@@ -41,13 +41,13 @@ Set `disableRemotePlayback` on the media element to opt out:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Video disableRemotePlayback />
+<HlsVideo disableRemotePlayback />
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video disableremoteplayback></video>
+<hls-video disableremoteplayback></hls-video>
 ```
 </FrameworkCase>
 
@@ -58,7 +58,8 @@ Cast works out of the box with the `videoFeatures` preset — no extra configura
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 import { createPlayer, CastButton } from '@videojs/react';
-import { Video, videoFeatures } from '@videojs/react/video';
+import { HlsVideo } from '@videojs/react/media/hls-video';
+import { videoFeatures } from '@videojs/react/video';
 
 const Player = createPlayer({ features: videoFeatures });
 
@@ -66,7 +67,7 @@ export default function App() {
   return (
     <Player.Provider>
       <Player.Container>
-        <Video src="https://stream.mux.com/..." autoPlay muted playsInline loop />
+        <HlsVideo src="https://stream.mux.com/..." autoPlay muted playsInline loop />
         <CastButton />
       </Player.Container>
     </Player.Provider>
@@ -79,7 +80,7 @@ export default function App() {
 ```html
 <video-player>
   <media-container>
-    <video src="https://stream.mux.com/..." autoplay muted playsinline loop></video>
+    <hls-video src="https://stream.mux.com/....m3u8" autoplay muted playsinline loop></hls-video>
     <media-cast-button></media-cast-button>
   </media-container>
 </video-player>
@@ -94,13 +95,13 @@ By default, Video.js uses Google's [Default Media Receiver](https://developers.g
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Video src="..." castReceiver="YOUR_APP_ID" />
+<HlsVideo src="..." castReceiver="YOUR_APP_ID" />
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video src="..." castreceiver="YOUR_APP_ID"></video>
+<hls-video src="..." castreceiver="YOUR_APP_ID"></hls-video>
 ```
 </FrameworkCase>
 
@@ -110,7 +111,7 @@ Pass arbitrary data to the receiver with each load request via `castCustomData`.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Video
+<HlsVideo
   src="..."
   castCustomData={{ token: 'abc123', userId: 'u_789' }}
 />
@@ -120,7 +121,7 @@ Pass arbitrary data to the receiver with each load request via `castCustomData`.
 <FrameworkCase frameworks={["html"]}>
 ```ts
 // HTML attributes can only carry strings; set the property in JS instead
-const video = document.querySelector('video');
+const video = document.querySelector('hls-video');
 video.castCustomData = { token: 'abc123', userId: 'u_789' };
 ```
 </FrameworkCase>
@@ -131,7 +132,7 @@ By default the receiver loads the same URL as the browser. Use `castSrc` to send
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Video
+<HlsVideo
   src="https://stream.mux.com/.../highest.mp4"
   castSrc="https://stream.mux.com/.../manifest.m3u8"
   castContentType="application/x-mpegURL"
@@ -141,11 +142,11 @@ By default the receiver loads the same URL as the browser. Use `castSrc` to send
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video
+<hls-video
   src="https://stream.mux.com/.../highest.mp4"
   castsrc="https://stream.mux.com/.../manifest.m3u8"
   castcontenttype="application/x-mpegURL"
-></video>
+></hls-video>
 ```
 </FrameworkCase>
 
@@ -157,13 +158,13 @@ Use `castStreamType` to tell the receiver whether the stream is `'on-demand'` or
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Video src="https://stream.mux.com/.../manifest.m3u8" castStreamType="live" />
+<HlsVideo src="https://stream.mux.com/.../manifest.m3u8" castStreamType="live" />
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video src="https://stream.mux.com/.../manifest.m3u8" caststreamtype="live"></video>
+<hls-video src="https://stream.mux.com/.../manifest.m3u8" caststreamtype="live"></hls-video>
 ```
 </FrameworkCase>
 
