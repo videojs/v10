@@ -22,7 +22,7 @@ import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composi
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { pickHighestResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import type { MaybeResolvedPresentation } from '../../../media/types';
-import { reloadTrack } from '../../behaviors/reload-track';
+import { reloadVideoTrack } from '../../behaviors/reload-track';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
 
@@ -58,7 +58,7 @@ export function createLivePlaylistSpikeEngine(
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
   };
 
-  return createComposition([resolvePresentation, selectVideoTrack, reloadTrack, shareSignals], {
+  return createComposition([resolvePresentation, selectVideoTrack, reloadVideoTrack, shareSignals], {
     config: finalConfig,
     // Spike skips the preload gate — resolve as soon as a url is set.
     initialState: { loadActivated: true },
