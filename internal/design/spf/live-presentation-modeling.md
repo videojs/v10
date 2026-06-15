@@ -324,19 +324,25 @@ prematurely fix.
   the observation that a not-yet-ended track *must* keep being refetched
   to stay current, so timeline reconciliation across tracks can't be
   fully independent even if fetch scheduling is.
-- **[4] How captured PDT feeds `timestampOffset` — the A/V-sync decision.**
-  The primary concern is keeping demuxed audio and video synchronized
-  when each track's `timestampOffset` is set independently; a shared
-  presentation-level anchor (PDT) rather than per-track zeroing is the
-  likely shape. Deliberately downstream of this model work; couples back
-  to discontinuity handling when that lands.
+- **[4] How captured PDT feeds the A/V-sync anchor — DECIDED (anchor source).**
+  Resolved in [live-timeline-anchoring](../../decisions/live-timeline-anchoring.md):
+  align demuxed audio/video by equal PDT (same real instant), not by
+  sequence number or per-track zeroing. The parser now surfaces
+  `Segment.programDateTime`. Still open downstream: how that anchor drives a
+  shared presentation timeline (the cross-track adjuster / per-track
+  `presentationTimeOffset`), and the separate manifest→buffer offset
+  ([mse-timestamp-offset](../../decisions/mse-timestamp-offset.md)). Couples
+  back to discontinuity handling when that lands.
 - **Parser output shape — resurrect `MediaPlaylistInfo` or hang fields on
   `Track`?** The snapshot/merge model wants a faithful per-fetch
   representation; today's parser merges into `Track`. This is the parser
   refactor's load-bearing call.
-- **Turnover `startTime` recovery.** When no overlap exists (long
-  background/stall), recover absolute `startTime` from PDT, or accept a
-  target-duration-based estimate?
+- **Turnover `startTime` recovery — DECIDED.** When no overlap exists (long
+  background/stall), recover absolute `startTime` from PDT rather than the
+  lossy `targetDuration × offset` estimate — see
+  [live-timeline-anchoring](../../decisions/live-timeline-anchoring.md).
+  (The `placeOnPreviousTimeline` no-overlap branch still uses the estimate;
+  swapping it to PDT is the follow-up.)
 - **`streamType` first-fetch ambiguity.** Accept untagged-VOD → `live`,
   or introduce `unknown`?
 - **DVR / event windowing.** `dvr-event-stream-support` reintroduces a
