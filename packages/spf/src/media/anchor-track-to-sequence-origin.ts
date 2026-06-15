@@ -34,16 +34,16 @@ export interface AnchorToSequenceOriginOptions {
  * video). Exact cross-track A/V alignment comes from `alignTrackTimelines`
  * (PDT) and ultimately the buffer, not from these estimates.
  *
- * No-op when there are no segments or none carries `programDateTime`.
+ * No-op when there are no segments or none carries `startDate`.
  */
 export function anchorTrackToSequenceOrigin<Tracks extends Track>(
   track: Tracks,
   { startSequence = 0 }: AnchorToSequenceOriginOptions = {}
 ): Tracks {
   const { segments } = track;
-  const anchorIndex = segments.findIndex((segment) => !isUndefined(segment.programDateTime));
+  const anchorIndex = segments.findIndex((segment) => !isUndefined(segment.startDate));
   const anchor = segments[anchorIndex];
-  if (!anchor || isUndefined(anchor.programDateTime)) {
+  if (!anchor || isUndefined(anchor.startDate)) {
     return track;
   }
 
@@ -59,7 +59,7 @@ export function anchorTrackToSequenceOrigin<Tracks extends Track>(
   return {
     ...track,
     startTime: track.startTime + shift,
-    startDate: anchor.programDateTime - originOffset,
+    startDate: anchor.startDate - originOffset,
     segments: segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift })),
   };
 }

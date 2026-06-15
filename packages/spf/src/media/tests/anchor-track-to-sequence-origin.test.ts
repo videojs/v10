@@ -20,7 +20,7 @@ function makeTrack(
         url: `${mediaSequence + i}.m4s`,
         duration: s.duration,
         startTime: s.startTime,
-        ...(s.pdt === undefined ? {} : { programDateTime: s.pdt }),
+        ...(s.pdt === undefined ? {} : { startDate: s.pdt }),
       })
     ),
     metadata: {
@@ -77,7 +77,7 @@ describe('anchorTrackToSequenceOrigin', () => {
     expect((b?.startTime ?? 0) - (a?.startTime ?? 0)).toBeCloseTo(1.9, 6);
   });
 
-  it('is a no-op when no segment carries programDateTime', () => {
+  it('is a no-op when no segment carries startDate', () => {
     const track = makeTrack(85, [
       { startTime: 0, duration: 4 },
       { startTime: 4, duration: 4 },

@@ -13,9 +13,9 @@ import type { Track } from './types';
  * difference in their `startDate`s. This shifts each track's `startTime`s (and
  * its origin `startTime`/`startDate`) by that difference, re-basing all tracks
  * to the earliest origin. After alignment, segments with equal
- * `programDateTime` have equal `startTime`.
+ * `startDate` have equal `startTime`.
  *
- * Tracks without a `startDate` (no `programDateTime` in the source) can't be
+ * Tracks without a `startDate` (no segment carried a wall-clock date) can't be
  * aligned and pass through unchanged. The common origin is the earliest
  * `startDate`, so no `startTime` goes negative.
  */

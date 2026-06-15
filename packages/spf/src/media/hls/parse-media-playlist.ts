@@ -159,7 +159,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   // Seeded by an explicit `#EXT-X-PROGRAM-DATE-TIME` (which re-anchors, e.g.
   // across a discontinuity) and advanced by each segment's duration so segments
   // without their own tag are interpolated forward (per RFC 8216).
-  let currentProgramDateTime: number | undefined;
+  let currentStartDate: number | undefined;
 
   // Playlist-level metadata (surfaced for live reload pacing / merge / termination).
   let targetDuration = 0;
@@ -186,7 +186,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
     if (trimmed.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
       const parsed = Date.parse(trimmed.slice('#EXT-X-PROGRAM-DATE-TIME:'.length).trim());
-      currentProgramDateTime = Number.isNaN(parsed) ? currentProgramDateTime : parsed / 1000;
+      currentStartDate = Number.isNaN(parsed) ? currentStartDate : parsed / 1000;
       continue;
     }
 
@@ -244,11 +244,11 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         startTime: currentTime,
       };
 
-      if (!isUndefined(currentProgramDateTime)) {
-        segment.programDateTime = currentProgramDateTime;
+      if (!isUndefined(currentStartDate)) {
+        segment.startDate = currentStartDate;
         // Interpolate forward: the next segment without an explicit tag inherits
         // this anchor plus this segment's duration.
-        currentProgramDateTime += currentDuration;
+        currentStartDate += currentDuration;
       }
 
       if (currentByteRange) {
@@ -282,14 +282,14 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     ? placeOnPreviousTimeline(previous, segments, mediaSequence, targetDuration)
     : { segments, startTime: 0 };
 
-  // Wall-clock anchor: `programDateTime − startTime` for the first PDT-bearing
+  // Wall-clock anchor: `startDate − startTime` for the first PDT-bearing
   // segment (constant along a linear timeline). Maps this track's origin to
   // wall clock; recomputed each parse, so it stays stable as the window slides
   // and is comparable across tracks for A/V alignment.
-  const anchorSegment = placed.segments.find((segment) => !isUndefined(segment.programDateTime));
+  const anchorSegment = placed.segments.find((segment) => !isUndefined(segment.startDate));
   const startDate =
-    anchorSegment && !isUndefined(anchorSegment.programDateTime)
-      ? anchorSegment.programDateTime - anchorSegment.startTime
+    anchorSegment && !isUndefined(anchorSegment.startDate)
+      ? anchorSegment.startDate - anchorSegment.startTime
       : undefined;
 
   // Build initialization (VTT may not have init segment)

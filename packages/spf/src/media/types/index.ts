@@ -140,15 +140,15 @@ export type Track = Ham &
     segments: Segment[];
     /**
      * Wall-clock time (epoch seconds) corresponding to the track's timeline
-     * origin (`startTime`) — i.e. `programDateTime − startTime`, the single
+     * origin (`startTime`) — i.e. `startDate − startTime`, the single
      * rolling anchor that maps this track's media timeline to wall clock.
-     * Optional: absent when no segment carries `programDateTime`.
+     * Optional: absent when no segment carries `startDate`.
      *
      * Provisional from the manifest, where the origin is the first fetched
      * segment; later refined from the buffer (`buffered`/`tfdt`) to pin the
      * origin to encoded-media zero. Comparable across tracks: the difference in
      * `startDate` between demuxed audio and video is their relative skew — the
-     * offset a cross-track aligner removes — and equal `programDateTime` across
+     * offset a cross-track aligner removes — and equal `startDate` across
      * tracks marks the same presentation instant.
      */
     startDate?: number;
@@ -338,7 +338,7 @@ export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelection
  * Media segment with timing information.
  * Follows CMAF-HAM composition pattern.
  *
- * `programDateTime` is the absolute wall-clock time of the segment's first
+ * `startDate` is the absolute wall-clock time of the segment's first
  * sample, in **epoch seconds** (unit-consistent with `startTime`/`duration`),
  * derived from `#EXT-X-PROGRAM-DATE-TIME` (explicit or interpolated forward via
  * `EXTINF`). Unlike the per-track-relative `startTime`, it is comparable across
@@ -347,7 +347,7 @@ export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelection
  * source carries no PDT (allowed by RFC 8216, required by Apple's HLS authoring
  * spec — so present on conformant content).
  */
-export type Segment = Ham & AddressableObject & TimeSpan & { programDateTime?: number };
+export type Segment = Ham & AddressableObject & TimeSpan & { startDate?: number };
 
 /**
  * Floating-point tolerance for matching segments by `startTime`. Two

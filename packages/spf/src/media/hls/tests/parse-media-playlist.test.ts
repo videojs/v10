@@ -573,7 +573,7 @@ s0.ts
 #EXTINF:4,
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
-      expect(r.segments.map((s) => s.programDateTime)).toEqual([
+      expect(r.segments.map((s) => s.startDate)).toEqual([
         epoch('2026-01-01T00:00:00.000Z'),
         epoch('2026-01-01T00:00:04.000Z'),
       ]);
@@ -590,7 +590,7 @@ s1.ts
 #EXTINF:4,
 s2.ts`;
       const r = parseMediaPlaylist(text, videoShell);
-      expect(r.segments.map((s) => s.programDateTime)).toEqual([
+      expect(r.segments.map((s) => s.startDate)).toEqual([
         epoch('2026-01-01T00:00:00.000Z'),
         epoch('2026-01-01T00:00:04.000Z'),
         epoch('2026-01-01T00:00:08.000Z'),
@@ -609,7 +609,7 @@ s0.ts
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
       // s1 takes the jumped absolute time, not s0 + 4s.
-      expect(r.segments.map((s) => s.programDateTime)).toEqual([
+      expect(r.segments.map((s) => s.startDate)).toEqual([
         epoch('2026-01-01T00:00:00.000Z'),
         epoch('2026-01-01T01:00:00.000Z'),
       ]);
@@ -627,9 +627,9 @@ s1.ts
 s2.ts`;
       const r = parseMediaPlaylist(text, videoShell);
       const t0 = epoch('2026-01-01T00:00:00.000Z');
-      expect(r.segments[0]?.programDateTime).toBeCloseTo(t0, 6);
-      expect(r.segments[1]?.programDateTime).toBeCloseTo(t0 + 1.9, 6);
-      expect(r.segments[2]?.programDateTime).toBeCloseTo(t0 + 1.9 + 2.05, 6);
+      expect(r.segments[0]?.startDate).toBeCloseTo(t0, 6);
+      expect(r.segments[1]?.startDate).toBeCloseTo(t0 + 1.9, 6);
+      expect(r.segments[2]?.startDate).toBeCloseTo(t0 + 1.9 + 2.05, 6);
     });
 
     it('leaves program date time undefined when the source carries no PDT', () => {
@@ -640,10 +640,10 @@ s0.ts
 #EXTINF:4,
 s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
-      expect(r.segments.every((s) => s.programDateTime === undefined)).toBe(true);
+      expect(r.segments.every((s) => s.startDate === undefined)).toBe(true);
     });
 
-    it('exposes Track.startDate as the wall-clock at the origin (programDateTime − startTime)', () => {
+    it('exposes Track.startDate as the wall-clock at the origin (startDate − startTime)', () => {
       const text = `#EXTM3U
 #EXT-X-MEDIA-SEQUENCE:0
 #EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:10.000Z
@@ -727,9 +727,9 @@ s0.ts`;
       expect(s3.segments[0]?.id).toBe('segment-88');
       expect(s3.mimeType).toBe('video/mp2t'); // TS container detected
       // PDT rides through carry-forward unchanged (absolute, not re-based).
-      expect(s3.segments[0]?.programDateTime).toBeDefined();
-      expect(s3.segments.map((seg) => seg.programDateTime ?? 0)).toEqual(
-        [...s3.segments.map((seg) => seg.programDateTime ?? 0)].sort((a, b) => a - b)
+      expect(s3.segments[0]?.startDate).toBeDefined();
+      expect(s3.segments.map((seg) => seg.startDate ?? 0)).toEqual(
+        [...s3.segments.map((seg) => seg.startDate ?? 0)].sort((a, b) => a - b)
       );
     });
 
@@ -755,7 +755,7 @@ s0.ts`;
       expect(a82).toBeDefined();
 
       // Same real instant → identical absolute PDT (the cross-track sync anchor)…
-      expect(v82?.programDateTime).toBe(a82?.programDateTime);
+      expect(v82?.startDate).toBe(a82?.startDate);
       // …even though per-track relative startTime disagrees by a full segment
       // (video's window starts one segment earlier). This 2s gap is exactly the
       // A/V misalignment that PDT-based alignment resolves and sequence-number

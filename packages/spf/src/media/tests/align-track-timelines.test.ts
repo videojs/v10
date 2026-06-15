@@ -21,7 +21,7 @@ function makeTrack(startDate: number | undefined, segments: Array<{ startTime: n
         url: `s${i}.m4s`,
         duration: 2,
         startTime: s.startTime,
-        ...(s.pdt === undefined ? {} : { programDateTime: s.pdt }),
+        ...(s.pdt === undefined ? {} : { startDate: s.pdt }),
       })
     ),
   };
@@ -50,8 +50,8 @@ describe('alignTrackTimelines', () => {
     expect(alignedAudio?.segments.map((s) => s.startTime)).toEqual([2, 4]);
 
     // The same instant (PDT 1004) now has the same startTime in both tracks.
-    const vAt1004 = alignedVideo?.segments.find((s) => s.programDateTime === 1004);
-    const aAt1004 = alignedAudio?.segments.find((s) => s.programDateTime === 1004);
+    const vAt1004 = alignedVideo?.segments.find((s) => s.startDate === 1004);
+    const aAt1004 = alignedAudio?.segments.find((s) => s.startDate === 1004);
     expect(vAt1004?.startTime).toBe(aAt1004?.startTime);
   });
 
