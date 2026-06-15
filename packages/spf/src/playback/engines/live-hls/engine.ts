@@ -20,6 +20,7 @@ import { calculatePresentationDuration } from '../../behaviors/calculate-present
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
@@ -101,6 +102,10 @@ export function createLiveHlsEngine(
 
       loadVideoSegments,
       loadAudioSegments,
+
+      // Seek the playhead into the (native-PTS) buffered window once segments
+      // land, so playback can start.
+      seekToLiveEdge,
 
       // No-op for unbounded live (no EXT-X-ENDLIST), composed for parity.
       endOfStream,
