@@ -82,7 +82,7 @@ export const root = (isShadowDOM: boolean) =>
     // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
     !isShadowDOM
       ? [
-          'before:absolute before:inset-0 before:pointer-events-none before:content-[""]',
+          'before:absolute before:inset-0 before:pointer-events-none',
           'before:[background-image:var(--media-poster-placeholder,none)]',
           'before:bg-no-repeat',
           'before:[background-position:var(--media-object-position,center)]',
