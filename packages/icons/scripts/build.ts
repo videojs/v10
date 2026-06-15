@@ -4,10 +4,10 @@ import { join } from 'node:path';
 const isWatch = process.argv.includes('--watch');
 
 import { transform } from '@svgr/core';
-import { camelCase, pascalCase } from '@videojs/utils/string';
 import { transform as esbuildTransform } from 'esbuild';
 import { optimize } from 'svgo';
 
+import { iconBases } from './icon-bases.js';
 import {
   ASSETS_DIR,
   createSvgoConfig,
@@ -270,21 +270,23 @@ function buildElementBaseTypes(): string {
 function buildIndexExports(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
   return icons
     .map(({ name, varName }) => {
+      const { pascal, camel } = iconBases(varName);
       if (framework === 'react') {
-        return `export { default as ${pascalCase(varName)}Icon } from './${name}.js';`;
+        return `export { default as ${pascal}Icon } from './${name}.js';`;
       }
 
-      return `export { ${camelCase(varName)}Icon } from './${name}.js';`;
+      return `export { ${camel}Icon } from './${name}.js';`;
     })
     .join('\n');
 }
 
 function buildIndexTypes(icons: { name: string; varName: string }[], framework: 'react' | 'html'): string {
-  const types = icons.map(({ varName }) =>
-    framework === 'react'
-      ? `export declare const ${pascalCase(varName)}Icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & React.RefAttributes<SVGSVGElement>>;`
-      : `export declare const ${camelCase(varName)}Icon: string;`
-  );
+  const types = icons.map(({ varName }) => {
+    const { pascal, camel } = iconBases(varName);
+    return framework === 'react'
+      ? `export declare const ${pascal}Icon: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & React.RefAttributes<SVGSVGElement>>;`
+      : `export declare const ${camel}Icon: string;`;
+  });
   return `/// <reference types="react" />\n${types.join('\n')}\n`;
 }
 
@@ -317,8 +319,10 @@ async function buildIconSet(setName: string): Promise<void> {
     for (const icon of icons) {
       const { name, varName, content } = icon;
 
+      const { pascal, camel } = iconBases(varName);
+
       if (framework === 'react') {
-        const componentName = `${pascalCase(varName)}Icon`;
+        const componentName = `${pascal}Icon`;
         const { js, tsx } = await buildReactComponent(content, componentName);
         writeFileSync(join(outDir, `${name}.js`), js);
         writeFileSync(join(outDir, `${name}.tsx`), tsx);
@@ -327,9 +331,9 @@ async function buildIconSet(setName: string): Promise<void> {
           `import * as React from 'react';\ndeclare const ${componentName}: React.ForwardRefExoticComponent<React.SVGProps<SVGSVGElement> & React.RefAttributes<SVGSVGElement>>;\nexport default ${componentName};\n`
         );
       } else {
-        const varNameCamel = camelCase(varName);
-        writeFileSync(join(outDir, `${name}.js`), buildHtmlExport(content, `${varNameCamel}Icon`));
-        writeFileSync(join(outDir, `${name}.d.ts`), `export declare const ${varNameCamel}Icon: string;\n`);
+        const constName = `${camel}Icon`;
+        writeFileSync(join(outDir, `${name}.js`), buildHtmlExport(content, constName));
+        writeFileSync(join(outDir, `${name}.d.ts`), `export declare const ${constName}: string;\n`);
       }
     }
 

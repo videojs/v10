@@ -1,31 +1,87 @@
 import { cn } from '@videojs/utils/style';
 
+import { popup } from './popup';
+
+const panelBase = cn(
+  'absolute inset-0 overflow-auto overscroll-none p-1.5 outline-none translate-none',
+  'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
+  'transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate]'
+);
+
+const rootView = cn(
+  panelBase,
+  'data-[menu-view-state=inactive]:-translate-x-full data-[menu-view-state=inactive]:blur'
+);
+
+const submenuPanel = cn(
+  panelBase,
+  'z-10',
+  'not-data-open:not-data-ending-style:-translate-x-full',
+  'not-data-open:not-data-ending-style:transition-none',
+  'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
+  'data-starting-style:blur data-ending-style:blur',
+  'data-starting-style:data-[direction=forward]:translate-x-full',
+  'data-ending-style:data-[direction=forward]:-translate-x-full',
+  'data-starting-style:data-[direction=back]:-translate-x-full',
+  'data-ending-style:data-[direction=back]:translate-x-full'
+);
+
+const itemBase = cn(
+  'flex cursor-pointer select-none items-center rounded-full py-1.5 px-3',
+  'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)',
+  'outline-2 -outline-offset-2 outline-transparent',
+  'transition-[background-color,color] duration-(--menu-item-transition-duration) ease-out',
+  'hover:bg-current/10 data-highlighted:bg-current/10',
+  'focus-visible:outline-current focus-visible:outline-offset-2'
+);
+
+const menuTokens = cn(
+  '[--menu-transition-duration:200ms] [--menu-item-transition-duration:100ms]',
+  'motion-reduce:[--menu-transition-duration:0ms] motion-reduce:[--menu-item-transition-duration:0ms]'
+);
+
+const menuHostShell = cn(
+  popup.popover,
+  menuTokens,
+  'max-w-(--media-popover-available-width,none) max-h-(--media-popover-available-height,none)',
+  'transition-[transform,scale,opacity,filter,width,height] duration-(--menu-transition-duration) ease-in-out',
+  'box-border rounded-[1.25rem] p-1.5 overscroll-none'
+);
+
 export const menu = {
-  root: cn(
-    'box-border min-w-[min(6rem,var(--media-popover-available-width,6rem))]',
-    'max-w-(--media-popover-available-width) max-h-(--media-popover-available-height)',
-    'p-1.5 !overflow-auto overscroll-none rounded-[1.25rem]',
-    'before:hidden'
+  /** Standalone menu popover host (audio playback rate, sandbox demos). */
+  root: cn(menuHostShell, 'min-w-24 overflow-auto'),
+  /** Settings menu viewport host with nested submenu navigation. */
+  settings: cn(
+    menuHostShell,
+    '[--menu-transition-duration:250ms]',
+    'relative min-w-44 w-(--media-menu-width) h-(--media-menu-height)',
+    'overflow-hidden'
   ),
-  group: cn(
-    'relative flex flex-col gap-0.5',
-    'before:hidden supports-[top:anchor(top)]:before:block',
-    'before:absolute before:pointer-events-none before:rounded-full before:bg-current/10',
-    'before:transition-[inset] before:duration-100 before:ease-in-out',
-    'before:[position-anchor:--media-menu-item-highlight-anchor] before:[inset:anchor(inside)]'
-  ),
+  group: 'flex flex-col gap-0.5',
   item: cn(
-    'group/menu-item flex min-h-8 cursor-pointer items-center justify-between gap-2 rounded-full px-3',
-    'tabular-nums text-inherit outline-2 -outline-offset-2 outline-transparent',
-    'hover:bg-current/10 data-highlighted:bg-current/10',
-    'supports-[top:anchor(top)]:hover:bg-transparent supports-[top:anchor(top)]:data-highlighted:bg-transparent',
-    'supports-[top:anchor(top)]:hover:[anchor-name:--media-menu-item-highlight-anchor]',
-    'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
-    'focus-visible:outline-current focus-visible:outline-offset-2',
+    itemBase,
+    'group/menu-item justify-between gap-2 tabular-nums text-inherit',
+    'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
     'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
   ),
   indicator: cn(
     '-mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
     '[&_.media-icon]:drop-shadow-[0_1px_0_var(--media-current-shadow-color)]'
   ),
+  /** Root settings view — slides out when a submenu is active. */
+  rootView,
+  /** Submenu panel — slides in/out alongside the root view. */
+  submenuPanel,
+  back: cn(
+    itemBase,
+    'mb-0.5 w-full gap-1.5 font-medium text-current/70',
+    'hover:text-inherit data-highlighted:text-inherit focus-visible:text-inherit'
+  ),
+  hint: 'ml-auto flex min-w-0 items-center gap-1 text-xs text-current/65',
+  hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
+  chevron: 'size-3.5 first:-ml-1 last:-mr-1',
+  settingsGroup: 'group/settings',
+  settingsTrigger: 'group hidden group-has-[[data-availability=available]]/settings:grid',
+  settingsIcon: 'transition-transform duration-150 ease-in-out group-aria-expanded:rotate-90 motion-reduce:duration-0',
 };

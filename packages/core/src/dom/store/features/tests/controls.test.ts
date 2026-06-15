@@ -225,6 +225,148 @@ describe('controlsFeature', () => {
       expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
     });
+
+    it('touch pointermove while controls are hidden does not show controls', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Let controls auto-hide
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Touch pointermove should not flip controlsVisible
+      container!.dispatchEvent(createPointerEvent('pointermove', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+      expect(store.state.userActive).toBe(false);
+    });
+
+    it('touch pointermove while controls are visible keeps idle timer alive without re-patching state', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Advance partway through idle delay
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+
+      // Touch pointermove should keep the timer alive without forcing a state change
+      container!.dispatchEvent(createPointerEvent('pointermove', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+
+      // Advance past the original deadline — still active because timer was reset
+      vi.advanceTimersByTime(500);
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+
+      // Wait the full idle delay from the pointermove — now it should go inactive
+      vi.advanceTimersByTime(IDLE_DELAY - 500);
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+    });
+
+    it('synthetic focusin fired between touch pointerdown and pointerup is ignored', () => {
+      // Mirrors Android Chrome: the container's own pointerup listener calls
+      // this.focus() before the controls feature's pointerup handler runs,
+      // so focusin fires while lastTouchAt was only set by pointerdown.
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Touch pointerdown starts the tap window.
+      container!.dispatchEvent(createPointerEvent('pointerdown', { pointerType: 'touch' }));
+      vi.advanceTimersByTime(50);
+
+      // focusin fires before our pointerup handler runs (synchronous focus grab).
+      container!.dispatchEvent(new Event('focusin'));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('synthetic focusin shortly after touch pointerup does not re-activate hidden controls', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Tap to hide controls (starts visible). This records lastTouchUpAt
+      // and sets controlsVisible=false via the inline tap-toggle.
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Synthetic focusin within 500 ms of touch pointerup (from the container's
+      // own focus() call) should be ignored.
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(new Event('focusin'));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('focusin after a touch tap window has elapsed still activates controls', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Tap to hide
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // After the 500 ms guard expires, focusin should still re-activate
+      // (e.g., keyboard navigation focusing the container).
+      vi.advanceTimersByTime(600);
+      container!.dispatchEvent(new Event('focusin'));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
+
+    it('synthetic mouseleave shortly after touch pointerup does not call setInactive', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+
+      // Let controls auto-hide first
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+
+      // Tap shows controls (controlsVisible=false → setActive path)
+      container!.dispatchEvent(new Event('pointerdown'));
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(createPointerEvent('pointerup', { pointerType: 'touch' }));
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      // Synthetic mouseleave within 500 ms of touchend should be ignored
+      vi.advanceTimersByTime(100);
+      container!.dispatchEvent(new Event('mouseleave'));
+      flush();
+
+      expect(store.state.userActive).toBe(true);
+      expect(store.state.controlsVisible).toBe(true);
+    });
   });
 
   describe('playback state interaction', () => {

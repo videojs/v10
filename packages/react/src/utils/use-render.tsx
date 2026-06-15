@@ -85,8 +85,9 @@ export function renderElement<
   const className = resolveClassName(classNameProp, state);
   const style = resolveStyle(styleProp, state);
 
-  // Generate data attributes from state
-  const stateDataAttrs = getStateDataAttrs(state, stateAttrMap);
+  // Generate data attributes only when a component explicitly opts in with a
+  // mapping. State is still passed to render/className/style callbacks.
+  const stateDataAttrs = stateAttrMap ? getStateDataAttrs(state, stateAttrMap) : {};
 
   // Merge: state data attrs first, then props (so props can override)
   const propsArray = Array.isArray(props) ? props : props ? [props] : [];

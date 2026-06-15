@@ -12,21 +12,20 @@ import {
   inputFeedback,
   menu,
   overlay,
-  playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
-  AirplayEnterIcon,
-  AirplayExitIcon,
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
@@ -35,6 +34,7 @@ import {
   ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
+  GearIcon,
   PauseIcon,
   PipEnterIcon,
   PipExitIcon,
@@ -47,9 +47,9 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
-import { AirplayButton } from '@/ui/airplay-button';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -60,7 +60,7 @@ import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
+import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
@@ -157,20 +157,128 @@ function VolumePopover(): ReactNode {
   );
 }
 
-function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value } = usePlaybackRateMenu();
+function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
+  return <ChevronIcon className={cn(icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
+}
+
+function SettingsMenu(): ReactNode {
+  const playbackRate = usePlaybackRateOptions();
+  const captions = useCaptionsOptions();
+  const hasPlaybackRate = playbackRate?.state.availability === 'available';
+  const hasCaptions = captions?.state.availability === 'available';
+
+  if (!hasPlaybackRate && !hasCaptions) return null;
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
-      {options.map((option) => (
-        <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
-          <span>{option.label}</span>
-          <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
-            <CheckIcon className={icon} />
-          </Menu.ItemIndicator>
-        </Menu.RadioItem>
-      ))}
-    </Menu.RadioGroup>
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        aria-label="Settings"
+        className="media-button--settings"
+        render={<Button className={cn(button.icon, menu.settingsTrigger)} />}
+      >
+        <GearIcon className={cn(icon, menu.settingsIcon)} />
+      </Menu.Trigger>
+      <Menu.Content className={menu.settings}>
+        <Menu.View className={menu.rootView}>
+          <div className={menu.group}>
+            {hasPlaybackRate && playbackRate ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="playback-rate"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <span>Speed</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Speed
+                  </Menu.Back>
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={playbackRate.value}
+                    onValueChange={playbackRate.setValue}
+                    aria-label="Playback rate"
+                  >
+                    {playbackRate.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === playbackRate.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={icon} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+            {hasCaptions && captions ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="captions"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <span>Captions</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Captions
+                  </Menu.Back>
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={captions.value}
+                    onValueChange={captions.setValue}
+                    aria-label="Captions"
+                  >
+                    {captions.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === captions.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={icon} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+          </div>
+        </Menu.View>
+      </Menu.Content>
+    </Menu.Root>
   );
 }
 
@@ -275,36 +383,22 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <Slider.Thumbnail className={preview.thumbnail} />
-                <TimeSlider.Value type="pointer" className={preview.time} />
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
+              <div className={thumbnail.root}>
+                <Slider.Thumbnail className={thumbnail.image} />
+                <TimeSlider.Value type="pointer" className={thumbnail.time} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
               </div>
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={slider.value} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
           </div>
 
           <div className={buttonGroupEnd}>
-            <PlaybackRateMenu.Root side="top" align="center">
-              <PlaybackRateMenu.Trigger className={playbackRate.button} render={<Button />} />
-              <PlaybackRateMenu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateMenuItems />
-              </PlaybackRateMenu.Content>
-            </PlaybackRateMenu.Root>
-
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className={iconState.captions.button} render={<Button />}>
-                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+            <SettingsMenu />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
@@ -321,10 +415,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <AirplayButton className={iconState.airplay.button} render={<Button />}>
-                    <AirplayEnterIcon className={cn(icon, iconState.airplay.enter)} />
-                    <AirplayExitIcon className={cn(icon, iconState.airplay.exit)} />
-                  </AirplayButton>
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)} />

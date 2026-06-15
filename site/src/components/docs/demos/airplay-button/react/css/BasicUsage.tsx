@@ -1,4 +1,4 @@
-import { AirplayButton, createPlayer } from '@videojs/react';
+import { AirPlayButton, createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 const Player = createPlayer({ features: videoFeatures });
@@ -14,13 +14,13 @@ export default function BasicUsage() {
           playsInline
           loop
         />
-        <AirplayButton
+        <AirPlayButton
           className="media-airplay-button"
           render={(props, state) => {
             const label =
               state.availability === 'unsupported'
                 ? 'AirPlay not supported'
-                : state.airplayState === 'connected'
+                : state.state === 'connected'
                   ? 'Stop AirPlay'
                   : state.availability === 'unavailable'
                     ? 'No AirPlay devices found'

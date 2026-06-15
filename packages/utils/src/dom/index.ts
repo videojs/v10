@@ -16,6 +16,7 @@ export { isMacOS } from './platform';
 export { tryHidePopover, tryShowPopover } from './popover';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
+export { loadScript } from './script';
 export {
   applyShadowStyles,
   createShadowStyle,
@@ -33,4 +34,20 @@ export {
   isCaptionOrSubtitleTrack,
 } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
-export type { CustomElement, CustomElementCallbacks } from './types';
+export type {
+  CustomElement,
+  CustomElementCallbacks,
+  EventListenerFor,
+  EventType,
+  QueriedElement,
+} from './types';
+export {
+  isWebKitAirPlayCapable,
+  supportsWebKitAirPlay,
+  type WebKitAirPlayMedia,
+  type WebKitDocument,
+  type WebKitFullscreenElement,
+  type WebKitPresentationMode,
+  type WebKitVideoElement,
+  type WebkitAvailabilityEvent,
+} from './webkit';

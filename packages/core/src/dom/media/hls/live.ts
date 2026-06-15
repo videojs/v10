@@ -94,7 +94,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     #armSeekToLive() {
       this.#disarmSeekToLive();
 
-      const target = this.target as HTMLMediaElement | null;
+      const target = this.target as HTMLVideoElement | null;
       if (!target || target.autoplay) return;
 
       this.#seekToLiveAbort = new AbortController();
@@ -115,7 +115,7 @@ export function HlsJsMediaLiveMixin<Base extends Constructor<HlsEngineHost>>(Bas
     }
 
     #trySeekToLive() {
-      const target = this.target as HTMLMediaElement | null;
+      const target = this.target as HTMLVideoElement | null;
       if (!target) return;
       const { liveEdgeStart } = this;
       if (!Number.isFinite(liveEdgeStart)) return;

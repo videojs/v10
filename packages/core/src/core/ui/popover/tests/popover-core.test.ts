@@ -69,6 +69,16 @@ describe('PopoverCore', () => {
       expect(attrs['aria-expanded']).toBe('true');
     });
 
+    it('returns aria-expanded false when closing', () => {
+      const core = new PopoverCore();
+      core.setInput({ active: true, status: 'ending' });
+      const state = core.getState();
+      const attrs = core.getTriggerAttrs(state);
+
+      expect(state.open).toBe(true);
+      expect(attrs['aria-expanded']).toBe('false');
+    });
+
     it('includes aria-controls when popupId is provided', () => {
       const core = new PopoverCore();
       core.setInput(OPEN);

@@ -192,7 +192,11 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   function getInitialHighlightItem(): HTMLElement | null {
-    return items.find((item) => item.matches('[aria-checked="true"], [aria-selected="true"]')) ?? items[0] ?? null;
+    return (
+      items.find((item) => item.matches('[role="menuitemradio"][aria-checked="true"], [aria-selected="true"]')) ??
+      items[0] ??
+      null
+    );
   }
 
   // --- Type-ahead ---

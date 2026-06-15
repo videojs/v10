@@ -32,10 +32,11 @@
 
 /* Play: ended → restart */
 .media-button--play[data-ended] .media-icon--restart,
-/* Play: paused (not ended) → play */
+/* Play: paused or not yet started (not ended) → play */
 .media-button--play:not([data-ended])[data-paused] .media-icon--play,
-/* Play: playing (not paused, not ended) → pause */
-.media-button--play:not([data-paused]):not([data-ended]) .media-icon--pause,
+.media-button--play:not([data-ended]):not([data-started]) .media-icon--play,
+/* Play: started and not paused/ended → pause */
+.media-button--play[data-started]:not([data-paused]):not([data-ended]) .media-icon--pause,
 /* Mute: muted → volume off */
 .media-button--mute[data-muted] .media-icon--volume-off,
 /* Mute: volume low (not muted) → volume low */
@@ -54,9 +55,9 @@
 .media-button--cast:not([data-cast-state="connected"]) .media-icon--cast-enter,
 /* Cast: connected → exit */
 .media-button--cast[data-cast-state="connected"] .media-icon--cast-exit,
-/* Airplay: not connected → enter */
+/* AirPlay: not connected → enter */
 .media-button--airplay:not([data-airplay-state="connected"]) .media-icon--airplay-enter,
-/* Airplay: connected → exit */
+/* AirPlay: connected → exit */
 .media-button--airplay[data-airplay-state="connected"] .media-icon--airplay-exit,
 /* Captions: not active → captions off */
 .media-button--captions:not([data-active]) .media-icon--captions-off,

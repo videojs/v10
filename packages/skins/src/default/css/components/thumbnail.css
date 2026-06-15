@@ -1,0 +1,59 @@
+/* ==========================================================================
+   Media thumbnail
+   ========================================================================== */
+
+.media-default-skin .media-thumbnail {
+  pointer-events: none;
+  background-color: oklch(0 0 0 / 0.9);
+  border-radius: 0.75rem;
+
+  & .media-thumbnail__image {
+    position: relative;
+    display: block;
+    overflow: clip;
+    border-radius: inherit;
+
+    &::after {
+      position: absolute;
+      inset: 0;
+      content: "";
+      background-image: linear-gradient(to top, oklch(0 0 0 / 0.8), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
+      border-radius: inherit;
+    }
+  }
+
+  & .media-thumbnail__time {
+    position: absolute;
+    inset-inline: 0;
+    bottom: 0.5rem;
+    text-align: center;
+  }
+
+  & .media-thumbnail__spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    opacity: 0;
+    translate: -50% -50%;
+  }
+
+  & .media-thumbnail__image,
+  & .media-thumbnail__spinner {
+    transition: opacity 150ms ease-out;
+  }
+
+  &:not(:has(.media-thumbnail__image[data-loading])) {
+    & .media-thumbnail__spinner {
+      --media-spinner-animation: none;
+    }
+  }
+
+  &:has(.media-thumbnail__image[data-loading]) {
+    & .media-thumbnail__image {
+      opacity: 0;
+    }
+    & .media-thumbnail__spinner {
+      opacity: 1;
+    }
+  }
+}

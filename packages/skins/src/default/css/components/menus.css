@@ -3,93 +3,194 @@
    Note: Menus use `.media-popover` styles for positioning and transitions.
    ========================================================================== */
 
-.media-default-skin .media-popover.media-menu {
+.media-default-skin .media-menu {
+  --menu-transition-duration: 200ms;
+  --menu-item-transition-duration: 100ms;
   box-sizing: border-box;
-  min-width: min(6rem, var(--media-popover-available-width, 6rem));
+  min-width: 6rem;
   max-width: var(--media-popover-available-width, none);
   max-height: var(--media-popover-available-height, none);
   padding: 0.375rem;
   overflow: auto;
   overscroll-behavior: none;
   border-radius: 1.25rem;
+  transition-timing-function: ease-in-out;
+  transition-duration: var(--menu-transition-duration);
+  transition-property: scale, opacity, filter, width, height;
 
-  &::before {
-    display: none;
+  @media (prefers-reduced-motion: reduce) {
+    --menu-transition-duration: 0ms;
+    --menu-item-transition-duration: 0ms;
   }
-}
 
-.media-default-skin .media-popover.media-menu .media-menu__group {
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-
-  &::before {
+  & .media-menu__panel {
     position: absolute;
-    position-anchor: --media-menu-item-highlight-anchor;
-    inset: anchor(inside);
-    pointer-events: none;
-    content: "";
-    background-color: oklch(from currentColor l c h / 0.1);
-    border-radius: calc(infinity * 1px);
-    transition: inset ease-in-out 100ms;
-  }
+    inset: 0;
+    padding: 0.375rem;
+    overflow: auto;
+    overscroll-behavior: none;
+    outline: none;
+    translate: 0 0;
+    transition-timing-function: ease-in-out;
+    transition-duration: var(--menu-transition-duration);
+    transition-property: translate, filter;
+    will-change: translate;
 
-  @supports not (top: anchor(top)) {
-    &::before {
-      display: none;
+    &[data-starting-style],
+    &[data-ending-style] {
+      overflow: hidden;
+    }
+
+    /* Root settings view — slides out when a submenu is active */
+    &[data-menu-root-view][data-menu-view-state="inactive"] {
+      filter: blur(8px);
+      translate: -100% 0;
+    }
+
+    /* Submenu panels — slide in/out alongside the root view */
+    &[data-submenu] {
+      z-index: 10;
+
+      &:not([data-open], [data-ending-style]) {
+        translate: -100% 0;
+        transition-property: none;
+      }
+
+      &[data-starting-style],
+      &[data-ending-style] {
+        pointer-events: none;
+        filter: blur(8px);
+      }
+
+      &[data-starting-style][data-direction="forward"],
+      &[data-ending-style][data-direction="back"] {
+        translate: 100% 0;
+      }
+
+      &[data-ending-style][data-direction="forward"],
+      &[data-starting-style][data-direction="back"] {
+        translate: -100% 0;
+      }
     }
   }
-}
 
-.media-default-skin .media-popover.media-menu .media-menu__item {
-  display: flex;
-  gap: 0.5rem;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 2rem;
-  padding: 0 0.75rem;
-  font-variant-numeric: tabular-nums;
-  color: inherit;
-  cursor: pointer;
-  outline: 2px solid transparent;
-  outline-offset: -2px;
-  border-radius: calc(infinity * 1px);
-
-  &:hover,
-  &[data-highlighted] {
-    anchor-name: --media-menu-item-highlight-anchor;
+  & .media-menu__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
   }
 
-  @supports not (top: anchor(top)) {
+  & .media-menu__item,
+  & .media-menu__back {
+    display: flex;
+    align-items: center;
+    padding: 0.375rem 0.75rem;
+    text-shadow: 0 1px 0 var(--media-current-shadow-color);
+    cursor: pointer;
+    user-select: none;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    border-radius: calc(infinity * 1px);
+    transition:
+      background-color var(--menu-item-transition-duration) ease-out,
+      color var(--menu-item-transition-duration) ease-out;
+
+    &:focus-visible {
+      outline-color: currentColor;
+      outline-offset: 2px;
+    }
+
     &:hover,
     &[data-highlighted] {
       background-color: oklch(from currentColor l c h / 0.1);
     }
+
+    &[data-availability="unavailable"],
+    &[data-availability="unsupported"] {
+      display: none;
+    }
+
+    & .media-menu__chevron:first-child {
+      margin-left: -0.25rem;
+    }
+    & .media-menu__chevron:last-child {
+      margin-right: -0.25rem;
+    }
   }
 
-  &:focus-visible {
-    outline-color: currentColor;
-    outline-offset: 2px;
+  & .media-menu__indicator {
+    flex-shrink: 0;
+    margin-right: -0.25rem;
+    opacity: 0;
+
+    & .media-icon {
+      filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
+    }
   }
 
-  &[aria-checked="true"] .media-menu__indicator {
-    opacity: 1;
+  & .media-menu__item {
+    gap: 0.5rem;
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    color: inherit;
+
+    &[aria-disabled="true"] {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    &[aria-checked="true"] .media-menu__indicator {
+      opacity: 1;
+    }
   }
 
-  &[aria-disabled="true"] {
-    pointer-events: none;
-    cursor: not-allowed;
-    opacity: 0.5;
+  & .media-menu__back {
+    gap: 0.375rem;
+    width: 100%;
+    margin-bottom: 0.125rem;
+    font-weight: 500;
+    color: oklch(from currentColor l c h / 0.7);
+
+    &:focus-visible {
+      color: inherit;
+    }
+
+    &:hover,
+    &[data-highlighted] {
+      color: inherit;
+    }
   }
-}
 
-.media-default-skin .media-popover.media-menu .media-menu__indicator {
-  flex-shrink: 0;
-  margin-right: -0.25rem;
-  opacity: 0;
-}
+  & .media-menu__hint {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    min-width: 0;
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: oklch(from currentColor l c h / 0.65);
+  }
 
-.media-default-skin .media-popover.media-menu .media-menu__indicator .media-icon {
-  filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
+  & .media-menu__hint-label {
+    max-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & .media-menu__chevron {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* Settings menu */
+  &.media-menu--settings {
+    --menu-transition-duration: 300ms;
+    position: relative;
+    width: var(--media-menu-width);
+    min-width: 11rem;
+    height: var(--media-menu-height);
+    overflow: hidden;
+  }
 }

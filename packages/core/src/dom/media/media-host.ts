@@ -1,91 +1,125 @@
-import type { ErrorLike, EventLike, EventTargetLike } from '../../core/media/types';
+import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import {
+  type EventLike,
+  type MediaFull,
+  type MediaStreamType,
+  MediaStreamTypes,
+  type MediaTargetLike,
+  type TextTrackKind,
+  type TextTrackLike,
+} from '../../core/media/types';
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+import { getComponents, getProp, setProp } from './utils';
 
-const EMPTY_TIME_RANGES: Readonly<TimeRanges> = Object.freeze({
-  length: 0,
-  start() {
-    return 0;
-  },
-  end() {
-    return 0;
-  },
-} as TimeRanges);
+export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';
 
-export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [K in keyof Events]: EventLike }>
+export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
+  querySelector<E extends Element = Element>(selectors: string): E | null;
+  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
+}
+
+export interface Component<Target extends HTMLMediaTargetLike = HTMLMediaTargetLike> {
+  readonly targetOverride?: Partial<Target> | null;
+  setMedia?(host: HTMLMediaElementHost<Target, any>): void;
+  attach?(target: Target): void;
+  detach?(): void;
+  destroy?(): void;
+}
+
+export interface ComponentConstructor<T extends Component = Component> {
+  new (...args: any[]): T;
+  readonly configKey?: string;
+}
+
+export interface Components extends Map<ComponentConstructor, Component> {
+  get<T extends Component>(component: ComponentConstructor<T>): T | undefined;
+  set<T extends Component>(component: ComponentConstructor<T>, instance: T): this;
+}
+
+// biome-ignore lint/suspicious/noEmptyInterface: augmentation target for component config namespaces
+export interface MediaComponentConfig {}
+
+/** Host config bag: free-form host/engine settings plus per-component config namespaces. */
+export type MediaConfig = Partial<MediaComponentConfig> & Record<string, unknown>;
+
+export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
-  implements EventTargetLike<Events>
+  implements MediaFull
 {
-  #target: T | null = null;
-  #types = new Set<string>();
+  #target: Target | null = null;
+  #eventTypes = new Set<string>();
+  #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
+  #config: MediaConfig = {};
 
-  get target() {
+  protected get target() {
     return this.#target;
   }
 
-  attach(target: T): void {
+  attach(target: Target) {
     if (!target || this.#target === target) return;
     this.#target = target;
-    for (const type of this.#types) {
+
+    for (const type of this.#eventTypes) {
       target.addEventListener(type, this.#forwardEvent);
+    }
+
+    for (const component of getComponents(this).values()) {
+      component.attach?.(target);
     }
   }
 
-  detach(): void {
+  detach() {
     if (!this.#target) return;
-    for (const type of this.#types) {
+
+    for (const component of getComponents(this).values()) {
+      component.detach?.();
+    }
+
+    for (const type of this.#eventTypes) {
       this.#target.removeEventListener(type, this.#forwardEvent);
     }
+
     this.#target = null;
   }
 
-  querySelectorAll<K extends keyof HTMLElementTagNameMap>(selectors: K): NodeListOf<HTMLElementTagNameMap[K]> | never[];
-  querySelectorAll<E extends Element = Element>(selectors: string): NodeListOf<E> | never[];
-  querySelectorAll(selectors: string): NodeListOf<Element> | never[] {
-    return this.target?.querySelectorAll(selectors) ?? [];
+  destroy() {
+    this.detach();
+    this.#eventTypes.clear();
+
+    const components = getComponents(this);
+    for (const component of components.values()) {
+      component.destroy?.();
+      const { configKey } = component.constructor as ComponentConstructor;
+      if (configKey) delete this.#config[configKey];
+    }
+    components.clear();
   }
 
-  querySelector<K extends keyof HTMLElementTagNameMap>(selectors: K): HTMLElementTagNameMap[K] | null;
-  querySelector<E extends Element = Element>(selectors: string): E | null;
-  querySelector(selectors: string): Element | null {
-    return this.target?.querySelector(selectors) ?? null;
+  querySelectorAll<E extends Element = Element, S extends string = string>(selectors: S) {
+    return (this.target?.querySelectorAll(selectors) ?? []) as NodeListOf<QueriedElement<S, E>> | never[];
   }
 
-  addEventListener<K extends keyof Events & string>(
+  querySelector<E extends Element = Element, S extends string = string>(selectors: S) {
+    return (this.target?.querySelector(selectors) ?? null) as QueriedElement<S, E> | null;
+  }
+
+  addEventListener<K extends EventType<Events>>(
     type: K,
-    listener: (event: Events[K]) => void,
+    listener: EventListenerFor<Events, K>,
     options?: boolean | AddEventListenerOptions
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | AddEventListenerOptions
-  ): void;
-  addEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
-    options?: boolean | AddEventListenerOptions
-  ): void {
-    if (!this.#types.has(type)) {
-      this.#types.add(type);
+  ) {
+    if (!this.#eventTypes.has(type)) {
+      this.#eventTypes.add(type);
       this.target?.addEventListener(type, this.#forwardEvent);
     }
     super.addEventListener(type, listener as EventListener, options);
   }
 
-  removeEventListener<K extends keyof Events & string>(
+  removeEventListener<K extends EventType<Events>>(
     type: K,
-    listener: (event: Events[K]) => void,
+    listener: EventListenerFor<Events, K>,
     options?: boolean | EventListenerOptions
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | null,
-    options?: boolean | EventListenerOptions
-  ): void;
-  removeEventListener(
-    type: string,
-    listener: EventListenerOrEventListenerObject | ((event: never) => void) | null,
-    options?: boolean | EventListenerOptions
-  ): void {
+  ) {
     super.removeEventListener(type, listener as EventListener, options);
   }
 
@@ -93,143 +127,195 @@ export class HTMLMediaElementHost<T extends HTMLMediaElement, Events extends { [
     this.dispatchEvent(new (event.constructor as typeof Event)(event.type, event));
   };
 
-  // -- Metadata --
+  get streamType() {
+    return getProp(this, 'streamType') ?? this.#streamType;
+  }
+  set streamType(value) {
+    if (this.streamType === value) return;
+    this.#streamType = value;
+    setProp(this, 'streamType', value);
+    this.dispatchEvent(new Event('streamtypechange'));
+  }
+
+  get liveEdgeStart() {
+    return getProp(this, 'liveEdgeStart') ?? Number.NaN;
+  }
+
+  get targetLiveWindow() {
+    return getProp(this, 'targetLiveWindow') ?? Number.NaN;
+  }
+
+  get config(): MediaConfig {
+    return this.#config;
+  }
+  set config(value: MediaConfig) {
+    Object.assign(this.#config, value);
+  }
 
   get title() {
-    return this.target?.title ?? '';
+    return getProp(this, 'title') ?? '';
+  }
+  set title(value) {
+    setProp(this, 'title', value);
   }
 
-  set title(value: string) {
-    if (this.target) this.target.title = value;
+  get controls() {
+    return getProp(this, 'controls') ?? false;
   }
-
-  // -- Playback --
+  set controls(value) {
+    setProp(this, 'controls', value);
+  }
 
   get paused() {
-    return this.target?.paused ?? true;
+    return getProp(this, 'paused') ?? true;
   }
 
   get ended() {
-    return this.target?.ended ?? false;
+    return getProp(this, 'ended') ?? false;
   }
 
   get loop() {
-    return this.target?.loop ?? false;
+    return getProp(this, 'loop') ?? false;
   }
-
-  set loop(value: boolean) {
-    if (this.target) this.target.loop = value;
+  set loop(value) {
+    setProp(this, 'loop', value);
   }
 
   play() {
-    return this.target?.play() ?? Promise.reject();
+    const play = getProp(this, 'play');
+    return play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
   }
 
   pause() {
-    this.target?.pause();
+    getProp(this, 'pause')?.();
   }
 
-  // -- Time --
+  get autoplay() {
+    return getProp(this, 'autoplay') ?? false;
+  }
+  set autoplay(value) {
+    setProp(this, 'autoplay', value);
+  }
 
   get currentTime() {
-    return this.target?.currentTime ?? 0;
+    return getProp(this, 'currentTime') ?? 0;
   }
-
-  set currentTime(value: number) {
-    if (this.target) this.target.currentTime = value;
+  set currentTime(value) {
+    setProp(this, 'currentTime', value);
   }
 
   get duration() {
-    return this.target?.duration ?? NaN;
+    return getProp(this, 'duration') ?? NaN;
   }
 
   get seeking() {
-    return this.target?.seeking ?? false;
+    return getProp(this, 'seeking') ?? false;
   }
-
-  // -- Source --
 
   get src() {
-    return this.target?.src ?? '';
+    return getProp(this, 'src') ?? '';
   }
-
-  set src(value: string) {
-    if (this.target) this.target.src = value;
+  set src(value) {
+    setProp(this, 'src', value);
   }
 
   get currentSrc() {
-    return this.target?.currentSrc ?? '';
+    return getProp(this, 'currentSrc') ?? '';
   }
 
   get readyState() {
-    return this.target?.readyState ?? 0;
+    return getProp(this, 'readyState') ?? 0;
+  }
+
+  get preload() {
+    return getProp(this, 'preload') ?? 'metadata';
+  }
+  set preload(value) {
+    setProp(this, 'preload', value);
+  }
+
+  get crossOrigin() {
+    return getProp(this, 'crossOrigin') ?? null;
+  }
+  set crossOrigin(value) {
+    setProp(this, 'crossOrigin', value);
   }
 
   load() {
-    this.target?.load();
+    return getProp(this, 'load')?.();
   }
 
-  // -- Volume --
+  canPlayType(type: string) {
+    return getProp(this, 'canPlayType')?.(type) ?? '';
+  }
 
   get volume() {
-    return this.target?.volume ?? 1;
+    return getProp(this, 'volume') ?? 1;
   }
-
-  set volume(value: number) {
-    if (this.target) this.target.volume = value;
+  set volume(value) {
+    setProp(this, 'volume', value);
   }
 
   get muted() {
-    return this.target?.muted ?? false;
+    return getProp(this, 'muted') ?? false;
+  }
+  set muted(value) {
+    setProp(this, 'muted', value);
   }
 
-  set muted(value: boolean) {
-    if (this.target) this.target.muted = value;
+  get defaultMuted() {
+    return getProp(this, 'defaultMuted') ?? false;
   }
-
-  // -- Playback rate --
+  set defaultMuted(value) {
+    setProp(this, 'defaultMuted', value);
+  }
 
   get playbackRate() {
-    return this.target?.playbackRate ?? 1;
+    return getProp(this, 'playbackRate') ?? 1;
+  }
+  set playbackRate(value) {
+    setProp(this, 'playbackRate', value);
   }
 
-  set playbackRate(value: number) {
-    if (this.target) this.target.playbackRate = value;
+  get defaultPlaybackRate() {
+    return getProp(this, 'defaultPlaybackRate') ?? 1;
+  }
+  set defaultPlaybackRate(value) {
+    setProp(this, 'defaultPlaybackRate', value);
   }
 
-  // -- Buffer --
-
-  get buffered(): TimeRanges {
-    return this.target?.buffered ?? EMPTY_TIME_RANGES;
+  get buffered() {
+    return (getProp(this, 'buffered') ?? EMPTY_TIME_RANGES) as TimeRanges;
   }
 
-  get seekable(): TimeRanges {
-    return this.target?.seekable ?? EMPTY_TIME_RANGES;
+  get seekable() {
+    return (getProp(this, 'seekable') ?? EMPTY_TIME_RANGES) as TimeRanges;
   }
 
-  // -- Error --
-
-  get error(): ErrorLike | null {
-    return this.target?.error ?? null;
+  get played() {
+    return (getProp(this, 'played') ?? EMPTY_TIME_RANGES) as TimeRanges;
   }
 
-  // -- Text tracks --
+  get error() {
+    return getProp(this, 'error') ?? null;
+  }
 
   get textTracks() {
-    return (this.target?.textTracks as TextTrackList) ?? [];
+    return (getProp(this, 'textTracks') ?? EMPTY_TEXT_TRACKS) as TextTrackList;
   }
 
-  // -- Remote playback --
+  addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
+    return getProp(this, 'addTextTrack')?.(kind, label, language) as TextTrackLike;
+  }
 
-  get remote(): RemotePlayback | undefined {
-    return this.target?.remote;
+  get remote() {
+    return getProp(this, 'remote') ?? EMPTY_REMOTE;
   }
 
   get disableRemotePlayback() {
-    return this.target?.disableRemotePlayback ?? false;
+    return getProp(this, 'disableRemotePlayback') ?? false;
   }
-
-  set disableRemotePlayback(value: boolean) {
-    if (this.target) this.target.disableRemotePlayback = value;
+  set disableRemotePlayback(value) {
+    setProp(this, 'disableRemotePlayback', value);
   }
 }

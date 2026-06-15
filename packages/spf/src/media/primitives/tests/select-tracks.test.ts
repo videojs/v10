@@ -7,7 +7,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../types';
-import { pickAudioTrack, pickTextTrack, pickVideoTrack } from '../select-tracks';
+import { pickAudioTrack, pickMaxResolutionVideoTrack, pickTextTrack, pickVideoTrack } from '../select-tracks';
 
 // Helper to create a minimal presentation
 function createPresentation(config: {
@@ -105,22 +105,22 @@ describe('pickVideoTrack', () => {
     const presentation = createPresentation({ video: tracks });
 
     // With default 1 Mbps, should select 360p (500k fits with margin)
-    const selected = pickVideoTrack(presentation, { type: 'video' });
+    const selected = pickVideoTrack(presentation);
     expect(selected).toBe('360p');
 
     // With 3 Mbps, should select 720p (2M fits, 4M doesn't with 0.85 margin)
-    const selected2 = pickVideoTrack(presentation, { initialBandwidth: 3_000_000, type: 'video' });
+    const selected2 = pickVideoTrack(presentation, { initialBandwidth: 3_000_000 });
     expect(selected2).toBe('720p');
 
     // With 5 Mbps, should select 1080p (4M fits with margin)
-    const selected3 = pickVideoTrack(presentation, { initialBandwidth: 5_000_000, type: 'video' });
+    const selected3 = pickVideoTrack(presentation, { initialBandwidth: 5_000_000 });
     expect(selected3).toBe('1080p');
   });
 
   it('returns undefined when no video tracks', () => {
     const presentation = createPresentation({ audio: [] });
 
-    const selected = pickVideoTrack(presentation, { type: 'video' });
+    const selected = pickVideoTrack(presentation);
     expect(selected).toBeUndefined();
   });
 
@@ -147,7 +147,7 @@ describe('pickVideoTrack', () => {
     const presentation = createPresentation({ video: tracks });
 
     // With 100 kbps (very low), should fall back to lowest (720p)
-    const selected = pickVideoTrack(presentation, { initialBandwidth: 100_000, type: 'video' });
+    const selected = pickVideoTrack(presentation, { initialBandwidth: 100_000 });
     expect(selected).toBe('720p');
   });
 
@@ -170,9 +170,105 @@ describe('pickVideoTrack', () => {
     const selected = pickVideoTrack(presentation, {
       initialBandwidth: 2_050_000,
       safetyMargin: 0.95,
-      type: 'video',
     });
     expect(selected).toBe('720p'); // Falls back since it's the only/lowest option
+  });
+});
+
+describe('pickMaxResolutionVideoTrack', () => {
+  it('selects the track with the highest width × height area', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: '360p',
+        url: 'http://example.com/360p.m3u8',
+        bandwidth: 500_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 640,
+        height: 360,
+      },
+      {
+        type: 'video',
+        id: '1080p',
+        url: 'http://example.com/1080p.m3u8',
+        bandwidth: 4_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1920,
+        height: 1080,
+      },
+      {
+        type: 'video',
+        id: '720p',
+        url: 'http://example.com/720p.m3u8',
+        bandwidth: 2_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1280,
+        height: 720,
+      },
+    ];
+
+    const presentation = createPresentation({ video: tracks });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBe('1080p');
+  });
+
+  it('falls back to bandwidth when resolution metadata is missing', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: 'low',
+        url: 'http://example.com/low.m3u8',
+        bandwidth: 500_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+      },
+      {
+        type: 'video',
+        id: 'high',
+        url: 'http://example.com/high.m3u8',
+        bandwidth: 4_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+      },
+    ];
+
+    const presentation = createPresentation({ video: tracks });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBe('high');
+  });
+
+  it('breaks ties on equal resolution by bandwidth', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: '1080p-low',
+        url: 'http://example.com/1080p-low.m3u8',
+        bandwidth: 3_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1920,
+        height: 1080,
+      },
+      {
+        type: 'video',
+        id: '1080p-high',
+        url: 'http://example.com/1080p-high.m3u8',
+        bandwidth: 6_000_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        width: 1920,
+        height: 1080,
+      },
+    ];
+
+    const presentation = createPresentation({ video: tracks });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBe('1080p-high');
+  });
+
+  it('returns undefined when no video tracks exist', () => {
+    const presentation = createPresentation({ audio: [] });
+    expect(pickMaxResolutionVideoTrack(presentation)).toBeUndefined();
   });
 });
 
@@ -209,7 +305,7 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio' });
+    const selected = pickAudioTrack(presentation);
     expect(selected).toBe('audio-en');
   });
 
@@ -245,7 +341,7 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio', preferredAudioLanguage: 'es' });
+    const selected = pickAudioTrack(presentation, { preferredAudioLanguage: 'es' });
     expect(selected).toBe('audio-es');
   });
 
@@ -280,7 +376,7 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio' });
+    const selected = pickAudioTrack(presentation);
     expect(selected).toBe('audio-es');
   });
 
@@ -317,14 +413,14 @@ describe('pickAudioTrack', () => {
 
     const presentation = createPresentation({ audio: tracks });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio', preferredAudioLanguage: 'en' });
+    const selected = pickAudioTrack(presentation, { preferredAudioLanguage: 'en' });
     expect(selected).toBe('audio-en');
   });
 
   it('returns undefined when no audio tracks', () => {
     const presentation = createPresentation({ video: [] });
 
-    const selected = pickAudioTrack(presentation, { type: 'audio' });
+    const selected = pickAudioTrack(presentation);
     expect(selected).toBeUndefined();
   });
 });

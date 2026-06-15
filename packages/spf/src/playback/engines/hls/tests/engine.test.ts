@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
+import type { PartiallyResolvedAudioTrack, PartiallyResolvedVideoTrack, Presentation } from '../../../../media/types';
 import { createSimpleHlsEngine } from '../engine';
 
 // Mock appendSegment to succeed without real MP4 data
@@ -59,6 +60,7 @@ describe('createSimpleHlsEngine', () => {
     // Everything else starts as `undefined` and behaviors write their
     // own slots in response to inputs.
     expect(snapshot(engine.state)).toEqual({
+      cdnPriority: undefined,
       userVideoTrackSelection: undefined,
       bandwidthState: {
         fastEstimate: 0,
@@ -78,6 +80,132 @@ describe('createSimpleHlsEngine', () => {
 
     const contextSnapshot = snapshot(engine.context);
     expect(Object.values(contextSnapshot).every((v) => v === undefined)).toBe(true);
+
+    engine.destroy();
+  });
+
+  it('publishes the CDN list and keeps the video selection on the primary (redundant-stream source)', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine();
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+
+    // Same rendition duplicated across cdn-a (manifest head) and cdn-b.
+    engine.state.presentation.set({
+      id: 'pres-1',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('720p-a', 'cdn-a.example.com'), videoTrack('720p-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    // resolveCdns publishes the manifest-ordered list; preferActiveCdn narrows
+    // the video pick to the primary (first-with-survivors) CDN.
+    expect(engine.state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+    expect(engine.state.selectedVideoTrackId.get()).toBe('720p-a');
+
+    // Reorder the CDN list (steering/override seam): the scope re-narrows and the
+    // selection follows to the other CDN's matching rendition.
+    engine.state.cdnPriority.set(['https://cdn-b.example.com', 'https://cdn-a.example.com']);
+    await flush();
+    expect(engine.state.selectedVideoTrackId.get()).toBe('720p-b');
+
+    engine.destroy();
+  });
+
+  it('keeps audio on the same CDN as video even when the audio rendition order differs', async () => {
+    // Order-effect guard: `resolveCdnPriority` derives the list from track order,
+    // so a same-ordered source can't distinguish "scope applied" from "scope is
+    // a no-op". This source is doubly adversarial to the desired result: the
+    // audio selection set comes BEFORE video in the manifest, and within it the
+    // audio renditions list cdn-b first. By raw parse order that would make
+    // cdn-b primary and pull everything onto cdn-b. `getOrderedCdnIds` instead
+    // visits video selection sets before audio, so `cdnPriority` is video-derived
+    // (cdn-a primary) *by guarantee*, and the scope pulls audio onto cdn-a —
+    // `aud-a`, NOT the parse-order `aud-b`. This pins the type-priority ordering,
+    // not a manifest/parse-order coincidence.
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine();
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+    const audioTrack = (id: string, host: string): PartiallyResolvedAudioTrack => ({
+      type: 'audio',
+      id,
+      codecs: ['mp4a.40.2'],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 128_000,
+      mimeType: 'audio/mp4',
+      groupId: 'audio',
+      name: id,
+      sampleRate: 48_000,
+      channels: 2,
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-asym',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      // Audio selection set listed FIRST, cdn-b first within it — the reverse of
+      // the video order on both axes. Type-priority ordering must still put video
+      // (cdn-a) at the head of cdnPriority.
+      selectionSets: [
+        {
+          id: 'a',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'as',
+              type: 'audio',
+              tracks: [audioTrack('aud-b', 'cdn-b.example.com'), audioTrack('aud-a', 'cdn-a.example.com')],
+            },
+          ],
+        },
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    expect(engine.state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-a');
+    // The discriminator: audio is listed first and lists aud-b first, but the
+    // video-derived cdnPriority puts cdn-a first, so the scope picks aud-a.
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
 
     engine.destroy();
   });

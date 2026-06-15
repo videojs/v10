@@ -15,7 +15,7 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
+import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -35,11 +35,12 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { switchVideoQuality } from '../../behaviors/quality-switching';
+import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
+import { selectTextTrack } from '../../behaviors/select-tracks';
 import { syncPreload } from '../../behaviors/sync-preload';
+import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -64,6 +65,23 @@ export interface SimpleHlsEngineState {
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
   userVideoTrackSelection?: Partial<VideoTrack>;
+  /**
+   * Consumer-driven constraint narrowing the audio candidate set. Sibling
+   * of `userVideoTrackSelection`. Partial-track shape — `{ language: 'es' }`,
+   * `{ id: 'audio-en' }`, etc. `selectAudioTrack` reads this and re-picks
+   * when it changes. Multi-language-audio Tier 2 programmatic-write path.
+   */
+  userAudioTrackSelection?: Partial<AudioTrack>;
+  /**
+   * The CDNs the source is served from (track-URL origins), in manifest
+   * priority order — most-preferred first (mirrors HLS content steering's
+   * `PATHWAY-PRIORITY`). Owned by `resolveCdnPriority`, read by
+   * `track-switching`'s `preferActiveCdn` scope, which narrows to the
+   * highest-priority CDN with surviving tracks so video / audio / text stay on
+   * one host. Only meaningful for redundant-stream sources; a single-CDN source
+   * has one entry.
+   */
+  cdnPriority?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -187,9 +205,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
 /**
  * Generic `shareSignals` instantiated against the HLS engine's full state
  * and context — captures composition signal refs into the consumer's
- * `onSignalsReady` callback at setup time.
+ * `onSignalsReady` callback at setup time, and materializes the consumer-input
+ * slots (`user*TrackSelection`) that no behavior produces: the track-switching
+ * behaviors only *read* them, so shareSignals owns bringing them into existence.
  */
-const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
+const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
+  'userVideoTrackSelection',
+  'userAudioTrackSelection',
+]);
 
 /**
  * Create an HLS playback engine.
@@ -236,10 +259,26 @@ export function createSimpleHlsEngine(
       trackLoadTriggers,
       resolvePresentation,
 
+      // Session-level CDN priority for redundant-stream sources. Owns
+      // `cdnPriority`; `track-switching`'s preferActiveCdn scope reads it so
+      // every type stays on one CDN. No-op for single-CDN sources.
+      //
+      // Placed before switch* so `cdnPriority` is set before the first pick —
+      // but this ordering is only *mildly* load-bearing, not required for
+      // correctness. Selection is reactive: a late `cdnPriority` re-fires the
+      // pick and converges on the same result (see the late-arrival test in
+      // track-switching.test.ts). Order affects only a transient, and only for
+      // an *asymmetric* manifest (a type listing a non-primary CDN first):
+      // composing this after switch* would let that type fire one wasted
+      // media-playlist fetch to the wrong CDN before correcting. Symmetric
+      // redundant streams (the norm) never hit it — the first-listed CDN is
+      // already the primary we'd pick anyway.
+      resolveCdnPriority,
+
       // Track selection (reads config for initial preferences).
-      // Video selection lives in switchVideoQuality, which owns the
-      // default-pick + ABR-driven adjustment for selectedVideoTrackId.
-      selectAudioTrack,
+      // Video selection lives in switchVideoTrack (composed below);
+      // audio selection lives in switchAudioTrack (composed below) —
+      // both are slot owners with filter-reactivity, mirroring shapes.
       selectTextTrack,
 
       // Resolve selected tracks (fetch media playlists)
@@ -262,7 +301,11 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
-      switchVideoQuality,
+      switchVideoTrack,
+      switchAudioTrack,
+      // Mid-stream audio-buffer flush on language switch is handled in
+      // `segment-loader`'s `planTasks` (predicate: language differs from
+      // the previously-buffered track) — not in switchAudioTrack itself.
 
       // Segment loading
       loadVideoSegments,
@@ -283,7 +326,7 @@ export function createSimpleHlsEngine(
     ],
     {
       config: finalConfig,
-      // Seed bandwidthState so switchVideoQuality fires on initial subscribe
+      // Seed bandwidthState so switchVideoTrack fires on initial subscribe
       // with the `initialBandwidth` fallback rather than waiting for the
       // first chunk. The empty sample buffer means `getBandwidthEstimate`
       // returns the configured initial bandwidth until real samples land.

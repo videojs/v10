@@ -3,7 +3,7 @@ import css from 'shiki/langs/css.mjs';
 import html from 'shiki/langs/html.mjs';
 import javascript from 'shiki/langs/javascript.mjs';
 import tsx from 'shiki/langs/tsx.mjs';
-import createHighlighter from './createHighlighter';
+import createHighlighter, { getOrCreateCachedHighlighter } from './createHighlighter';
 
 // Eager module-level Promise — deliberately NOT a top-level `await`.
 //
@@ -15,7 +15,9 @@ import createHighlighter from './createHighlighter';
 // avoiding the bug. The Promise starts resolving at import time, giving
 // it a head start before `client:idle` hydration kicks in.
 // ClientCode.tsx consumes this via React 19's `use()` hook + Suspense.
-const highlighterPromise = createHighlighter({ langs: [bash, html, tsx, css, javascript] });
+const highlighterPromise = getOrCreateCachedHighlighter('client', () =>
+  createHighlighter({ langs: [bash, html, tsx, css, javascript] })
+);
 
 export function getClientHighlighter() {
   return highlighterPromise;
