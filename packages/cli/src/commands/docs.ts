@@ -106,7 +106,7 @@ const DOCS_HELP = `Usage: @videojs/cli docs <slug> [--framework <html|react>]
 
 Installation flags (for docs how-to/installation):
   --preset <video|audio|background-video>
-  --skin <default|minimal>
+  --skin <default|minimal|none>
   --source-url <url>
   --media <html5-video|html5-audio|hls|background-video>
   --install-method <cdn|npm|pnpm|yarn|bun>`;
