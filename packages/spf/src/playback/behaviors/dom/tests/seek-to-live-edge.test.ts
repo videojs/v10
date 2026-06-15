@@ -1,9 +1,16 @@
 import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
-import type { MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../../media/types';
+import {
+  type MaybeResolvedPresentation,
+  MEDIA_PLAYLIST_METADATA_KEY,
+  type Presentation,
+  type VideoTrack,
+} from '../../../../media/types';
 import { seekToLiveEdge } from '../seek-to-live-edge';
 
 function makePresentation(): Presentation {
+  // 5-segment, 2s window: [100, 110]. HOLD-BACK = 3 × targetDuration(2) = 6,
+  // so the live-edge start is 110 − 6 = 104.
   const video: VideoTrack = {
     type: 'video',
     id: 'v-1',
@@ -15,11 +22,13 @@ function makePresentation(): Presentation {
     duration: Number.POSITIVE_INFINITY,
     startTime: 100,
     startDate: 1000,
-    segments: [
-      { id: 'segment-50', url: '50.m4s', duration: 2, startTime: 100 },
-      { id: 'segment-51', url: '51.m4s', duration: 2, startTime: 102 },
-      { id: 'segment-52', url: '52.m4s', duration: 2, startTime: 104 },
-    ],
+    segments: [100, 102, 104, 106, 108].map((startTime, i) => ({
+      id: `segment-${50 + i}`,
+      url: `${50 + i}.m4s`,
+      duration: 2,
+      startTime,
+    })),
+    metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, targetDuration: 2, endList: false } },
   };
   return {
     id: 'pres-1',
@@ -58,16 +67,17 @@ function run(opts: {
 }
 
 describe('seekToLiveEdge', () => {
-  it('declares the live seekable range and seeks into the window', () => {
+  it('declares the full seekable window and seeks near the live edge (HOLD-BACK behind)', () => {
     const ms = fakeMediaSource();
     const el = { currentTime: 0 } as HTMLMediaElement;
 
     const cleanup = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el, mediaSource: ms });
 
-    // window = [first.startTime, last.startTime + last.duration] = [100, 106].
-    expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 106);
+    // Full DVR window stays seekable: [first.startTime, last.startTime + last.duration] = [100, 110].
+    expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 110);
     expect(ms.duration).toBe(Number.POSITIVE_INFINITY);
-    expect(el.currentTime).toBe(100);
+    // Start HOLD-BACK (3 × 2s) behind the edge: 110 − 6 = 104, not the window start.
+    expect(el.currentTime).toBe(104);
 
     cleanup();
   });

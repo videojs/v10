@@ -11,8 +11,10 @@
  * 1. `MediaSource.setLiveSeekableRange(windowStart, windowEnd)` — derived from
  *    the selected video track's anchored segment timeline — so the window is
  *    seekable (kept current as the window slides across reloads).
- * 2. A one-time seek of `currentTime` to the window start, so the loader
- *    dispatches an in-window range and playback can begin.
+ * 2. A one-time seek of `currentTime` to HOLD-BACK behind the live edge
+ *    (default 3 × TARGETDURATION, clamped to the window start), so the loader
+ *    dispatches an in-window range and playback can begin near the edge rather
+ *    than at the back of the DVR window.
  *
  * Reads the *selected video track* timeline (anchored to ≈ native PTS by
  * `anchorLiveTracks`); video and audio share the origin, so the video window
@@ -22,8 +24,19 @@
 import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
-import { isResolvedPresentation, isResolvedTrack, type MaybeResolvedPresentation } from '../../../media/types';
+import {
+  getMediaPlaylistMetadata,
+  isResolvedPresentation,
+  isResolvedTrack,
+  type MaybeResolvedPresentation,
+} from '../../../media/types';
 import { findTrack } from '../../../media/utils/tracks';
+
+/**
+ * Multiple of TARGETDURATION to start behind the live edge — the HLS spec
+ * default for HOLD-BACK when the playlist doesn't specify one (RFC 8216bis).
+ */
+const HOLD_BACK_TARGET_MULTIPLIER = 3;
 
 export interface SeekToLiveEdgeState {
   presentation?: MaybeResolvedPresentation;
@@ -69,16 +82,23 @@ function seekToLiveEdgeSetup({
     try {
       // Live duration is unbounded; required for a live seekable range.
       if (Number.isNaN(mediaSource.duration)) mediaSource.duration = Number.POSITIVE_INFINITY;
-      // Re-declared as the window slides so seekable tracks the live window.
+      // Re-declared as the window slides so seekable tracks the live window
+      // (the full DVR range remains seekable; we just start near the edge).
       mediaSource.setLiveSeekableRange(windowStart, windowEnd);
     } catch {
       // readyState raced closed, or duration set rejected — retried on the next window change.
       return;
     }
 
-    // Seek into the window once so the loader dispatches an in-window range.
-    if (!seeked && mediaElement.currentTime < windowStart) {
-      mediaElement.currentTime = windowStart;
+    // Start near the live edge: HOLD-BACK (default 3 × TARGETDURATION) behind it,
+    // clamped to the window start. Closer to live than the window start, while
+    // leaving enough buffered ahead to begin smoothly.
+    const targetDuration = getMediaPlaylistMetadata(track)?.targetDuration || last.duration;
+    const liveEdgeStart = Math.max(windowStart, windowEnd - HOLD_BACK_TARGET_MULTIPLIER * targetDuration);
+
+    // Seek to the live edge once, so the loader dispatches an in-window range.
+    if (!seeked && mediaElement.currentTime < liveEdgeStart) {
+      mediaElement.currentTime = liveEdgeStart;
       seeked = true;
     }
   });
