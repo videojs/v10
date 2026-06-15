@@ -182,75 +182,6 @@ Add it to your components folder in a new file.
 
 </div>
 
-## Self-host the player
-
-The CDN tab loads the player from a public CDN. For offline, air-gapped, or locked-down deployments, you can serve everything from your own origin instead. Pick one of the options below.
-
-<FrameworkCase frameworks={["html"]}>
-
-### Bundle a single file (recommended)
-
-Install the package, put the JavaScript imports from the **Use your player** step above into an entry file, then let any bundler produce one self-contained module you can host anywhere. For the default video player that's:
-
-```js title="player.js"
-import '@videojs/html/video/player';
-import '@videojs/html/video/skin';
-```
-
-```bash
-npm install @videojs/html
-npx esbuild player.js --bundle --format=esm --minify --sourcemap --outfile=public/player.js
-```
-
-Load the output with `type="module"`, the same as the CDN path:
-
-```html
-<script type="module" src="/player.js"></script>
-```
-
-You get one file (plus a sourcemap), no runtime requests to a CDN, and only the features you import. Any bundler works (Vite, Rollup, webpack) as long as the output stays ESM.
-
-### Mirror the prebuilt CDN files
-
-To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
-
-<Aside type="caution" title="Copy the whole cdn/ directory">
-The CDN entry files like `video.js` and `media/hls-video.js` are not standalone. They import shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them. Copying a single file breaks at runtime, so mirror the entire `cdn/` directory and keep its layout intact.
-</Aside>
-
-```bash
-npm install @videojs/html
-mkdir -p public
-cp -r node_modules/@videojs/html/cdn public/videojs
-```
-
-Then point the script tag at your copy instead of the CDN:
-
-```html
-<script type="module" src="/videojs/video.js"></script>
-```
-
-The file name matches your selection: the CDN tab above generated it (for example `video.js`, `audio.js`, or `background.js`). Every option is present in the `cdn/` folder you copied.
-
-Hashed chunk names change between releases, so re-copy the directory whenever you upgrade `@videojs/html`.
-
-### HLS and other media types
-
-HLS and other non-default media need their own module on top of the player, the same way the **Use your player** step adds it to the generated imports. Match it in your self-hosted build:
-
-- **Bundle:** add the media import to your entry file (`import '@videojs/html/media/hls-video';`) and use the matching `<hls-video>` element with your `.m3u8` source.
-- **Mirror:** serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hls-video.js"></script>`).
-
-Without the media module the player UI renders but the video never loads, with no console error.
-
-</FrameworkCase>
-
-<FrameworkCase frameworks={["react"]}>
-
-Your bundler includes `@videojs/react` in your app like any other dependency, so your production build already serves the player from your own origin with no CDN or runtime fetches. Offline and self-hosted deployments need no extra steps.
-
-</FrameworkCase>
-
 ## CSP
 
 If your application uses a Content Security Policy, you may need to allow additional sources for player features to work correctly.
@@ -279,6 +210,10 @@ Content-Security-Policy:
 ## See also
 
 <DocsLinkCard slug="concepts/skins" anchor="styling" description="Some skins expose CSS custom properties">Skins</DocsLinkCard>
+
+<FrameworkCase frameworks={["html"]}>
+<DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+</FrameworkCase>
 
 ----
 
