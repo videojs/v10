@@ -1,3 +1,5 @@
+export type { LiveHlsMediaAPI, LiveHlsMediaProps } from './adapter';
+export { LiveHlsMediaElement, LiveHlsMediaMixin, liveHlsMediaDefaultProps } from './adapter';
 export type {
   LiveHlsEngineConfig,
   LiveHlsEngineContext,
