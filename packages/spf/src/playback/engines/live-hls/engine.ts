@@ -31,7 +31,12 @@ import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
-import type { SimpleHlsEngineConfig, SimpleHlsEngineContext, SimpleHlsEngineState } from '../hls/engine';
+import type {
+  SimpleHlsEngineConfig,
+  SimpleHlsEngineContext,
+  SimpleHlsEngineSignals,
+  SimpleHlsEngineState,
+} from '../hls/engine';
 
 /** Config for the live HLS engine: the VoD config plus live-only options. */
 export interface LiveHlsEngineConfig extends SimpleHlsEngineConfig {
@@ -44,6 +49,7 @@ export interface LiveHlsEngineConfig extends SimpleHlsEngineConfig {
 
 export type LiveHlsEngineState = SimpleHlsEngineState;
 export type LiveHlsEngineContext = SimpleHlsEngineContext;
+export type LiveHlsEngineSignals = SimpleHlsEngineSignals;
 
 const shareSignals = makeShareSignals<LiveHlsEngineState, LiveHlsEngineContext>([
   'userVideoTrackSelection',

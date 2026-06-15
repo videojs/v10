@@ -1,2 +1,7 @@
-export type { LiveHlsEngineConfig, LiveHlsEngineContext, LiveHlsEngineState } from './engine';
+export type {
+  LiveHlsEngineConfig,
+  LiveHlsEngineContext,
+  LiveHlsEngineSignals,
+  LiveHlsEngineState,
+} from './engine';
 export { createLiveHlsEngine } from './engine';

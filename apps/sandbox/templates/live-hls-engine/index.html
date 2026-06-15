@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Live HLS Engine (SPF)</title>
+    <style>
+      * { box-sizing: border-box; padding: 0; margin: 0; }
+      body { padding: 16px; font-family: monospace; font-size: 13px; color: #e0e0e0; background: #1a1a1a; }
+      h1 { margin-bottom: 10px; font-size: 15px; color: #fff; }
+      video { display: block; width: 100%; max-width: 900px; aspect-ratio: 16/9; background: #000; }
+      .state { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; max-width: 900px; padding: 6px 8px; margin: 8px 0; background: #222; border-radius: 3px; }
+      .state-key { color: #777; }
+      .val { color: #6cf; }
+      .log { max-width: 900px; height: 360px; padding: 6px 8px; overflow-y: auto; font-size: 11px; line-height: 1.6; background: #111; border-radius: 3px; }
+      .err { color: #f66; }
+    </style>
+  </head>
+  <body>
+    <h1>Live HLS Engine — <code>createLiveHlsEngine</code></h1>
+    <video id="video" controls muted playsinline></video>
+    <div class="state" id="state"></div>
+    <h2>Log</h2>
+    <div class="log" id="log"></div>
+    <script type="module" src="./main.ts"></script>
+  </body>
+</html>
