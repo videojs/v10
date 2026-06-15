@@ -5,7 +5,10 @@
  */
 import { createLiveHlsEngine, type LiveHlsEngineSignals } from '@videojs/spf/live-hls';
 
-const SRC = 'https://stream.mux.com/1DRguGQyA2K2TIelbV7rU7uePlZXHyYWR1LEMC8iTC4.m3u8';
+// Override per run with `?src=<m3u8 url>` (live test streams are ephemeral).
+const SRC =
+  new URLSearchParams(location.search).get('src') ??
+  'https://stream.mux.com/1DRguGQyA2K2TIelbV7rU7uePlZXHyYWR1LEMC8iTC4.m3u8';
 
 const video = document.getElementById('video') as HTMLVideoElement;
 const logEl = document.getElementById('log')!;
