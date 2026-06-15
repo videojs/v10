@@ -120,3 +120,39 @@ describe('reloadAudioTrack', () => {
     reactor.destroy();
   });
 });
+
+describe('reload resilience', () => {
+  it('survives a transient fetch failure and retries (does not kill the loop)', async () => {
+    vi.useFakeTimers();
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    try {
+      const state = {
+        presentation: signal<MaybeResolvedPresentation | undefined>(makePresentation()),
+        selectedVideoTrackId: signal<string | undefined>('v-1'),
+      };
+      let calls = 0;
+      const fetchResolvableText = vi.fn(() => {
+        calls += 1;
+        return calls === 1 ? Promise.reject(new TypeError('Failed to fetch')) : Promise.resolve(MEDIA_PLAYLIST);
+      });
+
+      const reactor = reloadVideoTrack.setup({ state, config: { fetchResolvableText } });
+
+      // First attempt rejects: logged, but the loop is still alive (track not yet resolved).
+      await vi.advanceTimersByTimeAsync(0);
+      expect(calls).toBe(1);
+      expect(errorSpy).toHaveBeenCalled();
+      expect(isResolvedTrack(findTrack(state.presentation.get()!, 'video', 'v-1')!)).toBe(false);
+
+      // Retry cadence elapses → second attempt succeeds (would never happen if the
+      // loop had died on the first failure).
+      await vi.advanceTimersByTimeAsync(6000);
+      expect(calls).toBe(2);
+      expect(isResolvedTrack(findTrack(state.presentation.get()!, 'video', 'v-1')!)).toBe(true);
+
+      reactor.destroy();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+});

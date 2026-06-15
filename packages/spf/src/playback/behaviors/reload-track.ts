@@ -115,8 +115,8 @@ function setupTrackReload<K extends SelectedTrackKey>({
           const trackId = state[selectedKey].get()!;
 
           void (async () => {
-            try {
-              while (!ac.signal.aborted) {
+            while (!ac.signal.aborted) {
+              try {
                 const presentation = peek(state.presentation);
                 if (!isResolvedPresentation(presentation)) break;
                 // The track currently in the presentation is the prior snapshot
@@ -143,11 +143,19 @@ function setupTrackReload<K extends SelectedTrackKey>({
                 const target = meta?.targetDuration || FALLBACK_TARGET_DURATION;
                 // Spec: reload ~target duration; half that when the playlist was unchanged.
                 await sleep((changed ? target : target / 2) * 1000, ac.signal);
+              } catch (error) {
+                if (error instanceof Error && error.name === 'AbortError') return;
+                // A transient fetch/parse failure must not kill the loop — a live
+                // playlist has to keep refreshing. Log and retry on the next
+                // cadence (the `while` re-checks `aborted`).
+                // TODO(error-management): route to a state-error slot once one exists.
+                console.error(`[reload:${type}] media-playlist reload failed; retrying:`, error);
+                try {
+                  await sleep(FALLBACK_TARGET_DURATION * 1000, ac.signal);
+                } catch {
+                  return; // aborted during the retry wait
+                }
               }
-            } catch (error) {
-              if (error instanceof Error && error.name === 'AbortError') return;
-              // TODO(error-management): route to a state-error slot once one exists.
-              console.error(`[reload:${type}] media-playlist reload failed:`, error);
             }
           })();
 
