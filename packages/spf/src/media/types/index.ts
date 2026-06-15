@@ -138,6 +138,20 @@ export type Track = Ham &
     bandwidth: number;
     initialization?: AddressableObject;
     segments: Segment[];
+    /**
+     * Wall-clock time (epoch seconds) corresponding to the track's timeline
+     * origin (`startTime`) — i.e. `programDateTime − startTime`, the single
+     * rolling anchor that maps this track's media timeline to wall clock.
+     * Optional: absent when no segment carries `programDateTime`.
+     *
+     * Provisional from the manifest, where the origin is the first fetched
+     * segment; later refined from the buffer (`buffered`/`tfdt`) to pin the
+     * origin to encoded-media zero. Comparable across tracks: the difference in
+     * `startDate` between demuxed audio and video is their relative skew — the
+     * offset a cross-track aligner removes — and equal `programDateTime` across
+     * tracks marks the same presentation instant.
+     */
+    startDate?: number;
   };
 
 /**

@@ -282,6 +282,16 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     ? placeOnPreviousTimeline(previous, segments, mediaSequence, targetDuration)
     : { segments, startTime: 0 };
 
+  // Wall-clock anchor: `programDateTime − startTime` for the first PDT-bearing
+  // segment (constant along a linear timeline). Maps this track's origin to
+  // wall clock; recomputed each parse, so it stays stable as the window slides
+  // and is comparable across tracks for A/V alignment.
+  const anchorSegment = placed.segments.find((segment) => !isUndefined(segment.programDateTime));
+  const startDate =
+    anchorSegment && !isUndefined(anchorSegment.programDateTime)
+      ? anchorSegment.programDateTime - anchorSegment.startTime
+      : undefined;
+
   // Build initialization (VTT may not have init segment)
   const initialization =
     previous.type === 'text' && !initSegmentUrl
@@ -305,6 +315,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     ...previous,
     mimeType,
     startTime: placed.startTime,
+    startDate,
     duration: trackDuration,
     segments: placed.segments,
     initialization,

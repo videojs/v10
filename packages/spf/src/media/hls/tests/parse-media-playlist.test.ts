@@ -642,6 +642,52 @@ s1.ts`;
       const r = parseMediaPlaylist(text, videoShell);
       expect(r.segments.every((s) => s.programDateTime === undefined)).toBe(true);
     });
+
+    it('exposes Track.startDate as the wall-clock at the origin (programDateTime − startTime)', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:10.000Z
+#EXTINF:4,
+s0.ts
+#EXTINF:4,
+s1.ts`;
+      // First parse anchors startTime at 0, so the origin maps to s0's wall clock.
+      expect(parseMediaPlaylist(text, videoShell).startDate).toBe(epoch('2026-01-01T00:00:10.000Z'));
+    });
+
+    it('keeps Track.startDate stable as the window slides', () => {
+      const first = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:00.000Z
+#EXTINF:4,
+s0.ts
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:04.000Z
+#EXTINF:4,
+s1.ts`;
+      const prev = parseMediaPlaylist(first, videoShell);
+      expect(prev.startDate).toBe(epoch('2026-01-01T00:00:00.000Z'));
+
+      // Window slid by one: s0 rolled off, s1 is now first (startTime carried to 4).
+      const reload = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:1
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:04.000Z
+#EXTINF:4,
+s1.ts
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:08.000Z
+#EXTINF:4,
+s2.ts`;
+      const next = parseMediaPlaylist(reload, prev);
+      expect(next.segments[0]?.startTime).toBe(4); // window advanced
+      expect(next.startDate).toBe(epoch('2026-01-01T00:00:00.000Z')); // origin unchanged
+    });
+
+    it('leaves Track.startDate undefined when the source carries no PDT', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:4,
+s0.ts`;
+      expect(parseMediaPlaylist(text, videoShell).startDate).toBeUndefined();
+    });
   });
 
   describe('real Mux live snapshots (fixtures)', () => {
@@ -716,6 +762,18 @@ s1.ts`;
       // alignment would mask.
       expect(v82?.startTime).toBe(2);
       expect(a82?.startTime).toBe(0);
+    });
+
+    it('exposes per-track startDate whose audio/video delta is the relative skew', () => {
+      const video = parseMediaPlaylist(liveCmafVideo, videoShell);
+      const audio = parseMediaPlaylist(liveCmafAudio, audioShell);
+
+      expect(video.startDate).toBeDefined();
+      expect(audio.startDate).toBeDefined();
+      // Each track's origin (startTime 0) sits at a different real instant —
+      // audio's window starts one 2s segment later — so the startDate delta is
+      // the relative A/V skew a cross-track aligner removes.
+      expect((audio.startDate ?? 0) - (video.startDate ?? 0)).toBeCloseTo(2, 3);
     });
   });
 });
