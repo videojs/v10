@@ -1,68 +1,104 @@
 /**
- * Seek the playhead into the live window once segments are buffered.
+ * Enter the live window: declare the seekable range and seek the playhead in.
  *
- * Live segments append at their native PTS, so the buffered range sits at a
- * large timestamp while `currentTime` starts at 0 — there's no media at 0, so
- * `readyState` never advances and playback can't start. This watches for the
- * buffered range to appear and, while the playhead is still before it, seeks
- * `currentTime` into the window (its start) so playback can begin.
+ * Live segments append at their native PTS, so the buffered window sits at a
+ * large timestamp while `currentTime` starts at 0. Two problems follow, both
+ * solved here from the *model* (not from `buffered`, which is empty at
+ * cold-start — the segment loader only fetches segments overlapping
+ * `[currentTime, currentTime + bufferDuration]`, so until the playhead is in
+ * the window nothing loads):
  *
- * Fires once per source. `readyState`-gated events (`canplay`/`loadeddata`)
- * can't be relied on (they need data *at* `currentTime`), so it listens to
- * events that fire regardless — `loadedmetadata`, `durationchange`, `progress`
- * — plus an initial check; `emptied` resets it for a reused element.
+ * 1. `MediaSource.setLiveSeekableRange(windowStart, windowEnd)` — derived from
+ *    the selected video track's anchored segment timeline — so the window is
+ *    seekable (kept current as the window slides across reloads).
+ * 2. A one-time seek of `currentTime` to the window start, so the loader
+ *    dispatches an in-window range and playback can begin.
  *
- * Starts at the window start (simplest, guaranteed playable). Live-edge
- * latency tuning (start near `buffered.end`) is a follow-up.
+ * Reads the *selected video track* timeline (anchored to ≈ native PTS by
+ * `anchorLiveTracks`); video and audio share the origin, so the video window
+ * positions both. Seeks once per source; re-declares the seekable range on
+ * each window change.
  */
-import { listen } from '@videojs/utils/dom';
-import { defineBehavior } from '../../../core/composition/create-composition';
+import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
+import { isResolvedPresentation, isResolvedTrack, type MaybeResolvedPresentation } from '../../../media/types';
+import { findTrack } from '../../../media/utils/tracks';
+
+export interface SeekToLiveEdgeState {
+  presentation?: MaybeResolvedPresentation;
+  selectedVideoTrackId?: string;
+}
 
 export interface SeekToLiveEdgeContext {
   mediaElement?: HTMLMediaElement | undefined;
+  mediaSource?: MediaSource;
 }
 
 function seekToLiveEdgeSetup({
+  state,
   context,
 }: {
-  context: { mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']> };
+  state: {
+    presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
+    selectedVideoTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedVideoTrackId']>;
+  };
+  context: {
+    mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
+    mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
+  };
 }): () => void {
+  let seeked = false;
+
   return effect(() => {
     const mediaElement = context.mediaElement.get();
-    if (!mediaElement) return;
+    const mediaSource = context.mediaSource.get();
+    const presentation = state.presentation.get();
+    const trackId = state.selectedVideoTrackId?.get();
+    if (!mediaElement || !mediaSource || !isResolvedPresentation(presentation) || !trackId) return;
+    if (mediaSource.readyState !== 'open') return;
 
-    let seeked = false;
-    const trySeek = () => {
-      if (seeked) return;
-      const { buffered } = mediaElement;
-      if (buffered.length === 0) return;
-      const start = buffered.start(0);
-      // Native-PTS live gap: playhead sits before the buffered window.
-      if (mediaElement.currentTime < start) {
-        mediaElement.currentTime = start;
-        seeked = true;
-      }
-    };
+    const track = findTrack(presentation, 'video', trackId);
+    if (!track || !isResolvedTrack(track) || track.segments.length === 0) return;
 
-    trySeek();
-    const removers = [
-      listen(mediaElement, 'loadedmetadata', trySeek),
-      listen(mediaElement, 'durationchange', trySeek),
-      listen(mediaElement, 'progress', trySeek),
-      listen(mediaElement, 'emptied', () => {
-        seeked = false;
-      }),
-    ];
-    return () => {
-      for (const remove of removers) remove();
-    };
+    const { segments } = track;
+    const windowStart = segments[0]!.startTime;
+    const last = segments[segments.length - 1]!;
+    const windowEnd = last.startTime + last.duration;
+
+    try {
+      // Live duration is unbounded; required for a live seekable range.
+      if (Number.isNaN(mediaSource.duration)) mediaSource.duration = Number.POSITIVE_INFINITY;
+      // Re-declared as the window slides so seekable tracks the live window.
+      mediaSource.setLiveSeekableRange(windowStart, windowEnd);
+    } catch {
+      // readyState raced closed, or duration set rejected — retried on the next window change.
+      return;
+    }
+
+    // Seek into the window once so the loader dispatches an in-window range.
+    if (!seeked && mediaElement.currentTime < windowStart) {
+      mediaElement.currentTime = windowStart;
+      seeked = true;
+    }
   });
 }
 
-export const seekToLiveEdge = defineBehavior({
-  stateKeys: [],
-  contextKeys: ['mediaElement'],
+/**
+ * Manual `Behavior<>` literal (like `anchorLiveTracks` /
+ * `calculatePresentationDuration`): declares only `presentation` in stateKeys
+ * while reading `selectedVideoTrackId` defensively (contributed by
+ * `switchVideoTrack`), so it composes without a stateKeys/type conflict.
+ */
+export const seekToLiveEdge: Behavior<
+  { presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']> },
+  {
+    mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
+    mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
+  },
+  object
+> = {
+  stateKeys: ['presentation'],
+  contextKeys: ['mediaElement', 'mediaSource'],
   setup: seekToLiveEdgeSetup,
-});
+};
