@@ -19,7 +19,7 @@ WebKit's solution is the **dual-source pattern**:
 - flip `disableRemotePlayback` off,
 - and suspend MSE loading while AirPlay is active so the local pipeline isn't double-fetching alongside the receiver.
 
-### First approach: HlsJsMedia Mixin (new SPF behavior)
+### First approach: HlsJsMedia Mixin (new SPF behavior TBD)
 
 As other Mixins in `packages/core/src/dom/media/hls` attaches to the HlsJsMediaBase and accesses both the video element (to add the source element and flip `disableRemotePlayback` off) and can access the engine to control playback.
 
@@ -34,12 +34,7 @@ Files to be modified:
 
 **SPF side** (new behavior — symmetric pattern, different layer):
 
-- [packages/spf/src/playback/behaviors/dom/setup-airplay-bridge.ts](../../packages/spf/src/playback/behaviors/dom/setup-airplay-bridge.ts) — new behavior. Same responsibilities as the hls.js mixin: source injection, `disableRemotePlayback`, debounced wireless listener. Writes `context.remotePlayback` so `load-segments` can suspend.
-- [packages/spf/src/playback/behaviors/dom/load-segments.ts](../../packages/spf/src/playback/behaviors/dom/load-segments.ts) — read `context.remotePlayback`, add a `'suspended'` reactor state that overrides the existing load gating.
-- [packages/spf/src/playback/engines/hls/engine.ts](../../packages/spf/src/playback/engines/hls/engine.ts) — compose `setupAirPlayBridge`; add `remotePlayback` slot to `SimpleHlsEngineContext`.
-- [packages/spf/src/media/dom/mse/mediasource-setup.ts](../../packages/spf/src/media/dom/mse/mediasource-setup.ts) — revisit unconditional `disableRemotePlayback = true` on ManagedMediaSource attach. The bridge needs it `false`.
-
-**Asymmetry to note:** the hls.js bridge is a media-adapter mixin; the SPF bridge is an engine-composition behavior.
+TBD
 
 ### Second approach: AirPlay Bridge on remote playback feature
 
@@ -65,12 +60,7 @@ Files to be modified:
 
 **SPF adapter (implements `LoadControlCapability`):**
 
-- [packages/spf/src/playback/engines/hls/adapter.ts](../../packages/spf/src/playback/engines/hls/adapter.ts) — extend `SimpleHlsMediaMixin` with `suspendLoad` / `resumeLoad` / `currentSourceUrl`. Methods write to / read from the SPF composition's state.
-- [packages/spf/src/playback/engines/hls/engine.ts](../../packages/spf/src/playback/engines/hls/engine.ts) — add `remotePlayback` to `SimpleHlsEngineState` so the adapter has a slot to write into; compose the load-gate.
-- [packages/spf/src/playback/behaviors/dom/load-segments.ts](../../packages/spf/src/playback/behaviors/dom/load-segments.ts) — same `'suspended'` reactor state as approach 1; this is engine-internal regardless of which approach we pick.
-- [packages/spf/src/media/dom/mse/mediasource-setup.ts](../../packages/spf/src/media/dom/mse/mediasource-setup.ts) — same `disableRemotePlayback` revisit.
-
-**Common to both approaches** (carried over from the shared lifecycle/MSE concerns): the `load-segments` `'suspended'` state and the `mediasource-setup` `disableRemotePlayback` change are SPF-internal and unavoidable either way — they're prerequisites for SPF being able to suspend cleanly, not specific to where the bridge lives.
+TBD
 
 ### `ControlLoad` capability
 
