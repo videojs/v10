@@ -331,4 +331,21 @@ describe('updateMediaSourceDuration', () => {
 
     reactor.destroy();
   });
+
+  it('writes Infinity for live even when an append already set a finite duration', async () => {
+    // Live race: the first segment append sets duration to the buffered end
+    // before this behavior writes. The once-while-NaN guard would leave it
+    // finite; for Infinity we override (Infinity ≥ any buffered range).
+    const { state, context, reactor } = setupUpdateMediaSourceDuration();
+
+    const mockMediaSource = makeMediaSource({ duration: 30 });
+    context.mediaSource.set(mockMediaSource);
+    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    reactor.destroy();
+  });
 });

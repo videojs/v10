@@ -2,13 +2,22 @@
  * **Propagate `presentation.duration` to `mediaSource.duration` — exactly
  * once per MediaSource.**
  *
- * When the presentation has a valid positive duration (including `Infinity`
- * for live) and a MediaSource is in context, writes the value through to
- * `mediaSource.duration` on initial setup — once, while `mediaSource.duration`
- * is still `NaN`. Once any non-NaN value is present (set by us, or by
- * `endOfStream` from the buffered end), the behavior leaves the property
- * alone; re-syncing a drift against `presentation.duration` would race with
- * concurrent `appendBuffer()` calls.
+ * Two paths, by whether the presentation is live:
+ *
+ * - **Live** (`presentation.duration === Infinity`): written **synchronously**
+ *   on entry. The presentation declares `Infinity` as soon as it resolves —
+ *   before any segment append — and this behavior is composed before the buffer
+ *   actors, so it runs while the MediaSource is freshly open and empty. Writing
+ *   now (no buffered clamp needed; `Infinity` ≥ any range) gets ahead of the
+ *   first append, which would otherwise set `duration` to the buffered end and
+ *   pin the live stream to a finite (live-edge) duration.
+ *
+ * - **VoD** (finite): the value is written once, after `mediaSource` is open and
+ *   all SourceBuffers are idle, clamped to be ≥ the highest buffered range (MSE
+ *   spec). Written only while `mediaSource.duration` is still `NaN`; once any
+ *   non-NaN value is present (us on a prior entry, or `endOfStream` from the
+ *   buffered end), the property is left alone — re-syncing would race
+ *   concurrent `appendBuffer()` calls.
  *
  * The entry resolves three async preconditions in order before writing:
  *
@@ -88,11 +97,25 @@ function updateMediaSourceDurationSetup({
           const presentation = state.presentation.get()!;
           const mediaSource = context.mediaSource.get()!;
 
-          // Idempotency: someone (us on a prior entry, or concurrent
-          // `endOfStream`) has already written. No-op and leave the state
-          // alone — the next source-reset transition will produce a fresh
-          // entry against the new MediaSource (whose `duration` starts at
-          // `NaN` again).
+          // Live: the presentation declares `Infinity` as soon as it resolves —
+          // before any segment append. This entry runs while the MediaSource is
+          // freshly open and still empty (it's composed before the buffer
+          // actors), so write it now, synchronously: no buffered clamp is needed
+          // (`Infinity` ≥ any range), and getting ahead of the first append is
+          // what stops the append pinning a finite (live-edge) duration. The
+          // async wait-for-idle path below would lose that race — a live loader
+          // appends continuously, so the buffers are rarely all idle.
+          if (presentation.duration === Number.POSITIVE_INFINITY) {
+            if (mediaSource.readyState === 'open' && mediaSource.duration !== Number.POSITIVE_INFINITY) {
+              mediaSource.duration = Number.POSITIVE_INFINITY;
+            }
+            return;
+          }
+
+          // VoD: write the finite duration once, while it is still `NaN`. Once
+          // any non-NaN value is present (us on a prior entry, or `endOfStream`
+          // from the buffered end), leave it alone — re-syncing a drift against
+          // `presentation.duration` would race concurrent `appendBuffer()`.
           if (!Number.isNaN(mediaSource.duration)) return;
 
           const controller = new AbortController();
