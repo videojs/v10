@@ -1,3 +1,4 @@
+import { isUndefined } from '@videojs/utils/predicate';
 import {
   type AudioTrack,
   getMediaPlaylistMetadata,
@@ -154,6 +155,11 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   let currentTime = 0;
   let segmentIndex = 0;
   let previousByteRangeEnd: number | undefined;
+  // Absolute wall-clock of the next segment's first sample, in epoch seconds.
+  // Seeded by an explicit `#EXT-X-PROGRAM-DATE-TIME` (which re-anchors, e.g.
+  // across a discontinuity) and advanced by each segment's duration so segments
+  // without their own tag are interpolated forward (per RFC 8216).
+  let currentProgramDateTime: number | undefined;
 
   // Playlist-level metadata (surfaced for live reload pacing / merge / termination).
   let targetDuration = 0;
@@ -175,6 +181,12 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
     if (trimmed.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
       mediaSequence = Number.parseInt(trimmed.slice('#EXT-X-MEDIA-SEQUENCE:'.length), 10) || 0;
+      continue;
+    }
+
+    if (trimmed.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
+      const parsed = Date.parse(trimmed.slice('#EXT-X-PROGRAM-DATE-TIME:'.length).trim());
+      currentProgramDateTime = Number.isNaN(parsed) ? currentProgramDateTime : parsed / 1000;
       continue;
     }
 
@@ -231,6 +243,13 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         duration: currentDuration,
         startTime: currentTime,
       };
+
+      if (!isUndefined(currentProgramDateTime)) {
+        segment.programDateTime = currentProgramDateTime;
+        // Interpolate forward: the next segment without an explicit tag inherits
+        // this anchor plus this segment's duration.
+        currentProgramDateTime += currentDuration;
+      }
 
       if (currentByteRange) {
         segment.byteRange = currentByteRange;

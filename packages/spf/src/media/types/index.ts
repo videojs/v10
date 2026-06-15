@@ -323,8 +323,17 @@ export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelection
 /**
  * Media segment with timing information.
  * Follows CMAF-HAM composition pattern.
+ *
+ * `programDateTime` is the absolute wall-clock time of the segment's first
+ * sample, in **epoch seconds** (unit-consistent with `startTime`/`duration`),
+ * derived from `#EXT-X-PROGRAM-DATE-TIME` (explicit or interpolated forward via
+ * `EXTINF`). Unlike the per-track-relative `startTime`, it is comparable across
+ * tracks, so it is the cross-track sync anchor for demuxed audio/video and the
+ * exact recovery value on a full live-window turnover. Optional: absent when the
+ * source carries no PDT (allowed by RFC 8216, required by Apple's HLS authoring
+ * spec — so present on conformant content).
  */
-export type Segment = Ham & AddressableObject & TimeSpan;
+export type Segment = Ham & AddressableObject & TimeSpan & { programDateTime?: number };
 
 /**
  * Floating-point tolerance for matching segments by `startTime`. Two

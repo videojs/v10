@@ -6,6 +6,11 @@ import {
   type PartiallyResolvedVideoTrack,
 } from '../../types';
 import { parseMediaPlaylist } from '../parse-media-playlist';
+import liveCmafAudio from './fixtures/live-cmaf-audio.m3u8?raw';
+import liveCmafVideo from './fixtures/live-cmaf-video.m3u8?raw';
+import liveTsVideo1 from './fixtures/live-ts-video-1.m3u8?raw';
+import liveTsVideo2 from './fixtures/live-ts-video-2.m3u8?raw';
+import liveTsVideo3 from './fixtures/live-ts-video-3.m3u8?raw';
 
 describe('parseMediaPlaylist', () => {
   describe('Video tracks', () => {
@@ -540,6 +545,177 @@ segment11.m4s`;
 
       // anchor = previous end (18) + (offset 10 − 3) × 6 = 60
       expect(next.segments.map((s) => s.startTime)).toEqual([60, 66]);
+    });
+  });
+
+  describe('EXT-X-PROGRAM-DATE-TIME', () => {
+    const videoShell: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'video-0',
+      url: 'https://example.com/video/playlist.m3u8',
+      bandwidth: 1400000,
+      width: 1280,
+      height: 720,
+      codecs: ['avc1.4d401f'],
+      frameRate: { frameRateNumerator: 30 },
+      mimeType: 'video/mp4',
+    };
+    const epoch = (iso: string) => Date.parse(iso) / 1000;
+
+    it('captures the per-segment program date time in epoch seconds', () => {
+      const text = `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:00.000Z
+#EXTINF:4,
+s0.ts
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:04.000Z
+#EXTINF:4,
+s1.ts`;
+      const r = parseMediaPlaylist(text, videoShell);
+      expect(r.segments.map((s) => s.programDateTime)).toEqual([
+        epoch('2026-01-01T00:00:00.000Z'),
+        epoch('2026-01-01T00:00:04.000Z'),
+      ]);
+    });
+
+    it('interpolates the date time forward via EXTINF when a tag is absent', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:00.000Z
+#EXTINF:4,
+s0.ts
+#EXTINF:4,
+s1.ts
+#EXTINF:4,
+s2.ts`;
+      const r = parseMediaPlaylist(text, videoShell);
+      expect(r.segments.map((s) => s.programDateTime)).toEqual([
+        epoch('2026-01-01T00:00:00.000Z'),
+        epoch('2026-01-01T00:00:04.000Z'),
+        epoch('2026-01-01T00:00:08.000Z'),
+      ]);
+    });
+
+    it('re-anchors on an explicit tag rather than interpolating (discontinuity jump)', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:00.000Z
+#EXTINF:4,
+s0.ts
+#EXT-X-DISCONTINUITY
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T01:00:00.000Z
+#EXTINF:4,
+s1.ts`;
+      const r = parseMediaPlaylist(text, videoShell);
+      // s1 takes the jumped absolute time, not s0 + 4s.
+      expect(r.segments.map((s) => s.programDateTime)).toEqual([
+        epoch('2026-01-01T00:00:00.000Z'),
+        epoch('2026-01-01T01:00:00.000Z'),
+      ]);
+    });
+
+    it('interpolates with each segment’s actual EXTINF, not a nominal duration', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:00.000Z
+#EXTINF:1.9,
+s0.ts
+#EXTINF:2.05,
+s1.ts
+#EXTINF:2.0,
+s2.ts`;
+      const r = parseMediaPlaylist(text, videoShell);
+      const t0 = epoch('2026-01-01T00:00:00.000Z');
+      expect(r.segments[0]?.programDateTime).toBeCloseTo(t0, 6);
+      expect(r.segments[1]?.programDateTime).toBeCloseTo(t0 + 1.9, 6);
+      expect(r.segments[2]?.programDateTime).toBeCloseTo(t0 + 1.9 + 2.05, 6);
+    });
+
+    it('leaves program date time undefined when the source carries no PDT', () => {
+      const text = `#EXTM3U
+#EXT-X-MEDIA-SEQUENCE:0
+#EXTINF:4,
+s0.ts
+#EXTINF:4,
+s1.ts`;
+      const r = parseMediaPlaylist(text, videoShell);
+      expect(r.segments.every((s) => s.programDateTime === undefined)).toBe(true);
+    });
+  });
+
+  describe('real Mux live snapshots (fixtures)', () => {
+    const videoShell: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'video-0',
+      url: 'https://example.com/video/playlist.m3u8',
+      bandwidth: 2191200,
+      width: 1280,
+      height: 572,
+      codecs: ['avc1.640020'],
+      frameRate: { frameRateNumerator: 30 },
+      mimeType: 'video/mp4',
+    };
+    const audioShell: PartiallyResolvedAudioTrack = {
+      type: 'audio',
+      id: 'audio-hi-0',
+      url: 'https://example.com/audio/playlist.m3u8',
+      groupId: 'audio-hi-0',
+      name: 'Default',
+      language: 'und',
+      codecs: ['mp4a.40.2'],
+      mimeType: 'audio/mp4',
+      bandwidth: 0,
+      sampleRate: 48000,
+      channels: 2,
+    };
+
+    it('carries the timeline forward across a non-uniform window slide (TS, media-seq 85→86→88)', () => {
+      const s1 = parseMediaPlaylist(liveTsVideo1, videoShell);
+      const s2 = parseMediaPlaylist(liveTsVideo2, s1);
+      const s3 = parseMediaPlaylist(liveTsVideo3, s2);
+
+      expect(s1.startTime).toBe(0); // first parse anchors at 0
+      expect(s2.startTime).toBe(4); // slid by one segment (4s)
+      expect(s3.startTime).toBe(12); // slid by TWO segments (8s) — the offset=2 path
+      expect(s3.segments[0]?.id).toBe('segment-88');
+      expect(s3.mimeType).toBe('video/mp2t'); // TS container detected
+      // PDT rides through carry-forward unchanged (absolute, not re-based).
+      expect(s3.segments[0]?.programDateTime).toBeDefined();
+      expect(s3.segments.map((seg) => seg.programDateTime ?? 0)).toEqual(
+        [...s3.segments.map((seg) => seg.programDateTime ?? 0)].sort((a, b) => a - b)
+      );
+    });
+
+    it('parses CMAF/LL-HLS: fMP4 mime, init segment, ignores partial segments', () => {
+      const video = parseMediaPlaylist(liveCmafVideo, videoShell);
+
+      expect(video.mimeType).toBe('video/mp4'); // fMP4 — not relabeled to a TS/unplayable mime
+      expect(video.initialization?.url).toContain('18446744073709551615.m4s'); // EXT-X-MAP
+      expect(video.duration).toBe(Number.POSITIVE_INFINITY); // unended live
+      // EXT-X-PART / PRELOAD-HINT / SERVER-CONTROL are ignored: only the 10
+      // complete .m4s segments are parsed.
+      expect(video.segments).toHaveLength(10);
+      expect(video.segments.every((s) => /\/\d+\.m4s$/.test(s.url))).toBe(true);
+    });
+
+    it('aligns demuxed audio and video by PDT, where per-track startTime disagrees', () => {
+      const video = parseMediaPlaylist(liveCmafVideo, videoShell);
+      const audio = parseMediaPlaylist(liveCmafAudio, audioShell);
+
+      const v82 = video.segments.find((s) => s.id === 'segment-82');
+      const a82 = audio.segments.find((s) => s.id === 'segment-82');
+      expect(v82).toBeDefined();
+      expect(a82).toBeDefined();
+
+      // Same real instant → identical absolute PDT (the cross-track sync anchor)…
+      expect(v82?.programDateTime).toBe(a82?.programDateTime);
+      // …even though per-track relative startTime disagrees by a full segment
+      // (video's window starts one segment earlier). This 2s gap is exactly the
+      // A/V misalignment that PDT-based alignment resolves and sequence-number
+      // alignment would mask.
+      expect(v82?.startTime).toBe(2);
+      expect(a82?.startTime).toBe(0);
     });
   });
 });
