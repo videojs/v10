@@ -45,7 +45,7 @@ export function HlsJsMediaPreloadMixin<Base extends Constructor<HlsEngineHost>>(
     #init(): void {
       this.#preloadAbort?.abort();
 
-      const target = this.target as HTMLMediaElement | null;
+      const target = this.target as HTMLVideoElement | null;
       if (!target) return;
 
       // Sync stored preload to the native element (may have been set before attach)

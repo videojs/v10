@@ -1,10 +1,13 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../../core/media/media-error';
+import type { RemotePlaybackLike } from '../../../../core/media/types';
+import { addComponent, type Component } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
-import { HlsMedia, SourceTypes } from '../index';
+import { ContentTypes, HlsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
+  vi.unstubAllGlobals();
 });
 
 function fireDurationChange(video: HTMLVideoElement, duration: number) {
@@ -30,8 +33,7 @@ function setup() {
   const handler = vi.fn();
   media.addEventListener('error', handler);
 
-  media.preferPlayback = 'native';
-  media.type = SourceTypes.M3U8;
+  media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
   media.load();
 
   return { media, video, handler };
@@ -86,13 +88,133 @@ describe('HlsMedia', () => {
       const pauseHandler = vi.fn();
       media.addEventListener('pause', pauseHandler);
 
-      media.preferPlayback = 'native';
-      media.type = SourceTypes.M3U8;
+      media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
       media.load();
 
       video.dispatchEvent(new Event('pause'));
 
       expect(pauseHandler).toHaveBeenCalledOnce();
+    });
+  });
+
+  describe('loadstart', () => {
+    it('dispatches loadstart to listeners once per load', () => {
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsMedia();
+      media.attach(video);
+
+      const handler = vi.fn();
+      media.addEventListener('loadstart', handler);
+
+      media.load();
+
+      expect(handler).toHaveBeenCalledOnce();
+    });
+
+    it('does not forward the native loadstart from the target', () => {
+      const { media, video } = setup();
+
+      const handler = vi.fn();
+      media.addEventListener('loadstart', handler);
+
+      video.dispatchEvent(new Event('loadstart'));
+
+      expect(handler).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('config', () => {
+    it('recreates the engine when a new hlsJs config is assigned', () => {
+      const { media, video } = setup();
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      // New `hlsJs` option values must recreate the engine to take effect.
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.load();
+
+      // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
+      expect(handler).toHaveBeenCalledTimes(2);
+      expect(media.streamType).toBe('live');
+    });
+
+    it('does not recreate the engine for an equivalent hlsJs config', () => {
+      const { media, video } = setup();
+
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      // Same option values in a new object (e.g. an inline React prop).
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.load();
+
+      // No engine teardown → no streamType churn.
+      expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('merges config assignments', () => {
+      const { media } = setup();
+
+      media.config = { hlsJs: { maxBufferLength: 60 } };
+
+      // Keys from the previous assignment in `setup()` survive.
+      expect(media.config.preferPlayback).toBe('native');
+      expect(media.config.hlsJs).toEqual({ maxBufferLength: 60 });
+    });
+  });
+
+  describe('remote playback load', () => {
+    function setupConnected(load: () => Promise<void>) {
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsMedia();
+      media.attach(video);
+
+      const component: Component = {
+        get targetOverride() {
+          return { remote: { state: 'connected' } as RemotePlaybackLike, load };
+        },
+      };
+      addComponent(media, component);
+
+      return { media };
+    }
+
+    it('awaits the receiver load while connected', async () => {
+      let resolveLoad!: () => void;
+      const load = vi.fn(() => new Promise<void>((resolve) => (resolveLoad = resolve)));
+      const { media } = setupConnected(load);
+
+      let settled = false;
+      const result = media.load().then(() => {
+        settled = true;
+      });
+
+      expect(load).toHaveBeenCalledTimes(1);
+      await Promise.resolve();
+      expect(settled).toBe(false);
+
+      resolveLoad();
+      await result;
+      expect(settled).toBe(true);
+    });
+
+    it('rejects when the receiver load rejects', async () => {
+      const load = vi.fn(() => Promise.reject(new Error('receiver failed')));
+      const { media } = setupConnected(load);
+
+      await expect(media.load()).rejects.toThrow('receiver failed');
     });
   });
 
@@ -179,9 +301,9 @@ describe('HlsMedia', () => {
       expect(media.streamType).toBe('live');
 
       handler.mockClear();
-      // `debug` is part of `HlsMedia`'s engine props — toggling it recreates the
-      // native delegate without switching playback engines.
-      media.debug = true;
+      // `config.hlsJs.debug` is part of `HlsMedia`'s engine props — toggling it
+      // recreates the native delegate without switching playback engines.
+      media.config = { ...media.config, hlsJs: { debug: true } };
       media.load();
 
       // Teardown: a single `live` → `unknown`, then the new delegate re-detects
@@ -203,7 +325,7 @@ describe('HlsMedia', () => {
       });
 
       // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
-      media.debug = true;
+      media.config = { ...media.config, hlsJs: { debug: true } };
       media.load();
 
       expect(seen).not.toContain('on-demand');
@@ -272,7 +394,7 @@ describe('HlsMedia', () => {
       media.streamType = 'live';
       expect(media.streamType).toBe('live');
 
-      media.preferPlayback = 'mse';
+      media.config = { ...media.config, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('live');
@@ -284,7 +406,7 @@ describe('HlsMedia', () => {
       media.streamType = 'live';
       media.streamType = 'unknown';
 
-      media.preferPlayback = 'mse';
+      media.config = { ...media.config, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('unknown');

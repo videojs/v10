@@ -1,8 +1,17 @@
+import type { MixinReturn } from '@videojs/utils/types';
 import Hls, { type HlsConfig } from 'hls.js';
-import type { MediaEngineHost } from '../../../core/media/types';
+import type { MediaError } from '../../../core/media/media-error';
+import { MediaTracksMixin, type WithMediaTracks } from '../../../core/media/media-tracks';
+import type {
+  MediaEngineHost,
+  MediaLiveCapability,
+  MediaSourceCapability,
+  MediaStreamTypeCapability,
+} from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaLiveMixin } from './live';
+import { HlsJsMediaMediaTracksMixin } from './media-tracks';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
 import { HlsJsMediaStreamTypeMixin } from './stream-type';
@@ -57,10 +66,23 @@ class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls
   }
 }
 
-export class HlsJsMedia extends HlsJsMediaPreloadMixin(
+interface HlsJsMediaCapabilities
+  extends MediaStreamTypeCapability,
+    MediaLiveCapability,
+    Pick<MediaSourceCapability, 'preload'> {
+  readonly error: MediaError | null;
+}
+
+const HlsJsMediaComposed = HlsJsMediaPreloadMixin(
   HlsJsMediaLiveMixin(
     HlsJsMediaStreamTypeMixin(
-      HlsJsMediaMetadataTracksMixin(HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(HlsJsMediaBase)))
+      HlsJsMediaMediaTracksMixin(
+        HlsJsMediaMetadataTracksMixin(
+          HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsMediaBase)))
+        )
+      )
     )
   )
-) {}
+) as unknown as MixinReturn<WithMediaTracks<typeof HlsJsMediaBase>, HlsJsMediaCapabilities>;
+
+export class HlsJsMedia extends HlsJsMediaComposed {}

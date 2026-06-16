@@ -6,6 +6,7 @@ import { z } from 'astro/zod';
 export const PresetSkinDefSchema = z.object({
   name: z.string(),
   tagName: z.string().optional(),
+  cssImport: z.string().optional(),
 });
 
 export const PresetReferenceSchema = z.object({

@@ -1,5 +1,7 @@
 'use client';
 
+import { GoogleCast } from '@videojs/core/dom/media/google-cast';
+import { addComponent } from '@videojs/core/dom/media/media-host';
 import type { NativeHlsMediaProps } from '@videojs/core/dom/media/native-hls';
 import { NativeHlsMedia, nativeHlsMediaDefaultProps } from '@videojs/core/dom/media/native-hls';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
@@ -19,7 +21,9 @@ export const NativeHlsVideo = forwardRef<HTMLVideoElement, NativeHlsVideoProps>(
   { children, ...props },
   ref
 ) {
-  const media = useMediaInstance(NativeHlsMedia);
+  const media = useMediaInstance(NativeHlsMedia, (media) => {
+    addComponent(media, new GoogleCast());
+  });
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const htmlProps = useSyncProps(media, props, nativeHlsMediaDefaultProps);

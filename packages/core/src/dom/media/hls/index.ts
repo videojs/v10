@@ -1,7 +1,8 @@
 import { shallowEqual } from '@videojs/utils/object';
-import Hls from 'hls.js';
+import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { bridgeEvents } from '../../../core/utils/bridge-events';
+import type { MediaConfig } from '../media-host';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMedia } from './hlsjs';
@@ -11,7 +12,7 @@ export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 export { Hls };
 
 export type PlaybackType = (typeof PlaybackTypes)[keyof typeof PlaybackTypes];
-export type SourceType = (typeof SourceTypes)[keyof typeof SourceTypes];
+export type SourceType = (typeof ContentTypes)[keyof typeof ContentTypes];
 export type StreamType = MediaStreamType;
 
 export const PlaybackTypes = {
@@ -19,7 +20,7 @@ export const PlaybackTypes = {
   NATIVE: 'native',
 };
 
-export const SourceTypes = {
+export const ContentTypes = {
   M3U8: 'application/vnd.apple.mpegurl',
   MP4: 'video/mp4',
 };
@@ -28,23 +29,25 @@ export const StreamTypes = MediaStreamTypes;
 
 export interface HlsMediaProps {
   src: string;
-  type: SourceType | undefined;
-  preferPlayback: PlaybackType | undefined;
-  config: Record<string, any>;
-  debug: boolean;
   preload: PreloadType;
   streamType: StreamType;
+  config?: HlsMediaConfig;
+}
+
+export interface HlsMediaConfig extends MediaConfig {
+  preferPlayback?: PlaybackType | undefined;
+  contentType?: SourceType | undefined;
+  hlsJs?: Partial<HlsJsConfig>;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
   src: '',
-  type: undefined,
-  preferPlayback: 'mse',
-  config: {},
-  debug: false,
   preload: 'metadata',
   streamType: MediaStreamTypes.UNKNOWN,
+  config: {},
 };
+
+class HlsMediaEvent extends Event {}
 
 /**
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
@@ -52,23 +55,70 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
  */
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
+  #mediaElement: HTMLVideoElement | null = null;
   #src = hlsMediaDefaultProps.src;
-  #type = hlsMediaDefaultProps.type;
-  #preferPlayback = hlsMediaDefaultProps.preferPlayback;
-  #config = { ...hlsMediaDefaultProps.config };
-  #debug = hlsMediaDefaultProps.debug;
   #preload = hlsMediaDefaultProps.preload;
   #streamType: StreamType = hlsMediaDefaultProps.streamType;
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
-  #prevEngineProps?: Record<string, any> | null;
+  #prevEngineConfigKey?: Record<string, any> | null;
+
+  constructor() {
+    super();
+    // Cancel the native loadstart event, it's handled in the load method.
+    this.addEventListener('loadstart', this.#stopTargetLoadStartEvent);
+  }
+
+  attach(target: HTMLVideoElement) {
+    this.#mediaElement = target;
+    super.attach(target);
+    this.#delegate?.attach(target);
+  }
+
+  detach() {
+    this.#delegate?.detach();
+    super.detach();
+    this.#mediaElement = null;
+  }
+
+  destroy() {
+    this.detach();
+    this.#engineDestroy();
+    super.destroy();
+    this.removeEventListener('loadstart', this.#stopTargetLoadStartEvent);
+  }
 
   get engine() {
     return this.#delegate?.engine ?? null;
   }
 
+  get config(): HlsMediaConfig {
+    return super.config;
+  }
+
+  set config(config: HlsMediaConfig) {
+    super.config = config;
+    if (this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
+  }
+
   get error() {
     return this.#delegate?.error ?? null;
+  }
+
+  get videoTracks() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoTracks : undefined;
+  }
+
+  get audioTracks() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioTracks : undefined;
+  }
+
+  get videoRenditions() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoRenditions : undefined;
+  }
+
+  get audioRenditions() {
+    return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioRenditions : undefined;
   }
 
   get src() {
@@ -77,44 +127,6 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   set src(src: string) {
     this.#src = src;
-    this.#requestLoad();
-  }
-
-  /** Explicit source type. When unset, inferred from the source URL extension. */
-  get type() {
-    return this.#type ?? inferSourceType(this.src);
-  }
-
-  set type(value: SourceType | undefined) {
-    this.#type = value;
-    this.#requestLoad();
-  }
-
-  /** Whether to prefer `'mse'` (hls.js) or `'native'` (browser-built-in) HLS. */
-  get preferPlayback() {
-    return this.#preferPlayback;
-  }
-
-  set preferPlayback(value) {
-    this.#preferPlayback = value;
-    this.#requestLoad();
-  }
-
-  get config() {
-    return this.#config;
-  }
-
-  set config(config) {
-    this.#config = config;
-    this.#requestLoad();
-  }
-
-  get debug() {
-    return this.#debug;
-  }
-
-  set debug(debug) {
-    this.#debug = debug;
     this.#requestLoad();
   }
 
@@ -146,7 +158,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
     if (this.#streamType === value) return;
     this.#streamType = value;
-    this.dispatchEvent(new Event('streamtypechange'));
+    this.dispatchEvent(new HlsMediaEvent('streamtypechange'));
   }
 
   /**
@@ -168,34 +180,23 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     return this.#delegate?.targetLiveWindow ?? Number.NaN;
   }
 
-  attach(target: HTMLVideoElement) {
-    super.attach(target);
-    this.#delegate?.attach(target);
-  }
-
-  detach() {
-    this.#delegate?.detach();
-    super.detach();
-  }
-
-  destroy() {
-    this.detach();
-    this.#engineDestroy();
-  }
-
-  load() {
+  async load() {
     this.#loadRequested = null;
 
-    if (this.#shouldEngineUpdate(this.#engineProps())) {
+    if (this.remote.state === 'connected') {
+      this.dispatchEvent(new HlsMediaEvent('loadstart'));
+      return super.load();
+    }
+
+    if (this.#shouldEngineUpdate(this.#engineConfigKey())) {
       this.#engineDestroy();
-      this.#prevEngineProps = this.#engineProps();
+      this.#prevEngineConfigKey = this.#engineConfigKey();
 
+      const contentType = this.config.contentType ?? inferContentType(this.#src);
       const useMse =
-        Hls.isSupported() && this.type === SourceTypes.M3U8 && this.preferPlayback !== PlaybackTypes.NATIVE;
+        Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
-      this.#delegate = useMse
-        ? new HlsJsMedia({ config: { ...this.config, debug: this.debug } })
-        : new NativeHlsMedia();
+      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config?.hlsJs } }) : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
@@ -207,15 +208,20 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
       this.#delegate.preload = this.preload;
 
-      if (this.target) {
-        this.#delegate.attach(this.target);
+      if (this.#mediaElement) {
+        this.#delegate.attach(this.#mediaElement);
       }
     }
 
     if (this.#delegate) {
+      this.dispatchEvent(new HlsMediaEvent('loadstart'));
       this.#delegate.src = this.#src;
     }
   }
+
+  #stopTargetLoadStartEvent = (event: Event) => {
+    if (!(event instanceof HlsMediaEvent)) event.stopImmediatePropagation();
+  };
 
   async #requestLoad() {
     if (this.#loadRequested) return;
@@ -224,31 +230,30 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.load();
   }
 
-  #shouldEngineUpdate(nextEngineProps: Record<string, any>) {
-    return !shallowEqual(this.#prevEngineProps, nextEngineProps);
+  #shouldEngineUpdate(nextEngineConfigKey: Record<string, any>) {
+    return !shallowEqual(this.#prevEngineConfigKey, nextEngineConfigKey);
   }
 
-  #engineProps() {
+  #engineConfigKey() {
     return {
-      config: this.config,
-      debug: this.debug,
-      preferPlayback: this.preferPlayback,
-      type: this.type,
+      ...this.config.hlsJs,
+      preferPlayback: this.config.preferPlayback,
+      contentType: this.config.contentType,
     };
   }
 
   #engineDestroy() {
     this.#delegate?.destroy();
     this.#delegate = null;
-    this.#prevEngineProps = null;
+    this.#prevEngineConfigKey = null;
     this.#loadRequested = null;
     // Delegate teardown already emits `streamtypechange` (bridged); only sync cache.
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
   }
 }
 
-function inferSourceType(src: string): SourceType {
+function inferContentType(src: string): SourceType {
   const path = src.split(/[?#]/)[0] ?? '';
-  if (path.endsWith('.mp4')) return SourceTypes.MP4;
-  return SourceTypes.M3U8;
+  if (path.endsWith('.mp4')) return ContentTypes.MP4;
+  return ContentTypes.M3U8;
 }
