@@ -4,13 +4,14 @@
  *
  * Two paths, by whether the presentation is live:
  *
- * - **Live** (`presentation.duration === Infinity`): written **synchronously**
- *   on entry. The presentation declares `Infinity` as soon as it resolves —
- *   before any segment append — and this behavior is composed before the buffer
- *   actors, so it runs while the MediaSource is freshly open and empty. Writing
- *   now (no buffered clamp needed; `Infinity` ≥ any range) gets ahead of the
- *   first append, which would otherwise set `duration` to the buffered end and
- *   pin the live stream to a finite (live-edge) duration.
+ * - **Live** (`presentation.duration === Infinity`): write `Infinity` ahead of
+ *   the first append (no buffered clamp needed; `Infinity` ≥ any range), which
+ *   would otherwise pin `duration` to the buffered (live-edge) end — and once
+ *   the window slides past that, further appends are rejected. Written
+ *   synchronously when the MediaSource is already open; otherwise deferred to
+ *   the next `sourceopen` (the presentation can resolve to `Infinity` before
+ *   `setupMediaSource` opens the MediaSource, so a synchronous-only write would
+ *   miss the window).
  *
  * - **VoD** (finite): the value is written once, after `mediaSource` is open and
  *   all SourceBuffers are idle, clamped to be ≥ the highest buffered range (MSE
@@ -97,19 +98,36 @@ function updateMediaSourceDurationSetup({
           const presentation = state.presentation.get()!;
           const mediaSource = context.mediaSource.get()!;
 
-          // Live: the presentation declares `Infinity` as soon as it resolves —
-          // before any segment append. This entry runs while the MediaSource is
-          // freshly open and still empty (it's composed before the buffer
-          // actors), so write it now, synchronously: no buffered clamp is needed
-          // (`Infinity` ≥ any range), and getting ahead of the first append is
-          // what stops the append pinning a finite (live-edge) duration. The
-          // async wait-for-idle path below would lose that race — a live loader
-          // appends continuously, so the buffers are rarely all idle.
+          // Live: the presentation declares `Infinity` as soon as it resolves.
+          // Write it ahead of the first append — otherwise the append pins
+          // `duration` to the buffered (live-edge) end, and once the window
+          // slides past that value further appends are rejected. No buffered
+          // clamp is needed (`Infinity` ≥ any range), and the async
+          // wait-for-idle path below would lose the race (a live loader appends
+          // continuously, so the buffers are rarely all idle).
           if (presentation.duration === Number.POSITIVE_INFINITY) {
-            if (mediaSource.readyState === 'open' && mediaSource.duration !== Number.POSITIVE_INFINITY) {
+            if (mediaSource.duration === Number.POSITIVE_INFINITY) return;
+            // Open already → write synchronously (fastest, gets ahead of appends).
+            if (mediaSource.readyState === 'open') {
               mediaSource.duration = Number.POSITIVE_INFINITY;
+              return;
             }
-            return;
+            // Not open yet → wait for `sourceopen`, then write. The presentation
+            // can resolve to `Infinity` before `setupMediaSource` opens the
+            // MediaSource; returning here without waiting (as this once did)
+            // would miss the write entirely and let the first append pin a
+            // finite duration. The continuation still runs before the
+            // network-delayed first append; if an append did land first,
+            // `Infinity` ≥ its range so the write is still valid.
+            const controller = new AbortController();
+            void (async () => {
+              await waitForMediaSourceOpen(mediaSource, controller.signal);
+              if (controller.signal.aborted || mediaSource.readyState !== 'open') return;
+              if (mediaSource.duration !== Number.POSITIVE_INFINITY) {
+                mediaSource.duration = Number.POSITIVE_INFINITY;
+              }
+            })();
+            return () => controller.abort();
           }
 
           // VoD: write the finite duration once, while it is still `NaN`. Once

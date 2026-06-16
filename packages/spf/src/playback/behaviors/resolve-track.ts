@@ -4,7 +4,7 @@ import { computed, peek, type ReadonlySignal, type Signal, update } from '../../
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
-import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
+import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
@@ -17,9 +17,21 @@ import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primi
 // `setupTrackResolution` has the same shape as a Behavior `setup` function:
 // `({ state, config }) => cleanup`. Each `resolveXTrack` export below calls it
 // from inside its own `defineBehavior` setup, supplying its per-type config
-// inline. The orchestration — gate on a selection, short-circuit when the
-// track is already resolved or missing, schedule the fetch+parse, and patch
-// the resolved track back into `state.presentation` — is shared.
+// inline. The orchestration — gate on a selection, decide whether a (re)load
+// is due, schedule the fetch+parse, and patch the resolved track back into
+// `state.presentation` (carrying the prior snapshot's timeline forward) — is
+// shared.
+//
+// This behavior is category [1] "content snapshot" from
+// [live-presentation-modeling.md](../../../internal/design/spf/live-presentation-modeling.md):
+// it produces the windowed segment list. *When* to (re)fetch is category [3]
+// "refetch policy", owned by the sibling `scheduleTrackReload` scheduler, which
+// bumps a per-type reload-epoch slot. The loader loads when the track is
+// unresolved (the initial resolve — the only trigger for VoD, where no
+// scheduler is composed) OR when the reload epoch has advanced past the last
+// one it serviced (a live reload). Setting the epoch synchronously at schedule
+// time, paired with `ConcurrentRunner`'s id-dedup, coalesces bumps that arrive
+// while a fetch is still in flight (drop-if-busy).
 // ============================================================================
 
 /**
@@ -32,16 +44,27 @@ export interface ResolveTrackState {
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
   failedCdns?: string[];
+  /**
+   * Per-type live-reload triggers, owned by `scheduleTrackReload`. A bump
+   * (monotonic increment) past the last-serviced value tells the loader a
+   * reload is due. Absent / unchanged for VoD (no scheduler composed).
+   */
+  videoReloadEpoch?: number;
+  audioReloadEpoch?: number;
+  textReloadEpoch?: number;
 }
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
+type ReloadEpochKey = 'videoReloadEpoch' | 'audioReloadEpoch' | 'textReloadEpoch';
 
-type ResolveTrackStateMap<K extends SelectedTrackKey> = {
+type ResolveTrackStateMap<K extends SelectedTrackKey, E extends ReloadEpochKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
-} & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
+} & { [P in K]: ReadonlySignal<ResolveTrackState[P]> } & { [P in E]: ReadonlySignal<ResolveTrackState[P]> };
 
-interface TrackResolutionConfig<K extends SelectedTrackKey> {
+interface TrackResolutionConfig<K extends SelectedTrackKey, E extends ReloadEpochKey> {
   selectedKey: K;
+  /** State slot the scheduler bumps to request a live reload of this type. */
+  reloadEpochKey: E;
   findTrackToResolve: (
     presentation: MaybeResolvedPresentation,
     trackId: string
@@ -59,17 +82,24 @@ interface ResolveTrackConfig {
   getCdnId?: GetCdnId;
 }
 
-function setupTrackResolution<K extends SelectedTrackKey>({
+function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochKey>({
   state,
-  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
+  config: { selectedKey, reloadEpochKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
 }: {
-  state: ResolveTrackStateMap<K>;
-  config: TrackResolutionConfig<K>;
+  state: ResolveTrackStateMap<K, E>;
+  config: TrackResolutionConfig<K, E>;
 }) {
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
+
+  // Highest reload epoch already serviced for the selected track. A resolved
+  // track only re-fetches once the scheduler bumps past this; an unresolved
+  // track always loads (the initial resolve / a retry of a failed one). Init 0
+  // so a freshly-mounted already-resolved track isn't re-fetched (matches the
+  // pre-reload one-shot resolve behavior).
+  let lastLoadedEpoch = 0;
 
   // Reactor states model the FSM the previous effect-based body was
   // hand-rolling. 'presentation-resolved' is entered when the
@@ -105,13 +135,23 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
             // internal updates (segments added by sibling tasks) don't
-            // re-fire the effect.
-            const presentation = peek(state.presentation);
+            // re-fire the effect. Tracked reads — `selectedKey` and the reload
+            // epoch — are taken up front, before any early return, so a later
+            // epoch bump re-fires this effect.
             const trackId = state[selectedKey].get();
+            const epoch = state[reloadEpochKey].get() ?? 0;
+            const presentation = peek(state.presentation);
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
-            if (!track || isResolvedTrack(track)) return;
+            if (!track) return;
+            // Resolved track: skip unless the scheduler requested a reload.
+            // Unresolved track: always load (initial resolve / failed-resolve retry).
+            if (isResolvedTrack(track) && epoch <= lastLoadedEpoch) return;
+            // Mark this epoch serviced synchronously: a same-id task already in
+            // flight is deduped by the runner, and we don't want to re-schedule
+            // it on the next effect run.
+            lastLoadedEpoch = epoch;
 
             runner.schedule(
               // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
@@ -122,6 +162,9 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // fetch: it trips the CDN on a failed fetch (network error or
                   // non-OK status). A parse failure is a content issue, not a
                   // CDN-availability one, so it doesn't trip.
+                  // `track` is the prior snapshot (the unresolved shell on the
+                  // first pass, the last resolved window on a live reload); the
+                  // parser carries its timeline forward.
                   const text = await fetchResolvableText(track, { signal });
                   const mediaTrack = parseMediaPlaylist(text, track);
 
@@ -143,9 +186,12 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     // audio↔video (mixed-container sources exist, e.g. muxed-TS
                     // video + raw-.aac audio), which also keeps per-type
                     // resolutions' writes disjoint (no race).
-                    return NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
+                    const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
+                    // Stream nature (category [2a]) — stable once a media
+                    // playlist is parsed; recomputing each reload is harmless.
+                    return { ...relabeled, streamType: deriveStreamType(getMediaPlaylistMetadata(mediaTrack)) };
                   });
                 },
                 { id: track.id }
@@ -164,18 +210,21 @@ function setupTrackResolution<K extends SelectedTrackKey>({
 
 const VIDEO_TRACK_RESOLUTION_CONFIG = {
   ...VIDEO_TYPE_CONFIG,
+  reloadEpochKey: 'videoReloadEpoch',
   findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
     findTrack(presentation, 'video', trackId),
 } as const;
 
 const AUDIO_TRACK_RESOLUTION_CONFIG = {
   ...AUDIO_TYPE_CONFIG,
+  reloadEpochKey: 'audioReloadEpoch',
   findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
     findTrack(presentation, 'audio', trackId),
 } as const;
 
 const TEXT_TRACK_RESOLUTION_CONFIG = {
   ...TEXT_TYPE_CONFIG,
+  reloadEpochKey: 'textReloadEpoch',
   findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
     findTrack(presentation, 'text', trackId),
 } as const;
@@ -190,13 +239,13 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
  * writes the resolved track back into `state.presentation`.
  */
 export const resolveVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId'],
+  stateKeys: ['presentation', 'selectedVideoTrackId', 'videoReloadEpoch'],
   contextKeys: [],
   setup: ({
     state,
     config = {},
   }: {
-    state: ResolveTrackStateMap<'selectedVideoTrackId'>;
+    state: ResolveTrackStateMap<'selectedVideoTrackId', 'videoReloadEpoch'>;
     config?: ResolveTrackConfig;
   }) => {
     // Engine `config` layers over the per-type defaults (mirrors the other
@@ -217,13 +266,13 @@ export const resolveVideoTrack = defineBehavior({
  * narrowed to audio.
  */
 export const resolveAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId'],
+  stateKeys: ['presentation', 'selectedAudioTrackId', 'audioReloadEpoch'],
   contextKeys: [],
   setup: ({
     state,
     config = {},
   }: {
-    state: ResolveTrackStateMap<'selectedAudioTrackId'>;
+    state: ResolveTrackStateMap<'selectedAudioTrackId', 'audioReloadEpoch'>;
     config?: ResolveTrackConfig;
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
@@ -240,13 +289,13 @@ export const resolveAudioTrack = defineBehavior({
  * narrowed to text.
  */
 export const resolveTextTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedTextTrackId'],
+  stateKeys: ['presentation', 'selectedTextTrackId', 'textReloadEpoch'],
   contextKeys: [],
   setup: ({
     state,
     config = {},
   }: {
-    state: ResolveTrackStateMap<'selectedTextTrackId'>;
+    state: ResolveTrackStateMap<'selectedTextTrackId', 'textReloadEpoch'>;
     config?: ResolveTrackConfig;
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.

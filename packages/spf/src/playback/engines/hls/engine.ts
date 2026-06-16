@@ -103,6 +103,15 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * Per-type live-reload triggers. Owned by `scheduleTrackReload` (composed
+   * only by live engines), which bumps them on a target-duration cadence;
+   * `resolveTrack` watches them to re-fetch the media playlist. Inert for VoD
+   * (no scheduler → never bumped → loader resolves once).
+   */
+  videoReloadEpoch?: number;
+  audioReloadEpoch?: number;
+  textReloadEpoch?: number;
 }
 
 /**

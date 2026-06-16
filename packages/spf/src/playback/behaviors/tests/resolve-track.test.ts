@@ -22,6 +22,9 @@ function makeState(initial: ResolveTrackState = {}): StateSignals<ResolveTrackSt
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
     failedCdns: signal<string[] | undefined>(initial.failedCdns),
+    videoReloadEpoch: signal<number | undefined>(initial.videoReloadEpoch),
+    audioReloadEpoch: signal<number | undefined>(initial.audioReloadEpoch),
+    textReloadEpoch: signal<number | undefined>(initial.textReloadEpoch),
   };
 }
 
@@ -406,6 +409,94 @@ http://example.com/a-seg1.m4s
     });
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+});
+
+describe('resolveVideoTrack — live reload', () => {
+  const LIVE_PLAYLIST = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:4
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:4.0,
+http://example.com/seg0.m4s`;
+
+  function liveVideoPresentation(): Presentation {
+    const unresolved: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-1',
+      url: 'http://example.com/variant1.m3u8',
+      bandwidth: 1_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+    return {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        { id: 'video-set', type: 'video', switchingSets: [{ id: 'sw-1', type: 'video', tracks: [unresolved] }] },
+      ],
+      startTime: 0,
+    };
+  }
+
+  it('re-fetches when the reload epoch is bumped', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    // A scheduler bump re-fetches the (already-resolved) track.
+    state.videoReloadEpoch.set(1);
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
+
+    // A stale/duplicate bump (≤ last serviced) does not.
+    state.videoReloadEpoch.set(1);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    reactor.destroy();
+  });
+
+  it('retries an unresolved track on epoch bump after a transient failure', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    let calls = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      calls += 1;
+      if (calls === 1) throw new TypeError('Failed to fetch');
+      return new Response(LIVE_PLAYLIST);
+    });
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    // First attempt fails and settles: track stays unresolved. (Waiting for
+    // the failed fetch to settle mirrors the scheduler's cadence delay — a bump
+    // arriving while the task is still in flight would be id-deduped.)
+    await vi.waitFor(() => expect(calls).toBe(1));
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(false);
+
+    // The scheduler's next bump retries the unresolved track → resolves.
+    state.videoReloadEpoch.set(1);
+    await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
+    expect(calls).toBe(2);
+
+    reactor.destroy();
+  });
+
+  it('sets presentation.streamType from the parsed playlist', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    // No EXT-X-PLAYLIST-TYPE:VOD → live.
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await vi.waitFor(() => expect(state.presentation.get()?.streamType).toBe('live'));
 
     reactor.destroy();
   });

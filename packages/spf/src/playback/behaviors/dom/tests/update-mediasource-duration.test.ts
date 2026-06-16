@@ -166,6 +166,32 @@ describe('updateMediaSourceDuration', () => {
     reactor.destroy();
   });
 
+  it('writes Infinity after sourceopen when the MediaSource starts closed (live)', async () => {
+    // Regression: the live path used to write only if the MediaSource was
+    // already open at entry, returning without scheduling a wait otherwise. The
+    // presentation can resolve to Infinity before `setupMediaSource` opens the
+    // MediaSource, so that eager write was missed — the first append then pinned
+    // a finite live-edge duration, and appends stalled once the window slid past.
+    const { state, context, reactor } = setupUpdateMediaSourceDuration();
+
+    const mockMediaSource = makeMediaSource({ readyState: 'closed' });
+    context.mediaSource.set(mockMediaSource);
+    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+
+    // Awaiting sourceopen — nothing written yet.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMediaSource.duration).toBeNaN();
+
+    // MediaSource opens — Infinity is written.
+    transitionMediaSource(mockMediaSource, 'open', 'sourceopen');
+
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    reactor.destroy();
+  });
+
   it('extends duration to match buffered range if needed', async () => {
     const { state, context, reactor } = setupUpdateMediaSourceDuration();
 

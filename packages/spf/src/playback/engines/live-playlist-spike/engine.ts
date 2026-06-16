@@ -22,13 +22,15 @@ import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composi
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { pickHighestResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import type { MaybeResolvedPresentation } from '../../../media/types';
-import { reloadVideoTrack } from '../../behaviors/reload-track';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
+import { resolveVideoTrack } from '../../behaviors/resolve-track';
+import { scheduleVideoTrackReload } from '../../behaviors/schedule-track-reload';
 import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
 
 export interface LivePlaylistSpikeState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
+  videoReloadEpoch?: number;
   preload?: 'auto' | 'metadata' | 'none';
   loadActivated?: boolean;
 }
@@ -58,9 +60,12 @@ export function createLivePlaylistSpikeEngine(
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
   };
 
-  return createComposition([resolvePresentation, selectVideoTrack, reloadVideoTrack, shareSignals], {
-    config: finalConfig,
-    // Spike skips the preload gate — resolve as soon as a url is set.
-    initialState: { loadActivated: true },
-  });
+  return createComposition(
+    [resolvePresentation, selectVideoTrack, resolveVideoTrack, scheduleVideoTrackReload, shareSignals],
+    {
+      config: finalConfig,
+      // Spike skips the preload gate — resolve as soon as a url is set.
+      initialState: { loadActivated: true },
+    }
+  );
 }

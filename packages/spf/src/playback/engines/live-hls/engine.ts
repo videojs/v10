@@ -26,8 +26,9 @@ import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { reloadAudioTrack, reloadVideoTrack } from '../../behaviors/reload-track';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
+import { resolveAudioTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
+import { scheduleAudioTrackReload, scheduleVideoTrackReload } from '../../behaviors/schedule-track-reload';
 import { setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
@@ -84,11 +85,15 @@ export function createLiveHlsEngine(
       deriveCdnPriority,
       setupFailoverMonitor,
 
-      // Live reload loop replaces one-shot resolve*: the first iteration
-      // resolves the selected track, then it re-fetches on a target-duration
-      // cadence, carrying the timeline forward.
-      reloadVideoTrack,
-      reloadAudioTrack,
+      // Loader (category [1]): resolves the selected track and re-fetches it
+      // whenever the scheduler bumps its reload epoch, carrying the timeline
+      // forward.
+      resolveVideoTrack,
+      resolveAudioTrack,
+      // Scheduler (category [3]): bumps the per-type reload epoch on a
+      // target-duration cadence until #EXT-X-ENDLIST.
+      scheduleVideoTrackReload,
+      scheduleAudioTrackReload,
 
       // Anchor selected tracks' timelines to the estimated stream origin so
       // segment.startTime ≈ native PTS (what the loader matches currentTime
