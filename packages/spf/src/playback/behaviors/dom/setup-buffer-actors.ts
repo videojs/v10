@@ -62,10 +62,10 @@
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal, update } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { buildMimeCodec, createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack } from '../../../media/types';
-import { addFailedCdn, getCdnId as defaultGetCdnId, type GetCdnId } from '../../../media/utils/cdn';
+import type { GetCdnId } from '../../../media/utils/cdn';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import { hasCodecs } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
@@ -76,6 +76,7 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
+import { failoverFetch } from '../failover-fetch';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
 
 /**
@@ -204,43 +205,6 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
 // ============================================================================
 
 /**
- * Wrap a segment `FetchBytes` so a failed fetch trips the segment's CDN into
- * `failedCdns` — the failover trip for segments, mirroring `resolve-track`'s
- * `failoverFetch` for media playlists. Unlike playlists the base fetch is
- * injected (per-type `trackedFetch` / `fetchStream`).
- *
- * `state` is typed as the behavior's map intersected with an *optional*
- * `failedCdns` — the failover monitor owns that slot, so a behavior's narrow
- * state is assignable here without declaring it (and the intersection shares
- * keys, so it isn't a weak type). No-op when no monitor is composed.
- */
-function failoverFetchBytes(
-  // `presentation` is a structural anchor: every buffer state has it, so the
-  // narrow behavior state is assignable and this isn't a weak type (TS2559) —
-  // only `failedCdns` is read.
-  state: {
-    presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
-    failedCdns?: Signal<string[] | undefined>;
-  },
-  baseFetch: FetchBytes,
-  config: { getCdnId?: GetCdnId }
-): FetchBytes {
-  const getCdnId = config.getCdnId ?? defaultGetCdnId;
-  return async (addressable, options) => {
-    try {
-      return await baseFetch(addressable, options);
-    } catch (error) {
-      // A failed segment fetch trips its CDN; an abort (track switch / teardown)
-      // doesn't. No-op when no failover monitor is composed (it owns the signal).
-      if (!options?.signal?.aborted && state.failedCdns) {
-        update(state.failedCdns, (cdns) => addFailedCdn(cdns, getCdnId(addressable.url)));
-      }
-      throw error;
-    }
-  };
-}
-
-/**
  * Set up the video `SourceBufferActor` + `SegmentLoaderActor`. Fires
  * when `mediaSource` is attached and the selected video track is
  * present in the presentation with codecs. Gates only on video state —
@@ -276,10 +240,13 @@ export const setupVideoBufferActors = defineBehavior({
       },
       (next) => state.bandwidthState.set(next)
     );
+    // Engine `config` layers over the per-type defaults; `failoverFetch` reads
+    // its `selectedKey` + `getCdnId` from the merged result.
+    const typeConfig = { ...VIDEO_TYPE_CONFIG, ...config };
     return setupBufferActors({
       state,
       context,
-      config: { ...VIDEO_TYPE_CONFIG, fetch: failoverFetchBytes(state, trackedFetch, config), ...config },
+      config: { ...typeConfig, fetch: failoverFetch(trackedFetch, state, typeConfig) },
     });
   },
 });
@@ -313,10 +280,13 @@ export const setupAudioBufferActors = defineBehavior({
     state: BufferActorsStateMap<'selectedAudioTrackId'>;
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
-  }) =>
-    setupBufferActors({
+  }) => {
+    // Key order mirrors setupVideoBufferActors.
+    const typeConfig = { ...AUDIO_TYPE_CONFIG, ...config };
+    return setupBufferActors({
       state,
       context,
-      config: { ...AUDIO_TYPE_CONFIG, fetch: failoverFetchBytes(state, fetchStream, config), ...config },
-    }),
+      config: { ...typeConfig, fetch: failoverFetch(fetchStream, state, typeConfig) },
+    });
+  },
 });

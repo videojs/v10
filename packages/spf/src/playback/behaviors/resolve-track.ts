@@ -5,9 +5,10 @@ import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
-import { addFailedCdn, getCdnId as defaultGetCdnId, type GetCdnId } from '../../media/utils/cdn';
+import type { GetCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
+import { failoverFetch } from './failover-fetch';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
 
 // ============================================================================
@@ -167,38 +168,6 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
     findTrack(presentation, 'text', trackId),
 } as const;
 
-/**
- * Build a behavior's failover-decorated playlist fetch: wrap the base fetch so a
- * failed request trips the track's CDN into `failedCdns`.
- *
- * `state` is typed as the behavior's map intersected with an *optional*
- * `failedCdns` — the failover monitor owns that slot, so a behavior's narrow
- * state is assignable here without the behavior declaring it (and the
- * intersection shares keys, so it isn't a weak type). When no monitor is
- * composed the slot is absent and tracking no-ops.
- */
-function failoverFetch<K extends SelectedTrackKey>(
-  state: ResolveTrackStateMap<K> & { failedCdns?: Signal<ResolveTrackState['failedCdns']> },
-  config: ResolveTrackConfig
-): FetchText {
-  const getCdnId = config.getCdnId ?? defaultGetCdnId;
-  return async (addressable, options) => {
-    try {
-      // `fetchResolvableText` rejects on non-OK, so this one catch covers both
-      // non-OK status and network errors → a single trip site.
-      return await defaultFetchResolvableText(addressable, options);
-    } catch (error) {
-      // A failed fetch trips the track's CDN into `failedCdns`; an abort (src
-      // change / teardown) doesn't. No-op when no failover monitor is composed
-      // (it owns the signal).
-      if (!options?.signal?.aborted && state.failedCdns) {
-        update(state.failedCdns, (cdns) => addFailedCdn(cdns, getCdnId(addressable.url)));
-      }
-      throw error;
-    }
-  };
-}
-
 // ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
@@ -217,17 +186,18 @@ export const resolveVideoTrack = defineBehavior({
   }: {
     state: ResolveTrackStateMap<'selectedVideoTrackId'>;
     config?: ResolveTrackConfig;
-  }) =>
-    setupTrackResolution({
+  }) => {
+    // Engine `config` layers over the per-type defaults (mirrors the other
+    // per-type variants, see track-types.ts); `failoverFetch` reads its
+    // `selectedKey` + `getCdnId` from the merged result. `fetchResolvableText`
+    // is then placed AFTER the spread so the failover-decorated fetch wins —
+    // unlike segments, playlists expose no overridable per-type fetch.
+    const trackConfig = { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config };
+    return setupTrackResolution({
       state,
-      // Key order is load-bearing. The two spreads layer (per-type defaults
-      // first, then engine `config` on top — mirrors the other per-type
-      // variants, see track-types.ts), but `fetchResolvableText` is a concrete
-      // value placed AFTER both spreads so neither can clobber it. Unlike
-      // segments, playlists expose no overridable per-type fetch, so this
-      // failover-decorated fetch must always win.
-      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config, fetchResolvableText: failoverFetch(state, config) },
-    }),
+      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+    });
+  },
 });
 
 /**
@@ -243,12 +213,14 @@ export const resolveAudioTrack = defineBehavior({
   }: {
     state: ResolveTrackStateMap<'selectedAudioTrackId'>;
     config?: ResolveTrackConfig;
-  }) =>
-    setupTrackResolution({
+  }) => {
+    // Key order is load-bearing — see resolveVideoTrack.
+    const trackConfig = { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config };
+    return setupTrackResolution({
       state,
-      // Key order is load-bearing — see resolveVideoTrack.
-      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config, fetchResolvableText: failoverFetch(state, config) },
-    }),
+      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+    });
+  },
 });
 
 /**
@@ -264,10 +236,12 @@ export const resolveTextTrack = defineBehavior({
   }: {
     state: ResolveTrackStateMap<'selectedTextTrackId'>;
     config?: ResolveTrackConfig;
-  }) =>
-    setupTrackResolution({
+  }) => {
+    // Key order is load-bearing — see resolveVideoTrack.
+    const trackConfig = { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config };
+    return setupTrackResolution({
       state,
-      // Key order is load-bearing — see resolveVideoTrack.
-      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config, fetchResolvableText: failoverFetch(state, config) },
-    }),
+      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+    });
+  },
 });
