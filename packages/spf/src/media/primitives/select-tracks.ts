@@ -179,10 +179,18 @@ export function pickVideoTrack(presentation: Presentation, config: VideoSelectio
 }
 
 /**
- * Translate a `maxResolution` config value into a pixel-area cap.
- * - `"720p"` -> `720 x (720 × 16) / 9 = 921_600` (16:9 standard area).
- * - bare number -> itself (interpreted as pixel area).
- * - undefined / unrecognized -> `+Infinity` (no cap).
+ * Translates a "max resolution" into a total total pixel area
+ * for comparisons with video track resolutions with an assumed
+ * 16:9 ratio.
+ *
+ * Example: "720p" translates to a 921600 pixel area.
+ *
+ * Because 720 * 1280 = 720 * (720 * (16/9) ) = 921_600
+ *
+ * Accepts:
+ * - string with the format '{height}p'. ('720p')
+ * - bare number, interpreted as pixel area. (921_600)
+ * - anything else will translate to `+Infinity`, meaning no cap specified
  */
 export function maxResolutionToPixelArea(value: string | number | undefined): number {
   if (value === undefined || value === null) return Number.POSITIVE_INFINITY;
