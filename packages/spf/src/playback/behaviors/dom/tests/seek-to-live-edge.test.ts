@@ -94,6 +94,23 @@ describe('seekToLiveEdge', () => {
     cleanup();
   });
 
+  it('no-ops for a complete (endList) playlist — VoD / ended live', () => {
+    const ms = fakeMediaSource();
+    const el = { currentTime: 0 } as HTMLMediaElement;
+
+    const presentation = makePresentation();
+    // Mark the selected video track's playlist complete.
+    const video = presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack;
+    video.metadata = { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, targetDuration: 2, endList: true } };
+
+    const cleanup = run({ presentation, trackId: 'v-1', mediaElement: el, mediaSource: ms });
+
+    expect(ms.setLiveSeekableRange).not.toHaveBeenCalled();
+    expect(el.currentTime).toBe(0);
+
+    cleanup();
+  });
+
   it('no-ops without a resolved presentation or selected track', () => {
     const ms = fakeMediaSource();
     const el = { currentTime: 0 } as HTMLMediaElement;

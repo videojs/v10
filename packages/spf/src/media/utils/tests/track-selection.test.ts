@@ -1,6 +1,16 @@
 import { describe, expect, it } from 'vitest';
-import type { AudioTrack, Presentation, VideoTrack } from '../../types';
-import { getResolvedSelectedTrackDuration, type TrackSelectionState } from '../track-selection';
+import { type AudioTrack, MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type VideoTrack } from '../../types';
+import {
+  getResolvedSelectedTrackDuration,
+  resolveSelectedTrackDuration,
+  type TrackSelectionState,
+} from '../track-selection';
+
+const withCompleteness = <T extends VideoTrack | AudioTrack>(track: T, endList: boolean): T =>
+  ({
+    ...track,
+    metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration: 10, mediaSequence: 0, endList } },
+  }) as T;
 
 function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]; duration?: number }): Presentation {
   const selectionSets = [];
@@ -130,5 +140,42 @@ describe('getResolvedSelectedTrackDuration', () => {
 
   it('returns undefined when there is no presentation', () => {
     expect(getResolvedSelectedTrackDuration({})).toBeUndefined();
+  });
+});
+
+describe('resolveSelectedTrackDuration', () => {
+  it('returns the finite duration for a complete (endList) track', () => {
+    const state: TrackSelectionState = {
+      presentation: createPresentation({ video: [withCompleteness(resolvedVideoTrack({ duration: 120.5 }), true)] }),
+      selectedVideoTrackId: 'video-1',
+    };
+    expect(resolveSelectedTrackDuration(state)).toBe(120.5);
+  });
+
+  it('returns Infinity for an incomplete (no endList) track — still growing / live', () => {
+    const state: TrackSelectionState = {
+      presentation: createPresentation({ video: [withCompleteness(resolvedVideoTrack({ duration: 30 }), false)] }),
+      selectedVideoTrackId: 'video-1',
+    };
+    expect(resolveSelectedTrackDuration(state)).toBe(Number.POSITIVE_INFINITY);
+  });
+
+  it('falls back to audio completeness when only audio is selected', () => {
+    const state: TrackSelectionState = {
+      presentation: createPresentation({ audio: [withCompleteness(resolvedAudioTrack({ duration: 90.25 }), true)] }),
+      selectedAudioTrackId: 'audio-1',
+    };
+    expect(resolveSelectedTrackDuration(state)).toBe(90.25);
+  });
+
+  it('returns undefined when the selected track is not yet resolved', () => {
+    const state: TrackSelectionState = {
+      presentation: {
+        url: 'http://example.com/playlist.m3u8',
+        selectionSets: [{ type: 'video', switchingSets: [{ tracks: [{ id: 'video-1', type: 'video' }] }] }],
+      } as any,
+      selectedVideoTrackId: 'video-1',
+    };
+    expect(resolveSelectedTrackDuration(state)).toBeUndefined();
   });
 });

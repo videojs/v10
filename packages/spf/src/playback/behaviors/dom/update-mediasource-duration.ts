@@ -4,14 +4,14 @@
  *
  * Two paths, by whether the presentation is live:
  *
- * - **Live** (`presentation.duration === Infinity`): write `Infinity` ahead of
- *   the first append (no buffered clamp needed; `Infinity` ≥ any range), which
- *   would otherwise pin `duration` to the buffered (live-edge) end — and once
- *   the window slides past that, further appends are rejected. Written
- *   synchronously when the MediaSource is already open; otherwise deferred to
- *   the next `sourceopen` (the presentation can resolve to `Infinity` before
- *   `setupMediaSource` opens the MediaSource, so a synchronous-only write would
- *   miss the window).
+ * - **Live** (`presentation.duration === Infinity`): write `Infinity` once the
+ *   MediaSource is open and no SourceBuffer is mid-append. No buffered clamp is
+ *   needed (`Infinity` ≥ any range) and — unlike the finite case — it needn't
+ *   precede the first append: `Infinity` overrides whatever finite live-edge
+ *   value an append may have pinned (a finite duration would otherwise stall
+ *   the stream once the window slides past it). The wait-for-idle is required
+ *   because the MSE spec forbids setting `duration` while a buffer is
+ *   `updating`; both waits resolve immediately when already open / idle.
  *
  * - **VoD** (finite): the value is written once, after `mediaSource` is open and
  *   all SourceBuffers are idle, clamped to be ≥ the highest buffered range (MSE
@@ -107,21 +107,22 @@ function updateMediaSourceDurationSetup({
           // continuously, so the buffers are rarely all idle).
           if (presentation.duration === Number.POSITIVE_INFINITY) {
             if (mediaSource.duration === Number.POSITIVE_INFINITY) return;
-            // Open already → write synchronously (fastest, gets ahead of appends).
-            if (mediaSource.readyState === 'open') {
-              mediaSource.duration = Number.POSITIVE_INFINITY;
-              return;
-            }
-            // Not open yet → wait for `sourceopen`, then write. The presentation
-            // can resolve to `Infinity` before `setupMediaSource` opens the
-            // MediaSource; returning here without waiting (as this once did)
-            // would miss the write entirely and let the first append pin a
-            // finite duration. The continuation still runs before the
-            // network-delayed first append; if an append did land first,
-            // `Infinity` ≥ its range so the write is still valid.
+            // Live: write Infinity once the MediaSource is open and no buffer is
+            // mid-append. Unlike the finite VoD case, Infinity needn't *precede*
+            // the first append — Infinity ≥ any buffered range, so it overrides
+            // whatever finite live-edge value an append may have pinned. The
+            // wait-for-idle is required, not just nice: the MSE spec forbids
+            // setting `duration` while a SourceBuffer is `updating`, and a
+            // synchronous write that races an in-flight append throws (and would
+            // leave the stream pinned to a finite duration, stalling once the
+            // window slides past it). `waitForMediaSourceOpen` /
+            // `waitForSourceBuffersReady` resolve immediately when already
+            // open / idle, so the common case still writes promptly.
             const controller = new AbortController();
             void (async () => {
               await waitForMediaSourceOpen(mediaSource, controller.signal);
+              if (controller.signal.aborted || mediaSource.readyState !== 'open') return;
+              await waitForSourceBuffersReady(mediaSource.sourceBuffers, controller.signal);
               if (controller.signal.aborted || mediaSource.readyState !== 'open') return;
               if (mediaSource.duration !== Number.POSITIVE_INFINITY) {
                 mediaSource.duration = Number.POSITIVE_INFINITY;

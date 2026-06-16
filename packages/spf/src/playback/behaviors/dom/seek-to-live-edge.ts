@@ -74,6 +74,11 @@ function seekToLiveEdgeSetup({
     const track = findTrack(presentation, 'video', trackId);
     if (!track || !isResolvedTrack(track) || track.segments.length === 0) return;
 
+    // Complete playlist (VoD, or live that has ended) → no live edge to seek to.
+    // This is the liveness guard that keeps the behavior inert in the unified
+    // engine: a VoD source never declares a live seekable range or seeks.
+    if (getMediaPlaylistMetadata(track)?.endList) return;
+
     const { segments } = track;
     const windowStart = segments[0]!.startTime;
     const last = segments[segments.length - 1]!;

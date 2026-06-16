@@ -18,12 +18,13 @@ import {
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
-import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
+import { resolveSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
+import { anchorLiveTracks } from '../../behaviors/anchor-live-tracks';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
@@ -31,6 +32,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
@@ -40,6 +42,11 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
+import {
+  scheduleAudioTrackReload,
+  scheduleTextTrackReload,
+  scheduleVideoTrackReload,
+} from '../../behaviors/schedule-track-reload';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
@@ -172,14 +179,20 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    */
   resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
   /**
-   * Resolver for `presentation.duration`. Defaults to picking the first
-   * resolved selected track's duration (video preferred, audio fallback) —
-   * appropriate for VoD and audio-only. Live engines should supply a
-   * resolver that returns `Number.POSITIVE_INFINITY` once the presentation
-   * is established as live; downstream `updateMediaSourceDuration` propagates
-   * that value to `mediaSource.duration` per the MSE spec.
+   * Resolver for `presentation.duration`. Defaults to
+   * `resolveSelectedTrackDuration`, which handles both VoD and live: the first
+   * resolved selected track's duration when its playlist is complete
+   * (`#EXT-X-ENDLIST`), else `Number.POSITIVE_INFINITY` (still growing → live).
+   * Downstream `updateMediaSourceDuration` propagates the value to
+   * `mediaSource.duration` per the MSE spec. Override to force a value.
    */
   resolveDuration?: PresentationDurationResolver;
+  /**
+   * Sequence number assumed to be the stream origin (time 0) for the live
+   * timeline anchor (`anchorLiveTracks`). Default 0. Only meaningful for live
+   * sources; ignored for VoD (the anchor is a no-op without `#EXT-X-PROGRAM-DATE-TIME`).
+   */
+  startSequence?: number;
   /**
    * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
    * multivariant-playlist parser; supply your own for alternate format
@@ -301,7 +314,7 @@ export function createSimpleHlsEngine(
     ...config,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
-    resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
+    resolveDuration: config.resolveDuration ?? resolveSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
@@ -337,12 +350,24 @@ export function createSimpleHlsEngine(
 
       // Resolve selected tracks (fetch media playlists). Composed before the
       // switch* slot owners; selection is reactive, so a resolve* re-fires once
-      // its switch* sets the id (same convergence for all three types).
+      // its switch* sets the id (same convergence for all three types). Also the
+      // live loader: re-fetches when its reload epoch advances (below).
       resolveVideoTrack,
       resolveAudioTrack,
       resolveTextTrack,
 
-      // Presentation duration
+      // Live refetch policy: bump each type's reload epoch on a target-duration
+      // cadence until `#EXT-X-ENDLIST`. Inert for VoD (a complete playlist never
+      // reloads), so these compose unconditionally.
+      scheduleVideoTrackReload,
+      scheduleAudioTrackReload,
+      scheduleTextTrackReload,
+
+      // Re-base selected live tracks' timelines to the estimated stream origin
+      // (segment.startTime ≈ native PTS). No-op for VoD (no PDT / shift 0).
+      anchorLiveTracks,
+
+      // Presentation duration (finite for complete playlists, Infinity for live)
       calculatePresentationDuration,
 
       // MSE setup. Video cluster is registered first so that, when both
@@ -372,6 +397,10 @@ export function createSimpleHlsEngine(
       // Segment loading
       loadVideoSegments,
       loadAudioSegments,
+
+      // Live: declare the seekable window and seek the playhead to the live
+      // edge once segments land. No-op for complete playlists (VoD / ended).
+      seekToLiveEdge,
 
       // End of stream coordination
       endOfStream,

@@ -192,6 +192,31 @@ describe('updateMediaSourceDuration', () => {
     reactor.destroy();
   });
 
+  it('writes Infinity for live only once a mid-append buffer goes idle', async () => {
+    // Regression: a synchronous Infinity write that races an in-flight append
+    // throws (MSE forbids setting duration while a buffer is updating) and was
+    // swallowed, leaving the live stream pinned to a finite duration. The write
+    // must defer to a non-updating instant.
+    const { state, context, reactor } = setupUpdateMediaSourceDuration();
+
+    const { buffer: mockBuffer, finishUpdating } = makeUpdatingSourceBuffer();
+    const mockMediaSource = makeMediaSource({ duration: 30, sourceBuffers: [mockBuffer] });
+    context.mediaSource.set(mockMediaSource);
+    state.presentation.set({ duration: Number.POSITIVE_INFINITY } as Presentation);
+
+    // Buffer still updating — must not have written yet (and must not throw).
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMediaSource.duration).toBe(30);
+
+    // Append finishes — Infinity is written, overriding the finite value.
+    finishUpdating();
+    await vi.waitFor(() => {
+      expect(mockMediaSource.duration).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    reactor.destroy();
+  });
+
   it('extends duration to match buffered range if needed', async () => {
     const { state, context, reactor } = setupUpdateMediaSourceDuration();
 
