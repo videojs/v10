@@ -9,9 +9,9 @@ import {
   type TextTrackLike,
 } from '../../core/media/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
-import { getComponents, getProp, setProp } from './utils';
+import { callProp, getComponents, getProp, setProp } from './utils';
 
-export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';
+export { addComponent, callProp, getComponents, getOwner, getProp, setProp } from './utils';
 
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;
@@ -182,12 +182,11 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   play() {
-    const play = getProp(this, 'play');
-    return play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
+    return callProp(this, 'play') ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
   }
 
   pause() {
-    getProp(this, 'pause')?.();
+    callProp(this, 'pause');
   }
 
   get autoplay() {
@@ -242,11 +241,11 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   load() {
-    return getProp(this, 'load')?.();
+    return callProp(this, 'load');
   }
 
   canPlayType(type: string) {
-    return getProp(this, 'canPlayType')?.(type) ?? '';
+    return callProp(this, 'canPlayType', type) ?? '';
   }
 
   get volume() {
@@ -305,7 +304,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
-    return getProp(this, 'addTextTrack')?.(kind, label, language) as TextTrackLike;
+    return callProp(this, 'addTextTrack', kind, label, language) as TextTrackLike;
   }
 
   get remote() {
