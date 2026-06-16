@@ -134,6 +134,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-pip', sidebarLabel: 'Picture-in-picture' },
       { slug: 'reference/feature-playback' },
       { slug: 'reference/feature-playback-rate' },
+      { slug: 'reference/feature-quality' },
       { slug: 'reference/feature-remote-playback' },
       { slug: 'reference/feature-source' },
       { slug: 'reference/feature-stream-type' },

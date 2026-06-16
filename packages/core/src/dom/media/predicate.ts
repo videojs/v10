@@ -11,6 +11,7 @@ import type {
   MediaSourceCapability,
   MediaStreamTypeCapability,
   MediaTextTrackCapability,
+  MediaVideoRenditionCapability,
   MediaVolumeCapability,
 } from '../../core/media/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
@@ -75,6 +76,12 @@ export function isMediaTextTrackCapable(value: unknown): value is MediaTextTrack
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
   return !isUndefined(media.textTracks) && media.textTracks !== EMPTY_TEXT_TRACKS;
+}
+
+export function isMediaVideoRenditionCapable(value: unknown): value is MediaVideoRenditionCapability {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.videoRenditions);
 }
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {

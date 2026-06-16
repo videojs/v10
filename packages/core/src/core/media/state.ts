@@ -230,6 +230,23 @@ export interface MediaPlaybackRateState {
   setPlaybackRate(rate: number): void;
 }
 
+export interface MediaVideoRendition {
+  id?: string;
+  width?: number;
+  height?: number;
+  bitrate?: number;
+  frameRate?: number;
+  codec?: string;
+  selected: boolean;
+}
+
+export interface MediaQualityState {
+  /** Video renditions available for manual quality selection. */
+  videoRenditionList: MediaVideoRendition[];
+  /** Select a video rendition by menu value, or automatic ABR with `"auto"`. */
+  selectVideoRendition(value: string): void;
+}
+
 /**
  * A text cue.
  *
