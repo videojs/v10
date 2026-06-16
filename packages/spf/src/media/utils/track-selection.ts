@@ -8,7 +8,7 @@ import type {
   TrackType,
   VideoTrack,
 } from '../types';
-import { getMediaPlaylistMetadata, isResolvedTrack } from '../types';
+import { isResolvedTrack } from '../types';
 
 /**
  * State shape for track selection.
@@ -68,6 +68,12 @@ export function getSelectedTrack<T extends TrackType>(
  * video over audio. A track is "resolved" once its media playlist has been
  * parsed (per {@link isResolvedTrack}). Returns `undefined` if neither
  * selected track is resolved.
+ *
+ * Handles VoD and live uniformly: `parseMediaPlaylist` sets `Track.duration`
+ * to the finite EXTINF sum for a complete playlist and to `Infinity` while it
+ * can still grow (live), so this returns the right MSE duration for both
+ * without re-deriving completeness here. `Track.duration` is the single source
+ * of truth.
  */
 export function getResolvedSelectedTrackDuration(state: TrackSelectionState): number | undefined {
   if (state.selectedVideoTrackId) {
@@ -77,34 +83,6 @@ export function getResolvedSelectedTrackDuration(state: TrackSelectionState): nu
   if (state.selectedAudioTrackId) {
     const audio = getSelectedTrack(state, 'audio');
     if (audio && isResolvedTrack(audio)) return audio.duration;
-  }
-  return undefined;
-}
-
-/**
- * Completeness-aware duration resolver — the unified VoD + live default for
- * `calculatePresentationDuration`. Like {@link getResolvedSelectedTrackDuration}
- * it picks the first resolved selected track (video preferred, audio fallback),
- * but branches on the playlist's completeness: a complete playlist
- * (`#EXT-X-ENDLIST`) yields its finite `duration`; an incomplete one is still
- * growing, so it yields `Infinity` (the MSE live value). `undefined` while no
- * selected track is resolved yet.
- *
- * Keys off completeness, *not* `streamType`: `deriveStreamType` marks any
- * playlist lacking `#EXT-X-PLAYLIST-TYPE:VOD` as `'live'`, which would wrongly
- * force `Infinity` on a plain VoD stream that only carries `#EXT-X-ENDLIST`.
- * See live-presentation-modeling.md (category [2b] completeness).
- */
-export function resolveSelectedTrackDuration(state: TrackSelectionState): number | undefined {
-  const durationByCompleteness = (track: VideoTrack | AudioTrack) =>
-    getMediaPlaylistMetadata(track)?.endList ? track.duration : Number.POSITIVE_INFINITY;
-  if (state.selectedVideoTrackId) {
-    const video = getSelectedTrack(state, 'video');
-    if (video && isResolvedTrack(video)) return durationByCompleteness(video);
-  }
-  if (state.selectedAudioTrackId) {
-    const audio = getSelectedTrack(state, 'audio');
-    if (audio && isResolvedTrack(audio)) return durationByCompleteness(audio);
   }
   return undefined;
 }

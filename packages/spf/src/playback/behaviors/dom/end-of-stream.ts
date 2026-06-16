@@ -1,11 +1,12 @@
 /**
  * **Drive each `open → ended` transition of the MediaSource.** Calls
  * `MediaSource.endOfStream()` once every active buffer actor's
- * currently-loading track is *complete* (`#EXT-X-ENDLIST`), its temporally
- * last segments are fully appended, and the user has reached them — letting
- * the browser finalize duration and fire `ended` on the media element. The
- * completeness gate keeps it inert for ongoing live, whose "last segment" is
- * only the rolling edge; a live stream opts in by appending `#EXT-X-ENDLIST`.
+ * currently-loading track is *complete* (finite `Track.duration` — the parser's
+ * completeness signal), its temporally last segments are fully appended, and
+ * the user has reached them — letting the browser finalize duration and fire
+ * `ended` on the media element. The completeness gate keeps it inert for
+ * ongoing live (`Track.duration === Infinity`), whose "last segment" is only
+ * the rolling edge; a live stream opts in when its duration turns finite.
  *
  * Re-fires on every subsequent `open → ended → open` cycle. Per the MSE
  * spec, `appendBuffer()` after `endOfStream()` transitions the MediaSource
@@ -101,7 +102,7 @@ import { getMaxBufferedEnd, waitForSourceBuffersReady } from '../../../media/dom
 import { isLastSegmentAppended } from '../../../media/dom/mse/end-of-stream';
 import { onMediaSourceReadyStateChange } from '../../../media/dom/mse/mediasource-setup';
 import type { MaybeResolvedPresentation } from '../../../media/types';
-import { getMediaPlaylistMetadata, isResolvedTrack } from '../../../media/types';
+import { isResolvedTrack } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 
@@ -146,13 +147,15 @@ function deriveState(
 
     const track = findTrackById(presentation, initTrackId);
     if (!track || !isResolvedTrack(track)) return 'preconditions-unmet';
-    // Only a complete playlist (#EXT-X-ENDLIST) has a true last segment. For an
-    // ongoing live playlist the last segment is just the current rolling edge,
-    // so end-of-stream must not fire — calling `endOfStream()` there would pin a
-    // finite (live-edge) duration and end the stream, only to be reopened by the
-    // next reload's appends and re-fire on a loop. When a live stream genuinely
-    // ends it appends #EXT-X-ENDLIST, which opens this guard.
-    if (!getMediaPlaylistMetadata(track)?.endList) return 'preconditions-unmet';
+    // Only a complete playlist has a true last segment. `Track.duration` is the
+    // parser's completeness signal — finite once `#EXT-X-ENDLIST` (or
+    // PLAYLIST-TYPE:VOD) is seen, `Infinity` while the playlist can still grow
+    // (live). For ongoing live the last segment is just the rolling edge, so
+    // end-of-stream must not fire — `endOfStream()` there would pin a finite
+    // (live-edge) duration and end the stream, only for the next reload's
+    // appends to reopen it and re-fire on a loop. A live stream that genuinely
+    // ends turns `Track.duration` finite, opening this guard.
+    if (!Number.isFinite(track.duration)) return 'preconditions-unmet';
     if (!isLastSegmentAppended(track.segments, appended)) return 'preconditions-unmet';
 
     if (track.segments.length > 0) {

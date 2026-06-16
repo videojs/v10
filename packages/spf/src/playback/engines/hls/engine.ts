@@ -18,7 +18,7 @@ import {
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
-import { resolveSelectedTrackDuration } from '../../../media/utils/track-selection';
+import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -180,11 +180,12 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
   resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
   /**
    * Resolver for `presentation.duration`. Defaults to
-   * `resolveSelectedTrackDuration`, which handles both VoD and live: the first
-   * resolved selected track's duration when its playlist is complete
-   * (`#EXT-X-ENDLIST`), else `Number.POSITIVE_INFINITY` (still growing → live).
-   * Downstream `updateMediaSourceDuration` propagates the value to
-   * `mediaSource.duration` per the MSE spec. Override to force a value.
+   * `getResolvedSelectedTrackDuration` (the first resolved selected track's
+   * `duration`), which handles both VoD and live: the parser sets
+   * `Track.duration` to a finite EXTINF sum for a complete playlist and to
+   * `Number.POSITIVE_INFINITY` while it can still grow (live). Downstream
+   * `updateMediaSourceDuration` propagates the value to `mediaSource.duration`
+   * per the MSE spec. Override to force a value.
    */
   resolveDuration?: PresentationDurationResolver;
   /**
@@ -314,7 +315,7 @@ export function createSimpleHlsEngine(
     ...config,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
-    resolveDuration: config.resolveDuration ?? resolveSelectedTrackDuration,
+    resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,

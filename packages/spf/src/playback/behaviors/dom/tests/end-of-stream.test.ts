@@ -1,13 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import {
-  type MaybeResolvedPresentation,
-  MEDIA_PLAYLIST_METADATA_KEY,
-  type Presentation,
-  type Segment,
-  type VideoTrack,
-} from '../../../../media/types';
+import type { MaybeResolvedPresentation, Presentation, Segment, VideoTrack } from '../../../../media/types';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
 import { type EndOfStreamContext, type EndOfStreamState, endOfStream } from '../end-of-stream';
 
@@ -116,7 +110,9 @@ function makeSegments(count: number): Segment[] {
   }));
 }
 
-function makeResolvedVideoTrack(segmentCount: number, id = 'video-1', endList = true): VideoTrack {
+// `complete` toggles the parser's completeness signal: a complete playlist has
+// a finite Track.duration (EXTINF sum), an incomplete (live) one is Infinity.
+function makeResolvedVideoTrack(segmentCount: number, id = 'video-1', complete = true): VideoTrack {
   return {
     id,
     type: 'video' as const,
@@ -126,9 +122,8 @@ function makeResolvedVideoTrack(segmentCount: number, id = 'video-1', endList = 
     initialization: { id: 'init', url: 'https://example.com/init.mp4' },
     segments: makeSegments(segmentCount),
     startTime: 0,
-    duration: segmentCount * 2.5,
+    duration: complete ? segmentCount * 2.5 : Number.POSITIVE_INFINITY,
     codecs: 'avc1.64001f',
-    metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 0, targetDuration: 3, endList } },
   } as unknown as VideoTrack;
 }
 
@@ -458,7 +453,7 @@ describe('endOfStream', () => {
       url: 'https://example.com/audio.m3u8',
       mimeType: 'audio/mp4',
       segments: makeSegments(4).map((s) => ({ ...s, id: `audio-${s.id}` })),
-      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 0, targetDuration: 3, endList: true } },
+      duration: 10,
     } as unknown as VideoTrack;
     const presentation = {
       id: 'pres-1',

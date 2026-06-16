@@ -94,14 +94,14 @@ describe('seekToLiveEdge', () => {
     cleanup();
   });
 
-  it('no-ops for a complete (endList) playlist — VoD / ended live', () => {
+  it('no-ops for a complete (finite-duration) playlist — VoD / ended live', () => {
     const ms = fakeMediaSource();
     const el = { currentTime: 0 } as HTMLMediaElement;
 
     const presentation = makePresentation();
-    // Mark the selected video track's playlist complete.
+    // Complete playlist → parser sets a finite Track.duration.
     const video = presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack;
-    video.metadata = { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, targetDuration: 2, endList: true } };
+    video.duration = 110;
 
     const cleanup = run({ presentation, trackId: 'v-1', mediaElement: el, mediaSource: ms });
 
