@@ -220,7 +220,13 @@ export const resolveVideoTrack = defineBehavior({
   }) =>
     setupTrackResolution({
       state,
-      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, fetchResolvableText: failoverFetch(state, config) },
+      // Key order is load-bearing. The two spreads layer (per-type defaults
+      // first, then engine `config` on top — mirrors the other per-type
+      // variants, see track-types.ts), but `fetchResolvableText` is a concrete
+      // value placed AFTER both spreads so neither can clobber it. Unlike
+      // segments, playlists expose no overridable per-type fetch, so this
+      // failover-decorated fetch must always win.
+      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config, fetchResolvableText: failoverFetch(state, config) },
     }),
 });
 
@@ -240,7 +246,8 @@ export const resolveAudioTrack = defineBehavior({
   }) =>
     setupTrackResolution({
       state,
-      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, fetchResolvableText: failoverFetch(state, config) },
+      // Key order is load-bearing — see resolveVideoTrack.
+      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config, fetchResolvableText: failoverFetch(state, config) },
     }),
 });
 
@@ -260,6 +267,7 @@ export const resolveTextTrack = defineBehavior({
   }) =>
     setupTrackResolution({
       state,
-      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, fetchResolvableText: failoverFetch(state, config) },
+      // Key order is load-bearing — see resolveVideoTrack.
+      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config, fetchResolvableText: failoverFetch(state, config) },
     }),
 });
