@@ -1,0 +1,11 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "composite": true,
+    "lib": ["ES2022"],
+    "types": ["node"],
+    "declarationDir": "types"
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["src/tests/**"]
+}

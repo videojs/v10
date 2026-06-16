@@ -1,0 +1,74 @@
+{
+  "name": "@videojs/compiler",
+  "type": "module",
+  "description": "Compiler for Video.js",
+  "license": "Apache-2.0",
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/compiler"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/jsx-runtime.d.ts",
+      "default": "./dist/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/jsx-dev-runtime.d.ts",
+      "default": "./dist/jsx-dev-runtime.js"
+    },
+    "./vite": {
+      "types": "./dist/plugins/vite.d.ts",
+      "default": "./dist/plugins/vite.js"
+    },
+    "./matchers": {
+      "types": "./dist/matchers/index.d.ts",
+      "default": "./dist/matchers/index.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "default": "./dist/styles/index.js"
+    },
+    "./tailwind": {
+      "types": "./dist/tailwind/index.d.ts",
+      "default": "./dist/tailwind/index.js"
+    },
+    "./tsconfig.preset.json": "./tsconfig.preset.json"
+  },
+  "bin": {
+    "vjs": "./dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "tsconfig.preset.json"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+  },
+  "dependencies": {
+    "@videojs/utils": "workspace:*",
+    "lightningcss": "^1.32.0",
+    "tailwindcss": "^4.2.1",
+    "typescript": "^6.0.2"
+  },
+  "devDependencies": {
+    "@videojs/core": "workspace:*",
+    "tsdown": "^0.21.4",
+    "vitest": "^4.1.0"
+  }
+}
