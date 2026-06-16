@@ -1172,8 +1172,9 @@ describe('Media element pipeline (end-to-end)', () => {
 
     it('includes events derived from VideoEvents capability contracts', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      // Events are extracted from VideoEvents in types.ts, which extends
-      // all capability event interfaces including TextTrackListEvents
+      // Events are extracted from VideoEvents in types.ts, which extends all
+      // capability event interfaces including TextTrackListEvents and
+      // MediaStreamTypeEvents (the latter contributes streamtypechange).
       expect(ref.events.native).toEqual([
         'play',
         'playing',
@@ -1198,6 +1199,7 @@ describe('Media element pipeline (end-to-end)', () => {
         'removetrack',
         'changetrack',
         'trackmodechange',
+        'streamtypechange',
       ]);
       // SimpleHost dispatches no events of its own.
       expect(ref.events.elementSpecific).toEqual([]);
@@ -1485,10 +1487,25 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.src.description).toBe('Source URL of the media.');
     });
 
-    it('extracts element-specific events from mixin dispatchEvent calls', () => {
+    it('documents a @fires event that is also in the native contract', () => {
+      // streamtypechange is in VideoEvents (via MediaStreamTypeEvents) AND carries
+      // a @fires tag on the mixin — mirrors HlsMedia. It must appear in BOTH lists:
+      // native (it's part of the typed contract) and element-specific (it's tagged
+      // for a description). This guards against contract membership suppressing it.
       const ref = findElement('MixinVideo')!.reference;
-      // No @fires tag for foochange — the event is listed without a description.
-      expect(ref.events.elementSpecific).toContainEqual({ name: 'foochange' });
+      expect(ref.events.native).toContain('streamtypechange');
+      expect(ref.events.elementSpecific).toContainEqual({
+        name: 'streamtypechange',
+        description: 'Fired when the detected stream type changes.',
+      });
+    });
+
+    it('does not document a dispatched-but-untagged event', () => {
+      // foochange is dispatched via this.dispatchEvent(new Event('foochange')) but
+      // has no @fires tag, so it is not surfaced — documentation requires a tag.
+      const ref = findElement('MixinVideo')!.reference;
+      const elementSpecificNames = ref.events.elementSpecific.map((e) => e.name);
+      expect(elementSpecificNames).not.toContain('foochange');
     });
 
     it('separates native events from element-specific events', () => {
@@ -1515,9 +1532,9 @@ describe('Media element pipeline (end-to-end)', () => {
   // @videojs/spf/hls.
   //
   // Also exercises:
-  //   - @fires-declared event descriptions (audiomodechange has a matching
-  //     dispatch site; manifestparsed is @fires-only — its dispatch happens
-  //     in helper files the builder never scans)
+  //   - @fires-declared event descriptions for events outside the native
+  //     contract (audiomodechange also has a dispatch site, manifestparsed does
+  //     not — the @fires tag alone surfaces both)
   //   - Defaults co-located with the mixin (spfAudioOnlyMediaDefaultProps)
   //   - AudioEvents capability contract and audio template slots
 
@@ -1554,7 +1571,7 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(ref.events.native).not.toContain('addtrack');
     });
 
-    it('pairs @fires descriptions with dispatched events', () => {
+    it('surfaces a @fires event with its tag description', () => {
       const ref = findElement('SpfAudio')!.reference;
       expect(ref.events.elementSpecific).toContainEqual({
         name: 'audiomodechange',

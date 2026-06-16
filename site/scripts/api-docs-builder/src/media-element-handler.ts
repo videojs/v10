@@ -1363,25 +1363,19 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     const slots = source.mediaType === 'video' ? videoSlots : audioSlots;
     const native = source.mediaType === 'video' ? videoEvents : audioEvents;
 
+    // Walk the host's mixin/parent chain collecting `@fires` descriptions. An
+    // event is documented as element-specific iff it carries a `@fires` tag —
+    // that tag is the authored signal that an event needs a description. Standard
+    // DOM events are never tagged, and a tagged event stays documented even when
+    // it also lives in the typed media events contract (e.g. streamtypechange).
     const fires = new Map<string, string>();
-    const dispatched = extractDispatchedEvents(
-      source.hostFilePath,
-      source.hostClassName,
-      compilerOptions,
-      new Set(),
-      new Set(),
-      fires
-    );
-    const nativeSet = new Set(native);
-    const elementSpecific: MediaEventDef[] = [...new Set([...dispatched, ...fires.keys()])]
-      .filter((e) => !nativeSet.has(e))
-      .sort()
-      .map((name) => {
-        const def: MediaEventDef = { name };
-        const description = fires.get(name);
-        if (description) def.description = description;
-        return def;
-      });
+    extractDispatchedEvents(source.hostFilePath, source.hostClassName, compilerOptions, new Set(), new Set(), fires);
+    const elementSpecific: MediaEventDef[] = [...fires.keys()].sort().map((name) => {
+      const def: MediaEventDef = { name };
+      const description = fires.get(name);
+      if (description) def.description = description;
+      return def;
+    });
 
     const reference: MediaElementReference = {
       name: source.className,

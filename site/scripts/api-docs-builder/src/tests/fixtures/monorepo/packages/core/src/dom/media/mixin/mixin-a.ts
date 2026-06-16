@@ -4,7 +4,11 @@
  * Exercises:
  *   - Function-declaration mixin walking
  *   - Property addition with JSDoc
- *   - Element-specific event extraction via this.dispatchEvent(new Event('foochange'))
+ *   - A dispatched-but-untagged event (foochange) is NOT documented — only
+ *     `@fires`-tagged events surface in the element-specific list.
+ *   - A `@fires` event that is ALSO part of the native contract (streamtypechange,
+ *     in VideoEvents via MediaStreamTypeEvents) — mirrors HlsMedia. It must surface
+ *     in the described element-specific list even though it is a native event.
  *   - Defaults declared in the mixin's own file (mirrors muxDataMediaDefaultProps)
  */
 type Constructor<T = object> = new (...args: any[]) => T;
@@ -13,6 +17,9 @@ export const mixinAFooDefaultProps = {
   foo: '',
 };
 
+/**
+ * @fires streamtypechange - Fired when the detected stream type changes.
+ */
 export function MixinAFooMixin<Base extends Constructor>(BaseClass: Base) {
   class MixinAFoo extends BaseClass {
     #foo: string = '';
