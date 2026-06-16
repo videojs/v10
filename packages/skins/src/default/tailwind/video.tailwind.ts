@@ -4,6 +4,7 @@ import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { inputFeedback as baseInputFeedback } from './components/input-feedback';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
@@ -173,6 +174,18 @@ export const popup = {
 };
 
 /* ==========================================================================
+   Menu
+   ========================================================================== */
+
+const menuOffsets = '[--media-popover-side-offset:0.5rem] [--media-popover-boundary-offset:0.5rem]';
+
+export const menu = {
+  ...baseMenu,
+  root: cn(baseMenu.root, menuOffsets),
+  settings: cn(baseMenu.settings, menuOffsets),
+};
+
+/* ==========================================================================
    Buffering (with video surface)
    ========================================================================== */
 
@@ -209,10 +222,10 @@ export const inputFeedback = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { menu } from './components/menu';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

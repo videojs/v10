@@ -1,5 +1,6 @@
 import { renderIcon } from '@videojs/icons/render';
 import {
+  badge,
   bufferingIndicator,
   button,
   buttonGroupEnd,
@@ -130,7 +131,16 @@ function getTemplateHTML() {
             <media-menu id="settings-menu" side="top" align="center" class="${menu.settings}">
               <media-menu-view class="${menu.rootView}">
                 <div class="${menu.group}">
+                  <media-menu-item commandfor="settings-quality-menu" type="quality" data-setting="quality" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    ${renderIcon('switches', { class: icon })}
+                    <span>Quality</span>
+                    <span class="${menu.hint}">
+                      <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: cn(icon, menu.chevron) })}
+                    </span>
+                  </media-menu-item>
                   <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    ${renderIcon('speed', { class: icon })}
                     <span>Speed</span>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
@@ -138,6 +148,7 @@ function getTemplateHTML() {
                     </span>
                   </media-menu-item>
                   <media-menu-item commandfor="settings-captions-menu" type="captions" data-setting="captions" class="${cn(menu.item, 'media-menu__item--submenu')}">
+                    ${renderIcon('captions-off', { class: icon })}
                     <span>Captions</span>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
@@ -147,11 +158,32 @@ function getTemplateHTML() {
                 </div>
               </media-menu-view>
 
+              <media-menu id="settings-quality-menu" class="${menu.submenuPanel}">
+                <media-menu-back class="${menu.back}">
+                  ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
+                  Quality
+                </media-menu-back>
+                <div class="${menu.separator}"></div>
+                <media-quality-radio-group class="${menu.group}">
+                  <template>
+                    <media-menu-radio-item class="${menu.item}">
+                      <span data-part="label"></span>
+                      <sup data-part="tier" class="${menu.tier}"></sup>
+                      <span data-part="badge" class="${cn(badge, menu.badge)}"></span>
+                      <media-menu-item-indicator force-mount class="${menu.indicator}">
+                        ${renderIcon('check', { class: icon })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-quality-radio-group>
+              </media-menu>
+
               <media-menu id="settings-speed-menu" class="${menu.submenuPanel}">
                 <media-menu-back class="${menu.back}">
                   ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
                   Speed
                 </media-menu-back>
+                <div class="${menu.separator}"></div>
                 <media-playback-rate-radio-group class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">
@@ -169,6 +201,7 @@ function getTemplateHTML() {
                   ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
                   Captions
                 </media-menu-back>
+                <div class="${menu.separator}"></div>
                 <media-captions-radio-group class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">

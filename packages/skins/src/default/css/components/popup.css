@@ -10,8 +10,14 @@
   border: 0;
   filter: blur(0px);
   transition-timing-function: var(--media-popup-transition-timing-function);
-  transition-duration: var(--media-popup-transition-duration);
-  transition-property: scale, opacity, filter;
+  transition-duration:
+    var(--media-popup-transition-duration),
+    var(--media-popup-transition-duration),
+    var(--media-popup-transition-duration) var(--popup-transition-duration,);
+  transition-property:
+    scale,
+    opacity,
+    filter var(--popup-transition-property,);
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -20,8 +26,8 @@
     scale: 0.85;
   }
 
-  &[data-instant] {
-    transition-duration: 0ms;
+  &[data-ending-style] {
+    transition-duration: max(0ms, calc(var(--media-popup-transition-duration) - 50ms));
   }
 
   &[data-side="top"] {

@@ -5,6 +5,7 @@ import type { ReactNode } from 'react';
 
 import { useCaptionsOptions } from '../captions-radio-group/use-captions-options';
 import { usePlaybackRateOptions } from '../playback-rate/use-playback-rate-options';
+import { useQualityOptions } from '../quality/use-quality-options';
 import { MenuItemSettingContextProvider } from './context';
 import type { MenuItemSettingType } from './menu-item-type';
 
@@ -42,9 +43,24 @@ function CaptionsMenuItemSettingProvider({ children }: { children: ReactNode }):
   );
 }
 
+function QualityMenuItemSettingProvider({ children }: { children: ReactNode }): ReactNode {
+  const quality = useQualityOptions();
+  if (!quality) return children;
+
+  const { state, options, value } = quality;
+  const label = options.find((option) => option.value === value)?.label ?? 'Auto';
+
+  return (
+    <MenuItemSettingContextProvider value={{ type: 'quality', label, availability: state.availability }}>
+      {children}
+    </MenuItemSettingContextProvider>
+  );
+}
+
 export function MenuItemSettingProvider({ type, children }: MenuItemSettingProviderProps): ReactNode {
   if (type === 'playback-rate')
     return <PlaybackRateMenuItemSettingProvider>{children}</PlaybackRateMenuItemSettingProvider>;
+  if (type === 'quality') return <QualityMenuItemSettingProvider>{children}</QualityMenuItemSettingProvider>;
   if (type === 'captions') return <CaptionsMenuItemSettingProvider>{children}</CaptionsMenuItemSettingProvider>;
   return children;
 }

@@ -4,12 +4,12 @@ const base = cn(
   // Reset default popover styles
   'm-0 border-0 text-inherit overflow-visible',
   // Animation
-  'transition-[transform,scale,opacity,filter]',
-  'duration-(--media-popup-transition-duration)',
+  'transition-[scale,opacity,filter_var(--popup-transition-property,)]',
+  'duration-[var(--media-popup-transition-duration),var(--media-popup-transition-duration),var(--media-popup-transition-duration)_var(--popup-transition-duration,)]',
   'ease-(--media-popup-transition-timing-function)',
   'data-starting-style:opacity-0 data-starting-style:scale-50 data-starting-style:blur-sm',
   'data-ending-style:opacity-0 data-ending-style:scale-50 data-ending-style:blur-sm',
-  'data-instant:duration-0',
+  'data-ending-style:duration-[max(0ms,calc(var(--media-popup-transition-duration)-50ms))]',
   // Ensure we animate from the correct origin based on the side the popover is on
   'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
   // Safe area between trigger and popup
