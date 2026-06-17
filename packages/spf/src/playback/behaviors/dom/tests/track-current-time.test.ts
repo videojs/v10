@@ -182,6 +182,31 @@ describe('trackCurrentTime', () => {
     cleanup();
   });
 
+  it('resets currentTime on emptied event (src change reuses engine)', async () => {
+    const mediaElement = document.createElement('video');
+    let currentTime = 5.5;
+    Object.defineProperty(mediaElement, 'currentTime', {
+      get: () => currentTime,
+      set: (v: number) => {
+        currentTime = v;
+      },
+      configurable: true,
+    });
+
+    const { state, cleanup } = setupTrackCurrentTime({}, { mediaElement });
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(5.5));
+
+    // Simulate src change on the same element: the media element load
+    // algorithm resets currentTime to 0 and dispatches `emptied`.
+    currentTime = 0;
+    mediaElement.dispatchEvent(new Event('emptied'));
+
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(0));
+
+    cleanup();
+  });
+
   it('updates currentTime on seeking events (seek while paused)', async () => {
     const mediaElement = document.createElement('video');
     Object.defineProperty(mediaElement, 'currentTime', { value: 0, writable: true });
@@ -211,6 +236,7 @@ describe('trackCurrentTime', () => {
     (mediaElement as any).currentTime = 50.0;
     mediaElement.dispatchEvent(new Event('timeupdate'));
     mediaElement.dispatchEvent(new Event('seeking'));
+    mediaElement.dispatchEvent(new Event('emptied'));
     await new Promise((resolve) => setTimeout(resolve, 30));
 
     expect(state.currentTime.get()).toBe(0);

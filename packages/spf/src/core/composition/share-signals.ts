@@ -26,24 +26,25 @@ export interface ShareSignalsConfig<S extends object, C extends object> {
  * intent can be expressed by typing captured refs as `Signal<T>` or
  * `ReadonlySignal<T>` at the call site).
  *
- * Declares no keys of its own (`stateKeys: []`, `contextKeys: []`); the
- * composition's state/context maps come from other behaviors' key
- * declarations. This behavior just observes/forwards whatever signals
- * the composition built.
+ * By default declares no keys; the composition's state/context maps come from
+ * other behaviors. Pass `inputStateKeys` / `inputContextKeys` to *materialize*
+ * consumer-input slots that no other behavior produces — a slot the consumer
+ * writes (e.g. `userAudioTrackSelection`) but only a rule reads. shareSignals
+ * is the consumer boundary, so it's the natural place to bring those slots into
+ * existence; readers then treat them as optional.
  *
- * Uses a `Behavior<>` literal (not `defineBehavior`) so the empty key
- * arrays don't trip the exhaustiveness check — the setup-param state/
- * context shapes here describe what the consumer's callback receives,
- * not keys this behavior needs created.
+ * Uses a `Behavior<>` literal (not `defineBehavior`) so its (possibly empty,
+ * possibly partial) key arrays don't trip the exhaustiveness check — the
+ * setup-param state/context shapes describe what the callback receives (the
+ * full `S` / `C`), not the subset this behavior materializes.
  */
-export function makeShareSignals<S extends object, C extends object>(): Behavior<
-  StateSignals<S>,
-  ContextSignals<C>,
-  ShareSignalsConfig<S, C>
-> {
+export function makeShareSignals<S extends object, C extends object>(
+  inputStateKeys: readonly (keyof S)[] = [],
+  inputContextKeys: readonly (keyof C)[] = []
+): Behavior<StateSignals<S>, ContextSignals<C>, ShareSignalsConfig<S, C>> {
   return {
-    stateKeys: [],
-    contextKeys: [],
+    stateKeys: inputStateKeys,
+    contextKeys: inputContextKeys,
     setup: ({ state, context, config }) => {
       config.onSignalsReady?.({ state, context });
     },

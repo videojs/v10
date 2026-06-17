@@ -1,0 +1,180 @@
+import type { MediaPlaybackRateState, MediaTextTrackState } from '@videojs/core';
+import type { AnyPlayerStore } from '@videojs/core/dom';
+import { ContextProvider } from '@videojs/element/context';
+import { createStore } from '@videojs/store';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+
+import { playerContext } from '../../../player/context';
+import { MediaElement } from '../../media-element';
+import { MenuItemElement } from '../menu-item-element';
+import { MenuItemValueElement } from '../menu-item-value-element';
+
+function defineElement(tagName: string, Base: CustomElementConstructor): void {
+  if (!customElements.get(tagName)) {
+    customElements.define(tagName, Base);
+  }
+}
+
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function waitForAssertion(assertion: () => void): Promise<void> {
+  let error: unknown;
+
+  for (let index = 0; index < 10; index++) {
+    try {
+      assertion();
+      return;
+    } catch (caught) {
+      error = caught;
+      await nextFrame();
+    }
+  }
+
+  throw error;
+}
+
+function createPlaybackRateStore({
+  playbackRates = [0.5, 1, 1.5, 2],
+  playbackRate = 1.5,
+}: {
+  playbackRates?: readonly number[] | undefined;
+  playbackRate?: number | undefined;
+} = {}): AnyPlayerStore {
+  return createStore<unknown>()<MediaPlaybackRateState>({
+    name: 'playbackRate',
+    state: () => ({
+      playbackRates,
+      playbackRate,
+      setPlaybackRate: vi.fn(),
+    }),
+  }) as unknown as AnyPlayerStore;
+}
+
+function createTextTrackStore({
+  textTrackList = [],
+  subtitlesShowing = false,
+  selectSubtitlesTrack = vi.fn(),
+}: {
+  textTrackList?: MediaTextTrackState['textTrackList'] | undefined;
+  subtitlesShowing?: boolean | undefined;
+  selectSubtitlesTrack?: MediaTextTrackState['selectSubtitlesTrack'] | undefined;
+} = {}): AnyPlayerStore {
+  return createStore<unknown>()<MediaTextTrackState>({
+    name: 'textTrack',
+    state: () => ({
+      chaptersCues: [],
+      thumbnailCues: [],
+      thumbnailTrackSrc: null,
+      textTrackList,
+      subtitlesShowing,
+      toggleSubtitles: vi.fn(),
+      selectSubtitlesTrack,
+    }),
+  }) as unknown as AnyPlayerStore;
+}
+
+class TestPlayerProviderElement extends MediaElement {
+  store: AnyPlayerStore = createPlaybackRateStore();
+
+  readonly #provider = new ContextProvider(this, { context: playerContext });
+
+  override connectedCallback(): void {
+    this.#provider.setValue(this.store);
+    super.connectedCallback();
+  }
+
+  setStore(store: AnyPlayerStore): void {
+    this.store = store;
+    this.#provider.setValue(store);
+  }
+}
+
+defineElement(MenuItemElement.tagName, MenuItemElement);
+defineElement(MenuItemValueElement.tagName, MenuItemValueElement);
+defineElement('test-menu-item-value-player', TestPlayerProviderElement);
+
+function setup(
+  store: AnyPlayerStore,
+  type: MenuItemElement['type']
+): {
+  menuItem: MenuItemElement;
+  value: MenuItemValueElement;
+} {
+  const provider = document.createElement('test-menu-item-value-player') as TestPlayerProviderElement;
+  const menuItem = document.createElement(MenuItemElement.tagName) as MenuItemElement;
+  const value = document.createElement(MenuItemValueElement.tagName) as MenuItemValueElement;
+
+  provider.setStore(store);
+  menuItem.type = type;
+  menuItem.commandfor = 'settings-submenu';
+  menuItem.append(value);
+  provider.append(menuItem);
+  document.body.append(provider);
+
+  return { menuItem, value };
+}
+
+describe('MenuItemValueElement', () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
+  });
+
+  it('renders the current playback rate label from menu item context', async () => {
+    const { value } = setup(createPlaybackRateStore({ playbackRate: 1.5 }), 'playback-rate');
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('1.5×');
+    });
+  });
+
+  it('renders Off when captions are disabled', async () => {
+    const { value } = setup(
+      createTextTrackStore({
+        textTrackList: [{ kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' }],
+      }),
+      'captions'
+    );
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('Off');
+    });
+  });
+
+  it('renders the active caption track label', async () => {
+    const { value } = setup(
+      createTextTrackStore({
+        textTrackList: [
+          { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
+          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+        ],
+        subtitlesShowing: true,
+      }),
+      'captions'
+    );
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('English');
+    });
+  });
+
+  it('clears the label when setting context is removed', async () => {
+    const { menuItem, value } = setup(createPlaybackRateStore({ playbackRate: 1.5 }), 'playback-rate');
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('1.5×');
+    });
+
+    menuItem.type = null;
+    await menuItem.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('');
+    });
+  });
+});

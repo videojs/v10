@@ -23,9 +23,9 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
       this.#update(value);
     }
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
+    attach(target: HTMLVideoElement): void {
+      super.attach(target);
+      this.#init(target);
     }
 
     detach(): void {
@@ -58,7 +58,7 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
       detect();
     }
 
-    #detect(target: HTMLMediaElement | null = this.target as HTMLMediaElement | null): MediaStreamType {
+    #detect(target: HTMLMediaElement | null = this.target as HTMLVideoElement | null): MediaStreamType {
       if (!target) return MediaStreamTypes.UNKNOWN;
       const { duration } = target;
       if (duration === Infinity) return MediaStreamTypes.LIVE;

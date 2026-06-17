@@ -65,7 +65,7 @@ function calculatePresentationDurationSetup({
     presentation: Signal<PresentationDurationState['presentation']>;
     // selectedVideoTrackId / selectedAudioTrackId are read defensively —
     // they are *not* declared in this behavior's stateKeys. The slots are
-    // contributed by other behaviors (`switchVideoQuality` writes the
+    // contributed by other behaviors (`switchVideoTrack` writes the
     // video slot in the default engine; `selectAudioTrack` writes the
     // audio slot) which compose conditionally per engine variant. Treating
     // each signal as optional lets calculatePresentationDuration stay

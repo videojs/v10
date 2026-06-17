@@ -326,6 +326,26 @@ A side-effecting fetch (or segment-load) wrapper produces signals another featur
 
 ---
 
+### Selection / filtering across clusters
+
+The end-to-end "filter, prioritize, select among track candidates" axis. The selection lifecycle for any track type (audio / video / text) crosses cluster C plus four neighbor clusters whose features participate at distinct points in the pipeline:
+
+| Cluster | Role in selection | Example features |
+|---|---|---|
+| **C — Track & variant registry** | Owns the slot (`selected*TrackId`) and the picker that chooses among candidates. | `selectAudioTrack`, `switchVideoQuality`, `audio-playback`, `multi-language-audio`, `video-abr`, `audio-abr` |
+| **D — Capability probing** | Filters the candidate set *before* selection runs. CODECS / `isTypeSupported` / `changeType()` gating shrinks the set the picker operates over. | `capability-probing`, `5.1-surround-selection` (consumer), `hevc-variant-selection` (consumer) |
+| **E — Selection policy** | Caps and modes that *bias* the candidate set. Layered on top of the capability-filtered set; same filter shape, different motivation (config vs platform). | `rendition-selection-caps` |
+| **G — Selection resilience** | Alternate URI rotation *within* the selected track. Swaps URIs for the same selection without changing which track is selected; wraps fetch primitives consumed by track resolution and segment loading. | `multi-cdn-failover`, `content-steering`, `network-resilience` |
+| **H — Encrypted media (DRM)** | Key-system support *gates which tracks can be selected*. Similar to capability-probing but along a different axis (key system rather than codec). | `drm-support` |
+
+**Skill action when this pattern is suspected.** A feature in cluster C nearly always interacts with the four neighbor clusters above. When enumerating fold-in candidates in `/spf-implement-feature` Step 2c, walk all four explicitly — even when the feature doc's *Related features* list names only a subset. Candidates often land as "design-with-in-mind" rather than full fold-in (each cluster owns its own primitives), but surfacing them keeps the cluster-C feature's shape from painting into a corner.
+
+Worked example: `multi-language-audio` should surface `capability-probing` (codec-filter the audio rendition list), `rendition-selection-caps` (audio caps as a future bias), `multi-cdn-failover` (alternate URI rotation per language playlist), and `drm-support` (per-language key-system filtering) as fold-in candidates — even when the feature doc's *Related features* lists only `capability-probing`. The likely outcomes are *design-with-in-mind* / *ignore for now* for most; the discipline is to *surface and assess* rather than silently omit.
+
+**The destination-architecture sibling shape.** Within cluster C itself, one sibling often carries the destination slot-owner shape that other siblings anchor on (e.g., `switchVideoQuality` for video selection; `switchAudioQuality` per `audio-abr` Phase 3 for audio selection). When implementing a feature that writes the same slot, anchor on the destination sibling's shape — not on whatever extends-the-current-code-shape happens to be available. The "implement the destination sibling first" ordering is a real fold-in outcome; see `/spf-implement-feature` Step 2's *Order-inversion not surfaced* discipline.
+
+---
+
 ## Where this doc fits
 
 Read alongside:

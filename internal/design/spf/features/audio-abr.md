@@ -122,22 +122,18 @@ Things this feature probably forces decisions on, not just additions:
   sample time), or (b) does the slot hold separate per-source
   accumulators that compose at read time? The current `BandwidthState`
   shape would need a small extension either way.
-- **`selectedAudioTrackId` triple-writer.** When all three writers
-  land (default + ABR + multi-language-audio Tier 2), the
-  characterization is: (a) `selectAudioTrack` writes once on
-  presentation-resolved entry, default-picker output (config / DOM
-  decision domain, one-shot trigger, cheap write); (b)
-  `switchAudioQuality` writes on bandwidth changes (derived decision
-  domain, ongoing reactive trigger, cheap write); (c) multi-language-
-  audio Tier 2 writes on consumer programmatic call (intent decision
-  domain, one-shot trigger, may incur cost via flush). Same coordination
-  shape as video's `selectedVideoTrackId` (`selectVideoTrack` default
-  + `switchVideoQuality` + external manual override) — with the added
-  complication that multi-language-audio's intent write may have
-  *side effects* (audio-side buffer flush) that pin-to-quality writes
-  don't. The constraint+filter slot precedent (one writer on the
-  selection slot, separate filter slots) may apply here too — see
-  next bullet.
+- **`selectedAudioTrackId` writer characterization.** As of multi-
+  language-audio Tier 2 landing, the slot stays **single-writer** —
+  `switchAudioTrack` (in `playback/behaviors/dom/switch-audio-track.ts`)
+  is the sole writer. Consumer intent flows through the
+  `userAudioTrackSelection` constraint+filter slot. Mid-stream flush is
+  dispatched from `switchAudioTrack` itself (slot owner = flush dispatcher
+  — keeps slot writes and consequences co-located, sitting architecturally
+  between `SegmentLoaderActor` and `SourceBufferActor`). When audio-abr
+  ships, `switchAudioQuality` extends `switchAudioTrack` with bandwidth +
+  ABR algorithm — either by rename + extension or as a sibling variant
+  that supplants it in the engine composition. Either way, the slot stays
+  single-writer and the filter shape carries over.
 - **Constraint+filter vs multi-writer for the manual-override slot.**
   video-abr's `userVideoTrackSelection` slot is a *constraint+filter*
   (the selection writer reads it as a filter; doesn't write the
@@ -192,12 +188,16 @@ Things this feature probably forces decisions on, not just additions:
   redundant data structure with similar semantics. Decision likely
   depends on whether the EWMA pattern wants extension to handle
   mixed-source sampling, or whether two slots is genuinely cleaner.
-- **Manual-override slot design.** Single `userAudioTrackSelection`
-  slot serving both bitrate-pinning (analog of video) AND language-
-  pinning (multi-language-audio Tier 2), vs separate slots. video-abr
-  uses one slot for the dual role; audio may differ because
-  language-switching has side effects (flush) that pin-to-quality
-  doesn't. Affects the multi-writer count on `selectedAudioTrackId`.
+- **Manual-override slot sharing.** `userAudioTrackSelection` slot
+  exists now (added by multi-language-audio Tier 2) and serves
+  language-pinning. Open: does audio-abr reuse the same slot for
+  bitrate-pinning too (one slot, dual role, mirrors video) — likely,
+  since the partial-track shape supports both. Side-effect concerns
+  (mid-stream flush) live in `switchAudioTrack`'s flush effect and key
+  off `initTrackId` vs `selectedAudioTrackId` mismatch — they fire on
+  language-switch and would naturally also fire on cross-codec
+  bitrate-switch (whose handling routes to 5.1-surround-selection's
+  `changeType()` path via a different `flushStrategy`).
 - **EWMA accumulator design under shared bandwidth state.** Single
   unified accumulator absorbing both video and audio samples, vs
   per-source accumulators read with a combining function (e.g.,
@@ -236,10 +236,16 @@ Things this feature probably forces decisions on, not just additions:
 - **[audio-playback](./audio-playback.md)** — the single-rendition
   baseline this feature extends. The "What's not implemented" Audio
   ABR bullet there is resolved by this doc.
-- **[multi-language-audio](./multi-language-audio.md)** *(coarse)* —
-  prerequisite per Notion #8 for the rendition-group machinery.
-  Audio-ABR operates within a language; multi-language-audio handles
-  across-language switching.
+- **[multi-language-audio](./multi-language-audio.md)** *(partial, sketched)* —
+  prerequisite per Notion #8 for the rendition-group machinery, now mostly
+  implemented. Audio-ABR operates within a language; multi-language-audio
+  handles across-language switching. Shared infrastructure landed:
+  `userAudioTrackSelection` filter slot, `switchAudioTrack` behavior
+  (slot owner; precursor to `switchAudioQuality`), and pluggable
+  `flushStrategy` config with `nextSegmentBoundaryFlushStrategy` as the
+  default. Audio-abr Phase 3's `switchAudioQuality` either renames
+  `switchAudioTrack` + adds bandwidth logic, or coexists with it as a
+  sibling variant in the engine composition.
 - **[5.1-surround-selection](./5.1-surround-selection.md)** —
   consumes its `changeType()` primitive for cross-channel-count
   switching when audio-ABR wants to cross those boundaries.

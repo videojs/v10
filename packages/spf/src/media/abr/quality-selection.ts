@@ -41,22 +41,29 @@ export const DEFAULT_QUALITY_CONFIG: QualityConfig = {
 };
 
 /**
- * Options for `selectQuality`. Spread of `Partial<QualityConfig>` plus a
- * runtime-supplied `currentTrack` for upgrade-vs-downgrade decisions.
+ * Selection context for `selectQuality`. The `bandwidth` field carries the
+ * current network estimate; `safetyMargin` / `upgradeMargin` override the
+ * defaults; `currentTrack` enables upgrade-vs-downgrade hysteresis.
+ *
+ * Shape matches the unified `selectOptimal` contract of
+ * `setupTrackSwitching` (`playback/behaviors/track-switching.ts`) so the
+ * function can be passed directly as a variant's `selectOptimal`.
  */
-export interface SelectQualityOpts extends Partial<QualityConfig> {
+export interface SelectQualityCtx<T extends { bandwidth: number } = PartiallyResolvedVideoTrack | VideoTrack>
+  extends Partial<QualityConfig> {
+  bandwidth: number;
   /**
    * Track currently selected. When supplied, `selectQuality` returns
    * `currentTrack` (no change) for upgrades that don't clear the
    * `upgradeMargin`. When omitted, no hysteresis is applied — the
    * computed optimal is returned regardless.
    */
-  currentTrack?: PartiallyResolvedVideoTrack | VideoTrack;
+  currentTrack?: T;
 }
 
 /**
- * Select the track to apply now, given current bandwidth, a current
- * selection (optional), and tuning. Returns:
+ * Select the track to apply now, given a context that carries current
+ * bandwidth, an optional `currentTrack`, and tuning overrides. Returns:
  *
  * - The bandwidth-fitting optimal when no `currentTrack` is supplied.
  * - The optimal when it's a downgrade vs. `currentTrack` (downgrades
@@ -67,28 +74,27 @@ export interface SelectQualityOpts extends Partial<QualityConfig> {
  *   (stay put — caller checks identity to no-op).
  *
  * "Optimal" is the highest-bandwidth track where the available bandwidth
- * meets the safety requirement (`currentBandwidth >= track.bandwidth / safetyMargin`).
+ * meets the safety requirement (`bandwidth >= track.bandwidth / safetyMargin`).
  * Falls back to the lowest-bandwidth track when nothing fits the safety
  * margin (preserves a definitive pick under under-bandwidth conditions).
  *
  * @example
  * const tracks = [low, mid, high];
- * selectQuality(tracks, 5_000_000, { currentTrack: low });
+ * selectQuality(tracks, { bandwidth: 5_000_000, currentTrack: low });
  * // Returns `high` if 5 Mbps clears safety AND high.bandwidth >= low.bandwidth * upgradeMargin.
  * // Returns `low` (no-op signal) otherwise.
  */
 export function selectQuality(
   tracks: readonly (PartiallyResolvedVideoTrack | VideoTrack)[],
-  currentBandwidth: number,
-  opts: SelectQualityOpts = {}
+  ctx: SelectQualityCtx
 ): PartiallyResolvedVideoTrack | VideoTrack | undefined {
   if (tracks.length === 0) {
     return undefined;
   }
 
-  const safetyMargin = opts.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
-  const upgradeMargin = opts.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
-  const { currentTrack } = opts;
+  const safetyMargin = ctx.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
+  const upgradeMargin = ctx.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
+  const { bandwidth: currentBandwidth, currentTrack } = ctx;
 
   // Sort tracks by bandwidth (lowest first)
   const sortedTracks = tracks.slice().sort((a, b) => a.bandwidth - b.bandwidth);
@@ -148,6 +154,15 @@ export function selectLowestQuality<T extends { bandwidth: number }>(tracks: rea
 }
 
 /**
+ * Resolution as a total pixel count (`width × height`), the basis for
+ * comparing two tracks at the same bitrate. Missing dimensions count as 0, so
+ * tracks without resolution metadata (e.g. audio) area-compare equal.
+ */
+export function resolutionArea(track: { width?: number; height?: number }): number {
+  return (track.width ?? 0) * (track.height ?? 0);
+}
+
+/**
  * Check if track A has higher resolution than track B.
  * Compares by total pixel count (width × height).
  *
@@ -159,7 +174,5 @@ function hasHigherResolution(
   trackA: PartiallyResolvedVideoTrack | VideoTrack,
   trackB: PartiallyResolvedVideoTrack | VideoTrack
 ): boolean {
-  const pixelsA = (trackA.width ?? 0) * (trackA.height ?? 0);
-  const pixelsB = (trackB.width ?? 0) * (trackB.height ?? 0);
-  return pixelsA > pixelsB;
+  return resolutionArea(trackA) > resolutionArea(trackB);
 }

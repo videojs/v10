@@ -46,14 +46,14 @@ describe('DashMedia', () => {
       expect(playHandler).not.toHaveBeenCalled();
     });
 
-    it('nullifies the target reference', () => {
+    it('detaches the dash view from the target on destroy', () => {
       const { media } = setup();
-
-      expect(media.target).not.toBeNull();
+      const attachView = media.engine!.attachView as ReturnType<typeof vi.fn>;
+      attachView.mockClear();
 
       media.destroy();
 
-      expect(media.target).toBeNull();
+      expect(attachView).toHaveBeenCalledWith(null);
     });
   });
 });

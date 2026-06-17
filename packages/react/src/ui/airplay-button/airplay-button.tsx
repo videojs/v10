@@ -1,25 +1,25 @@
 'use client';
 
-import { AirplayButtonCore, AirplayButtonDataAttrs } from '@videojs/core';
+import { AirPlayButtonCore, AirPlayButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
 
 import type { UIComponentProps } from '../../utils/types';
 import { createMediaButton } from '../create-media-button';
 
-export interface AirplayButtonProps
-  extends UIComponentProps<'button', AirplayButtonCore.State>,
-    AirplayButtonCore.Props {}
+export interface AirPlayButtonProps
+  extends UIComponentProps<'button', AirPlayButtonCore.State>,
+    AirPlayButtonCore.Props {}
 
 /** A button that toggles AirPlay to a remote device. */
-export const AirplayButton = createMediaButton<AirplayButtonCore, AirplayButtonProps>({
-  displayName: 'AirplayButton',
-  core: AirplayButtonCore,
-  stateAttrMap: AirplayButtonDataAttrs,
+export const AirPlayButton = createMediaButton<AirPlayButtonCore, AirPlayButtonProps>({
+  displayName: 'AirPlayButton',
+  core: AirPlayButtonCore,
+  stateAttrMap: AirPlayButtonDataAttrs,
   selector: selectRemotePlayback,
   action: (core, state) => core.toggle(state),
 });
 
-export namespace AirplayButton {
-  export type Props = AirplayButtonProps;
-  export type State = AirplayButtonCore.State;
+export namespace AirPlayButton {
+  export type Props = AirPlayButtonProps;
+  export type State = AirPlayButtonCore.State;
 }

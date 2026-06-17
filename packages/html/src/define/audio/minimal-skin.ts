@@ -68,13 +68,16 @@ function getTemplateHTML() {
                 <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
               </media-slider-track>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
+              <media-slider-preview class="media-slider__preview">
+                <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
+              </media-slider-preview>
             </media-time-slider>
           </div>
 
           <div class="media-button-group">
-            <media-playback-rate-menu-trigger commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-menu-trigger>
-            <media-playback-rate-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-popover media-menu media-menu--playback-rate">
-              <media-playback-rate-options class="media-menu__group">
+            <media-playback-rate-button commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
+            <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-popover media-menu">
+              <media-playback-rate-radio-group class="media-menu__group">
                 <template>
                   <media-menu-radio-item class="media-menu__item">
                     <span data-part="label"></span>
@@ -83,8 +86,8 @@ function getTemplateHTML() {
                     </media-menu-item-indicator>
                   </media-menu-radio-item>
                 </template>
-              </media-playback-rate-options>
-            </media-playback-rate-menu>
+              </media-playback-rate-radio-group>
+            </media-menu>
 
             <media-mute-button commandfor="audio-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}

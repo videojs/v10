@@ -149,13 +149,16 @@ Phase 1 baseline:
 - **[`buffer-management`](../features/buffer-management.md)** — used as-is in
   Phase 1; Phase 3 surfaces alternative defaults.
 
-Phase 2 (when these features land):
+Phase 2:
 
-- **[`audio-abr`](../features/audio-abr.md)** — when implemented, composed in
-  for multi-bitrate audio. Used as-is.
-- **[`multi-language-audio`](../features/multi-language-audio.md)** — when
-  implemented, composed in for mixed sources with multi-language audio. Used
-  as-is.
+- **[`audio-abr`](../features/audio-abr.md)** *(not yet implemented)* — when
+  implemented, composed in for multi-bitrate audio. Used as-is.
+- **[`multi-language-audio`](../features/multi-language-audio.md)** *(partial — landed)* —
+  composed in unchanged; variant state exposes `userAudioTrackSelection` slot.
+  Variant engine composes `switchAudioTrack` (slot owner with filter + flush)
+  instead of `selectAudioTrack`; `setupAudioBufferActors` carries over from
+  the default engine. Consumer can write language filters or specific track
+  IDs for mid-stream switching within the audio-only variant.
 
 ## Customer-policy surface
 
@@ -322,11 +325,13 @@ CDN entry: `packages/html/src/cdn/media/simple-hls-audio-only.ts` →
 
 Public re-export: `@videojs/react/media/simple-hls-audio-only`.
 
-**Composed behaviors (Phase 1):** `syncPreload`, `trackLoadTriggers`,
-`resolvePresentation`, `selectAudioTrack`, `resolveAudioTrack`,
-`calculatePresentationDuration`, `setupMediaSource`,
-`updateMediaSourceDuration`, `setupAudioBufferActors`, `trackCurrentTime`,
-`loadAudioSegments`, `endOfStream`, `shareSignals`.
+**Composed behaviors (current):** `syncPreload`, `trackLoadTriggers`,
+`resolvePresentation`, `resolveAudioTrack`, `calculatePresentationDuration`,
+`setupMediaSource`, `updateMediaSourceDuration`, `setupAudioBufferActors`,
+`trackCurrentTime`, `switchAudioTrack`, `loadAudioSegments`, `endOfStream`,
+`shareSignals`. (Phase 1 composed `selectAudioTrack`; `switchAudioTrack`
+replaced it when [`multi-language-audio`](../features/multi-language-audio.md)
+Tier 2 landed.)
 
 `endOfStream` composes unchanged from the default engine — it iterates
 buffer actors via `[videoBufferActor, audioBufferActor].filter(Boolean)`

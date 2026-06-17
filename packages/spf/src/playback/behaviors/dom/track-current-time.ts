@@ -5,6 +5,10 @@
  *   at the new position when this event dispatches, so buffer management can
  *   react immediately rather than waiting for `timeupdate`, which does not
  *   fire while paused.
+ * - `emptied` — fires when the resource selection algorithm tears down the
+ *   current media (e.g. a new `src` is set on the same element). Re-syncs so
+ *   downstream state doesn't retain the stale playback position from the
+ *   previous source when the engine is reused across src changes.
  *
  * Also syncs immediately when a media element becomes available.
  *
@@ -54,9 +58,11 @@ function trackCurrentTimeSetup({
 
     const sync = () => state.currentTime.set(mediaElement.currentTime);
     sync();
+    const removeEmptied = listen(mediaElement, 'emptied', sync);
     const removeTimeupdate = listen(mediaElement, 'timeupdate', sync);
     const removeSeeking = listen(mediaElement, 'seeking', sync);
     return () => {
+      removeEmptied();
       removeTimeupdate();
       removeSeeking();
     };

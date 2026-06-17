@@ -1,4 +1,6 @@
-import type { MediaFeatureAvailability, MediaStreamType } from './types';
+import type { MediaFeatureAvailability, MediaStreamType, TextTrackKind } from './types';
+
+export type { TextTrackKind };
 
 export interface MediaPlaybackState {
   /**
@@ -240,13 +242,6 @@ export interface MediaTextCue {
 }
 
 /**
- * The kind of text track.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
- */
-export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
-
-/**
  * The mode of a text track.
  *
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/mode
@@ -259,6 +254,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
+  id?: string;
   kind: Kind;
   label: string;
   language: string;
@@ -278,6 +274,8 @@ export interface MediaTextTrackState {
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */
   toggleSubtitles(forceShow?: boolean): boolean;
+  /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
+  selectSubtitlesTrack(value: string): void;
 }
 
 export interface MediaError {

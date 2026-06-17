@@ -24,6 +24,7 @@ import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
+import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
 import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
 import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
 import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
@@ -32,18 +33,21 @@ import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
 // Netlify sets CONTEXT and BRANCH for each deploy. We use them to determine
 // the correct site URL:
-//   - production (site/v10 branch)  → https://videojs.org
-//   - branch-deploy (main branch)   → https://next.videojs.org
+//   - production (site/v10 branch)  → PRODUCTION_URL (videojs.org)
+//   - branch-deploy (main branch)   → PRERELEASE_URL (main.videojs.org)
 //   - deploy-preview (PR branches)  → DEPLOY_PRIME_URL (Netlify subdomain)
+//
+// Hostnames are sourced from src/consts.ts so there is a single place to
+// update if the pre-release or production host ever moves.
 //
 // For URLs that must always point to production regardless of deploy context
 // (e.g. canonical, JSON-LD), use PRODUCTION_URL from src/consts.ts instead.
 const SITE_URL =
   process.env.CONTEXT === 'production'
-    ? 'https://videojs.org'
+    ? PRODUCTION_URL.origin
     : process.env.BRANCH === 'main'
-      ? 'https://next.videojs.org'
-      : process.env.DEPLOY_PRIME_URL || 'https://videojs.org';
+      ? PRERELEASE_URL.origin
+      : process.env.DEPLOY_PRIME_URL || PRODUCTION_URL.origin;
 
 // https://astro.build/config
 export default defineConfig({

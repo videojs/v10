@@ -3,6 +3,7 @@ import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
+import { slider as baseSlider } from './components/slider';
 
 /* ==========================================================================
    Root
@@ -24,6 +25,9 @@ export const root = cn(
   '[--media-tooltip-text-color:currentColor]',
   '[--media-tooltip-side-offset:0.75rem]',
   '[--media-tooltip-boundary-offset:0.75rem]',
+  '[--media-popover-background-color:oklch(1_0_0/0.1)]',
+  '[--media-popover-border-color:oklch(0_0_0/0.05)]',
+  '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-popover-side-offset:0.75rem]',
   '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
@@ -68,6 +72,15 @@ export const popup = {
 };
 
 /* ==========================================================================
+   Sliders
+   ========================================================================== */
+
+export const slider = {
+  ...baseSlider,
+  value: cn(baseSlider.value, 'bottom-10'),
+};
+
+/* ==========================================================================
    Error
    ========================================================================== */
 
@@ -98,5 +111,4 @@ export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon'
 export { menu } from './components/menu';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
-export { slider } from './components/slider';
 export { time } from './components/time';

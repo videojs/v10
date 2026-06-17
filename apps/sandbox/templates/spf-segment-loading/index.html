@@ -107,8 +107,9 @@
       #throughput-display.has-data { color: #16a34a; }
       #throughput-display.warming { color: #d97706; }
 
-      /* ── Rendition / resolution panels ── */
+      /* ── Rendition / resolution / audio panels ── */
       #rendition-picker,
+      #audio-track-picker,
       #resolution-status {
         padding: 12px 15px;
         margin: 16px 0;
@@ -117,7 +118,30 @@
         border: 1px solid #ddd;
         border-radius: 4px;
       }
-      #rendition-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+      #rendition-picker h2, #audio-track-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+
+      #audio-track-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .audio-track-btn {
+        padding: 6px 12px;
+        font-family: monospace;
+        font-size: 11px;
+        cursor: pointer;
+        background: #fff;
+        border: 2px solid #999;
+        border-radius: 4px;
+      }
+      .audio-track-btn:hover { background: #eee; border-color: #555; }
+      .audio-track-btn.selected-default { font-weight: bold; background: #e6f0ff; border-color: #0070f3; }
+      .audio-track-btn.selected-pinned  { font-weight: bold; background: #fef3c7; border-color: #d97706; }
+
+      .audio-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
+      .mode-default { font-weight: bold; color: #0070f3; }
+      .mode-pinned  { font-weight: bold; color: #d97706; }
+      .clear-filter-btn {
+        padding: 4px 10px; font-size: 11px; color: #d97706; cursor: pointer; background: #fef3c7;
+        border: 1px solid #d97706; border-radius: 4px;
+      }
+      .clear-filter-btn:hover { background: #fde68a; }
 
       #rendition-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
       .rendition-btn {
@@ -220,6 +244,11 @@
     <div id="rendition-picker">
       <h2>Video Renditions</h2>
       <div id="rendition-buttons">Waiting for presentation…</div>
+    </div>
+
+    <div id="audio-track-picker">
+      <h2>Audio Tracks</h2>
+      <div id="audio-track-buttons">Waiting for presentation…</div>
     </div>
 
     <div id="resolution-status">

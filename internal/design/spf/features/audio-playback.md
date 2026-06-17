@@ -42,19 +42,16 @@ Capability slices around today's audio playback contract.
 
 ## What's not implemented
 
-- **Language-aware default selection** — `pickAudioTrack` (in
-  `packages/spf/src/media/primitives/select-tracks.ts`) implements the
-  three-tier picker (`preferredAudioLanguage` → `DEFAULT=YES` →
-  first-track) and is structurally ready to use, but isn't wired as
-  the default in `selectAudioTrack`. The `preferredAudioLanguage`
-  field on `SimpleHlsEngineConfig` is therefore inert with the default
-  picker — consumers must override via `SelectAudioTrackConfig.picker`
-  to make it take effect. Wiring `pickAudioTrack` as the default is a
-  one-line change.
-- **Mid-stream audio rendition switching** — covered by
-  [`multi-language-audio`](./multi-language-audio.md) (coarse). No
-  programmatic write to `selectedAudioTrackId`, no audio buffer flush
-  on switch.
+- **Multi-rendition recognition + programmatic selection + mid-stream
+  switching** — covered by
+  [`multi-language-audio`](./multi-language-audio.md) (partial, sketched —
+  Tier 1 + most of Tier 2 implemented). Default selection now uses
+  `pickAudioTrack`'s three-tier picker (`preferredAudioLanguage` →
+  `DEFAULT=YES` → first-track), so `preferredAudioLanguage` config
+  takes effect. Tier 2 programmatic selection via
+  `userAudioTrackSelection` filter and same-codec mid-stream switching
+  with next-segment-boundary flush also implemented. Persistence and
+  A/V sync policy refinements deferred.
 - **Audio ABR** — covered by [audio-abr](./audio-abr.md).
   `setupAudioBufferActors` uses plain `fetchStream`; the
   bandwidth-sampling `createTrackedFetch` isn't wired into the audio
@@ -106,7 +103,8 @@ loadAudioSegments,
 
 | Behavior | File | Responsibility |
 |---|---|---|
-| `selectAudioTrack` | `packages/spf/src/playback/behaviors/select-tracks.ts` | Default audio rendition selection on source load |
+| `selectAudioTrack` | `packages/spf/src/playback/behaviors/select-tracks.ts` | Default audio rendition selection on source load. Lifecycle-only; mutually exclusive with `switchAudioTrack` |
+| `switchAudioTrack` | `packages/spf/src/playback/behaviors/dom/switch-audio-track.ts` | Filter-reactive slot owner + mid-stream flush dispatcher. **Owned architecturally by [`multi-language-audio`](./multi-language-audio.md)** — composed in both `createSimpleHlsEngine` and `createHlsAudioOnlyEngine` today |
 | `resolveAudioTrack` | `packages/spf/src/playback/behaviors/resolve-track.ts` | Fetches the selected audio media playlist |
 | `setupAudioBufferActors` | `packages/spf/src/playback/behaviors/dom/setup-buffer-actors.ts` | Audio SourceBuffer + actor setup. **Owned architecturally by `mse-mms-pipeline`** |
 | `loadAudioSegments` | `packages/spf/src/playback/behaviors/dom/load-segments.ts` | Audio segment loading dispatcher. **Owned architecturally by `buffer-management`** |
@@ -115,14 +113,20 @@ loadAudioSegments,
 
 | Helper | File | Status |
 |---|---|---|
-| `pickFirstTrackId(presentation, 'audio')` | `packages/spf/src/media/primitives/select-tracks.ts` | **Default picker today** |
-| `pickAudioTrack(presentation, config)` | `packages/spf/src/media/primitives/select-tracks.ts` | Language-aware (`preferredAudioLanguage` → `DEFAULT=YES` → first-track). Available but not wired |
+| `pickAudioTrack(presentation, config)` | `packages/spf/src/media/primitives/select-tracks.ts` | **Default picker today** — language-aware three-tier (`preferredAudioLanguage` → `DEFAULT=YES` → first-track). Wired by [`multi-language-audio`](./multi-language-audio.md) Tier 1 |
+| `pickFirstTrackId(presentation, 'audio')` | `packages/spf/src/media/primitives/select-tracks.ts` | Simple first-track fallback (still available for callers overriding via `SelectAudioTrackConfig.picker`) |
 
 **State slots:**
 
-- `selectedAudioTrackId` — single-writer today (`selectAudioTrack`).
-  Becomes multi-writer when `multi-language-audio` adds the
-  programmatic selection path.
+- `selectedAudioTrackId` — single-writer. Owner depends on which audio-
+  selection behavior is composed: `selectAudioTrack` (lifecycle-only) or
+  `switchAudioTrack` (filter-reactive + mid-stream flush; the variant
+  composed in `createSimpleHlsEngine` and `createHlsAudioOnlyEngine`
+  today). Becomes `switchAudioQuality`'s responsibility when
+  [audio-abr](./audio-abr.md) lands (extends `switchAudioTrack`).
+- `userAudioTrackSelection` — added by [`multi-language-audio`](./multi-language-audio.md).
+  Consumer-driven `Partial<AudioTrack>` filter narrowing the audio
+  candidate set before `switchAudioTrack`'s picker runs.
 - Reads `presentation` (audio renditions surface in
   `presentation.selectionSets`)
 
@@ -175,11 +179,6 @@ Consumers wanting language-aware selection today must override
 
 ## Open questions
 
-- **Wire `pickAudioTrack` as the default?** `preferredAudioLanguage`
-  being exposed but inert is confusing. Was deferral to
-  `multi-language-audio` deliberate, or is this a missed wiring? A
-  one-line change in `selectAudioTrack`'s wiring would make the
-  config field do what its name suggests.
 - **Audio-only composition guarantees.** The engine *tolerates*
   audio-only sources today, but is it *designed* for them? The
   [audio-only-mode-override](../use-cases/audio-only-mode-override.md)
@@ -192,9 +191,12 @@ Consumers wanting language-aware selection today must override
 
 ## Related features
 
-- **multi-language-audio** *(coarse)* — the future extension covering
-  multi-rendition surfacing, programmatic selection, and mid-stream
-  switching. Today's `audio-playback` is the baseline it builds on.
+- **[multi-language-audio](./multi-language-audio.md)** *(partial, sketched)* —
+  the extension covering multi-rendition surfacing (free via parser),
+  language-aware default selection (wires `pickAudioTrack`), programmatic
+  selection via `userAudioTrackSelection` filter, and same-codec mid-stream
+  switching via next-segment-boundary flush. Today's `audio-playback`
+  is the baseline it builds on.
 - **subtitles** — parallel structure (default picker + per-type
   segment loading; same `setupTrackResolution` helper). Text-track
   selection is user opt-in by default; audio's default selection

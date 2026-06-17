@@ -1,4 +1,4 @@
-import { listen } from '@videojs/utils/dom';
+import { listen, type WebKitVideoElement } from '@videojs/utils/dom';
 
 import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
@@ -9,7 +9,6 @@ import {
   isPictureInPictureEnabled,
   requestPictureInPicture,
 } from '../../presentation/pip';
-import type { WebKitVideoElement } from '../../presentation/types';
 
 export const pipFeature = definePlayerFeature({
   name: 'pip',

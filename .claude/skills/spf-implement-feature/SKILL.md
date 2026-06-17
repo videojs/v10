@@ -25,11 +25,12 @@ that doesn't match the doc's grounding, drifts beyond the agreed phase scope,
 misses the conventions catalog, or skips the doc-update cascade that keeps
 the feature registry current as code lands.
 
-Steps 1–2 are the load-bearing setup. Skipping them produces implementations
+Steps 1–3 are the load-bearing setup. Skipping them produces implementations
 that look superficially correct but anchor on the wrong scope, miss the doc's
-open questions, or fail to coordinate with cross-cutting concerns. Steps 3–7
-only make sense once the feature, sources, and intent are named. Step 8 (doc
-update as living artifact) is where the registry stays in sync with code.
+open questions, miss adjacent features whose shape constrains this one, or
+fail to coordinate with cross-cutting concerns. Steps 4–8 only make sense
+once the feature, composition target, fold-ins, and intent are named. Step 9
+(doc update as living artifact) is where the registry stays in sync with code.
 
 ## Usage
 
@@ -68,7 +69,7 @@ Discipline:
 
 - **Every doc revision is explicit and surfaced** to the user during the
   implementation pass. Never silent.
-- **Step 8 consolidates** the cumulative doc update reflecting all
+- **Step 9 consolidates** the cumulative doc update reflecting all
   revisions made during implementation — it's not the *only* revision
   point, just the cumulative one.
 - **Open questions are markers**, not absent specs — the implementation
@@ -136,6 +137,158 @@ Downstream skills routed-to:
   have meant another (especially: a request that's actually a use case
   routed-here as a feature, or vice versa). Always surface and confirm.
 
+- **Standard-vs-use-case composition routing skipped** — Step 1 must
+  confirm whether the implementation effort is for the base/standard
+  composition or for a specific use-case composition. Default is
+  base, but use-case-FOR implementations have different framing: the
+  use-case doc supplies the destination-architecture sketch; cluster
+  traversal narrows. Worked example: implementing
+  `multi-language-audio` for the base engine forces the cluster's
+  destination-architecture frame; implementing it as part of
+  `audio-only-mode-override` Phase 2 narrows to the use case's
+  variant engine.
+
+- **Destination architecture unframed** — for features in the base
+  composition, scoping without sketching the cluster's destination
+  architecture produces local-optimal cuts that don't fit the larger
+  shape. The destination sketch is Step 2's reference frame for the
+  fold-in assessment; without it, the assessment defaults to "is
+  this candidate adjacent to my feature?" rather than "does my
+  feature need to align with where this cluster is heading?"
+
+- **Doc-related-features-walked-without-cluster-traversal** —
+  relying solely on the feature doc's flat *Related features* list
+  misses architectural-axis siblings reachable via `clusters.md`
+  (primary cluster siblings + cross-cluster axis siblings). The
+  *Related features* list is a starting point; the cluster traversal
+  is what surfaces the architectural axis. Worked example:
+  `multi-language-audio`'s *Related features* list includes
+  `capability-probing` as a "candidate," but doesn't loudly surface
+  that capability-probing sits on the same
+  "filtering/prioritizing/selecting tracks of a given type" axis —
+  cluster traversal makes that axis explicit and the fold-in
+  candidacy clearer.
+
+- **Cross-cluster axis traversal short-circuit** — treating the
+  feature doc's *Related features* list as the *ceiling* for
+  cross-cluster candidates rather than the *floor*. Has two faces:
+  (i) **surfacing failure** — not enumerating the cross-cluster
+  cousins at all; (ii) **assessment failure** — enumerating them but
+  rating them all "ignore for now," skipping past the
+  design-with-in-mind landing zone.
+
+  For cluster-C (track & variant registry) features, at minimum
+  check capability-probing (D), rendition-selection-caps (E),
+  multi-cdn-failover (G), drm-support (H) — these cousins all
+  participate in the "filter / prioritize / select track candidates"
+  axis (see `clusters.md` → *Selection / filtering across clusters*).
+  Analogous cross-cluster cousins exist for other primary clusters;
+  consult the clusters doc before defaulting to "no cross-cluster
+  candidates."
+
+  **DWIM is the default recommendation for cross-cluster cousins**,
+  unless Impact-if-deferred pushes higher or Shape-constraint-if-
+  deferred is genuinely low. The clusters doc names this
+  explicitly: *"Candidates often land as design-with-in-mind rather
+  than full fold-in (each cluster owns its own primitives), but
+  surfacing them keeps the cluster-C feature's shape from painting
+  into a corner."* See Step 2d's *Default-recommended outcome per
+  candidate type* table — cross-cluster cousins are the row where
+  DWIM is the prior, not Ignore.
+
+  Worked example: `multi-language-audio`'s *Related features* lists
+  `capability-probing` but omits `rendition-selection-caps`,
+  `multi-cdn-failover`, `drm-support`. The implementation pass
+  should rate all four as DWIM: codec filtering composes with the
+  `userAudioTrackSelection` filter slot on the same axis; audio
+  caps would bias the same candidate set the filter narrows;
+  per-language URI rotation needs to stay extensible during
+  mid-stream-switch design; per-language key-system filtering
+  interacts with selection. Rating any of these "ignore" without
+  surfacing as DWIM is the assessment-failure shape; rating all
+  four as DWIM without surfacing each via `AskUserQuestion` is the
+  narrative-batched-skip shape (see next entry).
+
+- **Narrative-batched-skip of `AskUserQuestion` for "obvious"
+  candidates** — collapsing multiple fold-in candidates into a single
+  narrative sentence ("the remaining cross-cluster cousins all
+  default to ignore for now") and skipping the per-candidate
+  `AskUserQuestion` because the recommendation feels obvious. The
+  structured presentation is the load-bearing pressure that surfaces
+  assessment misjudgments — bypassing it lets misjudged
+  recommendations slip through unchallenged. This failure mode often
+  pairs with *Cross-cluster axis traversal short-circuit*'s
+  assessment-failure face: candidates rated "ignore for now" feel
+  uncontroversial enough to batch, and the batching is what hides
+  the misjudgment.
+
+  **Discipline.** Use `AskUserQuestion` per candidate **regardless of
+  recommendation strength**, even when the recommendation feels
+  obvious. If multiple candidates would otherwise be batched into one
+  narrative paragraph, group by shared rationale into 2–3
+  `AskUserQuestion` calls (4 candidates per call, per the
+  `AskUserQuestion` cap) — but every candidate appears as a discrete
+  row with discrete options, with DWIM and Ignore both visible in the
+  option list for cross-cluster cousins specifically.
+
+  Worked example: implementation pass enumerated 4 cross-cluster
+  cousins (cap-probing / caps / CDN / DRM) and assessed all as
+  "ignore for now," then narrative-batched ("the cross-cluster cousins
+  all default to ignore"). User pushback identified 3 of 4 as
+  design-with-in-mind that the narrative-batch silently suppressed.
+  Per-candidate `AskUserQuestion` with DWIM visible would have caught
+  the misjudgment by the first candidate.
+
+- **Order-inversion not surfaced** — when this feature anchors on a
+  sibling's slot-owner shape (a *destination-architecture sibling*),
+  implementing the sibling first may be the right route. This is a
+  legitimate fold-in outcome distinct from full / partial /
+  design-with-in-mind / ignore — surface it explicitly to the user,
+  don't silently reject as "we're implementing this feature, not
+  that one." Signal: a sibling at `definition: technical` (or deeper)
+  carries the destination architecture in its *Phases of complexity*
+  table. Worked example: `multi-language-audio` anchors on
+  `switchAudioQuality` (audio-abr Phase 3 + Phase 4 +
+  `selectedAudioTrackId` triple-writer characterization in Phase 5).
+  Implementing `multi-language-audio` while extending the current
+  `selectAudioTrack` shape — instead of introducing
+  `switchAudioQuality` per audio-abr's destination — would unwind
+  when audio-abr ships. The "audio-abr first" ordering must be
+  surfaced as an option before the fold-in walk, not buried inside
+  one candidate's per-question outcomes.
+
+- **Boil-the-ocean false positive** — rejecting fold-in candidates
+  reflexively as "too big" without considering partial-implementation.
+  The right question is "is there a focused partial-implementation
+  cut?" not "is the full feature big?" Worked example: rejecting
+  `audio-abr` as boil-the-ocean when a basic `switchAudioQuality`
+  shape that establishes placement + slot pattern is a focused
+  partial that gets audio-ABR's foundation in place without
+  implementing the full feature.
+
+- **Conflating partial-implementation with design-with-in-mind** —
+  these are distinct fold-in outcomes. Partial = concrete code lands;
+  design-with-in-mind = no new code, but this feature's shape is
+  constrained by the candidate's eventual needs. Treating them as
+  one outcome loses the distinction and produces either too little
+  code (skipping high-impact partials) or too much (writing
+  speculative code for design considerations). Worked example:
+  `audio-abr` is partial-implementation (basic
+  `switchAudioQuality`); `5.1-surround-selection` is
+  design-with-in-mind (no codec-change code, but mid-stream flush
+  orchestration left extensible).
+
+- **Value-curve check skipped** — scoping to "spec-compliant
+  baseline" without checking whether the cut produces
+  user-meaningful capability. Per `clusters.md`'s "can-play vs actual
+  support" distinction, a cut that ships only passive recognition /
+  spec-compliance is a value-curve red flag — either fold in more,
+  or be explicit with the user about the constraint. Worked example:
+  `multi-language-audio` Tier 1 alone produces "the engine
+  recognizes audio tracks and picks one at load time" — still only
+  "can-play" at the cluster's value-curve, since the consumer can't
+  dynamically select among them.
+
 - **Treating feature doc as hardened spec** — refusing to revise the
   doc when implementation reveals new questions, refines framing, or
   surfaces drift. Inverse failure of silent-override (see
@@ -192,13 +345,13 @@ Downstream skills routed-to:
 - **Status / Implementation-surface update skipped** — feature doc
   transitions from coarse → sketched as code lands. The doc must be
   updated as part of the implementation; deferring means future agents
-  see stale status. Step 8 enforces.
+  see stale status. Step 9 enforces.
 
 - **Downstream skill missing — silent inline implementation** — when a
   chunk hits a "Yes" row in the downstream-skill-needed table (new
   behavior, non-trivial behavior update), and the downstream skill
   doesn't exist yet, the failure mode is to silently apply discipline
-  ad-hoc. Step 6 explicitly surfaces this: branch on (i) defer chunk
+  ad-hoc. Step 7 explicitly surfaces this: branch on (i) defer chunk
   pending downstream skill, (ii) build the downstream skill inline now,
   (iii) apply discipline ad-hoc with explicit "extract later" flag.
 
@@ -244,7 +397,28 @@ boundary:
   `/spf-document-use-case` first, then `/spf-implement-use-case`.
 - **Ambiguous between options** → surface to user; do not pick silently.
 
-**1d. Gather sources.** (Once routing is confirmed and we're staying here.)
+**1d. Confirm composition target.** (Once routing is confirmed.)
+
+The implementation effort's composition target shapes scope considerably.
+Default is **standard composition** (`createSimpleHlsEngine`); use-case
+compositions (`createHlsAudioOnlyEngine`, etc.) follow a narrower frame.
+
+If not explicit in the invocation, surface and confirm. Three answers:
+
+- **Standard composition** *(default)* — feature lands in
+  `createSimpleHlsEngine` (or its constituents). Step 2's
+  destination-architecture frame applies in full.
+- **Use-case composition: `<use-case-name>`** — feature lands in the
+  use case's variant engine. Step 2's destination-architecture frame
+  is supplied by the use-case doc; fold-in traversal narrows.
+- **Both** — feature lands in standard composition; one or more
+  use-case compositions may need refactoring to absorb it. Treat
+  each use-case refactor as a fold-in candidate in Step 2.
+
+If the user didn't specify, default to **standard composition** and
+flag the assumption in the Step 1 report so the user can correct.
+
+**1e. Gather sources.** (Once routing and composition target are confirmed.)
 
 Triangulate from every available source:
 
@@ -270,46 +444,286 @@ Triangulate from every available source:
 
 **Stop and report back to the user** with:
 
-1. The feature name and the agreed phase scope (Phase 1? subset of
-   Phase 1's rows? multiple phases?).
-2. Sources consulted (with links).
-3. Feature doc status — what's already there vs what needs implementing.
-4. Likely template implementations (similar behaviors / actors / helpers).
-5. Open questions blocking implementation (going into Step 2's
-   discussion).
-6. **Recommended phase scope** for this implementation pass.
+1. The feature name.
+2. The confirmed composition target (standard / use-case / both).
+3. Sources consulted (with links).
+4. Feature doc status — what's already there vs what needs implementing.
+5. Likely template implementations (similar behaviors / actors / helpers).
+6. The feature's phases (from the doc) — surfaced for context, with
+   the phase-scope decision deferred to Step 3 once fold-in
+   assessment in Step 2 has shaped it.
 
-### Step 2 — Discuss to resolve open questions
+### Step 2 — Frame the work: destination architecture + fold-in assessment
 
-An **explicit conversational stage** — not optional, not implicit. After
-Step 1's report:
+Bridges "this feature, alone" and "this feature, as one slice of a
+larger architectural concern." Without it, scope-narrow choices that
+look reasonable in isolation produce implementations that don't fit
+the destination architecture, get reworked when adjacent features
+land, or ship capabilities of low user-meaningful value.
 
-- **Walk through the feature doc's Open questions section.** Which need
-  to resolve *before* coding? Which can stay open as known-unknowns?
-- **Confirm phase scope.** Phase 1 only? Phase 1 + Phase 2 subset?
-  Specific phase rows? The implementation must scope to a concrete chunk
-  list.
-- **Confirm composition mechanism per chunk** — (i) subtractive (no new
-  code), (ii) config-driven (existing behavior gains a knob), (iii)
-  new behavior (route to `/spf-create-behavior`), (iv) behavior update
-  with purpose change (route to `/spf-update-behavior`), (v) behavior
-  refactor with preserved purpose (route to `/refactor-behavior`), (vi)
-  media-layer / network-layer change (handle inline or defer per the
+Five movements (2a–2e). All five are required for features in the
+standard composition; for features being implemented FOR a specific
+use-case composition (per Step 1d), 2b lightens considerably — the
+use-case doc supplies the destination-architecture frame.
+
+**2a. Identify the architectural axis / cluster.**
+
+Per `features/clusters.md`, the feature lives in one or more clusters
+and may also sit on a cross-cluster axis (e.g., "selecting /
+filtering / prioritizing tracks of a given type"). Both matter:
+
+- **Primary cluster** — the section in `clusters.md` the feature
+  belongs to. Gives the direct siblings.
+- **Cross-cluster axis** — abstractions shared with features in
+  other clusters. The clusters doc's *Cross-cluster patterns*
+  section captures some of these (multi-writer state slots,
+  constraint + filter, per-type specialization,
+  sampling-baked-into-loading). The axis the feature sits on is
+  often inferable from the feature's verb-or-noun-phrase: "select" /
+  "filter" / "prioritize" / "sample" / "load" / "recover" /
+  "track-selection-for-type-X."
+
+Surface both: "this feature is in cluster X; it sits on the
+[axis-name] axis alongside features in clusters X, Y, Z."
+
+**2b. Sketch the destination architecture.**
+
+For features being implemented for the **standard composition** (the
+default), sketch where the cluster's destination architecture is
+heading — the larger shape this feature is one slice of. The sketch
+is the reference frame for the fold-in assessment.
+
+Format: a few sentences naming (i) the shape (multi-writer slot,
+constraint + filter, per-type sibling triad, etc.), (ii) the moving
+pieces (slots, behaviors, primitives), (iii) the open questions
+about where things live (the cluster's known unknowns). The sketch
+is necessarily approximate — its job is to give planning the right
+frame, not commit to design.
+
+**Mine sibling docs for already-articulated destination shapes.**
+Before sketching from scratch, scan cluster siblings' feature docs
+for an already-articulated destination shape. A sibling at
+`definition: technical` (or deeper) often carries the destination
+architecture in its *Phases of complexity* table — behavior names,
+slot ownership, multi-writer characterization. If found, the sketch
+becomes a cross-reference to that sibling's articulated shape rather
+than a fresh draft. When the destination sibling is itself
+unimplemented (e.g., `audio-abr`'s `switchAudioQuality` for
+`multi-language-audio`), this triggers an **ordering question** —
+surface it to the user in Step 2's report, before the per-candidate
+fold-in walk, per the *Order-inversion not surfaced* failure mode.
+
+For features being implemented **FOR a use-case composition**, the
+use-case doc supplies most of this frame; cross-reference rather
+than re-sketch.
+
+**2c. Enumerate fold-in candidates.**
+
+Walk three sources of candidates:
+
+- **Cluster siblings** (from 2a's primary cluster).
+- **Cross-cluster axis siblings** (from 2a's axis — features in
+  other clusters that share the abstraction). For cluster-C
+  (registry) features, at minimum check capability-probing (D),
+  rendition-selection-caps (E), multi-cdn-failover (G), drm-support
+  (H) regardless of whether the feature doc lists them — see
+  `clusters.md` → *Selection / filtering across clusters*. Analogous
+  cross-cluster cousins exist for other primary clusters; consult
+  that section before defaulting to "no cross-cluster candidates."
+- **The feature doc's *Related features* list** (catches anything
+  the cluster traversal missed — but treat the list as the *floor*,
+  not the ceiling).
+
+Candidates can be (i) whole features, (ii) specific phases of
+features, or (iii) use-case-composition refactors (a minor refactor
+to a use case's variant engine to absorb this feature's new
+behaviors counts as a fold-in candidate).
+
+**2d. Assess each candidate; recommend an outcome.**
+
+Four criteria per candidate. **Shape-constraint-if-deferred comes
+first** because it's the criterion that catches *design-with-in-mind*
+— the other three are oriented toward "should we write code for this
+candidate now?" and miss the design-shape question if it's not asked
+separately. Per the *Cross-cluster axis traversal short-circuit*
+failure mode.
+
+1. **Shape-constraint-if-deferred** — if we don't design this
+   feature with the candidate's eventual shape in mind, will the
+   structures we land make later integration awkward? Will slots,
+   composition seams, layering decisions, or filter-pipeline order
+   need to mutate when the candidate ships? High shape-constraint →
+   design-with-in-mind (or stronger); low shape-constraint → ignore
+   is safe.
+2. **Impact if deferred** — would solving this feature without
+   considering the candidate produce a solution that needs
+   significant refactor / rework / re-characterization when the
+   candidate later lands? Or that would be insufficient when the
+   candidate lands?
+3. **Overall speed if combined** — would partially or fully
+   implementing the candidate now produce overall less work than
+   serial implementation, even at moderate cost to this feature's
+   specific velocity?
+4. **Scope discipline** — is the candidate's bundled work focused
+   enough to remain a discrete partial-implementation, or does it
+   sprawl into ocean-boiling territory?
+
+The fourth criterion is where the **boiling-the-ocean check** lives
+— but it's a check on *scope sprawl*, not a default veto. Per the
+*Boil-the-ocean false positive* failure mode, rejecting candidates
+reflexively as "too big" misses the real question: "can this be cut
+to a focused partial-implementation?"
+
+**Why four criteria, not three.** The previous three-criteria rubric
+biased the recommendation toward "implement now or ignore" — when the
+implement-now threshold failed, the natural cognitive landing slid
+past design-with-in-mind to ignore. Lifting shape-constraint to
+criterion #1 pulls the design-shape question to the front of the
+assessment, where it can land on DWIM as the right answer instead of
+being skipped past.
+
+Five outcomes per candidate:
+
+- **Implement candidate first (flip ordering)** — when the candidate
+  carries this feature's destination architecture (per 2b),
+  implementing it first is the right route. This feature exits the
+  current implementation pass and returns later, anchored on the
+  candidate's slot-owner shape. Applies *only* to destination-
+  architecture siblings; for ordinary fold-in candidates, this
+  outcome doesn't apply. Per the *Order-inversion not surfaced*
+  failure mode.
+- **Fold in (full)** — implement the candidate (or candidate phase)
+  in this implementation pass. Used when impact is high and scope
+  fits.
+- **Partial implementation** — implement a focused subset of the
+  candidate in this pass. Concrete code lands; some of the
+  candidate stays unimplemented. Used when impact is high and a
+  focused cut exists.
+- **Design with in mind** — no new code for the candidate, but this
+  feature's implementation shape is constrained by the candidate's
+  eventual needs. Used when impact is medium and the candidate's
+  shape is enough to inform design but not enough to warrant code.
+- **Ignore for now** — defer entirely. Used when impact is low or
+  the candidate's eventual landing wouldn't meaningfully constrain
+  this feature's shape.
+
+Per the *Conflating partial-implementation with design-with-in-mind*
+failure mode, the partial vs design-with-in-mind distinction is
+load-bearing — partial means code lands; design-with-in-mind means
+no code, only shape constraints.
+
+**Default-recommended outcome per candidate type.** The four-criteria
+walk can land anywhere on the outcome spectrum, but candidate type
+carries strong priors. Diverging from the default without naming
+*which criterion* pushed the assessment is a smell:
+
+| Candidate type | Default outcome | Notes |
+|---|---|---|
+| **Destination-architecture sibling** (cluster sibling at `definition: technical`+ carrying this feature's destination slot-owner shape) | Flip ordering **or** Full fold-in | Per *Order-inversion not surfaced* failure mode. Never *ignore* — architecturally wrong by construction. |
+| **Primary cluster sibling** | Full fold-in / Partial | Assess via the four criteria. *Ignore* only if low-impact AND low-shape-constraint. |
+| **Cross-cluster axis cousin** (e.g., cluster D / E / G / H cousins for a cluster-C feature) | **Design with in mind** | Per *Cross-cluster axis traversal short-circuit* failure mode + `clusters.md` → *Selection / filtering across clusters*. Promote to Partial / Full only if Impact-if-deferred clears the threshold; demote to Ignore only if Shape-constraint-if-deferred is genuinely low. |
+| **Use-case composition refactor** | Design with in mind | Let standard composition land cleanly; verify the variant engine composes post-landing. |
+
+The defaults are starting points. When your assessment lands at a
+different outcome, name *which criterion* pushed it (e.g.,
+"Impact-if-deferred is high, so promoting capability-probing from
+DWIM to Partial"). The defaults exist to counter-bias the historical
+"implement now / ignore" pull of the four-criteria walk —
+particularly for cross-cluster cousins, where the cluster doc
+already says DWIM is the typical landing.
+
+**Value-curve check before recommending scope.** Per `clusters.md`'s
+"can-play vs actual support" framing, check whether the
+scope-as-recommended produces user-meaningful capability. A cut
+that ships only spec-compliance / passive recognition is a signal
+that the scope needs revisiting — either fold in more of the
+dynamic / interactive phases, or be explicit with the user about
+the value-curve constraint.
+
+**2e. Ask the user to confirm — one question per candidate.**
+
+**Use `AskUserQuestion`** to present each candidate's recommendation
+and let the user confirm or override. One question per candidate;
+batch into rounds of up to 4 per `AskUserQuestion` call. For each
+candidate's question:
+
+- **Question text** — name the candidate and summarize the
+  assessment in one sentence.
+- **Options (4)** — four of the outcomes, with the recommended
+  outcome listed first and labeled "(Recommended)". Order the
+  remaining three by the next-best fit per the assessment.
+- **Description per option** — one-line summary of what that
+  outcome means for this candidate (concrete: "implement basic
+  switchAudioQuality alongside" / "leave flush orchestration
+  codec-change-extensible" / "no change").
+
+When the candidate carries destination architecture (per 2b), the
+five-outcome list exceeds `AskUserQuestion`'s 4-option cap. Drop
+"Ignore for now" — ignoring a destination-architecture sibling is
+architecturally-wrong-by-construction. The remaining four (Flip
+ordering / Full fold-in / Partial / Design-with-in-mind) fit the
+cap. **Ordering surfacing also belongs in Step 2's narrative
+report**, not just inside the per-candidate `AskUserQuestion`:
+mention the destination-architecture sibling and the flip-ordering
+option in prose before the AskUserQuestion call, so the user sees
+the framing alongside the recommendation.
+
+Allow the user to select Other for adjustments not captured by the
+listed-outcome shape (e.g., "partially implement but limit to X").
+
+After confirmation, the **agreed scope** is the union of:
+
+- This feature's chosen phases (refined in Step 3).
+- Each fold-in / partial-implementation candidate's chosen scope.
+- Each "design with in mind" candidate's shape constraint (informs
+  design without adding code).
+
+This agreed scope feeds Step 3's open-questions discussion and
+final scope confirmation.
+
+**Stop and report back to the user** with:
+
+1. The cluster + axis identification (from 2a).
+2. The destination architecture sketch (from 2b).
+3. The candidate enumeration + per-candidate assessment +
+   recommended outcome (from 2c-2d).
+4. The value-curve check result.
+5. The `AskUserQuestion`-confirmed outcomes per candidate (from 2e).
+6. The resulting agreed scope.
+
+### Step 3 — Resolve open questions + confirm final scope
+
+An **explicit conversational stage** — not optional, not implicit.
+After Step 2's fold-in assessment delivers the agreed scope:
+
+- **Walk through the feature doc's Open questions section** plus any
+  open questions surfaced by fold-in candidates. Which need to
+  resolve *before* coding? Which can stay open as known-unknowns?
+- **Confirm phase scope at chunk granularity.** Step 2's agreed scope
+  is the high-level frame; this step decomposes to specific phase
+  rows + fold-in subsets the implementation will produce.
+- **Confirm composition mechanism per chunk** — (i) subtractive (no
+  new code), (ii) config-driven (existing behavior gains a knob),
+  (iii) new behavior (route to `/spf-create-behavior`), (iv)
+  behavior update with purpose change (route to
+  `/spf-update-behavior`), (v) behavior refactor with preserved
+  purpose (route to `/refactor-behavior`), (vi) media-layer /
+  network-layer change (handle inline or defer per the
   downstream-skill-missing branch).
-- **Resolve open questions the implementation needs.** Per the
-  pre-deciding-things failure mode, only resolve what the implementation
-  forces; leave the rest as open questions in the doc.
+- **Resolve open questions the implementation needs.** Only resolve
+  what the implementation forces; leave the rest as open questions
+  in the doc.
 
-**Use `AskUserQuestion`** for clear-cut choices (phase scope,
-composition mechanism per chunk, open-question resolutions).
+**Use `AskUserQuestion`** for clear-cut choices (open-question
+resolutions, composition mechanism per chunk).
 
-### Step 3 — Map phases to implementation chunks
+### Step 4 — Map phases to implementation chunks
 
 Per the agreed scope, decompose into discrete chunks. Each chunk is:
 
 - **Small enough to TDD individually** — one test (or small test set), one
   implementation file change, one composition wiring tweak.
-- **Categorized by composition mechanism** — drives Step 6's routing.
+- **Categorized by composition mechanism** — drives Step 7's routing.
 - **Sequenced for least-risk order** — primitives before behaviors;
   behaviors before composition wiring; composition wiring before
   integration tests.
@@ -322,7 +736,7 @@ Per the agreed scope, decompose into discrete chunks. Each chunk is:
 | Create switchAudioQuality behavior | New behavior | `/spf-create-behavior` | `switch-audio-quality.test.ts` (new) |
 | Wire switchAudioQuality into composition | Composition | None | `engine.test.ts` composition assertion |
 
-### Step 4 — Apply cross-cutting concern checks
+### Step 5 — Apply cross-cutting concern checks
 
 Run the failure-mode catalog and the feature doc's *Likely cross-cutting
 impact* section against the chunk list. Each check fires when its signals
@@ -344,7 +758,7 @@ are present:
   catalog, if the chunk touches buffer behavior and codecs change,
   surface the `changeType()` vs `flushBuffer` question explicitly.
 
-### Step 5 — TDD plan
+### Step 6 — TDD plan
 
 For each chunk, name:
 
@@ -353,16 +767,16 @@ For each chunk, name:
 - **The composition wiring change** — if any.
 - **Acceptance criterion** — what does "done" look like for this chunk?
 
-This output drives Step 6's per-chunk implementation loop.
+This output drives Step 7's per-chunk implementation loop.
 
 **The TDD plan is the seed of the feature doc's *Verification*
-section.** Step 8 persists each chunk's test (file path + test name +
+section.** Step 9 persists each chunk's test (file path + test name +
 assertion summary) into the feature doc — the TDD plan does not live
 only in chat. Name tests with assertion summaries suitable for the
-doc from the start, so Step 8 is a transcription pass rather than a
+doc from the start, so Step 9 is a transcription pass rather than a
 re-articulation.
 
-### Step 6 — Implement (test-first per chunk; route to downstream skills)
+### Step 7 — Implement (test-first per chunk; route to downstream skills)
 
 Iterate per chunk:
 
@@ -394,7 +808,7 @@ a downstream skill that doesn't exist yet (or is only a stub):
 
 The user makes the call. Don't apply ad-hoc discipline silently.
 
-### Step 7 — Final-shape audit (per chunk + cumulative)
+### Step 8 — Final-shape audit (per chunk + cumulative)
 
 After each chunk:
 
@@ -411,10 +825,10 @@ Cumulative audit after all chunks:
   *Likely cross-cutting impact* section either addressed or explicitly
   deferred?
 - **No silent ad-hoc downstream discipline?** — if any chunk went the
-  "apply discipline ad-hoc" path in Step 6, the extraction TODO is
+  "apply discipline ad-hoc" path in Step 7, the extraction TODO is
   flagged.
 
-### Step 8 — Update feature doc as living artifact
+### Step 9 — Update feature doc as living artifact
 
 The feature doc transitions from `coarse` → `sketched` (or `technical` →
 `sketched`) as code lands. Required updates:
@@ -432,7 +846,7 @@ The feature doc transitions from `coarse` → `sketched` (or `technical` →
   lands)** — populated with actual file paths, behavior names, state
   slots, helpers. See `audio-playback.md` for the canonical shape.
 - **Verification (required once any phase implementation lands)** —
-  **this is the persisted TDD artifact.** The Step 5 TDD plan lives
+  **this is the persisted TDD artifact.** The Step 6 TDD plan lives
   here in the doc, not just in chat. Each chunk's test gets a line:
   test file path → test name → assertion summary. Add *Sandbox*
   entries where demos exist; add *Out of scope / deferred* sub-list
@@ -465,9 +879,9 @@ This is **not optional** — the doc-as-living-artifact discipline is
 load-bearing for the registry staying current. Per the *Status update
 skipped* failure-mode entry.
 
-### Step 9 — Commit (with user confirmation)
+### Step 10 — Commit (with user confirmation)
 
-After Step 7 audit is clean and Step 8 doc update lands:
+After Step 8 audit is clean and Step 9 doc update lands:
 
 1. **Audit working-tree state.** `git status -s`. Surface any
    pre-existing uncommitted work outside the implementation scope.
@@ -489,48 +903,73 @@ After Step 7 audit is clean and Step 8 doc update lands:
 
 ## Output format
 
-Propose Steps 1–5 outputs as a structured report before writing any code:
+Propose Steps 1–6 outputs as structured reports before writing any code,
+in order:
 
-1. **Feature identification** (Step 1's report — feature, scope target,
-   sources, template implementations)
-2. **Ambiguities + open questions to resolve** (Step 2)
-3. **Chunk decomposition** (Step 3 — chunk list with mechanism + downstream
-   skill routing)
-4. **Cross-cutting concerns** (Step 4)
-5. **TDD plan** (Step 5 — per-chunk test + implementation targets)
+1. **Feature identification** (Step 1's report — feature, composition
+   target, sources, template implementations)
+2. **Destination architecture + fold-in assessment** (Step 2's report —
+   cluster/axis identification, destination sketch, candidate
+   assessment + recommendations, value-curve check, agreed scope after
+   `AskUserQuestion` confirmations)
+3. **Open questions + final scope** (Step 3 — resolved open questions,
+   final phase-and-fold-in scope at chunk granularity)
+4. **Chunk decomposition** (Step 4 — chunk list with mechanism +
+   downstream skill routing)
+5. **Cross-cutting concerns** (Step 5)
+6. **TDD plan** (Step 6 — per-chunk test + implementation targets)
 
-After user confirmation, proceed to Step 6 per-chunk loop. Surface Steps
-7–9 outputs after implementation.
+After user confirmation, proceed to Step 7 per-chunk loop. Surface Steps
+8–10 outputs after implementation.
 
 ## Why this order
 
 Same shape as `/spf-document-feature` and `/spf-document-use-case`. Steps
-1–2 force framing before mechanical work. Step 3 commits to a concrete
-chunk list; Step 4 runs cross-cutting checks while context is fresh; Step
-5 commits to TDD targets. Step 6 produces the artifact; Step 7 audits.
-Step 8 keeps the registry current. Step 9 hands the commit boundary to
+1–3 force framing before mechanical work. Step 4 commits to a concrete
+chunk list; Step 5 runs cross-cutting checks while context is fresh; Step
+6 commits to TDD targets. Step 7 produces the artifact; Step 8 audits.
+Step 9 keeps the registry current. Step 10 hands the commit boundary to
 the user.
 
-The novel discipline compared to the document-* skills is the **chunk
-decomposition + per-chunk downstream-skill routing** at Steps 3–6 —
-implementation work is inherently more granular than documentation work,
-and the chunk-level discipline is what keeps it from sprawling.
+The novel disciplines compared to the document-* skills:
 
-## Why a discussion stage (not implicit)
+- **Step 2's destination-architecture + fold-in assessment** —
+  implementation choices anchor the architecture more concretely
+  than documentation choices do; framing the destination + fold-ins
+  *before* scope-committing prevents local-optimal cuts that don't
+  fit the cluster's larger shape.
+- **Chunk decomposition + per-chunk downstream-skill routing** at
+  Steps 4–7 — implementation work is inherently more granular than
+  documentation work, and the chunk-level discipline is what keeps
+  it from sprawling.
 
-The open-questions-skipped failure mode is the canonical example: feature
-docs at coarse depth have unresolved design questions that block
-implementation. Resolving them silently via the edit loses the user's
-design intent. Step 2's explicit conversational stage forces resolution
-in the open, with the user making the call.
+## Why two discussion stages (not one)
+
+This skill has **two** explicit conversational stages: Step 2 (fold-in
+assessment, with `AskUserQuestion` per candidate) and Step 3 (open
+questions + final scope). They're separated because they resolve
+different decisions:
+
+- **Step 2** decides *which features / phases* the implementation pass
+  touches. Without this stage, scope-narrow choices that look reasonable
+  in isolation ship implementations that get reworked when adjacent
+  features land, or ship capabilities of low user-meaningful value.
+- **Step 3** decides *the specifics within the agreed scope* — open
+  questions, composition mechanisms per chunk, phase-row-level cuts.
+  Without this stage, the open-questions-skipped failure mode produces
+  silent design decisions that lose the user's design intent.
+
+Both stages use `AskUserQuestion`. Resolving them in chat — without the
+structured presentation — loses both the agreed scope and the agreed
+design decisions.
 
 ## When this is the wrong skill
 
 - **You want to document a feature (not yet implemented)** →
   `/spf-document-feature`.
 - **You want to implement a use-case composition (not a single feature)** →
-  *(future)* `/spf-implement-use-case`. For now, this skill can be invoked
-  per-constituent-feature of a use case.
+  `/spf-implement-use-case`. That skill consumes the use-case doc and
+  routes per-constituent-feature back into this skill.
 - **You want to refactor an existing behavior without feature scope** →
   `/refactor-behavior`.
 - **You want to split or merge behaviors** → `/refactor-behavior`'s
@@ -541,7 +980,7 @@ in the open, with the user making the call.
 ## How the failure-mode catalog grows
 
 Same pattern as other SPF skills: when a new failure mode surfaces during
-use (most likely during Step 6 per-chunk implementation or Step 7 audit):
+use (most likely during Step 7 per-chunk implementation or Step 8 audit):
 
 1. Add an entry to the *Failure-mode catalog* section above with the risk
    pattern and a worked-example citation.

@@ -11,9 +11,9 @@ import { MenuBackElement } from '../menu-back-element';
 import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
 import { MenuGroupElement } from '../menu-group-element';
+import { MenuGroupLabelElement } from '../menu-group-label-element';
 import { MenuItemElement } from '../menu-item-element';
 import { MenuItemIndicatorElement } from '../menu-item-indicator-element';
-import { MenuLabelElement } from '../menu-label-element';
 import { MenuRadioGroupElement } from '../menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu-radio-item-element';
 import { MenuSeparatorElement } from '../menu-separator-element';
@@ -113,7 +113,7 @@ afterEach(() => {
 describe('MenuElement', () => {
   it('scopes menu state data attributes to menu elements', async () => {
     const root = createElement(MenuElement);
-    const label = createElement(MenuLabelElement);
+    const label = createElement(MenuGroupLabelElement);
     const group = createElement(MenuGroupElement);
     const item = createElement(MenuItemElement);
     const checkboxItem = createElement(MenuCheckboxItemElement);
@@ -131,10 +131,8 @@ describe('MenuElement', () => {
     root.side = 'top';
     root.align = 'end';
     label.textContent = 'Playback';
-    group.label = 'Playback';
     item.textContent = 'Copy link';
     checkboxItem.textContent = 'Autoplay';
-    radioGroup.label = 'Quality';
     radioGroup.value = 'auto';
     radioItem.value = 'auto';
     radioItem.textContent = 'Auto';
@@ -148,10 +146,10 @@ describe('MenuElement', () => {
 
     radioItem.append(indicator);
     radioGroup.append(radioItem);
-    group.append(item, checkboxItem, radioGroup);
+    group.append(label, item, checkboxItem, radioGroup);
     rootView.append(trigger);
     child.append(back, childItem);
-    root.append(label, group, separator, rootView, child);
+    root.append(group, separator, rootView, child);
     document.body.append(root);
 
     await root.updateComplete;
@@ -365,6 +363,66 @@ describe('MenuElement', () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(
       expect.objectContaining({ detail: expect.objectContaining({ open: false }) })
     );
+  });
+
+  it('wires group labels to group elements with aria-labelledby', async () => {
+    const root = createElement(MenuElement);
+    const group = createElement(MenuGroupElement);
+    const radioGroup = createElement(MenuRadioGroupElement);
+    const groupLabel = createElement(MenuGroupLabelElement);
+    const radioLabel = createElement(MenuGroupLabelElement);
+
+    root.open = true;
+    groupLabel.textContent = 'Playback';
+    radioLabel.textContent = 'Quality';
+
+    group.append(groupLabel);
+    radioGroup.append(radioLabel);
+    root.append(group, radioGroup);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await group.updateComplete;
+    await radioGroup.updateComplete;
+    await groupLabel.updateComplete;
+    await radioLabel.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(group.getAttribute('aria-labelledby')).toBe(groupLabel.id);
+      expect(radioGroup.getAttribute('aria-labelledby')).toBe(radioLabel.id);
+    });
+  });
+
+  it('lets explicit group labels override generated aria-labelledby', async () => {
+    const root = createElement(MenuElement);
+    const ariaLabelGroup = createElement(MenuGroupElement);
+    const ariaLabelledByGroup = createElement(MenuRadioGroupElement);
+    const ariaLabel = createElement(MenuGroupLabelElement);
+    const ariaLabelledByLabel = createElement(MenuGroupLabelElement);
+
+    root.open = true;
+    ariaLabelGroup.setAttribute('aria-label', 'Playback');
+    ariaLabelledByGroup.setAttribute('aria-labelledby', 'external-label');
+
+    ariaLabelGroup.append(ariaLabel);
+    ariaLabelledByGroup.append(ariaLabelledByLabel);
+    root.append(ariaLabelGroup, ariaLabelledByGroup);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await ariaLabelGroup.updateComplete;
+    await ariaLabelledByGroup.updateComplete;
+    await ariaLabel.updateComplete;
+    await ariaLabelledByLabel.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(ariaLabel.id).not.toBe('');
+      expect(ariaLabelledByLabel.id).not.toBe('');
+    });
+
+    expect(ariaLabelGroup.getAttribute('aria-label')).toBe('Playback');
+    expect(ariaLabelGroup.hasAttribute('aria-labelledby')).toBe(false);
+    expect(ariaLabelledByGroup.getAttribute('aria-labelledby')).toBe('external-label');
   });
 
   it('highlights pointer-entered items without moving focus', async () => {

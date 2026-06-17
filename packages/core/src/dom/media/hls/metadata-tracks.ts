@@ -21,7 +21,8 @@ export function HlsJsMediaMetadataTracksMixin<Base extends Constructor<HlsEngine
     }
 
     #forceHiddenTracks(): void {
-      const { target } = this;
+      // The hls.js delegate always binds to the real `<video>` element.
+      const target = this.target as HTMLVideoElement | null;
       if (!target) return;
 
       [...target.textTracks].forEach((track) => {

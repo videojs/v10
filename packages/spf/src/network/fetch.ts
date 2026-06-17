@@ -125,6 +125,23 @@ export function getResponseText(response: ResponseLike): Promise<string> {
 }
 
 /**
+ * Fetch a resource and resolve its text body — the text analog of
+ * {@link FetchBytes}. A non-OK status rejects, so HTTP failures surface as
+ * rejections that callers (and decorators like the failover tracker) handle
+ * uniformly with network errors.
+ */
+export type FetchText = (addressable: Resource, options?: RequestInit) => Promise<string>;
+
+/** Default {@link FetchText}: fetch the resource, reject on non-OK, return text. */
+export const fetchResolvableText: FetchText = async (addressable, options) => {
+  const response = await fetchResolvable(addressable, options);
+  if (!response.ok) {
+    throw new Error(`fetchResolvableText: ${response.status} ${response.statusText} for ${addressable.url}`);
+  }
+  return getResponseText(response);
+};
+
+/**
  * Two-stage fetch helper: eagerly starts the HTTP request (TTFB is awaited),
  * then returns a lazy iterable over the response body. Separating connection
  * start from body iteration makes fetch timing predictable and observable

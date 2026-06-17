@@ -224,7 +224,94 @@ describe('selectAudioTrack', () => {
     reactor.destroy();
   });
 
-  it.skip('uses preferred language configuration', async () => {
+  it('picks track matching preferredAudioLanguage when supplied', async () => {
+    const audioTracks: PartiallyResolvedAudioTrack[] = [
+      {
+        type: 'audio',
+        id: 'audio-en',
+        url: 'http://example.com/audio-en.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'English',
+        language: 'en',
+        sampleRate: 48000,
+        channels: 2,
+      },
+      {
+        type: 'audio',
+        id: 'audio-es',
+        url: 'http://example.com/audio-es.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'Spanish',
+        language: 'es',
+        sampleRate: 48000,
+        channels: 2,
+      },
+    ];
+
+    const presentation = createPresentation({ audio: audioTracks });
+    const state = makeState({ presentation });
+
+    const reactor = selectAudioTrack.setup({ state, config: { preferredAudioLanguage: 'es' } });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
+
+    reactor.destroy();
+  });
+
+  it('falls back to DEFAULT=YES track when preferredAudioLanguage does not match', async () => {
+    const audioTracks: PartiallyResolvedAudioTrack[] = [
+      {
+        type: 'audio',
+        id: 'audio-en',
+        url: 'http://example.com/audio-en.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'English',
+        language: 'en',
+        sampleRate: 48000,
+        channels: 2,
+      },
+      {
+        type: 'audio',
+        id: 'audio-fr',
+        url: 'http://example.com/audio-fr.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'French',
+        language: 'fr',
+        default: true,
+        sampleRate: 48000,
+        channels: 2,
+      },
+    ];
+
+    const presentation = createPresentation({ audio: audioTracks });
+    const state = makeState({ presentation });
+
+    // Preferred language 'xx' has no match; picker falls back to the default
+    // track ('audio-fr') rather than the first track ('audio-en').
+    const reactor = selectAudioTrack.setup({ state, config: { preferredAudioLanguage: 'xx' } });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-fr');
+
+    reactor.destroy();
+  });
+
+  it('falls back to first track when no language preference and no DEFAULT track', async () => {
     const audioTracks: PartiallyResolvedAudioTrack[] = [
       {
         type: 'audio',
@@ -261,7 +348,7 @@ describe('selectAudioTrack', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.selectedAudioTrackId.get()).toBe('audio-es');
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     reactor.destroy();
   });

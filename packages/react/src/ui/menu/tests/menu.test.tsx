@@ -2,14 +2,16 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createPlayerWrapper } from '../../../testing/mocks';
 import { ControlsContextProvider } from '../../controls/context';
 import { MenuBack } from '../menu-back';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
 import { MenuContent } from '../menu-content';
 import { MenuGroup } from '../menu-group';
+import { MenuGroupLabel } from '../menu-group-label';
 import { MenuItem } from '../menu-item';
 import { MenuItemIndicator } from '../menu-item-indicator';
-import { MenuLabel } from '../menu-label';
+import { MenuItemValue } from '../menu-item-value';
 import { MenuRadioGroup } from '../menu-radio-group';
 import { MenuRadioItem } from '../menu-radio-item';
 import { MenuRoot } from '../menu-root';
@@ -253,6 +255,56 @@ function CheckboxFixture({
   );
 }
 
+function GroupLabelFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent>
+        <MenuGroup data-testid="group">
+          <MenuGroupLabel data-testid="label">Playback</MenuGroupLabel>
+          <MenuItem>Copy link</MenuItem>
+        </MenuGroup>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
+function RadioGroupLabelFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent>
+        <MenuRadioGroup data-testid="group" value="auto" onValueChange={vi.fn()}>
+          <MenuGroupLabel data-testid="label">Quality</MenuGroupLabel>
+          <MenuRadioItem value="auto">Auto</MenuRadioItem>
+        </MenuRadioGroup>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
+function ExplicitGroupLabelFixture() {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent>
+        <MenuGroup data-testid="aria-label-group" aria-label="Playback">
+          <MenuGroupLabel data-testid="aria-label-label">Ignored</MenuGroupLabel>
+        </MenuGroup>
+        <MenuRadioGroup
+          data-testid="aria-labelledby-group"
+          aria-labelledby="external-label"
+          value="auto"
+          onValueChange={vi.fn()}
+        >
+          <MenuGroupLabel data-testid="aria-labelledby-label">Ignored</MenuGroupLabel>
+          <MenuRadioItem value="auto">Auto</MenuRadioItem>
+        </MenuRadioGroup>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 function FocusOutFixture({ onRootOpenChange }: { onRootOpenChange: NonNullable<MenuRoot.Props['onOpenChange']> }) {
   return (
     <>
@@ -285,13 +337,13 @@ describe('MenuContent', () => {
       <MenuRoot defaultOpen side="top" align="end">
         <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
         <MenuContent data-testid="root-content">
-          <MenuLabel data-testid="label">Playback</MenuLabel>
-          <MenuGroup data-testid="group" label="Playback">
+          <MenuGroup data-testid="group">
+            <MenuGroupLabel data-testid="label">Playback</MenuGroupLabel>
             <MenuItem data-testid="item">Copy link</MenuItem>
             <MenuCheckboxItem data-testid="checkbox-item" checked={false} onCheckedChange={vi.fn()}>
               Autoplay
             </MenuCheckboxItem>
-            <MenuRadioGroup data-testid="radio-group" value="auto" onValueChange={vi.fn()} label="Quality">
+            <MenuRadioGroup data-testid="radio-group" aria-label="Quality" value="auto" onValueChange={vi.fn()}>
               <MenuRadioItem data-testid="radio-item" value="auto">
                 Auto
                 <MenuItemIndicator data-testid="indicator" checked>
@@ -653,6 +705,35 @@ describe('MenuContent', () => {
     });
   });
 
+  it('wires GroupLabel to Group with aria-labelledby', async () => {
+    render(<GroupLabelFixture />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('group').getAttribute('aria-labelledby')).toBe(screen.getByTestId('label').id);
+    });
+  });
+
+  it('wires GroupLabel to RadioGroup with aria-labelledby', async () => {
+    render(<RadioGroupLabelFixture />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('group').getAttribute('aria-labelledby')).toBe(screen.getByTestId('label').id);
+    });
+  });
+
+  it('lets explicit group labels override generated aria-labelledby', async () => {
+    render(<ExplicitGroupLabelFixture />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('aria-label-label').id).not.toBe('');
+      expect(screen.getByTestId('aria-labelledby-label').id).not.toBe('');
+    });
+
+    expect(screen.getByTestId('aria-label-group').getAttribute('aria-label')).toBe('Playback');
+    expect(screen.getByTestId('aria-label-group').hasAttribute('aria-labelledby')).toBe(false);
+    expect(screen.getByTestId('aria-labelledby-group').getAttribute('aria-labelledby')).toBe('external-label');
+  });
+
   it('keeps the menu open when a checkbox item is toggled', () => {
     const onCheckedChange = vi.fn();
     const onRootOpenChange = vi.fn();
@@ -698,5 +779,43 @@ describe('MenuContent', () => {
     await waitFor(() => {
       expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
     });
+  });
+
+  it('forwards disabled to a root trigger render prop and prevents opening', () => {
+    render(
+      <MenuRoot>
+        <MenuTrigger disabled render={<button type="button" data-testid="trigger" />} />
+        <MenuContent data-testid="content">Captions</MenuContent>
+      </MenuRoot>
+    );
+
+    const trigger = screen.getByTestId('trigger');
+    expect(trigger).toHaveProperty('disabled', true);
+
+    fireEvent.click(trigger);
+
+    expect(screen.queryByTestId('content')).toBeNull();
+
+    const event = new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true, cancelable: true });
+    trigger.dispatchEvent(event);
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(screen.queryByTestId('content')).toBeNull();
+  });
+
+  it('provides setting context for root trigger item values', () => {
+    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1.5 });
+
+    render(
+      <MenuRoot>
+        <MenuTrigger type="playback-rate" data-testid="trigger">
+          Speed <MenuItemValue data-testid="value" />
+        </MenuTrigger>
+        <MenuContent data-testid="content">Speed</MenuContent>
+      </MenuRoot>,
+      { wrapper: Wrapper }
+    );
+
+    expect(screen.getByTestId('value').textContent).toBe('1.5×');
   });
 });

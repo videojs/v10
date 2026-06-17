@@ -40,7 +40,8 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
       const { engine } = this;
       if (!engine || !this.target) return;
 
-      const media = this.target;
+      // The hls.js delegate always binds to the real `<video>` element.
+      const media = this.target as HTMLVideoElement;
 
       const onTracksFound = (_event: string, data: NonNativeTextTracksData) => {
         this.#clearTracks();

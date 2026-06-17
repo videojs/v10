@@ -28,7 +28,7 @@ async function render() {
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <mux-audio src="${SOURCES[state.source].url}" debug ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
         </${tag}>
       </audio-player>
     </div>

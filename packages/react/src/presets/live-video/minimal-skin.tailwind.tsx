@@ -8,6 +8,7 @@ import {
   icon,
   iconState,
   inputFeedback,
+  menu,
   overlay,
   popup,
   poster,
@@ -18,12 +19,13 @@ import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import {
-  AirplayEnterIcon,
-  AirplayExitIcon,
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -37,9 +39,10 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
-import { AirplayButton } from '@/ui/airplay-button';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -47,6 +50,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -134,6 +138,60 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function CaptionsTrigger(): ReactNode {
+  const captions = useCaptionsOptions();
+  if (!captions) return null;
+
+  const { disabled } = captions;
+
+  if (!captions.showMenu) {
+    return (
+      <Tooltip.Root side="top">
+        <Tooltip.Trigger
+          render={
+            <CaptionsButton className={iconState.captions.button} render={<Button />}>
+              <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+              <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+            </CaptionsButton>
+          }
+        />
+        <Tooltip.Popup className={cn(popup.tooltip)} />
+      </Tooltip.Root>
+    );
+  }
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        disabled={disabled}
+        render={
+          <CaptionsButton className={iconState.captions.button} render={<Button />}>
+            <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
+            <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
+          </CaptionsButton>
+        }
+      />
+      <Menu.Content className={cn(popup.popover, menu.root)}>
+        <Menu.RadioGroup
+          className={menu.group}
+          value={captions.value}
+          onValueChange={captions.setValue}
+          aria-label="Captions"
+        >
+          {captions.options.map((option) => (
+            <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+              <span>{option.label}</span>
+              <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
+                <CheckIcon className={icon} />
+              </Menu.ItemIndicator>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
 export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 
@@ -198,17 +256,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
           <div className={buttonGroupEnd}>
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className={iconState.captions.button} render={<Button />}>
-                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+            <CaptionsTrigger />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
@@ -225,10 +273,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <AirplayButton className={iconState.airplay.button} render={<Button />}>
-                    <AirplayEnterIcon className={cn(icon, iconState.airplay.enter)} />
-                    <AirplayExitIcon className={cn(icon, iconState.airplay.exit)} />
-                  </AirplayButton>
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
                 }
               />
               <Tooltip.Popup className={cn(popup.tooltip)} />

@@ -49,16 +49,9 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   attach(target: HTMLVideoElement) {
     super.attach(target);
+
     if (this.preload !== target.preload) target.preload = this.preload;
     if (this.src) target.src = this.src;
-  }
-
-  detach() {
-    super.detach();
-  }
-
-  destroy() {
-    this.detach();
   }
 }
 

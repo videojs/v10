@@ -154,6 +154,7 @@ bun.lockb
 .claude/worktrees/
 .opencode
 AGENTS.md
+.agents
 agents
 
 # Playwright
