@@ -21,6 +21,35 @@ export default function HTMLUsageCodeBlock() {
     embedMethod: $embedMethod,
   });
 
+  const isEjected = $embedMethod === 'ejected';
+
+  if (isEjected) {
+    return (
+      <TabsRoot maxWidth={false}>
+        <TabsList label="HTML implementation">
+          <Tab value="html" initial>
+            index.html
+          </Tab>
+          {result.js && <Tab value="javascript">index.ts</Tab>}
+          {result.css && <Tab value="css">skin.css</Tab>}
+        </TabsList>
+        <TabsPanel value="html" initial>
+          <ClientCode code={result.html} lang="html" />
+        </TabsPanel>
+        {result.js && (
+          <TabsPanel value="javascript">
+            <ClientCode code={result.js} lang="javascript" />
+          </TabsPanel>
+        )}
+        {result.css && (
+          <TabsPanel value="css">
+            <ClientCode code={result.css} lang="css" />
+          </TabsPanel>
+        )}
+      </TabsRoot>
+    );
+  }
+
   return (
     <>
       {result.js && (
@@ -40,16 +69,10 @@ export default function HTMLUsageCodeBlock() {
           <Tab value="html" initial>
             HTML
           </Tab>
-          {result.css && <Tab value="css">skin.css</Tab>}
         </TabsList>
         <TabsPanel value="html" initial>
           <ClientCode code={result.html} lang="html" />
         </TabsPanel>
-        {result.css && (
-          <TabsPanel value="css">
-            <ClientCode code={result.css} lang="css" />
-          </TabsPanel>
-        )}
       </TabsRoot>
     </>
   );

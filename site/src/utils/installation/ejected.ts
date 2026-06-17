@@ -4,6 +4,8 @@ import type { Skin } from './types';
 export interface EjectedSkinCode {
   tsx?: string;
   html?: string;
+  cdnScript?: string;
+  cdnStylesheet?: string;
   css?: string;
 }
 
@@ -23,6 +25,8 @@ export function generateEjectedSkinCode(opts: { skin: Skin; framework: 'html' | 
   const result: EjectedSkinCode = {};
   if ('tsx' in entry && entry.tsx) result.tsx = entry.tsx;
   if ('html' in entry && entry.html) result.html = entry.html;
+  if ('cdnScript' in entry && entry.cdnScript) result.cdnScript = entry.cdnScript;
+  if ('cdnStylesheet' in entry && entry.cdnStylesheet) result.cdnStylesheet = entry.cdnStylesheet;
   if ('css' in entry && entry.css) result.css = entry.css;
   return result;
 }

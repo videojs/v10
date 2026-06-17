@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   generateHTMLInstallCode,
   generateHTMLUsageCode,
@@ -8,6 +8,95 @@ import {
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
+
+// Mock the JSON at the module boundary so tests exercise the full ejected.ts → codegen.ts
+// path without depending on the built artifact. The fixture below documents the contract
+// that build-ejected-skins.ts must produce: placeholder tokens instead of baked-in values.
+vi.mock('../../../content/ejected-skins.json', () => ({
+  default: [
+    // HTML skins — html uses {{SRC}}, {{POSTER}}, {{MEDIA_TAG}} placeholders;
+    // cdnScript/cdnStylesheet are separate fields, not baked into the html string.
+    {
+      id: 'default-video',
+      name: 'Default Video',
+      platform: 'html',
+      style: 'css',
+      html: '<video-player>\n  <{{MEDIA_TAG}} src="{{SRC}}" playsinline></{{MEDIA_TAG}}>\n</video-player>',
+      cdnScript: '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'default-audio',
+      name: 'Default Audio',
+      platform: 'html',
+      style: 'css',
+      html: '<audio-player>\n  <{{MEDIA_TAG}} src="{{SRC}}"></{{MEDIA_TAG}}>\n</audio-player>',
+      cdnScript: '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.audio-player { display: block; }',
+    },
+    {
+      id: 'minimal-video',
+      name: 'Minimal Video',
+      platform: 'html',
+      style: 'css',
+      html: '<video-player>\n  <{{MEDIA_TAG}} src="{{SRC}}" playsinline></{{MEDIA_TAG}}>\n</video-player>',
+      cdnScript:
+        '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'minimal-audio',
+      name: 'Minimal Audio',
+      platform: 'html',
+      style: 'css',
+      html: '<audio-player>\n  <{{MEDIA_TAG}} src="{{SRC}}"></{{MEDIA_TAG}}>\n</audio-player>',
+      cdnScript:
+        '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-minimal-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.audio-player { display: block; }',
+    },
+    // React skins — css import uses './player.css' in source; codegen renames to './skin.css'.
+    {
+      id: 'default-video-react',
+      name: 'Default Video (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function VideoPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function VideoPlayer({ src }) { return null; }",
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'default-audio-react',
+      name: 'Default Audio (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function AudioPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function AudioPlayer({ src }) { return null; }",
+      css: '.audio-player { display: block; }',
+    },
+    {
+      id: 'minimal-video-react',
+      name: 'Minimal Video (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function VideoPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function VideoPlayer({ src }) { return null; }",
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'minimal-audio-react',
+      name: 'Minimal Audio (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function AudioPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function AudioPlayer({ src }) { return null; }",
+      css: '.audio-player { display: block; }',
+    },
+  ],
+}));
 
 const baseHTML: InstallationOptions = {
   framework: 'html',
@@ -89,6 +178,7 @@ describe('generateHTMLUsageCode', () => {
     expect(result.js).toContain("import '@videojs/html/video/player'");
     expect(result.css).toBeDefined();
     expect(result.html).toBeTruthy();
+    // CDN preamble is omitted for bundler installs
     expect(result.html).not.toContain('<script');
     expect(result.html).not.toContain('<link rel="stylesheet"');
   });
@@ -97,8 +187,8 @@ describe('generateHTMLUsageCode', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, installMethod: 'cdn', embedMethod: 'ejected' });
     expect(result.js).toBeUndefined();
     expect(result.css).toBeDefined();
+    // CDN preamble is prepended by codegen from the separate cdnScript/cdnStylesheet fields
     expect(result.html).toContain('cdn.jsdelivr.net');
-    expect(result.html).not.toContain('./player.css');
     expect(result.html).toContain('./skin.css');
   });
 

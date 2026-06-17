@@ -78,7 +78,12 @@ interface EjectedSkinEntry {
   name: string;
   platform: 'html' | 'react';
   style: 'css' | 'tailwind';
+  /** HTML template with {{SRC}}, {{POSTER}}, and {{MEDIA_TAG}} placeholders. */
   html?: string;
+  /** CDN <script> tag for the skin bundle (HTML platform only). */
+  cdnScript?: string;
+  /** CDN <link rel="stylesheet"> tag pointing to ./skin.css (HTML platform only). */
+  cdnStylesheet?: string;
   tsx?: string;
   jsx?: string;
   css?: string;
@@ -679,17 +684,21 @@ function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
   return isMinimal ? `${prefix}-minimal-ui` : `${prefix}-ui`;
 }
 
-function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
+function wrapHtmlSkin(html: string, skin: HtmlSkinDef): { html: string; cdnScript: string; cdnStylesheet: string } {
   const cdnFileName = getHtmlSkinCdnFileName(skin);
-  const scriptTag = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
-  const cssLink = `<link rel="stylesheet" href="./player.css">`;
+  const cdnScript = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
+  const cdnStylesheet = `<link rel="stylesheet" href="./skin.css">`;
   const playerTag = getSkinMediaType(skin) === 'audio' ? 'audio-player' : 'video-player';
   const indented = html
     .split('\n')
     .map((l) => (l.length > 0 ? `  ${l}` : l))
     .join('\n');
 
-  return `${scriptTag}\n${cssLink}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
+  return {
+    html: `<${playerTag}>\n${indented}\n</${playerTag}>`,
+    cdnScript,
+    cdnStylesheet,
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -794,9 +803,10 @@ function createRenderMediaIcon(iconSet: 'default' | 'minimal') {
  * self-contained.
  */
 function replaceSlots(html: string, mediaType: MediaType): string {
-  const tag = mediaType === 'audio' ? 'audio' : 'video';
   const playsInline = mediaType === 'video' ? ' playsinline' : '';
-  const mediaElement = `<${tag} src="${DEMO_VIDEO_SRC}"${playsInline}></${tag}>`;
+  // {{MEDIA_TAG}} is a placeholder: html5-video → "video", hls → "hls-video", audio → "audio".
+  // Consumers swap it out for the tag they need without touching the rest of the HTML.
+  const mediaElement = `<{{MEDIA_TAG}} src="{{SRC}}"${playsInline}></{{MEDIA_TAG}}>`;
 
   // Replace the deprecated comment + slot="media" + default slot block with the
   // media element, preserving the original indentation.
@@ -806,7 +816,7 @@ function replaceSlots(html: string, mediaType: MediaType): string {
   );
 
   // Replace the poster slot with an <img> element.
-  html = html.replace(/<slot name="poster"><\/slot>/, `<img src="${DEMO_POSTER_SRC}" />`);
+  html = html.replace(/<slot name="poster"><\/slot>/, `<img src="{{POSTER}}" />`);
 
   return html;
 }
@@ -815,7 +825,7 @@ function replaceSlots(html: string, mediaType: MediaType): string {
  * Process an HTML skin: extract the template, evaluate it with the right
  * context, and return the rendered HTML string.
  */
-async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
+async function processHtmlSkin(skin: HtmlSkinDef): Promise<{ html: string; cdnScript: string; cdnStylesheet: string }> {
   const absPath = resolve(ROOT, skin.template);
   const source = readFileSync(absPath, 'utf-8');
   validatePackageImports(source, skin.template);
@@ -857,7 +867,7 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   let html = evaluateTemplate(templateBody, context);
   html = replaceSlots(html, getSkinMediaType(skin));
 
-  return prependHtmlSkinScripts(html, skin);
+  return wrapHtmlSkin(html, skin);
 }
 
 // ---------------------------------------------------------------------------
@@ -1549,7 +1559,10 @@ async function main(): Promise<void> {
     };
 
     if (skin.platform === 'html') {
-      entry.html = await processHtmlSkin(skin);
+      const { html, cdnScript, cdnStylesheet } = await processHtmlSkin(skin);
+      entry.html = html;
+      entry.cdnScript = cdnScript;
+      entry.cdnStylesheet = cdnStylesheet;
     } else {
       const { tsx, jsx } = await processReactSkin(skin);
       entry.tsx = tsx;
