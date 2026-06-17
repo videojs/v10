@@ -1,3 +1,4 @@
+import type { Plugin } from 'vite';
 import { compile } from '../compile';
 import type { CompilerConfig, CompilerDiagnostic } from '../config';
 import { type LoadedCompilerConfig, loadConfig } from '../load-config';
@@ -9,27 +10,18 @@ export interface VideojsCompilerPluginOptions {
   exclude?: readonly string[] | undefined;
 }
 
-export interface VitePluginContext {
-  warn(warning: string | VitePluginWarning): void;
-}
+type ViteHookContext<Hook> = Hook extends (this: infer Context, ...args: never[]) => unknown
+  ? Context
+  : Hook extends { handler: (this: infer Context, ...args: never[]) => unknown }
+    ? Context
+    : never;
 
-export interface VitePluginWarning {
-  message: string;
-  id?: string | undefined;
-  loc?: { file?: string | undefined; line: number; column?: number | undefined } | undefined;
-  pluginCode?: string | undefined;
-}
+type ViteTransformContext = ViteHookContext<NonNullable<Plugin['transform']>>;
+type VitePluginWarning = ViteTransformContext extends { warn: (...args: infer WarningParameters) => unknown }
+  ? WarningParameters[0]
+  : string;
 
-export interface VitePlugin {
-  name: string;
-  enforce?: 'pre' | 'post';
-  configResolved?: (config: { root: string }) => void;
-  resolveId?: (id: string) => string | null;
-  load?: (id: string) => string | null;
-  transform?: (this: VitePluginContext, code: string, id: string) => Promise<{ code: string; map: null } | null>;
-}
-
-export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): VitePlugin {
+export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin {
   const include = options.include ?? ['.tsx'];
   const exclude = options.exclude ?? [];
   const cssById = new Map<string, string>();
@@ -84,7 +76,7 @@ function cssVirtualId(id: string, fileName: string, index: number): string {
   return `virtual:@videojs/compiler/css/${encodeURIComponent(id)}/${index}/${encodeURIComponent(fileName)}`;
 }
 
-function viteWarningFromDiagnostic(diagnostic: CompilerDiagnostic): string | VitePluginWarning {
+function viteWarningFromDiagnostic(diagnostic: CompilerDiagnostic): VitePluginWarning {
   if (!diagnostic.file || !diagnostic.line) return diagnostic.message;
   return {
     message: diagnostic.message,
@@ -92,7 +84,7 @@ function viteWarningFromDiagnostic(diagnostic: CompilerDiagnostic): string | Vit
     loc: {
       file: diagnostic.file,
       line: diagnostic.line,
-      ...(diagnostic.column ? { column: diagnostic.column } : {}),
+      column: diagnostic.column ?? 0,
     },
     pluginCode: diagnostic.code,
   };

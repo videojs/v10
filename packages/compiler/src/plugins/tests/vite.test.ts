@@ -2,6 +2,19 @@ import { describe, expect, it, vi } from 'vitest';
 import type { CompilerConfig } from '../../config';
 import { vjsCompiler } from '../vite';
 
+type TestPlugin = {
+  resolveId(id: string): string | null;
+  load(id: string): string | null;
+  transform(
+    this: { warn(warning: unknown): void },
+    code: string,
+    id: string
+  ): Promise<{ code: string; map: null } | null>;
+};
+
+const createPlugin = (...args: Parameters<typeof vjsCompiler>): TestPlugin =>
+  vjsCompiler(...args) as unknown as TestPlugin;
+
 const createCssStyle = (source: string): NonNullable<CompilerConfig['styles']> => ({
   name: 'fixture',
   setup(context) {
@@ -16,10 +29,9 @@ const createCssStyle = (source: string): NonNullable<CompilerConfig['styles']> =
 
 describe('vjsCompiler', () => {
   it('imports emitted CSS assets as virtual modules', async () => {
-    const plugin = vjsCompiler({ config: { styles: createCssStyle('.foo{display:flex;}') } });
-    plugin.configResolved?.({ root: '/workspace' });
+    const plugin = createPlugin({ config: { styles: createCssStyle('.foo{display:flex;}') } });
 
-    const result = await plugin.transform!.call(
+    const result = await plugin.transform.call(
       { warn: () => {} },
       `function App(){ return <Foo className="foo"/>; }`,
       '/workspace/skin.tsx'
@@ -31,14 +43,14 @@ describe('vjsCompiler', () => {
 
     const id = match![1]!;
     expect(id).toContain('virtual:@videojs/compiler/css/');
-    expect(plugin.resolveId?.(id)).toBe(`\0${id}`);
-    expect(plugin.load?.(`\0${id}`)).toBe('.foo{display:flex;}');
+    expect(plugin.resolveId(id)).toBe(`\0${id}`);
+    expect(plugin.load(`\0${id}`)).toBe('.foo{display:flex;}');
     expect(result!.code).toContain('function App');
   });
 
   it('forwards compiler warnings to Vite', async () => {
     const warn = vi.fn();
-    const plugin = vjsCompiler({
+    const plugin = createPlugin({
       config: {
         styles: {
           name: 'fixture',
@@ -50,14 +62,14 @@ describe('vjsCompiler', () => {
       },
     });
 
-    await plugin.transform!.call({ warn }, `function App(){ return <Foo/>; }`, '/workspace/skin.tsx');
+    await plugin.transform.call({ warn }, `function App(){ return <Foo/>; }`, '/workspace/skin.tsx');
 
     expect(warn).toHaveBeenCalledWith('Check this');
   });
 
   it('forwards located compiler warnings to Vite', async () => {
     const warn = vi.fn();
-    const plugin = vjsCompiler({
+    const plugin = createPlugin({
       config: {
         styles: {
           name: 'fixture',
@@ -77,7 +89,7 @@ describe('vjsCompiler', () => {
       },
     });
 
-    await plugin.transform!.call({ warn }, `function App(){ return <Foo/>; }`, '/workspace/skin.tsx');
+    await plugin.transform.call({ warn }, `function App(){ return <Foo/>; }`, '/workspace/skin.tsx');
 
     expect(warn).toHaveBeenCalledWith({
       message: 'Check this location',

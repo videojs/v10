@@ -64,6 +64,14 @@
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
+  "peerDependencies": {
+    "vite": "^7.0.0 || ^8.0.0"
+  },
+  "peerDependenciesMeta": {
+    "vite": {
+      "optional": true
+    }
+  },
   "dependencies": {
     "@videojs/utils": "workspace:*",
     "kleur": "^4.1.5",
@@ -74,6 +82,7 @@
   "devDependencies": {
     "@videojs/core": "workspace:*",
     "tsdown": "^0.21.4",
+    "vite": "^8.0.0",
     "vitest": "^4.1.0"
   }
 }
