@@ -1,10 +1,12 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, isAbsolute, resolve as resolvePath } from 'node:path';
+import { basename, dirname, extname, isAbsolute, join, resolve as resolvePath } from 'node:path';
 import ts from 'typescript';
+import type { CompilerContext, StylePipeline } from '../config';
+import { diagnosticLocationFromNode } from '../diagnostics';
 import { tagName } from '../matchers';
 import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
 import { decompose, type UtilityCss } from './decompose';
-import type { DesignSystem } from './design-system';
+import { type DesignSystem, loadDesignSystem } from './design-system';
 import {
   type CompiledRule,
   type EmittedCss,
@@ -15,63 +17,54 @@ import {
 import { EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
 import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type NameTransform } from './naming';
 
-/** Output target for `tailwindPlugin`. */
-export type TailwindTarget =
+/** Styling mode for Tailwind-backed className handling. */
+export type TailwindMode =
   /** Pass-through. JSX `className` values stay as authored. No CSS emitted. */
-  | 'tailwind'
+  | 'preserve'
   /**
    * Flatten every `cn(...)` call and dotted token reference to a single
    * literal utility string on each `className` prop. No CSS emitted; token
    * imports become unused (handled by `dropUnusedImports`).
    */
-  | 'tailwind-inlined'
+  | 'inline'
   /**
-   * Rewrite each `className` value to a semantic CSS class name and emit a
-   * sibling CSS file containing the compiled rules. The CSS is delivered
-   * through the `onCss` callback exactly once per source file.
+   * Rewrite each `className` value to a semantic CSS class name and return CSS
+   * as compiler assets.
    */
-  | 'vanilla-css';
+  | 'extract';
 
 /** Per-rule annotation hook; lets the consumer assign a `bag` for split-mode emission. */
 export type BagFor = (info: { className: string; segments: readonly StyleSegment[] }) => string | undefined;
 
-export interface TailwindPluginOptions {
-  /** Loaded Tailwind v4 design system (see `loadDesignSystem`). */
-  design: DesignSystem;
-  /** Output target. See `TailwindTarget`. */
-  target: TailwindTarget;
-  /**
-   * Absolute path of the source file currently being compiled. Required for
-   * `'tailwind-inlined'` and `'vanilla-css'` targets — the plugin resolves
-   * relative token imports from this directory.
-   */
-  sourcePath?: string;
+export interface TailwindOptions {
+  /** Styling mode. Defaults to `'preserve'`. */
+  mode?: TailwindMode | undefined;
+  /** Loaded Tailwind v4 design system. Required for `'extract'` unless `input` is provided. */
+  design?: DesignSystem | undefined;
+  /** Tailwind CSS entry used to load the design system when `design` is omitted. */
+  input?: string | undefined;
+  /** CSS asset name for `'extract'`. Defaults to the compiled source basename with `.css`. */
+  output?: string | undefined;
   /**
    * Hook for shaping the final class name (see `NameTransform`). Only used
-   * by `'vanilla-css'`. Identity by default.
+   * by `'extract'`. Identity by default.
    */
   transformName?: NameTransform;
   /**
-   * Per-tag / per-token-path class-name overrides. Only used by `'vanilla-css'`.
+   * Per-tag / per-token-path class-name overrides. Only used by `'extract'`.
    */
   overrides?: Record<string, string>;
   /**
    * Optional helper that decides which split-mode `bag` a rule belongs to.
-   * Only used by `'vanilla-css'`. Returns `undefined` to leave the rule
+   * Only used by `'extract'`. Returns `undefined` to leave the rule
    * unbagged.
    */
   bagFor?: BagFor;
-  /** Receives the full `CompiledRule[]` once per compiled source file. */
-  onRules?: (rules: readonly CompiledRule[]) => void;
-  /** Convenience hook: pre-emit CSS via `emitCss` and forward the result. */
-  onCss?: (css: EmittedCss) => void;
-  /** Options forwarded to the internal `emitCss` call when `onCss` is set. */
+  /** Options forwarded to `emitCss` for `'extract'`. */
   emit?: { mode?: 'merged' | 'split'; baseCss?: readonly string[]; configDir?: string };
   /**
    * Hoist uniform CSS variable declarations to a single root rule. See
-   * `HoistOptions`. Forwarded to the internal `emitCss` call when `onCss` is
-   * set, and exposed on `onRules` consumers via the `hoist` field they may
-   * read off the plugin options.
+   * `HoistOptions`. Forwarded to the internal `emitCss` call in extract mode.
    *
    * Pass `false` to disable. Plugin consumers driving `emitCss` themselves
    * should pass the same value through.
@@ -85,8 +78,7 @@ export interface TailwindPluginOptions {
    *   - `RegExp` — inline any `--name` matching.
    *   - omitted — no inlining.
    *
-   * Forwarded to the internal `emitCss` call when `onCss` is set; consumers
-   * driving `emitCss` themselves should pass the same value through.
+   * Forwarded to the internal `emitCss` call in extract mode.
    */
   inlineVars?: true | RegExp;
   /**
@@ -96,10 +88,60 @@ export interface TailwindPluginOptions {
    * `'emit'` (ship `@property` rules) or `'inline'` (bake initial-values in),
    * with an optional `resolve` hook for the per-property config.
    *
-   * Forwarded to the internal `emitCss` call when `onCss` is set; consumers
-   * driving `emitCss` themselves should pass the same value through.
+   * Forwarded to the internal `emitCss` call in extract mode.
    */
   properties?: RegisteredPropertiesOptions;
+}
+
+interface TailwindTransformOptions extends Omit<TailwindOptions, 'input' | 'output'> {
+  mode: TailwindMode;
+  sourcePath?: string | undefined;
+  onRules?: ((rules: readonly CompiledRule[]) => void) | undefined;
+}
+
+export function tailwind(options: TailwindOptions = {}): StylePipeline {
+  return {
+    name: 'tailwind',
+    async setup(context) {
+      const mode = options.mode ?? 'preserve';
+
+      if (mode === 'preserve') return {};
+
+      if (mode === 'inline') {
+        return {
+          transform: tailwindPlugin({ ...options, mode, sourcePath: context.filename }),
+        };
+      }
+
+      const design = await resolveDesignSystem(options, context);
+      const rules: CompiledRule[] = [];
+
+      return {
+        transform: tailwindPlugin({
+          ...options,
+          mode,
+          design,
+          sourcePath: context.filename,
+          onRules: (nextRules) => {
+            rules.push(...nextRules);
+          },
+        }),
+        async finish() {
+          if (rules.length === 0) return;
+          const emitted = await emitCss({
+            rules,
+            ...(options.emit ?? {}),
+            ...(options.hoistVars !== undefined ? { hoist: options.hoistVars } : {}),
+            ...(options.inlineVars !== undefined ? { inlineVars: options.inlineVars } : {}),
+            ...(options.properties ? { properties: options.properties } : {}),
+            resolveThemeVar: (name) => design.resolveThemeVar(name),
+            ...(options.hoistVars ? { themeSelector: options.hoistVars.rootSelector } : {}),
+          });
+          addCssAssets(context, options.output, emitted);
+        },
+      };
+    },
+  };
 }
 
 /**
@@ -108,21 +150,24 @@ export interface TailwindPluginOptions {
  * `decompose` + `deriveClassName` + `emitCss`. Token references are resolved
  * by statically evaluating the imported token module — see `evaluator.ts`.
  */
-export function tailwindPlugin(options: TailwindPluginOptions): ts.TransformerFactory<ts.SourceFile> {
-  if (options.target === 'tailwind') {
+export function tailwindPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
+  if (options.mode === 'preserve') {
     return () => (sourceFile) => sourceFile;
   }
-  if (options.target === 'tailwind-inlined') {
+  if (options.mode === 'inline') {
     return inlinedPlugin(options);
   }
-  return vanillaCssPlugin(options);
+  if (!options.design) {
+    throw new Error('@videojs/compiler: tailwind extract mode requires `design` or `input`');
+  }
+  return vanillaCssPlugin({ ...options, design: options.design });
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Target: tailwind-inlined
  * ───────────────────────────────────────────────────────────────────────── */
 
-function inlinedPlugin(options: TailwindPluginOptions): ts.TransformerFactory<ts.SourceFile> {
+function inlinedPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
   const env = buildTokenEnv(options.sourcePath);
 
   return (transformContext) => {
@@ -143,8 +188,10 @@ function inlinedPlugin(options: TailwindPluginOptions): ts.TransformerFactory<ts
  * Target: vanilla-css
  * ───────────────────────────────────────────────────────────────────────── */
 
-function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory<ts.SourceFile> {
-  const { design, transformName, overrides, bagFor, onRules, onCss, emit, hoistVars, inlineVars, properties } = options;
+function vanillaCssPlugin(
+  options: TailwindTransformOptions & { design: DesignSystem }
+): ts.TransformerFactory<ts.SourceFile> {
+  const { design, transformName, overrides, bagFor, onRules } = options;
 
   const env = buildTokenEnv(options.sourcePath);
 
@@ -249,28 +296,48 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
 
       onRules?.(rules);
 
-      if (onCss) {
-        // Scope the emitted theme variables to the skin's hoist root when one
-        // is configured, so they don't leak to a global `:root`.
-        const themeSelector = hoistVars ? hoistVars.rootSelector : undefined;
-        emitCss({
-          rules,
-          ...(emit ?? {}),
-          ...(hoistVars !== undefined ? { hoist: hoistVars } : {}),
-          ...(inlineVars !== undefined ? { inlineVars } : {}),
-          ...(properties ? { properties } : {}),
-          resolveThemeVar: (name) => design.resolveThemeVar(name),
-          ...(themeSelector ? { themeSelector } : {}),
-        })
-          .then(onCss)
-          .catch(() => {
-            // Swallowed; a misconfigured baseCss shouldn't crash the build.
-          });
-      }
-
       return transformed;
     };
   };
+}
+
+async function resolveDesignSystem(options: TailwindOptions, context: CompilerContext): Promise<DesignSystem> {
+  if (options.design) return options.design;
+  if (!options.input) {
+    throw new Error('@videojs/compiler: tailwind extract mode requires `input` when `design` is not provided');
+  }
+  const input = isAbsolute(options.input) ? options.input : resolvePath(context.configDir, options.input);
+  return loadDesignSystem(input);
+}
+
+function addCssAssets(context: CompilerContext, output: string | undefined, emitted: EmittedCss): void {
+  if (emitted.kind === 'merged') {
+    context.addAsset({
+      type: 'css',
+      fileName: output ?? defaultCssFileName(context),
+      source: emitted.css,
+      sourceFile: context.filename,
+    });
+    return;
+  }
+
+  const indexFile = output ?? defaultCssFileName(context);
+  context.addAsset({ type: 'css', fileName: indexFile, source: emitted.index, sourceFile: context.filename });
+  const dir = dirname(indexFile);
+  for (const [bag, source] of emitted.bags) {
+    context.addAsset({
+      type: 'css',
+      fileName: join(dir, `${bag || 'index'}.css`),
+      source,
+      sourceFile: context.filename,
+    });
+  }
+}
+
+function defaultCssFileName(context: CompilerContext): string {
+  const file = basename(context.outputFile ?? context.filename);
+  const ext = extname(file);
+  return `${ext ? file.slice(0, -ext.length) : file}.css`;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
@@ -473,18 +540,13 @@ function buildCompiledRule(
 
 function collisionError(element: ts.Node, className: string, first: string, next: string): DiagnosticError {
   const tag = tagName(element as Parameters<typeof tagName>[0]);
-  const sourceFile = element.getSourceFile?.();
-  const loc = sourceFile ? sourceFile.getLineAndCharacterOfPosition(element.pos) : undefined;
-  const fileName = sourceFile?.fileName;
-  const line = loc ? loc.line + 1 : undefined;
   return new DiagnosticError(
     `vanilla-css: class name '${className}' is derived from elements with different styles` +
-      `${fileName ? ` (this one at ${fileName}:${line})` : ''}.\n` +
+      `.\n` +
       `  <${tag}> resolves to: ${next}\n` +
       `  an earlier element resolved to: ${first}\n` +
       `Merging these would put conflicting declarations in a single '.${className}' rule. ` +
       `Disambiguate with a distinct token, a distinct component, or an \`overrides\` entry.`,
-    fileName,
-    line
+    { ...diagnosticLocationFromNode(element), diagnosticCode: 'tailwind-class-collision' }
   );
 }

@@ -27,6 +27,10 @@
       "types": "./dist/plugins/vite.d.ts",
       "default": "./dist/plugins/vite.js"
     },
+    "./ast": {
+      "types": "./dist/ast/index.d.ts",
+      "default": "./dist/ast/index.js"
+    },
     "./matchers": {
       "types": "./dist/matchers/index.d.ts",
       "default": "./dist/matchers/index.js"
@@ -62,6 +66,7 @@
   },
   "dependencies": {
     "@videojs/utils": "workspace:*",
+    "kleur": "^4.1.5",
     "lightningcss": "^1.32.0",
     "tailwindcss": "^4.2.1",
     "typescript": "^6.0.2"

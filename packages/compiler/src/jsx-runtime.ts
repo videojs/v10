@@ -2,9 +2,11 @@ import type { ComponentManifest, InferPartProps, InferParts, InferProps } from '
 
 export const VIDEOJS_NODE = Symbol.for('@videojs/node');
 
+export type ComponentType = string | Component<never> | typeof Fragment;
+
 export interface ComponentNode {
   readonly [VIDEOJS_NODE]: true;
-  readonly type: unknown;
+  readonly type: ComponentType;
   readonly props: Record<string, unknown>;
   readonly key: string | number | null;
 }
@@ -14,16 +16,16 @@ export interface BaseProps {
   children?: unknown;
 }
 
-export interface Component<Props> {
-  (props: BaseProps & Props): unknown;
+export interface Component<Props extends object> {
+  (props: BaseProps & Props): ComponentNode;
   readonly $$component: { name: string; part: string | null };
 }
 
 type PartComponentProps<M, K extends string> = K extends 'Root'
   ? InferProps<M>
-  : InferPartProps<M, K> extends never
-    ? unknown
-    : InferPartProps<M, K>;
+  : [NonNullable<InferPartProps<M, K>>] extends [never]
+    ? Record<string, never>
+    : NonNullable<InferPartProps<M, K>>;
 
 type CompoundComponent<M> = {
   [K in InferParts<M> & string]: Component<PartComponentProps<M, K>>;
@@ -33,8 +35,8 @@ export type CreateComponentResult<M> = [InferParts<M>] extends [never]
   ? Component<InferProps<M>>
   : CompoundComponent<M>;
 
-function makePart<Props>(name: string, part: string | null): Component<Props> {
-  const fn = (_props: BaseProps & Props): unknown => {
+function makePart<Props extends object>(name: string, part: string | null): Component<Props> {
+  const fn = (_props: BaseProps & Props): ComponentNode => {
     throw new Error(`@videojs/compiler: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
 
@@ -43,16 +45,16 @@ function makePart<Props>(name: string, part: string | null): Component<Props> {
   return fn as Component<Props>;
 }
 
-export function createComponent<M extends ComponentManifest<unknown, readonly string[], Record<string, unknown>>>(
-  manifest: M
-): CreateComponentResult<M> {
+export function createComponent<
+  M extends ComponentManifest<object, readonly string[], Partial<Record<string, object>>>,
+>(manifest: M): CreateComponentResult<M> {
   const parts = manifest.parts ?? [];
 
   if (parts.length === 0) {
     return makePart(manifest.name, null) as CreateComponentResult<M>;
   }
 
-  const compound: Record<string, Component<unknown>> = {};
+  const compound: Record<string, Component<never>> = {};
 
   for (const part of parts) {
     compound[part] = makePart(manifest.name, part);
@@ -61,7 +63,7 @@ export function createComponent<M extends ComponentManifest<unknown, readonly st
   return compound as CreateComponentResult<M>;
 }
 
-function createNode(type: unknown, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
+function createNode(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
   return {
     [VIDEOJS_NODE]: true,
     type,
@@ -70,18 +72,18 @@ function createNode(type: unknown, props: Record<string, unknown>, key?: string 
   };
 }
 
-export function jsx(type: unknown, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
+export function jsx(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
   return createNode(type, props, key);
 }
 
-export function jsxs(type: unknown, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
+export function jsxs(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {
   return createNode(type, props, key);
 }
 
 export const Fragment: unique symbol = Symbol.for('@videojs/fragment') as never;
 
 export namespace JSX {
-  export type Element = unknown;
+  export type Element = ComponentNode;
 
   export interface ElementChildrenAttribute {
     children: Record<string, never>;

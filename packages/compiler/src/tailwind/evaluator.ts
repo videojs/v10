@@ -1,6 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import ts from 'typescript';
+import { type DiagnosticLocation, diagnosticLocationFromNode } from '../diagnostics';
 
 /**
  * The shape a token module evaluates to: every leaf is a literal string, every
@@ -18,9 +19,23 @@ export type TokenValue = string | { readonly [key: string]: TokenValue };
  * include the file + line so consumers can point users at the offending decl.
  */
 export class EvaluationError extends Error {
-  constructor(message: string) {
+  public readonly diagnosticCode = 'tailwind-evaluation';
+  public readonly fileName?: string;
+  public readonly line?: number;
+  public readonly column?: number;
+  public readonly endLine?: number;
+  public readonly endColumn?: number;
+  public readonly sourceText?: string;
+
+  constructor(message: string, location?: DiagnosticLocation | undefined) {
     super(message);
     this.name = 'EvaluationError';
+    if (location?.file) this.fileName = location.file;
+    if (location?.line !== undefined) this.line = location.line;
+    if (location?.column !== undefined) this.column = location.column;
+    if (location?.endLine !== undefined) this.endLine = location.endLine;
+    if (location?.endColumn !== undefined) this.endColumn = location.endColumn;
+    if (location?.sourceText) this.sourceText = location.sourceText;
   }
 }
 
@@ -109,7 +124,9 @@ function processImport(stmt: ts.ImportDeclaration, fromFile: string, env: Map<st
       const sourceName = spec.propertyName?.text ?? spec.name.text;
       const localName = spec.name.text;
       if (!(sourceName in imported)) {
-        throw new EvaluationError(
+        throw evalError(
+          spec,
+          fromFile,
           `Module '${importedPath}' has no export '${sourceName}' (imported as '${localName}')`
         );
       }
@@ -154,7 +171,7 @@ function processReExport(
     for (const spec of stmt.exportClause.elements) {
       const sourceName = spec.propertyName?.text ?? spec.name.text;
       if (!(sourceName in imported)) {
-        throw new EvaluationError(`Module '${importedPath}' has no export '${sourceName}'`);
+        throw evalError(spec, fromFile, `Module '${importedPath}' has no export '${sourceName}'`);
       }
       const value = imported[sourceName]!;
       exports[spec.name.text] = value;
@@ -298,7 +315,5 @@ function resolveRelativeModule(specifier: string, fromFile: string): string {
  * ───────────────────────────────────────────────────────────────────────── */
 
 function evalError(node: ts.Node, fromFile: string, message: string): EvaluationError {
-  const sourceFile = node.getSourceFile();
-  const { line, character } = sourceFile.getLineAndCharacterOfPosition(node.getStart());
-  return new EvaluationError(`${message} (${fromFile}:${line + 1}:${character + 1})`);
+  return new EvaluationError(message, { ...diagnosticLocationFromNode(node), file: fromFile });
 }

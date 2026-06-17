@@ -226,6 +226,9 @@ importers:
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
+      kleur:
+        specifier: ^4.1.5
+        version: 4.1.5
       lightningcss:
         specifier: ^1.32.0
         version: 1.32.0

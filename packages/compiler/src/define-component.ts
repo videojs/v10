@@ -1,9 +1,9 @@
 declare const __PROPS_BRAND__: unique symbol;
 
 export interface ComponentManifest<
-  Props = unknown,
+  Props extends object = Record<string, never>,
   Parts extends readonly string[] = readonly string[],
-  PartProps extends Record<string, unknown> = Record<string, never>,
+  PartProps extends Partial<Record<Parts[number], object>> = Partial<Record<Parts[number], object>>,
 > {
   name: string;
   parts?: Parts;
@@ -13,17 +13,17 @@ export interface ComponentManifest<
 }
 
 export type InferProps<T> =
-  T extends ComponentManifest<infer P, readonly string[], Record<string, unknown>> ? P : never;
+  T extends ComponentManifest<infer P, readonly string[], Partial<Record<string, object>>> ? P : never;
 
 export type InferParts<T> =
-  T extends ComponentManifest<unknown, infer Parts, Record<string, unknown>>
+  T extends ComponentManifest<object, infer Parts, Partial<Record<string, object>>>
     ? readonly string[] extends Parts
       ? never
       : Parts[number]
     : never;
 
 export type InferPartProps<T, K extends string> =
-  T extends ComponentManifest<unknown, readonly string[], infer PartProps>
+  T extends ComponentManifest<object, readonly string[], infer PartProps>
     ? K extends keyof PartProps
       ? PartProps[K]
       : never
@@ -48,10 +48,10 @@ export type InferPartProps<T, K extends string> =
  *     dataAttrs: ControlsDataAttrs,
  *   });
  */
-export function defineComponent<Props = unknown>() {
+export function defineComponent<Props extends object = Record<string, never>>() {
   return <
     const Parts extends readonly string[] = readonly string[],
-    const PartProps extends Record<string, unknown> = Record<string, never>,
+    const PartProps extends Partial<Record<Parts[number], object>> = Partial<Record<Parts[number], object>>,
   >(
     manifest: Omit<ComponentManifest<Props, Parts, PartProps>, typeof __PROPS_BRAND__>
   ): ComponentManifest<Props, Parts, PartProps> => manifest as ComponentManifest<Props, Parts, PartProps>;

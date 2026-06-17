@@ -1,8 +1,8 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { describe, expect, it } from 'vitest';
-import { compile, type ImportRule } from '..';
+import { beforeAll, describe, expect, it } from 'vitest';
+import { compile, type ImportRule, react } from '..';
 import { anyTag, byTag, hasChild } from '../matchers';
 import { childAsProp, replace } from '../react';
 
@@ -19,6 +19,7 @@ const skinSource = resolve(__dirname, 'fixtures/video-skin.tsx');
  */
 describe('integration: default/video skin → React', () => {
   const source = readFileSync(skinSource, 'utf8');
+  let code = '';
 
   const imports: Record<string, ImportRule> = {
     '@videojs/core/components': (name) => ({
@@ -29,19 +30,25 @@ describe('integration: default/video skin → React', () => {
     '../tailwind': '@videojs/skins/default/tailwind',
   };
 
-  const { code } = compile(source, {
-    target: 'react',
-    imports,
-    plugins: [
-      replace({
-        match: byTag('Popover.Root', {
-          when: hasChild(byTag('Popover.Trigger', { when: hasChild(byTag('MuteButton')) })),
+  beforeAll(async () => {
+    const result = await compile(source, {
+      config: {
+        target: react({
+          imports,
+          transforms: [
+            replace({
+              match: byTag('Popover.Root', {
+                when: hasChild(byTag('Popover.Trigger', { when: hasChild(byTag('MuteButton')) })),
+              }),
+              with: { source: './volume-popover', name: 'VolumePopover' },
+              mapChildren: () => [],
+            }),
+            childAsProp({ match: anyTag(['Tooltip.Trigger', 'Popover.Trigger']), prop: 'render' }),
+          ],
         }),
-        with: { source: './volume-popover', name: 'VolumePopover' },
-        mapChildren: () => [],
-      }),
-      childAsProp({ match: anyTag(['Tooltip.Trigger', 'Popover.Trigger']), prop: 'render' }),
-    ],
+      },
+    });
+    code = result.code;
   });
 
   it('rewrites @videojs/core/components imports to per-identifier UI sources', () => {

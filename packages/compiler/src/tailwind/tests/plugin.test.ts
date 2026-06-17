@@ -2,12 +2,13 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { compile } from '../../compile';
+import { compile as compileSource } from '../../compile';
+import { type CompilerTransform, react } from '../../config';
 import type { DesignSystem } from '../design-system';
 import { loadDesignSystem } from '../design-system';
 import type { CompiledRule } from '../emit';
 import { clearTokenModuleCache } from '../evaluator';
-import { tailwindPlugin } from '../plugin';
+import { tailwind, tailwindPlugin } from '../plugin';
 
 const MINIMAL_CSS = `
 @import "tailwindcss";
@@ -45,25 +46,37 @@ const writeFixture = (relative: string, content: string): string => {
 
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 
-describe('tailwindPlugin — target: tailwind (passthrough)', () => {
-  it('leaves className values unchanged', () => {
+const compile = (
+  source: string,
+  options: {
+    filename?: string | undefined;
+    target?: 'react' | undefined;
+    plugins?: readonly CompilerTransform[] | undefined;
+  } = {}
+) => compileSource(source, { filename: options.filename, config: { target: react({ transforms: options.plugins }) } });
+
+const compileTailwind = (source: string, options: Parameters<typeof tailwind>[0], filename?: string) =>
+  compileSource(source, { filename, config: { styles: tailwind(options) } });
+
+describe('tailwindPlugin — mode: preserve', () => {
+  it('preserves static className values', async () => {
     const source = `function App(){ return <Foo className="flex items-center"/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'tailwind' })],
+      plugins: [tailwindPlugin({ design, mode: 'preserve' })],
     });
     expect(code).toContain('"flex items-center"');
   });
 
-  it('does not call onRules / onCss', () => {
+  it('skips extracted rule callbacks', async () => {
     const source = `function App(){ return <Foo className="flex"/>; }`;
     let called = 0;
-    compile(source, {
+    await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'tailwind',
+          mode: 'preserve',
           onRules: () => {
             called++;
           },
@@ -74,27 +87,27 @@ describe('tailwindPlugin — target: tailwind (passthrough)', () => {
   });
 });
 
-describe('tailwindPlugin — target: tailwind-inlined', () => {
-  it('flattens a literal-string className to itself', () => {
+describe('tailwindPlugin — mode: inline', () => {
+  it('preserves static className values', async () => {
     const source = `function App(){ return <Foo className="flex items-center"/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'tailwind-inlined' })],
+      plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toContain('"flex items-center"');
   });
 
-  it('flattens a `cn(...)` call into a single literal string', () => {
+  it('folds static cn calls', async () => {
     const source = `function App(){ return <Foo className={cn('flex', 'items-center', 'gap-2')}/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'tailwind-inlined' })],
+      plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toContain('"flex items-center gap-2"');
     expect(code).not.toMatch(/cn\(/);
   });
 
-  it('resolves token references via the on-disk evaluator', () => {
+  it('resolves imported token objects', async () => {
     writeFixture(
       'tokens.ts',
       `import { cn } from '@videojs/utils/style';
@@ -105,67 +118,67 @@ export const tokens = { button: { base: cn('rounded', 'p-2') } };
 function App(){ return <Foo className={cn('flex', styles.button.base)}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, target: 'tailwind-inlined', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
     });
     expect(code).toContain('"flex rounded p-2"');
   });
 
-  it('leaves the className alone if a token cannot be resolved', () => {
+  it('leaves unresolved imports untouched', async () => {
     const source = `import { tokens as styles } from './missing';
 function App(){ return <Foo className={cn('flex', styles.unknown)}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, target: 'tailwind-inlined', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
     });
     expect(code).toMatch(/cn\(/);
   });
 
-  it('leaves opaque expressions intact', () => {
+  it('leaves dynamic cn calls untouched', async () => {
     const source = `function App(){ return <Foo className={cn('flex', isOn && 'on')}/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'tailwind-inlined' })],
+      plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toMatch(/cn\(/);
   });
 });
 
-describe('tailwindPlugin — target: vanilla-css', () => {
-  it('rewrites className to a tag-derived semantic name', () => {
+describe('tailwindPlugin — mode: extract', () => {
+  it('replaces static utilities with component class names', async () => {
     const source = `function App(){ return <PlayButton className="flex items-center"/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"play-button"');
     expect(code).not.toContain('"flex items-center"');
   });
 
-  it('preserves marker utilities (group/peer) alongside the derived name', () => {
+  it('preserves group marker classes', async () => {
     const source = `function App(){ return <PlayButton className="group"/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     // `group` produces no declarations but is required by descendant
     // `group-*` variants, so it must survive on the element.
     expect(code).toContain('"play-button group"');
   });
 
-  it('keeps markers and still emits rules for declaration-producing utilities', () => {
+  it('extracts cn utilities and preserves group marker classes', async () => {
     const source = `function App(){ return <PlayButton className={cn('flex', 'group')}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           onRules: (rules) => {
             captured = rules;
           },
@@ -178,51 +191,51 @@ describe('tailwindPlugin — target: vanilla-css', () => {
     expect(captured!.flatMap((r) => r.utility.declarations)).toContainEqual({ property: 'display', value: 'flex' });
   });
 
-  it('preserves a marker while wrapping pass-through expressions in cn()', () => {
+  it('keeps dynamic cn expressions', async () => {
     const source = `function App(){ return <PlayButton className={cn('group', extra)}/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toMatch(/cn\("play-button group",\s*extra\)/);
   });
 
-  it('throws a diagnostic when two elements derive the same name with different styles', () => {
+  it('throws on generated class style collisions', async () => {
     const source = `function App(){ return <div><SeekIcon className="flex"/><SeekIcon className="block"/></div>; }`;
-    expect(() =>
+    await expect(
       compile(source, {
         target: 'react',
-        plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+        plugins: [tailwindPlugin({ design, mode: 'extract' })],
       })
-    ).toThrow(/class name 'seek-icon' is derived from elements with different styles/);
+    ).rejects.toThrow(/class name 'seek-icon' is derived from elements with different styles/);
   });
 
-  it('does not flag identical recurrences of the same derived name', () => {
+  it('handles duplicate component styles', async () => {
     const source = `function App(){ return <div><PlayButton className="flex"/><PlayButton className="flex"/></div>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"play-button"');
   });
 
-  it('rewrites className to a token-path-derived name on a bare HTML element', () => {
+  it('derives class names from style member expressions', async () => {
     const source = `function App(){ return <div className={styles.bufferingIndicator}/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"buffering-indicator"');
   });
 
-  it('honours overrides keyed by tag', () => {
+  it('applies component class overrides', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           overrides: { PlayButton: 'custom' },
         }),
       ],
@@ -230,14 +243,14 @@ describe('tailwindPlugin — target: vanilla-css', () => {
     expect(code).toContain('"custom"');
   });
 
-  it('runs the transformName hook', () => {
+  it('applies transformed generated class names', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           transformName: (ctx) => `app-${ctx.defaultName}`,
         }),
       ],
@@ -245,15 +258,15 @@ describe('tailwindPlugin — target: vanilla-css', () => {
     expect(code).toContain('"app-play-button"');
   });
 
-  it('collects CompiledRule[] via onRules', () => {
+  it('reports extracted rules through onRules', async () => {
     const source = `function App(){ return <Foo className="flex"/>; }`;
     let captured: readonly CompiledRule[] | undefined;
-    compile(source, {
+    await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           onRules: (rules) => {
             captured = rules;
           },
@@ -266,15 +279,15 @@ describe('tailwindPlugin — target: vanilla-css', () => {
     expect(captured![0]!.utility.declarations).toContainEqual({ property: 'display', value: 'flex' });
   });
 
-  it('expands a `cn(...)` call into one rule per utility', () => {
+  it('emits one rule per extracted utility', async () => {
     const source = `function App(){ return <Foo className={cn('flex', 'opacity-50')}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
-    compile(source, {
+    await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           onRules: (rules) => {
             captured = rules;
           },
@@ -286,7 +299,7 @@ describe('tailwindPlugin — target: vanilla-css', () => {
     expect(captured![1]!.className).toBe('foo');
   });
 
-  it('resolves token references via the on-disk evaluator', () => {
+  it('resolves imported tokens before extraction', async () => {
     writeFixture(
       'tokens.ts',
       `import { cn } from '@videojs/utils/style';
@@ -298,13 +311,13 @@ function App(){ return <Foo className={styles.button}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
     let captured: readonly CompiledRule[] | undefined;
-    compile(source, {
+    await compile(source, {
       target: 'react',
       filename: sourcePath,
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           sourcePath,
           onRules: (rules) => {
             captured = rules;
@@ -316,15 +329,15 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(captured![0]!.className).toBe('foo');
   });
 
-  it('annotates rules with a bag via bagFor', () => {
+  it('assigns rule bags with bagFor', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     let captured: readonly CompiledRule[] | undefined;
-    compile(source, {
+    await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           bagFor: ({ className }) => (className.startsWith('play-') ? 'controls' : undefined),
           onRules: (rules) => {
             captured = rules;
@@ -335,15 +348,15 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(captured![0]!.bag).toBe('controls');
   });
 
-  it('skips opaque expressions', () => {
+  it('skips dynamic conditional class expressions', async () => {
     const source = `function App(){ return <Foo className={isOn ? 'a' : 'b'}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           onRules: (rules) => {
             captured = rules;
           },
@@ -354,7 +367,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(code).toContain('isOn');
   });
 
-  it('resolves a local cn() const referenced via className={X}', () => {
+  it('resolves local cn constants and imported token members', async () => {
     writeFixture(
       'tokens.ts',
       `import { cn } from '@videojs/utils/style';
@@ -368,13 +381,13 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
     let captured: readonly CompiledRule[] | undefined;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       filename: sourcePath,
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           sourcePath,
           onRules: (rules) => {
             captured = rules;
@@ -388,26 +401,26 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     expect(utilities).toEqual(['flex', 'h-4', 'w-4']);
   });
 
-  it('preserves opaque expressions by wrapping the derived name in cn()', () => {
+  it('preserves dynamic cn suffixes after extraction', async () => {
     const source = `function App({ extra }){ return <PlayButton className={cn('flex', extra)}/>; }`;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
-      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toMatch(/cn\("play-button",\s*extra\)/);
   });
 
-  it('handles multiple elements in one source', () => {
+  it('extracts parent and child element class names', async () => {
     const source = `function App(){
       return <PlayButton className="flex"><PlayIcon className="opacity-50"/></PlayButton>;
     }`;
     let captured: readonly CompiledRule[] | undefined;
-    const { code } = compile(source, {
+    const { code } = await compile(source, {
       target: 'react',
       plugins: [
         tailwindPlugin({
           design,
-          target: 'vanilla-css',
+          mode: 'extract',
           onRules: (rules) => {
             captured = rules;
           },
@@ -422,68 +435,31 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     expect(collapse(code)).toContain(collapse(`<PlayIcon className="play-icon"/>`));
   });
 
-  it('forwards CSS through onCss when set', async () => {
+  it('returns CSS assets in extract mode', async () => {
     const source = `function App(){ return <Foo className="flex"/>; }`;
-    const cssPromise = new Promise<string>((resolve) => {
-      compile(source, {
-        target: 'react',
-        plugins: [
-          tailwindPlugin({
-            design,
-            target: 'vanilla-css',
-            onCss: (out) => {
-              if (out.kind === 'merged') resolve(out.css);
-            },
-          }),
-        ],
-      });
-    });
-    const css = await cssPromise;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    const css = assets[0]!.source;
     expect(collapse(css)).toContain(collapse('.foo{display:flex;}'));
   });
 
-  it('emits referenced theme variables in the onCss output', async () => {
+  it('emits referenced theme variables in extracted CSS', async () => {
     // `p-4` lowers to `padding: calc(var(--spacing) * 4)` — the output must
     // define `--spacing` so it resolves without a separate Tailwind theme.
     const source = `function App(){ return <Foo className="p-4"/>; }`;
-    const cssPromise = new Promise<string>((resolve) => {
-      compile(source, {
-        target: 'react',
-        plugins: [
-          tailwindPlugin({
-            design,
-            target: 'vanilla-css',
-            hoistVars: { rootSelector: '[data-skin="x"]' },
-            onCss: (out) => {
-              if (out.kind === 'merged') resolve(out.css);
-            },
-          }),
-        ],
-      });
+    const { assets } = await compileTailwind(source, {
+      mode: 'extract',
+      design,
+      hoistVars: { rootSelector: '[data-skin="x"]' },
     });
-    const css = await cssPromise;
+    const css = assets[0]!.source;
     expect(css).toMatch(/\[data-skin="x"\]\s*{[^}]*--spacing:/);
   });
 
   it('forwards the `properties` option (inline) so --tw-content resolves', async () => {
     // `after:absolute` emits `content: var(--tw-content)` with no setter.
     const source = `function App(){ return <Foo className="after:absolute"/>; }`;
-    const cssPromise = new Promise<string>((resolve) => {
-      compile(source, {
-        target: 'react',
-        plugins: [
-          tailwindPlugin({
-            design,
-            target: 'vanilla-css',
-            properties: { mode: 'inline' },
-            onCss: (out) => {
-              if (out.kind === 'merged') resolve(out.css);
-            },
-          }),
-        ],
-      });
-    });
-    const css = await cssPromise;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design, properties: { mode: 'inline' } });
+    const css = assets[0]!.source;
     expect(css).not.toMatch(/var\(--tw-content\)/);
     expect(collapse(css)).toContain(collapse('content: "";'));
   });

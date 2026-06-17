@@ -25,4 +25,4 @@ export {
   type NameContext,
   type NameTransform,
 } from './naming';
-export { type BagFor, type TailwindPluginOptions, type TailwindTarget, tailwindPlugin } from './plugin';
+export { type BagFor, type TailwindMode, type TailwindOptions, tailwind } from './plugin';

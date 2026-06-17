@@ -1,5 +1,5 @@
 import { kebabCase } from '@videojs/utils/string';
-import type ts from 'typescript';
+import { type DiagnosticLocation, diagnosticLocationFromNode } from '../diagnostics';
 import type { JsxElementLike } from '../matchers';
 import { tagName } from '../matchers';
 import type { StyleSegment } from '../styles';
@@ -68,15 +68,35 @@ export interface DeriveClassNameOptions {
  * extract a token, add an override).
  */
 export class DiagnosticError extends Error {
+  public readonly diagnosticCode: string;
+  public readonly fileName?: string;
+  public readonly line?: number;
+  public readonly column?: number;
+  public readonly endLine?: number;
+  public readonly endColumn?: number;
+  public readonly sourceText?: string;
+
   constructor(
     message: string,
-    /** Source file the offending element lives in (best-effort). */
-    public readonly fileName?: string,
-    /** Line number (1-based, best-effort). */
-    public readonly line?: number
+    location?: (DiagnosticLocation & { diagnosticCode?: string | undefined }) | string | undefined,
+    line?: number
   ) {
     super(message);
     this.name = 'DiagnosticError';
+    if (typeof location === 'string') {
+      this.fileName = location;
+      if (line !== undefined) this.line = line;
+      this.diagnosticCode = 'tailwind-diagnostic';
+      return;
+    }
+
+    this.diagnosticCode = location?.diagnosticCode ?? 'tailwind-diagnostic';
+    if (location?.file) this.fileName = location.file;
+    if (location?.line !== undefined) this.line = location.line;
+    if (location?.column !== undefined) this.column = location.column;
+    if (location?.endLine !== undefined) this.endLine = location.endLine;
+    if (location?.endColumn !== undefined) this.endColumn = location.endColumn;
+    if (location?.sourceText) this.sourceText = location.sourceText;
   }
 }
 
@@ -123,15 +143,13 @@ export function deriveClassName(opts: DeriveClassNameOptions): DerivedClassName 
   }
 
   // 4. Diagnostic — no rule matched.
-  const loc = sourceLocation(opts.element);
   throw new DiagnosticError(
-    `Cannot derive a CSS class name for <${tag}>${loc ? ` at ${loc.fileName}:${loc.line}` : ''}.\n` +
+    `Cannot derive a CSS class name for <${tag}>.\n` +
       `Tag is bare HTML and the className doesn't reference a single token. ` +
       `Resolve by: (a) using a JSX component instead of <${tag}>, ` +
       `(b) extracting the classes into a single token reference, ` +
       `or (c) adding an entry to \`overrides\`.`,
-    loc?.fileName,
-    loc?.line
+    { ...diagnosticLocationFromNode(opts.element), diagnosticCode: 'tailwind-class-name' }
   );
 }
 
@@ -171,11 +189,4 @@ function tokenPathToDefaultName(path: readonly string[]): string | null {
   if (path.length < 2) return null;
   const meaningful = path.slice(1);
   return meaningful.map((p) => kebabCase(p).replace(/^-/, '')).join('-');
-}
-
-function sourceLocation(node: ts.Node): { fileName: string; line: number } | null {
-  const sourceFile = node.getSourceFile?.();
-  if (!sourceFile) return null;
-  const { line } = sourceFile.getLineAndCharacterOfPosition(node.pos);
-  return { fileName: sourceFile.fileName, line: line + 1 };
 }

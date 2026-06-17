@@ -7,6 +7,7 @@ export default defineConfig({
     'jsx-runtime': './src/jsx-runtime.ts',
     'jsx-dev-runtime': './src/jsx-dev-runtime.ts',
     'plugins/vite': './src/plugins/vite.ts',
+    'ast/index': './src/ast/index.ts',
     'matchers/index': './src/matchers/index.ts',
     'react/index': './src/react/index.ts',
     'styles/index': './src/styles/index.ts',

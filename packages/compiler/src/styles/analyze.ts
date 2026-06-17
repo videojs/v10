@@ -22,17 +22,25 @@ export type StyleSegment =
  *   - `kind: 'opaque'` — anything else (computed expressions, ternaries that
  *     don't reduce, function calls other than `cn`). Visitors should pass.
  */
-export interface StyleAttributeInfo {
+export type StyleAttributeInfo = StyleAttributeSegmentsInfo | StyleAttributeOpaqueInfo;
+
+export interface StyleAttributeBaseInfo {
   /** The element this className lives on. */
   element: JsxElementLike;
   /** The JSX attribute node, for source-location reporting. */
   attribute: ts.JsxAttribute;
   /** The expression *inside* the attribute (the `className={…}` payload). */
   expression: ts.Expression;
+}
+
+export interface StyleAttributeSegmentsInfo extends StyleAttributeBaseInfo {
   /** Decomposition. */
-  kind: 'segments' | 'opaque';
-  /** Defined when `kind === 'segments'`. */
-  segments?: readonly StyleSegment[];
+  kind: 'segments';
+  segments: readonly StyleSegment[];
+}
+
+export interface StyleAttributeOpaqueInfo extends StyleAttributeBaseInfo {
+  kind: 'opaque';
 }
 
 /**
