@@ -1138,7 +1138,8 @@ describe('Media element pipeline (end-to-end)', () => {
       });
       expect(props.src.description).toBeUndefined();
 
-      // engine: readonly object
+      // engine: readonly, unannotated getter — type inferred by the checker
+      // (would be 'unknown' if the builder only read syntactic annotations).
       expect(props.engine).toMatchObject({
         type: 'object',
         readonly: true,

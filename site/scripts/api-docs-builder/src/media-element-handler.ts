@@ -676,6 +676,40 @@ function applyClassMembers(
   }
 }
 
+/**
+ * Resolve host property types via the type checker, keyed by property name.
+ * Walking own class members only sees explicit annotations, so this reads the
+ * class's full instance type — which the checker resolves through the mixin
+ * chain — to recover types for unannotated getters (e.g. `get src()` → string).
+ */
+function resolveInferredTypes(
+  hostFilePath: string,
+  hostClassName: string,
+  program: ts.Program,
+  checker: ts.TypeChecker
+): Map<string, string> {
+  const types = new Map<string, string>();
+  const sourceFile = program.getSourceFile(hostFilePath);
+  if (!sourceFile) return types;
+
+  let classNode: ts.ClassDeclaration | undefined;
+  const visit = (node: ts.Node) => {
+    if (ts.isClassDeclaration(node) && node.name?.text === hostClassName) classNode = node;
+    if (!classNode) ts.forEachChild(node, visit);
+  };
+  visit(sourceFile);
+  if (!classNode?.name) return types;
+
+  const symbol = checker.getSymbolAtLocation(classNode.name);
+  if (!symbol) return types;
+
+  for (const prop of checker.getDeclaredTypeOfSymbol(symbol).getProperties()) {
+    const propType = checker.getTypeOfSymbolAtLocation(prop, classNode);
+    types.set(prop.name, checker.typeToString(propType));
+  }
+  return types;
+}
+
 function findImportPath(sourceFile: ts.SourceFile, name: string): string | undefined {
   let importPath: string | undefined;
   ts.forEachChild(sourceFile, (node) => {
@@ -1314,7 +1348,11 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     ...compilerOptions,
     lib: dedupeStrings([...(compilerOptions.lib ?? []), 'lib.dom.d.ts']),
   };
-  const program = ts.createProgram([customMediaPath], programOptions);
+  const program = ts.createProgram(
+    dedupeStrings([customMediaPath, ...sources.map((s) => s.hostFilePath)]),
+    programOptions
+  );
+  const checker = program.getTypeChecker();
   const videoCSSVarsRaw = extractCSSVars(customMediaPath, program, 'Video');
   const audioCSSVarsRaw = extractCSSVars(customMediaPath, program, 'Audio');
 
@@ -1351,6 +1389,17 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       compilerOptions,
       nativeNames
     );
+
+    // The AST walk only reads explicit return-type annotations; getters without
+    // one fall back to the literal string 'unknown'. Fill those gaps from the
+    // type checker, which infers the real type across the mixin chain. Authored
+    // annotations are left untouched.
+    const inferredTypes = resolveInferredTypes(source.hostFilePath, source.hostClassName, program, checker);
+    for (const [name, def] of Object.entries(hostProperties)) {
+      if (def.type === 'unknown' && inferredTypes.has(name)) {
+        def.type = inferredTypes.get(name)!;
+      }
+    }
 
     // Deduplicate: host props that overlap with native attributes
     const hostAttrNames = new Set<string>();
