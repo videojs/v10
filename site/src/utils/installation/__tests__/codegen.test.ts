@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   generateHTMLInstallCode,
   generateHTMLUsageCode,
@@ -8,6 +8,95 @@ import {
   type InstallationOptions,
   validateInstallationOptions,
 } from '../codegen';
+
+// Mock the JSON at the module boundary so tests exercise the full ejected.ts → codegen.ts
+// path without depending on the built artifact. The fixture below documents the contract
+// that build-ejected-skins.ts must produce: placeholder tokens instead of baked-in values.
+vi.mock('../../../content/ejected-skins.json', () => ({
+  default: [
+    // HTML skins — html uses {{SRC}}, {{POSTER}}, {{MEDIA_TAG}} placeholders;
+    // cdnScript/cdnStylesheet are separate fields, not baked into the html string.
+    {
+      id: 'default-video',
+      name: 'Default Video',
+      platform: 'html',
+      style: 'css',
+      html: '<video-player>\n  <{{MEDIA_TAG}} src="{{SRC}}" playsinline></{{MEDIA_TAG}}>\n</video-player>',
+      cdnScript: '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'default-audio',
+      name: 'Default Audio',
+      platform: 'html',
+      style: 'css',
+      html: '<audio-player>\n  <{{MEDIA_TAG}} src="{{SRC}}"></{{MEDIA_TAG}}>\n</audio-player>',
+      cdnScript: '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.audio-player { display: block; }',
+    },
+    {
+      id: 'minimal-video',
+      name: 'Minimal Video',
+      platform: 'html',
+      style: 'css',
+      html: '<video-player>\n  <{{MEDIA_TAG}} src="{{SRC}}" playsinline></{{MEDIA_TAG}}>\n</video-player>',
+      cdnScript:
+        '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'minimal-audio',
+      name: 'Minimal Audio',
+      platform: 'html',
+      style: 'css',
+      html: '<audio-player>\n  <{{MEDIA_TAG}} src="{{SRC}}"></{{MEDIA_TAG}}>\n</audio-player>',
+      cdnScript:
+        '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-minimal-ui.js"></script>',
+      cdnStylesheet: '<link rel="stylesheet" href="./skin.css">',
+      css: '.audio-player { display: block; }',
+    },
+    // React skins — css import uses './player.css' in source; codegen renames to './skin.css'.
+    {
+      id: 'default-video-react',
+      name: 'Default Video (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function VideoPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function VideoPlayer({ src }) { return null; }",
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'default-audio-react',
+      name: 'Default Audio (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function AudioPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function AudioPlayer({ src }) { return null; }",
+      css: '.audio-player { display: block; }',
+    },
+    {
+      id: 'minimal-video-react',
+      name: 'Minimal Video (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function VideoPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function VideoPlayer({ src }) { return null; }",
+      css: '.video-player { display: block; }',
+    },
+    {
+      id: 'minimal-audio-react',
+      name: 'Minimal Audio (React)',
+      platform: 'react',
+      style: 'css',
+      tsx: "import './player.css';\nexport function AudioPlayer({ src }: { src: string }) { return null; }",
+      jsx: "import './player.css';\nexport function AudioPlayer({ src }) { return null; }",
+      css: '.audio-player { display: block; }',
+    },
+  ],
+}));
 
 const baseHTML: InstallationOptions = {
   framework: 'html',
@@ -83,6 +172,73 @@ describe('generateReactInstallCode', () => {
 });
 
 describe('generateHTMLUsageCode', () => {
+  it('returns ejected HTML, JS imports, and CSS for npm install', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, embedMethod: 'ejected' });
+    expect(result.js).toBeDefined();
+    expect(result.js).toContain("import '@videojs/html/video/player'");
+    expect(result.css).toBeDefined();
+    expect(result.html).toBeTruthy();
+    // CDN preamble is omitted for bundler installs
+    expect(result.html).not.toContain('<script');
+    expect(result.html).not.toContain('<link rel="stylesheet"');
+  });
+
+  it('returns ejected HTML with CDN scripts and no JS section for CDN install', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, installMethod: 'cdn', embedMethod: 'ejected' });
+    expect(result.js).toBeUndefined();
+    expect(result.css).toBeDefined();
+    // CDN preamble is prepended by codegen from the separate cdnScript/cdnStylesheet fields
+    expect(result.html).toContain('cdn.jsdelivr.net');
+    expect(result.html).toContain('./skin.css');
+  });
+
+  it('adds HLS media script to ejected CDN HTML for HLS renderer', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      installMethod: 'cdn',
+      embedMethod: 'ejected',
+      renderer: 'hls',
+    });
+    expect(result.html).toContain('media/hls-video.js');
+  });
+
+  it('injects custom sourceUrl into ejected HTML media element', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      embedMethod: 'ejected',
+      sourceUrl: 'https://example.com/custom.mp4',
+    });
+    expect(result.html).toContain('src="https://example.com/custom.mp4"');
+  });
+
+  it('uses default demo URL in ejected HTML when sourceUrl is empty', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, embedMethod: 'ejected', sourceUrl: '' });
+    expect(result.html).toContain('stream.mux.com');
+  });
+
+  it('uses HLS demo URL and hls-video element in ejected HTML for HLS renderer', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      embedMethod: 'ejected',
+      renderer: 'hls',
+      sourceUrl: '',
+    });
+    expect(result.html).toContain('.m3u8');
+    expect(result.html).toContain('<hls-video');
+    expect(result.html).not.toContain('<video ');
+  });
+
+  it('falls back to packaged for background-video even when ejected is requested', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'background-video',
+      renderer: 'background-video',
+      embedMethod: 'ejected',
+    });
+    expect(result.html).toContain('<background-video-player>');
+    expect(result.css).toBeUndefined();
+  });
+
   it('generates HTML with video-player and video-skin for default video', () => {
     const result = generateHTMLUsageCode(baseHTML);
     expect(result.html).toContain('<video-player>');
@@ -151,6 +307,48 @@ describe('generateHTMLUsageCode', () => {
 });
 
 describe('generateReactCreateCode', () => {
+  it('replaces MyPlayer.tsx with the ejected player when ejected, no Skin.tsx', () => {
+    const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    // The ejected TSX is the full self-contained player — no separate Skin.tsx.
+    expect(result['MyPlayer.tsx']).toBeDefined();
+    expect(result['Skin.tsx']).toBeUndefined();
+    expect(result['skin.css']).toBeDefined();
+  });
+
+  it('ejected MyPlayer.tsx exports MyPlayer as alias for the ejected component', () => {
+    const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    expect(result['MyPlayer.tsx']).toContain('export { VideoPlayer as MyPlayer }');
+  });
+
+  it('ejected MyPlayer.tsx imports skin.css not player.css', () => {
+    const result = generateReactCreateCode({ ...baseReact, embedMethod: 'ejected' });
+    expect(result['MyPlayer.tsx']).toContain("import './skin.css'");
+    expect(result['MyPlayer.tsx']).not.toContain("import './player.css'");
+  });
+
+  it('ejected MyPlayer.tsx for audio exports AudioPlayer as MyPlayer', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'html5-audio',
+      embedMethod: 'ejected',
+    });
+    expect(result['MyPlayer.tsx']).toContain('export { AudioPlayer as MyPlayer }');
+  });
+
+  it('falls back to packaged for background-video even when ejected is requested', () => {
+    const result = generateReactCreateCode({
+      ...baseReact,
+      useCase: 'background-video',
+      renderer: 'background-video',
+      embedMethod: 'ejected',
+    });
+    expect(result['MyPlayer.tsx']).toBeDefined();
+    expect(result['Skin.tsx']).toBeUndefined();
+    expect(result['skin.css']).toBeUndefined();
+  });
+
   it('generates a React player component for default video', () => {
     const result = generateReactCreateCode(baseReact);
     const code = result['MyPlayer.tsx'];

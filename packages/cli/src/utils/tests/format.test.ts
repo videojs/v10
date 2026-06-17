@@ -51,4 +51,38 @@ describe('formatInstallationCode', () => {
     const result = formatInstallationCode({ ...baseReact, installMethod: 'pnpm' });
     expect(result).toContain('pnpm add @videojs/react');
   });
+
+  it('formats ejected HTML with install, JS imports, HTML block, and skin.css sub-section', () => {
+    const result = formatInstallationCode({ ...baseHTML, embedMethod: 'ejected' });
+    expect(result).toContain('## Install Video.js');
+    expect(result).toContain('npm install @videojs/html');
+    expect(result).toContain('## JavaScript imports');
+    expect(result).toContain('## HTML');
+    expect(result).toContain('### skin.css');
+    expect(result).not.toContain('## Your skin');
+  });
+
+  it('formats ejected React with install, multi-file create, and use sections', () => {
+    const result = formatInstallationCode({ ...baseReact, embedMethod: 'ejected' });
+    expect(result).toContain('## Install Video.js');
+    expect(result).toContain('npm install @videojs/react');
+    expect(result).toContain('## Create your player');
+    expect(result).toContain('index.tsx');
+    expect(result).toContain('skin.css');
+    expect(result).toContain('## Use your player');
+    expect(result).not.toContain('## Your skin');
+  });
+
+  it('falls back to packaged for background-video even when ejected is requested', () => {
+    const result = formatInstallationCode({
+      ...baseHTML,
+      useCase: 'background-video',
+      renderer: 'background-video',
+      embedMethod: 'ejected',
+    });
+    expect(result).toContain('## HTML');
+    expect(result).toContain('<background-video-player>');
+    expect(result).not.toContain('## Your skin');
+    expect(result).not.toContain('### skin.css');
+  });
 });

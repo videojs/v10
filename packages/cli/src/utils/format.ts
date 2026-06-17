@@ -34,6 +34,11 @@ function formatHTMLInstallation(opts: InstallationOptions): string {
   sections.push('\n## HTML\n');
   sections.push(`\`\`\`html\n${usage.html}\n\`\`\``);
 
+  if (usage.css) {
+    sections.push('\n### skin.css\n');
+    sections.push(`\`\`\`css\n${usage.css}\n\`\`\``);
+  }
+
   return sections.join('\n');
 }
 
@@ -51,8 +56,16 @@ function formatReactInstallation(opts: InstallationOptions): string {
   sections.push(`\`\`\`bash\n${install[opts.installMethod]}\n\`\`\``);
 
   sections.push('\n## Create your player\n');
-  sections.push('Add to `./components/player/index.tsx`:\n');
-  sections.push(`\`\`\`tsx\n${create['MyPlayer.tsx']}\n\`\`\``);
+
+  if (create['MyPlayer.tsx']) {
+    sections.push('Add to `./components/player/index.tsx`:\n');
+    sections.push(`\`\`\`tsx\n${create['MyPlayer.tsx']}\n\`\`\``);
+  }
+
+  if (create['skin.css']) {
+    sections.push('\nAdd to `./components/player/skin.css`:\n');
+    sections.push(`\`\`\`css\n${create['skin.css']}\n\`\`\``);
+  }
 
   sections.push('\n## Use your player\n');
   sections.push(`\`\`\`tsx\n${usage['App.tsx']}\n\`\`\``);

@@ -11,6 +11,7 @@ const SITE_ROOT = resolve(__dirname, '../../../../../site/src');
 
 const ALIASED_FILES = [
   'utils/installation/codegen.ts',
+  'utils/installation/ejected.ts',
   'utils/installation/types.ts',
   'utils/installation/cdn-code.ts',
   'utils/installation/detect-renderer.ts',

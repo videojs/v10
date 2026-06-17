@@ -4,7 +4,7 @@ import { handleDocs } from './commands/docs.js';
 
 const parsed = parse(process.argv.slice(2), {
   alias: { f: 'framework', l: 'list', v: 'version', h: 'help' },
-  string: ['framework', 'preset', 'skin', 'media', 'source-url', 'install-method'],
+  string: ['framework', 'preset', 'skin', 'media', 'source-url', 'install-method', 'embed-method'],
   boolean: ['list', 'version', 'help'],
 });
 

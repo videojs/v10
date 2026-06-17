@@ -1,7 +1,7 @@
 import * as p from '@clack/prompts';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import type { EmbedMethod, InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 import { VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from './config.js';
 
@@ -49,6 +49,16 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   ];
 }
 
+function embedMethodOptionsForUseCase(useCase: UseCase): Array<{ value: EmbedMethod; label: string }> {
+  if (useCase === 'background-video') {
+    return [{ value: 'packaged', label: 'Packaged (pre-built skin)' }];
+  }
+  return [
+    { value: 'packaged', label: 'Packaged (pre-built skin)' },
+    { value: 'ejected', label: 'Ejected (copy skin source into your project)' },
+  ];
+}
+
 function installMethodOptions(framework: Framework): Array<{ value: InstallMethod; label: string }> {
   const options: Array<{ value: InstallMethod; label: string }> = [
     { value: 'npm', label: 'npm' },
@@ -69,6 +79,7 @@ export interface PartialInstallFlags {
   sourceUrl?: string;
   media?: Renderer;
   installMethod?: InstallMethod;
+  embedMethod?: EmbedMethod;
 }
 
 export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
@@ -89,15 +100,16 @@ export async function promptInstallOptions(
   framework: Framework,
   flags: PartialInstallFlags
 ): Promise<InstallationOptions> {
-  const useCase =
+  const useCase: UseCase =
     flags.preset ??
+    (flags.media === 'background-video' ? 'background-video' : undefined) ??
     (await (async () => {
       const value = await p.select({
         message: 'Preset',
         options: PRESET_OPTIONS,
       });
       if (p.isCancel(value)) process.exit(0);
-      return value;
+      return value as UseCase;
     })());
 
   // Resolve raw --skin flag now that useCase is known
@@ -158,6 +170,19 @@ export async function promptInstallOptions(
       return value;
     })());
 
+  const embedMethod: EmbedMethod =
+    flags.embedMethod ??
+    (await (async () => {
+      const options = embedMethodOptionsForUseCase(useCase);
+      if (options.length === 1) return options[0]!.value;
+      const value = await p.select<EmbedMethod>({
+        message: 'Embed method',
+        options,
+      });
+      if (p.isCancel(value)) process.exit(0);
+      return value;
+    })());
+
   return {
     framework,
     useCase,
@@ -165,5 +190,6 @@ export async function promptInstallOptions(
     renderer: media,
     sourceUrl,
     installMethod,
+    embedMethod,
   };
 }

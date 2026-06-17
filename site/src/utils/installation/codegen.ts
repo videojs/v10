@@ -1,6 +1,7 @@
 import { VJS10_DEMO_VIDEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import { generateEjectedSkinCode } from '@/utils/installation/ejected';
+import type { EmbedMethod, InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 
 export interface InstallationOptions {
   framework: 'html' | 'react';
@@ -9,6 +10,7 @@ export interface InstallationOptions {
   renderer: Renderer;
   sourceUrl: string;
   installMethod: InstallMethod;
+  embedMethod?: EmbedMethod;
 }
 
 type ValidationResult = { valid: true } | { valid: false; reason: string };
@@ -159,9 +161,33 @@ import '@videojs/html/background/video';${mediaImport}`;
 import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
 }
 
+function resolveEjectedPlaceholders(html: string, renderer: Renderer, url: string): string {
+  const tag = renderer === 'hls' ? 'hls-video' : renderer === 'html5-audio' ? 'audio' : 'video';
+  return html.replaceAll('{{MEDIA_TAG}}', tag).replaceAll('{{SRC}}', url);
+}
+
 export function generateHTMLUsageCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod'>
-): { html: string; js?: string } {
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'sourceUrl' | 'installMethod' | 'embedMethod'>
+): { html: string; js?: string; css?: string } {
+  if (opts.embedMethod === 'ejected' && opts.useCase !== 'background-video') {
+    const ejectedSkin = generateEjectedSkinCode({ skin: opts.skin, framework: 'html' });
+    const src = resolveSourceUrl(opts.sourceUrl, opts.renderer);
+    let html = resolveEjectedPlaceholders(ejectedSkin.html ?? '', opts.renderer, src);
+
+    if (opts.installMethod !== 'cdn') {
+      return { html, js: generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer), css: ejectedSkin.css };
+    }
+
+    let preamble = ejectedSkin.cdnScript ?? '';
+    if (opts.renderer === 'hls') {
+      const hlsScript =
+        '<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hls-video.js"></script>';
+      preamble += `\n${hlsScript}`;
+    }
+    preamble += `\n${ejectedSkin.cdnStylesheet ?? ''}`;
+    html = `${preamble}\n\n${html}`;
+    return { html, css: ejectedSkin.css };
+  }
   const html = generateHTMLMarkup(opts.useCase, opts.skin, opts.renderer, opts.sourceUrl);
   const js = opts.installMethod !== 'cdn' ? generateHTMLJSImports(opts.useCase, opts.skin, opts.renderer) : undefined;
   return { html, js };
@@ -211,10 +237,16 @@ function getRendererMediaSubpath(renderer: Renderer): string {
   return map[renderer] ?? renderer;
 }
 
+// Each CSS-style ejected React skin exports a top-level player component with
+// a name derived from the media type, not the skin variant.
+function getEjectedReactExport(useCase: UseCase): string {
+  return useCase === 'default-audio' ? 'AudioPlayer' : 'VideoPlayer';
+}
+
 export function generateReactCreateCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
-): Record<'MyPlayer.tsx', string> {
-  const { useCase, skin, renderer } = opts;
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer' | 'embedMethod'>
+): { 'MyPlayer.tsx': string; 'skin.css'?: string } {
+  const { useCase, skin, renderer, embedMethod } = opts;
   const rendererComponent = getRendererComponent(renderer);
   const featureType = getUseCaseFeatures(useCase);
 
@@ -247,8 +279,7 @@ export function generateReactCreateCode(
     ...(mediaImport ? [mediaImport] : []),
   ].join('\n');
 
-  return {
-    'MyPlayer.tsx': `'use client';
+  const myPlayerCode = `'use client';
 
 ${imports}
 
@@ -266,8 +297,23 @@ export const MyPlayer = ({ src }: MyPlayerProps) => {
       </${skinComponent}>
     </Player.Provider>
   );
-};`,
-  };
+};`;
+
+  if (embedMethod === 'ejected' && useCase !== 'background-video') {
+    const ejectedSkin = generateEjectedSkinCode({ skin, framework: 'react' });
+    const ejectedExport = getEjectedReactExport(useCase);
+    // The ejected TSX is a self-contained player (createPlayer + Provider + UI).
+    // Fix the CSS import path to match the guide filename, then add a MyPlayer
+    // alias so App.tsx can keep importing { MyPlayer } from '../components/player'.
+    const tsx = (ejectedSkin.tsx ?? '')
+      .replace("import './player.css';", "import './skin.css';")
+      .concat(`\nexport { ${ejectedExport} as MyPlayer };`);
+    const result: { 'MyPlayer.tsx': string; 'skin.css'?: string } = { 'MyPlayer.tsx': tsx };
+    if (ejectedSkin.css) result['skin.css'] = ejectedSkin.css;
+    return result;
+  }
+
+  return { 'MyPlayer.tsx': myPlayerCode };
 }
 
 // ---------------------------------------------------------------------------
