@@ -11,6 +11,7 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
     #isUserStreamType = false;
     #disconnect: AbortController | null = null;
 
+    /** Current stream type (`'on-demand'` / `'live'` / `'unknown'`). */
     get streamType(): MediaStreamType {
       return this.#streamType;
     }

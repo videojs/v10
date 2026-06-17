@@ -88,10 +88,20 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.removeEventListener('loadstart', this.#stopTargetLoadStartEvent);
   }
 
+  /**
+   * Underlying playback engine — the hls.js `Hls` instance when playing via
+   * MSE, otherwise `null`. An advanced escape hatch for direct engine access;
+   * normal playback is driven through this element's own properties and methods.
+   */
   get engine() {
     return this.#delegate?.engine ?? null;
   }
 
+  /**
+   * Playback configuration: a preferred playback path, an explicit content
+   * type, and options forwarded to hls.js. Reassigning reloads the engine when
+   * an engine-relevant option changes.
+   */
   get config(): HlsMediaConfig {
     return super.config;
   }
@@ -101,22 +111,27 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     if (this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
   }
 
+  /** The current fatal playback error, or `null` when playback is healthy. */
   get error() {
     return this.#delegate?.error ?? null;
   }
 
+  /** Available video tracks, or `undefined` unless the hls.js (MSE) engine is active. */
   get videoTracks() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoTracks : undefined;
   }
 
+  /** Available audio tracks, or `undefined` unless the hls.js (MSE) engine is active. */
   get audioTracks() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioTracks : undefined;
   }
 
+  /** Available video renditions (selectable quality levels), or `undefined` unless the hls.js (MSE) engine is active. */
   get videoRenditions() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoRenditions : undefined;
   }
 
+  /** Available audio renditions, or `undefined` unless the hls.js (MSE) engine is active. */
   get audioRenditions() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioRenditions : undefined;
   }

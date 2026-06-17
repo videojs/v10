@@ -62,6 +62,12 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       this.#engine = this.#createEngine();
     }
 
+    /**
+     * Underlying playback engine — the low-level SPF reactive composition that
+     * drives playback. An advanced escape hatch for direct engine access;
+     * normal playback is driven through this element's own properties and
+     * methods.
+     */
     get engine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return this.#engine;
     }
@@ -90,6 +96,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
     // -------------------------------------------------------------------------
 
+    /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
     get preload(): '' | 'none' | 'metadata' | 'auto' {
       return this.#preload;
     }

@@ -18,11 +18,19 @@ export function NativeHlsMediaLiveMixin<Base extends Constructor<NativeMediaHost
     #disconnect: AbortController | null = null;
     #currentSrc = '';
 
+    /**
+     * Seekable range size for live content. `0` for standard live, `Infinity`
+     * for DVR, `NaN` for on-demand or unknown.
+     */
     get targetLiveWindow() {
       return this.#targetLiveWindow;
     }
 
-    // Derived on each read from the current `seekable.end` and cached offset.
+    /**
+     * Presentation time marking the start of the Live Edge Window. Derived on
+     * each read from the current `seekable.end` and cached offset; `NaN` when
+     * the stream is not live or the offset is unavailable.
+     */
     get liveEdgeStart() {
       if (this.#liveEdgeStartOffset === undefined) return Number.NaN;
       const target = this.target as HTMLVideoElement | null;
