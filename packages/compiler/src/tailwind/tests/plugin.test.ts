@@ -464,4 +464,27 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     const css = await cssPromise;
     expect(css).toMatch(/\[data-skin="x"\]\s*{[^}]*--spacing:/);
   });
+
+  it('forwards the `properties` option (inline) so --tw-content resolves', async () => {
+    // `after:absolute` emits `content: var(--tw-content)` with no setter.
+    const source = `function App(){ return <Foo className="after:absolute"/>; }`;
+    const cssPromise = new Promise<string>((resolve) => {
+      compile(source, {
+        target: 'react',
+        plugins: [
+          tailwindPlugin({
+            design,
+            target: 'vanilla-css',
+            properties: { mode: 'inline' },
+            onCss: (out) => {
+              if (out.kind === 'merged') resolve(out.css);
+            },
+          }),
+        ],
+      });
+    });
+    const css = await cssPromise;
+    expect(css).not.toMatch(/var\(--tw-content\)/);
+    expect(collapse(css)).toContain(collapse('content: "";'));
+  });
 });

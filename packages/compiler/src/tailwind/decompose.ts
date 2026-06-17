@@ -28,10 +28,28 @@ export interface Variant {
   raw: string;
 }
 
+/**
+ * A `@property` registration Tailwind appends alongside a utility (e.g.
+ * `@property --tw-content { syntax: "*"; inherits: false; initial-value: "" }`).
+ * Values are kept verbatim so they can be re-emitted or inlined as authored.
+ */
+export interface PropertyRule {
+  name: string;
+  syntax?: string;
+  inherits?: boolean;
+  initialValue?: string;
+}
+
 export interface UtilityCss {
   utility: string;
   declarations: readonly Declaration[];
   variants: readonly Variant[];
+  /**
+   * `@property` registrations Tailwind emitted for this utility. These supply
+   * the typed defaults for `--tw-*` slots referenced (but not set) by the
+   * declarations — see `emitCss`'s `properties` option.
+   */
+  properties?: readonly PropertyRule[];
 }
 
 /**
@@ -63,7 +81,41 @@ export function decompose(utility: string, design: DesignSystem): UtilityCss | n
   const declarations: Declaration[] = [];
   walkNested(body, variants, declarations);
 
-  return { utility, declarations, variants };
+  // Tailwind appends `@property --tw-* { ... }` registrations after the utility
+  // rule. They live at the top level of the compiled output (siblings of the
+  // utility class), so we scan the whole string rather than the rule body.
+  const properties = parseProperties(trimmed);
+
+  return properties.length > 0 ? { utility, declarations, variants, properties } : { utility, declarations, variants };
+}
+
+/** Parse every `@property --name { ... }` block from a compiled utility. */
+function parseProperties(css: string): PropertyRule[] {
+  const out: PropertyRule[] = [];
+  const re = /@property\s+(--[A-Za-z0-9_-]+)\s*\{/g;
+  let match = re.exec(css);
+  while (match !== null) {
+    const name = match[1]!;
+    const openIdx = match.index + match[0].length - 1;
+    const block = readBalancedBlock(css, openIdx);
+    if (!block) break;
+
+    const rule: PropertyRule = { name };
+    for (const decl of block.inner.split(';')) {
+      const colon = decl.indexOf(':');
+      if (colon === -1) continue;
+      const prop = decl.slice(0, colon).trim();
+      const value = decl.slice(colon + 1).trim();
+      if (!value) continue;
+      if (prop === 'syntax') rule.syntax = value;
+      else if (prop === 'inherits') rule.inherits = value === 'true';
+      else if (prop === 'initial-value') rule.initialValue = value;
+    }
+    out.push(rule);
+    re.lastIndex = block.end + 1;
+    match = re.exec(css);
+  }
+  return out;
 }
 
 /**

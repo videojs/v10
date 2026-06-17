@@ -93,6 +93,25 @@ describe('decompose — variants', () => {
   });
 });
 
+describe('decompose — @property registrations', () => {
+  it('captures the @property rule Tailwind appends for a slot', () => {
+    const r = decompose('before:content-["x"]', design);
+    expect(r).not.toBeNull();
+    const content = r!.properties?.find((p) => p.name === '--tw-content');
+    expect(content).toEqual({
+      name: '--tw-content',
+      syntax: '"*"',
+      inherits: false,
+      initialValue: '""',
+    });
+  });
+
+  it('omits `properties` when a utility registers none', () => {
+    const r = decompose('flex', design);
+    expect(r!.properties).toBeUndefined();
+  });
+});
+
 describe('decompose — caching', () => {
   it('returns the same compiled CSS on repeat lookups (DesignSystem cache)', () => {
     const a = design.compileUtility('flex');

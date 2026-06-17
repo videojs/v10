@@ -532,3 +532,78 @@ describe('emitCss — theme variables', () => {
     expect(out.css).not.toMatch(/:root/);
   });
 });
+
+describe('emitCss — registered @property slots', () => {
+  // The `after:absolute` pattern: an `::after` rule that references
+  // `--tw-content` but never sets it, relying on Tailwind's @property default.
+  const contentRule = (): CompiledRule => ({
+    className: 'card',
+    utility: {
+      utility: 'after:absolute',
+      declarations: [
+        { property: 'content', value: 'var(--tw-content)' },
+        { property: 'position', value: 'absolute' },
+      ],
+      variants: [{ kind: 'pseudo', selector: '::after', raw: '::after' }],
+      properties: [{ name: '--tw-content', syntax: '"*"', inherits: false, initialValue: '""' }],
+    },
+  });
+
+  it("mode 'inline' substitutes the initial-value and drops the dangling reference", async () => {
+    const out = await emitCss({ rules: [contentRule()], properties: { mode: 'inline' } });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(collapse('content: "";'));
+    expect(out.css).not.toMatch(/var\(--tw-content\)/);
+  });
+
+  it("mode 'emit' emits an @property rule and keeps the reference", async () => {
+    const out = await emitCss({ rules: [contentRule()], properties: { mode: 'emit' } });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(
+      collapse('@property --tw-content {\n  syntax: "*";\n  inherits: false;\n  initial-value: "";\n}')
+    );
+    expect(out.css).toMatch(/var\(--tw-content\)/);
+  });
+
+  it('lets the resolve hook override the initial-value (inline)', async () => {
+    const out = await emitCss({
+      rules: [contentRule()],
+      properties: {
+        mode: 'inline',
+        resolve: (name, captured) => (name === '--tw-content' ? { ...captured, initialValue: '"!"' } : undefined),
+      },
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(collapse('content: "!";'));
+  });
+
+  it('lets the resolve hook override descriptors (emit)', async () => {
+    const out = await emitCss({
+      rules: [contentRule()],
+      properties: {
+        mode: 'emit',
+        resolve: () => ({ syntax: '"<length>"', inherits: true, initialValue: '0px' }),
+      },
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(
+      collapse('@property --tw-content {\n  syntax: "<length>";\n  inherits: true;\n  initial-value: 0px;\n}')
+    );
+  });
+
+  it('honours the match filter (leaves non-matching slots alone)', async () => {
+    const out = await emitCss({
+      rules: [contentRule()],
+      properties: { mode: 'inline', match: /^--brand-/ },
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(out.css).toMatch(/var\(--tw-content\)/);
+  });
+
+  it('leaves slots untouched when no properties option is given (back-compat)', async () => {
+    const out = await emitCss({ rules: [contentRule()] });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(out.css).toMatch(/var\(--tw-content\)/);
+    expect(out.css).not.toMatch(/@property/);
+  });
+});

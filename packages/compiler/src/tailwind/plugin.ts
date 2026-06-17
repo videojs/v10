@@ -5,7 +5,13 @@ import { tagName } from '../matchers';
 import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
 import { decompose, type UtilityCss } from './decompose';
 import type { DesignSystem } from './design-system';
-import { type CompiledRule, type EmittedCss, emitCss, type HoistOptions } from './emit';
+import {
+  type CompiledRule,
+  type EmittedCss,
+  emitCss,
+  type HoistOptions,
+  type RegisteredPropertiesOptions,
+} from './emit';
 import { EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
 import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type NameTransform } from './naming';
 
@@ -83,6 +89,17 @@ export interface TailwindPluginOptions {
    * driving `emitCss` themselves should pass the same value through.
    */
   inlineVars?: true | RegExp;
+  /**
+   * Handle Tailwind's `@property`-registered slots (`--tw-content`, etc.) that
+   * are referenced but never set, so the output isn't broken (e.g.
+   * `content: var(--tw-content)`). See `RegisteredPropertiesOptions` — choose
+   * `'emit'` (ship `@property` rules) or `'inline'` (bake initial-values in),
+   * with an optional `resolve` hook for the per-property config.
+   *
+   * Forwarded to the internal `emitCss` call when `onCss` is set; consumers
+   * driving `emitCss` themselves should pass the same value through.
+   */
+  properties?: RegisteredPropertiesOptions;
 }
 
 /**
@@ -127,7 +144,7 @@ function inlinedPlugin(options: TailwindPluginOptions): ts.TransformerFactory<ts
  * ───────────────────────────────────────────────────────────────────────── */
 
 function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory<ts.SourceFile> {
-  const { design, transformName, overrides, bagFor, onRules, onCss, emit, hoistVars, inlineVars } = options;
+  const { design, transformName, overrides, bagFor, onRules, onCss, emit, hoistVars, inlineVars, properties } = options;
 
   const env = buildTokenEnv(options.sourcePath);
 
@@ -241,6 +258,7 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
           ...(emit ?? {}),
           ...(hoistVars !== undefined ? { hoist: hoistVars } : {}),
           ...(inlineVars !== undefined ? { inlineVars } : {}),
+          ...(properties ? { properties } : {}),
           resolveThemeVar: (name) => design.resolveThemeVar(name),
           ...(themeSelector ? { themeSelector } : {}),
         })

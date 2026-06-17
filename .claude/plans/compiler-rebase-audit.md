@@ -83,8 +83,10 @@ Unrelated (drop from our set — belongs to main or a separate change):
 - ✅ Marker-class drop (`group`/`peer`) — preserved on the element.
 - ✅ Class-name collisions — `DiagnosticError` thrown on same-name/different-styles.
 - ✅ Undefined theme vars — `emitCss` emits a resolved theme block via `resolveThemeVar`.
-- ⬜ Follow-up: `@property`-registered `--tw-*` slots (e.g. `--tw-content`) still
-  resolve to `undefined`; emit their `@property` initial values or inline them.
+- ✅ `@property`-registered `--tw-*` slots (e.g. `--tw-content`) — `decompose`
+  now captures the `@property` rules; `emitCss`'s `properties` option handles
+  them in `'emit'` (ship `@property` rules) or `'inline'` (bake initial-values)
+  mode, with a `resolve` hook + `match` filter for per-property config.
 
 ## Deferred porting backlog (NOT this pass)
 - Constrained-JSX for airplay/live/menu/playback-rate components + manifests.

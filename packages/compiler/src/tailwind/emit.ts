@@ -89,6 +89,46 @@ export interface EmitCssOptions {
    * skin selector (e.g. `[data-skin="default-video"]`) to scope the variables.
    */
   themeSelector?: string;
+  /**
+   * How to handle Tailwind's `@property`-registered slots (e.g. `--tw-content`,
+   * `--tw-shadow`) that the compiled rules reference but never set locally.
+   * Without this they resolve to nothing and break — e.g. `content:
+   * var(--tw-content)` suppresses the `::after`/`::before` box.
+   *
+   * Omit to leave them alone (current behavior). See `RegisteredPropertiesOptions`.
+   */
+  properties?: RegisteredPropertiesOptions;
+}
+
+/** A `@property` definition (sans name), as captured or overridden. */
+export interface PropertyDef {
+  /** `@property` syntax descriptor, e.g. `"*"`. Defaults to `"*"` when emitted. */
+  syntax?: string;
+  /** Whether the property inherits. Defaults to `false` when emitted. */
+  inherits?: boolean;
+  /** The registered default, e.g. `""` for `--tw-content`. */
+  initialValue?: string;
+}
+
+export interface RegisteredPropertiesOptions {
+  /**
+   * - `'emit'`   — emit `@property` rules for referenced slots, preserving
+   *   Tailwind's typed defaults (relies on browser `@property` support).
+   * - `'inline'` — substitute each slot's `initial-value` into the values that
+   *   reference it (and drop any `--tw-*` setter declarations), so the output
+   *   is fully self-contained. This is a superset of `inlineVars` for the
+   *   matched slots.
+   */
+  mode: 'emit' | 'inline';
+  /** Which property names to handle. Defaults to `inlineVars`'s matcher, else `/^--tw-/`. */
+  match?: RegExp;
+  /**
+   * Override or supply a property's definition. Receives the name and the
+   * definition captured from Tailwind's output (if any); return a new
+   * definition (merged in), or `undefined` to keep the captured one. Lets you
+   * fix an initial-value or register a slot Tailwind didn't.
+   */
+  resolve?: (name: string, captured: PropertyDef | undefined) => PropertyDef | undefined;
 }
 
 /**
@@ -108,11 +148,28 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   const hoist = opts.hoist === false ? undefined : opts.hoist;
   const inlineVars = normalizeInlineMatcher(opts.inlineVars);
 
+  // Registered `@property` (--tw-*) handling. In 'inline' mode the slots'
+  // initial-values seed the inline pass as fallbacks (and the matcher widens to
+  // cover them, even when `inlineVars` was off). In 'emit' mode they're left in
+  // place to be emitted as `@property` rules.
+  const propMode = opts.properties?.mode;
+  const captured = collectPropertyDefs(opts.rules);
+  const resolveDef = (name: string): PropertyDef | undefined => {
+    const cap = captured.get(name);
+    return opts.properties?.resolve?.(name, cap) ?? cap;
+  };
+  const propMatch = opts.properties?.match ?? inlineVars ?? /^--tw-/;
+  const inlineMatch = propMode === 'inline' ? propMatch : inlineVars;
+  const fallbacks = propMode === 'inline' ? buildFallbackSetters(captured, propMatch, resolveDef) : undefined;
+  const emitProperties = (css: string): string =>
+    propMode === 'emit' ? buildPropertyBlocks(css, propMatch, resolveDef) : '';
+
   if (mode === 'merged') {
     const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
-    const body = composeRules(opts.rules, hoist, inlineVars);
+    const body = composeRules(opts.rules, hoist, inlineMatch, fallbacks);
     const theme = buildThemeBlock(body, opts.resolveThemeVar, opts.themeSelector);
-    return { kind: 'merged', css: joinSections(base, theme, body) };
+    const properties = emitProperties(body);
+    return { kind: 'merged', css: joinSections(base, properties, theme, body) };
   }
 
   // Split mode: group rules by `bag`.
@@ -130,14 +187,17 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   const sortedBags = [...byBag.keys()].sort();
   for (const bagName of sortedBags) {
     const bagRules = byBag.get(bagName)!;
-    bags.set(bagName, composeRules(bagRules, undefined, inlineVars));
+    bags.set(bagName, composeRules(bagRules, undefined, inlineMatch, fallbacks));
     importLines.push(`@import "./${bagName || 'index'}.css";`);
   }
 
   const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
-  // Theme variables go in `index` (it loads first), resolved against every bag.
-  const theme = buildThemeBlock([...bags.values()].join('\n'), opts.resolveThemeVar, opts.themeSelector);
-  const index = joinSections(base, theme, importLines.join('\n'));
+  // Theme variables and @property rules go in `index` (it loads first),
+  // resolved against every bag.
+  const allBagsCss = [...bags.values()].join('\n');
+  const theme = buildThemeBlock(allBagsCss, opts.resolveThemeVar, opts.themeSelector);
+  const properties = emitProperties(allBagsCss);
+  const index = joinSections(base, properties, theme, importLines.join('\n'));
   return { kind: 'split', index, bags };
 }
 
@@ -203,6 +263,60 @@ function collectDefinedVars(css: string): Set<string> {
   return out;
 }
 
+/* ─────────────────────────────────────────────────────────────────────────
+ * Registered `@property` slots
+ * ───────────────────────────────────────────────────────────────────────── */
+
+/** Aggregate the `@property` defs captured across every rule (first wins). */
+function collectPropertyDefs(rules: readonly CompiledRule[]): Map<string, PropertyDef> {
+  const out = new Map<string, PropertyDef>();
+  for (const rule of rules) {
+    for (const p of rule.utility.properties ?? []) {
+      if (out.has(p.name)) continue;
+      const { name, ...def } = p;
+      out.set(name, def);
+    }
+  }
+  return out;
+}
+
+/** Build the `name → initial-value` fallback map for `mode: 'inline'`. */
+function buildFallbackSetters(
+  captured: Map<string, PropertyDef>,
+  match: RegExp,
+  resolveDef: (name: string) => PropertyDef | undefined
+): Map<string, string> {
+  const out = new Map<string, string>();
+  for (const name of captured.keys()) {
+    if (!match.test(name)) continue;
+    const def = resolveDef(name);
+    if (def?.initialValue !== undefined) out.set(name, def.initialValue);
+  }
+  return out;
+}
+
+/**
+ * Build `@property` rules for every matching slot the CSS references but
+ * doesn't itself declare. Descriptors default to `syntax: "*"` / `inherits:
+ * false` when a resolved def omits them.
+ */
+function buildPropertyBlocks(
+  css: string,
+  match: RegExp,
+  resolveDef: (name: string) => PropertyDef | undefined
+): string {
+  const referenced = [...collectReferencedVars(css)].filter((name) => match.test(name)).sort();
+  const blocks: string[] = [];
+  for (const name of referenced) {
+    const def = resolveDef(name);
+    if (!def) continue;
+    const lines = [`  syntax: ${def.syntax ?? '"*"'};`, `  inherits: ${def.inherits ?? false};`];
+    if (def.initialValue !== undefined) lines.push(`  initial-value: ${def.initialValue};`);
+    blocks.push(`@property ${name} {\n${lines.join('\n')}\n}`);
+  }
+  return blocks.join('\n\n');
+}
+
 /** Internal: read each `baseCss` file via Lightning CSS, return concatenated string. */
 async function bundleBaseCss(paths: readonly string[], configDir: string): Promise<string> {
   if (paths.length === 0) return '';
@@ -244,7 +358,8 @@ interface EmitUnit {
 function composeRules(
   rules: readonly CompiledRule[],
   hoist: HoistOptions | undefined,
-  inlineVars: RegExp | undefined
+  inlineVars: RegExp | undefined,
+  fallbackSetters?: Map<string, string>
 ): string {
   // Step 1: turn each CompiledRule into one EmitUnit.
   const units: EmitUnit[] = [];
@@ -284,7 +399,7 @@ function composeRules(
   // consumers, then drop the matching declarations. Pulls setters from the
   // consumer's own rule plus the hoist root (when set) so consumers in
   // separate rules from the original setter still resolve.
-  if (inlineVars) applyInline(merged, inlineVars, hoist?.rootSelector);
+  if (inlineVars) applyInline(merged, inlineVars, hoist?.rootSelector, fallbackSetters);
 
   // Step 3: collapse units that share the same (atRulePath, declarations) into
   // a comma-separated selector list. Sort the declaration set to make the
@@ -446,7 +561,8 @@ function normalizeInlineMatcher(opt: true | RegExp | undefined): RegExp | undefi
 function applyInline(
   merged: Map<string, EmitUnit & { declarations: Declaration[]; declSet: Set<string> }>,
   match: RegExp,
-  hoistRootSelector: string | undefined
+  hoistRootSelector: string | undefined,
+  fallbackSetters?: Map<string, string>
 ): void {
   // Pull root-scope setters once. They serve as fallback when a consumer
   // rule doesn't declare the property locally.
@@ -473,8 +589,11 @@ function applyInline(
       }
     }
 
-    // Effective setters: rule-local first, hoist root as fallback.
-    const setters = new Map<string, string>(rootSetters);
+    // Effective setters, narrowest last: registered `@property` initial-values
+    // (lowest), then hoist root, then rule-local. Initial-values resolve
+    // references to slots no rule ever sets (e.g. `content: var(--tw-content)`).
+    const setters = new Map<string, string>(fallbackSetters);
+    for (const [name, value] of rootSetters) setters.set(name, value);
     for (const [name, value] of localSetters) setters.set(name, value);
     resolveSettersInPlace(setters, match);
 
