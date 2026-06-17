@@ -167,8 +167,10 @@ function getTemplateHTML() {
                 <media-quality-radio-group class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">
-                      <span data-part="label"></span>
-                      <sup data-part="tier" class="${menu.tier}"></sup>
+                      <span>
+                        <span data-part="label"></span>
+                        <sup data-part="tier" class="${menu.tier}"></sup>
+                      </span>
                       <span data-part="badge" class="${cn(badge, menu.badge)}"></span>
                       <media-menu-item-indicator force-mount class="${menu.indicator}">
                         ${renderIcon('check', { class: icon })}

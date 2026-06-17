@@ -11,6 +11,7 @@ import type {
   MediaSourceCapability,
   MediaStreamTypeCapability,
   MediaTextTrackCapability,
+  MediaVideoDimensionsCapability,
   MediaVideoRenditionCapability,
   MediaVolumeCapability,
 } from '../../core/media/types';
@@ -82,6 +83,12 @@ export function isMediaVideoRenditionCapable(value: unknown): value is MediaVide
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
   return !isUndefined(media.videoRenditions);
+}
+
+export function isMediaVideoDimensionsCapable(value: unknown): value is MediaVideoDimensionsCapability {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.videoWidth) && !isUndefined(media.videoHeight);
 }
 
 export function isMediaRemotePlaybackCapable(value: unknown): value is MediaRemotePlaybackCapability {

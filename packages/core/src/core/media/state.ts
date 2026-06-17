@@ -243,6 +243,8 @@ export interface MediaVideoRendition {
 export interface MediaQualityState {
   /** Video renditions available for manual quality selection. */
   videoRenditionList: MediaVideoRendition[];
+  /** Video rendition currently playing, including when automatic ABR is selected. */
+  activeVideoRendition: MediaVideoRendition | null;
   /** Select a video rendition by menu value, or automatic ABR with `"auto"`. */
   selectVideoRendition(value: string): void;
 }

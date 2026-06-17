@@ -24,6 +24,7 @@ export interface QualityRadioGroupRendition {
 
 export interface QualityRadioGroupState extends ButtonState {
   renditions: readonly QualityRadioGroupRendition[];
+  autoLabel: string;
   value: string;
   disabled: boolean;
   availability: 'available' | 'unavailable';
@@ -93,6 +94,18 @@ function getRenditionValue(rendition: MediaVideoRendition, index: number): strin
   return rendition.id || String(index);
 }
 
+function isSameRendition(a: MediaVideoRendition, b: MediaVideoRendition): boolean {
+  if (a.id !== undefined || b.id !== undefined) return a.id === b.id;
+
+  return (
+    a.width === b.width &&
+    a.height === b.height &&
+    a.bitrate === b.bitrate &&
+    a.frameRate === b.frameRate &&
+    a.codec === b.codec
+  );
+}
+
 export class QualityRadioGroupCore {
   static readonly defaultProps: NonNullableObject<QualityRadioGroupProps> = {
     label: '',
@@ -102,6 +115,7 @@ export class QualityRadioGroupCore {
 
   readonly state = createState<QualityRadioGroupState>({
     renditions: [],
+    autoLabel: 'Auto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'unavailable',
@@ -175,19 +189,29 @@ export class QualityRadioGroupCore {
     const selectedIndex = media.videoRenditionList.findIndex((rendition) => rendition.selected);
     const availability: QualityRadioGroupState['availability'] =
       media.videoRenditionList.length > 1 ? 'available' : 'unavailable';
+    const toRendition = (rendition: MediaVideoRendition, index: number): QualityRadioGroupRendition => {
+      const tier = this.getRenditionTier(rendition);
+      const badge = this.getRenditionBadge(rendition, media.videoRenditionList);
+
+      return {
+        value: this.getRenditionValue(rendition, index),
+        label: this.getRenditionLabel(rendition),
+        ...(tier && { tier }),
+        ...(badge && { badge }),
+      };
+    };
+    const activeIndex =
+      media.activeVideoRendition === null
+        ? -1
+        : media.videoRenditionList.findIndex((rendition) => isSameRendition(rendition, media.activeVideoRendition!));
+    const active =
+      media.activeVideoRendition && activeIndex !== -1
+        ? toRendition(media.activeVideoRendition, activeIndex)
+        : undefined;
 
     this.state.patch({
-      renditions: media.videoRenditionList.map((rendition, index) => {
-        const tier = this.getRenditionTier(rendition);
-        const badge = this.getRenditionBadge(rendition, media.videoRenditionList);
-
-        return {
-          value: this.getRenditionValue(rendition, index),
-          label: this.getRenditionLabel(rendition),
-          ...(tier && { tier }),
-          ...(badge && { badge }),
-        };
-      }),
+      renditions: media.videoRenditionList.map(toRendition),
+      autoLabel: selectedIndex === -1 && active ? `Auto (${active.label})` : 'Auto',
       value:
         selectedIndex === -1
           ? QUALITY_AUTO_VALUE

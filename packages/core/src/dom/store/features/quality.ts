@@ -3,7 +3,7 @@ import { listen } from '@videojs/utils/dom';
 import type { MediaQualityState, MediaVideoRendition } from '../../../core/media/state';
 import type { VideoRenditionLike, VideoRenditionListLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaVideoRenditionCapable } from '../../media/predicate';
+import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '../../media/predicate';
 
 const QUALITY_AUTO_VALUE = 'auto';
 
@@ -23,10 +23,16 @@ function toMediaRendition(rendition: VideoRenditionLike): MediaVideoRendition {
   };
 }
 
+function getSize(rendition: Pick<VideoRenditionLike, 'width' | 'height'>): number | undefined {
+  if (rendition.width && rendition.height) return Math.min(rendition.width, rendition.height);
+  return rendition.height ?? rendition.width;
+}
+
 export const qualityFeature = definePlayerFeature({
   name: 'quality',
   state: ({ target }): MediaQualityState => ({
     videoRenditionList: [],
+    activeVideoRendition: null,
     selectVideoRendition(value: string) {
       const { media } = target();
       if (!isMediaVideoRenditionCapable(media)) return;
@@ -50,8 +56,31 @@ export const qualityFeature = definePlayerFeature({
     let cleanup: AbortController | null = null;
 
     const getVideoRenditions = () => (isMediaVideoRenditionCapable(media) ? media.videoRenditions : null);
+    const getActiveRendition = (list: VideoRenditionListLike | null) => {
+      if (!list) return null;
+
+      const renditions = [...list];
+      const active = renditions.find((rendition) => rendition.active);
+      if (active) return active;
+
+      if (!isMediaVideoDimensionsCapable(media) || (!media.videoWidth && !media.videoHeight)) return null;
+
+      const size = getSize({
+        width: media.videoWidth || undefined,
+        height: media.videoHeight || undefined,
+      });
+      const matches = renditions.filter((rendition) => getSize(rendition) === size);
+
+      return matches.length === 1 ? matches[0] : null;
+    };
+
     const sync = (list = getVideoRenditions()) => {
-      set({ videoRenditionList: list ? [...list].map(toMediaRendition) : [] });
+      const active = getActiveRendition(list);
+
+      set({
+        videoRenditionList: list ? [...list].map(toMediaRendition) : [],
+        activeVideoRendition: active ? toMediaRendition(active) : null,
+      });
     };
 
     const bind = () => {
@@ -70,6 +99,7 @@ export const qualityFeature = definePlayerFeature({
         listen(videoRenditions, 'addrendition', () => sync(videoRenditions), { signal: cleanup.signal });
         listen(videoRenditions, 'removerendition', () => sync(videoRenditions), { signal: cleanup.signal });
         listen(videoRenditions, 'change', () => sync(videoRenditions), { signal: cleanup.signal });
+        listen(videoRenditions, 'activechange', () => sync(videoRenditions), { signal: cleanup.signal });
       }
 
       sync(videoRenditions);
@@ -78,6 +108,7 @@ export const qualityFeature = definePlayerFeature({
     bind();
 
     listen(media, 'loadstart', bind, { signal });
+    listen(media, 'resize', () => sync(videoRenditions), { signal });
     signal.addEventListener('abort', () => cleanup?.abort(), { once: true });
   },
 });

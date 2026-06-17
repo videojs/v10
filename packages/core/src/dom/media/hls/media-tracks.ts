@@ -57,6 +57,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       engine.on(Hls.Events.MANIFEST_PARSED, this.#onManifestParsed);
       engine.on(Hls.Events.AUDIO_TRACKS_UPDATED, this.#onAudioTracksUpdated);
       engine.on(Hls.Events.LEVELS_UPDATED, this.#onLevelsUpdated);
+      engine.on(Hls.Events.LEVEL_SWITCHED, this.#onLevelSwitched);
       engine.once(Hls.Events.DESTROYING, this.#teardown);
 
       this.audioTracks.addEventListener('change', this.#switchAudioTrack);
@@ -131,6 +132,14 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       }
     };
 
+    #onLevelSwitched = (_event: string, data: { level: number }) => {
+      const activeId = `${data.level}`;
+
+      for (const rendition of this.videoRenditions) {
+        rendition.active = rendition.id === activeId;
+      }
+    };
+
     #switchRendition = () => {
       const { engine } = this;
       if (!engine) return;
@@ -145,6 +154,7 @@ export function HlsJsMediaMediaTracksMixin<Base extends Constructor<MediaTracksH
       engine?.off(Hls.Events.MANIFEST_PARSED, this.#onManifestParsed);
       engine?.off(Hls.Events.AUDIO_TRACKS_UPDATED, this.#onAudioTracksUpdated);
       engine?.off(Hls.Events.LEVELS_UPDATED, this.#onLevelsUpdated);
+      engine?.off(Hls.Events.LEVEL_SWITCHED, this.#onLevelSwitched);
       engine?.off(Hls.Events.DESTROYING, this.#teardown);
 
       this.audioTracks.removeEventListener('change', this.#switchAudioTrack);

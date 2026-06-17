@@ -32,7 +32,7 @@ export const selectPiP = createSelector(pipFeature);
 export const selectPlayback = createSelector(playbackFeature);
 /** Select the playback rate state (playbackRate, playbackRates, setPlaybackRate). */
 export const selectPlaybackRate = createSelector(playbackRateFeature);
-/** Select the quality state (videoRenditionList, selectVideoRendition). */
+/** Select the quality state (videoRenditionList, activeVideoRendition, selectVideoRendition). */
 export const selectQuality = createSelector(qualityFeature);
 /** Select the remote playback state (remote playback connection state, availability). */
 export const selectRemotePlayback = createSelector(remotePlaybackFeature);

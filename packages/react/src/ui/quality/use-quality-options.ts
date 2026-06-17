@@ -46,7 +46,7 @@ export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsRe
     state,
     value: state.value,
     options: [
-      { value: QUALITY_AUTO_VALUE, label: 'Auto', disabled: state.disabled },
+      { value: QUALITY_AUTO_VALUE, label: state.autoLabel, disabled: state.disabled },
       ...state.renditions.map((rendition) => ({
         value: rendition.value,
         label: rendition.label,

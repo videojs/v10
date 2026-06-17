@@ -1,4 +1,4 @@
-import { selectedChanged } from './video-rendition-list';
+import { activeChanged, selectedChanged } from './video-rendition-list';
 
 /**
  * The consumer should use the `selected` setter to select one or multiple
@@ -13,6 +13,7 @@ export class VideoRendition {
   frameRate: number | undefined;
   codec: string | undefined;
   #selected = false;
+  #active = false;
 
   get selected(): boolean {
     return this.#selected;
@@ -23,5 +24,16 @@ export class VideoRendition {
     this.#selected = value;
 
     selectedChanged(this);
+  }
+
+  get active(): boolean {
+    return this.#active;
+  }
+
+  set active(value: boolean) {
+    if (this.#active === value) return;
+    this.#active = value;
+
+    activeChanged(this);
   }
 }

@@ -69,7 +69,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     const templateKey = template?.innerHTML ?? '';
     const renditionsKey = `${state.renditions
       .map((rendition) => `${rendition.value}:${rendition.label}:${rendition.tier ?? ''}:${rendition.badge ?? ''}`)
-      .join('|')}::${templateKey}`;
+      .join('|')}::${state.autoLabel}::${templateKey}`;
 
     if (renditionsKey !== this.#renditionsKey) {
       this.#renditionsKey = renditionsKey;
@@ -79,7 +79,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
         child.remove();
       }
 
-      this.append(this.#createItem(QUALITY_AUTO_VALUE, 'Auto', undefined, undefined, template));
+      this.append(this.#createItem(QUALITY_AUTO_VALUE, state.autoLabel, undefined, undefined, template));
       this.append(
         ...state.renditions.map((rendition) =>
           this.#createItem(rendition.value, rendition.label, rendition.tier, rendition.badge, template)

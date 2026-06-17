@@ -10,6 +10,7 @@ function createMediaState(overrides: Partial<MediaQualityState> = {}): MediaQual
       { id: '0', height: 1080, bitrate: 6_000_000, selected: false },
       { id: '1', height: 720, bitrate: 3_000_000, selected: false },
     ],
+    activeVideoRendition: null,
     selectVideoRendition: vi.fn(),
     ...overrides,
   };
@@ -21,6 +22,7 @@ function createState(overrides: Partial<QualityRadioGroupState> = {}): QualityRa
       { value: '0', label: '1080p' },
       { value: '1', label: '720p' },
     ],
+    autoLabel: 'Auto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'available',
@@ -92,6 +94,19 @@ describe('QualityRadioGroupCore', () => {
       core.setMedia(media);
 
       expect(core.getState().value).toBe('1');
+    });
+
+    it('labels automatic with the active rendition', () => {
+      const core = new QualityRadioGroupCore();
+      const media = createMediaState({
+        activeVideoRendition: { id: '1', height: 720, selected: false },
+      });
+      core.setMedia(media);
+
+      const state = core.getState();
+
+      expect(state.value).toBe(QUALITY_AUTO_VALUE);
+      expect(state.autoLabel).toBe('Auto (720p)');
     });
 
     it('marks availability unavailable with one rendition', () => {

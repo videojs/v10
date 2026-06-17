@@ -59,6 +59,22 @@ export function selectedChanged(rendition: VideoRendition) {
   });
 }
 
+export function activeChanged(rendition: VideoRendition) {
+  const renditionList = getPrivate(rendition).media?.deref()?.videoRenditions as VideoRenditionList | undefined;
+
+  if (!renditionList || getPrivate(renditionList).activeChangeRequested) return;
+  getPrivate(renditionList).activeChangeRequested = true;
+
+  queueMicrotask(() => {
+    delete getPrivate(renditionList).activeChangeRequested;
+
+    const track = getPrivate(rendition).track as VideoTrack;
+    if (!track.selected) return;
+
+    renditionList.dispatchEvent(new Event('activechange'));
+  });
+}
+
 function getCurrentRenditions(renditionList: VideoRenditionList): VideoRendition[] {
   const media = getPrivate(renditionList).media?.deref() as HTMLMediaElement | undefined;
   if (!media) return [];

@@ -55,15 +55,18 @@ function createQualityStore({
     { id: '0', height: 1080, selected: false },
     { id: '1', height: 720, selected: false },
   ],
+  activeVideoRendition = null,
   selectVideoRendition = vi.fn(),
 }: {
   videoRenditionList?: MediaQualityState['videoRenditionList'] | undefined;
+  activeVideoRendition?: MediaQualityState['activeVideoRendition'] | undefined;
   selectVideoRendition?: MediaQualityState['selectVideoRendition'] | undefined;
 } = {}): AnyPlayerStore {
   return createStore<unknown>()<MediaQualityState>({
     name: 'quality',
     state: () => ({
       videoRenditionList,
+      activeVideoRendition,
       selectVideoRendition,
     }),
   }) as unknown as AnyPlayerStore;
@@ -94,14 +97,16 @@ defineElement('test-quality-player', TestPlayerProviderElement);
 
 function setup({
   videoRenditionList,
+  activeVideoRendition,
   selectVideoRendition,
   template,
 }: {
   videoRenditionList?: MediaQualityState['videoRenditionList'] | undefined;
+  activeVideoRendition?: MediaQualityState['activeVideoRendition'] | undefined;
   selectVideoRendition?: MediaQualityState['selectVideoRendition'] | undefined;
   template?: string | undefined;
 } = {}) {
-  const store = createQualityStore({ videoRenditionList, selectVideoRendition });
+  const store = createQualityStore({ videoRenditionList, activeVideoRendition, selectVideoRendition });
   const provider = document.createElement('test-quality-player') as TestPlayerProviderElement;
   const menu = createElement(MenuElement);
   const options = createElement(QualityRadioGroupElement);
@@ -167,6 +172,20 @@ describe('QualityRadioGroupElement', () => {
     expect(item.className).toBe('custom-item');
     expect(item.querySelector('[data-part~="label"]')?.textContent).toBe('Auto');
     expect(indicators.map((indicator) => indicator.checked)).toEqual([true, false, false]);
+  });
+
+  it('renders the active rendition in the Auto label', async () => {
+    const { menu, options } = setup({
+      activeVideoRendition: { id: '1', height: 720, selected: false },
+      template:
+        '<media-menu-radio-item><span data-part="label"></span><media-menu-item-indicator force-mount></media-menu-item-indicator></media-menu-radio-item>',
+    });
+
+    await waitForMenu(menu, options);
+
+    const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+
+    expect(items[0]?.querySelector('[data-part~="label"]')?.textContent).toBe('Auto (720p)');
   });
 
   it('renders bitrate badges from a template', async () => {

@@ -38,7 +38,7 @@ export function getMenuItemSettingState(
     const state = cores.quality.getState();
 
     if (state.value === QUALITY_AUTO_VALUE) {
-      return { label: 'Auto', availability: state.availability };
+      return { label: state.autoLabel, availability: state.availability };
     }
 
     const rendition = state.renditions.find((candidate) => candidate.value === state.value);

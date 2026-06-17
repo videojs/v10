@@ -16,14 +16,16 @@ function renderQualityOptions({
     { id: '0', height: 1080, selected: false },
     { id: '1', height: 720, selected: false },
   ],
+  activeVideoRendition = null,
   selectVideoRendition = vi.fn(),
   formatRendition,
 }: {
   videoRenditionList?: MediaVideoRendition[];
+  activeVideoRendition?: MediaVideoRendition | null | undefined;
   selectVideoRendition?: (value: string) => void;
   formatRendition?: ((rendition: MediaVideoRendition) => string) | undefined;
 } = {}) {
-  const { Wrapper } = createPlayerWrapper({ videoRenditionList, selectVideoRendition });
+  const { Wrapper } = createPlayerWrapper({ videoRenditionList, activeVideoRendition, selectVideoRendition });
 
   render(
     <Menu.Root defaultOpen align="center">
@@ -76,6 +78,14 @@ describe('useQualityOptions', () => {
     fireEvent.click(screen.getByRole('menuitemradio', { name: '720p' }));
 
     expect(selectVideoRendition).toHaveBeenCalledWith('1');
+  });
+
+  it('renders the active rendition in the Auto option', () => {
+    renderQualityOptions({
+      activeVideoRendition: { id: '1', height: 720, selected: false },
+    });
+
+    expect(screen.getByRole('menuitemradio', { name: 'Auto (720p)' }).getAttribute('aria-checked')).toBe('true');
   });
 
   it('uses a custom rendition formatter', () => {

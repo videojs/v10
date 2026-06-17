@@ -41,6 +41,13 @@ class TestTrackList extends EventTarget {
 class TestMedia extends EventTarget {
   videoRenditions: TestRenditionList | undefined = undefined;
   videoTracks = new TestTrackList();
+  videoWidth = 0;
+  videoHeight = 0;
+
+  constructor(renditions?: VideoRenditionLike[]) {
+    super();
+    if (renditions) this.videoRenditions = new TestRenditionList(renditions);
+  }
 
   async play() {}
 }
@@ -59,14 +66,7 @@ function createRendition(overrides: Partial<VideoRenditionLike>): VideoRendition
 }
 
 function createMedia(renditions: VideoRenditionLike[]): PlayerTarget['media'] {
-  return {
-    play: async () => {},
-    addEventListener: () => {},
-    removeEventListener: () => {},
-    dispatchEvent: () => true,
-    videoRenditions: new TestRenditionList(renditions),
-    videoTracks: new TestTrackList(),
-  } as unknown as PlayerTarget['media'];
+  return new TestMedia(renditions) as unknown as PlayerTarget['media'];
 }
 
 describe('qualityFeature', () => {
@@ -83,6 +83,7 @@ describe('qualityFeature', () => {
       { id: '0', height: 1080, bitrate: 6_000_000, selected: false },
       { id: '1', height: 720, bitrate: 3_000_000, selected: false },
     ]);
+    expect(store.state.activeVideoRendition).toBeNull();
   });
 
   it('syncs video renditions after loadstart', () => {
@@ -140,5 +141,67 @@ describe('qualityFeature', () => {
     (media as any).videoRenditions.dispatchEvent(new Event('change'));
 
     expect(store.state.videoRenditionList[1]?.selected).toBe(true);
+  });
+
+  it('syncs the active video rendition', () => {
+    const media = createMedia([
+      createRendition({ id: '0', height: 1080 }),
+      createRendition({ id: '1', height: 720, active: true }),
+    ]);
+    const store = createStore<PlayerTarget>()(qualityFeature);
+    store.attach({ media, container: null });
+
+    expect(store.state.activeVideoRendition).toEqual({ id: '1', height: 720, selected: false });
+
+    (media as any).videoRenditions.renditions[1].active = false;
+    (media as any).videoRenditions.renditions[0].active = true;
+    (media as any).videoRenditions.dispatchEvent(new Event('activechange'));
+
+    expect(store.state.activeVideoRendition).toEqual({ id: '0', height: 1080, selected: false });
+  });
+
+  it('falls back to video dimensions for the active rendition', () => {
+    const media = createMedia([createRendition({ id: '0', height: 1080 }), createRendition({ id: '1', height: 720 })]);
+    const testMedia = media as unknown as TestMedia;
+    testMedia.videoWidth = 1280;
+    testMedia.videoHeight = 720;
+    const store = createStore<PlayerTarget>()(qualityFeature);
+
+    store.attach({ media, container: null });
+
+    expect(store.state.activeVideoRendition).toEqual({ id: '1', height: 720, selected: false });
+
+    testMedia.videoWidth = 1920;
+    testMedia.videoHeight = 1080;
+    media.dispatchEvent(new Event('resize'));
+
+    expect(store.state.activeVideoRendition).toEqual({ id: '0', height: 1080, selected: false });
+  });
+
+  it('does not fall back when multiple renditions share the video dimensions', () => {
+    const media = createMedia([
+      createRendition({ id: '0', height: 1080, bitrate: 6_000_000 }),
+      createRendition({ id: '1', height: 1080, bitrate: 3_000_000 }),
+      createRendition({ id: '2', height: 720, bitrate: 1_500_000 }),
+    ]);
+    const testMedia = media as unknown as TestMedia;
+    testMedia.videoWidth = 1920;
+    testMedia.videoHeight = 1080;
+    const store = createStore<PlayerTarget>()(qualityFeature);
+
+    store.attach({ media, container: null });
+
+    expect(store.state.activeVideoRendition).toBeNull();
+
+    testMedia.videoWidth = 1280;
+    testMedia.videoHeight = 720;
+    media.dispatchEvent(new Event('resize'));
+
+    expect(store.state.activeVideoRendition).toEqual({
+      id: '2',
+      height: 720,
+      bitrate: 1_500_000,
+      selected: false,
+    });
   });
 });

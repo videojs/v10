@@ -80,13 +80,16 @@ function createQualityStore({
     { id: '0', height: 1080, selected: false },
     { id: '1', height: 720, selected: false },
   ],
+  activeVideoRendition = null,
 }: {
   videoRenditionList?: MediaQualityState['videoRenditionList'] | undefined;
+  activeVideoRendition?: MediaQualityState['activeVideoRendition'] | undefined;
 } = {}): AnyPlayerStore {
   return createStore<unknown>()<MediaQualityState>({
     name: 'quality',
     state: () => ({
       videoRenditionList,
+      activeVideoRendition,
       selectVideoRendition: vi.fn(),
     }),
   }) as unknown as AnyPlayerStore;
@@ -167,6 +170,20 @@ describe('MenuItemValueElement', () => {
     await value.updateComplete;
     await waitForAssertion(() => {
       expect(value.textContent).toBe('Auto');
+    });
+  });
+
+  it('renders the active quality label when quality is automatic', async () => {
+    const { value } = setup(
+      createQualityStore({
+        activeVideoRendition: { id: '1', height: 720, selected: false },
+      }),
+      'quality'
+    );
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('Auto (720p)');
     });
   });
 
