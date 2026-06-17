@@ -8,8 +8,8 @@ import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
 import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
-import { failoverFetch } from './failover-fetch';
-import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
+import { failoverFetch } from '../primitives/failover-fetch';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 
 // ============================================================================
 // Specialization helper

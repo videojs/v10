@@ -76,8 +76,8 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
-import { failoverFetch } from '../failover-fetch';
-import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
+import { failoverFetch } from '../../primitives/failover-fetch';
+import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';
 
 /**
  * Media track type for MSE buffer setup.

@@ -10,6 +10,7 @@ src/
   media/       CML-like media building blocks — types, parsers, ABR, buffer logic, MSE/VTT primitives
   network/     HTTP fetch utilities, chunked-stream iterables
   playback/    Playback domain — composes core+media+network into engines
+    primitives/ Signal-aware playback building blocks composed by behaviors (no behavior lifecycle)
     behaviors/ Compositional behaviors that drive playback (use signals/effects)
     actors/    Actor factories used inside behaviors
     engines/   Assembled playback engines (currently just hls/)
@@ -31,8 +32,10 @@ src/
 | `core/` → DOM | ❌ | `core/tsconfig.json` `lib` excludes `DOM` |
 | `media/` (non-dom) → DOM | ❌ | `media/tsconfig.json` `lib` excludes `DOM` |
 | `network/` → DOM | ❌ | `network/tsconfig.json` `lib` excludes `DOM` |
+| `playback/primitives/` → DOM | ❌ | tsconfig `lib` excludes `DOM` |
 | `playback/behaviors/` (non-dom) → DOM | ❌ | tsconfig `lib` excludes `DOM` |
 | `playback/actors/` (non-dom) → DOM | ❌ | tsconfig `lib` excludes `DOM` |
+| `playback/behaviors/` → `playback/primitives/` | ✅ | references |
 | `playback/` → `core/`, `network/`, `media/` | ✅ | references in playback tsconfigs |
 | `playback/engines/hls/` → `playback/behaviors/`, `playback/actors/` | ✅ | references |
 | `playback/engines/hls/` → `core/`, `media/` | ✅ — engines compose primitives directly | references |
@@ -42,12 +45,13 @@ The substance: `core/`, `media/`, `network/` are framework-agnostic foundations.
 ## Where to put new code
 
 - **Pure media/streaming logic** (parsers, types, selection algorithms, MSE/VTT helpers without signals): `media/` or `media/dom/`. Must not import from `core/`.
+- **Signal-aware playback primitive** (a composable building block that reads/writes `core` signals but has no behavior lifecycle — no `effect`/`computed`/`subscribe`, not invoked by composition): `playback/primitives/`. These are composed *by* behaviors/actors/engines (e.g. `failoverFetch`, a fetch decorator that reads selected-track signals at fetch time; `track-types`, the per-type config bundles). They live at the `playback/` layer rather than `media/`/`network/` precisely because they touch `core/` — that's the line below.
 - **Compositional behavior driving state** (uses `effect`/`computed`/`update` against owners or state signals): `playback/behaviors/` or `playback/behaviors/dom/`.
 - **Actor factories** (long-lived stateful units that receive messages): `playback/actors/` or `playback/actors/dom/`.
 - **Engine compositions** (wiring behaviors+actors+config into a `createComposition` call): `playback/engines/<name>/`.
 - **Generic, framework-agnostic utilities** that aren't media-specific: prefer `@videojs/utils` over creating new homes inside spf.
 
-If a module looks like a primitive but reaches into `core/`, that's a smell — consider whether the signal binding can move to the call site (see `onMediaSourceReadyStateChange` for a callback-shaped primitive that lets the consumer create the signal).
+If a module looks like a `media/`/`network/` primitive but reaches into `core/`, that's a smell — first consider whether the signal binding can move to the call site (see `onMediaSourceReadyStateChange` for a callback-shaped primitive that lets the consumer create the signal), keeping the primitive itself `core`-free. Only when a building block genuinely needs *live* signal access — e.g. `failoverFetch` is constructed once but its returned fetch reads `presentation`/selected-track signals lazily on every call — does it belong at the `playback/` layer, in `playback/primitives/`.
 
 Conversely: if a function inside `playback/behaviors/` (or `playback/actors/`) has no `core/` dependency — no signals, effects, or reactors — it probably belongs in a layer below (`media/`, `network/`, or `@videojs/utils`). Same layering principle, opposite direction. When reviewing a behavior or actor file, scan its top-level helpers; any pure data-manipulation / lookup / format-handling code with no reactive concerns is a candidate to extract.
 
@@ -71,7 +75,7 @@ Internal paths are not part of the public API. Don't import from `@videojs/spf/p
 ## Vitest projects
 
 `packages/spf/vitest.config.ts` shards tests by area:
-- `core`, `media`, `network`, `behaviors` — Node, no browser
+- `core`, `media`, `network`, `behaviors` — Node, no browser (the `behaviors` project also covers `playback/actors/` and `playback/primitives/`)
 - `dom` — Chromium via Playwright, covers all `**/dom/**/*.test.ts` across subtrees
 - `playback-engines` — Chromium, covers engines/
 - `types` — type-only tests via tsgo
