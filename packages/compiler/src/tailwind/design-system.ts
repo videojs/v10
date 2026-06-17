@@ -19,6 +19,13 @@ export interface DesignSystem {
   readonly cssPath: string;
   /** Compile a single utility class to CSS. Returns `null` for unknown candidates. */
   compileUtility(utility: string): string | null;
+  /**
+   * Resolve a `@theme` variable (e.g. `--spacing`, `--color-white`) to its
+   * value, or `undefined` if the theme doesn't define it. Used to emit a
+   * self-contained theme block for the variables compiled rules reference.
+   * Returns `undefined` for `@property`-registered slots like `--tw-*`.
+   */
+  resolveThemeVar(name: string): string | undefined;
 }
 
 /**
@@ -43,6 +50,7 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   });
 
   const cache = new Map<string, string | null>();
+  const themeCache = new Map<string, string | undefined>();
 
   return {
     cssPath: absolute,
@@ -52,6 +60,17 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
       const [css] = ds.candidatesToCss([utility]);
       const value = css ?? null;
       cache.set(utility, value);
+      return value;
+    },
+    resolveThemeVar(name: string): string | undefined {
+      if (themeCache.has(name)) return themeCache.get(name);
+      let value: string | undefined;
+      try {
+        value = ds.resolveThemeValue?.(name);
+      } catch {
+        value = undefined;
+      }
+      themeCache.set(name, value);
       return value;
     },
   };

@@ -475,3 +475,60 @@ describe('emitCss — inlineVars', () => {
     expect(out.css).toMatch(/\.a\s*{[^}]*color:\s*var\(--media-color\)/);
   });
 });
+
+describe('emitCss — theme variables', () => {
+  it('emits a :root block defining referenced theme variables', async () => {
+    const out = await emitCss({
+      rules: [rule('box', [{ property: 'padding', value: 'calc(var(--spacing) * 1)' }])],
+      resolveThemeVar: (name) => (name === '--spacing' ? '0.25rem' : undefined),
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(collapse(':root {\n  --spacing: 0.25rem;\n}'));
+    // Theme block precedes the rules that consume it.
+    expect(out.css.indexOf('--spacing: 0.25rem')).toBeLessThan(out.css.indexOf('.box'));
+  });
+
+  it('resolves theme variables transitively', async () => {
+    const out = await emitCss({
+      rules: [rule('box', [{ property: 'color', value: 'var(--brand)' }])],
+      resolveThemeVar: (name) =>
+        name === '--brand' ? 'var(--brand-500)' : name === '--brand-500' ? '#09f' : undefined,
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(collapse('--brand: var(--brand-500);'));
+    expect(collapse(out.css)).toContain(collapse('--brand-500: #09f;'));
+  });
+
+  it('does not redeclare variables the rules already define', async () => {
+    const out = await emitCss({
+      rules: [
+        rule('box', [
+          { property: '--spacing', value: '1rem' },
+          { property: 'padding', value: 'var(--spacing)' },
+        ]),
+      ],
+      resolveThemeVar: () => '0.25rem',
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    // The locally-declared --spacing wins; no :root override is emitted.
+    expect(out.css).not.toMatch(/:root/);
+  });
+
+  it('scopes the theme block to a custom selector', async () => {
+    const out = await emitCss({
+      rules: [rule('box', [{ property: 'gap', value: 'var(--spacing)' }])],
+      resolveThemeVar: (name) => (name === '--spacing' ? '0.25rem' : undefined),
+      themeSelector: '[data-skin="x"]',
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(collapse('[data-skin="x"] {\n  --spacing: 0.25rem;\n}'));
+  });
+
+  it('omits the theme block when no resolver is provided (back-compat)', async () => {
+    const out = await emitCss({
+      rules: [rule('box', [{ property: 'gap', value: 'var(--spacing)' }])],
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(out.css).not.toMatch(/:root/);
+  });
+});

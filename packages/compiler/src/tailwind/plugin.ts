@@ -1,12 +1,13 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve as resolvePath } from 'node:path';
 import ts from 'typescript';
+import { tagName } from '../matchers';
 import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
 import { decompose, type UtilityCss } from './decompose';
 import type { DesignSystem } from './design-system';
 import { type CompiledRule, type EmittedCss, emitCss, type HoistOptions } from './emit';
 import { EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
-import { type DeriveClassNameOptions, deriveClassName, type NameTransform } from './naming';
+import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type NameTransform } from './naming';
 
 /** Output target for `tailwindPlugin`. */
 export type TailwindTarget =
@@ -133,13 +134,20 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
   return (transformContext) => {
     return (sourceFile) => {
       const rules: CompiledRule[] = [];
+      // Per derived class name, the sorted utility signature of the first
+      // element that produced it. Lets us detect when two *different* source
+      // elements collapse onto the same class name with *different* styles —
+      // emitCss would silently merge their declarations into one rule.
+      const signatures = new Map<string, string>();
 
       const visit: StyleVisitor = (info, factory) => {
         if (info.kind !== 'segments' || !info.segments) return undefined;
+        // Capture the narrowed segments so the closures below keep the type.
+        const segments = info.segments;
 
         const naming: DeriveClassNameOptions = {
           element: info.element,
-          segments: info.segments,
+          segments,
           ...(transformName ? { transformName } : {}),
           ...(overrides ? { overrides } : {}),
         };
@@ -152,12 +160,30 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
         // classname to the derived semantic name and wrap any pass-throughs in
         // a `cn(...)` call so composition is preserved.
         const passThrough: ts.Expression[] = [];
-        for (const seg of info.segments) {
+        const preserved: string[] = [];
+        // Every utility this element resolves to (rule-producing or preserved),
+        // for the collision signature below.
+        const utilities: string[] = [];
+
+        // Compile one utility: emit a rule when it produces declarations,
+        // otherwise *preserve* it as a literal class. Utilities that yield no
+        // declarations are markers (`group`, `peer`, `group/<name>`) or classes
+        // Tailwind doesn't recognize — dropping them would silently break every
+        // descendant `group-*` / `peer-*` variant that targets the marker.
+        const handleUtility = (utility: string): void => {
+          utilities.push(utility);
+          const css = decompose(utility, design);
+          if (css && css.declarations.length > 0) {
+            rules.push(buildCompiledRule(derived.className, css, segments, bagFor));
+            return;
+          }
+          if (!preserved.includes(utility)) preserved.push(utility);
+        };
+
+        for (const seg of segments) {
           if (seg.kind === 'literal') {
             for (const utility of seg.value.split(/\s+/)) {
-              if (!utility) continue;
-              const css = decompose(utility, design);
-              if (css) rules.push(buildCompiledRule(derived.className, css, info.segments, bagFor));
+              if (utility) handleUtility(utility);
             }
             continue;
           }
@@ -165,9 +191,7 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
             const literal = resolveTokenPath(seg.path, env);
             if (literal !== null) {
               for (const utility of literal.split(/\s+/)) {
-                if (!utility) continue;
-                const css = decompose(utility, design);
-                if (css) rules.push(buildCompiledRule(derived.className, css, info.segments, bagFor));
+                if (utility) handleUtility(utility);
               }
               continue;
             }
@@ -176,11 +200,28 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
           passThrough.push(seg.node);
         }
 
+        // Collision guard: two distinct elements that derive the same class
+        // name must resolve to the same utilities. Identical recurrences (e.g.
+        // many `<Tooltip.Popup>` with the same token) share a signature and are
+        // fine; differing ones would merge conflicting declarations into one
+        // rule, so we fail loudly with a fixable diagnostic.
+        if (utilities.length > 0) {
+          const signature = [...utilities].sort().join(' ');
+          const previous = signatures.get(derived.className);
+          if (previous === undefined) {
+            signatures.set(derived.className, signature);
+          } else if (previous !== signature) {
+            throw collisionError(info.element, derived.className, previous, signature);
+          }
+        }
+
+        const baseName = preserved.length > 0 ? `${derived.className} ${preserved.join(' ')}` : derived.className;
+
         if (passThrough.length === 0) {
-          return factory.createStringLiteral(derived.className);
+          return factory.createStringLiteral(baseName);
         }
         return factory.createCallExpression(factory.createIdentifier('cn'), undefined, [
-          factory.createStringLiteral(derived.className),
+          factory.createStringLiteral(baseName),
           ...passThrough,
         ]);
       };
@@ -192,11 +233,16 @@ function vanillaCssPlugin(options: TailwindPluginOptions): ts.TransformerFactory
       onRules?.(rules);
 
       if (onCss) {
+        // Scope the emitted theme variables to the skin's hoist root when one
+        // is configured, so they don't leak to a global `:root`.
+        const themeSelector = hoistVars ? hoistVars.rootSelector : undefined;
         emitCss({
           rules,
           ...(emit ?? {}),
           ...(hoistVars !== undefined ? { hoist: hoistVars } : {}),
           ...(inlineVars !== undefined ? { inlineVars } : {}),
+          resolveThemeVar: (name) => design.resolveThemeVar(name),
+          ...(themeSelector ? { themeSelector } : {}),
         })
           .then(onCss)
           .catch(() => {
@@ -405,4 +451,22 @@ function buildCompiledRule(
 ): CompiledRule {
   const bag = bagFor?.({ className, segments });
   return bag === undefined ? { className, utility } : { className, utility, bag };
+}
+
+function collisionError(element: ts.Node, className: string, first: string, next: string): DiagnosticError {
+  const tag = tagName(element as Parameters<typeof tagName>[0]);
+  const sourceFile = element.getSourceFile?.();
+  const loc = sourceFile ? sourceFile.getLineAndCharacterOfPosition(element.pos) : undefined;
+  const fileName = sourceFile?.fileName;
+  const line = loc ? loc.line + 1 : undefined;
+  return new DiagnosticError(
+    `vanilla-css: class name '${className}' is derived from elements with different styles` +
+      `${fileName ? ` (this one at ${fileName}:${line})` : ''}.\n` +
+      `  <${tag}> resolves to: ${next}\n` +
+      `  an earlier element resolved to: ${first}\n` +
+      `Merging these would put conflicting declarations in a single '.${className}' rule. ` +
+      `Disambiguate with a distinct token, a distinct component, or an \`overrides\` entry.`,
+    fileName,
+    line
+  );
 }

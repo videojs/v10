@@ -146,6 +146,66 @@ describe('tailwindPlugin — target: vanilla-css', () => {
     expect(code).not.toContain('"flex items-center"');
   });
 
+  it('preserves marker utilities (group/peer) alongside the derived name', () => {
+    const source = `function App(){ return <PlayButton className="group"/>; }`;
+    const { code } = compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+    });
+    // `group` produces no declarations but is required by descendant
+    // `group-*` variants, so it must survive on the element.
+    expect(code).toContain('"play-button group"');
+  });
+
+  it('keeps markers and still emits rules for declaration-producing utilities', () => {
+    const source = `function App(){ return <PlayButton className={cn('flex', 'group')}/>; }`;
+    let captured: readonly CompiledRule[] | undefined;
+    const { code } = compile(source, {
+      target: 'react',
+      plugins: [
+        tailwindPlugin({
+          design,
+          target: 'vanilla-css',
+          onRules: (rules) => {
+            captured = rules;
+          },
+        }),
+      ],
+    });
+    expect(code).toContain('"play-button group"');
+    expect(captured).toBeDefined();
+    expect(captured!.map((r) => r.className)).toContain('play-button');
+    expect(captured!.flatMap((r) => r.utility.declarations)).toContainEqual({ property: 'display', value: 'flex' });
+  });
+
+  it('preserves a marker while wrapping pass-through expressions in cn()', () => {
+    const source = `function App(){ return <PlayButton className={cn('group', extra)}/>; }`;
+    const { code } = compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+    });
+    expect(code).toMatch(/cn\("play-button group",\s*extra\)/);
+  });
+
+  it('throws a diagnostic when two elements derive the same name with different styles', () => {
+    const source = `function App(){ return <div><SeekIcon className="flex"/><SeekIcon className="block"/></div>; }`;
+    expect(() =>
+      compile(source, {
+        target: 'react',
+        plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+      })
+    ).toThrow(/class name 'seek-icon' is derived from elements with different styles/);
+  });
+
+  it('does not flag identical recurrences of the same derived name', () => {
+    const source = `function App(){ return <div><PlayButton className="flex"/><PlayButton className="flex"/></div>; }`;
+    const { code } = compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, target: 'vanilla-css' })],
+    });
+    expect(code).toContain('"play-button"');
+  });
+
   it('rewrites className to a token-path-derived name on a bare HTML element', () => {
     const source = `function App(){ return <div className={styles.bufferingIndicator}/>; }`;
     const { code } = compile(source, {
@@ -380,5 +440,28 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     });
     const css = await cssPromise;
     expect(collapse(css)).toContain(collapse('.foo{display:flex;}'));
+  });
+
+  it('emits referenced theme variables in the onCss output', async () => {
+    // `p-4` lowers to `padding: calc(var(--spacing) * 4)` — the output must
+    // define `--spacing` so it resolves without a separate Tailwind theme.
+    const source = `function App(){ return <Foo className="p-4"/>; }`;
+    const cssPromise = new Promise<string>((resolve) => {
+      compile(source, {
+        target: 'react',
+        plugins: [
+          tailwindPlugin({
+            design,
+            target: 'vanilla-css',
+            hoistVars: { rootSelector: '[data-skin="x"]' },
+            onCss: (out) => {
+              if (out.kind === 'merged') resolve(out.css);
+            },
+          }),
+        ],
+      });
+    });
+    const css = await cssPromise;
+    expect(css).toMatch(/\[data-skin="x"\]\s*{[^}]*--spacing:/);
   });
 });

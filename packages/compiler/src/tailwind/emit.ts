@@ -75,6 +75,20 @@ export interface EmitCssOptions {
    * fallback if present, otherwise they're left alone.
    */
   inlineVars?: true | RegExp;
+  /**
+   * Resolve a referenced `@theme` variable (e.g. `--spacing`) to its value.
+   * When set, `emitCss` emits a leading rule defining every theme variable the
+   * output references but doesn't itself declare, so the CSS resolves without a
+   * separate Tailwind theme/preflight on the page. Typically
+   * `design.resolveThemeVar`. Returns `undefined` to leave a variable alone
+   * (e.g. `@property`-registered `--tw-*` slots).
+   */
+  resolveThemeVar?: (name: string) => string | undefined;
+  /**
+   * Selector the emitted theme block attaches to. Defaults to `:root`. Pass a
+   * skin selector (e.g. `[data-skin="default-video"]`) to scope the variables.
+   */
+  themeSelector?: string;
 }
 
 /**
@@ -97,7 +111,8 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   if (mode === 'merged') {
     const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
     const body = composeRules(opts.rules, hoist, inlineVars);
-    return { kind: 'merged', css: joinSections(base, body) };
+    const theme = buildThemeBlock(body, opts.resolveThemeVar, opts.themeSelector);
+    return { kind: 'merged', css: joinSections(base, theme, body) };
   }
 
   // Split mode: group rules by `bag`.
@@ -120,8 +135,72 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   }
 
   const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
-  const index = joinSections(base, importLines.join('\n'));
+  // Theme variables go in `index` (it loads first), resolved against every bag.
+  const theme = buildThemeBlock([...bags.values()].join('\n'), opts.resolveThemeVar, opts.themeSelector);
+  const index = joinSections(base, theme, importLines.join('\n'));
   return { kind: 'split', index, bags };
+}
+
+/**
+ * Build a leading rule that defines every `@theme` variable the emitted CSS
+ * references but doesn't itself declare. Resolves transitively (a theme value
+ * may reference further variables). Returns `''` when there's nothing to emit
+ * or no resolver was supplied.
+ */
+function buildThemeBlock(
+  css: string,
+  resolveThemeVar: ((name: string) => string | undefined) | undefined,
+  themeSelector: string | undefined
+): string {
+  if (!resolveThemeVar) return '';
+
+  const defined = collectDefinedVars(css);
+  const resolved = new Map<string, string>();
+  const queue = [...collectReferencedVars(css)].filter((name) => !defined.has(name));
+
+  while (queue.length > 0) {
+    const name = queue.shift()!;
+    if (resolved.has(name) || defined.has(name)) continue;
+    const value = resolveThemeVar(name);
+    if (value === undefined) continue;
+    resolved.set(name, value);
+    for (const ref of collectReferencedVars(value)) {
+      if (!resolved.has(ref) && !defined.has(ref)) queue.push(ref);
+    }
+  }
+
+  if (resolved.size === 0) return '';
+
+  const selector = themeSelector ?? ':root';
+  const decls = [...resolved.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([name, value]) => `  ${name}: ${value};`)
+    .join('\n');
+  return `${selector} {\n${decls}\n}`;
+}
+
+/** Collect `var(--name)` references in a CSS string. */
+function collectReferencedVars(css: string): Set<string> {
+  const out = new Set<string>();
+  const re = /var\(\s*(--[A-Za-z0-9_-]+)/g;
+  let m: RegExpExecArray | null = re.exec(css);
+  while (m !== null) {
+    out.add(m[1]!);
+    m = re.exec(css);
+  }
+  return out;
+}
+
+/** Collect custom properties *declared* (`--name:`) in a CSS string. */
+function collectDefinedVars(css: string): Set<string> {
+  const out = new Set<string>();
+  const re = /(?:^|[{;\s])(--[A-Za-z0-9_-]+)\s*:/g;
+  let m: RegExpExecArray | null = re.exec(css);
+  while (m !== null) {
+    out.add(m[1]!);
+    m = re.exec(css);
+  }
+  return out;
 }
 
 /** Internal: read each `baseCss` file via Lightning CSS, return concatenated string. */
