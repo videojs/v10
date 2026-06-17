@@ -5,15 +5,16 @@ import type {
   Components,
   HTMLMediaElementHost,
   HTMLMediaTargetLike as TargetLike,
-} from './media-host';
+} from '../media-host';
+import { getConfigBag } from './config';
 
-type Host<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
+export type Host<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
 
-const registry = new WeakMap<Host, Components>();
+const componentRegistry = new WeakMap<Host, Components>();
 
 export function getComponents(host: Host) {
-  let map = registry.get(host);
-  if (!map) registry.set(host, (map = new Map() as Components));
+  let map = componentRegistry.get(host);
+  if (!map) componentRegistry.set(host, (map = new Map() as Components));
   return map;
 }
 
@@ -23,19 +24,16 @@ export function addComponent<T extends Component>(host: Host, component: T) {
   const ctor = component.constructor as ComponentConstructor<T>;
   components.set(ctor, component);
 
-  // Expose a live binding on `host.config`: reads return the component, writes assign onto it.
+  // `host.config` reflects the component live under its `configKey` (see
+  // readConfig/writeConfig). Adopt any config staged before this point: move it
+  // onto the component and drop it from the bag so the component is sole owner.
   const { configKey } = ctor;
   if (configKey) {
-    // Adopt config set before the component was registered.
-    const initial = host.config[configKey];
-    Object.defineProperty(host.config, configKey, {
-      enumerable: true,
-      configurable: true,
-      get: () => component,
-      set: (value) => Object.assign(component, value),
-    });
-
-    if (initial) Object.assign(component, initial);
+    const bag = getConfigBag(host);
+    if (configKey in bag) {
+      Object.assign(component, bag[configKey]);
+      delete bag[configKey];
+    }
   }
 
   component.setMedia?.(host);
@@ -46,8 +44,6 @@ export function addComponent<T extends Component>(host: Host, component: T) {
   return () => {
     if (components.get(ctor) === component) {
       components.delete(ctor);
-
-      if (configKey) delete host.config[configKey];
     }
   };
 }

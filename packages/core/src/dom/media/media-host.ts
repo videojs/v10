@@ -9,7 +9,7 @@ import {
   type TextTrackLike,
 } from '../../core/media/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
-import { callProp, getComponents, getProp, setProp } from './utils';
+import { callProp, getComponents, getProp, readConfig, setProp, writeConfig } from './utils';
 
 export { addComponent, callProp, getComponents, getOwner, getProp, setProp } from './utils';
 
@@ -49,7 +49,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   #target: Target | null = null;
   #eventTypes = new Set<string>();
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
-  #config: MediaConfig = {};
 
   protected get target() {
     return this.#target;
@@ -89,8 +88,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     const components = getComponents(this);
     for (const component of components.values()) {
       component.destroy?.();
-      const { configKey } = component.constructor as ComponentConstructor;
-      if (configKey) delete this.#config[configKey];
     }
     components.clear();
   }
@@ -146,10 +143,10 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   get config(): MediaConfig {
-    return this.#config;
+    return readConfig(this);
   }
   set config(value: MediaConfig) {
-    Object.assign(this.#config, value);
+    writeConfig(this, value);
   }
 
   get title() {

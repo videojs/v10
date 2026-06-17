@@ -208,15 +208,17 @@ describe('HTMLMediaElementHost', () => {
       expect((host.config.fake as ConfigurableComponent).value).toBe(5);
     });
 
-    it('assigns onto the component when the namespace is written', () => {
+    it('does not write through when the returned config object is mutated', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
       addComponent(host, component);
 
+      // The getter returns a fresh enumeration; component bridges are not
+      // accessors on it, so mutating the result does not reach the component.
       host.config.fake = { value: 7, label: 'hi' };
 
-      expect(component.value).toBe(7);
-      expect(component.label).toBe('hi');
+      expect(component.value).toBe(0);
+      expect(component.label).toBe('');
     });
 
     it('routes component keys through the config setter', () => {
@@ -252,14 +254,42 @@ describe('HTMLMediaElementHost', () => {
       expect(Object.keys(host.config)).toContain('fake');
     });
 
-    it('merges host-level keys on assignment', () => {
+    it('resets host-level keys when a new config object is assigned', () => {
       const host = new HTMLAudioElementHost();
 
       host.config = { a: 1 };
       host.config = { b: 2 };
 
-      expect(host.config.a).toBe(1);
+      // A new config object signals a fresh start: prior free-form keys are dropped.
+      expect(host.config.a).toBeUndefined();
       expect(host.config.b).toBe(2);
+    });
+
+    it('keeps component state across a config reset', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      host.config = { fake: { value: 5 }, a: 1 };
+      // New object: free-form `a` is dropped, but the component keeps its state.
+      host.config = { b: 2 };
+
+      expect(component.value).toBe(5);
+      expect(host.config.fake).toBe(component);
+      expect(host.config.a).toBeUndefined();
+      expect(host.config.b).toBe(2);
+    });
+
+    it('overwrites component state only for keys present in the new config', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      host.config = { fake: { value: 5, label: 'a' } };
+      host.config = { fake: { value: 9 } };
+
+      expect(component.value).toBe(9);
+      expect(component.label).toBe('a');
     });
 
     it('removes the config binding when the component is removed', () => {

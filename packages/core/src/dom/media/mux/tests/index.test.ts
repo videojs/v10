@@ -97,13 +97,13 @@ describe('MuxData', () => {
     addComponent(media, new MuxData());
 
     // Type-level: `config.muxData` infers `Partial<MuxDataProps>` via the
-    // component's `configKey` augmentation, so these assignments/reads are
-    // checked. This line fails to compile if inference regresses.
-    media.config.muxData = { envKey: 'key', debug: true };
+    // component's `configKey` augmentation, so the assignment/read are checked.
+    // This fails to compile if inference regresses.
+    media.config = { muxData: { envKey: 'key', debug: true } };
     const envKey: string | undefined = media.config.muxData?.envKey;
 
     expect(envKey).toBe('key');
-    // Live binding: the write reached the component instance.
+    // The setter routed the namespace onto the live component instance.
     expect(media.config.muxData).toBeInstanceOf(MuxData);
   });
 
