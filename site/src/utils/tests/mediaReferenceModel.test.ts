@@ -20,7 +20,6 @@ function makeRef(overrides = {}) {
       elementSpecific: [{ name: 'streamtypechange', description: 'Fired when the stream type changes.' }],
     },
     cssCustomProperties: { '--media-object-fit': { description: 'Object fit.' } },
-    slots: ['media', ''],
     ...overrides,
   };
 }
@@ -37,10 +36,9 @@ describe('createMediaReferenceModel', () => {
   });
 
   it('drops sections with no data', () => {
-    const model = createMediaReferenceModel('HlsVideo', makeRef({ hostProperties: {}, slots: [] }));
+    const model = createMediaReferenceModel('HlsVideo', makeRef({ hostProperties: {} }));
     const keys = model.sections.map((s) => s.key);
     expect(keys).not.toContain('hostProperties');
-    expect(keys).not.toContain('slots');
   });
 
   it('keeps the events section when only native events exist', () => {

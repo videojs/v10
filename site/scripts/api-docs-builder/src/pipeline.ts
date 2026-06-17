@@ -604,7 +604,6 @@ export interface MediaElementReference {
     elementSpecific: MediaEventDef[];
   };
   cssCustomProperties: Record<string, { description: string }>;
-  slots: string[];
 }
 
 export interface MediaElementResult {

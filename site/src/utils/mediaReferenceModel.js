@@ -30,12 +30,6 @@ const MEDIA_REFERENCE_SUBSECTIONS = Object.freeze([
     id: 'css-custom-properties',
     isEmpty: (ref) => Object.keys(ref.cssCustomProperties ?? {}).length === 0,
   },
-  {
-    key: 'slots',
-    title: 'Slots',
-    id: 'slots',
-    isEmpty: (ref) => (ref.slots ?? []).length === 0,
-  },
 ]);
 
 /**

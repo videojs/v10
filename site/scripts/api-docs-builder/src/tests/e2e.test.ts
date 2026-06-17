@@ -64,7 +64,7 @@
  *   simple-video  — Simple media element. Exercises: discovery via static
  *                   tagName in define/media/*.ts, minimal host (src rw,
  *                   engine readonly), shared attributes/events/CSS vars
- *                   from custom-media-element, slots parsed from template HTML.
+ *                   from custom-media-element.
  *   complex-video — Complex media element. Exercises: host with JSDoc
  *                   descriptions, multiple property types (string, boolean,
  *                   Record), host-vs-native attribute deduplication
@@ -1069,7 +1069,6 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - Host properties by following the CustomMediaElement(tag, Host) call to the
 //     host class and walking its getter/setter pairs
 //   - Shared native attributes from static properties, events, and CSS vars
-//   - Slots parsed from the template HTML (getVideoTemplateHTML / getCommonTemplateHTML)
 //   - JSDoc descriptions from host getter/setter pairs
 //
 // Key behaviors:
@@ -1214,11 +1213,6 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(css['--media-video-border-radius']).toEqual({
         description: 'Border radius of the video element.',
       });
-    });
-
-    it('includes slots parsed from the video template HTML', () => {
-      const ref = findElement('SimpleVideo')!.reference;
-      expect(ref.slots).toEqual(expect.arrayContaining(['media', '']));
     });
   });
 
@@ -1537,7 +1531,7 @@ describe('Media element pipeline (end-to-end)', () => {
   //     contract (audiomodechange also has a dispatch site, manifestparsed does
   //     not — the @fires tag alone surfaces both)
   //   - Defaults co-located with the mixin (spfAudioOnlyMediaDefaultProps)
-  //   - AudioEvents capability contract and audio template slots
+  //   - AudioEvents capability contract
 
   describe('SpfAudio (cross-package mixin, audio host)', () => {
     it('extracts the tag name and audio media type', () => {
@@ -1594,9 +1588,8 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(names).toEqual([...names].sort());
     });
 
-    it('uses the audio template slots and empty AudioCSSVars', () => {
+    it('has empty AudioCSSVars', () => {
       const ref = findElement('SpfAudio')!.reference;
-      expect(ref.slots).toEqual(expect.arrayContaining(['media', '']));
       expect(ref.cssCustomProperties).toEqual({});
     });
   });

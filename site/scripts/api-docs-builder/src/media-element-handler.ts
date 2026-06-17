@@ -2,7 +2,7 @@
  * Media element reference extraction.
  *
  * Discovers media elements from packages/html/src/define/media/*.ts and extracts
- * host properties, shared attributes/events/CSS vars, and slots.
+ * host properties, shared attributes/events, and CSS vars.
  *
  * Convention:
  *   - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
@@ -12,8 +12,7 @@
  *     HTMLVideoElementHost or HTMLAudioElementHost with getter/setter pairs
  *   - Shared data: packages/core/src/dom/media/custom-media-element/index.ts
  *     exports CustomMediaElement factory (with static properties), VideoCSSVars,
- *     AudioCSSVars, and template functions
- *   - Slots: parsed from getVideoTemplateHTML / getCommonTemplateHTML in custom-media-element
+ *     AudioCSSVars
  *
  * Exclusions (elements discovered but intentionally skipped):
  *   - container.ts: re-exports a class, doesn't declare one inline → no static tagName found
@@ -983,102 +982,6 @@ function extractStaticProperties(filePath: string): string[] {
   return attributes;
 }
 
-function extractSlotsFromTemplate(filePath: string, templateFnName: string): string[] {
-  const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
-  const slots: string[] = [];
-
-  function visit(node: ts.Node): void {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === templateFnName && node.body) {
-      const templateText = extractTemplateString(node.body);
-      if (templateText) {
-        parseSlots(templateText, slots);
-      }
-      return;
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return slots;
-}
-
-/**
- * Extract slots from getCommonTemplateHTML — a factory function that returns
- * a function containing the template string.
- */
-function extractSlotsFromTemplateFactory(filePath: string, factoryFnName: string): string[] {
-  const content = fs.readFileSync(filePath, 'utf-8');
-  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
-  const slots: string[] = [];
-
-  function visit(node: ts.Node): void {
-    if (ts.isFunctionDeclaration(node) && node.name?.text === factoryFnName && node.body) {
-      // The factory returns a function — look for a return statement with a function/arrow
-      for (const stmt of node.body.statements) {
-        if (ts.isReturnStatement(stmt) && stmt.expression) {
-          // Could be an arrow function or function expression
-          let innerBody: ts.Block | ts.Expression | undefined;
-          if (ts.isArrowFunction(stmt.expression)) {
-            innerBody = stmt.expression.body;
-          } else if (ts.isFunctionExpression(stmt.expression)) {
-            innerBody = stmt.expression.body;
-          }
-
-          if (innerBody) {
-            const templateText = ts.isBlock(innerBody)
-              ? extractTemplateString(innerBody)
-              : getTemplateText(innerBody as ts.Expression);
-            if (templateText) {
-              parseSlots(templateText, slots);
-            }
-          }
-        }
-      }
-      return;
-    }
-    ts.forEachChild(node, visit);
-  }
-
-  visit(sourceFile);
-  return slots;
-}
-
-function extractTemplateString(block: ts.Block): string | undefined {
-  for (const stmt of block.statements) {
-    if (ts.isReturnStatement(stmt) && stmt.expression) {
-      return getTemplateText(stmt.expression);
-    }
-  }
-  return undefined;
-}
-
-function getTemplateText(node: ts.Expression): string | undefined {
-  if (ts.isTaggedTemplateExpression(node)) {
-    return getTemplateText(node.template);
-  }
-  if (ts.isNoSubstitutionTemplateLiteral(node)) {
-    return node.text;
-  }
-  if (ts.isTemplateExpression(node)) {
-    let text = node.head.text;
-    for (const span of node.templateSpans) {
-      text += span.literal.text;
-    }
-    return text;
-  }
-  return undefined;
-}
-
-function parseSlots(html: string, slots: string[]): void {
-  const slotRegex = /<slot(?:\s+name="([^"]*)")?[^>]*>/g;
-  let match: RegExpExecArray | null;
-  while ((match = slotRegex.exec(html)) !== null) {
-    const name = match[1] ?? '';
-    slots.push(name);
-  }
-}
-
 // ─── Event Extraction ────────────────────────────────────────────────
 
 /**
@@ -1376,10 +1279,6 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     }
   }
 
-  // Extract slots from template functions
-  const videoSlots = extractSlotsFromTemplate(customMediaPath, 'getVideoTemplateHTML');
-  const audioSlots = extractSlotsFromTemplateFactory(customMediaPath, 'getCommonTemplateHTML');
-
   const results: MediaElementResult[] = [];
 
   for (const source of sources) {
@@ -1409,7 +1308,6 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     const nativeAttributes = allAttributes.filter((attr) => !hostAttrNames.has(attr));
 
     const cssCustomProperties = source.mediaType === 'video' ? videoCSSVars : audioCSSVars;
-    const slots = source.mediaType === 'video' ? videoSlots : audioSlots;
     const native = source.mediaType === 'video' ? videoEvents : audioEvents;
 
     // Walk the host's mixin/parent chain collecting `@fires` descriptions. An
@@ -1434,7 +1332,6 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       nativeAttributes,
       events: { native, elementSpecific },
       cssCustomProperties,
-      slots,
     };
 
     results.push({ name: source.className, reference });

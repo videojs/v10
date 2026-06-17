@@ -24,7 +24,6 @@ export const MediaReferenceSchema = z.object({
     elementSpecific: z.array(MediaEventDefSchema),
   }),
   cssCustomProperties: z.record(z.string(), z.object({ description: z.string() })),
-  slots: z.array(z.string()),
 });
 
 export type HostPropertyDef = z.infer<typeof HostPropertyDefSchema>;

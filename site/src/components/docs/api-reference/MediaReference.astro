@@ -2,11 +2,11 @@
 import { getEntry } from 'astro:content';
 import { kebabCase } from 'es-toolkit/string';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
+import A from '@/components/typography/A.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
 import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
-import Pre from '@/components/typography/Pre.astro';
 import Table from '@/components/typography/Table.astro';
 import Tbody from '@/components/typography/Tbody.astro';
 import Td from '@/components/typography/Td.astro';
@@ -36,9 +36,10 @@ const hostPropsSection = model.sections.find((s: { key: string }) => s.key === '
 const nativeAttrsSection = model.sections.find((s: { key: string }) => s.key === 'nativeAttributes');
 const eventsSection = model.sections.find((s: { key: string }) => s.key === 'events');
 const cssVarsSection = model.sections.find((s: { key: string }) => s.key === 'cssCustomProperties');
-const slotsSection = model.sections.find((s: { key: string }) => s.key === 'slots');
-
 const mediaTag = `<${ref.mediaType}>`;
+
+const mdnElementUrl = `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/${ref.mediaType}`;
+const mdnEventsUrl = 'https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement#events';
 
 // React prop spellings for the curated attribute examples.
 const REACT_PROP_NAMES: Record<string, string> = {
@@ -51,14 +52,6 @@ const attributeExampleNames =
   framework === 'react' ? attributeExamples.map((attr) => REACT_PROP_NAMES[attr] ?? attr) : attributeExamples;
 
 const elementSpecificEvents = ref.events.elementSpecific;
-
-const htmlEventsSample = [
-  `const el = document.querySelector('${ref.tagName}');`,
-  `el.addEventListener('play', onPlay);`,
-  `el.addEventListener('timeupdate', onTimeUpdate);`,
-].join('\n');
-
-const reactEventsSample = `<${ref.name} src={src} onPlay={onPlay} onTimeUpdate={onTimeUpdate} />`;
 ---
 
 <ContentWidth>
@@ -81,8 +74,9 @@ const reactEventsSample = `<${ref.name} src={src} onPlay={onPlay} onTimeUpdate={
       <>
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
         <P>
-          Accepts common native media attributes and forwards them to the
-          internal <MarkdownCode>{mediaTag}</MarkdownCode> element, including{" "}
+          Accepts common <A href={mdnElementUrl}>native media attributes</A> and
+          forwards them to the internal <MarkdownCode>{mediaTag}</MarkdownCode>{" "}
+          element, including{" "}
           {attributeExampleNames.map((attr, index) => (
             <>
               <MarkdownCode>{attr}</MarkdownCode>
@@ -105,7 +99,9 @@ const reactEventsSample = `<${ref.name} src={src} onPlay={onPlay} onTimeUpdate={
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
         <P>
           The component renders a native <MarkdownCode>{mediaTag}</MarkdownCode>{" "}
-          element, so standard React media props are supported, including{" "}
+          element, so standard React media props — mapping to{" "}
+          <A href={mdnElementUrl}>native media attributes</A> — are supported,
+          including{" "}
           {attributeExampleNames.map((attr, index) => (
             <>
               <MarkdownCode>{attr}</MarkdownCode>
@@ -127,22 +123,20 @@ const reactEventsSample = `<${ref.name} src={src} onPlay={onPlay} onTimeUpdate={
         <H3 id={eventsSection.id}>{eventsSection.title}</H3>
         {framework === "html" ? (
           <P>
-            Native media events are re-dispatched from the internal{" "}
+            All standard <A href={mdnEventsUrl}>media events</A> are
+            re-dispatched from the internal{" "}
             <MarkdownCode>{mediaTag}</MarkdownCode> element, so you can listen
-            for them on the element directly:
+            for them on the element directly.
           </P>
         ) : (
           <P>
             The component renders a native{" "}
             <MarkdownCode>{mediaTag}</MarkdownCode> element, so standard React
-            media event props work:
+            media event props (e.g. <MarkdownCode>onPlay</MarkdownCode>,{" "}
+            <MarkdownCode>onTimeUpdate</MarkdownCode>) map to the underlying{" "}
+            <A href={mdnEventsUrl}>media events</A>.
           </P>
         )}
-        <Pre data-language={framework === "html" ? "ts" : "tsx"}>
-          <MarkdownCode codeBlock="true">
-            {framework === "html" ? htmlEventsSample : reactEventsSample}
-          </MarkdownCode>
-        </Pre>
         {elementSpecificEvents.length === 0 ? (
           <P>
             This element dispatches no events beyond the native media events.
@@ -189,19 +183,6 @@ const reactEventsSample = `<${ref.name} src={src} onPlay={onPlay} onTimeUpdate={
           cssCustomProperties={ref.cssCustomProperties}
           componentName={media}
         />
-      </>
-    )
-  }
-
-  {
-    slotsSection && (
-      <>
-        <H3 id={slotsSection.id}>{slotsSection.title}</H3>
-        <p class="my-4 flex flex-wrap gap-2">
-          {ref.slots.map((slot) => (
-            <MarkdownCode>{slot === "" ? "(default)" : slot}</MarkdownCode>
-          ))}
-        </p>
       </>
     )
   }
