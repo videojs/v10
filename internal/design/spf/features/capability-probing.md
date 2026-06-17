@@ -57,7 +57,7 @@ layer onto specific phases per the
 | Media-playlist / segment-level capability checking | Per-segment CODECS verification + container detection at the media-playlist level. Catches mismatches the multivariant didn't declare | Not implemented. Tier 1; largely defensive, rare for well-formed manifests |
 | Key-system capability probing | `requestMediaKeySystemAccess` for each candidate key system (Widevine, PlayReady, FairPlay, FairPlay-AirPlay). Returns supported configurations. **DRM-adjacent boundary:** this feature owns Tier 1 probing only; EME setup, license fetch, key delivery live under [drm-support](./drm-support.md) (GitHub issue #1411) | Not implemented. Async — a slot-writer behavior, *not* the synchronous config-predicate route codec filtering took (see resolved open question) |
 | Cross-codec transition (`changeType()`) probing | Probe whether `SourceBuffer.changeType()` is available, plus pair-wise support for specific codec transitions (AVC ↔ HEVC, AAC stereo ↔ AC-3 5.1, etc.). Browser support is fragile and pair-specific | Not implemented. Consumers decide whether to attempt mid-stream switches based on this probe; the `changeType()` call itself lives in those consumer features |
-| Unsupported-case error surfacing | When no candidate survives filtering, surface a clear state rather than failing late in `createSourceBuffer` | Not implemented. A speculative per-type `noPlayable{Video,Audio}Tracks` flag was prototyped and **removed** (no consumer — write-only state + derivation stored as a slot). Today the type simply makes no pick; the late `createSourceBuffer` check is the backstop. Deferred in full to `[unsupported-case-error-mapping]`, which will own the surfaced shape (likely a derived `computed`, not a stored slot) once a consumer exists |
+| Unsupported-case error surfacing | When no candidate survives filtering, surface a clear state rather than failing late in `createSourceBuffer` | Not implemented. A speculative per-type `noPlayable{Video,Audio}Tracks` flag was prototyped and **removed** (no consumer — write-only state + derivation stored as a slot). Today, when constraints prune a type that *has* tracks to empty, the behavior clears the selection (no pick) and `console.error`s as a placeholder; the late `createSourceBuffer` check is the backstop. Deferred in full to `[unsupported-case-error-mapping]`, which will replace the `console.error` with a surfaced shape (likely a derived `computed`, not a stored slot) once a consumer exists |
 | Tier 2: customer probing overrides | Config-driven biases: "force AVC even when HEVC supported," "prefer hardware-backed DRM," "exclude codec X." Layered on top of Tier 1's spec-compliant filtering | Not implemented. The `canPlayTrack` config injection point is the natural seam (override the default probe) |
 
 ## What's in scope vs out of scope
@@ -106,7 +106,7 @@ layer onto specific phases per the
 
 | Piece | Role |
 |---|---|
-| `excludeUnplayableTracks` | Hard-constraint in the `applyConstraints` pre-pass; reads `config.canPlayTrack`, drops undecodable renditions before the rule chain. Shared by `switchVideoTrack` / `switchAudioTrack`, pooled with `excludeFailedCdns`. When it prunes a type to empty, the type makes no pick |
+| `excludeUnplayableTracks` | Hard-constraint in the `applyConstraints` pre-pass; reads `config.canPlayTrack`, drops undecodable renditions before the rule chain. Shared by `switchVideoTrack` / `switchAudioTrack`, pooled with `excludeFailedCdns`. When it prunes a type that *has* tracks to empty, the selection clears (no pick) so a pick made before a relabel can't linger as unplayable |
 
 **Engine wiring (`playback/engines/hls/engine.ts` + `engine-audio-only.ts`):**
 - `canPlayTrack` config — both engine factories default it to the DOM `canPlayTrack` in `finalConfig` (the audio-only variant too, so filtering isn't inert there); override to force-exclude a codec (the Tier 2 seam). Adapters forward it via `...config`.
@@ -120,10 +120,10 @@ layer onto specific phases per the
 - **Unit — `media/dom/tests/capabilities.test.ts`:** `canPlayTrack` returns the `isTypeSupported` verdict for a track's built MIME; memoizes per unique MIME (probes once); passes through (`true`) for unprobeable tracks (no `mimeType`, or empty/absent `codecs`); asserts non-fMP4 containers (`video/mp2t`, `audio/aac`) unsupported without consulting `isTypeSupported` (even with codecs).
 - **Unit — `media/hls/tests/parse-media-playlist.test.ts`:** relabels to `video/mp2t` / `audio/aac` when there's no `#EXT-X-MAP` and segments are `.ts` / `.aac` (query string ignored; `video/mp2t` for audio TS too); keeps the fMP4 default when an `#EXT-X-MAP` is present or the extension is unrecognized.
 - **Unit — `media/utils/tests/tracks.test.ts`:** `applyContainerMimeType` sets the MIME on every track of the given type, leaves other types untouched (never crosses audio↔video), idempotent.
-- **Unit — `playback/behaviors/tests/track-switching.test.ts`:** `excludeUnplayableTracks` prunes undecodable renditions before ranking (picks best playable codec); passes through with no probe wired; a user-selected unplayable track is still excluded (hard constraint beats the soft user filter); makes no pick when the constraint prunes every rendition.
+- **Unit — `playback/behaviors/tests/track-switching.test.ts`:** `excludeUnplayableTracks` prunes undecodable renditions before ranking (picks best playable codec); passes through with no probe wired; a user-selected unplayable track is still excluded (hard constraint beats the soft user filter); makes no pick when the constraint prunes every rendition from a cold start; **clears a prior pick when a later relabel prunes every rendition to empty** (the warm path — a pick made under the initial mp4 label, then the type relabeled to `video/mp2t`).
 - **Integration — `playback/engines/hls/tests/engine.test.ts`:** a mixed HEVC+AVC source with a `canPlayTrack` rejecting HEVC selects the AVC rendition; an all-undecodable source makes no video pick.
 
-**Live smoke test:** verified in the SPF sandbox against the Apple `bipbop_4x3` stream (muxed-TS video + raw-`.aac` audio) — video relabels `video/mp2t`, audio relabels `audio/aac`, and both types are pruned to empty (per-type propagation: one fetch per type, not per rendition), so neither makes a pick instead of stalling deep in the pipeline. An audio-only `.aac` source likewise makes no pick.
+**Live smoke test:** verified in the SPF sandbox against the Apple `bipbop_4x3` stream (muxed-TS video + raw-`.aac` audio) — video relabels `video/mp2t`, audio relabels `audio/aac`, and both types are pruned to empty (per-type propagation: one fetch per type, not per rendition), so the selection clears (no pick) instead of leaving the initial mp4-labeled pick selected to stall deep in the pipeline. An audio-only `.aac` source likewise makes no pick.
 
 **Out of scope / deferred:** `canPlayType` wrapper, key-system probing, `changeType()` probing, per-segment CODECS checking, no-playable surfacing / the full error-code interface, and Tier 2 override config. Container *detection* covers MPEG-TS + raw ADTS AAC (not `.mp3` etc. yet); both are asserted **unplayable** for now. *Playing* them is separate follow-up work — TS needs a transmux pipeline; **raw AAC is genuinely browser-supported (Chrome/Safari) and could be played by removing the pipeline's init-segment assumption** (the segment loader queues an `append-init` with an empty URL, and append handling is fMP4-shaped).
 
@@ -170,14 +170,16 @@ layer onto specific phases per the
   `noPlayable*` flag was prototyped — set when a type's candidates pruned to
   empty (codec filtering *or* CDN-failover cooldown). It was deleted: nothing
   consumed it (write-only state), and it stored a derivation in a slot an
-  effect wrote rather than a `computed`. Today an emptied type simply makes no
-  pick; the late `createSourceBuffer` check is the backstop, and a track with
-  no declared `CODECS` (optional per spec) is unprobeable and passes through.
-  When a consumer materializes, `[unsupported-case-error-mapping]` owns the
-  surfaced shape — note the *had-candidates-vs-never-had-candidates* distinction
-  a bare "candidate set is empty" check can't make (a video-only source's absent
-  audio is empty but not an error), which is why a naive derivation needs the
-  pre-constraint count too.
+  effect wrote rather than a `computed`. Today an emptied type that *had* tracks
+  clears the selection (no pick) and `console.error`s as a placeholder; the late
+  `createSourceBuffer` check is the backstop, and a track with no declared
+  `CODECS` (optional per spec) is unprobeable and passes through. The
+  *had-candidates-vs-never-had-candidates* distinction a bare "candidate set is
+  empty" check can't make (a video-only source's absent audio is empty but not
+  an error) is **already** made — the clear/error is gated on a non-zero
+  pre-constraint track count for the type. When a consumer materializes,
+  `[unsupported-case-error-mapping]` replaces the `console.error` with the
+  surfaced shape (likely a `computed`).
 - **Container-detection scope → non-fMP4 detection (TS + raw AAC), per-track-type,
   marked unplayable.** The media-playlist parser relabels a resolved non-fMP4
   rendition (no `#EXT-X-MAP` + a recognized extension: `.ts` → `video/mp2t`,
@@ -201,9 +203,11 @@ layer onto specific phases per the
 
 - **Surfacing "nothing playable" as a (fatal) error.** The pre-pass can prune a
   type to empty — every rendition undecodable (fatal: the source can't play at
-  all) or, transiently, every CDN cooled down (recoverable). Today both are a
-  silent no-pick with the late `createSourceBuffer` check as the only backstop;
-  `[unsupported-case-error-mapping]` will want this surfaced. Open: a derived
+  all) or, transiently, every CDN cooled down (recoverable). Today both clear
+  the selection (no pick) and `console.error` — *uniformly*, without yet
+  distinguishing fatal from recoverable; the late `createSourceBuffer` check
+  remains the backstop. `[unsupported-case-error-mapping]` will want this
+  surfaced. Open: a derived
   `computed` read by that consumer (preferred — see the removed `noPlayable*`
   note under "Resolved"), or a dedicated **behavior** if surfacing needs to own
   emit/clear, the fatal-vs-recoverable classification, and the

@@ -54,7 +54,7 @@
 
 import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { DEFAULT_QUALITY_CONFIG, type QualityConfig, resolutionArea } from '../../media/abr/quality-selection';
 import { matchesPartialTrack } from '../../media/primitives/select-tracks';
 import {
@@ -411,8 +411,8 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
  *
  * Passes everything through when there's no `failedCdns` signal/value. When it
  * prunes *every* track (all CDNs cooled down), the empty result is preserved
- * (per `applyConstraints`) — "nothing playable," which today leaves the prior
- * pick in place.
+ * (per `applyConstraints`) — "nothing playable," which clears the selection (no
+ * pick); a later CDN recovery refills the candidate set and re-picks.
  */
 function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
@@ -438,8 +438,8 @@ function excludeFailedCdns<S extends SelectionKey, T extends SwitchableTrack>(
  * Passes everything through when there's no `canPlayTrack` probe (a composition
  * that didn't wire it, or DOM-free tests). When it prunes *every* track (no
  * decodable rendition), the empty result is preserved (per `applyConstraints`)
- * — "nothing playable," so the behavior makes no pick and the late
- * `createSourceBuffer` check stays as the backstop.
+ * — "nothing playable," so the behavior clears the selection (no pick) and the
+ * late `createSourceBuffer` check stays as the backstop.
  */
 function excludeUnplayableTracks<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
@@ -599,13 +599,30 @@ function setupTrackSwitching<
             // re-picks.
             const tracks = candidateSet.get();
 
-            // No playable tracks: no tracks of this type, or the hard-constraints
-            // pre-pass pruned everything (every rendition undecodable, or every
-            // CDN cooled down). Nothing to pick — leave any prior pick in place.
-            // The late createSourceBuffer check is the backstop if an unplayable
-            // rendition reaches the pipeline; surfacing "nothing playable" as
-            // observable state is deferred until a consumer needs it.
-            if (!tracks.length) return;
+            // Empty candidate set — two shapes, told apart by whether the type
+            // has any tracks at all:
+            //   - The type has no tracks (e.g. a video-only source's absent
+            //     audio): legitimate, nothing to pick or clear.
+            //   - The type HAS tracks but the hard-constraints pre-pass pruned
+            //     every one (every rendition undecodable, or every CDN in
+            //     failover cooldown): no playable rendition. Clear the selection
+            //     so a pick made earlier — e.g. under the initial mp4 label,
+            //     before resolve-track relabeled the type to a non-fMP4
+            //     container — can't linger as a now-unplayable selection and
+            //     silently stall the pipeline.
+            // The `console.error` is a placeholder until the planned error
+            // behaviors surface "nothing playable" as observable state.
+            if (!tracks.length) {
+              const presentation = peek(state.presentation);
+              const hasTracksOfType = isResolvedPresentation(presentation) && getTracks(presentation).length > 0;
+              if (hasTracksOfType) {
+                console.error(
+                  `[track-switching] every ${selectionKey} candidate was filtered out by constraints; clearing selection`
+                );
+                state[selectionKey].set(undefined);
+              }
+              return;
+            }
 
             // The whole deps object passes straight through to every rule in the
             // variant-supplied chain (state + config from the behavior; context

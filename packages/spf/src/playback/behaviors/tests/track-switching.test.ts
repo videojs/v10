@@ -10,6 +10,7 @@ import type {
   VideoSelectionSet,
   VideoTrack,
 } from '../../../media/types';
+import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
   applyConstraints,
@@ -969,19 +970,26 @@ describe('excludeFailedCdns (failover constraint)', () => {
     reactor.destroy();
   });
 
-  it('keeps the prior pick when every CDN is in cooldown (nothing playable)', async () => {
+  it('clears the selection when every CDN is in cooldown, re-picking on recovery', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const state = makeState(undefined);
     const reactor = switchVideoTrack.setup({ state });
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
 
-    // All CDNs cooled down → constraints prune everything → no playable set →
-    // the effect no-ops, leaving the last pick in place (deferred terminal-state
-    // modeling).
+    // All CDNs cooled down → constraints prune every track → no playable set →
+    // the selection clears (no pick) rather than lingering on an unreachable CDN.
     state.failedCdns.set(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalled();
+
+    // A CDN recovers → its tracks reappear → the candidate set refills and re-picks.
+    state.failedCdns.set(['https://cdn-b.example.com']);
     await flush();
     expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
 
+    errorSpy.mockRestore();
     reactor.destroy();
   });
 });
@@ -1050,12 +1058,38 @@ describe('excludeUnplayableTracks (capability constraint)', () => {
   });
 
   it('makes no pick when the constraint prunes every rendition', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     const state = makeState();
     const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
     await flush();
-    // Every codec rejected → empty candidate set → nothing selected (the late
-    // createSourceBuffer check is the backstop; no observable flag is surfaced).
+    // Every codec rejected from a cold start → empty candidate set → nothing
+    // selected, and the empty-from-constraints case is flagged. The late
+    // createSourceBuffer check stays as the backstop.
     expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+    reactor.destroy();
+  });
+
+  it('clears a prior pick when a later relabel prunes every rendition to empty', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const state = makeState();
+    // Accepts fMP4; rejects the non-fMP4 container MIME resolve-track relabels to.
+    const canPlayTrack = (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t';
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack } });
+    await flush();
+    // Pick made while the tracks are still labeled video/mp4.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-hevc');
+
+    // resolve-track detects a TS container and relabels the whole video type;
+    // every rendition is now undecodable → candidate set empties → the now-stale
+    // pick clears (instead of lingering as an unplayable selection that stalls).
+    state.presentation.set(applyContainerMimeType(mixedCodecPresentation(), 'video', 'video/mp2t'));
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalled();
+
+    errorSpy.mockRestore();
     reactor.destroy();
   });
 });
