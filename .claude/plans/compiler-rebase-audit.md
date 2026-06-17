@@ -79,12 +79,20 @@ Unrelated (drop from our set — belongs to main or a separate change):
 - HTML: `cdn/*`, `define/{audio,video}/{skin,minimal-skin}.{ts,css}`.
 - Skins: `{default,minimal}/css/**`, `shared/tailwind/icon-state.css`.
 
+## Compiler `vanilla-css` correctness — DONE (commit `fix(compiler): vanilla-css correctness`)
+- ✅ Marker-class drop (`group`/`peer`) — preserved on the element.
+- ✅ Class-name collisions — `DiagnosticError` thrown on same-name/different-styles.
+- ✅ Undefined theme vars — `emitCss` emits a resolved theme block via `resolveThemeVar`.
+- ⬜ Follow-up: `@property`-registered `--tw-*` slots (e.g. `--tw-content`) still
+  resolve to `undefined`; emit their `@property` initial values or inline them.
+
 ## Deferred porting backlog (NOT this pass)
 - Constrained-JSX for airplay/live/menu/playback-rate components + manifests.
 - `live-video` / `live-audio` compiler presets.
-- Regenerate skins to include the above.
-- Fix the CRITICAL vanilla-css issues from the prior review (marker-class drop,
-  class-name collisions, undefined theme vars) before compiled skins ship.
+- Regenerate skins to include the above; wire `resolveThemeVar`/`themeSelector`
+  into `packages/react`'s `compileSkins` `emitCss` call when it's re-enabled.
+- Resolve the real collisions the new diagnostic surfaces (`time-value`,
+  `seek-icon`, `spinner-icon`) via `overrides` or distinct tokens.
 
 ## Verification gates
 `pnpm install` → `pnpm -F @videojs/compiler build` → `pnpm typecheck` →
