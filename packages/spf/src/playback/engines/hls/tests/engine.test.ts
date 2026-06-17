@@ -8,15 +8,27 @@ vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Fallback for URLs a test's mock doesn't handle explicitly. Segment/init
+// requests resolve with an empty body — the appendSegment mock makes the bytes
+// inert — so the failover monitor isn't tripped by unmocked segment fetches (a
+// single failed fetch trips that CDN into cooldown, which empties the candidate
+// set). Genuinely unknown URLs still reject loudly.
+function unmockedFetchFallback(url: string): Promise<Response> {
+  // Non-empty body: `fetchStream` throws "Response has no body" on a null body
+  // (empty Uint8Array), which would itself trip the monitor.
+  if (/\.(m4s|mp4|ts|aac)(\?|$)/.test(url)) return Promise.resolve(new Response(new Uint8Array([0])));
+  return Promise.reject(new Error(`Unmocked URL: ${url}`));
+}
+
 describe('createSimpleHlsEngine', () => {
   let originalFetch: typeof globalThis.fetch;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
-  // Tests assert at actor-presence and state-shape level, not at "init
-  // segment appended" level — so unmocked init/segment URLs in the manifests
-  // are intentional. The fetch loop's reject path leaks a console.error in
-  // each test; suppress only the expected patterns so genuine failures still
-  // surface.
+  // Tests assert at actor-presence and state-shape level, not at "init segment
+  // appended" level. Audio/video segment fetches resolve via
+  // `unmockedFetchFallback` (inert under the appendSegment mock); text-track
+  // segment fetches still reject and leak a console.error. Suppress only the
+  // expected patterns so genuine failures still surface.
   const expectedErrorPatterns = [
     /Unexpected error in segment loader.*Unmocked URL/s,
     /Failed to load text-track segment/,
@@ -534,7 +546,7 @@ http://example.com/segment1.m4s
       }
 
       // Fallback for unmocked URLs
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -602,7 +614,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -650,9 +662,11 @@ http://example.com/audio-seg1.m4s
         // 4. MediaElement should be set
         expect(owners.mediaElement).toBe(mediaElement);
 
-        // 5. MediaSource should be created and open
+        // 5. MediaSource should be created
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
 
         // 6. Video buffer cluster should be created (actor presence implies
         //    `addSourceBuffer` ran; SourceBuffer itself is private to
@@ -740,7 +754,7 @@ http://example.com/audio-b-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -761,7 +775,9 @@ http://example.com/audio-b-seg1.m4s
         expect(state.presentation?.id).toBeDefined();
         expect(state.selectedVideoTrackId).toBeDefined();
         expect(state.selectedAudioTrackId).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
         expect(owners.videoBufferActor).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
       },
@@ -794,7 +810,9 @@ http://example.com/audio-b-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
 
         // Fresh MediaSource + buffer actors (different instances from A)
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
         expect(owners.mediaSource).not.toBe(sourceAMediaSource);
         expect(owners.videoBufferActor).not.toBe(sourceAVideoBufferActor);
         expect(owners.audioBufferActor).not.toBe(sourceAAudioBufferActor);
@@ -831,7 +849,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -858,7 +876,9 @@ http://example.com/video-seg1.m4s
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
       },
       { timeout: 2000 }
     );
@@ -893,7 +913,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -920,7 +940,9 @@ http://example.com/audio-seg1.m4s
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
       },
       { timeout: 2000 }
     );
@@ -955,7 +977,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1010,7 +1032,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1087,7 +1109,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1123,7 +1145,9 @@ http://example.com/audio-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
 
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
         expect(owners.videoBufferActor).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
       },
@@ -1165,7 +1189,7 @@ http://example.com/seg1.m4s
         return Promise.resolve(new Response(new ArrayBuffer(100)));
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1238,7 +1262,7 @@ http://example.com/seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1280,10 +1304,15 @@ http://example.com/seg1.m4s
     // The resolved track should be the selected one
     expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
 
-    // Should fetch: 1 multivariant + 1 media playlist + init attempt
-    // (Only selected quality, not all 3 qualities; init.mp4 is attempted but
-    // rejected by the mock — segment is not attempted since init fails first)
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    // The non-selected qualities are never resolved — only the selected track's
+    // media playlist is fetched. Asserts the intent directly rather than a brittle
+    // total fetch count (which shifts with init/segment loading of the selected track).
+    const fetchedUrls = mockFetch.mock.calls.map((call: unknown[]) => {
+      const input = call[0] as RequestInfo | URL;
+      return typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    });
+    expect(fetchedUrls.some((u: string) => u.includes('video-720p.m3u8'))).toBe(false);
+    expect(fetchedUrls.some((u: string) => u.includes('video-1080p.m3u8'))).toBe(false);
 
     engine.destroy();
   });
@@ -1338,7 +1367,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1430,7 +1459,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1506,7 +1535,7 @@ http://example.com/text-fr-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1591,7 +1620,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1683,7 +1712,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1777,7 +1806,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1876,7 +1905,7 @@ http://example.com/seg2.m4s
       return Promise.resolve(new Response(new ArrayBuffer(1000)));
     }
 
-    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    return unmockedFetchFallback(url);
   });
   globalThis.fetch = mockFetch;
 
@@ -1951,7 +1980,7 @@ http://example.com/audio-seg1.m4s
       return Promise.resolve(new Response(new ArrayBuffer(1000)));
     }
 
-    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    return unmockedFetchFallback(url);
   });
   globalThis.fetch = mockFetch;
 
