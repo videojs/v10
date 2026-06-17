@@ -1,4 +1,3 @@
-import { isFunction } from '@videojs/utils/predicate';
 import type {
   Component,
   ComponentConstructor,
@@ -49,19 +48,6 @@ export function getProp<T extends TargetLike, K extends keyof T>(host: Host<T>, 
 export function setProp<T extends TargetLike, K extends keyof T>(host: Host<T>, prop: K, value: T[K]): void {
   const own = getOwner(host, prop);
   if (own) (own as Record<K, T[K]>)[prop] = value;
-}
-
-type AnyFn = (...args: any[]) => any;
-
-/** Invoke a media method on its owner, preserving the owner as `this`. Returns `undefined` when no owner exposes it. */
-export function callProp<K extends keyof TargetLike>(
-  host: Host,
-  prop: K,
-  ...args: Parameters<Extract<TargetLike[K], AnyFn>>
-): ReturnType<Extract<TargetLike[K], AnyFn>> | undefined {
-  const own = getOwner(host, prop);
-  const fn = own?.[prop];
-  return isFunction(fn) ? fn.apply(own, args) : undefined;
 }
 
 /** Find the object that owns a media property: the first component `override` exposing it, otherwise the attached target. */

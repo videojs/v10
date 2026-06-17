@@ -9,9 +9,9 @@ import {
   type TextTrackLike,
 } from '../../core/media/types';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
-import { callProp, getComponents, getProp, readConfig, setProp, writeConfig } from './utils';
+import { getComponents, getOwner, getProp, readConfig, setProp, writeConfig } from './utils';
 
-export { addComponent, callProp, getComponents, getOwner, getProp, setProp } from './utils';
+export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';
 
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;
@@ -179,11 +179,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   play() {
-    return callProp(this, 'play') ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
+    const owner = getOwner(this, 'play');
+    return owner?.play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
   }
 
   pause() {
-    callProp(this, 'pause');
+    const owner = getOwner(this, 'pause');
+    owner?.pause?.();
   }
 
   get autoplay() {
@@ -238,11 +240,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   load() {
-    return callProp(this, 'load');
+    const owner = getOwner(this, 'load');
+    return owner?.load?.();
   }
 
   canPlayType(type: string) {
-    return callProp(this, 'canPlayType', type) ?? '';
+    const owner = getOwner(this, 'canPlayType');
+    return owner?.canPlayType?.(type) ?? '';
   }
 
   get volume() {
@@ -301,7 +305,8 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
-    return callProp(this, 'addTextTrack', kind, label, language) as TextTrackLike;
+    const owner = getOwner(this, 'addTextTrack');
+    return owner?.addTextTrack?.(kind, label, language) as TextTrackLike;
   }
 
   get remote() {
