@@ -313,5 +313,21 @@ describe('HTMLMediaElementHost', () => {
       expect(component.label).toBe('early');
       expect(host.config.fake).toBe(component);
     });
+
+    it('adopts staged component config even after an intervening config reset', () => {
+      const host = new HTMLAudioElementHost();
+      host.config = { fake: { value: 4, label: 'early' } };
+      // A later config object that omits `fake` resets free-form keys but must
+      // not drop the staged component settings — they belong to a component, so
+      // they should still be adopted when it registers.
+      host.config = { a: 1 };
+
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      expect(component.value).toBe(4);
+      expect(component.label).toBe('early');
+      expect(host.config.fake).toBe(component);
+    });
   });
 });

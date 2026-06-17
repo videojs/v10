@@ -6,7 +6,7 @@ import type {
   HTMLMediaElementHost,
   HTMLMediaTargetLike as TargetLike,
 } from '../media-host';
-import { getConfigBag } from './config';
+import { adoptStagedConfig } from './config';
 
 export type Host<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
 
@@ -25,16 +25,10 @@ export function addComponent<T extends Component>(host: Host, component: T) {
   components.set(ctor, component);
 
   // `host.config` reflects the component live under its `configKey` (see
-  // readConfig/writeConfig). Adopt any config staged before this point: move it
-  // onto the component and drop it from the bag so the component is sole owner.
+  // readConfig/writeConfig). Adopt any config staged before this point so the
+  // component owns its namespace, even across an intervening config reset.
   const { configKey } = ctor;
-  if (configKey) {
-    const bag = getConfigBag(host);
-    if (configKey in bag) {
-      Object.assign(component, bag[configKey]);
-      delete bag[configKey];
-    }
-  }
+  if (configKey) adoptStagedConfig(host, configKey, component);
 
   component.setMedia?.(host);
 
