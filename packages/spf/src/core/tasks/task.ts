@@ -105,22 +105,26 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
   }
 
   run(): Promise<TValue> {
-    // Memoized: run the work once; repeated calls share the same promise (which
-    // resolves/rejects immediately once settled). Re-running needs a `clone()`.
-    this.#promise ??= (async () => {
-      this.#status = 'running';
-      try {
-        const result = await this.#runFn(this.#signal);
-        this.#value = result; // value before status — ordering guarantee
-        this.#status = 'done';
-        return result;
-      } catch (e) {
-        this.#error = e as TError; // error before status — ordering guarantee
-        this.#status = 'error';
-        throw e;
-      }
-    })();
+    // Memoized: run the work once, sharing the same promise across calls. The
+    // memoized promise IS what callers await, so it's always handled (no orphan
+    // `Promise.resolve/reject`); a sync-throwing `#runFn` is captured as a
+    // rejection rather than re-run.
+    this.#promise ??= this.#execute();
     return this.#promise;
+  }
+
+  async #execute(): Promise<TValue> {
+    this.#status = 'running';
+    try {
+      const result = await this.#runFn(this.#signal);
+      this.#value = result; // value before status — ordering guarantee
+      this.#status = 'done';
+      return result;
+    } catch (e) {
+      this.#error = e as TError; // error before status — ordering guarantee
+      this.#status = 'error';
+      throw e;
+    }
   }
 
   abort(): void {
