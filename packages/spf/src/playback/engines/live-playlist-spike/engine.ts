@@ -12,6 +12,7 @@
  * Drive it via `onSignalsReady`: set `presentation = { url }`. Selection and
  * reloading then run on their own.
  */
+
 import {
   type Composition,
   type ContextSignals,
@@ -19,18 +20,18 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
+import { mediaPlaylistReloadDelay } from '../../../media/hls/reload-policy';
 import { pickHighestResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveVideoTrack } from '../../behaviors/resolve-track';
-import { scheduleVideoTrackReload } from '../../behaviors/schedule-track-reload';
 import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
 
 export interface LivePlaylistSpikeState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
-  videoReloadEpoch?: number;
   preload?: 'auto' | 'metadata' | 'none';
   loadActivated?: boolean;
 }
@@ -58,14 +59,15 @@ export function createLivePlaylistSpikeEngine(
     ...config,
     picker: config.picker ?? pickHighestResolutionVideoTrack,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
+    // Reload the resolved video playlist (the spike's whole point) via the
+    // loader's RecurringRunner — target-duration cadence, start-anchored + made
+    // awaitable by `delayedReschedule`.
+    reschedule: delayedReschedule(mediaPlaylistReloadDelay),
   };
 
-  return createComposition(
-    [resolvePresentation, selectVideoTrack, resolveVideoTrack, scheduleVideoTrackReload, shareSignals],
-    {
-      config: finalConfig,
-      // Spike skips the preload gate — resolve as soon as a url is set.
-      initialState: { loadActivated: true },
-    }
-  );
+  return createComposition([resolvePresentation, selectVideoTrack, resolveVideoTrack, shareSignals], {
+    config: finalConfig,
+    // Spike skips the preload gate — resolve as soon as a url is set.
+    initialState: { loadActivated: true },
+  });
 }

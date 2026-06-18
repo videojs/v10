@@ -5,6 +5,8 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
+import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
@@ -16,7 +18,15 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
+import { mediaPlaylistReloadDelay } from '../../../media/hls/reload-policy';
+import type {
+  AudioTrack,
+  CanPlayTrack,
+  MaybeResolvedPresentation,
+  ResolvedTrack,
+  TextTrack,
+  VideoTrack,
+} from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
@@ -42,11 +52,6 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import {
-  scheduleAudioTrackReload,
-  scheduleTextTrackReload,
-  scheduleVideoTrackReload,
-} from '../../behaviors/schedule-track-reload';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
@@ -110,15 +115,6 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
-  /**
-   * Per-type live-reload triggers. Owned by `scheduleTrackReload` (composed
-   * only by live engines), which bumps them on a target-duration cadence;
-   * `resolveTrack` watches them to re-fetch the media playlist. Inert for VoD
-   * (no scheduler → never bumped → loader resolves once).
-   */
-  videoReloadEpoch?: number;
-  audioReloadEpoch?: number;
-  textReloadEpoch?: number;
 }
 
 /**
@@ -194,6 +190,15 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * sources; ignored for VoD (the anchor is a no-op without `#EXT-X-PROGRAM-DATE-TIME`).
    */
   startSequence?: number;
+  /**
+   * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`:
+   * returns a promise that resolves when the playlist should reload, or `null` to
+   * stop. Defaults to `mediaPlaylistReloadDelay` (target-duration cadence, half on
+   * an unchanged window, stop on `#EXT-X-ENDLIST`) composed with a cancellable
+   * `sleep`. Inert for VoD (a complete playlist stops it after the first resolve).
+   * Override to tune live reload timing.
+   */
+  reschedule?: Reschedule<ResolvedTrack>;
   /**
    * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
    * multivariant-playlist parser; supply your own for alternate format
@@ -314,6 +319,11 @@ export function createSimpleHlsEngine(
   const finalConfig = {
     ...config,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    // The resolve* loaders' RecurringRunner re-runs on this `reschedule`: the pure
+    // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.
+    // Inert for VoD (the cadence returns null once a playlist is complete), so it
+    // composes always.
+    reschedule: config.reschedule ?? delayedReschedule(mediaPlaylistReloadDelay),
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
@@ -352,17 +362,12 @@ export function createSimpleHlsEngine(
       // Resolve selected tracks (fetch media playlists). Composed before the
       // switch* slot owners; selection is reactive, so a resolve* re-fires once
       // its switch* sets the id (same convergence for all three types). Also the
-      // live loader: re-fetches when its reload epoch advances (below).
+      // live loader: its `RecurringRunner` re-resolves on the playlist's
+      // target-duration cadence (`reschedule` in config) until `#EXT-X-ENDLIST`.
+      // Inert for VoD (a complete playlist stops the policy after one resolve).
       resolveVideoTrack,
       resolveAudioTrack,
       resolveTextTrack,
-
-      // Live refetch policy: bump each type's reload epoch on a target-duration
-      // cadence until `#EXT-X-ENDLIST`. Inert for VoD (a complete playlist never
-      // reloads), so these compose unconditionally.
-      scheduleVideoTrackReload,
-      scheduleAudioTrackReload,
-      scheduleTextTrackReload,
 
       // Re-base selected live tracks' timelines to the estimated stream origin
       // (segment.startTime ≈ native PTS). No-op for VoD (no PDT / shift 0).

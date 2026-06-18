@@ -1,12 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
+import type { TaskLike } from '../../../core/tasks/task';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
+  ResolvedTrack,
 } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { type ResolveTrackState, resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../resolve-track';
@@ -15,25 +17,13 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-// The reload-epoch slots live outside `ResolveTrackState` (the loader's gate
-// reads them defensively; `scheduleTrackReload` materializes them in the real
-// composition). The test plays that role, so it extends the state shape here.
-type TestResolveTrackState = ResolveTrackState & {
-  videoReloadEpoch?: number;
-  audioReloadEpoch?: number;
-  textReloadEpoch?: number;
-};
-
-function makeState(initial: TestResolveTrackState = {}): StateSignals<TestResolveTrackState> {
+function makeState(initial: ResolveTrackState = {}): StateSignals<ResolveTrackState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
     failedCdns: signal<string[] | undefined>(initial.failedCdns),
-    videoReloadEpoch: signal<number | undefined>(initial.videoReloadEpoch),
-    audioReloadEpoch: signal<number | undefined>(initial.audioReloadEpoch),
-    textReloadEpoch: signal<number | undefined>(initial.textReloadEpoch),
   };
 }
 
@@ -451,49 +441,64 @@ http://example.com/seg0.m4s`;
     };
   }
 
-  it('re-fetches when the reload epoch is bumped', async () => {
+  // Flush pending macrotasks so "did NOT happen" assertions are meaningful.
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('re-resolves while the window is incomplete (reschedule resolves)', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
+
+    // Re-run twice, then stop — bounds the loop without timers.
+    let cycles = 0;
+    const reschedule = async () => cycles++ < 2;
+    const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
+
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(3)); // initial + 2 reloads
+    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true);
+
+    await flush();
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+    reactor.destroy();
+  });
+
+  it('resolves once and never reloads when no reschedule is configured (VoD/non-live)', async () => {
     const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
     const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
 
     const reactor = resolveVideoTrack.setup({ state });
 
-    await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    await flush();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
-
-    // A scheduler bump re-fetches the (already-resolved, incomplete) track.
-    state.videoReloadEpoch.set(1);
-    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
-
-    // Re-setting the same epoch value is a signal no-op (no re-fire), so the
-    // scheduler's monotonic bumps drive reloads one-for-one without the loader
-    // tracking a last-serviced epoch.
-    state.videoReloadEpoch.set(1);
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(fetchSpy).toHaveBeenCalledTimes(2);
 
     reactor.destroy();
   });
 
-  it('does not reload a complete (VoD/ENDLIST) track on an epoch bump', async () => {
+  it('stops reloading once the playlist completes (reschedule returns null)', async () => {
     const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
-    // ENDLIST → complete → finite duration → never reloads, even if a bump arrives.
+    // Complete (ENDLIST) → finite duration → reschedule stops after the first resolve.
     const fetchSpy = vi
       .spyOn(globalThis, 'fetch')
       .mockImplementation(async () => new Response(`${LIVE_PLAYLIST}\n#EXT-X-ENDLIST`));
 
-    const reactor = resolveVideoTrack.setup({ state });
+    // Observe the resolved track; stop (false) once it's complete.
+    const reschedule = async (task: TaskLike<ResolvedTrack>) => {
+      const current = await task.run().catch(() => undefined);
+      return !(current && Number.isFinite(current.duration));
+    };
+    const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
 
     await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
-    state.videoReloadEpoch.set(1);
-    await new Promise((resolve) => setTimeout(resolve, 20));
+    await flush();
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     reactor.destroy();
   });
 
-  it('retries an unresolved track on epoch bump after a transient failure', async () => {
+  it('retries an unresolved track after a transient failure (errored run → reschedule retry)', async () => {
     const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
     let calls = 0;
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
@@ -502,17 +507,13 @@ http://example.com/seg0.m4s`;
       return new Response(LIVE_PLAYLIST);
     });
 
-    const reactor = resolveVideoTrack.setup({ state });
+    // Retry while the observed run errored (undefined); stop once a result lands.
+    const reschedule = async (task: TaskLike<ResolvedTrack>) => {
+      const current = await task.run().catch(() => undefined);
+      return current === undefined;
+    };
+    const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
 
-    // First attempt fails and settles: track stays unresolved. (Waiting for
-    // the failed fetch to settle mirrors the scheduler's cadence delay — a bump
-    // arriving while the task is still in flight would be id-deduped.)
-    await vi.waitFor(() => expect(calls).toBe(1));
-    await new Promise((resolve) => setTimeout(resolve, 20));
-    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(false);
-
-    // The scheduler's next bump retries the unresolved track → resolves.
-    state.videoReloadEpoch.set(1);
     await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
     expect(calls).toBe(2);
 

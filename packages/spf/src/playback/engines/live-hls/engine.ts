@@ -13,8 +13,10 @@
  */
 import { type Composition, createComposition } from '../../../core/composition/create-composition';
 import { makeShareSignals } from '../../../core/composition/share-signals';
+import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
 import { canPlayTrack } from '../../../media/dom/capabilities';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
+import { mediaPlaylistReloadDelay } from '../../../media/hls/reload-policy';
 import { anchorLiveTracks } from '../../behaviors/anchor-live-tracks';
 import { calculatePresentationDuration } from '../../behaviors/calculate-presentation-duration';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
@@ -28,7 +30,6 @@ import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { scheduleAudioTrackReload, scheduleVideoTrackReload } from '../../behaviors/schedule-track-reload';
 import { setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchVideoTrack } from '../../behaviors/track-switching';
@@ -74,6 +75,9 @@ export function createLiveHlsEngine(
     // Infinity to `mediaSource.duration` per the MSE spec.
     resolveDuration: config.resolveDuration ?? (() => Number.POSITIVE_INFINITY),
     startSequence: config.startSequence ?? 0,
+    // Reload the selected playlists via the loaders' RecurringRunner — the
+    // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.
+    reschedule: config.reschedule ?? delayedReschedule(mediaPlaylistReloadDelay),
   };
 
   return createComposition(
@@ -85,15 +89,11 @@ export function createLiveHlsEngine(
       deriveCdnPriority,
       setupFailoverMonitor,
 
-      // Loader (category [1]): resolves the selected track and re-fetches it
-      // whenever the scheduler bumps its reload epoch, carrying the timeline
-      // forward.
+      // Loader (category [1]): resolves the selected track and, via its
+      // RecurringRunner + `reschedule`, re-fetches it on a target-duration
+      // cadence until #EXT-X-ENDLIST, carrying the timeline forward.
       resolveVideoTrack,
       resolveAudioTrack,
-      // Scheduler (category [3]): bumps the per-type reload epoch on a
-      // target-duration cadence until #EXT-X-ENDLIST.
-      scheduleVideoTrackReload,
-      scheduleAudioTrackReload,
 
       // Anchor selected tracks' timelines to the estimated stream origin so
       // segment.startTime ≈ native PTS (what the loader matches currentTime
