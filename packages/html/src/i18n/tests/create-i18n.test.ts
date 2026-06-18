@@ -9,6 +9,7 @@ import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 describe('createI18n (HTML)', () => {
   afterEach(() => {
     resetI18nRegistryForTesting();
+    document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
     vi.restoreAllMocks();
   });
@@ -49,9 +50,9 @@ describe('createI18n (HTML)', () => {
   });
 
   it('updates media-text when html lang changes', async () => {
-    registerI18n('de', { play: 'Los' });
-    registerI18n('fr', { play: 'Lire' });
-    document.documentElement.lang = 'de';
+    registerI18n('x-test-de', { play: 'Los' });
+    registerI18n('x-test-fr', { play: 'Lire' });
+    document.documentElement.lang = 'x-test-de';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
     text.setAttribute('key', 'play');
@@ -60,7 +61,7 @@ describe('createI18n (HTML)', () => {
     await vi.waitFor(() => {
       expect(text.textContent).toBe('Los');
     });
-    document.documentElement.lang = 'fr';
+    document.documentElement.lang = 'x-test-fr';
     await vi.waitFor(() => {
       expect(text.textContent).toBe('Lire');
     });
@@ -69,8 +70,8 @@ describe('createI18n (HTML)', () => {
   it('reloads builtin lazy overlays when ambient html lang changes', async () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loadLocale: async (tag) => {
-        if (tag === 'de') return { play: 'BuiltinDe' };
-        if (tag === 'fr') return { play: 'BuiltinFr' };
+        if (tag === 'x-test-lazy-de') return { play: 'BuiltinDe' };
+        if (tag === 'x-test-lazy-fr') return { play: 'BuiltinFr' };
         return undefined;
       },
     });
@@ -79,7 +80,7 @@ describe('createI18n (HTML)', () => {
     customElements.define('i18n-lazy-ambient-provider', LazyAmbientProvider);
     customElements.define('i18n-lazy-ambient-text', LazyAmbientText);
 
-    document.documentElement.lang = 'de';
+    document.documentElement.lang = 'x-test-lazy-de';
     const provider = new LazyAmbientProvider();
     const text = new LazyAmbientText();
     text.setAttribute('key', 'play');
@@ -89,7 +90,7 @@ describe('createI18n (HTML)', () => {
       expect(text.textContent).toBe('BuiltinDe');
     });
 
-    document.documentElement.lang = 'fr';
+    document.documentElement.lang = 'x-test-lazy-fr';
     await vi.waitFor(() => {
       expect(text.textContent).toBe('BuiltinFr');
     });
