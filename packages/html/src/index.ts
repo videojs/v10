@@ -1,4 +1,22 @@
 // Core
+export {
+  hasMetadata,
+  isMediaBufferCapable,
+  isMediaErrorCapable,
+  isMediaLiveCapable,
+  isMediaPauseCapable,
+  isMediaPlaybackRateCapable,
+  isMediaRemotePlaybackCapable,
+  isMediaSeekCapable,
+  isMediaSourceCapable,
+  isMediaStreamTypeCapable,
+  isMediaTextTrackCapable,
+  isMediaVideoDimensionsCapable,
+  isMediaVideoRenditionCapable,
+  isMediaVolumeCapable,
+  isQuerySelectorAllCapable,
+  type NodeListLike,
+} from '@videojs/core';
 export * from '@videojs/core/dom';
 export type {
   Destroyable,

@@ -1,4 +1,4 @@
-import type { RemotePlaybackLike, TextTrackListLike, TimeRangeLike } from '../../core/media/types';
+import type { RemotePlaybackLike, TextTrackListLike, TimeRangeLike } from './types';
 
 /** A frozen, empty `TimeRanges`-like value for hosts with no ranges. */
 export const EMPTY_TIME_RANGES: TimeRangeLike = Object.freeze({
