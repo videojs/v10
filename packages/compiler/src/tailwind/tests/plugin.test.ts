@@ -210,6 +210,16 @@ describe('tailwindPlugin — mode: extract', () => {
     ).rejects.toThrow(/class name 'seek-icon' is derived from elements with different styles/);
   });
 
+  it('allows preserved marker classes next to matching generated styles', async () => {
+    const source = `function App(){ return <div><Menu.Item className={cn('flex', 'legacy-submenu')}/><Menu.Item className="flex"/></div>; }`;
+    const { code } = await compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
+    });
+    expect(code).toContain('"menu-item legacy-submenu"');
+    expect(code).toContain('"menu-item"');
+  });
+
   it('handles duplicate component styles', async () => {
     const source = `function App(){ return <div><PlayButton className="flex"/><PlayButton className="flex"/></div>; }`;
     const { code } = await compile(source, {
@@ -226,6 +236,113 @@ describe('tailwindPlugin — mode: extract', () => {
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"buffering-indicator"');
+  });
+
+  it('preserves named token import roots in class names', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const slider = { root: 'flex' };
+`
+    );
+    const source = `import { slider } from './tokens';
+function App(){ return <div className={slider.root}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      filename: sourcePath,
+      target: 'react',
+      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+    });
+    expect(code).toContain('"slider-root"');
+  });
+
+  it('uses known token roots to disambiguate reused component tags', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const icon = 'inline-block';
+export const menu = { chevron: 'size-3' };
+export const inputFeedback = { bubble: { shownSeek: 'block' } };
+`
+    );
+    const source = `import { icon, inputFeedback, menu } from './tokens';
+function App(){ return <div><ChevronIcon className={cn(icon, menu.chevron)}/><ChevronIcon className={cn(icon, inputFeedback.bubble.shownSeek)}/></div>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      filename: sourcePath,
+      target: 'react',
+      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+    });
+    expect(code).toContain('"menu-chevron"');
+    expect(code).toContain('"input-feedback-bubble-shown-seek"');
+  });
+
+  it('derives class names from single imported token identifiers', async () => {
+    const source = `function App(){ return <div className={buttonGroupStart}/>; }`;
+    const { code } = await compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
+    });
+    expect(code).toContain('"button-group-start"');
+  });
+
+  it('prefers style token names over reusable component tag names', async () => {
+    const source = `function App(){ return <Menu.Trigger className={styles.menu.item}/>; }`;
+    const { code } = await compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
+    });
+    expect(code).toContain('"menu-item"');
+  });
+
+  it('derives bare HTML class names from the most specific token path', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const tokens = { seek: { label: 'text-xs', labelBackward: 'left-0' } };
+`
+    );
+    const source = `import { tokens as styles } from './tokens';
+function App(){ return <span className={cn(styles.seek.label, styles.seek.labelBackward)}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      target: 'react',
+      filename: sourcePath,
+      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+    });
+
+    expect(code).toContain('"seek-label-backward"');
+  });
+
+  it('derives bare HTML class names from tokens when runtime segments are present', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const tokens = { slider: { fill: { base: 'absolute', fill: 'bg-white', buffer: 'bg-white/40' } } };
+`
+    );
+    const source = `import { tokens as styles } from './tokens';
+function App({ type, className }){
+  return <div className={cn(styles.slider.fill.base, type === 'fill' ? styles.slider.fill.fill : styles.slider.fill.buffer, className)}/>;
+}`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      target: 'react',
+      filename: sourcePath,
+      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+    });
+
+    expect(code).toContain('"slider-fill-base"');
+  });
+
+  it('keeps a single simple literal utility as the class name for bare HTML', async () => {
+    const source = `function App(){ return <div className="grow"/>; }`;
+    const { code } = await compile(source, {
+      target: 'react',
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
+    });
+
+    expect(code).toContain('"grow"');
   });
 
   it('applies component class overrides', async () => {
@@ -326,7 +443,39 @@ function App(){ return <Foo className={styles.button}/>; }`;
       ],
     });
     expect(captured!.length).toBe(2);
-    expect(captured![0]!.className).toBe('foo');
+    expect(captured![0]!.className).toBe('button');
+  });
+
+  it('resolves bare token imports through a configured resolver', async () => {
+    const tokenPath = writeFixture(
+      'tokens.ts',
+      `import { cn } from '@videojs/utils/style';
+export const tokens = { button: cn('flex', 'gap-2') };
+`
+    );
+    const source = `import { tokens as styles } from '@fixture/tokens';
+function App(){ return <Foo className={styles.button}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    let captured: readonly CompiledRule[] | undefined;
+    const { code } = await compile(source, {
+      target: 'react',
+      filename: sourcePath,
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          sourcePath,
+          resolveTokenModule: (specifier) => (specifier === '@fixture/tokens' ? tokenPath : null),
+          onRules: (rules) => {
+            captured = rules;
+          },
+        }),
+      ],
+    });
+
+    expect(code).toContain('"button"');
+    expect(captured!.length).toBe(2);
   });
 
   it('assigns rule bags with bagFor', async () => {
@@ -395,7 +544,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
         }),
       ],
     });
-    expect(code).toContain('"play-button"');
+    expect(code).toContain('"icon-button"');
     expect(captured!.length).toBe(3);
     const utilities = captured!.map((r) => r.utility.utility).sort();
     expect(utilities).toEqual(['flex', 'h-4', 'w-4']);

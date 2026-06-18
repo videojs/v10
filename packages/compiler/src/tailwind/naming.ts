@@ -9,7 +9,7 @@ export interface DerivedClassName {
   /** The full class name. */
   className: string;
   /** Which derivation rule produced the name. */
-  source: 'tag' | 'token-path' | 'override';
+  source: 'tag' | 'token-path' | 'literal' | 'override';
 }
 
 /** Context passed to a `NameTransform`. */
@@ -59,6 +59,13 @@ export interface DeriveClassNameOptions {
    * Overrides win over `transformName`.
    */
   overrides?: Record<string, string>;
+  /**
+   * Local identifiers that are namespace imports for token modules. When
+   * provided, only these leading path segments are dropped from token names.
+   */
+  tokenNamespaces?: ReadonlySet<string>;
+  /** Local identifiers known to resolve to style tokens. */
+  tokenRoots?: ReadonlySet<string>;
 }
 
 /**
@@ -105,36 +112,33 @@ export class DiagnosticError extends Error {
  *
  * Priority order:
  *   1. **Override** — `overrides[tag]` or `overrides[token-path]` if set.
- *   2. **JSX component tag** — kebab-cased, dotted parts joined with `-`.
+ *   2. **Token path** — when className references style tokens. The
+ *      most specific dotted token path names the class. Leading namespace
+ *      identifier is dropped; remaining parts kebab-cased and joined with `-`.
+ *      Result passed through `transformName`.
+ *   3. **JSX component tag** — kebab-cased, dotted parts joined with `-`.
  *      Result passed through `transformName` for final shaping.
- *   3. **Token path** — for bare HTML elements with a single dotted token
- *      reference. Leading namespace identifier is dropped; remaining parts
- *      kebab-cased and joined with `-`. Result passed through `transformName`.
- *   4. **Diagnostic** — no rule matched; throws `DiagnosticError`.
+ *   4. **Literal utility** — for bare HTML elements with one simple literal
+ *      utility, reuse that utility as the class name.
+ *   5. **Diagnostic** — no rule matched; throws `DiagnosticError`.
  */
 export function deriveClassName(opts: DeriveClassNameOptions): DerivedClassName {
   const overrides = opts.overrides ?? {};
   const transform: NameTransform = opts.transformName ?? ((ctx) => ctx.defaultName);
 
   const tag = tagName(opts.element);
+  const isComponent = isComponentTag(tag);
 
   // 1. Override hit by tag.
   if (overrides[tag]) return { className: overrides[tag]!, source: 'override' };
 
-  // 2. JSX component tag derivation.
-  if (isComponentTag(tag)) {
-    const defaultName = tagToDefaultName(tag);
-    const className = transform({ source: 'tag', tag, defaultName });
-    return { className, source: 'tag' };
-  }
-
-  // 3. Token-path derivation.
+  // 2. Token-path derivation.
   if (opts.segments) {
-    const tokenPath = singleTokenPath(opts.segments);
-    if (tokenPath) {
+    const tokenPath = mostSpecificTokenPath(opts.segments, opts.tokenRoots);
+    if (tokenPath && (!isComponent || tag.includes('.') || opts.tokenRoots?.has(tokenPath[0]!))) {
       const overrideKey = tokenPath.join('.');
       if (overrides[overrideKey]) return { className: overrides[overrideKey]!, source: 'override' };
-      const defaultName = tokenPathToDefaultName(tokenPath);
+      const defaultName = tokenPathToDefaultName(tokenPath, opts.tokenNamespaces);
       if (defaultName) {
         const className = transform({ source: 'token-path', tokenPath, defaultName });
         return { className, source: 'token-path' };
@@ -142,10 +146,22 @@ export function deriveClassName(opts: DeriveClassNameOptions): DerivedClassName 
     }
   }
 
-  // 4. Diagnostic — no rule matched.
+  // 3. JSX component tag derivation.
+  if (isComponent) {
+    const defaultName = tagToDefaultName(tag);
+    const className = transform({ source: 'tag', tag, defaultName });
+    return { className, source: 'tag' };
+  }
+
+  if (opts.segments) {
+    const literal = singleLiteralUtility(opts.segments);
+    if (literal) return { className: literal, source: 'literal' };
+  }
+
+  // 5. Diagnostic — no rule matched.
   throw new DiagnosticError(
     `Cannot derive a CSS class name for <${tag}>.\n` +
-      `Tag is bare HTML and the className doesn't reference a single token. ` +
+      `Tag is bare HTML and the className doesn't reference a token path. ` +
       `Resolve by: (a) using a JSX component instead of <${tag}>, ` +
       `(b) extracting the classes into a single token reference, ` +
       `or (c) adding an entry to \`overrides\`.`,
@@ -167,26 +183,51 @@ function tagToDefaultName(tag: string): string {
     .join('-');
 }
 
-function singleTokenPath(segments: readonly StyleSegment[]): readonly string[] | null {
-  // Accept a single token segment plus any number of literal segments
-  // (literals contribute utilities, the token names the class). Reject
-  // multiple token segments (ambiguous) or any opaque expression.
+function mostSpecificTokenPath(
+  segments: readonly StyleSegment[],
+  tokenRoots?: ReadonlySet<string> | undefined
+): readonly string[] | null {
+  // Accept token segments plus any number of literal or opaque segments. Opaque
+  // runtime values are preserved by the style transform, but a static token can
+  // still name the generated class.
   let tokenSegment: readonly string[] | null = null;
   for (const seg of segments) {
     if (seg.kind === 'literal') continue;
-    if (seg.kind === 'opaque') return null;
+    if (seg.kind === 'opaque') continue;
     if (seg.kind === 'token') {
-      if (tokenSegment) return null;
-      tokenSegment = seg.path;
+      if (tokenRoots && !tokenRoots.has(seg.path[0]!)) continue;
+      if (!tokenSegment || seg.path.length >= tokenSegment.length) tokenSegment = seg.path;
     }
   }
   return tokenSegment;
 }
 
-function tokenPathToDefaultName(path: readonly string[]): string | null {
-  // Drop the leading identifier (the namespace under which the tokens are
-  // imported) — it's not semantic.
-  if (path.length < 2) return null;
-  const meaningful = path.slice(1);
+function tokenPathToDefaultName(
+  path: readonly string[],
+  tokenNamespaces?: ReadonlySet<string> | undefined
+): string | null {
+  const meaningful = tokenPathMeaningfulSegments(path, tokenNamespaces);
   return meaningful.map((p) => kebabCase(p).replace(/^-/, '')).join('-');
+}
+
+function tokenPathMeaningfulSegments(
+  path: readonly string[],
+  tokenNamespaces?: ReadonlySet<string> | undefined
+): readonly string[] {
+  if (path.length === 1) return path;
+  if (!tokenNamespaces) return path.slice(1);
+  return tokenNamespaces.has(path[0]!) ? path.slice(1) : path;
+}
+
+function singleLiteralUtility(segments: readonly StyleSegment[]): string | null {
+  let utility: string | null = null;
+  for (const seg of segments) {
+    if (seg.kind !== 'literal') return null;
+    const parts = seg.value.split(/\s+/).filter(Boolean);
+    for (const part of parts) {
+      if (utility || !/^[a-z0-9_-]+$/.test(part)) return null;
+      utility = part;
+    }
+  }
+  return utility;
 }

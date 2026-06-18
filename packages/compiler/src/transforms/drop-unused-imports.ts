@@ -39,11 +39,43 @@ function collectReferencedIdentifiers(sourceFile: ts.SourceFile): Set<string> {
       // not references. (Module specifier is a string literal, no identifiers.)
       return;
     }
+    if (ts.isJsxOpeningElement(node)) {
+      collectFromTagName(node.tagName, used);
+      ts.forEachChild(node.attributes, (c) => visit(c, inImport));
+      return;
+    }
+    if (ts.isJsxSelfClosingElement(node)) {
+      collectFromTagName(node.tagName, used);
+      ts.forEachChild(node.attributes, (c) => visit(c, inImport));
+      return;
+    }
+    if (ts.isJsxClosingElement(node)) {
+      collectFromTagName(node.tagName, used);
+      return;
+    }
+    if (ts.isJsxAttribute(node)) {
+      if (node.initializer) visit(node.initializer, inImport);
+      return;
+    }
+    if (ts.isPropertyAccessExpression(node)) {
+      visit(node.expression, inImport);
+      return;
+    }
+    if (ts.isBindingElement(node)) {
+      if (node.initializer) visit(node.initializer, inImport);
+      return;
+    }
+    if (ts.isVariableDeclaration(node)) {
+      if (node.initializer) visit(node.initializer, inImport);
+      return;
+    }
+    if (ts.isPropertyAssignment(node)) {
+      if (ts.isComputedPropertyName(node.name)) visit(node.name.expression, inImport);
+      visit(node.initializer, inImport);
+      return;
+    }
     if (ts.isIdentifier(node) && !inImport) {
       used.add(node.text);
-    }
-    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxClosingElement(node)) {
-      collectFromTagName(node.tagName, used);
     }
     ts.forEachChild(node, (c) => visit(c, inImport));
   };
@@ -54,12 +86,16 @@ function collectReferencedIdentifiers(sourceFile: ts.SourceFile): Set<string> {
 
 function collectFromTagName(name: ts.JsxTagNameExpression, into: Set<string>): void {
   if (ts.isIdentifier(name)) {
-    into.add(name.text);
+    if (isComponentIdentifier(name.text)) into.add(name.text);
     return;
   }
   if (ts.isPropertyAccessExpression(name)) {
     collectFromTagName(name.expression as ts.JsxTagNameExpression, into);
   }
+}
+
+function isComponentIdentifier(name: string): boolean {
+  return /^[A-Z]/.test(name);
 }
 
 function trimImport(

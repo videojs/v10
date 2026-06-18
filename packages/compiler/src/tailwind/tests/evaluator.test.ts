@@ -109,6 +109,27 @@ describe('loadTokenModule — cn() calls', () => {
   });
 });
 
+describe('loadTokenModule — array joins', () => {
+  it('joins static array literals with a string separator', () => {
+    const file = write(
+      'mod.ts',
+      `export const a = ['flex', 'items-center'].join(' ');
+`
+    );
+    expect(loadTokenModule(file)).toEqual({ a: 'flex items-center' });
+  });
+
+  it('rejects non-literal join separators', () => {
+    const file = write(
+      'mod.ts',
+      `const sep = ' ';
+export const a = ['flex', 'items-center'].join(sep);
+`
+    );
+    expect(() => loadTokenModule(file)).toThrow(/separator must be a string literal/);
+  });
+});
+
 describe('loadTokenModule — relative imports', () => {
   it('resolves a relative .ts import', () => {
     write('base.ts', `export const value = 'flex';\n`);

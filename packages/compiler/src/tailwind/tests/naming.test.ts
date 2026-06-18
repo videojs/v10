@@ -84,6 +84,24 @@ describe('deriveClassName — token-path derivation', () => {
     expect(r.className).toBe('foo');
   });
 
+  it('drops leading identifiers that are known token namespaces', () => {
+    const r = deriveClassName({
+      element: firstElement(`<div className={styles.foo}/>`),
+      segments: [token(['styles', 'foo'])],
+      tokenNamespaces: new Set(['styles']),
+    });
+    expect(r.className).toBe('foo');
+  });
+
+  it('keeps leading identifiers that are named token imports', () => {
+    const r = deriveClassName({
+      element: firstElement(`<div className={slider.root}/>`),
+      segments: [token(['slider', 'root'])],
+      tokenNamespaces: new Set(),
+    });
+    expect(r.className).toBe('slider-root');
+  });
+
   it('combines literal segments with a single token (token names the class)', () => {
     const r = deriveClassName({
       element: firstElement(`<div className={cn('flex', styles.foo)}/>`),
@@ -92,22 +110,20 @@ describe('deriveClassName — token-path derivation', () => {
     expect(r.className).toBe('foo');
   });
 
-  it('throws on multiple tokens (ambiguous)', () => {
-    expect(() =>
-      deriveClassName({
-        element: firstElement(`<div className={cn(styles.a, styles.b)}/>`),
-        segments: [token(['styles', 'a']), token(['styles', 'b'])],
-      })
-    ).toThrow(DiagnosticError);
+  it('uses the last equal-depth token when multiple tokens are present', () => {
+    const r = deriveClassName({
+      element: firstElement(`<div className={cn(styles.a, styles.b)}/>`),
+      segments: [token(['styles', 'a']), token(['styles', 'b'])],
+    });
+    expect(r.className).toBe('b');
   });
 
-  it('throws on an opaque expression next to a token', () => {
-    expect(() =>
-      deriveClassName({
-        element: firstElement(`<div className={cn(styles.a, foo())}/>`),
-        segments: [token(['styles', 'a']), opaque()],
-      })
-    ).toThrow(DiagnosticError);
+  it('derives from a token when opaque runtime segments are present', () => {
+    const r = deriveClassName({
+      element: firstElement(`<div className={cn(styles.a, foo())}/>`),
+      segments: [token(['styles', 'a']), opaque()],
+    });
+    expect(r.className).toBe('a');
   });
 
   it('honours overrides keyed by dotted token path', () => {
@@ -118,6 +134,35 @@ describe('deriveClassName — token-path derivation', () => {
     });
     expect(r.source).toBe('override');
     expect(r.className).toBe('special');
+  });
+
+  it('keeps regular components tag-derived when token segments are present', () => {
+    const r = deriveClassName({
+      element: firstElement(`<PlayButton className={styles.button.icon}/>`),
+      segments: [token(['styles', 'button', 'icon'])],
+    });
+    expect(r.source).toBe('tag');
+    expect(r.className).toBe('play-button');
+  });
+
+  it('derives regular components from known token roots', () => {
+    const r = deriveClassName({
+      element: firstElement(`<ChevronIcon className={menu.chevron}/>`),
+      segments: [token(['menu', 'chevron'])],
+      tokenRoots: new Set(['menu']),
+      tokenNamespaces: new Set(),
+    });
+    expect(r.source).toBe('token-path');
+    expect(r.className).toBe('menu-chevron');
+  });
+
+  it('derives compound components from token segments when present', () => {
+    const r = deriveClassName({
+      element: firstElement(`<Menu.Trigger className={styles.menu.item}/>`),
+      segments: [token(['styles', 'menu', 'item'])],
+    });
+    expect(r.source).toBe('token-path');
+    expect(r.className).toBe('menu-item');
   });
 });
 
@@ -215,7 +260,7 @@ describe('deriveClassName — diagnostics', () => {
   it('includes the tag name in the error message', () => {
     let caught: DiagnosticError | null = null;
     try {
-      deriveClassName({ element: firstElement(`<div className="x"/>`), segments: [literal('x')] });
+      deriveClassName({ element: firstElement(`<div className="x y"/>`), segments: [literal('x y')] });
     } catch (e) {
       caught = e as DiagnosticError;
     }

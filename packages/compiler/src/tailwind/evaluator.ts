@@ -205,16 +205,7 @@ function evaluate(node: ts.Expression, env: Map<string, TokenValue>, fromFile: s
   if (ts.isArrayLiteralExpression(node)) {
     // Arrays only appear as `cn(...)` arguments. We model them as the
     // space-join of their elements (matching `cn`'s `.flat()` semantics).
-    const parts: string[] = [];
-    for (const el of node.elements) {
-      const v = evaluate(el, env, fromFile);
-      if (typeof v === 'string') {
-        if (v) parts.push(v);
-      } else {
-        throw evalError(node, fromFile, 'Arrays in token expressions must contain strings only');
-      }
-    }
-    return parts.join(' ');
+    return evaluateArrayParts(node, env, fromFile).join(' ');
   }
   if (ts.isParenthesizedExpression(node)) {
     return evaluate(node.expression, env, fromFile);
@@ -279,6 +270,10 @@ function readPropertyKey(name: ts.PropertyName, fromFile: string): string {
 }
 
 function evaluateCall(node: ts.CallExpression, env: Map<string, TokenValue>, fromFile: string): TokenValue {
+  if (ts.isPropertyAccessExpression(node.expression) && node.expression.name.text === 'join') {
+    return evaluateArrayJoin(node, env, fromFile);
+  }
+
   if (!ts.isIdentifier(node.expression) || node.expression.text !== 'cn') {
     throw evalError(node, fromFile, 'Only `cn(...)` calls are supported in token expressions');
   }
@@ -292,6 +287,40 @@ function evaluateCall(node: ts.CallExpression, env: Map<string, TokenValue>, fro
     throw evalError(arg, fromFile, 'cn() arguments must be strings or arrays of strings');
   }
   return parts.join(' ');
+}
+
+function evaluateArrayJoin(node: ts.CallExpression, env: Map<string, TokenValue>, fromFile: string): TokenValue {
+  const callee = node.expression;
+  if (!ts.isPropertyAccessExpression(callee) || !ts.isArrayLiteralExpression(callee.expression)) {
+    throw evalError(node, fromFile, 'Only array-literal `.join()` calls are supported in token expressions');
+  }
+  if (node.arguments.length > 1) {
+    throw evalError(node, fromFile, 'Array `.join()` in token expressions accepts at most one separator');
+  }
+
+  let separator = ',';
+  const arg = node.arguments[0];
+  if (arg) {
+    if (!ts.isStringLiteral(arg) && !ts.isNoSubstitutionTemplateLiteral(arg)) {
+      throw evalError(arg, fromFile, 'Array `.join()` separator must be a string literal');
+    }
+    separator = arg.text;
+  }
+
+  return evaluateArrayParts(callee.expression, env, fromFile).join(separator);
+}
+
+function evaluateArrayParts(node: ts.ArrayLiteralExpression, env: Map<string, TokenValue>, fromFile: string): string[] {
+  const parts: string[] = [];
+  for (const el of node.elements) {
+    const v = evaluate(el, env, fromFile);
+    if (typeof v === 'string') {
+      if (v) parts.push(v);
+      continue;
+    }
+    throw evalError(node, fromFile, 'Arrays in token expressions must contain strings only');
+  }
+  return parts;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

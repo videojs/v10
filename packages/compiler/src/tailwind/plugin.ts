@@ -36,6 +36,8 @@ export type TailwindMode =
 /** Per-rule annotation hook; lets the consumer assign a `bag` for split-mode emission. */
 export type BagFor = (info: { className: string; segments: readonly StyleSegment[] }) => string | undefined;
 
+export type ResolveTokenModule = (specifier: string, fromFile: string) => string | null | undefined;
+
 export interface TailwindOptions {
   /** Styling mode. Defaults to `'preserve'`. */
   mode?: TailwindMode | undefined;
@@ -45,6 +47,8 @@ export interface TailwindOptions {
   input?: string | undefined;
   /** CSS asset name for `'extract'`. Defaults to the compiled source basename with `.css`. */
   output?: string | undefined;
+  /** Resolve bare token imports in skin sources to token modules on disk. Relative imports use the default resolver. */
+  resolveTokenModule?: ResolveTokenModule | undefined;
   /**
    * Hook for shaping the final class name (see `NameTransform`). Only used
    * by `'extract'`. Identity by default.
@@ -168,13 +172,13 @@ export function tailwindPlugin(options: TailwindTransformOptions): ts.Transforme
  * ───────────────────────────────────────────────────────────────────────── */
 
 function inlinedPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
-  const env = buildTokenEnv(options.sourcePath);
+  const env = buildTokenEnv(options.sourcePath, options.resolveTokenModule);
 
   return (transformContext) => {
     return (sourceFile) => {
       const visit: StyleVisitor = (info, factory) => {
         if (info.kind !== 'segments' || !info.segments) return undefined;
-        const flat = flattenToLiteral(info.segments, env);
+        const flat = flattenToLiteral(info.segments, env.values);
         if (flat === null) return undefined;
         return factory.createStringLiteral(flat);
       };
@@ -193,7 +197,7 @@ function vanillaCssPlugin(
 ): ts.TransformerFactory<ts.SourceFile> {
   const { design, transformName, overrides, bagFor, onRules } = options;
 
-  const env = buildTokenEnv(options.sourcePath);
+  const env = buildTokenEnv(options.sourcePath, options.resolveTokenModule);
 
   return (transformContext) => {
     return (sourceFile) => {
@@ -214,6 +218,7 @@ function vanillaCssPlugin(
           segments,
           ...(transformName ? { transformName } : {}),
           ...(overrides ? { overrides } : {}),
+          ...(env.hasSource ? { tokenNamespaces: env.namespaces, tokenRoots: env.roots } : {}),
         };
         const derived = deriveClassName(naming);
 
@@ -225,9 +230,9 @@ function vanillaCssPlugin(
         // a `cn(...)` call so composition is preserved.
         const passThrough: ts.Expression[] = [];
         const preserved: string[] = [];
-        // Every utility this element resolves to (rule-producing or preserved),
-        // for the collision signature below.
-        const utilities: string[] = [];
+        // Rule-producing utilities only. Preserved marker classes stay on the
+        // element and don't participate in generated CSS rule merging.
+        const ruleUtilities: string[] = [];
 
         // Compile one utility: emit a rule when it produces declarations,
         // otherwise *preserve* it as a literal class. Utilities that yield no
@@ -235,9 +240,9 @@ function vanillaCssPlugin(
         // Tailwind doesn't recognize — dropping them would silently break every
         // descendant `group-*` / `peer-*` variant that targets the marker.
         const handleUtility = (utility: string): void => {
-          utilities.push(utility);
           const css = decompose(utility, design);
           if (css && css.declarations.length > 0) {
+            ruleUtilities.push(utility);
             rules.push(buildCompiledRule(derived.className, css, segments, bagFor));
             return;
           }
@@ -252,7 +257,7 @@ function vanillaCssPlugin(
             continue;
           }
           if (seg.kind === 'token') {
-            const literal = resolveTokenPath(seg.path, env);
+            const literal = resolveTokenPath(seg.path, env.values);
             if (literal !== null) {
               for (const utility of literal.split(/\s+/)) {
                 if (utility) handleUtility(utility);
@@ -269,8 +274,8 @@ function vanillaCssPlugin(
         // many `<Tooltip.Popup>` with the same token) share a signature and are
         // fine; differing ones would merge conflicting declarations into one
         // rule, so we fail loudly with a fixable diagnostic.
-        if (utilities.length > 0) {
-          const signature = [...utilities].sort().join(' ');
+        if (ruleUtilities.length > 0) {
+          const signature = [...ruleUtilities].sort().join(' ');
           const previous = signatures.get(derived.className);
           if (previous === undefined) {
             signatures.set(derived.className, signature);
@@ -357,9 +362,22 @@ function defaultCssFileName(context: CompilerContext): string {
  * If `sourcePath` is undefined or unreadable, returns an empty map; the plugin
  * then leaves token-bearing className expressions alone.
  */
-function buildTokenEnv(sourcePath: string | undefined): Map<string, TokenValue> {
-  const env = new Map<string, TokenValue>();
+interface TokenEnv {
+  values: Map<string, TokenValue>;
+  namespaces: Set<string>;
+  roots: Set<string>;
+  hasSource: boolean;
+}
+
+function buildTokenEnv(sourcePath: string | undefined, resolveTokenModule?: ResolveTokenModule | undefined): TokenEnv {
+  const env: TokenEnv = {
+    values: new Map<string, TokenValue>(),
+    namespaces: new Set<string>(),
+    roots: new Set<string>(),
+    hasSource: false,
+  };
   if (!sourcePath || !existsSync(sourcePath)) return env;
+  env.hasSource = true;
 
   const source = readFileSync(sourcePath, 'utf8');
   const sourceFile = ts.createSourceFile(sourcePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
@@ -370,9 +388,7 @@ function buildTokenEnv(sourcePath: string | undefined): Map<string, TokenValue> 
     const specifier = stmt.moduleSpecifier;
     if (!ts.isStringLiteral(specifier)) continue;
     const id = specifier.text;
-    if (!id.startsWith('.')) continue;
-
-    const absolutePath = resolveModulePath(id, sourcePath);
+    const absolutePath = resolveTokenImport(id, sourcePath, resolveTokenModule);
     if (!absolutePath) continue;
 
     let exports: Record<string, TokenValue>;
@@ -395,13 +411,17 @@ function buildTokenEnv(sourcePath: string | undefined): Map<string, TokenValue> 
         const sourceName = spec.propertyName?.text ?? spec.name.text;
         const localName = spec.name.text;
         const value = exports[sourceName];
-        if (value !== undefined) env.set(localName, value);
+        if (value !== undefined) {
+          setTokenValue(env, localName, value);
+          if (isTokenNamespaceImport(sourceName, localName, value)) env.namespaces.add(localName);
+        }
       }
       continue;
     }
 
     if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
-      env.set(clause.namedBindings.name.text, exports as TokenValue);
+      env.namespaces.add(clause.namedBindings.name.text);
+      setTokenValue(env, clause.namedBindings.name.text, exports as TokenValue);
     }
   }
 
@@ -414,12 +434,22 @@ function buildTokenEnv(sourcePath: string | undefined): Map<string, TokenValue> 
     if (!ts.isVariableStatement(stmt)) continue;
     for (const decl of stmt.declarationList.declarations) {
       if (!ts.isIdentifier(decl.name) || !decl.initializer) continue;
-      const value = tryEvaluateLocal(decl.initializer, env);
-      if (value !== null) env.set(decl.name.text, value);
+      const value = tryEvaluateLocal(decl.initializer, env.values);
+      if (value !== null) setTokenValue(env, decl.name.text, value);
     }
   }
 
   return env;
+}
+
+function setTokenValue(env: TokenEnv, name: string, value: TokenValue): void {
+  env.values.set(name, value);
+  env.roots.add(name);
+}
+
+function isTokenNamespaceImport(sourceName: string, localName: string, value: TokenValue): boolean {
+  if (typeof value === 'string') return false;
+  return sourceName === 'tokens' || sourceName === 'styles' || localName === 'tokens' || localName === 'styles';
 }
 
 /**
@@ -457,6 +487,17 @@ function tryEvaluateLocal(node: ts.Expression, env: Map<string, TokenValue>): To
 }
 
 const MODULE_EXTENSIONS = ['.ts', '.tsx', '/index.ts', '/index.tsx'] as const;
+
+function resolveTokenImport(
+  specifier: string,
+  fromFile: string,
+  resolveTokenModule?: ResolveTokenModule | undefined
+): string | null {
+  if (specifier.startsWith('.')) return resolveModulePath(specifier, fromFile);
+  const resolved = resolveTokenModule?.(specifier, fromFile);
+  if (!resolved) return null;
+  return isAbsolute(resolved) ? resolved : resolvePath(dirname(fromFile), resolved);
+}
 
 function resolveModulePath(specifier: string, fromFile: string): string | null {
   const base = isAbsolute(specifier) ? specifier : resolvePath(dirname(fromFile), specifier);
