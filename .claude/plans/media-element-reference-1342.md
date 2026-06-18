@@ -64,7 +64,10 @@ If resuming with fresh context: you are resuscitating PR #1342 on branch `claude
 - Plan doc committed `19a518c` (pushed). Implementation committed `1a477bb` (not yet pushed).
 
 ## Remaining
-1. Prose-polish pass via subagent using `docs` skill / writing-style.md — MediaReference.astro prose + 8 per-page MDX intros + background-video.mdx. Preserve accuracy (no "all attributes/events" regressions), enumerated lists, MDN links, JS-only note, inverted-defaults facts. (IN PROGRESS)
-2. File regression issue (F): fixtures-green-but-real-empty class.
-3. Rewrite PR body (G): important vs ignorable files, "output is what matters," link key Netlify preview pages.
-4. `pnpm -F site test` + build sanity; push to `claude/refine-local-plan-ClRzU`; do NOT touch installation.
+- ✅ Prose-polish pass: DONE, commit `bb89d14` (433 tests green, astro check 0 errors). 6 files; accuracy preserved.
+- ✅ F — regression issue filed: #1709.
+- ✅ G — PR #1342 body rewritten for reviewability (file guide + Netlify preview links + "output is what matters").
+- ✅ Final verify: 433 site tests, astro check 0 errors, on committed state.
+- ⬜ Push prose commit; confirm PR updated. Did NOT touch installation (#1254/#1255 — separate follow-up).
+
+## Done. PR #1342 ready for review (still draft). If reopening: offer to mark ready / watch CI.
