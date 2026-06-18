@@ -1301,6 +1301,19 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const videoEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'VideoEvents') : [];
   const audioEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'AudioEvents') : [];
 
+  // Custom Video.js events (e.g. `streamtypechange`, `targetlivewindowchange`)
+  // are baked into the VideoEvents/AudioEvents contract via dedicated capability
+  // interfaces, but they are NOT native DOM media events — they must never
+  // surface in the `native` list (which points readers at MDN). They belong
+  // solely to the element-specific bucket, where `@fires` adds them per element
+  // that actually exposes the capability.
+  const customEventNames = fs.existsSync(mediaTypesPath)
+    ? new Set([
+        ...extractEventsFromTypes(mediaTypesPath, 'MediaStreamTypeEvents'),
+        ...extractEventsFromTypes(mediaTypesPath, 'MediaLiveEvents'),
+      ])
+    : new Set<string>();
+
   // Supported native media methods are the public instance methods forwarded
   // from the shared base host classes — extracted ONCE per media type (mirroring
   // how events come from VideoEvents/AudioEvents), not per element. Video adds
@@ -1392,11 +1405,15 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       return def;
     });
 
-    // Element-specific events live only in the elementSpecific bucket; exclude
-    // them from native so they are never listed twice.
+    // The native list points readers at MDN, so it must contain only genuine
+    // native DOM events. Exclude (1) element-specific events already surfaced
+    // with their own description, and (2) custom Video.js events from the
+    // capability interfaces — these are never native, even on elements that
+    // don't fire them (e.g. dash-video has no streamType, so streamtypechange
+    // appears nowhere).
     const elementSpecificNames = new Set(elementSpecific.map((e) => e.name));
     const native = (source.mediaType === 'video' ? videoEvents : audioEvents).filter(
-      (n) => !elementSpecificNames.has(n)
+      (n) => !elementSpecificNames.has(n) && !customEventNames.has(n)
     );
 
     const methods = source.mediaType === 'video' ? videoMethods : audioMethods;

@@ -1189,8 +1189,10 @@ describe('Media element pipeline (end-to-end)', () => {
     it('includes events derived from VideoEvents capability contracts', () => {
       const ref = findElement('SimpleVideo')!.reference;
       // Events are extracted from VideoEvents in types.ts, which extends all
-      // capability event interfaces including TextTrackListEvents and
-      // MediaStreamTypeEvents (the latter contributes streamtypechange).
+      // capability event interfaces including TextTrackListEvents. Custom
+      // Video.js events from MediaStreamTypeEvents/MediaLiveEvents
+      // (streamtypechange) are NOT native and are excluded here — they only
+      // appear in elementSpecific, and only on elements that @fires them.
       expect(ref.events.native).toEqual([
         'play',
         'playing',
@@ -1215,10 +1217,21 @@ describe('Media element pipeline (end-to-end)', () => {
         'removetrack',
         'changetrack',
         'trackmodechange',
-        'streamtypechange',
       ]);
       // SimpleHost dispatches no events of its own.
       expect(ref.events.elementSpecific).toEqual([]);
+    });
+
+    it('omits custom events entirely when the element does not @fires them', () => {
+      // Regression guard: streamtypechange lives in the VideoEvents contract via
+      // MediaStreamTypeEvents, but SimpleVideo has no @fires tag for it (and no
+      // streamType capability). A custom event must never leak into `native`
+      // (which points readers at MDN) — with no @fires it appears in NEITHER
+      // bucket. Mirrors dash-video / simple-hls-video in the real monorepo.
+      const ref = findElement('SimpleVideo')!.reference;
+      expect(ref.events.native).not.toContain('streamtypechange');
+      const elementSpecificNames = ref.events.elementSpecific.map((e) => e.name);
+      expect(elementSpecificNames).not.toContain('streamtypechange');
     });
 
     it('includes CSS custom properties from VideoCSSVars', () => {
