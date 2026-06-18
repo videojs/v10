@@ -1,0 +1,63 @@
+# PR #1342 — Media Element API Reference: Resuscitation Plan & Decision Log
+
+**Status:** in progress (working draft — compact before merge)
+**Branch:** `claude/refine-local-plan-ClRzU` (PR #1342). Work directly here (explicit owner approval to override default branch pin).
+**Goal:** ship the media-element reference pages **live, accurate, and useful**. Team principle: "undocumented features don't exist."
+
+## North star
+- Document the *supported subset* truthfully. Our novel surface (host properties, element-specific events) gets full descriptions; native passthrough (attributes, native events, native methods) defers to MDN.
+- The original sub-issues (#727 tree) are **stale guidance, not spec** — validate against current source.
+
+## Current branch state (verified by regenerating real JSON — DO NOT re-investigate)
+The generator is in good shape already:
+- Host properties: mixin-aware extraction works (hls/mux=12, native-hls=7). Types resolved via TS checker (not `unknown`). Defaults extracted from `*DefaultProps`.
+- JSDoc descriptions already authored on host getters (only `src` intentionally blank → native). **Workstream B (authoring JSDoc) is essentially DONE on this branch.**
+- `@fires` element-specific events already present: streamtypechange, targetlivewindowchange (hls/native-hls/mux-audio).
+- dash-video legitimately thin (2 props) — DashMedia is a minimal host; streamType is hls-specific. Not a bug.
+
+## Decision log (Q1–Q11 from owner interview — these are LOCKED)
+1. **Descriptions:** author novel surface only; native passthrough → MDN. (Mostly already done.)
+2. **Native attributes presentation:** accurate enumerated subset list + MDN (NOT "all attributes", NOT a type/default table).
+3. **Events presentation:** two-tier — native subset as a list + MDN; element-specific as a name/description table.
+4. **Methods:** accurate supported-subset list + MDN; generator collects via prototype-forwarding rule (mirror events, per-mediaType from base host files). No per-method table.
+5. **Slots:** OMIT entirely (the `media` slot is @deprecated; rest is advanced/internal).
+6. **Demos:** HTML demos live now; React demos stay commented pending #1343 (window-at-import SSR crash).
+7. **PR scope:** reference pages ONLY. Installation work (#1254/#1255) is a separate follow-up.
+8. **Verification:** DON'T build the contract test now — OPEN AN ISSUE documenting the regression class (fixtures green while real output empty/wrong).
+9. **background-video:** keep hand-authored, mirror generated structure, document novel surface (src; inverted defaults autoplay/muted/loop ON by default; nomuted/noloop/noautoplay opt-outs; --media-object-fit/--media-object-position; default slot).
+10. **Host property ordering:** alphabetical; "advanced/escape hatch" conveyed via authored JSDoc (engine/config). No curated priority list.
+11. **Attributes list = COMPLETE set:** include src/preload/stream-type (shown in BOTH Attributes and Host Properties — accurate, MDN-style content-attr vs IDL-prop). Requires un-dedup in generator + e2e spec update.
+
+## Accuracy bugs being fixed (found in real JSON/prose)
+- Prose overclaims: "Accepts common native media attributes [+examples]" and "All standard media events are re-dispatched" → replace with accurate enumerated subsets.
+- False claim: "setting [host properties] as markup attributes has no effect" — false for src/preload/streamType. Replace with: lower-level props (engine/config) are JS-only.
+- Dedup bug A: `stream-type` leaks into nativeAttributes despite `streamType` host prop (kebab-vs-camel). (Resolved by Q11 un-dedup: full list intended.)
+- Dedup bug B: streamtypechange/targetlivewindowchange appear in BOTH events.native and elementSpecific → must be elementSpecific-only.
+
+## Workstreams & status
+- **A. Generator** (media-element-handler.ts, pipeline.ts): un-dedup nativeAttributes (full set); dedup element-specific OUT of native; add `methods: string[]` (per-mediaType from media-host.ts + video-host.ts/audio-host.ts). → DELEGATED to subagent.
+- **B. Source JSDoc:** already done on branch (verify completeness only).
+- **C. Rendering** (MediaReference.astro, mediaReferenceModel.js, types/media-reference.ts): accurate attribute list; events two-tier + native subset framing; new Methods section; drop curated-examples machinery; JS-only host-props note. → DELEGATED to subagent (exact prose specified).
+- **D. background-video:** hand-author MDX mirroring structure + novel surface. → TODO (me).
+- **E. Demos:** HTML only (no change needed). React deferred to #1343.
+- **F. Regression issue:** file issue re fixtures-green-but-real-empty class. → TODO (me).
+- **G. PR body:** rewrite for reviewability — call out important vs ignorable files, emphasize "the output is what matters," link key Netlify preview pages. → TODO (me).
+
+## Key files
+- Generator: `site/scripts/api-docs-builder/src/media-element-handler.ts`, `pipeline.ts`
+- e2e spec + fixtures: `site/scripts/api-docs-builder/src/tests/e2e.test.ts`, `.../tests/fixtures/monorepo/`
+- Rendering: `site/src/components/docs/api-reference/MediaReference.astro`, `MediaHostPropsTable.astro`, `ApiCSSVarsTable.astro`
+- Model/types: `site/src/utils/mediaReferenceModel.js`, `site/src/types/media-reference.ts`
+- Pages: `site/src/content/docs/reference/{hls,dash,mux-video,mux-audio,native-hls,simple-hls-video,simple-hls-audio-only,background}-*.mdx`
+- Generated JSON (gitignored): `site/src/content/generated-media-reference/*.json`
+
+## Verify
+`cd site && pnpm api-docs && pnpm test e2e.test.ts && pnpm test mediaReferenceModel && pnpm exec astro check`
+Then manual per-element sanity: host props non-empty, types not `unknown`, defaults present, nativeAttributes = full set, native events exclude element-specific, methods populated.
+
+## Remaining after subagent returns
+1. Review subagent diff (esp. prose quality in MediaReference.astro).
+2. background-video MDX (Workstream D).
+3. File regression issue (F).
+4. Rewrite PR body (G).
+5. `pnpm -F site test`, build sanity; commit + push to `claude/refine-local-plan-ClRzU`; do NOT touch installation.
