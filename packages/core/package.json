@@ -34,6 +34,11 @@
       "development": "./dist/dev/dom/media/*/index.js",
       "default": "./dist/default/dom/media/*/index.js"
     },
+    "./media/predicate": {
+      "types": "./dist/dev/media/predicate.d.ts",
+      "development": "./dist/dev/media/predicate.js",
+      "default": "./dist/default/media/predicate.js"
+    },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",
       "development": "./dist/dev/i18n.js",

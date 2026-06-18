@@ -14,6 +14,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
+    'media/predicate': './src/core/media/predicate.ts',
     i18n: './src/core/i18n/index.ts',
     ...localeEntries,
     dom: './src/dom/index.ts',
