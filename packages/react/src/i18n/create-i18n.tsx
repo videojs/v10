@@ -81,6 +81,8 @@ export interface I18nContextValue {
   locale: Locale;
   /** True when {@link I18nProviderProps.locale} was set explicitly on this provider. */
   localeFromProp: boolean;
+  /** Overrides passed to this provider. */
+  translations?: Partial<Translations>;
 }
 
 export interface CreateI18nResult {
@@ -195,8 +197,13 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     const translator = useMemo(() => createTranslator(translations, resolvedLocale), [translations, resolvedLocale]);
 
     const value = useMemo<I18nContextValue>(
-      () => ({ translator, locale: resolvedLocale, localeFromProp: localeProp !== undefined }),
-      [translator, resolvedLocale, localeProp]
+      () => ({
+        translator,
+        locale: resolvedLocale,
+        localeFromProp: localeProp !== undefined,
+        translations: translationsProp,
+      }),
+      [translator, resolvedLocale, localeProp, translationsProp]
     );
 
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -211,7 +218,14 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       return props.children;
     }
     const inheritedLocale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
-    return <I18nProviderRoot {...props} {...(inheritedLocale !== undefined ? { locale: inheritedLocale } : {})} />;
+    const inheritedTranslations = props.translations ?? (langRootOnly && parent ? parent.translations : undefined);
+    return (
+      <I18nProviderRoot
+        {...props}
+        {...(inheritedLocale !== undefined ? { locale: inheritedLocale } : {})}
+        {...(inheritedTranslations !== undefined ? { translations: inheritedTranslations } : {})}
+      />
+    );
   }
 
   function useTranslator(): Translator {

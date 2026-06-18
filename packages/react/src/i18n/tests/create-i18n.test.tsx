@@ -66,6 +66,32 @@ describe('createI18n', () => {
     });
   });
 
+  it('preserves parent translations in langRootRef providers', async () => {
+    registerI18n('en', { play: 'Registry' });
+    const rootRef = createRef<HTMLDivElement>();
+    const { I18nProvider, useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    render(
+      <I18nProvider translations={{ play: 'Override' }}>
+        <I18nProvider langRootRef={rootRef}>
+          <div ref={rootRef}>
+            <Probe />
+          </div>
+        </I18nProvider>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Override')).not.toBeNull();
+    });
+    expect(screen.queryByText('Registry')).toBeNull();
+  });
+
   it('inherits nearest ancestor lang (including html)', async () => {
     registerI18n('de', { play: 'Los' });
     document.documentElement.lang = 'de';
