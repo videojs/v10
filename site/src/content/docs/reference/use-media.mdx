@@ -12,7 +12,7 @@ import BasicUsageDemoReact from "@/components/docs/demos/use-media/react/css/Bas
 import basicUsageReactTsx from "@/components/docs/demos/use-media/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/use-media/react/css/BasicUsage.css?raw";
 
-`Player.useMedia` returns the current `Media` object (or `null` if no media has been registered yet). `Media` is a runtime-agnostic playback interface — any instance that conforms to it, including an `HTMLVideoElement`, can be the media. It exposes capabilities like `play()` and event subscription rather than assuming a native element. It must be called within a `Player.Provider`. The media object becomes available after a `<Video>` or `<Audio>` component mounts inside the provider tree. To attach a custom media element instead of the built-in components, see <DocsLink slug="reference/use-media-attach">`useMediaAttach`</DocsLink>.
+`Player.useMedia` (from <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>) returns the current `Media` object (or `null` if no media has been registered yet). `Media` is a runtime-agnostic playback interface — any instance that conforms to it, including an `HTMLVideoElement`, can be the media. It exposes capabilities like `play()` and event subscription rather than assuming a native element. It must be called within a `Player.Provider`. The media object becomes available after a `<Video>` or `<Audio>` component mounts inside the provider tree. To attach a custom media element instead of the built-in components, see <DocsLink slug="reference/use-media-attach">`useMediaAttach`</DocsLink>.
 
 ## Examples
 
