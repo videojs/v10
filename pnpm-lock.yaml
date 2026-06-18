@@ -282,6 +282,9 @@ importers:
       '@types/chromecast-caf-sender':
         specifier: ^1.0.11
         version: 1.0.11
+      '@videojs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0
@@ -360,6 +363,9 @@ importers:
       '@types/react':
         specifier: ^19.2.14
         version: 19.2.14
+      '@videojs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

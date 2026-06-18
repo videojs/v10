@@ -27,6 +27,11 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
+    "./components": {
+      "types": "./dist/dev/components.d.ts",
+      "development": "./dist/dev/components.js",
+      "default": "./dist/default/components.js"
+    },
     "./dom/media/*": {
       "types": "./dist/dev/dom/media/*/index.d.ts",
       "development": "./dist/dev/dom/media/*/index.js",
@@ -43,6 +48,7 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
+    "generate": "vjs generate",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
@@ -59,6 +65,7 @@
   "devDependencies": {
     "@types/chrome": "^0.1.40",
     "@types/chromecast-caf-sender": "^1.0.11",
+    "@videojs/compiler": "workspace:*",
     "jsdom": "^26.1.0",
     "tsdown": "^0.21.9",
     "vitest": "^4.1.0"

@@ -1,6 +1,8 @@
+import { generate } from '@videojs/compiler';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
+import compilerConfig from './compiler.config.js';
 import packageJson from './package.json' with { type: 'json' };
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
@@ -8,6 +10,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',
+    components: './src/core/ui/components.generated.ts',
     'dom/media/media-host/index': './src/dom/media/media-host.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
     'dom/media/media-played-ranges/index': './src/dom/media/media-played-ranges/index.ts',
@@ -22,9 +25,17 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/media/mux/index': './src/dom/media/mux/index.ts',
     'dom/media/google-cast/index': './src/dom/media/google-cast/index.ts',
   },
+  deps: {
+    neverBundle: [/^@videojs\/compiler/],
+  },
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
     __PLAYER_VERSION__: JSON.stringify(packageJson.version),
+  },
+  hooks: {
+    'build:prepare': async () => {
+      await generate(compilerConfig);
+    },
   },
 });
 

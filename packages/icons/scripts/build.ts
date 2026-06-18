@@ -4,8 +4,10 @@ import { join } from 'node:path';
 const isWatch = process.argv.includes('--watch');
 
 import { transform } from '@svgr/core';
+import { generate as generateComponents } from '@videojs/compiler';
 import { transform as esbuildTransform } from 'esbuild';
 import { optimize } from 'svgo';
+import compilerConfig from '../compiler.config.js';
 
 import { iconBases } from './icon-bases.js';
 import {
@@ -101,6 +103,36 @@ function buildRenderTypes(iconNames: string[]): string {
 function buildIconMap(icons: { name: string; content: string }[]): string {
   const entries = icons.map(({ name, content }) => `  "${name}": \`${optimizeSvg(content)}\``).join(',\n');
   return `export const icons = {\n${entries},\n};\n`;
+}
+
+function buildComponentsTypes(sourceText: string): string {
+  const componentNames = Array.from(
+    sourceText.matchAll(/^export const (\w+) = createComponent/gm),
+    (match) => match[1]!
+  );
+  if (componentNames.length === 0) {
+    throw new Error('No generated icon components found');
+  }
+
+  const exports = componentNames.map((name) => `export declare const ${name}: IconComponent;`).join('\n');
+  const components = componentNames.map((name) => `  readonly ${name}: IconManifest;`).join('\n');
+
+  return [
+    `import type { ComponentManifest } from '@videojs/compiler';`,
+    `import type { Component } from '@videojs/compiler/jsx-runtime';`,
+    ``,
+    `type IconComponent = Component<Record<string, never>>;`,
+    `type IconManifest = ComponentManifest<Record<string, never>, readonly string[], Partial<Record<string, object>>>;`,
+    ``,
+    exports,
+    ``,
+    `export declare const COMPONENTS: {`,
+    components,
+    `};`,
+    ``,
+    `export type Components = typeof COMPONENTS;`,
+    ``,
+  ].join('\n');
 }
 
 function buildElementIndex(sets: string[]): string {
@@ -301,6 +333,30 @@ function ensureElementBase(): void {
   }
 }
 
+async function buildComponentsModule(): Promise<void> {
+  const generatedDir = join(ASSETS_DIR, '..', '__generated__');
+  ensureDir(generatedDir);
+
+  for (const config of compilerConfig) {
+    await generateComponents(config);
+
+    const setName = config.generate.output.match(/__generated__\/(\w+)\.ts$/)?.[1];
+    if (!setName) {
+      throw new Error(`Could not derive icon set from output path: ${config.generate.output}`);
+    }
+
+    const componentsDir = join(DIST_DIR, 'components', setName);
+    ensureDir(componentsDir);
+
+    const sourcePath = join(generatedDir, `${setName}.ts`);
+    const sourceText = readFileSync(sourcePath, 'utf8');
+
+    const { code } = await esbuildTransform(sourceText, { loader: 'ts', format: 'esm' });
+    writeFileSync(join(componentsDir, 'index.js'), code);
+    writeFileSync(join(componentsDir, 'index.d.ts'), buildComponentsTypes(sourceText));
+  }
+}
+
 async function buildIconSet(setName: string): Promise<void> {
   const svgFiles = getSvgFiles(setName);
   console.log(`Building set: ${setName} (${svgFiles.length} icons)`);
@@ -361,6 +417,8 @@ async function buildIconSet(setName: string): Promise<void> {
 async function build(): Promise<void> {
   const sets = getIconSets();
   console.log(`Found ${sets.length} icon sets: ${sets.join(', ')}\n`);
+
+  await buildComponentsModule();
 
   for (const set of sets) {
     await buildIconSet(set);

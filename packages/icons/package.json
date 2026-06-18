@@ -14,6 +14,14 @@
     "./dist/element/**/*.js"
   ],
   "exports": {
+    "./components": {
+      "types": "./dist/components/default/index.d.ts",
+      "default": "./dist/components/default/index.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "default": "./dist/components/*/index.js"
+    },
     "./react": {
       "types": "./dist/react/default/index.d.ts",
       "default": "./dist/react/default/index.js"
@@ -64,6 +72,7 @@
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/react": "^19.2.14",
+    "@videojs/compiler": "workspace:*",
     "@videojs/utils": "workspace:*",
     "react": "^19.2.4",
     "tsx": "^4.21.0"
