@@ -1,9 +1,8 @@
 import { findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
-
+import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../../core/media/predicate';
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
 import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../media/predicate';
 
 function getTrackId(track: TextTrackLike, index: number): string {
   return track.id || `track:${index}:${track.kind}:${track.language}:${track.label}`;
@@ -111,7 +110,7 @@ export const textTrackFeature = definePlayerFeature({
       // Listen for <track> load events on tracks that don't have cues yet.
       // `addtrack` fires before cues are parsed — we need the `load` event
       // on the <track> element to know when cues are ready.
-      const tracks = (isQuerySelectorAllCapable<'track'>(media) && media.querySelectorAll('track')) || [];
+      const tracks = (isQuerySelectorAllCapable<HTMLTrackElement>(media) && media.querySelectorAll('track')) || [];
       const shadowTracks = (media instanceof HTMLElement && media.shadowRoot?.querySelectorAll('track')) || [];
 
       for (const trackEl of [...tracks, ...shadowTracks]) {

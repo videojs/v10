@@ -1,8 +1,8 @@
 import { listen } from '@videojs/utils/dom';
+import { isMediaVolumeCapable } from '../../../core/media/predicate';
 import type { MediaVolumeState } from '../../../core/media/state';
 import type { MediaFeatureAvailability } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaVolumeCapable } from '../../media/predicate';
 
 /** Volume to restore when unmuting at zero. */
 const UNMUTE_VOLUME = 0.25;
