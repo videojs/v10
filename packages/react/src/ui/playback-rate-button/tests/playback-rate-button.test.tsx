@@ -49,10 +49,10 @@ describe('PlaybackRateButton', () => {
     const button = document.querySelector('[data-testid="button"]');
 
     await waitFor(() => {
-      expect(document.querySelector('[data-testid="popup"] span')?.textContent).toBe('Playback rate 1');
+      expect(document.querySelector('[data-testid="popup"] span')?.textContent).toBe('playbackRateAria');
       expect(document.querySelector('[data-testid="popup"] kbd')?.textContent).toBe('>');
     });
-    expect(button?.getAttribute('aria-label')).toBe('Playback rate 1');
+    expect(button?.getAttribute('aria-label')).toBe('playbackRateAria');
     expect(button?.getAttribute('aria-keyshortcuts')).toBe('>');
   });
 });

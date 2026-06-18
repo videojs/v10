@@ -1,5 +1,14 @@
 import type { State } from '@videojs/store';
 
+import type { TranslationKeyOrString } from '../i18n/types';
+
+export type { TranslationKeyOrString };
+
+/** DOM attrs where `aria-label` is a {@link TranslationKeyOrString} resolved by the platform layer. */
+export type TranslationAriaLabelAttrs = {
+  'aria-label'?: TranslationKeyOrString;
+};
+
 export type StateAttrMap<State> = {
   [Key in keyof State]?: string;
 };
@@ -17,14 +26,14 @@ export interface MediaUIComponent<Props = object, State extends object = object>
 }
 
 export interface ButtonState {
-  label: string;
+  label: TranslationKeyOrString;
 }
 
 /** Constraint for media button cores that provide a label derived from state. */
 export interface MediaButtonComponent<Props = object, ComponentState extends ButtonState = ButtonState>
   extends MediaUIComponent<Props, ComponentState> {
   readonly state: State<ComponentState>;
-  getLabel(state: ComponentState): string;
+  getLabel(state: ComponentState): TranslationKeyOrString;
 }
 
 /** Extracts the media state parameter type from a core's `setMedia` method. */

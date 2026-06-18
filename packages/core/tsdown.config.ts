@@ -2,12 +2,21 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import packageJson from './package.json' with { type: 'json' };
+import { SHIPPED_LOCALE_TAGS } from './src/core/i18n/built-in-locales.ts';
+
+const localeEntries = Object.fromEntries([
+  ['i18n/locales/all', './src/core/i18n/locales/all.ts'],
+  ['i18n/locales/en', './src/core/i18n/locales/en.ts'],
+  ...SHIPPED_LOCALE_TAGS.map((tag) => [`i18n/locales/${tag}`, `./src/core/i18n/locales/${tag}.ts`]),
+]);
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
     'media/predicate': './src/core/media/predicate.ts',
+    i18n: './src/core/i18n/index.ts',
+    ...localeEntries,
     dom: './src/dom/index.ts',
     'dom/media/media-host/index': './src/dom/media/media-host.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
