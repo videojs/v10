@@ -55,9 +55,16 @@ The generator is in good shape already:
 `cd site && pnpm api-docs && pnpm test e2e.test.ts && pnpm test mediaReferenceModel && pnpm exec astro check`
 Then manual per-element sanity: host props non-empty, types not `unknown`, defaults present, nativeAttributes = full set, native events exclude element-specific, methods populated.
 
-## Remaining after subagent returns
-1. Review subagent diff (esp. prose quality in MediaReference.astro).
-2. background-video MDX (Workstream D).
-3. File regression issue (F).
-4. Rewrite PR body (G).
-5. `pnpm -F site test`, build sanity; commit + push to `claude/refine-local-plan-ClRzU`; do NOT touch installation.
+## ⚠️ POST-COMPACTION RE-ANCHOR (read first)
+If resuming with fresh context: you are resuscitating PR #1342 on branch `claude/refine-local-plan-ClRzU`. Deps installed + packages built already. Committed checkpoints: `1a477bb` (generator+rendering accuracy), `19a518c`/this doc. A prose-polish subagent may have run — review its work via `git diff` on `MediaReference.astro` + the 8 `reference/*.mdx` intros, checking the HARD ACCURACY CONSTRAINTS below were not regressed (no "all attributes/events" overclaims; no "host props have no effect as attributes"; background-video inverted-defaults facts intact; MDN links + enumerated lists + JS-only note preserved). Then do the Remaining items. Verify with `cd site && pnpm test` (expect 433) + `pnpm exec astro check`. Commit + push at the end. Do NOT touch installation (#1254/#1255).
+
+## Progress
+- ✅ A (generator) + C (rendering): DONE & verified. Commit `1a477bb`. 433 site tests pass; e2e 122; model 8; astro check clean. Real JSON confirmed: full attrs (incl src/preload/stream-type), native events exclude element-specific, methods populated.
+- ✅ D (background-video): page already documents novel surface (inverted defaults, no* opt-outs, css vars) — only prose polish needed, folded into prose pass.
+- Plan doc committed `19a518c` (pushed). Implementation committed `1a477bb` (not yet pushed).
+
+## Remaining
+1. Prose-polish pass via subagent using `docs` skill / writing-style.md — MediaReference.astro prose + 8 per-page MDX intros + background-video.mdx. Preserve accuracy (no "all attributes/events" regressions), enumerated lists, MDN links, JS-only note, inverted-defaults facts. (IN PROGRESS)
+2. File regression issue (F): fixtures-green-but-real-empty class.
+3. Rewrite PR body (G): important vs ignorable files, "output is what matters," link key Netlify preview pages.
+4. `pnpm -F site test` + build sanity; push to `claude/refine-local-plan-ClRzU`; do NOT touch installation.
