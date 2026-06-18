@@ -5,7 +5,6 @@ import type {
   HTMLMediaElementHost,
   HTMLMediaTargetLike as TargetLike,
 } from '../media-host';
-import { adoptStagedConfig } from './config';
 
 export type Host<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
 
@@ -21,13 +20,14 @@ export function addComponent<T extends Component>(host: Host, component: T) {
   const components = getComponents(host);
   // Get the component's constructor to use as the key for the component in the registry.
   const ctor = component.constructor as ComponentConstructor<T>;
+
+  // Adopt any config set under this namespace before the component registered.
+  const { configKey } = ctor;
+  const staged = configKey ? host.config[configKey] : undefined;
+
   components.set(ctor, component);
 
-  // `host.config` reflects the component live under its `configKey` (see
-  // readConfig/writeConfig). Adopt any config staged before this point so the
-  // component owns its namespace, even across an intervening config reset.
-  const { configKey } = ctor;
-  if (configKey) adoptStagedConfig(host, configKey, component);
+  if (staged !== undefined) Object.assign(component, staged);
 
   component.setMedia?.(host);
 
