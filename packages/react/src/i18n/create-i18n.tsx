@@ -85,6 +85,10 @@ export interface I18nContextValue {
   translations?: Partial<Translations>;
 }
 
+interface I18nProviderRootProps extends I18nProviderProps {
+  parentLocale?: Locale;
+}
+
 export interface CreateI18nResult {
   I18nContext: Context<I18nContextValue | null>;
   I18nProvider: (props: I18nProviderProps) => ReactNode;
@@ -105,10 +109,11 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   function I18nProviderRoot({
     locale: localeProp,
     langRootRef,
+    parentLocale,
     translations: translationsProp,
     children,
     onActiveLocaleChange,
-  }: I18nProviderProps): ReactNode {
+  }: I18nProviderRootProps): ReactNode {
     const onActiveLocaleChangeRef = useRef(onActiveLocaleChange);
     onActiveLocaleChangeRef.current = onActiveLocaleChange;
     const [, invalidateLangRoot] = useReducer((epoch: number) => epoch + 1, 0);
@@ -132,10 +137,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       subscribeAmbientLang,
       () => {
         if (langRootRef) {
-          const root =
-            langRootElementRef.current ??
-            langRootRef.current ??
-            (typeof document !== 'undefined' ? document.documentElement : null);
+          const root = langRootElementRef.current ?? langRootRef.current;
+          if (!root) return undefined;
           return localeFromDomLang(nearestLang(root));
         }
         const root = typeof document !== 'undefined' ? document.documentElement : null;
@@ -144,7 +147,10 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       ambientLangServerSnapshot
     );
 
-    const resolvedLocale = useMemo(() => effectiveLocale(localeProp, ambientLang) as Locale, [localeProp, ambientLang]);
+    const resolvedLocale = useMemo(
+      () => effectiveLocale(localeProp, ambientLang ?? parentLocale) as Locale,
+      [localeProp, ambientLang, parentLocale]
+    );
 
     useEffect(() => {
       onActiveLocaleChangeRef.current?.(resolvedLocale);
@@ -182,6 +188,11 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
           // Ignore rejected built-in locale loads; registry/prop layers still apply.
         }
       })();
+      return () => {
+        if (lazySeqRef.current === seq) {
+          lazySeqRef.current += 1;
+        }
+      };
     }, [resolvedLocale]);
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: `registryEpoch` bumps on registry mutations; `getI18nTranslations` reads mutable registry state.
@@ -201,7 +212,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         translator,
         locale: resolvedLocale,
         localeFromProp: localeProp !== undefined,
-        translations: translationsProp,
+        ...(translationsProp !== undefined ? { translations: translationsProp } : {}),
       }),
       [translator, resolvedLocale, localeProp, translationsProp]
     );
@@ -218,14 +229,13 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       return props.children;
     }
     const inheritedLocale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
+    const parentLocale = props.langRootRef !== undefined && parent ? parent.locale : undefined;
     const inheritedTranslations = props.translations ?? (langRootOnly && parent ? parent.translations : undefined);
-    return (
-      <I18nProviderRoot
-        {...props}
-        {...(inheritedLocale !== undefined ? { locale: inheritedLocale } : {})}
-        {...(inheritedTranslations !== undefined ? { translations: inheritedTranslations } : {})}
-      />
-    );
+    const rootProps: I18nProviderRootProps = { ...props };
+    if (inheritedLocale !== undefined) rootProps.locale = inheritedLocale;
+    if (parentLocale !== undefined) rootProps.parentLocale = parentLocale;
+    if (inheritedTranslations !== undefined) rootProps.translations = inheritedTranslations;
+    return <I18nProviderRoot {...rootProps} />;
   }
 
   function useTranslator(): Translator {
