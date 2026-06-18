@@ -1,16 +1,16 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
 
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
 export interface MuteButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: MuteButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: MuteButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -49,11 +49,17 @@ export class MuteButtonCore {
     this.#props = defaults(props, MuteButtonCore.defaultProps);
   }
 
-  getLabel(state: MuteButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: MuteButtonState): string {
+    const { label } = this.#props;
 
-    return state.muted ? 'unmute' : 'mute';
+    if (isFunction(label)) {
+      const customLabel = label(state);
+      if (customLabel) return customLabel;
+    } else if (label) {
+      return label;
+    }
+
+    return state.muted ? 'Unmute' : 'Mute';
   }
 
   getAttrs(state: MuteButtonState) {

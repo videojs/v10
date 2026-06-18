@@ -1,16 +1,16 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
-import { createOptionalControlLabelCache } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
 
 export interface SeekButtonProps {
   /** Seconds to seek. Positive = forward, negative = backward. Default `30`. */
   seconds?: number | undefined;
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: SeekButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: SeekButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -39,7 +39,6 @@ export class SeekButtonCore {
 
   #props = { ...SeekButtonCore.defaultProps };
   #media: MediaTimeState | null = null;
-  readonly #customLabel = createOptionalControlLabelCache<SeekButtonState>();
 
   constructor(props?: SeekButtonProps) {
     if (props) this.setProps(props);
@@ -47,19 +46,20 @@ export class SeekButtonCore {
 
   setProps(props: SeekButtonProps): void {
     this.#props = defaults(props, SeekButtonCore.defaultProps);
-    this.#customLabel.invalidate();
   }
 
-  getLabel(state: SeekButtonState): TranslationKeyOrString {
-    const custom = this.#customLabel.resolve(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: SeekButtonState): string {
+    const { label } = this.#props;
 
-    return state.direction === 'backward' ? 'seekBackward' : 'seekForward';
-  }
+    if (isFunction(label)) {
+      const customLabel = label(state);
+      if (customLabel) return customLabel;
+    } else if (label) {
+      return label;
+    }
 
-  getLabelParams(state: SeekButtonState): { seconds: number } | undefined {
-    if (this.#customLabel.resolve(this.#props.label, state) !== undefined) return undefined;
-    return { seconds: Math.abs(this.#props.seconds) };
+    const abs = Math.abs(this.#props.seconds);
+    return state.direction === 'backward' ? `Seek backward ${abs} seconds` : `Seek forward ${abs} seconds`;
   }
 
   getAttrs(state: SeekButtonState) {

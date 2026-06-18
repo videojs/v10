@@ -1,4 +1,3 @@
-import { formatVolumePercent } from '@videojs/utils/time';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaVolumeState } from '../../../media/state';
@@ -31,7 +30,7 @@ describe('VolumeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(VolumeSliderCore.defaultProps).toEqual({
-        label: '',
+        label: 'Volume',
         step: 1,
         largeStep: 10,
         wheelStep: 5,
@@ -141,9 +140,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('volume');
-      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.75));
-      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.75) });
+      expect(attrs['aria-label']).toBe('Volume');
+      expect(attrs['aria-valuetext']).toBe('75 percent');
       expect(attrs.role).toBe('slider');
     });
 
@@ -154,8 +152,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('volumeSliderValueTextMuted');
-      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.5) });
+      expect(attrs['aria-valuetext']).toBe('50 percent, muted');
     });
 
     it('rounds value in valuetext', () => {
@@ -165,8 +162,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe(formatVolumePercent(0.333));
-      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0.333) });
+      expect(attrs['aria-valuetext']).toBe('33 percent');
     });
 
     it('uses custom label', () => {
@@ -186,8 +182,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('volumeSliderValueTextMuted');
-      expect(core.getValueTextParams(state)).toEqual({ percent: formatVolumePercent(0) });
+      expect(attrs['aria-valuetext']).toBe('0 percent, muted');
     });
   });
 

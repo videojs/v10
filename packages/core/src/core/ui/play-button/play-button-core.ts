@@ -1,14 +1,14 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
 
 export interface PlayButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: PlayButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: PlayButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -39,12 +39,18 @@ export class PlayButtonCore {
     this.#props = defaults(props, PlayButtonCore.defaultProps);
   }
 
-  getLabel(state: PlayButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: PlayButtonState): string {
+    const { label } = this.#props;
 
-    if (state.ended) return 'replay';
-    return state.paused ? 'play' : 'pause';
+    if (isFunction(label)) {
+      const customLabel = label(state);
+      if (customLabel) return customLabel;
+    } else if (label) {
+      return label;
+    }
+
+    if (state.ended) return 'Replay';
+    return state.paused ? 'Play' : 'Pause';
   }
 
   getAttrs(state: PlayButtonState) {

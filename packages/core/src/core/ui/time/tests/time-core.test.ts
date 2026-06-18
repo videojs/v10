@@ -1,4 +1,3 @@
-import { formatDuration } from '@videojs/utils/time';
 import { describe, expect, it } from 'vitest';
 
 import type { MediaTimeState } from '../../../media/state';
@@ -41,7 +40,7 @@ describe('TimeCore', () => {
       expect(state.seconds).toBe(90);
       expect(state.negative).toBe(false);
       expect(state.text).toBe('1:30');
-      expect(state.phrase).toBe(formatDuration(90));
+      expect(state.phrase).toBe('1 minute, 30 seconds');
       expect(state.datetime).toBe('PT1M30S');
     });
 
@@ -54,7 +53,7 @@ describe('TimeCore', () => {
       expect(state.seconds).toBe(300);
       expect(state.negative).toBe(false);
       expect(state.text).toBe('5:00');
-      expect(state.phrase).toBe(formatDuration(300));
+      expect(state.phrase).toBe('5 minutes');
       expect(state.datetime).toBe('PT5M');
     });
 
@@ -67,7 +66,7 @@ describe('TimeCore', () => {
       expect(state.seconds).toBe(-210); // 90 - 300
       expect(state.negative).toBe(true);
       expect(state.text).toBe('3:30');
-      expect(state.phrase).toBe(formatDuration(90 - 300));
+      expect(state.phrase).toBe('3 minutes, 30 seconds remaining');
       expect(state.datetime).toBe('PT3M30S');
     });
 
@@ -104,21 +103,21 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'current' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('timeCurrent');
+      expect(core.getLabel(state)).toBe('Current time');
     });
 
     it('returns default label for duration', () => {
       const core = new TimeCore({ type: 'duration' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('timeDuration');
+      expect(core.getLabel(state)).toBe('Duration');
     });
 
     it('returns default label for remaining', () => {
       const core = new TimeCore({ type: 'remaining' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('timeRemaining');
+      expect(core.getLabel(state)).toBe('Remaining');
     });
 
     it('returns custom string label', () => {
@@ -146,8 +145,8 @@ describe('TimeCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('timeCurrent');
-      expect(attrs['aria-valuetext']).toBe(formatDuration(90));
+      expect(attrs['aria-label']).toBe('Current time');
+      expect(attrs['aria-valuetext']).toBe('1 minute, 30 seconds');
     });
 
     it('includes remaining suffix in valuetext', () => {
@@ -156,22 +155,8 @@ describe('TimeCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('timeRemaining');
-      expect(attrs['aria-valuetext']).toBe(formatDuration(90 - 300));
-    });
-
-    it('uses formatRemaining for remaining phrase when provided', () => {
-      const core = new TimeCore({
-        type: 'remaining',
-        formatOptions: {
-          locale: 'en',
-          formatRemaining: (duration) => `quedan ${duration}`,
-        },
-      });
-      core.setMedia(createMediaState({ currentTime: 60, duration: 120 }));
-      const state = core.getState();
-
-      expect(state.phrase.startsWith('quedan ')).toBe(true);
+      expect(attrs['aria-label']).toBe('Remaining');
+      expect(attrs['aria-valuetext']).toBe('3 minutes, 30 seconds remaining');
     });
   });
 });

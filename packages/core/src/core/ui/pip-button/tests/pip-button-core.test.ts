@@ -48,12 +48,12 @@ describe('PiPButtonCore', () => {
   describe('getLabel', () => {
     it('returns Enter picture-in-picture when not in PiP', () => {
       const core = new PiPButtonCore();
-      expect(core.getLabel(createState({ pip: false }))).toBe('enterPictureInPicture');
+      expect(core.getLabel(createState({ pip: false }))).toBe('Enter picture-in-picture');
     });
 
     it('returns Exit picture-in-picture when in PiP', () => {
       const core = new PiPButtonCore();
-      expect(core.getLabel(createState({ pip: true }))).toBe('exitPictureInPicture');
+      expect(core.getLabel(createState({ pip: true }))).toBe('Exit picture-in-picture');
     });
 
     it('returns custom string label', () => {
@@ -73,7 +73,7 @@ describe('PiPButtonCore', () => {
     it('returns aria-label', () => {
       const core = new PiPButtonCore();
       const attrs = core.getAttrs(createState());
-      expect(attrs['aria-label']).toBe('enterPictureInPicture');
+      expect(attrs['aria-label']).toBe('Enter picture-in-picture');
     });
 
     it('sets aria-disabled when disabled', () => {

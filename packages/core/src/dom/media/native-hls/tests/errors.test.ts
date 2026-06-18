@@ -42,20 +42,7 @@ describe('NativeHlsMediaErrorsMixin', () => {
     expect(event.error).toBeInstanceOf(MediaError);
     expect(event.error.code).toBe(MediaError.MEDIA_ERR_NETWORK);
     expect(event.error.fatal).toBe(true);
-    expect(event.error.message).toBe(MediaError.defaultMessages[MediaError.MEDIA_ERR_NETWORK]);
-  });
-
-  it('normalizes browser-specific messages for standard error codes', () => {
-    const { host, video } = setup();
-
-    const handler = vi.fn();
-    host.addEventListener('error', handler);
-
-    fireNativeError(video, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, 'Failed to open media');
-
-    const event = handler.mock.calls[0]![0] as ErrorEvent;
-    expect(event.error.code).toBe(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
-    expect(event.error.message).toBe(MediaError.defaultMessages[MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]);
+    expect(event.error.message).toBe('network failure');
   });
 
   it('uses default message when native error has no message', () => {
@@ -76,11 +63,10 @@ describe('NativeHlsMediaErrorsMixin', () => {
 
     expect(host.error).toBeNull();
 
-    fireNativeError(video, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, 'Failed to open media');
+    fireNativeError(video, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, 'unsupported');
 
     expect(host.error).toBeInstanceOf(MediaError);
     expect(host.error!.code).toBe(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
-    expect(host.error!.message).toBe(MediaError.defaultMessages[MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]);
   });
 
   it('stops propagation of the native error event', () => {

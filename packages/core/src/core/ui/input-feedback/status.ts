@@ -56,7 +56,6 @@ export interface MediaSnapshot {
 export interface InputIndicatorLabels {
   muted: string;
   volume: string;
-  volumeWithValue: (value: string) => string;
   captionsOn: string;
   captionsOff: string;
   paused: string;
@@ -77,7 +76,6 @@ export interface StatusDetails {
 export const DEFAULT_INPUT_INDICATOR_LABELS: InputIndicatorLabels = {
   muted: 'Muted',
   volume: 'Volume',
-  volumeWithValue: (value) => `Volume ${value}`,
   captionsOn: 'Captions on',
   captionsOff: 'Captions off',
   paused: 'Paused',
@@ -156,7 +154,7 @@ export function deriveAnnouncerLabel(
   if (!details) return null;
 
   if (isVolumeIndicatorAction(event.action)) {
-    return details.status === 'volume-off' ? labels.muted : labels.volumeWithValue(details.value ?? '');
+    return details.status === 'volume-off' ? labels.muted : `${labels.volume} ${details.value}`;
   }
 
   return details.label;

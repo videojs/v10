@@ -65,19 +65,19 @@ describe('PlayButtonCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns play when paused', () => {
+    it('returns Play when paused', () => {
       const core = new PlayButtonCore();
-      expect(core.getLabel(createState({ paused: true }))).toBe('play');
+      expect(core.getLabel(createState({ paused: true }))).toBe('Play');
     });
 
-    it('returns pause when playing', () => {
+    it('returns Pause when playing', () => {
       const core = new PlayButtonCore();
-      expect(core.getLabel(createState({ paused: false }))).toBe('pause');
+      expect(core.getLabel(createState({ paused: false }))).toBe('Pause');
     });
 
-    it('returns replay when ended', () => {
+    it('returns Replay when ended', () => {
       const core = new PlayButtonCore();
-      expect(core.getLabel(createState({ ended: true }))).toBe('replay');
+      expect(core.getLabel(createState({ ended: true }))).toBe('Replay');
     });
 
     it('returns custom string label', () => {
@@ -94,7 +94,7 @@ describe('PlayButtonCore', () => {
 
     it('falls back to default when function returns empty', () => {
       const core = new PlayButtonCore({ label: () => '' });
-      expect(core.getLabel(createState({ paused: true }))).toBe('play');
+      expect(core.getLabel(createState({ paused: true }))).toBe('Play');
     });
   });
 
@@ -102,7 +102,7 @@ describe('PlayButtonCore', () => {
     it('returns aria-label', () => {
       const core = new PlayButtonCore();
       const attrs = core.getAttrs(createState({ paused: true }));
-      expect(attrs['aria-label']).toBe('play');
+      expect(attrs['aria-label']).toBe('Play');
     });
 
     it('sets aria-disabled when disabled', () => {

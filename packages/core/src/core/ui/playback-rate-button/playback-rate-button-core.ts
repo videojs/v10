@@ -1,14 +1,14 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
-import { createOptionalControlLabelCache } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
 
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: PlaybackRateButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
   /** When true, pointer activation opens a menu instead of cycling. React sets this automatically inside `Menu.Trigger`. */
@@ -33,7 +33,6 @@ export class PlaybackRateButtonCore {
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
-  readonly #customLabel = createOptionalControlLabelCache<PlaybackRateButtonState>();
 
   constructor(props?: PlaybackRateButtonProps) {
     if (props) this.setProps(props);
@@ -41,19 +40,19 @@ export class PlaybackRateButtonCore {
 
   setProps(props: PlaybackRateButtonProps): void {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
-    this.#customLabel.invalidate();
   }
 
-  getLabel(state: PlaybackRateButtonState): TranslationKeyOrString {
-    const custom = this.#customLabel.resolve(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: PlaybackRateButtonState): string {
+    const { label } = this.#props;
 
-    return 'playbackRateAria';
-  }
+    if (isFunction(label)) {
+      const customLabel = label(state);
+      if (customLabel) return customLabel;
+    } else if (label) {
+      return label;
+    }
 
-  getLabelParams(state: PlaybackRateButtonState): { rate: number } | undefined {
-    if (this.#customLabel.resolve(this.#props.label, state) !== undefined) return undefined;
-    return { rate: state.rate };
+    return `Playback rate ${state.rate}`;
   }
 
   getAttrs(state: PlaybackRateButtonState) {
