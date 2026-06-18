@@ -70,4 +70,9 @@ If resuming with fresh context: you are resuscitating PR #1342 on branch `claude
 - ✅ Final verify: 433 site tests, astro check 0 errors, on committed state.
 - ⬜ Push prose commit; confirm PR updated. Did NOT touch installation (#1254/#1255 — separate follow-up).
 
+## Post-implementation self-review (verified against real JSON + rendered pages)
+- **Bug found & fixed (commit `7437846`):** `streamtypechange`/`targetlivewindowchange` are custom events baked into VideoEvents/AudioEvents via MediaStreamTypeEvents/MediaLiveEvents. The per-element `@fires` heuristic only reclassified them on the 4 elements that tag them; on dash-video / simple-hls-video / simple-hls-audio-only (no `@fires`, no streamType/targetLiveWindow capability) they leaked into `native` and rendered as "native media events, see MDN" — wrong (not native, not on MDN). Fix: source custom-event names from their capability interfaces, exclude from `native` everywhere; they appear only in elementSpecific, only where `@fires`. Regression guard added (the fixtures had encoded the bug as expected). Capability-property signal (streamType↔streamtypechange, targetLiveWindow↔targetlivewindowchange) matches `@fires` exactly across all 7 elements.
+- **Rendered verification (dev server + Playwright):** hls-video shows host-props table (types/defaults/descriptions), enumerated attributes, native events list + element-specific table with descriptions, methods, CSS vars. dash-video correctly shows no custom events ("dispatches no events beyond the media events above"). Console errors on pages are env noise (mux.com font CERT, vite dep re-optimize `createRoot` hydration) — reference content is server-rendered and unaffected.
+- 434 site tests + 123 e2e pass; astro check 0 errors.
+
 ## Done. PR #1342 ready for review (still draft). If reopening: offer to mark ready / watch CI.
