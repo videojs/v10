@@ -10,9 +10,9 @@ Working notes for rebasing the `@videojs/compiler` work (branch `t3code/2b2bbfad
    re-apply our work as (1) the additive `@videojs/compiler` package and
    (2) freshly regenerated skins + build wiring. Generated artifacts are rebuilt,
    not merge-patched.
-2. **Carry main's legacy skin files into `__old__`** — take `origin/main`'s current
-   legacy skin sources as content, then relocate them to `__old__` per the branch's
-   staging strategy.
+2. **Remove parked legacy skin migration files** — keep current skin sources in
+   `packages/skins/src` as the canonical baseline and delete the stale migration
+   copy used during the earlier rebase.
 3. **Audit + reconcile build wiring only** — land a building, typechecking branch;
    do NOT author constrained-JSX for the new upstream components in this pass.
    Porting them is deferred (see "Deferred porting backlog").
@@ -72,7 +72,7 @@ Unrelated (drop from our set — belongs to main or a separate change):
 - `packages/spf/src/dom/features/track-playback-initiated.ts` — was wrongly folded into
   a compiler commit; main owns this. Take main's version, drop ours.
 
-## Legacy files to relocate into `__old__` (carry main's content)
+## Parked legacy migration files removed
 - React: `presets/{video,audio}/skin.tsx|css`, `minimal-skin.tsx|css`,
   `presets/background/skin.tsx|css` (main's latest, incl. ejected-skin slider fix #1660,
   scrubber preview #1652, audio overflow #1623).

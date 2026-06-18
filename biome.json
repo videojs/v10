@@ -158,7 +158,6 @@
       "!**/build/agents",
       "!**/dist",
       "!**/examples",
-      "!**/__old__",
       "!**/packages/html/cdn",
       "!**/styles/vjs.css",
       "!**/packages/*/types"
