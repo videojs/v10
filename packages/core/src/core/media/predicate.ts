@@ -1,5 +1,6 @@
 import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 import type {
   MediaBufferCapability,
   MediaErrorCapability,
@@ -14,8 +15,7 @@ import type {
   MediaVideoDimensionsCapability,
   MediaVideoRenditionCapability,
   MediaVolumeCapability,
-} from '../../core/media/types';
-import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
+} from './types';
 
 export function hasMetadata(media: MediaSourceCapability): boolean {
   return media.readyState >= 1;
@@ -109,11 +109,17 @@ export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability
   return !isUndefined(media.liveEdgeStart) && !isUndefined(media.targetLiveWindow);
 }
 
-export function isQuerySelectorAllCapable<T extends string>(
+/** Framework-agnostic `NodeList`-like shape returned by `querySelectorAll`. */
+export interface NodeListLike<Element> {
+  readonly length: number;
+  readonly [index: number]: Element;
+  item(index: number): Element | null;
+  [Symbol.iterator](): Iterator<Element>;
+}
+
+export function isQuerySelectorAllCapable<Element = unknown>(
   value: unknown
-): value is {
-  querySelectorAll: (selectors: T) => NodeListOf<HTMLElementTagNameMap[Extract<T, keyof HTMLElementTagNameMap>]>;
-} {
+): value is { querySelectorAll: (selectors: string) => NodeListLike<Element> } {
   return (
     isObject(value) && 'querySelectorAll' in value && isFunction((value as Record<string, unknown>).querySelectorAll)
   );

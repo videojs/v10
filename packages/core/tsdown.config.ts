@@ -7,6 +7,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
+    'media/predicate': './src/core/media/predicate.ts',
     dom: './src/dom/index.ts',
     'dom/media/media-host/index': './src/dom/media/media-host.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',

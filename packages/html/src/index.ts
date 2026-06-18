@@ -1,5 +1,7 @@
 // Core
 export * from '@videojs/core/dom';
+// Media predicates
+export * from '@videojs/core/media/predicate';
 export type {
   Destroyable,
   PropertyDeclaration,
@@ -10,7 +12,6 @@ export type {
 } from '@videojs/element';
 // Element — reactive primitives for users extending MediaElement
 export { DestroyMixin, ReactiveElement } from '@videojs/element';
-
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';

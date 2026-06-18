@@ -3,6 +3,8 @@
 export type { IndicatorStatus, InputAction, InputIndicatorLabels } from '@videojs/core';
 // Core
 export * from '@videojs/core/dom';
+// Media predicates
+export * from '@videojs/core/media/predicate';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
