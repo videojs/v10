@@ -184,7 +184,7 @@ describe('VolumeSlider compound', () => {
 
     const thumb = container.querySelector('[data-testid="thumb"]');
     expect(thumb?.getAttribute('role')).toBe('slider');
-    expect(thumb?.getAttribute('aria-label')).toBe('Volume');
+    expect(thumb?.getAttribute('aria-label')).toBe('volume');
   });
 
   it('SliderValue formats as percentage', () => {

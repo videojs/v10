@@ -1,10 +1,78 @@
 import { isNumber } from '../predicate/predicate';
 
+export type TimeFormatOptions = {
+  /** BCP 47 tag(s) for {@link Intl.DurationFormat} (and percent formatting where applicable). */
+  locale?: string | string[];
+  /** Called only when `seconds` is negative; formats the localized remaining-time phrase for the duration body. */
+  formatRemaining?: (duration: string) => string;
+  /** Passed to `Intl.DurationFormat`; defaults to `"long"`. */
+  style?: 'long' | 'short' | 'narrow' | 'digital';
+};
+
 const UNIT_LABELS = [
   { singular: 'hour', plural: 'hours' },
   { singular: 'minute', plural: 'minutes' },
   { singular: 'second', plural: 'seconds' },
 ] as const;
+
+type DurationFormatConstructor = new (
+  locales?: string | string[],
+  options?: { style?: TimeFormatOptions['style'] }
+) => { format: (duration: object) => string };
+
+const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
+
+const percentFormatters = new Map<string, Intl.NumberFormat>();
+const durationFormatters = new Map<string, InstanceType<NonNullable<typeof DurationFormat>>>();
+
+function localeCacheKey(locale?: string | string[]): string {
+  if (locale === undefined) return '';
+  return Array.isArray(locale) ? locale.join('\0') : locale;
+}
+
+function isEnglishLocale(locale?: string | string[]): boolean {
+  const tag = Array.isArray(locale) ? locale[0] : locale;
+  if (!tag) return true;
+  return tag === 'en' || tag.startsWith('en-');
+}
+
+function getPercentFormatter(locale?: string | string[]): Intl.NumberFormat | undefined {
+  const key = localeCacheKey(locale);
+  let formatter = percentFormatters.get(key);
+  if (!formatter) {
+    try {
+      formatter = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
+      percentFormatters.set(key, formatter);
+    } catch {
+      return undefined;
+    }
+  }
+  return formatter;
+}
+
+function formatVolumePercentFallback(fraction: number): string {
+  const percent = Math.round(Math.min(1, Math.max(0, fraction)) * 100);
+  return `${percent}%`;
+}
+
+function getDurationFormatter(
+  locale?: string | string[],
+  style: NonNullable<TimeFormatOptions['style']> = 'long'
+): InstanceType<NonNullable<typeof DurationFormat>> | undefined {
+  if (!DurationFormat) return undefined;
+
+  const key = `${localeCacheKey(locale)}\0${style}`;
+  let formatter = durationFormatters.get(key);
+  if (!formatter) {
+    try {
+      formatter = new DurationFormat(locale, { style });
+      durationFormatters.set(key, formatter);
+    } catch {
+      return undefined;
+    }
+  }
+  return formatter;
+}
 
 function isValidTime(value: number): boolean {
   return isNumber(value) && Number.isFinite(value);
@@ -117,4 +185,70 @@ export function secondsToIsoDuration(seconds: number): string {
   if (s > 0 || duration === 'PT') duration += `${s}S`;
 
   return duration;
+}
+
+/**
+ * Human-readable duration using {@link Intl.DurationFormat} when available.
+ *
+ * Negative `seconds` denote remaining time: the absolute value is formatted, then wrapped in a
+ * localized phrase via {@link TimeFormatOptions.formatRemaining}; otherwise `{duration} remaining`.
+ */
+export function formatDuration(seconds: number, options?: TimeFormatOptions): string {
+  if (!isValidTime(seconds)) {
+    return '';
+  }
+
+  const negative = seconds < 0;
+  const positiveSeconds = Math.abs(seconds);
+  const totalSeconds = Math.floor(positiveSeconds);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const secondsPart = totalSeconds % 60;
+
+  const record: Partial<{ hours: number; minutes: number; seconds: number }> = {};
+  if (hours > 0) record.hours = hours;
+  if (minutes > 0) record.minutes = minutes;
+  if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
+
+  let body: string;
+  try {
+    const durationFormatter = getDurationFormatter(options?.locale, options?.style ?? 'long');
+    if (durationFormatter) {
+      body = durationFormatter.format(record);
+    } else {
+      body = formatTimeAsPhrase(positiveSeconds);
+    }
+  } catch {
+    body = formatTimeAsPhrase(positiveSeconds);
+  }
+
+  // Some ICU builds return an empty string for a zero-length duration; fall back to the phrase formatter.
+  if (!body.trim()) {
+    body = formatTimeAsPhrase(positiveSeconds);
+  }
+
+  if (negative) {
+    const formatRemaining = options?.formatRemaining;
+    if (formatRemaining) return formatRemaining(body);
+    if (isEnglishLocale(options?.locale)) return `${body} remaining`;
+    return body;
+  }
+
+  return body;
+}
+
+/** Format a volume fraction (0–1) with {@link Intl.NumberFormat} `style: "percent"`. */
+export function formatVolumePercent(fraction: number, locale?: string | string[]): string {
+  const value = !isNumber(fraction) || !Number.isFinite(fraction) ? 0 : Math.min(1, Math.max(0, fraction));
+
+  try {
+    const formatter = getPercentFormatter(locale) ?? getPercentFormatter(undefined);
+    if (formatter) {
+      return formatter.format(value);
+    }
+  } catch {
+    // fall through to simple percent string
+  }
+
+  return formatVolumePercentFallback(value);
 }

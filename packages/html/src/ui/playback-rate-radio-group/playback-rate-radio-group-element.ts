@@ -1,5 +1,5 @@
 import { PlaybackRateRadioGroupCore, PlaybackRateRadioGroupDataAttrs } from '@videojs/core';
-import { applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { playerContext } from '../../player/context';
@@ -54,8 +54,11 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
 
       this.value = this.#core.getRateValue(state.rate);
       if (!this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby')) {
-        this.setAttribute('aria-label', 'Playback rate');
+        this.setAttribute('aria-label', this.#core.getLabel(state));
       }
+      applyElementProps(this, {
+        'aria-disabled': state.disabled ? 'true' : undefined,
+      });
 
       this.#syncContent(state);
     }
