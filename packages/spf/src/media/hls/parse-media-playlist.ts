@@ -11,6 +11,39 @@ import type {
 import { matchTag, parseByteRange, parseExtInfDuration } from './parse-attributes';
 import { resolveUrl } from './resolve-url';
 
+/** MPEG-2 Transport Stream (IANA `video/MP2T`, lowercased for `isTypeSupported`). Video + audio TS — there is no `audio/mp2t`. */
+export const MPEG_TS_MIME = 'video/mp2t';
+/** Raw ADTS AAC packed-audio (HLS `.aac` segments; IANA `audio/aac`). */
+export const RAW_AAC_MIME = 'audio/aac';
+
+// Non-fMP4 container MIMEs keyed by segment file extension. fMP4 (the MSE
+// default) always carries an EXT-X-MAP init segment, so a media playlist with
+// no init segment and one of these extensions is a non-fMP4 rendition,
+// relabeled from the fMP4 default. Extend with `.mp3` → 'audio/mpeg' etc.
+const CONTAINER_MIME_BY_EXTENSION: Record<string, string> = {
+  '.ts': MPEG_TS_MIME,
+  '.aac': RAW_AAC_MIME,
+};
+
+/** The non-fMP4 container MIMEs the parser detects — all currently treated as unplayable. */
+export const NON_FMP4_CONTAINER_MIMES = new Set(Object.values(CONTAINER_MIME_BY_EXTENSION));
+
+/**
+ * Non-fMP4 container MIME for a (resolved, absolute) segment URL, by file
+ * extension, ignoring the query string. `undefined` for fMP4 / unrecognized.
+ */
+function containerMimeFromSegment(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  let path: string;
+  try {
+    path = new URL(url).pathname.toLowerCase();
+  } catch {
+    path = url.toLowerCase().split('?')[0] ?? '';
+  }
+  const dot = path.lastIndexOf('.');
+  return dot === -1 ? undefined : CONTAINER_MIME_BY_EXTENSION[path.slice(dot)];
+}
+
 /**
  * Resolve unresolved track type to its resolved equivalent.
  */
@@ -134,10 +167,20 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         ? { url: initSegmentUrl, ...(initSegmentByteRange ? { byteRange: initSegmentByteRange } : {}) }
         : { url: '' };
 
+  // Container detection: fMP4 always carries an EXT-X-MAP init segment, so its
+  // absence plus a recognized non-fMP4 segment extension (`.ts` → MPEG-TS,
+  // `.aac` → raw ADTS AAC) marks a non-fMP4 rendition (high-precision — never
+  // trips on fMP4, which mandates the map). Relabel from the fMP4 default
+  // `video/mp4` / `audio/mp4` to the container MIME so capability probing prunes
+  // it (these containers are currently treated as unplayable; see `canPlayTrack`).
+  const detectedContainer = initSegmentUrl ? undefined : containerMimeFromSegment(segments[0]?.url);
+  const mimeType = unresolved.type !== 'text' && detectedContainer ? detectedContainer : unresolved.mimeType;
+
   // Generic resolution: All type-specific fields already on unresolved track from P1
   // Just add parsed properties (startTime, duration, segments, initialization)
   return {
     ...unresolved,
+    mimeType,
     startTime: 0,
     duration: totalDuration,
     segments,

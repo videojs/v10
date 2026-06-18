@@ -4,6 +4,7 @@ const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 
 function getCdnFileName(useCase: UseCase, skin: Skin): string {
   if (useCase === 'background-video') return 'background';
+  if (skin === 'none') return useCase === 'default-audio' ? 'audio-headless' : 'video-headless';
   if (skin === 'minimal-video') return 'video-minimal';
   if (skin === 'minimal-audio') return 'audio-minimal';
   return skin;

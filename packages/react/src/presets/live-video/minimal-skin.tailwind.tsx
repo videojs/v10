@@ -17,7 +17,7 @@ import {
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -155,7 +155,10 @@ function CaptionsTrigger(): ReactNode {
             </CaptionsButton>
           }
         />
-        <Tooltip.Popup className={cn(popup.tooltip)} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
       </Tooltip.Root>
     );
   }
@@ -193,10 +196,14 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, ...rest } = props;
+  const { children, className, poster: posterProp, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn(root(false), className)} {...rest}>
+    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (
@@ -245,7 +252,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
@@ -267,7 +277,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -279,7 +292,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -291,7 +307,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -303,7 +322,10 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

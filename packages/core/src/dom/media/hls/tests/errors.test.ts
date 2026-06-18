@@ -2,23 +2,15 @@ import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
 
 import { MediaError } from '../../../../core/media/media-error';
+import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaErrorsMixin } from '../errors';
 
-class FakeHost extends EventTarget {
+class FakeHost extends HTMLVideoElementHost {
   engine: Hls | null;
-  target: HTMLMediaElement | null = null;
 
   constructor(engine: Hls | null = null) {
     super();
     this.engine = engine;
-  }
-
-  attach(target: EventTarget): void {
-    this.target = target as HTMLMediaElement;
-  }
-
-  detach(): void {
-    this.target = null;
   }
 }
 

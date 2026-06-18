@@ -1,6 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import {
+  maxResolutionToPixelArea,
+  pickTrackUnderPixelArea,
+  type TrackPicker,
+} from '../../../media/primitives/select-tracks';
+import type { VideoSelectionSet } from '../../../media/types';
+import {
   type BackgroundLoopingVideoEngineConfig,
   type BackgroundLoopingVideoEngineContext,
   type BackgroundLoopingVideoEngineSignals,
@@ -14,6 +20,7 @@ export interface BackgroundLoopingVideoMediaProps {
   loop: boolean;
   muted: boolean;
   autoplay: boolean;
+  maxResolution: string | number | undefined;
 }
 
 export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMediaProps = {
@@ -22,6 +29,7 @@ export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMedi
   loop: true,
   muted: true,
   autoplay: true,
+  maxResolution: undefined,
 };
 
 export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMediaProps {
@@ -71,6 +79,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     #loop: boolean = backgroundLoopingVideoMediaDefaultProps.loop;
     #muted: boolean = backgroundLoopingVideoMediaDefaultProps.muted;
     #autoplay: boolean = backgroundLoopingVideoMediaDefaultProps.autoplay;
+    #maxResolution: string | number | undefined;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -80,6 +89,8 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
 
       const { config } = args?.[0] ?? {};
       this.#config = config;
+
+      this.#maxResolution = config?.maxResolution;
       this.#engine = this.#createEngine();
     }
 
@@ -157,6 +168,27 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     }
 
     // -------------------------------------------------------------------------
+    // maxResolution — adapter-owned cap on the picked rendition. The engine's
+    // closure picker (see `#createEngine`) reads this field at pick time, so
+    // setter writes take effect on the next `presentation-resolved` transition
+    // without an engine rebuild.
+    // -------------------------------------------------------------------------
+
+    get maxResolution(): string | number | undefined {
+      return this.#maxResolution;
+    }
+
+    /**
+     * Set the cap. Accepts `"720p"` / `"1080p"` etc., a bare number
+     * (interpreted as pixel area), or `undefined` to clear. Unrecognized
+     * values are treated as no cap.
+     */
+    set maxResolution(value: string | number | undefined) {
+      if (value === this.#maxResolution) return;
+      this.#maxResolution = value;
+    }
+
+    // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
     // Each assignment destroys the current engine and starts a fresh one,
     // matching the browser's load algorithm reset on src change.
@@ -212,7 +244,14 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     // -------------------------------------------------------------------------
 
     #createEngine(): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
+      const adapterPicker: TrackPicker = (presentation) => {
+        const videoSet = presentation.selectionSets?.find((s) => s.type === 'video') as VideoSelectionSet | undefined;
+        const tracks = videoSet?.switchingSets[0]?.tracks ?? [];
+        return pickTrackUnderPixelArea(tracks, maxResolutionToPixelArea(this.#maxResolution))?.id;
+      };
+
       return createBackgroundLoopingVideoEngine({
+        picker: adapterPicker,
         ...this.#config,
         onSignalsReady: (signals) => {
           this.#signals = signals;

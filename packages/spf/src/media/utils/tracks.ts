@@ -120,6 +120,37 @@ export function hasCodecs(track: PartiallyResolvedTrack | ResolvedTrack | undefi
 }
 
 /**
+ * Set `mimeType` on every track of one `type` (immutably). Used to propagate a
+ * detected container across a type's renditions: an ABR ladder is the same
+ * content at different bitrates, so one rendition's container holds for all of
+ * them — capability probing + SourceBuffer setup then get the right MIME for the
+ * whole type from a single resolved media playlist, without fetching the rest.
+ *
+ * Scoped to one type on purpose: propagating *across* audio/video would be wrong
+ * for mixed-container sources (e.g. muxed-TS video + raw-`.aac` audio) and races
+ * concurrent per-type resolution. Same-type writes are disjoint and safe.
+ * Idempotent — tracks already at `mimeType` are left as-is.
+ */
+export function applyContainerMimeType(presentation: Presentation, type: TrackType, mimeType: string): Presentation {
+  return {
+    ...presentation,
+    selectionSets: presentation.selectionSets.map((selectionSet) =>
+      selectionSet.type === type
+        ? {
+            ...selectionSet,
+            switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
+              ...switchingSet,
+              tracks: switchingSet.tracks.map((track) =>
+                track.mimeType === mimeType ? track : { ...track, mimeType }
+              ),
+            })),
+          }
+        : selectionSet
+    ),
+  } as Presentation;
+}
+
+/**
  * Updates a track within a presentation (immutably). Generic — works for
  * video, audio, or text tracks.
  */

@@ -191,7 +191,10 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -205,7 +208,10 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -219,7 +225,10 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 

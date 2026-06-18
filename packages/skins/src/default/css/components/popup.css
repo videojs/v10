@@ -10,8 +10,14 @@
   border: 0;
   filter: blur(0px);
   transition-timing-function: var(--media-popup-transition-timing-function);
-  transition-duration: var(--media-popup-transition-duration);
-  transition-property: scale, opacity, filter;
+  transition-duration:
+    var(--media-popup-transition-duration),
+    var(--media-popup-transition-duration),
+    var(--media-popup-transition-duration) var(--popup-transition-duration,);
+  transition-property:
+    scale,
+    opacity,
+    filter var(--popup-transition-property,);
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -20,8 +26,8 @@
     scale: 0.85;
   }
 
-  &[data-instant] {
-    transition-duration: 0ms;
+  &[data-ending-style] {
+    transition-duration: max(0ms, calc(var(--media-popup-transition-duration) - 50ms));
   }
 
   &[data-side="top"] {
@@ -94,6 +100,13 @@
   white-space: nowrap;
   border-radius: calc(infinity * 1px);
 
+  /* `display: flex` must not apply while closed — it overrides UA `[popover]` hiding. */
+  &[data-open] {
+    display: flex;
+    column-gap: 0.25rem;
+    align-items: center;
+  }
+
   &[data-side="top"]::before,
   &[data-side="bottom"]::before {
     height: var(--media-tooltip-side-offset);
@@ -101,5 +114,17 @@
   &[data-side="left"]::before,
   &[data-side="right"]::before {
     width: var(--media-tooltip-side-offset);
+  }
+
+  & .media-tooltip__kbd {
+    min-width: 1.5em;
+    padding: 0.1em;
+    font-family: inherit;
+    font-size: 90%;
+    font-weight: 600;
+    line-height: 1.25;
+    text-align: center;
+    background-color: oklch(from currentColor l c h / 0.3);
+    border-radius: 0.25rem;
   }
 }

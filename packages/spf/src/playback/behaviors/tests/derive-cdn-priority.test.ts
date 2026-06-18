@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, PartiallyResolvedVideoTrack, Presentation } from '../../../media/types';
-import { type ResolveCdnPriorityState, resolveCdnPriority } from '../resolve-cdn-priority';
+import { type DeriveCdnPriorityState, deriveCdnPriority } from '../derive-cdn-priority';
 
-function makeState(initial: Partial<ResolveCdnPriorityState> = {}): StateSignals<ResolveCdnPriorityState> {
+function makeState(initial: Partial<DeriveCdnPriorityState> = {}): StateSignals<DeriveCdnPriorityState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     cdnPriority: signal<string[] | undefined>(initial.cdnPriority),
@@ -50,10 +50,10 @@ const redundant = (id = 'pres-1'): Presentation =>
 
 const flush = () => Promise.resolve().then(() => Promise.resolve());
 
-describe('resolveCdnPriority', () => {
+describe('deriveCdnPriority', () => {
   it('does nothing without a presentation', async () => {
     const state = makeState();
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toBeUndefined();
     reactor.destroy();
@@ -61,7 +61,7 @@ describe('resolveCdnPriority', () => {
 
   it('publishes the manifest-ordered CDN list on src load', async () => {
     const state = makeState({ presentation: redundant() });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
     reactor.destroy();
@@ -69,7 +69,7 @@ describe('resolveCdnPriority', () => {
 
   it('publishes a single-entry list for a non-redundant source', async () => {
     const state = makeState({ presentation: presentationWith(['https://cdn-a.example.com/720p.m3u8']) });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toEqual(['https://cdn-a.example.com']);
     reactor.destroy();
@@ -77,7 +77,7 @@ describe('resolveCdnPriority', () => {
 
   it('does not re-set the list when a resolved swap keeps the same CDNs', async () => {
     const state = makeState({ presentation: redundant() });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     const first = state.cdnPriority.get();
 
@@ -92,7 +92,7 @@ describe('resolveCdnPriority', () => {
 
   it('updates the list when a resolved swap changes the CDN order', async () => {
     const state = makeState({ presentation: redundant() });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
 
@@ -107,7 +107,7 @@ describe('resolveCdnPriority', () => {
 
   it('clears cdnPriority on src unload', async () => {
     const state = makeState({ presentation: redundant() });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toBeDefined();
 
@@ -120,7 +120,7 @@ describe('resolveCdnPriority', () => {
 
   it('clears cdnPriority on destroy', async () => {
     const state = makeState({ presentation: redundant() });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toBeDefined();
 
@@ -130,7 +130,7 @@ describe('resolveCdnPriority', () => {
 
   it('re-publishes after a src reset (undefined → new resolved)', async () => {
     const state = makeState({ presentation: redundant() });
-    const reactor = resolveCdnPriority.setup({ state });
+    const reactor = deriveCdnPriority.setup({ state });
     await flush();
     expect(state.cdnPriority.get()).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
 

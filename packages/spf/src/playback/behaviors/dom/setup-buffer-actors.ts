@@ -65,6 +65,7 @@ import { createMachineReactor } from '../../../core/reactors/create-machine-reac
 import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { buildMimeCodec, createSourceBuffer } from '../../../media/dom/mse/mediasource-setup';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack } from '../../../media/types';
+import type { GetCdnId } from '../../../media/utils/cdn';
 import { getSelectedTrack, type TrackSelectionState } from '../../../media/utils/track-selection';
 import { hasCodecs } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
@@ -75,7 +76,8 @@ import {
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../actors/dom/source-buffer';
-import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
+import { failoverFetch } from '../../primitives/failover-fetch';
+import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';
 
 /**
  * Media track type for MSE buffer setup.
@@ -221,7 +223,7 @@ export const setupVideoBufferActors = defineBehavior({
       bandwidthState: Signal<BufferActorsState['bandwidthState']>;
     };
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
-    config?: object;
+    config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
   }) => {
     // Bandwidth-sampling fetch. The factory accumulates EWMA state
     // internally; the callback bridges samples to engine state for ABR.
@@ -238,10 +240,13 @@ export const setupVideoBufferActors = defineBehavior({
       },
       (next) => state.bandwidthState.set(next)
     );
+    // Engine `config` layers over the per-type defaults; `failoverFetch` reads
+    // its `selectedKey` + `getCdnId` from the merged result.
+    const typeConfig = { ...VIDEO_TYPE_CONFIG, ...config };
     return setupBufferActors({
       state,
       context,
-      config: { ...VIDEO_TYPE_CONFIG, fetch: trackedFetch, ...config },
+      config: { ...typeConfig, fetch: failoverFetch(trackedFetch, state, typeConfig) },
     });
   },
 });
@@ -274,11 +279,14 @@ export const setupAudioBufferActors = defineBehavior({
   }: {
     state: BufferActorsStateMap<'selectedAudioTrackId'>;
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
-    config?: object;
-  }) =>
-    setupBufferActors({
+    config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
+  }) => {
+    // Key order mirrors setupVideoBufferActors.
+    const typeConfig = { ...AUDIO_TYPE_CONFIG, ...config };
+    return setupBufferActors({
       state,
       context,
-      config: { ...AUDIO_TYPE_CONFIG, fetch: fetchStream, ...config },
-    }),
+      config: { ...typeConfig, fetch: failoverFetch(fetchStream, state, typeConfig) },
+    });
+  },
 });

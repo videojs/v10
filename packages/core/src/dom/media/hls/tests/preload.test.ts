@@ -1,8 +1,8 @@
 import Hls from 'hls.js';
 import { describe, expect, it, vi } from 'vitest';
 
+import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaPreloadMixin } from '../preload';
-import type { HlsEngineHost } from '../types';
 
 function createEngine(): Hls {
   const listeners = new Map<string, Set<(...args: any[]) => void>>();
@@ -26,13 +26,17 @@ function createEngine(): Hls {
   } as unknown as Hls;
 }
 
-class FakeHost extends EventTarget implements HlsEngineHost {
+class FakeHost extends HTMLVideoElementHost {
   engine: Hls | null;
-  target: HTMLMediaElement | null = null;
 
   constructor(engine: Hls | null = null) {
     super();
     this.engine = engine;
+  }
+
+  // Re-expose the now-protected `target` for test assertions.
+  override get target(): HTMLVideoElement | null {
+    return super.target as HTMLVideoElement | null;
   }
 }
 
@@ -62,7 +66,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     expect(host.target).toBeNull();
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(video.preload).toBe('none');
@@ -75,7 +79,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'auto';
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(engine.startLoad).toHaveBeenCalled();
@@ -89,7 +93,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'none';
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(engine.startLoad).not.toHaveBeenCalled();
@@ -102,7 +106,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     expect(engine.startLoad).toHaveBeenCalled();
@@ -117,7 +121,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
@@ -134,7 +138,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     const host = new PreloadHost(engine);
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
 
     host.preload = 'auto';
 
@@ -148,7 +152,7 @@ describe('HlsJsMediaPreloadMixin', () => {
     host.preload = 'metadata';
 
     const video = document.createElement('video');
-    host.target = video;
+    host.attach(video);
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();

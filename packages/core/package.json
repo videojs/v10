@@ -51,6 +51,7 @@
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
+    "@vimeo/player": "^2.30.3",
     "dashjs": "^5.0.0",
     "hls.js": "^1.6.7",
     "mux-embed": "^5.17.10"

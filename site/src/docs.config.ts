@@ -47,7 +47,11 @@ export const sidebar: Sidebar = [
     sidebarLabel: 'How to',
     llmsDescription:
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
-    contents: [{ slug: 'how-to/customize-skins' }, { slug: 'how-to/build-your-own-component' }],
+    contents: [
+      { slug: 'how-to/customize-skins' },
+      { slug: 'how-to/build-your-own-component' },
+      { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
+    ],
   },
   {
     sidebarLabel: 'Components',
@@ -136,6 +140,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-pip', sidebarLabel: 'Picture-in-picture' },
       { slug: 'reference/feature-playback' },
       { slug: 'reference/feature-playback-rate' },
+      { slug: 'reference/feature-quality' },
       { slug: 'reference/feature-remote-playback' },
       { slug: 'reference/feature-source' },
       { slug: 'reference/feature-stream-type' },

@@ -42,7 +42,7 @@ If you run it without flags, it will allow you to interactively configure your p
 npx @videojs/cli docs how-to/installation \
   --framework <html|react> \
   --preset <video|audio|background-video> \
-  --skin <default|minimal> \
+  --skin <default|minimal|none> \
   --media <html5-video|html5-audio|hls|background-video> \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
@@ -210,6 +210,10 @@ Content-Security-Policy:
 ## See also
 
 <DocsLinkCard slug="concepts/skins" anchor="styling" description="Some skins expose CSS custom properties">Skins</DocsLinkCard>
+
+<FrameworkCase frameworks={["html"]}>
+<DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+</FrameworkCase>
 
 ----
 

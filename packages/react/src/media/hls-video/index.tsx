@@ -1,7 +1,9 @@
 'use client';
 
+import { GoogleCast } from '@videojs/core/dom/media/google-cast';
 import type { HlsMediaProps } from '@videojs/core/dom/media/hls';
 import { HlsMedia, hlsMediaDefaultProps } from '@videojs/core/dom/media/hls';
+import { addComponent } from '@videojs/core/dom/media/media-host';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
@@ -16,7 +18,9 @@ export interface HlsVideoProps
 }
 
 export const HlsVideo = forwardRef<HTMLVideoElement, HlsVideoProps>(function HlsVideo({ children, ...props }, ref) {
-  const media = useMediaInstance(HlsMedia);
+  const media = useMediaInstance(HlsMedia, (media) => {
+    addComponent(media, new GoogleCast());
+  });
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const htmlProps = useSyncProps(media, props, hlsMediaDefaultProps);

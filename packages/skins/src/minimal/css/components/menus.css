@@ -4,13 +4,14 @@
    ========================================================================== */
 
 .media-minimal-skin .media-menu {
-  --menu-item-height: 1.875rem;
-  --menu-transition-duration: 200ms;
-  --menu-item-transition-duration: 100ms;
+  --menu-transition-duration: 250ms;
+  --menu-max-height: 14rem;
+  --popup-transition-property: , width, height;
+  --popup-transition-duration: , var(--menu-transition-duration), var(--menu-transition-duration);
   box-sizing: border-box;
   min-width: 6rem;
   max-width: var(--media-popover-available-width, none);
-  max-height: var(--media-popover-available-height, none);
+  max-height: min(var(--media-popover-available-height, var(--menu-max-height)), var(--menu-max-height));
   padding: 0.25rem;
   overflow: auto;
   overscroll-behavior: none;
@@ -21,13 +22,10 @@
     0 4px 6px -1px oklch(0 0 0 / 0.1),
     0 2px 4px -2px oklch(0 0 0 / 0.1);
   backdrop-filter: var(--media-popover-backdrop-filter);
-  transition-timing-function: ease-in-out;
-  transition-duration: var(--menu-transition-duration);
-  transition-property: scale, opacity, filter, width, height;
+  transition-timing-function: ease-out;
 
   @media (prefers-reduced-motion: reduce) {
     --menu-transition-duration: 0ms;
-    --menu-item-transition-duration: 0ms;
   }
 
   & .media-menu__panel {
@@ -41,7 +39,7 @@
     transition-timing-function: ease-in-out;
     transition-duration: var(--menu-transition-duration);
     transition-property: translate, filter;
-    will-change: translate;
+    will-change: translate, filter;
 
     &[data-starting-style],
     &[data-ending-style] {
@@ -83,6 +81,12 @@
     }
   }
 
+  & .media-menu__separator {
+    margin: 0.25rem -0.25rem;
+    border-bottom: 1px solid oklch(0 0 0 / 0.075);
+    box-shadow: 0 1px 0 0 oklch(1 0 0 / 0.05);
+  }
+
   & .media-menu__group {
     display: flex;
     flex-direction: column;
@@ -92,17 +96,18 @@
   & .media-menu__item,
   & .media-menu__back {
     display: flex;
+    gap: 0.5rem;
     align-items: center;
-    height: var(--menu-item-height);
+    padding: 0.375rem 0.625rem;
     text-shadow: 0 1px 0 var(--media-current-shadow-color);
     cursor: pointer;
     user-select: none;
     outline: 2px solid transparent;
     outline-offset: -2px;
     border-radius: 0.5rem;
-    transition:
-      background-color var(--menu-item-transition-duration) ease-out,
-      color var(--menu-item-transition-duration) ease-out;
+    transition: background-color, color;
+    transition-timing-function: ease-out;
+    transition-duration: 100ms;
 
     &:focus-visible {
       outline-color: currentColor;
@@ -130,13 +135,12 @@
   & .media-menu__indicator {
     flex-shrink: 0;
     margin-right: -0.25rem;
+    margin-left: auto;
     opacity: 0;
   }
 
   & .media-menu__item {
-    gap: 0.5rem;
     justify-content: space-between;
-    padding: 0 0.625rem;
     font-variant-numeric: tabular-nums;
     color: inherit;
 
@@ -151,19 +155,19 @@
     }
   }
 
+  & .media-menu__tier {
+    padding-top: 0.0625rem;
+    padding-left: 0.125rem;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    line-height: 1;
+    color: oklch(from currentColor l c h / 0.7);
+  }
+
   & .media-menu__back {
-    gap: 0.375rem;
     width: 100%;
-    padding: 0 0.625rem;
     margin-bottom: 0.125rem;
     font-weight: 500;
-    color: oklch(from currentColor l c h / 0.7);
-
-    &:hover,
-    &[data-highlighted],
-    &:focus-visible {
-      color: inherit;
-    }
   }
 
   & .media-menu__hint {
@@ -190,8 +194,6 @@
 
   /* Settings menu */
   &.media-menu--settings {
-    --menu-transition-duration: 250ms;
-    position: relative;
     width: var(--media-menu-width);
     min-width: 11rem;
     height: var(--media-menu-height);

@@ -3,9 +3,9 @@ import { cn } from '@videojs/utils/style';
 import { popup } from './popup';
 
 const panelBase = cn(
-  'absolute inset-0 overflow-auto overscroll-none p-1.5 outline-none translate-none',
+  'absolute inset-0 overflow-auto overscroll-none p-1 outline-none translate-none',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
-  'transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate]'
+  'transition-[translate,filter] duration-(--menu-transition-duration) ease-out will-change-[translate,filter]'
 );
 
 const rootView = cn(
@@ -27,44 +27,43 @@ const submenuPanel = cn(
 );
 
 const itemBase = cn(
-  'flex cursor-pointer select-none items-center rounded-full py-1.5 px-3',
+  'flex cursor-pointer select-none items-center gap-2 rounded-lg py-1.5 px-3',
   'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)',
   'outline-2 -outline-offset-2 outline-transparent',
-  'transition-[background-color,color] duration-(--menu-item-transition-duration) ease-out',
+  'transition-colors duration-100 ease-out',
   'hover:bg-current/10 data-highlighted:bg-current/10',
-  'focus-visible:outline-current focus-visible:outline-offset-2'
+  'focus-visible:outline-current focus-visible:outline-offset-2',
+  '[&_.media-icon]:drop-shadow-[0_1px_0_var(--media-current-shadow-color)]'
 );
 
 const menuTokens = cn(
-  '[--menu-transition-duration:200ms] [--menu-item-transition-duration:100ms]',
-  'motion-reduce:[--menu-transition-duration:0ms] motion-reduce:[--menu-item-transition-duration:0ms]'
+  '[--menu-transition-duration:250ms] [--menu-max-height:14rem]',
+  '[--popup-transition-property:,_width,_height] [--popup-transition-duration:,_var(--menu-transition-duration),_var(--menu-transition-duration)]',
+  'motion-reduce:[--menu-transition-duration:0ms]'
 );
 
 const menuHostShell = cn(
   popup.popover,
   menuTokens,
-  'max-w-(--media-popover-available-width,none) max-h-(--media-popover-available-height,none)',
-  'transition-[transform,scale,opacity,filter,width,height] duration-(--menu-transition-duration) ease-in-out',
-  'box-border rounded-[1.25rem] p-1.5 overscroll-none'
+  'max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--menu-max-height)),var(--menu-max-height))]',
+  'box-border rounded-xl p-1 overscroll-none'
 );
 
 export const menu = {
   /** Standalone menu popover host (audio playback rate, sandbox demos). */
-  root: cn(menuHostShell, 'min-w-24 overflow-auto'),
+  root: cn(menuHostShell, 'min-w-24 !overflow-auto'),
   /** Settings menu viewport host with nested submenu navigation. */
-  settings: cn(
-    menuHostShell,
-    '[--menu-transition-duration:250ms]',
-    'relative min-w-44 w-(--media-menu-width) h-(--media-menu-height)',
-    'overflow-hidden'
-  ),
+  settings: cn(menuHostShell, 'min-w-44 w-(--media-menu-width) h-(--media-menu-height)', '!overflow-hidden'),
   group: 'flex flex-col gap-0.5',
   item: cn(
     itemBase,
-    'group/menu-item justify-between gap-2 tabular-nums text-inherit',
+    'group/menu-item justify-between tabular-nums text-inherit',
     'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
     'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
   ),
+  separator: 'my-1 border-b border-[oklch(0_0_0/0.1)] shadow-[0_1px_0_0_oklch(1_0_0/0.075)]',
+  tier: 'self-start -ml-1 pt-px text-[0.5625rem] font-semibold leading-none text-current/70',
+  badge: 'ml-auto',
   indicator: cn(
     '-mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
     '[&_.media-icon]:drop-shadow-[0_1px_0_var(--media-current-shadow-color)]'
@@ -73,11 +72,7 @@ export const menu = {
   rootView,
   /** Submenu panel — slides in/out alongside the root view. */
   submenuPanel,
-  back: cn(
-    itemBase,
-    'mb-0.5 w-full gap-1.5 font-medium text-current/70',
-    'hover:text-inherit data-highlighted:text-inherit focus-visible:text-inherit'
-  ),
+  back: cn(itemBase, 'mb-0.5 w-full font-medium'),
   hint: 'ml-auto flex min-w-0 items-center gap-1 text-xs text-current/65',
   hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
   chevron: 'size-3.5 first:-ml-1 last:-mr-1',

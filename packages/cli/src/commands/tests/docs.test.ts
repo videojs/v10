@@ -241,6 +241,14 @@ describe('handleDocs', () => {
         expect(output()).toContain('minimal');
       });
 
+      it('generates headless (no skin) variant with skin none', async () => {
+        await handleDocs(htmlFlags({ skin: 'none' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<video-player>');
+        expect(out).not.toContain('<video-skin>');
+        expect(out).not.toContain("'@videojs/html/video/skin'");
+      });
+
       it('includes custom source URL in generated code', async () => {
         await handleDocs(htmlFlags({ 'source-url': 'https://example.com/my-video.mp4' }), ['how-to/installation']);
         expect(output()).toContain('https://example.com/my-video.mp4');

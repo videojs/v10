@@ -56,7 +56,7 @@ import type { MaybeResolvedPresentation, Segment } from '../../../media/types';
 import { findResolvedAudioTrack, findResolvedTextTrack, findResolvedVideoTrack } from '../../../media/utils/tracks';
 import type { BufferState, SegmentLoaderActor, SourceBufferState } from '../../actors/dom/segment-loader';
 import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
-import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../track-types';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../../primitives/track-types';
 
 // Re-export buffer state types for consumers that import them from this module.
 export type { BufferState, SourceBufferState };

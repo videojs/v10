@@ -1,246 +1,151 @@
-import type { MixinReturn } from '@videojs/utils/types';
-import type { RemotePlaybackLike } from '../../../core/media/types';
+import type { MediaStreamType } from '../../../core/media/types';
+import type { Component, HTMLMediaElementHost, HTMLMediaTargetLike } from '../media-host';
 import { GoogleCastProvider } from './google-cast-provider';
-import { RemotePlayback } from './remote-playback';
-import type { GoogleCastMedia, GoogleCastMediaHostConstructor } from './types';
-import { getDefaultCastOptions, loadCastFramework, requiresCastFramework } from './utils';
+import { requiresCastFramework } from './utils';
 
-export type { GoogleCastMediaElement } from './types';
+type MediaHost = HTMLMediaElementHost<HTMLMediaTargetLike, any>;
 
-export const GoogleCastMixin = <Base extends GoogleCastMediaHostConstructor>(
-  superclass: Base
-): MixinReturn<Base, GoogleCastMedia> => {
-  class GoogleCastMedia extends superclass {
-    #castOptions = getDefaultCastOptions();
-    #castCustomData: Record<string, unknown> | null | undefined;
-    #castSrc: string | undefined;
-    #castContentType: string | undefined;
-    #castStreamType: string | undefined;
-    #castReceiver: string | undefined;
-    #remote: RemotePlayback | null | undefined;
-    #provider: GoogleCastProvider | null | undefined;
-    #destroyed = false;
+export interface GoogleCastProps {
+  /** Source URL loaded on the Cast receiver. Falls back to the host's `src` / `currentSrc`. */
+  src?: string | undefined;
+  /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
+  contentType?: string | undefined;
+  /** Stream type used on the Cast receiver. */
+  streamType?: MediaStreamType | undefined;
+  /** Cast receiver application ID. Defaults to Google's default media receiver. */
+  receiver?: string | undefined;
+  /** Custom data sent to the Cast receiver with the load request. */
+  customData?: Record<string, unknown> | null | undefined;
+}
 
-    get remote(): RemotePlayback | RemotePlaybackLike | undefined {
-      if (this.#remote) return this.#remote;
-      if (this.#destroyed) return super.remote;
+declare module '../media-host' {
+  interface MediaComponentConfig {
+    googleCast: GoogleCastProps;
+  }
+}
 
-      if (requiresCastFramework()) {
-        if (!this.disableRemotePlayback) {
-          loadCastFramework();
-        }
+export class GoogleCast implements GoogleCastProps, Component {
+  static readonly configKey = 'googleCast';
 
-        this.#provider = new GoogleCastProvider(this, {
-          duration: () => super.duration,
-          currentTime: () => super.currentTime,
-          paused: () => super.paused,
-          muted: () => super.muted,
-          pause: () => super.pause(),
-        });
-        return (this.#remote = new RemotePlayback(this.#provider));
-      }
+  #src: string | undefined;
+  #contentType: string | undefined;
+  #streamType: MediaStreamType | undefined;
+  #receiver: string | undefined;
+  #customData: Record<string, unknown> | null | undefined;
+  #media: MediaHost | null = null;
+  #provider: GoogleCastProvider | null = null;
+  #override: Partial<HTMLMediaTargetLike> | null = null;
 
-      return super.remote;
-    }
-
-    attach(target: HTMLMediaElement) {
-      super.attach(target);
-
-      if (requiresCastFramework() && !this.disableRemotePlayback) {
-        loadCastFramework();
-      }
-    }
-
-    detach() {
-      super.detach();
-    }
-
-    destroy() {
-      this.#provider?.destroy();
-      this.#provider = null;
-      this.#remote = null;
-      this.#destroyed = true;
-      super.destroy();
-    }
-
-    async load() {
-      if (!this.#provider?.isCasting) return super.load();
-      return this.#provider.load();
-    }
-
-    play() {
-      if (this.#provider?.isCasting) {
-        return this.#provider.play();
-      }
-      return super.play();
-    }
-
-    pause() {
-      if (this.#provider?.isCasting) {
-        this.#provider.pause();
-        return;
-      }
-      super.pause();
-    }
-
-    /** Resolved options passed to the Google Cast framework when it initializes. */
-    get castOptions() {
-      return this.#castOptions;
-    }
-
-    /** Cast receiver application ID. Defaults to Google's default media receiver. */
-    get castReceiver() {
-      return this.#castReceiver;
-    }
-
-    set castReceiver(val: string | undefined) {
-      // Normalize empty/nullish values to `undefined` so the type returned from
-      // the getter stays `string | undefined`. The `CustomMediaElement` wrapper
-      // coerces removed attributes to `''` when routing through
-      // `attributeChangedCallback`.
-      const next = val || undefined;
-      if (this.#castReceiver === next) return;
-      this.#castReceiver = next;
-
-      if (next) {
-        this.#castOptions.receiverApplicationId = next;
-      }
-    }
-
-    /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
-    get castSrc() {
-      return this.#castSrc ?? this.querySelector('source')?.src ?? this.src ?? this.currentSrc;
-    }
-
-    set castSrc(val: string | undefined) {
-      // Normalize empty/nullish values to `undefined` so the fallback chain in the
-      // getter (via `??`) still applies. The `CustomMediaElement` wrapper coerces
-      // removed attributes to `''` when routing through `attributeChangedCallback`,
-      // which would otherwise short-circuit the fallback and break Cast loading.
-      const next = val || undefined;
-      if (this.#castSrc === next) return;
-      this.#castSrc = next;
-
-      if (this.#provider?.isCasting) this.load();
-    }
-
-    /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
-    get castContentType() {
-      return this.#castContentType;
-    }
-
-    set castContentType(val: string | undefined) {
-      // Normalize empty/nullish values to `undefined` so the type returned from
-      // the getter stays `string | undefined`. The `CustomMediaElement` wrapper
-      // coerces removed attributes to `''` when routing through
-      // `attributeChangedCallback`.
-      this.#castContentType = val || undefined;
-    }
-
-    /** Stream type (`'on-demand'` or `'live'`) used on the Cast receiver. Falls back to `streamType`. */
-    get castStreamType() {
-      return this.#castStreamType ?? this.streamType;
-    }
-
-    set castStreamType(val: string | undefined) {
-      if (this.#castStreamType === val) return;
-      this.#castStreamType = val;
-
-      if (this.#provider?.isCasting) this.load();
-    }
-
-    /** Custom data sent to the Cast receiver with the load request. */
-    get castCustomData() {
-      return this.#castCustomData;
-    }
-
-    set castCustomData(val: Record<string, unknown> | null | undefined) {
-      const valType = typeof val;
-      if (!['object', 'undefined'].includes(valType)) {
-        console.error(`castCustomData must be nullish or an object but value was of type ${valType}`);
-        return;
-      }
-
-      this.#castCustomData = val;
-    }
-
-    get seeking() {
-      if (this.#provider?.isCasting) return this.#provider.seeking;
-      return super.seeking;
-    }
-
-    get readyState() {
-      if (this.#provider?.isCasting) return this.#provider.readyState;
-      return super.readyState;
-    }
-
-    get paused() {
-      if (this.#provider?.isCasting) return this.#provider.paused;
-      return super.paused;
-    }
-
-    get ended() {
-      if (this.#provider?.isCasting) return this.#provider.ended;
-      return super.ended;
-    }
-
-    get muted() {
-      if (this.#provider?.isCasting) return this.#provider.muted;
-      return super.muted;
-    }
-
-    set muted(val: boolean) {
-      if (this.#provider?.isCasting) {
-        this.#provider.muted = val;
-        return;
-      }
-      super.muted = val;
-    }
-
-    get volume() {
-      if (this.#provider?.isCasting) return this.#provider.volume;
-      return super.volume;
-    }
-
-    set volume(val: number) {
-      if (this.#provider?.isCasting) {
-        this.#provider.volume = val;
-        return;
-      }
-      super.volume = val;
-    }
-
-    get playbackRate() {
-      if (this.#provider?.isCasting) return this.#provider.playbackRate;
-      return super.playbackRate;
-    }
-
-    set playbackRate(val: number) {
-      if (this.#provider?.isCasting) {
-        this.#provider.playbackRate = val;
-        return;
-      }
-      super.playbackRate = val;
-    }
-
-    get duration() {
-      if (this.#provider?.isCasting) return this.#provider.duration;
-      return super.duration;
-    }
-
-    get currentTime() {
-      if (this.#provider?.isCasting) return this.#provider.currentTime;
-      return super.currentTime;
-    }
-
-    set currentTime(val: number) {
-      if (this.#provider?.isCasting) {
-        this.#provider.currentTime = val;
-        return;
-      }
-      super.currentTime = val;
-    }
+  constructor(props: GoogleCastProps = {}) {
+    Object.assign(this, props);
   }
 
-  return GoogleCastMedia as unknown as MixinReturn<Base, GoogleCastMedia>;
-};
+  setMedia(host: MediaHost) {
+    if (!requiresCastFramework()) return;
+
+    this.#media = host;
+
+    this.#provider ??= new GoogleCastProvider(this);
+    this.#override = this.#createRemoteOverride();
+    this.#provider.remote.addEventListener('connect', this.#onStateChange);
+    this.#provider.remote.addEventListener('disconnect', this.#onStateChange);
+  }
+
+  attach(target: HTMLMediaTargetLike) {
+    this.#provider?.attach(target);
+  }
+
+  detach() {
+    this.#provider?.detach();
+  }
+
+  destroy() {
+    this.#provider?.destroy();
+    this.#provider = null;
+    this.#media = null;
+  }
+
+  #onStateChange = () => {
+    if (!this.#provider) return;
+
+    if (this.#provider.remote.state === 'connected') {
+      this.#override = this.#provider;
+    } else {
+      this.#override = this.#createRemoteOverride();
+    }
+  };
+
+  #createRemoteOverride(): Partial<HTMLMediaTargetLike> {
+    const provider = this.#provider!;
+    return {
+      get remote() {
+        return provider.remote;
+      },
+    };
+  }
+
+  get targetOverride() {
+    return this.#override;
+  }
+
+  /** Source URL loaded on the Cast receiver. Falls back to a `<source>` child, `src`, then `currentSrc`. */
+  get src() {
+    return this.#src ?? this.#media?.querySelector('source')?.src ?? this.#media?.src ?? this.#media?.currentSrc ?? '';
+  }
+
+  set src(value: string) {
+    if (this.#src === value) return;
+    this.#src = value;
+    this.#load();
+  }
+
+  /** MIME type of the Cast source. When unset, the receiver infers it from the URL. */
+  get contentType() {
+    return this.#contentType;
+  }
+
+  set contentType(value: string | undefined) {
+    if (this.#contentType === value) return;
+    this.#contentType = value;
+    this.#load();
+  }
+
+  /** Stream type used on the Cast receiver. Falls back to the host's `streamType` if it exposes one. */
+  get streamType() {
+    return this.#streamType ?? (this.#media as { streamType?: MediaStreamType } | null)?.streamType;
+  }
+
+  set streamType(value: MediaStreamType | undefined) {
+    if (this.#streamType === value) return;
+    this.#streamType = value;
+    this.#load();
+  }
+
+  /** Cast receiver application ID. Read on session start; falls back to the layer's default. */
+  get receiver() {
+    return this.#receiver;
+  }
+
+  set receiver(value: string | undefined) {
+    if (this.#receiver === value) return;
+    this.#receiver = value;
+    this.#load();
+  }
+
+  /** Custom data sent to the Cast receiver with the load request. */
+  get customData() {
+    return this.#customData;
+  }
+
+  set customData(value: Record<string, unknown> | null | undefined) {
+    if (this.#customData === value) return;
+    this.#customData = value;
+    this.#load();
+  }
+
+  #load() {
+    if (this.#media?.remote.state === 'connected') {
+      this.#media.load();
+    }
+  }
+}

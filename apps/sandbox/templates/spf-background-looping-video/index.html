@@ -50,14 +50,6 @@
       padding: 0 8vw;
     }
 
-    .hero .eyebrow {
-      margin: 0 0 12px;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.18em;
-      opacity: 0.7;
-    }
-
     .hero h1 {
       margin: 0 0 16px;
       font-size: clamp(36px, 6vw, 72px);
@@ -185,59 +177,42 @@
       gap: 4px;
     }
 
-    .rendition-buttons button {
+    .rendition-buttons .rendition {
       width: 100%;
       padding: 6px 8px;
       font: inherit;
       font-size: 12px;
       color: inherit;
       text-align: left;
-      cursor: pointer;
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid rgba(255, 255, 255, 0.12);
       border-radius: 4px;
     }
 
-    .rendition-buttons button:hover {
-      background: rgba(255, 255, 255, 0.12);
-    }
-
-    .rendition-buttons button.selected {
+    .rendition-buttons .rendition.selected {
       color: #7ee787;
       background: rgba(126, 231, 135, 0.12);
       border-color: rgba(126, 231, 135, 0.4);
     }
 
-    .controls .roadmap {
-      padding-top: 12px;
-      margin-top: 14px;
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    .controls .roadmap-title {
-      margin-bottom: 8px;
-      font-size: 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.12em;
-      opacity: 0.5;
-    }
-
-    .controls .roadmap-item {
-      display: flex;
-      gap: 8px;
-      align-items: baseline;
+    .controls .load-btn {
+      width: 100%;
+      padding: 8px 10px;
+      margin-top: 10px;
+      font: inherit;
       font-size: 12px;
-      line-height: 1.6;
-      opacity: 0.55;
+      font-weight: 600;
+      color: inherit;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      background: rgba(126, 231, 135, 0.16);
+      border: 1px solid rgba(126, 231, 135, 0.4);
+      border-radius: 4px;
     }
 
-    .controls .roadmap-item .phase {
-      flex-shrink: 0;
-      padding: 1px 5px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-      font-size: 10px;
-      background: rgba(255, 255, 255, 0.08);
-      border-radius: 3px;
+    .controls .load-btn:hover {
+      background: rgba(126, 231, 135, 0.24);
     }
   </style>
 </head>
@@ -248,7 +223,6 @@
     <div class="scrim"></div>
 
     <div class="hero">
-      <p class="eyebrow">SPF · Phase 1</p>
       <h1>Background Looping Video</h1>
       <p>
         Subtractive engine variant — audio, text tracks, ABR, and preload monitoring are composed out; a max-resolution
@@ -269,14 +243,23 @@
       <select id="source-select"></select>
 
       <div class="picker-section">
-        <label>Rendition</label>
-        <div id="rendition-buttons" class="rendition-buttons"></div>
+        <label for="max-resolution-select">maxResolution</label>
+        <select id="max-resolution-select">
+          <option value="">— none —</option>
+          <option value="240p">240p</option>
+          <option value="360p">360p</option>
+          <option value="480p">480p</option>
+          <option value="720p">720p</option>
+          <option value="1080p">1080p</option>
+          <option value="1440p">1440p</option>
+          <option value="2160p">2160p</option>
+        </select>
+        <button type="button" id="load-btn" class="load-btn">Load</button>
       </div>
 
-      <div class="roadmap">
-        <div class="roadmap-title">Later-phase controls</div>
-        <div class="roadmap-item"><span class="phase">P2</span>withAudio() — unmute / audio tracks</div>
-        <div class="roadmap-item"><span class="phase">P3</span>withPreload() — preload mode</div>
+      <div class="picker-section">
+        <label>Rendition</label>
+        <div id="rendition-buttons" class="rendition-buttons"></div>
       </div>
     </div>
   </div>

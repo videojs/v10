@@ -179,31 +179,64 @@ export function pickVideoTrack(
 }
 
 /**
- * Pick the video track with the highest resolution (width x height).
+ * Translates a "max resolution" into a total total pixel area
+ * for comparisons with video track resolutions with an assumed
+ * 16:9 ratio.
  *
- * Falls back to `bandwidth` when resolution metadata is missing.
+ * Example: "720p" translates to a 921600 pixel area.
+ *
+ * Because 720 * 1280 = 720 * (720 * (16/9) ) = 921_600
+ *
+ * Accepts:
+ * - string with the format '{height}p'. ('720p')
+ * - bare number, interpreted as pixel area. (921_600)
+ * - anything else will translate to `+Infinity`, meaning no cap specified
+ */
+export function maxResolutionToPixelArea(value: string | number | undefined): number {
+  if (value === undefined || value === null) return Number.POSITIVE_INFINITY;
+  if (typeof value === 'number') return Number.isFinite(value) && value > 0 ? value : Number.POSITIVE_INFINITY;
+  const match = value.trim().match(/^(\d+)p?$/i);
+  if (!match) return Number.POSITIVE_INFINITY;
+  const height = Number(match[1]);
+  if (!(Number.isFinite(height) && height > 0)) return Number.POSITIVE_INFINITY;
+  return (height * height * 16) / 9;
+}
+
+type RankableTrack = { id: string; width?: number; height?: number; bandwidth?: number };
+
+/**
+ * Pick the track with the highest pixel area at or below `maxPixelArea`.
+ * Falls back to the lowest track when nothing satisfies the cap (the
+ * lowest of the above-cap set is the closest to the cap from above).
+ * Tiebreak on bandwidth. Missing dimensions are treated as area `0`.
+ */
+export function pickTrackUnderPixelArea<T extends RankableTrack>(
+  tracks: readonly T[],
+  maxPixelArea: number = Number.POSITIVE_INFINITY
+): T | undefined {
+  if (tracks.length === 0) return undefined;
+
+  // Sort descending by pixel area, bandwidth as tiebreaker. List sizes
+  // are small (HLS variant counts) — no need to optimize past a sort.
+  const sorted = [...tracks].sort(
+    (a, b) =>
+      (b.width ?? 0) * (b.height ?? 0) - (a.width ?? 0) * (a.height ?? 0) || (b.bandwidth ?? 0) - (a.bandwidth ?? 0)
+  );
+
+  return sorted.find((t) => (t.width ?? 0) * (t.height ?? 0) <= maxPixelArea) ?? sorted[sorted.length - 1];
+}
+
+/**
+ * Pick the video track with the highest pixel area.
  *
  * Pair with `selectVideoTrack`; compose `switchVideoQuality` instead
  * for runtime-adapted quality.
  */
-export function pickMaxResolutionVideoTrack(presentation: MaybeResolvedPresentation): string | undefined {
+export function pickHighestResolutionVideoTrack(presentation: MaybeResolvedPresentation): string | undefined {
   const videoSet = presentation.selectionSets?.find((set) => set.type === 'video') as VideoSelectionSet | undefined;
   const tracks = videoSet?.switchingSets[0]?.tracks;
   if (!tracks?.length) return undefined;
-
-  let bestId: string | undefined;
-  let bestArea = -1;
-  let bestBandwidth = -1;
-  for (const track of tracks) {
-    const area = track.width && track.height ? track.width * track.height : 0;
-    const bandwidth = track.bandwidth ?? 0;
-    if (area > bestArea || (area === bestArea && bandwidth > bestBandwidth)) {
-      bestArea = area;
-      bestBandwidth = bandwidth;
-      bestId = track.id;
-    }
-  }
-  return bestId;
+  return pickTrackUnderPixelArea(tracks)?.id;
 }
 
 /**

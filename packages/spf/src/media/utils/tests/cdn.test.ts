@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { MaybeResolvedPresentation } from '../../types';
-import { getCdnId, getOrderedCdnIds } from '../cdn';
+import { addFailedCdn, getCdnId, getOrderedCdnIds } from '../cdn';
 
 const presentationWith = (urlsByType: {
   video?: string[];
@@ -117,5 +117,24 @@ describe('getOrderedCdnIds', () => {
       ] as MaybeResolvedPresentation['selectionSets'],
     };
     expect(getOrderedCdnIds(presentation)).toEqual(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+  });
+});
+
+describe('addFailedCdn', () => {
+  it('appends to an undefined or empty list', () => {
+    expect(addFailedCdn(undefined, 'https://cdn-a.example.com')).toEqual(['https://cdn-a.example.com']);
+    expect(addFailedCdn([], 'https://cdn-a.example.com')).toEqual(['https://cdn-a.example.com']);
+  });
+
+  it('appends in order', () => {
+    expect(addFailedCdn(['https://cdn-a.example.com'], 'https://cdn-b.example.com')).toEqual([
+      'https://cdn-a.example.com',
+      'https://cdn-b.example.com',
+    ]);
+  });
+
+  it('is idempotent — re-adding a present CDN returns the same array reference', () => {
+    const failed = ['https://cdn-a.example.com'];
+    expect(addFailedCdn(failed, 'https://cdn-a.example.com')).toBe(failed);
   });
 });

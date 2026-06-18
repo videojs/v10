@@ -1,0 +1,48 @@
+---
+title: Quality
+description: Video rendition state and actions for the player store
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Tracks video renditions and selects a manual rendition or automatic adaptive bitrate.
+
+<FeatureReference feature="quality" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectQuality` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to quality state. Returns `undefined` if the quality feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectQuality` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to quality state. Returns `undefined` if the quality feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="QualityInfo.tsx"
+import { selectQuality, usePlayer } from '@videojs/react';
+
+function QualityInfo() {
+  const quality = usePlayer(selectQuality);
+  if (!quality) return null;
+
+  return <span>{quality.videoRenditionList.length} renditions</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="quality-info.ts"
+import { createPlayer, MediaElement, selectQuality } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class QualityInfo extends MediaElement {
+  readonly #quality = new PlayerController(this, context, selectQuality);
+}
+```
+</FrameworkCase>

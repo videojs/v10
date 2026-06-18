@@ -103,6 +103,7 @@ export const error = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';

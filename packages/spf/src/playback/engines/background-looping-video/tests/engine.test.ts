@@ -78,7 +78,7 @@ describe('createBackgroundLoopingVideoEngine', () => {
     engine.destroy();
   });
 
-  it('defaults the picker to pickMaxResolutionVideoTrack', async () => {
+  it('defaults the picker to pickHighestResolutionVideoTrack', async () => {
     const engine = createBackgroundLoopingVideoEngine();
 
     const presentation: MaybeResolvedPresentation = {

@@ -129,7 +129,10 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />

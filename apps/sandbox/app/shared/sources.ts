@@ -79,6 +79,8 @@ export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
+export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
+
 /** Returns true when the given source represents a live stream and should use the live-video skin. */
 export function isLiveSource(id: SourceId): boolean {
   return (SOURCES[id] as { live?: boolean }).live === true;
@@ -87,6 +89,11 @@ export function isLiveSource(id: SourceId): boolean {
 export function getPosterSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/thumbnail.jpg` : undefined;
+}
+
+export function getPlaceholderSrc(source: SourceId): string | undefined {
+  const id = getMuxAssetId(source);
+  return id ? `https://image.mux.com/${id}/thumbnail.jpg?width=20` : undefined;
 }
 
 export function getStoryboardSrc(source: SourceId): string | undefined {

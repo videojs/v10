@@ -53,7 +53,10 @@ function getTemplateHTML() {
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
@@ -61,7 +64,10 @@ function getTemplateHTML() {
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
+            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
@@ -69,7 +75,10 @@ function getTemplateHTML() {
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}"></media-tooltip>
+            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+            </media-tooltip>
           </div>
 
           <div class="${time.group}">

@@ -29,9 +29,9 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../media/types';
-import { getOrderedCdnIds } from '../../media/utils/cdn';
+import { getCdnId as defaultGetCdnId, type GetCdnId, getOrderedCdnIds } from '../../media/utils/cdn';
 
-export interface ResolveCdnPriorityState {
+export interface DeriveCdnPriorityState {
   presentation?: MaybeResolvedPresentation;
   cdnPriority?: string[];
 }
@@ -44,19 +44,22 @@ const samePriority = (a: string[] | undefined, b: string[]): boolean =>
  * on src unload.
  *
  * @example
- * const reactor = resolveCdnPriority.setup({ state });
+ * const reactor = deriveCdnPriority.setup({ state });
  */
-export const resolveCdnPriority = defineBehavior({
+export const deriveCdnPriority = defineBehavior({
   stateKeys: ['presentation', 'cdnPriority'],
   contextKeys: [],
   setup: ({
     state,
+    config = {},
   }: {
     state: {
-      presentation: ReadonlySignal<ResolveCdnPriorityState['presentation']>;
-      cdnPriority: Signal<ResolveCdnPriorityState['cdnPriority']>;
+      presentation: ReadonlySignal<DeriveCdnPriorityState['presentation']>;
+      cdnPriority: Signal<DeriveCdnPriorityState['cdnPriority']>;
     };
+    config?: { getCdnId?: GetCdnId };
   }) => {
+    const getCdnId = config.getCdnId ?? defaultGetCdnId;
     const derivedStateSignal = computed(() =>
       isResolvedPresentation(state.presentation.get())
         ? ('presentation-resolved' as const)
@@ -76,7 +79,7 @@ export const resolveCdnPriority = defineBehavior({
             () => {
               const presentation = state.presentation.get();
               if (!isResolvedPresentation(presentation)) return;
-              const next = getOrderedCdnIds(presentation);
+              const next = getOrderedCdnIds(presentation, getCdnId);
               // Skip the write when the CDN set is unchanged — a live reload swaps
               // in a new presentation object with the same hosts, and re-setting a
               // fresh array would re-fire the scope for an identical result.

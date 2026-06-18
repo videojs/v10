@@ -1,26 +1,12 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import type { NativeMediaHost } from '../errors';
+import { HTMLVideoElementHost } from '../../video-host';
 import { NativeHlsMediaLiveMixin } from '../live';
 
-class FakeHost extends EventTarget implements NativeMediaHost {
-  #target: HTMLMediaElement | null = null;
-
-  get target() {
-    return this.#target;
-  }
-
-  attach(target: HTMLMediaElement): void {
-    if (!target || this.#target === target) return;
-    this.#target = target;
-  }
-
-  detach(): void {
-    this.#target = null;
-  }
-
-  destroy(): void {
-    this.#target = null;
+class FakeHost extends HTMLVideoElementHost {
+  // Re-expose the now-protected `target` for test assertions.
+  override get target(): HTMLVideoElement | null {
+    return super.target as HTMLVideoElement | null;
   }
 }
 

@@ -8,15 +8,27 @@ vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Fallback for URLs a test's mock doesn't handle explicitly. Segment/init
+// requests resolve with an empty body — the appendSegment mock makes the bytes
+// inert — so the failover monitor isn't tripped by unmocked segment fetches (a
+// single failed fetch trips that CDN into cooldown, which empties the candidate
+// set). Genuinely unknown URLs still reject loudly.
+function unmockedFetchFallback(url: string): Promise<Response> {
+  // Non-empty body: `fetchStream` throws "Response has no body" on a null body
+  // (empty Uint8Array), which would itself trip the monitor.
+  if (/\.(m4s|mp4|ts|aac)(\?|$)/.test(url)) return Promise.resolve(new Response(new Uint8Array([0])));
+  return Promise.reject(new Error(`Unmocked URL: ${url}`));
+}
+
 describe('createSimpleHlsEngine', () => {
   let originalFetch: typeof globalThis.fetch;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
-  // Tests assert at actor-presence and state-shape level, not at "init
-  // segment appended" level — so unmocked init/segment URLs in the manifests
-  // are intentional. The fetch loop's reject path leaks a console.error in
-  // each test; suppress only the expected patterns so genuine failures still
-  // surface.
+  // Tests assert at actor-presence and state-shape level, not at "init segment
+  // appended" level. Audio/video segment fetches resolve via
+  // `unmockedFetchFallback` (inert under the appendSegment mock); text-track
+  // segment fetches still reject and leak a console.error. Suppress only the
+  // expected patterns so genuine failures still surface.
   const expectedErrorPatterns = [
     /Unexpected error in segment loader.*Unmocked URL/s,
     /Failed to load text-track segment/,
@@ -133,7 +145,7 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('keeps audio on the same CDN as video even when the audio rendition order differs', async () => {
-    // Order-effect guard: `resolveCdnPriority` derives the list from track order,
+    // Order-effect guard: `deriveCdnPriority` derives the list from track order,
     // so a same-ordered source can't distinguish "scope applied" from "scope is
     // a no-op". This source is doubly adversarial to the desired result: the
     // audio selection set comes BEFORE video in the manifest, and within it the
@@ -206,6 +218,255 @@ describe('createSimpleHlsEngine', () => {
     // The discriminator: audio is listed first and lists aud-b first, but the
     // video-derived cdnPriority puts cdn-a first, so the scope picks aud-a.
     expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
+
+    engine.destroy();
+  });
+
+  it('fails over video and audio to the next CDN when one is marked failed', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine();
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+    const audioTrack = (id: string, host: string): PartiallyResolvedAudioTrack => ({
+      type: 'audio',
+      id,
+      codecs: ['mp4a.40.2'],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 128_000,
+      mimeType: 'audio/mp4',
+      groupId: 'audio',
+      name: id,
+      sampleRate: 48_000,
+      channels: 2,
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-failover',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+        {
+          id: 'a',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'as',
+              type: 'audio',
+              tracks: [audioTrack('aud-a', 'cdn-a.example.com'), audioTrack('aud-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    // Primary CDN initially.
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-a');
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
+
+    // Mark cdn-a failed → both types fail over to cdn-b coherently.
+    engine.state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-b');
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-b');
+
+    // cdn-a recovers → both return to the primary.
+    engine.state.failedCdns.set([]);
+    await flush();
+    expect(engine.state.selectedVideoTrackId.get()).toBe('vid-a');
+    expect(engine.state.selectedAudioTrackId.get()).toBe('aud-a');
+
+    engine.destroy();
+  });
+
+  it('codec-filters renditions via the injected canPlayTrack before selection', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    // Reject HEVC; accept everything else.
+    const canPlayTrack = (track: { codecs?: string[] }) => !track.codecs?.some((c) => c.startsWith('hvc1'));
+    const engine = createSimpleHlsEngine({ canPlayTrack });
+
+    const videoTrack = (id: string, codec: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [codec],
+      url: `https://example.com/${id}.m3u8`,
+      bandwidth: 4_800_000,
+      mimeType: 'video/mp4',
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-codec',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('1080p-hevc', 'hvc1.1.6.L120.B0'), videoTrack('1080p-avc', 'avc1.640028')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    // HEVC pruned upstream by the capability constraint; AVC selected.
+    expect(engine.state.selectedVideoTrackId.get()).toBe('1080p-avc');
+
+    engine.destroy();
+  });
+
+  it('makes no video pick when no rendition is decodable', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    const engine = createSimpleHlsEngine({ canPlayTrack: () => false });
+
+    engine.state.presentation.set({
+      id: 'pres-unsupported',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: '1080p-hevc',
+                  codecs: ['hvc1.1.6.L120.B0'],
+                  url: 'https://example.com/1080p-hevc.m3u8',
+                  bandwidth: 4_800_000,
+                  mimeType: 'video/mp4',
+                } as PartiallyResolvedVideoTrack,
+              ],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    expect(engine.state.selectedVideoTrackId.get()).toBeUndefined();
+
+    engine.destroy();
+  });
+
+  it('auto-fails-over when a CDN fetch fails (monitor trips, failedCdns set)', async () => {
+    const engine = createSimpleHlsEngine({ failover: { cooldownMs: 60_000 } });
+
+    // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+      if (url.includes('cdn-a')) throw new TypeError('cdn-a unreachable');
+      return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
+    }) as typeof fetch;
+
+    const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://${host}/${id}.m3u8`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-failover',
+      url: 'https://cdn-a.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [videoTrack('vid-a', 'cdn-a.example.com'), videoTrack('vid-b', 'cdn-b.example.com')],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+
+    // The primary (cdn-a) is picked first, its media-playlist fetch fails, the
+    // monitor trips it, the constraint prunes it, and the scope fails over to
+    // cdn-b — all without any external failedCdns write.
+    await vi.waitFor(() => {
+      expect(engine.state.failedCdns.get()).toEqual(['https://cdn-a.example.com']);
+      expect(engine.state.selectedVideoTrackId.get()).toBe('vid-b');
+    });
+
+    engine.destroy();
+  });
+
+  it('honors a custom getCdnId across cdnPriority, the trip, and the constraint/scope', async () => {
+    // Key CDNs on the `cdn=` query param instead of origin. Both variants share a
+    // host, so origin-based identity would see ONE CDN (no redundancy); the
+    // custom resolver must be respected at every site for failover to work.
+    const getCdnId = (url: string) => new URL(url).searchParams.get('cdn') ?? url;
+    const engine = createSimpleHlsEngine({ getCdnId, failover: { cooldownMs: 60_000 } });
+
+    globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
+      if (url.includes('cdn=a')) throw new TypeError('cdn-a unreachable');
+      return new Response('#EXTM3U\n#EXT-X-TARGETDURATION:10\n#EXTINF:10.0,\nseg-1.m4s\n#EXT-X-ENDLIST');
+    }) as typeof fetch;
+
+    const videoTrack = (id: string, cdn: string): PartiallyResolvedVideoTrack => ({
+      type: 'video',
+      id,
+      codecs: [],
+      url: `https://cdn.example.com/${id}.m3u8?cdn=${cdn}`,
+      bandwidth: 2_400_000,
+      mimeType: 'video/mp4',
+    });
+
+    engine.state.presentation.set({
+      id: 'pres-custom-cdn',
+      url: 'https://cdn.example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [{ id: 'vs', type: 'video', tracks: [videoTrack('vid-a', 'a'), videoTrack('vid-b', 'b')] }],
+        },
+      ],
+    } as Presentation);
+
+    await vi.waitFor(() => {
+      // deriveCdnPriority keyed on the param (not origin → not a single CDN).
+      expect(engine.state.cdnPriority.get()).toEqual(['a', 'b']);
+      // The trip recorded the param key, and the constraint + scope failed over.
+      expect(engine.state.failedCdns.get()).toEqual(['a']);
+      expect(engine.state.selectedVideoTrackId.get()).toBe('vid-b');
+    });
 
     engine.destroy();
   });
@@ -285,7 +546,7 @@ http://example.com/segment1.m4s
       }
 
       // Fallback for unmocked URLs
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -353,7 +614,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -401,9 +662,11 @@ http://example.com/audio-seg1.m4s
         // 4. MediaElement should be set
         expect(owners.mediaElement).toBe(mediaElement);
 
-        // 5. MediaSource should be created and open
+        // 5. MediaSource should be created
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
 
         // 6. Video buffer cluster should be created (actor presence implies
         //    `addSourceBuffer` ran; SourceBuffer itself is private to
@@ -491,7 +754,7 @@ http://example.com/audio-b-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -512,7 +775,9 @@ http://example.com/audio-b-seg1.m4s
         expect(state.presentation?.id).toBeDefined();
         expect(state.selectedVideoTrackId).toBeDefined();
         expect(state.selectedAudioTrackId).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
         expect(owners.videoBufferActor).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
       },
@@ -545,7 +810,9 @@ http://example.com/audio-b-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
 
         // Fresh MediaSource + buffer actors (different instances from A)
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
         expect(owners.mediaSource).not.toBe(sourceAMediaSource);
         expect(owners.videoBufferActor).not.toBe(sourceAVideoBufferActor);
         expect(owners.audioBufferActor).not.toBe(sourceAAudioBufferActor);
@@ -582,7 +849,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -609,7 +876,9 @@ http://example.com/video-seg1.m4s
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
       },
       { timeout: 2000 }
     );
@@ -644,7 +913,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -671,7 +940,9 @@ http://example.com/audio-seg1.m4s
 
         // MediaSource should still be created
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
       },
       { timeout: 2000 }
     );
@@ -706,7 +977,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -761,7 +1032,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -838,7 +1109,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -874,7 +1145,9 @@ http://example.com/audio-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
 
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
         expect(owners.videoBufferActor).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
       },
@@ -916,7 +1189,7 @@ http://example.com/seg1.m4s
         return Promise.resolve(new Response(new ArrayBuffer(100)));
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -989,7 +1262,7 @@ http://example.com/seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1031,10 +1304,15 @@ http://example.com/seg1.m4s
     // The resolved track should be the selected one
     expect(resolvedTracks?.[0]?.id).toBe(state.selectedVideoTrackId);
 
-    // Should fetch: 1 multivariant + 1 media playlist + init attempt
-    // (Only selected quality, not all 3 qualities; init.mp4 is attempted but
-    // rejected by the mock — segment is not attempted since init fails first)
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    // The non-selected qualities are never resolved — only the selected track's
+    // media playlist is fetched. Asserts the intent directly rather than a brittle
+    // total fetch count (which shifts with init/segment loading of the selected track).
+    const fetchedUrls = mockFetch.mock.calls.map((call: unknown[]) => {
+      const input = call[0] as RequestInfo | URL;
+      return typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+    });
+    expect(fetchedUrls.some((u: string) => u.includes('video-720p.m3u8'))).toBe(false);
+    expect(fetchedUrls.some((u: string) => u.includes('video-1080p.m3u8'))).toBe(false);
 
     engine.destroy();
   });
@@ -1089,7 +1367,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1181,7 +1459,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1257,7 +1535,7 @@ http://example.com/text-fr-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1342,7 +1620,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1434,7 +1712,7 @@ http://example.com/video-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1528,7 +1806,7 @@ http://example.com/text-es-seg1.vtt
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -1627,7 +1905,7 @@ http://example.com/seg2.m4s
       return Promise.resolve(new Response(new ArrayBuffer(1000)));
     }
 
-    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    return unmockedFetchFallback(url);
   });
   globalThis.fetch = mockFetch;
 
@@ -1702,7 +1980,7 @@ http://example.com/audio-seg1.m4s
       return Promise.resolve(new Response(new ArrayBuffer(1000)));
     }
 
-    return Promise.reject(new Error(`Unmocked URL: ${url}`));
+    return unmockedFetchFallback(url);
   });
   globalThis.fetch = mockFetch;
 

@@ -104,6 +104,7 @@ export const error = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
