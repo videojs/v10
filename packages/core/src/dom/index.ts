@@ -8,6 +8,7 @@ export * from './hotkey/aria';
 export * from './hotkey/coordinator';
 export * from './hotkey/hotkey';
 export * from './hotkey/hotkey-events';
+export * from './media/predicate';
 export * from './media/types';
 export * from './store/features';
 export * from './store/selectors';

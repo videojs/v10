@@ -1,6 +1,6 @@
 export type Renderer = 'background-video' | 'hls' | 'html5-audio' | 'html5-video';
 
-export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio';
+export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
 
 export type UseCase = 'default-video' | 'default-audio' | 'background-video';
 

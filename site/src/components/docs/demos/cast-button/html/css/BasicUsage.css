@@ -1,0 +1,39 @@
+.video-player {
+  position: relative;
+  display: block;
+}
+
+.video-player video {
+  width: 100%;
+}
+
+.media-cast-button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-cast-button[data-availability="unsupported"] {
+  display: none;
+}
+
+.media-cast-button .connected {
+  display: none;
+}
+.media-cast-button .disconnected {
+  display: none;
+}
+.media-cast-button[data-cast-state="connected"] .connected {
+  display: inline;
+}
+.media-cast-button:not([data-cast-state="connected"]) .disconnected {
+  display: inline;
+}

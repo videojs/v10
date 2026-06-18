@@ -91,6 +91,11 @@ export function getPosterSrc(source: SourceId): string | undefined {
   return id ? `https://image.mux.com/${id}/thumbnail.jpg` : undefined;
 }
 
+export function getPlaceholderSrc(source: SourceId): string | undefined {
+  const id = getMuxAssetId(source);
+  return id ? `https://image.mux.com/${id}/thumbnail.jpg?width=20` : undefined;
+}
+
 export function getStoryboardSrc(source: SourceId): string | undefined {
   // Storyboards aren't generated for live streams, so skip the request entirely.
   if (isLiveSource(source)) return undefined;

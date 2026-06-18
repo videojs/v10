@@ -5,6 +5,7 @@ import { Storyboard } from '@app/shared/react/storyboard';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
 import { useLoop } from '@app/shared/react/use-loop';
 import { useMuted } from '@app/shared/react/use-muted';
+import { usePlaceholder } from '@app/shared/react/use-placeholder';
 import { usePoster } from '@app/shared/react/use-poster';
 import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
@@ -25,6 +26,7 @@ function App() {
   const source = useSource();
   const styling = useMemo(readStyling, []);
   const poster = usePoster();
+  const placeholder = usePlaceholder();
   const storyboard = useStoryboard();
   const live = isLiveSource(source);
   const autoplay = useAutoplay();
@@ -37,6 +39,7 @@ function App() {
     <Provider>
       <VideoSkinComponent
         poster={poster}
+        placeholder={placeholder}
         skin={skin}
         styling={styling}
         live={live}

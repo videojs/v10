@@ -37,7 +37,11 @@ function isVideoLikeRenderer(renderer: Renderer): boolean {
   return renderer === 'html5-video' || renderer === 'hls' || renderer === 'background-video';
 }
 
-function getSkinImportParts(skin: Skin): { group: string; skinFile: string } {
+function getGroupFromUseCase(useCase: UseCase): string {
+  return useCase === 'default-audio' ? 'audio' : 'video';
+}
+
+function getSkinImportParts(skin: Exclude<Skin, 'none'>): { group: string; skinFile: string } {
   if (skin === 'minimal-video') return { group: 'video', skinFile: 'minimal-skin' };
   if (skin === 'minimal-audio') return { group: 'audio', skinFile: 'minimal-skin' };
   return { group: skin, skinFile: 'skin' };
@@ -102,11 +106,11 @@ function getProviderTag(useCase: UseCase): string {
   return map[useCase];
 }
 
-function getSkinTag(useCase: UseCase, skin: Skin): string {
+function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
   if (useCase === 'background-video') {
     return 'background-video-skin';
   }
-  const map: Record<Skin, string> = {
+  const map: Record<Exclude<Skin, 'none'>, string> = {
     video: 'video-skin',
     audio: 'audio-skin',
     'minimal-video': 'video-minimal-skin',
@@ -117,16 +121,38 @@ function getSkinTag(useCase: UseCase, skin: Skin): string {
 
 function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
   const providerTag = getProviderTag(useCase);
-  const skinTag = getSkinTag(useCase, skin);
   const tag = getRendererTag(renderer);
   const src = resolveSourceUrl(url, renderer);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
 
-  return `<!--
+  const mediaComment = `  <!--
+      Media are players without UIs, handling networking
+      and display of the media. They are easily swappable
+      to handle different sources.
+    -->`;
+
+  const skinMediaComment = `    <!--
+        Media are players without UIs, handling networking
+        and display of the media. They are easily swappable
+        to handle different sources.
+      -->`;
+
+  const providerComment = `<!--
   The PlayerProvider passes state between the UI components
   and Media, and makes fully custom UIs possible.
   It does not have layout by default (display:contents)
- -->
+ -->`;
+
+  if (skin === 'none' && useCase !== 'background-video') {
+    return `${providerComment}
+<${providerTag}>
+${mediaComment}
+  <${tag} src="${src}"${playsInline}></${tag}>
+</${providerTag}>`;
+  }
+
+  const skinTag = getSkinTag(useCase, skin as Exclude<Skin, 'none'>);
+  return `${providerComment}
 <${providerTag}>
   <!--
     Skins contain the entire player UI and are easily swappable.
@@ -134,11 +160,7 @@ function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, ur
     of UI components.
    -->
   <${skinTag}>
-    <!--
-      Media are players without UIs, handling networking
-      and display of the media. They are easily swappable
-      to handle different sources.
-    -->
+${skinMediaComment}
     <${tag} src="${src}"${playsInline}></${tag}>
   </${skinTag}>
 </${providerTag}>`;
@@ -152,9 +174,13 @@ function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer)
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';${mediaImport}`;
   }
-  const { group, skinFile } = getSkinImportParts(skin);
+  const group = skin === 'none' ? getGroupFromUseCase(useCase) : getSkinImportParts(skin).group;
   const mediaSubpath = getMediaImportSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
+  if (skin === 'none') {
+    return `import '@videojs/html/${group}/player';${mediaImport}`;
+  }
+  const { skinFile } = getSkinImportParts(skin);
   return `import '@videojs/html/${group}/player';
 import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
 }
@@ -181,8 +207,8 @@ function getRendererComponent(renderer: Renderer): string {
   return map[renderer];
 }
 
-function getSkinComponent(skin: Skin): string {
-  const map: Record<Skin, string> = {
+function getSkinComponent(skin: Exclude<Skin, 'none'>): string {
+  const map: Record<Exclude<Skin, 'none'>, string> = {
     video: 'VideoSkin',
     audio: 'AudioSkin',
     'minimal-video': 'MinimalVideoSkin',
@@ -219,31 +245,58 @@ export function generateReactCreateCode(
   const featureType = getUseCaseFeatures(useCase);
 
   const isBackgroundVideo = useCase === 'background-video';
-  const skinComponent = isBackgroundVideo ? 'BackgroundVideoSkin' : getSkinComponent(skin);
-  const { group, skinFile } = getSkinImportParts(skin);
-  const skinCssImport = isBackgroundVideo
-    ? '@videojs/react/background/skin.css'
-    : `@videojs/react/${group}/${skinFile}.css`;
-
-  const presetSubpath = isBackgroundVideo ? 'background' : group;
-
-  let presetImport: string;
-  let mediaImport: string | null = null;
-
-  if (isPresetRenderer(renderer)) {
-    presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${presetSubpath}';`;
-  } else {
-    presetImport = `import { ${skinComponent} } from '@videojs/react/${presetSubpath}';`;
-    mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getRendererMediaSubpath(renderer)}';`;
-  }
+  const isNoSkin = skin === 'none';
+  const group = isBackgroundVideo
+    ? 'background'
+    : isNoSkin
+      ? getGroupFromUseCase(useCase)
+      : getSkinImportParts(skin).group;
 
   const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
 
+  let presetImport: string;
+  let mediaImport: string | null = null;
+  let skinCssImport: string | null = null;
+  let skinComponent: string | null = null;
+
+  if (isBackgroundVideo) {
+    skinComponent = 'BackgroundVideoSkin';
+    skinCssImport = '@videojs/react/background/skin.css';
+    presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/background';`;
+  } else if (isNoSkin) {
+    if (isPresetRenderer(renderer)) {
+      presetImport = `import { ${rendererComponent} } from '@videojs/react/${group}';`;
+    } else {
+      presetImport = '';
+      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getRendererMediaSubpath(renderer)}';`;
+    }
+  } else {
+    const { skinFile } = getSkinImportParts(skin);
+    skinComponent = getSkinComponent(skin);
+    skinCssImport = `@videojs/react/${group}/${skinFile}.css`;
+    if (isPresetRenderer(renderer)) {
+      presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
+    } else {
+      presetImport = `import { ${skinComponent} } from '@videojs/react/${group}';`;
+      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getRendererMediaSubpath(renderer)}';`;
+    }
+  }
+
+  const playerJsx = skinComponent
+    ? `    <Player.Provider>
+      <${skinComponent}>
+        ${rendererJsx}
+      </${skinComponent}>
+    </Player.Provider>`
+    : `    <Player.Provider>
+      ${rendererJsx}
+    </Player.Provider>`;
+
   const imports = [
-    `import '${skinCssImport}';`,
+    ...(skinCssImport ? [`import '${skinCssImport}';`] : []),
     `import { createPlayer, ${featureType} } from '@videojs/react';`,
-    presetImport,
+    ...(presetImport ? [presetImport] : []),
     ...(mediaImport ? [mediaImport] : []),
   ].join('\n');
 
@@ -260,11 +313,7 @@ interface MyPlayerProps {
 
 export const MyPlayer = ({ src }: MyPlayerProps) => {
   return (
-    <Player.Provider>
-      <${skinComponent}>
-        ${rendererJsx}
-      </${skinComponent}>
-    </Player.Provider>
+${playerJsx}
   );
 };`,
   };
