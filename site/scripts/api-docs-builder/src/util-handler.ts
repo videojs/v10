@@ -34,7 +34,6 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { kebabCase } from 'es-toolkit/string';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import {
@@ -44,6 +43,7 @@ import {
   type UtilReference,
   UtilReferenceSchema,
 } from '../../../src/types/util-reference.js';
+import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
 import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
 
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
@@ -156,21 +156,6 @@ function getDisplayName(name: string): string {
     return name.replace(/^create/, '');
   }
   return name;
-}
-
-/** Kebab slugs for exports where `kebabCase` splits `I18n` incorrectly (e.g. `register-i-18-n`). */
-const UTIL_SLUG_OVERRIDES: Record<string, string> = {
-  registerI18n: 'register-i18n',
-  getI18nTranslations: 'get-i18n-translations',
-  hasRegisteredI18n: 'has-registered-i18n',
-  onI18nRegistryChange: 'on-i18n-registry-change',
-  createI18n: 'create-i18n',
-  createTranslator: 'create-translator',
-  I18nProvider: 'i18n-provider',
-};
-
-function utilSlug(name: string): string {
-  return UTIL_SLUG_OVERRIDES[name] ?? kebabCase(name);
 }
 
 function normalizeDescription(description: unknown): string | undefined {
@@ -879,7 +864,7 @@ function processExport(
   if (!isUtilExport(exportNode)) return;
 
   const displayName = getDisplayName(exportNode.name);
-  const slug = resolveSlugCollision(utilSlug(displayName), entryPoint.framework, seenSlugs);
+  const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 
@@ -928,7 +913,7 @@ function processRawExport(
   if (!isRawUtilExport(info)) return;
 
   const displayName = getDisplayName(info.name);
-  const slug = resolveSlugCollision(utilSlug(displayName), entryPoint.framework, seenSlugs);
+  const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 
