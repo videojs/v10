@@ -87,10 +87,10 @@ const elementSpecificEvents = ref.events.elementSpecific;
       <>
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
         <P>
-          Supports the following native media attributes, forwarded to the
-          internal <MarkdownCode>{mediaTag}</MarkdownCode> element — see{" "}
-          <A href={mdnElementUrl}>native media attributes</A> for each one's
-          behavior:{" "}
+          Forwards these native media attributes to the internal{" "}
+          <MarkdownCode>{mediaTag}</MarkdownCode> element. See{" "}
+          <A href={mdnElementUrl}>native media attributes</A> for what each one
+          does:{" "}
           {attributeNames.map((attr, index) => (
             <>
               <MarkdownCode>{attr}</MarkdownCode>
@@ -107,8 +107,8 @@ const elementSpecificEvents = ref.events.elementSpecific;
                 {index < jsOnlyHostProps.length - 1 ? ", " : ""}
               </>
             ))}
-            ) are JavaScript-only properties — see Host Properties — with no
-            attribute equivalent.
+            ) have no attribute equivalent. Set them in JavaScript — see Host
+            Properties.
           </P>
         )}
       </>
@@ -121,8 +121,8 @@ const elementSpecificEvents = ref.events.elementSpecific;
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
         <P>
           Renders a native <MarkdownCode>{mediaTag}</MarkdownCode> element, so
-          the corresponding React props for these{" "}
-          <A href={mdnElementUrl}>native media attributes</A> are supported:{" "}
+          it supports the React props for these{" "}
+          <A href={mdnElementUrl}>native media attributes</A>:{" "}
           {attributeNames.map((attr, index) => (
             <>
               <MarkdownCode>{attr}</MarkdownCode>
@@ -139,8 +139,8 @@ const elementSpecificEvents = ref.events.elementSpecific;
                 {index < jsOnlyHostProps.length - 1 ? ", " : ""}
               </>
             ))}
-            ) are JavaScript-only properties — see Host Properties — with no
-            attribute equivalent.
+            ) have no attribute equivalent. Set them in JavaScript — see Host
+            Properties.
           </P>
         )}
       </>
@@ -153,9 +153,9 @@ const elementSpecificEvents = ref.events.elementSpecific;
         <H3 id={eventsSection.id}>{eventsSection.title}</H3>
         {framework === "html" ? (
           <P>
-            Supports the following media events, re-dispatched from the internal{" "}
-            <MarkdownCode>{mediaTag}</MarkdownCode> element so you can listen
-            for them directly — see <A href={mdnEventsUrl}>media events</A>:{" "}
+            Re-dispatches these media events from the internal{" "}
+            <MarkdownCode>{mediaTag}</MarkdownCode> element, so you can listen
+            for them directly. See <A href={mdnEventsUrl}>media events</A>:{" "}
             {sortedNativeEvents.map((event, index) => (
               <>
                 <MarkdownCode>{event}</MarkdownCode>
@@ -165,8 +165,7 @@ const elementSpecificEvents = ref.events.elementSpecific;
           </P>
         ) : (
           <P>
-            Standard React media event props (e.g.{" "}
-            <MarkdownCode>onPlay</MarkdownCode>,{" "}
+            React media event props (e.g. <MarkdownCode>onPlay</MarkdownCode>,{" "}
             <MarkdownCode>onTimeUpdate</MarkdownCode>) map to these{" "}
             <A href={mdnEventsUrl}>media events</A>:{" "}
             {sortedNativeEvents.map((event, index) => (
@@ -179,11 +178,11 @@ const elementSpecificEvents = ref.events.elementSpecific;
         )}
         {elementSpecificEvents.length === 0 ? (
           <P>
-            This element dispatches no events beyond the native media events.
+            This element dispatches no events beyond the media events above.
           </P>
         ) : (
           <>
-            <P>Beyond the standard media events, this element emits:</P>
+            <P>Beyond the media events above, this element emits:</P>
             <Table maxWidth={false} outerClass="my-6">
               <Thead>
                 <Tr>
@@ -204,8 +203,8 @@ const elementSpecificEvents = ref.events.elementSpecific;
             </Table>
             {framework === "react" && (
               <P>
-                These events have no built-in React prop — attach a listener to
-                the element via a <MarkdownCode>ref</MarkdownCode> with{" "}
+                These events have no built-in React prop. Attach a listener to
+                the element through a <MarkdownCode>ref</MarkdownCode> with{" "}
                 <MarkdownCode>addEventListener</MarkdownCode>.
               </P>
             )}
@@ -220,7 +219,7 @@ const elementSpecificEvents = ref.events.elementSpecific;
       <>
         <H3 id={methodsSection.id}>{methodsSection.title}</H3>
         <P>
-          Supports the following methods from the native media API — see{" "}
+          Supports these methods from the native media API. See{" "}
           <A href={mdnMethodsUrl}>HTMLMediaElement methods</A>:{" "}
           {sortedMethods.map((method, index) => (
             <>
@@ -231,8 +230,8 @@ const elementSpecificEvents = ref.events.elementSpecific;
         </P>
         {framework === "react" && (
           <P>
-            In React, call these via a <MarkdownCode>ref</MarkdownCode> to the
-            element.
+            In React, call these through a <MarkdownCode>ref</MarkdownCode> to
+            the element.
           </P>
         )}
       </>
