@@ -23,6 +23,7 @@ export const MediaReferenceSchema = z.object({
     native: z.array(z.string()),
     elementSpecific: z.array(MediaEventDefSchema),
   }),
+  methods: z.array(z.string()),
   cssCustomProperties: z.record(z.string(), z.object({ description: z.string() })),
 });
 

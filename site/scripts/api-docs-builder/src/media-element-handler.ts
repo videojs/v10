@@ -982,6 +982,64 @@ function extractStaticProperties(filePath: string): string[] {
   return attributes;
 }
 
+// ─── Method Extraction ───────────────────────────────────────────────
+
+// Lifecycle methods plus EventTarget/DOM-query plumbing that the host class
+// overrides but which aren't part of the native HTMLMediaElement method API the
+// docs link to.
+const EXCLUDED_METHOD_NAMES = new Set([
+  'attach',
+  'detach',
+  'destroy',
+  'addEventListener',
+  'removeEventListener',
+  'querySelector',
+  'querySelectorAll',
+]);
+
+/**
+ * Collect public instance method names declared directly on a named class.
+ * Excludes the constructor, lifecycle methods (attach/detach/destroy),
+ * private/protected `_`/`#` names, and accessors (getters/setters are
+ * properties, not methods). Returns [] if the file or class isn't found.
+ */
+function extractPublicMethodNames(filePath: string, className: string): string[] {
+  if (!fs.existsSync(filePath)) return [];
+
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+
+  let classNode: ts.ClassDeclaration | undefined;
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isClassDeclaration(node) && node.name?.text === className) {
+      classNode = node;
+    }
+  });
+  if (!classNode) return [];
+
+  const names: string[] = [];
+  for (const member of classNode.members) {
+    if (!ts.isMethodDeclaration(member) || !member.name || !ts.isIdentifier(member.name)) continue;
+    if (
+      member.modifiers?.some(
+        (m) => m.kind === ts.SyntaxKind.PrivateKeyword || m.kind === ts.SyntaxKind.ProtectedKeyword
+      )
+    ) {
+      continue;
+    }
+    const name = member.name.text;
+    if (name.startsWith('_') || name.startsWith('#')) continue;
+    if (EXCLUDED_METHOD_NAMES.has(name)) continue;
+    names.push(name);
+  }
+  return names;
+}
+
+/** Merge two method-name lists, dedupe by name, and sort alphabetically. */
+function mergeMethodNames(a: readonly string[], b: readonly string[]): string[] {
+  return [...new Set([...a, ...b])].sort();
+}
+
 // ─── Event Extraction ────────────────────────────────────────────────
 
 /**
@@ -1243,6 +1301,17 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const videoEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'VideoEvents') : [];
   const audioEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'AudioEvents') : [];
 
+  // Supported native media methods are the public instance methods forwarded
+  // from the shared base host classes — extracted ONCE per media type (mirroring
+  // how events come from VideoEvents/AudioEvents), not per element. Video adds
+  // the video-host methods; audio adds the audio-host methods.
+  const mediaHostPath = path.join(monorepoRoot, 'packages/core/src/dom/media/media-host.ts');
+  const videoHostPath = path.join(monorepoRoot, 'packages/core/src/dom/media/video-host.ts');
+  const audioHostPath = path.join(monorepoRoot, 'packages/core/src/dom/media/audio-host.ts');
+  const baseMethods = extractPublicMethodNames(mediaHostPath, 'HTMLMediaElementHost');
+  const videoMethods = mergeMethodNames(baseMethods, extractPublicMethodNames(videoHostPath, 'HTMLVideoElementHost'));
+  const audioMethods = mergeMethodNames(baseMethods, extractPublicMethodNames(audioHostPath, 'HTMLAudioElementHost'));
+
   // Extract CSS vars using the existing handler (needs a TS program).
   // Ensure `lib.dom.d.ts` is loaded so HTMLMediaElement / HTMLVideoElement /
   // HTMLAudioElement member names can be resolved for the `overridesNative`
@@ -1300,15 +1369,14 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       }
     }
 
-    // Deduplicate: host props that overlap with native attributes
-    const hostAttrNames = new Set<string>();
-    for (const propName of Object.keys(hostProperties)) {
-      hostAttrNames.add(propName.toLowerCase());
-    }
-    const nativeAttributes = allAttributes.filter((attr) => !hostAttrNames.has(attr));
+    // Native attributes are the COMPLETE markup-settable set from `static
+    // properties`. Host-owned names (src/preload/stream-type) intentionally
+    // overlap with hostProperties — this mirrors MDN's content-attribute vs
+    // IDL-property model: the same name is both a settable attribute and a
+    // richer JS property.
+    const nativeAttributes = [...allAttributes];
 
     const cssCustomProperties = source.mediaType === 'video' ? videoCSSVars : audioCSSVars;
-    const native = source.mediaType === 'video' ? videoEvents : audioEvents;
 
     // Walk the host's mixin/parent chain collecting `@fires` descriptions. An
     // event is documented as element-specific iff it carries a `@fires` tag —
@@ -1324,6 +1392,15 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       return def;
     });
 
+    // Element-specific events live only in the elementSpecific bucket; exclude
+    // them from native so they are never listed twice.
+    const elementSpecificNames = new Set(elementSpecific.map((e) => e.name));
+    const native = (source.mediaType === 'video' ? videoEvents : audioEvents).filter(
+      (n) => !elementSpecificNames.has(n)
+    );
+
+    const methods = source.mediaType === 'video' ? videoMethods : audioMethods;
+
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
@@ -1331,6 +1408,7 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       hostProperties,
       nativeAttributes,
       events: { native, elementSpecific },
+      methods,
       cssCustomProperties,
     };
 

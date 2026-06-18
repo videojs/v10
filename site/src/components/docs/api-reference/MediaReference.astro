@@ -14,7 +14,7 @@ import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { MediaReference } from '@/types/media-reference';
-import { createMediaReferenceModel, getAttributeExamples } from '@/utils/mediaReferenceModel';
+import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
 import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
 import MediaHostPropsTable from './MediaHostPropsTable.astro';
 
@@ -35,21 +35,34 @@ if (!model) return;
 const hostPropsSection = model.sections.find((s: { key: string }) => s.key === 'hostProperties');
 const nativeAttrsSection = model.sections.find((s: { key: string }) => s.key === 'nativeAttributes');
 const eventsSection = model.sections.find((s: { key: string }) => s.key === 'events');
+const methodsSection = model.sections.find((s: { key: string }) => s.key === 'methods');
 const cssVarsSection = model.sections.find((s: { key: string }) => s.key === 'cssCustomProperties');
 const mediaTag = `<${ref.mediaType}>`;
 
 const mdnElementUrl = `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/${ref.mediaType}`;
 const mdnEventsUrl = 'https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement#events';
+const mdnMethodsUrl = 'https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement';
 
-// React prop spellings for the curated attribute examples.
+// React prop spellings for the native attributes that differ from their HTML
+// attribute names.
 const REACT_PROP_NAMES: Record<string, string> = {
   autoplay: 'autoPlay',
   playsinline: 'playsInline',
   crossorigin: 'crossOrigin',
 };
-const attributeExamples: string[] = getAttributeExamples(ref);
-const attributeExampleNames =
-  framework === 'react' ? attributeExamples.map((attr) => REACT_PROP_NAMES[attr] ?? attr) : attributeExamples;
+
+const sortedNativeAttributes = [...(ref.nativeAttributes ?? [])].sort();
+const attributeNames =
+  framework === 'react' ? sortedNativeAttributes.map((attr) => REACT_PROP_NAMES[attr] ?? attr) : sortedNativeAttributes;
+
+// Host properties with NO attribute equivalent — JavaScript-only options.
+const attrSet = new Set(ref.nativeAttributes ?? []);
+const jsOnlyHostProps = Object.keys(ref.hostProperties ?? {}).filter(
+  (p) => !attrSet.has(kebabCase(p)) && !attrSet.has(p.toLowerCase())
+);
+
+const sortedNativeEvents = [...(ref.events.native ?? [])].sort();
+const sortedMethods = [...(ref.methods ?? [])].sort();
 
 const elementSpecificEvents = ref.events.elementSpecific;
 ---
@@ -74,21 +87,30 @@ const elementSpecificEvents = ref.events.elementSpecific;
       <>
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
         <P>
-          Accepts common <A href={mdnElementUrl}>native media attributes</A> and
-          forwards them to the internal <MarkdownCode>{mediaTag}</MarkdownCode>{" "}
-          element, including{" "}
-          {attributeExampleNames.map((attr, index) => (
+          Supports the following native media attributes, forwarded to the
+          internal <MarkdownCode>{mediaTag}</MarkdownCode> element — see{" "}
+          <A href={mdnElementUrl}>native media attributes</A> for each one's
+          behavior:{" "}
+          {attributeNames.map((attr, index) => (
             <>
               <MarkdownCode>{attr}</MarkdownCode>
-              {index < attributeExampleNames.length - 1 ? ", " : "."}
+              {index < attributeNames.length - 1 ? ", " : "."}
             </>
           ))}
         </P>
-        <P>
-          Options specific to this element are JavaScript properties, not
-          attributes — see Host Properties above. Setting them as markup
-          attributes has no effect.
-        </P>
+        {jsOnlyHostProps.length > 0 && (
+          <P>
+            Lower-level options (
+            {jsOnlyHostProps.map((prop, index) => (
+              <>
+                <MarkdownCode>{prop}</MarkdownCode>
+                {index < jsOnlyHostProps.length - 1 ? ", " : ""}
+              </>
+            ))}
+            ) are JavaScript-only properties — see Host Properties — with no
+            attribute equivalent.
+          </P>
+        )}
       </>
     )
   }
@@ -98,21 +120,29 @@ const elementSpecificEvents = ref.events.elementSpecific;
       <>
         <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
         <P>
-          The component renders a native <MarkdownCode>{mediaTag}</MarkdownCode>{" "}
-          element, so standard React media props — mapping to{" "}
-          <A href={mdnElementUrl}>native media attributes</A> — are supported,
-          including{" "}
-          {attributeExampleNames.map((attr, index) => (
+          Renders a native <MarkdownCode>{mediaTag}</MarkdownCode> element, so
+          the corresponding React props for these{" "}
+          <A href={mdnElementUrl}>native media attributes</A> are supported:{" "}
+          {attributeNames.map((attr, index) => (
             <>
               <MarkdownCode>{attr}</MarkdownCode>
-              {index < attributeExampleNames.length - 1 ? ", " : "."}
+              {index < attributeNames.length - 1 ? ", " : "."}
             </>
           ))}
         </P>
-        <P>
-          Options specific to this element are also props — every host property
-          above is available as a prop.
-        </P>
+        {jsOnlyHostProps.length > 0 && (
+          <P>
+            Lower-level options (
+            {jsOnlyHostProps.map((prop, index) => (
+              <>
+                <MarkdownCode>{prop}</MarkdownCode>
+                {index < jsOnlyHostProps.length - 1 ? ", " : ""}
+              </>
+            ))}
+            ) are JavaScript-only properties — see Host Properties — with no
+            attribute equivalent.
+          </P>
+        )}
       </>
     )
   }
@@ -123,18 +153,28 @@ const elementSpecificEvents = ref.events.elementSpecific;
         <H3 id={eventsSection.id}>{eventsSection.title}</H3>
         {framework === "html" ? (
           <P>
-            All standard <A href={mdnEventsUrl}>media events</A> are
-            re-dispatched from the internal{" "}
-            <MarkdownCode>{mediaTag}</MarkdownCode> element, so you can listen
-            for them on the element directly.
+            Supports the following media events, re-dispatched from the internal{" "}
+            <MarkdownCode>{mediaTag}</MarkdownCode> element so you can listen
+            for them directly — see <A href={mdnEventsUrl}>media events</A>:{" "}
+            {sortedNativeEvents.map((event, index) => (
+              <>
+                <MarkdownCode>{event}</MarkdownCode>
+                {index < sortedNativeEvents.length - 1 ? ", " : "."}
+              </>
+            ))}
           </P>
         ) : (
           <P>
-            The component renders a native{" "}
-            <MarkdownCode>{mediaTag}</MarkdownCode> element, so standard React
-            media event props (e.g. <MarkdownCode>onPlay</MarkdownCode>,{" "}
-            <MarkdownCode>onTimeUpdate</MarkdownCode>) map to the underlying{" "}
-            <A href={mdnEventsUrl}>media events</A>.
+            Standard React media event props (e.g.{" "}
+            <MarkdownCode>onPlay</MarkdownCode>,{" "}
+            <MarkdownCode>onTimeUpdate</MarkdownCode>) map to these{" "}
+            <A href={mdnEventsUrl}>media events</A>:{" "}
+            {sortedNativeEvents.map((event, index) => (
+              <>
+                <MarkdownCode>{event}</MarkdownCode>
+                {index < sortedNativeEvents.length - 1 ? ", " : "."}
+              </>
+            ))}
           </P>
         )}
         {elementSpecificEvents.length === 0 ? (
@@ -170,6 +210,30 @@ const elementSpecificEvents = ref.events.elementSpecific;
               </P>
             )}
           </>
+        )}
+      </>
+    )
+  }
+
+  {
+    methodsSection && (
+      <>
+        <H3 id={methodsSection.id}>{methodsSection.title}</H3>
+        <P>
+          Supports the following methods from the native media API — see{" "}
+          <A href={mdnMethodsUrl}>HTMLMediaElement methods</A>:{" "}
+          {sortedMethods.map((method, index) => (
+            <>
+              <MarkdownCode>{method}</MarkdownCode>
+              {index < sortedMethods.length - 1 ? ", " : "."}
+            </>
+          ))}
+        </P>
+        {framework === "react" && (
+          <P>
+            In React, call these via a <MarkdownCode>ref</MarkdownCode> to the
+            element.
+          </P>
         )}
       </>
     )

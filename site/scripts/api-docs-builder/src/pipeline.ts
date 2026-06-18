@@ -603,6 +603,7 @@ export interface MediaElementReference {
     native: string[];
     elementSpecific: MediaEventDef[];
   };
+  methods: string[];
   cssCustomProperties: Record<string, { description: string }>;
 }
 

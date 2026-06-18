@@ -1,10 +1,6 @@
 // @ts-nocheck — the model is plain JS shared with remarkConditionalHeadings
 import { describe, expect, it } from 'vitest';
-import {
-  buildMediaReferenceTocHeadings,
-  createMediaReferenceModel,
-  getAttributeExamples,
-} from '../mediaReferenceModel';
+import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from '../mediaReferenceModel';
 
 function makeRef(overrides = {}) {
   return {
@@ -14,11 +10,12 @@ function makeRef(overrides = {}) {
       src: { type: 'string', readonly: false },
       streamType: { type: 'string', readonly: true },
     },
-    nativeAttributes: ['autoplay', 'controls', 'loop', 'muted', 'playsinline', 'poster'],
+    nativeAttributes: ['src', 'autoplay', 'controls', 'loop', 'muted', 'playsinline', 'poster'],
     events: {
       native: ['play', 'pause'],
       elementSpecific: [{ name: 'streamtypechange', description: 'Fired when the stream type changes.' }],
     },
+    methods: ['canPlayType', 'load', 'pause', 'play', 'requestFullscreen'],
     cssCustomProperties: { '--media-object-fit': { description: 'Object fit.' } },
     ...overrides,
   };
@@ -48,29 +45,20 @@ describe('createMediaReferenceModel', () => {
     );
     expect(model.sections.some((s) => s.key === 'events')).toBe(true);
   });
-});
 
-describe('getAttributeExamples', () => {
-  it('filters the curated list against the generated attributes', () => {
-    const examples = getAttributeExamples(makeRef({ hostProperties: {} }));
-    // src/preload are not in nativeAttributes or hostProperties → dropped.
-    expect(examples).not.toContain('src');
-    expect(examples).not.toContain('preload');
-    expect(examples).toContain('controls');
+  it('includes a methods section after events when methods exist', () => {
+    const model = createMediaReferenceModel('HlsVideo', makeRef());
+    const keys = model.sections.map((s) => s.key);
+    expect(keys).toContain('methods');
+    expect(keys.indexOf('methods')).toBeGreaterThan(keys.indexOf('events'));
+    expect(keys.indexOf('methods')).toBeLessThan(keys.indexOf('cssCustomProperties'));
+    const methods = model.sections.find((s) => s.key === 'methods');
+    expect(methods).toMatchObject({ title: 'Methods', id: 'methods' });
   });
 
-  it('includes attributes backed by host properties (deduplicated src/preload)', () => {
-    // src is deduplicated out of nativeAttributes because the host owns it,
-    // but it remains attribute-settable — the prose must still mention it.
-    const examples = getAttributeExamples(makeRef());
-    expect(examples).toContain('src');
-  });
-
-  it('preserves curated display order regardless of input order', () => {
-    const examples = getAttributeExamples(
-      makeRef({ nativeAttributes: ['poster', 'autoplay', 'controls', 'muted', 'loop', 'playsinline'] })
-    );
-    expect(examples).toEqual(['src', 'controls', 'autoplay', 'muted', 'loop', 'playsinline', 'poster']);
+  it('drops the methods section when there are no methods', () => {
+    const model = createMediaReferenceModel('HlsVideo', makeRef({ methods: [] }));
+    expect(model.sections.some((s) => s.key === 'methods')).toBe(false);
   });
 });
 
