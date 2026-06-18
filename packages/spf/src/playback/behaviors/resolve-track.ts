@@ -1,4 +1,4 @@
-import { defineBehavior } from '../../core/composition/create-composition';
+import { type AnySlotMap, defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
@@ -24,17 +24,17 @@ import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primi
 //
 // This behavior is category [1] "content snapshot" from
 // [live-presentation-modeling.md](../../../internal/design/spf/live-presentation-modeling.md):
-// it produces the windowed segment list. *When* to (re)fetch is category [3]
-// "refetch policy", owned by the sibling `scheduleTrackReload` scheduler, which
-// bumps a per-type reload-epoch slot on a cadence. The loader treats that slot
-// purely as a re-fire *ping* — it subscribes to the bump but never reads its
-// value — and re-runs the gate. Whether a (re)load is actually due is decided
-// by `shouldResolveTrack` against the current snapshot:
-//   - unresolved          → load (initial resolve, or a retry of a failed one)
-//   - resolved, incomplete → reload (a live window may have slid past the
-//                            playhead, so reusing it risks a stall)
-//   - resolved, complete   → reuse (VoD, or live that hit ENDLIST — a complete
-//                            playlist can never go stale)
+// it produces the windowed segment list. *Whether* a (re)load is due is decided
+// by an injected `shouldLoadTrack(track, params)` gate, so the core stays
+// live-agnostic — it knows nothing about reload epochs or completeness. The
+// default (`loadIfUnresolved`) resolves only an unresolved track (the pre-live
+// one-shot). Live-capable variants inject `shouldLoadLiveTrack`, which also
+// reloads a resolved-but-incomplete window and subscribes the effect to the
+// scheduler's per-type reload-epoch *ping* (read for subscription only — see
+// `scheduleTrackReload`, category [3] "refetch policy"). The ping slot is read
+// defensively inside that gate, off an optional state view, so the core never
+// names or assumes it (the `bandwidthState?` pattern from `track-switching`).
+//
 // A same-id task already in flight is deduped by `ConcurrentRunner`
 // (drop-if-busy), and the post-resolve presentation write is read with `peek`,
 // so it never re-fires the effect.
@@ -50,33 +50,31 @@ export interface ResolveTrackState {
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
   failedCdns?: string[];
-  /**
-   * Per-type live-reload triggers, owned by `scheduleTrackReload`. A bump
-   * (monotonic increment) past the last-serviced value tells the loader a
-   * reload is due. Absent / unchanged for VoD (no scheduler composed).
-   */
-  videoReloadEpoch?: number;
-  audioReloadEpoch?: number;
-  textReloadEpoch?: number;
 }
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 type ReloadEpochKey = 'videoReloadEpoch' | 'audioReloadEpoch' | 'textReloadEpoch';
 
-type ResolveTrackStateMap<K extends SelectedTrackKey, E extends ReloadEpochKey> = {
+type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
-} & { [P in K]: ReadonlySignal<ResolveTrackState[P]> } & { [P in E]: ReadonlySignal<ResolveTrackState[P]> };
+} & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
-interface TrackResolutionConfig<K extends SelectedTrackKey, E extends ReloadEpochKey> {
+interface TrackResolutionConfig<K extends SelectedTrackKey> {
   selectedKey: K;
-  /** State slot the scheduler bumps to request a live reload of this type. */
-  reloadEpochKey: E;
   findTrackToResolve: (
     presentation: MaybeResolvedPresentation,
     trackId: string
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
   /** Fetch a track's media-playlist text — already failover-decorated by the behavior. */
   fetchResolvableText?: FetchText;
+  /**
+   * Load gate — decides whether to (re)resolve the selected track. Defaults to
+   * `loadIfUnresolved` (initial resolve only). Live-capable variants inject
+   * `shouldLoadLiveTrack`, which also reloads incomplete windows and subscribes
+   * to the scheduler's reload-epoch ping. Receives the behavior's `params`
+   * (`{ state, context, config }`) untouched.
+   */
+  shouldLoadTrack?: ShouldLoadTrack<ResolveTrackStateMap<K>, AnySlotMap, TrackResolutionConfig<K>>;
 }
 
 /**
@@ -89,26 +87,82 @@ interface ResolveTrackConfig {
 }
 
 /**
- * Should the loader (re)resolve this track right now? Unresolved → yes (initial
- * resolve, or a retry of a failed one). Resolved-but-incomplete (live, ongoing)
- * → yes: the cached window may have slid past the playhead, so reuse risks a
- * stall. Resolved and complete (VoD, or live that hit `#EXT-X-ENDLIST`) → no; a
- * complete playlist can never go stale. Completeness keys off `Track.duration`
- * (Infinity while the playlist can still grow), the single completeness source
- * of truth — so a live stream that ends stops reloading the moment it goes
- * finite, with no engine- or stream-type config.
+ * The behavior's setup deps, threaded straight through to `shouldLoadTrack` so a
+ * gate reads from the same surfaces the behavior does. `context` is optional —
+ * present at runtime, absent on direct setup calls and unread by today's gates,
+ * so the whole object passes through unchanged.
  */
-function shouldResolveTrack(track: PartiallyResolvedTrack | ResolvedTrack): boolean {
+export interface ShouldLoadTrackParams<State = unknown, Context = unknown, Config = unknown> {
+  state: State;
+  context?: Context;
+  config: Config;
+}
+
+/**
+ * Decides whether the loader should (re)resolve the selected track now, reading
+ * whatever signals it needs off `params` at call time (so its `.get()`s
+ * subscribe the loader's effect to exactly what it consulted). Returning `true`
+ * schedules a fetch+parse; an in-flight same-id task is deduped by the runner.
+ */
+export type ShouldLoadTrack<State = unknown, Context = unknown, Config = unknown> = (
+  track: PartiallyResolvedTrack | ResolvedTrack,
+  params: ShouldLoadTrackParams<State, Context, Config>
+) => boolean;
+
+/**
+ * Default load gate: resolve only an unresolved track (the initial resolve, or a
+ * retry of a failed one). The pre-live one-shot behavior — it names no
+ * reload-epoch slot, so the core assumes no live ping. Live-capable variants
+ * inject `shouldLoadLiveTrack` instead.
+ */
+function loadIfUnresolved(track: PartiallyResolvedTrack | ResolvedTrack): boolean {
+  return !isResolvedTrack(track);
+}
+
+/**
+ * Per-type reload-epoch ping slots, all *optional* — the live gate reads its
+ * slot defensively, so the core's state type (which omits them) stays
+ * assignable and the core never assumes the ping exists. Materialized by
+ * `scheduleTrackReload` when it's composed; absent otherwise.
+ */
+type ReloadEpochStateView = { [P in ReloadEpochKey]?: ReadonlySignal<number | undefined> };
+
+/**
+ * Live load gate — the `shouldLoadTrack` alternative the live-capable variants
+ * inject. Beyond the default's initial resolve, it reloads a resolved-but-
+ * incomplete window (Infinity `Track.duration`, the single completeness source
+ * of truth): a live window may have slid past the playhead, so reuse risks a
+ * stall; a complete playlist (VoD, or live that hit `#EXT-X-ENDLIST`) can never
+ * go stale, so it's reused. Reading the per-type reload-epoch slot subscribes
+ * the loader's effect to the scheduler's cadence ping (each bump re-fires it);
+ * the value is unused — a signal used as an event channel. The slot is read
+ * defensively, off the optional `ReloadEpochStateView`, with its per-type key
+ * closured in by the variant — so only this gate names it, never the core.
+ */
+function shouldLoadLiveTrack<K extends SelectedTrackKey>(
+  track: PartiallyResolvedTrack | ResolvedTrack,
+  params: ShouldLoadTrackParams<ResolveTrackStateMap<K> & ReloadEpochStateView>,
+  reloadEpochKey: ReloadEpochKey
+): boolean {
+  params.state[reloadEpochKey]?.get();
   return !isResolvedTrack(track) || !Number.isFinite(track.duration);
 }
 
-function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochKey>({
-  state,
-  config: { selectedKey, reloadEpochKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
-}: {
-  state: ResolveTrackStateMap<K, E>;
-  config: TrackResolutionConfig<K, E>;
+function setupTrackResolution<K extends SelectedTrackKey>(params: {
+  state: ResolveTrackStateMap<K>;
+  context?: AnySlotMap;
+  config: TrackResolutionConfig<K>;
 }) {
+  // Destructure in the body (not the signature) so the whole `params` object —
+  // `{ state, context, config }` — passes straight through to `shouldLoadTrack`,
+  // letting a gate reach `context` in future without changing this seam.
+  const { state, config } = params;
+  const {
+    selectedKey,
+    findTrackToResolve,
+    fetchResolvableText = defaultFetchResolvableText,
+    shouldLoadTrack = loadIfUnresolved,
+  } = config;
   // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
@@ -147,24 +201,20 @@ function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochK
             // The reactor's state transitions handle relevant presentation
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
-            // internal updates (segments added by sibling tasks) don't
-            // re-fire the effect. The tracked reads — `selectedKey` and the
-            // reload-epoch ping — are taken up front, before any early return,
-            // so a selection change or a scheduler bump re-fires this effect.
+            // internal updates (segments added by sibling tasks) don't re-fire
+            // the effect. `selectedKey` is read tracked up front so a selection
+            // change re-fires; the injected `shouldLoadTrack` gate takes any
+            // further tracked reads it needs (e.g. the live reload-epoch ping),
+            // subscribing the effect to exactly what it consulted.
             const trackId = state[selectedKey].get();
-            // Subscribe to the scheduler's reload-epoch slot purely to re-fire
-            // on each bump — the value is unused; `shouldResolveTrack` decides
-            // from the snapshot, not the epoch. (A signal used as an event
-            // channel; see the header comment.)
-            state[reloadEpochKey].get();
             const presentation = peek(state.presentation);
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
-            // Unresolved → initial resolve / retry; resolved-but-incomplete →
-            // live reload; resolved + complete → reuse. A same-id task already
+            // The gate decides whether a (re)load is due (default: unresolved
+            // only; live: also incomplete-window reload). A same-id task already
             // in flight is deduped by the runner (drop-if-busy).
-            if (!track || !shouldResolveTrack(track)) return;
+            if (!track || !shouldLoadTrack(track, params)) return;
 
             runner.schedule(
               // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
@@ -223,21 +273,18 @@ function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochK
 
 const VIDEO_TRACK_RESOLUTION_CONFIG = {
   ...VIDEO_TYPE_CONFIG,
-  reloadEpochKey: 'videoReloadEpoch',
   findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
     findTrack(presentation, 'video', trackId),
 } as const;
 
 const AUDIO_TRACK_RESOLUTION_CONFIG = {
   ...AUDIO_TYPE_CONFIG,
-  reloadEpochKey: 'audioReloadEpoch',
   findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
     findTrack(presentation, 'audio', trackId),
 } as const;
 
 const TEXT_TRACK_RESOLUTION_CONFIG = {
   ...TEXT_TYPE_CONFIG,
-  reloadEpochKey: 'textReloadEpoch',
   findTrackToResolve: (presentation: MaybeResolvedPresentation, trackId: string) =>
     findTrack(presentation, 'text', trackId),
 } as const;
@@ -252,13 +299,14 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
  * writes the resolved track back into `state.presentation`.
  */
 export const resolveVideoTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedVideoTrackId', 'videoReloadEpoch'],
+  stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
   setup: ({
     state,
     config = {},
+    ...otherProps
   }: {
-    state: ResolveTrackStateMap<'selectedVideoTrackId', 'videoReloadEpoch'>;
+    state: ResolveTrackStateMap<'selectedVideoTrackId'>;
     config?: ResolveTrackConfig;
   }) => {
     // Engine `config` layers over the per-type defaults (mirrors the other
@@ -268,8 +316,15 @@ export const resolveVideoTrack = defineBehavior({
     // unlike segments, playlists expose no overridable per-type fetch.
     const trackConfig = { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config };
     return setupTrackResolution({
+      ...otherProps,
       state,
-      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+      config: {
+        ...trackConfig,
+        fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig),
+        // Live-capable gate: closure in this type's reload-epoch slot so the
+        // core never names it.
+        shouldLoadTrack: (track, params) => shouldLoadLiveTrack(track, params, 'videoReloadEpoch'),
+      },
     });
   },
 });
@@ -279,20 +334,26 @@ export const resolveVideoTrack = defineBehavior({
  * narrowed to audio.
  */
 export const resolveAudioTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedAudioTrackId', 'audioReloadEpoch'],
+  stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
   setup: ({
     state,
     config = {},
+    ...otherProps
   }: {
-    state: ResolveTrackStateMap<'selectedAudioTrackId', 'audioReloadEpoch'>;
+    state: ResolveTrackStateMap<'selectedAudioTrackId'>;
     config?: ResolveTrackConfig;
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
     const trackConfig = { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config };
     return setupTrackResolution({
+      ...otherProps,
       state,
-      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+      config: {
+        ...trackConfig,
+        fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig),
+        shouldLoadTrack: (track, params) => shouldLoadLiveTrack(track, params, 'audioReloadEpoch'),
+      },
     });
   },
 });
@@ -302,20 +363,26 @@ export const resolveAudioTrack = defineBehavior({
  * narrowed to text.
  */
 export const resolveTextTrack = defineBehavior({
-  stateKeys: ['presentation', 'selectedTextTrackId', 'textReloadEpoch'],
+  stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
   setup: ({
     state,
     config = {},
+    ...otherProps
   }: {
-    state: ResolveTrackStateMap<'selectedTextTrackId', 'textReloadEpoch'>;
+    state: ResolveTrackStateMap<'selectedTextTrackId'>;
     config?: ResolveTrackConfig;
   }) => {
     // Key order is load-bearing — see resolveVideoTrack.
     const trackConfig = { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config };
     return setupTrackResolution({
+      ...otherProps,
       state,
-      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+      config: {
+        ...trackConfig,
+        fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig),
+        shouldLoadTrack: (track, params) => shouldLoadLiveTrack(track, params, 'textReloadEpoch'),
+      },
     });
   },
 });

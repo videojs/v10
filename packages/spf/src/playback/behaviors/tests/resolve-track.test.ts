@@ -15,7 +15,16 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-function makeState(initial: ResolveTrackState = {}): StateSignals<ResolveTrackState> {
+// The reload-epoch slots live outside `ResolveTrackState` (the loader's gate
+// reads them defensively; `scheduleTrackReload` materializes them in the real
+// composition). The test plays that role, so it extends the state shape here.
+type TestResolveTrackState = ResolveTrackState & {
+  videoReloadEpoch?: number;
+  audioReloadEpoch?: number;
+  textReloadEpoch?: number;
+};
+
+function makeState(initial: TestResolveTrackState = {}): StateSignals<TestResolveTrackState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
