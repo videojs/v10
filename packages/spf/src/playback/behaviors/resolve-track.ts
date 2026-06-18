@@ -26,12 +26,18 @@ import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primi
 // [live-presentation-modeling.md](../../../internal/design/spf/live-presentation-modeling.md):
 // it produces the windowed segment list. *When* to (re)fetch is category [3]
 // "refetch policy", owned by the sibling `scheduleTrackReload` scheduler, which
-// bumps a per-type reload-epoch slot. The loader loads when the track is
-// unresolved (the initial resolve — the only trigger for VoD, where no
-// scheduler is composed) OR when the reload epoch has advanced past the last
-// one it serviced (a live reload). Setting the epoch synchronously at schedule
-// time, paired with `ConcurrentRunner`'s id-dedup, coalesces bumps that arrive
-// while a fetch is still in flight (drop-if-busy).
+// bumps a per-type reload-epoch slot on a cadence. The loader treats that slot
+// purely as a re-fire *ping* — it subscribes to the bump but never reads its
+// value — and re-runs the gate. Whether a (re)load is actually due is decided
+// by `shouldResolveTrack` against the current snapshot:
+//   - unresolved          → load (initial resolve, or a retry of a failed one)
+//   - resolved, incomplete → reload (a live window may have slid past the
+//                            playhead, so reusing it risks a stall)
+//   - resolved, complete   → reuse (VoD, or live that hit ENDLIST — a complete
+//                            playlist can never go stale)
+// A same-id task already in flight is deduped by `ConcurrentRunner`
+// (drop-if-busy), and the post-resolve presentation write is read with `peek`,
+// so it never re-fires the effect.
 // ============================================================================
 
 /**
@@ -82,6 +88,20 @@ interface ResolveTrackConfig {
   getCdnId?: GetCdnId;
 }
 
+/**
+ * Should the loader (re)resolve this track right now? Unresolved → yes (initial
+ * resolve, or a retry of a failed one). Resolved-but-incomplete (live, ongoing)
+ * → yes: the cached window may have slid past the playhead, so reuse risks a
+ * stall. Resolved and complete (VoD, or live that hit `#EXT-X-ENDLIST`) → no; a
+ * complete playlist can never go stale. Completeness keys off `Track.duration`
+ * (Infinity while the playlist can still grow), the single completeness source
+ * of truth — so a live stream that ends stops reloading the moment it goes
+ * finite, with no engine- or stream-type config.
+ */
+function shouldResolveTrack(track: PartiallyResolvedTrack | ResolvedTrack): boolean {
+  return !isResolvedTrack(track) || !Number.isFinite(track.duration);
+}
+
 function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochKey>({
   state,
   config: { selectedKey, reloadEpochKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
@@ -93,13 +113,6 @@ function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochK
   // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
   // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
   const runner = new ConcurrentRunner();
-
-  // Highest reload epoch already serviced for the selected track. A resolved
-  // track only re-fetches once the scheduler bumps past this; an unresolved
-  // track always loads (the initial resolve / a retry of a failed one). Init 0
-  // so a freshly-mounted already-resolved track isn't re-fetched (matches the
-  // pre-reload one-shot resolve behavior).
-  let lastLoadedEpoch = 0;
 
   // Reactor states model the FSM the previous effect-based body was
   // hand-rolling. 'presentation-resolved' is entered when the
@@ -135,23 +148,23 @@ function setupTrackResolution<K extends SelectedTrackKey, E extends ReloadEpochK
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
             // internal updates (segments added by sibling tasks) don't
-            // re-fire the effect. Tracked reads — `selectedKey` and the reload
-            // epoch — are taken up front, before any early return, so a later
-            // epoch bump re-fires this effect.
+            // re-fire the effect. The tracked reads — `selectedKey` and the
+            // reload-epoch ping — are taken up front, before any early return,
+            // so a selection change or a scheduler bump re-fires this effect.
             const trackId = state[selectedKey].get();
-            const epoch = state[reloadEpochKey].get() ?? 0;
+            // Subscribe to the scheduler's reload-epoch slot purely to re-fire
+            // on each bump — the value is unused; `shouldResolveTrack` decides
+            // from the snapshot, not the epoch. (A signal used as an event
+            // channel; see the header comment.)
+            state[reloadEpochKey].get();
             const presentation = peek(state.presentation);
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
-            if (!track) return;
-            // Resolved track: skip unless the scheduler requested a reload.
-            // Unresolved track: always load (initial resolve / failed-resolve retry).
-            if (isResolvedTrack(track) && epoch <= lastLoadedEpoch) return;
-            // Mark this epoch serviced synchronously: a same-id task already in
-            // flight is deduped by the runner, and we don't want to re-schedule
-            // it on the next effect run.
-            lastLoadedEpoch = epoch;
+            // Unresolved → initial resolve / retry; resolved-but-incomplete →
+            // live reload; resolved + complete → reuse. A same-id task already
+            // in flight is deduped by the runner (drop-if-busy).
+            if (!track || !shouldResolveTrack(track)) return;
 
             runner.schedule(
               // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),

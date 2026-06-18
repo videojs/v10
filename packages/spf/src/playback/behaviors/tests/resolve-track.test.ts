@@ -451,14 +451,35 @@ http://example.com/seg0.m4s`;
     await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
     expect(fetchSpy).toHaveBeenCalledTimes(1);
 
-    // A scheduler bump re-fetches the (already-resolved) track.
+    // A scheduler bump re-fetches the (already-resolved, incomplete) track.
     state.videoReloadEpoch.set(1);
     await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(2));
 
-    // A stale/duplicate bump (≤ last serviced) does not.
+    // Re-setting the same epoch value is a signal no-op (no re-fire), so the
+    // scheduler's monotonic bumps drive reloads one-for-one without the loader
+    // tracking a last-serviced epoch.
     state.videoReloadEpoch.set(1);
     await new Promise((resolve) => setTimeout(resolve, 20));
     expect(fetchSpy).toHaveBeenCalledTimes(2);
+
+    reactor.destroy();
+  });
+
+  it('does not reload a complete (VoD/ENDLIST) track on an epoch bump', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    // ENDLIST → complete → finite duration → never reloads, even if a bump arrives.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => new Response(`${LIVE_PLAYLIST}\n#EXT-X-ENDLIST`));
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    state.videoReloadEpoch.set(1);
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
 
     reactor.destroy();
   });
