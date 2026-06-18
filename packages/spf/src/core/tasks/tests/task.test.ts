@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { ConcurrentRunner, RecurringRunner, type Reschedule, SerialRunner, Task } from '../task';
+import { ConcurrentRunner, RecurringRunner, type Reschedule, runOnce, SerialRunner, Task } from '../task';
 
 // =============================================================================
 // Task
@@ -670,10 +670,10 @@ describe('RecurringRunner', () => {
   /** Flush pending macrotasks so "did NOT happen" assertions are meaningful. */
   const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-  it('runs the task once when no reschedule is supplied', async () => {
+  it('runs the task exactly once with the runOnce reschedule', async () => {
     let runs = 0;
     const task = new Task<number>(async () => ++runs, { id: 'x' });
-    const runner = new RecurringRunner<number>();
+    const runner = new RecurringRunner<number>(runOnce);
 
     runner.schedule(task);
     await vi.waitFor(() => expect(runs).toBe(1));
@@ -714,21 +714,21 @@ describe('RecurringRunner', () => {
     ]);
   });
 
-  it('keeps the loop alive across a transient error (observed value is undefined)', async () => {
+  it('rejects and stops the recurrence when a run errors (no swallowing/retry)', async () => {
     let n = 0;
     const task = new Task<number>(async () => {
       n += 1;
       if (n === 1) throw new Error('boom');
       return n;
     });
-    // Retry on error (observed value undefined); keep going until a value reaches 3.
-    const runner = new RecurringRunner<number>(async (t) => {
-      const current = await t.run().catch(() => undefined);
-      return current === undefined || current < 3;
-    });
+    // A reschedule that would otherwise keep going — but a run error ends it.
+    const runner = new RecurringRunner<number>(async () => true);
 
-    runner.schedule(task);
-    await vi.waitFor(() => expect(n).toBe(3));
+    // The first cycle's error propagates out of schedule(); the recurrence stops.
+    await expect(runner.schedule(task)).rejects.toThrow('boom');
+
+    await flush();
+    expect(n).toBe(1); // no retry — the errored run was terminal
 
     runner.destroy();
   });

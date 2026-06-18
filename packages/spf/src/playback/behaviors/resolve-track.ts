@@ -1,7 +1,7 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
-import { RecurringRunner, type Reschedule, Task } from '../../core/tasks/task';
+import { RecurringRunner, type Reschedule, runOnce, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
@@ -107,10 +107,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   config: TrackResolutionConfig<K>;
 }) {
   // The runner owns recurrence: with a `reschedule` (live) it re-runs the resolve
-  // task whenever reschedule resolves, until it returns null; with none (VoD) it
-  // runs once. Single-slot — a selection change re-schedules (abort-and-replace),
-  // and the reactor's state-exit aborts it on source change.
-  const runner = new RecurringRunner<ResolvedTrack>(reschedule);
+  // task whenever reschedule resolves true, until it returns false; with none
+  // configured (VoD) `runOnce` makes it resolve exactly once. Single-slot — a
+  // selection change re-schedules (abort-and-replace), and the reactor's
+  // state-exit aborts it on source change.
+  const runner = new RecurringRunner<ResolvedTrack>(reschedule ?? runOnce);
 
   // The resolve task for `trackId`. The `RecurringRunner` re-runs this same task
   // each reload cycle, so its run fn re-reads the current snapshot each time —
@@ -205,7 +206,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // is the runner's job, driven by `reschedule`.
             if (!track || !shouldLoadTrack(track)) return;
 
-            runner.schedule(createResolveTask(trackId));
+            // Abort (selection/source change, via `abortAll`) settles quietly;
+            // `schedule` rejects only on a genuine resolve failure. We don't
+            // surface those to state yet, so end quietly.
+            // TODO: surface unrecoverable resolve errors.
+            runner.schedule(createResolveTask(trackId)).catch(() => {});
           },
         ],
       },

@@ -498,24 +498,23 @@ http://example.com/seg0.m4s`;
     reactor.destroy();
   });
 
-  it('retries an unresolved track after a transient failure (errored run → reschedule retry)', async () => {
+  it('stops resolving on a fetch failure (an errored run is terminal — no retry)', async () => {
     const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
     let calls = 0;
     vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
       calls += 1;
-      if (calls === 1) throw new TypeError('Failed to fetch');
-      return new Response(LIVE_PLAYLIST);
+      throw new TypeError('Failed to fetch');
     });
 
-    // Retry while the observed run errored (undefined); stop once a result lands.
-    const reschedule = async (task: TaskLike<ResolvedTrack>) => {
-      const current = await task.run().catch(() => undefined);
-      return current === undefined;
-    };
+    // Even a reschedule that would keep going can't revive an errored run — the
+    // rejected run ends the recurrence (retry, if wanted, belongs in the fetch layer).
+    const reschedule = async () => true;
     const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
 
-    await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
-    expect(calls).toBe(2);
+    await vi.waitFor(() => expect(calls).toBe(1));
+    await flush();
+    expect(calls).toBe(1); // no retry
+    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(false);
 
     reactor.destroy();
   });

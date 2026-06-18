@@ -367,14 +367,21 @@ export class SerialRunner {
 export type Reschedule<TValue> = (task: TaskLike<TValue>) => PromiseLike<boolean>;
 
 /**
+ * A {@link Reschedule} that never recurs — the task runs exactly once. Pass it to
+ * a {@link RecurringRunner} for non-recurring, run-once work (e.g. resolving a
+ * complete VoD playlist that can never go stale).
+ */
+export const runOnce: Reschedule<unknown> = () => Promise.resolve(false);
+
+/**
  * Runs a task, then re-runs it whenever a {@link Reschedule} function says to,
  * until it says stop (or it's aborted) — the recurring sibling of
  * {@link ConcurrentRunner} / {@link SerialRunner}, and like them it's handed a
  * {@link TaskLike} to run.
  *
  * The runner has no notion of time: it just awaits whatever `reschedule`
- * returns (a promise → re-run when it resolves; `null` → stop). With no
- * reschedule it runs the task exactly once (the non-recurring default).
+ * returns (resolves `true` → re-run; `false` → stop). A `reschedule` is required;
+ * pass {@link runOnce} for non-recurring, run-exactly-once work.
  *
  * Single-slot, keyed by task **id**: there is always at most one identified
  * active task for re-running. Scheduling a task whose id matches the active one
@@ -396,64 +403,74 @@ export type Reschedule<TValue> = (task: TaskLike<TValue>) => PromiseLike<boolean
  * frees the slot, so a later schedule of the same id starts fresh.
  */
 export class RecurringRunner<TValue = unknown> {
-  readonly #reschedule: Reschedule<TValue> | undefined;
+  readonly #reschedule: Reschedule<TValue>;
   // The identified active task — the one being (re)run. Held across cycles
   // (including the inter-cycle wait); null once the recurrence stops/aborts. Also
-  // serves as the loop's ownership token: a loop frees the slot only while
+  // serves as the ownership token: a cycle advances or frees the slot only while
   // `#active` still points at its own task (a supersede/abortAll swaps it).
   #active: TaskLike<TValue, unknown> | null = null;
   #destroyed = false;
 
-  constructor(reschedule?: Reschedule<TValue>) {
+  constructor(reschedule: Reschedule<TValue>) {
     this.#reschedule = reschedule;
   }
 
-  schedule(task: TaskLike<TValue, unknown>): void {
-    if (this.#destroyed) return;
+  /**
+   * Run `task` and recur per the `reschedule` verdict, as a single promise.
+   * Resolves with the *final* cycle's value when the recurrence stops; **rejects**
+   * if a run (or reschedule) genuinely fails — the rejection propagates to the
+   * caller, who owns error handling; the runner only frees its slot (no
+   * swallowing). The runner's *own* cancellation (abort/supersede/destroy) is not
+   * a failure, so an aborted recurrence settles quietly rather than rejecting —
+   * callers don't have to `.catch` routine teardown.
+   *
+   * Each cycle runs the task and consults `reschedule` concurrently (so the delay
+   * can be measured from the run's start); when both settle and this cycle still
+   * owns the slot, a `true` verdict re-schedules a `clone()` whose promise is
+   * *returned* — so the recurrence is the method calling itself, threaded into one
+   * promise, no separate loop. The clone shares the id, so the slot's identity is
+   * stable across cycles; it's released just before the re-schedule so the call
+   * advances rather than dedup-returning.
+   *
+   * Note: because each cycle's promise adopts the next, the chain retains every
+   * prior cycle for the life of the recurrence — bounded for finite recurrences,
+   * an unbounded (small per-cycle) cost for a long-lived one (e.g. live reload).
+   */
+  schedule(task: TaskLike<TValue, unknown>): Promise<TValue> {
+    if (this.#destroyed) return Promise.resolve() as Promise<TValue>;
     // Dedup by id: this id is already the active re-run target, so the existing
-    // recurrence continues uninterrupted (don't restart it).
-    if (this.#active?.id === task.id) return;
-    // Different id supersedes: abort the prior recurrence, then take over as the
-    // one identified active task.
+    // recurrence continues uninterrupted (don't restart it) — hand back its
+    // in-flight run.
+    if (this.#active?.id === task.id) return this.#active.run();
+    // Different id supersedes: abort the prior recurrence, then take over.
     this.#cancel();
     this.#active = task;
-    void this.#loop(task);
-  }
 
-  async #loop(task: TaskLike<TValue, unknown>): Promise<void> {
-    let current = task;
-    while (true) {
-      let again = false;
-      try {
-        // Start the run and the reschedule together: reschedule observes the run
-        // (via the memoized `current.run()`) and owns the inter-run delay, so the
-        // interval can be measured from the run's *start*. `Promise.all` waits
-        // for both — the run (so the clone can carry its value forward as
-        // `previous`) and the verdict + delay. The run's own result is swallowed
-        // here; reschedule reads it (and decides retry-vs-stop on error).
-        [, again] = await Promise.all([
-          current.run().then(
-            () => {},
-            () => {}
-          ),
-          this.#reschedule ? this.#reschedule(current) : Promise.resolve(false),
-        ]);
-      } catch {
-        return; // reschedule rejected (aborted during its delay) — stop without freeing
+    // Drive the run (in case `reschedule` doesn't observe it — e.g. `runOnce`)
+    // and the verdict together; a rejected run rejects the whole cycle.
+    return Promise.all([task.run(), this.#reschedule(task)]).then(
+      ([value, again]) => {
+        // Only act while we still own the slot — a supersede/abortAll swapped
+        // `#active`, in which case this stale cycle does nothing.
+        if (this.#active === task && again && !task.signal.aborted) {
+          // Release first so the same-id clone advances (isn't dedup-returned),
+          // then chain the next cycle into this promise.
+          this.#active = null;
+          return this.schedule(task.clone());
+        }
+        if (this.#active === task) this.#active = null; // natural stop / superseded
+        return value;
+      },
+      (error) => {
+        // The recurrence ended on a rejection; free the slot if we still own it.
+        if (this.#active === task) this.#active = null;
+        // The runner's own cancellation isn't a failure — settle quietly so
+        // routine teardown (abort/supersede/destroy) needs no caller `.catch`.
+        // A genuine run/reschedule failure propagates to the caller.
+        if (task.signal.aborted) return undefined as TValue;
+        throw error;
       }
-      // The task is the cancellation channel; an aborted task means we were
-      // superseded/aborted even if reschedule still resolved true.
-      if (current.signal.aborted || !again) break;
-      // Re-run the same work as a fresh task — `run()` is memoized, so re-running
-      // `current` wouldn't re-execute. The clone keeps the id (stable slot
-      // identity) and carries `previous`; track it as active so an abort hits the
-      // in-flight instance.
-      current = current.clone();
-      this.#active = current;
-    }
-    // Loop ended on its own terms (stop / aborted-but-not-cancelled): free the
-    // slot iff this loop still owns it (a supersede/abortAll swapped `#active`).
-    if (this.#active === current) this.#active = null;
+    );
   }
 
   #cancel(): void {
