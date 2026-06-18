@@ -21,6 +21,7 @@ function makeState(initial: ResolveTrackState = {}): StateSignals<ResolveTrackSt
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+    failedCdns: signal<string[] | undefined>(initial.failedCdns),
   };
 }
 

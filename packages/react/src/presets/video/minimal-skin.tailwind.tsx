@@ -1,4 +1,5 @@
 import {
+  badge,
   bufferingIndicator,
   button,
   buttonGroupEnd,
@@ -22,7 +23,7 @@ import {
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -41,7 +42,9 @@ import {
   PlayIcon,
   RestartIcon,
   SeekIcon,
+  SpeedIcon,
   SpinnerIcon,
+  SwitchesIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
@@ -63,6 +66,7 @@ import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
+import { useQualityOptions } from '@/ui/quality';
 import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
@@ -163,11 +167,13 @@ function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
 
 function SettingsMenu(): ReactNode {
   const playbackRate = usePlaybackRateOptions();
+  const quality = useQualityOptions();
   const captions = useCaptionsOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
+  const hasQuality = quality?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
 
-  if (!hasPlaybackRate && !hasCaptions) return null;
+  if (!hasPlaybackRate && !hasQuality && !hasCaptions) return null;
 
   return (
     <Menu.Root side="top" align="center">
@@ -181,6 +187,57 @@ function SettingsMenu(): ReactNode {
       <Menu.Content className={menu.settings}>
         <Menu.View className={menu.rootView}>
           <div className={menu.group}>
+            {hasQuality && quality ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="quality"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <SwitchesIcon className={icon} />
+                      <span>Quality</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Quality
+                  </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={quality.value}
+                    onValueChange={quality.setValue}
+                    aria-label="Quality"
+                  >
+                    {quality.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
+                        {option.badge ? <span className={cn(badge, menu.badge)}>{option.badge}</span> : null}
+                        <Menu.ItemIndicator
+                          checked={option.value === quality.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={icon} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
             {hasPlaybackRate && playbackRate ? (
               <Menu.Root>
                 <Menu.Trigger
@@ -188,6 +245,7 @@ function SettingsMenu(): ReactNode {
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
+                      <SpeedIcon className={icon} />
                       <span>Speed</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -201,6 +259,7 @@ function SettingsMenu(): ReactNode {
                     <MenuChevron flipped />
                     Speed
                   </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
                   <Menu.RadioGroup
                     className={menu.group}
                     value={playbackRate.value}
@@ -235,6 +294,7 @@ function SettingsMenu(): ReactNode {
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
+                      <CaptionsOffIcon className={icon} />
                       <span>Captions</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -248,6 +308,7 @@ function SettingsMenu(): ReactNode {
                     <MenuChevron flipped />
                     Captions
                   </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
                   <Menu.RadioGroup
                     className={menu.group}
                     value={captions.value}
@@ -285,10 +346,14 @@ function SettingsMenu(): ReactNode {
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, ...rest } = props;
+  const { children, className, poster: posterProp, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn(root(false), className)} {...rest}>
+    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (
@@ -337,7 +402,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -351,7 +419,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -365,7 +436,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 
@@ -395,7 +469,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
             </TimeSlider.Root>
           </div>
 
-          <div className={buttonGroupEnd}>
+          <div className={cn(buttonGroupEnd, menu.settingsGroup)}>
             <VolumePopover />
 
             <SettingsMenu />
@@ -409,7 +483,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -421,7 +498,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -433,7 +513,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -445,7 +528,10 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

@@ -9,6 +9,7 @@ export * from './pip';
 export * from './playback';
 export * from './playback-rate';
 export * from './presets';
+export * from './quality';
 export * from './remote-playback';
 export * from './source';
 export * from './stream-type';

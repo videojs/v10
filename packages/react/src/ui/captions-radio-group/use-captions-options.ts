@@ -1,10 +1,6 @@
 'use client';
 
-import {
-  CAPTIONS_OFF_VALUE,
-  type CaptionsRadioGroupCore,
-  CaptionsRadioGroupCore as CaptionsRadioGroupCoreClass,
-} from '@videojs/core';
+import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectTextTrack } from '@videojs/core/dom';
 import { useCallback, useState } from 'react';
 
@@ -28,8 +24,10 @@ export interface CaptionsOptionsResult {
 }
 
 export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOptionsResult | null {
+  'use no memo';
+
   const media = usePlayer(selectTextTrack);
-  const [core] = useState(() => new CaptionsRadioGroupCoreClass());
+  const [core] = useState(() => new CaptionsRadioGroupCore());
 
   core.setProps(props ?? {});
 
@@ -48,7 +46,11 @@ export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOption
     state,
     value: state.value,
     options: [
-      { value: CAPTIONS_OFF_VALUE, label: 'Off', disabled: state.disabled },
+      {
+        value: CAPTIONS_OFF_VALUE,
+        label: 'Off',
+        disabled: state.disabled,
+      },
       ...state.tracks.map((track) => ({
         value: track.value,
         label: track.label,

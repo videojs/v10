@@ -51,4 +51,11 @@ describe('formatInstallationCode', () => {
     const result = formatInstallationCode({ ...baseReact, installMethod: 'pnpm' });
     expect(result).toContain('pnpm add @videojs/react');
   });
+
+  it('formats HTML with skin none — omits skin tag and skin import', () => {
+    const result = formatInstallationCode({ ...baseHTML, skin: 'none' });
+    expect(result).toContain('<video-player>');
+    expect(result).not.toContain('<video-skin>');
+    expect(result).not.toContain("'@videojs/html/video/skin'");
+  });
 });

@@ -1,4 +1,5 @@
 import * as dashjs from 'dashjs';
+import { MediaTracksMixin } from '../../../core/media/media-tracks';
 import type { MediaEngineHost } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 
@@ -11,7 +12,7 @@ export const dashMediaDefaultProps: DashMediaProps = {
 };
 
 export class DashMedia
-  extends HTMLVideoElementHost
+  extends MediaTracksMixin(HTMLVideoElementHost)
   implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
 {
   #engine: dashjs.MediaPlayerClass;
@@ -21,19 +22,6 @@ export class DashMedia
     super();
     this.#engine = dashjs.MediaPlayer().create();
     this.#engine.initialize(undefined, undefined, false);
-  }
-
-  get engine() {
-    return this.#engine;
-  }
-
-  get src() {
-    return this.#src;
-  }
-
-  set src(src) {
-    this.#src = src;
-    this.#engine.attachSource(src);
   }
 
   attach(target: HTMLVideoElement) {
@@ -50,5 +38,19 @@ export class DashMedia
   destroy() {
     this.detach();
     this.#engine.destroy();
+    super.destroy();
+  }
+
+  get engine() {
+    return this.#engine;
+  }
+
+  get src() {
+    return this.#src;
+  }
+
+  set src(src) {
+    this.#src = src;
+    this.#engine.attachSource(src);
   }
 }

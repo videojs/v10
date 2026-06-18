@@ -6,7 +6,7 @@ import {
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import { pickMaxResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
+import { pickHighestResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -79,9 +79,12 @@ export interface BackgroundLoopingVideoEngineConfig
   extends ShareSignalsConfig<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
   /**
    * Track picker handed to `selectVideoTrack`. Default:
-   * `pickMaxResolutionVideoTrack` — picks the highest-resolution variant on
+   * `pickHighestResolutionVideoTrack` — picks the highest-resolution variant on
    * presentation resolve and pins it for the session. Override for
    * mobile-aware or content-aware caps.
+   *
+   * Adapters (e.g. `BackgroundLoopingVideoMediaElement`) install their own
+   * picker; this default applies when the engine is constructed directly.
    */
   picker?: TrackPicker<SelectVideoTrackConfig>;
   /**
@@ -132,7 +135,7 @@ export function createBackgroundLoopingVideoEngine(
 ): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
   const finalConfig = {
     ...config,
-    picker: config.picker ?? pickMaxResolutionVideoTrack,
+    picker: config.picker ?? pickHighestResolutionVideoTrack,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,
   };

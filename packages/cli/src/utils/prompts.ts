@@ -46,6 +46,7 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   return [
     { value: isAudio ? 'audio' : 'video', label: 'Default' },
     { value: isAudio ? 'minimal-audio' : 'minimal-video', label: 'Minimal' },
+    { value: 'none', label: 'None (headless)' },
   ];
 }
 
@@ -76,10 +77,11 @@ export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
   const map: Record<string, Skin> = {
     default: isAudio ? 'audio' : 'video',
     minimal: isAudio ? 'minimal-audio' : 'minimal-video',
+    none: 'none',
   };
   const result = map[skinFlag];
   if (!result) {
-    console.error(`Invalid skin: "${skinFlag}". Must be "default" or "minimal".`);
+    console.error(`Invalid skin: "${skinFlag}". Must be "default", "minimal", or "none".`);
     process.exit(1);
   }
   return result;

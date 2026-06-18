@@ -1,13 +1,9 @@
 import type { Constructor } from '@videojs/utils/types';
 
 import { MediaError } from '../../../core/media/media-error';
+import type { HTMLVideoElementHost } from '../video-host';
 
-export interface NativeMediaHost extends EventTarget {
-  readonly target: EventTarget | null;
-  attach?(target: EventTarget): void;
-  detach?(): void;
-  destroy?(): void;
-}
+export type NativeMediaHost = HTMLVideoElementHost;
 
 export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaErrors extends (BaseClass as Constructor<NativeMediaHost>) {
@@ -18,9 +14,9 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
       return this.#error;
     }
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
+    attach(target: HTMLVideoElement): void {
+      super.attach(target);
+      this.#init(target);
     }
 
     detach(): void {
@@ -53,7 +49,9 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
           const native = target.error;
           if (!native) return;
 
-          const error = new MediaError(native.message, native.code, true);
+          const code = native.code;
+          const useCanonicalMessage = code >= MediaError.MEDIA_ERR_ABORTED && code <= MediaError.MEDIA_ERR_ENCRYPTED;
+          const error = new MediaError(useCanonicalMessage ? undefined : native.message, code, true);
           this.#error = error;
 
           this.dispatchEvent(new ErrorEvent('error', { error, message: error.message }));

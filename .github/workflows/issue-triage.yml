@@ -1,7 +1,7 @@
 name: Issue Triage
 on:
   issues:
-    types: [opened, edited, reopened]
+    types: [opened, reopened]
 
 permissions:
   actions: read

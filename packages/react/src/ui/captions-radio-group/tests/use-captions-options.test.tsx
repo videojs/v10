@@ -1,10 +1,11 @@
 'use client';
 
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
 import { useCaptionsOptions } from '../use-captions-options';
@@ -43,6 +44,42 @@ function renderCaptionsMenu({
   );
 
   return { selectSubtitlesTrack };
+}
+
+function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
+  const listeners = new Set<() => void>();
+  const store = {
+    state: initialState,
+    subscribe: (callback: () => void) => {
+      listeners.add(callback);
+      return () => listeners.delete(callback);
+    },
+    attach: vi.fn(() => vi.fn()),
+    destroy: vi.fn(),
+  };
+
+  const value: PlayerContextValue = {
+    store: store as unknown as PlayerContextValue['store'],
+    media: null,
+    setMedia: vi.fn(),
+    container: null,
+    setContainer: vi.fn(),
+  };
+
+  return {
+    updateState(next: Record<string, unknown>) {
+      store.state = next;
+      for (const listener of listeners) listener();
+    },
+    Wrapper({ children }: { children: ReactNode }) {
+      return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
+    },
+  };
+}
+
+function CaptionsAvailability(): ReactNode {
+  const captions = useCaptionsOptions();
+  return <div data-testid="availability">{captions?.state.availability ?? 'missing'}</div>;
 }
 
 function CaptionsRadioGroup(): ReactNode {
@@ -93,5 +130,38 @@ describe('useCaptionsOptions', () => {
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'Off' }));
 
     expect(selectSubtitlesTrack).toHaveBeenCalledWith(CAPTIONS_OFF_VALUE);
+  });
+
+  it('updates when caption tracks become available', () => {
+    const { Wrapper, updateState } = createReactiveTextTrackWrapper({
+      chaptersCues: [],
+      thumbnailCues: [],
+      thumbnailTrackSrc: null,
+      textTrackList: [],
+      subtitlesShowing: false,
+      selectSubtitlesTrack: vi.fn(),
+      toggleSubtitles: vi.fn(),
+    });
+
+    render(<CaptionsAvailability />, { wrapper: Wrapper });
+
+    expect(screen.getByTestId('availability').textContent).toBe('unavailable');
+
+    act(() => {
+      updateState({
+        chaptersCues: [],
+        thumbnailCues: [],
+        thumbnailTrackSrc: null,
+        textTrackList: [
+          { kind: 'subtitles', label: 'English', language: 'en', mode: 'disabled' },
+          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
+        ],
+        subtitlesShowing: true,
+        selectSubtitlesTrack: vi.fn(),
+        toggleSubtitles: vi.fn(),
+      });
+    });
+
+    expect(screen.getByTestId('availability').textContent).toBe('available');
   });
 });

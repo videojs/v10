@@ -45,11 +45,19 @@ export function usePlayerContext(): PlayerContextValue {
 /**
  * Access the player store from within a Player Provider.
  *
+ * This standalone hook has no knowledge of your configured features, so it
+ * returns an untyped `UnknownStore` whose state properties are typed as
+ * `unknown`. For typed access, use the `usePlayer` returned by `createPlayer()`,
+ * or pass a premade selector to recover the type from its return value.
+ *
  * @label Without Selector
  */
 export function usePlayer(): UnknownStore;
 /**
  * Select a value from the player store. Re-renders when the selected value changes.
+ *
+ * The selector receives `UnknownState`, so an inline selector returns `unknown`.
+ * Pass a premade selector (e.g. `selectPlayback`) to get a typed result.
  *
  * @label With Selector
  * @param selector - Derives a value from the player store state.

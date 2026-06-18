@@ -166,7 +166,7 @@ export class PlayerPage {
     await this.settingsButton.click();
     await expect(this.settingsSpeedItem).toBeVisible();
     await this.settingsSpeedItem.click();
-    await expect(this.page.locator(`${SELECTORS.activeMenuPanel} [role="menuitemradio"]`).first()).toBeVisible();
+    await expect(this.page.locator(SELECTORS.activeMenuOptions).first()).toBeVisible();
   }
 
   async openCaptionsSettings(): Promise<void> {
@@ -174,7 +174,7 @@ export class PlayerPage {
     await this.settingsButton.click();
     await expect(this.settingsCaptionsItem).toBeVisible();
     await this.settingsCaptionsItem.click();
-    await expect(this.page.locator(SELECTORS.activeMenuRadioItems).first()).toBeVisible();
+    await expect(this.page.locator(SELECTORS.activeMenuOptions).first()).toBeVisible();
   }
 
   async getPlaybackRate(): Promise<number> {
@@ -236,16 +236,8 @@ export class PlayerPage {
       await this.playbackRateButton.click();
     }
 
-    const uncheckedPlaybackRateOptions = SELECTORS.openPlaybackRateMenuRadioItems
-      .split(', ')
-      .map((selector) => `${selector.trim()}[aria-checked="false"]`)
-      .join(', ');
     const option = this.page
-      .locator(
-        usesSettingsMenu
-          ? `${SELECTORS.activeMenuPanel} [role="menuitemradio"][aria-checked="false"]`
-          : uncheckedPlaybackRateOptions
-      )
+      .locator(usesSettingsMenu ? SELECTORS.activeMenuUncheckedOptions : SELECTORS.playbackRateUncheckedOptions)
       .first();
     await expect(option).toBeVisible({ timeout: 5_000 });
     // Menu popovers can intercept pointer events on nested radio items.

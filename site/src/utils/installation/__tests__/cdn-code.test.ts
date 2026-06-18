@@ -20,4 +20,16 @@ describe('generateCdnCode', () => {
       `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/background.js"></script>`
     );
   });
+
+  it('generates headless video CDN tag when skin is none', () => {
+    expect(generateCdnCode('default-video', 'none', 'html5-video')).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-headless.js"></script>`
+    );
+  });
+
+  it('generates headless audio CDN tag when skin is none', () => {
+    expect(generateCdnCode('default-audio', 'none', 'html5-audio')).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/audio-headless.js"></script>`
+    );
+  });
 });

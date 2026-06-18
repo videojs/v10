@@ -95,7 +95,10 @@ export function MinimalLiveAudioSkin(props: MinimalLiveAudioSkinProps): ReactNod
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />

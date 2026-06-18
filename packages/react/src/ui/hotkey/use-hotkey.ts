@@ -29,5 +29,5 @@ export function useHotkey(options: UseHotkeyOptions): void {
       disabled,
       onActivate: (event, key) => onActivateRef.current(event, key),
     });
-  }, [container, keys, target, repeatable, disabled, onActivateRef]);
+  }, [container, keys, target, repeatable, disabled]);
 }

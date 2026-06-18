@@ -18,6 +18,23 @@ const sharedSheet = createShadowStyle(sharedStyles);
  * via `adoptedStyleSheets` (or `<style>` fallback).
  */
 export class SkinElement extends ReactiveElement {
+  static get observedAttributes(): string[] {
+    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+    return [...super.observedAttributes, 'placeholdersrc'];
+  }
+
+  override attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
+    super.attributeChangedCallback(attr, oldValue, newValue);
+
+    if (attr === 'placeholdersrc') {
+      if (newValue) {
+        this.style.setProperty('--media-poster-placeholder', `url(${newValue})`);
+      } else {
+        this.style.removeProperty('--media-poster-placeholder');
+      }
+    }
+  }
+
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
   static styles?: ShadowStyle;
   static template?: HTMLTemplateElement | null;

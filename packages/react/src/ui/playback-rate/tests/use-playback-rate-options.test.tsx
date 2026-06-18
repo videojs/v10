@@ -72,7 +72,7 @@ describe('usePlaybackRateOptions', () => {
 
     const trigger = screen.getByTestId('trigger');
 
-    expect(trigger.getAttribute('aria-label')).toBe('Playback rate 1.5');
+    expect(trigger.getAttribute('aria-label')).toBe('playbackRateAria');
     expect(trigger.getAttribute('data-rate')).toBe('1.5');
   });
 

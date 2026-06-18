@@ -15,13 +15,21 @@ function withinControls(selector: string): string {
   return `media-controls ${selector}, .media-controls ${selector}`;
 }
 
-/** Scope a descendant selector to each comma-separated panel matcher. */
-function withinMenuPanel(panelSelector: string, descendant: string): string {
-  return panelSelector
+function unchecked(selector: string): string {
+  return selector
     .split(',')
-    .map((panel) => `${panel.trim()} ${descendant}`)
+    .map((part) => `${part.trim()}[aria-checked="false"]`)
     .join(', ');
 }
+
+const menu = '[role="menu"]';
+const item = '[role="menuitem"]';
+const option = '[role="menuitemradio"]';
+const activeMenu = `${menu}[data-menu-view-state="active"]`;
+const playbackRateOptions = [
+  `#playback-rate-menu ${option}`,
+  withinControls(`.media-menu--playback-rate ${option}`),
+].join(', ');
 
 export const SELECTORS = {
   // Player containers
@@ -47,37 +55,16 @@ export const SELECTORS = {
     withinControls('.media-button--playback-rate'),
     withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
   ].join(', '),
-  playbackRateMenuPanel: '#playback-rate-menu[role="menu"], [role="menu"]#playback-rate-menu',
-  playbackRateMenuRadioItems: withinMenuPanel(
-    '#playback-rate-menu[role="menu"], [role="menu"]#playback-rate-menu',
-    '[role="menuitemradio"]'
-  ),
-  /** Standalone playback rate menu items (HTML id + React open menu in controls). */
-  openPlaybackRateMenuRadioItems: [
-    withinMenuPanel('#playback-rate-menu[role="menu"], [role="menu"]#playback-rate-menu', '[role="menuitemradio"]'),
-    withinControls('[role="menu"] [role="menuitemradio"]'),
-  ].join(', '),
-  /** Currently visible settings submenu panel (HTML + React). */
-  activeMenuPanel: '[role="menu"][data-menu-view-state="active"]',
-  activeMenuRadioItems: '[role="menu"][data-menu-view-state="active"] [role="menuitemradio"]',
+  playbackRateUncheckedOptions: unchecked(playbackRateOptions),
+  activeMenuOptions: `${activeMenu} ${option}`,
+  activeMenuUncheckedOptions: unchecked(`${activeMenu} ${option}`),
   settingsButton: [
     withinControls('.media-button--settings'),
     withinControls('button[commandfor="settings-menu"]'),
     withinControls('button[aria-label="Settings"]'),
   ].join(', '),
-  settingsCaptionsItem: [
-    'media-menu-item[commandfor="settings-captions-menu"]',
-    '[role="menuitem"]:has-text("Captions")',
-  ].join(', '),
-  settingsSpeedItem: ['media-menu-item[commandfor="settings-speed-menu"]', '[role="menuitem"]:has-text("Speed")'].join(
-    ', '
-  ),
-  settingsSpeedMenuPanel: '#settings-speed-menu[role="menu"], [role="menu"]#settings-speed-menu',
-  settingsCaptionsMenuPanel: '#settings-captions-menu[role="menu"], [role="menu"]#settings-captions-menu',
-  settingsCaptionsMenuRadioItems: withinMenuPanel(
-    '#settings-captions-menu[role="menu"], [role="menu"]#settings-captions-menu',
-    '[role="menuitemradio"]'
-  ),
+  settingsCaptionsItem: `${item}:has-text("Captions")`,
+  settingsSpeedItem: `${item}:has-text("Speed")`,
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls

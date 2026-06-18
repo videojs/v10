@@ -49,6 +49,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     uri?: string | undefined;
     default?: boolean | undefined;
     autoselect?: boolean | undefined;
+    channels?: number | undefined;
   }
 
   interface SubtitleRenditionInfo {
@@ -101,6 +102,10 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
           uri: uri ? resolveUrl(uri, baseUrl) : undefined,
           default: mediaAttrs.getBool('DEFAULT'),
           autoselect: mediaAttrs.getBool('AUTOSELECT'),
+          // CHANNELS is a quoted string whose first parameter is the channel
+          // count ("6", or "16/JOC" for spatial audio); getInt reads the
+          // leading integer.
+          channels: mediaAttrs.getInt('CHANNELS'),
         });
       }
 
@@ -175,8 +180,29 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
     }
   }
 
-  // Build PartiallyResolvedVideoTracks from video streams
-  const videoTracks: PartiallyResolvedVideoTrack[] = videoStreams.map((stream) => {
+  // Build PartiallyResolvedVideoTracks from video streams, de-duplicating the
+  // HLS cross-product: one video rendition is listed across several
+  // `EXT-X-STREAM-INF` entries — one per audio group it can pair with, all
+  // sharing the same media-playlist URI. Collapse them to one track per URI,
+  // accumulating every advertised audio group. (Redundant-stream renditions
+  // live at *distinct* per-CDN URIs, so they stay separate — only the same-URI
+  // cross-product merges.)
+  const videoTracksByUrl = new Map<string, PartiallyResolvedVideoTrack>();
+  for (const stream of videoStreams) {
+    const existing = videoTracksByUrl.get(stream.uri);
+    if (existing) {
+      if (stream.audioGroupId && !existing.audioGroupIds?.includes(stream.audioGroupId)) {
+        existing.audioGroupIds = [...(existing.audioGroupIds ?? []), stream.audioGroupId];
+      }
+      // BANDWIDTH is video + audio combined; the duplicates differ only in the
+      // paired audio. Keep the lowest as the closest proxy to video-only, which
+      // is what ABR should rank on.
+      if (stream.bandwidth < existing.bandwidth) {
+        existing.bandwidth = stream.bandwidth;
+      }
+      continue;
+    }
+
     const codecs = stream.codecs ? parseCodecs(stream.codecs) : undefined;
 
     const track: PartiallyResolvedVideoTrack = {
@@ -202,11 +228,12 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       track.frameRate = stream.frameRate;
     }
     if (stream.audioGroupId) {
-      track.audioGroupId = stream.audioGroupId;
+      track.audioGroupIds = [stream.audioGroupId];
     }
 
-    return track;
-  });
+    videoTracksByUrl.set(stream.uri, track);
+  }
+  const videoTracks: PartiallyResolvedVideoTrack[] = [...videoTracksByUrl.values()];
 
   // Build PartiallyResolvedAudioTracks from audio-only streams
   const audioOnlyTracks: PartiallyResolvedAudioTrack[] = audioOnlyStreams.map((stream) => {
@@ -252,7 +279,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       mimeType: 'audio/mp4',
       bandwidth: 0, // Not available in multivariant for demuxed audio
       sampleRate: 48000, // CMAF default
-      channels: 2, // Stereo default
+      channels: rendition.channels ?? 2, // From EXT-X-MEDIA CHANNELS; stereo default
       codecs: [],
     };
 

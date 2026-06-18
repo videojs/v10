@@ -15,7 +15,16 @@ import SelectorDemoReact from "@/components/docs/demos/use-player/react/css/Sele
 import selectorReactTsx from "@/components/docs/demos/use-player/react/css/Selector.tsx?raw";
 import selectorReactCss from "@/components/docs/demos/use-player/react/css/Selector.css?raw";
 
-`Player.usePlayer` gives you access to the player store from any component within a `Player.Provider`. It has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions. `Player.usePlayer` is typed to the features you passed to <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>. It's also available as a standalone import (`import { usePlayer } from '@videojs/react'`), but the standalone version returns an untyped store.
+`Player.usePlayer` (from <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>) gives you access to the player store from any component within a `Player.Provider`. It's typed to the features you passed to `createPlayer`, and has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions.
+
+`usePlayer` is also available as a standalone import (`import { usePlayer } from '@videojs/react'`), but the standalone version returns an untyped `UnknownStore`. Pass a premade selector to recover typing:
+
+```tsx
+import { usePlayer, selectPlayback } from '@videojs/react';
+
+usePlayer();               // UnknownStore (state: unknown)
+usePlayer(selectPlayback); // PlaybackState | undefined
+```
 
 ## Examples
 

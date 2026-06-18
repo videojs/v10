@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '../format';
+import { formatDuration, formatTime, formatTimeAsPhrase, formatVolumePercent, secondsToIsoDuration } from '../format';
 
 describe('formatTime', () => {
   it('formats seconds only', () => {
@@ -96,6 +96,80 @@ describe('formatTimeAsPhrase', () => {
   it('handles invalid values', () => {
     expect(formatTimeAsPhrase(NaN)).toBe('');
     expect(formatTimeAsPhrase(Infinity)).toBe('');
+  });
+});
+
+describe('formatDuration', () => {
+  it('formats positive duration', () => {
+    expect(formatDuration(90)).toContain('1');
+    expect(formatDuration(90)).toMatch(/minute/i);
+    expect(formatDuration(90)).toMatch(/30/);
+    expect(formatDuration(300)).toMatch(/5/);
+    expect(formatDuration(300)).toMatch(/minute/i);
+  });
+
+  it('adds remaining suffix for negative seconds', () => {
+    expect(formatDuration(-30)).toMatch(/30/);
+    expect(formatDuration(-30)).toMatch(/remaining$/i);
+  });
+
+  it('uses formatRemaining only for negative durations', () => {
+    expect(formatDuration(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/^quedan /);
+    expect(formatDuration(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/30/);
+    expect(formatDuration(90, { formatRemaining: () => 'should-not-appear' })).toBe(formatDuration(90));
+  });
+
+  it('omits English remaining suffix for non-English locales without formatRemaining', () => {
+    const formatted = formatDuration(-30, { locale: 'es' });
+    expect(formatted).toMatch(/30/);
+    expect(formatted).not.toMatch(/remaining$/i);
+  });
+
+  it('uses Intl.DurationFormat when supported; otherwise matches formatTimeAsPhrase', () => {
+    const DurationFormatConstructor = (Intl as typeof Intl & { DurationFormat?: unknown }).DurationFormat;
+    const hasDurationFormat = typeof DurationFormatConstructor === 'function';
+    const phrase = formatTimeAsPhrase(125);
+    if (hasDurationFormat) {
+      const en = formatDuration(125, { locale: 'en' });
+      const de = formatDuration(125, { locale: 'de' });
+      expect(en.length).toBeGreaterThan(0);
+      expect(de.length).toBeGreaterThan(0);
+      expect(en).not.toBe(de);
+    } else {
+      expect(formatDuration(125, { locale: 'en' })).toBe(phrase);
+      expect(formatDuration(125, { locale: 'ja' })).toBe(phrase);
+    }
+  });
+
+  it('handles invalid values', () => {
+    expect(formatDuration(NaN)).toBe('');
+    expect(formatDuration(Infinity)).toBe('');
+  });
+
+  it('falls back to formatTimeAsPhrase when locale is invalid', () => {
+    const phrase = formatTimeAsPhrase(90);
+    expect(formatDuration(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toBe(phrase);
+  });
+});
+
+describe('formatVolumePercent', () => {
+  it('uses Intl percent style', () => {
+    expect(formatVolumePercent(0.75)).toMatch(/75/);
+    expect(formatVolumePercent(0.75)).toMatch(/%/);
+  });
+
+  it('clamps to 0–100%', () => {
+    expect(formatVolumePercent(-1)).toBe(formatVolumePercent(0));
+    expect(formatVolumePercent(2)).toBe(formatVolumePercent(1));
+  });
+
+  it('handles invalid fraction', () => {
+    expect(formatVolumePercent(Number.NaN)).toMatch(/0/);
+    expect(formatVolumePercent(Number.NaN)).toMatch(/%/);
+  });
+
+  it('falls back when locale is invalid', () => {
+    expect(formatVolumePercent(0.75, 'not-a-invalid-bcp47-tag!!!')).toBe('75%');
   });
 });
 

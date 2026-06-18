@@ -67,8 +67,8 @@ test.describe('Visual — Captions', () => {
 
     await player.showControls();
     await player.openCaptionsSettings();
-    await expect(page.locator(SELECTORS.activeMenuRadioItems)).toHaveCount(2);
-    await page.locator(SELECTORS.activeMenuRadioItems).nth(1).dispatchEvent('click');
+    await expect(page.locator(SELECTORS.activeMenuOptions)).toHaveCount(2);
+    await page.locator(SELECTORS.activeMenuOptions).nth(1).dispatchEvent('click');
 
     // Play briefly so the caption cue at 0:00 activates, then pause
     await player.play();

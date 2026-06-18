@@ -69,12 +69,12 @@ describe('CaptionsButtonCore', () => {
   describe('getLabel', () => {
     it('returns Enable captions when captions are disabled', () => {
       const core = new CaptionsButtonCore();
-      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('Enable captions');
+      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('enableCaptions');
     });
 
     it('returns Disable captions when captions are enabled', () => {
       const core = new CaptionsButtonCore();
-      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('Disable captions');
+      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('disableCaptions');
     });
 
     it('returns custom string label', () => {
@@ -94,7 +94,7 @@ describe('CaptionsButtonCore', () => {
     it('returns aria-label', () => {
       const core = new CaptionsButtonCore();
       const attrs = core.getAttrs(createState({ subtitlesShowing: false }));
-      expect(attrs['aria-label']).toBe('Enable captions');
+      expect(attrs['aria-label']).toBe('enableCaptions');
     });
 
     it('sets aria-disabled when disabled', () => {

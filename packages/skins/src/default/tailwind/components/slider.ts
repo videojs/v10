@@ -22,9 +22,11 @@ export const slider = {
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0',
       'data-[orientation=horizontal]:w-(--media-slider-fill)',
+      'group-data-dragging/slider:data-[orientation=horizontal]:w-(--media-slider-pointer)',
       // Vertical
       'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:bottom-0',
-      'data-[orientation=vertical]:h-(--media-slider-fill)'
+      'data-[orientation=vertical]:h-(--media-slider-fill)',
+      'group-data-dragging/slider:data-[orientation=vertical]:h-(--media-slider-pointer)'
     ),
     buffer: cn(
       'bg-current/20 duration-250 ease-out',
@@ -45,10 +47,18 @@ export const slider = {
       'outline-4 outline-transparent -outline-offset-4',
       'hover:outline-current/15 hover:outline-offset-0',
       'focus-visible:outline-current/15 focus-visible:outline-offset-0',
+      // Focus ring via ::after (matches default slider.css)
+      'after:absolute after:-inset-1 after:rounded-[inherit]',
+      'after:shadow-[0_0_0_2px_currentColor] after:pointer-events-none',
+      'after:transition-[opacity,scale] after:duration-150 after:ease-out',
+      'after:opacity-0 after:scale-50',
+      'focus-visible:after:opacity-100 focus-visible:after:scale-100',
       // Horizontal
       'data-[orientation=horizontal]:top-1/2 data-[orientation=horizontal]:left-(--media-slider-fill)',
+      'group-data-dragging/slider:data-[orientation=horizontal]:left-(--media-slider-pointer)',
       // Vertical
-      'data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))]'
+      'data-[orientation=vertical]:left-1/2 data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))]',
+      'group-data-dragging/slider:data-[orientation=vertical]:top-[calc(100%-var(--media-slider-pointer))]'
     ),
     persistent: 'size-3',
     interactive: cn(

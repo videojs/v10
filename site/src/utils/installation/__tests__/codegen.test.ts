@@ -139,6 +139,14 @@ describe('generateHTMLUsageCode', () => {
     expect(result.js).toContain("import '@videojs/html/video/minimal-skin'");
   });
 
+  it('omits skin tag and skin import when skin is none', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, skin: 'none' });
+    expect(result.html).toContain('<video-player>');
+    expect(result.html).not.toContain('<video-skin>');
+    expect(result.js).toContain("import '@videojs/html/video/player'");
+    expect(result.js).not.toContain("import '@videojs/html/video/skin'");
+  });
+
   it('uses custom source URL when provided', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, sourceUrl: 'https://example.com/video.mp4' });
     expect(result.html).toContain('https://example.com/video.mp4');
@@ -191,6 +199,15 @@ describe('generateReactCreateCode', () => {
     const code = result['MyPlayer.tsx'];
     expect(code).toContain('<MinimalVideoSkin>');
     expect(code).toContain("import '@videojs/react/video/minimal-skin.css'");
+  });
+
+  it('omits skin component and CSS import when skin is none', () => {
+    const result = generateReactCreateCode({ ...baseReact, skin: 'none' });
+    const code = result['MyPlayer.tsx'];
+    expect(code).not.toContain('VideoSkin');
+    expect(code).not.toContain('skin.css');
+    expect(code).toContain('<Video src={src} playsInline />');
+    expect(code).toContain("from '@videojs/react/video'");
   });
 
   it('uses background video components', () => {

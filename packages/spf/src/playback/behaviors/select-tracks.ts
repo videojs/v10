@@ -44,7 +44,7 @@ import {
   type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
 import { isResolvedPresentation } from '../../media/types';
-import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 
 // ============================================================================
 // Specialization helper

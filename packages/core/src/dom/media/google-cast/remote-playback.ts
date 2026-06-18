@@ -5,8 +5,28 @@ export type RemotePlaybackState = 'disconnected' | 'connecting' | 'connected';
 
 type AvailabilityCallback = (available: boolean) => void;
 
+export type RemotePlaybackHooks = {
+  setState(next: RemotePlaybackState): void;
+  setAvailable(available: boolean): void;
+};
+
 let callbackIdCount = 0;
 
+/**
+ * Implementation of the W3C [`RemotePlayback`](https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback)
+ * interface backed by Google Cast.
+ *
+ * Surfaced via `host.remote` while the {@link GoogleCastProvider} is in the
+ * provider chain. The public API must strictly conform to the W3C spec:
+ *
+ * - Properties: `state`
+ * - Methods: `watchAvailability`, `cancelWatchAvailability`, `prompt`
+ * - Events: `connecting`, `connect`, `disconnect`
+ *
+ * Internal state mutations are pushed by {@link GoogleCastProvider} through
+ * private callbacks registered via `provider.bindHooks(...)` in the constructor —
+ * do not add public methods or properties that aren't part of the spec.
+ */
 export class RemotePlayback extends EventTarget {
   #provider: GoogleCastProvider;
   #state: RemotePlaybackState = 'disconnected';
@@ -53,7 +73,7 @@ export class RemotePlayback extends EventTarget {
   }
 
   #assertEnabled() {
-    if (this.#provider.media.disableRemotePlayback) {
+    if (this.#provider.target?.disableRemotePlayback) {
       throw new InvalidStateError('disableRemotePlayback attribute is present.');
     }
   }

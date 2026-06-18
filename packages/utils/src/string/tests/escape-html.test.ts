@@ -12,5 +12,8 @@ describe('escapeHtml', () => {
 
   it('escapes ampersand first to avoid double-encoding', () => {
     expect(escapeHtml('&amp;')).toBe('&amp;amp;');
+    expect(escapeHtml('https://player.vimeo.com/video/123?autoplay=1')).toBe(
+      'https://player.vimeo.com/video/123?autoplay=1'
+    );
   });
 });
