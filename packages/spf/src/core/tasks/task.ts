@@ -46,6 +46,18 @@ export interface TaskLike<TValue = void, TError = unknown> {
   readonly status: TaskStatus;
   readonly value: DeepReadonly<TValue> | undefined;
   readonly error: DeepReadonly<TError> | undefined;
+  /**
+   * The last successful value carried forward from the run this was `clone()`d
+   * from — the prior cycle's result for a `RecurringRunner` (undefined for an
+   * original, or until the lineage has produced a success).
+   */
+  readonly previous: DeepReadonly<TValue> | undefined;
+  /**
+   * The signal this task's work runs under (its own abort composed with any
+   * external one). Aborting the task fires it — so a `reschedule` can wait on it
+   * to have its delay cancelled when the recurrence is aborted.
+   */
+  readonly signal: AbortSignal;
   /** Run the work, memoized: repeated calls share one execution + result. */
   run(): Promise<TValue>;
   abort(): void;
@@ -80,6 +92,7 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
   #status: TaskStatus = 'pending';
   #value: TValue | undefined = undefined;
   #error: TError | undefined = undefined;
+  #previous: TValue | undefined = undefined;
   #promise: Promise<TValue> | undefined = undefined;
 
   constructor(runFn: (signal: AbortSignal) => Promise<TValue>, config?: TaskConfig) {
@@ -102,6 +115,14 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
 
   get error(): DeepReadonly<TError> | undefined {
     return this.#error as DeepReadonly<TError> | undefined;
+  }
+
+  get previous(): DeepReadonly<TValue> | undefined {
+    return this.#previous as DeepReadonly<TValue> | undefined;
+  }
+
+  get signal(): AbortSignal {
+    return this.#signal;
   }
 
   run(): Promise<TValue> {
@@ -135,9 +156,16 @@ export class Task<TValue = void, TError = unknown> implements TaskLike<TValue, T
    * A fresh task with the same work, id, and external signal, in a pending state
    * (its own AbortController, no memoized result) — so it can be run again. Used
    * to re-run structurally identical work (e.g. `RecurringRunner` reloads).
+   *
+   * The clone inherits this run's value as its `previous` (or this run's own
+   * `previous` if it never produced one — e.g. it errored), so a recurrence's
+   * `previous` always tracks the last *successful* value across the lineage with
+   * no bookkeeping in the runner.
    */
   clone(): Task<TValue, TError> {
-    return new Task<TValue, TError>(this.#runFn, { id: this.id, signal: this.#externalSignal });
+    const cloned = new Task<TValue, TError>(this.#runFn, { id: this.id, signal: this.#externalSignal });
+    cloned.#previous = this.#value ?? this.#previous;
+    return cloned;
   }
 }
 
@@ -322,12 +350,13 @@ export class SerialRunner {
 /**
  * Decides whether — and *when* — a {@link RecurringRunner} re-runs its task.
  * Invoked **concurrently with the run** (so the inter-run interval can be
- * measured from when the run *started*, not when it finished), with:
- * - `task` — the in-flight run, observable via the memoized `task.run()` (does
+ * measured from when the run *started*, not when it finished) with the single
+ * {@link TaskLike}, which carries everything a decision needs:
+ * - `task.run()` — the in-flight run, observable via this memoized call (does
  *   not re-trigger work), e.g. to read its result for a cadence/stop decision.
- * - `previous` — the prior successful run's value (`undefined` on the first),
- *   for decisions that compare consecutive results.
- * - `signal` — aborts the wait (and the recurrence).
+ * - `task.previous` — the prior successful run's value (`undefined` on the
+ *   first), for decisions that compare consecutive results.
+ * - `task.signal` — aborts the wait (and the recurrence) when the task is.
  *
  * Resolves `true` to re-run (after whatever delay it owns) or `false` to stop.
  * The runner deals only in this awaitable verdict — *how* the delay is produced
@@ -335,11 +364,7 @@ export class SerialRunner {
  * the reschedule function, so the runner itself knows nothing about time. See
  * `delayedReschedule` for the common timer-based, start-anchored implementation.
  */
-export type Reschedule<TValue> = (
-  task: TaskLike<TValue>,
-  previous: TValue | undefined,
-  signal: AbortSignal
-) => PromiseLike<boolean>;
+export type Reschedule<TValue> = (task: TaskLike<TValue>) => PromiseLike<boolean>;
 
 /**
  * Runs a task, then re-runs it whenever a {@link Reschedule} function says to,
@@ -361,20 +386,22 @@ export type Reschedule<TValue> = (
  *
  * Each re-run is a fresh `clone()` of the task (since `Task.run()` is memoized —
  * the same instance won't re-execute), carrying the same id so the slot's
- * identity is stable across cycles. The run function should read any inputs that
+ * identity is stable across cycles. The clone also carries the prior cycle's
+ * value forward as `task.previous`. The run function should read any inputs that
  * change between cycles at call time rather than capturing them once.
- * `abortAll()` aborts the in-flight task and the pending reschedule; an aborted
- * (or stopped) recurrence frees the slot, so a later schedule of the same id
- * starts fresh.
+ *
+ * The task is the sole cancellation channel: `abortAll()` aborts the active task,
+ * which fires `task.signal` — cancelling both its in-flight run and any pending
+ * reschedule delay waiting on that signal. An aborted (or stopped) recurrence
+ * frees the slot, so a later schedule of the same id starts fresh.
  */
 export class RecurringRunner<TValue = unknown> {
   readonly #reschedule: Reschedule<TValue> | undefined;
   // The identified active task — the one being (re)run. Held across cycles
-  // (including the inter-cycle wait); null once the recurrence stops/aborts.
+  // (including the inter-cycle wait); null once the recurrence stops/aborts. Also
+  // serves as the loop's ownership token: a loop frees the slot only while
+  // `#active` still points at its own task (a supersede/abortAll swaps it).
   #active: TaskLike<TValue, unknown> | null = null;
-  // Aborts the active recurrence: its in-flight run (via the task) and the
-  // pending reschedule await (via the signal passed to `reschedule`).
-  #abort: AbortController | null = null;
   #destroyed = false;
 
   constructor(reschedule?: Reschedule<TValue>) {
@@ -390,55 +417,46 @@ export class RecurringRunner<TValue = unknown> {
     // one identified active task.
     this.#cancel();
     this.#active = task;
-    const ac = new AbortController();
-    this.#abort = ac;
-    void this.#loop(task, ac);
+    void this.#loop(task);
   }
 
-  async #loop(task: TaskLike<TValue, unknown>, ac: AbortController): Promise<void> {
-    const signal = ac.signal;
+  async #loop(task: TaskLike<TValue, unknown>): Promise<void> {
     let current = task;
-    let previous: TValue | undefined;
-    while (!signal.aborted) {
-      let result: TValue | undefined;
+    while (true) {
       let again = false;
       try {
         // Start the run and the reschedule together: reschedule observes the run
-        // (via the memoized `task.run()`) and owns the inter-run delay, so the
+        // (via the memoized `current.run()`) and owns the inter-run delay, so the
         // interval can be measured from the run's *start*. `Promise.all` waits
-        // for both — the result (the next cycle's `previous`) and the verdict +
-        // delay. An errored run resolves to `undefined`, leaving the retry/stop
-        // choice to reschedule.
-        [result, again] = await Promise.all([
+        // for both — the run (so the clone can carry its value forward as
+        // `previous`) and the verdict + delay. The run's own result is swallowed
+        // here; reschedule reads it (and decides retry-vs-stop on error).
+        [, again] = await Promise.all([
           current.run().then(
-            (value) => value,
-            () => undefined
+            () => {},
+            () => {}
           ),
-          this.#reschedule ? this.#reschedule(current, previous, signal) : Promise.resolve(false),
+          this.#reschedule ? this.#reschedule(current) : Promise.resolve(false),
         ]);
       } catch {
         return; // reschedule rejected (aborted during its delay) — stop without freeing
       }
-      if (signal.aborted || !again) break;
-      // Only a successful run advances the comparison baseline.
-      if (result !== undefined) previous = result;
+      // The task is the cancellation channel; an aborted task means we were
+      // superseded/aborted even if reschedule still resolved true.
+      if (current.signal.aborted || !again) break;
       // Re-run the same work as a fresh task — `run()` is memoized, so re-running
       // `current` wouldn't re-execute. The clone keeps the id (stable slot
-      // identity); track it as active so an abort hits the in-flight instance.
+      // identity) and carries `previous`; track it as active so an abort hits the
+      // in-flight instance.
       current = current.clone();
       this.#active = current;
     }
     // Loop ended on its own terms (stop / aborted-but-not-cancelled): free the
-    // slot iff this loop still owns it (a supersede/abortAll swapped #abort).
-    if (this.#abort === ac) {
-      this.#active = null;
-      this.#abort = null;
-    }
+    // slot iff this loop still owns it (a supersede/abortAll swapped `#active`).
+    if (this.#active === current) this.#active = null;
   }
 
   #cancel(): void {
-    this.#abort?.abort();
-    this.#abort = null;
     this.#active?.abort();
     this.#active = null;
   }

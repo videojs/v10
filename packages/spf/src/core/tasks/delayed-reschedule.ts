@@ -19,7 +19,7 @@ import type { Reschedule } from './task';
 export function delayedReschedule<TValue>(
   cadence: (current: TValue | undefined, previous: TValue | undefined) => number | null
 ): Reschedule<TValue> {
-  return async (task, previous, signal) => {
+  return async (task) => {
     const startedAt = Date.now();
     let current: TValue | undefined;
     try {
@@ -27,9 +27,11 @@ export function delayedReschedule<TValue>(
     } catch {
       current = undefined;
     }
-    const ms = cadence(current, previous);
+    // `task.previous` is the prior successful value (carried by the runner's
+    // clone); read-only for the cadence, hence the cast off `DeepReadonly`.
+    const ms = cadence(current, task.previous as TValue | undefined);
     if (ms === null) return false;
-    await sleep(Math.max(0, ms - (Date.now() - startedAt)), signal);
+    await sleep(Math.max(0, ms - (Date.now() - startedAt)), task.signal);
     return true;
   };
 }

@@ -229,6 +229,31 @@ describe('Task', () => {
       expect(signals).toHaveLength(1);
       expect(signals[0]?.aborted).toBe(true);
     });
+
+    it('carries the run value forward as the clone’s `previous`', async () => {
+      const original = new Task<number>(async () => 1, { id: 'x' });
+      expect(original.previous).toBeUndefined();
+      await original.run();
+
+      const cloned = original.clone();
+      expect(cloned.previous).toBe(1);
+    });
+
+    it('preserves the last successful `previous` across an errored cycle', async () => {
+      let n = 0;
+      // Cycle 1 → 1, cycle 2 → throws, cycle 3 → 3.
+      const run = async () => {
+        n += 1;
+        if (n === 2) throw new Error('boom');
+        return n;
+      };
+      const c1 = new Task<number>(run, { id: 'x' });
+      await c1.run();
+      const c2 = c1.clone(); // previous = 1
+      await c2.run().catch(() => {});
+      const c3 = c2.clone(); // errored cycle keeps previous = 1
+      expect(c3.previous).toBe(1);
+    });
   });
 });
 
@@ -637,9 +662,9 @@ describe('SerialRunner', () => {
 describe('RecurringRunner', () => {
   /** A reschedule that parks forever, rejecting only when its signal aborts — so a
    *  recurrence stays "live" (awaiting) until superseded or aborted. */
-  const parkUntilAborted: Reschedule<number> = (_task, _previous, signal) =>
+  const parkUntilAborted: Reschedule<number> = (task) =>
     new Promise<boolean>((_resolve, reject) => {
-      signal.addEventListener('abort', () => reject(signal.reason), { once: true });
+      task.signal.addEventListener('abort', () => reject(task.signal.reason), { once: true });
     });
 
   /** Flush pending macrotasks so "did NOT happen" assertions are meaningful. */
@@ -674,9 +699,9 @@ describe('RecurringRunner', () => {
     let n = 0;
     const task = new Task<number>(async () => ++n, { id: 'x' });
     const seen: Array<[number, number | undefined]> = [];
-    const runner = new RecurringRunner<number>(async (t, previous) => {
+    const runner = new RecurringRunner<number>(async (t) => {
       const current = await t.run(); // observe via the memoized run
-      seen.push([current, previous]);
+      seen.push([current, t.previous]); // `previous` carried forward by the clone
       return current < 2;
     });
 
