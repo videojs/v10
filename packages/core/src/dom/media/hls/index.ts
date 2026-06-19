@@ -111,27 +111,27 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     if (this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
   }
 
-  /** The current fatal playback error, or `null` when playback is healthy. */
+  /** The current fatal playback error. */
   get error() {
     return this.#delegate?.error ?? null;
   }
 
-  /** Available video tracks, or `undefined` unless the hls.js (MSE) engine is active. */
+  /** Populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get videoTracks() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoTracks : undefined;
   }
 
-  /** Available audio tracks, or `undefined` unless the hls.js (MSE) engine is active. */
+  /** Populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioTracks() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioTracks : undefined;
   }
 
-  /** Available video renditions (selectable quality levels), or `undefined` unless the hls.js (MSE) engine is active. */
+  /** Selectable quality levels, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get videoRenditions() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoRenditions : undefined;
   }
 
-  /** Available audio renditions, or `undefined` unless the hls.js (MSE) engine is active. */
+  /** Selectable audio variants, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioRenditions() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioRenditions : undefined;
   }
