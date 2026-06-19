@@ -172,6 +172,11 @@ export default defineConfig({
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.
       exclude: ['@videojs/react', '@videojs/html', '@resvg/resvg-js'],
+      // react-dom (CJS) must be pre-bundled so its named exports (createRoot,
+      // hydrateRoot) are exposed as ESM bindings to the @astrojs/react client
+      // renderer. Excluding @videojs/react above shadows the include list the
+      // React integration injects, so re-declare them here.
+      include: ['react-dom', 'react-dom/client'],
     },
     resolve: {
       dedupe: ['react', 'react-dom'],
