@@ -10,7 +10,6 @@ export function NativeHlsMediaErrorsMixin<Base extends Constructor<NativeMediaHo
     #disconnect: AbortController | null = null;
     #error: MediaError | null = null;
 
-    /** The current fatal media error. */
     get error(): MediaError | null {
       return this.#error;
     }

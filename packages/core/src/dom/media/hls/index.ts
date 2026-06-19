@@ -111,7 +111,6 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     if (this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
   }
 
-  /** The current fatal playback error. */
   get error() {
     return this.#delegate?.error ?? null;
   }
