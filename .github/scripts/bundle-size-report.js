@@ -238,7 +238,6 @@ function generateFlatBreakdown(entries, pkg) {
 // ---------------------------------------------------------------------------
 
 function generateComparisonReport(current, base) {
-  const baseMap = Object.fromEntries(base.map((e) => [e.name, e.size]));
   const currentMap = Object.fromEntries(current.map((e) => [e.name, e.size]));
   const baseEntryMap = Object.fromEntries(base.map((e) => [e.name, e]));
 
@@ -325,20 +324,22 @@ function generateComparisonReport(current, base) {
 
       for (const entry of changed) {
         const el = entryLabel(entry.name, pkg);
-        const prev = baseMap[entry.name];
         const previousEntry = baseEntryMap[entry.name];
-        const d = formatDelta(entry.size, prev);
+        const prevInitial = previousEntry ? comparisonSize(previousEntry) : undefined;
+        const currentInitial = comparisonSize(entry);
+        const d = formatDelta(currentInitial, prevInitial);
         const status = entryStatusIcon(entry, previousEntry);
-        const baseSize = prev !== undefined ? formatBytes(prev) : '—';
+        const baseSize = prevInitial !== undefined ? formatBytes(prevInitial) : '—';
         lines.push(
-          `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${comparisonLazyDelta(entry, previousEntry)} | ${status} |`,
+          `| ${el} | ${baseSize} | ${formatBytes(currentInitial)} | ${d.bytes} | ${d.pct} | ${comparisonLazyDelta(entry, previousEntry)} | ${status} |`,
         );
       }
 
       for (const entry of removed) {
         const el = entryLabel(entry.name, pkg);
+        const previousInitial = comparisonSize(entry);
         lines.push(
-          `| ${el} | ${formatBytes(entry.size)} | — | −${formatBytes(entry.size)} | −100% | ${comparisonLazyDelta(undefined, entry)} | 🗑️ |`,
+          `| ${el} | ${formatBytes(previousInitial)} | — | −${formatBytes(previousInitial)} | −100% | ${comparisonLazyDelta(undefined, entry)} | 🗑️ |`,
         );
       }
 
