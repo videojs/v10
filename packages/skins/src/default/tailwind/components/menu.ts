@@ -1,6 +1,7 @@
 import { cn } from '@videojs/utils/style';
 
 import { popup } from './popup';
+import { surface } from './surface';
 
 const panelBase = cn(
   'absolute inset-0 overflow-auto overscroll-none p-1 outline-none translate-none',
@@ -44,6 +45,7 @@ const menuTokens = cn(
 
 const menuHostShell = cn(
   popup.popover,
+  surface,
   menuTokens,
   'max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--menu-max-height)),var(--menu-max-height))]',
   'box-border rounded-xl p-1 overscroll-none'
