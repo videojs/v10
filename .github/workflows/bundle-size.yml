@@ -54,6 +54,13 @@ jobs:
         with:
           ref: ${{ github.base_ref }}
 
+      - name: Checkout PR scripts
+        uses: actions/checkout@v5
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.sha }}
+          path: .bundle-size-pr
+
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
 
@@ -75,9 +82,9 @@ jobs:
         run: |
           pnpm install
 
-          if [ -f .github/scripts/bundle-size.js ]; then
+          if [ -f .bundle-size-pr/.github/scripts/bundle-size.js ]; then
             pnpm build:packages
-            node .github/scripts/bundle-size.js --json base-size.json
+            node .bundle-size-pr/.github/scripts/bundle-size.js --root . --json base-size.json
           else
             echo '[]' > base-size.json
           fi
