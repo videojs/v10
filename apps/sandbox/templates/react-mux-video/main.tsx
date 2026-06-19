@@ -41,7 +41,7 @@ function App() {
       <Provider>
         <VideoSkinComponent
           poster={poster}
-        placeholder={placeholder}
+          placeholder={placeholder}
           skin={skin}
           styling={styling}
           live={live}
