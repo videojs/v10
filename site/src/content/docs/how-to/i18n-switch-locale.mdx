@@ -15,7 +15,7 @@ Video.js re-resolves translations when the active locale changes. How you trigge
 
 ## Ambient `<html lang>`
 
-The simplest switch — update the document language and let providers pick it up:
+The simplest switch updates the document language and lets providers pick it up:
 
 ```ts
 document.documentElement.lang = 'fr';
@@ -90,7 +90,7 @@ Or set `document.documentElement.lang` if the player inherits ambient language.
 
 ## Avoid flash while switching
 
-Async lazy loads can briefly show English. Preload copy before the active locale changes — three common patterns:
+Async lazy loads can briefly show English. Preload copy before the active locale changes with one of three common patterns:
 
 ### Pre-register at bootstrap (React and HTML)
 
@@ -106,7 +106,7 @@ import fr from '@videojs/react/i18n/locales/fr';
 registerI18n('es', es);
 registerI18n('fr', fr);
 
-// Switching locale is instant — no remount, no lazy-load gap
+// Switching locale is instant: no remount, no lazy-load gap
 <I18nProvider locale={userLocale}>
   <VideoSkin>...</VideoSkin>
 </I18nProvider>
@@ -174,12 +174,12 @@ async function switchTo(next: string) {
 
 | Approach | Scope | Best for |
 | --- | --- | --- |
-| `registerI18n` at bootstrap | Global — all providers | Language picker with a fixed set of locales |
-| `registerI18n` before switch | Global — all providers | On-demand prefetch before changing `locale` |
+| `registerI18n` at bootstrap | Global, all providers | Language picker with a fixed set of locales |
+| `registerI18n` before switch | Global, all providers | On-demand prefetch before changing `locale` |
 | `I18nProvider translations` | Single provider subtree | Scoped overrides, SSR first paint |
 
 <Aside type="note">
-`registerI18n` merges into the global registry — repeated calls add or replace keys for the same tag, they do not wipe other locales. Registry updates notify mounted providers via `onI18nRegistryChange`, so late registrations still refresh wired controls.
+`registerI18n` merges into the global registry. Repeated calls add or replace keys for the same tag, they do not wipe other locales. Registry updates notify mounted providers via `onI18nRegistryChange`, so late registrations still refresh wired controls.
 </Aside>
 
 <Aside type="tip">
@@ -193,4 +193,4 @@ Reload or navigate with an updated `locale` query parameter, or load a different
 ## What's next?
 
 - <DocsLink slug="how-to/i18n-ssr">SSR with locale</DocsLink>
-- <DocsLink slug="reference/use-locale">`useLocale`</DocsLink> — read the active locale in React
+- <DocsLink slug="reference/use-locale">`useLocale`</DocsLink>: Read the active locale in React

@@ -11,7 +11,8 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge order and fallback rules.
 
 ```ts
-import { createTranslator, getI18nTranslations } from '@videojs/core/i18n';
+import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
+// or @videojs/react/i18n
 
 const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
 t('play'); // merged Portuguese string
