@@ -31,9 +31,8 @@ function propertyKey(key: string): string {
 
 function generateLoadLocaleTs(): string {
   const tags = [...BUILT_IN_LOCALES, ...LOCALE_ALIAS_TAGS];
-  const entries = tags.map((tag) => `  ${propertyKey(tag)}: () => import('./locales/${tag}'),`).join('\n');
-  const normalizedEntries = tags
-    .map((tag) => `  ${propertyKey(tag.trim().replaceAll('_', '-').toLowerCase())}: '${tag}',`)
+  const entries = tags
+    .map((tag) => `  ${propertyKey(tag.trim().replaceAll('_', '-').toLowerCase())}: () => import('./locales/${tag}'),`)
     .join('\n');
 
   return `${GENERATED_HEADER}import { canonicalLocaleRegistryKey, hasRegisteredI18n, localeLookupChain } from './registry';
@@ -43,17 +42,12 @@ const loaders = {
 ${entries}
 } as const satisfies Record<string, () => Promise<{ default: Partial<Translations> }>>;
 
-const loaderTagByNormalized = {
-${normalizedEntries}
-} as const satisfies Record<string, keyof typeof loaders>;
-
 /** Lazy-import a shipped locale pack when the tag is not already in the registry. */
 export async function loadLocale(tag: string): Promise<Partial<Translations> | undefined> {
   if (hasRegisteredI18n(tag)) return undefined;
   for (const chainTag of localeLookupChain(tag)) {
     if (hasRegisteredI18n(chainTag)) return undefined;
-    const loaderTag = loaderTagByNormalized[canonicalLocaleRegistryKey(chainTag) as keyof typeof loaderTagByNormalized];
-    const load = loaderTag ? loaders[loaderTag] : undefined;
+    const load = loaders[canonicalLocaleRegistryKey(chainTag) as keyof typeof loaders];
     if (load) return (await load()).default;
   }
   return undefined;
