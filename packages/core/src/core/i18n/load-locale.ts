@@ -37,8 +37,8 @@ const loaders = {
   ne: () => import('./locales/ne'),
   oc: () => import('./locales/oc'),
   pl: () => import('./locales/pl'),
-  'pt-BR': () => import('./locales/pt-BR'),
-  'pt-PT': () => import('./locales/pt-PT'),
+  'pt-br': () => import('./locales/pt-BR'),
+  'pt-pt': () => import('./locales/pt-PT'),
   ro: () => import('./locales/ro'),
   ru: () => import('./locales/ru'),
   sk: () => import('./locales/sk'),
@@ -50,73 +50,18 @@ const loaders = {
   tr: () => import('./locales/tr'),
   uk: () => import('./locales/uk'),
   vi: () => import('./locales/vi'),
-  'zh-CN': () => import('./locales/zh-CN'),
-  'zh-TW': () => import('./locales/zh-TW'),
+  'zh-cn': () => import('./locales/zh-CN'),
+  'zh-tw': () => import('./locales/zh-TW'),
   pt: () => import('./locales/pt'),
   zh: () => import('./locales/zh'),
 } as const satisfies Record<string, () => Promise<{ default: Partial<Translations> }>>;
-
-const loaderTagByNormalized = {
-  ar: 'ar',
-  az: 'az',
-  bs: 'bs',
-  bg: 'bg',
-  bn: 'bn',
-  ca: 'ca',
-  cs: 'cs',
-  cy: 'cy',
-  da: 'da',
-  de: 'de',
-  el: 'el',
-  es: 'es',
-  et: 'et',
-  eu: 'eu',
-  fa: 'fa',
-  fi: 'fi',
-  fr: 'fr',
-  gd: 'gd',
-  gl: 'gl',
-  he: 'he',
-  hi: 'hi',
-  hr: 'hr',
-  hu: 'hu',
-  it: 'it',
-  ja: 'ja',
-  ko: 'ko',
-  lv: 'lv',
-  mr: 'mr',
-  nb: 'nb',
-  nl: 'nl',
-  nn: 'nn',
-  ne: 'ne',
-  oc: 'oc',
-  pl: 'pl',
-  'pt-br': 'pt-BR',
-  'pt-pt': 'pt-PT',
-  ro: 'ro',
-  ru: 'ru',
-  sk: 'sk',
-  sl: 'sl',
-  sr: 'sr',
-  sv: 'sv',
-  te: 'te',
-  th: 'th',
-  tr: 'tr',
-  uk: 'uk',
-  vi: 'vi',
-  'zh-cn': 'zh-CN',
-  'zh-tw': 'zh-TW',
-  pt: 'pt',
-  zh: 'zh',
-} as const satisfies Record<string, keyof typeof loaders>;
 
 /** Lazy-import a shipped locale pack when the tag is not already in the registry. */
 export async function loadLocale(tag: string): Promise<Partial<Translations> | undefined> {
   if (hasRegisteredI18n(tag)) return undefined;
   for (const chainTag of localeLookupChain(tag)) {
     if (hasRegisteredI18n(chainTag)) return undefined;
-    const loaderTag = loaderTagByNormalized[canonicalLocaleRegistryKey(chainTag) as keyof typeof loaderTagByNormalized];
-    const load = loaderTag ? loaders[loaderTag] : undefined;
+    const load = loaders[canonicalLocaleRegistryKey(chainTag) as keyof typeof loaders];
     if (load) return (await load()).default;
   }
   return undefined;
