@@ -2,8 +2,6 @@ name: Bundle Size
 
 on:
   pull_request:
-    branches:
-      - main
 
 permissions:
   pull-requests: write
