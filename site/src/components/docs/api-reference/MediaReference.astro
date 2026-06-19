@@ -16,6 +16,7 @@ import Tr from '@/components/typography/Tr.astro';
 import type { MediaReference } from '@/types/media-reference';
 import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
 import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
+import CodeChip from './CodeChip.astro';
 import MediaHostPropsTable from './MediaHostPropsTable.astro';
 
 interface Props {
@@ -116,12 +117,11 @@ const elementSpecificEvents = ref.events.elementSpecific;
           <MarkdownCode>{mediaTag}</MarkdownCode> element. The standard ones
           behave as described in the{" "}
           <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
-          {attributeNames.map((attr, index) => (
-            <>
-              <MarkdownCode>{attr}</MarkdownCode>
-              {index < attributeNames.length - 1 ? ", " : "."}
-            </>
-          ))}
+          <span class="code-list">
+            {attributeNames.map((attr) => (
+              <CodeChip value={attr} />
+            ))}
+          </span>
         </P>
       </>
     )
@@ -136,12 +136,11 @@ const elementSpecificEvents = ref.events.elementSpecific;
           accepts these media attributes as React props. The standard ones
           behave as described in the{" "}
           <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
-          {attributeNames.map((attr, index) => (
-            <>
-              <MarkdownCode>{attr}</MarkdownCode>
-              {index < attributeNames.length - 1 ? ", " : "."}
-            </>
-          ))}
+          <span class="code-list">
+            {attributeNames.map((attr) => (
+              <CodeChip value={attr} />
+            ))}
+          </span>
         </P>
       </>
     )
@@ -156,12 +155,11 @@ const elementSpecificEvents = ref.events.elementSpecific;
             Re-dispatches these media events from the internal{" "}
             <MarkdownCode>{mediaTag}</MarkdownCode> element, so you can listen
             for them directly. See <A href={mdnEventsUrl}>media events</A>:{" "}
-            {sortedNativeEvents.map((event, index) => (
-              <>
-                <MarkdownCode>{event}</MarkdownCode>
-                {index < sortedNativeEvents.length - 1 ? ", " : "."}
-              </>
-            ))}
+            <span class="code-list">
+              {sortedNativeEvents.map((event) => (
+                <CodeChip value={event} />
+              ))}
+            </span>
           </P>
         ) : (
           <>
@@ -170,24 +168,22 @@ const elementSpecificEvents = ref.events.elementSpecific;
               <MarkdownCode>onPlay</MarkdownCode>,{" "}
               <MarkdownCode>onTimeUpdate</MarkdownCode>). See{" "}
               <A href={mdnEventsUrl}>media events</A>:{" "}
-              {reactMappedEvents.map((event, index) => (
-                <>
-                  <MarkdownCode>{event}</MarkdownCode>
-                  {index < reactMappedEvents.length - 1 ? ", " : "."}
-                </>
-              ))}
+              <span class="code-list">
+                {reactMappedEvents.map((event) => (
+                  <CodeChip value={event} />
+                ))}
+              </span>
             </P>
             {reactRefOnlyEvents.length > 0 && (
               <P>
                 These media events have no React prop — attach a listener
                 through a <MarkdownCode>ref</MarkdownCode> with{" "}
                 <MarkdownCode>addEventListener</MarkdownCode>:{" "}
-                {reactRefOnlyEvents.map((event, index) => (
-                  <>
-                    <MarkdownCode>{event}</MarkdownCode>
-                    {index < reactRefOnlyEvents.length - 1 ? ", " : "."}
-                  </>
-                ))}
+                <span class="code-list">
+                  {reactRefOnlyEvents.map((event) => (
+                    <CodeChip value={event} />
+                  ))}
+                </span>
               </P>
             )}
           </>
@@ -237,12 +233,11 @@ const elementSpecificEvents = ref.events.elementSpecific;
         <P>
           Supports these methods from the native media API. See{" "}
           <A href={mdnMethodsUrl}>HTMLMediaElement</A> for the core methods:{" "}
-          {sortedMethods.map((method, index) => (
-            <>
-              <MarkdownCode>{method}</MarkdownCode>
-              {index < sortedMethods.length - 1 ? ", " : "."}
-            </>
-          ))}
+          <span class="code-list">
+            {sortedMethods.map((method) => (
+              <CodeChip value={method} />
+            ))}
+          </span>
         </P>
         {framework === "react" && (
           <P>
