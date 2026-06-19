@@ -1,10 +1,5 @@
 .container {
   display: grid;
-  grid-template-columns: 1fr;
   width: 100%;
   aspect-ratio: 16 / 9;
-}
-
-background-video {
-  --media-object-fit: cover;
 }
