@@ -6,7 +6,7 @@ description: Patch individual i18n strings without replacing an entire locale pa
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-`registerI18n` **merges** — each call adds or replaces keys for that locale tag without wiping prior registrations. Use this to tweak shipped packs or A/B test copy.
+`registerI18n` **merges**. Each call adds or replaces keys for that locale tag without wiping prior registrations. Use this to tweak shipped packs or A/B test copy.
 
 Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge order and key naming.
 
@@ -73,11 +73,11 @@ Keep required placeholders when overriding:
 // ✅
 registerI18n('es', { seekForward: 'Adelantar {seconds} segundos' });
 
-// ❌ TypeScript error — missing {seconds}
+// ❌ TypeScript error: missing {seconds}
 registerI18n('es', { seekForward: 'Adelantar' });
 ```
 
 ## What's next?
 
 - <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>
-- <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink> — inspect the merged map
+- <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink>: Inspect the merged map

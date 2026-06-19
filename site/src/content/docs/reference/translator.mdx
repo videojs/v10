@@ -10,7 +10,8 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 ## Import
 
 ```ts
-import type { Translator } from '@videojs/core/i18n';
+import type { Translator } from '@videojs/html/i18n';
+// or @videojs/react/i18n
 ```
 
 ## Definition
@@ -30,7 +31,8 @@ Missing keys in the active map resolve to the key string (`'play'`) so partial l
 ## Create manually
 
 ```ts
-import { createTranslator, getI18nTranslations } from '@videojs/core/i18n';
+import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
+// or @videojs/react/i18n
 
 const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
 t('pause'); // localized or key fallback
@@ -47,7 +49,7 @@ function Label() {
 }
 ```
 
-Control components resolve keys from core `getLabel()` through `resolveControlLabel` / `resolveControlAttrs` — you rarely call `t()` directly unless building custom UI.
+Control components resolve keys from core `getLabel()` through `resolveControlLabel` / `resolveControlAttrs`. You rarely call `t()` directly unless building custom UI.
 
 ## Related
 

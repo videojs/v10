@@ -38,7 +38,7 @@ registerI18n('es', es);
 </html>
 ```
 
-If you skip `registerI18n`, the built-in provider still **lazy-loads** `es` when `lang="es"` — explicit registration avoids the async gap on first paint.
+If you skip `registerI18n`, the built-in provider still **lazy-loads** `es` when `lang="es"`. Explicit registration avoids the async gap on first paint.
 
 </FrameworkCase>
 
@@ -68,8 +68,10 @@ Preset skins use `Container`, which includes <DocsLink slug="reference/i18n-prov
 
 ## Register your own pack
 
+<FrameworkCase frameworks={["html"]}>
+
 ```ts title="my-es.ts"
-import type { Translations } from '@videojs/core/i18n';
+import type { Translations } from '@videojs/html/i18n';
 
 const es = {
   play: 'Reproducir',
@@ -81,6 +83,25 @@ const es = {
 export default es;
 ```
 
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts title="my-es.ts"
+import type { Translations } from '@videojs/react/i18n';
+
+const es = {
+  play: 'Reproducir',
+  pause: 'Pausa',
+  mute: 'Silenciar',
+  unmute: 'Activar sonido',
+} satisfies Partial<Translations>;
+
+export default es;
+```
+
+</FrameworkCase>
+
 ```ts
 import { registerI18n } from '@videojs/html/i18n'; // or @videojs/react/i18n
 import es from './my-es';
@@ -88,7 +109,7 @@ import es from './my-es';
 registerI18n('es', es);
 ```
 
-All keys are optional — missing keys fall back through the BCP 47 chain to English.
+All keys are optional. Missing keys fall back through the BCP 47 chain to English.
 
 ## CDN
 

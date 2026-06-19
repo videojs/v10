@@ -5,18 +5,13 @@ description: Union of shipped BCP 47 locale tags with autocomplete in TypeScript
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-`BuiltInLocale` narrows <DocsLink slug="reference/locale">`Locale`</DocsLink> to tags with shipped translation packs in `@videojs/core/i18n/locales/*`. TypeScript suggests these tags when you call `registerI18n`, `loadLocale`, or import locale modules.
+`BuiltInLocale` narrows <DocsLink slug="reference/locale">`Locale`</DocsLink> to tags with shipped translation packs. TypeScript suggests these tags when you call `registerI18n`, `loadLocale`, or import locale modules.
 
-## Import
-
-```ts
-import type { BuiltInLocale } from '@videojs/core/i18n';
-```
-
-Runtime lists are also exported:
+## App imports
 
 ```ts
-import { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS, SHIPPED_LOCALE_TAGS } from '@videojs/core/i18n';
+import es from '@videojs/html/i18n/locales/es';
+// or @videojs/react/i18n/locales/es
 ```
 
 ## Definition
@@ -36,6 +31,7 @@ Providers call `loadLocale(tag)` for tags in `SHIPPED_LOCALE_TAGS` when a pack i
 ## Examples
 
 ```ts
+import { registerI18n } from '@videojs/react/i18n';
 import es from '@videojs/react/i18n/locales/es';
 
 registerI18n('es', es); // 'es' autocompletes as BuiltInLocale
