@@ -8,7 +8,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 Built-in locales live in `packages/core/src/core/i18n/locales/`. The build generates lazy loaders, CDN chunks, and HTML/React re-exports from that directory.
 
-This guide is for **contributors** adding or updating shipped packs — app authors should use <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink> instead.
+This guide is for **contributors** adding or updating shipped packs. App authors should use <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink> instead.
 
 ### Prerequisites
 
@@ -25,7 +25,7 @@ import type { Translations } from '../types';
 export default {
   play: '…',
   pause: '…',
-  // all keys from en.ts — each entry optional but completeness is preferred
+  // all keys from en.ts; completeness is preferred
 } satisfies Partial<Translations>;
 ```
 
@@ -33,10 +33,10 @@ Use **opaque keys** from `en.ts`, not English sentences as keys. Parametric stri
 
 Copy guidelines:
 
-- `liveBadge` — sentence case (`Live`); skins uppercase via CSS where needed
-- `seek` — slider aria label (`Seek`), not legacy "Progress" wording
-- `timeRemainingPhrase` — `'{duration} remaining'` pattern with `{duration}` placeholder
-- Button and error strings — short aria-label style, aligned with V10 core label usage
+- `liveBadge`: sentence case (`Live`); skins uppercase via CSS where needed
+- `seek`: slider aria label (`Seek`), not legacy "Progress" wording
+- `timeRemainingPhrase`: `'{duration} remaining'` pattern with `{duration}` placeholder
+- Button and error strings: short aria-label style, aligned with V10 core label usage
 
 ## 2. Register the tag in built-in metadata
 
@@ -76,7 +76,7 @@ pnpm -F @videojs/html build:cdn
 ```
 
 <Aside type="note">
-Do not copy strings blindly from Video.js v8 `lang/` JSON — v10 uses different keys and aria-label semantics. Translate from `en.ts` keys and core `getLabel` usage.
+Do not copy strings blindly from Video.js v8 `lang/` JSON. V10 uses different keys and aria-label semantics. Translate from `en.ts` keys and core `getLabel` usage.
 </Aside>
 
 ## What's next?

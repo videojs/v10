@@ -7,7 +7,7 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Server-rendered pages should output the correct `lang` **and** supply translations on the first client render. Lazy `loadLocale` runs after hydration — without preloaded copy, controls briefly show English.
+Server-rendered pages should output the correct `lang` **and** supply translations on the first client render. Lazy `loadLocale` runs after hydration. Without preloaded copy, controls briefly show English.
 
 Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for provider resolution and merge order.
 
@@ -46,7 +46,7 @@ export async function Player({ locale }: { locale: string }) {
 }
 ```
 
-`translations` on the first render skips the async lazy layer — labels match on server and client.
+`translations` on the first render skips the async lazy layer. Labels match on server and client.
 
 </FrameworkCase>
 
@@ -61,7 +61,7 @@ import es from './locales/es';
 registerI18n('es', es);
 ```
 
-The registry is module singleton state — registration in server entry points carries into the client bundle when shared.
+The registry is module singleton state. Registration in server entry points carries into the client bundle when shared.
 
 ## next-intl and app routers
 
@@ -76,7 +76,7 @@ const { default: translations } = await import(`@videojs/react/i18n/locales/${lo
 </I18nProvider>
 ```
 
-Match your app's locale negotiation — Video.js does not replace framework i18n; it consumes the tag you pass.
+Match your app's locale negotiation. Video.js does not replace framework i18n; it consumes the tag you pass.
 
 ## HTML custom elements
 
