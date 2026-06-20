@@ -1,8 +1,21 @@
 import { describe, expect, it } from 'vitest';
-import { accessPath, compile, jsxExpression, type ReactTargetOptions, react, replaceJsxChild } from '..';
-import { parse } from '../ast';
-import { anyTag, byTag, hasChild } from '../matchers';
-import { addProp, childAsProp, replace, wrap } from '../react';
+import { compile } from '..';
+import {
+  accessPath,
+  addProp,
+  anyTag,
+  byTag,
+  childAsProp,
+  hasChild,
+  type JsxElementLike,
+  type JsxTargetOptions,
+  jsx,
+  jsxExpression,
+  replace,
+  replaceJsxChild,
+  wrap,
+} from '../jsx';
+import { parse } from '../parse';
 
 /**
  * The TS printer emits `<A />` (space before slash) — collapse all whitespace
@@ -10,8 +23,8 @@ import { addProp, childAsProp, replace, wrap } from '../react';
  */
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 
-const compileReact = (source: string, options: ReactTargetOptions = {}) =>
-  compile(source, { config: { target: react(options) } });
+const compileJsx = (source: string, options: JsxTargetOptions = {}) =>
+  compile(source, { config: { target: jsx(options) } });
 
 describe('parse', () => {
   it('produces a TSX SourceFile with parent pointers set', () => {
@@ -24,7 +37,7 @@ describe('parse', () => {
 describe('compile (no transforms)', () => {
   it('round-trips a simple TSX module', async () => {
     const source = `import { Foo } from 'bar';\nexport function App() { return <Foo/>; }\n`;
-    const { code } = await compileReact(source);
+    const { code } = await compileJsx(source);
     // Identifier and JSX preserved; quote/whitespace style is whatever the printer decides.
     expect(code).toContain('Foo');
     expect(code).toContain('bar');
@@ -35,16 +48,16 @@ describe('compile (no transforms)', () => {
 describe('compile (transformImports — bare-string rule)', () => {
   it('rewrites the module specifier and leaves identifiers untouched', async () => {
     const source = `import { PlayIcon } from '@videojs/icons/components';\nconst _x = PlayIcon;`;
-    const { code } = await compileReact(source, {
-      imports: { '@videojs/icons/components': '@videojs/icons/react' },
+    const { code } = await compileJsx(source, {
+      imports: { '@videojs/icons/components': '@videojs/icons/jsx' },
     });
-    expect(code).toContain(`import { PlayIcon } from "@videojs/icons/react"`);
+    expect(code).toContain(`import { PlayIcon } from "@videojs/icons/jsx"`);
   });
 
   it('leaves unrelated imports untouched', async () => {
     const source = `import { Other } from 'unrelated';\nimport { PlayIcon } from '@videojs/icons/components';\nconst _ = [Other, PlayIcon];`;
-    const { code } = await compileReact(source, {
-      imports: { '@videojs/icons/components': '@videojs/icons/react' },
+    const { code } = await compileJsx(source, {
+      imports: { '@videojs/icons/components': '@videojs/icons/jsx' },
     });
     expect(code).toMatch(/from ['"]unrelated['"]/);
     expect(code).toContain('PlayIcon');
@@ -54,7 +67,7 @@ describe('compile (transformImports — bare-string rule)', () => {
 describe('compile (transformImports — function rule)', () => {
   it('rewrites per-identifier source and bucket-merges by resolved target', async () => {
     const source = `import { Alpha, Beta } from '@fixture/components';\nconst _ = [Alpha, Beta];`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       imports: {
         '@fixture/components': (name) => ({ source: `./ui/${name.toLowerCase()}`, name }),
       },
@@ -65,7 +78,7 @@ describe('compile (transformImports — function rule)', () => {
 
   it('renames identifiers when the rule returns a different `name`', async () => {
     const source = `import { OldName } from 'src';\nconst _ = OldName;`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       imports: { src: (_name) => ({ source: 'dst', name: 'NewName' }) },
     });
     expect(code).toContain(`import { NewName as OldName } from "dst"`);
@@ -75,7 +88,7 @@ describe('compile (transformImports — function rule)', () => {
 describe('replace', () => {
   it('substitutes a matched element with a new tag and adds the import', async () => {
     const source = `function App(){ return <Old foo="bar"/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [replace({ match: byTag('Old'), with: { source: 'pkg', name: 'New' } })],
     });
     expect(code).toContain(`<New foo="bar"`);
@@ -84,7 +97,7 @@ describe('replace', () => {
 
   it('preserves children when matching an open element', async () => {
     const source = `function App(){ return <Old><span/></Old>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [replace({ match: byTag('Old'), with: { source: 'pkg', name: 'New' } })],
     });
     expect(collapse(code)).toContain(collapse(`<New><span/></New>`));
@@ -94,7 +107,7 @@ describe('replace', () => {
 describe('wrap', () => {
   it('wraps a matched element with a new tag and adds the import', async () => {
     const source = `function App(){ return <Inner/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [wrap({ match: byTag('Inner'), with: { source: 'pkg', name: 'Outer' } })],
     });
     expect(collapse(code)).toContain(collapse(`<Outer><Inner/></Outer>`));
@@ -105,7 +118,7 @@ describe('wrap', () => {
 describe('childAsProp', () => {
   it('lifts a single JSX-element child into the named prop', async () => {
     const source = `function App(){ return <T><B/></T>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [childAsProp({ match: byTag('T'), prop: 'render' })],
     });
     expect(collapse(code)).toContain(collapse(`<T render={<B/>}/>`));
@@ -113,7 +126,7 @@ describe('childAsProp', () => {
 
   it('skips when prop is already set', async () => {
     const source = `function App(){ return <T render={<X/>}><B/></T>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [childAsProp({ match: byTag('T'), prop: 'render' })],
     });
     expect(collapse(code)).toContain(collapse(`<X/>`));
@@ -122,7 +135,7 @@ describe('childAsProp', () => {
 
   it('skips when there are multiple JSX-element children', async () => {
     const source = `function App(){ return <T><A/><B/></T>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [childAsProp({ match: byTag('T'), prop: 'render' })],
     });
     expect(collapse(code)).toContain(collapse(`<T><A/><B/></T>`));
@@ -130,7 +143,7 @@ describe('childAsProp', () => {
 
   it('matches an array of tags via anyTag', async () => {
     const source = `function App(){ return <><T1><A/></T1><T2><B/></T2></>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [childAsProp({ match: anyTag(['T1', 'T2']), prop: 'render' })],
     });
     const trimmed = collapse(code);
@@ -142,7 +155,7 @@ describe('childAsProp', () => {
 describe('replaceJsxChild', () => {
   it('replaces matched JSX children with expression helpers', async () => {
     const source = `function App({ values }){ return <Container><Token name="poster-image"/></Container>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         replaceJsxChild({
           match: byTag('Token'),
@@ -158,7 +171,7 @@ describe('replaceJsxChild', () => {
 describe('addProp', () => {
   it('emits a JSX value by default and adds the import', async () => {
     const source = `function App(){ return <PlayButton/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         addProp({ match: byTag('PlayButton'), prop: 'render', value: { source: './button', name: 'Button' } }),
       ],
@@ -169,7 +182,7 @@ describe('addProp', () => {
 
   it('emits a bare reference when kind is "ref"', async () => {
     const source = `function App(){ return <PlayButton/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         addProp({
           match: byTag('PlayButton'),
@@ -183,7 +196,7 @@ describe('addProp', () => {
 
   it('skips elements where the prop is already set', async () => {
     const source = `function App(){ return <PlayButton render={<X/>}/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         addProp({ match: byTag('PlayButton'), prop: 'render', value: { source: './button', name: 'Button' } }),
       ],
@@ -194,7 +207,7 @@ describe('addProp', () => {
 
   it('overwrites the existing prop when overwrite is true', async () => {
     const source = `function App(){ return <PlayButton render={<X/>}/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         addProp({
           match: byTag('PlayButton'),
@@ -211,7 +224,7 @@ describe('addProp', () => {
 describe('matchers', () => {
   it('byTag supports dotted tags', async () => {
     const source = `function App(){ return <Popover.Root foo="bar"/>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [replace({ match: byTag('Popover.Root'), with: { source: 'pkg', name: 'NewRoot' } })],
     });
     expect(code).toContain(`<NewRoot`);
@@ -219,12 +232,12 @@ describe('matchers', () => {
 
   it('byTag honours `when` refinement', async () => {
     const source = `function App(){ return <><Foo a="1"/><Foo a="2"/></>; }`;
-    const isA1 = (node: import('../matchers').JsxElementLike) => {
+    const isA1 = (node: JsxElementLike) => {
       const attrs = 'attributes' in node ? node.attributes : (node as never);
       const props = (attrs as { properties?: ReadonlyArray<{ initializer?: { text?: string } }> }).properties ?? [];
       return props.some((p) => p.initializer?.text === '1');
     };
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [replace({ match: byTag('Foo', { when: isA1 }), with: { source: 'pkg', name: 'Bar' } })],
     });
     expect(code).toContain(`<Bar a="1"`);
@@ -233,7 +246,7 @@ describe('matchers', () => {
 
   it('hasChild matches direct children only by default', async () => {
     const source = `function App(){ return <><A><B/></A><A><div><B/></div></A></>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [replace({ match: byTag('A', { when: hasChild(byTag('B')) }), with: { source: 'p', name: 'Z' } })],
     });
     // First <A> has direct <B/> child → replaced; second <A> has only a nested <B/> → not replaced.
@@ -243,7 +256,7 @@ describe('matchers', () => {
 
   it('hasChild with deep:true matches descendants', async () => {
     const source = `function App(){ return <A><div><B/></div></A>; }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         replace({
           match: byTag('A', { when: hasChild(byTag('B'), { deep: true }) }),
@@ -258,7 +271,7 @@ describe('matchers', () => {
     const source = `function App(){
       return <><Outer><Inner><Target/></Inner></Outer><Outer><Inner><Other/></Inner></Outer></>;
     }`;
-    const { code } = await compileReact(source, {
+    const { code } = await compileJsx(source, {
       transforms: [
         replace({
           match: byTag('Outer', { when: hasChild(byTag('Inner', { when: hasChild(byTag('Target')) })) }),

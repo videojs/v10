@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { compile } from '../../compile';
-import { react } from '../../config';
+import { jsx } from '../../config';
 import type { StyleAttributeInfo, StyleAttributeSegmentsInfo, StyleSegment } from '../analyze';
 import { analyzeStyles } from '../analyze';
 
@@ -9,7 +9,7 @@ async function collectSegments(source: string): Promise<StyleAttributeInfo[]> {
   const collected: StyleAttributeInfo[] = [];
   await compile(source, {
     config: {
-      target: react({
+      target: jsx({
         transforms: [
           analyzeStyles({
             visit: (info) => {
@@ -25,7 +25,7 @@ async function collectSegments(source: string): Promise<StyleAttributeInfo[]> {
 }
 
 const compileWithTransform = (source: string, transform: ReturnType<typeof analyzeStyles>) =>
-  compile(source, { config: { target: react({ transforms: [transform] }) } });
+  compile(source, { config: { target: jsx({ transforms: [transform] }) } });
 
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 
@@ -109,7 +109,7 @@ describe('analyzeStyles — decomposition', () => {
     const infos: StyleAttributeInfo[] = [];
     await compile(source, {
       config: {
-        target: react({
+        target: jsx({
           transforms: [
             analyzeStyles({
               mergeFn: 'twMerge',

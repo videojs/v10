@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import type { JsxElementLike } from '../../matchers';
+import type { JsxElementLike } from '../../jsx';
 import { parse } from '../../parse';
 import type { StyleSegment } from '../../styles';
 import { DiagnosticError, deriveClassName } from '../naming';

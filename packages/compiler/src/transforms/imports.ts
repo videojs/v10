@@ -3,7 +3,7 @@ import ts from 'typescript';
 
 /**
  * Per-identifier rewrite target. `source` may be either a bare specifier
- * (`@videojs/icons/react`) or a relative path. Relative paths are resolved
+ * (`@fixture/icons/jsx`) or a relative path. Relative paths are resolved
  * against the configured `configDir` and re-projected as a relative path from
  * the output file at print time.
  */

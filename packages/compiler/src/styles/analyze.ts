@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import type { JsxElementLike } from '../matchers';
+import type { JsxElementLike } from '../jsx';
 
 /**
  * A single segment within a `className` attribute. Either a literal class

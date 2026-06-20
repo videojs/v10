@@ -16,20 +16,20 @@
       "default": "./dist/index.js"
     },
     "./vite": {
-      "types": "./dist/plugins/vite.d.ts",
-      "default": "./dist/plugins/vite.js"
+      "types": "./dist/bundlers/vite.d.ts",
+      "default": "./dist/bundlers/vite.js"
     },
-    "./ast": {
-      "types": "./dist/ast/index.d.ts",
-      "default": "./dist/ast/index.js"
+    "./jsx": {
+      "types": "./dist/jsx/index.d.ts",
+      "default": "./dist/jsx/index.js"
     },
-    "./matchers": {
-      "types": "./dist/matchers/index.d.ts",
-      "default": "./dist/matchers/index.js"
+    "./diagnostics": {
+      "types": "./dist/diagnostics.d.ts",
+      "default": "./dist/diagnostics.js"
     },
-    "./react": {
-      "types": "./dist/react/index.d.ts",
-      "default": "./dist/react/index.js"
+    "./transforms": {
+      "types": "./dist/transforms/index.d.ts",
+      "default": "./dist/transforms/index.js"
     },
     "./styles": {
       "types": "./dist/styles/index.d.ts",

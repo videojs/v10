@@ -3,7 +3,7 @@ import { basename, dirname, extname, isAbsolute, join, resolve as resolvePath } 
 import ts from 'typescript';
 import type { CompilerContext, StylePipeline } from '../config';
 import { diagnosticLocationFromNode } from '../diagnostics';
-import { tagName } from '../matchers';
+import { tagName } from '../jsx';
 import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
 import { decompose, type UtilityCss } from './decompose';
 import { type DesignSystem, loadDesignSystem } from './design-system';

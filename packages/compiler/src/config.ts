@@ -41,11 +41,8 @@ export interface StylePipeline {
   setup(context: CompilerContext): CompilerPipelineStep | Promise<CompilerPipelineStep>;
 }
 
-/**
- * Per-target compile configuration. Currently only `react` is shipped, but
- * the shape is extensible for `html`/etc.
- */
-export interface ReactTargetOptions {
+/** Per-target compile configuration for JSX transforms. */
+export interface JsxTargetOptions {
   /** Per-source-module rewrite rules. */
   imports?: Record<string, ImportRule> | undefined;
   /** Transforms applied in order after `transformImports`. */
@@ -53,7 +50,7 @@ export interface ReactTargetOptions {
 }
 
 export interface CompilerTarget {
-  name: 'react' | 'html';
+  name: 'jsx';
   imports?: Record<string, ImportRule> | undefined;
   transforms?: readonly CompilerTransform[] | undefined;
 }
@@ -68,9 +65,9 @@ export function defineConfig<const Config extends CompilerConfig>(config: Config
   return config;
 }
 
-export function react(options: ReactTargetOptions = {}): CompilerTarget {
+export function jsx(options: JsxTargetOptions = {}): CompilerTarget {
   return {
-    name: 'react',
+    name: 'jsx',
     ...(options.imports ? { imports: options.imports } : {}),
     ...(options.transforms ? { transforms: options.transforms } : {}),
   };

@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { compile } from '../../compile';
-import { react } from '../../config';
+import { jsx } from '../../config';
 import { dropUnusedImports } from '../drop-unused-imports';
 
 const wrap = async (source: string): Promise<string> =>
-  (await compile(source, { config: { target: react({ transforms: [dropUnusedImports()] }) } })).code;
+  (await compile(source, { config: { target: jsx({ transforms: [dropUnusedImports()] }) } })).code;
 
 describe('dropUnusedImports', () => {
   it('does not count intrinsic JSX tag names as import references', async () => {

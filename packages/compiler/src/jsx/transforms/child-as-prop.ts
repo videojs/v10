@@ -11,7 +11,7 @@ export interface ChildAsPropOptions {
  * named prop (turning the element into a self-closing form):
  *
  *   <Tooltip.Trigger><PlayButton/></Tooltip.Trigger>
- *     →  <Tooltip.Trigger render={<PlayButton/>}/>
+ *     -> <Tooltip.Trigger render={<PlayButton/>}/>
  *
  * Skips no-op cases:
  *   - element is already self-closing

@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { compile as compileSource } from '../../compile';
-import { type CompilerTransform, react } from '../../config';
+import { type CompilerTransform, jsx } from '../../config';
 import type { DesignSystem } from '../design-system';
 import { loadDesignSystem } from '../design-system';
 import type { CompiledRule } from '../emit';
@@ -50,10 +50,10 @@ const compile = (
   source: string,
   options: {
     filename?: string | undefined;
-    target?: 'react' | undefined;
+    target?: 'jsx' | undefined;
     plugins?: readonly CompilerTransform[] | undefined;
   } = {}
-) => compileSource(source, { filename: options.filename, config: { target: react({ transforms: options.plugins }) } });
+) => compileSource(source, { filename: options.filename, config: { target: jsx({ transforms: options.plugins }) } });
 
 const compileTailwind = (source: string, options: Parameters<typeof tailwind>[0], filename?: string) =>
   compileSource(source, { filename, config: { styles: tailwind(options) } });
@@ -62,7 +62,7 @@ describe('tailwindPlugin — mode: preserve', () => {
   it('preserves static className values', async () => {
     const source = `function App(){ return <Foo className="flex items-center"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'preserve' })],
     });
     expect(code).toContain('"flex items-center"');
@@ -72,7 +72,7 @@ describe('tailwindPlugin — mode: preserve', () => {
     const source = `function App(){ return <Foo className="flex"/>; }`;
     let called = 0;
     await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -91,7 +91,7 @@ describe('tailwindPlugin — mode: inline', () => {
   it('preserves static className values', async () => {
     const source = `function App(){ return <Foo className="flex items-center"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toContain('"flex items-center"');
@@ -100,7 +100,7 @@ describe('tailwindPlugin — mode: inline', () => {
   it('folds static cn calls', async () => {
     const source = `function App(){ return <Foo className={cn('flex', 'items-center', 'gap-2')}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toContain('"flex items-center gap-2"');
@@ -119,7 +119,7 @@ function App(){ return <Foo className={cn('flex', styles.button.base)}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
     });
@@ -131,7 +131,7 @@ function App(){ return <Foo className={cn('flex', styles.button.base)}/>; }`;
 function App(){ return <Foo className={cn('flex', styles.unknown)}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
     });
@@ -141,7 +141,7 @@ function App(){ return <Foo className={cn('flex', styles.unknown)}/>; }`;
   it('leaves dynamic cn calls untouched', async () => {
     const source = `function App(){ return <Foo className={cn('flex', isOn && 'on')}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toMatch(/cn\(/);
@@ -152,7 +152,7 @@ describe('tailwindPlugin — mode: extract', () => {
   it('replaces static utilities with component class names', async () => {
     const source = `function App(){ return <PlayButton className="flex items-center"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"play-button"');
@@ -162,7 +162,7 @@ describe('tailwindPlugin — mode: extract', () => {
   it('preserves group marker classes', async () => {
     const source = `function App(){ return <PlayButton className="group"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     // `group` produces no declarations but is required by descendant
@@ -174,7 +174,7 @@ describe('tailwindPlugin — mode: extract', () => {
     const source = `function App(){ return <PlayButton className={cn('flex', 'group')}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -194,7 +194,7 @@ describe('tailwindPlugin — mode: extract', () => {
   it('keeps dynamic cn expressions', async () => {
     const source = `function App(){ return <PlayButton className={cn('group', extra)}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toMatch(/cn\("play-button group",\s*extra\)/);
@@ -204,7 +204,7 @@ describe('tailwindPlugin — mode: extract', () => {
     const source = `function App(){ return <div><SeekIcon className="flex"/><SeekIcon className="block"/></div>; }`;
     await expect(
       compile(source, {
-        target: 'react',
+        target: 'jsx',
         plugins: [tailwindPlugin({ design, mode: 'extract' })],
       })
     ).rejects.toThrow(/class name 'seek-icon' is derived from elements with different styles/);
@@ -213,7 +213,7 @@ describe('tailwindPlugin — mode: extract', () => {
   it('allows preserved marker classes next to matching generated styles', async () => {
     const source = `function App(){ return <div><Menu.Item className={cn('flex', 'legacy-submenu')}/><Menu.Item className="flex"/></div>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"menu-item legacy-submenu"');
@@ -223,7 +223,7 @@ describe('tailwindPlugin — mode: extract', () => {
   it('handles duplicate component styles', async () => {
     const source = `function App(){ return <div><PlayButton className="flex"/><PlayButton className="flex"/></div>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"play-button"');
@@ -232,7 +232,7 @@ describe('tailwindPlugin — mode: extract', () => {
   it('derives class names from style member expressions', async () => {
     const source = `function App(){ return <div className={styles.bufferingIndicator}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"buffering-indicator"');
@@ -250,7 +250,7 @@ function App(){ return <div className={slider.root}/>; }`;
 
     const { code } = await compile(source, {
       filename: sourcePath,
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
     });
     expect(code).toContain('"slider-root"');
@@ -270,7 +270,7 @@ function App(){ return <div><ChevronIcon className={cn(icon, menu.chevron)}/><Ch
 
     const { code } = await compile(source, {
       filename: sourcePath,
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
     });
     expect(code).toContain('"menu-chevron"');
@@ -280,7 +280,7 @@ function App(){ return <div><ChevronIcon className={cn(icon, menu.chevron)}/><Ch
   it('derives class names from single imported token identifiers', async () => {
     const source = `function App(){ return <div className={buttonGroupStart}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"button-group-start"');
@@ -289,7 +289,7 @@ function App(){ return <div><ChevronIcon className={cn(icon, menu.chevron)}/><Ch
   it('prefers style token names over reusable component tag names', async () => {
     const source = `function App(){ return <Menu.Trigger className={styles.menu.item}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"menu-item"');
@@ -306,7 +306,7 @@ function App(){ return <span className={cn(styles.seek.label, styles.seek.labelB
     const sourcePath = writeFixture('skin.tsx', source);
 
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
     });
@@ -327,7 +327,7 @@ function App({ type, className }){
     const sourcePath = writeFixture('skin.tsx', source);
 
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
     });
@@ -338,7 +338,7 @@ function App({ type, className }){
   it('keeps a single simple literal utility as the class name for bare HTML', async () => {
     const source = `function App(){ return <div className="grow"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
 
@@ -348,7 +348,7 @@ function App({ type, className }){
   it('applies component class overrides', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -363,7 +363,7 @@ function App({ type, className }){
   it('applies transformed generated class names', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -379,7 +379,7 @@ function App({ type, className }){
     const source = `function App(){ return <Foo className="flex"/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -400,7 +400,7 @@ function App({ type, className }){
     const source = `function App(){ return <Foo className={cn('flex', 'opacity-50')}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -429,7 +429,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
 
     let captured: readonly CompiledRule[] | undefined;
     await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [
         tailwindPlugin({
@@ -459,7 +459,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
 
     let captured: readonly CompiledRule[] | undefined;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [
         tailwindPlugin({
@@ -482,7 +482,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -501,7 +501,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     const source = `function App(){ return <Foo className={isOn ? 'a' : 'b'}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
@@ -531,7 +531,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
 
     let captured: readonly CompiledRule[] | undefined;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       filename: sourcePath,
       plugins: [
         tailwindPlugin({
@@ -553,7 +553,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
   it('preserves dynamic cn suffixes after extraction', async () => {
     const source = `function App({ extra }){ return <PlayButton className={cn('flex', extra)}/>; }`;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toMatch(/cn\("play-button",\s*extra\)/);
@@ -565,7 +565,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     }`;
     let captured: readonly CompiledRule[] | undefined;
     const { code } = await compile(source, {
-      target: 'react',
+      target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,

@@ -6,7 +6,7 @@ import {
   type CompilerDiagnostic,
   type CompilerPipelineStep,
   type CompilerTransform,
-  react,
+  jsx,
 } from './config';
 import { fatalDiagnosticFromError, withDiagnosticSource } from './diagnostics';
 import { parse } from './parse';
@@ -59,7 +59,7 @@ const printer = ts.createPrinter({
 export async function compile(source: string, options: CompileOptions = {}): Promise<CompileResult> {
   const filename = options.filename ?? 'input.tsx';
   const config = options.config ?? {};
-  const target = config.target ?? react();
+  const target = config.target ?? jsx();
   const assets: CompilerAsset[] = [];
   const diagnostics: CompilerDiagnostic[] = [];
   const context: CompilerContext = {

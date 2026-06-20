@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { compile } from '../../compile';
-import { react } from '../../config';
+import { jsx } from '../../config';
 import { dropUnusedLocals } from '../drop-unused-locals';
 
 const wrap = async (source: string): Promise<string> =>
-  (await compile(source, { config: { target: react({ transforms: [dropUnusedLocals()] }) } })).code;
+  (await compile(source, { config: { target: jsx({ transforms: [dropUnusedLocals()] }) } })).code;
 
 describe('dropUnusedLocals', () => {
   it('drops an unused cn() local', async () => {

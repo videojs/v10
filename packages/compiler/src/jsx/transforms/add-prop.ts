@@ -1,6 +1,6 @@
 import ts from 'typescript';
+import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
 import type { JsxElementLike, Matcher } from '../matchers';
-import { type AddImportContext, addNamedImport } from '../transforms/add-import';
 
 export interface AddPropImportRef {
   source: string;

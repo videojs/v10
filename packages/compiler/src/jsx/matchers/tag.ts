@@ -1,6 +1,6 @@
 import ts from 'typescript';
 
-/** A JSX element that helpers can transform — either an open/close pair or self-closing. */
+/** A JSX element that helpers can transform: either an open/close pair or self-closing. */
 export type JsxElementLike = ts.JsxElement | ts.JsxSelfClosingElement;
 
 /** Predicate over a JSX element. Single shape across `replace`, `wrap`, `childAsProp`, `addProp`. */
@@ -16,7 +16,7 @@ function readTag(name: ts.JsxTagNameExpression): string {
   if (ts.isIdentifier(name)) return name.text;
   if (ts.isPropertyAccessExpression(name))
     return `${readTag(name.expression as ts.JsxTagNameExpression)}.${name.name.text}`;
-  // ThisExpression / JsxNamespacedName — uncommon in our skins; fall back to source text.
+  // ThisExpression / JsxNamespacedName: uncommon in our skins; fall back to source text.
   return name.getText();
 }
 

@@ -1,12 +1,13 @@
 import type ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { CompilerError, compile, react } from '..';
+import { CompilerError, compile } from '..';
 import {
   diagnosticLocationFromNode,
   formatCompilerDiagnostic,
   formatCompilerDiagnosticJsonLine,
   formatDiagnosticSummaryJsonLine,
 } from '../diagnostics';
+import { jsx } from '../jsx';
 import { DiagnosticError } from '../tailwind';
 
 describe('formatCompilerDiagnostic', () => {
@@ -96,7 +97,7 @@ describe('CompilerError diagnostics', () => {
     try {
       await compile(`export function App(){ return <Foo/>; }`, {
         filename: '/workspace/skin.tsx',
-        config: { target: react({ transforms: [transform()] }) },
+        config: { target: jsx({ transforms: [transform()] }) },
       });
       throw new Error('Expected compile to fail');
     } catch (error) {

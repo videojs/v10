@@ -2,9 +2,9 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { compile, type ImportRule, react } from '..';
-import { anyTag, byTag, hasChild } from '../matchers';
-import { childAsProp, replace } from '../react';
+import { compile } from '..';
+import { anyTag, byTag, childAsProp, hasChild, jsx, replace } from '../jsx';
+import type { ImportRule } from '../transforms';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const skinSource = resolve(__dirname, 'fixtures/video-skin.tsx');
@@ -12,12 +12,12 @@ const skinSource = resolve(__dirname, 'fixtures/video-skin.tsx');
 /**
  * End-to-end smoke test: feed a representative constrained-JSX video skin
  * (vendored under `fixtures/`) through `compile()` with the same shape
- * a React package build hook uses, and sanity-check the output's structural
+ * a package build hook uses, and sanity-check the output's structural
  * shape. Snapshot-style assertions intentionally use `.toContain` over a full
  * snapshot to keep the test resilient to incidental whitespace differences
  * from the TS printer.
  */
-describe('integration: default/video skin → React', () => {
+describe('integration: default/video skin → JSX', () => {
   const source = readFileSync(skinSource, 'utf8');
   let code = '';
 
@@ -26,14 +26,14 @@ describe('integration: default/video skin → React', () => {
       source: `./src/ui/${name.replace(/^[A-Z]/, (m) => m.toLowerCase()).replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`,
       name,
     }),
-    '@fixture/icons/components': '@fixture/icons/react',
+    '@fixture/icons/components': '@fixture/icons/jsx',
     '../tailwind': '@videojs/skins/default/tailwind',
   };
 
   beforeAll(async () => {
     const result = await compile(source, {
       config: {
-        target: react({
+        target: jsx({
           imports,
           transforms: [
             replace({
@@ -60,7 +60,7 @@ describe('integration: default/video skin → React', () => {
   });
 
   it('rewrites icon component imports', () => {
-    expect(code).toContain('@fixture/icons/react');
+    expect(code).toContain('@fixture/icons/jsx');
     expect(code).not.toContain('@fixture/icons/components');
   });
 

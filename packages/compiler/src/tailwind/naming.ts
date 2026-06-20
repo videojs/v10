@@ -1,7 +1,6 @@
 import { kebabCase } from '@videojs/utils/string';
 import { type DiagnosticLocation, diagnosticLocationFromNode } from '../diagnostics';
-import type { JsxElementLike } from '../matchers';
-import { tagName } from '../matchers';
+import { type JsxElementLike, tagName } from '../jsx';
 import type { StyleSegment } from '../styles';
 
 /** Result of deriving a CSS class name for a JSX element. */

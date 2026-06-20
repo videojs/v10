@@ -1,10 +1,11 @@
 import ts from 'typescript';
+import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
+import type { ImportRef } from '../../transforms/imports';
 import type { JsxElementLike, Matcher } from '../matchers';
-import { type AddImportContext, type AddImportRef, addNamedImport } from './add-import';
 
 export interface ReplaceOptions {
   match: Matcher;
-  with: AddImportRef;
+  with: ImportRef;
   /** Reshape the new element's attributes from the original's. Defaults to passthrough. */
   mapProps?: (original: ts.JsxAttributes, factory: ts.NodeFactory) => ts.JsxAttributes;
   /** Reshape the new element's children from the original's. Defaults to passthrough (open form only). */

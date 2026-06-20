@@ -1,15 +1,16 @@
 import ts from 'typescript';
+import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
+import type { ImportRef } from '../../transforms/imports';
 import type { JsxElementLike, Matcher } from '../matchers';
-import { type AddImportContext, type AddImportRef, addNamedImport } from './add-import';
 
 export interface WrapOptions {
   match: Matcher;
-  with: AddImportRef;
+  with: ImportRef;
 }
 
 /**
  * Wrap a matched JSX subtree with another component:
- *   <Match/>  →  <Wrapper><Match/></Wrapper>
+ *   <Match/> -> <Wrapper><Match/></Wrapper>
  * The wrapper's import is added if missing.
  */
 export function wrap(opts: WrapOptions, ctx: AddImportContext = {}): ts.TransformerFactory<ts.SourceFile> {
