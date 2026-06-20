@@ -15,6 +15,8 @@ export type MixinReturn<Base extends AnyConstructor<any>, Props> = Constructor<I
 
 export type Falsy<T> = T | false | null | undefined;
 
+export type StringWithSuggestions<Value extends string> = Value | (string & {});
+
 export type EnsureFunction<T> = T extends (...args: any[]) => any ? T : never;
 
 export type Simplify<T> = { [KeyType in keyof T]: T[KeyType] } & {};

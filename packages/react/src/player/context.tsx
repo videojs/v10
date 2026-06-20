@@ -1,6 +1,6 @@
 'use client';
 
-import type { Media } from '@videojs/core';
+import type { ContainerProps as CoreContainerProps, Media } from '@videojs/core';
 import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
@@ -113,7 +113,7 @@ export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null
   return ctx?.setContainer;
 }
 
-export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
+export interface ContainerProps extends HTMLAttributes<HTMLDivElement>, CoreContainerProps {
   children?: ReactNode;
 }
 

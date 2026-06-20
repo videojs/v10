@@ -46,7 +46,7 @@ export type CreateComponentResult<M> = [InferParts<M>] extends [never]
   ? Component<InferProps<M>>
   : CompoundComponent<M>;
 
-function makePart<Props extends object>(name: string, part: string | null): Component<Props> {
+function createComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
   const fn = (_props: BaseProps & Props): ComponentNode => {
     throw new Error(`@videojs/core: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
@@ -56,7 +56,7 @@ function makePart<Props extends object>(name: string, part: string | null): Comp
   return fn as Component<Props>;
 }
 
-export const Slot = makePart<SlotProps>('Slot', null);
+export const Slot = createComponentPart<SlotProps>('Slot', null);
 
 export function createComponent<
   M extends ComponentManifest<object, readonly string[], Partial<Record<string, object>>>,
@@ -64,13 +64,13 @@ export function createComponent<
   const parts = manifest.parts ?? [];
 
   if (parts.length === 0) {
-    return makePart(manifest.name, null) as CreateComponentResult<M>;
+    return createComponentPart(manifest.name, null) as CreateComponentResult<M>;
   }
 
   const compound: Record<string, Component<never>> = {};
 
   for (const part of parts) {
-    compound[part] = makePart(manifest.name, part);
+    compound[part] = createComponentPart(manifest.name, part);
   }
 
   return compound as CreateComponentResult<M>;
@@ -107,7 +107,6 @@ export namespace JSX {
   }
 
   export interface IntrinsicElements {
-    div: BaseProps;
-    span: BaseProps;
+    readonly [intrinsicElement: string]: never;
   }
 }

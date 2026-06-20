@@ -7,9 +7,12 @@ import BufferingIndicatorDef from './buffering-indicator/buffering-indicator-com
 import CaptionsButtonDef from './captions-button/captions-button-component';
 import CaptionsRadioGroupDef from './captions-radio-group/captions-radio-group-component';
 import CastButtonDef from './cast-button/cast-button-component';
+import ContainerDef from './container/container-component';
 import ControlsDef from './controls/controls-component';
 import ErrorDialogDef from './error-dialog/error-dialog-component';
 import FullscreenButtonDef from './fullscreen-button/fullscreen-button-component';
+import GestureDef from './gesture/gesture-component';
+import HotkeyDef from './hotkey/hotkey-component';
 import LiveButtonDef from './live-button/live-button-component';
 import MenuDef from './menu/menu-component';
 import MuteButtonDef from './mute-button/mute-button-component';
@@ -38,9 +41,12 @@ export const BufferingIndicator = createComponent(BufferingIndicatorDef);
 export const CaptionsButton = createComponent(CaptionsButtonDef);
 export const CaptionsRadioGroup = createComponent(CaptionsRadioGroupDef);
 export const CastButton = createComponent(CastButtonDef);
+export const Container = createComponent(ContainerDef);
 export const Controls = createComponent(ControlsDef);
 export const ErrorDialog = createComponent(ErrorDialogDef);
 export const FullscreenButton = createComponent(FullscreenButtonDef);
+export const Gesture = createComponent(GestureDef);
+export const Hotkey = createComponent(HotkeyDef);
 export const LiveButton = createComponent(LiveButtonDef);
 export const Menu = createComponent(MenuDef);
 export const MuteButton = createComponent(MuteButtonDef);
@@ -70,9 +76,12 @@ export const COMPONENTS = {
   CaptionsButton: CaptionsButtonDef,
   CaptionsRadioGroup: CaptionsRadioGroupDef,
   CastButton: CastButtonDef,
+  Container: ContainerDef,
   Controls: ControlsDef,
   ErrorDialog: ErrorDialogDef,
   FullscreenButton: FullscreenButtonDef,
+  Gesture: GestureDef,
+  Hotkey: HotkeyDef,
   LiveButton: LiveButtonDef,
   Menu: MenuDef,
   MuteButton: MuteButtonDef,

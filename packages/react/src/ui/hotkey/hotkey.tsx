@@ -1,24 +1,11 @@
 'use client';
 
-import {
-  type AnyPlayerStore,
-  createHotkey,
-  type HotkeyActionName,
-  isHotkeyToggleAction,
-  resolveHotkeyAction,
-} from '@videojs/core/dom';
+import type { HotkeyProps } from '@videojs/core';
+import { type AnyPlayerStore, createHotkey, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 
 import { useContainer, usePlayer } from '../../player/context';
-
-export interface HotkeyProps {
-  keys: string;
-  action: HotkeyActionName | (string & {});
-  value?: number;
-  disabled?: boolean;
-  target?: 'player' | 'document';
-}
 
 export function Hotkey({ keys, action, value, disabled, target }: HotkeyProps): ReactNode {
   const store = usePlayer() as AnyPlayerStore;
@@ -49,6 +36,8 @@ export function Hotkey({ keys, action, value, disabled, target }: HotkeyProps): 
 export namespace Hotkey {
   export type Props = HotkeyProps;
 }
+
+export type { HotkeyProps };
 
 /** @deprecated Use `HotkeyProps` instead. */
 export type MediaHotkeyProps = HotkeyProps;

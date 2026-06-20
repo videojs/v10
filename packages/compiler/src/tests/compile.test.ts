@@ -66,14 +66,14 @@ describe('compile (transformImports — bare-string rule)', () => {
 
 describe('compile (transformImports — function rule)', () => {
   it('rewrites per-identifier source and bucket-merges by resolved target', async () => {
-    const source = `import { Alpha, Beta } from '@fixture/components';\nconst _ = [Alpha, Beta];`;
+    const source = `import { Alpha, Beta } from '@fixture/widgets';\nconst _ = [Alpha, Beta];`;
     const { code } = await compileJsx(source, {
       imports: {
-        '@fixture/components': (name) => ({ source: `./ui/${name.toLowerCase()}`, name }),
+        '@fixture/widgets': (name) => ({ source: `./widgets/${name.toLowerCase()}`, name }),
       },
     });
-    expect(code).toContain(`import { Alpha } from "./ui/alpha"`);
-    expect(code).toContain(`import { Beta } from "./ui/beta"`);
+    expect(code).toContain(`import { Alpha } from "./widgets/alpha"`);
+    expect(code).toContain(`import { Beta } from "./widgets/beta"`);
   });
 
   it('renames identifiers when the rule returns a different `name`', async () => {
@@ -154,7 +154,7 @@ describe('childAsProp', () => {
 
 describe('replaceJsxChild', () => {
   it('replaces matched JSX children with expression helpers', async () => {
-    const source = `function App({ values }){ return <Container><Token name="poster-image"/></Container>; }`;
+    const source = `function App({ values }){ return <Host><Token name="poster-image"/></Host>; }`;
     const { code } = await compileJsx(source, {
       transforms: [
         replaceJsxChild({
@@ -164,68 +164,64 @@ describe('replaceJsxChild', () => {
       ],
     });
 
-    expect(collapse(code)).toContain(collapse(`<Container>{values["poster-image"]}</Container>`));
+    expect(collapse(code)).toContain(collapse(`<Host>{values["poster-image"]}</Host>`));
   });
 });
 
 describe('addProp', () => {
   it('emits a JSX value by default and adds the import', async () => {
-    const source = `function App(){ return <PlayButton/>; }`;
+    const source = `function App(){ return <Action/>; }`;
     const { code } = await compileJsx(source, {
-      transforms: [
-        addProp({ match: byTag('PlayButton'), prop: 'render', value: { source: './button', name: 'Button' } }),
-      ],
+      transforms: [addProp({ match: byTag('Action'), prop: 'render', value: { source: './button', name: 'Button' } })],
     });
-    expect(collapse(code)).toContain(collapse(`<PlayButton render={<Button/>}/>`));
+    expect(collapse(code)).toContain(collapse(`<Action render={<Button/>}/>`));
     expect(code).toContain(`import { Button } from "./button"`);
   });
 
   it('emits a bare reference when kind is "ref"', async () => {
-    const source = `function App(){ return <PlayButton/>; }`;
+    const source = `function App(){ return <Action/>; }`;
     const { code } = await compileJsx(source, {
       transforms: [
         addProp({
-          match: byTag('PlayButton'),
+          match: byTag('Action'),
           prop: 'as',
           value: { source: './button', name: 'Button', kind: 'ref' },
         }),
       ],
     });
-    expect(collapse(code)).toContain(collapse(`<PlayButton as={Button}/>`));
+    expect(collapse(code)).toContain(collapse(`<Action as={Button}/>`));
   });
 
   it('skips elements where the prop is already set', async () => {
-    const source = `function App(){ return <PlayButton render={<X/>}/>; }`;
+    const source = `function App(){ return <Action render={<X/>}/>; }`;
     const { code } = await compileJsx(source, {
-      transforms: [
-        addProp({ match: byTag('PlayButton'), prop: 'render', value: { source: './button', name: 'Button' } }),
-      ],
+      transforms: [addProp({ match: byTag('Action'), prop: 'render', value: { source: './button', name: 'Button' } })],
     });
     expect(collapse(code)).toContain(collapse(`<X/>`));
     expect(code).not.toContain('import { Button }');
   });
 
   it('overwrites the existing prop when overwrite is true', async () => {
-    const source = `function App(){ return <PlayButton render={<X/>}/>; }`;
+    const source = `function App(){ return <Action render={<X/>}/>; }`;
     const { code } = await compileJsx(source, {
       transforms: [
         addProp({
-          match: byTag('PlayButton'),
+          match: byTag('Action'),
           prop: 'render',
           overwrite: true,
           value: { source: './button', name: 'Button' },
         }),
       ],
     });
-    expect(collapse(code)).toContain(collapse(`<PlayButton render={<Button/>}/>`));
+    expect(collapse(code)).toContain(collapse(`<Action render={<Button/>}/>`));
   });
 });
 
 describe('matchers', () => {
   it('byTag supports dotted tags', async () => {
-    const source = `function App(){ return <Popover.Root foo="bar"/>; }`;
+    const source = `function App(){ return <Alpha.Root foo="bar"/>; }`;
     const { code } = await compileJsx(source, {
-      transforms: [replace({ match: byTag('Popover.Root'), with: { source: 'pkg', name: 'NewRoot' } })],
+      transforms: [replace({ match: byTag('Alpha.Root'), with: { source: 'pkg', name: 'NewRoot' } })],
     });
     expect(code).toContain(`<NewRoot`);
   });

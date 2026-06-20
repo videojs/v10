@@ -1,4 +1,5 @@
-import { createHotkey, type HotkeyActionName, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
+import type { HotkeyProps } from '@videojs/core';
+import { createHotkey, isHotkeyToggleAction, resolveHotkeyAction } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -17,11 +18,11 @@ export class HotkeyElement extends MediaElement {
     target: { type: String },
   };
 
-  keys = '';
-  action: HotkeyActionName | (string & {}) = '';
-  value: number | undefined = undefined;
+  keys: HotkeyProps['keys'] = '';
+  action: HotkeyProps['action'] = '';
+  value: HotkeyProps['value'] = undefined;
   disabled = false;
-  target: 'player' | 'document' = 'player';
+  target: NonNullable<HotkeyProps['target']> = 'player';
 
   readonly #player = new PlayerController(this, playerContext);
   readonly #container = new ContextConsumer(this, {

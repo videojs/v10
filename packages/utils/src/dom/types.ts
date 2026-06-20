@@ -1,3 +1,5 @@
+import type { StringWithSuggestions } from '../types';
+
 // Method syntax is required here for TypeScript's class inheritance checking.
 // Using property syntax (e.g., `connectedCallback?: () => void`) causes TS2425
 // when a class extends a generic mixin that defines lifecycle callbacks.
@@ -18,7 +20,7 @@ export type QueriedElement<S extends string, E extends Element> = S extends keyo
   ? HTMLElementTagNameMap[S]
   : E;
 
-export type EventType<Events> = (keyof Events & string) | (string & {});
+export type EventType<Events> = StringWithSuggestions<keyof Events & string>;
 
 export type EventListenerFor<Events, K> =
   | ((event: K extends keyof Events ? Events[K] : Event) => void)

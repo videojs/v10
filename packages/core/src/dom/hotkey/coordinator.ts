@@ -56,7 +56,7 @@ export class HotkeyCoordinator {
     this.#sortBindings();
 
     // Lazily connect listeners.
-    if (options.target === 'document') {
+    if (options.target === 'global') {
       this.#connectDocument();
     } else {
       this.#connect();
@@ -132,8 +132,8 @@ export class HotkeyCoordinator {
   }
 
   #maybeDisconnect(): void {
-    const hasPlayer = this.#bindings.some((b) => b.options.target !== 'document');
-    const hasDoc = this.#bindings.some((b) => b.options.target === 'document');
+    const hasPlayer = this.#bindings.some((b) => b.options.target !== 'global');
+    const hasDoc = this.#bindings.some((b) => b.options.target === 'global');
 
     if (!hasPlayer) {
       this.#disconnect?.abort();
@@ -164,7 +164,7 @@ export class HotkeyCoordinator {
       if (event.repeat && options.repeatable === false) continue;
 
       // Only consider bindings matching the event's target scope.
-      const isDocBinding = options.target === 'document';
+      const isDocBinding = options.target === 'global';
       const isDocEvent = event.currentTarget === document;
       if (isDocBinding !== isDocEvent) continue;
 

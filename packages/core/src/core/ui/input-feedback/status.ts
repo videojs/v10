@@ -1,21 +1,9 @@
 import { clamp } from '@videojs/utils/number';
 import { formatTime } from '@videojs/utils/time';
 
-export type InputActionSource = 'gesture' | 'hotkey';
+import type { InputAction, InputActionEvent } from '../input-action';
 
-export type InputAction =
-  | 'togglePaused'
-  | 'toggleMuted'
-  | 'toggleFullscreen'
-  | 'toggleSubtitles'
-  | 'togglePictureInPicture'
-  | 'toggleControls'
-  | 'seekStep'
-  | 'seekToPercent'
-  | 'volumeStep'
-  | 'speedUp'
-  | 'speedDown'
-  | (string & {});
+export type { InputAction, InputActionEvent, InputActionSource } from '../input-action';
 
 export type IndicatorDirection = 'forward' | 'backward';
 export type IndicatorVolumeLevel = 'off' | 'low' | 'high';
@@ -32,13 +20,6 @@ export type IndicatorStatus =
   | 'exit-fullscreen'
   | 'pip'
   | 'exit-pip';
-
-export interface InputActionEvent {
-  action?: string | undefined;
-  value?: number | undefined;
-  source?: InputActionSource | undefined;
-  key?: string | undefined;
-}
 
 export interface MediaSnapshot {
   paused?: boolean | undefined;

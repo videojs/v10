@@ -1,11 +1,5 @@
-import {
-  createDoubleTapGesture,
-  createTapGesture,
-  type GestureActionName,
-  type GesturePointerType,
-  type GestureRegion,
-  resolveGestureAction,
-} from '@videojs/core/dom';
+import type { GestureProps } from '@videojs/core';
+import { createDoubleTapGesture, createTapGesture, resolveGestureAction } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -25,11 +19,11 @@ export class GestureElement extends MediaElement {
     disabled: { type: Boolean },
   };
 
-  type: 'tap' | 'doubletap' | (string & {}) = '';
-  action: GestureActionName | (string & {}) = '';
-  value: number | undefined = undefined;
-  pointer: GesturePointerType | undefined = undefined;
-  region: GestureRegion | undefined = undefined;
+  type: GestureProps['type'] = '';
+  action: GestureProps['action'] = '';
+  value: GestureProps['value'] = undefined;
+  pointer: GestureProps['pointer'] = undefined;
+  region: GestureProps['region'] = undefined;
   disabled = false;
 
   readonly #player = new PlayerController(this, playerContext);

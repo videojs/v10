@@ -1,33 +1,46 @@
-import { readFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { compile } from '..';
 import { anyTag, byTag, childAsProp, hasChild, jsx, replace } from '../jsx';
 import type { ImportRule } from '../transforms';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const skinSource = resolve(__dirname, 'fixtures/video-skin.tsx');
-
 /**
- * End-to-end smoke test: feed a representative constrained-JSX video skin
- * (vendored under `fixtures/`) through `compile()` with the same shape
- * a package build hook uses, and sanity-check the output's structural
- * shape. Snapshot-style assertions intentionally use `.toContain` over a full
- * snapshot to keep the test resilient to incidental whitespace differences
- * from the TS printer.
+ * End-to-end smoke test for the generic JSX transform pipeline. The compiler
+ * package deliberately avoids Video.js UI semantics here: transforms operate on
+ * JSX tags and imports only.
  */
-describe('integration: default/video skin → JSX', () => {
-  const source = readFileSync(skinSource, 'utf8');
+describe('integration: JSX transform pipeline', () => {
+  const source = `
+import { Alpha, Beta, Gamma } from '@fixture/widgets';
+import { Icon } from '@fixture/icons/components';
+import { tokens } from '../tokens';
+
+export function Example() {
+  return (
+    <Alpha.Root className={tokens.root}>
+      <Alpha.Trigger>
+        <Beta className={tokens.action}>
+          <Icon className={tokens.icon} />
+        </Beta>
+      </Alpha.Trigger>
+      <Gamma.Root>
+        <Gamma.Trigger>
+          <Beta className={tokens.secondary} />
+        </Gamma.Trigger>
+        <Gamma.Panel className={tokens.panel} />
+      </Gamma.Root>
+    </Alpha.Root>
+  );
+}
+`;
   let code = '';
 
   const imports: Record<string, ImportRule> = {
-    '@fixture/components': (name) => ({
-      source: `./src/ui/${name.replace(/^[A-Z]/, (m) => m.toLowerCase()).replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`,
+    '@fixture/widgets': (name) => ({
+      source: `./widgets/${name.replace(/^[A-Z]/, (m) => m.toLowerCase()).replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`,
       name,
     }),
     '@fixture/icons/components': '@fixture/icons/jsx',
-    '../tailwind': '@videojs/skins/default/tailwind',
+    '../tokens': '@fixture/tokens',
   };
 
   beforeAll(async () => {
@@ -37,13 +50,13 @@ describe('integration: default/video skin → JSX', () => {
           imports,
           transforms: [
             replace({
-              match: byTag('Popover.Root', {
-                when: hasChild(byTag('Popover.Trigger', { when: hasChild(byTag('MuteButton')) })),
+              match: byTag('Gamma.Root', {
+                when: hasChild(byTag('Gamma.Trigger', { when: hasChild(byTag('Beta')) })),
               }),
-              with: { source: './volume-popover', name: 'VolumePopover' },
+              with: { source: './replacement', name: 'Replacement' },
               mapChildren: () => [],
             }),
-            childAsProp({ match: anyTag(['Tooltip.Trigger', 'Popover.Trigger']), prop: 'render' }),
+            childAsProp({ match: anyTag(['Alpha.Trigger', 'Gamma.Trigger']), prop: 'render' }),
           ],
         }),
       },
@@ -51,12 +64,11 @@ describe('integration: default/video skin → JSX', () => {
     code = result.code;
   });
 
-  it('rewrites component imports to per-identifier UI sources', () => {
-    expect(code).toMatch(/import \{ PlayButton \} from "\.\/src\/ui\/play-button"/);
-    // MuteButton lives under the volume Popover.Root subtree, which is replaced
-    // wholesale by VolumePopover — its import is correctly dropped by the
-    // unused-imports cleanup pass.
-    expect(code).not.toMatch(/import \{ MuteButton \}/);
+  it('rewrites component imports to per-identifier sources', () => {
+    expect(code).toMatch(/import \{ Alpha \} from "\.\/widgets\/alpha"/);
+    expect(code).toMatch(/import \{ Beta \} from "\.\/widgets\/beta"/);
+    // Gamma only appears under the replaced subtree, so cleanup drops it.
+    expect(code).not.toMatch(/import \{ Gamma \}/);
   });
 
   it('rewrites icon component imports', () => {
@@ -64,16 +76,16 @@ describe('integration: default/video skin → JSX', () => {
     expect(code).not.toContain('@fixture/icons/components');
   });
 
-  it('substitutes the volume Popover.Root with VolumePopover', () => {
-    expect(code).toContain('<VolumePopover');
-    expect(code).toContain('import { VolumePopover }');
+  it('substitutes the matched subtree with the replacement component', () => {
+    expect(code).toContain('<Replacement');
+    expect(code).toContain('import { Replacement }');
   });
 
-  it('lifts Tooltip.Trigger / Popover.Trigger children into render props', () => {
-    expect(code).toMatch(/<Tooltip\.Trigger render=\{<PlayButton/);
+  it('lifts matched trigger children into render props', () => {
+    expect(code).toMatch(/<Alpha\.Trigger render=\{<Beta/);
   });
 
-  it('keeps unrelated relative tailwind import re-routed to the skins package', () => {
-    expect(code).toContain('@videojs/skins/default/tailwind');
+  it('keeps unrelated relative token imports re-routed by config', () => {
+    expect(code).toContain('@fixture/tokens');
   });
 });

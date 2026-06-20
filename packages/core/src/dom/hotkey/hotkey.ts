@@ -1,5 +1,6 @@
 import { isMacOS } from '@videojs/utils/dom';
 
+import type { HotkeyTarget } from '../../core/ui/hotkey/hotkey-core';
 import { HotkeyCoordinator } from './coordinator';
 
 export type HotkeyModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';
@@ -15,8 +16,8 @@ export interface ParsedHotkeyBinding {
 export interface HotkeyOptions {
   keys: string;
   onActivate: (event: KeyboardEvent, key: string) => void;
-  /** Where to listen — `'player'` (container) or `'document'`. */
-  target?: 'player' | 'document' | undefined;
+  /** Where to listen — `'player'` (container) or `'global'`. */
+  target?: HotkeyTarget | undefined;
   /** Whether `event.repeat` should fire the callback. */
   repeatable?: boolean | undefined;
   disabled?: boolean | undefined;

@@ -1,10 +1,11 @@
 import { isString } from '@videojs/utils/predicate';
+import type { StringWithSuggestions } from '@videojs/utils/types';
 
 export function forceLayout(element: HTMLElement | null): void {
   element?.getBoundingClientRect();
 }
 
-export type PositioningBoundary = 'viewport' | 'container' | (string & {}) | Element | null | undefined;
+export type PositioningBoundary = StringWithSuggestions<'viewport' | 'container'> | Element | null | undefined;
 
 export interface ResolvePositioningBoundaryOptions {
   container?: Element | null;

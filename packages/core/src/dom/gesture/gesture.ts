@@ -1,8 +1,6 @@
-export type GesturePointerType = 'mouse' | 'touch' | 'pen';
+import type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/gesture-core';
 
-export type GestureType = 'tap' | 'doubletap';
-
-export type GestureRegion = 'left' | 'center' | 'right';
+export type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/gesture-core';
 
 export interface GestureOptions {
   pointer?: GesturePointerType | undefined;

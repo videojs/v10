@@ -291,21 +291,21 @@ describe('HotkeyCoordinator', () => {
     });
   });
 
-  describe('document target', () => {
-    it('listens on document for document-scoped bindings', () => {
+  describe('global target', () => {
+    it('listens on document for global bindings', () => {
       const c = setup();
       const onActivate = vi.fn();
-      c.add({ keys: 'k', onActivate, target: 'document' });
+      c.add({ keys: 'k', onActivate, target: 'global' });
 
       keydown(document, 'k');
 
       expect(onActivate).toHaveBeenCalledOnce();
     });
 
-    it('cleans up document listener when last doc binding removed', () => {
+    it('cleans up document listener when last global binding removed', () => {
       const c = setup();
       const onActivate = vi.fn();
-      const remove = c.add({ keys: 'k', onActivate, target: 'document' });
+      const remove = c.add({ keys: 'k', onActivate, target: 'global' });
 
       remove();
       keydown(document, 'k');
@@ -313,10 +313,10 @@ describe('HotkeyCoordinator', () => {
       expect(onActivate).not.toHaveBeenCalled();
     });
 
-    it('fires document-scoped binding once when key originates in container', () => {
+    it('fires global binding once when key originates in container', () => {
       const c = setup();
       const onActivate = vi.fn();
-      c.add({ keys: 'k', onActivate, target: 'document' });
+      c.add({ keys: 'k', onActivate, target: 'global' });
 
       // Key in container bubbles to document — doc listener fires once.
       keydown(container, 'k');

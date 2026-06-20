@@ -1,5 +1,6 @@
 'use client';
 
+import type { HotkeyTarget } from '@videojs/core';
 import { createHotkey } from '@videojs/core/dom';
 import { useEffect } from 'react';
 
@@ -9,7 +10,7 @@ import { useLatestRef } from '../../utils/use-latest-ref';
 export interface UseHotkeyOptions {
   keys: string;
   onActivate: (event: KeyboardEvent, key: string) => void;
-  target?: 'player' | 'document';
+  target?: HotkeyTarget;
   repeatable?: boolean;
   disabled?: boolean;
 }

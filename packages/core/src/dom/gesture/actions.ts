@@ -1,4 +1,5 @@
 import { isFunction } from '@videojs/utils/predicate';
+import type { StringWithSuggestions } from '@videojs/utils/types';
 import type { AnyPlayerStore } from '../media/types';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
 
@@ -33,7 +34,9 @@ const GESTURE_ACTION_OVERRIDES: Partial<Record<GestureActionName, GestureActionR
   speedDown: MEDIA_INPUT_ACTION_OVERRIDES.speedDown,
 };
 
-export function resolveGestureAction(name: GestureActionName | (string & {})): GestureActionResolver | undefined {
+export function resolveGestureAction(
+  name: StringWithSuggestions<GestureActionName>
+): GestureActionResolver | undefined {
   const override = GESTURE_ACTION_OVERRIDES[name as GestureActionName];
   if (override) return override;
 
