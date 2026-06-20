@@ -42,30 +42,6 @@ export interface StylePipeline {
 }
 
 /**
- * Bulk-defined component entry. Globs `files`, derives each component's name
- * from the filename (extension stripped) via `name(stem)`, and inline-emits
- * `createComponent({ name })` calls. Components defined this way are
- * BaseProps-only — to type Props, parts, or partProps, use a manifest file.
- */
-export interface BulkComponentEntry {
-  files: string;
-  name: (filename: string) => string;
-}
-
-export type ComponentEntry = string | BulkComponentEntry;
-
-export interface GenerateConfig {
-  /**
-   * Component sources. Each entry is either:
-   * - a glob string matching `*-component.ts` manifest files, or
-   * - a `{ files, name }` object that bulk-defines components from arbitrary files.
-   */
-  components: readonly ComponentEntry[];
-  /** Path the generator writes the components file to. */
-  output: string;
-}
-
-/**
  * Per-target compile configuration. Currently only `react` is shipped, but
  * the shape is extensible for `html`/etc.
  */
@@ -84,7 +60,6 @@ export interface CompilerTarget {
 
 export interface CompilerConfig {
   files?: readonly string[] | undefined;
-  generate?: GenerateConfig;
   target?: CompilerTarget | undefined;
   styles?: StylePipeline | undefined;
 }

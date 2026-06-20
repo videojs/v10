@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { PiPButtonProps } from './pip-button-core';
 import { PiPButtonDataAttrs } from './pip-button-data-attrs';
 

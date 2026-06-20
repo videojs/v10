@@ -10,8 +10,7 @@ import {
   formatCompilerDiagnosticJsonLine,
   formatDiagnosticSummaryJsonLine,
 } from './diagnostics';
-import { generate } from './generate';
-import { CONFIG_FILENAMES, loadConfig } from './load-config';
+import { loadConfig } from './load-config';
 
 interface ParsedArgs {
   command: string | undefined;
@@ -54,7 +53,6 @@ function printHelp(): void {
       'Usage: vjs <command> [options]',
       '',
       'Commands:',
-      '  generate              Generate components from the configured manifests',
       '  compile <file>        Compile a JSX file',
       '',
       'Options:',
@@ -65,18 +63,6 @@ function printHelp(): void {
       '',
     ].join('\n')
   );
-}
-
-async function runGenerate(configOverride: string | undefined): Promise<void> {
-  const cwd = process.cwd();
-  const loaded = await loadConfig(cwd, configOverride);
-  if (!loaded) {
-    throw new Error(
-      `No compiler config found in ${cwd}. Expected one of: ${CONFIG_FILENAMES.join(', ')}, or pass --config <path>.`
-    );
-  }
-  const result = await generate(loaded.config);
-  process.stdout.write(`Wrote ${result.outputPath}\n`);
 }
 
 async function runCompile(
@@ -128,9 +114,6 @@ async function main(): Promise<void> {
   }
 
   switch (command) {
-    case 'generate':
-      await runGenerate(configOverride);
-      return;
     case 'compile':
       await runCompile(positional, configOverride, outFile, diagnosticsFormat);
       return;

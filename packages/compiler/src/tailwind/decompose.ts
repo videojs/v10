@@ -46,7 +46,7 @@ export interface UtilityCss {
   variants: readonly Variant[];
   /**
    * `@property` registrations Tailwind emitted for this utility. These supply
-   * the typed defaults for `--tw-*` slots referenced (but not set) by the
+   * the typed defaults for `--tw-*` variables referenced (but not set) by the
    * declarations — see `emitCss`'s `properties` option.
    */
   properties?: readonly PropertyRule[];

@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { PlaybackRateButtonProps } from './playback-rate-button-core';
 import { PlaybackRateButtonDataAttrs } from './playback-rate-button-data-attrs';
 

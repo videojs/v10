@@ -533,7 +533,7 @@ describe('emitCss — theme variables', () => {
   });
 });
 
-describe('emitCss — registered @property slots', () => {
+describe('emitCss — registered @property variables', () => {
   // The `after:absolute` pattern: an `::after` rule that references
   // `--tw-content` but never sets it, relying on Tailwind's @property default.
   const contentRule = (): CompiledRule => ({
@@ -591,7 +591,7 @@ describe('emitCss — registered @property slots', () => {
     );
   });
 
-  it('honours the match filter (leaves non-matching slots alone)', async () => {
+  it('honours the match filter (leaves non-matching variables alone)', async () => {
     const out = await emitCss({
       rules: [contentRule()],
       properties: { mode: 'inline', match: /^--brand-/ },
@@ -600,7 +600,7 @@ describe('emitCss — registered @property slots', () => {
     expect(out.css).toMatch(/var\(--tw-content\)/);
   });
 
-  it('leaves slots untouched when no properties option is given (back-compat)', async () => {
+  it('leaves variables untouched when no properties option is given (back-compat)', async () => {
     const out = await emitCss({ rules: [contentRule()] });
     if (out.kind !== 'merged') throw new Error('expected merged');
     expect(out.css).toMatch(/var\(--tw-content\)/);

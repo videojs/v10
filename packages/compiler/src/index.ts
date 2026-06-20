@@ -13,13 +13,6 @@ export {
   type StylePipeline,
 } from './config';
 export {
-  type ComponentManifest,
-  defineComponent,
-  type InferPartProps,
-  type InferParts,
-  type InferProps,
-} from './define-component';
-export {
   compilerDiagnosticToJsonEvent,
   type DiagnosticFormat,
   type DiagnosticJsonEvent,
@@ -38,6 +31,14 @@ export {
   mapLogLevelToString,
   shouldUseColor,
 } from './diagnostics';
-export { type GenerateResult, generate } from './generate';
 export { type TailwindMode, type TailwindOptions, tailwind } from './tailwind';
 export type { ImportRef, ImportRule } from './transforms/imports';
+export {
+  accessPath,
+  type JsxChildReplacement,
+  jsxExpression,
+  propertyAccess,
+  type ReplaceJsxChildOptions,
+  readStringAttribute,
+  replaceJsxChild,
+} from './transforms/jsx';

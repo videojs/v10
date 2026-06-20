@@ -22,6 +22,26 @@ export default defineConfig({
           setupFiles: ['src/dom/tests/setup.ts'],
         },
       },
+      {
+        extends: true,
+        test: {
+          name: 'scripts',
+          include: ['scripts/**/*.test.ts'],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: 'types',
+          include: [],
+          typecheck: {
+            enabled: true,
+            checker: 'tsgo',
+            include: ['src/core/ui/**/*.test-d.tsx'],
+            tsconfig: 'src/core/ui/tests/tsconfig.json',
+          },
+        },
+      },
     ],
   },
 });

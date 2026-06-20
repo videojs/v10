@@ -1,21 +1,26 @@
 import {
+  airplayIcon,
   badge,
   bufferingIndicator,
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  castIcon,
+  container,
   controls,
   error,
+  fullscreenIcon,
   icon,
   iconContainer,
   iconFlipped,
-  iconState,
   inputFeedback,
   menu,
+  muteIcon,
   overlay,
+  pipIcon,
+  playIcon,
   popup,
   poster,
-  root,
   seek,
   slider,
   thumbnail,
@@ -137,10 +142,10 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={iconState.mute.button} render={<Button />}>
-      <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-      <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-      <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+    <MuteButton className={muteIcon.button} render={<Button />}>
+      <VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />
+      <VolumeLowIcon className={cn(icon, muteIcon.volumeLow)} />
+      <VolumeHighIcon className={cn(icon, muteIcon.volumeHigh)} />
     </MuteButton>
   );
 
@@ -349,14 +354,14 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
   const { children, className, poster: posterProp, ...rest } = props;
 
   return (
-    <Container className={cn(root(false), className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       {posterProp && (
         <Poster
           src={isString(posterProp) ? posterProp : undefined}
           render={isRenderProp(posterProp) ? posterProp : undefined}
-          className={poster(false)}
+          className={poster}
         />
       )}
 
@@ -393,10 +398,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PlayButton className={iconState.play.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, iconState.play.restart)} />
-                    <PlayIcon className={cn(icon, iconState.play.play)} />
-                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  <PlayButton className={playIcon.button} render={<Button />}>
+                    <RestartIcon className={cn(icon, playIcon.restart)} />
+                    <PlayIcon className={cn(icon, playIcon.play)} />
+                    <PauseIcon className={cn(icon, playIcon.pause)} />
                   </PlayButton>
                 }
               />
@@ -469,9 +474,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <CastButton className={iconState.cast.button} render={<Button />}>
-                    <CastEnterIcon className={cn(icon, iconState.cast.enter)} />
-                    <CastExitIcon className={cn(icon, iconState.cast.exit)} />
+                  <CastButton className={castIcon.button} render={<Button />}>
+                    <CastEnterIcon className={cn(icon, castIcon.enter)} />
+                    <CastExitIcon className={cn(icon, castIcon.exit)} />
                   </CastButton>
                 }
               />
@@ -484,9 +489,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
-                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
-                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  <AirPlayButton className={airplayIcon.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, airplayIcon.enter)} />
+                    <AirPlayExitIcon className={cn(icon, airplayIcon.exit)} />
                   </AirPlayButton>
                 }
               />
@@ -499,9 +504,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PiPButton className={iconState.pip.button} render={<Button />}>
-                    <PipEnterIcon className={cn(icon, iconState.pip.off)} />
-                    <PipExitIcon className={cn(icon, iconState.pip.on)} />
+                  <PiPButton className={pipIcon.button} render={<Button />}>
+                    <PipEnterIcon className={cn(icon, pipIcon.off)} />
+                    <PipExitIcon className={cn(icon, pipIcon.on)} />
                   </PiPButton>
                 }
               />
@@ -514,9 +519,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <FullscreenButton className={iconState.fullscreen.button} render={<Button />}>
-                    <FullscreenEnterIcon className={cn(icon, iconState.fullscreen.enter)} />
-                    <FullscreenExitIcon className={cn(icon, iconState.fullscreen.exit)} />
+                  <FullscreenButton className={fullscreenIcon.button} render={<Button />}>
+                    <FullscreenEnterIcon className={cn(icon, fullscreenIcon.enter)} />
+                    <FullscreenExitIcon className={cn(icon, fullscreenIcon.exit)} />
                   </FullscreenButton>
                 }
               />

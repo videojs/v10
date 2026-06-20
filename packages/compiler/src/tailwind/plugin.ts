@@ -78,7 +78,7 @@ export interface TailwindOptions {
    * Inline matching CSS custom properties into their consumers, dropping
    * the matching declarations. Same shape as `EmitCssOptions['inlineVars']`:
    *
-   *   - `true` — inline `--tw-*` (Tailwind's internal slots).
+   *   - `true` — inline `--tw-*` (Tailwind's internal registered variables).
    *   - `RegExp` — inline any `--name` matching.
    *   - omitted — no inlining.
    *
@@ -86,7 +86,7 @@ export interface TailwindOptions {
    */
   inlineVars?: true | RegExp;
   /**
-   * Handle Tailwind's `@property`-registered slots (`--tw-content`, etc.) that
+   * Handle Tailwind's `@property`-registered variables (`--tw-content`, etc.) that
    * are referenced but never set, so the output isn't broken (e.g.
    * `content: var(--tw-content)`). See `RegisteredPropertiesOptions` — choose
    * `'emit'` (ship `@property` rules) or `'inline'` (bake initial-values in),

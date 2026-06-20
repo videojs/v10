@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { CaptionsRadioGroupProps } from './captions-radio-group-core';
 import { CaptionsRadioGroupDataAttrs } from './captions-radio-group-data-attrs';
 

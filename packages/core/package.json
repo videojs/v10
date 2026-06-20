@@ -32,6 +32,16 @@
       "development": "./dist/dev/components.js",
       "default": "./dist/default/components.js"
     },
+    "./jsx-runtime": {
+      "types": "./dist/dev/jsx-runtime.d.ts",
+      "development": "./dist/dev/jsx-runtime.js",
+      "default": "./dist/default/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/dev/jsx-dev-runtime.d.ts",
+      "development": "./dist/dev/jsx-dev-runtime.js",
+      "default": "./dist/default/jsx-dev-runtime.js"
+    },
     "./dom/media/*": {
       "types": "./dist/dev/dom/media/*/index.d.ts",
       "development": "./dist/dev/dom/media/*/index.js",
@@ -48,7 +58,7 @@
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "generate": "vjs generate",
+    "generate": "node --import tsx scripts/generate-components.ts --config components.config.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
@@ -65,9 +75,10 @@
   "devDependencies": {
     "@types/chrome": "^0.1.40",
     "@types/chromecast-caf-sender": "^1.0.11",
-    "@videojs/compiler": "workspace:*",
     "jsdom": "^26.1.0",
     "tsdown": "^0.21.9",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.0"
   },
   "publishConfig": {

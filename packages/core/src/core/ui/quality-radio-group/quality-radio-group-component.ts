@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { QualityRadioGroupProps } from './quality-radio-group-core';
 import { QualityRadioGroupDataAttrs } from './quality-radio-group-data-attrs';
 

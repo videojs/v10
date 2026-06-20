@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { MenuProps } from './menu-core';
 import { MenuDataAttrs } from './menu-data-attrs';
 

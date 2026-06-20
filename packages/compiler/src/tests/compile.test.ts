@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { compile, type ReactTargetOptions, react } from '..';
+import { accessPath, compile, jsxExpression, type ReactTargetOptions, react, replaceJsxChild } from '..';
 import { parse } from '../ast';
 import { anyTag, byTag, hasChild } from '../matchers';
 import { addProp, childAsProp, replace, wrap } from '../react';
@@ -53,14 +53,14 @@ describe('compile (transformImports — bare-string rule)', () => {
 
 describe('compile (transformImports — function rule)', () => {
   it('rewrites per-identifier source and bucket-merges by resolved target', async () => {
-    const source = `import { PlayButton, MuteButton } from '@videojs/core/components';\nconst _ = [PlayButton, MuteButton];`;
+    const source = `import { Alpha, Beta } from '@fixture/components';\nconst _ = [Alpha, Beta];`;
     const { code } = await compileReact(source, {
       imports: {
-        '@videojs/core/components': (name) => ({ source: `./ui/${name.toLowerCase()}`, name }),
+        '@fixture/components': (name) => ({ source: `./ui/${name.toLowerCase()}`, name }),
       },
     });
-    expect(code).toContain(`import { PlayButton } from "./ui/playbutton"`);
-    expect(code).toContain(`import { MuteButton } from "./ui/mutebutton"`);
+    expect(code).toContain(`import { Alpha } from "./ui/alpha"`);
+    expect(code).toContain(`import { Beta } from "./ui/beta"`);
   });
 
   it('renames identifiers when the rule returns a different `name`', async () => {
@@ -136,6 +136,22 @@ describe('childAsProp', () => {
     const trimmed = collapse(code);
     expect(trimmed).toContain(collapse(`<T1 render={<A/>}/>`));
     expect(trimmed).toContain(collapse(`<T2 render={<B/>}/>`));
+  });
+});
+
+describe('replaceJsxChild', () => {
+  it('replaces matched JSX children with expression helpers', async () => {
+    const source = `function App({ values }){ return <Container><Token name="poster-image"/></Container>; }`;
+    const { code } = await compileReact(source, {
+      transforms: [
+        replaceJsxChild({
+          match: byTag('Token'),
+          replace: (_node, factory) => jsxExpression(factory, accessPath(factory, 'values', 'poster-image')),
+        }),
+      ],
+    });
+
+    expect(collapse(code)).toContain(collapse(`<Container>{values["poster-image"]}</Container>`));
   });
 });
 

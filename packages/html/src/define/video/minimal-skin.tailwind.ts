@@ -1,22 +1,27 @@
 import { renderIcon } from '@videojs/icons/render/minimal';
 import {
+  airplayIcon,
   badge,
   bufferingIndicator,
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  castIcon,
+  container,
   controls,
   error,
+  fullscreenIcon,
   icon,
   iconContainer,
   iconFlipped,
-  iconState,
   inputFeedback,
   menu,
+  muteIcon,
   overlay,
+  pipIcon,
+  playIcon,
   popup,
   poster,
-  root,
   seek,
   slider,
   thumbnail,
@@ -34,12 +39,12 @@ const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root(true)}">
+    <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
 
-      <media-poster class="${poster(true)}">
+      <media-poster class="${poster}">
         <slot name="poster"></slot>
       </media-poster>
 
@@ -62,10 +67,10 @@ function getTemplateHTML() {
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroupStart}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
-                ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-                ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-                ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, playIcon.button)}">
+                ${renderIcon('restart', { class: cn(icon, playIcon.restart) })}
+                ${renderIcon('play', { class: cn(icon, playIcon.play) })}
+                ${renderIcon('pause', { class: cn(icon, playIcon.pause) })}
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>
@@ -123,10 +128,10 @@ function getTemplateHTML() {
           </div>
 
           <div class="${cn(buttonGroupEnd, menu.settingsGroup)}">
-            <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+            <media-mute-button commandfor="video-volume-popover" class="${cn(button.base, button.subtle, button.icon, muteIcon.button)}">
+              ${renderIcon('volume-off', { class: cn(icon, muteIcon.volumeOff) })}
+              ${renderIcon('volume-low', { class: cn(icon, muteIcon.volumeLow) })}
+              ${renderIcon('volume-high', { class: cn(icon, muteIcon.volumeHigh) })}
             </media-mute-button>
 
             <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.volume)}">
@@ -230,33 +235,33 @@ function getTemplateHTML() {
               </media-menu>
             </media-menu>
 
-              <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
-                ${renderIcon('cast-enter', { class: cn(icon, iconState.cast.enter) })}
-                ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}
+              <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, castIcon.button)}">
+                ${renderIcon('cast-enter', { class: cn(icon, castIcon.enter) })}
+                ${renderIcon('cast-exit', { class: cn(icon, castIcon.exit) })}
               </media-cast-button>
               <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>
                 <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.airplay.button)}">
-                ${renderIcon('airplay-enter', { class: cn(icon, iconState.airplay.enter) })}
-                ${renderIcon('airplay-exit', { class: cn(icon, iconState.airplay.exit) })}
+              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, airplayIcon.button)}">
+                ${renderIcon('airplay-enter', { class: cn(icon, airplayIcon.enter) })}
+                ${renderIcon('airplay-exit', { class: cn(icon, airplayIcon.exit) })}
               </media-airplay-button>
               <media-tooltip id="airplay-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>
                 <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.pip.button)}">
-                ${renderIcon('pip-enter', { class: cn(icon, iconState.pip.off) })}
-                ${renderIcon('pip-exit', { class: cn(icon, iconState.pip.on) })}
+              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, pipIcon.button)}">
+                ${renderIcon('pip-enter', { class: cn(icon, pipIcon.off) })}
+                ${renderIcon('pip-exit', { class: cn(icon, pipIcon.on) })}
               </media-pip-button>
               <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>
                 <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.fullscreen.button)}">
-                ${renderIcon('fullscreen-enter', { class: cn(icon, iconState.fullscreen.enter) })}
-                ${renderIcon('fullscreen-exit', { class: cn(icon, iconState.fullscreen.exit) })}
+              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, fullscreenIcon.button)}">
+                ${renderIcon('fullscreen-enter', { class: cn(icon, fullscreenIcon.enter) })}
+                ${renderIcon('fullscreen-exit', { class: cn(icon, fullscreenIcon.exit) })}
               </media-fullscreen-button>
               <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}">
                 <media-tooltip-label></media-tooltip-label>

@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { ThumbnailProps } from './thumbnail-core';
 import { ThumbnailDataAttrs } from './thumbnail-data-attrs';
 

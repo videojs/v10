@@ -1,7 +1,31 @@
-/** @jsxImportSource @videojs/compiler */
+/** @jsxImportSource ../../.. */
 
-import { PlayButton, Slider, Time } from '@videojs/core/components';
 import { describe, it } from 'vitest';
+import { createComponent, Slot } from '../../../jsx-runtime';
+import { defineComponent } from '../manifest';
+
+const PlayButton = createComponent(
+  defineComponent()({
+    name: 'PlayButton',
+  })
+);
+
+const Slider = createComponent(
+  defineComponent<{ orientation?: 'horizontal' | 'vertical'; thumbAlignment?: 'center' | 'edge' }>()({
+    name: 'Slider',
+    parts: ['Root', 'Track', 'Fill', 'Thumb'] as const,
+  })
+);
+
+const Time = createComponent(
+  defineComponent()({
+    name: 'Time',
+    parts: ['Value'] as const,
+    partProps: {
+      Value: {} as { type: 'current' | 'duration' },
+    },
+  })
+);
 
 describe('constrained JSX', () => {
   it('accepts a single component', () => {
@@ -43,5 +67,16 @@ describe('constrained JSX', () => {
     );
     // @ts-expect-error - arbitrary HTML attributes (id) are not allowed on layout intrinsics
     void (<div id="foo" />);
+  });
+
+  it('accepts slot primitives', () => {
+    void (<Slot />);
+    void (
+      <Slot name="poster">
+        <span className="fallback" />
+      </Slot>
+    );
+    // @ts-expect-error - slot name must be a string
+    void (<Slot name={5} />);
   });
 });

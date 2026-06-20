@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { TimeSliderProps } from './time-slider-core';
 import { TimeSliderDataAttrs } from './time-slider-data-attrs';
 

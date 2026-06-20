@@ -6,5 +6,5 @@
     "declarationDir": "types"
   },
   "references": [{ "path": "../utils" }, { "path": "../store" }],
-  "include": ["src/core/**/*.ts"]
+  "include": ["src/core/**/*.ts", "src/jsx-runtime.ts", "src/jsx-dev-runtime.ts"]
 }

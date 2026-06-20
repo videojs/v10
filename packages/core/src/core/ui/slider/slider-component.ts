@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { SliderProps } from './slider-core';
 import { SliderDataAttrs } from './slider-data-attrs';
 

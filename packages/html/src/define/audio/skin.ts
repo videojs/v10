@@ -1,5 +1,5 @@
 import { renderIcon } from '@videojs/icons/render';
-import { createShadowStyle, createTemplate } from '@videojs/utils/dom';
+import { createTemplate } from '@videojs/utils/dom';
 import { safeDefine } from '../safe-define';
 import { SkinElement } from '../skin-element';
 import styles from './skin.css?inline';
@@ -133,7 +133,7 @@ function getTemplateHTML() {
 
 export class AudioSkinElement extends SkinElement {
   static readonly tagName = 'audio-skin';
-  static styles = createShadowStyle(styles);
+  static styles = styles;
   static template = createTemplate(getTemplateHTML());
 }
 

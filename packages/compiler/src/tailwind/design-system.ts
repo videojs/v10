@@ -23,7 +23,7 @@ export interface DesignSystem {
    * Resolve a `@theme` variable (e.g. `--spacing`, `--color-white`) to its
    * value, or `undefined` if the theme doesn't define it. Used to emit a
    * self-contained theme block for the variables compiled rules reference.
-   * Returns `undefined` for `@property`-registered slots like `--tw-*`.
+   * Returns `undefined` for `@property`-registered variables like `--tw-*`.
    */
   resolveThemeVar(name: string): string | undefined;
 }

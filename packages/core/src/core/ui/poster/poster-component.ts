@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import { PosterDataAttrs } from './poster-data-attrs';
 
 export default defineComponent()({

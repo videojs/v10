@@ -43,23 +43,10 @@ export async function loadConfigFile(configPath: string): Promise<LoadedCompiler
   if (!config) {
     throw new Error(`Config file ${configPath} must export a default compiler config (use \`defineConfig\`).`);
   }
-  return { config: resolveConfigPaths(config, configPath), configPath, configDir: dirname(configPath) };
+  return { config, configPath, configDir: dirname(configPath) };
 }
 
 export async function loadConfig(cwd: string, override: string | undefined): Promise<LoadedCompilerConfig | null> {
   const configPath = findConfig(cwd, override);
   return configPath ? loadConfigFile(configPath) : null;
-}
-
-function resolveConfigPaths(config: CompilerConfig, configPath: string): CompilerConfig {
-  if (!config.generate) return config;
-  const base = dirname(configPath);
-  const { output, components } = config.generate;
-  return {
-    ...config,
-    generate: {
-      components,
-      output: isAbsolute(output) ? output : resolve(base, output),
-    },
-  };
 }

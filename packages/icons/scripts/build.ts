@@ -4,10 +4,10 @@ import { join } from 'node:path';
 const isWatch = process.argv.includes('--watch');
 
 import { transform } from '@svgr/core';
-import { generate as generateComponents } from '@videojs/compiler';
 import { transform as esbuildTransform } from 'esbuild';
 import { optimize } from 'svgo';
-import compilerConfig from '../compiler.config.js';
+import { generateComponents } from '../../core/scripts/generate-components.ts';
+import componentsConfig from '../components.config.js';
 
 import { iconBases } from './icon-bases.js';
 import {
@@ -118,11 +118,12 @@ function buildComponentsTypes(sourceText: string): string {
   const components = componentNames.map((name) => `  readonly ${name}: IconManifest;`).join('\n');
 
   return [
-    `import type { ComponentManifest } from '@videojs/compiler';`,
-    `import type { Component } from '@videojs/compiler/jsx-runtime';`,
+    `import type { Component } from '@videojs/core/jsx-runtime';`,
     ``,
-    `type IconComponent = Component<Record<string, never>>;`,
-    `type IconManifest = ComponentManifest<Record<string, never>, readonly string[], Partial<Record<string, object>>>;`,
+    `declare const ICON_PROPS: unique symbol;`,
+    `type IconProps = { readonly [ICON_PROPS]?: never };`,
+    `type IconComponent = Component<IconProps>;`,
+    `interface IconManifest { readonly name: string; }`,
     ``,
     exports,
     ``,
@@ -337,12 +338,12 @@ async function buildComponentsModule(): Promise<void> {
   const generatedDir = join(ASSETS_DIR, '..', '__generated__');
   ensureDir(generatedDir);
 
-  for (const config of compilerConfig) {
+  for (const config of componentsConfig) {
     await generateComponents(config);
 
-    const setName = config.generate.output.match(/__generated__\/(\w+)\.ts$/)?.[1];
+    const setName = config.output.match(/__generated__\/(\w+)\.ts$/)?.[1];
     if (!setName) {
-      throw new Error(`Could not derive icon set from output path: ${config.generate.output}`);
+      throw new Error(`Could not derive icon set from output path: ${config.output}`);
     }
 
     const componentsDir = join(DIST_DIR, 'components', setName);

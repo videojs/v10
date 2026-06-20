@@ -2,16 +2,17 @@ import { renderIcon } from '@videojs/icons/render';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
   iconContainer,
   iconFlipped,
-  iconState,
   menu,
+  muteIcon,
   playbackRate,
+  playIcon,
   popup,
-  root,
   seek,
   slider,
   time,
@@ -28,7 +29,7 @@ const SEEK_TIME = 10;
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root}">
+    <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -48,10 +49,10 @@ function getTemplateHTML() {
       <div class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
-                ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-                ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-                ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, playIcon.button)}">
+                ${renderIcon('restart', { class: cn(icon, playIcon.restart) })}
+                ${renderIcon('play', { class: cn(icon, playIcon.play) })}
+                ${renderIcon('pause', { class: cn(icon, playIcon.pause) })}
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
               <media-tooltip-label></media-tooltip-label>
@@ -111,10 +112,10 @@ function getTemplateHTML() {
               </media-playback-rate-radio-group>
             </media-menu>
 
-            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, muteIcon.button)}">
+              ${renderIcon('volume-off', { class: cn(icon, muteIcon.volumeOff) })}
+              ${renderIcon('volume-low', { class: cn(icon, muteIcon.volumeLow) })}
+              ${renderIcon('volume-high', { class: cn(icon, muteIcon.volumeHigh) })}
             </media-mute-button>
 
             <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="${cn(popup.popover, popup.volume)}">

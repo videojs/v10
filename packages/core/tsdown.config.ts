@@ -1,9 +1,9 @@
-import { generate } from '@videojs/compiler';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
-import compilerConfig from './compiler.config.js';
+import componentsConfig from './components.config.js';
 import packageJson from './package.json' with { type: 'json' };
+import { generateComponents } from './scripts/generate-components.ts';
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
@@ -11,6 +11,8 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     index: './src/core/index.ts',
     dom: './src/dom/index.ts',
     components: './src/core/ui/components.generated.ts',
+    'jsx-runtime': './src/jsx-runtime.ts',
+    'jsx-dev-runtime': './src/jsx-dev-runtime.ts',
     'dom/media/media-host/index': './src/dom/media/media-host.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
     'dom/media/media-played-ranges/index': './src/dom/media/media-played-ranges/index.ts',
@@ -25,16 +27,13 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/media/mux/index': './src/dom/media/mux/index.ts',
     'dom/media/google-cast/index': './src/dom/media/google-cast/index.ts',
   },
-  deps: {
-    neverBundle: [/^@videojs\/compiler/],
-  },
   define: {
     __DEV__: mode === 'dev' ? 'true' : 'false',
     __PLAYER_VERSION__: JSON.stringify(packageJson.version),
   },
   hooks: {
     'build:prepare': async () => {
-      await generate(compilerConfig);
+      await generateComponents(componentsConfig);
     },
   },
 });

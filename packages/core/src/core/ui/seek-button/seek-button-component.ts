@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { SeekButtonProps } from './seek-button-core';
 import { SeekButtonDataAttrs } from './seek-button-data-attrs';
 

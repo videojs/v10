@@ -1,7 +1,12 @@
 declare const __PROPS_BRAND__: unique symbol;
+declare const __EMPTY_PROPS__: unique symbol;
+
+export type EmptyProps = {
+  readonly [__EMPTY_PROPS__]?: never;
+};
 
 export interface ComponentManifest<
-  Props extends object = Record<string, never>,
+  Props extends object = EmptyProps,
   Parts extends readonly string[] = readonly string[],
   PartProps extends Partial<Record<Parts[number], object>> = Partial<Record<Parts[number], object>>,
 > {
@@ -13,7 +18,7 @@ export interface ComponentManifest<
 }
 
 export type InferProps<T> =
-  T extends ComponentManifest<infer P, readonly string[], Partial<Record<string, object>>> ? P : never;
+  T extends ComponentManifest<infer Props, readonly string[], Partial<Record<string, object>>> ? Props : never;
 
 export type InferParts<T> =
   T extends ComponentManifest<object, infer Parts, Partial<Record<string, object>>>
@@ -29,26 +34,8 @@ export type InferPartProps<T, K extends string> =
       : never
     : never;
 
-/**
- * Define a component manifest.
- *
- * Curried so the `Props` generic can be supplied without disabling inference
- * of `Parts` and `PartProps` from the manifest body:
- *
- * @example
- *   const Slider = defineComponent<SliderProps>()({
- *     name: 'Slider',
- *     parts: SliderParts,
- *     dataAttrs: SliderDataAttrs,
- *   });
- *
- *   const Controls = defineComponent()({
- *     name: 'Controls',
- *     parts: ControlsParts,
- *     dataAttrs: ControlsDataAttrs,
- *   });
- */
-export function defineComponent<Props extends object = Record<string, never>>() {
+/** Define a component manifest. */
+export function defineComponent<Props extends object = EmptyProps>() {
   return <
     const Parts extends readonly string[] = readonly string[],
     const PartProps extends Partial<Record<Parts[number], object>> = Partial<Record<Parts[number], object>>,

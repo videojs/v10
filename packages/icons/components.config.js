@@ -1,4 +1,3 @@
-import { defineConfig } from '@videojs/compiler';
 import { pascalCase } from '@videojs/utils/string';
 
 const PASCAL_CASE_ICON_NAME_OVERRIDES = {
@@ -12,17 +11,14 @@ function iconComponentName(name) {
 }
 
 /** @param {string} set */
-const iconConfig = (set) =>
-  defineConfig({
-    generate: {
-      components: [
-        {
-          files: `./src/assets/${set}/*.svg`,
-          name: iconComponentName,
-        },
-      ],
-      output: `./src/__generated__/${set}.ts`,
+const iconConfig = (set) => ({
+  components: [
+    {
+      files: `./src/assets/${set}/*.svg`,
+      name: iconComponentName,
     },
-  });
+  ],
+  output: `./src/__generated__/${set}.ts`,
+});
 
 export default [iconConfig('default'), iconConfig('minimal')];

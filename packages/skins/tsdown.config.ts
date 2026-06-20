@@ -13,24 +13,13 @@ const entries = Object.fromEntries(
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
   entry: entries,
-  copy: [
-    {
-      from: 'src/**/*.css',
-      to: `dist/${mode}`,
-      flatten: false,
-    },
-  ],
-  plugins: [
-    {
-      name: 'watch-css',
-      buildStart() {
-        const cssFiles = globSync('src/**/*.css');
-        for (const file of cssFiles) {
-          this.addWatchFile(file);
-        }
-      },
-    },
-  ],
+  // copy: [
+  //   {
+  //     from: 'src/**/*.css',
+  //     to: `dist/${mode}`,
+  //     flatten: false,
+  //   },
+  // ],
 });
 
 export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));

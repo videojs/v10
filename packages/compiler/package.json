@@ -15,14 +15,6 @@
       "types": "./dist/index.d.ts",
       "default": "./dist/index.js"
     },
-    "./jsx-runtime": {
-      "types": "./dist/jsx-runtime.d.ts",
-      "default": "./dist/jsx-runtime.js"
-    },
-    "./jsx-dev-runtime": {
-      "types": "./dist/jsx-dev-runtime.d.ts",
-      "default": "./dist/jsx-dev-runtime.js"
-    },
     "./vite": {
       "types": "./dist/plugins/vite.d.ts",
       "default": "./dist/plugins/vite.js"
@@ -46,15 +38,13 @@
     "./tailwind": {
       "types": "./dist/tailwind/index.d.ts",
       "default": "./dist/tailwind/index.js"
-    },
-    "./tsconfig.preset.json": "./tsconfig.preset.json"
+    }
   },
   "bin": {
     "vjs": "./dist/cli.js"
   },
   "files": [
-    "dist",
-    "tsconfig.preset.json"
+    "dist"
   ],
   "scripts": {
     "build": "tsdown",
@@ -80,7 +70,6 @@
     "typescript": "^6.0.2"
   },
   "devDependencies": {
-    "@videojs/core": "workspace:*",
     "tsdown": "^0.21.4",
     "vite": "^8.0.0",
     "vitest": "^4.1.0"

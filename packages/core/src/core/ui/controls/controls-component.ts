@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import { ControlsDataAttrs } from './controls-data-attrs';
 
 export default defineComponent()({

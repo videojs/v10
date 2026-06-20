@@ -3,12 +3,12 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { generate } from '../generate';
+import { generateComponents } from '../generate-components';
 
 const STUB = 'const defineComponent: any = () => (m: any) => m;';
 
 function setup(): { dir: string; output: string; pattern: string } {
-  const dir = mkdtempSync(join(tmpdir(), 'videojs-compiler-'));
+  const dir = mkdtempSync(join(tmpdir(), 'videojs-components-'));
   mkdirSync(join(dir, 'play-button'));
   mkdirSync(join(dir, 'slider'));
   mkdirSync(join(dir, 'hotkey'));
@@ -51,26 +51,34 @@ function setup(): { dir: string; output: string; pattern: string } {
 }
 
 function setupBulk(): { dir: string; output: string } {
-  const dir = mkdtempSync(join(tmpdir(), 'videojs-compiler-bulk-'));
+  const dir = mkdtempSync(join(tmpdir(), 'videojs-components-bulk-'));
   mkdirSync(join(dir, 'assets'));
   writeFileSync(join(dir, 'assets', 'play.svg'), '<svg/>');
   writeFileSync(join(dir, 'assets', 'pause.svg'), '<svg/>');
   return { dir, output: join(dir, 'out.ts') };
 }
 
-describe('generate (manifest entries)', () => {
+describe('generateComponents (manifest entries)', () => {
   it('imports each manifest as `<Name>Def` default-import', async () => {
-    const { output, pattern } = setup();
-    await generate({ generate: { components: [pattern], output } });
+    const { dir, output, pattern } = setup();
+    await generateComponents({ components: [pattern], output }, { cwd: dir });
     const source = readFileSync(output, 'utf8');
+    expect(source).toContain("import { createComponent } from '@videojs/core/jsx-runtime';");
     expect(source).toContain("import PlayButtonDef from './play-button/play-button-component';");
     expect(source).toContain("import SliderDef from './slider/slider-component';");
     expect(source).toContain("import HotkeyDef from './hotkey/hotkey-component';");
   });
 
+  it('uses an explicit runtime import when configured', async () => {
+    const { dir, output, pattern } = setup();
+    await generateComponents({ components: [pattern], output, runtimeImport: '../../jsx-runtime' }, { cwd: dir });
+    const source = readFileSync(output, 'utf8');
+    expect(source).toContain("import { createComponent } from '../../jsx-runtime';");
+  });
+
   it('emits createComponent(Def) for each component', async () => {
-    const { output, pattern } = setup();
-    await generate({ generate: { components: [pattern], output } });
+    const { dir, output, pattern } = setup();
+    await generateComponents({ components: [pattern], output }, { cwd: dir });
     const source = readFileSync(output, 'utf8');
     expect(source).toContain('export const PlayButton = createComponent(PlayButtonDef);');
     expect(source).toContain('export const Slider = createComponent(SliderDef);');
@@ -78,8 +86,8 @@ describe('generate (manifest entries)', () => {
   });
 
   it('emits COMPONENTS referencing each definition', async () => {
-    const { output, pattern } = setup();
-    await generate({ generate: { components: [pattern], output } });
+    const { dir, output, pattern } = setup();
+    await generateComponents({ components: [pattern], output }, { cwd: dir });
     const source = readFileSync(output, 'utf8');
     expect(source).toContain('export const COMPONENTS = {');
     expect(source).toContain('export type Components = typeof COMPONENTS;');
@@ -89,15 +97,21 @@ describe('generate (manifest entries)', () => {
   });
 });
 
-describe('generate (bulk entries)', () => {
+describe('generateComponents (bulk entries)', () => {
   it('inlines createComponent({ name }) for each matched file', async () => {
     const { dir, output } = setupBulk();
-    await generate({
-      generate: {
-        components: [{ files: join(dir, 'assets/*.svg'), name: (f) => `${f[0]!.toUpperCase()}${f.slice(1)}Icon` }],
+    await generateComponents(
+      {
+        components: [
+          {
+            files: join(dir, 'assets/*.svg'),
+            name: (filename) => `${filename[0]!.toUpperCase()}${filename.slice(1)}Icon`,
+          },
+        ],
         output,
       },
-    });
+      { cwd: dir }
+    );
     const source = readFileSync(output, 'utf8');
     expect(source).toContain("export const PauseIcon = createComponent({ name: 'PauseIcon' });");
     expect(source).toContain("export const PlayIcon = createComponent({ name: 'PlayIcon' });");
@@ -105,12 +119,18 @@ describe('generate (bulk entries)', () => {
 
   it('emits COMPONENTS with inline manifests for bulk entries', async () => {
     const { dir, output } = setupBulk();
-    await generate({
-      generate: {
-        components: [{ files: join(dir, 'assets/*.svg'), name: (f) => `${f[0]!.toUpperCase()}${f.slice(1)}Icon` }],
+    await generateComponents(
+      {
+        components: [
+          {
+            files: join(dir, 'assets/*.svg'),
+            name: (filename) => `${filename[0]!.toUpperCase()}${filename.slice(1)}Icon`,
+          },
+        ],
         output,
       },
-    });
+      { cwd: dir }
+    );
     const source = readFileSync(output, 'utf8');
     expect(source).toContain("PlayIcon: { name: 'PlayIcon' },");
     expect(source).toContain("PauseIcon: { name: 'PauseIcon' },");
@@ -119,20 +139,21 @@ describe('generate (bulk entries)', () => {
   it('strips the file extension before passing to name()', async () => {
     const { dir, output } = setupBulk();
     let received: string | null = null;
-    await generate({
-      generate: {
+    await generateComponents(
+      {
         components: [
           {
             files: join(dir, 'assets/*.svg'),
-            name: (f) => {
-              if (received === null) received = f;
-              return `${f}Icon`;
+            name: (filename) => {
+              if (received === null) received = filename;
+              return `${filename}Icon`;
             },
           },
         ],
         output,
       },
-    });
+      { cwd: dir }
+    );
     expect(received).not.toContain('.svg');
   });
 });

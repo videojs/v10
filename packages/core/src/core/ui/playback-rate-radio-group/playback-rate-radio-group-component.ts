@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { PlaybackRateRadioGroupProps } from './playback-rate-radio-group-core';
 import { PlaybackRateRadioGroupDataAttrs } from './playback-rate-radio-group-data-attrs';
 

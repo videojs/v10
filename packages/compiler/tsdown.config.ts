@@ -4,8 +4,6 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     cli: './src/cli.ts',
-    'jsx-runtime': './src/jsx-runtime.ts',
-    'jsx-dev-runtime': './src/jsx-dev-runtime.ts',
     'plugins/vite': './src/plugins/vite.ts',
     'ast/index': './src/ast/index.ts',
     'matchers/index': './src/matchers/index.ts',

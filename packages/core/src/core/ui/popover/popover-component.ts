@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { PopoverProps } from './popover-core';
 import { PopoverDataAttrs } from './popover-data-attrs';
 

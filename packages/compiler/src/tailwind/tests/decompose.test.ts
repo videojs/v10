@@ -94,7 +94,7 @@ describe('decompose — variants', () => {
 });
 
 describe('decompose — @property registrations', () => {
-  it('captures the @property rule Tailwind appends for a slot', () => {
+  it('captures the @property rule Tailwind appends for a registered variable', () => {
     const r = decompose('before:content-["x"]', design);
     expect(r).not.toBeNull();
     const content = r!.properties?.find((p) => p.name === '--tw-content');

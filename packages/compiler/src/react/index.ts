@@ -1,8 +1,8 @@
 /**
  * React-target plugins for `@videojs/compiler`. Houses the framework-pattern
- * helpers that lower constrained-JSX skin idioms into React's render-prop
- * slot composition idiom. Re-exports `replace` and `wrap` for convenience so
- * a config can import everything from one subpath.
+ * helpers that lower constrained JSX into React-friendly component shapes.
+ * Re-exports `replace` and `wrap` for convenience so a config can import
+ * everything from one subpath.
  */
 
 export { type ReplaceOptions, replace } from '../transforms/replace';

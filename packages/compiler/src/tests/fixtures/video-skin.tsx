@@ -20,7 +20,7 @@ import {
   TimeSlider,
   Tooltip,
   VolumeSlider,
-} from '@videojs/core/components';
+} from '@fixture/components';
 import {
   CaptionsOffIcon,
   CaptionsOnIcon,
@@ -38,7 +38,7 @@ import {
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
-} from '@videojs/icons/components';
+} from '@fixture/icons/components';
 import { cn } from '@videojs/utils/style';
 import { video as styles } from '../tailwind';
 
@@ -52,7 +52,7 @@ export interface VideoSkinProps {
 
 export function VideoSkin({ className }: VideoSkinProps) {
   return (
-    <Container data-skin="default-video" className={cn(styles.root, className)}>
+    <Container data-skin="default-video" className={cn(styles.container, className)}>
       <Poster className={styles.poster} />
 
       <BufferingIndicator className={styles.bufferingIndicator.root}>

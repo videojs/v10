@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { AlertDialogProps } from './alert-dialog-core';
 import { AlertDialogDataAttrs } from './alert-dialog-data-attrs';
 

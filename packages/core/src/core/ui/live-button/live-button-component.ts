@@ -1,4 +1,4 @@
-import { defineComponent } from '@videojs/compiler';
+import { defineComponent } from '../manifest';
 import type { LiveButtonProps } from './live-button-core';
 import { LiveButtonDataAttrs } from './live-button-data-attrs';
 

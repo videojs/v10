@@ -12,7 +12,7 @@ const skinSource = resolve(__dirname, 'fixtures/video-skin.tsx');
 /**
  * End-to-end smoke test: feed a representative constrained-JSX video skin
  * (vendored under `fixtures/`) through `compile()` with the same shape
- * `@videojs/react`'s build hook uses, and sanity-check the output's structural
+ * a React package build hook uses, and sanity-check the output's structural
  * shape. Snapshot-style assertions intentionally use `.toContain` over a full
  * snapshot to keep the test resilient to incidental whitespace differences
  * from the TS printer.
@@ -22,11 +22,11 @@ describe('integration: default/video skin → React', () => {
   let code = '';
 
   const imports: Record<string, ImportRule> = {
-    '@videojs/core/components': (name) => ({
+    '@fixture/components': (name) => ({
       source: `./src/ui/${name.replace(/^[A-Z]/, (m) => m.toLowerCase()).replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`)}`,
       name,
     }),
-    '@videojs/icons/components': '@videojs/icons/react',
+    '@fixture/icons/components': '@fixture/icons/react',
     '../tailwind': '@videojs/skins/default/tailwind',
   };
 
@@ -51,7 +51,7 @@ describe('integration: default/video skin → React', () => {
     code = result.code;
   });
 
-  it('rewrites @videojs/core/components imports to per-identifier UI sources', () => {
+  it('rewrites component imports to per-identifier UI sources', () => {
     expect(code).toMatch(/import \{ PlayButton \} from "\.\/src\/ui\/play-button"/);
     // MuteButton lives under the volume Popover.Root subtree, which is replaced
     // wholesale by VolumePopover — its import is correctly dropped by the
@@ -59,9 +59,9 @@ describe('integration: default/video skin → React', () => {
     expect(code).not.toMatch(/import \{ MuteButton \}/);
   });
 
-  it('rewrites @videojs/icons/components to @videojs/icons/react', () => {
-    expect(code).toContain('@videojs/icons/react');
-    expect(code).not.toContain('@videojs/icons/components');
+  it('rewrites icon component imports', () => {
+    expect(code).toContain('@fixture/icons/react');
+    expect(code).not.toContain('@fixture/icons/components');
   });
 
   it('substitutes the volume Popover.Root with VolumePopover', () => {

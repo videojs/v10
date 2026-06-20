@@ -1,12 +1,13 @@
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
-  iconState,
+  muteIcon,
+  playIcon,
   popup,
-  root,
   slider,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
@@ -71,10 +72,10 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={iconState.mute.button} render={<Button />}>
-      <VolumeOffIcon className={cn(icon, iconState.mute.volumeOff)} />
-      <VolumeLowIcon className={cn(icon, iconState.mute.volumeLow)} />
-      <VolumeHighIcon className={cn(icon, iconState.mute.volumeHigh)} />
+    <MuteButton className={muteIcon.button} render={<Button />}>
+      <VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />
+      <VolumeLowIcon className={cn(icon, muteIcon.volumeLow)} />
+      <VolumeHighIcon className={cn(icon, muteIcon.volumeHigh)} />
     </MuteButton>
   );
 
@@ -99,7 +100,7 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>
@@ -122,10 +123,10 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <PlayButton className={iconState.play.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, iconState.play.restart)} />
-                    <PlayIcon className={cn(icon, iconState.play.play)} />
-                    <PauseIcon className={cn(icon, iconState.play.pause)} />
+                  <PlayButton className={playIcon.button} render={<Button />}>
+                    <RestartIcon className={cn(icon, playIcon.restart)} />
+                    <PlayIcon className={cn(icon, playIcon.play)} />
+                    <PauseIcon className={cn(icon, playIcon.pause)} />
                   </PlayButton>
                 }
               />

@@ -62,7 +62,7 @@ export interface EmitCssOptions {
   /**
    * Inline matching CSS custom properties into the values that reference
    * them, then drop the declarations themselves. Useful for stripping
-   * Tailwind's internal `--tw-*` slots from the final output.
+   * Tailwind's internal `--tw-*` registered variables from the final output.
    *
    *   - `true` — inline `--tw-*` (regex `/^--tw-/`).
    *   - `RegExp` — inline any `--name` whose name (excluding the leading
@@ -81,7 +81,7 @@ export interface EmitCssOptions {
    * output references but doesn't itself declare, so the CSS resolves without a
    * separate Tailwind theme/preflight on the page. Typically
    * `design.resolveThemeVar`. Returns `undefined` to leave a variable alone
-   * (e.g. `@property`-registered `--tw-*` slots).
+   * (e.g. `@property`-registered `--tw-*` variables).
    */
   resolveThemeVar?: (name: string) => string | undefined;
   /**
@@ -90,7 +90,7 @@ export interface EmitCssOptions {
    */
   themeSelector?: string;
   /**
-   * How to handle Tailwind's `@property`-registered slots (e.g. `--tw-content`,
+   * How to handle Tailwind's `@property`-registered variables (e.g. `--tw-content`,
    * `--tw-shadow`) that the compiled rules reference but never set locally.
    * Without this they resolve to nothing and break — e.g. `content:
    * var(--tw-content)` suppresses the `::after`/`::before` box.
@@ -112,12 +112,12 @@ export interface PropertyDef {
 
 export interface RegisteredPropertiesOptions {
   /**
-   * - `'emit'`   — emit `@property` rules for referenced slots, preserving
+   * - `'emit'`   — emit `@property` rules for referenced variables, preserving
    *   Tailwind's typed defaults (relies on browser `@property` support).
-   * - `'inline'` — substitute each slot's `initial-value` into the values that
+   * - `'inline'` — substitute each variable's `initial-value` into the values that
    *   reference it (and drop any `--tw-*` setter declarations), so the output
    *   is fully self-contained. This is a superset of `inlineVars` for the
-   *   matched slots.
+   *   matched variables.
    */
   mode: 'emit' | 'inline';
   /** Which property names to handle. Defaults to `inlineVars`'s matcher, else `/^--tw-/`. */
@@ -126,7 +126,7 @@ export interface RegisteredPropertiesOptions {
    * Override or supply a property's definition. Receives the name and the
    * definition captured from Tailwind's output (if any); return a new
    * definition (merged in), or `undefined` to keep the captured one. Lets you
-   * fix an initial-value or register a slot Tailwind didn't.
+   * fix an initial-value or register a variable Tailwind didn't.
    */
   resolve?: (name: string, captured: PropertyDef | undefined) => PropertyDef | undefined;
 }
@@ -148,7 +148,7 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   const hoist = opts.hoist === false ? undefined : opts.hoist;
   const inlineVars = normalizeInlineMatcher(opts.inlineVars);
 
-  // Registered `@property` (--tw-*) handling. In 'inline' mode the slots'
+  // Registered `@property` (--tw-*) handling. In 'inline' mode the variables'
   // initial-values seed the inline pass as fallbacks (and the matcher widens to
   // cover them, even when `inlineVars` was off). In 'emit' mode they're left in
   // place to be emitted as `@property` rules.
@@ -264,7 +264,7 @@ function collectDefinedVars(css: string): Set<string> {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
- * Registered `@property` slots
+ * Registered `@property` variables
  * ───────────────────────────────────────────────────────────────────────── */
 
 /** Aggregate the `@property` defs captured across every rule (first wins). */
@@ -296,7 +296,7 @@ function buildFallbackSetters(
 }
 
 /**
- * Build `@property` rules for every matching slot the CSS references but
+ * Build `@property` rules for every matching variable the CSS references but
  * doesn't itself declare. Descriptors default to `syntax: "*"` / `inherits:
  * false` when a resolved def omits them.
  */
@@ -591,7 +591,7 @@ function applyInline(
 
     // Effective setters, narrowest last: registered `@property` initial-values
     // (lowest), then hoist root, then rule-local. Initial-values resolve
-    // references to slots no rule ever sets (e.g. `content: var(--tw-content)`).
+    // references to variables no rule ever sets (e.g. `content: var(--tw-content)`).
     const setters = new Map<string, string>(fallbackSetters);
     for (const [name, value] of rootSetters) setters.set(name, value);
     for (const [name, value] of localSetters) setters.set(name, value);

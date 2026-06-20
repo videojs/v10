@@ -66,13 +66,13 @@
     "format": "node --import tsx scripts/format.ts"
   },
   "dependencies": {
+    "@videojs/core": "workspace:*",
     "svgo": "^4.0.1"
   },
   "devDependencies": {
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/react": "^19.2.14",
-    "@videojs/compiler": "workspace:*",
     "@videojs/utils": "workspace:*",
     "react": "^19.2.4",
     "tsx": "^4.21.0"

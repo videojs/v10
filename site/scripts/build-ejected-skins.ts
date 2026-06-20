@@ -868,8 +868,7 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
 function serializeValue(value: unknown, indent = 0): string {
   if (typeof value === 'string') return JSON.stringify(value);
   if (typeof value === 'function') {
-    // Function tokens (like `root`) — resolve with false (no shadow DOM)
-    return `() => ${JSON.stringify((value as (arg: boolean) => string)(false))}`;
+    throw new Error('Function skin tokens are not supported in ejected skins. Use static token values instead.');
   }
   if (typeof value === 'object' && value !== null) {
     const entries = Object.entries(value as Record<string, unknown>);

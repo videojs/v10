@@ -1,6 +1,12 @@
-import type { ComponentManifest, InferPartProps, InferParts, InferProps } from './define-component';
+import type { ComponentManifest, InferPartProps, InferParts, InferProps } from './core/ui/manifest';
 
 export const VIDEOJS_NODE = Symbol.for('@videojs/node');
+
+declare const EMPTY_PROPS_SYMBOL: unique symbol;
+
+type EmptyProps = {
+  readonly [EMPTY_PROPS_SYMBOL]?: never;
+};
 
 export type ComponentType = string | Component<never> | typeof Fragment;
 
@@ -16,6 +22,11 @@ export interface BaseProps {
   children?: unknown;
 }
 
+export interface SlotProps {
+  name?: string | undefined;
+  children?: unknown;
+}
+
 export interface Component<Props extends object> {
   (props: BaseProps & Props): ComponentNode;
   readonly $$component: { name: string; part: string | null };
@@ -24,7 +35,7 @@ export interface Component<Props extends object> {
 type PartComponentProps<M, K extends string> = K extends 'Root'
   ? InferProps<M>
   : [NonNullable<InferPartProps<M, K>>] extends [never]
-    ? Record<string, never>
+    ? EmptyProps
     : NonNullable<InferPartProps<M, K>>;
 
 type CompoundComponent<M> = {
@@ -37,13 +48,15 @@ export type CreateComponentResult<M> = [InferParts<M>] extends [never]
 
 function makePart<Props extends object>(name: string, part: string | null): Component<Props> {
   const fn = (_props: BaseProps & Props): ComponentNode => {
-    throw new Error(`@videojs/compiler: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
+    throw new Error(`@videojs/core: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
 
   Object.assign(fn, { $$component: { name, part } });
 
   return fn as Component<Props>;
 }
+
+export const Slot = makePart<SlotProps>('Slot', null);
 
 export function createComponent<
   M extends ComponentManifest<object, readonly string[], Partial<Record<string, object>>>,

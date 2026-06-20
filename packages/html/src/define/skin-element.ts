@@ -14,8 +14,7 @@ const sharedSheet = createShadowStyle(sharedStyles);
 
 /**
  * Base element for skin definitions. Attaches a shadow root, clones
- * `static template` into it, and applies shared + per-skin styles
- * via `adoptedStyleSheets` (or `<style>` fallback).
+ * `static template` into it, and applies shared + per-skin styles.
  */
 export class SkinElement extends ReactiveElement {
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
