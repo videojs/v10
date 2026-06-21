@@ -36,6 +36,8 @@ export {
 export {
   Container,
   type ContainerProps,
+} from './player/container';
+export {
   type PlayerContextValue,
   useContainer,
   useContainerAttach,

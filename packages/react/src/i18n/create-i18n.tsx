@@ -11,7 +11,6 @@ import {
   registerI18n,
   shouldAttemptBrowserTranslation,
   type Translations,
-  type Translator,
 } from '@videojs/core/i18n';
 import {
   effectiveLocale,
@@ -22,7 +21,6 @@ import {
 } from '@videojs/utils/dom';
 import {
   type Context,
-  createContext,
   type ReactNode,
   type RefObject,
   useContext,
@@ -34,6 +32,8 @@ import {
   useState,
   useSyncExternalStore,
 } from 'react';
+
+import { createI18nBase, type I18nBase, type I18nContextValue } from './base';
 
 function ambientLangServerSnapshot(): string | undefined {
   return undefined;
@@ -76,14 +76,7 @@ export interface I18nProviderProps {
   onActiveLocaleChange?: (locale: Locale) => void;
 }
 
-export interface I18nContextValue {
-  translator: Translator;
-  locale: Locale;
-  /** True when {@link I18nProviderProps.locale} was set explicitly on this provider. */
-  localeFromProp: boolean;
-  /** Overrides passed to this provider. */
-  translations?: Partial<Translations>;
-}
+export type { I18nContextValue } from './base';
 
 interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: Locale;
@@ -92,7 +85,7 @@ interface I18nProviderRootProps extends I18nProviderProps {
 export interface CreateI18nResult {
   I18nContext: Context<I18nContextValue | null>;
   I18nProvider: (props: I18nProviderProps) => ReactNode;
-  useTranslator: () => Translator;
+  useTranslator: I18nBase['useTranslator'];
   useLocale: () => Locale;
 }
 
@@ -102,9 +95,12 @@ export interface CreateI18nResult {
  * @param options - Optional hooks such as custom built-in locale loading.
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
-  const loadLocale = options?.loadLocale ?? defaultLoadLocale;
+  return createI18nWithBase(createI18nBase(), options);
+}
 
-  const I18nContext = createContext<I18nContextValue | null>(null);
+export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions): CreateI18nResult {
+  const loadLocale = options?.loadLocale ?? defaultLoadLocale;
+  const { I18nContext } = base;
 
   function I18nProviderRoot({
     locale: localeProp,
@@ -238,29 +234,5 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     return <I18nProviderRoot {...rootProps} />;
   }
 
-  function useTranslator(): Translator {
-    const ctx = useContext(I18nContext);
-    const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
-
-    useEffect(() => {
-      return onI18nRegistryChange(() => invalidateRegistry());
-    }, []);
-
-    const fallback = useMemo(() => {
-      void registryEpoch;
-      return createTranslator(getI18nTranslations('en'), 'en');
-    }, [registryEpoch]);
-
-    if (!ctx) {
-      return fallback;
-    }
-    return ctx.translator;
-  }
-
-  function useLocale(): Locale {
-    const ctx = useContext(I18nContext);
-    return ctx?.locale ?? 'en';
-  }
-
-  return { I18nContext, I18nProvider, useTranslator, useLocale };
+  return { I18nContext, I18nProvider, useTranslator: base.useTranslator, useLocale: base.useLocale };
 }

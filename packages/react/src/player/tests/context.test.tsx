@@ -3,8 +3,8 @@ import type { ReactNode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { createMockStore } from '../../testing/mocks';
+import { Container } from '../container';
 import {
-  Container,
   PlayerContextProvider,
   type PlayerContextValue,
   useContainer,

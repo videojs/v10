@@ -5,7 +5,7 @@ import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, 
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useEffect, useState } from 'react';
 
-import { useLocale, useTranslator } from '../../i18n';
+import { useLocale, useTranslator } from '../../i18n/instance';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';

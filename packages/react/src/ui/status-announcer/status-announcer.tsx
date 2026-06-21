@@ -4,7 +4,7 @@ import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useState, useSyncExternalStore } from 'react';
 
-import { useTranslator } from '../../i18n';
+import { useTranslator } from '../../i18n/instance';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
