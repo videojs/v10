@@ -130,6 +130,14 @@ function getTemplateHTML() {
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
                     </span>
                   </media-menu-item>
+                  <media-menu-item commandfor="settings-audio-menu" type="audio-track" data-setting="audio-track" class="media-menu__item media-menu__item--submenu">
+                    ${renderIcon('speech', { class: 'media-icon' })}
+                    <span>Audio</span>
+                    <span class="media-menu__hint">
+                      <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
+                      ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
+                    </span>
+                  </media-menu-item>
                   <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('speed', { class: 'media-icon' })}
                     <span>Speed</span>
@@ -169,6 +177,24 @@ function getTemplateHTML() {
                     </media-menu-radio-item>
                   </template>
                 </media-quality-radio-group>
+              </media-menu>
+
+              <media-menu id="settings-audio-menu" class="media-menu__panel">
+                <media-menu-back class="media-menu__back">
+                  ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
+                  Audio
+                </media-menu-back>
+                <div class="media-menu__separator"></div>
+                <media-audio-track-radio-group class="media-menu__group">
+                  <template>
+                    <media-menu-radio-item class="media-menu__item">
+                      <span data-part="label"></span>
+                      <media-menu-item-indicator force-mount class="media-menu__indicator">
+                        ${renderIcon('check', { class: 'media-icon' })}
+                      </media-menu-item-indicator>
+                    </media-menu-radio-item>
+                  </template>
+                </media-audio-track-radio-group>
               </media-menu>
 
               <media-menu id="settings-speed-menu" class="media-menu__panel">

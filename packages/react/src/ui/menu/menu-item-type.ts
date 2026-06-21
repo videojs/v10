@@ -1,1 +1,1 @@
-export type MenuItemSettingType = 'playback-rate' | 'quality' | 'captions';
+export type MenuItemSettingType = 'playback-rate' | 'quality' | 'audio-track' | 'captions';

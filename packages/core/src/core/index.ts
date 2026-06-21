@@ -6,6 +6,8 @@ export * from './ui/airplay-button/airplay-button-core';
 export * from './ui/airplay-button/airplay-button-data-attrs';
 export * from './ui/alert-dialog/alert-dialog-core';
 export * from './ui/alert-dialog/alert-dialog-data-attrs';
+export * from './ui/audio-track-radio-group/audio-track-radio-group-core';
+export * from './ui/audio-track-radio-group/audio-track-radio-group-data-attrs';
 export * from './ui/buffering-indicator/buffering-indicator-core';
 export * from './ui/buffering-indicator/buffering-indicator-data-attrs';
 export * from './ui/captions-button/captions-button-core';
