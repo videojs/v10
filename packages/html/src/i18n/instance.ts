@@ -1,8 +1,7 @@
-import { createI18n } from './create-i18n';
+import { createI18nBase } from './base';
 
-const built = createI18n();
+export const i18nBase = createI18nBase();
 
-export const context = built.context;
-export const I18nController = built.I18nController;
-export const I18nProviderMixin = built.ProviderMixin;
-export const I18nTextMixin = built.TextMixin;
+export const context = i18nBase.context;
+export const I18nController = i18nBase.I18nController;
+export const I18nTextMixin = i18nBase.TextMixin;

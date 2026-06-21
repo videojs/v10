@@ -24,5 +24,6 @@ export type {
 } from './create-i18n';
 export { createI18n } from './create-i18n';
 export { MediaI18nProviderElement, MediaTextElement } from './elements';
-export { context, I18nController, I18nProviderMixin, I18nTextMixin } from './instance';
+export { context, I18nController, I18nTextMixin } from './instance';
 export { localeFromDomLang, resolvePlayerLocale, resolveProviderLocale } from './locale';
+export { I18nProviderMixin } from './provider-instance';

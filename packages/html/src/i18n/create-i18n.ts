@@ -9,85 +9,42 @@ import {
   registerI18n,
   shouldAttemptBrowserTranslation,
   type Translations,
-  type Translator,
 } from '@videojs/core/i18n';
-import type { PropertyValues, ReactiveController, ReactiveControllerHost, ReactiveElement } from '@videojs/element';
-import { type Context, ContextConsumer, ContextProvider, createContext } from '@videojs/element/context';
+import type { PropertyValues, ReactiveElement } from '@videojs/element';
+import { ContextProvider } from '@videojs/element/context';
 import { mergeLocaleOverlays, subscribeAmbientLang } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
+import {
+  createI18nBase,
+  type I18nBase,
+  type I18nControllerConstructor,
+  type I18nLitContext,
+  type I18nTextMixin,
+  type ReactiveElementMixinBase,
+} from './base';
 import { resolveProviderLocale } from './locale';
 
-/** Reflected i18n keys are untyped strings; the runtime translator accepts any key. */
-function translateReflectedKey(translator: Translator, key: string): string {
-  const translateLoose = translator as (k: string, params?: unknown) => string;
-  return translateLoose(key);
-}
-
-export interface I18nContextValue {
-  translator: Translator;
-  locale: Locale;
-}
+export type { I18nContextValue, I18nLitContext } from './base';
 
 export interface CreateI18nOptions {
   /** Override lazy loading of shipped locale packs (tests or custom loaders). */
   loadLocale?: (tag: string) => Promise<Partial<Translations> | undefined>;
 }
 
-/** Per-factory context identity (see {@link createI18n}). */
-export type I18nLitContext = Context<symbol, I18nContextValue>;
-
-/**
- * `Constructor<ReactiveElement>` does not imply static `properties`; this intersection matches how
- * mixins spread {@link ReactiveElement.properties} from their base.
- */
-type ReactiveElementMixinBase = Constructor<ReactiveElement> & Pick<typeof ReactiveElement, 'properties'>;
-
 export interface CreateI18nResult {
   context: I18nLitContext;
-  I18nController: new (
-    host: ReactiveControllerHost & HTMLElement
-  ) => ReactiveController & {
-    readonly value: Translator;
-    readonly locale: Locale;
-  };
+  I18nController: I18nControllerConstructor;
   ProviderMixin: <Base extends ReactiveElementMixinBase>(Base: Base) => Constructor<ReactiveElement> & Base;
-  TextMixin: <Base extends ReactiveElementMixinBase>(Base: Base) => Constructor<ReactiveElement> & Base;
+  TextMixin: I18nTextMixin;
 }
 
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
+  return createI18nWithBase(createI18nBase(), options);
+}
+
+export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions): CreateI18nResult {
   const loadLocale = options?.loadLocale ?? defaultLoadLocale;
-  const fallbackTranslator = createTranslator(getI18nTranslations('en'), 'en');
-
-  const i18nContextKey = Symbol('@videojs/i18n');
-  const i18nContext = createContext<I18nContextValue, typeof i18nContextKey>(i18nContextKey);
-
-  class I18nControllerImpl implements ReactiveController {
-    readonly #host: ReactiveControllerHost & HTMLElement;
-    readonly #consumer: ContextConsumer<I18nLitContext, ReactiveControllerHost & HTMLElement>;
-
-    constructor(host: ReactiveControllerHost & HTMLElement) {
-      this.#host = host;
-      this.#consumer = new ContextConsumer(host, {
-        context: i18nContext,
-        callback: () => this.#host.requestUpdate(),
-        subscribe: true,
-      });
-      host.addController(this);
-    }
-
-    get value(): Translator {
-      return this.#consumer.value?.translator ?? fallbackTranslator;
-    }
-
-    get locale(): Locale {
-      return this.#consumer.value?.locale ?? 'en';
-    }
-
-    hostConnected(): void {}
-
-    hostDisconnected(): void {}
-  }
 
   const ProviderMixin = <Base extends ReactiveElementMixinBase>(Base: Base) => {
     class I18nProviderElement extends Base {
@@ -99,9 +56,9 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       lang = '';
 
       readonly #i18nProvider = new ContextProvider(this, {
-        context: i18nContext,
+        context: base.context,
         initialValue: {
-          translator: fallbackTranslator,
+          translator: base.fallbackTranslator,
           locale: 'en',
         },
       });
@@ -192,29 +149,10 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     return I18nProviderElement;
   };
 
-  const TextMixin = <Base extends ReactiveElementMixinBase>(Base: Base) => {
-    class MediaText extends Base {
-      static properties = {
-        ...Base.properties,
-        key: { type: String, reflect: true },
-      };
-
-      key = '';
-
-      readonly #i18n = new I18nControllerImpl(this);
-
-      protected override updated(changed: PropertyValues): void {
-        super.updated(changed);
-        this.textContent = this.key ? translateReflectedKey(this.#i18n.value, this.key) : '';
-      }
-    }
-    return MediaText;
-  };
-
   return {
-    context: i18nContext,
-    I18nController: I18nControllerImpl,
+    context: base.context,
+    I18nController: base.I18nController,
     ProviderMixin,
-    TextMixin,
+    TextMixin: base.TextMixin,
   };
 }
