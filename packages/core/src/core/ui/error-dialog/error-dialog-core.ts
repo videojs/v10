@@ -1,4 +1,5 @@
 import { AlertDialogCore, type AlertDialogState } from '../alert-dialog/alert-dialog-core';
+import type { ErrorDialogProps } from './props';
 
 export interface ErrorDialogState extends AlertDialogState {}
 
@@ -8,5 +9,8 @@ export class ErrorDialogCore extends AlertDialogCore {
 }
 
 export namespace ErrorDialogCore {
+  export type Props = ErrorDialogProps;
   export type State = ErrorDialogState;
 }
+
+export type { ErrorDialogProps } from './props';

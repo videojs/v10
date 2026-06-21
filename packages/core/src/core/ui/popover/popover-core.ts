@@ -1,39 +1,8 @@
 import { defaults } from '@videojs/utils/object';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
-
-export type PopoverSide = 'top' | 'bottom' | 'left' | 'right';
-
-export type PopoverAlign = 'start' | 'center' | 'end';
-
-export interface PopoverProps {
-  /** Which side of the trigger the popup appears on. */
-  side?: PopoverSide | undefined;
-  /** Alignment of the popup along the trigger's edge. */
-  align?: PopoverAlign | undefined;
-  /**
-   * - `false` (default): non-modal; background content remains interactive.
-   * - `true`: modal; sets `aria-modal="true"` on the popup.
-   * - `'trap-focus'`: reserved for future focus-trapping behavior.
-   */
-  modal?: boolean | 'trap-focus' | undefined;
-  /** Close the popup when the Escape key is pressed. */
-  closeOnEscape?: boolean | undefined;
-  /** Close the popup when clicking outside the trigger and popup. */
-  closeOnOutsideClick?: boolean | undefined;
-  /** Controlled open state. When set, the consumer is responsible for toggling. */
-  open?: boolean | undefined;
-  /** Initial open state for uncontrolled usage. */
-  defaultOpen?: boolean | undefined;
-  /** Open the popup on pointer hover instead of click. */
-  openOnHover?: boolean | undefined;
-  /** Delay in ms before opening on hover. */
-  delay?: number | undefined;
-  /** Delay in ms before closing after pointer leaves. */
-  closeDelay?: number | undefined;
-}
+import { POPOVER_DEFAULT_PROPS, type PopoverAlign, type PopoverProps, type PopoverSide } from './props';
 
 /**
  * The raw transition state managed by `createTransition`. Uses `active`
@@ -51,18 +20,7 @@ export interface PopoverState extends TransitionFlags {
 }
 
 export class PopoverCore {
-  static readonly defaultProps: NonNullableObject<PopoverProps> = {
-    side: 'top',
-    align: 'center',
-    modal: false,
-    closeOnEscape: true,
-    closeOnOutsideClick: true,
-    open: false,
-    defaultOpen: false,
-    openOnHover: false,
-    delay: 300,
-    closeDelay: 0,
-  };
+  static readonly defaultProps = POPOVER_DEFAULT_PROPS;
 
   #props = { ...PopoverCore.defaultProps };
 
@@ -114,3 +72,5 @@ export namespace PopoverCore {
   export type State = PopoverState;
   export type Input = PopoverInput;
 }
+
+export type { PopoverAlign, PopoverProps, PopoverSide } from './props';

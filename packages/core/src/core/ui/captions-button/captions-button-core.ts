@@ -2,30 +2,17 @@ import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface CaptionsButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: CaptionsButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-  /** When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically inside `Menu.Trigger`. */
-  menuTrigger?: boolean | undefined;
-}
+import { CAPTIONS_BUTTON_DEFAULT_PROPS, type CaptionsButtonProps } from './props';
 
 export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
   availability: 'available' | 'unavailable';
 }
 
 export class CaptionsButtonCore {
-  static readonly defaultProps: NonNullableObject<CaptionsButtonProps> = {
-    label: '',
-    disabled: false,
-    menuTrigger: false,
-  };
+  static readonly defaultProps = CAPTIONS_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<CaptionsButtonState>({
     subtitlesShowing: false,
@@ -95,3 +82,5 @@ export namespace CaptionsButtonCore {
   export type Props = CaptionsButtonProps;
   export type State = CaptionsButtonState;
 }
+
+export type { CaptionsButtonProps } from './props';

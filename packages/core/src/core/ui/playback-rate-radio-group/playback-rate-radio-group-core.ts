@@ -1,19 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction, isUndefined } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface PlaybackRateRadioGroupProps {
-  /** Custom label for the options group. */
-  label?: string | ((state: PlaybackRateRadioGroupState) => string) | undefined;
-  /** Custom formatter for visible playback rate labels. */
-  formatRate?: ((rate: number) => string) | undefined;
-  /** Whether playback rate selection is disabled. */
-  disabled?: boolean | undefined;
-}
+import { PLAYBACK_RATE_RADIO_GROUP_DEFAULT_PROPS, type PlaybackRateRadioGroupProps } from './props';
 
 export interface PlaybackRateRadioGroupState extends ButtonState {
   rate: number;
@@ -22,16 +13,8 @@ export interface PlaybackRateRadioGroupState extends ButtonState {
   availability: 'available' | 'unavailable';
 }
 
-function formatPlaybackRate(rate: number): string {
-  return `${rate}×`;
-}
-
 export class PlaybackRateRadioGroupCore {
-  static readonly defaultProps: NonNullableObject<PlaybackRateRadioGroupProps> = {
-    label: '',
-    formatRate: formatPlaybackRate,
-    disabled: false,
-  };
+  static readonly defaultProps = PLAYBACK_RATE_RADIO_GROUP_DEFAULT_PROPS;
 
   readonly state = createState<PlaybackRateRadioGroupState>({
     rate: 1,
@@ -120,3 +103,5 @@ export namespace PlaybackRateRadioGroupCore {
   export type Props = PlaybackRateRadioGroupProps;
   export type State = PlaybackRateRadioGroupState;
 }
+
+export type { PlaybackRateRadioGroupProps } from './props';

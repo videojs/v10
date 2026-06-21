@@ -2,19 +2,10 @@ import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTextTrack, MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface CaptionsRadioGroupProps {
-  /** Custom label for the menu trigger. */
-  label?: string | ((state: CaptionsRadioGroupState) => string) | undefined;
-  /** Custom formatter for visible track labels. */
-  formatTrack?: ((track: MediaTextTrack) => string) | undefined;
-  /** Whether track selection is disabled. */
-  disabled?: boolean | undefined;
-}
+import { CAPTIONS_RADIO_GROUP_DEFAULT_PROPS, type CaptionsRadioGroupProps } from './props';
 
 export interface CaptionsRadioGroupTrack {
   value: string;
@@ -30,12 +21,6 @@ export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subt
 
 export const CAPTIONS_OFF_VALUE = 'off';
 
-function formatTrackLabel(track: MediaTextTrack): string {
-  if (track.label) return track.label;
-  if (track.language) return track.language;
-  return track.kind === 'captions' ? 'Captions' : 'Subtitles';
-}
-
 function sortCaptionTracks(a: MediaTextTrack, b: MediaTextTrack): number {
   return a.kind > b.kind ? 1 : a.kind < b.kind ? -1 : 0;
 }
@@ -45,11 +30,7 @@ function getCaptionTracks(textTrackList: readonly MediaTextTrack[]): MediaTextTr
 }
 
 export class CaptionsRadioGroupCore {
-  static readonly defaultProps: NonNullableObject<CaptionsRadioGroupProps> = {
-    label: '',
-    formatTrack: formatTrackLabel,
-    disabled: false,
-  };
+  static readonly defaultProps = CAPTIONS_RADIO_GROUP_DEFAULT_PROPS;
 
   readonly state = createState<CaptionsRadioGroupState>({
     tracks: [],
@@ -148,3 +129,5 @@ export namespace CaptionsRadioGroupCore {
   export type Props = CaptionsRadioGroupProps;
   export type State = CaptionsRadioGroupState;
 }
+
+export type { CaptionsRadioGroupProps } from './props';

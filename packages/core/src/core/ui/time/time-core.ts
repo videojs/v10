@@ -1,21 +1,9 @@
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
-
-/** Time display type. */
-export type TimeType = 'current' | 'duration' | 'remaining';
-
-export interface TimeProps {
-  /** Which time value to display. */
-  type?: TimeType | undefined;
-  /** Symbol prepended to remaining time. */
-  negativeSign?: string | undefined;
-  /** Custom label for accessibility. */
-  label?: string | ((state: TimeState) => string) | undefined;
-}
+import { TIME_DEFAULT_PROPS, type TimeProps, type TimeType } from './props';
 
 export interface TimeState {
   /** Time display type. */
@@ -39,11 +27,7 @@ const DEFAULT_LABELS: Record<TimeType, string> = {
 };
 
 export class TimeCore {
-  static readonly defaultProps: NonNullableObject<TimeProps> = {
-    type: 'current',
-    negativeSign: '-',
-    label: '',
-  };
+  static readonly defaultProps = TIME_DEFAULT_PROPS;
 
   #props = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
@@ -135,3 +119,5 @@ export namespace TimeCore {
   export type Props = TimeProps;
   export type State = TimeState;
 }
+
+export type { TimeProps, TimeType } from './props';

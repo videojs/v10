@@ -1,18 +1,11 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
-
-export interface CastButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: CastButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { CAST_BUTTON_DEFAULT_PROPS, type CastButtonProps } from './props';
 
 export interface CastButtonState extends ButtonState {
   castState: RemotePlaybackConnectionState;
@@ -20,10 +13,7 @@ export interface CastButtonState extends ButtonState {
 }
 
 export class CastButtonCore {
-  static readonly defaultProps: NonNullableObject<CastButtonProps> = {
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = CAST_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<CastButtonState>({
     castState: 'disconnected',
@@ -97,3 +87,5 @@ export namespace CastButtonCore {
   export type Props = CastButtonProps;
   export type State = CastButtonState;
 }
+
+export type { CastButtonProps } from './props';

@@ -1,17 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPictureInPictureState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface PiPButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: PiPButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { PIP_BUTTON_DEFAULT_PROPS, type PiPButtonProps } from './props';
 
 export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>, ButtonState {
   /** Whether picture-in-picture can be requested on this platform. */
@@ -19,10 +12,7 @@ export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>,
 }
 
 export class PiPButtonCore {
-  static readonly defaultProps: NonNullableObject<PiPButtonProps> = {
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = PIP_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<PiPButtonState>({
     pip: false,
@@ -93,3 +83,5 @@ export namespace PiPButtonCore {
   export type Props = PiPButtonProps;
   export type State = PiPButtonState;
 }
+
+export type { PiPButtonProps } from './props';

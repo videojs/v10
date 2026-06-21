@@ -1,6 +1,7 @@
 import { createState } from '@videojs/store';
 
-import type { IndicatorCoreProps, IndicatorLifecycleState } from './indicator-lifecycle';
+import type { VolumeIndicatorProps } from '../volume-indicator/props';
+import type { IndicatorLifecycleState } from './indicator-lifecycle';
 import { getIndicatorCloseDelay, IndicatorCloseController } from './indicator-lifecycle';
 import {
   DEFAULT_INPUT_INDICATOR_LABELS,
@@ -11,8 +12,6 @@ import {
   type MediaSnapshot,
   predictVolumeActionOutcome,
 } from './status';
-
-export interface VolumeIndicatorProps extends IndicatorCoreProps {}
 
 export interface VolumeIndicatorState extends IndicatorLifecycleState {
   level: IndicatorVolumeLevel | null;
@@ -134,6 +133,8 @@ export namespace VolumeIndicatorCore {
   export type Props = VolumeIndicatorProps;
   export type State = VolumeIndicatorState;
 }
+
+export type { VolumeIndicatorProps } from '../volume-indicator/props';
 
 function getVolumeBoundary(event: InputActionEvent, currentVolume: number, nextVolume: number): 'min' | 'max' | null {
   if (event.action !== 'volumeStep' || event.value === undefined || event.value === 0) return null;

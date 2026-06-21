@@ -1,6 +1,6 @@
 import { defineComponent } from '../manifest';
-import type { FullscreenButtonProps } from './fullscreen-button-core';
 import { FullscreenButtonDataAttrs } from './fullscreen-button-data-attrs';
+import type { FullscreenButtonProps } from './props';
 
 export default defineComponent<FullscreenButtonProps>()({
   name: 'FullscreenButton',

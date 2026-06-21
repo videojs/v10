@@ -1,6 +1,6 @@
 import { defineComponent } from '../manifest';
-import type { PlaybackRateButtonProps } from './playback-rate-button-core';
 import { PlaybackRateButtonDataAttrs } from './playback-rate-button-data-attrs';
+import type { PlaybackRateButtonProps } from './props';
 
 export default defineComponent<PlaybackRateButtonProps>()({
   name: 'PlaybackRateButton',

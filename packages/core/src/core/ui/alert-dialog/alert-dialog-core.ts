@@ -1,14 +1,6 @@
-import type { NonNullableObject } from '@videojs/utils/types';
-
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
-
-export interface AlertDialogProps {
-  /** Controlled open state. When set, the consumer is responsible for toggling. */
-  open?: boolean | undefined;
-  /** Initial open state for uncontrolled usage. */
-  defaultOpen?: boolean | undefined;
-}
+import { ALERT_DIALOG_DEFAULT_PROPS, type AlertDialogProps } from './props';
 
 export interface AlertDialogInput extends TransitionState {}
 
@@ -24,10 +16,7 @@ export interface AlertDialogState extends TransitionFlags {
 }
 
 export class AlertDialogCore {
-  static readonly defaultProps: NonNullableObject<AlertDialogProps> = {
-    open: false,
-    defaultOpen: false,
-  };
+  static readonly defaultProps = ALERT_DIALOG_DEFAULT_PROPS;
 
   /** Accept props for API consistency. Props are consumed by platform layers. */
   setProps(_props: AlertDialogProps): void {}
@@ -74,3 +63,5 @@ export namespace AlertDialogCore {
   export type State = AlertDialogState;
   export type Input = AlertDialogInput;
 }
+
+export type { AlertDialogProps } from './props';

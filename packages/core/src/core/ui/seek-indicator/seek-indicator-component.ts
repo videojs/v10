@@ -1,9 +1,12 @@
-import type { SeekIndicatorProps } from '../input-feedback/seek-indicator-core';
 import { SeekIndicatorDataAttrs } from '../input-feedback/seek-indicator-data-attrs';
-import { defineComponent } from '../manifest';
+import { defineComponent, defineComponentPart } from '../manifest';
+import type { SeekIndicatorProps } from './props';
 
-export default defineComponent<SeekIndicatorProps>()({
+export default defineComponent()({
   name: 'SeekIndicator',
-  parts: ['Root', 'Value'] as const,
+  parts: {
+    Root: defineComponentPart<SeekIndicatorProps>(),
+    Value: defineComponentPart(),
+  },
   dataAttrs: SeekIndicatorDataAttrs,
 });

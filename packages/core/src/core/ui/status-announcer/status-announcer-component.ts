@@ -1,5 +1,5 @@
-import type { StatusAnnouncerProps } from '../input-feedback/status-announcer-core';
 import { defineComponent } from '../manifest';
+import type { StatusAnnouncerProps } from './props';
 
 export default defineComponent<StatusAnnouncerProps>()({
   name: 'StatusAnnouncer',

@@ -5,7 +5,7 @@ import { createComponent, Slot } from '../../../jsx-runtime';
 import type { ContainerProps } from '../container/container-core';
 import type { GestureProps } from '../gesture/gesture-core';
 import type { HotkeyProps } from '../hotkey/hotkey-core';
-import { defineComponent } from '../manifest';
+import { defineComponent, defineComponentPart } from '../manifest';
 
 const PlayButton = createComponent(
   defineComponent()({
@@ -16,16 +16,34 @@ const PlayButton = createComponent(
 const Slider = createComponent(
   defineComponent<{ orientation?: 'horizontal' | 'vertical'; thumbAlignment?: 'center' | 'edge' }>()({
     name: 'Slider',
-    parts: ['Root', 'Track', 'Fill', 'Thumb'] as const,
+    parts: {
+      Root: defineComponentPart<{ orientation?: 'horizontal' | 'vertical'; thumbAlignment?: 'center' | 'edge' }>(),
+      Track: defineComponentPart(),
+      Fill: defineComponentPart(),
+      Thumb: defineComponentPart(),
+      Value: defineComponentPart<{ type?: 'current' | 'pointer' }>(),
+    },
   })
 );
 
 const Time = createComponent(
   defineComponent()({
     name: 'Time',
-    parts: ['Value'] as const,
-    partProps: {
-      Value: {} as { type: 'current' | 'duration' },
+    parts: {
+      Value: defineComponentPart<{ type: 'current' | 'duration' }>(),
+    },
+  })
+);
+
+const Menu = createComponent(
+  defineComponent()({
+    name: 'Menu',
+    parts: {
+      Root: defineComponentPart(),
+      Trigger: defineComponentPart<{ type?: 'quality' | 'playback-rate' | 'captions'; disabled?: boolean }>(),
+      RadioGroup: defineComponentPart<{ value: string; onValueChange: (value: string) => void }>(),
+      RadioItem: defineComponentPart<{ value: string; disabled?: boolean }>(),
+      ItemIndicator: defineComponentPart<{ checked?: boolean; forceMount?: boolean }>(),
     },
   })
 );
@@ -108,6 +126,30 @@ describe('constrained JSX', () => {
     void (<Time.Value type="current" className="t" />);
     // @ts-expect-error - `bogus` not in Time type union
     void (<Time.Value type="bogus" />);
+  });
+
+  it('accepts typed component part props', () => {
+    void (<Time.Value type="current" className="t" />);
+    void (<Slider.Value type="pointer" />);
+    void (
+      <Menu.Root>
+        <Menu.Trigger type="quality" disabled />
+        <Menu.RadioGroup value="auto" onValueChange={() => {}}>
+          <Menu.RadioItem value="auto" disabled>
+            <Menu.ItemIndicator checked forceMount />
+          </Menu.RadioItem>
+        </Menu.RadioGroup>
+      </Menu.Root>
+    );
+  });
+
+  it('rejects invalid typed component part props', () => {
+    // @ts-expect-error - invalid menu setting type
+    void (<Menu.Trigger type="speed" />);
+    // @ts-expect-error - value is required for radio items
+    void (<Menu.RadioItem />);
+    // @ts-expect-error - invalid time value type
+    void (<Time.Value type="elapsed" />);
   });
 
   it('rejects platform-specific intrinsic elements', () => {

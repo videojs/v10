@@ -1,28 +1,9 @@
 import { defaults } from '@videojs/utils/object';
-import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { PopoverAlign, PopoverSide } from '../popover/popover-core';
+import type { PopoverAlign, PopoverSide } from '../popover/props';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
-
-export interface TooltipProps {
-  /** Which side of the trigger the tooltip appears on. */
-  side?: PopoverSide | undefined;
-  /** Alignment of the tooltip along the trigger's edge. */
-  align?: PopoverAlign | undefined;
-  /** Controlled open state. */
-  open?: boolean | undefined;
-  /** Initial open state for uncontrolled usage. */
-  defaultOpen?: boolean | undefined;
-  /** Delay in ms before opening on hover. */
-  delay?: number | undefined;
-  /** Delay in ms before closing after pointer leaves. */
-  closeDelay?: number | undefined;
-  /** When true, hovering the popup does not keep it open. */
-  disableHoverablePopup?: boolean | undefined;
-  /** When true, the tooltip is disabled and will not open. */
-  disabled?: boolean | undefined;
-}
+import { TOOLTIP_DEFAULT_PROPS, type TooltipProps } from './props';
 
 export interface TooltipInput extends TransitionState {}
 
@@ -38,16 +19,7 @@ export interface TooltipState extends TransitionFlags {
 }
 
 export class TooltipCore {
-  static readonly defaultProps: NonNullableObject<TooltipProps> = {
-    side: 'top',
-    align: 'center',
-    open: false,
-    defaultOpen: false,
-    delay: 600,
-    closeDelay: 0,
-    disableHoverablePopup: true,
-    disabled: false,
-  };
+  static readonly defaultProps = TOOLTIP_DEFAULT_PROPS;
 
   #props = { ...TooltipCore.defaultProps };
 
@@ -89,3 +61,5 @@ export namespace TooltipCore {
   export type State = TooltipState;
   export type Input = TooltipInput;
 }
+
+export type { TooltipProps } from './props';

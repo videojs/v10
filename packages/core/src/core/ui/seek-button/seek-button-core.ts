@@ -1,19 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface SeekButtonProps {
-  /** Seconds to seek. Positive = forward, negative = backward. Default `30`. */
-  seconds?: number | undefined;
-  /** Custom label for the button. */
-  label?: string | ((state: SeekButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { SEEK_BUTTON_DEFAULT_PROPS, type SeekButtonProps } from './props';
 
 export type SeekButtonDirection = 'forward' | 'backward';
 
@@ -25,11 +16,7 @@ export interface SeekButtonState extends ButtonState {
 }
 
 export class SeekButtonCore {
-  static readonly defaultProps: NonNullableObject<SeekButtonProps> = {
-    seconds: 30,
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = SEEK_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<SeekButtonState>({
     seeking: false,
@@ -93,3 +80,5 @@ export namespace SeekButtonCore {
   export type Props = SeekButtonProps;
   export type State = SeekButtonState;
 }
+
+export type { SeekButtonProps } from './props';

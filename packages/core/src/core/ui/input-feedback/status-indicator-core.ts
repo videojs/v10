@@ -1,21 +1,15 @@
 import { createState } from '@videojs/store';
 
-import type { IndicatorCoreProps, IndicatorLifecycleState } from './indicator-lifecycle';
+import type { StatusIndicatorProps } from '../status-indicator/props';
+import type { IndicatorLifecycleState } from './indicator-lifecycle';
 import { getIndicatorCloseDelay, IndicatorCloseController } from './indicator-lifecycle';
 import {
   DEFAULT_INPUT_INDICATOR_LABELS,
   deriveStatus,
-  type InputAction,
   type InputActionEvent,
-  type InputIndicatorLabels,
   isInputActionIncluded,
   type MediaSnapshot,
 } from './status';
-
-export interface StatusIndicatorProps extends IndicatorCoreProps {
-  actions?: readonly InputAction[] | undefined;
-  labels?: Partial<InputIndicatorLabels> | undefined;
-}
 
 export interface StatusIndicatorState extends IndicatorLifecycleState {
   status: ReturnType<typeof deriveStatus> extends infer Details
@@ -83,3 +77,5 @@ export namespace StatusIndicatorCore {
   export type Props = StatusIndicatorProps;
   export type State = StatusIndicatorState;
 }
+
+export type { StatusIndicatorProps } from '../status-indicator/props';

@@ -1,25 +1,15 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface PlayButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: PlayButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { PLAY_BUTTON_DEFAULT_PROPS, type PlayButtonProps } from './props';
 
 export interface PlayButtonState extends Pick<MediaPlaybackState, 'paused' | 'ended' | 'started'>, ButtonState {}
 
 export class PlayButtonCore {
-  static readonly defaultProps: NonNullableObject<PlayButtonProps> = {
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = PLAY_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<PlayButtonState>({
     paused: true,
@@ -88,3 +78,5 @@ export namespace PlayButtonCore {
   export type Props = PlayButtonProps;
   export type State = PlayButtonState;
 }
+
+export type { PlayButtonProps } from './props';

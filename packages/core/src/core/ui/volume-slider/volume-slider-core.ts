@@ -2,18 +2,8 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaVolumeState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
-import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
-
-export interface VolumeSliderProps extends SliderProps {
-  /** Step increment for wheel scrolling. */
-  wheelStep?: number | undefined;
-  /** @internal Derived from `volume` (0–100) — not user-settable. */
-  value?: number | undefined;
-  /** @internal Always 0 — not user-settable. */
-  min?: number | undefined;
-  /** @internal Always 100 — not user-settable. */
-  max?: number | undefined;
-}
+import { SliderCore, type SliderState } from '../slider/slider-core';
+import { VOLUME_SLIDER_DEFAULT_PROPS, type VolumeSliderProps } from './props';
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {
   availability: MediaFeatureAvailability;
@@ -21,11 +11,7 @@ export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, '
 
 /** Volume-domain slider: maps media volume/mute state to slider state. */
 export class VolumeSliderCore extends SliderCore {
-  static override readonly defaultProps: NonNullableObject<VolumeSliderProps> = {
-    ...SliderCore.defaultProps,
-    label: 'Volume',
-    wheelStep: 5,
-  };
+  static override readonly defaultProps = VOLUME_SLIDER_DEFAULT_PROPS;
 
   #media: MediaVolumeState | null = null;
 
@@ -86,3 +72,5 @@ export namespace VolumeSliderCore {
   export type Props = VolumeSliderProps;
   export type State = VolumeSliderState;
 }
+
+export type { VolumeSliderProps } from './props';

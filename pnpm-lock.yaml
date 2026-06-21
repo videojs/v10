@@ -425,6 +425,12 @@ importers:
         specifier: workspace:*
         version: link:../utils
     devDependencies:
+      '@videojs/core':
+        specifier: workspace:*
+        version: link:../core
+      '@videojs/icons':
+        specifier: workspace:*
+        version: link:../icons
       tsdown:
         specifier: ^0.21.9
         version: 0.21.9(@typescript/native-preview@7.0.0-dev.20260421.2)(typescript@6.0.2)

@@ -35,6 +35,8 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@videojs/core": "workspace:*",
+    "@videojs/icons": "workspace:*",
     "tsdown": "^0.21.9"
   },
   "keywords": [

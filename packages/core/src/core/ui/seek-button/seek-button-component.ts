@@ -1,5 +1,5 @@
 import { defineComponent } from '../manifest';
-import type { SeekButtonProps } from './seek-button-core';
+import type { SeekButtonProps } from './props';
 import { SeekButtonDataAttrs } from './seek-button-data-attrs';
 
 export default defineComponent<SeekButtonProps>()({

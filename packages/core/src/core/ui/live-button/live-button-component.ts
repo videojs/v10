@@ -1,6 +1,6 @@
 import { defineComponent } from '../manifest';
-import type { LiveButtonProps } from './live-button-core';
 import { LiveButtonDataAttrs } from './live-button-data-attrs';
+import type { LiveButtonProps } from './props';
 
 export default defineComponent<LiveButtonProps>()({
   name: 'LiveButton',

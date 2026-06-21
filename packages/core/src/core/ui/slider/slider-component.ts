@@ -1,9 +1,18 @@
-import { defineComponent } from '../manifest';
-import type { SliderProps } from './slider-core';
+import { defineComponent, defineComponentPart } from '../manifest';
+import type { SliderProps, SliderValueProps } from './props';
 import { SliderDataAttrs } from './slider-data-attrs';
 
-export default defineComponent<SliderProps>()({
+export default defineComponent()({
   name: 'Slider',
-  parts: ['Root', 'Track', 'Fill', 'Buffer', 'Thumb', 'Thumbnail', 'Preview', 'Value'] as const,
+  parts: {
+    Root: defineComponentPart<SliderProps>(),
+    Track: defineComponentPart(),
+    Fill: defineComponentPart(),
+    Buffer: defineComponentPart(),
+    Thumb: defineComponentPart(),
+    Thumbnail: defineComponentPart(),
+    Preview: defineComponentPart(),
+    Value: defineComponentPart<SliderValueProps>(),
+  },
   dataAttrs: SliderDataAttrs,
 });

@@ -1,19 +1,16 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaQualityState, MediaVideoRendition } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface QualityRadioGroupProps {
-  /** Custom label for the options group. */
-  label?: string | ((state: QualityRadioGroupState) => string) | undefined;
-  /** Custom formatter for visible rendition labels. */
-  formatRendition?: ((rendition: MediaVideoRendition) => string) | undefined;
-  /** Whether quality selection is disabled. */
-  disabled?: boolean | undefined;
-}
+import {
+  formatBitrate,
+  formatRenditionLabel,
+  getRenditionSize,
+  QUALITY_RADIO_GROUP_DEFAULT_PROPS,
+  type QualityRadioGroupProps,
+} from './props';
 
 export interface QualityRadioGroupRendition {
   value: string;
@@ -32,43 +29,9 @@ export interface QualityRadioGroupState extends ButtonState {
 
 export const QUALITY_AUTO_VALUE = 'auto';
 
-const STANDARD_RENDITION_SIZES: readonly number[] = [4320, 2160, 1440, 1080, 720, 480, 360, 240];
-
-function formatBitrate(bitrate: number): string {
-  return bitrate >= 1_000_000 ? `${Math.round(bitrate / 100_000) / 10} Mbps` : `${Math.round(bitrate / 1000)} kbps`;
-}
-
-function getWidescreenSize(width: number): number | undefined {
-  const size = Math.round((width * 9) / 16);
-  return STANDARD_RENDITION_SIZES.includes(size) ? size : undefined;
-}
-
-function getRenditionSize(rendition: MediaVideoRendition): number | undefined {
-  const { width, height } = rendition;
-
-  if (width && height) {
-    // 4:3 and portrait renditions use their actual vertical-ish size. For wider-than-16:9
-    // cinematic encodes, snap to a known 16:9 class only when the width maps cleanly.
-    if (width > height && width * 9 > height * 16) return getWidescreenSize(width) ?? height;
-    return Math.min(width, height);
-  }
-
-  if (height) return height;
-  if (width) return getWidescreenSize(width) ?? width;
-
-  return undefined;
-}
-
 function hasSameSize(rendition: MediaVideoRendition, renditions: readonly MediaVideoRendition[]): boolean {
   const size = getRenditionSize(rendition);
   return Boolean(size && renditions.some((other) => other !== rendition && getRenditionSize(other) === size));
-}
-
-function formatRenditionLabel(rendition: MediaVideoRendition): string {
-  const size = getRenditionSize(rendition);
-  if (size) return `${size}p`;
-  if (rendition.bitrate) return formatBitrate(rendition.bitrate);
-  return 'Quality';
 }
 
 function formatRenditionBadge(
@@ -107,11 +70,7 @@ function isSameRendition(a: MediaVideoRendition, b: MediaVideoRendition): boolea
 }
 
 export class QualityRadioGroupCore {
-  static readonly defaultProps: NonNullableObject<QualityRadioGroupProps> = {
-    label: '',
-    formatRendition: formatRenditionLabel,
-    disabled: false,
-  };
+  static readonly defaultProps = QUALITY_RADIO_GROUP_DEFAULT_PROPS;
 
   readonly state = createState<QualityRadioGroupState>({
     renditions: [],
@@ -249,3 +208,5 @@ export namespace QualityRadioGroupCore {
   export type Props = QualityRadioGroupProps;
   export type State = QualityRadioGroupState;
 }
+
+export type { QualityRadioGroupProps } from './props';

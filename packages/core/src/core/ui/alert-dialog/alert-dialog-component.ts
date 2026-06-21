@@ -1,9 +1,15 @@
-import { defineComponent } from '../manifest';
-import type { AlertDialogProps } from './alert-dialog-core';
+import { defineComponent, defineComponentPart } from '../manifest';
 import { AlertDialogDataAttrs } from './alert-dialog-data-attrs';
+import type { AlertDialogProps } from './props';
 
-export default defineComponent<AlertDialogProps>()({
+export default defineComponent()({
   name: 'AlertDialog',
-  parts: ['Root', 'Popup', 'Title', 'Description', 'Close'] as const,
+  parts: {
+    Root: defineComponentPart<AlertDialogProps>(),
+    Popup: defineComponentPart(),
+    Title: defineComponentPart(),
+    Description: defineComponentPart(),
+    Close: defineComponentPart(),
+  },
   dataAttrs: AlertDialogDataAttrs,
 });

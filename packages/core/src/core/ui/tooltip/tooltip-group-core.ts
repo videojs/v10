@@ -1,21 +1,9 @@
 import { defaults } from '@videojs/utils/object';
-import type { NonNullableObject } from '@videojs/utils/types';
 
-export interface TooltipGroupProps {
-  /** Default open delay in ms for tooltips in this group. */
-  delay?: number | undefined;
-  /** Default close delay in ms for tooltips in this group. */
-  closeDelay?: number | undefined;
-  /** Duration in ms after a tooltip closes during which the next tooltip opens instantly. */
-  timeout?: number | undefined;
-}
+import { TOOLTIP_GROUP_DEFAULT_PROPS, type TooltipGroupProps } from './props';
 
 export class TooltipGroupCore {
-  static readonly defaultProps: NonNullableObject<TooltipGroupProps> = {
-    delay: 600,
-    closeDelay: 0,
-    timeout: 400,
-  };
+  static readonly defaultProps = TOOLTIP_GROUP_DEFAULT_PROPS;
 
   #props = { ...TooltipGroupCore.defaultProps };
   #lastCloseTime = 0;
@@ -55,3 +43,5 @@ export class TooltipGroupCore {
 export namespace TooltipGroupCore {
   export type Props = TooltipGroupProps;
 }
+
+export type { TooltipGroupProps } from './props';

@@ -5,41 +5,48 @@ export type EmptyProps = {
   readonly [__EMPTY_PROPS__]?: never;
 };
 
-export interface ComponentManifest<
-  Props extends object = EmptyProps,
-  Parts extends readonly string[] = readonly string[],
-  PartProps extends Partial<Record<Parts[number], object>> = Partial<Record<Parts[number], object>>,
-> {
-  name: string;
-  parts?: Parts;
-  dataAttrs?: Record<string, string>;
-  partProps?: PartProps;
+export interface ComponentPart<Props extends object = EmptyProps> {
   readonly [__PROPS_BRAND__]?: Props;
 }
 
-export type InferProps<T> =
-  T extends ComponentManifest<infer Props, readonly string[], Partial<Record<string, object>>> ? Props : never;
+export type ComponentPartRecord = Record<string, ComponentPart<any>>;
 
-export type InferParts<T> =
-  T extends ComponentManifest<object, infer Parts, Partial<Record<string, object>>>
-    ? readonly string[] extends Parts
-      ? never
-      : Parts[number]
-    : never;
+export interface ComponentManifest<Props extends object = EmptyProps> {
+  name: string;
+  dataAttrs?: Record<string, string>;
+  readonly [__PROPS_BRAND__]?: Props;
+}
+
+export interface ComponentGroupManifest<Parts extends ComponentPartRecord = ComponentPartRecord> {
+  name: string;
+  parts: Parts;
+  dataAttrs?: Record<string, string>;
+}
+
+export type AnyComponentManifest = ComponentManifest<object> | ComponentGroupManifest<ComponentPartRecord>;
+
+type ComponentDefinition<Props extends object> = Omit<ComponentManifest<Props>, typeof __PROPS_BRAND__>;
+type ComponentGroupDefinition<Parts extends ComponentPartRecord> = ComponentGroupManifest<Parts>;
+
+interface DefineComponentFactory<Props extends object> {
+  <const Parts extends ComponentPartRecord>(manifest: ComponentGroupDefinition<Parts>): ComponentGroupManifest<Parts>;
+  (manifest: ComponentDefinition<Props>): ComponentManifest<Props>;
+}
+
+export type InferProps<T> =
+  T extends ComponentManifest<infer Props> ? Props : T extends ComponentPart<infer Props> ? Props : never;
+
+export type InferParts<T> = T extends ComponentGroupManifest<infer Parts> ? keyof Parts : never;
 
 export type InferPartProps<T, K extends string> =
-  T extends ComponentManifest<object, readonly string[], infer PartProps>
-    ? K extends keyof PartProps
-      ? PartProps[K]
-      : never
-    : never;
+  T extends ComponentGroupManifest<infer Parts> ? (K extends keyof Parts ? InferProps<Parts[K]> : never) : never;
+
+export function defineComponentPart<Props extends object = EmptyProps>(): ComponentPart<Props> {
+  return {} as ComponentPart<Props>;
+}
 
 /** Define a component manifest. */
-export function defineComponent<Props extends object = EmptyProps>() {
-  return <
-    const Parts extends readonly string[] = readonly string[],
-    const PartProps extends Partial<Record<Parts[number], object>> = Partial<Record<Parts[number], object>>,
-  >(
-    manifest: Omit<ComponentManifest<Props, Parts, PartProps>, typeof __PROPS_BRAND__>
-  ): ComponentManifest<Props, Parts, PartProps> => manifest as ComponentManifest<Props, Parts, PartProps>;
+export function defineComponent<Props extends object = EmptyProps>(): DefineComponentFactory<Props> {
+  return ((manifest: ComponentDefinition<Props> | ComponentGroupDefinition<ComponentPartRecord>) =>
+    manifest) as DefineComponentFactory<Props>;
 }

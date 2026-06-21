@@ -1,20 +1,9 @@
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaTimeState } from '../../media/state';
-import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
-
-export interface TimeSliderProps extends SliderProps {
-  /** @internal Derived from `currentTime` — not user-settable. */
-  value?: number | undefined;
-  /** @internal Always 0 — not user-settable. */
-  min?: number | undefined;
-  /** @internal Derived from `duration` — not user-settable. */
-  max?: number | undefined;
-  /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
-  changeThrottle?: number | undefined;
-}
+import { SliderCore, type SliderState } from '../slider/slider-core';
+import { TIME_SLIDER_DEFAULT_PROPS, type TimeSliderProps } from './props';
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
   /** Buffered amount as a percentage of duration (0–100). */
@@ -23,11 +12,7 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
 
 /** Time-domain slider: maps media time/buffer state to slider state. */
 export class TimeSliderCore extends SliderCore {
-  static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
-    ...SliderCore.defaultProps,
-    label: 'Seek',
-    changeThrottle: 100,
-  };
+  static override readonly defaultProps = TIME_SLIDER_DEFAULT_PROPS;
 
   #props = { ...TimeSliderCore.defaultProps };
   #media: (MediaTimeState & MediaBufferState) | null = null;
@@ -93,3 +78,5 @@ export namespace TimeSliderCore {
   export type Props = TimeSliderProps;
   export type State = TimeSliderState;
 }
+
+export type { TimeSliderProps } from './props';

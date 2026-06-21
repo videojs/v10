@@ -1,17 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaFullscreenState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface FullscreenButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: FullscreenButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { FULLSCREEN_BUTTON_DEFAULT_PROPS, type FullscreenButtonProps } from './props';
 
 export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fullscreen'>, ButtonState {
   /** Whether fullscreen can be requested on this platform. */
@@ -19,10 +12,7 @@ export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fulls
 }
 
 export class FullscreenButtonCore {
-  static readonly defaultProps: NonNullableObject<FullscreenButtonProps> = {
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = FULLSCREEN_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<FullscreenButtonState>({
     fullscreen: false,
@@ -93,3 +83,5 @@ export namespace FullscreenButtonCore {
   export type Props = FullscreenButtonProps;
   export type State = FullscreenButtonState;
 }
+
+export type { FullscreenButtonProps } from './props';

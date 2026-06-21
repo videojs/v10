@@ -1,9 +1,17 @@
-import { defineComponent } from '../manifest';
-import type { TooltipProps } from './tooltip-core';
+import { defineComponent, defineComponentPart } from '../manifest';
+import type { TooltipProps } from './props';
 import { TooltipDataAttrs } from './tooltip-data-attrs';
 
-export default defineComponent<TooltipProps>()({
+export default defineComponent()({
   name: 'Tooltip',
-  parts: ['Provider', 'Root', 'Trigger', 'Popup', 'Arrow', 'Label', 'Shortcut'] as const,
+  parts: {
+    Provider: defineComponentPart(),
+    Root: defineComponentPart<TooltipProps>(),
+    Trigger: defineComponentPart(),
+    Popup: defineComponentPart(),
+    Arrow: defineComponentPart(),
+    Label: defineComponentPart(),
+    Shortcut: defineComponentPart(),
+  },
   dataAttrs: TooltipDataAttrs,
 });

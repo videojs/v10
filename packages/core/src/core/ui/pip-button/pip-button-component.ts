@@ -1,6 +1,6 @@
 import { defineComponent } from '../manifest';
-import type { PiPButtonProps } from './pip-button-core';
 import { PiPButtonDataAttrs } from './pip-button-data-attrs';
+import type { PiPButtonProps } from './props';
 
 export default defineComponent<PiPButtonProps>()({
   name: 'PiPButton',

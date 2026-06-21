@@ -1,9 +1,12 @@
-import type { StatusIndicatorProps } from '../input-feedback/status-indicator-core';
 import { StatusIndicatorDataAttrs } from '../input-feedback/status-indicator-data-attrs';
-import { defineComponent } from '../manifest';
+import { defineComponent, defineComponentPart } from '../manifest';
+import type { StatusIndicatorProps } from './props';
 
-export default defineComponent<StatusIndicatorProps>()({
+export default defineComponent()({
   name: 'StatusIndicator',
-  parts: ['Root', 'Value'] as const,
+  parts: {
+    Root: defineComponentPart<StatusIndicatorProps>(),
+    Value: defineComponentPart(),
+  },
   dataAttrs: StatusIndicatorDataAttrs,
 });

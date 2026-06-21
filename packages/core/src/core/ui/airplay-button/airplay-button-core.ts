@@ -2,18 +2,11 @@ import { createState } from '@videojs/store';
 import { supportsWebKitAirPlay } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
-
-export interface AirPlayButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: AirPlayButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { AIRPLAY_BUTTON_DEFAULT_PROPS, type AirPlayButtonProps } from './props';
 
 export interface AirPlayButtonState extends ButtonState {
   /** Current AirPlay connection state. */
@@ -22,10 +15,7 @@ export interface AirPlayButtonState extends ButtonState {
   availability: MediaFeatureAvailability;
 }
 export class AirPlayButtonCore {
-  static readonly defaultProps: NonNullableObject<AirPlayButtonProps> = {
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = AIRPLAY_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<AirPlayButtonState>({
     state: 'disconnected',
@@ -101,3 +91,5 @@ export namespace AirPlayButtonCore {
   export type Props = AirPlayButtonProps;
   export type State = AirPlayButtonState;
 }
+
+export type { AirPlayButtonProps } from './props';

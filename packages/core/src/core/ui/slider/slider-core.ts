@@ -3,27 +3,7 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-/** Configuration shared by all slider variants. */
-export interface SliderProps {
-  /** Custom label for the slider. */
-  label?: string | ((state: SliderState) => string) | undefined;
-  /** Step increment for value changes (arrow keys). */
-  step?: number | undefined;
-  /** Large step increment (Page Up/Down keys). */
-  largeStep?: number | undefined;
-  /** Axis of slider movement. */
-  orientation?: 'horizontal' | 'vertical' | undefined;
-  /** Whether the slider is non-interactive. */
-  disabled?: boolean | undefined;
-  /** How the thumb aligns at the track edges. `edge` constrains the thumb within track bounds. */
-  thumbAlignment?: 'center' | 'edge' | undefined;
-  /** Current slider value. */
-  value?: number | undefined;
-  /** Minimum value of the slider range. */
-  min?: number | undefined;
-  /** Maximum value of the slider range. */
-  max?: number | undefined;
-}
+import { SLIDER_DEFAULT_PROPS, type SliderProps } from './props';
 
 /** Current pointer/drag input state, typically provided by a DOM controller. */
 export interface SliderInput {
@@ -62,17 +42,7 @@ export interface SliderState {
 
 /** Base slider logic: value mapping, ARIA attrs, and step calculations. */
 export class SliderCore {
-  static readonly defaultProps: NonNullableObject<SliderProps> = {
-    label: '',
-    step: 1,
-    largeStep: 10,
-    orientation: 'horizontal',
-    disabled: false,
-    thumbAlignment: 'center',
-    value: 0,
-    min: 0,
-    max: 100,
-  };
+  static readonly defaultProps = SLIDER_DEFAULT_PROPS;
 
   static readonly defaultInput: SliderInput = {
     pointerPercent: 0,
@@ -198,3 +168,5 @@ export namespace SliderCore {
   export type State = SliderState;
   export type Input = SliderInput;
 }
+
+export type { SliderProps, SliderValueProps } from './props';

@@ -1,6 +1,7 @@
 import { createState } from '@videojs/store';
 
-import type { IndicatorCoreProps, IndicatorLifecycleState } from './indicator-lifecycle';
+import type { SeekIndicatorProps } from '../seek-indicator/props';
+import type { IndicatorLifecycleState } from './indicator-lifecycle';
 import { getIndicatorCloseDelay, IndicatorCloseController } from './indicator-lifecycle';
 import {
   formatCurrentTime,
@@ -10,8 +11,6 @@ import {
   isSeekIndicatorAction,
   type MediaSnapshot,
 } from './status';
-
-export interface SeekIndicatorProps extends IndicatorCoreProps {}
 
 export interface SeekIndicatorState extends IndicatorLifecycleState {
   direction: IndicatorDirection | null;
@@ -110,3 +109,5 @@ export namespace SeekIndicatorCore {
   export type Props = SeekIndicatorProps;
   export type State = SeekIndicatorState;
 }
+
+export type { SeekIndicatorProps } from '../seek-indicator/props';

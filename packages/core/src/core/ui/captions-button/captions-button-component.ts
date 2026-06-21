@@ -1,6 +1,6 @@
 import { defineComponent } from '../manifest';
-import type { CaptionsButtonProps } from './captions-button-core';
 import { CaptionsButtonDataAttrs } from './captions-button-data-attrs';
+import type { CaptionsButtonProps } from './props';
 
 export default defineComponent<CaptionsButtonProps>()({
   name: 'CaptionsButton',

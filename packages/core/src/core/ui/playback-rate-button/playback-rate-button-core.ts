@@ -1,30 +1,17 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface PlaybackRateButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-  /** When true, pointer activation opens a menu instead of cycling. React sets this automatically inside `Menu.Trigger`. */
-  menuTrigger?: boolean | undefined;
-}
+import { PLAYBACK_RATE_BUTTON_DEFAULT_PROPS, type PlaybackRateButtonProps } from './props';
 
 export interface PlaybackRateButtonState extends ButtonState {
   rate: number;
 }
 
 export class PlaybackRateButtonCore {
-  static readonly defaultProps: NonNullableObject<PlaybackRateButtonProps> = {
-    label: '',
-    disabled: false,
-    menuTrigger: false,
-  };
+  static readonly defaultProps = PLAYBACK_RATE_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<PlaybackRateButtonState>({
     rate: 1,
@@ -95,3 +82,5 @@ export namespace PlaybackRateButtonCore {
   export type Props = PlaybackRateButtonProps;
   export type State = PlaybackRateButtonState;
 }
+
+export type { PlaybackRateButtonProps } from './props';

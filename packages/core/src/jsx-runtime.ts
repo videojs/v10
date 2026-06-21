@@ -1,10 +1,16 @@
-import type { ComponentManifest, InferPartProps, InferParts, InferProps } from './core/ui/manifest';
+import type {
+  AnyComponentManifest,
+  ComponentGroupManifest,
+  InferPartProps,
+  InferParts,
+  InferProps,
+} from './core/ui/manifest';
 
 export const VIDEOJS_NODE = Symbol.for('@videojs/node');
 
 declare const EMPTY_PROPS_SYMBOL: unique symbol;
 
-type EmptyProps = {
+export type EmptyProps = {
   readonly [EMPTY_PROPS_SYMBOL]?: never;
 };
 
@@ -33,7 +39,7 @@ export interface Component<Props extends object> {
 }
 
 type PartComponentProps<M, K extends string> = K extends 'Root'
-  ? InferProps<M>
+  ? NonNullable<InferPartProps<M, K>>
   : [NonNullable<InferPartProps<M, K>>] extends [never]
     ? EmptyProps
     : NonNullable<InferPartProps<M, K>>;
@@ -42,11 +48,11 @@ type CompoundComponent<M> = {
   [K in InferParts<M> & string]: Component<PartComponentProps<M, K>>;
 };
 
-export type CreateComponentResult<M> = [InferParts<M>] extends [never]
-  ? Component<InferProps<M>>
-  : CompoundComponent<M>;
+export type CreateComponentResult<M> = M extends ComponentGroupManifest
+  ? CompoundComponent<M>
+  : Component<InferProps<M>>;
 
-function createComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
+function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
   const fn = (_props: BaseProps & Props): ComponentNode => {
     throw new Error(`@videojs/core: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
@@ -56,21 +62,17 @@ function createComponentPart<Props extends object>(name: string, part: string | 
   return fn as Component<Props>;
 }
 
-export const Slot = createComponentPart<SlotProps>('Slot', null);
+export const Slot = createRuntimeComponentPart<SlotProps>('Slot', null);
 
-export function createComponent<
-  M extends ComponentManifest<object, readonly string[], Partial<Record<string, object>>>,
->(manifest: M): CreateComponentResult<M> {
-  const parts = manifest.parts ?? [];
-
-  if (parts.length === 0) {
-    return createComponentPart(manifest.name, null) as CreateComponentResult<M>;
+export function createComponent<M extends AnyComponentManifest>(manifest: M): CreateComponentResult<M> {
+  if (!('parts' in manifest)) {
+    return createRuntimeComponentPart(manifest.name, null) as CreateComponentResult<M>;
   }
 
   const compound: Record<string, Component<never>> = {};
 
-  for (const part of parts) {
-    compound[part] = createComponentPart(manifest.name, part);
+  for (const part of Object.keys(manifest.parts)) {
+    compound[part] = createRuntimeComponentPart(manifest.name, part);
   }
 
   return compound as CreateComponentResult<M>;

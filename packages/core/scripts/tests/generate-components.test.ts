@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { generateComponents } from '../generate-components';
 
-const STUB = 'const defineComponent: any = () => (m: any) => m;';
+const STUB = 'const defineComponent: any = () => (m: any) => m; const defineComponentPart: any = () => ({});';
 
 function setup(): { dir: string; output: string; pattern: string } {
   const dir = mkdtempSync(join(tmpdir(), 'videojs-components-'));
@@ -27,16 +27,17 @@ function setup(): { dir: string; output: string; pattern: string } {
      });`
   );
 
-  writeFileSync(join(dir, 'slider', 'slider-parts.ts'), `export const SliderParts = ['Root', 'Track'] as const;`);
   writeFileSync(join(dir, 'slider', 'slider-data-attrs.ts'), `export const SliderDataAttrs = {} as const;`);
   writeFileSync(
     join(dir, 'slider', 'slider-component.ts'),
     `import { SliderDataAttrs } from './slider-data-attrs';
-     import { SliderParts } from './slider-parts';
      ${STUB}
-     export default defineComponent<{ orientation?: 'horizontal' | 'vertical' }>()({
+     export default defineComponent()({
        name: 'Slider',
-       parts: SliderParts,
+       parts: {
+         Root: defineComponentPart<{ orientation?: 'horizontal' | 'vertical' }>(),
+         Track: defineComponentPart(),
+       },
        dataAttrs: SliderDataAttrs,
      });`
   );

@@ -1,13 +1,8 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackState } from '../../media/state';
-
-export interface BufferingIndicatorProps {
-  /** Delay in milliseconds before the indicator becomes visible. */
-  delay?: number | undefined;
-}
+import { BUFFERING_INDICATOR_DEFAULT_PROPS, type BufferingIndicatorProps } from './props';
 
 export interface BufferingIndicatorState {
   /** Whether the indicator should be visible. True after the delay elapses while media is waiting and not paused. */
@@ -15,9 +10,7 @@ export interface BufferingIndicatorState {
 }
 
 export class BufferingIndicatorCore {
-  static readonly defaultProps: NonNullableObject<BufferingIndicatorProps> = {
-    delay: 500,
-  };
+  static readonly defaultProps = BUFFERING_INDICATOR_DEFAULT_PROPS;
 
   readonly state = createState<BufferingIndicatorState>({ visible: false });
 
@@ -58,3 +51,5 @@ export namespace BufferingIndicatorCore {
   export type Props = BufferingIndicatorProps;
   export type State = BufferingIndicatorState;
 }
+
+export type { BufferingIndicatorProps } from './props';

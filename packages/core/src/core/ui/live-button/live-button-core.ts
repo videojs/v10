@@ -1,17 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
-import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaLiveState, MediaTimeState } from '../../media/state';
 import type { ButtonState } from '../types';
-
-export interface LiveButtonProps {
-  /** Custom label for the button. */
-  label?: string | ((state: LiveButtonState) => string) | undefined;
-  /** Whether the button is disabled. */
-  disabled?: boolean | undefined;
-}
+import { LIVE_BUTTON_DEFAULT_PROPS, type LiveButtonProps } from './props';
 
 /**
  * Fallback offset (in seconds) from the end of the seekable window used to
@@ -60,10 +53,7 @@ export class LiveButtonCore {
    */
   static defaultText = 'Live';
 
-  static readonly defaultProps: NonNullableObject<LiveButtonProps> = {
-    label: '',
-    disabled: false,
-  };
+  static readonly defaultProps = LIVE_BUTTON_DEFAULT_PROPS;
 
   readonly state = createState<LiveButtonState>({
     live: false,
@@ -149,6 +139,8 @@ export namespace LiveButtonCore {
   export type State = LiveButtonState;
   export type MediaState = LiveButtonMediaState;
 }
+
+export type { LiveButtonProps } from './props';
 
 function isLiveMedia(media: LiveButtonMediaState): boolean {
   // `targetLiveWindow` is `0` for low-latency live, `Infinity` for DVR, and

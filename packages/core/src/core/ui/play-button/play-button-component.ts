@@ -1,6 +1,6 @@
 import { defineComponent } from '../manifest';
-import type { PlayButtonProps } from './play-button-core';
 import { PlayButtonDataAttrs } from './play-button-data-attrs';
+import type { PlayButtonProps } from './props';
 
 export default defineComponent<PlayButtonProps>()({
   name: 'PlayButton',

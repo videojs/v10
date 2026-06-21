@@ -1,27 +1,8 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-import type { PopoverAlign, PopoverSide } from '../popover/popover-core';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
-
-export type { PopoverAlign, PopoverSide };
-
-export interface MenuProps {
-  /** Which side of the trigger the menu appears on. Root menus only. */
-  side?: PopoverSide | undefined;
-  /** Alignment along the trigger's edge. Root menus only. */
-  align?: PopoverAlign | undefined;
-  /** Controlled open state. */
-  open?: boolean | undefined;
-  /** Initial open state (uncontrolled). */
-  defaultOpen?: boolean | undefined;
-  /** Close the menu when Escape is pressed at root level. */
-  closeOnEscape?: boolean | undefined;
-  /** Close the menu when clicking outside. Root menus only. */
-  closeOnOutsideClick?: boolean | undefined;
-  /** True when this menu instance is nested inside a parent menu's content. */
-  isSubmenu?: boolean | undefined;
-}
+import { MENU_DEFAULT_PROPS, type MenuProps, type PopoverAlign, type PopoverSide } from './props';
 
 /** Raw transition state provided by `createTransition`. */
 export interface MenuInput extends TransitionState {}
@@ -37,15 +18,7 @@ export interface MenuState extends TransitionFlags {
 
 /** Base menu logic: ARIA attributes and open/close state computation. */
 export class MenuCore {
-  static readonly defaultProps: NonNullableObject<MenuProps> = {
-    side: 'bottom',
-    align: 'start',
-    open: false,
-    defaultOpen: false,
-    closeOnEscape: true,
-    closeOnOutsideClick: true,
-    isSubmenu: false,
-  };
+  static readonly defaultProps = MENU_DEFAULT_PROPS;
 
   #props = { ...MenuCore.defaultProps };
   #input: MenuInput | null = null;
@@ -104,3 +77,17 @@ export namespace MenuCore {
   export type State = MenuState;
   export type Input = MenuInput;
 }
+
+export type {
+  MenuBackProps,
+  MenuCheckboxItemProps,
+  MenuItemIndicatorProps,
+  MenuItemProps,
+  MenuItemSettingType,
+  MenuProps,
+  MenuRadioGroupProps,
+  MenuRadioItemProps,
+  MenuTriggerProps,
+  PopoverAlign,
+  PopoverSide,
+} from './props';

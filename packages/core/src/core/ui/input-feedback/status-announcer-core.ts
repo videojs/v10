@@ -1,18 +1,13 @@
 import { createState } from '@videojs/store';
 
-import type { IndicatorCoreProps } from './indicator-lifecycle';
+import type { StatusAnnouncerProps } from '../status-announcer/props';
 import { getIndicatorCloseDelay, IndicatorCloseController } from './indicator-lifecycle';
 import {
   DEFAULT_INPUT_INDICATOR_LABELS,
   deriveAnnouncerLabel,
   type InputActionEvent,
-  type InputIndicatorLabels,
   type MediaSnapshot,
 } from './status';
-
-export interface StatusAnnouncerProps extends IndicatorCoreProps {
-  labels?: Partial<InputIndicatorLabels> | undefined;
-}
 
 export interface StatusAnnouncerState {
   label: string | null;
@@ -52,3 +47,5 @@ export namespace StatusAnnouncerCore {
   export type Props = StatusAnnouncerProps;
   export type State = StatusAnnouncerState;
 }
+
+export type { StatusAnnouncerProps } from '../status-announcer/props';

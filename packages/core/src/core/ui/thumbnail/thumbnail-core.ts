@@ -1,22 +1,5 @@
-import type {
-  ThumbnailConstraints,
-  ThumbnailCrossOrigin,
-  ThumbnailFetchPriority,
-  ThumbnailImage,
-  ThumbnailLoading,
-  ThumbnailResizeResult,
-} from './types';
-
-export interface ThumbnailProps {
-  /** Time in seconds to display the thumbnail for. */
-  time?: number | undefined;
-  /** CORS setting forwarded to the inner `<img>`. */
-  crossOrigin?: ThumbnailCrossOrigin | undefined;
-  /** Image loading strategy forwarded to the inner `<img>`. */
-  loading?: ThumbnailLoading | undefined;
-  /** Image fetch priority hint forwarded to the inner `<img>`. */
-  fetchPriority?: ThumbnailFetchPriority | undefined;
-}
+import type { ThumbnailProps } from './props';
+import type { ThumbnailConstraints, ThumbnailImage, ThumbnailResizeResult } from './types';
 
 export interface ThumbnailState {
   /** The thumbnail image is loading. */
@@ -158,3 +141,5 @@ export namespace ThumbnailCore {
   export type Props = ThumbnailProps;
   export type State = ThumbnailState;
 }
+
+export type { ThumbnailProps } from './props';
