@@ -72,5 +72,3 @@ export namespace PopoverCore {
   export type State = PopoverState;
   export type Input = PopoverInput;
 }
-
-export type { PopoverAlign, PopoverProps, PopoverSide } from './props';

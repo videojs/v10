@@ -119,5 +119,3 @@ export namespace TimeCore {
   export type Props = TimeProps;
   export type State = TimeState;
 }
-
-export type { TimeProps, TimeType } from './props';

@@ -12,5 +12,3 @@ export namespace ErrorDialogCore {
   export type Props = ErrorDialogProps;
   export type State = ErrorDialogState;
 }
-
-export type { ErrorDialogProps } from './props';

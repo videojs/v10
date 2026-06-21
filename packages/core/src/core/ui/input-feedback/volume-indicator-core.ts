@@ -134,8 +134,6 @@ export namespace VolumeIndicatorCore {
   export type State = VolumeIndicatorState;
 }
 
-export type { VolumeIndicatorProps } from '../volume-indicator/props';
-
 function getVolumeBoundary(event: InputActionEvent, currentVolume: number, nextVolume: number): 'min' | 'max' | null {
   if (event.action !== 'volumeStep' || event.value === undefined || event.value === 0) return null;
   if (nextVolume !== currentVolume) return null;

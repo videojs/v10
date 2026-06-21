@@ -51,5 +51,3 @@ export namespace BufferingIndicatorCore {
   export type Props = BufferingIndicatorProps;
   export type State = BufferingIndicatorState;
 }
-
-export type { BufferingIndicatorProps } from './props';

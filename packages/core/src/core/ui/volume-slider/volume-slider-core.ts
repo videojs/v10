@@ -72,5 +72,3 @@ export namespace VolumeSliderCore {
   export type Props = VolumeSliderProps;
   export type State = VolumeSliderState;
 }
-
-export type { VolumeSliderProps } from './props';

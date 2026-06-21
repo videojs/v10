@@ -2,9 +2,9 @@
 
 import { describe, it } from 'vitest';
 import { createComponent, Slot } from '../../../jsx-runtime';
-import type { ContainerProps } from '../container/container-core';
-import type { GestureProps } from '../gesture/gesture-core';
-import type { HotkeyProps } from '../hotkey/hotkey-core';
+import type { ContainerProps } from '../container/props';
+import type { GestureProps } from '../gesture/props';
+import type { HotkeyProps } from '../hotkey/props';
 import { defineComponent, defineComponentPart } from '../manifest';
 
 const PlayButton = createComponent(

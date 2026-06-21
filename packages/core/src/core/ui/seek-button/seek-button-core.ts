@@ -80,5 +80,3 @@ export namespace SeekButtonCore {
   export type Props = SeekButtonProps;
   export type State = SeekButtonState;
 }
-
-export type { SeekButtonProps } from './props';

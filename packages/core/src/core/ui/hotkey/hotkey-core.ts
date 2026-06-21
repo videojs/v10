@@ -1,1 +1,1 @@
-export type { HotkeyProps, HotkeyTarget } from './props';
+export {};

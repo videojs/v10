@@ -140,8 +140,6 @@ export namespace LiveButtonCore {
   export type MediaState = LiveButtonMediaState;
 }
 
-export type { LiveButtonProps } from './props';
-
 function isLiveMedia(media: LiveButtonMediaState): boolean {
   // `targetLiveWindow` is `0` for low-latency live, `Infinity` for DVR, and
   // `NaN` for on-demand or unknown — finite-or-infinite means live.

@@ -103,5 +103,3 @@ export namespace PlaybackRateRadioGroupCore {
   export type Props = PlaybackRateRadioGroupProps;
   export type State = PlaybackRateRadioGroupState;
 }
-
-export type { PlaybackRateRadioGroupProps } from './props';

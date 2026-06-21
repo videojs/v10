@@ -2,8 +2,6 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { PopoverAlign, PopoverSide } from '../popover/props';
 
-export type { PopoverAlign, PopoverSide } from '../popover/props';
-
 export interface MenuProps {
   /** Which side of the trigger the menu appears on. Root menus only. */
   side?: PopoverSide | undefined;

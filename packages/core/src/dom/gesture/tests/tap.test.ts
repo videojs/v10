@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import type { GestureMatchResult, GestureType } from '../gesture';
+import type { GestureType } from '../../../core/ui/gesture/props';
+import type { GestureMatchResult } from '../gesture';
 import { TapRecognizer } from '../tap';
 
 const DOUBLETAP_WINDOW = 200;

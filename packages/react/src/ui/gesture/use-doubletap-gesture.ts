@@ -1,6 +1,7 @@
 'use client';
 
-import { createDoubleTapGesture, type GesturePointerType, type GestureRegion } from '@videojs/core/dom';
+import type { GesturePointerType, GestureRegion } from '@videojs/core';
+import { createDoubleTapGesture } from '@videojs/core/dom';
 import type { RefObject } from 'react';
 import { useEffect } from 'react';
 
@@ -27,5 +28,5 @@ export function useDoubleTapGesture(
     if (!container || disabled) return;
 
     return createDoubleTapGesture(container, (event) => onActivateRef.current(event), { pointer, region });
-  }, [container, disabled, pointer, region, onActivateRef]);
+  }, [container, disabled, pointer, region]);
 }

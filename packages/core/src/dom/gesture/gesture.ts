@@ -1,6 +1,4 @@
-import type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/gesture-core';
-
-export type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/gesture-core';
+import type { GesturePointerType, GestureRegion, GestureType } from '../../core/ui/gesture/props';
 
 export interface GestureOptions {
   pointer?: GesturePointerType | undefined;

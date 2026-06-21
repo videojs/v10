@@ -61,5 +61,3 @@ export namespace TooltipCore {
   export type State = TooltipState;
   export type Input = TooltipInput;
 }
-
-export type { TooltipProps } from './props';

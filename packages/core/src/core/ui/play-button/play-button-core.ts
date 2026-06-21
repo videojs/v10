@@ -78,5 +78,3 @@ export namespace PlayButtonCore {
   export type Props = PlayButtonProps;
   export type State = PlayButtonState;
 }
-
-export type { PlayButtonProps } from './props';

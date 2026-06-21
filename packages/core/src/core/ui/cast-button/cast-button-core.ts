@@ -87,5 +87,3 @@ export namespace CastButtonCore {
   export type Props = CastButtonProps;
   export type State = CastButtonState;
 }
-
-export type { CastButtonProps } from './props';

@@ -43,5 +43,3 @@ export class TooltipGroupCore {
 export namespace TooltipGroupCore {
   export type Props = TooltipGroupProps;
 }
-
-export type { TooltipGroupProps } from './props';

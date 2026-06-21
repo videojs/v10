@@ -141,5 +141,3 @@ export namespace ThumbnailCore {
   export type Props = ThumbnailProps;
   export type State = ThumbnailState;
 }
-
-export type { ThumbnailProps } from './props';

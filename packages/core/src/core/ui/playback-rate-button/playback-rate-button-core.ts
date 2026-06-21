@@ -82,5 +82,3 @@ export namespace PlaybackRateButtonCore {
   export type Props = PlaybackRateButtonProps;
   export type State = PlaybackRateButtonState;
 }
-
-export type { PlaybackRateButtonProps } from './props';

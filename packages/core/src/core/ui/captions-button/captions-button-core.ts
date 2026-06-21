@@ -82,5 +82,3 @@ export namespace CaptionsButtonCore {
   export type Props = CaptionsButtonProps;
   export type State = CaptionsButtonState;
 }
-
-export type { CaptionsButtonProps } from './props';

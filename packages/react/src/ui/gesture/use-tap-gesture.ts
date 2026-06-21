@@ -1,6 +1,7 @@
 'use client';
 
-import { createTapGesture, type GesturePointerType, type GestureRegion } from '@videojs/core/dom';
+import type { GesturePointerType, GestureRegion } from '@videojs/core';
+import { createTapGesture } from '@videojs/core/dom';
 import type { RefObject } from 'react';
 import { useEffect } from 'react';
 
@@ -24,5 +25,5 @@ export function useTapGesture(onActivate: (event: PointerEvent) => void, options
     if (!container || disabled) return;
 
     return createTapGesture(container, (event) => onActivateRef.current(event), { pointer, region });
-  }, [container, disabled, pointer, region, onActivateRef]);
+  }, [container, disabled, pointer, region]);
 }

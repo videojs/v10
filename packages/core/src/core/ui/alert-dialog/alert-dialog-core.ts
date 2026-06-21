@@ -63,5 +63,3 @@ export namespace AlertDialogCore {
   export type State = AlertDialogState;
   export type Input = AlertDialogInput;
 }
-
-export type { AlertDialogProps } from './props';

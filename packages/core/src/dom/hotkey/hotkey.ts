@@ -1,6 +1,6 @@
 import { isMacOS } from '@videojs/utils/dom';
 
-import type { HotkeyTarget } from '../../core/ui/hotkey/hotkey-core';
+import type { HotkeyTarget } from '../../core/ui/hotkey/props';
 import { HotkeyCoordinator } from './coordinator';
 
 export type HotkeyModifierKey = 'shift' | 'ctrl' | 'alt' | 'meta';

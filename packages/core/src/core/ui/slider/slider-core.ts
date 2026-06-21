@@ -168,5 +168,3 @@ export namespace SliderCore {
   export type State = SliderState;
   export type Input = SliderInput;
 }
-
-export type { SliderProps, SliderValueProps } from './props';

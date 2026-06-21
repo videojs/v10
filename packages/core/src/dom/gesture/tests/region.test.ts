@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import type { GestureRegion } from '../gesture';
+import type { GestureRegion } from '../../../core/ui/gesture/props';
 import { resolveRegion } from '../region';
 
 describe('resolveRegion', () => {

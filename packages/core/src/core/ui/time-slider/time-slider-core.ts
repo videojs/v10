@@ -78,5 +78,3 @@ export namespace TimeSliderCore {
   export type Props = TimeSliderProps;
   export type State = TimeSliderState;
 }
-
-export type { TimeSliderProps } from './props';

@@ -129,5 +129,3 @@ export namespace CaptionsRadioGroupCore {
   export type Props = CaptionsRadioGroupProps;
   export type State = CaptionsRadioGroupState;
 }
-
-export type { CaptionsRadioGroupProps } from './props';

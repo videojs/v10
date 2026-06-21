@@ -1,4 +1,4 @@
-import type { GestureRegion } from './gesture';
+import type { GestureRegion } from '../../core/ui/gesture/props';
 
 /**
  * Determine which named region a pointer position falls into.

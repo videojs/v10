@@ -208,5 +208,3 @@ export namespace QualityRadioGroupCore {
   export type Props = QualityRadioGroupProps;
   export type State = QualityRadioGroupState;
 }
-
-export type { QualityRadioGroupProps } from './props';

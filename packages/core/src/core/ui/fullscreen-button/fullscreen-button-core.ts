@@ -83,5 +83,3 @@ export namespace FullscreenButtonCore {
   export type Props = FullscreenButtonProps;
   export type State = FullscreenButtonState;
 }
-
-export type { FullscreenButtonProps } from './props';

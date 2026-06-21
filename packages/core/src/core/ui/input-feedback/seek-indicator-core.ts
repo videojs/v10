@@ -109,5 +109,3 @@ export namespace SeekIndicatorCore {
   export type Props = SeekIndicatorProps;
   export type State = SeekIndicatorState;
 }
-
-export type { SeekIndicatorProps } from '../seek-indicator/props';

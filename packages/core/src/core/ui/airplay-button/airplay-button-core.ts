@@ -91,5 +91,3 @@ export namespace AirPlayButtonCore {
   export type Props = AirPlayButtonProps;
   export type State = AirPlayButtonState;
 }
-
-export type { AirPlayButtonProps } from './props';

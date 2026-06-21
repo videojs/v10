@@ -1,1 +1,1 @@
-export type { ContainerProps } from './props';
+export {};

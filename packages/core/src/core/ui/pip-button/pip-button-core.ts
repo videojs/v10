@@ -83,5 +83,3 @@ export namespace PiPButtonCore {
   export type Props = PiPButtonProps;
   export type State = PiPButtonState;
 }
-
-export type { PiPButtonProps } from './props';

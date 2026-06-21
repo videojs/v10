@@ -1,13 +1,7 @@
 import { isInteractiveTarget, listen } from '@videojs/utils/dom';
 
-import type {
-  GestureActivateEvent,
-  GestureBinding,
-  GestureMatchResult,
-  GestureRecognizer,
-  GestureRegion,
-  GestureType,
-} from './gesture';
+import type { GestureRegion, GestureType } from '../../core/ui/gesture/props';
+import type { GestureActivateEvent, GestureBinding, GestureMatchResult, GestureRecognizer } from './gesture';
 import { resolveRegion } from './region';
 
 const TAP_THRESHOLD = 250;

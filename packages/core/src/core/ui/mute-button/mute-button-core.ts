@@ -82,8 +82,6 @@ export namespace MuteButtonCore {
   export type State = MuteButtonState;
 }
 
-export type { MuteButtonProps } from './props';
-
 function getVolumeLevel(media: MediaVolumeState): VolumeLevel {
   if (media.muted || media.volume === 0) return 'off';
   if (media.volume < 0.5) return 'low';

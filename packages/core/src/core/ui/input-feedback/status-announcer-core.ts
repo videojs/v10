@@ -47,5 +47,3 @@ export namespace StatusAnnouncerCore {
   export type Props = StatusAnnouncerProps;
   export type State = StatusAnnouncerState;
 }
-
-export type { StatusAnnouncerProps } from '../status-announcer/props';

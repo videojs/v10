@@ -1,8 +1,9 @@
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+import type { PopoverAlign, PopoverSide } from '../popover/props';
 import type { TransitionFlags, TransitionState, TransitionStatus } from '../transition';
 import { getTransitionFlags } from '../transition';
-import { MENU_DEFAULT_PROPS, type MenuProps, type PopoverAlign, type PopoverSide } from './props';
+import { MENU_DEFAULT_PROPS, type MenuProps } from './props';
 
 /** Raw transition state provided by `createTransition`. */
 export interface MenuInput extends TransitionState {}
@@ -77,17 +78,3 @@ export namespace MenuCore {
   export type State = MenuState;
   export type Input = MenuInput;
 }
-
-export type {
-  MenuBackProps,
-  MenuCheckboxItemProps,
-  MenuItemIndicatorProps,
-  MenuItemProps,
-  MenuItemSettingType,
-  MenuProps,
-  MenuRadioGroupProps,
-  MenuRadioItemProps,
-  MenuTriggerProps,
-  PopoverAlign,
-  PopoverSide,
-} from './props';

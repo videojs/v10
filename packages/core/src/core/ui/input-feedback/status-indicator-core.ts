@@ -77,5 +77,3 @@ export namespace StatusIndicatorCore {
   export type Props = StatusIndicatorProps;
   export type State = StatusIndicatorState;
 }
-
-export type { StatusIndicatorProps } from '../status-indicator/props';
