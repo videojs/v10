@@ -4,11 +4,8 @@ import type { Media } from '@videojs/core';
 import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
-import type { Dispatch, HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent, SetStateAction } from 'react';
-import { createContext, forwardRef, useContext, useEffect, useRef } from 'react';
-
-import { I18nProvider } from '../i18n';
-import { useComposedRefs } from '../utils/use-composed-refs';
+import type { Dispatch, ReactNode, SetStateAction } from 'react';
+import { createContext, useContext } from 'react';
 
 export interface PlayerContextValue {
   store: UnknownStore;
@@ -120,44 +117,4 @@ export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undef
 export function useContainerAttach(): Dispatch<SetStateAction<HTMLElement | null>> | undefined {
   const ctx = useContext(PlayerContext);
   return ctx?.setContainer;
-}
-
-export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
-  children?: ReactNode;
-}
-
-export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Container(
-  { children, tabIndex = 0, ...props },
-  ref
-) {
-  const setContainer = useContainerAttach();
-  const internalRef = useRef<HTMLDivElement>(null);
-  const composedRef = useComposedRefs(ref, internalRef);
-
-  useEffect(() => {
-    setContainer?.(internalRef.current);
-    return () => setContainer?.(null);
-  }, [setContainer]);
-
-  const handlePointerUp = (event: ReactPointerEvent<HTMLDivElement>) => {
-    props.onPointerUp?.(event);
-    const el = internalRef.current;
-    if (!el) return;
-    // If nothing inside has focus, grab it so keyboard events reach hotkey listeners.
-    if (!el.contains(document.activeElement) || document.activeElement === document.body) {
-      el.focus({ preventScroll: true });
-    }
-  };
-
-  return (
-    <I18nProvider langRootRef={internalRef}>
-      <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
-        {children}
-      </div>
-    </I18nProvider>
-  );
-});
-
-export namespace Container {
-  export type Props = ContainerProps;
 }

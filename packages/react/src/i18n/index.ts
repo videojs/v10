@@ -25,7 +25,5 @@ export type {
 } from './create-i18n';
 
 export { createI18n } from './create-i18n';
-
-import { createI18n as createDefaultI18n } from './create-i18n';
-
-export const { I18nContext, I18nProvider, useLocale, useTranslator } = createDefaultI18n();
+export { I18nContext, useLocale, useTranslator } from './instance';
+export { I18nProvider } from './provider-instance';

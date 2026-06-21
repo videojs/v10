@@ -50,7 +50,8 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
-import { Container, usePlayer } from '@/player/context';
+import { Container } from '@/player/container';
+import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';

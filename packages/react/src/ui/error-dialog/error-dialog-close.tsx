@@ -4,7 +4,7 @@ import type { AlertDialogCore } from '@videojs/core';
 import { getErrorDialogDismissLabel } from '@videojs/core';
 import { resolveTranslationPhrase } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useCallback } from 'react';
-import { useTranslator } from '../../i18n';
+import { useTranslator } from '../../i18n/instance';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useAlertDialogContext } from '../alert-dialog/context';
