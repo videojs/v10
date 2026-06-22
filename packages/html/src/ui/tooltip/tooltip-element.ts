@@ -24,7 +24,7 @@ import {
   type TooltipChangeDetails,
   type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';

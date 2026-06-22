@@ -16,7 +16,7 @@ import {
   createTransition,
   selectError,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';

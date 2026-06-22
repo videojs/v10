@@ -1,6 +1,6 @@
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 
