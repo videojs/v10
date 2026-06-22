@@ -110,8 +110,9 @@ function getTemplateHTML() {
               </media-volume-slider>
             </media-popover>
 
-            <button commandfor="settings-menu" data-i18n-aria-label="menuSettings" class="media-button media-button--subtle media-button--icon media-button--settings">
+            <button commandfor="settings-menu" aria-labelledby="settings-label" class="media-button media-button--subtle media-button--icon media-button--settings">
               ${renderIcon('gear', { class: 'media-icon media-icon--settings' })}
+              <media-text id="settings-label" key="menuSettings" class="media-sr-only"></media-text>
             </button>
             <media-menu id="settings-menu" side="top" align="center" class="media-surface media-popover media-menu media-menu--settings">
               <media-menu-view class="media-menu__panel">
