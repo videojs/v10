@@ -229,16 +229,17 @@ async function render() {
   const live = canPlayLive(preset) && isLiveSource(state.source);
 
   const loaded = await loadLatest(async () => {
-    // Load player first, then locale pack (matches apps/e2e/apps/vite cdn-i18n-es).
     await loadCdnPreset(preset, state.skin, live);
     await loadCdnMedia(preset);
-    await ensureCdnSandboxLocale(locale);
     return true;
   });
 
   if (!loaded) {
     return;
   }
+
+  // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
+  await ensureCdnSandboxLocale(locale);
 
   loadStylesheets(preset, state.skin);
 

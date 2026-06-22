@@ -43,22 +43,21 @@ function App() {
           styling={styling}
           live={live}
           className="aspect-video max-w-4xl mx-auto"
-      	>
-          <HlsJsVideo
-          src={SOURCES[source].url}
-          autoPlay={autoplay}
-          muted={muted}
-          loop={loop}
-          preload={preload}
-          playsInline
-          crossOrigin="anonymous"
         >
+          <HlsJsVideo
+            src={SOURCES[source].url}
+            autoPlay={autoplay}
+            muted={muted}
+            loop={loop}
+            preload={preload}
+            playsInline
+            crossOrigin="anonymous"
+          >
             <Storyboard src={storyboard} />
-          </HlsVideo>
-        </HlsJsVideo>
-      </VideoSkinComponent>
-    </Provider>
-	</SandboxI18nProvider>
+          </HlsJsVideo>
+        </VideoSkinComponent>
+      </Provider>
+    </SandboxI18nProvider>
   );
 }
 
