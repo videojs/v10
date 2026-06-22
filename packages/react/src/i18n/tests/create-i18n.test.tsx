@@ -594,6 +594,41 @@ describe('createI18n', () => {
     });
   });
 
+  it('resolves ambient locale for a callback-only provider', async () => {
+    const onActiveLocaleChange = vi.fn();
+    registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    const { I18nProvider, useLocale, useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      return (
+        <span>
+          {useLocale()}:{useTranslator()('play')}
+        </span>
+      );
+    }
+
+    render(
+      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('de:Los')).not.toBeNull();
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('de');
+    });
+
+    document.documentElement.setAttribute('lang', 'fr');
+
+    await waitFor(() => {
+      expect(screen.queryByText('fr:Lire')).not.toBeNull();
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('fr');
+    });
+  });
+
   it('useTranslator falls back to English outside a provider', () => {
     const { useTranslator } = createI18n();
 
