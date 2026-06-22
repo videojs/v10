@@ -1,9 +1,9 @@
 'use client';
 
-import type { HTMLAttributes, PointerEvent as ReactPointerEvent, ReactNode } from 'react';
+import type { HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent } from 'react';
 import { forwardRef, useEffect, useRef } from 'react';
 
-import { I18nProvider } from '../i18n/provider-instance';
+import { I18nProvider } from '../i18n/provider';
 import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach } from './context';
 
