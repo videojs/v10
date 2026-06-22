@@ -52,7 +52,7 @@ export default {
   menuSettings: 'Parametrlər',
   menuQuality: 'Keyfiyyət',
   menuSpeed: 'Sürət',
-  menuCaptions: 'Altyazılar',
+  menuCaptions: 'Başlıqlar',
   menuPlaybackRate: 'Oynatma sürəti',
   menuBack: 'Geri',
   menuOff: 'Söndür',

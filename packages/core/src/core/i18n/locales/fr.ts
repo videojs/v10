@@ -53,7 +53,7 @@ export default {
   menuSettings: 'Paramètres',
   menuQuality: 'Qualité',
   menuSpeed: 'Vitesse',
-  menuCaptions: 'Sous-titres',
+  menuCaptions: 'Sous-titres transcrits',
   menuPlaybackRate: 'Vitesse de lecture',
   menuBack: 'Retour',
   menuOff: 'Désactivé',
