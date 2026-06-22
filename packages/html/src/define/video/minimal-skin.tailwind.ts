@@ -138,8 +138,9 @@ function getTemplateHTML() {
               </media-volume-slider>
             </media-popover>
 
-            <button commandfor="settings-menu" data-i18n-aria-label="menuSettings" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger, 'media-button--settings')}">
+            <button commandfor="settings-menu" aria-labelledby="settings-label" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger, 'media-button--settings')}">
               ${renderIcon('gear', { class: cn(icon, menu.settingsIcon) })}
+              <media-text id="settings-label" key="menuSettings" class="media-sr-only"></media-text>
             </button>
             <media-menu id="settings-menu" side="top" align="center" class="${menu.settings}">
               <media-menu-view class="${menu.rootView}">
