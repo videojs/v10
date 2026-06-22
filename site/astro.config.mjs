@@ -2,6 +2,7 @@
 
 import process from 'node:process';
 
+import { unified } from '@astrojs/markdown-remark';
 import mdx from '@astrojs/mdx';
 import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
@@ -53,6 +54,11 @@ const SITE_URL =
 export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
+  // Astro 7's default flipped from `true` to `'jsx'`, which strips whitespace
+  // between inline elements (JSX rules). Pin to the previous behavior so this
+  // upgrade holds rendered output constant; the `'jsx'` migration is tracked
+  // separately (issue #1720).
+  compressHTML: true,
   adapter: netlify({
     devFeatures: { images: false, environmentVariables: false },
   }),
@@ -118,9 +124,6 @@ export default defineConfig({
   },
 
   markdown: {
-    // a lot of these are defaults but I'm setting them just to be explicit
-    smartypants: true,
-    gfm: true,
     syntaxHighlight: 'shiki',
     shikiConfig: {
       themes: {
@@ -148,8 +151,14 @@ export default defineConfig({
       ],
       transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
     },
-    remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
-    rehypePlugins: [rehypePrepareCodeBlocks],
+    // Astro 7 makes Sätteri the default Markdown processor, which does not run
+    // remark/rehype plugins. Stay on the unified() pipeline so our plugins keep
+    // working unchanged. unified() applies GFM + SmartyPants by default (which
+    // is why the previous explicit `gfm`/`smartypants` flags were dropped).
+    processor: unified({
+      remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
+      rehypePlugins: [rehypePrepareCodeBlocks],
+    }),
   },
 
   image: {

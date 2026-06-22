@@ -581,8 +581,8 @@ vi.mock('@/types/docs', async () => {
 
 ## Technology Stack
 
-- **[Astro 6.3.1](https://astro.build)**: Static site generation with island architecture
-- **[Vite 7](https://vite.dev)**: Underlying dev server and bundler (Astro 6 adopts Vite's Environment API — see "Dependency Optimization" gotcha below)
+- **[Astro 7](https://astro.build)**: Static site generation with island architecture (Rust compiler; Markdown stays on the `unified()` remark/rehype processor — see "MDX Processing Plugins" below)
+- **[Vite 8](https://vite.dev)**: Underlying dev server and bundler, via Rolldown (see "Dependency Optimization" gotcha below)
 - **[React 19](https://react.dev)**: Client-side interactive components (`client:load`)
 - **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 19
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
@@ -597,7 +597,8 @@ vi.mock('@/types/docs', async () => {
 
 `astro.config.mjs` sets `vite.optimizeDeps` (e.g. `exclude` for the workspace
 `@videojs/*` packages and the native `@resvg/resvg-js` binding). Since the
-Astro 6 / Vite 7 upgrade, this root-level `optimizeDeps` **shadows** the
+Astro 6 / Vite 7 upgrade (and still under Astro 7 / Vite 8), this root-level
+`optimizeDeps` **shadows** the
 per-environment `optimizeDeps.include` that renderer integrations
 (`@astrojs/react`) inject via Vite's Environment API — so React's CJS deps stop
 being pre-bundled in **dev only**. The symptom is every React island failing to
@@ -695,7 +696,15 @@ OAuth and Mux integration exist to support the **video uploader** on the install
 
 ## MDX Processing Plugins
 
-Four plugins transform MDX content during build. Registered in `astro.config.mjs`:
+Four plugins transform MDX content during build. Registered in `astro.config.mjs`.
+
+> **Markdown processor:** Astro 7 makes Sätteri the default Markdown pipeline,
+> which does **not** run remark/rehype plugins. The site stays on the unified
+> pipeline by passing the plugins to `markdown.processor: unified({ remarkPlugins,
+> rehypePlugins })` (from `@astrojs/markdown-remark`), rather than the deprecated
+> top-level `markdown.remarkPlugins`/`rehypePlugins` options. `syntaxHighlight`
+> and `shikiConfig` remain top-level `markdown` options. Porting these plugins to
+> Sätteri MDAST/HAST for build speed is tracked separately (issue #1719).
 
 **`remarkConditionalHeadings`** (`src/utils/remarkConditionalHeadings.js`)
 Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ComponentReference>` and `<UtilReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
