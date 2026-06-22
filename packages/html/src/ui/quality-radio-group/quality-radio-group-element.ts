@@ -1,6 +1,6 @@
 import { QUALITY_AUTO_VALUE, QualityRadioGroupCore, QualityRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectQuality } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { I18nController } from '../../i18n/instance';
@@ -28,6 +28,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
   readonly #mediaState = new PlayerController(this, playerContext, selectQuality);
 
   #renditionsKey = '';
+  #renditionsTranslator: Translator | null = null;
   #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
@@ -71,6 +72,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
   #syncContent(state: QualityRadioGroupCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
+    const translator = this.#i18n.value;
     const renditionsKey = `${state.renditions
       .map(
         (rendition) =>
@@ -80,8 +82,9 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
         '|'
       )}::${state.autoLabel}:${state.autoLabelKey ?? ''}:${state.autoLabelParams?.label ?? ''}::${this.#i18n.locale}::${templateKey}`;
 
-    if (renditionsKey !== this.#renditionsKey) {
+    if (renditionsKey !== this.#renditionsKey || translator !== this.#renditionsTranslator) {
       this.#renditionsKey = renditionsKey;
+      this.#renditionsTranslator = translator;
 
       for (const child of [...this.children]) {
         if (child instanceof HTMLTemplateElement) continue;
@@ -91,7 +94,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       this.append(
         this.#createItem(
           QUALITY_AUTO_VALUE,
-          resolveTranslationPhrase(this.#i18n.value, state.autoLabelKey ?? state.autoLabel, state.autoLabelParams),
+          resolveTranslationPhrase(translator, state.autoLabelKey ?? state.autoLabel, state.autoLabelParams),
           undefined,
           undefined,
           template
@@ -101,7 +104,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
         ...state.renditions.map((rendition) =>
           this.#createItem(
             rendition.value,
-            resolveTranslationPhrase(this.#i18n.value, rendition.labelKey ?? rendition.label),
+            resolveTranslationPhrase(translator, rendition.labelKey ?? rendition.label),
             rendition.tier,
             rendition.badge,
             template
