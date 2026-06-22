@@ -60,10 +60,10 @@ describe('anchorTrackToSequenceOrigin', () => {
     expect(anchored.segments[0]?.startTime).toBe(40);
   });
 
-  it('honors a configured startSequence (no shift when it equals the window start)', () => {
+  it('honors a configured presumedStartSequence (no shift when it equals the window start)', () => {
     const track = makeTrack(85, [{ startTime: 0, duration: 4, pdt: 1000 }]);
-    // startSequence = 85 → originOffset 0 → already at origin → unchanged identity.
-    expect(anchorTrackToSequenceOrigin(track, { startSequence: 85 })).toBe(track);
+    // presumedStartSequence = 85 → originOffset 0 → already at origin → unchanged identity.
+    expect(anchorTrackToSequenceOrigin(track, { presumedStartSequence: 85 })).toBe(track);
   });
 
   it('preserves present segments’ actual spacing (only the origin offset is estimated)', () => {

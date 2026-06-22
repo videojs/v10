@@ -41,7 +41,7 @@ export interface AnchorLiveTracksConfig {
    * Sequence number assumed to be the stream origin (time 0). Default 0 —
    * see `anchorTrackToSequenceOrigin`.
    */
-  startSequence?: number;
+  presumedStartSequence?: number;
 }
 
 function anchorLiveTracksSetup({
@@ -55,7 +55,7 @@ function anchorLiveTracksSetup({
   };
   config?: AnchorLiveTracksConfig;
 }): () => void {
-  const { startSequence = 0 } = config;
+  const { presumedStartSequence = 0 } = config;
 
   return effect(() => {
     const presentation = state.presentation.get();
@@ -72,7 +72,7 @@ function anchorLiveTracksSetup({
     const anchored: ResolvedTrack[] = [];
     for (const track of selected) {
       if (!track || !isResolvedTrack(track) || isUndefined(track.startDate)) continue;
-      const next = anchorTrackToSequenceOrigin(track, { startSequence });
+      const next = anchorTrackToSequenceOrigin(track, { presumedStartSequence });
       // Identity-equal when already anchored (shift 0) → nothing to patch.
       if (next !== track) anchored.push(next);
     }

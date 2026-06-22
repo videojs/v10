@@ -189,7 +189,7 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * timeline anchor (`anchorLiveTracks`). Default 0. Only meaningful for live
    * sources; ignored for VoD (the anchor is a no-op without `#EXT-X-PROGRAM-DATE-TIME`).
    */
-  startSequence?: number;
+  presumedStartSequence?: number;
   /**
    * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`:
    * returns a promise that resolves when the playlist should reload, or `null` to

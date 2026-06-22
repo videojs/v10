@@ -7,12 +7,12 @@ export interface AnchorToSequenceOriginOptions {
    * — the spec default when `EXT-X-MEDIA-SEQUENCE` is absent, and the common
    * encoder convention. Override when the true origin sequence is known.
    */
-  startSequence?: number;
+  presumedStartSequence?: number;
 }
 
 /**
  * Re-origin a track's timeline to an estimated stream start (the segment at
- * `startSequence`, default 0), so `startTime` reads as elapsed-since-stream-start
+ * `presumedStartSequence`, default 0), so `startTime` reads as elapsed-since-stream-start
  * and `startDate` becomes the wall clock at that origin — the stream-absolute
  * convention, from the manifest alone.
  *
@@ -20,11 +20,11 @@ export interface AnchorToSequenceOriginOptions {
  * is estimated from the observed segments' **average duration** — more reliable
  * than `EXT-X-TARGETDURATION` (a spec ceiling that systematically
  * over-estimates). The origin offset of the first PDT-bearing segment is
- * `(its sequence − startSequence) × averageDuration`; present segments keep
+ * `(its sequence − presumedStartSequence) × averageDuration`; present segments keep
  * their actual relative spacing, only the offset to the unseen origin is
  * estimated.
  *
- * ROUGH and provisional: assumes `startSequence` is the true origin (often but
+ * ROUGH and provisional: assumes `presumedStartSequence` is the true origin (often but
  * not always correct — configurable), roughly uniform durations, and no
  * discontinuities in the unseen past; error grows with the sequence gap.
  * Refined later from the buffer (`buffered`/`tfdt`), which is authoritative.
@@ -38,7 +38,7 @@ export interface AnchorToSequenceOriginOptions {
  */
 export function anchorTrackToSequenceOrigin<Tracks extends Track>(
   track: Tracks,
-  { startSequence = 0 }: AnchorToSequenceOriginOptions = {}
+  { presumedStartSequence = 0 }: AnchorToSequenceOriginOptions = {}
 ): Tracks {
   const { segments } = track;
   const anchorIndex = segments.findIndex((segment) => !isUndefined(segment.startDate));
@@ -50,7 +50,7 @@ export function anchorTrackToSequenceOrigin<Tracks extends Track>(
   const mediaSequence = getMediaPlaylistMetadata(track)?.mediaSequence ?? 0;
   const anchorSequence = mediaSequence + anchorIndex;
   const averageDuration = segments.reduce((sum, segment) => sum + segment.duration, 0) / segments.length;
-  const originOffset = (anchorSequence - startSequence) * averageDuration;
+  const originOffset = (anchorSequence - presumedStartSequence) * averageDuration;
   const shift = originOffset - anchor.startTime;
   if (shift === 0) {
     return track;
