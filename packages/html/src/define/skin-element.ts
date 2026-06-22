@@ -7,7 +7,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
-import { I18nController } from '../i18n/instance';
+import type { I18nContextValue } from '../i18n/base';
 import { I18nProviderMixin } from '../i18n/provider';
 import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
@@ -21,7 +21,7 @@ const sharedSheet = createShadowStyle(sharedStyles);
  * via `adoptedStyleSheets` (or `<style>` fallback).
  */
 export class SkinElement extends I18nProviderMixin(ReactiveElement) {
-  readonly #i18n = new I18nController(this);
+  protected declare readonly i18nValue: I18nContextValue;
 
   static get observedAttributes(): string[] {
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super
@@ -69,7 +69,7 @@ export class SkinElement extends I18nProviderMixin(ReactiveElement) {
 
     for (const el of this.shadowRoot?.querySelectorAll<HTMLElement>('[data-i18n-aria-label]') ?? []) {
       const key = el.dataset.i18nAriaLabel;
-      if (key) el.setAttribute('aria-label', resolveTranslationPhrase(this.#i18n.value, key));
+      if (key) el.setAttribute('aria-label', resolveTranslationPhrase(this.i18nValue.translator, key));
     }
   }
 }

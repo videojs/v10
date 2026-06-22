@@ -18,6 +18,7 @@ import type { Constructor } from '@videojs/utils/types';
 import {
   createI18nBase,
   type I18nBase,
+  type I18nContextValue,
   type I18nControllerConstructor,
   type I18nLitContext,
   type I18nTextMixin,
@@ -71,6 +72,14 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
       #resolvedLocaleForLazy: Locale | undefined;
       /** Locale snapshot when the current `#lazySeq` async load was started (see `willUpdate` drift guard). */
       #lazyResetStartedForLocale: Locale | undefined;
+      #i18nValue: I18nContextValue = {
+        translator: base.fallbackTranslator,
+        locale: 'en',
+      };
+
+      protected get i18nValue(): I18nContextValue {
+        return this.#i18nValue;
+      }
 
       override connectedCallback(): void {
         super.connectedCallback();
@@ -143,7 +152,8 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
           ...this.#lazyLayer,
         };
         const translator = createTranslator(translations, locale);
-        this.#i18nProvider.setValue({ translator, locale });
+        this.#i18nValue = { translator, locale };
+        this.#i18nProvider.setValue(this.#i18nValue);
       }
     }
     return I18nProviderElement;
