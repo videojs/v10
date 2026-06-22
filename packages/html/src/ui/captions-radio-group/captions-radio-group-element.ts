@@ -1,6 +1,6 @@
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { I18nController } from '../../i18n/instance';
@@ -27,6 +27,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   readonly #mediaState = new PlayerController(this, playerContext, selectTextTrack);
 
   #tracksKey = '';
+  #tracksTranslator: Translator | null = null;
   #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
@@ -70,26 +71,22 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   #syncContent(state: CaptionsRadioGroupCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
+    const translator = this.#i18n.value;
     const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}:${track.labelKey ?? ''}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
-    if (tracksKey !== this.#tracksKey) {
+    if (tracksKey !== this.#tracksKey || translator !== this.#tracksTranslator) {
       this.#tracksKey = tracksKey;
+      this.#tracksTranslator = translator;
 
       for (const child of [...this.children]) {
         if (child instanceof HTMLTemplateElement) continue;
         child.remove();
       }
 
-      this.append(
-        this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslationPhrase(this.#i18n.value, 'menuOff'), template)
-      );
+      this.append(this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslationPhrase(translator, 'menuOff'), template));
       this.append(
         ...state.tracks.map((track) =>
-          this.#createItem(
-            track.value,
-            resolveTranslationPhrase(this.#i18n.value, track.labelKey ?? track.label),
-            template
-          )
+          this.#createItem(track.value, resolveTranslationPhrase(translator, track.labelKey ?? track.label), template)
         )
       );
     }
