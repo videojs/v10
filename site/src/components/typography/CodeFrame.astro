@@ -1,0 +1,37 @@
+---
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+
+type Props = {
+  framed?: boolean;
+  label?: string;
+};
+
+const { framed = true, label = 'code' } = Astro.props;
+
+const value = 'code';
+---
+
+{
+  /* Optional tabbed chrome around a code block. Kept separate from Pre so Pre's
+     template stays a single root element — a templated ternary makes prettier
+     re-expand the inner <pre>'s <slot /> onto its own line, and the Astro 7
+     compiler then leaks that whitespace into the rendered code. Whitespace
+     prettier adds around the slots here lands around the <pre> in block context,
+     so it stays invisible. */
+}
+{
+  framed ? (
+    <TabsRoot client:idle>
+      <TabsList client:idle label={`${label} code`}>
+        <Tab client:idle value={value} initial>
+          {label}
+        </Tab>
+      </TabsList>
+      <TabsPanel client:idle value={value} initial>
+        <slot />
+      </TabsPanel>
+    </TabsRoot>
+  ) : (
+    <slot />
+  )
+}
