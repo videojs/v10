@@ -2,8 +2,10 @@
 
 import { QUALITY_AUTO_VALUE, QualityRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectQuality } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import { useCallback, useState } from 'react';
 
+import { useTranslator } from '../../i18n/instance';
 import { usePlayer } from '../../player/context';
 
 export interface QualityOptionsProps extends QualityRadioGroupCore.Props {}
@@ -28,6 +30,7 @@ export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsRe
   'use no memo';
 
   const media = usePlayer(selectQuality);
+  const t = useTranslator();
   const [core] = useState(() => new QualityRadioGroupCore());
 
   core.setProps(props ?? {});
@@ -46,10 +49,14 @@ export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsRe
     state,
     value: state.value,
     options: [
-      { value: QUALITY_AUTO_VALUE, label: state.autoLabel, disabled: state.disabled },
+      {
+        value: QUALITY_AUTO_VALUE,
+        label: resolveTranslationPhrase(t, state.autoLabel, state.autoLabelParams),
+        disabled: state.disabled,
+      },
       ...state.renditions.map((rendition) => ({
         value: rendition.value,
-        label: rendition.label,
+        label: resolveTranslationPhrase(t, rendition.label),
         ...(rendition.tier && { tier: rendition.tier }),
         ...(rendition.badge && { badge: rendition.badge }),
         disabled: state.disabled,
