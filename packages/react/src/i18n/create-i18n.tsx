@@ -103,6 +103,40 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
   const loadLocale = options?.loadLocale ?? defaultLoadLocale;
   const { I18nContext } = base;
 
+  function I18nCallbackProvider({
+    parent,
+    onActiveLocaleChange,
+    children,
+  }: {
+    parent: I18nContextValue | null;
+    onActiveLocaleChange: NonNullable<I18nProviderProps['onActiveLocaleChange']>;
+    children: ReactNode;
+  }): ReactNode {
+    const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
+    useEffect(() => {
+      return onI18nRegistryChange(() => invalidateRegistry());
+    }, []);
+
+    const fallback = useMemo<I18nContextValue>(() => {
+      void registryEpoch;
+      return {
+        translator: createTranslator(getI18nTranslations('en'), 'en'),
+        locale: 'en',
+        localeFromProp: false,
+      };
+    }, [registryEpoch]);
+
+    const value = useMemo<I18nContextValue>(
+      () => ({
+        ...(parent ?? fallback),
+        onActiveLocaleChange,
+      }),
+      [parent, fallback, onActiveLocaleChange]
+    );
+
+    return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+  }
+
   function I18nProviderRoot({
     locale: localeProp,
     langRootRef,
@@ -211,8 +245,9 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
         locale: resolvedLocale,
         localeFromProp,
         ...(translationsProp !== undefined ? { translations: translationsProp } : {}),
+        ...(onActiveLocaleChange !== undefined ? { onActiveLocaleChange } : {}),
       }),
-      [translator, resolvedLocale, localeFromProp, translationsProp]
+      [translator, resolvedLocale, localeFromProp, translationsProp, onActiveLocaleChange]
     );
 
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -220,6 +255,17 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
 
   function I18nProvider(props: I18nProviderProps): ReactNode {
     const parent = useContext(I18nContext);
+    const callback = props.onActiveLocaleChange;
+    const hasLocaleOverrides = props.locale !== undefined || props.translations !== undefined;
+    const callbackOnly = callback !== undefined && !hasLocaleOverrides && props.langRootRef === undefined;
+    if (callbackOnly) {
+      return (
+        <I18nCallbackProvider parent={parent} onActiveLocaleChange={callback}>
+          {props.children}
+        </I18nCallbackProvider>
+      );
+    }
+
     const hasOverrides =
       props.locale !== undefined || props.translations !== undefined || props.onActiveLocaleChange !== undefined;
     const langRootOnly = props.langRootRef !== undefined && !hasOverrides;
@@ -229,11 +275,13 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     const inheritedLocale = props.locale ?? (props.langRootRef === undefined && parent ? parent.locale : undefined);
     const parentLocale = props.langRootRef !== undefined && parent ? parent.locale : undefined;
     const inheritedTranslations = props.translations ?? (langRootOnly && parent ? parent.translations : undefined);
+    const onActiveLocaleChange = props.onActiveLocaleChange ?? parent?.onActiveLocaleChange;
     const rootProps: I18nProviderRootProps = { ...props };
     if (inheritedLocale !== undefined) rootProps.locale = inheritedLocale;
     rootProps.localeFromProp = props.locale !== undefined;
     if (parentLocale !== undefined) rootProps.parentLocale = parentLocale;
     if (inheritedTranslations !== undefined) rootProps.translations = inheritedTranslations;
+    if (onActiveLocaleChange !== undefined) rootProps.onActiveLocaleChange = onActiveLocaleChange;
     return <I18nProviderRoot {...rootProps} />;
   }
 

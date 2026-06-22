@@ -530,6 +530,7 @@ describe('createI18n', () => {
     document.documentElement.lang = 'de';
 
     const onActiveLocaleChange = vi.fn();
+    const rootRef = createRef<HTMLDivElement>();
     const { I18nProvider } = createI18n();
 
     function Probe(): ReactElement {
@@ -537,8 +538,10 @@ describe('createI18n', () => {
     }
 
     const { rerender } = render(
-      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
-        <Probe />
+      <I18nProvider langRootRef={rootRef} onActiveLocaleChange={onActiveLocaleChange}>
+        <div ref={rootRef}>
+          <Probe />
+        </div>
       </I18nProvider>
     );
 
@@ -549,8 +552,10 @@ describe('createI18n', () => {
     const callCountAfterMount = onActiveLocaleChange.mock.calls.length;
 
     rerender(
-      <I18nProvider onActiveLocaleChange={() => {}}>
-        <Probe />
+      <I18nProvider langRootRef={rootRef} onActiveLocaleChange={() => {}}>
+        <div ref={rootRef}>
+          <Probe />
+        </div>
       </I18nProvider>
     );
 
@@ -560,8 +565,10 @@ describe('createI18n', () => {
   it('notifies onActiveLocaleChange when resolved locale changes', async () => {
     const onActiveLocaleChange = vi.fn();
     registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
     document.documentElement.lang = 'de';
 
+    const rootRef = createRef<HTMLDivElement>();
     const { I18nProvider } = createI18n();
 
     function Probe(): ReactElement {
@@ -569,8 +576,10 @@ describe('createI18n', () => {
     }
 
     render(
-      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
-        <Probe />
+      <I18nProvider langRootRef={rootRef} onActiveLocaleChange={onActiveLocaleChange}>
+        <div ref={rootRef}>
+          <Probe />
+        </div>
       </I18nProvider>
     );
 
@@ -864,6 +873,42 @@ describe('createI18n', () => {
       expect(screen.queryByText('fr:Lire:Override')).not.toBeNull();
     });
     expect(screen.queryByText('de:Abspielen:Override')).toBeNull();
+  });
+
+  it('reports nested langRootRef locale from a callback-only ancestor', async () => {
+    registerI18n('de', { play: 'Abspielen' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    const onActiveLocaleChange = vi.fn();
+    const { I18nProvider, useLocale, useTranslator } = createI18n();
+    const rootRef = createRef<HTMLDivElement>();
+
+    function Probe(): ReactElement {
+      return (
+        <span>
+          {useLocale()}:{useTranslator()('play')}
+        </span>
+      );
+    }
+
+    render(
+      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
+        <section lang="fr">
+          <I18nProvider langRootRef={rootRef}>
+            <div ref={rootRef}>
+              <Probe />
+            </div>
+          </I18nProvider>
+        </section>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('fr:Lire')).not.toBeNull();
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('fr');
+    });
+    expect(onActiveLocaleChange).not.toHaveBeenCalledWith('de');
   });
 
   it('passes through when a nested provider only supplies langRootRef under an explicit locale', async () => {
