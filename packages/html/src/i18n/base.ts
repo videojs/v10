@@ -1,4 +1,4 @@
-import { createTranslator, getI18nTranslations, type Locale, type Translator } from '@videojs/core/i18n';
+import { createTranslator, getI18nTranslations, type Locale, type Translator } from '@videojs/core/i18n/base';
 import type { PropertyValues, ReactiveController, ReactiveControllerHost, ReactiveElement } from '@videojs/element';
 import { type Context, ContextConsumer, createContext } from '@videojs/element/context';
 import type { Constructor } from '@videojs/utils/types';
@@ -30,9 +30,7 @@ export type I18nControllerConstructor = new (
   readonly locale: Locale;
 };
 
-export type I18nTextMixin = <Base extends ReactiveElementMixinBase>(
-  Base: Base
-) => Constructor<ReactiveElement> & Base;
+export type I18nTextMixin = <Base extends ReactiveElementMixinBase>(Base: Base) => Constructor<ReactiveElement> & Base;
 
 export interface I18nBase {
   context: I18nLitContext;
