@@ -6,6 +6,7 @@ import {
   resolveBrowserTranslationTarget,
   shouldAttemptBrowserTranslation,
 } from '../browser-translation';
+import en from '../locales/en';
 import { registerI18n, resetI18nRegistryForTesting } from '../registry';
 
 type MockAvailability = 'available' | 'downloadable' | 'unavailable';
@@ -58,6 +59,14 @@ describe('shouldAttemptBrowserTranslation', () => {
   it('skips when a non-English lazy built-in tag loaded', () => {
     expect(shouldAttemptBrowserTranslation('xx', ['xx'])).toBe(false);
     expect(shouldAttemptBrowserTranslation('es', ['en', 'es'])).toBe(false);
+  });
+
+  it('attempts when a loaded built-in pack is missing English keys', () => {
+    expect(shouldAttemptBrowserTranslation('es', ['es'], { play: 'Ir' })).toBe(true);
+  });
+
+  it('skips when a loaded built-in pack covers English keys', () => {
+    expect(shouldAttemptBrowserTranslation('es', ['es'], { ...en, play: 'Ir' })).toBe(false);
   });
 
   it('attempts when only English lazy tags loaded', () => {
