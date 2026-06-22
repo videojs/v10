@@ -703,7 +703,9 @@ describe('createI18n', () => {
       menuSettings: 'Paramètres',
     } satisfies Partial<Translations>);
 
-    const { I18nProvider, useTranslator } = createI18n();
+    const { I18nProvider, useTranslator } = createI18n({
+      loadLocale: async (tag) => (tag === 'fr' ? { play: 'Lire' } : undefined),
+    });
 
     function Probe(): ReactElement {
       const t = useTranslator();
