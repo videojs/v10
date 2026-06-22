@@ -1,4 +1,3 @@
-import { globSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
@@ -9,13 +8,6 @@ import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/built-in-locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
-const indexEntries = Object.fromEntries(
-  globSync('src/**/index.{ts,tsx}').map((file) => {
-    const key = file.replace('src/', '').replace(/\.tsx?$/, '');
-    return [key, file];
-  })
-);
-
 const i18nLocaleEntries = Object.fromEntries([
   ['i18n/locales/all', 'src/i18n/locales/all.ts'],
   ['i18n/locales/en', 'src/i18n/locales/en.ts'],
@@ -24,10 +16,7 @@ const i18nLocaleEntries = Object.fromEntries([
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
-  entry: {
-    ...indexEntries,
-    ...i18nLocaleEntries,
-  },
+  entry: ['src/**/index.{ts,tsx}', i18nLocaleEntries],
   noExternal: [/^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
