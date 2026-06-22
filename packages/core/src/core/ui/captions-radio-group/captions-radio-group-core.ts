@@ -4,6 +4,7 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
+import type { TranslationKeyOrString } from '../../i18n/types';
 import type { MediaTextTrack, MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
 
@@ -19,6 +20,7 @@ export interface CaptionsRadioGroupProps {
 export interface CaptionsRadioGroupTrack {
   value: string;
   label: string;
+  labelKey?: TranslationKeyOrString | undefined;
 }
 
 export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
@@ -33,6 +35,11 @@ export const CAPTIONS_OFF_VALUE = 'off';
 function formatTrackLabel(track: MediaTextTrack): string {
   if (track.label) return track.label;
   if (track.language) return track.language;
+  return track.kind === 'captions' ? 'Captions' : 'Subtitles';
+}
+
+function getTrackLabelKey(track: MediaTextTrack): TranslationKeyOrString | undefined {
+  if (track.label || track.language) return undefined;
   return track.kind === 'captions' ? 'menuCaptions' : 'menuSubtitles';
 }
 
@@ -103,10 +110,15 @@ export class CaptionsRadioGroupCore {
     const media = this.#media!;
     const captionTracks = getCaptionTracks(media.textTrackList);
     const showingIndex = captionTracks.findIndex((track) => track.mode === 'showing');
-    const tracks = captionTracks.map((track, index) => ({
-      value: track.id || String(index),
-      label: this.getTrackLabel(track),
-    }));
+    const tracks = captionTracks.map((track, index) => {
+      const labelKey = getTrackLabelKey(track);
+
+      return {
+        value: track.id || String(index),
+        label: this.getTrackLabel(track),
+        ...(labelKey && { labelKey }),
+      };
+    });
 
     const availability: CaptionsRadioGroupState['availability'] =
       captionTracks.length > 0 ? 'available' : 'unavailable';

@@ -125,7 +125,24 @@ describe('CaptionsRadioGroupCore', () => {
         })
       ).toBe('English');
       expect(core.getTrackLabel({ kind: 'subtitles', label: '', language: 'es', mode: 'disabled' })).toBe('es');
-      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('menuCaptions');
+      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('Captions');
+    });
+
+    it('adds default label keys for unlabeled tracks', () => {
+      const core = new CaptionsRadioGroupCore();
+      const media = createMediaState({
+        textTrackList: [
+          { id: 'captions-en', kind: 'captions', label: '', language: '', mode: 'disabled' },
+          { id: 'subtitles-en', kind: 'subtitles', label: '', language: '', mode: 'disabled' },
+        ],
+      });
+
+      core.setMedia(media);
+
+      expect(core.getState().tracks).toEqual([
+        { value: 'captions-en', label: 'Captions', labelKey: 'menuCaptions' },
+        { value: 'subtitles-en', label: 'Subtitles', labelKey: 'menuSubtitles' },
+      ]);
     });
 
     it('uses a custom formatter', () => {
