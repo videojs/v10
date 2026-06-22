@@ -53,7 +53,7 @@ export default {
   menuSettings: 'Axustes',
   menuQuality: 'Calidade',
   menuSpeed: 'Velocidade',
-  menuCaptions: 'Lendas',
+  menuCaptions: 'Subtítulos',
   menuPlaybackRate: 'Velocidade de reprodución',
   menuBack: 'Atrás',
   menuOff: 'Desactivado',

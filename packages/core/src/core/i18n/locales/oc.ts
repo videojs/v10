@@ -59,6 +59,6 @@ export default {
   menuOff: 'Desactivat',
   menuAuto: 'Automatic',
   menuAutoWithLabel: 'Automatic ({label})',
-  menuSubtitles: 'Subtítols',
+  menuSubtitles: 'Sostítols',
   mediaErrorFallback: "Una error s'es produsida. Provatz d'un autre còp.",
 } as const satisfies Partial<Translations>;
