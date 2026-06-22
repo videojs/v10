@@ -1,5 +1,5 @@
 import * as coreI18n from '@videojs/core/i18n';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetBrowserTranslationCacheForTesting, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -9,6 +9,7 @@ import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 describe('createI18n (HTML)', () => {
   afterEach(() => {
     resetI18nRegistryForTesting();
+    resetBrowserTranslationCacheForTesting();
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
     vi.restoreAllMocks();
@@ -198,11 +199,19 @@ describe('createI18n (HTML)', () => {
   it('registers browser translations when a shipped locale pack is missing keys', async () => {
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({
       menuSettings: 'Paramètres',
-    });
+    } satisfies Partial<coreI18n.Translations>);
 
-    const provider = new MediaI18nProviderElement();
+    const { ProviderMixin, TextMixin } = createI18n({
+      loadLocale: async (tag) => (tag === 'fr' ? { play: 'Lire' } : undefined),
+    });
+    class PartialProvider extends ProviderMixin(ReactiveElement) {}
+    class PartialText extends TextMixin(ReactiveElement) {}
+    customElements.define('i18n-partial-provider', PartialProvider);
+    customElements.define('i18n-partial-text', PartialText);
+
+    const provider = new PartialProvider();
     provider.setAttribute('lang', 'fr');
-    const text = new MediaTextElement();
+    const text = new PartialText();
     text.setAttribute('key', 'menuSettings');
     provider.appendChild(text);
     document.body.appendChild(provider);
