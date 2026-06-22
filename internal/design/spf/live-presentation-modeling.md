@@ -177,8 +177,20 @@ here.
 target; ½× on an unchanged playlist). This is the category the
 decomposition most insists on isolating: it is a **delivery / scheduling**
 concern, *not* part of the time-*t* content snapshot, even though HLS
-happens to deliver both in the same playlist text. Its model placement
-(per-track vs presentation-level) is an [open question](#open-questions).
+happens to deliver both in the same playlist text.
+
+**Realized** (`feat/spf-hls-live`) as a pure §6.3.4 cadence function
+`mediaPlaylistReloadDelay(current, previous)` (`media/hls/reload-policy.ts`) — full
+target on a changed window, ½× on an unchanged one, `null` once complete — consumed
+by `delayedReschedule` + a `RecurringRunner` (`core/tasks/`) that owns the loop but
+knows nothing about time. Fetch scheduling landed **per-track**: each `resolveXTrack`
+owns its runner (see the [placement open question](#open-questions)). A failed reload
+is **not** retried by the policy — the rejection propagates and ends that track's
+recurrence; transient-fetch resilience (retry/backoff) is a fetch-layer concern
+deferred to [network-resilience](./features/network-resilience.md), kept out of the
+cadence. "Changed" is detected from the full-segment window (`mediaSequence` + segment
+count); a parts-only LL-HLS update is invisible to it, which
+[ll-hls-support](./features/ll-hls-support.md) must extend.
 
 ### [4] Sync anchor — `PROGRAM-DATE-TIME`
 
@@ -228,7 +240,8 @@ behavior are the implementation efforts that consume this.
   model argues for a faithful per-fetch representation. This is the seam
   where this doc meets the parser refactor.
 - **`Presentation`** — add `streamType` ([2a]). Completeness ([2b]) rides the
-  existing `duration` field. Refetch policy ([3]) placement TBD.
+  existing `duration` field. Refetch policy ([3]) realized per-track — each
+  `resolveXTrack` owns a `RecurringRunner` driven by an engine-injected reschedule.
 
 ---
 
@@ -314,16 +327,17 @@ prematurely fix.
 
 ## Open questions
 
-- **[3] Refetch-policy placement — per-track vs presentation-level.** In
+- **[3] Refetch-policy placement — DECIDED (fetch scheduling per-track).** In
   HLS each media playlist (= each `Track`) carries its own
   `TARGETDURATION`; in DASH, `minimumUpdatePeriod` is MPD-level
   (presentation). Per-track bakes an HLS assumption; presentation-level
-  fights HLS's per-playlist reality. Likely answer: a presentation-level
-  concept fed by per-track source data — but decide deliberately. Ties
-  to live-stream-support's per-type reload-coordination question, and to
-  the observation that a not-yet-ended track *must* keep being refetched
-  to stay current, so timeline reconciliation across tracks can't be
-  fully independent even if fetch scheduling is.
+  fights HLS's per-playlist reality. Landed (`feat/spf-hls-live`) as the
+  anticipated split: **fetch scheduling is per-track** — each `resolveXTrack`
+  owns a `RecurringRunner` paced by its own `TARGETDURATION` — while
+  cross-track **timeline reconciliation** stays separate (the parser carries
+  the timeline forward per fetch; `anchorLiveTracks` aligns renditions by PDT).
+  So fetch scheduling is independent without the timeline reconciliation being
+  forced independent, as this question anticipated.
 - **[4] How captured PDT feeds the A/V-sync anchor — DECIDED (anchor source).**
   Resolved in [live-timeline-anchoring](../../decisions/live-timeline-anchoring.md):
   align demuxed audio/video by equal PDT (same real instant), not by
