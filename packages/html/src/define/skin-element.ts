@@ -6,7 +6,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
-import { I18nProviderMixin } from '../i18n/provider-instance';
+import { I18nProviderMixin } from '../i18n/provider';
 import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
 
