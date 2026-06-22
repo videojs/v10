@@ -1,7 +1,9 @@
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { I18nController } from '../../i18n/instance';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
@@ -21,9 +23,11 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   label = '';
 
   readonly #core = new CaptionsRadioGroupCore();
+  readonly #i18n = new I18nController(this);
   readonly #mediaState = new PlayerController(this, playerContext, selectTextTrack);
 
   #tracksKey = '';
+  #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -54,7 +58,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.label = this.label || 'Captions';
+      this.#applyAriaLabel(this.label || 'menuCaptions');
       this.#syncContent(state);
     }
 
@@ -66,7 +70,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   #syncContent(state: CaptionsRadioGroupCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
-    const tracksKey = `${state.tracks.map((track) => track.value).join('|')}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
     if (tracksKey !== this.#tracksKey) {
       this.#tracksKey = tracksKey;
@@ -76,8 +80,14 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
         child.remove();
       }
 
-      this.append(this.#createItem(CAPTIONS_OFF_VALUE, 'Off', template));
-      this.append(...state.tracks.map((track) => this.#createItem(track.value, track.label, template)));
+      this.append(
+        this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslationPhrase(this.#i18n.value, 'menuOff'), template)
+      );
+      this.append(
+        ...state.tracks.map((track) =>
+          this.#createItem(track.value, resolveTranslationPhrase(this.#i18n.value, track.label), template)
+        )
+      );
     }
 
     for (const item of this.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)) {
@@ -130,6 +140,16 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     }
 
     return null;
+  }
+
+  #applyAriaLabel(label: string): void {
+    if (this.hasAttribute('aria-labelledby')) return;
+
+    const current = this.getAttribute('aria-label');
+    if (current !== null && current !== this.#ariaLabel) return;
+
+    this.#ariaLabel = resolveTranslationPhrase(this.#i18n.value, label);
+    this.setAttribute('aria-label', this.#ariaLabel);
   }
 
   #handleValueChange = (event: Event): void => {

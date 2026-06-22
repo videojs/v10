@@ -165,7 +165,7 @@ describe('PlaybackRateRadioGroupElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
     });
-    expect(options.getAttribute('aria-label')).toBe('playbackRateAria');
+    expect(options.getAttribute('aria-label')).toBe('Playback rate 1.25');
     expect(options.getAttribute('data-rate')).toBe('1.25');
   });
 

@@ -1,4 +1,5 @@
-import { ReactiveElement } from '@videojs/element';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import {
   applyShadowStyles,
   createShadowStyle,
@@ -6,6 +7,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
+import { I18nController } from '../i18n/instance';
 import { I18nProviderMixin } from '../i18n/provider';
 import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
@@ -19,6 +21,8 @@ const sharedSheet = createShadowStyle(sharedStyles);
  * via `adoptedStyleSheets` (or `<style>` fallback).
  */
 export class SkinElement extends I18nProviderMixin(ReactiveElement) {
+  readonly #i18n = new I18nController(this);
+
   static get observedAttributes(): string[] {
     // biome-ignore lint/complexity/noThisInStatic: intentional use of super
     return [...super.observedAttributes, 'placeholdersrc'];
@@ -57,6 +61,15 @@ export class SkinElement extends I18nProviderMixin(ReactiveElement) {
         sheets.push(ctor.styles);
       }
       applyShadowStyles(this.shadowRoot!, sheets);
+    }
+  }
+
+  protected override updated(changed: PropertyValues): void {
+    super.updated(changed);
+
+    for (const el of this.shadowRoot?.querySelectorAll<HTMLElement>('[data-i18n-aria-label]') ?? []) {
+      const key = el.dataset.i18nAriaLabel;
+      if (key) el.setAttribute('aria-label', resolveTranslationPhrase(this.#i18n.value, key));
     }
   }
 }
