@@ -30,17 +30,19 @@ describe('vjs compile', () => {
     writeFileSync(
       configPath,
       `export default {
-  styles: {
-    name: 'fixture',
-    setup(context) {
-      return {
-        transform: () => (sourceFile) => sourceFile,
-        finish() {
-          context.addAsset({ type: 'css', fileName: 'skin.css', source: '.foo{display:flex;}' });
-        },
-      };
+  plugins: [
+    {
+      name: 'fixture',
+      setup(context) {
+        return {
+          transform: () => (sourceFile) => sourceFile,
+          finish() {
+            context.addAsset({ type: 'css', fileName: 'skin.css', source: '.foo{display:flex;}' });
+          },
+        };
+      },
     },
-  },
+  ],
 };
 `,
       'utf8'
@@ -58,6 +60,30 @@ describe('vjs compile', () => {
     expect(readFileSync(join(workDir, 'dist', 'skin.css'), 'utf8')).toBe('.foo{display:flex;}');
   });
 
+  it('compiles configured project inputs when no file is passed', () => {
+    const inputPath = join(workDir, 'src', 'skin.tsx');
+    const configPath = join(workDir, 'compiler.config.mjs');
+    mkdirSync(dirname(inputPath), { recursive: true });
+    writeFileSync(inputPath, `export function App(){ return <Foo/>; }\n`, 'utf8');
+    writeFileSync(
+      configPath,
+      `export default {
+  input: { skin: 'src/skin.tsx' },
+  output: { dir: 'dist', entryFileNames: '[name].tsx', banner: '// Generated\\n' },
+};
+`,
+      'utf8'
+    );
+
+    execFileSync(process.execPath, ['--import', tsxPath, cliPath, 'compile', '--config', configPath], {
+      encoding: 'utf8',
+    });
+
+    const output = readFileSync(join(workDir, 'dist', 'skin.tsx'), 'utf8');
+    expect(output).toContain('// Generated');
+    expect(output).toContain('function App');
+  });
+
   it('prints compiler diagnostics with code frames', () => {
     const inputPath = join(workDir, 'src', 'skin.tsx');
     const configPath = join(workDir, 'compiler.config.mjs');
@@ -68,17 +94,19 @@ describe('vjs compile', () => {
       `import { readFileSync } from 'node:fs';
 
 export default {
-  styles: {
-    name: 'fixture',
-    setup(context) {
-      const error = new Error('Fixture failed');
-      error.fileName = context.filename;
-      error.line = 1;
-      error.column = 30;
-      error.sourceText = readFileSync(context.filename, 'utf8');
-      throw error;
+  plugins: [
+    {
+      name: 'fixture',
+      setup(context) {
+        const error = new Error('Fixture failed');
+        error.fileName = context.filename;
+        error.line = 1;
+        error.column = 30;
+        error.sourceText = readFileSync(context.filename, 'utf8');
+        throw error;
+      },
     },
-  },
+  ],
 };
 `,
       'utf8'
@@ -110,17 +138,19 @@ export default {
       `import { readFileSync } from 'node:fs';
 
 export default {
-  styles: {
-    name: 'fixture',
-    setup(context) {
-      const error = new Error('Fixture failed');
-      error.fileName = context.filename;
-      error.line = 1;
-      error.column = 30;
-      error.sourceText = readFileSync(context.filename, 'utf8');
-      throw error;
+  plugins: [
+    {
+      name: 'fixture',
+      setup(context) {
+        const error = new Error('Fixture failed');
+        error.fileName = context.filename;
+        error.line = 1;
+        error.column = 30;
+        error.sourceText = readFileSync(context.filename, 'utf8');
+        throw error;
+      },
     },
-  },
+  ],
 };
 `,
       'utf8'

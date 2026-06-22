@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { CompilerConfig } from '../../config';
+import type { CompilerPlugin } from '../../config';
 import { vjsCompiler } from '../vite';
 
 type TestPlugin = {
@@ -15,7 +15,7 @@ type TestPlugin = {
 const createPlugin = (...args: Parameters<typeof vjsCompiler>): TestPlugin =>
   vjsCompiler(...args) as unknown as TestPlugin;
 
-const createCssStyle = (source: string): NonNullable<CompilerConfig['styles']> => ({
+const createCssPlugin = (source: string): CompilerPlugin => ({
   name: 'fixture',
   setup(context) {
     return {
@@ -29,7 +29,7 @@ const createCssStyle = (source: string): NonNullable<CompilerConfig['styles']> =
 
 describe('vjsCompiler', () => {
   it('imports emitted CSS assets as virtual modules', async () => {
-    const plugin = createPlugin({ config: { styles: createCssStyle('.foo{display:flex;}') } });
+    const plugin = createPlugin({ config: { plugins: [createCssPlugin('.foo{display:flex;}')] } });
 
     const result = await plugin.transform.call(
       { warn: () => {} },
@@ -52,13 +52,15 @@ describe('vjsCompiler', () => {
     const warn = vi.fn();
     const plugin = createPlugin({
       config: {
-        styles: {
-          name: 'fixture',
-          setup(context) {
-            context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this', plugin: 'fixture' });
-            return { transform: () => (sourceFile) => sourceFile };
+        plugins: [
+          {
+            name: 'fixture',
+            setup(context) {
+              context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this', plugin: 'fixture' });
+              return { transform: () => (sourceFile) => sourceFile };
+            },
           },
-        },
+        ],
       },
     });
 
@@ -71,21 +73,23 @@ describe('vjsCompiler', () => {
     const warn = vi.fn();
     const plugin = createPlugin({
       config: {
-        styles: {
-          name: 'fixture',
-          setup(context) {
-            context.report({
-              level: 'warning',
-              code: 'fixture-warning',
-              message: 'Check this location',
-              file: context.filename,
-              line: 1,
-              column: 24,
-              plugin: 'fixture',
-            });
-            return { transform: () => (sourceFile) => sourceFile };
+        plugins: [
+          {
+            name: 'fixture',
+            setup(context) {
+              context.report({
+                level: 'warning',
+                code: 'fixture-warning',
+                message: 'Check this location',
+                file: context.filename,
+                line: 1,
+                column: 24,
+                plugin: 'fixture',
+              });
+              return { transform: () => (sourceFile) => sourceFile };
+            },
           },
-        },
+        ],
       },
     });
 

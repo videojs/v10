@@ -23,8 +23,10 @@ export interface ComponentNode {
   readonly key: string | number | null;
 }
 
+export type ClassNameValue = string | false | null | undefined | readonly ClassNameValue[];
+
 export interface BaseProps {
-  className?: string | undefined;
+  className?: ClassNameValue;
   children?: unknown;
 }
 

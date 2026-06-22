@@ -60,9 +60,9 @@ describe('analyzeStyles — decomposition', () => {
     expect(info.segments[0]).toMatchObject({ kind: 'token', path: ['styles', 'button', 'icon'] });
   });
 
-  it('decomposes a `cn(...)` call into mixed segments', async () => {
+  it('decomposes a className array into mixed segments', async () => {
     const source = `function App(){
-      return <div className={cn('flex', styles.button.base, foo())}/>;
+      return <div className={['flex', styles.button.base, foo()]}/>;
     }`;
     const infos = await collectSegments(source);
     expect(infos).toHaveLength(1);
@@ -87,7 +87,7 @@ describe('analyzeStyles — decomposition', () => {
 
   it('walks nested elements', async () => {
     const source = `function App(){
-      return <div className="a"><span className="b"/><Inner className={cn('c')}/></div>;
+      return <div className="a"><span className="b"/><Inner className={['c']}/></div>;
     }`;
     const infos = await collectSegments(source);
     expect(infos).toHaveLength(3);
@@ -104,27 +104,11 @@ describe('analyzeStyles — decomposition', () => {
     expect(info.segments[0]).toMatchObject({ value: 'b' });
   });
 
-  it('honours custom mergeFn name', async () => {
+  it('marks helper calls as opaque', async () => {
     const source = `function App(){ return <div className={twMerge('a', 'b')}/>; }`;
-    const infos: StyleAttributeInfo[] = [];
-    await compile(source, {
-      config: {
-        target: jsx({
-          transforms: [
-            analyzeStyles({
-              mergeFn: 'twMerge',
-              visit: (info) => {
-                infos.push(info);
-                return undefined;
-              },
-            }),
-          ],
-        }),
-      },
-    });
+    const infos = await collectSegments(source);
     const info = infos[0]!;
-    expectSegments(info);
-    expect(info.segments).toHaveLength(2);
+    expect(info.kind).toBe('opaque');
   });
 });
 

@@ -9,5 +9,5 @@
     },
     "declarationDir": "types"
   },
-  "include": ["src"]
+  "include": ["src", "skins.compiler.config.ts"]
 }

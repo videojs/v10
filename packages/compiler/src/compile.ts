@@ -5,6 +5,7 @@ import {
   type CompilerContext,
   type CompilerDiagnostic,
   type CompilerPipelineStep,
+  type CompilerPlugin,
   type CompilerTransform,
   jsx,
 } from './config';
@@ -76,7 +77,7 @@ export async function compile(source: string, options: CompileOptions = {}): Pro
 
   const { ast } = parse(source, { filename });
   const transformers: CompilerTransform[] = [];
-  let styleStep: CompilerPipelineStep | undefined;
+  const finishers: Array<() => void | Promise<void>> = [];
 
   if (target.imports) {
     transformers.push(
@@ -88,14 +89,10 @@ export async function compile(source: string, options: CompileOptions = {}): Pro
     );
   }
 
-  try {
-    styleStep = config.styles ? await config.styles.setup(context) : undefined;
-    if (styleStep?.transform) transformers.push(styleStep.transform);
-  } catch (error) {
-    throw new CompilerError(
-      [fatalDiagnosticFromError(error, { filename, sourceText: source, plugin: config.styles?.name })],
-      { cause: error }
-    );
+  for (const plugin of orderPlugins(config.plugins ?? [])) {
+    const step = await setupPipelineStep(plugin.name, () => plugin.setup?.(context), filename, source);
+    if (step?.transform) transformers.push(step.transform);
+    if (step?.finish) finishers.push(step.finish);
   }
 
   if (target.transforms) transformers.push(...target.transforms);
@@ -109,6 +106,7 @@ export async function compile(source: string, options: CompileOptions = {}): Pro
   }
 
   if (transformers.length === 0) {
+    for (const finish of finishers) await finish();
     return { code: separateTopLevel(printer.printFile(ast)), map: null, assets, diagnostics };
   }
 
@@ -118,7 +116,7 @@ export async function compile(source: string, options: CompileOptions = {}): Pro
     const transformed = result.transformed[0]!;
     const code = separateTopLevel(printer.printFile(transformed));
 
-    await styleStep?.finish?.();
+    for (const finish of finishers) await finish();
 
     return { code, map: null, assets, diagnostics };
   } catch (error) {
@@ -126,6 +124,28 @@ export async function compile(source: string, options: CompileOptions = {}): Pro
     throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source })], { cause: error });
   } finally {
     result?.dispose();
+  }
+}
+
+function orderPlugins(plugins: readonly CompilerPlugin[]): CompilerPlugin[] {
+  const pre = plugins.filter((plugin) => plugin.enforce === 'pre');
+  const normal = plugins.filter((plugin) => plugin.enforce === undefined);
+  const post = plugins.filter((plugin) => plugin.enforce === 'post');
+  return [...pre, ...normal, ...post];
+}
+
+async function setupPipelineStep(
+  plugin: string,
+  setup: () => CompilerPipelineStep | Promise<CompilerPipelineStep | undefined> | undefined,
+  filename: string,
+  source: string
+): Promise<CompilerPipelineStep | undefined> {
+  try {
+    return await setup();
+  } catch (error) {
+    throw new CompilerError([fatalDiagnosticFromError(error, { filename, sourceText: source, plugin })], {
+      cause: error,
+    });
   }
 }
 

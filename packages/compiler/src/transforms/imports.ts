@@ -15,8 +15,8 @@ export interface ImportRef {
 /**
  * Rewrite rule for a given source module.
  * - `string`: rewrite the module specifier; identifier names pass through.
- * - function: per-identifier full power. Receives the local name; returns the
- *   target `{ source, name }`.
+ * - function: per-identifier full power. Receives the imported name; returns
+ *   the target `{ source, name }`.
  */
 export type ImportRule = string | ((name: string) => ImportRef);
 

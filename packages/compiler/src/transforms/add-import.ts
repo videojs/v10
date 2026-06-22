@@ -4,6 +4,7 @@ import { resolveRelative } from './imports';
 export interface AddImportRef {
   source: string;
   name: string;
+  type?: boolean | undefined;
 }
 
 export interface AddImportContext {
@@ -36,6 +37,7 @@ export function addNamedImport(
     if (stmt.moduleSpecifier.text !== target) continue;
     const clause = stmt.importClause;
     if (!clause?.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
+    if (clause.isTypeOnly && !ref.type) continue;
     if (clause.namedBindings.elements.some((e) => e.name.text === ref.name)) {
       return sourceFile;
     }
@@ -47,7 +49,11 @@ export function addNamedImport(
         clause.name,
         factory.createNamedImports([
           ...clause.namedBindings.elements,
-          factory.createImportSpecifier(false, undefined, factory.createIdentifier(ref.name)),
+          factory.createImportSpecifier(
+            Boolean(ref.type) && !clause.isTypeOnly,
+            undefined,
+            factory.createIdentifier(ref.name)
+          ),
         ])
       ),
       stmt.moduleSpecifier,
@@ -63,7 +69,7 @@ export function addNamedImport(
   const newImport = factory.createImportDeclaration(
     undefined,
     factory.createImportClause(
-      false,
+      Boolean(ref.type),
       undefined,
       factory.createNamedImports([factory.createImportSpecifier(false, undefined, factory.createIdentifier(ref.name))])
     ),

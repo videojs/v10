@@ -98,6 +98,7 @@
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
+    "compile:skins": "vjs compile --config skins.compiler.config.ts",
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -117,12 +118,15 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.14",
+    "@videojs/compiler": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "jsdom": "^26.1.0",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "tsdown": "^0.21.9",
+    "tsx": "^4.21.0",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.0"
   },
   "publishConfig": {

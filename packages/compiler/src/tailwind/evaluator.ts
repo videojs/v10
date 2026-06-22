@@ -8,8 +8,8 @@ import { type DiagnosticLocation, diagnosticLocationFromNode } from '../diagnost
  * branch is a plain object whose keys are property names.
  *
  * Token sources are constrained to a small grammar (imports + plain object
- * literals + spreads + `cn(...)` of string-literal args + dotted access) so we
- * can statically resolve them without running JS — see `loadTokenModule`.
+ * literals + arrays of strings + spreads + dotted access) so we can statically
+ * resolve them without running JS — see `loadTokenModule`.
  */
 export type TokenValue = string | { readonly [key: string]: TokenValue };
 
@@ -203,8 +203,7 @@ function evaluate(node: ts.Expression, env: Map<string, TokenValue>, fromFile: s
     return evaluateCall(node, env, fromFile);
   }
   if (ts.isArrayLiteralExpression(node)) {
-    // Arrays only appear as `cn(...)` arguments. We model them as the
-    // space-join of their elements (matching `cn`'s `.flat()` semantics).
+    // Token arrays model a static class list and resolve to a space-joined string.
     return evaluateArrayParts(node, env, fromFile).join(' ');
   }
   if (ts.isParenthesizedExpression(node)) {

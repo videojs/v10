@@ -11,6 +11,7 @@ import {
   formatDiagnosticSummaryJsonLine,
 } from './diagnostics';
 import { loadConfig } from './load-config';
+import { compileProject } from './project';
 
 interface ParsedArgs {
   command: string | undefined;
@@ -53,7 +54,7 @@ function printHelp(): void {
       'Usage: vjs <command> [options]',
       '',
       'Commands:',
-      '  compile <file>        Compile a JSX file',
+      '  compile [file]        Compile a JSX file, or compile config.input when file is omitted',
       '',
       'Options:',
       '  -c, --config <path>   Path to a compiler config (default: compiler.config.ts in cwd)',
@@ -72,12 +73,26 @@ async function runCompile(
   diagnosticsFormat: DiagnosticFormat
 ): Promise<void> {
   const file = positional[0];
-  if (!file) throw new Error('Usage: vjs compile <file>');
-
   const cwd = process.cwd();
-  const inputPath = isAbsolute(file) ? file : resolve(cwd, file);
   const outputPath = outFile ? (isAbsolute(outFile) ? outFile : resolve(cwd, outFile)) : undefined;
   const loaded = await loadConfig(cwd, configOverride);
+
+  if (!file) {
+    if (!loaded?.config.input) throw new Error('Usage: vjs compile <file> or configure `input`.');
+    if (outputPath) throw new Error('`--out` is only supported when compiling a single file. Use `output` in config.');
+
+    const result = await compileProject(loaded.config, { configDir: loaded.configDir, cwd });
+    writeDiagnostics(result.diagnostics, diagnosticsFormat, { summary: diagnosticsFormat === 'jsonl' });
+
+    for (const file of result.files) {
+      mkdirSync(dirname(file.fileName), { recursive: true });
+      writeFileSync(file.fileName, file.source, 'utf8');
+      process.stdout.write(`Wrote ${file.fileName}\n`);
+    }
+    return;
+  }
+
+  const inputPath = isAbsolute(file) ? file : resolve(cwd, file);
   const source = readFileSync(inputPath, 'utf8');
   const result = await compile(source, {
     filename: inputPath,

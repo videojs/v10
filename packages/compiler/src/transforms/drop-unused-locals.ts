@@ -3,9 +3,9 @@ import ts from 'typescript';
 /**
  * Remove top-level `const x = <expr>;` declarations whose name isn't
  * referenced anywhere else in the SourceFile, when `<expr>` is provably
- * side-effect-free (a `cn(...)` call, a string literal, or a property access).
+ * side-effect-free (a className array of literals/token refs).
  *
- * Source-to-source rewrites (`tailwindPlugin` resolving local cn() consts
+ * Source-to-source rewrites (`tailwindPlugin` resolving local className arrays
  * into class strings, `replace`/`childAsProp` replacing JSX) frequently leave
  * locals stranded. This pass cleans them up so the generated artifact doesn't
  * trip TypeScript's `noUnusedLocals` warning.
@@ -94,29 +94,44 @@ function collectFromTagName(name: ts.JsxTagNameExpression, into: Set<string>): v
 }
 
 /**
- * Conservative pattern check: drop only `const X = cn(<args>)` where every
- * argument is a string literal, identifier, dotted access, array literal of
- * the same, or a nested `cn(...)` call. Skipping other shapes (bare
- * identifier RHS, property access, etc.) keeps the pass narrow — the caller
- * presumably had a reason to materialize the binding.
+ * Conservative pattern check: drop only class-list-shaped `const X = [<parts>]`
+ * where every item is a string literal, identifier, dotted access, or nested
+ * array of the same, and at least one item is clearly class-like (a string
+ * literal or dotted token access). Skipping generic identifier arrays keeps
+ * import-reference sentinels and other materialized bindings intact.
  */
 function isPureExpression(node: ts.Expression): boolean {
-  if (!ts.isCallExpression(node)) return false;
-  if (!ts.isIdentifier(node.expression) || node.expression.text !== 'cn') return false;
-  return node.arguments.every(isPureCnArgument);
+  return ts.isArrayLiteralExpression(node) && node.elements.every(isPureArrayItem) && hasClassLikeItem(node);
 }
 
-function isPureCnArgument(node: ts.Expression): boolean {
+function isPureArrayItem(node: ts.Expression): boolean {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return true;
   if (ts.isIdentifier(node)) return true;
-  if (ts.isPropertyAccessExpression(node)) return isPureCnArgument(node.expression);
-  if (ts.isParenthesizedExpression(node)) return isPureCnArgument(node.expression);
-  if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) return isPureCnArgument(node.expression);
+  if (ts.isPropertyAccessExpression(node)) return isPureArrayItem(node.expression);
+  if (ts.isParenthesizedExpression(node)) return isPureArrayItem(node.expression);
+  if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) return isPureArrayItem(node.expression);
   if (ts.isArrayLiteralExpression(node)) {
-    return node.elements.every((e) => !ts.isSpreadElement(e) && isPureCnArgument(e as ts.Expression));
-  }
-  if (ts.isCallExpression(node)) {
-    return isPureExpression(node);
+    return node.elements.every((e) => !ts.isSpreadElement(e) && isPureArrayItem(e as ts.Expression));
   }
   return false;
+}
+
+function hasClassLikeItem(node: ts.ArrayLiteralExpression): boolean {
+  return node.elements.some((item) => {
+    if (ts.isSpreadElement(item)) return false;
+    if (ts.isStringLiteral(item) || ts.isNoSubstitutionTemplateLiteral(item)) return true;
+    if (ts.isPropertyAccessExpression(item)) return true;
+    if (ts.isParenthesizedExpression(item)) return hasClassLikeExpression(item.expression);
+    if (ts.isAsExpression(item) || ts.isTypeAssertionExpression(item)) return hasClassLikeExpression(item.expression);
+    if (ts.isArrayLiteralExpression(item)) return hasClassLikeItem(item);
+    return false;
+  });
+}
+
+function hasClassLikeExpression(node: ts.Expression): boolean {
+  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return true;
+  if (ts.isPropertyAccessExpression(node)) return true;
+  if (ts.isParenthesizedExpression(node)) return hasClassLikeExpression(node.expression);
+  if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) return hasClassLikeExpression(node.expression);
+  return ts.isArrayLiteralExpression(node) && hasClassLikeItem(node);
 }

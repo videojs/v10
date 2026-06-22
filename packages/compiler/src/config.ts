@@ -36,9 +36,12 @@ export interface CompilerPipelineStep {
   finish?: (() => void | Promise<void>) | undefined;
 }
 
-export interface StylePipeline {
+export type CompilerPluginEnforce = 'pre' | 'post';
+
+export interface CompilerPlugin {
   name: string;
-  setup(context: CompilerContext): CompilerPipelineStep | Promise<CompilerPipelineStep>;
+  enforce?: CompilerPluginEnforce | undefined;
+  setup?(context: CompilerContext): CompilerPipelineStep | Promise<CompilerPipelineStep>;
 }
 
 /** Per-target compile configuration for JSX transforms. */
@@ -57,8 +60,19 @@ export interface CompilerTarget {
 
 export interface CompilerConfig {
   files?: readonly string[] | undefined;
+  input?: CompilerInput | undefined;
+  output?: CompilerOutputOptions | undefined;
+  plugins?: readonly CompilerPlugin[] | undefined;
   target?: CompilerTarget | undefined;
-  styles?: StylePipeline | undefined;
+}
+
+export type CompilerInput = string | readonly string[] | Record<string, string>;
+
+export interface CompilerOutputOptions {
+  dir?: string | undefined;
+  file?: string | undefined;
+  entryFileNames?: string | undefined;
+  banner?: string | undefined;
 }
 
 export function defineConfig<const Config extends CompilerConfig>(config: Config): Config {

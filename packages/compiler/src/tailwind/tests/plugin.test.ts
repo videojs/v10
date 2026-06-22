@@ -56,7 +56,7 @@ const compile = (
 ) => compileSource(source, { filename: options.filename, config: { target: jsx({ transforms: options.plugins }) } });
 
 const compileTailwind = (source: string, options: Parameters<typeof tailwind>[0], filename?: string) =>
-  compileSource(source, { filename, config: { styles: tailwind(options) } });
+  compileSource(source, { filename, config: { plugins: [tailwind(options)] } });
 
 describe('tailwindPlugin — mode: preserve', () => {
   it('preserves static className values', async () => {
@@ -97,25 +97,24 @@ describe('tailwindPlugin — mode: inline', () => {
     expect(code).toContain('"flex items-center"');
   });
 
-  it('folds static cn calls', async () => {
-    const source = `function App(){ return <Foo className={cn('flex', 'items-center', 'gap-2')}/>; }`;
+  it('folds static className arrays', async () => {
+    const source = `function App(){ return <Foo className={['flex', 'items-center', 'gap-2']}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toContain('"flex items-center gap-2"');
-    expect(code).not.toMatch(/cn\(/);
+    expect(code).not.toMatch(/className=\{\[/);
   });
 
   it('resolves imported token objects', async () => {
     writeFixture(
       'tokens.ts',
-      `import { cn } from '@videojs/utils/style';
-export const tokens = { button: { base: cn('rounded', 'p-2') } };
+      `export const tokens = { button: { base: ['rounded', 'p-2'] } };
 `
     );
     const source = `import { tokens as styles } from './tokens';
-function App(){ return <Foo className={cn('flex', styles.button.base)}/>; }`;
+function App(){ return <Foo className={['flex', styles.button.base]}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
     const { code } = await compile(source, {
@@ -128,23 +127,23 @@ function App(){ return <Foo className={cn('flex', styles.button.base)}/>; }`;
 
   it('leaves unresolved imports untouched', async () => {
     const source = `import { tokens as styles } from './missing';
-function App(){ return <Foo className={cn('flex', styles.unknown)}/>; }`;
+function App(){ return <Foo className={['flex', styles.unknown]}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
     const { code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
       plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
     });
-    expect(code).toMatch(/cn\(/);
+    expect(code).toMatch(/className=\{\[/);
   });
 
-  it('leaves dynamic cn calls untouched', async () => {
-    const source = `function App(){ return <Foo className={cn('flex', isOn && 'on')}/>; }`;
+  it('leaves dynamic className arrays untouched', async () => {
+    const source = `function App(){ return <Foo className={['flex', isOn && 'on']}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
-    expect(code).toMatch(/cn\(/);
+    expect(code).toMatch(/className=\{\[/);
   });
 });
 
@@ -170,8 +169,8 @@ describe('tailwindPlugin — mode: extract', () => {
     expect(code).toContain('"play-button group"');
   });
 
-  it('extracts cn utilities and preserves group marker classes', async () => {
-    const source = `function App(){ return <PlayButton className={cn('flex', 'group')}/>; }`;
+  it('extracts className array utilities and preserves group marker classes', async () => {
+    const source = `function App(){ return <PlayButton className={['flex', 'group']}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     const { code } = await compile(source, {
       target: 'jsx',
@@ -191,13 +190,13 @@ describe('tailwindPlugin — mode: extract', () => {
     expect(captured!.flatMap((r) => r.utility.declarations)).toContainEqual({ property: 'display', value: 'flex' });
   });
 
-  it('keeps dynamic cn expressions', async () => {
-    const source = `function App(){ return <PlayButton className={cn('group', extra)}/>; }`;
+  it('keeps dynamic className array expressions', async () => {
+    const source = `function App(){ return <PlayButton className={['group', extra]}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(code).toMatch(/cn\("play-button group",\s*extra\)/);
+    expect(code).toMatch(/className=\{\["play-button group",\s*extra\]\}/);
   });
 
   it('throws on generated class style collisions', async () => {
@@ -211,7 +210,7 @@ describe('tailwindPlugin — mode: extract', () => {
   });
 
   it('allows preserved marker classes next to matching generated styles', async () => {
-    const source = `function App(){ return <div><Menu.Item className={cn('flex', 'legacy-submenu')}/><Menu.Item className="flex"/></div>; }`;
+    const source = `function App(){ return <div><Menu.Item className={['flex', 'legacy-submenu']}/><Menu.Item className="flex"/></div>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
@@ -265,7 +264,7 @@ export const inputFeedback = { bubble: { shownSeek: 'block' } };
 `
     );
     const source = `import { icon, inputFeedback, menu } from './tokens';
-function App(){ return <div><ChevronIcon className={cn(icon, menu.chevron)}/><ChevronIcon className={cn(icon, inputFeedback.bubble.shownSeek)}/></div>; }`;
+function App(){ return <div><ChevronIcon className={[icon, menu.chevron]}/><ChevronIcon className={[icon, inputFeedback.bubble.shownSeek]}/></div>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
     const { code } = await compile(source, {
@@ -302,7 +301,7 @@ function App(){ return <div><ChevronIcon className={cn(icon, menu.chevron)}/><Ch
 `
     );
     const source = `import { tokens as styles } from './tokens';
-function App(){ return <span className={cn(styles.seek.label, styles.seek.labelBackward)}/>; }`;
+function App(){ return <span className={[styles.seek.label, styles.seek.labelBackward]}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
     const { code } = await compile(source, {
@@ -322,7 +321,7 @@ function App(){ return <span className={cn(styles.seek.label, styles.seek.labelB
     );
     const source = `import { tokens as styles } from './tokens';
 function App({ type, className }){
-  return <div className={cn(styles.slider.fill.base, type === 'fill' ? styles.slider.fill.fill : styles.slider.fill.buffer, className)}/>;
+  return <div className={[styles.slider.fill.base, type === 'fill' ? styles.slider.fill.fill : styles.slider.fill.buffer, className]}/>;
 }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
@@ -397,7 +396,7 @@ function App({ type, className }){
   });
 
   it('emits one rule per extracted utility', async () => {
-    const source = `function App(){ return <Foo className={cn('flex', 'opacity-50')}/>; }`;
+    const source = `function App(){ return <Foo className={['flex', 'opacity-50']}/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     await compile(source, {
       target: 'jsx',
@@ -419,8 +418,7 @@ function App({ type, className }){
   it('resolves imported tokens before extraction', async () => {
     writeFixture(
       'tokens.ts',
-      `import { cn } from '@videojs/utils/style';
-export const tokens = { button: cn('flex', 'gap-2') };
+      `export const tokens = { button: ['flex', 'gap-2'] };
 `
     );
     const source = `import { tokens as styles } from './tokens';
@@ -449,8 +447,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
   it('resolves bare token imports through a configured resolver', async () => {
     const tokenPath = writeFixture(
       'tokens.ts',
-      `import { cn } from '@videojs/utils/style';
-export const tokens = { button: cn('flex', 'gap-2') };
+      `export const tokens = { button: ['flex', 'gap-2'] };
 `
     );
     const source = `import { tokens as styles } from '@fixture/tokens';
@@ -516,16 +513,14 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(code).toContain('isOn');
   });
 
-  it('resolves local cn constants and imported token members', async () => {
+  it('resolves local className arrays and imported token members', async () => {
     writeFixture(
       'tokens.ts',
-      `import { cn } from '@videojs/utils/style';
-export const tokens = { button: { base: 'flex', icon: 'w-4 h-4' } };
+      `export const tokens = { button: { base: 'flex', icon: 'w-4 h-4' } };
 `
     );
     const source = `import { tokens as styles } from './tokens';
-import { cn } from '@videojs/utils/style';
-const iconButton = cn(styles.button.base, styles.button.icon);
+const iconButton = [styles.button.base, styles.button.icon];
 function App(){ return <PlayButton className={iconButton}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
@@ -550,13 +545,13 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     expect(utilities).toEqual(['flex', 'h-4', 'w-4']);
   });
 
-  it('preserves dynamic cn suffixes after extraction', async () => {
-    const source = `function App({ extra }){ return <PlayButton className={cn('flex', extra)}/>; }`;
+  it('preserves dynamic className suffixes after extraction', async () => {
+    const source = `function App({ extra }){ return <PlayButton className={['flex', extra]}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(code).toMatch(/cn\("play-button",\s*extra\)/);
+    expect(code).toMatch(/className=\{\["play-button",\s*extra\]\}/);
   });
 
   it('extracts parent and child element class names', async () => {

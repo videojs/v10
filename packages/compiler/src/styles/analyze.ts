@@ -16,11 +16,11 @@ export type StyleSegment =
  * The `className` attribute on a JSX element, plus everything the visitor
  * needs to inspect or rewrite it. Two shapes:
  *
- *   - `kind: 'segments'` — the value is either a literal string, a `cn(...)`
- *     call, or a single dotted token reference. We can decompose it into
- *     ordered `StyleSegment`s.
+ *   - `kind: 'segments'` — the value is a literal string, className array, or
+ *     single dotted token reference. We can decompose it into ordered
+ *     `StyleSegment`s.
  *   - `kind: 'opaque'` — anything else (computed expressions, ternaries that
- *     don't reduce, function calls other than `cn`). Visitors should pass.
+ *     don't reduce, function calls). Visitors should pass.
  */
 export type StyleAttributeInfo = StyleAttributeSegmentsInfo | StyleAttributeOpaqueInfo;
 
@@ -55,11 +55,6 @@ export type StyleVisitor = (info: StyleAttributeInfo, factory: ts.NodeFactory) =
 
 export interface AnalyzeStylesOptions {
   visit: StyleVisitor;
-  /**
-   * Name of the helper call we treat as a class-merge (default: `'cn'`).
-   * Override if your skin module uses a different name.
-   */
-  mergeFn?: string;
 }
 
 /**
@@ -72,7 +67,7 @@ export interface AnalyzeStylesOptions {
  * compose it.
  */
 export function analyzeStyles(options: AnalyzeStylesOptions): ts.TransformerFactory<ts.SourceFile> {
-  const { visit, mergeFn = 'cn' } = options;
+  const { visit } = options;
 
   return (transformContext) => {
     const factory = transformContext.factory;
@@ -80,7 +75,7 @@ export function analyzeStyles(options: AnalyzeStylesOptions): ts.TransformerFact
     return (sourceFile) => {
       const visitNode = (node: ts.Node): ts.Node => {
         if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
-          const visited = visitJsxElement(node as JsxElementLike, factory, visit, mergeFn, transformContext);
+          const visited = visitJsxElement(node as JsxElementLike, factory, visit, transformContext);
           // Continue descending into the (possibly transformed) element.
           return ts.visitEachChild(visited, visitNode, transformContext);
         }
@@ -96,7 +91,6 @@ function visitJsxElement(
   element: JsxElementLike,
   factory: ts.NodeFactory,
   visit: StyleVisitor,
-  mergeFn: string,
   context: ts.TransformationContext
 ): JsxElementLike {
   const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
@@ -106,7 +100,7 @@ function visitJsxElement(
   const expression = readAttributeExpression(classNameAttr);
   if (!expression) return element;
 
-  const info: StyleAttributeInfo = decompose(element, classNameAttr, expression, mergeFn);
+  const info: StyleAttributeInfo = decompose(element, classNameAttr, expression);
 
   const replacement = visit(info, factory);
   if (replacement === undefined) return element;
@@ -131,12 +125,7 @@ function readAttributeExpression(attr: ts.JsxAttribute): ts.Expression | undefin
   return undefined;
 }
 
-function decompose(
-  element: JsxElementLike,
-  attribute: ts.JsxAttribute,
-  expression: ts.Expression,
-  mergeFn: string
-): StyleAttributeInfo {
+function decompose(element: JsxElementLike, attribute: ts.JsxAttribute, expression: ts.Expression): StyleAttributeInfo {
   // Literal string: `className="foo bar"` or `className={'foo bar'}`.
   if (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) {
     return {
@@ -162,11 +151,12 @@ function decompose(
     }
   }
 
-  // `cn(...)` call: decompose each argument.
-  if (ts.isCallExpression(expression) && isMergeCall(expression, mergeFn)) {
+  // Array literal: decompose each element.
+  if (ts.isArrayLiteralExpression(expression)) {
     const segments: StyleSegment[] = [];
-    for (const arg of expression.arguments) {
-      segments.push(classifySegment(arg));
+    for (const item of expression.elements) {
+      if (ts.isSpreadElement(item)) return { element, attribute, expression, kind: 'opaque' };
+      segments.push(classifySegment(item));
     }
     return {
       element,
@@ -179,11 +169,6 @@ function decompose(
 
   // Anything else (ternaries, function calls, conditional spreads, …)
   return { element, attribute, expression, kind: 'opaque' };
-}
-
-function isMergeCall(call: ts.CallExpression, mergeFn: string): boolean {
-  const callee = call.expression;
-  return ts.isIdentifier(callee) && callee.text === mergeFn;
 }
 
 function classifySegment(arg: ts.Expression): StyleSegment {

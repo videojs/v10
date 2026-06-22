@@ -104,7 +104,7 @@ describe('deriveClassName — token-path derivation', () => {
 
   it('combines literal segments with a single token (token names the class)', () => {
     const r = deriveClassName({
-      element: firstElement(`<div className={cn('flex', styles.foo)}/>`),
+      element: firstElement(`<div className={['flex', styles.foo]}/>`),
       segments: [literal('flex'), token(['styles', 'foo'])],
     });
     expect(r.className).toBe('foo');
@@ -112,7 +112,7 @@ describe('deriveClassName — token-path derivation', () => {
 
   it('uses the last equal-depth token when multiple tokens are present', () => {
     const r = deriveClassName({
-      element: firstElement(`<div className={cn(styles.a, styles.b)}/>`),
+      element: firstElement(`<div className={[styles.a, styles.b]}/>`),
       segments: [token(['styles', 'a']), token(['styles', 'b'])],
     });
     expect(r.className).toBe('b');
@@ -120,7 +120,7 @@ describe('deriveClassName — token-path derivation', () => {
 
   it('derives from a token when opaque runtime segments are present', () => {
     const r = deriveClassName({
-      element: firstElement(`<div className={cn(styles.a, foo())}/>`),
+      element: firstElement(`<div className={[styles.a, foo()]}/>`),
       segments: [token(['styles', 'a']), opaque()],
     });
     expect(r.className).toBe('a');

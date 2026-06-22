@@ -1,7 +1,7 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { basename, dirname, extname, isAbsolute, join, resolve as resolvePath } from 'node:path';
 import ts from 'typescript';
-import type { CompilerContext, StylePipeline } from '../config';
+import type { CompilerContext, CompilerPlugin } from '../config';
 import { diagnosticLocationFromNode } from '../diagnostics';
 import { tagName } from '../jsx';
 import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
@@ -22,7 +22,7 @@ export type TailwindMode =
   /** Pass-through. JSX `className` values stay as authored. No CSS emitted. */
   | 'preserve'
   /**
-   * Flatten every `cn(...)` call and dotted token reference to a single
+   * Flatten every className array and dotted token reference to a single
    * literal utility string on each `className` prop. No CSS emitted; token
    * imports become unused (handled by `dropUnusedImports`).
    */
@@ -103,7 +103,7 @@ interface TailwindTransformOptions extends Omit<TailwindOptions, 'input' | 'outp
   onRules?: ((rules: readonly CompiledRule[]) => void) | undefined;
 }
 
-export function tailwind(options: TailwindOptions = {}): StylePipeline {
+export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
   return {
     name: 'tailwind',
     async setup(context) {
@@ -226,8 +226,8 @@ function vanillaCssPlugin(
         // tokens resolve via path walking; opaques and unresolved tokens are
         // *passed through* — those are runtime expressions (e.g. a `className`
         // prop the consumer composes onto the element). We rewrite the
-        // classname to the derived semantic name and wrap any pass-throughs in
-        // a `cn(...)` call so composition is preserved.
+        // className to the derived semantic name and preserve pass-throughs in
+        // an array so target generators can choose how to merge.
         const passThrough: ts.Expression[] = [];
         const preserved: string[] = [];
         // Rule-producing utilities only. Preserved marker classes stay on the
@@ -289,10 +289,7 @@ function vanillaCssPlugin(
         if (passThrough.length === 0) {
           return factory.createStringLiteral(baseName);
         }
-        return factory.createCallExpression(factory.createIdentifier('cn'), undefined, [
-          factory.createStringLiteral(baseName),
-          ...passThrough,
-        ]);
+        return factory.createArrayLiteralExpression([factory.createStringLiteral(baseName), ...passThrough]);
       };
 
       const transformed = analyzeStyles({ visit })(transformContext)(sourceFile);
@@ -351,7 +348,7 @@ function defaultCssFileName(context: CompilerContext): string {
 
 /**
  * Discover the token-namespace imports in the skin source and evaluate each
- * referenced module on disk. Also folds local `const X = cn(<resolvable>)`
+ * referenced module on disk. Also folds local `const X = [<resolvable>]`
  * declarations into the env so JSX `className={X}` references resolve.
  *
  * Reads + reparses the source file from disk rather than walking the in-flight
@@ -427,7 +424,7 @@ function buildTokenEnv(sourcePath: string | undefined, resolveTokenModule?: Reso
 
   // Second pass: top-level `const X = <expr>` declarations whose RHS resolves
   // statically against the env. Lets skins write
-  //   const iconButton = cn(styles.button.base, styles.button.icon);
+  //   const iconButton = [styles.button.base, styles.button.icon];
   // and reference `iconButton` in `className={iconButton}` without losing
   // the resolution.
   for (const stmt of sourceFile.statements) {
@@ -453,7 +450,7 @@ function isTokenNamespaceImport(sourceName: string, localName: string, value: To
 }
 
 /**
- * Evaluate a local declaration's RHS against `env`. Supports `cn(...)` calls,
+ * Evaluate a local declaration's RHS against `env`. Supports className arrays,
  * dotted access, identifier lookup, and string literals — same surface as the
  * token-module evaluator, but without nested object literals (skins don't
  * declare those locally) and without recursion across files.
@@ -473,10 +470,11 @@ function tryEvaluateLocal(node: ts.Expression, env: Map<string, TokenValue>): To
     const next = root[node.name.text];
     return next ?? null;
   }
-  if (ts.isCallExpression(node) && ts.isIdentifier(node.expression) && node.expression.text === 'cn') {
+  if (ts.isArrayLiteralExpression(node)) {
     const parts: string[] = [];
-    for (const arg of node.arguments) {
-      const v = tryEvaluateLocal(arg, env);
+    for (const item of node.elements) {
+      if (ts.isSpreadElement(item)) return null;
+      const v = tryEvaluateLocal(item, env);
       if (v === null || typeof v !== 'string') return null;
       if (v) parts.push(v);
     }

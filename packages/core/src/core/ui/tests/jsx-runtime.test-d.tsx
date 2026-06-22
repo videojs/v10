@@ -69,12 +69,15 @@ const Gesture = createComponent(
 describe('constrained JSX', () => {
   it('accepts a single component', () => {
     void (<PlayButton className="x" />);
+    void (<PlayButton className={['x', undefined, false, ['y']]} />);
     void (<PlayButton key="play" />);
   });
 
   it('rejects invalid props on a single component', () => {
-    // @ts-expect-error - className must be a string
+    // @ts-expect-error - className must be a string or className array
     void (<PlayButton className={5} />);
+    // @ts-expect-error - className array values must be className-compatible
+    void (<PlayButton className={['x', 5]} />);
     // @ts-expect-error - id is a target-specific attr, not a core JSX prop
     void (<PlayButton id="play" />);
     // @ts-expect-error - hidden is a target-specific attr, not a core JSX prop
