@@ -124,7 +124,7 @@ function getTemplateHTML() {
                 <div class="media-menu__group">
                   <media-menu-item commandfor="settings-quality-menu" type="quality" data-setting="quality" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('switches', { class: 'media-icon' })}
-                    <span><media-text key="menuQuality"></media-text></span>
+                    <media-text key="menuQuality"></media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -140,7 +140,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('speed', { class: 'media-icon' })}
-                    <span><media-text key="menuSpeed"></media-text></span>
+                    <media-text key="menuSpeed"></media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -148,7 +148,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-captions-menu" type="captions" data-setting="captions" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('captions-off', { class: 'media-icon' })}
-                    <span><media-text key="menuCaptions"></media-text></span>
+                    <media-text key="menuCaptions"></media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
