@@ -138,7 +138,7 @@ function getTemplateHTML() {
               </media-volume-slider>
             </media-popover>
 
-            <button commandfor="settings-menu" aria-label="Settings" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger, 'media-button--settings')}">
+            <button commandfor="settings-menu" data-i18n-aria-label="menuSettings" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger, 'media-button--settings')}">
               ${renderIcon('gear', { class: cn(icon, menu.settingsIcon) })}
             </button>
             <media-menu id="settings-menu" side="top" align="center" class="${menu.settings}">
@@ -146,7 +146,7 @@ function getTemplateHTML() {
                 <div class="${menu.group}">
                   <media-menu-item commandfor="settings-quality-menu" type="quality" data-setting="quality" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     ${renderIcon('switches', { class: cn(icon, menu.icon) })}
-                    <span>Quality</span>
+                    <span><media-text key="menuQuality"></media-text></span>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
                       ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron) })}
@@ -162,7 +162,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     ${renderIcon('speed', { class: cn(icon, menu.icon) })}
-                    <span>Speed</span>
+                    <span><media-text key="menuSpeed"></media-text></span>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
                       ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron) })}
@@ -170,7 +170,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-captions-menu" type="captions" data-setting="captions" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     ${renderIcon('captions-off', { class: cn(icon, menu.icon) })}
-                    <span>Captions</span>
+                    <span><media-text key="menuCaptions"></media-text></span>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
                       ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron) })}
@@ -182,7 +182,7 @@ function getTemplateHTML() {
               <media-menu id="settings-quality-menu" class="${menu.submenuPanel}">
                 <media-menu-back class="${menu.back}">
                   ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron, iconFlipped) })}
-                  Quality
+                  <media-text key="menuQuality"></media-text>
                 </media-menu-back>
                 <div class="${menu.separator}"></div>
                 <media-quality-radio-group class="${menu.group}">
@@ -222,7 +222,7 @@ function getTemplateHTML() {
               <media-menu id="settings-speed-menu" class="${menu.submenuPanel}">
                 <media-menu-back class="${menu.back}">
                   ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron, iconFlipped) })}
-                  Speed
+                  <media-text key="menuSpeed"></media-text>
                 </media-menu-back>
                 <div class="${menu.separator}"></div>
                 <media-playback-rate-radio-group class="${menu.group}">
@@ -240,7 +240,7 @@ function getTemplateHTML() {
               <media-menu id="settings-captions-menu" class="${menu.submenuPanel}">
                 <media-menu-back class="${menu.back}">
                   ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron, iconFlipped) })}
-                  Captions
+                  <media-text key="menuCaptions"></media-text>
                 </media-menu-back>
                 <div class="${menu.separator}"></div>
                 <media-captions-radio-group class="${menu.group}">
