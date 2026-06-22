@@ -120,7 +120,7 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
         void (async () => {
           const { merged, loadedTags } = await mergeLocaleOverlays(localeSnapshot, loadLocale, localeLookupChain);
           if (seq !== this.#lazySeq) return;
-          if (shouldAttemptBrowserTranslation(localeSnapshot, loadedTags)) {
+          if (shouldAttemptBrowserTranslation(localeSnapshot, loadedTags, merged)) {
             const browser = await getBrowserTranslations(localeSnapshot);
             if (seq !== this.#lazySeq) return;
             if (Object.keys(browser).length) registerI18n(localeSnapshot, browser);
