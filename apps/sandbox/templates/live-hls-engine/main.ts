@@ -1,9 +1,9 @@
 /**
- * Bare harness for the experimental SPF live HLS engine — wires
- * `createLiveHlsEngine` to a raw <video> (no player/skin) and logs playback
+ * Bare harness for live HLS playback — wires `createSimpleHlsEngine` (which
+ * folds in live support) to a raw <video> (no player/skin) and logs playback
  * state, to validate live CMAF/LL-HLS playback end-to-end.
  */
-import { createLiveHlsEngine, type LiveHlsEngineSignals } from '@videojs/spf/live-hls';
+import { createSimpleHlsEngine, type SimpleHlsEngineSignals } from '@videojs/spf/hls';
 
 // Override per run with `?src=<m3u8 url>` (live test streams are ephemeral).
 const SRC =
@@ -46,8 +46,8 @@ for (const ev of ['loadedmetadata', 'durationchange', 'canplay', 'playing', 'wai
 }
 video.addEventListener('error', () => log(`video error: ${video.error?.code}`, 'err'));
 
-let signals: LiveHlsEngineSignals | undefined;
-const engine = createLiveHlsEngine({
+let signals: SimpleHlsEngineSignals | undefined;
+const engine = createSimpleHlsEngine({
   onSignalsReady: (refs) => {
     signals = refs;
   },
