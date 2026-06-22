@@ -1,6 +1,7 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { useTranslator } from '@/i18n/instance';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -99,6 +100,7 @@ function VolumePopover(): ReactNode {
  * sit at opposite edges of the control bar.
  */
 function CaptionsTrigger(): ReactNode {
+  const t = useTranslator();
   const captions = useCaptionsOptions();
   if (!captions) return null;
 
@@ -137,7 +139,12 @@ function CaptionsTrigger(): ReactNode {
         }
       />
       <Menu.Content className="media-surface media-popover media-menu media-menu--captions">
-        <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Captions">
+        <Menu.RadioGroup
+          className="media-menu__group"
+          value={value}
+          onValueChange={setValue}
+          aria-label={t('menuCaptions')}
+        >
           {options.map((option) => (
             <Menu.RadioItem
               key={option.value}

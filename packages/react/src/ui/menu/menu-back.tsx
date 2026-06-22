@@ -1,8 +1,10 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import { forwardRef, useCallback } from 'react';
 
+import { useTranslator } from '../../i18n/instance';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSubMenuContext } from './context';
@@ -14,9 +16,10 @@ export interface MenuBackProps extends UIComponentProps<'button', MenuState> {
 
 /** Button that navigates back to the parent menu view. Place at the top of a submenu Content. */
 export const MenuBack = forwardRef<HTMLButtonElement, MenuBackProps>(function MenuBack(
-  { render, className, style, label = 'Back', onClick, ...elementProps },
+  { render, className, style, label = 'menuBack', onClick, ...elementProps },
   forwardedRef
 ) {
+  const t = useTranslator();
   const subMenuCtx = useSubMenuContext();
   const parentMenu = subMenuCtx?.parentMenu ?? null;
 
@@ -37,7 +40,7 @@ export const MenuBack = forwardRef<HTMLButtonElement, MenuBackProps>(function Me
       props: [
         {
           type: 'button' as const,
-          'aria-label': label,
+          'aria-label': resolveTranslationPhrase(t, label),
           onClick: handleClick,
         },
         elementProps,

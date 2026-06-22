@@ -1,8 +1,10 @@
 'use client';
 
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { ReactNode } from 'react';
 
+import { useTranslator } from '../../i18n/instance';
 import { useAudioTrackOptions } from '../audio-track/use-audio-track-options';
 import { useCaptionsOptions } from '../captions-radio-group/use-captions-options';
 import { usePlaybackRateOptions } from '../playback-rate/use-playback-rate-options';
@@ -31,11 +33,14 @@ function PlaybackRateMenuItemSettingProvider({ children }: { children: ReactNode
 
 function CaptionsMenuItemSettingProvider({ children }: { children: ReactNode }): ReactNode {
   const captions = useCaptionsOptions();
+  const t = useTranslator();
   if (!captions) return children;
 
   const { state, options, value } = captions;
   const label =
-    value === CAPTIONS_OFF_VALUE ? 'Off' : (options.find((option) => option.value === value)?.label ?? 'Off');
+    value === CAPTIONS_OFF_VALUE
+      ? resolveTranslationPhrase(t, 'menuOff')
+      : (options.find((option) => option.value === value)?.label ?? resolveTranslationPhrase(t, 'menuOff'));
 
   return (
     <MenuItemSettingContextProvider value={{ type: 'captions', label, availability: state.availability }}>
@@ -46,10 +51,11 @@ function CaptionsMenuItemSettingProvider({ children }: { children: ReactNode }):
 
 function QualityMenuItemSettingProvider({ children }: { children: ReactNode }): ReactNode {
   const quality = useQualityOptions();
+  const t = useTranslator();
   if (!quality) return children;
 
   const { state, options, value } = quality;
-  const label = options.find((option) => option.value === value)?.label ?? 'Auto';
+  const label = options.find((option) => option.value === value)?.label ?? resolveTranslationPhrase(t, 'menuAuto');
 
   return (
     <MenuItemSettingContextProvider value={{ type: 'quality', label, availability: state.availability }}>

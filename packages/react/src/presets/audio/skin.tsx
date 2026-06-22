@@ -1,5 +1,6 @@
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { useTranslator } from '@/i18n/instance';
 import {
   CheckIcon,
   PauseIcon,
@@ -74,13 +75,19 @@ function VolumePopover(): ReactNode {
 }
 
 function PlaybackRateRadioGroup(): ReactNode {
+  const t = useTranslator();
   const state = usePlaybackRateOptions();
   if (!state) return null;
 
   const { options, setValue, value } = state;
 
   return (
-    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Playback rate">
+    <Menu.RadioGroup
+      className="media-menu__group"
+      value={value}
+      onValueChange={setValue}
+      aria-label={t('menuPlaybackRate')}
+    >
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
