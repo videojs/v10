@@ -56,7 +56,7 @@ export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOption
       },
       ...state.tracks.map((track) => ({
         value: track.value,
-        label: resolveTranslationPhrase(t, track.label),
+        label: resolveTranslationPhrase(t, track.labelKey ?? track.label),
         disabled: state.disabled,
       })),
     ],
