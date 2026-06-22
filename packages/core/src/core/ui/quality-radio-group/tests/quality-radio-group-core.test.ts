@@ -22,7 +22,8 @@ function createState(overrides: Partial<QualityRadioGroupState> = {}): QualityRa
       { value: '0', label: '1080p' },
       { value: '1', label: '720p' },
     ],
-    autoLabel: 'menuAuto',
+    autoLabel: 'Auto',
+    autoLabelKey: 'menuAuto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'available',
@@ -106,7 +107,8 @@ describe('QualityRadioGroupCore', () => {
       const state = core.getState();
 
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
-      expect(state.autoLabel).toBe('menuAutoWithLabel');
+      expect(state.autoLabel).toBe('Auto (720p)');
+      expect(state.autoLabelKey).toBe('menuAutoWithLabel');
       expect(state.autoLabelParams).toEqual({ label: '720p' });
     });
 
