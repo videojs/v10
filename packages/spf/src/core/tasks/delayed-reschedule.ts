@@ -12,21 +12,17 @@ import type { Reschedule } from './task';
  * RFC 8216 §6.3.4's "measured from the last time the client began loading"). If
  * the run takes longer than the cadence, the next run starts immediately.
  *
- * A `null` cadence stops the recurrence. An errored run passes `current` as
- * `undefined`, so the cadence function can choose to retry (return a delay) or
- * stop (return `null`).
+ * A `null` cadence stops the recurrence. A rejected run rejects this reschedule,
+ * which the `RecurringRunner` propagates as the recurrence's failure — error
+ * recovery (e.g. retrying transient fetch failures) belongs below, at the fetch
+ * layer, not in the cadence.
  */
 export function delayedReschedule<TValue>(
-  cadence: (current: TValue | undefined, previous: TValue | undefined) => number | null
+  cadence: (current: TValue, previous: TValue | undefined) => number | null
 ): Reschedule<TValue> {
   return async (task) => {
     const startedAt = Date.now();
-    let current: TValue | undefined;
-    try {
-      current = await task.run();
-    } catch {
-      current = undefined;
-    }
+    const current = await task.run();
     // `task.previous` is the prior successful value (carried by the runner's
     // clone); read-only for the cadence, hence the cast off `DeepReadonly`.
     const ms = cadence(current, task.previous as TValue | undefined);

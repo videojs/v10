@@ -82,26 +82,18 @@ describe('delayedReschedule', () => {
     await expect(reschedule(fakeTask(async () => 1))).resolves.toBe(false);
   });
 
-  it('passes undefined to the cadence when the run errors (so it can retry)', async () => {
-    vi.useFakeTimers();
-    const cadence = vi.fn(() => 50); // retry on error
+  it('rejects (propagating the run failure) without consulting the cadence', async () => {
+    const cadence = vi.fn(() => 50);
     const reschedule = delayedReschedule<number>(cadence);
 
-    let resolved: boolean | undefined;
-    const done = reschedule(
-      fakeTask(async () => {
-        throw new Error('boom');
-      })
-    ).then((v) => {
-      resolved = v;
-    });
-
-    await vi.advanceTimersByTimeAsync(0);
-    expect(cadence).toHaveBeenCalledWith(undefined, undefined);
-
-    await vi.advanceTimersByTimeAsync(50);
-    await done;
-    expect(resolved).toBe(true);
+    await expect(
+      reschedule(
+        fakeTask(async () => {
+          throw new Error('boom');
+        })
+      )
+    ).rejects.toThrow('boom');
+    expect(cadence).not.toHaveBeenCalled();
   });
 
   it('rejects when aborted during the wait', async () => {

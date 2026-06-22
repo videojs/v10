@@ -43,12 +43,7 @@ describe('mediaPlaylistReloadDelay', () => {
     expect(mediaPlaylistReloadDelay(slid, prev)).toBe(4000);
   });
 
-  it('retries at the last-known cadence when a reload errors (current undefined)', () => {
-    const prev = track({ targetDuration: 8 });
-    expect(mediaPlaylistReloadDelay(undefined, prev)).toBe(8000);
-  });
-
-  it('falls back to 6s when no target duration / prior snapshot is available', () => {
-    expect(mediaPlaylistReloadDelay(undefined, undefined)).toBe(6000);
+  it('falls back to 6s when the playlist carries no usable target duration', () => {
+    expect(mediaPlaylistReloadDelay(track({ targetDuration: 0 }), undefined)).toBe(6000);
   });
 });
