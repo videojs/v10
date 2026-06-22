@@ -25,6 +25,7 @@ export interface QualityRadioGroupRendition {
 export interface QualityRadioGroupState extends ButtonState {
   renditions: readonly QualityRadioGroupRendition[];
   autoLabel: string;
+  autoLabelParams?: { label: string } | undefined;
   value: string;
   disabled: boolean;
   availability: 'available' | 'unavailable';
@@ -68,7 +69,7 @@ function formatRenditionLabel(rendition: MediaVideoRendition): string {
   const size = getRenditionSize(rendition);
   if (size) return `${size}p`;
   if (rendition.bitrate) return formatBitrate(rendition.bitrate);
-  return 'Quality';
+  return 'menuQuality';
 }
 
 function formatRenditionBadge(
@@ -115,7 +116,7 @@ export class QualityRadioGroupCore {
 
   readonly state = createState<QualityRadioGroupState>({
     renditions: [],
-    autoLabel: 'Auto',
+    autoLabel: 'menuAuto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'unavailable',
@@ -143,7 +144,7 @@ export class QualityRadioGroupCore {
       return label;
     }
 
-    return 'Quality';
+    return 'menuQuality';
   }
 
   getRenditionLabel(rendition: MediaVideoRendition): string {
@@ -211,7 +212,8 @@ export class QualityRadioGroupCore {
 
     this.state.patch({
       renditions: media.videoRenditionList.map(toRendition),
-      autoLabel: selectedIndex === -1 && active ? `Auto (${active.label})` : 'Auto',
+      autoLabel: selectedIndex === -1 && active ? 'menuAutoWithLabel' : 'menuAuto',
+      autoLabelParams: selectedIndex === -1 && active ? { label: active.label } : undefined,
       value:
         selectedIndex === -1
           ? QUALITY_AUTO_VALUE

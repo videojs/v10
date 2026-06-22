@@ -33,7 +33,7 @@ export const CAPTIONS_OFF_VALUE = 'off';
 function formatTrackLabel(track: MediaTextTrack): string {
   if (track.label) return track.label;
   if (track.language) return track.language;
-  return track.kind === 'captions' ? 'Captions' : 'Subtitles';
+  return track.kind === 'captions' ? 'menuCaptions' : 'menuSubtitles';
 }
 
 function sortCaptionTracks(a: MediaTextTrack, b: MediaTextTrack): number {
@@ -81,7 +81,7 @@ export class CaptionsRadioGroupCore {
       return label;
     }
 
-    return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
+    return state.subtitlesShowing ? 'disableCaptions' : 'enableCaptions';
   }
 
   getTrackLabel(track: MediaTextTrack): string {

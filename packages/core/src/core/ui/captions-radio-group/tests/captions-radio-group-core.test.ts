@@ -96,8 +96,8 @@ describe('CaptionsRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns default labels based on showing state', () => {
       const core = new CaptionsRadioGroupCore();
-      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('Enable captions');
-      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('Disable captions');
+      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('enableCaptions');
+      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('disableCaptions');
     });
 
     it('returns custom string label', () => {
@@ -125,7 +125,7 @@ describe('CaptionsRadioGroupCore', () => {
         })
       ).toBe('English');
       expect(core.getTrackLabel({ kind: 'subtitles', label: '', language: 'es', mode: 'disabled' })).toBe('es');
-      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('Captions');
+      expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('menuCaptions');
     });
 
     it('uses a custom formatter', () => {

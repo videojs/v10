@@ -58,6 +58,16 @@ export type TranslationParams = {
   errorDialogTitle: never;
   errorDialogDismiss: never;
   mediaErrorFallback: never;
+  menuSettings: never;
+  menuQuality: never;
+  menuSpeed: never;
+  menuCaptions: never;
+  menuPlaybackRate: never;
+  menuBack: never;
+  menuOff: never;
+  menuAuto: never;
+  menuAutoWithLabel: { label: string };
+  menuSubtitles: never;
 };
 
 /**
@@ -75,6 +85,7 @@ type ParametricTranslations = {
   timeRemainingPhrase: Contains<'{duration}'>;
   volumeSliderValueTextMuted: Contains<'{percent}'>;
   indicatorVolumeWithValue: Contains<'{value}'>;
+  menuAutoWithLabel: Contains<'{label}'>;
 };
 
 /** Player copy keyed by camelCase tokens; all entries are optional overlay keys. */
