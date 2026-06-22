@@ -140,7 +140,7 @@ function getTemplateHTML() {
                 <div class="${menu.group}">
                   <media-menu-item commandfor="settings-quality-menu" type="quality" data-setting="quality" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     ${renderIcon('switches', { class: cn(icon, menu.icon) })}
-                    <span><media-text key="menuQuality"></media-text></span>
+                    <media-text key="menuQuality"></media-text>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
                       ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron) })}
@@ -156,7 +156,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     ${renderIcon('speed', { class: cn(icon, menu.icon) })}
-                    <span><media-text key="menuSpeed"></media-text></span>
+                    <media-text key="menuSpeed"></media-text>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
                       ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron) })}
@@ -164,7 +164,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-captions-menu" type="captions" data-setting="captions" class="${cn(menu.item, 'media-menu__item--submenu')}">
                     ${renderIcon('captions-off', { class: cn(icon, menu.icon) })}
-                    <span><media-text key="menuCaptions"></media-text></span>
+                    <media-text key="menuCaptions"></media-text>
                     <span class="${menu.hint}">
                       <media-menu-item-value class="${menu.hintLabel}"></media-menu-item-value>
                       ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron) })}
