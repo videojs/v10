@@ -830,6 +830,42 @@ describe('createI18n', () => {
     });
   });
 
+  it('resolves langRootRef below an inherited translations provider', async () => {
+    registerI18n('de', { play: 'Abspielen', pause: 'Pause' });
+    registerI18n('fr', { play: 'Lire', pause: 'Pause' });
+
+    const { I18nProvider, useTranslator, useLocale } = createI18n();
+    const rootRef = createRef<HTMLDivElement>();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return (
+        <span>
+          {useLocale()}:{t('play')}:{t('pause')}
+        </span>
+      );
+    }
+
+    render(
+      <I18nProvider locale="de">
+        <I18nProvider translations={{ pause: 'Override' }}>
+          <section lang="fr">
+            <I18nProvider langRootRef={rootRef}>
+              <div ref={rootRef}>
+                <Probe />
+              </div>
+            </I18nProvider>
+          </section>
+        </I18nProvider>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('fr:Lire:Override')).not.toBeNull();
+    });
+    expect(screen.queryByText('de:Abspielen:Override')).toBeNull();
+  });
+
   it('passes through when a nested provider only supplies langRootRef under an explicit locale', async () => {
     registerI18n('de', { play: 'Abspielen' });
 

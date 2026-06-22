@@ -80,6 +80,7 @@ export type { I18nContextValue } from './base';
 
 interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: Locale;
+  localeFromProp?: boolean;
 }
 
 export interface CreateI18nResult {
@@ -106,6 +107,7 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     locale: localeProp,
     langRootRef,
     parentLocale,
+    localeFromProp = localeProp !== undefined,
     translations: translationsProp,
     children,
     onActiveLocaleChange,
@@ -207,10 +209,10 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
       () => ({
         translator,
         locale: resolvedLocale,
-        localeFromProp: localeProp !== undefined,
+        localeFromProp,
         ...(translationsProp !== undefined ? { translations: translationsProp } : {}),
       }),
-      [translator, resolvedLocale, localeProp, translationsProp]
+      [translator, resolvedLocale, localeFromProp, translationsProp]
     );
 
     return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
@@ -229,6 +231,7 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     const inheritedTranslations = props.translations ?? (langRootOnly && parent ? parent.translations : undefined);
     const rootProps: I18nProviderRootProps = { ...props };
     if (inheritedLocale !== undefined) rootProps.locale = inheritedLocale;
+    rootProps.localeFromProp = props.locale !== undefined;
     if (parentLocale !== undefined) rootProps.parentLocale = parentLocale;
     if (inheritedTranslations !== undefined) rootProps.translations = inheritedTranslations;
     return <I18nProviderRoot {...rootProps} />;
