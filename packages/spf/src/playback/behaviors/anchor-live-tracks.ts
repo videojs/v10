@@ -1,27 +1,39 @@
 /**
- * Anchor the selected live tracks' timelines to the estimated stream origin.
+ * Position the selected tracks' timelines so model coordinates coincide with the
+ * SourceBuffer's native-PTS coordinates — the loader matches `currentTime` (a
+ * native-PTS value, since segments append unmodified) against each segment's
+ * `startTime`, so the two timelines must agree.
  *
- * The segment loader matches `currentTime` (the SourceBuffer's native-PTS
- * coordinate, since segments append unmodified) against each segment's
- * `startTime`. For live, the manifest's `startTime` (EXTINF-from-0) is *not*
- * the native PTS, so without adjustment the loader can't find the segments
- * around the playhead. This applies `anchorTrackToSequenceOrigin` to each
- * selected resolved track so `startTime` reads as elapsed-since-stream-start —
- * which ≈ native PTS when the encoder's timeline is stream-relative — closing
- * that gap from the manifest alone (refined later from the buffer).
+ * Two anchors, by precedence:
+ * 1. **Buffer pin (authoritative).** Once a segment is buffered, an injected
+ *    `resolveBufferedAnchor` reports where it *actually* landed (native PTS); the
+ *    track re-origins onto that exactly (`anchorTrackToBufferedSegment`). The
+ *    offset is constant (no-mid-stream-discontinuity assumption), so we pin
+ *    **once** per track and then leave it — the parser's PDT-exact carry-forward
+ *    (`placeOnPreviousTimeline`) maintains the buffer-aligned timeline across
+ *    reloads. Re-pinning every reload would *mask* a drifting baseline; pinning
+ *    once *surfaces* it.
+ * 2. **Sequence estimate (bootstrap).** Before anything is buffered there's no
+ *    ground truth, so `anchorTrackToSequenceOrigin` positions from the manifest
+ *    alone (`averageDuration × sequence`) — close enough to start playback, then
+ *    superseded by the pin.
  *
- * Per-track and idempotent: `anchorTrackToSequenceOrigin` returns the same
- * track once anchored (shift 0), so the effect converges without re-firing.
- * Cross-track A/V alignment (`alignTrackTimelines`) is intentionally *not*
- * composed here — it would fight the per-track anchor in a re-firing effect;
- * the residual per-track skew is absorbed by native-PTS A/V sync in the buffer.
+ * DOM-free: the buffered ground truth arrives via the injected resolver (the
+ * engine wires it from the buffer actor's `bufferedRanges`), so this behavior
+ * never touches `HTMLMediaElement`. The same shape serves non-zero-PTS VOD, where
+ * the model is zero-based and the buffer holds the original (large) PTS.
+ *
+ * Cross-track A/V alignment is intentionally *not* composed here — the buffer pin
+ * already lands each track on the shared native-PTS timeline.
  */
 
 import { isUndefined } from '@videojs/utils/predicate';
 import type { Behavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
 import { type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
+import { anchorTrackToBufferedSegment } from '../../media/anchor-track-to-buffered-segment';
 import { anchorTrackToSequenceOrigin } from '../../media/anchor-track-to-sequence-origin';
+import type { BufferedAnchor } from '../../media/buffered-anchor';
 import {
   isResolvedPresentation,
   isResolvedTrack,
@@ -38,10 +50,16 @@ export interface AnchorLiveTracksState {
 
 export interface AnchorLiveTracksConfig {
   /**
-   * Sequence number assumed to be the stream origin (time 0). Default 0 —
-   * see `anchorTrackToSequenceOrigin`.
+   * Sequence number assumed to be the stream origin (time 0) for the bootstrap
+   * estimate. Default 0 — see `anchorTrackToSequenceOrigin`.
    */
   presumedStartSequence?: number;
+  /**
+   * Buffered-ground-truth resolver, injected by the engine (the DOM boundary).
+   * Returns where a buffered segment actually sits in native PTS, or `undefined`
+   * before anything is buffered. Absent → estimate-only (e.g. non-DOM tests).
+   */
+  resolveBufferedAnchor?: (track: ResolvedTrack) => BufferedAnchor | undefined;
 }
 
 function anchorLiveTracksSetup({
@@ -55,11 +73,36 @@ function anchorLiveTracksSetup({
   };
   config?: AnchorLiveTracksConfig;
 }): () => void {
-  const { presumedStartSequence = 0 } = config;
+  const { presumedStartSequence = 0, resolveBufferedAnchor } = config;
+  // Track ids pinned to the buffer. Pinned once; thereafter the parser's
+  // PDT-exact carry-forward maintains the alignment — re-pinning every reload
+  // would mask a drifting baseline rather than surface it.
+  const pinned = new Set<string>();
+
+  function position(track: ResolvedTrack): ResolvedTrack {
+    // Already pinned → leave it to the parser's carry-forward.
+    if (pinned.has(track.id)) return track;
+
+    // Buffer ground truth available → pin once (authoritative). Only when the
+    // anchor's segment is actually in this track; otherwise fall through to the
+    // estimate and retry next reload.
+    const anchor = resolveBufferedAnchor?.(track);
+    if (anchor && track.segments.some((s) => s.id === anchor.segmentId)) {
+      pinned.add(track.id);
+      return anchorTrackToBufferedSegment(track, anchor.segmentId, anchor.actualStart);
+    }
+
+    // Pre-buffer bootstrap: the manifest-only sequence estimate.
+    return anchorTrackToSequenceOrigin(track, { presumedStartSequence });
+  }
 
   return effect(() => {
     const presentation = state.presentation.get();
-    if (!isResolvedPresentation(presentation)) return;
+    if (!isResolvedPresentation(presentation)) {
+      // Source unloaded/changing — drop pins so the next source re-pins.
+      pinned.clear();
+      return;
+    }
 
     const videoId = state.selectedVideoTrackId?.get();
     const audioId = state.selectedAudioTrackId?.get();
@@ -69,19 +112,19 @@ function anchorLiveTracksSetup({
       audioId ? findTrack(presentation, 'audio', audioId) : undefined,
     ];
 
-    const anchored: ResolvedTrack[] = [];
+    const positioned: ResolvedTrack[] = [];
     for (const track of selected) {
       if (!track || !isResolvedTrack(track) || isUndefined(track.startDate)) continue;
-      const next = anchorTrackToSequenceOrigin(track, { presumedStartSequence });
-      // Identity-equal when already anchored (shift 0) → nothing to patch.
-      if (next !== track) anchored.push(next);
+      const next = position(track);
+      // Identity-equal when nothing moved (already aligned / maintain mode).
+      if (next !== track) positioned.push(next);
     }
-    if (anchored.length === 0) return;
+    if (positioned.length === 0) return;
 
     update(state.presentation as Signal<MaybeResolvedPresentation>, (current) => {
       if (!isResolvedPresentation(current)) return current;
       let result = current;
-      for (const track of anchored) result = updateTrackInPresentation(result, track);
+      for (const track of positioned) result = updateTrackInPresentation(result, track);
       return result;
     });
   });
@@ -90,8 +133,8 @@ function anchorLiveTracksSetup({
 /**
  * Manual `Behavior<>` literal (like `calculatePresentationDuration`): declares
  * only `presentation` in stateKeys while reading the `selected*TrackId` slots
- * defensively, so the behavior stays composable in variants that wire
- * selection differently.
+ * defensively, so the behavior stays composable in variants that wire selection
+ * differently.
  */
 export const anchorLiveTracks: Behavior<
   { presentation: Signal<AnchorLiveTracksState['presentation']> },

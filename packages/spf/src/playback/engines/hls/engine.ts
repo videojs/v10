@@ -5,11 +5,13 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { type ReadonlySignal, untrack } from '../../../core/signals/primitives';
 import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
 import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
+import { bufferedAnchorFor } from '../../../media/buffered-anchor';
 import { canPlayTrack } from '../../../media/dom/capabilities';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
@@ -316,8 +318,28 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+  // Buffer-pin resolver injected into `anchorLiveTracks`. Reads the buffer
+  // actors' DOM-free snapshot data (appended segments + native-PTS
+  // `bufferedRanges`) to report where a segment actually landed, so the model
+  // timeline can be pinned to ground truth. The actor refs are filled from the
+  // composition's context once it's built (below); the resolver is only ever
+  // called later, during reloads. Reads are untracked — the pin re-checks each
+  // reload, no need to re-fire on every buffer tick.
+  let videoBufferActor: ReadonlySignal<SourceBufferActor | undefined> | undefined;
+  let audioBufferActor: ReadonlySignal<SourceBufferActor | undefined> | undefined;
+  const resolveBufferedAnchor = (track: ResolvedTrack) =>
+    untrack(() => {
+      const actor = (
+        track.type === 'video' ? videoBufferActor : track.type === 'audio' ? audioBufferActor : undefined
+      )?.get();
+      if (!actor) return undefined;
+      const { context } = actor.snapshot.get();
+      return bufferedAnchorFor(context.segments, context.bufferedRanges);
+    });
+
   const finalConfig = {
     ...config,
+    resolveBufferedAnchor,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     // The resolve* loaders' RecurringRunner re-runs on this `reschedule`: the pure
     // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.
@@ -332,7 +354,7 @@ export function createSimpleHlsEngine(
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
   };
 
-  return createComposition(
+  const composition = createComposition(
     [
       syncPreload,
       trackLoadTriggers,
@@ -438,4 +460,11 @@ export function createSimpleHlsEngine(
       },
     }
   );
+
+  // Fill the buffer-pin resolver's refs from the live context (created above);
+  // the resolver closes over these and is only invoked later, during reloads.
+  videoBufferActor = composition.context.videoBufferActor;
+  audioBufferActor = composition.context.audioBufferActor;
+
+  return composition;
 }

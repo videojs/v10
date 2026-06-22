@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
 import {
   isResolvedTrack,
@@ -86,5 +86,59 @@ describe('anchorLiveTracks', () => {
     expect(findTrack(state.presentation.get()!, 'video', 'v-1')?.startTime).toBe(0);
 
     cleanup();
+  });
+
+  describe('buffer pin', () => {
+    it('pins the track onto the actual buffered position, overriding the estimate', () => {
+      const state = {
+        presentation: signal<MaybeResolvedPresentation | undefined>(makePresentation(makeVideoTrack())),
+        selectedVideoTrackId: signal<string | undefined>('v-1'),
+      };
+
+      const cleanup = anchorLiveTracks.setup({
+        state,
+        context: {},
+        config: { resolveBufferedAnchor: () => ({ segmentId: 'segment-85', actualStart: 500 }) },
+      }) as () => void;
+
+      const track = findTrack(state.presentation.get()!, 'video', 'v-1');
+      expect(track && isResolvedTrack(track)).toBe(true);
+      if (!track || !isResolvedTrack(track)) return;
+      // Buffer wins over the estimate (which would place it at 340).
+      expect(track.startTime).toBe(500);
+      expect(track.segments[0]?.startTime).toBe(500);
+
+      cleanup();
+    });
+
+    it('pins once — a later reload is left to the parser (no re-pin even if the anchor drifts)', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      let actualStart = 500;
+      const state = {
+        presentation: signal<MaybeResolvedPresentation | undefined>(makePresentation(makeVideoTrack())),
+        selectedVideoTrackId: signal<string | undefined>('v-1'),
+      };
+
+      const cleanup = anchorLiveTracks.setup({
+        state,
+        context: {},
+        config: { resolveBufferedAnchor: () => ({ segmentId: 'segment-85', actualStart }) },
+      }) as () => void;
+
+      expect((findTrack(state.presentation.get()!, 'video', 'v-1') as { startTime: number }).startTime).toBe(500);
+
+      // Reload carrying the pinned timeline forward; the resolver now disagrees.
+      actualStart = 600;
+      const carried = makeVideoTrack();
+      carried.startTime = 500;
+      carried.segments = [{ ...carried.segments[0]!, startTime: 500 }];
+      state.presentation.set(makePresentation(carried));
+
+      // Maintain mode: stays at 500 (the parser owns carry-forward), not re-pinned to 600.
+      expect((findTrack(state.presentation.get()!, 'video', 'v-1') as { startTime: number }).startTime).toBe(500);
+
+      cleanup();
+      warn.mockRestore();
+    });
   });
 });
