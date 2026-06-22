@@ -698,6 +698,30 @@ describe('createI18n', () => {
     expect(getBrowserTranslations).toHaveBeenCalledWith('xx');
   });
 
+  it('registers browser translations when a shipped locale pack is missing keys', async () => {
+    const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({
+      menuSettings: 'Paramètres',
+    } satisfies Partial<Translations>);
+
+    const { I18nProvider, useTranslator } = createI18n();
+
+    function Probe(): ReactElement {
+      const t = useTranslator();
+      return <span>{t('menuSettings')}</span>;
+    }
+
+    render(
+      <I18nProvider locale="fr">
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Paramètres')).not.toBeNull();
+    });
+    expect(getBrowserTranslations).toHaveBeenCalledWith('fr');
+  });
+
   it('skips browser translation when locale is already registered', async () => {
     registerI18n('fr', { play: 'Lire' });
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations');
