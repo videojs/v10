@@ -21,8 +21,10 @@ import {
 } from '@videojs/utils/dom';
 import {
   type Context,
+  createContext,
   type ReactNode,
   type RefObject,
+  useCallback,
   useContext,
   useEffect,
   useLayoutEffect,
@@ -78,9 +80,12 @@ export interface I18nProviderProps {
 
 export type { I18nContextValue } from './base';
 
+type AddLocaleRoot = () => () => void;
+
 interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: Locale;
   localeFromProp?: boolean;
+  parentAddLocaleRoot?: AddLocaleRoot;
 }
 
 export interface CreateI18nResult {
@@ -102,40 +107,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
 export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions): CreateI18nResult {
   const loadLocale = options?.loadLocale ?? defaultLoadLocale;
   const { I18nContext } = base;
-
-  function I18nCallbackProvider({
-    parent,
-    onActiveLocaleChange,
-    children,
-  }: {
-    parent: I18nContextValue | null;
-    onActiveLocaleChange: NonNullable<I18nProviderProps['onActiveLocaleChange']>;
-    children: ReactNode;
-  }): ReactNode {
-    const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
-    useEffect(() => {
-      return onI18nRegistryChange(() => invalidateRegistry());
-    }, []);
-
-    const fallback = useMemo<I18nContextValue>(() => {
-      void registryEpoch;
-      return {
-        translator: createTranslator(getI18nTranslations('en'), 'en'),
-        locale: 'en',
-        localeFromProp: false,
-      };
-    }, [registryEpoch]);
-
-    const value = useMemo<I18nContextValue>(
-      () => ({
-        ...(parent ?? fallback),
-        onActiveLocaleChange,
-      }),
-      [parent, fallback, onActiveLocaleChange]
-    );
-
-    return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
-  }
+  const LocaleRootContext = createContext<AddLocaleRoot | undefined>(undefined);
 
   function I18nProviderRoot({
     locale: localeProp,
@@ -145,11 +117,24 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     translations: translationsProp,
     children,
     onActiveLocaleChange,
+    parentAddLocaleRoot,
   }: I18nProviderRootProps): ReactNode {
     const onActiveLocaleChangeRef = useRef(onActiveLocaleChange);
     onActiveLocaleChangeRef.current = onActiveLocaleChange;
+    const childLocaleRootCountRef = useRef(0);
+    const addLocaleRoot = useCallback(() => {
+      childLocaleRootCountRef.current += 1;
+      return () => {
+        childLocaleRootCountRef.current = Math.max(0, childLocaleRootCountRef.current - 1);
+      };
+    }, []);
     const [, invalidateLangRoot] = useReducer((epoch: number) => epoch + 1, 0);
     const langRootElementRef = useRef<Element | null>(null);
+
+    useLayoutEffect(() => {
+      if (!langRootRef) return;
+      return parentAddLocaleRoot?.();
+    }, [langRootRef, parentAddLocaleRoot]);
 
     useLayoutEffect(() => {
       if (!langRootRef) {
@@ -185,7 +170,11 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     );
 
     useEffect(() => {
-      onActiveLocaleChangeRef.current?.(resolvedLocale);
+      const id = setTimeout(() => {
+        if (childLocaleRootCountRef.current > 0) return;
+        onActiveLocaleChangeRef.current?.(resolvedLocale);
+      }, 0);
+      return () => clearTimeout(id);
     }, [resolvedLocale]);
 
     const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
@@ -250,22 +239,16 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
       [translator, resolvedLocale, localeFromProp, translationsProp, onActiveLocaleChange]
     );
 
-    return <I18nContext.Provider value={value}>{children}</I18nContext.Provider>;
+    return (
+      <LocaleRootContext.Provider value={addLocaleRoot}>
+        <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+      </LocaleRootContext.Provider>
+    );
   }
 
   function I18nProvider(props: I18nProviderProps): ReactNode {
     const parent = useContext(I18nContext);
-    const callback = props.onActiveLocaleChange;
-    const hasLocaleOverrides = props.locale !== undefined || props.translations !== undefined;
-    const callbackOnly = callback !== undefined && !hasLocaleOverrides && props.langRootRef === undefined;
-    if (callbackOnly) {
-      return (
-        <I18nCallbackProvider parent={parent} onActiveLocaleChange={callback}>
-          {props.children}
-        </I18nCallbackProvider>
-      );
-    }
-
+    const parentAddLocaleRoot = useContext(LocaleRootContext);
     const hasOverrides =
       props.locale !== undefined || props.translations !== undefined || props.onActiveLocaleChange !== undefined;
     const langRootOnly = props.langRootRef !== undefined && !hasOverrides;
@@ -282,6 +265,7 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     if (parentLocale !== undefined) rootProps.parentLocale = parentLocale;
     if (inheritedTranslations !== undefined) rootProps.translations = inheritedTranslations;
     if (onActiveLocaleChange !== undefined) rootProps.onActiveLocaleChange = onActiveLocaleChange;
+    if (parentAddLocaleRoot !== undefined) rootProps.parentAddLocaleRoot = parentAddLocaleRoot;
     return <I18nProviderRoot {...rootProps} />;
   }
 
