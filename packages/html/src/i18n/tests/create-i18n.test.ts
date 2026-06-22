@@ -195,20 +195,22 @@ describe('createI18n (HTML)', () => {
     expect(getBrowserTranslations).not.toHaveBeenCalled();
   });
 
-  it('skips browser translation when a shipped locale pack loads lazily', async () => {
-    const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations');
+  it('registers browser translations when a shipped locale pack is missing keys', async () => {
+    const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({
+      menuSettings: 'Paramètres',
+    });
 
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'fr');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'menuSettings');
     provider.appendChild(text);
     document.body.appendChild(provider);
 
     await vi.waitFor(() => {
-      expect(text.textContent).toBe('Lecture');
+      expect(text.textContent).toBe('Paramètres');
     });
-    expect(getBrowserTranslations).not.toHaveBeenCalled();
+    expect(getBrowserTranslations).toHaveBeenCalledWith('fr');
   });
 
   it('does not register browser translations after locale changes', async () => {
