@@ -86,12 +86,22 @@ export function resolveBrowserTranslationTarget(locale: string): string | undefi
 }
 
 /** Whether to invoke the Browser Translation API for this locale after lazy built-in loading. */
-export function shouldAttemptBrowserTranslation(locale: Locale, loadedLazyTags: readonly string[]): boolean {
+export function shouldAttemptBrowserTranslation(
+  locale: Locale,
+  loadedLazyTags: readonly string[],
+  translations?: Partial<Translations>
+): boolean {
   const target = resolveBrowserTranslationTarget(locale);
   if (!target) return false;
-  if (loadedLazyTags.some((tag) => !isEnglishLocaleTag(tag))) return false;
+  if (loadedLazyTags.some((tag) => !isEnglishLocaleTag(tag))) {
+    return translations !== undefined && hasMissingEnglishTranslations(translations);
+  }
 
   return !localeLookupChain(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredI18n(tag));
+}
+
+function hasMissingEnglishTranslations(translations: Partial<Translations>): boolean {
+  return (Object.keys(en) as (keyof Translations)[]).some((key) => translations[key] === undefined);
 }
 
 /**
