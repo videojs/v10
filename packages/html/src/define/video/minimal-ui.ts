@@ -35,6 +35,7 @@ import {
   defineTimeSlider,
   defineVolumeSlider,
 } from '../ui/compounds';
+import '../i18n';
 
 // Value import — player.ts body runs before this module's body.
 import { VideoPlayerElement } from './player';

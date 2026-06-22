@@ -72,8 +72,13 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const renditionsKey = `${state.renditions
-      .map((rendition) => `${rendition.value}:${rendition.label}:${rendition.tier ?? ''}:${rendition.badge ?? ''}`)
-      .join('|')}::${state.autoLabel}:${state.autoLabelParams?.label ?? ''}::${this.#i18n.locale}::${templateKey}`;
+      .map(
+        (rendition) =>
+          `${rendition.value}:${rendition.label}:${rendition.labelKey ?? ''}:${rendition.tier ?? ''}:${rendition.badge ?? ''}`
+      )
+      .join(
+        '|'
+      )}::${state.autoLabel}:${state.autoLabelKey ?? ''}:${state.autoLabelParams?.label ?? ''}::${this.#i18n.locale}::${templateKey}`;
 
     if (renditionsKey !== this.#renditionsKey) {
       this.#renditionsKey = renditionsKey;
@@ -86,7 +91,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       this.append(
         this.#createItem(
           QUALITY_AUTO_VALUE,
-          resolveTranslationPhrase(this.#i18n.value, state.autoLabel, state.autoLabelParams),
+          resolveTranslationPhrase(this.#i18n.value, state.autoLabelKey ?? state.autoLabel, state.autoLabelParams),
           undefined,
           undefined,
           template
@@ -96,7 +101,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
         ...state.renditions.map((rendition) =>
           this.#createItem(
             rendition.value,
-            resolveTranslationPhrase(this.#i18n.value, rendition.label),
+            resolveTranslationPhrase(this.#i18n.value, rendition.labelKey ?? rendition.label),
             rendition.tier,
             rendition.badge,
             template

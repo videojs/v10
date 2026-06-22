@@ -134,6 +134,16 @@ describe('composite define registration', () => {
     });
   });
 
+  describe('video/ui', () => {
+    it('registers media-text for skin template labels', async () => {
+      const before = spy.mock.calls.length;
+      await import('../video/ui');
+      const batch = batchSince(before);
+
+      expect(batch).toContain('media-text');
+    });
+  });
+
   // ── Final state ──────────────────────────────────────────────────────
 
   describe('registry completeness', () => {
