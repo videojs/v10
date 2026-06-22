@@ -1,13 +1,16 @@
 import {
   AirPlayButton,
+  BufferingIndicator,
   CastButton,
   Container,
   Controls,
+  ErrorDialog,
   FullscreenButton,
   Gesture,
   Hotkey,
   PiPButton,
   PlayButton,
+  Poster,
   SeekButton,
   StatusAnnouncer,
   Time,
@@ -27,15 +30,18 @@ import {
   PlayIcon,
   RestartIcon,
   SeekIcon,
+  SpinnerIcon,
 } from '@videojs/icons/components';
 import {
   airplayIcon,
+  bufferingIndicator,
   button,
   buttonGroupEnd,
   buttonGroupStart,
   castIcon,
   container,
   controls,
+  error,
   fullscreenIcon,
   icon,
   iconContainer,
@@ -48,9 +54,10 @@ import {
 } from './tailwind/video.tailwind';
 
 const SEEK_TIME = 10;
+const iconButton = [button.base, button.subtle, button.icon];
 
 export interface DefaultVideoSkinProps {
-  className?: string | undefined;
+  className?: string;
   children?: unknown;
 }
 
@@ -59,12 +66,26 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
     <Container className={[container, className]}>
       {children}
 
+      <Poster />
+
+      <BufferingIndicator className={bufferingIndicator.root}>
+        <SpinnerIcon className={icon} />
+      </BufferingIndicator>
+
+      <ErrorDialog.Root>
+        <ErrorDialog.Popup className={error.popup}>
+          <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+          <ErrorDialog.Description className={error.description} />
+          <ErrorDialog.Close className={[button.base, button.primary, error.close]}>OK</ErrorDialog.Close>
+        </ErrorDialog.Popup>
+      </ErrorDialog.Root>
+
       <Controls.Root className={controls}>
         <Tooltip.Provider>
           <Controls.Group className={buttonGroupStart}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <PlayButton className={[button.base, button.subtle, button.icon, playIcon.button]}>
+                <PlayButton className={[iconButton, playIcon.button]}>
                   <RestartIcon className={[icon, playIcon.restart]} />
                   <PlayIcon className={[icon, playIcon.play]} />
                   <PauseIcon className={[icon, playIcon.pause]} />
@@ -78,7 +99,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <SeekButton seconds={-SEEK_TIME} className={[button.base, button.subtle, button.icon]}>
+                <SeekButton seconds={-SEEK_TIME} className={[iconButton]}>
                   <SeekIcon className={[icon, iconContainer, iconFlipped]} />
                 </SeekButton>
               </Tooltip.Trigger>
@@ -90,7 +111,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <SeekButton seconds={SEEK_TIME} className={[button.base, button.subtle, button.icon]}>
+                <SeekButton seconds={SEEK_TIME} className={[iconButton]}>
                   <SeekIcon className={[icon, iconContainer]} />
                 </SeekButton>
               </Tooltip.Trigger>
@@ -119,7 +140,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
           <Controls.Group className={buttonGroupEnd}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <CastButton className={[button.base, button.subtle, button.icon, castIcon.button]}>
+                <CastButton className={[iconButton, castIcon.button]}>
                   <CastEnterIcon className={[icon, castIcon.enter]} />
                   <CastExitIcon className={[icon, castIcon.exit]} />
                 </CastButton>
@@ -132,7 +153,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <AirPlayButton className={[button.base, button.subtle, button.icon, airplayIcon.button]}>
+                <AirPlayButton className={[iconButton, airplayIcon.button]}>
                   <AirPlayEnterIcon className={[icon, airplayIcon.enter]} />
                   <AirPlayExitIcon className={[icon, airplayIcon.exit]} />
                 </AirPlayButton>
@@ -145,7 +166,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <PiPButton className={[button.base, button.subtle, button.icon, pipIcon.button]}>
+                <PiPButton className={[iconButton, pipIcon.button]}>
                   <PipEnterIcon className={[icon, pipIcon.off]} />
                   <PipExitIcon className={[icon, pipIcon.on]} />
                 </PiPButton>
@@ -158,7 +179,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <FullscreenButton className={[button.base, button.subtle, button.icon, fullscreenIcon.button]}>
+                <FullscreenButton className={[iconButton, fullscreenIcon.button]}>
                   <FullscreenEnterIcon className={[icon, fullscreenIcon.enter]} />
                   <FullscreenExitIcon className={[icon, fullscreenIcon.exit]} />
                 </FullscreenButton>

@@ -15,33 +15,55 @@ export interface RefHelpers {
   import(source: string, name: string, options?: { type?: boolean | undefined }): ImportReference;
 }
 
+export type ValueReference = string | ImportReference | ts.Expression;
+export type JsxPropValue = string | ImportReference | ts.Expression | undefined;
+export type JsxPropsSpec = readonly (ts.JsxAttribute | ts.JsxSpreadAttribute)[] | Record<string, JsxPropValue>;
+
+export interface ValueOnlyIfOptions {
+  value: ValueReference;
+  condition: ValueReference;
+  fallback?: ValueReference | undefined;
+}
+
 export type MatchPredicate<Value = unknown, Context = unknown> = (value: Value, context?: Context) => boolean;
 
 export interface MatchHelpers {
   all(...predicates: readonly MatchPredicate[]): MatchPredicate;
+  value: {
+    array(): MatchPredicate;
+  };
   jsx: {
     tag(name: string | RegExp): MatchPredicate;
-    attribute(name: string): MatchPredicate;
-    value: {
-      array(): MatchPredicate;
-    };
+    prop(name: string): MatchPredicate;
   };
   interface: {
     name(name: string | RegExp): MatchPredicate;
     property(name: string): MatchPredicate;
   };
+  function: {
+    name(name: string | RegExp): MatchPredicate;
+  };
 }
 
 export interface CreateHelpers {
-  expr: {
-    call(callee: string | ImportReference | ts.Expression, args: readonly ts.Expression[]): ts.CallExpression;
+  value: {
+    and(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
+    arrayItems(value: ts.Expression): ts.Expression[];
+    call(callee: ValueReference, args: readonly ts.Expression[]): ts.CallExpression;
+    conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
     identifier(value: string | ImportReference): ts.Identifier;
+    onlyIf(options: ValueOnlyIfOptions): ts.ConditionalExpression;
+    undefined(): ts.Identifier;
   };
   jsx: {
-    arrayElements(value: ts.Expression): ts.Expression[];
+    element(tag: string | ImportReference, props?: JsxPropsSpec): ts.JsxSelfClosingElement;
+    expression(value: ts.Expression): ts.JsxExpression;
+    prop(name: string, value?: JsxPropValue): ts.JsxAttribute;
+    renderIf(test: ValueReference, element: ts.Expression): ts.JsxExpression;
+    spreadProps(value: ValueReference): ts.JsxSpreadAttribute;
   };
   type: {
-    ref(value: string | ImportReference): ts.TypeReferenceNode;
+    named(value: string | ImportReference): ts.TypeReferenceNode;
     union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
     undefined(): ts.KeywordTypeNode;
   };
@@ -53,13 +75,21 @@ export interface EditHelpers {
   };
   jsx: {
     element(options: JsxElementEditOptions): CompilerTransform;
-    attribute(options: JsxAttributeEditOptions): CompilerTransform;
-    childAsProp(prop: string): JsxElementEdit;
-    addAttribute(name: string, value?: string | ts.Expression | undefined): JsxElementEdit;
+    prop(options: JsxPropEditOptions): CompilerTransform;
+    addProp(name: string, value?: JsxPropValue): JsxElementEdit;
+    addPropsSpread(value: ValueReference): JsxElementEdit;
+    moveChildToProp(prop: string): JsxElementEdit;
+    replaceTag(tag: string | ImportReference): JsxElementEdit;
   };
   interface: {
+    declaration(options: InterfaceDeclarationEditOptions): CompilerTransform;
+    extends(value: string | ImportReference): InterfaceDeclarationEdit;
     property(options: InterfacePropertyEditOptions): CompilerTransform;
     setType(type: (context: InterfacePropertyContext) => ts.TypeNode): InterfacePropertyEdit;
+  };
+  function: {
+    declaration(options: FunctionDeclarationEditOptions): CompilerTransform;
+    addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): FunctionDeclarationEdit;
   };
 }
 
@@ -79,26 +109,28 @@ export interface TransformOptions {
 }
 
 export interface JsxElementContext {
+  element: JsxElementLike;
   factory: ts.NodeFactory;
+  tagName: string;
 }
 
-export type JsxElementEdit = (element: JsxElementLike, context: JsxElementContext) => JsxElementLike | undefined;
+export type JsxElementEdit = (element: JsxElementLike, context: JsxElementContext) => ts.Node | undefined;
 
 export interface JsxElementEditOptions {
-  match: MatchPredicate;
+  when: MatchPredicate;
   transform: JsxElementEdit;
 }
 
-export interface JsxAttributeContext {
+export interface JsxPropContext {
   element: JsxElementLike;
-  attribute: ts.JsxAttribute;
+  prop: ts.JsxAttribute;
   value: ts.Expression;
   factory: ts.NodeFactory;
 }
 
-export interface JsxAttributeEditOptions {
-  match: MatchPredicate;
-  transform(context: JsxAttributeContext): ts.Expression | undefined;
+export interface JsxPropEditOptions {
+  when: MatchPredicate;
+  transform(context: JsxPropContext): ts.Expression | undefined;
 }
 
 export interface InterfacePropertyContext {
@@ -107,12 +139,38 @@ export interface InterfacePropertyContext {
   factory: ts.NodeFactory;
 }
 
+export interface InterfaceDeclarationContext {
+  interface: ts.InterfaceDeclaration;
+  factory: ts.NodeFactory;
+}
+
+export type InterfaceDeclarationEdit = (context: InterfaceDeclarationContext) => ts.InterfaceDeclaration | undefined;
+
+export interface InterfaceDeclarationEditOptions {
+  when: MatchPredicate;
+  transform: InterfaceDeclarationEdit;
+}
+
 export type InterfacePropertyEdit = (context: InterfacePropertyContext) => ts.PropertySignature | undefined;
 
 export interface InterfacePropertyEditOptions {
-  match: MatchPredicate;
+  when: MatchPredicate;
   transform: InterfacePropertyEdit;
 }
+
+export interface FunctionDeclarationContext {
+  function: ts.FunctionDeclaration;
+  factory: ts.NodeFactory;
+}
+
+export type FunctionDeclarationEdit = (context: FunctionDeclarationContext) => ts.FunctionDeclaration | undefined;
+
+export interface FunctionDeclarationEditOptions {
+  when: MatchPredicate;
+  transform: FunctionDeclarationEdit;
+}
+
+export type FunctionPropSpec = string | { name: string; spread?: boolean | undefined };
 
 interface MutableImportReference extends ImportReference {
   used: boolean;
@@ -184,6 +242,12 @@ function createMatchHelpers(): MatchHelpers {
       (...predicates) =>
       (value, context) =>
         predicates.every((predicate) => predicate(value, context)),
+    value: {
+      array: () => (value, context) => {
+        const expression = readJsxPropValue(value, context);
+        return Boolean(expression && ts.isArrayLiteralExpression(expression));
+      },
+    },
     jsx: {
       tag: (name) => (value, context) => {
         const element = readJsxElement(value, context);
@@ -191,15 +255,9 @@ function createMatchHelpers(): MatchHelpers {
         const current = tagName(element);
         return typeof name === 'string' ? current === name : name.test(current);
       },
-      attribute: (name) => (value, context) => {
-        const attr = readJsxAttribute(value, context);
+      prop: (name) => (value, context) => {
+        const attr = readJsxProp(value, context);
         return Boolean(attr && ts.isIdentifier(attr.name) && attr.name.text === name);
-      },
-      value: {
-        array: () => (value, context) => {
-          const expression = readJsxAttributeValue(value, context);
-          return Boolean(expression && ts.isArrayLiteralExpression(expression));
-        },
       },
     },
     interface: {
@@ -213,28 +271,92 @@ function createMatchHelpers(): MatchHelpers {
         return Boolean(property && ts.isIdentifier(property.name) && property.name.text === name);
       },
     },
+    function: {
+      name: (name) => (value, context) => {
+        const declaration = readFunctionDeclaration(value, context);
+        if (!declaration?.name) return false;
+        return typeof name === 'string' ? declaration.name.text === name : name.test(declaration.name.text);
+      },
+    },
   };
 }
 
 function createCreateHelpers(): CreateHelpers {
   return {
-    expr: {
+    value: {
+      and(left, right) {
+        return ts.factory.createBinaryExpression(
+          valueFromReference(left),
+          ts.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+          right
+        );
+      },
+      arrayItems(value) {
+        if (!ts.isArrayLiteralExpression(value)) return [];
+        return value.elements.filter((item): item is ts.Expression => !ts.isSpreadElement(item));
+      },
       call(callee, args) {
-        return ts.factory.createCallExpression(expressionFromReference(callee), undefined, [...args]);
+        return ts.factory.createCallExpression(valueFromReference(callee), undefined, [...args]);
+      },
+      conditional(test, whenTrue, whenFalse) {
+        return ts.factory.createConditionalExpression(
+          test,
+          ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+          whenTrue,
+          ts.factory.createToken(ts.SyntaxKind.ColonToken),
+          whenFalse
+        );
       },
       identifier(value) {
         if (isImportReference(value)) value.used = true;
         return ts.factory.createIdentifier(typeof value === 'string' ? value : value.name);
       },
+      onlyIf(options) {
+        const value = valueFromReference(options.value);
+        return ts.factory.createConditionalExpression(
+          ts.factory.createCallExpression(valueFromReference(options.condition), undefined, [value]),
+          ts.factory.createToken(ts.SyntaxKind.QuestionToken),
+          value,
+          ts.factory.createToken(ts.SyntaxKind.ColonToken),
+          options.fallback === undefined
+            ? ts.factory.createIdentifier('undefined')
+            : valueFromReference(options.fallback)
+        );
+      },
+      undefined() {
+        return ts.factory.createIdentifier('undefined');
+      },
     },
     jsx: {
-      arrayElements(value) {
-        if (!ts.isArrayLiteralExpression(value)) return [];
-        return value.elements.filter((item): item is ts.Expression => !ts.isSpreadElement(item));
+      element(tag, props = []) {
+        return ts.factory.createJsxSelfClosingElement(
+          jsxTagNameFromReference(tag),
+          undefined,
+          ts.factory.createJsxAttributes(createJsxProps(props, ts.factory))
+        );
+      },
+      expression(value) {
+        return ts.factory.createJsxExpression(undefined, value);
+      },
+      prop(name, value) {
+        return createJsxProp(name, value, ts.factory);
+      },
+      renderIf(test, element) {
+        return ts.factory.createJsxExpression(
+          undefined,
+          ts.factory.createBinaryExpression(
+            valueFromReference(test),
+            ts.factory.createToken(ts.SyntaxKind.AmpersandAmpersandToken),
+            element
+          )
+        );
+      },
+      spreadProps(value) {
+        return ts.factory.createJsxSpreadAttribute(valueFromReference(value));
       },
     },
     type: {
-      ref(value) {
+      named(value) {
         if (isImportReference(value)) value.used = true;
         return ts.factory.createTypeReferenceNode(typeof value === 'string' ? value : value.name);
       },
@@ -262,17 +384,28 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
     },
     jsx: {
       element: editJsxElement,
-      attribute: editJsxAttribute,
-      childAsProp:
+      prop: editJsxProp,
+      addProp:
+        (name, value) =>
+        (element, { factory }) =>
+          addJsxProp(element, name, value, factory),
+      addPropsSpread:
+        (value) =>
+        (element, { factory }) =>
+          addJsxPropsSpread(element, value, factory),
+      moveChildToProp:
         (prop) =>
         (element, { factory }) =>
           liftSingleChildToProp(element, prop, factory),
-      addAttribute:
-        (name, value) =>
+      replaceTag:
+        (tag) =>
         (element, { factory }) =>
-          addJsxAttribute(element, name, value, factory),
+          replaceJsxTag(element, tag, factory),
     },
     interface: {
+      declaration: editInterfaceDeclaration,
+      extends: (value) => (interfaceContext) =>
+        addInterfaceExtends(interfaceContext.interface, value, interfaceContext.factory),
       property: editInterfaceProperty,
       setType: (type) => (propertyContext) => {
         const factory = propertyContext.factory;
@@ -285,10 +418,17 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
         );
       },
     },
+    function: {
+      declaration: editFunctionDeclaration,
+      addProps:
+        (props, parameterIndex = 0) =>
+        (functionContext) =>
+          addFunctionProps(functionContext.function, parameterIndex, props, functionContext.factory),
+    },
   };
 }
 
-function expressionFromReference(value: string | ImportReference | ts.Expression): ts.Expression {
+function valueFromReference(value: ValueReference): ts.Expression {
   if (typeof value === 'string') return ts.factory.createIdentifier(value);
   if (isImportReference(value)) {
     value.used = true;
@@ -298,20 +438,33 @@ function expressionFromReference(value: string | ImportReference | ts.Expression
   throw new TypeError('Expected an expression or import reference.');
 }
 
+function jsxTagNameFromReference(value: string | ImportReference): ts.JsxTagNameExpression {
+  if (isImportReference(value)) value.used = true;
+
+  const text = typeof value === 'string' ? value : value.name;
+  const parts = text.split('.');
+  let current: ts.Identifier | ts.PropertyAccessExpression = ts.factory.createIdentifier(parts[0]!);
+  for (const part of parts.slice(1)) {
+    current = ts.factory.createPropertyAccessExpression(current, ts.factory.createIdentifier(part));
+  }
+  return current as ts.JsxTagNameExpression;
+}
+
 function editJsxElement(options: JsxElementEditOptions): CompilerTransform {
   return (context) => {
     const visit = (node: ts.Node): ts.Node => {
       const next = ts.visitEachChild(node, visit, context);
       if (!isJsxElementLike(next)) return next;
-      if (!options.match(next, { element: next })) return next;
-      return options.transform(next, { factory: context.factory }) ?? next;
+      const elementContext: JsxElementContext = { element: next, factory: context.factory, tagName: tagName(next) };
+      if (!options.when(next, elementContext)) return next;
+      return options.transform(next, elementContext) ?? next;
     };
 
     return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
   };
 }
 
-function editJsxAttribute(options: JsxAttributeEditOptions): CompilerTransform {
+function editJsxProp(options: JsxPropEditOptions): CompilerTransform {
   return (context) => {
     const factory = context.factory;
 
@@ -323,11 +476,11 @@ function editJsxAttribute(options: JsxAttributeEditOptions): CompilerTransform {
       let changed = false;
       const properties = attrs.properties.map((property) => {
         if (!ts.isJsxAttribute(property)) return property;
-        const value = readAttributeExpression(property);
+        const value = readPropValue(property);
         if (!value) return property;
-        const attributeContext: JsxAttributeContext = { element: next, attribute: property, value, factory };
-        if (!options.match(property, attributeContext)) return property;
-        const replacement = options.transform(attributeContext);
+        const propContext: JsxPropContext = { element: next, prop: property, value, factory };
+        if (!options.when(property, propContext)) return property;
+        const replacement = options.transform(propContext);
         if (!replacement) return property;
         changed = true;
         return factory.updateJsxAttribute(
@@ -373,7 +526,7 @@ function editInterfaceProperty(options: InterfacePropertyEditOptions): CompilerT
       const members = next.members.map((member) => {
         if (!ts.isPropertySignature(member)) return member;
         const propertyContext: InterfacePropertyContext = { interface: next, property: member, factory };
-        if (!options.match(member, propertyContext)) return member;
+        if (!options.when(member, propertyContext)) return member;
         const replacement = options.transform(propertyContext);
         if (!replacement) return member;
         changed = true;
@@ -389,6 +542,40 @@ function editInterfaceProperty(options: InterfacePropertyEditOptions): CompilerT
         next.heritageClauses,
         members
       );
+    };
+
+    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+  };
+}
+
+function editInterfaceDeclaration(options: InterfaceDeclarationEditOptions): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+
+    const visit = (node: ts.Node): ts.Node => {
+      const next = ts.visitEachChild(node, visit, context);
+      if (!ts.isInterfaceDeclaration(next)) return next;
+
+      const interfaceContext: InterfaceDeclarationContext = { interface: next, factory };
+      if (!options.when(next, interfaceContext)) return next;
+      return options.transform(interfaceContext) ?? next;
+    };
+
+    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
+  };
+}
+
+function editFunctionDeclaration(options: FunctionDeclarationEditOptions): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+
+    const visit = (node: ts.Node): ts.Node => {
+      const next = ts.visitEachChild(node, visit, context);
+      if (!ts.isFunctionDeclaration(next)) return next;
+
+      const functionContext: FunctionDeclarationContext = { function: next, factory };
+      if (!options.when(next, functionContext)) return next;
+      return options.transform(functionContext) ?? next;
     };
 
     return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
@@ -428,7 +615,7 @@ function liftSingleChildToProp(
 ): JsxElementLike | undefined {
   if (!ts.isJsxElement(element)) return undefined;
   const opening = element.openingElement;
-  if (hasAttribute(opening.attributes, prop)) return undefined;
+  if (hasProp(opening.attributes, prop)) return undefined;
 
   const child = singleElementChild(element.children);
   if (!child) return undefined;
@@ -441,25 +628,16 @@ function liftSingleChildToProp(
   return factory.createJsxSelfClosingElement(opening.tagName, opening.typeArguments, nextAttrs);
 }
 
-function addJsxAttribute(
+function addJsxProp(
   element: JsxElementLike,
   name: string,
-  value: string | ts.Expression | undefined,
+  value: JsxPropValue,
   factory: ts.NodeFactory
 ): JsxElementLike | undefined {
   const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
-  if (hasAttribute(attrs, name)) return undefined;
+  if (hasProp(attrs, name)) return undefined;
 
-  const initializer =
-    value === undefined
-      ? undefined
-      : typeof value === 'string'
-        ? factory.createStringLiteral(value)
-        : factory.createJsxExpression(undefined, value);
-  const nextAttrs = factory.createJsxAttributes([
-    ...attrs.properties,
-    factory.createJsxAttribute(factory.createIdentifier(name), initializer),
-  ]);
+  const nextAttrs = factory.createJsxAttributes([...attrs.properties, createJsxProp(name, value, factory)]);
 
   if (ts.isJsxElement(element)) {
     return factory.updateJsxElement(
@@ -478,6 +656,183 @@ function addJsxAttribute(
   return factory.updateJsxSelfClosingElement(element, element.tagName, element.typeArguments, nextAttrs);
 }
 
+function addJsxPropsSpread(
+  element: JsxElementLike,
+  value: ValueReference,
+  factory: ts.NodeFactory
+): JsxElementLike | undefined {
+  const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
+  const expression = valueFromReference(value);
+
+  if (typeof value === 'string' && hasPropsSpread(attrs, value)) return undefined;
+
+  const nextAttrs = factory.createJsxAttributes([...attrs.properties, factory.createJsxSpreadAttribute(expression)]);
+
+  if (ts.isJsxElement(element)) {
+    return factory.updateJsxElement(
+      element,
+      factory.updateJsxOpeningElement(
+        element.openingElement,
+        element.openingElement.tagName,
+        element.openingElement.typeArguments,
+        nextAttrs
+      ),
+      element.children,
+      element.closingElement
+    );
+  }
+
+  return factory.updateJsxSelfClosingElement(element, element.tagName, element.typeArguments, nextAttrs);
+}
+
+function addInterfaceExtends(
+  declaration: ts.InterfaceDeclaration,
+  value: string | ImportReference,
+  factory: ts.NodeFactory
+): ts.InterfaceDeclaration | undefined {
+  const name = typeof value === 'string' ? value : value.name;
+  const heritageClauses = declaration.heritageClauses ? [...declaration.heritageClauses] : [];
+  const extendsIndex = heritageClauses.findIndex((clause) => clause.token === ts.SyntaxKind.ExtendsKeyword);
+  const nextType = factory.createExpressionWithTypeArguments(valueFromReference(value), undefined);
+
+  if (extendsIndex >= 0) {
+    const extendsClause = heritageClauses[extendsIndex]!;
+    if (extendsClause.types.some((type) => heritageTypeName(type) === name)) return undefined;
+    heritageClauses[extendsIndex] = factory.updateHeritageClause(extendsClause, [...extendsClause.types, nextType]);
+  } else {
+    heritageClauses.push(factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [nextType]));
+  }
+
+  return factory.updateInterfaceDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.name,
+    declaration.typeParameters,
+    heritageClauses,
+    declaration.members
+  );
+}
+
+function addFunctionProps(
+  declaration: ts.FunctionDeclaration,
+  parameterIndex: number,
+  props: readonly FunctionPropSpec[],
+  factory: ts.NodeFactory
+): ts.FunctionDeclaration | undefined {
+  const parameter = declaration.parameters[parameterIndex];
+  if (!parameter || !ts.isObjectBindingPattern(parameter.name)) return undefined;
+
+  const existing = new Set<string>();
+  const normalElements: ts.BindingElement[] = [];
+  let spreadElement: ts.BindingElement | undefined;
+
+  for (const element of parameter.name.elements) {
+    const name = bindingElementName(element);
+    if (name) existing.add(name);
+    if (element.dotDotDotToken) {
+      spreadElement = element;
+    } else {
+      normalElements.push(element);
+    }
+  }
+
+  let changed = false;
+  const nextElements = [...normalElements];
+  let nextSpreadElement = spreadElement;
+
+  for (const spec of props) {
+    const name = typeof spec === 'string' ? spec : spec.name;
+    const spread = typeof spec === 'object' && spec.spread === true;
+
+    if (spread) {
+      if (nextSpreadElement) continue;
+      nextSpreadElement = factory.createBindingElement(
+        factory.createToken(ts.SyntaxKind.DotDotDotToken),
+        undefined,
+        factory.createIdentifier(name),
+        undefined
+      );
+      changed = true;
+      continue;
+    }
+
+    if (existing.has(name)) continue;
+    nextElements.push(factory.createBindingElement(undefined, undefined, factory.createIdentifier(name), undefined));
+    existing.add(name);
+    changed = true;
+  }
+
+  if (!changed) return undefined;
+
+  const nextBinding = factory.updateObjectBindingPattern(
+    parameter.name,
+    nextSpreadElement ? [...nextElements, nextSpreadElement] : nextElements
+  );
+  const nextParameter = factory.updateParameterDeclaration(
+    parameter,
+    parameter.modifiers,
+    parameter.dotDotDotToken,
+    nextBinding,
+    parameter.questionToken,
+    parameter.type,
+    parameter.initializer
+  );
+  const nextParameters = declaration.parameters.map((item, index) => (index === parameterIndex ? nextParameter : item));
+
+  return factory.updateFunctionDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.asteriskToken,
+    declaration.name,
+    declaration.typeParameters,
+    nextParameters,
+    declaration.type,
+    declaration.body
+  );
+}
+
+function replaceJsxTag(
+  element: JsxElementLike,
+  tag: string | ImportReference,
+  factory: ts.NodeFactory
+): JsxElementLike {
+  if (ts.isJsxElement(element)) {
+    return factory.updateJsxElement(
+      element,
+      factory.updateJsxOpeningElement(
+        element.openingElement,
+        jsxTagNameFromReference(tag),
+        element.openingElement.typeArguments,
+        element.openingElement.attributes
+      ),
+      element.children,
+      factory.updateJsxClosingElement(element.closingElement, jsxTagNameFromReference(tag))
+    );
+  }
+
+  return factory.updateJsxSelfClosingElement(
+    element,
+    jsxTagNameFromReference(tag),
+    element.typeArguments,
+    element.attributes
+  );
+}
+
+function createJsxProp(name: string, value: JsxPropValue, factory: ts.NodeFactory): ts.JsxAttribute {
+  const initializer =
+    value === undefined
+      ? undefined
+      : typeof value === 'string'
+        ? factory.createStringLiteral(value)
+        : factory.createJsxExpression(undefined, valueFromReference(value));
+  return factory.createJsxAttribute(factory.createIdentifier(name), initializer);
+}
+
+function createJsxProps(spec: JsxPropsSpec, factory: ts.NodeFactory): (ts.JsxAttribute | ts.JsxSpreadAttribute)[] {
+  if (Array.isArray(spec)) return [...spec];
+  return Object.entries(spec).map(([name, value]) => createJsxProp(name, value, factory));
+}
+
 function singleElementChild(
   children: readonly ts.JsxChild[]
 ): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxFragment | null {
@@ -494,14 +849,33 @@ function singleElementChild(
   return found;
 }
 
-function hasAttribute(attrs: ts.JsxAttributes, name: string): boolean {
+function hasProp(attrs: ts.JsxAttributes, name: string): boolean {
   return attrs.properties.some(
     (property) => ts.isJsxAttribute(property) && ts.isIdentifier(property.name) && property.name.text === name
   );
 }
 
-function readAttributeExpression(attribute: ts.JsxAttribute): ts.Expression | undefined {
-  const init = attribute.initializer;
+function hasPropsSpread(attrs: ts.JsxAttributes, name: string): boolean {
+  return attrs.properties.some(
+    (property) =>
+      ts.isJsxSpreadAttribute(property) && ts.isIdentifier(property.expression) && property.expression.text === name
+  );
+}
+
+function heritageTypeName(type: ts.ExpressionWithTypeArguments): string | undefined {
+  const expression = type.expression;
+  if (ts.isIdentifier(expression)) return expression.text;
+  if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
+  return undefined;
+}
+
+function bindingElementName(element: ts.BindingElement): string | undefined {
+  if (ts.isIdentifier(element.name)) return element.name.text;
+  return undefined;
+}
+
+function readPropValue(prop: ts.JsxAttribute): ts.Expression | undefined {
+  const init = prop.initializer;
   if (!init) return undefined;
   if (ts.isStringLiteral(init)) return init;
   if (ts.isJsxExpression(init) && init.expression) return init.expression;
@@ -514,16 +888,16 @@ function readJsxElement(value: unknown, context: unknown): JsxElementLike | unde
   return undefined;
 }
 
-function readJsxAttribute(value: unknown, context: unknown): ts.JsxAttribute | undefined {
-  if (isJsxAttribute(value)) return value;
-  if (isObject(context) && isJsxAttribute(context.attribute)) return context.attribute;
+function readJsxProp(value: unknown, context: unknown): ts.JsxAttribute | undefined {
+  if (isJsxProp(value)) return value;
+  if (isObject(context) && isJsxProp(context.prop)) return context.prop;
   return undefined;
 }
 
-function readJsxAttributeValue(value: unknown, context: unknown): ts.Expression | undefined {
+function readJsxPropValue(value: unknown, context: unknown): ts.Expression | undefined {
   if (isObject(context) && isNode(context.value) && ts.isExpression(context.value)) return context.value;
-  const attribute = readJsxAttribute(value, context);
-  return attribute ? readAttributeExpression(attribute) : undefined;
+  const prop = readJsxProp(value, context);
+  return prop ? readPropValue(prop) : undefined;
 }
 
 function readInterface(value: unknown, context: unknown): ts.InterfaceDeclaration | undefined {
@@ -542,11 +916,19 @@ function readInterfaceProperty(value: unknown, context: unknown): ts.PropertySig
   return undefined;
 }
 
+function readFunctionDeclaration(value: unknown, context: unknown): ts.FunctionDeclaration | undefined {
+  if (isNode(value) && ts.isFunctionDeclaration(value)) return value;
+  if (isObject(context) && isNode(context.function) && ts.isFunctionDeclaration(context.function)) {
+    return context.function as ts.FunctionDeclaration;
+  }
+  return undefined;
+}
+
 function isJsxElementLike(value: unknown): value is JsxElementLike {
   return Boolean(isNode(value) && (ts.isJsxElement(value) || ts.isJsxSelfClosingElement(value)));
 }
 
-function isJsxAttribute(value: unknown): value is ts.JsxAttribute {
+function isJsxProp(value: unknown): value is ts.JsxAttribute {
   return Boolean(isNode(value) && ts.isJsxAttribute(value));
 }
 

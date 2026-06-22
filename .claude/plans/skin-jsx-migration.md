@@ -75,7 +75,7 @@ Purpose: create one canonical source skin tree that can be compiled later.
 
 Status:
 - Started with `packages/skins/src/default/video.skin.tsx`.
-- Current scaffold covers container, children slot, controls root/groups, play button, seek buttons, time slider without thumbnail preview, cast, AirPlay, PiP, fullscreen button, hotkeys, gestures, and status announcer.
+- Current scaffold covers container, children slot, poster slot, buffering indicator, error dialog shell, controls root/groups, play button, seek buttons, time slider without thumbnail preview, cast, AirPlay, PiP, fullscreen button, hotkeys, gestures, and status announcer.
 - Current scaffold typechecks and does not change `@videojs/skins` package output.
 - Core manifests now use `parts: { Part: defineComponentPart<Props>() }` instead of `parts: [...]` plus `partProps`.
 - Core JSX runtime now infers props from every part descriptor, including `Root`.
@@ -88,9 +88,9 @@ Gap inventory for the remaining `default/video` port:
 | Tooltip trigger composition | React uses `render={<PlayButton />}` to avoid nested buttons. | React lowering | Source can use `<Tooltip.Trigger><PlayButton /></Tooltip.Trigger>`; React generator must lift the single child into `render`. Same for seek/fullscreen/cast/airplay/pip and popover triggers. |
 | Controls marker | Manual React sets `data-controls=""` on `Controls.Root` for Tailwind `has-*` selectors. | Target lowering | Source JSX cannot set `data-*`; React/HTML lowering should add the marker to `Controls.Root`. |
 | Cast, AirPlay, PiP buttons | Manual React repeats tooltip + button + icon patterns. | Existing Core parts | Added to source scaffold; still depends on trigger lowering for generated React parity. |
-| Poster | Manual React skin prop supports `poster?: string | renderProp`. Core `Poster` has state only; source JSX cannot pass React render props. | Needs design decision | Options: model target-neutral poster source props, use a named `Slot`, or keep poster handling in React generated wrapper. |
-| Buffering indicator shell | Manual React uses `BufferingIndicator render` with an outer root and inner surface container. | Core part candidate | Consider changing `BufferingIndicator` to compound parts such as `Root` and `Container`, or define a target lowering wrapper. |
-| Error dialog shell | Manual React uses `ErrorDialog.Popup` plus raw dialog/content/actions wrappers. | Core part candidate | Consider adding semantic parts such as `Panel`, `Content`, and `Actions` to `ErrorDialog` rather than source-local wrappers. |
+| Poster | Manual React skin prop supports `poster?: string | renderProp`. Core `Poster` has state only; source JSX cannot pass React render props. | Done via React lowering | Source uses a neutral `<Poster />` marker. React lowering extends `BaseVideoSkinProps`, destructures `poster`, spreads remaining container props, and emits the conditional React `Poster` with string/render-prop guards. |
+| Buffering indicator shell | Manual React uses `BufferingIndicator render` with an outer root and inner surface container. | Deferred parity gap | Generated slice keeps the root `BufferingIndicator` and spinner only; the inner surface container is visual-only and should be reintroduced only as a deliberate Core part or skin abstraction. |
+| Error dialog shell | Manual React uses `ErrorDialog.Popup` plus raw dialog/content/actions wrappers. | Done without new primitives | `Popup` is the dialog content primitive. The generated source uses `Popup`, `Title`, `Description`, and `Close` only, with `error.popup` / `error.close` skin tokens carrying the layout. Layout-only `Panel`/`Content`/`Actions` parts were rejected. |
 | Overlay | Manual React uses a raw `<div className={overlay} />`. | Needs design decision | Could become a Core `Overlay` component, target-lowered visual element, or a constrained skin-local abstraction if we allow those later. |
 | Thumbnail preview shell | Manual React wraps `Slider.Thumbnail`, pointer time, and spinner in a raw thumbnail root. | Core part candidate | Existing `Slider.Thumbnail` is the thumbnail image component, not the visual preview shell. Need a semantic wrapper/part before source can represent this without `div`. |
 | Volume popover | Manual React conditionally skips the popover when volume is unsupported. | React lowering or Core component | Existing `MuteButton`, `Popover`, and `VolumeSlider` can express most structure, but the unsupported branch currently depends on React state selection. |
@@ -100,7 +100,7 @@ Gap inventory for the remaining `default/video` port:
 
 Recommended next coding order:
 - Define React lowering for child-as-trigger composition and `Controls.Root` marker.
-- Resolve one structural Core-part gap at a time, starting with ErrorDialog or BufferingIndicator because they are small and isolated.
+- Resolve one structural gap at a time; next candidates are poster, overlay, thumbnail shell, or input feedback shells.
 
 Steps:
 - Use `packages/react/src/presets/video/skin.tailwind.tsx` as the structural reference for `default/video`.
@@ -119,7 +119,6 @@ Expected gap areas:
 - React render wrappers for buttons and slider pieces.
 - Dynamic settings menu option lists that currently use React hooks.
 - Poster render/source handling.
-- Error dialog inner content/action shells.
 - Buffering and input-feedback inner shells.
 - Thumbnail wrappers and status/icon group wrappers.
 
@@ -148,15 +147,16 @@ Purpose: compile the Phase 1 source skin into a React Tailwind module that match
 Status:
 - Replaced the temporary React-owned compiler module/script with `packages/react/skins.compiler.config.ts`.
 - The compiler now has an additive project path: config `input` / `output` / `plugins`, `compileProject(config, options)`, and CLI project mode via `vjs compile --config ...` when no file is passed.
-- The compiler exposes a generic `transform(({ ref, match, create, edit }) => [...])` plugin helper. React lowering is expressed with generic import, JSX, and interface/type edits rather than React-specific compiler internals.
+- The compiler exposes a generic `transform((code) => [...])` plugin helper. React lowering is expressed with generic import, JSX, and interface/type edits rather than React-specific compiler internals.
 - The compiler config is plugins-only; the temporary `config.styles` compatibility slot was removed to avoid competing extension paths.
 - Current generated output is checked in at `packages/react/src/presets/video/default-video.generated.tailwind.tsx` as an unexported temporary generated artifact.
-- Current lowering covers the represented `default/video` source slice only: component/icon import rewrites, Tailwind token import rewrite, `Tooltip.Trigger` child-as-`render`, `Controls.Root` `data-controls` marker, `className` array to React `cn(...)`, and source `children?: unknown` to React `ReactNode`.
+- Current lowering covers the represented `default/video` source slice only: component/icon import rewrites, Tailwind token import rewrite, `Tooltip.Trigger` child-as-`render`, `Controls.Root` `data-controls` marker, button `type="button"` defaults, poster prop lowering, container rest-prop spreading, `className` array to React `cn(...)`, and source `children?: unknown` to React `ReactNode`.
 - Existing manual React presets remain untouched and still provide the runtime/exported implementation.
 
 Remaining prototype gaps before replacing a manual preset:
-- Generated output does not yet add the manual React `Button`/slider render wrappers; it relies on current React component default elements plus source-authored classes.
-- The source skin still omits known structural gaps from Phase 1: poster, buffering indicator, error dialog internals, overlay, volume popover, settings menu, thumbnail shell, and input feedback shells.
+- Generated output now keeps button and slider visual classes in the source skin. React lowering uses the default React UI parts instead of generated skin renderer wrappers for this slice.
+- Time/volume-specific slider roots should use their own namespaced parts in source (`TimeSlider.Track`, `VolumeSlider.Track`, etc.). The React lowering may replace track/fill/buffer/thumb tags with skin wrapper components, but those wrappers must render the matching React `Slider.*` primitive internally.
+- The source skin still omits known structural gaps from Phase 1: overlay, volume popover, settings menu, thumbnail shell, seek labels, and input feedback shells.
 - `compile:skins` emits TypeScript-printer formatting; checked-in output is formatted with Biome after generation.
 
 Compiler config direction:
@@ -178,23 +178,22 @@ output: {
 
 - Keep exact per-entry outputs as a possible later escape hatch if generated source files need paths that cannot be expressed cleanly with `output.dir` and `entryFileNames`.
 - Replace `pipeline([...])` with a `transform(...)` plugin factory. The callback receives transform-context helpers and returns one ordered declarative pipeline.
-- `ref.import(...)` creates lazy symbol references used by transforms/builders. It should not emit imports immediately; imports are emitted only when a transform actually uses the reference.
+- `code.ref.import(...)` creates lazy symbol references used by transforms/builders. It should not emit imports immediately; imports are emitted only when a transform actually uses the reference.
 - Keep matching, creation, and mutation separate:
-  - `match.*` selects nodes and composes predicates.
-  - `create.*` builds expressions, types, JSX values, and declarations.
-  - `edit.*` applies visitors/mutations.
+  - `code.match.*` selects nodes and composes predicates.
+  - `code.create.*` builds output values, types, and JSX.
+  - `code.edit.*` applies visitors/mutations.
 - Prefer top-level `match` with domain subnamespaces so composition has one mental model:
-  - `match.jsx.tag('Controls.Root')`
-  - `match.jsx.attribute('className')`
-  - `match.interface.name(/Props$/)`
-  - `match.interface.property('children')`
-  - `match.import.source('@videojs/core/components')`
+  - `code.match.jsx.tag('Controls.Root')`
+  - `code.match.jsx.prop('className')`
+  - `code.match.interface.name(/Props$/)`
+  - `code.match.interface.property('children')`
 - Keep edit domains explicit:
-  - `edit.import.rewrite(...)`
-  - `edit.jsx.element(...)`
-  - `edit.jsx.attribute(...)`
-  - `edit.interface.property(...)`
-- Do not add a one-off compiler API such as `jsx.arrayAttributeToCall(...)`. Express that as generic composition: match a JSX attribute whose value is an array, then replace the value with a call expression built from `create.expr.call(cn, create.jsx.arrayElements(value))`.
+  - `code.edit.import.rewrite(...)`
+  - `code.edit.jsx.element(...)`
+  - `code.edit.jsx.prop(...)`
+  - `code.edit.interface.property(...)`
+- Do not add a one-off compiler API such as `jsx.arrayPropToCall(...)`. Express that as generic composition: match a JSX prop whose value is an array, then replace the value with a call expression built from `code.create.value.call(cn, code.create.value.arrayItems(value))`.
 - React config sketch:
 
 ```ts
@@ -211,32 +210,34 @@ export default defineConfig({
     banner: '// Generated by @videojs/compiler. Do not edit.\n',
   },
   plugins: [
-    transform(({ ref, match, create, edit }) => {
-      const cn = ref.import('@videojs/utils/style', 'cn');
-      const ReactNode = ref.import('react', 'ReactNode', { type: true });
+    transform((code) => {
+      const cn = code.ref.import('@videojs/utils/style', 'cn');
+      const ReactNode = code.ref.import('react', 'ReactNode', { type: true });
 
       return [
-        edit.import.rewrite({
+        code.edit.import.rewrite({
           '@videojs/core/components': coreComponentImport,
           '@videojs/icons/components': '@/icons',
           './tailwind/video.tailwind': '@videojs/skins/default/tailwind/video.tailwind',
         }),
         tailwind({ mode: 'preserve' }),
-        edit.jsx.element({
-          match: match.jsx.tag('Tooltip.Trigger'),
-          transform: edit.jsx.childAsProp('render'),
+        code.edit.jsx.element({
+          when: code.match.jsx.tag('Tooltip.Trigger'),
+          transform: code.edit.jsx.moveChildToProp('render'),
         }),
-        edit.jsx.element({
-          match: match.jsx.tag('Controls.Root'),
-          transform: edit.jsx.addAttribute('data-controls', ''),
+        code.edit.jsx.element({
+          when: code.match.jsx.tag('Controls.Root'),
+          transform: code.edit.jsx.addProp('data-controls', ''),
         }),
-        edit.jsx.attribute({
-          match: match.all(match.jsx.attribute('className'), match.jsx.value.array()),
-          transform: ({ value }) => create.expr.call(cn, create.jsx.arrayElements(value)),
+        code.edit.jsx.prop({
+          when: code.match.all(code.match.jsx.prop('className'), code.match.value.array()),
+          transform: ({ value }) => code.create.value.call(cn, code.create.value.arrayItems(value)),
         }),
-        edit.interface.property({
-          match: match.all(match.interface.name(/Props$/), match.interface.property('children')),
-          transform: edit.interface.setType(() => create.type.union(create.type.ref(ReactNode), create.type.undefined())),
+        code.edit.interface.property({
+          when: code.match.all(code.match.interface.name(/Props$/), code.match.interface.property('children')),
+          transform: code.edit.interface.setType(() =>
+            code.create.type.union(code.create.type.named(ReactNode), code.create.type.undefined())
+          ),
         }),
       ];
     }),
@@ -275,15 +276,15 @@ interface CompilerPlugin {
   - `transform`: parse/edit source, rewrite generated imports, lower JSX, update interfaces/types, process className, and run Tailwind transforms.
   - `render`: final per-file shaping such as generated banners, source pragma removal, comment normalization, or formatter integration.
   - `writeBundle`: whole-output validation, stale output checks, drift reporting, and summaries.
-- Import rewriting remains a transform, not `resolve`. Rollup `resolveId` answers "what file should this import load?"; React lowering answers "what import should generated source contain?" and belongs in `edit.import.rewrite(...)`.
+- Import rewriting remains a transform, not `resolve`. Rollup `resolveId` answers "what file should this import load?"; React lowering answers "what import should generated source contain?" and belongs in `code.edit.import.rewrite(...)`.
 - `tailwind({ mode: 'preserve' })` should also be a compiler plugin so Tailwind work participates in the same lifecycle and can emit CSS assets through plugin context when running in extract mode.
 
 Implemented compiler surface:
 - Project compilation for config input/output via `compileProject(config, options)` and CLI project mode.
-- Generic AST primitives in `@videojs/compiler`: `match`, `create`, `edit`, and transform-context `ref` helpers.
-- Lazy value/type import materialization through `ref.import(...)` and `create.*` builders.
+- Generic AST primitives in `@videojs/compiler`: `code.match`, `code.create`, `code.edit`, and transform-context `code.ref` helpers.
+- Lazy value/type import materialization through `code.ref.import(...)` and `code.create.*` builders.
 - Generic interface/type transforms for `children?: unknown` to `ReactNode` without React importing `typescript`.
-- Generic JSX element/attribute transforms for child-as-prop, adding attributes, and replacing attribute values.
+- Generic JSX element/attribute transforms for child-as-prop, adding attributes, conditional JSX expressions, guard expressions, object-form JSX attributes, and replacing attribute values.
 - The source-file pragma was removed from `packages/skins/src/default/video.skin.tsx`; skins rely on `packages/skins/tsconfig.json` `jsxImportSource`.
 
 Steps:
@@ -312,6 +313,25 @@ Verification:
 
 Gate question:
 - Should generated files be committed into `packages/react/src/presets/**`, generated into `__generated__` and re-exported, or generated only at build time?
+
+Next implementation sequence:
+
+1. Finish default video React wrapper parity before expanding coverage. Done for the current source slice.
+    - Add React-owned helper components for generated skins instead of teaching `@videojs/compiler` React semantics.
+    - Source owns shared icon button visual classes through `iconButton = [button.base, button.subtle, button.icon]` and slider part classes through `slider.*` tokens.
+    - React lowering keeps default `TimeSlider.*` / `VolumeSlider.*` parts and adds button `type="button"` defaults instead of importing generated skin renderer wrappers.
+    - Keep this first slice narrow: source-owned class composition plus target-only props. Defer missing structural regions to later steps.
+2. Expand `packages/skins/src/default/video.skin.tsx` toward manual default-video parity.
+   - Add overlay, volume popover, settings menu, thumbnail shell, seek labels, and input feedback islands.
+   - Classify each gap before implementation as source-neutral structure, React-only behavior, or React helper output.
+3. Add focused generated-output parity tests as each chunk lands.
+   - Assert key imports and structures rather than full snapshots.
+    - Cover wrapper `render` props, buffering, settings, volume, thumbnail, and input feedback incrementally.
+4. Decide generated artifact placement before replacing public exports.
+   - Recommendation: generate into a `__generated__` path and keep stable hand-written export files once replacement begins.
+5. After default video reaches parity, expand horizontally.
+   - Add `default/audio.skin.tsx`, `minimal/video.skin.tsx`, and `minimal/audio.skin.tsx`.
+   - Defer live/background variants until base audio/video generation is stable.
 
 ## Phase 3 - Expand React Tailwind Coverage
 
@@ -383,4 +403,4 @@ Gate question:
 
 ## Immediate Next Step
 
-Prototype React lowering for the existing `default/video` source scaffold, starting with child-as-trigger composition and the `Controls.Root` marker. Resolve the first structural Core-part gap only after that lowering path is proven.
+Continue expanding `default/video` source parity one structural gap at a time. The next likely gap is overlay after deciding whether the missing shell belongs in Core parts, source abstractions, or React lowering.

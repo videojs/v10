@@ -187,6 +187,7 @@ export const bufferingIndicator = {
 
 export const error = {
   ...baseError,
+  popup: cn(baseError.popup, surface, 'text-shadow-2xs text-shadow-black/25'),
   dialog: cn(baseError.dialog, surface, 'text-shadow-2xs text-shadow-black/25'),
   content: cn(baseError.content, 'text-shadow-inherit'),
   title: cn(baseError.title, 'text-base'),
