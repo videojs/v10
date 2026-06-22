@@ -2,7 +2,7 @@
 
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import type { ForwardedRef, KeyboardEvent, MouseEvent } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
