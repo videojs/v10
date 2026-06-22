@@ -110,10 +110,20 @@ function placeOnPreviousTimeline(
     anchor = localBase;
   } else {
     const last = prevSegments[prevSegments.length - 1]!;
-    anchor = last.startTime + last.duration + (offset - prevSegments.length) * targetDuration;
-    console.warn(
-      `[parseMediaPlaylist] full window turnover (offset ${offset} >= ${prevSegments.length}); estimating from previous end.`
-    );
+    const newFirst = segments[0]!;
+    if (last.startDate !== undefined && newFirst.startDate !== undefined) {
+      // PDT bridges the gap exactly — the spec-consistent cross-reload reference,
+      // immune to the target-duration over-estimate when actual segment durations
+      // differ from the declared ceiling. (`startDate` is intrinsic PDT, unaffected
+      // by the new window's local positioning.)
+      anchor = last.startTime + (newFirst.startDate - last.startDate);
+    } else {
+      anchor = last.startTime + last.duration + (offset - prevSegments.length) * targetDuration;
+      console.warn(
+        `[parseMediaPlaylist] full window turnover (offset ${offset} >= ${prevSegments.length}); ` +
+          'no PDT to bridge — estimating from previous end.'
+      );
+    }
   }
 
   const shift = anchor - localBase;

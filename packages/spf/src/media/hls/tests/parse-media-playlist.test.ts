@@ -546,6 +546,38 @@ segment11.m4s`;
       // anchor = previous end (18) + (offset 10 − 3) × 6 = 60
       expect(next.segments.map((s) => s.startTime)).toEqual([60, 66]);
     });
+
+    it('bridges a full window turnover exactly via PDT, not the target-duration estimate', () => {
+      // Actual segment duration (5s) is below the declared TARGETDURATION (6s), so
+      // the target-duration estimate over-shoots — PDT (the spec-consistent
+      // cross-reload reference) places the turnover window exactly.
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2024-01-01T00:00:00.000Z
+#EXTINF:5.0,
+segment0.m4s
+#EXTINF:5.0,
+segment1.m4s
+#EXTINF:5.0,
+segment2.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo); // [0, 5, 10], seg2 PDT = origin+10
+
+      // Turnover (offset 10 ≥ 3), 50s of real elapsed (10 × 5s) — PDT says so.
+      const reload = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:10
+#EXT-X-PROGRAM-DATE-TIME:2024-01-01T00:00:50.000Z
+#EXTINF:5.0,
+segment10.m4s
+#EXTINF:5.0,
+segment11.m4s`;
+      const next = parseMediaPlaylist(reload, previous);
+
+      // PDT-exact: seg2 sits at 10 with PDT origin+10; seg10 is origin+50 → 10 + 40 = 50.
+      // (The target-duration estimate would over-shoot to 15 + (10−3)×6 = 57.)
+      expect(next.segments.map((s) => s.startTime)).toEqual([50, 55]);
+    });
   });
 
   describe('EXT-X-PROGRAM-DATE-TIME', () => {
