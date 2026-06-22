@@ -44,7 +44,7 @@ export function createI18nBase(): I18nBase {
   const i18nContextKey = Symbol('@videojs/i18n');
   const i18nContext = createContext<I18nContextValue, typeof i18nContextKey>(i18nContextKey);
 
-  class I18nControllerImpl implements ReactiveController {
+  class I18nController implements ReactiveController {
     readonly #host: ReactiveControllerHost & HTMLElement;
     readonly #consumer: ContextConsumer<I18nLitContext, ReactiveControllerHost & HTMLElement>;
 
@@ -80,7 +80,7 @@ export function createI18nBase(): I18nBase {
 
       key = '';
 
-      readonly #i18n = new I18nControllerImpl(this);
+      readonly #i18n = new I18nController(this);
 
       protected override updated(changed: PropertyValues): void {
         super.updated(changed);
@@ -93,7 +93,7 @@ export function createI18nBase(): I18nBase {
   return {
     context: i18nContext,
     fallbackTranslator,
-    I18nController: I18nControllerImpl,
+    I18nController,
     TextMixin,
   };
 }

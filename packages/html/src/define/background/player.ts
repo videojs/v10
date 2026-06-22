@@ -1,5 +1,5 @@
 import { backgroundFeatures } from '@videojs/core/dom';
-import { I18nProviderMixin } from '../../i18n/provider-instance';
+import { I18nProviderMixin } from '../../i18n/provider';
 import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';
