@@ -51,12 +51,12 @@ export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsRe
     options: [
       {
         value: QUALITY_AUTO_VALUE,
-        label: resolveTranslationPhrase(t, state.autoLabel, state.autoLabelParams),
+        label: resolveTranslationPhrase(t, state.autoLabelKey ?? state.autoLabel, state.autoLabelParams),
         disabled: state.disabled,
       },
       ...state.renditions.map((rendition) => ({
         value: rendition.value,
-        label: resolveTranslationPhrase(t, rendition.label),
+        label: resolveTranslationPhrase(t, rendition.labelKey ?? rendition.label),
         ...(rendition.tier && { tier: rendition.tier }),
         ...(rendition.badge && { badge: rendition.badge }),
         disabled: state.disabled,
