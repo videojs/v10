@@ -19,6 +19,7 @@ export const MediaReferenceSchema = z.object({
   mediaType: z.enum(['video', 'audio']),
   hostProperties: z.record(z.string(), HostPropertyDefSchema),
   nativeAttributes: z.array(z.string()),
+  nativeProperties: z.array(z.string()),
   events: z.object({
     native: z.array(z.string()),
     elementSpecific: z.array(MediaEventDefSchema),

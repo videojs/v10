@@ -7,28 +7,28 @@
 
 const MEDIA_REFERENCE_SUBSECTIONS = Object.freeze([
   {
-    key: 'hostProperties',
-    title: 'Host Properties',
-    id: 'host-properties',
-    isEmpty: (ref) => Object.keys(ref.hostProperties ?? {}).length === 0,
-  },
-  {
     key: 'nativeAttributes',
     title: 'Attributes',
     id: 'attributes',
     isEmpty: (ref) => (ref.nativeAttributes ?? []).length === 0,
   },
   {
-    key: 'events',
-    title: 'Events',
-    id: 'events',
-    isEmpty: (ref) => (ref.events?.native ?? []).length === 0 && (ref.events?.elementSpecific ?? []).length === 0,
+    key: 'hostProperties',
+    title: 'Properties',
+    id: 'properties',
+    isEmpty: (ref) => Object.keys(ref.hostProperties ?? {}).length === 0 && (ref.nativeProperties ?? []).length === 0,
   },
   {
     key: 'methods',
     title: 'Methods',
     id: 'methods',
     isEmpty: (ref) => (ref.methods ?? []).length === 0,
+  },
+  {
+    key: 'events',
+    title: 'Events',
+    id: 'events',
+    isEmpty: (ref) => (ref.events?.native ?? []).length === 0 && (ref.events?.elementSpecific ?? []).length === 0,
   },
   {
     key: 'cssCustomProperties',

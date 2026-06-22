@@ -599,6 +599,8 @@ export interface MediaElementReference {
   mediaType: 'video' | 'audio';
   hostProperties: Record<string, HostPropertyDef>;
   nativeAttributes: string[];
+  /** Native media property names forwarded from the base host classes (MDN-linked). */
+  nativeProperties: string[];
   events: {
     native: string[];
     elementSpecific: MediaEventDef[];
