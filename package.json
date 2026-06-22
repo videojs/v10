@@ -69,6 +69,15 @@
     "turbo": "^2.9.0",
     "@typescript/native-preview": "beta"
   },
+  "pnpm": {
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@svta/cml-cta": "1.0.1",
+        "@svta/cml-structured-field-values": "1.0.1",
+        "@svta/cml-utils": "1.0.1"
+      }
+    }
+  },
   "simple-git-hooks": {
     "pre-commit": "pnpm lint-staged",
     "commit-msg": "pnpm commitlint"
