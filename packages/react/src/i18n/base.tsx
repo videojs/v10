@@ -17,6 +17,8 @@ export interface I18nContextValue {
   localeFromProp: boolean;
   /** Overrides passed to this provider. */
   translations?: Partial<Translations>;
+  /** Callback inherited by nested locale roots. */
+  onActiveLocaleChange?: (locale: Locale) => void;
 }
 
 export interface I18nBase {
