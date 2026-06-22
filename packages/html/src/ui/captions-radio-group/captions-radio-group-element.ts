@@ -70,7 +70,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   #syncContent(state: CaptionsRadioGroupCore.State): void {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
-    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}:${track.labelKey ?? ''}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
     if (tracksKey !== this.#tracksKey) {
       this.#tracksKey = tracksKey;
@@ -85,7 +85,11 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
       );
       this.append(
         ...state.tracks.map((track) =>
-          this.#createItem(track.value, resolveTranslationPhrase(this.#i18n.value, track.label), template)
+          this.#createItem(
+            track.value,
+            resolveTranslationPhrase(this.#i18n.value, track.labelKey ?? track.label),
+            template
+          )
         )
       );
     }
