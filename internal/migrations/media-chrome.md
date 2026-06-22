@@ -6,7 +6,7 @@ Video.js v10's HTML player uses the same `media-*` custom-element convention as 
 
 ## Before you begin
 
-Install Video.js and pick a preset/skin (see the [installation guide](https://videojs.org/docs/framework/html/how-to/installation)). The fastest path is to start from a preset, then replace its controls with your migrated markup.
+Install Video.js and pick a preset/skin (see the installation guide). The fastest path is to start from a preset, then replace its controls with your migrated markup.
 
 ```bash
 npm install @videojs/html   # or @videojs/react
@@ -37,6 +37,53 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
   </media-container>
 </video-player>
 ```
+
+## Map controller attributes
+
+Media Chrome configures behavior through `<media-controller>` attributes. Video.js v10 has no single controller element, so these settle into three places:
+
+- **Store features** — playback behavior composed into the player via `createPlayer({ features })`.
+- **`<media-container>` / `<media-controls>`** — layout, focus, and autohide.
+- **Dedicated elements** — `<media-hotkey>`, `<media-gesture>`, etc., declared in markup.
+
+| Media Chrome attribute | Video.js v10 | How |
+|---|---|---|
+| `audio` | `audioFeatures` preset | Choose an audio player (`createPlayer({ features: audioFeatures })` / audio skin) rather than toggling at runtime. |
+| `autohide` | `media-controls` (built in) | Controls auto-hide after inactivity automatically. The delay is currently fixed — see Known gaps. |
+| `fullscreenelement` | `media-container` | Fullscreen targets the container element. |
+| `gesturesdisabled` | `media-gesture disabled` / omit | Disable per gesture element, or leave the gestures out. |
+| `nohotkeys` | `media-hotkey disabled` / omit | Disable per hotkey element, or leave them out. |
+| `hotkeys="noarrowleft …"` | individual `media-hotkey` | Each shortcut is its own element — remove the ones you don't want. |
+| `keyboardforwardseekoffset` / `keyboardbackwardseekoffset` | `value` on `media-hotkey` | Set the signed seek amount per element. |
+| `defaultsubtitles` | `media-captions-button` / store | Partial — captions can be toggled; "on by default" isn't a flag yet. |
+| `defaultstreamtype` | `streamType` feature | Partial — derived from the media; no pre-load default. |
+| `liveedgeoffset` / `seektoliveoffset` | live media engine | Live-edge behavior lives in the playback engine, not a UI attribute. |
+| `lang` | i18n translator | Localization is configured through the translator/locale registry. |
+
+### Hotkeys
+
+Media Chrome toggles keyboard shortcuts with `nohotkeys` / `hotkeys`. Video.js declares each shortcut as a `<media-hotkey>` element, so you opt in to exactly the keys you want and set seek offsets inline:
+
+```html
+<media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+<media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+<media-hotkey keys="ArrowRight" action="seekStep" value="5"></media-hotkey>
+<media-hotkey keys="ArrowLeft" action="seekStep" value="-5"></media-hotkey>
+```
+
+To drop a shortcut, remove its element (or add `disabled`). There's no global "all hotkeys off" switch — omit the elements you don't need.
+
+### Gestures
+
+`gesturesdisabled` becomes per-element `<media-gesture>` controls. Tap and double-tap behavior — click to toggle play, double-tap to seek or go fullscreen — is declared explicitly:
+
+```html
+<media-gesture type="tap" action="togglePaused" pointer="mouse" region="center"></media-gesture>
+<media-gesture type="doubletap" action="seekStep" value="-10" region="left"></media-gesture>
+<media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
+```
+
+Remove an element or set `disabled` to turn a gesture off.
 
 ## Map the elements
 
@@ -104,8 +151,19 @@ export function MyPlayer() {
 }
 ```
 
+## Known gaps
+
+- Chapters are not yet supported in the media and in the time slider UI
+- Cue points are not yet supported in the media
+- No configurable `autohide` delay or disable switch (`autohide="-1"`), and no `autohideovercontrols`
+- No `breakpoints` / container-breakpoint attributes
+- No `defaultduration` placeholder before the media loads
+- No `seektoliveoffset` / `noautoseektolive` controls
+- No preference-persistence opt-outs (`novolumepref`, `nomutedpref`, `nosubtitleslangpref`)
+
 ## See also
 
-- [Installation](https://videojs.org/docs/framework/html/how-to/installation)
-- [UI components concept](https://videojs.org/docs/framework/html/concepts/ui-components)
-- [Skins, Presets, Customize skins](https://videojs.org/docs/framework/html/how-to/customize-skins)
+- Installation
+- UI components concept
+- Skins, Presets, Customize skins
+- Component reference pages
