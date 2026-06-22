@@ -6,7 +6,7 @@ Video.js v10's HTML player uses the same `media-*` custom-element convention as 
 
 ## Before you begin
 
-Install Video.js and pick a preset/skin (see the installation guide). The fastest path is to start from a preset, then replace its controls with your migrated markup.
+Install Video.js and pick a preset/skin (see the [installation guide](https://videojs.org/docs/framework/html/how-to/installation)). The fastest path is to start from a preset, then replace its controls with your migrated markup.
 
 ```bash
 npm install @videojs/html   # or @videojs/react
@@ -104,14 +104,8 @@ export function MyPlayer() {
 }
 ```
 
-## Known gaps
-
-- **Native controls aren't auto-removed when custom controls load** ([#1160](https://github.com/videojs/v10/issues/1160)). Omit the `controls` attribute on the underlying media to avoid double controls.
-- **`videoTracks` (multiple video tracks/angles) is not yet supported** ([#1163](https://github.com/videojs/v10/issues/1163)).
-
 ## See also
 
-- Installation
-- UI components concept
-- Skins, Presets, Customize skins
-- Component reference pages
+- [Installation](https://videojs.org/docs/framework/html/how-to/installation)
+- [UI components concept](https://videojs.org/docs/framework/html/concepts/ui-components)
+- [Skins, Presets, Customize skins](https://videojs.org/docs/framework/html/how-to/customize-skins)
