@@ -33,6 +33,8 @@
     { "path": "packages/html" },
     { "path": "packages/react" },
 
+    { "path": "packages/compiler" },
+
     { "path": "packages/cli" }
   ],
   "files": []

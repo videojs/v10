@@ -18,6 +18,7 @@ export default {
         'ci',
         'claude',
         'cli',
+        'compiler',
         'core',
         'design',
         'element',
