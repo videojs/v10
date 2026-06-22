@@ -46,13 +46,17 @@ export function getMenuItemSettingState(
     const state = cores.quality.getState();
 
     if (state.value === QUALITY_AUTO_VALUE) {
-      return { label: state.autoLabel, labelParams: state.autoLabelParams, availability: state.availability };
+      return {
+        label: state.autoLabelKey ?? state.autoLabel,
+        labelParams: state.autoLabelParams,
+        availability: state.availability,
+      };
     }
 
     const rendition = state.renditions.find((candidate) => candidate.value === state.value);
 
     return {
-      label: rendition?.label ?? 'menuAuto',
+      label: rendition?.labelKey ?? rendition?.label ?? 'menuAuto',
       availability: state.availability,
     };
   }
@@ -78,7 +82,7 @@ export function getMenuItemSettingState(
   const track = state.tracks.find((candidate) => candidate.value === state.value);
 
   return {
-    label: track?.label ?? 'menuOff',
+    label: track?.labelKey ?? track?.label ?? 'menuOff',
     availability: state.availability,
   };
 }
