@@ -6,7 +6,7 @@ Video.js v10's HTML player uses the same `media-*` custom-element convention as 
 
 ## Before you begin
 
-Install Video.js and pick a preset/skin (see the installation guide). The fastest path is to start from a preset, then replace its controls with your migrated markup.
+Install Video.js and pick a preset/skin (see the [installation guide](https://videojs.org/docs/framework/html/how-to/installation)). The fastest path is to start from a preset, then replace its controls with your migrated markup.
 
 ```bash
 npm install @videojs/html   # or @videojs/react
@@ -123,7 +123,7 @@ Continuous values use CSS custom properties: sliders expose `--media-slider-fill
 
 ## Themes → skins
 
-Media Chrome `<template>`-based themes (`media-theme`) become Video.js **skins** and **presets**. Start from a preset, then eject and customize (see the skins and presets concepts, and the customize-skins guide) rather than authoring a template.
+Media Chrome `<template>`-based themes (`media-theme`) become Video.js **skins** and **presets**. Start from a preset, then eject and customize (see the [skins](https://videojs.org/docs/framework/html/concepts/skins) and [presets](https://videojs.org/docs/framework/html/concepts/presets) concepts, and the [customize-skins guide](https://videojs.org/docs/framework/html/how-to/customize-skins)) rather than authoring a template.
 
 ## React
 
@@ -236,7 +236,7 @@ In the HTML player, do the same against the store directly — `selectVolume(sto
 
 ## See also
 
-- Installation
-- UI components concept
-- Skins, Presets, Customize skins
+- [Installation](https://videojs.org/docs/framework/html/how-to/installation)
+- [UI components concept](https://videojs.org/docs/framework/html/concepts/ui-components)
+- [Skins, Presets, Customize skins](https://videojs.org/docs/framework/html/how-to/customize-skins)
 - Component reference pages
