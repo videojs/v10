@@ -82,8 +82,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
       // The store may have been destroyed during an asynchronous gap between React
       // effect cleanup and re-setup (e.g., React <Activity> hide → reveal). The
-      // useState initializer does not re-run in this case, so we recreate and swap
-      // the store instance to unblock the next render cycle.
+      // useState initializer does not re-run in this case.
       if (store.destroyed) {
         setStore(createStore<PlayerTarget>()(combine(...config.features)));
         return;

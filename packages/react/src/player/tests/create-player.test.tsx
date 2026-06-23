@@ -96,17 +96,13 @@ describe('createPlayer', () => {
       originalStore.destroy();
       expect(originalStore.destroyed).toBe(true);
 
-      // Trigger the attach effect to re-run by changing the `media` dep — this
-      // mirrors what happens in the real app where Activity reveals the subtree
-      // with an already-attached media element. Without the fix this throws
-      // StoreError('DESTROYED').
+      // Mirrors the real app: Activity reveals the subtree with an already-attached media element.
       expect(() => {
         act(() => {
           setMediaFn(document.createElement('video'));
         });
       }).not.toThrow();
 
-      // Provider should have swapped in a fresh store so the player is operational.
       expect(store).toBeDefined();
       expect(store.destroyed).toBe(false);
       expect(store).not.toBe(originalStore);
@@ -167,7 +163,6 @@ describe('createPlayer', () => {
       // The Activity guard must not have fired: one store instance, not two.
       // (setStore would have been called and produced a second instance.)
       expect(seenStores.size).toBe(1);
-      // Deferred destroy was cancelled — store is alive after all timers flush.
       expect(currentStore.destroyed).toBe(false);
 
       vi.useRealTimers();
