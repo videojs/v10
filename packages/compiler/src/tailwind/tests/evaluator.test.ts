@@ -140,6 +140,12 @@ describe('loadTokenModule — relative imports', () => {
     expect(loadTokenModule(file)).toEqual({ a: 'flex gap-2' });
   });
 
+  it('resolves a relative import with an explicit extension', () => {
+    write('base.ts', `export const value = 'flex';\n`);
+    const file = write('mod.ts', `import { value } from './base.ts';\nexport const a = value;\n`);
+    expect(loadTokenModule(file)).toEqual({ a: 'flex' });
+  });
+
   it('resolves an aliased import', () => {
     write('base.ts', `export const button = { base: 'rounded' };\n`);
     const file = write(

@@ -127,6 +127,22 @@ describe('emitCss — split mode', () => {
     expect(twoIdx).toBeGreaterThan(-1);
     expect(oneIdx).toBeLessThan(twoIdx);
   });
+
+  it('uses safe file stems for empty, reserved, and path-like groups', async () => {
+    const out = await emitCss({
+      mode: 'split',
+      rules: [
+        rule('a', [{ property: 'color', value: 'red' }]),
+        rule('b', [{ property: 'color', value: 'blue' }], [], 'index'),
+        rule('c', [{ property: 'color', value: 'green' }], [], '../controls'),
+        rule('d', [{ property: 'color', value: 'purple' }], [], 'controls'),
+      ],
+    });
+    if (out.kind !== 'split') throw new Error('expected split');
+    expect([...out.groups.keys()].sort()).toEqual(['_default', '_index', 'controls', 'controls-2']);
+    expect(out.index).not.toContain('./index.css');
+    expect(out.index).not.toContain('..');
+  });
 });
 
 describe('emitCss — baseCss prepend', () => {
@@ -608,6 +624,29 @@ describe('emitCss — registered @property variables', () => {
     });
     if (out.kind !== 'merged') throw new Error('expected merged');
     expect(out.css).toMatch(/var\(--tw-content\)/);
+  });
+
+  it('uses resolver-supplied inline defaults for uncaptured variables', async () => {
+    const out = await emitCss({
+      rules: [
+        rule('card', [
+          { property: 'content', value: 'var(--brand-content)' },
+          { property: 'display', value: 'block' },
+        ]),
+      ],
+      properties: {
+        mode: 'inline',
+        variables: [
+          {
+            match: /^--brand-/,
+            resolve: (name) => (name === '--brand-content' ? { initialValue: '"brand"' } : undefined),
+          },
+        ],
+      },
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(collapse(out.css)).toContain(collapse('content: "brand";'));
+    expect(out.css).not.toMatch(/var\(--brand-content\)/);
   });
 
   it('leaves variables untouched when no properties option is given (back-compat)', async () => {

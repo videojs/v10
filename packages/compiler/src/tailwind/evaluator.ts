@@ -1,5 +1,5 @@
 import { existsSync, readFileSync } from 'node:fs';
-import { dirname, isAbsolute, resolve } from 'node:path';
+import { dirname, extname, isAbsolute, resolve } from 'node:path';
 import ts from 'typescript';
 import { type DiagnosticLocation, diagnosticLocationFromNode } from '../diagnostics';
 
@@ -331,6 +331,7 @@ const MODULE_EXTENSIONS = ['.ts', '.tsx', '/index.ts', '/index.tsx'] as const;
 /** Resolve a relative `./foo` / `../foo` specifier from `fromFile`. */
 function resolveRelativeModule(specifier: string, fromFile: string): string {
   const base = isAbsolute(specifier) ? specifier : resolve(dirname(fromFile), specifier);
+  if (extname(base) && existsSync(base)) return base;
   for (const ext of MODULE_EXTENSIONS) {
     const candidate = `${base}${ext}`;
     if (existsSync(candidate)) return candidate;

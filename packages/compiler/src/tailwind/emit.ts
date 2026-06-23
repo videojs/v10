@@ -19,7 +19,12 @@ export interface CompiledRule {
 /** Output of `emitCss`. Discriminated by `kind`. */
 export type EmittedCss =
   | { kind: 'merged'; css: string }
-  | { kind: 'split'; index: string; groups: Map<string, string> };
+  | {
+      kind: 'split';
+      index: string;
+      /** CSS chunks keyed by safe file stem, not raw group name. */
+      groups: Map<string, string>;
+    };
 
 /**
  * Hoist configuration. When provided, every CSS custom property declaration
@@ -68,8 +73,7 @@ export interface EmitCssOptions {
    * Tailwind's internal `--tw-*` registered variables from the final output.
    *
    *   - `true` — inline `--tw-*` (regex `/^--tw-/`).
-   *   - `RegExp` — inline any `--name` whose name (excluding the leading
-   *     `--`) matches.
+   *   - `RegExp` — inline any custom property whose full name matches.
    *   - omitted — no inlining.
    *
    * Resolution is per-rule: the setter for a property must live in the
@@ -169,6 +173,7 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   // place to be emitted as `@property` rules.
   const propMode = opts.properties?.mode;
   const captured = collectPropertyDefs(opts.rules);
+  const referenced = collectReferencedVarsFromRules(opts.rules);
   const propertyVariables = opts.properties ? normalizePropertyVariables(opts.properties.variables, inlineVars) : [];
   const propertyMatch = propertyVariables.length > 0 ? matchAny(propertyVariables) : undefined;
   const resolveDef = (name: string): PropertyDef | undefined => {
@@ -178,7 +183,9 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   };
   const inlineMatch = propMode === 'inline' ? combineMatchers(inlineVars, propertyMatch) : inlineVars;
   const fallbacks =
-    propMode === 'inline' && propertyMatch ? buildFallbackSetters(captured, propertyMatch, resolveDef) : undefined;
+    propMode === 'inline' && propertyMatch
+      ? buildFallbackSetters(captured, referenced, propertyMatch, resolveDef)
+      : undefined;
   const emitProperties = (css: string): string =>
     propMode === 'emit' && propertyMatch ? buildPropertyBlocks(css, propertyMatch, resolveDef) : '';
 
@@ -201,12 +208,14 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
 
   const groups = new Map<string, string>();
   const importLines: string[] = [];
+  const groupFileNames = new Set<string>();
   // Sort group names for deterministic output.
   const sortedGroups = [...byGroup.keys()].sort();
   for (const groupName of sortedGroups) {
     const groupRules = byGroup.get(groupName)!;
-    groups.set(groupName, composeRules(groupRules, undefined, inlineMatch, fallbacks));
-    importLines.push(`@import "./${groupName || 'index'}.css";`);
+    const fileName = groupCssFileName(groupName, groupFileNames);
+    groups.set(fileName, composeRules(groupRules, undefined, inlineMatch, fallbacks));
+    importLines.push(`@import "./${fileName}.css";`);
   }
 
   const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
@@ -269,6 +278,16 @@ function collectReferencedVars(css: string): Set<string> {
   return out;
 }
 
+function collectReferencedVarsFromRules(rules: readonly CompiledRule[]): Set<string> {
+  const out = new Set<string>();
+  for (const rule of rules) {
+    for (const declaration of rule.utility.declarations) {
+      for (const name of collectReferencedVars(declaration.value)) out.add(name);
+    }
+  }
+  return out;
+}
+
 /** Collect custom properties *declared* (`--name:`) in a CSS string. */
 function collectDefinedVars(css: string): Set<string> {
   const out = new Set<string>();
@@ -301,11 +320,13 @@ function collectPropertyDefs(rules: readonly CompiledRule[]): Map<string, Proper
 /** Build the `name → initial-value` fallback map for `mode: 'inline'`. */
 function buildFallbackSetters(
   captured: Map<string, PropertyDef>,
+  referenced: Set<string>,
   match: VariableMatcher,
   resolveDef: (name: string) => PropertyDef | undefined
 ): Map<string, string> {
   const out = new Map<string, string>();
-  for (const name of captured.keys()) {
+  const names = new Set([...captured.keys(), ...referenced]);
+  for (const name of names) {
     if (!match(name)) continue;
     const def = resolveDef(name);
     if (def?.initialValue !== undefined) out.set(name, def.initialValue);
@@ -351,6 +372,27 @@ async function bundleBaseCss(paths: readonly string[], configDir: string): Promi
 /** Joins non-empty sections with two newlines. */
 function joinSections(...sections: string[]): string {
   return sections.filter((s) => s.length > 0).join('\n\n');
+}
+
+function groupCssFileName(groupName: string, used: Set<string>): string {
+  const base = sanitizeGroupName(groupName);
+  let fileName = base;
+  let suffix = 2;
+  while (used.has(fileName)) {
+    fileName = `${base}-${suffix}`;
+    suffix++;
+  }
+  used.add(fileName);
+  return fileName;
+}
+
+function sanitizeGroupName(groupName: string): string {
+  const trimmed = groupName.trim();
+  if (!trimmed) return '_default';
+
+  const safe = trimmed.replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
+  const fileName = safe || '_group';
+  return fileName === 'index' ? '_index' : fileName;
 }
 
 /* ─────────────────────────────────────────────────────────────────────────

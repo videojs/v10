@@ -475,6 +475,24 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(captured![0]!.className).toBe('button');
   });
 
+  it('resolves imported tokens with explicit extensions before extraction', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const tokens = { button: 'flex' };
+`
+    );
+    const source = `import { tokens as styles } from './tokens.ts';
+function App(){ return <Foo className={styles.button}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      target: 'jsx',
+      filename: sourcePath,
+      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+    });
+    expect(code).toContain('"button"');
+  });
+
   it('resolves bare token imports through a configured resolver', async () => {
     const tokenPath = writeFixture(
       'tokens.ts',

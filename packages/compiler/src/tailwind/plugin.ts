@@ -314,7 +314,7 @@ function addCssAssets(context: CompilerContext, output: string | undefined, emit
   for (const [group, source] of emitted.groups) {
     context.addAsset({
       type: 'css',
-      fileName: join(dir, `${group || 'index'}.css`),
+      fileName: join(dir, `${group}.css`),
       source,
       sourceFile: context.filename,
     });
@@ -484,6 +484,7 @@ function resolveTokenImport(
 
 function resolveModulePath(specifier: string, fromFile: string): string | null {
   const base = isAbsolute(specifier) ? specifier : resolvePath(dirname(fromFile), specifier);
+  if (extname(base) && existsSync(base)) return base;
   for (const ext of MODULE_EXTENSIONS) {
     const candidate = `${base}${ext}`;
     if (existsSync(candidate)) return candidate;
