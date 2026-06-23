@@ -30,8 +30,7 @@ without it, live HLS sources don't play correctly.
   `on-resume` reposition policy (a future use-case). Termination is
   `#EXT-X-ENDLIST`-based (the naive tier —
   sufficient for conformant content); the miss-counter fallback and reload
-  jitter are deferred full-depth, and `clearLiveSeekableRange()` on termination
-  is a low-risk verify-later item.
+  jitter are deferred full-depth.
 - **Definition depth:** sketched — grounded in the implementation on
   `feat/spf-hls-live`. Source material: [SPF Epics Working Doc — Live Stream
   Support (epic #2)](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4)
@@ -52,12 +51,12 @@ below is part of "live works (and terminates) at all"; richer live variants
 | Manifest reload loop | ✅ Implemented | Periodic media-playlist refetch keyed off `#EXT-X-TARGETDURATION`. Each `resolveXTrack` owns a `RecurringRunner` (`resolve-track.ts`) rescheduled by `delayedReschedule(mediaPlaylistReloadDelay)` (wired in `engine.ts`). Cadence in `reload-policy.ts`: full target-duration on window change / first reload, half target-duration on unchanged window; start-anchored per RFC 8216bis §6.3.4; returns `null` (stops) once duration is finite |
 | Sliding-window segment tracking | ✅ Implemented | `placeOnPreviousTimeline` (`parse-media-playlist.ts`) carries the new window onto the established timeline via media-sequence overlap (PDT bridge on full turnover). Segment-loader `planTasks` re-evaluates the mutating `track.segments` on each load dispatch; back-buffer keeps last 2 segments. No explicit "no-longer-in-playlist" eviction signal — the keep-count heuristic + list shrink handle roll-off |
 | Live duration semantics | ✅ Implemented | Parser sets `Track.duration = Infinity` for unended live; `calculatePresentationDuration` (default resolver `getResolvedSelectedTrackDuration`) writes it; `updateMediaSourceDuration` propagates `mediaSource.duration = Infinity` once MS is open and buffers idle |
-| Live edge tracking + `setLiveSeekableRange` | ✅ Implemented (option **b**) | The live window (or null for VOD/ended) is derived once by the pure `liveWindowFor` (`media/live-window.ts`), consumed by two separate behaviors: `sync-live-seekable-range.ts` declares `setLiveSeekableRange(start, end)` reactively on each window slide (runs while paused too), and `seek-to-live-edge.ts` does the one-time HOLD-BACK seek. Separate from the reload loop (option b). Inert for VOD via `liveWindowFor` returning null. **Gap:** no `clearLiveSeekableRange()` on termination |
+| Live edge tracking + `setLiveSeekableRange` | ✅ Implemented (option **b**) | The live window (or null for VOD/ended) is derived once by the pure `liveWindowFor` (`media/live-window.ts`), consumed by two separate behaviors: `sync-live-seekable-range.ts` declares `setLiveSeekableRange(start, end)` reactively on each window slide (runs while paused too), and `seek-to-live-edge.ts` does the one-time HOLD-BACK seek. Separate from the reload loop (option b). Inert for VOD via `liveWindowFor` returning null. No `clearLiveSeekableRange()` on termination — unnecessary: the UA consults the live range only while `duration === Infinity`, so once `endOfStream` sets a finite duration it's ignored |
 | Live-window playhead guard | ✅ Implemented (`window-exit`) | While playing (`!paused && !seeking && readyState > 0`), reposition `currentTime` to `liveEdgeStart = max(windowStart, windowEnd − HOLD_BACK_TARGET_MULTIPLIER×targetDuration)` when the playhead falls **outside** the sliding window — covering *paused-too-long* (Scenario A; fires on the `playing` resume) and *fell-behind-on-poor-network* (Scenario B; fires on the reload / window-update re-fire of the effect, since `timeupdate` stops during a stall). Within-window pause and scrub-back are left untouched (DVR model). Lives in `seek-to-live-edge` so the live playhead position has a single owner (the one-time initial seek + the ongoing guard); secondary triggers are `playing` / `timeupdate` / `seeked` listeners. Reposition policy is a seam (`repositionPolicy`, default `'window-exit'`); the edge-only `'on-resume'` branch is not yet implemented. **Deferred:** playback-rate latency catch-up, MSE gap-jumping |
 | Reload jitter / backoff | ✅ Naive only | Target-duration cadence with unchanged-window throttle (half target). No thundering-herd jitter, no backoff on repeated identical-playlist responses (full depth, not implemented) |
 | Per-type reload coordination | ✅ Independent | Audio / video / text each own their `RecurringRunner` and reload on their own `#EXT-X-TARGETDURATION`. Resolved as **extended `resolveXTrack`** (same `setupTrackResolution` handles one-shot VOD and recurring live via the `RecurringRunner` abstraction) — no separate `reloadXTrack` family |
 | Termination detection | ✅ Naive depth | `#EXT-X-ENDLIST` recognized and surfaced (`MediaPlaylistMetadata.endList`); parser flips `Track.duration` finite (on `ENDLIST` or `PLAYLIST-TYPE:VOD`), which stops the reload loop. ENDLIST-only is the sanctioned naive tier (per [clusters.md](./clusters.md#naive-vs-full-implementation-depth)) and sufficient for conformant content (Mux always emits `ENDLIST`); the miss-counter fallback for non-conformant servers is deferred full-depth |
-| Terminated state transition | ✅ Implemented (one verify-later item) | Reload stops (policy returns `null`); the `endOfStream` gate unblocks once `Track.duration` is finite and the last segment is appended; per-type independent (waits for all active tracks). `clearLiveSeekableRange()` is **not** called on the transition — low-risk (a terminated window's stale live range ~matches its buffered/duration-derived seekable); verify on a real terminating stream |
+| Terminated state transition | ✅ Implemented (one verify-later item) | Reload stops (policy returns `null`); the `endOfStream` gate unblocks once `Track.duration` is finite and the last segment is appended; per-type independent (waits for all active tracks). `clearLiveSeekableRange()` is intentionally **not** called — the MSE spec consults the live range only while `duration === Infinity`, so once `endOfStream` sets a finite duration the UA ignores it; clearing on the `ENDLIST`→finite transition would be premature (duration still `Infinity`) and shrink `seekable` to buffered-only |
 
 ## What's not implemented
 
@@ -67,9 +66,6 @@ below is part of "live works (and terminates) at all"; richer live variants
   exists (default `'window-exit'`, implemented), but the `'on-resume'`
   (always-snap-to-edge / no-DVR) branch is inert. It lands as the
   `[live-edge-only-mode]` use-case, not here.
-- **`clearLiveSeekableRange()` on termination** — not called; low-risk (a
-  terminated window's stale live range ~matches its buffered/duration-derived
-  seekable). Verify on a real terminating stream; not a blocker.
 
 **Naive depth (sufficient for conformant content; full depth deferred):**
 

@@ -14,9 +14,16 @@
  *
  * Duration is owned solely by `updateMediaSourceDuration`; this behavior only
  * declares the seekable range (`setLiveSeekableRange` requires only
- * `readyState === 'open'` per the W3C MSE spec, not a set `duration`). Out of
- * scope (tracked follow-up): `clearLiveSeekableRange()` on the live→ended
- * transition.
+ * `readyState === 'open'` per the W3C MSE spec, not a set `duration`).
+ *
+ * No `clearLiveSeekableRange()` on termination, by design: the MSE spec consults
+ * the live seekable range *only* while `duration === Infinity`. When a live
+ * stream ends, `endOfStream()` sets a finite duration and the UA derives
+ * `seekable` from buffered + duration, ignoring the live range — so clearing is
+ * unnecessary. Clearing on the `ENDLIST`→finite-`Track.duration` transition
+ * (when the window goes `null`) would also be premature: `duration` is still
+ * `Infinity` until `endOfStream`, so clearing would shrink `seekable` to
+ * buffered-only while the stream is still effectively live.
  */
 import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
