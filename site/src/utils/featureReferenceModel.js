@@ -2,7 +2,7 @@
  * Centralized feature API reference subsection definitions.
  *
  * Mirrors componentReferenceModel.js for feature APIs. Produces heading/id data
- * consumed by both FeatureReference.astro and remarkConditionalHeadings.
+ * consumed by both FeatureReference.astro and satteriConditionalHeadings.
  *
  * Structure:
  *   ## API Reference (H2)

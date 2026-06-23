@@ -581,7 +581,7 @@ vi.mock('@/types/docs', async () => {
 
 ## Technology Stack
 
-- **[Astro 7](https://astro.build)**: Static site generation with island architecture (Rust compiler; Markdown stays on the `unified()` remark/rehype processor — see "MDX Processing Plugins" below)
+- **[Astro 7](https://astro.build)**: Static site generation with island architecture (Rust compiler; Markdown runs on the native **Sätteri** processor with custom MDAST plugins — see "MDX Processing Plugins" below)
 - **[Vite 8](https://vite.dev)**: Underlying dev server and bundler, via Rolldown (see "Dependency Optimization" gotcha below)
 - **[React 19](https://react.dev)**: Client-side interactive components (`client:load`)
 - **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 19
@@ -696,31 +696,45 @@ OAuth and Mux integration exist to support the **video uploader** on the install
 
 ## MDX Processing Plugins
 
-Four plugins transform MDX content during build. Registered in `astro.config.mjs`.
+The Markdown pipeline uses **Sätteri** (`markdown.processor: satteri({ mdastPlugins })`
+in `astro.config.mjs`), Astro 7's native Rust processor. Custom transforms are
+Sätteri **MDAST plugins** (`defineMdastPlugin` from `satteri`), not remark/rehype.
 
-> **Markdown processor:** Astro 7 makes Sätteri the default Markdown pipeline,
-> which does **not** run remark/rehype plugins. The site stays on the unified
-> pipeline by passing the plugins to `markdown.processor: unified({ remarkPlugins,
-> rehypePlugins })` (from `@astrojs/markdown-remark`), rather than the deprecated
-> top-level `markdown.remarkPlugins`/`rehypePlugins` options. `syntaxHighlight`
-> and `shikiConfig` remain top-level `markdown` options. Porting these plugins to
-> Sätteri MDAST/HAST for build speed is tracked separately (issue #1719).
+> **Syntax highlighting is independent of the processor.** `markdown.syntaxHighlight`
+> and `shikiConfig` (themes, pre-registered langs, and `transformers`) are applied by
+> Astro's Shiki layer regardless of processor, so the notation transformers carry over
+> unchanged. GFM and SmartyPants stay on by default (Astro's `markdown.gfm`/`smartypants`
+> default true), matching the previous output.
+>
+> **Plugins write frontmatter via `ctx.data.astro.frontmatter.*`.** The markdown-satteri
+> adapter seeds the document data bag with `{ astro: { frontmatter, headings } }` and
+> surfaces `data.astro.frontmatter` back as `render().remarkPluginFrontmatter` — the same
+> contract the old remark plugins used via `file.data.astro.frontmatter`. Stateful plugins
+> are written as factories (`() => defineMdastPlugin(...)`) so per-document state resets.
 
-**`remarkConditionalHeadings`** (`src/utils/remarkConditionalHeadings.js`)
-Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ComponentReference>` and `<UtilReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
+**`satteriConditionalHeadings`** (`src/utils/satteriConditionalHeadings.ts`)
+Collects headings (slugged with GithubSlugger in document order, so slugs match the ids the
+markdown-satteri `heading-ids` plugin emits), tracking which `<FrameworkCase>` / `<StyleCase>`
+each lives in via `ctx.parent()`. Reads `<ComponentReference>` / `<FeatureReference>` /
+`<UtilReference>` / `<MediaReference>` props, loads the generated JSON, and injects heading
+entries so API-reference sections appear in the TOC. Outputs `frontmatter.conditionalHeadings`.
 
-**`remarkReadingTime`** (`src/utils/remarkReadingTime.mjs`)
-Calculates reading time and injects `frontmatter.minutesRead` (text) and `frontmatter.readingTimeMinutes` (number).
+**`satteriReadingTime`** (`src/utils/satteriReadingTime.ts`)
+Accumulates text/code node content and injects `frontmatter.minutesRead` (text) and
+`frontmatter.readingTimeMinutes` (number).
 
-**`rehypePrepareCodeBlocks`** (`src/utils/rehypePrepareCodeBlocks.js`)
-Tags `<code>` children of `<pre>` with a `codeBlock` property, and marks `<pre>` blocks with `hasFrame: true` when inside a `<TabsPanel>` JSX component. This controls code block styling (framed vs. standalone).
+**`satteriCodeFrame`** (`src/utils/satteriCodeFrame.ts`)
+Wraps standalone fenced code blocks in a `<CodeFrame>` component (filename/lang header + copy
+button, reusing the `Tabs` chrome). Blocks already inside an authored `<TabsPanel>` are left
+alone. The title is read from the fence meta (e.g. ```` ```ts title="App.ts"````), which is why
+no Shiki title transformer is needed.
 
-**`shikiTransformMetadata`** (`src/utils/shikiTransformMetadata.js`)
-Shiki transformer that extracts `title="..."` from code fence metadata, enabling titled code blocks:
-
-~~~markdown
-```tsx title="Example.tsx"
-~~~
+> **Why `CodeFrame` instead of a `pre`/`code` component override:** under Sätteri the Shiki
+> highlight step rewrites each `<pre>` into raw HTML *before* HAST plugins run, so the old
+> `pre: Pre` override never fired. Wrapping at the MDAST stage keeps a real component frame
+> while Sätteri still highlights the inner code. The raw `.astro-code` `<pre>` gets its
+> monospace font/size from a rule in `src/styles/shiki-transformers.css` (previously supplied
+> by the `MarkdownCode` `codeBlock` branch).
 
 ## Custom Astro Integration: LLM Markdown
 

@@ -2,7 +2,7 @@
 
 import process from 'node:process';
 
-import { unified } from '@astrojs/markdown-remark';
+import { satteri } from '@astrojs/markdown-satteri';
 import mdx from '@astrojs/mdx';
 import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
@@ -26,11 +26,10 @@ import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
-import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
-import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
-import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
+import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
+import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
+import { satteriReadingTime } from './src/utils/satteriReadingTime';
 import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
-import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
 
 // Netlify sets CONTEXT and BRANCH for each deploy. We use them to determine
 // the correct site URL:
@@ -144,15 +143,17 @@ export default defineConfig({
         ...http,
         ...astro,
       ],
-      transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
+      transformers: [...shikiNotationTransformers],
     },
-    // Astro 7 makes Sätteri the default Markdown processor, which does not run
-    // remark/rehype plugins. Stay on the unified() pipeline so our plugins keep
-    // working unchanged. unified() applies GFM + SmartyPants by default (which
-    // is why the previous explicit `gfm`/`smartypants` flags were dropped).
-    processor: unified({
-      remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
-      rehypePlugins: [rehypePrepareCodeBlocks],
+    // Sätteri is Astro 7's native (Rust) Markdown processor. `syntaxHighlight`
+    // and `shikiConfig` above are processor-independent, so our themes, langs,
+    // and transformers carry over unchanged. Our custom plugins are ported to
+    // Sätteri MDAST plugins; the code-block title is read from fence meta by
+    // `satteriCodeFrame`, so the old `shikiTransformMetadata` is retired.
+    // GFM and SmartyPants stay on by default (Astro's `markdown.gfm`/
+    // `smartypants` both default true), preserving the prior unified() output.
+    processor: satteri({
+      mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCodeFrame()],
     }),
   },
 

@@ -2,7 +2,7 @@
  * Centralized media element API subsection definitions.
  *
  * Mirrors componentReferenceModel.js for media elements. Produces heading/id
- * data consumed by both MediaReference.astro and remarkConditionalHeadings.
+ * data consumed by both MediaReference.astro and satteriConditionalHeadings.
  */
 
 const MEDIA_REFERENCE_SUBSECTIONS = Object.freeze([

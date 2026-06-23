@@ -1,4 +1,4 @@
-// @ts-nocheck — the model is plain JS shared with remarkConditionalHeadings
+// @ts-nocheck — the model is plain JS shared with satteriConditionalHeadings
 import { describe, expect, it } from 'vitest';
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from '../mediaReferenceModel';
 
