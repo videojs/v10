@@ -48,6 +48,7 @@ import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-range';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
@@ -426,8 +427,12 @@ export function createSimpleHlsEngine(
       loadVideoSegments,
       loadAudioSegments,
 
-      // Live: declare the seekable window and seek the playhead to the live
-      // edge once segments land. No-op for complete playlists (VoD / ended).
+      // Live: declare the seekable window, then seek the playhead to the live
+      // edge + keep it in-window. No-op for complete playlists (VoD / ended).
+      // Order matters: the seekable range must be declared (syncLiveSeekableRange)
+      // before seekToLiveEdge moves the playhead into it (a seek outside
+      // `seekable` is clamped).
+      syncLiveSeekableRange,
       seekToLiveEdge,
 
       // End of stream coordination

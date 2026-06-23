@@ -98,28 +98,24 @@ function run(opts: {
 const flush = () => Promise.resolve();
 
 describe('seekToLiveEdge', () => {
-  it('declares the full seekable window and seeks near the live edge (HOLD-BACK behind)', () => {
+  it('seeks near the live edge on entry (HOLD-BACK behind)', () => {
     const ms = fakeMediaSource();
     const el = fakeMediaElement();
 
     const { cleanup } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el, mediaSource: ms });
 
-    // Full DVR window stays seekable: [first.startTime, last.startTime + last.duration] = [100, 110].
-    expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 110);
-    expect(ms.duration).toBe(Number.POSITIVE_INFINITY);
     // Start HOLD-BACK (3 × 2s) behind the edge: 110 − 6 = 104, not the window start.
     expect(el.currentTime).toBe(104);
 
     cleanup();
   });
 
-  it('does nothing until the MediaSource is open', () => {
+  it('does not seek until the MediaSource is open', () => {
     const ms = fakeMediaSource('closed');
     const el = fakeMediaElement();
 
     const { cleanup } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el, mediaSource: ms });
 
-    expect(ms.setLiveSeekableRange).not.toHaveBeenCalled();
     expect(el.currentTime).toBe(0);
 
     cleanup();
@@ -136,7 +132,6 @@ describe('seekToLiveEdge', () => {
 
     const { cleanup } = run({ presentation, trackId: 'v-1', mediaElement: el, mediaSource: ms });
 
-    expect(ms.setLiveSeekableRange).not.toHaveBeenCalled();
     expect(el.currentTime).toBe(0);
 
     cleanup();
@@ -148,7 +143,6 @@ describe('seekToLiveEdge', () => {
 
     const { cleanup } = run({ presentation: undefined, trackId: undefined, mediaElement: el, mediaSource: ms });
 
-    expect(ms.setLiveSeekableRange).not.toHaveBeenCalled();
     expect(el.currentTime).toBe(0);
 
     cleanup();

@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'vitest';
+import { liveWindowFor } from '../live-window';
+import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type VideoTrack } from '../types';
+
+/** 5-segment, 2s window starting at 100: [100, 110]; targetDuration 2. */
+function makePresentation(overrides?: Partial<VideoTrack>): Presentation {
+  const video: VideoTrack = {
+    type: 'video',
+    id: 'v-1',
+    url: 'https://example.com/video.m3u8',
+    mimeType: 'video/mp4',
+    codecs: ['avc1.640020'],
+    bandwidth: 1_000_000,
+    initialization: { url: 'https://example.com/init.mp4' },
+    duration: Number.POSITIVE_INFINITY,
+    startTime: 100,
+    startDate: 1000,
+    segments: [100, 102, 104, 106, 108].map((startTime, i) => ({
+      id: `segment-${50 + i}`,
+      url: `${50 + i}.m4s`,
+      duration: 2,
+      startTime,
+    })),
+    metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, targetDuration: 2, endList: false } },
+    ...overrides,
+  };
+  return {
+    id: 'pres-1',
+    url: 'https://example.com/master.m3u8',
+    startTime: 0,
+    selectionSets: [{ id: 'video-set', type: 'video', switchingSets: [{ id: 'vs', type: 'video', tracks: [video] }] }],
+  };
+}
+
+describe('liveWindowFor', () => {
+  it('returns the window + target duration for a live track', () => {
+    expect(liveWindowFor(makePresentation(), 'v-1')).toEqual({ start: 100, end: 110, targetDuration: 2 });
+  });
+
+  it('returns null for a complete (finite-duration) playlist — VoD / ended live', () => {
+    expect(liveWindowFor(makePresentation({ duration: 110 }), 'v-1')).toBeNull();
+  });
+
+  it('returns null without a resolved presentation', () => {
+    expect(liveWindowFor(undefined, 'v-1')).toBeNull();
+    expect(liveWindowFor({ id: 'p', url: 'https://example.com/x.m3u8' }, 'v-1')).toBeNull();
+  });
+
+  it('returns null without a selected video track id', () => {
+    expect(liveWindowFor(makePresentation(), undefined)).toBeNull();
+  });
+
+  it('returns null when the track id does not resolve', () => {
+    expect(liveWindowFor(makePresentation(), 'missing')).toBeNull();
+  });
+
+  it('returns null for a track with no segments', () => {
+    expect(liveWindowFor(makePresentation({ segments: [] }), 'v-1')).toBeNull();
+  });
+
+  it('falls back to the last segment duration when target duration is absent', () => {
+    const presentation = makePresentation({
+      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, endList: false } },
+    });
+    expect(liveWindowFor(presentation, 'v-1')).toEqual({ start: 100, end: 110, targetDuration: 2 });
+  });
+});
