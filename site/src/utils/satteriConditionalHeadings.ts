@@ -159,7 +159,11 @@ function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: Con
   const json = readRefJson(COMPONENT_REF_DIR, kebabCase(componentName));
   if (!json) return;
   const partOrder = extractArrayAttr(node, 'partOrder');
-  const model = createComponentReferenceModel(componentName, json, partOrder);
+  const model = createComponentReferenceModel(
+    componentName,
+    json as Parameters<typeof createComponentReferenceModel>[1],
+    partOrder ?? undefined
+  );
   headings.push(...buildComponentReferenceTocHeadings(model));
 }
 
@@ -178,7 +182,7 @@ function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: Conditio
   const slug = getStringAttr(node, 'slug');
   const json = readRefJson(UTIL_REF_DIR, slug ?? kebabCase(utilName));
   if (!json) return;
-  const model = createUtilReferenceModel(utilName, json);
+  const model = createUtilReferenceModel(utilName, json as Parameters<typeof createUtilReferenceModel>[1]);
   headings.push(...buildUtilReferenceTocHeadings(model));
 }
 

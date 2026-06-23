@@ -6,7 +6,14 @@ import { describe, expect, it } from 'vitest';
 import { satteriReadingTime } from '../satteriReadingTime';
 
 function render(source: string) {
-  const data = { astro: { frontmatter: {} as Record<string, unknown>, headings: [] } };
+  const data = {
+    astro: {
+      frontmatter: {} as Record<string, unknown>,
+      headings: [],
+      localImagePaths: new Set<string>(),
+      remoteImagePaths: new Set<string>(),
+    },
+  };
   markdownToHtml(source, { mdastPlugins: [satteriReadingTime()], data });
   return data.astro.frontmatter;
 }

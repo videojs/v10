@@ -1,5 +1,6 @@
 import type { MdastContent } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
+import type { MdastVisitorContext } from './satteriAstroData';
 
 const TITLE_RE = /title=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
 
@@ -23,7 +24,7 @@ export function satteriCodeFrame() {
     name: 'astro-code-frame',
     code: (node, ctx) => {
       // Skip blocks framed by an authored tab group.
-      let ancestor = ctx.parent(node);
+      let ancestor: ReturnType<MdastVisitorContext['parent']> = ctx.parent(node);
       while (ancestor) {
         if (ancestor.type === 'mdxJsxFlowElement' && ancestor.name === 'TabsPanel') return;
         ancestor = ctx.parent(ancestor);

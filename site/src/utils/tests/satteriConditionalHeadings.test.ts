@@ -14,7 +14,14 @@ interface Heading {
 }
 
 function collect(source: string): Heading[] {
-  const data = { astro: { frontmatter: {} as Record<string, unknown>, headings: [] } };
+  const data = {
+    astro: {
+      frontmatter: {} as Record<string, unknown>,
+      headings: [],
+      localImagePaths: new Set<string>(),
+      remoteImagePaths: new Set<string>(),
+    },
+  };
   mdxToJs(source, { mdastPlugins: [satteriConditionalHeadings()], data });
   return (data.astro.frontmatter.conditionalHeadings ?? []) as Heading[];
 }

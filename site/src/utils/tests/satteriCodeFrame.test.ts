@@ -6,7 +6,14 @@ import { describe, expect, it } from 'vitest';
 import { satteriCodeFrame } from '../satteriCodeFrame';
 
 function compile(source: string): string {
-  const data = { astro: { frontmatter: {}, headings: [] } };
+  const data = {
+    astro: {
+      frontmatter: {},
+      headings: [],
+      localImagePaths: new Set<string>(),
+      remoteImagePaths: new Set<string>(),
+    },
+  };
   const { code } = mdxToJs(source, { mdastPlugins: [satteriCodeFrame()], data });
   return code;
 }
