@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { liveWindowFor } from '../live-window';
-import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type VideoTrack } from '../types';
+import { type AudioTrack, MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type VideoTrack } from '../types';
 
 /** 5-segment, 2s window starting at 100: [100, 110]; targetDuration 2. */
 function makePresentation(overrides?: Partial<VideoTrack>): Presentation {
@@ -63,5 +63,35 @@ describe('liveWindowFor', () => {
       metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, endList: false } },
     });
     expect(liveWindowFor(presentation, 'v-1')).toEqual({ start: 100, end: 110, targetDuration: 2 });
+  });
+
+  it('resolves a track by id regardless of type — audio-only', () => {
+    const audio: AudioTrack = {
+      type: 'audio',
+      id: 'a-1',
+      groupId: 'audio-hi',
+      name: 'Default',
+      sampleRate: 48_000,
+      channels: 2,
+      url: 'https://example.com/audio.m3u8',
+      mimeType: 'audio/mp4',
+      codecs: ['mp4a.40.2'],
+      bandwidth: 128_000,
+      initialization: { url: 'https://example.com/a-init.mp4' },
+      duration: Number.POSITIVE_INFINITY,
+      startTime: 200,
+      startDate: 1000,
+      segments: [0, 2, 4, 6, 8].map((o, i) => ({ id: `a-${i}`, url: `a${i}.m4s`, duration: 2, startTime: 200 + o })),
+      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 0, targetDuration: 2, endList: false } },
+    };
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        { id: 'audio-set', type: 'audio', switchingSets: [{ id: 'as', type: 'audio', tracks: [audio] }] },
+      ],
+    };
+    expect(liveWindowFor(presentation, 'a-1')).toEqual({ start: 200, end: 210, targetDuration: 2 });
   });
 });

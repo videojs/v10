@@ -6,8 +6,9 @@
  * reflects the live window (without it, `seekable` is empty under
  * `duration === Infinity`).
  *
- * The live window comes from `liveWindowFor` (the shared derivation); inert
- * when it returns `null` (VoD / ended live). Composed *before* `seekToLiveEdge`
+ * The live window comes from `liveWindowFromState` (the shared derivation —
+ * video track when present, else audio); inert when it returns `null` (VoD /
+ * ended live). Composed *before* `seekToLiveEdge`
  * so the range is declared before that behavior seeks the playhead into it (a
  * seek outside `seekable` is clamped).
  *
@@ -20,12 +21,13 @@
 import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
-import { liveWindowFor } from '../../../media/live-window';
 import type { MaybeResolvedPresentation } from '../../../media/types';
+import { liveWindowFromState } from '../../primitives/live-window';
 
 export interface SyncLiveSeekableRangeState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
 }
 
 export interface SyncLiveSeekableRangeContext {
@@ -39,6 +41,7 @@ function syncLiveSeekableRangeSetup({
   state: {
     presentation: ReadonlySignal<SyncLiveSeekableRangeState['presentation']>;
     selectedVideoTrackId?: ReadonlySignal<SyncLiveSeekableRangeState['selectedVideoTrackId']>;
+    selectedAudioTrackId?: ReadonlySignal<SyncLiveSeekableRangeState['selectedAudioTrackId']>;
   };
   context: {
     mediaSource: ReadonlySignal<SyncLiveSeekableRangeContext['mediaSource']>;
@@ -46,7 +49,7 @@ function syncLiveSeekableRangeSetup({
 }): () => void {
   return effect(() => {
     const mediaSource = context.mediaSource.get();
-    const liveWindow = liveWindowFor(state.presentation.get(), state.selectedVideoTrackId?.get());
+    const liveWindow = liveWindowFromState(state);
     if (!mediaSource || mediaSource.readyState !== 'open' || !liveWindow) return;
 
     // Re-declared as the window slides so seekable tracks the live window

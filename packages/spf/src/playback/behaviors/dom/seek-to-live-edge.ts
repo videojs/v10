@@ -13,8 +13,9 @@
  *    stops once a stall freezes `currentTime`). In-window pause and DVR
  *    scrub-back are left untouched (the `window-exit` reposition policy).
  *
- * The live window comes from `liveWindowFor` (the shared derivation); this
- * behavior is inert when it returns `null` (VoD / ended live). Declaring the
+ * The live window comes from `liveWindowFromState` (the shared derivation —
+ * video track when present, else audio); this behavior is inert when it returns
+ * `null` (VoD / ended live). Declaring the
  * seekable range is a separate concern — see `sync-live-seekable-range`, which
  * is composed *before* this behavior so the range exists before we seek into
  * it (a seek outside `seekable` is clamped). The `mediaSource` open-gate here
@@ -24,8 +25,8 @@ import { listen } from '@videojs/utils/dom';
 import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
-import { liveWindowFor } from '../../../media/live-window';
 import type { MaybeResolvedPresentation } from '../../../media/types';
+import { liveWindowFromState } from '../../primitives/live-window';
 
 /**
  * Multiple of TARGETDURATION to start behind the live edge — the HLS spec
@@ -51,6 +52,7 @@ export type LiveRepositionPolicy = 'window-exit' | 'on-resume';
 export interface SeekToLiveEdgeState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
 }
 
 export interface SeekToLiveEdgeContext {
@@ -71,6 +73,7 @@ function seekToLiveEdgeSetup({
   state: {
     presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
     selectedVideoTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedVideoTrackId']>;
+    selectedAudioTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedAudioTrackId']>;
   };
   context: {
     mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
@@ -84,7 +87,7 @@ function seekToLiveEdgeSetup({
   return effect(() => {
     const mediaElement = context.mediaElement.get();
     const mediaSource = context.mediaSource.get();
-    const liveWindow = liveWindowFor(state.presentation.get(), state.selectedVideoTrackId?.get());
+    const liveWindow = liveWindowFromState(state);
     if (!mediaElement || !liveWindow) return;
     // Gate on the seekable range being declarable/declared (see file JSDoc):
     // sync-live-seekable-range runs first while open, so seeks land in-window.

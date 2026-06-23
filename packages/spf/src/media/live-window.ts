@@ -1,13 +1,13 @@
 /**
- * Derive the live window of the selected video track — the single source of
- * truth for "where is live," consumed by the seek-to-live-edge and
- * live-seekable-range behaviors so neither re-derives (or re-presumes) the
- * window shape.
+ * Derive the live window of the track with the given id — the single source of
+ * truth for "where is live," consumed (via `liveWindowFromState`) by the
+ * seek-to-live-edge and live-seekable-range behaviors so neither re-derives (or
+ * re-presumes) the window shape. Type-agnostic: the caller decides which track
+ * bears the timeline (video when present, else audio).
  *
  * Returns `null` when there is no live edge to track: an unresolved
  * presentation or track, a track with no segments, or a **complete** playlist
- * (VoD, or live that has ended — a finite `Track.duration`). Video and audio
- * share the timeline origin, so the video track's window positions both.
+ * (VoD, or live that has ended — a finite `Track.duration`).
  */
 import {
   getMediaPlaylistMetadata,
@@ -15,7 +15,7 @@ import {
   isResolvedTrack,
   type MaybeResolvedPresentation,
 } from './types';
-import { findTrack } from './utils/tracks';
+import { findTrackById } from './utils/tracks';
 
 export interface LiveWindow {
   /** Earliest time still in the window (seconds, model timeline). */
@@ -28,11 +28,11 @@ export interface LiveWindow {
 
 export function liveWindowFor(
   presentation: MaybeResolvedPresentation | undefined,
-  videoTrackId: string | undefined
+  trackId: string | undefined
 ): LiveWindow | null {
-  if (!isResolvedPresentation(presentation) || !videoTrackId) return null;
+  if (!isResolvedPresentation(presentation) || !trackId) return null;
 
-  const track = findTrack(presentation, 'video', videoTrackId);
+  const track = findTrackById(presentation, trackId);
   if (!track || !isResolvedTrack(track) || track.segments.length === 0) return null;
 
   // Complete playlist (VoD, or live that has ended) → no live edge. `Track.duration`
