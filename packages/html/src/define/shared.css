@@ -12,6 +12,11 @@ media-tooltip-group {
   width: 100%;
 }
 
+media-container {
+  min-width: 0;
+  min-height: 0;
+}
+
 /* Hide volume popover when volume control is unsupported (e.g., iOS Safari). */
 .media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
   display: none;

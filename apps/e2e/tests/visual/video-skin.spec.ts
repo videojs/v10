@@ -50,6 +50,39 @@ for (const { name, path } of VISUAL_PAGES) {
   });
 }
 
+// --- Portrait media layout ---
+
+test.describe('Visual — HTML Portrait Layout', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/pages/html-video-mp4.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => customElements.get('video-skin'));
+    await page.evaluate(() => {
+      const root = document.getElementById('root');
+      if (!root) return;
+
+      root.innerHTML = `
+        <video-player>
+          <video-skin style="max-width: 800px; aspect-ratio: 16/9">
+            <video width="270" height="480" playsinline></video>
+          </video-skin>
+        </video-player>
+      `;
+    });
+  });
+
+  test('keeps the authored skin aspect ratio', async ({ page }) => {
+    const box = await page.evaluate(() => {
+      const container = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-container');
+      const rect = container?.getBoundingClientRect();
+
+      return rect ? { height: rect.height, width: rect.width } : null;
+    });
+
+    expect(box).not.toBeNull();
+    expect(box!.width / box!.height).toBeCloseTo(16 / 9, 1);
+  });
+});
+
 // --- Captions snapshot (dedicated page with subtitle track baked in) ---
 
 test.describe('Visual — Captions', () => {
