@@ -163,22 +163,28 @@ export const thumbnail = {
   ...baseThumbnail,
   root: cn(
     baseThumbnail.root,
-    '[--media-slider-thumbnail-max-width:11rem] [--media-slider-thumbnail-padding:-0.5rem] [--media-slider-thumbnail-inset:calc(100cqi-100%)]',
+    '[--media-slider-thumbnail-max-width:11rem]',
+    '[--media-slider-thumbnail-max-height:8rem]',
+    '[--media-slider-thumbnail-padding:-0.5rem]',
+    '[--media-slider-thumbnail-inset:calc(100cqi-100%)]',
     'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-full -translate-x-1/2',
     '@2xl/media-root:[left:var(--media-slider-pointer)]',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
     'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
     'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none',
-    'has-[[role=img][data-loading]]:max-h-24'
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
   ),
   imageWrapper: cn(
     baseThumbnail.imageWrapper,
     'after:absolute after:inset-0 after:rounded-[inherit]',
     'after:ring-1 after:ring-black/5 after:shadow-sm after:shadow-black/20'
   ),
-  image: cn(baseThumbnail.image, 'max-w-(--media-slider-thumbnail-max-width)'),
+  image: cn(
+    baseThumbnail.image,
+    'max-w-(--media-slider-thumbnail-max-width)',
+    'max-h-(--media-slider-thumbnail-max-height)'
+  ),
 };
 
 /* ==========================================================================

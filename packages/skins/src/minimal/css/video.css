@@ -267,6 +267,7 @@
 
 .media-minimal-skin--video .media-slider__thumbnail {
   --media-slider-thumbnail-max-width: 11rem;
+  --media-slider-thumbnail-max-height: 8rem;
   --media-slider-thumbnail-padding: -0.5rem;
   /**
     Inset is the difference between the container width and the slider (100%) width.
@@ -317,10 +318,7 @@
 
   & .media-thumbnail__image {
     max-width: var(--media-slider-thumbnail-max-width);
-  }
-
-  &:has(.media-thumbnail__image[data-loading]) {
-    max-height: 6rem;
+    max-height: var(--media-slider-thumbnail-max-height);
   }
 }
 .media-minimal-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
