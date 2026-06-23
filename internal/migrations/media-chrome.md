@@ -161,7 +161,7 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 - No `defaultduration` placeholder before the media loads ([#1729](https://github.com/videojs/v10/issues/1729))
 - No preference-persistence opt-outs (`novolumepref`, `nomutedpref`, `nosubtitleslangpref`) ([#1428](https://github.com/videojs/v10/issues/1428), [#1423](https://github.com/videojs/v10/issues/1423))
 - No `breakpoints` / container-breakpoint attributes, use CSS container queries instead
-- No `seektoliveoffset` / `noautoseektolive` controls
+- No `seektoliveoffset` / `noautoseektolive` controls; live-edge offset/tolerance aren't configurable ([#1730](https://github.com/videojs/v10/issues/1730))
 
 ## Workarounds
 
