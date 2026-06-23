@@ -138,9 +138,10 @@ guard:
 
 | Behavior | File | Live responsibility |
 |---|---|---|
-| `liveWindowFor` *(pure helper)* | `media/live-window.ts` | Derive the live window `{start,end,targetDuration}` from the selected video track, or `null` (VOD/ended/unresolved). The single source of truth consumed by the two behaviors below — centralizes all inertness so neither re-derives the window. |
-| `syncLiveSeekableRange` | `behaviors/dom/sync-live-seekable-range.ts` | Consume `liveWindowFor`; `setLiveSeekableRange(start, end)` reactively on each window slide, including while paused. Duration is owned solely by `updateMediaSourceDuration`. Composed before `seekToLiveEdge`. |
-| `seekToLiveEdge` | `behaviors/dom/seek-to-live-edge.ts` | Consume `liveWindowFor`; one-time HOLD-BACK seek + the live-window playhead guard (reposition-on-window-exit, `repositionPolicy` seam). Gates on `mediaSource` open so the seek lands in the declared range. |
+| `liveWindowFor` *(pure helper)* | `media/live-window.ts` | Derive the live window `{start,end,targetDuration}` from the track with the given id (type-agnostic via `findTrackById`), or `null` (VOD/ended/unresolved). Centralizes all inertness so consumers don't re-derive the window. |
+| `liveWindowFromState` *(primitive)* | `playback/primitives/live-window.ts` | The single state-reading call site both live behaviors use. Picks the timeline-bearing track — `selectedVideoTrackId ?? selectedAudioTrackId` (video positions both A/V; audio-only falls back to audio) — and calls `liveWindowFor`. Reads signals lazily (call inside an effect). |
+| `syncLiveSeekableRange` | `behaviors/dom/sync-live-seekable-range.ts` | Consume `liveWindowFromState`; `setLiveSeekableRange(start, end)` reactively on each window slide, including while paused. Duration is owned solely by `updateMediaSourceDuration`. Composed before `seekToLiveEdge`. |
+| `seekToLiveEdge` | `behaviors/dom/seek-to-live-edge.ts` | Consume `liveWindowFromState`; one-time HOLD-BACK seek + the live-window playhead guard (reposition-on-window-exit, `repositionPolicy` seam). Gates on `mediaSource` open so the seek lands in the declared range. |
 | `anchorLiveTracks` | `behaviors/anchor-live-tracks.ts` | Pin live track timelines to the SourceBuffer's native-PTS ground truth (first appended segment) or manifest estimate; re-pin per reload as the window slides |
 | `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `behaviors/resolve-track.ts` | Own the reload loop via `RecurringRunner`; reschedule defaults to `mediaPlaylistReloadDelay`; per-type independent |
 | `calculatePresentationDuration` | `behaviors/calculate-presentation-duration.ts` | Populate `presentation.duration` via the config resolver (`Infinity` for unended live) |
