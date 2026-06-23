@@ -155,13 +155,13 @@ export function MyPlayer() {
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated — see Workarounds below.
 
-- Chapters are not yet supported in the media and in the time slider UI
-- Cue points are not yet supported in the media
-- No configurable `autohide` delay or disable switch (`autohide="-1"`), and no `autohideovercontrols`
-- No `breakpoints` / container-breakpoint attributes
-- No `defaultduration` placeholder before the media loads
+- Chapters are not yet supported in the media and in the time slider UI ([#1441](https://github.com/videojs/v10/issues/1441))
+- Cue points are not yet supported in the media ([#1442](https://github.com/videojs/v10/issues/1442))
+- No configurable `autohide` delay or disable switch (`autohide="-1"`), and no `autohideovercontrols` ([#1728](https://github.com/videojs/v10/issues/1728))
+- No `defaultduration` placeholder before the media loads ([#1729](https://github.com/videojs/v10/issues/1729))
+- No preference-persistence opt-outs (`novolumepref`, `nomutedpref`, `nosubtitleslangpref`) ([#1428](https://github.com/videojs/v10/issues/1428), [#1423](https://github.com/videojs/v10/issues/1423))
+- No `breakpoints` / container-breakpoint attributes, use CSS container queries instead
 - No `seektoliveoffset` / `noautoseektolive` controls
-- No preference-persistence opt-outs (`novolumepref`, `nomutedpref`, `nosubtitleslangpref`)
 
 ## Workarounds
 
@@ -239,4 +239,3 @@ In the HTML player, do the same against the store directly — `selectVolume(sto
 - [Installation](https://videojs.org/docs/framework/html/how-to/installation)
 - [UI components concept](https://videojs.org/docs/framework/html/concepts/ui-components)
 - [Skins, Presets, Customize skins](https://videojs.org/docs/framework/html/how-to/customize-skins)
-- Component reference pages
