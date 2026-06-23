@@ -11,14 +11,17 @@ type Props<Tag extends HTMLTag = 'code'> = Polymorphic<{ as: Tag }> & {
 
 const { as: Tag = 'code', class: className, codeBlock, ...props } = Astro.props;
 
-// When codeBlock="true", Shiki handles styling; otherwise style as inline code.
-// Compute the class here rather than branching in the template: the Astro 7
-// compiler preserves whitespace around an own-line <slot />, which leaks into
-// inline code and <pre>. Keeping <slot /> tight against the tags avoids it, and
-// a single root element (vs a templated ternary) survives prettier, which would
-// otherwise re-expand the slot onto its own line.
+// When codeBlock="true", render plain code tag (Shiki handles styling)
+// Otherwise, render inline code with styling
 const isCodeBlock = codeBlock === 'true';
-const codeClass = twMerge(isCodeBlock ? shared.codeBlock : shared.code, className);
 ---
 
-<Tag class={codeClass} {...props}><slot /></Tag>
+{
+  isCodeBlock ? (
+    // prettier-ignore
+    <Tag class={twMerge(shared.codeBlock, className)} {...props}><slot /></Tag>
+  ) : (
+    // prettier-ignore
+    <Tag class={twMerge(shared.code, className)} {...props}><slot /></Tag>
+  )
+}

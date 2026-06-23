@@ -1,23 +1,39 @@
 ---
-import type { HTMLAttributes } from 'astro/types';
-import CodeFrame from './CodeFrame.astro';
 
-type Props = HTMLAttributes<'pre'> & {
+import type { HTMLTag, Polymorphic } from 'astro/types';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+
+type Props<Tag extends HTMLTag = 'pre'> = Polymorphic<{ as: Tag }> & {
   maxWidth?: boolean;
+  class?: string;
   hasFrame?: boolean;
+  title?: string;
 };
 
-const { maxWidth = false, class: className, style: _style, title, hasFrame, ...props } = Astro.props;
+const { as: Tag = 'pre', maxWidth = false, class: className, style: _style, title, hasFrame, ...props } = Astro.props;
 
 const language = props['data-language'];
 const label = title || language || 'code';
+
+const value = 'code';
 ---
 
 {
-  /* Single root element, no templated ternary: this keeps the <pre>'s <slot />
-   inline through prettier so the Astro 7 compiler doesn't leak whitespace into
-   the code block. The optional tab chrome lives in CodeFrame. */
+  hasFrame ? (
+    <Tag class={className} {...props}>
+      <slot />
+    </Tag>
+  ) : (
+    <TabsRoot client:idle>
+      <TabsList client:idle label={`${label} code`}>
+        <Tab client:idle value={value} initial>
+          {label}
+        </Tab>
+      </TabsList>
+      <TabsPanel client:idle value={value} initial>
+        {/* prettier-ignore */}
+        <Tag class={className} {...props}><slot /></Tag>
+      </TabsPanel>
+    </TabsRoot>
+  )
 }
-<CodeFrame framed={!hasFrame} label={label}
-  ><pre class={className} {...props}><slot /></pre></CodeFrame
->
