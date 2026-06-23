@@ -49,13 +49,12 @@ function syncLiveSeekableRangeSetup({
     const liveWindow = liveWindowFor(state.presentation.get(), state.selectedVideoTrackId?.get());
     if (!mediaSource || mediaSource.readyState !== 'open' || !liveWindow) return;
 
-    try {
-      // Re-declared as the window slides so seekable tracks the live window
-      // (the full DVR range remains seekable; seek-to-live-edge starts near the edge).
-      mediaSource.setLiveSeekableRange(liveWindow.start, liveWindow.end);
-    } catch {
-      // readyState raced closed — retried on the next window change.
-    }
+    // Re-declared as the window slides so seekable tracks the live window
+    // (the full DVR range remains seekable; seek-to-live-edge starts near the edge).
+    // No try/catch: `setLiveSeekableRange` throws only on a non-'open' readyState
+    // (checked synchronously just above — no await between, so it can't change) or
+    // an invalid range (`liveWindowFor` guarantees 0 ≤ start ≤ end).
+    mediaSource.setLiveSeekableRange(liveWindow.start, liveWindow.end);
   });
 }
 
