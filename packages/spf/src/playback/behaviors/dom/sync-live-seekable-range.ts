@@ -11,10 +11,11 @@
  * so the range is declared before that behavior seeks the playhead into it (a
  * seek outside `seekable` is clamped).
  *
- * Out of scope (deliberate, tracked as follow-ups): `clearLiveSeekableRange()`
- * on the live→ended transition; and dropping the defensive `duration` write
- * below once duration ownership/ordering with `updateMediaSourceDuration` (the
- * canonical, but asynchronous, duration writer) is resolved.
+ * Duration is owned solely by `updateMediaSourceDuration`; this behavior only
+ * declares the seekable range (`setLiveSeekableRange` requires only
+ * `readyState === 'open'` per the W3C MSE spec, not a set `duration`). Out of
+ * scope (tracked follow-up): `clearLiveSeekableRange()` on the live→ended
+ * transition.
  */
 import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
@@ -49,15 +50,11 @@ function syncLiveSeekableRangeSetup({
     if (!mediaSource || mediaSource.readyState !== 'open' || !liveWindow) return;
 
     try {
-      // A live seekable range needs a set duration. `updateMediaSourceDuration`
-      // is the canonical duration owner, but writes asynchronously — so guard
-      // here so this doesn't race ahead of it. (Follow-up: resolve ownership.)
-      if (Number.isNaN(mediaSource.duration)) mediaSource.duration = Number.POSITIVE_INFINITY;
       // Re-declared as the window slides so seekable tracks the live window
       // (the full DVR range remains seekable; seek-to-live-edge starts near the edge).
       mediaSource.setLiveSeekableRange(liveWindow.start, liveWindow.end);
     } catch {
-      // readyState raced closed, or duration set rejected — retried on the next window change.
+      // readyState raced closed — retried on the next window change.
     }
   });
 }

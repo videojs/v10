@@ -55,13 +55,12 @@ function run(opts: { presentation?: MaybeResolvedPresentation; trackId?: string;
 }
 
 describe('syncLiveSeekableRange', () => {
-  it('declares the full live window as seekable and sets Infinity duration', () => {
+  it('declares the full live window as seekable', () => {
     const ms = fakeMediaSource();
     const cleanup = run({ presentation: makePresentation(), trackId: 'v-1', mediaSource: ms });
 
     // [first.startTime, last.startTime + last.duration] = [100, 110].
     expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 110);
-    expect(ms.duration).toBe(Number.POSITIVE_INFINITY);
 
     cleanup();
   });
@@ -96,13 +95,13 @@ describe('syncLiveSeekableRange', () => {
     cleanup();
   });
 
-  it('does not overwrite an already-set (non-NaN) duration', () => {
+  it('leaves duration alone — owned by updateMediaSourceDuration', () => {
     const ms = fakeMediaSource();
-    ms.duration = 500; // e.g. updateMediaSourceDuration already wrote it
     const cleanup = run({ presentation: makePresentation(), trackId: 'v-1', mediaSource: ms });
 
-    expect(ms.duration).toBe(500);
+    // Declares the range without touching duration (still NaN from the fake).
     expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 110);
+    expect(ms.duration).toBeNaN();
 
     cleanup();
   });
