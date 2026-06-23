@@ -1,9 +1,9 @@
 import '@app/styles.css';
 
-// SPF Background Looping Video — sandbox demo
-// http://localhost:5173/spf-background-looping-video/
+// SPF Background Video — sandbox demo
+// http://localhost:5173/spf-background-video/
 //
-// Drives `BackgroundLoopingVideoMediaElement`. The diagnostic strip
+// Drives `BackgroundVideoMediaElement`. The diagnostic strip
 // surfaces three signals reviewers should verify:
 //   - loadActivated is true from frame 0 (no preload-gate or play-event needed)
 //   - the picker honors `maxResolution` (defaults to the highest variant)
@@ -19,8 +19,8 @@ import '@app/styles.css';
 
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
-import type { BackgroundLoopingVideoEngineState } from '@videojs/spf/background-looping-video';
-import { BackgroundLoopingVideoMediaElement } from '@videojs/spf/background-looping-video';
+import type { BackgroundVideoEngineState } from '@videojs/spf/background-video';
+import { BackgroundVideoMediaElement } from '@videojs/spf/background-video';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('bg-video') as HTMLVideoElement;
@@ -50,7 +50,7 @@ for (const id of HLS_SOURCE_IDS) {
 }
 
 // ── Renditions ────────────────────────────────────────────────────────────────
-type MaybePresentation = BackgroundLoopingVideoEngineState['presentation'];
+type MaybePresentation = BackgroundVideoEngineState['presentation'];
 
 function videoTracksOf(presentation: MaybePresentation) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
@@ -75,7 +75,7 @@ function trackDimensions(track: VideoTrack): { w: number; h: number } {
 // ── Adapter lifecycle ─────────────────────────────────────────────────────────
 let currentSourceId: keyof typeof SOURCES = DEFAULT_ID;
 let currentMaxResolution: string | undefined;
-let adapter!: BackgroundLoopingVideoMediaElement;
+let adapter!: BackgroundVideoMediaElement;
 let stopDiag: () => void = () => {};
 
 function rebuildAdapter(): void {
@@ -84,7 +84,7 @@ function rebuildAdapter(): void {
   video.pause();
   adapter?.destroy();
 
-  adapter = new BackgroundLoopingVideoMediaElement({ config: { maxResolution: currentMaxResolution } });
+  adapter = new BackgroundVideoMediaElement({ config: { maxResolution: currentMaxResolution } });
   // src before attach: the engine starts resolving the presentation before
   // play() (called inside attach) runs, so no teardown races the play promise.
   adapter.src = SOURCES[currentSourceId].url;

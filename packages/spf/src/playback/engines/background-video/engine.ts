@@ -23,11 +23,11 @@ import { resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
 
 // ============================================================================
-// Background-looping-video engine state & context
+// Background-video engine state & context
 // ============================================================================
 
 /**
- * State shape for the background-looping-video playback engine.
+ * State shape for the background-video playback engine.
  *
  * Narrower than `SimpleHlsEngineState`: audio/text track slots are absent
  * because their selection/resolution behaviors are subtracted. `bandwidthState`
@@ -35,7 +35,7 @@ import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/s
  * samples into it (wasted work in this variant — a Phase 3 alt-impl will skip
  * sampling).
  */
-export interface BackgroundLoopingVideoEngineState {
+export interface BackgroundVideoEngineState {
   /**
    * The presentation being played. A caller writes `{ url }`;
    * `resolvePresentation` parses the manifest and populates the rest.
@@ -47,9 +47,9 @@ export interface BackgroundLoopingVideoEngineState {
 }
 
 /**
- * Context shape for the background-looping-video engine.
+ * Context shape for the background-video engine.
  */
-export interface BackgroundLoopingVideoEngineContext {
+export interface BackgroundVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   videoBufferActor?: SourceBufferActor;
@@ -62,28 +62,28 @@ export interface BackgroundLoopingVideoEngineContext {
  * state (reads) without touching `composition.state` / `composition.context`
  * directly.
  */
-export type BackgroundLoopingVideoEngineSignals = {
-  state: StateSignals<BackgroundLoopingVideoEngineState>;
-  context: ContextSignals<BackgroundLoopingVideoEngineContext>;
+export type BackgroundVideoEngineSignals = {
+  state: StateSignals<BackgroundVideoEngineState>;
+  context: ContextSignals<BackgroundVideoEngineContext>;
 };
 
 /**
- * Configuration for the background-looping-video engine.
+ * Configuration for the background-video engine.
  *
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read. Compared to
  * `SimpleHlsEngineConfig`, audio/text/ABR/bandwidth/quality knobs are
  * dropped: the variant subtracts the behaviors that read them.
  */
-export interface BackgroundLoopingVideoEngineConfig
-  extends ShareSignalsConfig<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
+export interface BackgroundVideoEngineConfig
+  extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   /**
    * Track picker handed to `selectVideoTrack`. Default:
    * `pickHighestResolutionVideoTrack` — picks the highest-resolution variant on
    * presentation resolve and pins it for the session. Override for
    * mobile-aware or content-aware caps.
    *
-   * Adapters (e.g. `BackgroundLoopingVideoMediaElement`) install their own
+   * Adapters (e.g. `BackgroundVideoMediaElement`) install their own
    * picker; this default applies when the engine is constructed directly.
    */
   picker?: TrackPicker<SelectVideoTrackConfig>;
@@ -95,13 +95,13 @@ export interface BackgroundLoopingVideoEngineConfig
 }
 
 // ============================================================================
-// Background-looping-video playback engine
+// Background-video playback engine
 // ============================================================================
 
-const shareSignals = makeShareSignals<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext>();
+const shareSignals = makeShareSignals<BackgroundVideoEngineState, BackgroundVideoEngineContext>();
 
 /**
- * Create a background-looping-video playback engine.
+ * Create a background-video playback engine.
  *
  * Subtractive composition over the HLS engine baseline:
  * audio-side, text-side, ABR-driven, preload-monitoring, and play/seek
@@ -113,12 +113,12 @@ const shareSignals = makeShareSignals<BackgroundLoopingVideoEngineState, Backgro
  * surfaces that should start loading the moment a src is set.
  *
  * Native `loop` / `muted` / `autoplay` are adapter concerns and live on
- * `BackgroundLoopingVideoMediaElement` rather than the engine.
+ * `BackgroundVideoMediaElement` rather than the engine.
  *
  * @example
  * ```ts
- * let signals: BackgroundLoopingVideoEngineSignals;
- * const engine = createBackgroundLoopingVideoEngine({
+ * let signals: BackgroundVideoEngineSignals;
+ * const engine = createBackgroundVideoEngine({
  *   onSignalsReady: (refs) => {
  *     signals = refs;
  *   },
@@ -130,9 +130,9 @@ const shareSignals = makeShareSignals<BackgroundLoopingVideoEngineState, Backgro
  * await engine.destroy();
  * ```
  */
-export function createBackgroundLoopingVideoEngine(
-  config: BackgroundLoopingVideoEngineConfig = {}
-): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
+export function createBackgroundVideoEngine(
+  config: BackgroundVideoEngineConfig = {}
+): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   const finalConfig = {
     ...config,
     picker: config.picker ?? pickHighestResolutionVideoTrack,

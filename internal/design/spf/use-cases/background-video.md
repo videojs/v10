@@ -4,7 +4,7 @@ date: 2026-05-22
 definition: technical
 ---
 
-# Background-looping video
+# Background video
 
 Engine variant for silent, autoplay-looping video on ambient/decorative
 surfaces (hero backgrounds, GIF-replacement loops, editorial previews).
@@ -18,7 +18,7 @@ demonstrates SPF composability by *removing* behaviors from the standard
 playback engine rather than adding new logic.
 
 Distinct from [`video-only-mode-override`](./video-only-mode-override.md):
-both subtract audio from mixed-source manifests, but background-looping-
+both subtract audio from mixed-source manifests, but background-
 video also commits to single-rendition playback, loop semantics,
 autoplay-via-initial-state, and a product-shaped adapter — `mode-override`
 is the narrower "deliver video-only despite mixed source" use case.
@@ -26,9 +26,9 @@ is the narrower "deliver video-only despite mixed source" use case.
 ## Status
 
 Phase 1 implemented ([#1586](https://github.com/videojs/v10/issues/1586)):
-`createBackgroundLoopingVideoEngine`, `BackgroundLoopingVideoMediaElement`,
+`createBackgroundVideoEngine`, `BackgroundVideoMediaElement`,
 and the `pickMaxResolutionVideoTrack` primitive ship under
-`@videojs/spf/background-looping-video`. Phases 2-3 (decorator composition
+`@videojs/spf/background-video`. Phases 2-3 (decorator composition
 of audio and preload) and Phase 4 (Video.js component shell — out of SPF
 scope) stay coarser.
 
@@ -82,7 +82,7 @@ tree-shakes out the ABR code path."* — exactly the affordance Phase 1 wants.
 Independent adapter parallel to `SimpleHlsMediaElement`:
 
 ```ts
-const bgPlayer = new BackgroundLoopingVideoMediaElement({ picker: maxResolutionPicker });
+const bgPlayer = new BackgroundVideoMediaElement({ picker: maxResolutionPicker });
 bgPlayer.src = sourceUrl;
 bgPlayer.loop = true;        // native HTMLMediaElement.loop
 bgPlayer.muted = true;       // browser autoplay policy
@@ -97,7 +97,7 @@ Video.js component shell) live above the SPF engine.
 
 ## Variant-decision signal source
 
-**Adapter-upfront.** Selecting `BackgroundLoopingVideoMediaElement` *is*
+**Adapter-upfront.** Selecting `BackgroundVideoMediaElement` *is*
 the variant choice — no parser detection, no runtime config branch. Same
 resolution as [`video-only-mode-override`](./video-only-mode-override.md)
 and [`audio-only-mode-override`](./audio-only-mode-override.md): Case-2
@@ -135,7 +135,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 - **Sampling-strip alt-impl Path A vs B.** Likely Path B per [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases).
 - **GPU/thermal-aware quality caps boundary.** Engine-variant (compose a thermal-aware behavior) or adapter (cap the picker candidate set). Likely engine-variant given the product context.
 
-Resolved Phase 1: ~~picker location~~ (`pickMaxResolutionVideoTrack` ships in [`media/primitives/select-tracks.ts`](../../../../packages/spf/src/media/primitives/select-tracks.ts) next to `pickFirstTrackId`); ~~adapter naming~~ (`BackgroundLoopingVideoMediaElement`; product-shell naming `<mux-background-video>` lives in the adapter layer).
+Resolved Phase 1: ~~picker location~~ (`pickMaxResolutionVideoTrack` ships in [`media/primitives/select-tracks.ts`](../../../../packages/spf/src/media/primitives/select-tracks.ts) next to `pickFirstTrackId`); ~~adapter naming~~ (`BackgroundVideoMediaElement`; product-shell naming `<mux-background-video>` lives in the adapter layer).
 
 ## See also
 

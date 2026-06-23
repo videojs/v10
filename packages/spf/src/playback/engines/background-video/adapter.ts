@@ -7,14 +7,14 @@ import {
 } from '../../../media/primitives/select-tracks';
 import type { VideoSelectionSet } from '../../../media/types';
 import {
-  type BackgroundLoopingVideoEngineConfig,
-  type BackgroundLoopingVideoEngineContext,
-  type BackgroundLoopingVideoEngineSignals,
-  type BackgroundLoopingVideoEngineState,
-  createBackgroundLoopingVideoEngine,
+  type BackgroundVideoEngineConfig,
+  type BackgroundVideoEngineContext,
+  type BackgroundVideoEngineSignals,
+  type BackgroundVideoEngineState,
+  createBackgroundVideoEngine,
 } from './engine';
 
-export interface BackgroundLoopingVideoMediaProps {
+export interface BackgroundVideoMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   loop: boolean;
@@ -23,7 +23,7 @@ export interface BackgroundLoopingVideoMediaProps {
   maxResolution: string | number | undefined;
 }
 
-export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMediaProps = {
+export const backgroundVideoMediaDefaultProps: BackgroundVideoMediaProps = {
   src: '',
   preload: 'auto',
   loop: true,
@@ -32,8 +32,8 @@ export const backgroundLoopingVideoMediaDefaultProps: BackgroundLoopingVideoMedi
   maxResolution: undefined,
 };
 
-export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMediaProps {
-  readonly engine: Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext>;
+export interface BackgroundVideoMediaAPI extends BackgroundVideoMediaProps {
+  readonly engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -41,7 +41,7 @@ export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMe
 }
 
 /**
- * Mixin that adds the background-looping-video SPF playback engine to any
+ * Mixin that adds the background-video SPF playback engine to any
  * base class.
  *
  * Implements the WHATWG HTML media element contract (`src`, `preload`,
@@ -53,7 +53,7 @@ export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMe
  *   passthroughs, all defaulting to `true` — the use case is silent
  *   autoplay-looping video, so muted + autoplay satisfy browser autoplay
  *   policies and loop is the defining behavior;
- * - drives the underlying engine with the background-looping-video
+ * - drives the underlying engine with the background-video
  *   composition (single-rendition, video-only, autoplay-from-construction).
  *
  * A new engine is created on every src assignment — this fully tears down
@@ -63,22 +63,22 @@ export interface BackgroundLoopingVideoMediaAPI extends BackgroundLoopingVideoMe
  * automatically.
  *
  * @example
- * class BackgroundLoopingVideoMedia extends BackgroundLoopingVideoMediaMixin(HTMLVideoElementHost) {}
+ * class BackgroundVideoMedia extends BackgroundVideoMediaMixin(HTMLVideoElementHost) {}
  *
- * const media = new BackgroundLoopingVideoMedia();
+ * const media = new BackgroundVideoMedia();
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  * media.play();
  */
-export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  class BackgroundLoopingVideoMediaImpl extends BaseClass {
-    #engine: Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext>;
-    #config: BackgroundLoopingVideoEngineConfig;
-    #signals!: BackgroundLoopingVideoEngineSignals;
-    #preload: '' | 'none' | 'metadata' | 'auto' = backgroundLoopingVideoMediaDefaultProps.preload;
-    #loop: boolean = backgroundLoopingVideoMediaDefaultProps.loop;
-    #muted: boolean = backgroundLoopingVideoMediaDefaultProps.muted;
-    #autoplay: boolean = backgroundLoopingVideoMediaDefaultProps.autoplay;
+export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  class BackgroundVideoMediaImpl extends BaseClass {
+    #engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
+    #config: BackgroundVideoEngineConfig;
+    #signals!: BackgroundVideoEngineSignals;
+    #preload: '' | 'none' | 'metadata' | 'auto' = backgroundVideoMediaDefaultProps.preload;
+    #loop: boolean = backgroundVideoMediaDefaultProps.loop;
+    #muted: boolean = backgroundVideoMediaDefaultProps.muted;
+    #autoplay: boolean = backgroundVideoMediaDefaultProps.autoplay;
     #maxResolution: string | number | undefined;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -94,7 +94,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
       this.#engine = this.#createEngine();
     }
 
-    get engine(): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
+    get engine(): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
       return this.#engine;
     }
 
@@ -216,7 +216,7 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     async play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
-        return Promise.reject(new Error('BackgroundLoopingVideoMediaElement: no media element attached'));
+        return Promise.reject(new Error('BackgroundVideoMediaElement: no media element attached'));
       }
 
       try {
@@ -243,14 +243,14 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     // Private
     // -------------------------------------------------------------------------
 
-    #createEngine(): Composition<BackgroundLoopingVideoEngineState, BackgroundLoopingVideoEngineContext> {
+    #createEngine(): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
       const adapterPicker: TrackPicker = (presentation) => {
         const videoSet = presentation.selectionSets?.find((s) => s.type === 'video') as VideoSelectionSet | undefined;
         const tracks = videoSet?.switchingSets[0]?.tracks ?? [];
         return pickTrackUnderPixelArea(tracks, maxResolutionToPixelArea(this.#maxResolution))?.id;
       };
 
-      return createBackgroundLoopingVideoEngine({
+      return createBackgroundVideoEngine({
         picker: adapterPicker,
         ...this.#config,
         onSignalsReady: (signals) => {
@@ -267,8 +267,8 @@ export function BackgroundLoopingVideoMediaMixin<Base extends Constructor<any>>(
     }
   }
 
-  return BackgroundLoopingVideoMediaImpl as unknown as MixinReturn<Base, BackgroundLoopingVideoMediaAPI>;
+  return BackgroundVideoMediaImpl as unknown as MixinReturn<Base, BackgroundVideoMediaAPI>;
 }
 
-/** Standalone SPF background-looping-video adapter with no base class. */
-export class BackgroundLoopingVideoMediaElement extends BackgroundLoopingVideoMediaMixin(class {}) {}
+/** Standalone SPF background-video adapter with no base class. */
+export class BackgroundVideoMediaElement extends BackgroundVideoMediaMixin(class {}) {}

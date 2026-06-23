@@ -1,5 +1,5 @@
 /**
- * BackgroundLoopingVideoMediaElement adapter tests.
+ * BackgroundVideoMediaElement adapter tests.
  *
  * Covers the HTMLMediaElement-compatible contract for src, preload, loop,
  * muted, and play(). Adapter-shape parallels SimpleHlsMediaElement; the
@@ -8,9 +8,9 @@
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { BackgroundLoopingVideoMediaElement } from '../adapter';
+import { BackgroundVideoMediaElement } from '../adapter';
 
-describe('BackgroundLoopingVideoMediaElement', () => {
+describe('BackgroundVideoMediaElement', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
@@ -24,24 +24,24 @@ describe('BackgroundLoopingVideoMediaElement', () => {
 
   describe('src', () => {
     it('returns empty string before any src is set', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       expect(media.src).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.src = 'https://example.com/v.m3u8';
       expect(media.src).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src is set', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.src = 'https://example.com/v.m3u8';
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('clears engine presentation state when src is set to empty string', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.engine.state.presentation.get()?.url).toBeFalsy();
@@ -50,12 +50,12 @@ describe('BackgroundLoopingVideoMediaElement', () => {
 
   describe('attach / detach', () => {
     it('exposes the engine immediately (created at construction)', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       expect(media.engine).not.toBeNull();
     });
 
     it('reuses the same engine instance across attach calls', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const engineBefore = media.engine;
       media.attach(document.createElement('video'));
       media.attach(document.createElement('video'));
@@ -63,7 +63,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it('re-attaches the media element to the new engine when src changes', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
@@ -71,21 +71,21 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it('sets mediaElement in context when attached', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
     it('clears mediaElement in context when detached', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.attach(document.createElement('video'));
       media.detach();
       expect(media.engine.context.mediaElement.get()).toBeUndefined();
     });
 
     it('detach does not destroy the engine', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.attach(document.createElement('video'));
       const spy = vi.spyOn(media.engine, 'destroy');
       media.detach();
@@ -95,17 +95,17 @@ describe('BackgroundLoopingVideoMediaElement', () => {
 
   describe('loop / muted defaults', () => {
     it('defaults loop to true', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       expect(media.loop).toBe(true);
     });
 
     it('defaults muted to true', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       expect(media.muted).toBe(true);
     });
 
     it('applies loop / muted defaults to the media element on attach', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       // start the element in the opposite state so we can confirm attach overrides it
       el.loop = false;
@@ -117,7 +117,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
 
     // attach modifies native props; changing src doesn't
     it('preserves loop / muted to the preserved element on src change', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       el.loop = false;
@@ -131,7 +131,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     // pins loop=true / muted=true for the autoplay-looping use case). These
     // assert functional setters — unskip when the setters are implemented.
     it.skip('mirrors loop changes onto the attached element', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.loop = false;
@@ -140,7 +140,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it.skip('mirrors muted changes onto the attached element', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.muted = false;
@@ -149,7 +149,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it.skip('stores loop / muted updates made before attach and applies them on attach', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.loop = false;
       media.muted = false;
       const el = document.createElement('video');
@@ -161,7 +161,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
 
   describe('play()', () => {
     it('returns a Promise', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.attach(document.createElement('video'));
       const result = media.play();
       expect(result).toBeInstanceOf(Promise);
@@ -169,14 +169,14 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it('rejects when no media element is attached', async () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       await expect(media.play()).rejects.toThrow('no media element attached');
     });
   });
 
   describe('destroy()', () => {
     it('destroys the underlying engine', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
@@ -185,25 +185,25 @@ describe('BackgroundLoopingVideoMediaElement', () => {
 
   describe('maxResolution', () => {
     it('defaults to undefined', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       expect(media.maxResolution).toBeUndefined();
     });
 
     it('reflects the value passed via constructor config', () => {
-      const media = new BackgroundLoopingVideoMediaElement({
+      const media = new BackgroundVideoMediaElement({
         config: { maxResolution: '720p' },
       });
       expect(media.maxResolution).toBe('720p');
     });
 
     it('reflects setter writes', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.maxResolution = '1080p';
       expect(media.maxResolution).toBe('1080p');
     });
 
     it('does not rebuild the engine on setter writes — closure picker reads the field live', () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       const firstEngine = media.engine;
       media.maxResolution = '720p';
       expect(media.engine).toBe(firstEngine);
@@ -240,7 +240,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     it('the closure picker reads maxResolution at pick time', async () => {
       // Construct without a cap. If the closure captured at creation, the
       // pick would use `undefined` (→ 1440p). It uses the current field instead.
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.maxResolution = '720p';
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
@@ -249,7 +249,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it('setter writes are reflected on the next presentation cycle', async () => {
-      const media = new BackgroundLoopingVideoMediaElement();
+      const media = new BackgroundVideoMediaElement();
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('1440p');
@@ -268,7 +268,7 @@ describe('BackgroundLoopingVideoMediaElement', () => {
     });
 
     it('honors a user-supplied picker, overriding the closure default', async () => {
-      const media = new BackgroundLoopingVideoMediaElement({
+      const media = new BackgroundVideoMediaElement({
         config: { maxResolution: '720p', picker: () => '1440p' },
       });
       media.engine.state.presentation.set(presentationWithFourTracks());

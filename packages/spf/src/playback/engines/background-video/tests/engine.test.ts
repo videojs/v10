@@ -1,5 +1,5 @@
 /**
- * createBackgroundLoopingVideoEngine tests.
+ * createBackgroundVideoEngine tests.
  *
  * The variant subtracts audio, text, ABR, and preload-monitoring behaviors
  * from the simple HLS engine, then seeds `loadActivated: true` so the
@@ -10,13 +10,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { createBackgroundLoopingVideoEngine } from '../engine';
+import { createBackgroundVideoEngine } from '../engine';
 
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
-describe('createBackgroundLoopingVideoEngine', () => {
+describe('createBackgroundVideoEngine', () => {
   let originalFetch: typeof globalThis.fetch;
 
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('createBackgroundLoopingVideoEngine', () => {
   });
 
   it('creates an engine with state, context, and destroy()', () => {
-    const engine = createBackgroundLoopingVideoEngine();
+    const engine = createBackgroundVideoEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
@@ -38,13 +38,13 @@ describe('createBackgroundLoopingVideoEngine', () => {
   });
 
   it('seeds loadActivated: true so preload gates pass from frame 0', () => {
-    const engine = createBackgroundLoopingVideoEngine();
+    const engine = createBackgroundVideoEngine();
     expect(engine.state.loadActivated.get()).toBe(true);
     engine.destroy();
   });
 
   it('omits subtracted state slots — no audio/text/userVideoTrackSelection signals', () => {
-    const engine = createBackgroundLoopingVideoEngine();
+    const engine = createBackgroundVideoEngine();
     const state = snapshot(engine.state) as Record<string, unknown>;
 
     // selectedAudioTrackId is declared by calculatePresentationDuration so
@@ -61,7 +61,7 @@ describe('createBackgroundLoopingVideoEngine', () => {
   });
 
   it('omits subtracted context slots — no audio segment loader / text actors', () => {
-    const engine = createBackgroundLoopingVideoEngine();
+    const engine = createBackgroundVideoEngine();
     const context = snapshot(engine.context) as Record<string, unknown>;
 
     // `audioBufferActor` IS declared by `endOfStream` (cross-type EOS
@@ -79,7 +79,7 @@ describe('createBackgroundLoopingVideoEngine', () => {
   });
 
   it('defaults the picker to pickHighestResolutionVideoTrack', async () => {
-    const engine = createBackgroundLoopingVideoEngine();
+    const engine = createBackgroundVideoEngine();
 
     const presentation: MaybeResolvedPresentation = {
       id: 'p',
@@ -136,7 +136,7 @@ describe('createBackgroundLoopingVideoEngine', () => {
   });
 
   it('honors a custom picker override from config', async () => {
-    const engine = createBackgroundLoopingVideoEngine({
+    const engine = createBackgroundVideoEngine({
       picker: () => 'forced-pick',
     });
 
