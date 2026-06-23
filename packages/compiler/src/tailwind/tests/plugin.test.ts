@@ -344,7 +344,7 @@ function App({ type, className }){
     expect(code).toContain('"grow"');
   });
 
-  it('applies component class overrides', async () => {
+  it('applies resolved generated class names', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
@@ -352,26 +352,57 @@ function App({ type, className }){
         tailwindPlugin({
           design,
           mode: 'extract',
-          overrides: { PlayButton: 'custom' },
-        }),
-      ],
-    });
-    expect(code).toContain('"custom"');
-  });
-
-  it('applies transformed generated class names', async () => {
-    const source = `function App(){ return <PlayButton className="flex"/>; }`;
-    const { code } = await compile(source, {
-      target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          transformName: (ctx) => `app-${ctx.defaultName}`,
+          resolve: {
+            name: (ctx) => `app-${ctx.defaultName}`,
+          },
         }),
       ],
     });
     expect(code).toContain('"app-play-button"');
+  });
+
+  it('lets resolve.name choose token names for component elements', async () => {
+    const source = `function App(){ return <PlayButton className={styles.button.icon}/>; }`;
+    const { code } = await compile(source, {
+      target: 'jsx',
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          resolve: {
+            name: (ctx) => ctx.tokenName ?? ctx.defaultName,
+          },
+        }),
+      ],
+    });
+    expect(code).toContain('"button-icon"');
+  });
+
+  it('lets resolve.name choose component names over known token roots', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const menu = { chevron: 'size-3' };
+`
+    );
+    const source = `import { menu } from './tokens';
+function App(){ return <ChevronIcon className={menu.chevron}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      target: 'jsx',
+      filename: sourcePath,
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          sourcePath,
+          resolve: {
+            name: (ctx) => ctx.componentName ?? ctx.defaultName,
+          },
+        }),
+      ],
+    });
+    expect(code).toContain('"chevron-icon"');
   });
 
   it('reports extracted rules through onRules', async () => {
@@ -463,7 +494,9 @@ function App(){ return <Foo className={styles.button}/>; }`;
           design,
           mode: 'extract',
           sourcePath,
-          resolveTokenModule: (specifier) => (specifier === '@fixture/tokens' ? tokenPath : null),
+          resolve: {
+            tokenModule: (specifier) => (specifier === '@fixture/tokens' ? tokenPath : null),
+          },
           onRules: (rules) => {
             captured = rules;
           },
@@ -475,7 +508,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(captured!.length).toBe(2);
   });
 
-  it('assigns rule bags with bagFor', async () => {
+  it('assigns rule groups with resolve.group', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     let captured: readonly CompiledRule[] | undefined;
     await compile(source, {
@@ -484,14 +517,16 @@ function App(){ return <Foo className={styles.button}/>; }`;
         tailwindPlugin({
           design,
           mode: 'extract',
-          bagFor: ({ className }) => (className.startsWith('play-') ? 'controls' : undefined),
+          resolve: {
+            group: ({ className }) => (className.startsWith('play-') ? 'controls' : undefined),
+          },
           onRules: (rules) => {
             captured = rules;
           },
         }),
       ],
     });
-    expect(captured![0]!.bag).toBe('controls');
+    expect(captured![0]!.group).toBe('controls');
   });
 
   it('skips dynamic conditional class expressions', async () => {
@@ -593,7 +628,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     const { assets } = await compileTailwind(source, {
       mode: 'extract',
       design,
-      hoistVars: { rootSelector: '[data-skin="x"]' },
+      vars: { hoist: { rootSelector: '[data-skin="x"]' } },
     });
     const css = assets[0]!.source;
     expect(css).toMatch(/\[data-skin="x"\]\s*{[^}]*--spacing:/);
@@ -602,9 +637,25 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
   it('forwards the `properties` option (inline) so --tw-content resolves', async () => {
     // `after:absolute` emits `content: var(--tw-content)` with no setter.
     const source = `function App(){ return <Foo className="after:absolute"/>; }`;
-    const { assets } = await compileTailwind(source, { mode: 'extract', design, properties: { mode: 'inline' } });
+    const { assets } = await compileTailwind(source, {
+      mode: 'extract',
+      design,
+      vars: { properties: { mode: 'inline' } },
+    });
     const css = assets[0]!.source;
     expect(css).not.toMatch(/var\(--tw-content\)/);
     expect(collapse(css)).toContain(collapse('content: "";'));
+  });
+
+  it('forwards the `vars.inline` option', async () => {
+    const source = `function App(){ return <Foo className="shadow-sm"/>; }`;
+    const { assets } = await compileTailwind(source, {
+      mode: 'extract',
+      design,
+      vars: { inline: true },
+    });
+    const css = assets[0]!.source;
+    expect(css).not.toMatch(/--tw-shadow:/);
+    expect(css).not.toMatch(/var\(--tw-shadow[),]/);
   });
 });

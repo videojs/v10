@@ -9,14 +9,17 @@ export interface CompiledRule {
   /** Declarations + variants extracted from the utility. */
   utility: UtilityCss;
   /**
-   * Optional grouping key for `mode: 'split'`. Rules with the same `bag`
-   * end up in the same `<bag>.css` file. Ignored in merged mode.
+   * Optional logical grouping key. `mode: 'split'` writes rules with the same
+   * group to the same `<group>.css` file; merged mode preserves the metadata
+   * but emits one stylesheet.
    */
-  bag?: string;
+  group?: string;
 }
 
 /** Output of `emitCss`. Discriminated by `kind`. */
-export type EmittedCss = { kind: 'merged'; css: string } | { kind: 'split'; index: string; bags: Map<string, string> };
+export type EmittedCss =
+  | { kind: 'merged'; css: string }
+  | { kind: 'split'; index: string; groups: Map<string, string> };
 
 /**
  * Hoist configuration. When provided, every CSS custom property declaration
@@ -39,14 +42,14 @@ export interface EmitCssOptions {
   /**
    * Layout mode:
    *   - `'merged'` (default): one CSS string with all rules.
-   *   - `'split'`: one string per `bag` plus an `index` string with
-   *     `@import` lines for each bag in stable order.
+   *   - `'split'`: one string per group plus an `index` string with
+   *     `@import` lines for each group in stable order.
    */
   mode?: 'merged' | 'split';
   /**
    * Optional list of CSS files to prepend to the output (verbatim, after
    * `@import` resolution via Lightning CSS). In `'split'` mode they go into
-   * `index` only, not duplicated across bags.
+   * `index` only, not duplicated across groups.
    */
   baseCss?: readonly string[];
   /**
@@ -120,8 +123,13 @@ export interface RegisteredPropertiesOptions {
    *   matched variables.
    */
   mode: 'emit' | 'inline';
-  /** Which property names to handle. Defaults to `inlineVars`'s matcher, else `/^--tw-/`. */
-  match?: RegExp;
+  /** Variable matchers and optional definition resolvers. Defaults to `inlineVars`, else `/^--tw-/`. */
+  variables?: readonly RegisteredPropertyVariableOptions[] | undefined;
+}
+
+export interface RegisteredPropertyVariableOptions {
+  /** Which registered property names this rule handles. */
+  match: RegExp;
   /**
    * Override or supply a property's definition. Receives the name and the
    * definition captured from Tailwind's output (if any); return a new
@@ -129,6 +137,13 @@ export interface RegisteredPropertiesOptions {
    * fix an initial-value or register a variable Tailwind didn't.
    */
   resolve?: (name: string, captured: PropertyDef | undefined) => PropertyDef | undefined;
+}
+
+type VariableMatcher = (name: string) => boolean;
+
+interface RegisteredPropertyVariable {
+  match: VariableMatcher;
+  resolve?: ((name: string, captured: PropertyDef | undefined) => PropertyDef | undefined) | undefined;
 }
 
 /**
@@ -154,15 +169,18 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
   // place to be emitted as `@property` rules.
   const propMode = opts.properties?.mode;
   const captured = collectPropertyDefs(opts.rules);
+  const propertyVariables = opts.properties ? normalizePropertyVariables(opts.properties.variables, inlineVars) : [];
+  const propertyMatch = propertyVariables.length > 0 ? matchAny(propertyVariables) : undefined;
   const resolveDef = (name: string): PropertyDef | undefined => {
     const cap = captured.get(name);
-    return opts.properties?.resolve?.(name, cap) ?? cap;
+    const variable = propertyVariables.find((v) => v.match(name));
+    return variable?.resolve?.(name, cap) ?? cap;
   };
-  const propMatch = opts.properties?.match ?? inlineVars ?? /^--tw-/;
-  const inlineMatch = propMode === 'inline' ? propMatch : inlineVars;
-  const fallbacks = propMode === 'inline' ? buildFallbackSetters(captured, propMatch, resolveDef) : undefined;
+  const inlineMatch = propMode === 'inline' ? combineMatchers(inlineVars, propertyMatch) : inlineVars;
+  const fallbacks =
+    propMode === 'inline' && propertyMatch ? buildFallbackSetters(captured, propertyMatch, resolveDef) : undefined;
   const emitProperties = (css: string): string =>
-    propMode === 'emit' ? buildPropertyBlocks(css, propMatch, resolveDef) : '';
+    propMode === 'emit' && propertyMatch ? buildPropertyBlocks(css, propertyMatch, resolveDef) : '';
 
   if (mode === 'merged') {
     const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
@@ -172,33 +190,33 @@ export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
     return { kind: 'merged', css: joinSections(base, properties, theme, body) };
   }
 
-  // Split mode: group rules by `bag`.
-  const byBag = new Map<string, CompiledRule[]>();
+  // Split mode: group rules by resolved group.
+  const byGroup = new Map<string, CompiledRule[]>();
   for (const rule of opts.rules) {
-    const bag = rule.bag ?? '';
-    const arr = byBag.get(bag) ?? [];
+    const group = rule.group ?? '';
+    const arr = byGroup.get(group) ?? [];
     arr.push(rule);
-    byBag.set(bag, arr);
+    byGroup.set(group, arr);
   }
 
-  const bags = new Map<string, string>();
+  const groups = new Map<string, string>();
   const importLines: string[] = [];
-  // Sort bag names for deterministic output.
-  const sortedBags = [...byBag.keys()].sort();
-  for (const bagName of sortedBags) {
-    const bagRules = byBag.get(bagName)!;
-    bags.set(bagName, composeRules(bagRules, undefined, inlineMatch, fallbacks));
-    importLines.push(`@import "./${bagName || 'index'}.css";`);
+  // Sort group names for deterministic output.
+  const sortedGroups = [...byGroup.keys()].sort();
+  for (const groupName of sortedGroups) {
+    const groupRules = byGroup.get(groupName)!;
+    groups.set(groupName, composeRules(groupRules, undefined, inlineMatch, fallbacks));
+    importLines.push(`@import "./${groupName || 'index'}.css";`);
   }
 
   const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
   // Theme variables and @property rules go in `index` (it loads first),
-  // resolved against every bag.
-  const allBagsCss = [...bags.values()].join('\n');
-  const theme = buildThemeBlock(allBagsCss, opts.resolveThemeVar, opts.themeSelector);
-  const properties = emitProperties(allBagsCss);
+  // resolved against every group.
+  const allGroupsCss = [...groups.values()].join('\n');
+  const theme = buildThemeBlock(allGroupsCss, opts.resolveThemeVar, opts.themeSelector);
+  const properties = emitProperties(allGroupsCss);
   const index = joinSections(base, properties, theme, importLines.join('\n'));
-  return { kind: 'split', index, bags };
+  return { kind: 'split', index, groups };
 }
 
 /**
@@ -283,12 +301,12 @@ function collectPropertyDefs(rules: readonly CompiledRule[]): Map<string, Proper
 /** Build the `name → initial-value` fallback map for `mode: 'inline'`. */
 function buildFallbackSetters(
   captured: Map<string, PropertyDef>,
-  match: RegExp,
+  match: VariableMatcher,
   resolveDef: (name: string) => PropertyDef | undefined
 ): Map<string, string> {
   const out = new Map<string, string>();
   for (const name of captured.keys()) {
-    if (!match.test(name)) continue;
+    if (!match(name)) continue;
     const def = resolveDef(name);
     if (def?.initialValue !== undefined) out.set(name, def.initialValue);
   }
@@ -302,10 +320,10 @@ function buildFallbackSetters(
  */
 function buildPropertyBlocks(
   css: string,
-  match: RegExp,
+  match: VariableMatcher,
   resolveDef: (name: string) => PropertyDef | undefined
 ): string {
-  const referenced = [...collectReferencedVars(css)].filter((name) => match.test(name)).sort();
+  const referenced = [...collectReferencedVars(css)].filter(match).sort();
   const blocks: string[] = [];
   for (const name of referenced) {
     const def = resolveDef(name);
@@ -358,7 +376,7 @@ interface EmitUnit {
 function composeRules(
   rules: readonly CompiledRule[],
   hoist: HoistOptions | undefined,
-  inlineVars: RegExp | undefined,
+  inlineVars: VariableMatcher | undefined,
   fallbackSetters?: Map<string, string>
 ): string {
   // Step 1: turn each CompiledRule into one EmitUnit.
@@ -537,10 +555,44 @@ function applyHoist(
   }
 }
 
-function normalizeInlineMatcher(opt: true | RegExp | undefined): RegExp | undefined {
+function normalizeInlineMatcher(opt: true | RegExp | undefined): VariableMatcher | undefined {
   if (opt === undefined) return undefined;
-  if (opt === true) return /^--tw-/;
-  return opt;
+  if (opt === true) return regexMatcher(/^--tw-/);
+  return regexMatcher(opt);
+}
+
+function normalizePropertyVariables(
+  variables: readonly RegisteredPropertyVariableOptions[] | undefined,
+  inlineVars: VariableMatcher | undefined
+): RegisteredPropertyVariable[] {
+  if (variables && variables.length > 0) {
+    return variables.map((variable) => ({
+      match: regexMatcher(variable.match),
+      ...(variable.resolve ? { resolve: variable.resolve } : {}),
+    }));
+  }
+
+  return [{ match: inlineVars ?? regexMatcher(/^--tw-/) }];
+}
+
+function regexMatcher(regex: RegExp): VariableMatcher {
+  return (name) => {
+    regex.lastIndex = 0;
+    return regex.test(name);
+  };
+}
+
+function matchAny(variables: readonly RegisteredPropertyVariable[]): VariableMatcher {
+  return (name) => variables.some((variable) => variable.match(name));
+}
+
+function combineMatchers(
+  first: VariableMatcher | undefined,
+  second: VariableMatcher | undefined
+): VariableMatcher | undefined {
+  if (!first) return second;
+  if (!second) return first;
+  return (name) => first(name) || second(name);
 }
 
 /**
@@ -560,7 +612,7 @@ function normalizeInlineMatcher(opt: true | RegExp | undefined): RegExp | undefi
  */
 function applyInline(
   merged: Map<string, EmitUnit & { declarations: Declaration[]; declSet: Set<string> }>,
-  match: RegExp,
+  match: VariableMatcher,
   hoistRootSelector: string | undefined,
   fallbackSetters?: Map<string, string>
 ): void {
@@ -571,7 +623,7 @@ function applyInline(
     const rootEntry = merged.get(`\n${hoistRootSelector}`);
     if (rootEntry) {
       for (const d of rootEntry.declarations) {
-        if (d.property.startsWith('--') && match.test(d.property)) {
+        if (d.property.startsWith('--') && match(d.property)) {
           rootSetters.set(d.property, d.value);
         }
       }
@@ -584,7 +636,7 @@ function applyInline(
     const isRoot = hoistRootSelector !== undefined && entry.selector === hoistRootSelector;
     const localSetters = new Map<string, string>();
     for (const d of entry.declarations) {
-      if (d.property.startsWith('--') && match.test(d.property)) {
+      if (d.property.startsWith('--') && match(d.property)) {
         localSetters.set(d.property, d.value);
       }
     }
@@ -600,7 +652,7 @@ function applyInline(
     const next: Declaration[] = [];
     const nextSet = new Set<string>();
     for (const d of entry.declarations) {
-      if (d.property.startsWith('--') && match.test(d.property)) {
+      if (d.property.startsWith('--') && match(d.property)) {
         // The hoist root is where matching setters live for the rest of the
         // file to inline — drop it from the root unit too, since by now
         // every consumer has substituted its value. This leaves the root
@@ -623,7 +675,7 @@ function applyInline(
  * Resolve a `setters` map to a fixed point so values that reference other
  * matching properties substitute recursively. Mutates the map in place.
  */
-function resolveSettersInPlace(setters: Map<string, string>, match: RegExp): void {
+function resolveSettersInPlace(setters: Map<string, string>, match: VariableMatcher): void {
   if (setters.size === 0) return;
   for (let pass = 0; pass < 10; pass++) {
     let changed = false;
@@ -645,7 +697,7 @@ function resolveSettersInPlace(setters: Map<string, string>, match: RegExp): voi
  * else stay as `var(...)` (the runtime CSS engine will resolve them — or
  * not — at use time).
  */
-function inlineValue(value: string, setters: Map<string, string>, match: RegExp): string {
+function inlineValue(value: string, setters: Map<string, string>, match: VariableMatcher): string {
   let out = '';
   let i = 0;
   while (i < value.length) {
@@ -684,14 +736,14 @@ function inlineValue(value: string, setters: Map<string, string>, match: RegExp)
  * the substituted string. If the property doesn't match or isn't set, returns
  * the original `var(<inner>)` text.
  */
-function resolveVarRef(inner: string, setters: Map<string, string>, match: RegExp): string {
+function resolveVarRef(inner: string, setters: Map<string, string>, match: VariableMatcher): string {
   const commaIdx = findTopLevelComma(inner);
   const name = (commaIdx === -1 ? inner : inner.slice(0, commaIdx)).trim();
   const fallback = commaIdx === -1 ? undefined : inner.slice(commaIdx + 1).trim();
 
   if (!name.startsWith('--')) return `var(${inner})`;
 
-  if (match.test(name)) {
+  if (match(name)) {
     if (setters.has(name)) {
       // Recurse so a value containing further `var(...)` references resolves.
       return inlineValue(setters.get(name)!, setters, match);

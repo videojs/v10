@@ -39,22 +39,13 @@ const opaque = (): StyleSegment => ({ kind: 'opaque', node: null as never });
 describe('deriveClassName — tag derivation', () => {
   it('kebab-cases a simple component tag', () => {
     const r = deriveClassName({ element: firstElement(`<FooBar/>`) });
-    expect(r.source).toBe('tag');
+    expect(r.source).toBe('component');
     expect(r.className).toBe('foo-bar');
   });
 
   it('flattens compound tags', () => {
     const r = deriveClassName({ element: firstElement(`<Outer.Inner/>`) });
     expect(r.className).toBe('outer-inner');
-  });
-
-  it('honours overrides keyed by tag', () => {
-    const r = deriveClassName({
-      element: firstElement(`<XYZWidget/>`),
-      overrides: { XYZWidget: 'xyz-widget' },
-    });
-    expect(r.source).toBe('override');
-    expect(r.className).toBe('xyz-widget');
   });
 });
 
@@ -64,7 +55,7 @@ describe('deriveClassName — token-path derivation', () => {
       element: firstElement(`<div className={styles.fooBar}/>`),
       segments: [token(['styles', 'fooBar'])],
     });
-    expect(r.source).toBe('token-path');
+    expect(r.source).toBe('token');
     expect(r.className).toBe('foo-bar');
   });
 
@@ -126,22 +117,12 @@ describe('deriveClassName — token-path derivation', () => {
     expect(r.className).toBe('a');
   });
 
-  it('honours overrides keyed by dotted token path', () => {
-    const r = deriveClassName({
-      element: firstElement(`<div className={styles.foo.bar}/>`),
-      segments: [token(['styles', 'foo', 'bar'])],
-      overrides: { 'styles.foo.bar': 'special' },
-    });
-    expect(r.source).toBe('override');
-    expect(r.className).toBe('special');
-  });
-
   it('keeps regular components tag-derived when token segments are present', () => {
     const r = deriveClassName({
       element: firstElement(`<PlayButton className={styles.button.icon}/>`),
       segments: [token(['styles', 'button', 'icon'])],
     });
-    expect(r.source).toBe('tag');
+    expect(r.source).toBe('component');
     expect(r.className).toBe('play-button');
   });
 
@@ -152,7 +133,7 @@ describe('deriveClassName — token-path derivation', () => {
       tokenRoots: new Set(['menu']),
       tokenNamespaces: new Set(),
     });
-    expect(r.source).toBe('token-path');
+    expect(r.source).toBe('token');
     expect(r.className).toBe('menu-chevron');
   });
 
@@ -161,12 +142,12 @@ describe('deriveClassName — token-path derivation', () => {
       element: firstElement(`<Menu.Trigger className={styles.menu.item}/>`),
       segments: [token(['styles', 'menu', 'item'])],
     });
-    expect(r.source).toBe('token-path');
+    expect(r.source).toBe('token');
     expect(r.className).toBe('menu-item');
   });
 });
 
-describe('deriveClassName — transformName', () => {
+describe('deriveClassName — resolveName', () => {
   it('default is identity (returns defaultName as the class)', () => {
     const r = deriveClassName({ element: firstElement(`<FooBar/>`) });
     expect(r.className).toBe('foo-bar');
@@ -175,7 +156,7 @@ describe('deriveClassName — transformName', () => {
   it('lets the consumer reshape the name (e.g. add a prefix)', () => {
     const r = deriveClassName({
       element: firstElement(`<FooBar/>`),
-      transformName: (ctx) => `app-${ctx.defaultName}`,
+      resolveName: (ctx) => `app-${ctx.defaultName}`,
     });
     expect(r.className).toBe('app-foo-bar');
   });
@@ -183,8 +164,8 @@ describe('deriveClassName — transformName', () => {
   it('lets the consumer drop a tail segment by inspecting the original tag', () => {
     const r = deriveClassName({
       element: firstElement(`<Foo.Root/>`),
-      transformName: (ctx) => {
-        if (ctx.source === 'tag' && ctx.tag.endsWith('.Root')) {
+      resolveName: (ctx) => {
+        if (ctx.source === 'component' && ctx.tag.endsWith('.Root')) {
           return ctx.defaultName.replace(/-root$/, '');
         }
         return ctx.defaultName;
@@ -197,8 +178,8 @@ describe('deriveClassName — transformName', () => {
     const r = deriveClassName({
       element: firstElement(`<div className={styles.foo.root}/>`),
       segments: [token(['styles', 'foo', 'root'])],
-      transformName: (ctx) => {
-        if (ctx.source === 'token-path' && ctx.tokenPath.at(-1) === 'root') {
+      resolveName: (ctx) => {
+        if (ctx.source === 'token' && ctx.tokenPath?.at(-1) === 'root') {
           return ctx.defaultName.replace(/-root$/, '');
         }
         return ctx.defaultName;
@@ -207,39 +188,51 @@ describe('deriveClassName — transformName', () => {
     expect(r.className).toBe('foo');
   });
 
-  it('overrides win over transformName', () => {
+  it('can choose a token name for a regular component', () => {
     const r = deriveClassName({
-      element: firstElement(`<FooBar/>`),
-      overrides: { FooBar: 'override-wins' },
-      transformName: () => 'transform-wins',
+      element: firstElement(`<PlayButton className={styles.button.icon}/>`),
+      segments: [token(['styles', 'button', 'icon'])],
+      resolveName: (ctx) => ctx.tokenName ?? ctx.defaultName,
     });
-    expect(r.className).toBe('override-wins');
-    expect(r.source).toBe('override');
+    expect(r.className).toBe('button-icon');
+    expect(r.source).toBe('resolved');
   });
 
-  it('transformName receives source = "tag" for tag derivation', () => {
+  it('can choose a component name when a known token root would be the default', () => {
+    const r = deriveClassName({
+      element: firstElement(`<ChevronIcon className={menu.chevron}/>`),
+      segments: [token(['menu', 'chevron'])],
+      tokenRoots: new Set(['menu']),
+      tokenNamespaces: new Set(),
+      resolveName: (ctx) => ctx.componentName ?? ctx.defaultName,
+    });
+    expect(r.className).toBe('chevron-icon');
+    expect(r.source).toBe('resolved');
+  });
+
+  it('resolveName receives source = "component" for component defaults', () => {
     let receivedSource: string | undefined;
     deriveClassName({
       element: firstElement(`<FooBar/>`),
-      transformName: (ctx) => {
+      resolveName: (ctx) => {
         receivedSource = ctx.source;
         return ctx.defaultName;
       },
     });
-    expect(receivedSource).toBe('tag');
+    expect(receivedSource).toBe('component');
   });
 
-  it('transformName receives source = "token-path" for token derivation', () => {
+  it('resolveName receives source = "token" for token defaults', () => {
     let receivedSource: string | undefined;
     deriveClassName({
       element: firstElement(`<div className={styles.foo}/>`),
       segments: [token(['styles', 'foo'])],
-      transformName: (ctx) => {
+      resolveName: (ctx) => {
         receivedSource = ctx.source;
         return ctx.defaultName;
       },
     });
-    expect(receivedSource).toBe('token-path');
+    expect(receivedSource).toBe('token');
   });
 });
 

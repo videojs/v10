@@ -15,7 +15,7 @@ import {
   type RegisteredPropertiesOptions,
 } from './emit';
 import { EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
-import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type NameTransform } from './naming';
+import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type ResolveName } from './naming';
 
 /** Styling mode for Tailwind-backed className handling. */
 export type TailwindMode =
@@ -33,10 +33,37 @@ export type TailwindMode =
    */
   | 'extract';
 
-/** Per-rule annotation hook; lets the consumer assign a `bag` for split-mode emission. */
-export type BagFor = (info: { className: string; segments: readonly StyleSegment[] }) => string | undefined;
+/** Per-rule grouping hook. */
+export type ResolveGroup = (info: { className: string; segments: readonly StyleSegment[] }) => string | undefined;
 
 export type ResolveTokenModule = (specifier: string, fromFile: string) => string | null | undefined;
+
+export interface TailwindResolveOptions {
+  /** Resolve bare token imports in skin sources to token modules on disk. Relative imports use the default resolver. */
+  tokenModule?: ResolveTokenModule | undefined;
+  /** Resolve the final CSS class name from component/token/literal candidates. */
+  name?: ResolveName | undefined;
+  /** Assign an extracted rule to a logical CSS group. */
+  group?: ResolveGroup | undefined;
+}
+
+export interface TailwindEmitOptions {
+  /** CSS emission layout. Defaults to merged output. */
+  mode?: 'merged' | 'split';
+  /** Base CSS files to prepend to emitted output. */
+  baseCss?: readonly string[];
+  /** Directory used to resolve relative base CSS paths. */
+  configDir?: string;
+}
+
+export interface TailwindVarsOptions {
+  /** Hoist uniform custom property declarations to a root selector, or disable explicitly. */
+  hoist?: false | HoistOptions | undefined;
+  /** Inline matching custom properties into values that reference them. */
+  inline?: true | RegExp | undefined;
+  /** Handle registered @property variables such as Tailwind's --tw-* vars. */
+  properties?: RegisteredPropertiesOptions | undefined;
+}
 
 export interface TailwindOptions {
   /** Styling mode. Defaults to `'preserve'`. */
@@ -47,54 +74,12 @@ export interface TailwindOptions {
   input?: string | undefined;
   /** CSS asset name for `'extract'`. Defaults to the compiled source basename with `.css`. */
   output?: string | undefined;
-  /** Resolve bare token imports in skin sources to token modules on disk. Relative imports use the default resolver. */
-  resolveTokenModule?: ResolveTokenModule | undefined;
-  /**
-   * Hook for shaping the final class name (see `NameTransform`). Only used
-   * by `'extract'`. Identity by default.
-   */
-  transformName?: NameTransform;
-  /**
-   * Per-tag / per-token-path class-name overrides. Only used by `'extract'`.
-   */
-  overrides?: Record<string, string>;
-  /**
-   * Optional helper that decides which split-mode `bag` a rule belongs to.
-   * Only used by `'extract'`. Returns `undefined` to leave the rule
-   * unbagged.
-   */
-  bagFor?: BagFor;
-  /** Options forwarded to `emitCss` for `'extract'`. */
-  emit?: { mode?: 'merged' | 'split'; baseCss?: readonly string[]; configDir?: string };
-  /**
-   * Hoist uniform CSS variable declarations to a single root rule. See
-   * `HoistOptions`. Forwarded to the internal `emitCss` call in extract mode.
-   *
-   * Pass `false` to disable. Plugin consumers driving `emitCss` themselves
-   * should pass the same value through.
-   */
-  hoistVars?: false | HoistOptions;
-  /**
-   * Inline matching CSS custom properties into their consumers, dropping
-   * the matching declarations. Same shape as `EmitCssOptions['inlineVars']`:
-   *
-   *   - `true` — inline `--tw-*` (Tailwind's internal registered variables).
-   *   - `RegExp` — inline any `--name` matching.
-   *   - omitted — no inlining.
-   *
-   * Forwarded to the internal `emitCss` call in extract mode.
-   */
-  inlineVars?: true | RegExp;
-  /**
-   * Handle Tailwind's `@property`-registered variables (`--tw-content`, etc.) that
-   * are referenced but never set, so the output isn't broken (e.g.
-   * `content: var(--tw-content)`). See `RegisteredPropertiesOptions` — choose
-   * `'emit'` (ship `@property` rules) or `'inline'` (bake initial-values in),
-   * with an optional `resolve` hook for the per-property config.
-   *
-   * Forwarded to the internal `emitCss` call in extract mode.
-   */
-  properties?: RegisteredPropertiesOptions;
+  /** Resolution hooks for token modules, generated class names, and rule groups. */
+  resolve?: TailwindResolveOptions | undefined;
+  /** CSS asset emission options for extract mode. */
+  emit?: TailwindEmitOptions | undefined;
+  /** CSS custom property handling options for extract mode. */
+  vars?: TailwindVarsOptions | undefined;
 }
 
 interface TailwindTransformOptions extends Omit<TailwindOptions, 'input' | 'output'> {
@@ -132,14 +117,15 @@ export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
         }),
         async finish() {
           if (rules.length === 0) return;
+          const vars = options.vars;
           const emitted = await emitCss({
             rules,
             ...(options.emit ?? {}),
-            ...(options.hoistVars !== undefined ? { hoist: options.hoistVars } : {}),
-            ...(options.inlineVars !== undefined ? { inlineVars: options.inlineVars } : {}),
-            ...(options.properties ? { properties: options.properties } : {}),
+            ...(vars?.hoist !== undefined ? { hoist: vars.hoist } : {}),
+            ...(vars?.inline !== undefined ? { inlineVars: vars.inline } : {}),
+            ...(vars?.properties ? { properties: vars.properties } : {}),
             resolveThemeVar: (name) => design.resolveThemeVar(name),
-            ...(options.hoistVars ? { themeSelector: options.hoistVars.rootSelector } : {}),
+            ...(vars?.hoist ? { themeSelector: vars.hoist.rootSelector } : {}),
           });
           addCssAssets(context, options.output, emitted);
         },
@@ -172,7 +158,7 @@ export function tailwindPlugin(options: TailwindTransformOptions): ts.Transforme
  * ───────────────────────────────────────────────────────────────────────── */
 
 function inlinedPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
-  const env = buildTokenEnv(options.sourcePath, options.resolveTokenModule);
+  const env = buildTokenEnv(options.sourcePath, options.resolve?.tokenModule);
 
   return (transformContext) => {
     return (sourceFile) => {
@@ -195,9 +181,9 @@ function inlinedPlugin(options: TailwindTransformOptions): ts.TransformerFactory
 function vanillaCssPlugin(
   options: TailwindTransformOptions & { design: DesignSystem }
 ): ts.TransformerFactory<ts.SourceFile> {
-  const { design, transformName, overrides, bagFor, onRules } = options;
+  const { design, resolve, onRules } = options;
 
-  const env = buildTokenEnv(options.sourcePath, options.resolveTokenModule);
+  const env = buildTokenEnv(options.sourcePath, resolve?.tokenModule);
 
   return (transformContext) => {
     return (sourceFile) => {
@@ -216,8 +202,7 @@ function vanillaCssPlugin(
         const naming: DeriveClassNameOptions = {
           element: info.element,
           segments,
-          ...(transformName ? { transformName } : {}),
-          ...(overrides ? { overrides } : {}),
+          ...(resolve?.name ? { resolveName: resolve.name } : {}),
           ...(env.hasSource ? { tokenNamespaces: env.namespaces, tokenRoots: env.roots } : {}),
         };
         const derived = deriveClassName(naming);
@@ -243,7 +228,7 @@ function vanillaCssPlugin(
           const css = decompose(utility, design);
           if (css && css.declarations.length > 0) {
             ruleUtilities.push(utility);
-            rules.push(buildCompiledRule(derived.className, css, segments, bagFor));
+            rules.push(buildCompiledRule(derived.className, css, segments, resolve?.group));
             return;
           }
           if (!preserved.includes(utility)) preserved.push(utility);
@@ -326,10 +311,10 @@ function addCssAssets(context: CompilerContext, output: string | undefined, emit
   const indexFile = output ?? defaultCssFileName(context);
   context.addAsset({ type: 'css', fileName: indexFile, source: emitted.index, sourceFile: context.filename });
   const dir = dirname(indexFile);
-  for (const [bag, source] of emitted.bags) {
+  for (const [group, source] of emitted.groups) {
     context.addAsset({
       type: 'css',
-      fileName: join(dir, `${bag || 'index'}.css`),
+      fileName: join(dir, `${group || 'index'}.css`),
       source,
       sourceFile: context.filename,
     });
@@ -366,7 +351,7 @@ interface TokenEnv {
   hasSource: boolean;
 }
 
-function buildTokenEnv(sourcePath: string | undefined, resolveTokenModule?: ResolveTokenModule | undefined): TokenEnv {
+function buildTokenEnv(sourcePath: string | undefined, tokenModuleResolver?: ResolveTokenModule | undefined): TokenEnv {
   const env: TokenEnv = {
     values: new Map<string, TokenValue>(),
     namespaces: new Set<string>(),
@@ -385,7 +370,7 @@ function buildTokenEnv(sourcePath: string | undefined, resolveTokenModule?: Reso
     const specifier = stmt.moduleSpecifier;
     if (!ts.isStringLiteral(specifier)) continue;
     const id = specifier.text;
-    const absolutePath = resolveTokenImport(id, sourcePath, resolveTokenModule);
+    const absolutePath = resolveTokenImport(id, sourcePath, tokenModuleResolver);
     if (!absolutePath) continue;
 
     let exports: Record<string, TokenValue>;
@@ -489,10 +474,10 @@ const MODULE_EXTENSIONS = ['.ts', '.tsx', '/index.ts', '/index.tsx'] as const;
 function resolveTokenImport(
   specifier: string,
   fromFile: string,
-  resolveTokenModule?: ResolveTokenModule | undefined
+  tokenModuleResolver?: ResolveTokenModule | undefined
 ): string | null {
   if (specifier.startsWith('.')) return resolveModulePath(specifier, fromFile);
-  const resolved = resolveTokenModule?.(specifier, fromFile);
+  const resolved = tokenModuleResolver?.(specifier, fromFile);
   if (!resolved) return null;
   return isAbsolute(resolved) ? resolved : resolvePath(dirname(fromFile), resolved);
 }
@@ -571,10 +556,10 @@ function buildCompiledRule(
   className: string,
   utility: UtilityCss,
   segments: readonly StyleSegment[],
-  bagFor: BagFor | undefined
+  resolveGroup: ResolveGroup | undefined
 ): CompiledRule {
-  const bag = bagFor?.({ className, segments });
-  return bag === undefined ? { className, utility } : { className, utility, bag };
+  const group = resolveGroup?.({ className, segments });
+  return group === undefined ? { className, utility } : { className, utility, group };
 }
 
 function collisionError(element: ts.Node, className: string, first: string, next: string): DiagnosticError {
@@ -585,7 +570,7 @@ function collisionError(element: ts.Node, className: string, first: string, next
       `  <${tag}> resolves to: ${next}\n` +
       `  an earlier element resolved to: ${first}\n` +
       `Merging these would put conflicting declarations in a single '.${className}' rule. ` +
-      `Disambiguate with a distinct token, a distinct component, or an \`overrides\` entry.`,
+      `Disambiguate with a distinct token, a distinct component, or \`resolve.name\`.`,
     { ...diagnosticLocationFromNode(element), diagnosticCode: 'tailwind-class-collision' }
   );
 }

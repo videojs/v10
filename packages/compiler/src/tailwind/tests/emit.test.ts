@@ -11,10 +11,10 @@ function rule(
   className: string,
   declarations: { property: string; value: string }[],
   variants: any[] = [],
-  bag?: string
+  group?: string
 ): CompiledRule {
   const utility = { utility: 'mock', declarations, variants };
-  return bag === undefined ? { className, utility } : { className, utility, bag };
+  return group === undefined ? { className, utility } : { className, utility, group };
 }
 
 describe('emitCss — merged mode', () => {
@@ -97,7 +97,7 @@ describe('emitCss — merged mode', () => {
 });
 
 describe('emitCss — split mode', () => {
-  it('groups rules by bag', async () => {
+  it('groups rules by group', async () => {
     const out = await emitCss({
       mode: 'split',
       rules: [
@@ -107,12 +107,12 @@ describe('emitCss — split mode', () => {
     });
     expect(out.kind).toBe('split');
     if (out.kind !== 'split') return;
-    expect(out.bags.size).toBe(2);
-    expect(collapse(out.bags.get('one')!)).toContain(collapse('.a{color:red;}'));
-    expect(collapse(out.bags.get('two')!)).toContain(collapse('.b{color:blue;}'));
+    expect(out.groups.size).toBe(2);
+    expect(collapse(out.groups.get('one')!)).toContain(collapse('.a{color:red;}'));
+    expect(collapse(out.groups.get('two')!)).toContain(collapse('.b{color:blue;}'));
   });
 
-  it('emits an index with @import lines for each bag in stable order', async () => {
+  it('emits an index with @import lines for each group in stable order', async () => {
     const out = await emitCss({
       mode: 'split',
       rules: [
@@ -157,7 +157,7 @@ describe('emitCss — baseCss prepend', () => {
     expect(out.css).not.toContain('@import');
   });
 
-  it('puts baseCss in index only (split mode), not duplicated across bags', async () => {
+  it('puts baseCss in index only (split mode), not duplicated across groups', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'emit-css-split-base-'));
     const basePath = join(dir, 'base.css');
     writeFileSync(basePath, '.base { color: green; }', 'utf8');
@@ -171,8 +171,8 @@ describe('emitCss — baseCss prepend', () => {
     });
     if (out.kind !== 'split') throw new Error('expected split');
     expect(out.index).toContain('.base');
-    expect(out.bags.get('one')!).not.toContain('.base');
-    expect(out.bags.get('two')!).not.toContain('.base');
+    expect(out.groups.get('one')!).not.toContain('.base');
+    expect(out.groups.get('two')!).not.toContain('.base');
   });
 
   it('resolves relative baseCss paths against configDir', async () => {
@@ -570,7 +570,12 @@ describe('emitCss — registered @property variables', () => {
       rules: [contentRule()],
       properties: {
         mode: 'inline',
-        resolve: (name, captured) => (name === '--tw-content' ? { ...captured, initialValue: '"!"' } : undefined),
+        variables: [
+          {
+            match: /^--tw-/,
+            resolve: (name, captured) => (name === '--tw-content' ? { ...captured, initialValue: '"!"' } : undefined),
+          },
+        ],
       },
     });
     if (out.kind !== 'merged') throw new Error('expected merged');
@@ -582,7 +587,12 @@ describe('emitCss — registered @property variables', () => {
       rules: [contentRule()],
       properties: {
         mode: 'emit',
-        resolve: () => ({ syntax: '"<length>"', inherits: true, initialValue: '0px' }),
+        variables: [
+          {
+            match: /^--tw-/,
+            resolve: () => ({ syntax: '"<length>"', inherits: true, initialValue: '0px' }),
+          },
+        ],
       },
     });
     if (out.kind !== 'merged') throw new Error('expected merged');
@@ -594,7 +604,7 @@ describe('emitCss — registered @property variables', () => {
   it('honours the match filter (leaves non-matching variables alone)', async () => {
     const out = await emitCss({
       rules: [contentRule()],
-      properties: { mode: 'inline', match: /^--brand-/ },
+      properties: { mode: 'inline', variables: [{ match: /^--brand-/ }] },
     });
     if (out.kind !== 'merged') throw new Error('expected merged');
     expect(out.css).toMatch(/var\(--tw-content\)/);

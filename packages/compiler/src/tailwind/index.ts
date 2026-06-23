@@ -15,6 +15,7 @@ export {
   type HoistOptions,
   type PropertyDef,
   type RegisteredPropertiesOptions,
+  type RegisteredPropertyVariableOptions,
 } from './emit';
 export { clearTokenModuleCache, EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
 export {
@@ -23,6 +24,15 @@ export {
   DiagnosticError,
   deriveClassName,
   type NameContext,
-  type NameTransform,
+  type ResolveName,
 } from './naming';
-export { type BagFor, type TailwindMode, type TailwindOptions, tailwind } from './plugin';
+export {
+  type ResolveGroup,
+  type ResolveTokenModule,
+  type TailwindEmitOptions,
+  type TailwindMode,
+  type TailwindOptions,
+  type TailwindResolveOptions,
+  type TailwindVarsOptions,
+  tailwind,
+} from './plugin';
