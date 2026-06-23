@@ -66,6 +66,7 @@ import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
+import { Overlay } from '@/ui/overlay';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
@@ -534,7 +535,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         </Tooltip.Provider>
       </Controls.Root>
 
-      <div className={overlay} />
+      <Overlay className={overlay} />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

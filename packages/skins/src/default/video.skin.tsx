@@ -8,6 +8,7 @@ import {
   FullscreenButton,
   Gesture,
   Hotkey,
+  Overlay,
   PiPButton,
   PlayButton,
   Poster,
@@ -46,6 +47,7 @@ import {
   icon,
   iconContainer,
   iconFlipped,
+  overlay,
   pipIcon,
   playIcon,
   popup,
@@ -192,6 +194,8 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
           </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
+
+      <Overlay className={overlay} />
 
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />

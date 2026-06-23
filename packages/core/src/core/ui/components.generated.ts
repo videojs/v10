@@ -16,6 +16,7 @@ import HotkeyDef from './hotkey/hotkey-component';
 import LiveButtonDef from './live-button/live-button-component';
 import MenuDef from './menu/menu-component';
 import MuteButtonDef from './mute-button/mute-button-component';
+import OverlayDef from './overlay/overlay-component';
 import PiPButtonDef from './pip-button/pip-button-component';
 import PlayButtonDef from './play-button/play-button-component';
 import PlaybackRateButtonDef from './playback-rate-button/playback-rate-button-component';
@@ -50,6 +51,7 @@ export const Hotkey = createComponent(HotkeyDef);
 export const LiveButton = createComponent(LiveButtonDef);
 export const Menu = createComponent(MenuDef);
 export const MuteButton = createComponent(MuteButtonDef);
+export const Overlay = createComponent(OverlayDef);
 export const PiPButton = createComponent(PiPButtonDef);
 export const PlaybackRateButton = createComponent(PlaybackRateButtonDef);
 export const PlaybackRateRadioGroup = createComponent(PlaybackRateRadioGroupDef);
@@ -85,6 +87,7 @@ export const COMPONENTS = {
   LiveButton: LiveButtonDef,
   Menu: MenuDef,
   MuteButton: MuteButtonDef,
+  Overlay: OverlayDef,
   PiPButton: PiPButtonDef,
   PlaybackRateButton: PlaybackRateButtonDef,
   PlaybackRateRadioGroup: PlaybackRateRadioGroupDef,

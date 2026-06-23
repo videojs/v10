@@ -56,6 +56,7 @@ export { useHotkeyShortcut } from './ui/hotkey/use-hotkey-shortcut';
 export { LiveButton, type LiveButtonProps } from './ui/live-button/live-button';
 export { Menu, type MenuContextValue, useMenuContext, useOptionalMenuContext } from './ui/menu';
 export { MuteButton, type MuteButtonProps } from './ui/mute-button/mute-button';
+export { Overlay, type OverlayProps } from './ui/overlay/overlay';
 export { PiPButton, type PiPButtonProps } from './ui/pip-button/pip-button';
 export { PlayButton, type PlayButtonProps } from './ui/play-button/play-button';
 export {

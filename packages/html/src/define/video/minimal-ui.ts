@@ -12,6 +12,7 @@ import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-b
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
+import { OverlayElement } from '../../ui/overlay/overlay-element';
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playback-rate-button-element';
@@ -61,6 +62,7 @@ safeDefine(FullscreenButtonElement);
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
 safeDefine(MuteButtonElement);
+safeDefine(OverlayElement);
 safeDefine(PiPButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PlaybackRateButtonElement);

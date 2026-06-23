@@ -24,6 +24,7 @@ describe('skins compiler config', () => {
     expect(code).toContain('from "@/ui/airplay-button"');
     expect(code).toContain('from "@/ui/buffering-indicator"');
     expect(code).toContain('from "@/ui/error-dialog"');
+    expect(code).toContain('from "@/ui/overlay"');
     expect(code).toContain('from "@/ui/pip-button"');
     expect(code).toContain('from "@/ui/play-button"');
     expect(code).toContain('from "@/ui/poster"');
@@ -63,6 +64,8 @@ describe('skins compiler config', () => {
     expect(compactCode).not.toContain('ErrorDialog.Content');
     expect(compactCode).not.toContain('ErrorDialog.Actions');
     expect(compactCode).toContain(compact('<Controls.Root className={controls} data-controls="">'));
+    expect(compactCode).toContain(compact('<Overlay className={overlay} />'));
+    expect(compactCode).not.toContain(compact('<div className={overlay} />'));
     expect(compactCode).toContain(compact('<Tooltip.Trigger render={<PlayButton'));
     expect(compactCode).toContain(compact('<PlayButton className={cn(iconButton, playIcon.button)} type="button">'));
     expect(compactCode).toContain(

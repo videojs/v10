@@ -130,7 +130,7 @@ function getTemplateHTML() {
         </media-tooltip-group>
       </media-controls>
 
-      <div class="media-overlay"></div>
+      <media-overlay class="media-overlay"></media-overlay>
 
       <!-- Hotkeys -->
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>

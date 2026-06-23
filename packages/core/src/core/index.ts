@@ -54,6 +54,8 @@ export * from './ui/menu/props';
 export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/mute-button/props';
+export * from './ui/overlay/overlay-core';
+export * from './ui/overlay/overlay-data-attrs';
 export * from './ui/pip-button/pip-button-core';
 export * from './ui/pip-button/pip-button-data-attrs';
 export * from './ui/pip-button/props';

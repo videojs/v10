@@ -69,6 +69,7 @@ export { MenuRadioItemElement } from './ui/menu/menu-radio-item-element';
 export { MenuSeparatorElement } from './ui/menu/menu-separator-element';
 export { MenuViewElement } from './ui/menu/menu-view-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
+export { OverlayElement } from './ui/overlay/overlay-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';

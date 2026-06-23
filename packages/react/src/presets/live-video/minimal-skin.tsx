@@ -35,6 +35,7 @@ import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
+import { Overlay } from '@/ui/overlay';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
@@ -289,7 +290,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
         </Tooltip.Provider>
       </Controls.Root>
 
-      <div className="media-overlay" />
+      <Overlay className="media-overlay" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

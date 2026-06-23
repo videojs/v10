@@ -14,6 +14,7 @@ import {
   icon,
   iconContainer,
   iconFlipped,
+  overlay,
   pipIcon,
   playIcon,
   popup,
@@ -47,6 +48,7 @@ import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
+import { Overlay } from '@/ui/overlay';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Poster } from '@/ui/poster';
@@ -214,6 +216,8 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
           </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
+
+      <Overlay className={overlay} />
 
       <Hotkey keys="Space" action="togglePaused" />
       <Hotkey keys="k" action="togglePaused" />
