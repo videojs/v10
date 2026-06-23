@@ -1,9 +1,11 @@
-import { render, renderHook } from '@testing-library/react';
+import { render, renderHook, waitFor } from '@testing-library/react';
 import type { PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { StrictMode } from 'react';
 import { describe, expect, it, vi } from 'vitest';
+import { Video } from '../../media/video';
+import { Controls } from '../../ui/controls';
 import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
@@ -109,6 +111,42 @@ describe('createPlayer', () => {
       );
 
       expect(container.querySelector('[data-testid="child"]')).toBeTruthy();
+    });
+
+    it('keeps native controls without controls', () => {
+      const { Provider } = createPlayer({ features: [mockSlice] });
+
+      const { container } = render(
+        <Provider>
+          <Video controls />
+        </Provider>
+      );
+
+      const video = container.querySelector('video') as HTMLVideoElement;
+
+      expect(video.controls).toBe(true);
+    });
+
+    it('removes native controls when controls attach', async () => {
+      const { Provider } = createPlayer({ features: [mockSlice] });
+
+      const view = (
+        <Provider>
+          <Video controls />
+          <Controls.Root />
+        </Provider>
+      );
+      const { container, rerender } = render(view);
+
+      const video = container.querySelector('video') as HTMLVideoElement;
+
+      await waitFor(() => {
+        expect(video.controls).toBe(false);
+      });
+
+      rerender(view);
+
+      expect(video.controls).toBe(false);
     });
   });
 

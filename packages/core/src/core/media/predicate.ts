@@ -3,6 +3,7 @@ import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 import type {
   MediaBufferCapability,
+  MediaControlsCapability,
   MediaErrorCapability,
   MediaLiveCapability,
   MediaPauseCapability,
@@ -54,6 +55,12 @@ export function isMediaPlaybackRateCapable(value: unknown): value is MediaPlayba
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
   return !isUndefined(media.playbackRate);
+}
+
+export function isMediaControlsCapable(value: unknown): value is MediaControlsCapability {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.controls);
 }
 
 export function isMediaBufferCapable(value: unknown): value is MediaBufferCapability {

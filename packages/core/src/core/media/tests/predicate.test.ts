@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
-import { isMediaBufferCapable, isMediaRemotePlaybackCapable, isMediaTextTrackCapable } from '../predicate';
+import {
+  isMediaBufferCapable,
+  isMediaControlsCapable,
+  isMediaRemotePlaybackCapable,
+  isMediaTextTrackCapable,
+} from '../predicate';
 
 describe('isMediaBufferCapable', () => {
   it('rejects empty time range stubs', () => {
@@ -20,6 +25,16 @@ describe('isMediaTextTrackCapable', () => {
 
   it('accepts defined non-stub text tracks', () => {
     expect(isMediaTextTrackCapable({ textTracks: Object.assign(new EventTarget(), { length: 0 }) })).toBe(true);
+  });
+});
+
+describe('isMediaControlsCapable', () => {
+  it('rejects media without native controls', () => {
+    expect(isMediaControlsCapable({})).toBe(false);
+  });
+
+  it('accepts media with native controls', () => {
+    expect(isMediaControlsCapable({ controls: false })).toBe(true);
   });
 });
 

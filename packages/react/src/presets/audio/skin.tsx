@@ -11,6 +11,7 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
@@ -123,7 +124,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
-      <div className="media-surface media-controls">
+      <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
           <div className="media-button-group">
             <Tooltip.Root side="top" boundary="viewport">
@@ -203,7 +204,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
             <VolumePopover />
           </div>
         </Tooltip.Provider>
-      </div>
+      </Controls.Root>
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

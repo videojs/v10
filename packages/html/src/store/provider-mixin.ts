@@ -5,15 +5,17 @@ import {
   type PlayerStore,
   type PlayerTarget,
 } from '@videojs/core/dom';
+import { isMediaControlsCapable } from '@videojs/core/media/predicate';
 import { ContextProvider } from '@videojs/element/context';
 import { isNull } from '@videojs/utils/predicate';
 import type { MediaElementConstructor } from '@/ui/media-element';
-import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
+import type { ContainerContext, ControlsContext, MediaContext, PlayerContext } from '../player/context';
 import type { PlayerProvider, PlayerProviderConstructor } from './types';
 
 export interface ProviderMixinConfig<Store extends PlayerStore> {
   playerContext: PlayerContext<Store>;
   mediaContext: MediaContext;
+  controlsContext: ControlsContext;
   containerContext: ContainerContext;
   factory: () => Store;
 }
@@ -45,13 +47,30 @@ export function createProviderMixin<Store extends PlayerStore>(
       #media: Media | null = null;
       #container: MediaContainer | null = null;
       #popupGroup = createPopupGroup();
+      #controlsCount = 0;
+      #nativeControlsHidden = false;
       #fallbackQueued = false;
 
       #setMedia = (media: Media | null): void => {
         if (this.#media === media) return;
+        this.#restoreNativeControls();
         this.#media = media;
         this.#mediaProvider.setValue({ media, setMedia: this.#setMedia });
         this.#tryAttach();
+      };
+
+      #registerControls = (): (() => void) => {
+        this.#controlsCount += 1;
+        this.#syncControlsContext();
+        this.#hideNativeControls();
+
+        return () => {
+          this.#controlsCount = Math.max(0, this.#controlsCount - 1);
+          if (!this.#controlsCount) {
+            this.#restoreNativeControls();
+          }
+          this.#syncControlsContext();
+        };
       };
 
       #setContainer = (container: MediaContainer | null): void => {
@@ -75,6 +94,11 @@ export function createProviderMixin<Store extends PlayerStore>(
         initialValue: { media: this.#media, setMedia: this.#setMedia },
       });
 
+      #controlsProvider = new ContextProvider(this, {
+        context: config.controlsContext,
+        initialValue: { mounted: false, register: this.#registerControls },
+      });
+
       #containerProvider = new ContextProvider(this, {
         context: config.containerContext,
         initialValue: {
@@ -96,6 +120,7 @@ export function createProviderMixin<Store extends PlayerStore>(
         super.connectedCallback();
         this.#playerProvider.setValue(this.store);
         this.#mediaProvider.setValue({ media: this.#media, setMedia: this.#setMedia });
+        this.#syncControlsContext();
         this.#containerProvider.setValue({
           container: this.#container,
           setContainer: this.#setContainer,
@@ -137,7 +162,29 @@ export function createProviderMixin<Store extends PlayerStore>(
         if (hasMediaChanged || hasContainerChanged) {
           this.#detachStore();
           this.#detach = store.attach(target);
+          this.#hideNativeControls();
         }
+      }
+
+      #hideNativeControls(): void {
+        if (!this.#controlsCount || !isMediaControlsCapable(this.#media) || !this.#media.controls) return;
+        this.#media.controls = false;
+        this.#nativeControlsHidden = true;
+      }
+
+      #restoreNativeControls(): void {
+        if (!this.#nativeControlsHidden) return;
+        if (isMediaControlsCapable(this.#media)) {
+          this.#media.controls = true;
+        }
+        this.#nativeControlsHidden = false;
+      }
+
+      #syncControlsContext(): void {
+        this.#controlsProvider.setValue({
+          mounted: this.#controlsCount > 0,
+          register: this.#registerControls,
+        });
       }
 
       #detachStore(): void {

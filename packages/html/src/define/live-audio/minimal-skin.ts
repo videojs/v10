@@ -26,7 +26,7 @@ function getTemplateHTML() {
         </div>
       </media-error-dialog>
 
-      <div class="media-controls">
+      <media-controls class="media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
             <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
@@ -61,7 +61,7 @@ function getTemplateHTML() {
             </media-popover>
           </div>
         </media-tooltip-group>
-      </div>
+      </media-controls>
     </media-container>
   `;
 }

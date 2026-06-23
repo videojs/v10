@@ -59,6 +59,39 @@ describe('Audio', () => {
   });
 
   describe('with Provider', () => {
+    it('renders native controls when controls are not mounted', () => {
+      const setMedia = vi.fn();
+      const store = createMockStore();
+      const value: PlayerContextValue = {
+        store: store as any,
+        media: null,
+        setMedia,
+        container: null,
+        setContainer: vi.fn(),
+      };
+
+      const { container } = render(<Audio controls />, { wrapper: createWrapper(value) });
+
+      expect(container.querySelector('audio')?.hasAttribute('controls')).toBe(true);
+    });
+
+    it('does not render native controls when controls are mounted', () => {
+      const setMedia = vi.fn();
+      const store = createMockStore();
+      const value: PlayerContextValue = {
+        store: store as any,
+        media: null,
+        setMedia,
+        controlsMounted: true,
+        container: null,
+        setContainer: vi.fn(),
+      };
+
+      const { container } = render(<Audio controls />, { wrapper: createWrapper(value) });
+
+      expect(container.querySelector('audio')?.hasAttribute('controls')).toBe(false);
+    });
+
     it('calls setMedia on mount', () => {
       const setMedia = vi.fn();
       const store = createMockStore();

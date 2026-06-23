@@ -28,6 +28,7 @@ import {
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
@@ -176,7 +177,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
-      <div className={controls}>
+      <Controls.Root className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
             <Tooltip.Root side="top" boundary="viewport">
@@ -260,7 +261,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
             <VolumePopover />
           </div>
         </Tooltip.Provider>
-      </div>
+      </Controls.Root>
     </Container>
   );
 }

@@ -38,6 +38,21 @@ export type MediaContext = Context<typeof MEDIA_CONTEXT_KEY, MediaContextValue>;
 export const mediaContext = createContext<MediaContextValue, typeof MEDIA_CONTEXT_KEY>(MEDIA_CONTEXT_KEY);
 
 // ----------------------------------------
+// Controls Context
+// ----------------------------------------
+
+export const CONTROLS_CONTEXT_KEY = Symbol.for('@videojs/controls');
+
+export interface ControlsContextValue {
+  mounted: boolean;
+  register: () => () => void;
+}
+
+export type ControlsContext = Context<typeof CONTROLS_CONTEXT_KEY, ControlsContextValue>;
+
+export const controlsContext = createContext<ControlsContextValue, typeof CONTROLS_CONTEXT_KEY>(CONTROLS_CONTEXT_KEY);
+
+// ----------------------------------------
 // Container Context
 // ----------------------------------------
 

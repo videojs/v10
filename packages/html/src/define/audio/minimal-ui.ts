@@ -14,7 +14,14 @@ import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
 import { TooltipShortcutElement } from '../../ui/tooltip/tooltip-shortcut-element';
 import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineMenu, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import {
+  defineControls,
+  defineErrorDialog,
+  defineMenu,
+  defineTime,
+  defineTimeSlider,
+  defineVolumeSlider,
+} from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { AudioPlayerElement } from './player';
@@ -25,6 +32,7 @@ safeDefine(AudioPlayerElement);
 safeDefine(MediaContainerElement);
 
 // Compound groups.
+defineControls();
 defineErrorDialog();
 defineTimeSlider();
 defineVolumeSlider();

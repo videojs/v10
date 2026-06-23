@@ -12,11 +12,12 @@ import type {
   VideoPlayerStore,
 } from '@videojs/core/dom';
 import { createPopupGroup } from '@videojs/core/dom';
+import { isMediaControlsCapable } from '@videojs/core/media/predicate';
 import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
@@ -74,6 +75,13 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
+    const [controlsCount, setControlsCount] = useState(0);
+    const controlsMounted = controlsCount > 0;
+
+    const registerControls = useCallback(() => {
+      setControlsCount((count) => count + 1);
+      return () => setControlsCount((count) => Math.max(0, count - 1));
+    }, []);
 
     useDestroy(store);
 
@@ -82,8 +90,23 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       return store.attach({ media, container });
     }, [media, container, store]);
 
+    useEffect(() => {
+      if (controlsMounted && isMediaControlsCapable(media) && media.controls) media.controls = false;
+    }, [controlsMounted, media]);
+
     return (
-      <PlayerContextProvider value={{ store, media, setMedia, container, setContainer, popupGroup }}>
+      <PlayerContextProvider
+        value={{
+          store,
+          media,
+          setMedia,
+          controlsMounted,
+          registerControls,
+          container,
+          setContainer,
+          popupGroup,
+        }}
+      >
         {children}
       </PlayerContextProvider>
     );

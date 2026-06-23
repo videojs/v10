@@ -28,6 +28,7 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
@@ -178,7 +179,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
-      <div className={controls}>
+      <Controls.Root className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
             <Tooltip.Root side="top" boundary="viewport">
@@ -258,7 +259,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <VolumePopover />
           </div>
         </Tooltip.Provider>
-      </div>
+      </Controls.Root>
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

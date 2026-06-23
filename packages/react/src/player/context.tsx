@@ -13,6 +13,8 @@ export interface PlayerContextValue {
   store: UnknownStore;
   media: Media | null;
   setMedia: Dispatch<SetStateAction<Media | null>>;
+  controlsMounted?: boolean;
+  registerControls?: () => () => void;
   container: MediaContainer | null;
   setContainer: Dispatch<SetStateAction<HTMLElement | null>>;
   popupGroup?: PopupGroup;
@@ -113,6 +115,16 @@ export function useOptionalPopupGroup(): PopupGroup | undefined {
 export function useMediaAttach(): Dispatch<SetStateAction<Media | null>> | undefined {
   const ctx = useContext(PlayerContext);
   return ctx?.setMedia;
+}
+
+export function useControlsMounted(): boolean {
+  const ctx = useContext(PlayerContext);
+  return ctx?.controlsMounted ?? false;
+}
+
+export function useControlsRegister(): (() => () => void) | undefined {
+  const ctx = useContext(PlayerContext);
+  return ctx?.registerControls;
 }
 
 /** Access the container attach setter for connecting a container element to the player. */

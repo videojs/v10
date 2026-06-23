@@ -37,7 +37,7 @@ function getTemplateHTML() {
         </div>
       </media-error-dialog>
 
-      <div class="${controls}">
+      <media-controls class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
@@ -72,7 +72,7 @@ function getTemplateHTML() {
             </media-popover>
           </div>
         </media-tooltip-group>
-      </div>
+      </media-controls>
     </media-container>
   `;
 }

@@ -2,6 +2,7 @@ import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
@@ -90,7 +91,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
-      <div className="media-surface media-controls">
+      <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
           <div className="media-button-group">
             <Tooltip.Root side="top" boundary="viewport">
@@ -115,7 +116,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
             <VolumePopover />
           </div>
         </Tooltip.Provider>
-      </div>
+      </Controls.Root>
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />
