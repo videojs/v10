@@ -54,11 +54,6 @@ const SITE_URL =
 export default defineConfig({
   site: SITE_URL,
   trailingSlash: 'never',
-  // Astro 7's default flipped from `true` to `'jsx'`, which strips whitespace
-  // between inline elements (JSX rules). Pin to the previous behavior so this
-  // upgrade holds rendered output constant; the `'jsx'` migration is tracked
-  // separately (issue #1720).
-  compressHTML: true,
   adapter: netlify({
     devFeatures: { images: false, environmentVariables: false },
   }),
