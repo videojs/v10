@@ -214,7 +214,11 @@ Things this feature probably forces decisions on, not just additions:
   `Infinity` duration semantics, termination detection (`ENDLIST` +
   miss-counter), and the `setLiveSeekableRange` writer-behavior
   shape. DVR/event-stream supplies the windowing variance and the
-  variant-specific seekable-range start producer.
+  variant-specific seekable-range start producer. Its live-window
+  playhead guard's DVR `repositionPolicy` (preserve in-window
+  scrub-back on the sliding window) is the analog of this feature's
+  full-history back-seek; the guard's edge-only `repositionPolicy`
+  variant is the no-scrub-back opposite end of that spectrum.
 - **[ll-hls-support](./ll-hls-support.md)** — orthogonal cluster A
   extension. DVR + LL-HLS compose; both extensions sit atop the
   same reload-loop foundation but address different concerns
