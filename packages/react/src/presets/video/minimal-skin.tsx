@@ -17,11 +17,11 @@ import {
   PipEnterIcon,
   PipExitIcon,
   PlayIcon,
+  QualityIcon,
   RestartIcon,
   SeekIcon,
   SpeedIcon,
   SpinnerIcon,
-  SwitchesIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
@@ -131,7 +131,7 @@ function SettingsMenu(): ReactNode {
                   className="media-menu__item media-menu__item--submenu"
                   render={(props) => (
                     <div {...props}>
-                      <SwitchesIcon className="media-icon" />
+                      <QualityIcon className="media-icon" />
                       <span>Quality</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />

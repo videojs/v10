@@ -36,17 +36,17 @@
   --media-error-dialog-transition-timing-function: ease-out;
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
-  --media-tooltip-background-color: oklch(1 0 0 / 0.1);
-  --media-tooltip-border-color: transparent;
+  --media-tooltip-background-color: oklch(0 0 0 / 0.5);
+  --media-tooltip-border-color: oklch(1 0 0 / 0.1);
   --media-tooltip-backdrop-filter: blur(16px) saturate(1.5);
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.5rem;
   --media-tooltip-boundary-offset: 0.5rem;
-  --media-popover-background-color: oklch(1 0 0 / 0.1);
-  --media-popover-border-color: transparent;
-  --media-popover-backdrop-filter: blur(16px) saturate(1.5);
+  --media-popover-background-color: var(--media-tooltip-background-color);
+  --media-popover-border-color: var(--media-tooltip-border-color);
+  --media-popover-backdrop-filter: var(--media-tooltip-backdrop-filter);
   --media-popover-side-offset: 1.5rem;
-  --media-popover-boundary-offset: 0.5rem;
+  --media-popover-boundary-offset: var(--media-tooltip-boundary-offset);
   overflow: clip;
   background: oklch(0 0 0);
 

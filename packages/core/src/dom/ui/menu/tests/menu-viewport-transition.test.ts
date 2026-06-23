@@ -55,11 +55,15 @@ function mockMenuViewSize(
     currentHeight,
     naturalWidth,
     naturalHeight,
+    constrainedWidth,
+    constrainedHeight,
   }: {
     currentWidth: number;
     currentHeight: number;
     naturalWidth: number;
     naturalHeight: number;
+    constrainedWidth?: number;
+    constrainedHeight?: number;
   }
 ): void {
   function isMeasuringNaturalSize(): boolean {
@@ -68,18 +72,35 @@ function mockMenuViewSize(
     );
   }
 
-  element.getBoundingClientRect = vi.fn(() =>
-    isMeasuringNaturalSize() ? createRect(naturalWidth, naturalHeight) : createRect(currentWidth, currentHeight)
-  );
+  function isMeasuringConstrainedSize(): boolean {
+    return element.style.getPropertyValue('width') === `${constrainedWidth}px`;
+  }
+
+  function getSize(): { width: number; height: number } {
+    if (isMeasuringNaturalSize()) {
+      return { width: naturalWidth, height: naturalHeight };
+    }
+
+    if (constrainedWidth && constrainedHeight && isMeasuringConstrainedSize()) {
+      return { width: constrainedWidth, height: constrainedHeight };
+    }
+
+    return { width: currentWidth, height: currentHeight };
+  }
+
+  element.getBoundingClientRect = vi.fn(() => {
+    const size = getSize();
+    return createRect(size.width, size.height);
+  });
 
   Object.defineProperty(element, 'scrollWidth', {
     configurable: true,
-    get: () => (isMeasuringNaturalSize() ? naturalWidth : currentWidth),
+    get: () => getSize().width,
   });
 
   Object.defineProperty(element, 'scrollHeight', {
     configurable: true,
-    get: () => (isMeasuringNaturalSize() ? naturalHeight : currentHeight),
+    get: () => getSize().height,
   });
 }
 
@@ -188,6 +209,156 @@ describe('menu-viewport-transition', () => {
 
     expect(rootView.getAttribute('data-menu-view-state')).toBe('active');
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('160px');
+  });
+
+  it('measures the root view height at the available menu width', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    content.style.setProperty('--media-popover-available-width', '180px');
+    content.append(rootView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 80,
+      naturalWidth: 260,
+      naturalHeight: 80,
+      constrainedWidth: 180,
+      constrainedHeight: 128,
+    });
+
+    syncMenuViewRoot(content, false);
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('128px');
+  });
+
+  it('measures an entering submenu height at the available menu width', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    menuView.setAttribute('data-menu-view', '');
+    content.style.setProperty('--media-popover-available-width', '180px');
+    content.append(rootView, menuView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(menuView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 260,
+      naturalHeight: 100,
+      constrainedWidth: 180,
+      constrainedHeight: 148,
+    });
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'entering',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    syncMenuViewTransition(content, menuView, {
+      phase: 'active',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('148px');
+  });
+
+  it('remeasures a pending submenu when the available menu width changes before active', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    menuView.setAttribute('data-menu-view', '');
+    content.append(rootView, menuView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(menuView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 260,
+      naturalHeight: 100,
+      constrainedWidth: 180,
+      constrainedHeight: 148,
+    });
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'entering',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+
+    content.style.setProperty('--media-popover-available-width', '180px');
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'active',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('148px');
+  });
+
+  it('resyncs an active submenu when the available menu width changes', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    menuView.setAttribute('data-menu-view', '');
+    content.append(rootView, menuView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(menuView, {
+      currentWidth: 260,
+      currentHeight: 100,
+      naturalWidth: 260,
+      naturalHeight: 100,
+      constrainedWidth: 180,
+      constrainedHeight: 148,
+    });
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'entering',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    syncMenuViewTransition(content, menuView, {
+      phase: 'active',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('260px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('100px');
+
+    content.style.setProperty('--media-popover-available-width', '180px');
+    syncMenuViewRoot(content, true);
+
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('148px');
   });
 
   it('forces root view layout around the active submenu transition', () => {

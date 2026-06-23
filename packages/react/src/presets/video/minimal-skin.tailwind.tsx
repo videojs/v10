@@ -40,11 +40,11 @@ import {
   PipEnterIcon,
   PipExitIcon,
   PlayIcon,
+  QualityIcon,
   RestartIcon,
   SeekIcon,
   SpeedIcon,
   SpinnerIcon,
-  SwitchesIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
@@ -162,7 +162,7 @@ function VolumePopover(): ReactNode {
 }
 
 function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
-  return <ChevronIcon className={cn(icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
+  return <ChevronIcon className={cn(icon, menu.icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
 }
 
 function SettingsMenu(): ReactNode {
@@ -194,7 +194,7 @@ function SettingsMenu(): ReactNode {
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
-                      <SwitchesIcon className={icon} />
+                      <QualityIcon className={cn(icon, menu.icon)} />
                       <span>Quality</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -222,15 +222,17 @@ function SettingsMenu(): ReactNode {
                         value={option.value}
                         disabled={option.disabled}
                       >
-                        <span>{option.label}</span>
-                        {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
-                        {option.badge ? <span className={cn(badge, menu.badge)}>{option.badge}</span> : null}
+                        <span>
+                          {option.label}
+                          {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
+                        </span>
+                        {option.badge ? <span className={badge}>{option.badge}</span> : null}
                         <Menu.ItemIndicator
                           checked={option.value === quality.value}
                           forceMount
                           className={menu.indicator}
                         >
-                          <CheckIcon className={icon} />
+                          <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
                     ))}
@@ -245,7 +247,7 @@ function SettingsMenu(): ReactNode {
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
-                      <SpeedIcon className={icon} />
+                      <SpeedIcon className={cn(icon, menu.icon)} />
                       <span>Speed</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -279,7 +281,7 @@ function SettingsMenu(): ReactNode {
                           forceMount
                           className={menu.indicator}
                         >
-                          <CheckIcon className={icon} />
+                          <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
                     ))}
@@ -294,7 +296,7 @@ function SettingsMenu(): ReactNode {
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
-                      <CaptionsOffIcon className={icon} />
+                      <CaptionsOffIcon className={cn(icon, menu.icon)} />
                       <span>Captions</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -328,7 +330,7 @@ function SettingsMenu(): ReactNode {
                           forceMount
                           className={menu.indicator}
                         >
-                          <CheckIcon className={icon} />
+                          <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
                     ))}

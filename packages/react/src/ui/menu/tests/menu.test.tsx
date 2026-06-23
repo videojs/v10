@@ -499,6 +499,38 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-view').hasAttribute('data-menu-view')).toBe(true);
   });
 
+  it('syncs root viewport size without position options', async () => {
+    const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+
+    HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRectMock() {
+      if (this.getAttribute('data-testid') === 'root-view') {
+        return new DOMRect(0, 0, 180, 96);
+      }
+
+      return getBoundingClientRect.call(this);
+    };
+
+    try {
+      render(
+        <MenuRoot defaultOpen side={null as never}>
+          <MenuTrigger>Settings</MenuTrigger>
+          <MenuContent data-testid="root-content">
+            <MenuView data-testid="root-view">
+              <MenuItem>Auto</MenuItem>
+            </MenuView>
+          </MenuContent>
+        </MenuRoot>
+      );
+
+      await waitFor(() => {
+        expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-width')).toBe('180px');
+        expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-height')).toBe('96px');
+      });
+    } finally {
+      HTMLElement.prototype.getBoundingClientRect = getBoundingClientRect;
+    }
+  });
+
   it('remeasures an open root view when menu items are added', async () => {
     const { rerender } = render(<DynamicMenuFixture showCaptions={false} />);
     const content = screen.getByTestId('content');

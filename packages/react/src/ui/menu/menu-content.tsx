@@ -1,6 +1,6 @@
 'use client';
 
-import type { MenuState } from '@videojs/core';
+import { type MenuState, PopoverCSSVars } from '@videojs/core';
 import {
   createMenuViewTransition,
   getAnchorPositionStyle,
@@ -135,6 +135,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const menuViewTransitionState = useSnapshot(menuViewTransition.input);
   const menuViewElementRef = useRef<HTMLDivElement | null>(null);
   const parentContentElementRef = useRef<HTMLElement | null>(null);
+  const activeSubMenuIdRef = useRef(activeSubMenuId);
+
+  activeSubMenuIdRef.current = activeSubMenuId;
 
   useLayoutEffect(() => {
     return () => menuViewTransition.destroy();
@@ -241,11 +244,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     if (!state.open) return;
 
     syncMenuViewRoot(internalRef.current, activeSubMenuId !== null);
-  }, [isSubmenu, state.open, activeSubMenuId]);
-
-  useLayoutEffect(() => {
-    if (isSubmenu) return;
-    if (!state.open) return;
 
     const contentElement = internalRef.current;
     if (!contentElement) return;
@@ -265,9 +263,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   useLayoutEffect(() => {
     if (isSubmenu) return;
-    if (!positionOptions) return;
     if (!state.open) {
       setManualStyle(null);
+      return;
+    }
+
+    if (!positionOptions) {
+      syncMenuViewRoot(internalRef.current, activeSubMenuIdRef.current !== null);
       return;
     }
 
@@ -281,11 +283,12 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       const triggerRect = triggerElement.getBoundingClientRect();
       const root = contentElement.getRootNode() as Document | ShadowRoot;
       const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
-      const contentRect = supportsAnchorPositioning() ? undefined : getPopupPositionRect(contentElement);
+      const anchorSupported = supportsAnchorPositioning();
+      const contentRect = anchorSupported ? undefined : getPopupPositionRect(contentElement);
       const boundaryRect = getPositioningBoundaryRect(boundaryElement);
       const offsets = resolveOffsets(contentElement);
 
-      const { positionAnchor: _, ...nextStyle } = getAnchorPositionStyle(
+      let nextStyle = getAnchorPositionStyle(
         anchorName,
         rootPositionOptions,
         triggerRect,
@@ -294,7 +297,27 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
         offsets
       );
 
-      setManualStyle(nextStyle as CSSProperties);
+      const availableWidth = nextStyle[PopoverCSSVars.availableWidth];
+      syncMenuViewRoot(
+        contentElement,
+        activeSubMenuIdRef.current !== null,
+        availableWidth ? { availableWidth } : undefined
+      );
+
+      if (!anchorSupported) {
+        nextStyle = getAnchorPositionStyle(
+          anchorName,
+          rootPositionOptions,
+          triggerRect,
+          getPopupPositionRect(contentElement),
+          boundaryRect,
+          offsets
+        );
+      }
+
+      const { positionAnchor: _, ...rootStyle } = nextStyle;
+
+      setManualStyle(rootStyle as CSSProperties);
     }
 
     measure();
