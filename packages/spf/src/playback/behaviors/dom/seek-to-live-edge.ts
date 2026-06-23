@@ -1,5 +1,6 @@
 /**
- * Enter the live window: declare the seekable range and seek the playhead in.
+ * Enter and hold the live window: declare the seekable range, seek the playhead
+ * in, and reposition it to the live edge if it ever falls outside the window.
  *
  * Live segments append at their native PTS, so the buffered window sits at a
  * large timestamp while `currentTime` starts at 0. Two problems follow, both
@@ -15,12 +16,20 @@
  *    (default 3 × TARGETDURATION, clamped to the window start), so the loader
  *    dispatches an in-window range and playback can begin near the edge rather
  *    than at the back of the DVR window.
+ * 3. A live-window playhead guard: while playing, reposition `currentTime` to
+ *    the live edge when it falls *outside* the sliding window — a paused
+ *    playhead the window slid past (caught on the `playing` resume), or
+ *    playback that fell behind on poor network (caught on this effect's
+ *    window-update re-fire, since `timeupdate` stops once a stall freezes
+ *    `currentTime`). In-window pause and DVR scrub-back are left untouched (the
+ *    `window-exit` reposition policy — the DVR model).
  *
  * Reads the *selected video track* timeline (anchored to ≈ native PTS by
  * `anchorLiveTracks`); video and audio share the origin, so the video window
  * positions both. Seeks once per source; re-declares the seekable range on
  * each window change.
  */
+import { listen } from '@videojs/utils/dom';
 import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
@@ -38,6 +47,21 @@ import { findTrack } from '../../../media/utils/tracks';
  */
 const HOLD_BACK_TARGET_MULTIPLIER = 3;
 
+/**
+ * Tolerance (seconds) around the window edges before the guard repositions, so
+ * boundary / floating-point noise doesn't trigger a spurious seek.
+ */
+const REPOSITION_TOLERANCE = 0.1;
+
+/**
+ * When the live-window guard repositions the playhead to the live edge.
+ * - `'window-exit'` (default; DVR model): only when the playhead is outside the
+ *   sliding window. In-window pause / scrub-back is left untouched.
+ * - `'on-resume'`: edge-only — always snap to the live edge on resume. A future
+ *   use-case variant (live-edge-only mode); not yet implemented.
+ */
+export type LiveRepositionPolicy = 'window-exit' | 'on-resume';
+
 export interface SeekToLiveEdgeState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
@@ -48,9 +72,15 @@ export interface SeekToLiveEdgeContext {
   mediaSource?: MediaSource;
 }
 
+export interface SeekToLiveEdgeConfig {
+  /** Reposition policy for the live-window guard. Defaults to `'window-exit'`. */
+  repositionPolicy?: LiveRepositionPolicy;
+}
+
 function seekToLiveEdgeSetup({
   state,
   context,
+  config,
 }: {
   state: {
     presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
@@ -60,7 +90,9 @@ function seekToLiveEdgeSetup({
     mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
     mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
   };
+  config?: SeekToLiveEdgeConfig;
 }): () => void {
+  const repositionPolicy = config?.repositionPolicy ?? 'window-exit';
   let seeked = false;
 
   return effect(() => {
@@ -102,11 +134,38 @@ function seekToLiveEdgeSetup({
     const targetDuration = getMediaPlaylistMetadata(track)?.targetDuration || last.duration;
     const liveEdgeStart = Math.max(windowStart, windowEnd - HOLD_BACK_TARGET_MULTIPLIER * targetDuration);
 
-    // Seek to the live edge once, so the loader dispatches an in-window range.
+    // Initial entry: seek into the window once — even while paused — so the
+    // loader dispatches an in-window range and preload shows the right frame.
+    // Latched so a later reload never re-yanks a paused user who scrubbed back.
     if (!seeked && mediaElement.currentTime < liveEdgeStart) {
       mediaElement.currentTime = liveEdgeStart;
       seeked = true;
     }
+
+    // Live-window playhead guard. Repositions to the live edge when the playhead
+    // falls outside the sliding window while playing. Runs now (this effect
+    // re-fires on each window-update / reload — the primary trigger, since
+    // `timeupdate` stops while a stall freezes `currentTime`) and on the
+    // secondary media-event triggers below.
+    const guard = () => {
+      // `on-resume` (edge-only) is a future use-case variant; only the DVR
+      // `window-exit` policy is implemented today.
+      if (repositionPolicy !== 'window-exit') return;
+      if (mediaElement.paused || mediaElement.seeking || mediaElement.readyState === 0) return;
+      const { currentTime } = mediaElement;
+      if (currentTime < windowStart - REPOSITION_TOLERANCE || currentTime > windowEnd + REPOSITION_TOLERANCE) {
+        mediaElement.currentTime = liveEdgeStart;
+      }
+    };
+    guard();
+    const removePlaying = listen(mediaElement, 'playing', guard);
+    const removeTimeupdate = listen(mediaElement, 'timeupdate', guard);
+    const removeSeeked = listen(mediaElement, 'seeked', guard);
+    return () => {
+      removePlaying();
+      removeTimeupdate();
+      removeSeeked();
+    };
   });
 }
 
@@ -122,7 +181,7 @@ export const seekToLiveEdge: Behavior<
     mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
     mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
   },
-  object
+  SeekToLiveEdgeConfig
 > = {
   stateKeys: ['presentation'],
   contextKeys: ['mediaElement', 'mediaSource'],
