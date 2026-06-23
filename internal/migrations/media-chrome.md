@@ -153,6 +153,8 @@ export function MyPlayer() {
 
 ## Known gaps
 
+These Media Chrome features have no direct equivalent yet. Several can be approximated — see Workarounds below.
+
 - Chapters are not yet supported in the media and in the time slider UI
 - Cue points are not yet supported in the media
 - No configurable `autohide` delay or disable switch (`autohide="-1"`), and no `autohideovercontrols`
@@ -160,6 +162,77 @@ export function MyPlayer() {
 - No `defaultduration` placeholder before the media loads
 - No `seektoliveoffset` / `noautoseektolive` controls
 - No preference-persistence opt-outs (`novolumepref`, `nomutedpref`, `nosubtitleslangpref`)
+
+## Workarounds
+
+### Disable autohide (`autohide="-1"`)
+
+The skin hides controls by removing `data-visible` from `<media-controls>`. Keep them (and the cursor) visible by overriding that hidden state in your player CSS:
+
+```css
+.media-default-skin--video .media-controls:not([data-visible]) {
+  opacity: 1;
+  scale: 1;
+  filter: none;
+  pointer-events: auto;
+}
+
+.media-default-skin--video:has(.media-controls:not([data-visible])) {
+  cursor: auto;
+}
+```
+
+To change the *delay* rather than disable it, note the idle timer is a constant inside `controlsFeature`. Fork that feature and swap it into a custom feature list:
+
+```ts
+const Player = createPlayer({
+  features: videoFeatures.map((f) => (f.name === 'controls' ? myControlsFeature : f)),
+});
+```
+
+### Breakpoints
+
+The skin root is an inline-size container named `media-root`, so write responsive styles with container queries instead of `breakpoints` attributes (this is exactly how the built-in skins adapt):
+
+```css
+@container media-root (width > 40rem) {
+  .media-controls { /* wide layout */ }
+}
+```
+
+### Default duration
+
+There's no store input for a pre-load duration. Use `preload="metadata"` (the default) so the real duration is known almost immediately — only `preload="none"` defers it. If you must defer loading, render your own static placeholder in markup.
+
+### Preference persistence
+
+Media Chrome remembers volume/muted/language across sessions; v10 persists nothing (so its `no*pref` opt-outs don't apply). Restore and save the values yourself from the store. In React, read volume state with `usePlayer(selectVolume)`:
+
+```tsx
+import { selectVolume, usePlayer } from '@videojs/react';
+import { useEffect } from 'react';
+
+function PersistVolume() {
+  const volume = usePlayer(selectVolume);
+
+  useEffect(() => {
+    const saved = localStorage.getItem('vjs:volume');
+    if (saved) volume.setVolume(Number(saved));
+  }, []);
+
+  useEffect(() => {
+    localStorage.setItem('vjs:volume', String(volume.volume));
+  }, [volume.volume]);
+
+  return null;
+}
+```
+
+In the HTML player, do the same against the store directly — `selectVolume(store.state).setVolume(...)` on init, and `store.subscribe(...)` to save on change.
+
+### Live edge offsets
+
+`seektoliveoffset` / `noautoseektolive` are governed by the playback engine, not the UI layer, so there's no attribute to tune them today. The escape hatch is a custom live control built against the `selectLive` / `selectTime` store state.
 
 ## See also
 
