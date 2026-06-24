@@ -5,7 +5,13 @@ import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
 import { formatInstallationCode } from '../utils/format.js';
-import { mapRawSkin, type PartialInstallFlags, promptFramework, promptInstallOptions } from '../utils/prompts.js';
+import {
+  mapRawSkin,
+  type PartialInstallFlags,
+  promptFramework,
+  promptInstallOptions,
+  supportsCdnInstall,
+} from '../utils/prompts.js';
 import { replaceMarker, stripOmitMarkers } from '../utils/replace.js';
 
 interface ParsedFlags {
@@ -174,6 +180,14 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
     const validation = validateInstallationOptions(opts);
     if (!validation.valid) {
       console.error(`Error: ${validation.reason}`);
+      process.exit(1);
+    }
+
+    // The interactive prompt hides CDN for renderers without a CDN build; guard
+    // the non-interactive flag path so a `--install-method cdn` request for one
+    // can't emit a broken snippet.
+    if (opts.installMethod === 'cdn' && !supportsCdnInstall(opts.renderer)) {
+      console.error('Error: this source type has no CDN build. Install it with npm, pnpm, yarn, or bun.');
       process.exit(1);
     }
 
