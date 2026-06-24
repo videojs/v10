@@ -20,36 +20,31 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
 
   const supportsCdn = rendererSupportsCdn($renderer, cdnMedia);
 
-  // When the selected renderer has no CDN build, the CDN tab is removed; make
-  // sure the install method isn't left pointing at the now-missing option.
+  // Mirror the active install-method tab into the store so the usage code block
+  // can react (e.g. CDN omits the JS imports). Observing from the stable
+  // wrapper rather than the tabs root means the observer survives the keyed
+  // remount below, so it never needs to re-attach.
   useEffect(() => {
-    if (!supportsCdn && installMethod.get() === 'cdn') {
-      installMethod.set('npm');
-    }
-  }, [supportsCdn]);
-
-  // Mirror the active install-method tab into the store so the usage code
-  // block can react (e.g. CDN omits the JS imports). A single observer on the
-  // tabs root with `subtree: true` catches `data-tab-active` flips on any tab,
-  // including the CDN tab when it's added or removed as the renderer changes —
-  // so it never needs to re-attach, and the dependency array stays honest.
-  useEffect(() => {
-    const root = ref.current?.querySelector('[data-tabs-root]');
-    if (!root) return;
+    const el = ref.current;
+    if (!el) return;
 
     const observer = new MutationObserver(() => {
-      const value = root.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
+      const value = el.querySelector('[role="tab"][data-tab-active="true"]')?.getAttribute('data-value');
       if (value) installMethod.set(value as InstallMethod);
     });
 
-    observer.observe(root, { subtree: true, attributes: true, attributeFilter: ['data-tab-active'] });
+    observer.observe(el, { subtree: true, attributes: true, attributeFilter: ['data-tab-active'] });
 
     return () => observer.disconnect();
   }, []);
 
   return (
     <div ref={ref}>
-      <TabsRoot>
+      {/* Remount the tab set when CDN availability changes so the active tab
+          resets cleanly to its initial. Without this, flipping the npm tab's
+          `initial` while the CDN tab mounts/unmounts can leave two tabs active
+          at once and desync installMethod from the visible tab. */}
+      <TabsRoot key={supportsCdn ? 'with-cdn' : 'without-cdn'}>
         <TabsList label="Installation">
           {supportsCdn && (
             <Tab value="cdn" initial>

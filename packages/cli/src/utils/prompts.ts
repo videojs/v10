@@ -7,12 +7,8 @@ import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installatio
 import { VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from './config.js';
 
-// Media subpaths that ship a CDN build, from the generated manifest (bundled at
-// build time). Mirrors how the installation page reads the `cdnMedia` content
-// collection — same source of truth, so the CLI gates CDN exactly like the UI.
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
 
-/** Whether a renderer can be installed via CDN (parity with the install page). */
 export function supportsCdnInstall(renderer: Renderer): boolean {
   return rendererSupportsCdn(renderer, CDN_MEDIA_SUBPATHS);
 }
