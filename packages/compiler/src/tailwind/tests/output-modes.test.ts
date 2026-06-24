@@ -20,6 +20,7 @@ import { cn } from '@videojs/utils/style';
 export const styles = {
   controls: cn(
     'flex flex-wrap',
+    '[--media-popover-side-offset:0.5rem]',
     'pointer-fine:transition-[scale,filter,opacity]',
     'motion-reduce:[--media-controls-transition-duration:50ms]',
     'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
@@ -53,7 +54,7 @@ import { styles } from './tokens';
 
 export function Fixture() {
   return (
-    <FixtureRoot className="container p-4 [--media-popover-side-offset:0.5rem] [--media-controls-transition-duration:100ms] [color:var(--media-color-primary,oklch(1_0_0))] [&_video]:block [&:fullscreen]:[--media-border-radius:0]">
+    <FixtureRoot className="container p-4 [--media-controls-transition-duration:100ms] [color:var(--media-color-primary,oklch(1_0_0))] [&_video]:block [&:fullscreen]:[--media-border-radius:0]">
       <Controls className={styles.controls}>
         <Button className={styles.button}>
           <Icon className={styles.icon} />
@@ -92,8 +93,8 @@ describe('tailwind output modes', () => {
     expect(result.code).not.toContain('styles.');
     expect(result.code).toMatchInlineSnapshot(`
       "export function Fixture() {
-          return (<FixtureRoot className="container p-4 [--media-popover-side-offset:0.5rem] [--media-controls-transition-duration:100ms] [color:var(--media-color-primary,oklch(1_0_0))] [&_video]:block [&:fullscreen]:[--media-border-radius:0]">
-            <Controls className="flex flex-wrap pointer-fine:transition-[scale,filter,opacity] motion-reduce:[--media-controls-transition-duration:50ms] contrast-more:[--media-surface-background-color:oklch(0_0_0)] [@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)] @2xl/media-root:flex-nowrap">
+          return (<FixtureRoot className="container p-4 [--media-controls-transition-duration:100ms] [color:var(--media-color-primary,oklch(1_0_0))] [&_video]:block [&:fullscreen]:[--media-border-radius:0]">
+            <Controls className="flex flex-wrap [--media-popover-side-offset:0.5rem] pointer-fine:transition-[scale,filter,opacity] motion-reduce:[--media-controls-transition-duration:50ms] contrast-more:[--media-surface-background-color:oklch(0_0_0)] [@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)] @2xl/media-root:flex-nowrap">
               <Button className="group flex items-center disabled:opacity-50 data-[availability=unsupported]:hidden aria-expanded:bg-current/10 focus-visible:outline-current">
                 <Icon className="hidden opacity-0 group-data-paused:block group-data-paused:opacity-100 group-not-data-paused:opacity-0"/>
               </Button>
