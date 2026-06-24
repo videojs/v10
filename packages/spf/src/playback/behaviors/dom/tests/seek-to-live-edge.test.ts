@@ -57,9 +57,9 @@ type FakeMediaElement = HTMLMediaElement & {
 };
 
 /**
- * Event-capable fake: `seekToLiveEdge` attaches `playing` / `timeupdate` /
- * `seeked` listeners, so the element must be a real `EventTarget`. Defaults to
- * paused + `readyState` HAVE_ENOUGH_DATA (the post-initial-seek resting state).
+ * Event-capable fake: `seekToLiveEdge` attaches a `play` listener, so the
+ * element must be a real `EventTarget`. Defaults to paused + `readyState`
+ * HAVE_ENOUGH_DATA (the post-initial-seek resting state).
  */
 function fakeMediaElement(
   init: Partial<Pick<FakeMediaElement, 'currentTime' | 'paused' | 'seeking' | 'readyState'>> = {}
@@ -160,7 +160,7 @@ describe('seekToLiveEdge', () => {
   });
 
   describe('live-window playhead guard', () => {
-    function started(config?: SeekToLiveEdgeConfig) {
+    function started() {
       const ms = fakeMediaSource();
       const el = fakeMediaElement();
       const { cleanup, state } = run({
@@ -168,58 +168,53 @@ describe('seekToLiveEdge', () => {
         trackId: 'v-1',
         mediaElement: el,
         mediaSource: ms,
-        config,
       });
       // Initial entry seeked into the window at the live edge (104). Window [100, 110].
       expect(el.currentTime).toBe(104);
       return { el, ms, state, cleanup };
     }
 
-    it('leaves the playhead alone when playing inside the window', () => {
+    it('leaves the playhead alone when playing inside the window (resume)', () => {
       const { el, cleanup } = started();
       el.paused = false;
       el.currentTime = 106; // within [100, 110]
-      el.dispatchEvent(new Event('timeupdate'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(106);
       cleanup();
     });
 
-    it('repositions to the live edge when the playhead falls behind the window start (playing)', () => {
+    it('repositions to the live edge on resume when the playhead is behind the window start', () => {
       const { el, cleanup } = started();
       el.paused = false;
       el.currentTime = 90; // fell behind windowStart (100)
-      el.dispatchEvent(new Event('playing'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(104);
       cleanup();
     });
 
-    it('repositions to the live edge when the playhead overruns the window end (playing)', () => {
-      const { el, cleanup } = started();
-      el.paused = false;
-      el.currentTime = 120; // past windowEnd (110)
-      el.dispatchEvent(new Event('timeupdate'));
-      expect(el.currentTime).toBe(104);
-      cleanup();
-    });
-
-    it('does not reposition while paused; repositions on resume', () => {
-      const { el, cleanup } = started();
+    it('does not reposition while paused as the window slides; repositions on resume', async () => {
+      const { el, state, cleanup } = started();
       el.currentTime = 90; // window slid past while paused
       el.paused = true;
-      el.dispatchEvent(new Event('timeupdate'));
+
+      // A window-update re-fire (playlist reload) while paused must not yank.
+      state.presentation.set(makePresentation());
+      await flush();
       expect(el.currentTime).toBe(90); // paused → untouched
 
       el.paused = false;
-      el.dispatchEvent(new Event('playing'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(104); // resume snaps into the window
       cleanup();
     });
 
-    it('does not yank an in-window DVR scrub-back (playing)', () => {
-      const { el, cleanup } = started();
+    it('does not yank an in-window DVR scrub-back across a window update', async () => {
+      const { el, state, cleanup } = started();
       el.paused = false;
       el.currentTime = 102; // user scrubbed back, still within [100, 110]
-      el.dispatchEvent(new Event('seeked'));
+
+      state.presentation.set(makePresentation()); // window unchanged → still in window
+      await flush();
       expect(el.currentTime).toBe(102);
       cleanup();
     });
@@ -229,11 +224,11 @@ describe('seekToLiveEdge', () => {
       el.paused = false;
       el.currentTime = 90;
       el.seeking = true;
-      el.dispatchEvent(new Event('timeupdate'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(90); // seek in flight → untouched
 
       el.seeking = false;
-      el.dispatchEvent(new Event('seeked'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(104);
       cleanup();
     });
@@ -242,11 +237,11 @@ describe('seekToLiveEdge', () => {
       const { el, cleanup } = started();
       el.paused = false;
       el.currentTime = 99.95; // within REPOSITION_TOLERANCE (0.1) of windowStart 100
-      el.dispatchEvent(new Event('timeupdate'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(99.95); // no jitter seek
 
       el.currentTime = 99.85; // beyond tolerance (< 100 − 0.1)
-      el.dispatchEvent(new Event('timeupdate'));
+      el.dispatchEvent(new Event('play'));
       expect(el.currentTime).toBe(104);
       cleanup();
     });
@@ -263,7 +258,7 @@ describe('seekToLiveEdge', () => {
       expect(el.currentTime).toBe(104); // still untouched while paused
 
       el.paused = false;
-      el.dispatchEvent(new Event('playing'));
+      el.dispatchEvent(new Event('play'));
       // New window [300, 310] → live edge 310 − 6 = 304.
       expect(el.currentTime).toBe(304);
       cleanup();
@@ -278,18 +273,9 @@ describe('seekToLiveEdge', () => {
       state.presentation.set(makePresentation(200, 100));
       await flush();
 
-      // The effect's window-update re-fire (not timeupdate, which is silent during
-      // a stall) catches it: 104 < new windowStart 200 → snap to new live edge 204.
+      // The window-update re-fire (not a media event — `timeupdate` is silent
+      // during a stall) catches it: 104 < new windowStart 200 → snap to 204.
       expect(el.currentTime).toBe(204);
-      cleanup();
-    });
-
-    it('does not implement the on-resume (edge-only) policy yet — no reposition', () => {
-      const { el, cleanup } = started({ repositionPolicy: 'on-resume' });
-      el.paused = false;
-      el.currentTime = 90; // would snap to edge under window-exit
-      el.dispatchEvent(new Event('playing'));
-      expect(el.currentTime).toBe(90); // on-resume is a future variant; guard is inert
       cleanup();
     });
   });

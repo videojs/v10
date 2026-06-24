@@ -17,13 +17,16 @@
  * `entry`, it fires once per entry into `live`; a source change exits to
  * `inactive`, so the next source re-seeks (no closure latch to reset).
  *
- * Window-exit guard: while playing (`!paused && !seeking && readyState > 0`),
- * reposition to the live edge when the playhead falls *outside* the sliding
- * window — a paused playhead the window slid past (caught on the `playing`
- * resume) or playback that fell behind on poor network (caught on the effect's
- * window-update re-fire, since `timeupdate` stops once a stall freezes
- * `currentTime`). In-window pause / DVR scrub-back are left untouched (the
- * `window-exit` reposition policy).
+ * Window-exit guard: while playing (not paused, not mid-seek), reposition to the
+ * live edge when the playhead has fallen behind the window start. Two triggers:
+ * the **window-update re-fire** (the guard reads the live edge, so each reload /
+ * slide re-runs it — this catches a stall, where `timeupdate` stops but the
+ * playlist keeps reloading) and a **`play` listener** for immediate reactivity on
+ * resume, since the reload interval can be seconds. `play`, not `playing`: after
+ * a long pause the playhead sits behind the window at an unseekable position,
+ * where the browser stalls and `playing` never fires; `play` fires on the
+ * paused→false transition regardless, so we snap before the stall. In-window
+ * pause / DVR scrub-back are left untouched.
  *
  * The latency comes from the injected `resolveLiveLatency` seam (HLS:
  * `HOLD-BACK`), so this behavior carries no delivery-format specifics. The
@@ -36,7 +39,7 @@
 import { listen } from '@videojs/utils/dom';
 import type { Behavior } from '../../../core/composition/create-composition';
 import { createMachineReactor, type Reactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { getLiveEdge, type LiveEdge, type ResolveLiveLatency } from '../../primitives/live-window';
 
@@ -45,15 +48,6 @@ import { getLiveEdge, type LiveEdge, type ResolveLiveLatency } from '../../primi
  * boundary / floating-point noise doesn't trigger a spurious seek.
  */
 const REPOSITION_TOLERANCE = 0.1;
-
-/**
- * When the live-window guard repositions the playhead to the live edge.
- * - `'window-exit'` (default; DVR model): only when the playhead is outside the
- *   sliding window. In-window pause / scrub-back is left untouched.
- * - `'on-resume'`: edge-only — always snap to the live edge on resume. A future
- *   use-case variant (live-edge-only mode); not yet implemented.
- */
-export type LiveRepositionPolicy = 'window-exit' | 'on-resume';
 
 export interface SeekToLiveEdgeState {
   presentation?: MaybeResolvedPresentation;
@@ -67,8 +61,6 @@ export interface SeekToLiveEdgeContext {
 }
 
 export interface SeekToLiveEdgeConfig {
-  /** Reposition policy for the live-window guard. Defaults to `'window-exit'`. */
-  repositionPolicy?: LiveRepositionPolicy;
   /**
    * Resolve the target live latency (seconds the playhead should trail the live
    * edge) for the timeline-bearing track. Injected by the engine so the latency
@@ -109,8 +101,6 @@ function seekToLiveEdgeSetup({
   };
   config?: SeekToLiveEdgeConfig;
 }): Reactor<SeekToLiveEdgeFsmState | 'destroying' | 'destroyed'> {
-  const repositionPolicy = config?.repositionPolicy ?? 'window-exit';
-
   const derivedStateSignal = computed(() =>
     deriveState(context.mediaElement.get(), context.mediaSource.get(), getLiveEdge({ state, config }))
   );
@@ -127,44 +117,40 @@ function seekToLiveEdgeSetup({
         // `live`; a source change exits to `inactive`, so a new source re-seeks.
         // Live-specific — a future DVR mode skips this (starts in place).
         entry: () => {
-          const mediaElement = context.mediaElement.get();
-          const edge = getLiveEdge({ state, config });
-          // The monitor guarantees both while in `live`.
-          if (!mediaElement || !edge) return;
-          if (mediaElement.currentTime < edge.liveEdgeStart) {
-            mediaElement.currentTime = edge.liveEdgeStart;
+          // The monitor guarantees a media element + live edge while in `live`.
+          const mediaElement = context.mediaElement.get()!;
+          const { liveEdgeStart } = getLiveEdge({ state, config })!;
+          if (mediaElement.currentTime < liveEdgeStart) {
+            mediaElement.currentTime = liveEdgeStart;
           }
         },
 
-        // Window-exit guard. Re-fires on each window update (the primary
-        // trigger — `timeupdate` stops while a stall freezes `currentTime`) and
-        // on the secondary media-event listeners. Tracks `mediaElement` too, so
-        // the listeners re-bind if the element identity changes.
+        // Window-exit guard. Repositions to the live edge when the playhead has
+        // fallen behind the window start, while playing. Two triggers: this
+        // effect's window-update re-fire (it reads the live edge, so each reload
+        // re-runs it — catches a stall, where `timeupdate` is silent) and a
+        // `play` listener for immediate reactivity on resume.
         effects: () => {
-          const mediaElement = context.mediaElement.get();
-          const edge = getLiveEdge({ state, config });
-          if (!mediaElement || !edge) return;
-
-          const { start: windowStart, end: windowEnd, liveEdgeStart } = edge;
+          // Read the live edge first — the only tracked dependency — so window
+          // slides keep re-firing this effect even while paused. Bailing before
+          // it (on paused) would drop the dependency and the effect would go
+          // inert, missing the next slide. The monitor guarantees the edge while
+          // in `live`; the media element is read untracked (the window update,
+          // not element identity, is the re-fire trigger).
+          const { start: windowStart, liveEdgeStart } = getLiveEdge({ state, config })!;
+          const mediaElement = peek(context.mediaElement)!;
           const reposition = () => {
-            // `on-resume` (edge-only) is a future use-case variant; only the DVR
-            // `window-exit` policy is implemented today.
-            if (repositionPolicy !== 'window-exit') return;
-            if (mediaElement.paused || mediaElement.seeking || mediaElement.readyState === 0) return;
-            const { currentTime } = mediaElement;
-            if (currentTime < windowStart - REPOSITION_TOLERANCE || currentTime > windowEnd + REPOSITION_TOLERANCE) {
+            // Don't yank a paused viewer or fight an in-flight seek (DVR scrub-back).
+            if (mediaElement.paused || mediaElement.seeking) return;
+            if (mediaElement.currentTime < windowStart - REPOSITION_TOLERANCE) {
               mediaElement.currentTime = liveEdgeStart;
             }
           };
           reposition();
-          const removePlaying = listen(mediaElement, 'playing', reposition);
-          const removeTimeupdate = listen(mediaElement, 'timeupdate', reposition);
-          const removeSeeked = listen(mediaElement, 'seeked', reposition);
-          return () => {
-            removePlaying();
-            removeTimeupdate();
-            removeSeeked();
-          };
+          // `play` (not `playing`): a slid-past playhead is at an unseekable
+          // position where `playing` would stall and never fire; `play` fires on
+          // unpause regardless, so we snap before the stall.
+          return listen(mediaElement, 'play', reposition);
         },
       },
     },
