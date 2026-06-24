@@ -75,7 +75,7 @@ export const popup = {
 
 export const bufferingIndicator = {
   ...baseBufferingIndicator,
-  container: cn(baseBufferingIndicator.container, surface),
+  root: cn(baseBufferingIndicator.root, surface),
 };
 
 /* ===========================================================================

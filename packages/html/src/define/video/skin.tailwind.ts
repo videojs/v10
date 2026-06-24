@@ -49,9 +49,7 @@ function getTemplateHTML() {
       </media-poster>
 
       <media-buffering-indicator class="${bufferingIndicator.root}">
-        <div class="${bufferingIndicator.container}">
-          ${renderIcon('spinner')}
-        </div>
+        ${renderIcon('spinner')}
       </media-buffering-indicator>
 
       <media-error-dialog class="${error.root}">

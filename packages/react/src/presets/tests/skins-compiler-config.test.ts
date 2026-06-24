@@ -53,6 +53,7 @@ describe('skins compiler config', () => {
     expect(compactCode).toContain(compact('<BufferingIndicator className={bufferingIndicator.root}>'));
     expect(compactCode).toContain(compact('<SpinnerIcon className={icon} />'));
     expect(compactCode).not.toContain('BufferingIndicatorRoot');
+    expect(compactCode).not.toContain('bufferingIndicator.container');
     expect(compactCode).toContain(compact('<ErrorDialog.Popup className={error.popup}>'));
     expect(compactCode).toContain(
       compact('<ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>')

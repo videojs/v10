@@ -366,15 +366,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         />
       )}
 
-      <BufferingIndicator
-        render={(props) => (
-          <div {...props} className={bufferingIndicator.root}>
-            <div className={bufferingIndicator.container}>
-              <SpinnerIcon className={icon} />
-            </div>
-          </div>
-        )}
-      />
+      <BufferingIndicator className={bufferingIndicator.root}>
+        <SpinnerIcon className={icon} />
+      </BufferingIndicator>
 
       <ErrorDialog.Root>
         <ErrorDialog.Popup className={error.root}>
