@@ -7,7 +7,7 @@ import JSPicker from '@/components/installation/JSPicker.astro';
 import RendererPicker from '@/components/installation/RendererPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
-import HTMLInstallSection from '@/components/installation/HTMLInstallSection.astro';
+import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
@@ -112,7 +112,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 ## Install Video.js
 
 <FrameworkCase frameworks={["html"]}>
-  <HTMLInstallSection />
+  <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
   <TabsRoot client:idle>
