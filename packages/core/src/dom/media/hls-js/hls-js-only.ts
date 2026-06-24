@@ -9,6 +9,7 @@ import type {
   MediaStreamTypeCapability,
 } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
+import { HlsJsMediaAirPlayMixin } from './airplay-bridge';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaLiveMixin } from './live';
 import { HlsJsMediaMediaTracksMixin } from './media-tracks';
@@ -73,12 +74,14 @@ interface HlsJsMediaCapabilities
   readonly error: MediaError | null;
 }
 
-const HlsJsOnlyMediaComposed = HlsJsMediaPreloadMixin(
-  HlsJsMediaLiveMixin(
-    HlsJsMediaStreamTypeMixin(
-      HlsJsMediaMediaTracksMixin(
-        HlsJsMediaMetadataTracksMixin(
-          HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
+const HlsJsOnlyMediaComposed = HlsJsMediaAirPlayMixin(
+  HlsJsMediaPreloadMixin(
+    HlsJsMediaLiveMixin(
+      HlsJsMediaStreamTypeMixin(
+        HlsJsMediaMediaTracksMixin(
+          HlsJsMediaMetadataTracksMixin(
+            HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
+          )
         )
       )
     )
