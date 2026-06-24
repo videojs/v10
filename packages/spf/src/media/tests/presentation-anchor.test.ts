@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest';
-import { anchorTrackToBufferedSegment } from '../anchor-track-to-buffered-segment';
 import {
   positionTrackToAnchor,
   presentationAnchorEstimate,
@@ -88,17 +87,5 @@ describe('positionTrackToAnchor', () => {
     expect(positionTrackToAnchor(t, 1000)).toBe(t); // startDate already 1000
     const noPdt = track({ startDate: undefined });
     expect(positionTrackToAnchor(noPdt, 900)).toBe(noPdt);
-  });
-});
-
-describe('generalizes anchorTrackToBufferedSegment', () => {
-  it('positioning to the buffer-derived anchor equals the per-track buffer pin', () => {
-    const t = track();
-    const anchor = presentationAnchorFromBuffer(t, 'segment-50', 480)!;
-    const viaAnchor = positionTrackToAnchor(t, anchor);
-    const viaPin = anchorTrackToBufferedSegment(t, 'segment-50', 480);
-    expect(viaAnchor.startTime).toBe(viaPin.startTime);
-    expect(viaAnchor.startDate).toBe(viaPin.startDate);
-    expect(viaAnchor.segments.map((s) => s.startTime)).toEqual(viaPin.segments.map((s) => s.startTime));
   });
 });

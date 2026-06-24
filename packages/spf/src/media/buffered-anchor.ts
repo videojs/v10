@@ -16,8 +16,9 @@ export interface BufferedAnchor {
  * ranges (`mediaElement.buffered`, exposed DOM-free by the buffer actor). The
  * latest appended segment sits at the buffer's leading edge, so its actual start
  * is `maxBufferedEnd − duration`. Pairing its id with that start lets
- * {@link anchorTrackToBufferedSegment} re-origin the whole track onto the buffer
- * (the constant offset means one anchor pins the window).
+ * {@link presentationAnchorFromBuffer} derive the shared presentation anchor
+ * that positions every track (the constant offset means one anchor pins the
+ * window).
  *
  * Returns `undefined` before anything is buffered — callers fall back to the
  * sequence estimate until then.
