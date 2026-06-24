@@ -5,13 +5,11 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
-import { type ReadonlySignal, untrack } from '../../../core/signals/primitives';
 import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
 import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
-import { bufferedAnchorFor } from '../../../media/buffered-anchor';
 import { canPlayTrack } from '../../../media/dom/capabilities';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
@@ -36,7 +34,7 @@ import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
-import { anchorLiveTracks } from '../../behaviors/anchor-live-tracks';
+import { makeAnchorLiveTracks } from '../../behaviors/anchor-live-tracks';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
@@ -58,6 +56,7 @@ import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../be
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import { resolveBufferedAnchor } from './resolve-buffered-anchor';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -319,25 +318,6 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
-  // Buffer-pin resolver injected into `anchorLiveTracks`. Reads the buffer
-  // actors' DOM-free snapshot data (appended segments + native-PTS
-  // `bufferedRanges`) to report where a segment actually landed, so the model
-  // timeline can be pinned to ground truth. The actor refs are filled from the
-  // composition's context once it's built (below); the resolver is only ever
-  // called later, during reloads. Reads are untracked — the pin re-checks each
-  // reload, no need to re-fire on every buffer tick.
-  let videoBufferActor: ReadonlySignal<SourceBufferActor | undefined> | undefined;
-  let audioBufferActor: ReadonlySignal<SourceBufferActor | undefined> | undefined;
-  const resolveBufferedAnchor = (track: ResolvedTrack) =>
-    untrack(() => {
-      const actor = (
-        track.type === 'video' ? videoBufferActor : track.type === 'audio' ? audioBufferActor : undefined
-      )?.get();
-      if (!actor) return undefined;
-      const { context } = actor.snapshot.get();
-      return bufferedAnchorFor(context.segments, context.bufferedRanges);
-    });
-
   const finalConfig = {
     ...config,
     resolveBufferedAnchor,
@@ -395,9 +375,9 @@ export function createSimpleHlsEngine(
       resolveAudioTrack,
       resolveTextTrack,
 
-      // Re-base selected live tracks' timelines to the estimated stream origin
-      // (segment.startTime ≈ native PTS). No-op for VoD (no PDT / shift 0).
-      anchorLiveTracks,
+      // Re-base selected live tracks' timelines onto the shared presentation
+      // anchor (estimate, then buffer ground truth). No-op for VoD (no PDT).
+      makeAnchorLiveTracks<SimpleHlsEngineContext>(),
 
       // Presentation duration (finite for complete playlists, Infinity for live)
       calculatePresentationDuration,
@@ -468,11 +448,6 @@ export function createSimpleHlsEngine(
       },
     }
   );
-
-  // Fill the buffer-pin resolver's refs from the live context (created above);
-  // the resolver closes over these and is only invoked later, during reloads.
-  videoBufferActor = composition.context.videoBufferActor;
-  audioBufferActor = composition.context.audioBufferActor;
 
   return composition;
 }

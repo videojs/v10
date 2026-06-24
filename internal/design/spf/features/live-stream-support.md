@@ -137,7 +137,7 @@ realized. What remains is forward-looking:
 | `liveWindowFromState` / `getLiveEdge` *(primitives)* | `playback/primitives/live-window.ts` | The state-reading call sites the live behaviors use. `liveWindowFromState` picks the timeline-bearing track — `selectedVideoTrackId ?? selectedAudioTrackId` (video positions both A/V; audio-only falls back to audio) — and calls `liveWindowFor`. `getLiveEdge({state,config})` adds the target playhead position (`liveEdgeStart = end − live latency`, clamped to start), bundling window geometry with the format-specific `config.resolveLiveLatency` policy so the behavior consumes one edge. Reads signals lazily (call inside an effect). |
 | `syncLiveSeekableRange` | `behaviors/dom/sync-live-seekable-range.ts` | Consume `liveWindowFromState`; `setLiveSeekableRange(start, end)` reactively on each window slide, including while paused. Duration is owned solely by `updateMediaSourceDuration`. Composed before `seekToLiveEdge`. |
 | `seekToLiveEdge` | `behaviors/dom/seek-to-live-edge.ts` | A reactor (`inactive ↔ live`) consuming `getLiveEdge`. `live` `entry` does the one-time seek to `liveEdgeStart`; `live` `effects` runs the window-exit guard (window-update re-fire + `play` listener). Format-neutral — the live latency comes from the injected `resolveLiveLatency` seam, never read here. The `mediaSource`-open precondition orders the entry seek after `sync-live-seekable-range` declares the range, so the seek lands in-window. |
-| `anchorLiveTracks` | `behaviors/anchor-live-tracks.ts` | Pin live track timelines to the SourceBuffer's native-PTS ground truth (first appended segment) or manifest estimate; re-pin per reload as the window slides |
+| `anchorLiveTracks` | `behaviors/anchor-live-tracks.ts` | A reactor (`unanchored → anchored`) holding **one** shared presentation anchor for all selected tracks (video, audio, *and* text). `unanchored` positions from the manifest estimate; entering `anchored` establishes the anchor once from the first selected A/V track's SourceBuffer ground truth (first-track-wins) and positions each track onto it by PDT, then leaves it to the parser's carry-forward (pin-once surfaces drift). See [live-presentation-anchor](../../../decisions/live-presentation-anchor.md). |
 | `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `behaviors/resolve-track.ts` | Own the reload loop via `RecurringRunner`; reschedule defaults to `mediaPlaylistReloadDelay`; per-type independent |
 | `calculatePresentationDuration` | `behaviors/calculate-presentation-duration.ts` | Populate `presentation.duration` via the config resolver (`Infinity` for unended live) |
 | `updateMediaSourceDuration` | `behaviors/dom/update-mediasource-duration.ts` | Propagate `presentation.duration` to `mediaSource.duration` once per MediaSource (uniform across variants) |
@@ -183,8 +183,9 @@ unconditionally (`anchorLiveTracks`, `calculatePresentationDuration`,
 - `media/hls/tests/parse-media-playlist.test.ts` — `Infinity` for unended
   live; `endList` on `#EXT-X-ENDLIST`; finite for `PLAYLIST-TYPE:VOD`; PDT
   capture + carry-forward.
-- `behaviors/tests/anchor-live-tracks.test.ts` — pin to buffer ground truth;
-  PDT carry-forward; sequence-origin bootstrap.
+- `behaviors/tests/anchor-live-tracks.test.ts` — estimate bootstrap; one A/V
+  pin placing audio + text by PDT; first-track-wins; estimate → buffer-pin
+  upgrade; pin-once across reloads.
 - `behaviors/tests/resolve-track.test.ts` — live reload re-resolves; stops on
   finite duration; source-change abort.
 - `behaviors/dom/tests/seek-to-live-edge.test.ts` — seeks to `liveEdgeStart`

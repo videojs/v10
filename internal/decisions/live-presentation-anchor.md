@@ -99,12 +99,17 @@ This promotes open question **[4] sync anchor** in
 
 ## Verification
 
-Not yet implemented. The implementation converts `anchor-live-tracks` into a
-reactor (`unanchored → anchored`; a single entry establishes the shared anchor
-once an A/V track has buffer ground truth, then positions all selected tracks)
-— tracked separately. Verification will cover: one A/V pin placing audio + text
-by PDT; first-track-wins; pre-pin estimate → buffer-pin upgrade; pin-once (no
-re-pin across reloads); inert when no PDT / no resolved track.
+Implemented. `anchor-live-tracks` is a two-state reactor (`unanchored →
+anchored`): `unanchored` positions every selected track from the manifest
+estimate; entering `anchored` establishes the shared anchor once from the first
+selected A/V track with buffer ground truth, then positions all selected tracks
+(incl. text) onto it. The old per-track pin primitives
+(`anchorTrackToBufferedSegment` / `anchorTrackToSequenceOrigin`) are removed.
+
+Unit-covered (`anchor-live-tracks.test.ts`): one A/V pin placing audio + text by
+PDT; first-track-wins (video preferred); pre-pin estimate → buffer-pin upgrade;
+pin-once (no re-pin across reloads); inert when no PDT / no resolved track. Live
+end-to-end (a real stream with subtitles) is not yet smoke-tested.
 
 ## See also
 
