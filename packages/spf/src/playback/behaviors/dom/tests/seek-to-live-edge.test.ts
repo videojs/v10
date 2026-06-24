@@ -93,8 +93,10 @@ function run(opts: {
   // The engine injects this seam; here a fixed 6s latency (HLS 3 × targetDuration(2))
   // stands in so the live-edge start lands at windowEnd − 6.
   const config = { resolveLiveLatency: () => 6, ...opts.config };
-  const cleanup = seekToLiveEdge.setup({ state, context, config }) as () => void;
-  return { cleanup, state, context };
+  // The manual `Behavior<>` literal widens the setup return to `BehaviorCleanup`;
+  // narrow back to the reactor's destroy handle for teardown.
+  const reactor = seekToLiveEdge.setup({ state, context, config }) as { destroy: () => void };
+  return { cleanup: () => reactor.destroy(), state, context };
 }
 
 // Let the effect re-run after a signal write (effects re-run on a microtask).
@@ -113,11 +115,17 @@ describe('seekToLiveEdge', () => {
     cleanup();
   });
 
-  it('does not seek until the MediaSource is open', () => {
-    const ms = fakeMediaSource('closed');
+  it('does not seek until the MediaSource is published (open)', () => {
     const el = fakeMediaElement();
 
-    const { cleanup } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el, mediaSource: ms });
+    // `setupMediaSource` publishes `context.mediaSource` only once open, so an
+    // unpublished (absent) MediaSource is the "not ready" gate.
+    const { cleanup } = run({
+      presentation: makePresentation(),
+      trackId: 'v-1',
+      mediaElement: el,
+      mediaSource: undefined,
+    });
 
     expect(el.currentTime).toBe(0);
 

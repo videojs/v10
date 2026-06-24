@@ -1,34 +1,44 @@
 /**
- * Seek the playhead into the live window and keep it there:
+ * Keep the playhead in the live window, via a two-state reactor gated on the
+ * preconditions for "we know where live is":
  *
- * 1. A one-time seek of `currentTime` to the target live latency behind the
- *    edge (clamped to the window start) so playback begins near the edge and
- *    the segment loader dispatches an in-window range rather than starting at
- *    the back of the DVR window. The latency comes from the injected
- *    `resolveLiveLatency` seam (HLS: `HOLD-BACK`), keeping this behavior free of
- *    any delivery-format specifics.
- * 2. A live-window playhead guard: while playing (`!paused && !seeking &&
- *    readyState > 0`), reposition `currentTime` to the live edge when it falls
- *    *outside* the sliding window — a paused playhead the window slid past
- *    (caught on the `playing` resume) or playback that fell behind on poor
- *    network (caught on this effect's window-update re-fire, since `timeupdate`
- *    stops once a stall freezes `currentTime`). In-window pause and DVR
- *    scrub-back are left untouched (the `window-exit` reposition policy).
+ * - **`inactive`** — no media element, no (published, hence open) MediaSource,
+ *   or no live edge (`getLiveEdge` is `null`: VOD, ended, or unresolved). Idle.
+ * - **`live`** — preconditions met. `entry` seeks `currentTime` once to the
+ *   target live latency behind the edge (clamped to the window start) so
+ *   playback begins near the edge and the loader dispatches an in-window range;
+ *   `effects` runs the window-exit guard.
  *
- * The live window comes from `liveWindowFromState` (the shared derivation —
- * video track when present, else audio); this behavior is inert when it returns
- * `null` (VoD / ended live). Declaring the
- * seekable range is a separate concern — see `sync-live-seekable-range`, which
- * is composed *before* this behavior so the range exists before we seek into
- * it (a seek outside `seekable` is clamped). The `mediaSource` open-gate here
- * is the read that ties the seek to that declared range being available.
+ * The two pieces split along the axis a future DVR / EVENT mode will care about:
+ * the **one-time seek** (`entry`) is the *live-specific* behavior — jump to the
+ * edge on load; a DVR mode makes it conditional (start in place). The
+ * **window-exit guard** (`effects`) is the *general windowed-live* behavior —
+ * applies to sliding-window live, DVR, and EVENT alike. Because the seek is an
+ * `entry`, it fires once per entry into `live`; a source change exits to
+ * `inactive`, so the next source re-seeks (no closure latch to reset).
+ *
+ * Window-exit guard: while playing (`!paused && !seeking && readyState > 0`),
+ * reposition to the live edge when the playhead falls *outside* the sliding
+ * window — a paused playhead the window slid past (caught on the `playing`
+ * resume) or playback that fell behind on poor network (caught on the effect's
+ * window-update re-fire, since `timeupdate` stops once a stall freezes
+ * `currentTime`). In-window pause / DVR scrub-back are left untouched (the
+ * `window-exit` reposition policy).
+ *
+ * The latency comes from the injected `resolveLiveLatency` seam (HLS:
+ * `HOLD-BACK`), so this behavior carries no delivery-format specifics. The
+ * MediaSource precondition ties the seek to the declared seekable range:
+ * `sync-live-seekable-range` (composed before this) declares it while the
+ * MediaSource is open, so seeks land in-window (a seek outside `seekable` is
+ * clamped). `setupMediaSource` publishes `context.mediaSource` only once open,
+ * so the signal's *presence* is the open gate — no `readyState` re-check.
  */
 import { listen } from '@videojs/utils/dom';
 import type { Behavior } from '../../../core/composition/create-composition';
-import { effect } from '../../../core/signals/effect';
-import type { ReadonlySignal } from '../../../core/signals/primitives';
+import { createMachineReactor, type Reactor } from '../../../core/reactors/create-machine-reactor';
+import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
-import { getLiveEdge, type ResolveLiveLatency } from '../../primitives/live-window';
+import { getLiveEdge, type LiveEdge, type ResolveLiveLatency } from '../../primitives/live-window';
 
 /**
  * Tolerance (seconds) around the window edges before the guard repositions, so
@@ -69,6 +79,20 @@ export interface SeekToLiveEdgeConfig {
   resolveLiveLatency?: ResolveLiveLatency;
 }
 
+type SeekToLiveEdgeFsmState = 'inactive' | 'live';
+
+/**
+ * `'live'` once the seek preconditions hold: a media element, a (published →
+ * open) MediaSource, and a derivable live edge. `'inactive'` otherwise.
+ */
+function deriveState(
+  mediaElement: HTMLMediaElement | undefined,
+  mediaSource: MediaSource | undefined,
+  edge: LiveEdge | null
+): SeekToLiveEdgeFsmState {
+  return mediaElement && mediaSource && edge ? 'live' : 'inactive';
+}
+
 function seekToLiveEdgeSetup({
   state,
   context,
@@ -84,53 +108,66 @@ function seekToLiveEdgeSetup({
     mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
   };
   config?: SeekToLiveEdgeConfig;
-}): () => void {
+}): Reactor<SeekToLiveEdgeFsmState | 'destroying' | 'destroyed'> {
   const repositionPolicy = config?.repositionPolicy ?? 'window-exit';
-  let seeked = false;
 
-  return effect(() => {
-    const mediaElement = context.mediaElement.get();
-    const mediaSource = context.mediaSource.get();
-    const edge = getLiveEdge({ state, config });
-    if (!mediaElement || !edge) return;
-    // Gate on the seekable range being declarable/declared (see file JSDoc):
-    // sync-live-seekable-range runs first while open, so seeks land in-window.
-    if (!mediaSource || mediaSource.readyState !== 'open') return;
+  const derivedStateSignal = computed(() =>
+    deriveState(context.mediaElement.get(), context.mediaSource.get(), getLiveEdge({ state, config }))
+  );
 
-    const { start: windowStart, end: windowEnd, liveEdgeStart } = edge;
+  return createMachineReactor<SeekToLiveEdgeFsmState>({
+    initial: 'inactive',
+    monitor: () => derivedStateSignal.get(),
+    states: {
+      inactive: {},
 
-    // Initial entry: seek into the window once — even while paused — so the
-    // loader dispatches an in-window range and preload shows the right frame.
-    // Latched so a later reload never re-yanks a paused user who scrubbed back.
-    if (!seeked && mediaElement.currentTime < liveEdgeStart) {
-      mediaElement.currentTime = liveEdgeStart;
-      seeked = true;
-    }
+      live: {
+        // One-time seek into the window so the loader dispatches an in-window
+        // range and preload shows the right frame. Fires once per entry into
+        // `live`; a source change exits to `inactive`, so a new source re-seeks.
+        // Live-specific — a future DVR mode skips this (starts in place).
+        entry: () => {
+          const mediaElement = context.mediaElement.get();
+          const edge = getLiveEdge({ state, config });
+          // The monitor guarantees both while in `live`.
+          if (!mediaElement || !edge) return;
+          if (mediaElement.currentTime < edge.liveEdgeStart) {
+            mediaElement.currentTime = edge.liveEdgeStart;
+          }
+        },
 
-    // Live-window playhead guard. Repositions to the live edge when the playhead
-    // falls outside the sliding window while playing. Runs now (this effect
-    // re-fires on each window-update / reload — the primary trigger, since
-    // `timeupdate` stops while a stall freezes `currentTime`) and on the
-    // secondary media-event triggers below.
-    const guard = () => {
-      // `on-resume` (edge-only) is a future use-case variant; only the DVR
-      // `window-exit` policy is implemented today.
-      if (repositionPolicy !== 'window-exit') return;
-      if (mediaElement.paused || mediaElement.seeking || mediaElement.readyState === 0) return;
-      const { currentTime } = mediaElement;
-      if (currentTime < windowStart - REPOSITION_TOLERANCE || currentTime > windowEnd + REPOSITION_TOLERANCE) {
-        mediaElement.currentTime = liveEdgeStart;
-      }
-    };
-    guard();
-    const removePlaying = listen(mediaElement, 'playing', guard);
-    const removeTimeupdate = listen(mediaElement, 'timeupdate', guard);
-    const removeSeeked = listen(mediaElement, 'seeked', guard);
-    return () => {
-      removePlaying();
-      removeTimeupdate();
-      removeSeeked();
-    };
+        // Window-exit guard. Re-fires on each window update (the primary
+        // trigger — `timeupdate` stops while a stall freezes `currentTime`) and
+        // on the secondary media-event listeners. Tracks `mediaElement` too, so
+        // the listeners re-bind if the element identity changes.
+        effects: () => {
+          const mediaElement = context.mediaElement.get();
+          const edge = getLiveEdge({ state, config });
+          if (!mediaElement || !edge) return;
+
+          const { start: windowStart, end: windowEnd, liveEdgeStart } = edge;
+          const reposition = () => {
+            // `on-resume` (edge-only) is a future use-case variant; only the DVR
+            // `window-exit` policy is implemented today.
+            if (repositionPolicy !== 'window-exit') return;
+            if (mediaElement.paused || mediaElement.seeking || mediaElement.readyState === 0) return;
+            const { currentTime } = mediaElement;
+            if (currentTime < windowStart - REPOSITION_TOLERANCE || currentTime > windowEnd + REPOSITION_TOLERANCE) {
+              mediaElement.currentTime = liveEdgeStart;
+            }
+          };
+          reposition();
+          const removePlaying = listen(mediaElement, 'playing', reposition);
+          const removeTimeupdate = listen(mediaElement, 'timeupdate', reposition);
+          const removeSeeked = listen(mediaElement, 'seeked', reposition);
+          return () => {
+            removePlaying();
+            removeTimeupdate();
+            removeSeeked();
+          };
+        },
+      },
+    },
   });
 }
 
