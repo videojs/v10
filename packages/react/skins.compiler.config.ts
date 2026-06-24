@@ -62,6 +62,7 @@ export default defineConfig({
               code.create.jsx.element(Poster, {
                 src: code.create.value.onlyIf({ value: 'poster', condition: isString }),
                 render: code.create.value.onlyIf({ value: 'poster', condition: isRenderProp }),
+                className: code.create.value.identifier('posterClass'),
               })
             );
           },

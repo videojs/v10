@@ -47,7 +47,7 @@ describe('skins compiler config', () => {
     expect(compactCode).toContain(compact('<Container className={cn(container, className)} {...rest}>'));
     expect(compactCode).toContain(
       compact(
-        '{poster && <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />}'
+        '{poster && <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} className={posterClass} />}'
       )
     );
     expect(compactCode).toContain(compact('<BufferingIndicator className={bufferingIndicator.root}>'));
