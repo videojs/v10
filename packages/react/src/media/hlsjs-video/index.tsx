@@ -1,5 +1,6 @@
 'use client';
 
+import { CuePoints } from '@videojs/core/dom/media/cue-points';
 import { GoogleCast } from '@videojs/core/dom/media/google-cast';
 import type { HlsMediaProps } from '@videojs/core/dom/media/hls-js';
 import { HlsJsMedia, hlsMediaDefaultProps } from '@videojs/core/dom/media/hls-js';
@@ -22,6 +23,7 @@ export const HlsJsVideo = forwardRef<HTMLVideoElement, HlsJsVideoProps>(function
   ref
 ) {
   const media = useMediaInstance(HlsJsMedia, (media) => {
+    addComponent(media, new CuePoints());
     addComponent(media, new GoogleCast());
   });
   const attachRef = useAttachMedia(media);
