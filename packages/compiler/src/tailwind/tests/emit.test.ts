@@ -13,8 +13,23 @@ function rule(
   variants: any[] = [],
   group?: string
 ): CompiledRule {
-  const utility = { utility: 'mock', declarations, variants };
+  const utility = { utility: 'mock', branches: [{ declarations, variants }], declarations, variants };
   return group === undefined ? { className, utility } : { className, utility, group };
+}
+
+function branchedRule(
+  className: string,
+  branches: { declarations: { property: string; value: string }[]; variants: any[] }[]
+): CompiledRule {
+  return {
+    className,
+    utility: {
+      utility: 'mock',
+      branches,
+      declarations: branches.flatMap((branch) => branch.declarations),
+      variants: branches[0]?.variants ?? [],
+    },
+  };
 }
 
 describe('emitCss — merged mode', () => {
@@ -79,6 +94,26 @@ describe('emitCss — merged mode', () => {
     });
     expect(out.kind === 'merged' && collapse(out.css)).toContain(
       collapse('@media (hover: hover){.foo:hover{opacity:1;}}')
+    );
+  });
+
+  it('emits each utility branch with its own variant path', async () => {
+    const media = {
+      kind: 'media' as const,
+      atRule: { name: 'media', params: '(width >= 40rem)' },
+      raw: '@media (width >= 40rem)',
+    };
+    const out = await emitCss({
+      rules: [
+        branchedRule('container', [
+          { declarations: [{ property: 'width', value: '100%' }], variants: [] },
+          { declarations: [{ property: 'max-width', value: '40rem' }], variants: [media] },
+        ]),
+      ],
+    });
+    expect(out.kind === 'merged' && collapse(out.css)).toContain(collapse('.container{width:100%;}'));
+    expect(out.kind === 'merged' && collapse(out.css)).toContain(
+      collapse('@media (width >= 40rem){.container{max-width:40rem;}}')
     );
   });
 
@@ -559,6 +594,15 @@ describe('emitCss — registered @property variables', () => {
       declarations: [
         { property: 'content', value: 'var(--tw-content)' },
         { property: 'position', value: 'absolute' },
+      ],
+      branches: [
+        {
+          declarations: [
+            { property: 'content', value: 'var(--tw-content)' },
+            { property: 'position', value: 'absolute' },
+          ],
+          variants: [{ kind: 'pseudo', selector: '::after', raw: '::after' }],
+        },
       ],
       variants: [{ kind: 'pseudo', selector: '::after', raw: '::after' }],
       properties: [{ name: '--tw-content', syntax: '"*"', inherits: false, initialValue: '""' }],

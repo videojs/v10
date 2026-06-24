@@ -5,7 +5,6 @@ import type { CompilerContext, CompilerPlugin } from '../config';
 import { diagnosticLocationFromNode } from '../diagnostics';
 import { tagName } from '../jsx';
 import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
-import { decompose, type UtilityCss } from './decompose';
 import { type DesignSystem, loadDesignSystem } from './design-system';
 import {
   type CompiledRule,
@@ -16,6 +15,7 @@ import {
 } from './emit';
 import { EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
 import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type ResolveName } from './naming';
+import { analyzeUtility, type UtilityCss } from './utility-css';
 
 /** Styling mode for Tailwind-backed className handling. */
 export type TailwindMode =
@@ -137,7 +137,7 @@ export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
 /**
  * TS transformer that rewrites JSX `className` attributes per the chosen
  * Tailwind target. Built on top of `analyzeStyles` (generic JSX walker) +
- * `decompose` + `deriveClassName` + `emitCss`. Token references are resolved
+ * `analyzeUtility` + `deriveClassName` + `emitCss`. Token references are resolved
  * by statically evaluating the imported token module — see `evaluator.ts`.
  */
 export function tailwindPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
@@ -225,7 +225,7 @@ function vanillaCssPlugin(
         // Tailwind doesn't recognize — dropping them would silently break every
         // descendant `group-*` / `peer-*` variant that targets the marker.
         const handleUtility = (utility: string): void => {
-          const css = decompose(utility, design);
+          const css = analyzeUtility(utility, design);
           if (css && css.declarations.length > 0) {
             ruleUtilities.push(utility);
             rules.push(buildCompiledRule(derived.className, css, segments, resolve?.group));

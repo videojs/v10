@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from 'node:path';
 import { bundleAsync } from 'lightningcss';
-import type { Declaration, UtilityCss } from './decompose';
+import type { Declaration, UtilityCss, UtilityCssBranch } from './utility-css';
 
 /** A compiled rule: a class name + the utility's declarations and variants. */
 export interface CompiledRule {
@@ -421,10 +421,10 @@ function composeRules(
   inlineVars: VariableMatcher | undefined,
   fallbackSetters?: Map<string, string>
 ): string {
-  // Step 1: turn each CompiledRule into one EmitUnit.
+  // Step 1: turn each CompiledRule branch into one EmitUnit.
   const units: EmitUnit[] = [];
   for (const rule of rules) {
-    units.push(buildEmitUnit(rule));
+    units.push(...buildEmitUnits(rule));
   }
 
   // Step 2: merge units by (atRulePath, selector). Dedupe declarations by
@@ -815,11 +815,15 @@ function findTopLevelComma(s: string): number {
   return -1;
 }
 
-function buildEmitUnit(rule: CompiledRule): EmitUnit {
+function buildEmitUnits(rule: CompiledRule): EmitUnit[] {
+  return rule.utility.branches.map((branch) => buildEmitUnit(rule.className, branch));
+}
+
+function buildEmitUnit(className: string, branch: UtilityCssBranch): EmitUnit {
   const atRulePath: string[] = [];
   let selectorTail = '';
 
-  for (const v of rule.utility.variants) {
+  for (const v of branch.variants) {
     if (v.atRule) {
       atRulePath.push(`@${v.atRule.name} ${v.atRule.params}`.trim());
     } else if (v.selector) {
@@ -829,8 +833,8 @@ function buildEmitUnit(rule: CompiledRule): EmitUnit {
 
   return {
     atRulePath,
-    selector: `.${rule.className}${selectorTail}`,
-    declarations: rule.utility.declarations,
+    selector: `.${className}${selectorTail}`,
+    declarations: branch.declarations,
   };
 }
 

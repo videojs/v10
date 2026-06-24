@@ -2,9 +2,9 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { decompose } from '../decompose';
 import type { DesignSystem } from '../design-system';
 import { loadDesignSystem } from '../design-system';
+import { analyzeUtility } from '../utility-css';
 
 let design: DesignSystem;
 
@@ -24,17 +24,18 @@ beforeAll(async () => {
   design = await loadDesignSystem(cssPath);
 }, 30_000);
 
-describe('decompose — base utilities', () => {
+describe('analyzeUtility — base utilities', () => {
   it('handles a plain utility', () => {
-    const r = decompose('flex', design);
+    const r = analyzeUtility('flex', design);
     expect(r).not.toBeNull();
     expect(r!.utility).toBe('flex');
     expect(r!.variants).toEqual([]);
     expect(r!.declarations).toEqual([{ property: 'display', value: 'flex' }]);
+    expect(r!.branches).toEqual([{ declarations: [{ property: 'display', value: 'flex' }], variants: [] }]);
   });
 
   it('handles a utility with multiple declarations', () => {
-    const r = decompose('p-4', design);
+    const r = analyzeUtility('p-4', design);
     expect(r).not.toBeNull();
     // Tailwind v4 emits `padding: calc(var(--spacing) * 4);`.
     const props = r!.declarations.map((d) => d.property);
@@ -42,13 +43,13 @@ describe('decompose — base utilities', () => {
   });
 
   it('returns null for unknown utilities', () => {
-    expect(decompose('not-a-real-utility', design)).toBeNull();
+    expect(analyzeUtility('not-a-real-utility', design)).toBeNull();
   });
 });
 
-describe('decompose — variants', () => {
+describe('analyzeUtility — variants', () => {
   it('captures :hover as a pseudo variant', () => {
-    const r = decompose('hover:opacity-100', design);
+    const r = analyzeUtility('hover:opacity-100', design);
     expect(r).not.toBeNull();
     // Tailwind v4 nests `&:hover` *inside* `@media (hover: hover)` so we
     // see both — pseudo for the selector tail, media for the hover gate.
@@ -62,14 +63,14 @@ describe('decompose — variants', () => {
   });
 
   it('captures :focus-visible as a pseudo variant', () => {
-    const r = decompose('focus-visible:outline-current', design);
+    const r = analyzeUtility('focus-visible:outline-current', design);
     expect(r).not.toBeNull();
     expect(r!.variants[0]!.kind).toBe('pseudo');
     expect(r!.variants[0]!.selector).toMatch(/:focus-visible/);
   });
 
   it('captures @media-style at-rule wrappers', () => {
-    const r = decompose('motion-reduce:opacity-50', design);
+    const r = analyzeUtility('motion-reduce:opacity-50', design);
     expect(r).not.toBeNull();
     const media = r!.variants.find((v) => v.kind === 'media');
     expect(media).toBeDefined();
@@ -77,7 +78,7 @@ describe('decompose — variants', () => {
   });
 
   it('captures attribute-selector variants from data-[…]', () => {
-    const r = decompose('data-[state=open]:opacity-100', design);
+    const r = analyzeUtility('data-[state=open]:opacity-100', design);
     expect(r).not.toBeNull();
     const attr = r!.variants.find((v) => v.kind === 'attribute');
     expect(attr).toBeDefined();
@@ -85,7 +86,7 @@ describe('decompose — variants', () => {
   });
 
   it('captures group-data variants', () => {
-    const r = decompose('group-data-paused:opacity-100', design);
+    const r = analyzeUtility('group-data-paused:opacity-100', design);
     expect(r).not.toBeNull();
     const grp = r!.variants.find((v) => v.kind === 'group');
     expect(grp).toBeDefined();
@@ -93,9 +94,26 @@ describe('decompose — variants', () => {
   });
 });
 
-describe('decompose — @property registrations', () => {
+describe('analyzeUtility — branches', () => {
+  it('preserves sibling declaration branches from one utility', () => {
+    const r = analyzeUtility('container', design);
+    expect(r).not.toBeNull();
+    expect(r!.branches.length).toBeGreaterThan(1);
+    expect(r!.branches).toContainEqual({ declarations: [{ property: 'width', value: '100%' }], variants: [] });
+    expect(r!.branches.some((branch) => branch.variants.some((variant) => variant.kind === 'media'))).toBe(true);
+  });
+
+  it.each(['{', '}'])('handles arbitrary content containing %s', (brace) => {
+    const r = analyzeUtility(`before:content-["${brace}"]`, design);
+    expect(r).not.toBeNull();
+    expect(r!.declarations.find((declaration) => declaration.property === '--tw-content')?.value).toContain(brace);
+    expect(r!.declarations).toContainEqual({ property: 'content', value: 'var(--tw-content)' });
+  });
+});
+
+describe('analyzeUtility — @property registrations', () => {
   it('captures the @property rule Tailwind appends for a registered variable', () => {
-    const r = decompose('before:content-["x"]', design);
+    const r = analyzeUtility('before:content-["x"]', design);
     expect(r).not.toBeNull();
     const content = r!.properties?.find((p) => p.name === '--tw-content');
     expect(content).toEqual({
@@ -107,12 +125,12 @@ describe('decompose — @property registrations', () => {
   });
 
   it('omits `properties` when a utility registers none', () => {
-    const r = decompose('flex', design);
+    const r = analyzeUtility('flex', design);
     expect(r!.properties).toBeUndefined();
   });
 });
 
-describe('decompose — caching', () => {
+describe('analyzeUtility — caching', () => {
   it('returns the same compiled CSS on repeat lookups (DesignSystem cache)', () => {
     const a = design.compileUtility('flex');
     const b = design.compileUtility('flex');

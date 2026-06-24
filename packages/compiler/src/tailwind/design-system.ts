@@ -6,7 +6,7 @@ import { __unstable__loadDesignSystem } from 'tailwindcss';
 /**
  * A loaded Tailwind v4 design system. Wraps Tailwind's
  * `__unstable__loadDesignSystem` return value with a small surface focused on
- * what `decompose` needs:
+ * what `analyzeUtility` needs:
  *
  *   - `compileUtility(name)` — compile a single utility class to CSS, or
  *     `null` if Tailwind doesn't recognize it.

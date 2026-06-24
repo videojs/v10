@@ -1,11 +1,3 @@
-export {
-  type Declaration,
-  decompose,
-  type PropertyRule,
-  type UtilityCss,
-  type Variant,
-  type VariantKind,
-} from './decompose';
 export { type DesignSystem, loadDesignSystem } from './design-system';
 export {
   type CompiledRule,
@@ -36,3 +28,12 @@ export {
   type TailwindVarsOptions,
   tailwind,
 } from './plugin';
+export {
+  analyzeUtility,
+  type Declaration,
+  type PropertyRule,
+  type UtilityCss,
+  type UtilityCssBranch,
+  type Variant,
+  type VariantKind,
+} from './utility-css';
