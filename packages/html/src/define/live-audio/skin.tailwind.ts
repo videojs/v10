@@ -39,23 +39,23 @@ function getTemplateHTML() {
 
       <media-controls class="${controls}">
         <media-tooltip-group>
-          <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
-                ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-                ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-                ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
-              </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+          <media-controls-group class="${buttonGroup}">
+            <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
+              ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
+              ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
+              ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+            </media-play-button>
+            <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
             </media-tooltip>
 
-              <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
-          </div>
+            <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
+          </media-controls-group>
 
-          <div class="grow" aria-hidden="true"></div>
+          <media-controls-group class="grow" aria-hidden="true"></media-controls-group>
 
-          <div class="${buttonGroup}">
+          <media-controls-group class="${buttonGroup}">
             <media-mute-button commandfor="live-audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
               ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
               ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
@@ -70,7 +70,7 @@ function getTemplateHTML() {
                 <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-          </div>
+          </media-controls-group>
         </media-tooltip-group>
       </media-controls>
     </media-container>

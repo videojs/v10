@@ -30,7 +30,7 @@ function getTemplateHTML() {
 
       <media-controls class="media-surface media-controls">
         <media-tooltip-group>
-          <div class="media-button-group">
+          <media-controls-group class="media-button-group">
             <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
               ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
@@ -62,9 +62,9 @@ function getTemplateHTML() {
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
-          </div>
+          </media-controls-group>
 
-          <div class="media-time-controls">
+          <media-controls-group class="media-time-controls">
             <media-time type="current" class="media-time"></media-time>
             <media-time-slider class="media-slider">
               <media-slider-track class="media-slider__track">
@@ -77,9 +77,9 @@ function getTemplateHTML() {
               </media-slider-preview>
             </media-time-slider>
             <media-time type="duration" class="media-time"></media-time>
-          </div>
+          </media-controls-group>
 
-          <div class="media-button-group">
+          <media-controls-group class="media-button-group">
             <media-playback-rate-button commandfor="playback-rate-menu" class="media-button media-button--subtle media-button--icon media-button--playback-rate"></media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="media-surface media-popover media-menu">
               <media-playback-rate-radio-group class="media-menu__group">
@@ -108,7 +108,7 @@ function getTemplateHTML() {
                 <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-          </div>
+          </media-controls-group>
         </media-tooltip-group>
       </media-controls>
 

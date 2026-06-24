@@ -181,7 +181,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
 
       <Controls.Root className={controls}>
         <Tooltip.Provider>
-          <div className={buttonGroup}>
+          <Controls.Group className={buttonGroup}>
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
@@ -231,9 +231,9 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
                 <Tooltip.Shortcut className={popup.tooltipShortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className={time.group}>
+          <Controls.Group className={time.group}>
             <Time.Value type="current" className={time.current} />
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
@@ -246,9 +246,9 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
-          </div>
+          </Controls.Group>
 
-          <div className={buttonGroup}>
+          <Controls.Group className={buttonGroup}>
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className={cn(popup.popover, menu.root)}>
@@ -257,7 +257,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             </Menu.Root>
 
             <VolumePopover />
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

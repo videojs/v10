@@ -393,7 +393,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
         className={controls}
       >
         <Tooltip.Provider>
-          <div className={buttonGroupStart}>
+          <Controls.Group className={buttonGroupStart}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -443,9 +443,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className={popup.tooltipShortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className={time.group}>
+          <Controls.Group className={time.group}>
             <Time.Value type="current" className={time.current} />
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
@@ -463,9 +463,9 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
               </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className={time.duration} />
-          </div>
+          </Controls.Group>
 
-          <div className={cn(buttonGroupEnd, menu.settingsGroup)}>
+          <Controls.Group className={cn(buttonGroupEnd, menu.settingsGroup)}>
             <VolumePopover />
 
             <SettingsMenu />
@@ -529,7 +529,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className={popup.tooltipShortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

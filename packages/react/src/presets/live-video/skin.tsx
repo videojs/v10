@@ -201,7 +201,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
 
       <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -219,11 +219,11 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
-          </div>
+          </Controls.Group>
 
-          <div className="media-time-controls" aria-hidden="true" />
+          <Controls.Group className="media-time-controls" aria-hidden="true" />
 
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <VolumePopover />
 
             <CaptionsTrigger />
@@ -287,7 +287,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

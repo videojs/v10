@@ -47,13 +47,13 @@ function getTemplateHTML() {
 
       <media-controls class="${controls}">
         <media-tooltip-group>
-          <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
-                ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
-                ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
-                ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
-              </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+          <media-controls-group class="${buttonGroup}">
+            <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
+              ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
+              ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
+              ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
+            </media-play-button>
+            <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
             </media-tooltip>
@@ -79,9 +79,9 @@ function getTemplateHTML() {
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
             </media-tooltip>
-          </div>
+          </media-controls-group>
 
-          <div class="${time.group}">
+          <media-controls-group class="${time.group}">
             <media-time type="current" class="${time.current}"></media-time>
             <media-time-slider class="${slider.root}">
               <media-slider-track class="${slider.track}">
@@ -94,9 +94,9 @@ function getTemplateHTML() {
               </media-slider-preview>
             </media-time-slider>
             <media-time type="duration" class="${time.duration}"></media-time>
-          </div>
+          </media-controls-group>
 
-          <div class="${buttonGroup}">
+          <media-controls-group class="${buttonGroup}">
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
               <media-playback-rate-radio-group class="${menu.group}">
@@ -125,7 +125,7 @@ function getTemplateHTML() {
                 <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-          </div>
+          </media-controls-group>
         </media-tooltip-group>
       </media-controls>
     </media-container>

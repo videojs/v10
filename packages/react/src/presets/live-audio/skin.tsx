@@ -93,7 +93,7 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
 
       <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
@@ -108,13 +108,13 @@ export function LiveAudioSkin(props: LiveAudioSkinProps): ReactNode {
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
-          </div>
+          </Controls.Group>
 
-          <div className="media-time-controls" aria-hidden="true" />
+          <Controls.Group className="media-time-controls" aria-hidden="true" />
 
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <VolumePopover />
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

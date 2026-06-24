@@ -119,7 +119,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
 
       <Controls.Root className={controls}>
         <Tooltip.Provider>
-          <div className={buttonGroup}>
+          <Controls.Group className={buttonGroup}>
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
@@ -137,13 +137,13 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
-          </div>
+          </Controls.Group>
 
-          <div className="grow" aria-hidden="true" />
+          <Controls.Group className="grow" aria-hidden="true" />
 
-          <div className={buttonGroup}>
+          <Controls.Group className={buttonGroup}>
             <VolumePopover />
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

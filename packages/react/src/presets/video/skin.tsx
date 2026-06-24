@@ -327,7 +327,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
 
       <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -377,9 +377,9 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className="media-time-controls">
+          <Controls.Group className="media-time-controls">
             <Time.Value type="current" className="media-time" />
             <TimeSlider.Root className="media-slider">
               <TimeSlider.Track className="media-slider__track">
@@ -398,9 +398,9 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
               </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className="media-time" />
-          </div>
+          </Controls.Group>
 
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <VolumePopover />
 
             <SettingsMenu />
@@ -464,7 +464,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

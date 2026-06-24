@@ -391,7 +391,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
         className={controls}
       >
         <Tooltip.Provider>
-          <div className={buttonGroupStart}>
+          <Controls.Group className={buttonGroupStart}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -441,9 +441,9 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <Tooltip.Shortcut className={popup.tooltipShortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className={time.controls}>
+          <Controls.Group className={time.controls}>
             <Time.Group className={time.group}>
               <Time.Value type="current" className={time.current} />
               <Time.Separator className={time.separator} />
@@ -467,9 +467,9 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <TimeSlider.Value type="pointer" className={slider.value} />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-          </div>
+          </Controls.Group>
 
-          <div className={cn(buttonGroupEnd, menu.settingsGroup)}>
+          <Controls.Group className={cn(buttonGroupEnd, menu.settingsGroup)}>
             <VolumePopover />
 
             <SettingsMenu />
@@ -533,7 +533,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
                 <Tooltip.Shortcut className={popup.tooltipShortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

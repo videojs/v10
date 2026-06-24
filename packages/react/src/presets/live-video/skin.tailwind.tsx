@@ -243,7 +243,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
         className={controls}
       >
         <Tooltip.Provider>
-          <div className={buttonGroupStart}>
+          <Controls.Group className={buttonGroupStart}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -261,11 +261,11 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
-          </div>
+          </Controls.Group>
 
-          <div className="grow" aria-hidden="true" />
+          <Controls.Group className="grow" aria-hidden="true" />
 
-          <div className={buttonGroupEnd}>
+          <Controls.Group className={buttonGroupEnd}>
             <VolumePopover />
 
             <CaptionsTrigger />
@@ -329,7 +329,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className={popup.tooltipShortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

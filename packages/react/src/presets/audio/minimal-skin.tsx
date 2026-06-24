@@ -126,7 +126,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
 
       <Controls.Root className="media-controls">
         <Tooltip.Provider>
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
@@ -176,9 +176,9 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className="media-time-controls">
+          <Controls.Group className="media-time-controls">
             <Time.Group className="media-time-group">
               <Time.Value type="current" className="media-time media-time--current" />
               <Time.Separator className="media-time-separator" />
@@ -195,9 +195,9 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-          </div>
+          </Controls.Group>
 
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className="media-popover media-menu media-menu--playback-rate">
@@ -206,7 +206,7 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
             </Menu.Root>
 
             <VolumePopover />
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

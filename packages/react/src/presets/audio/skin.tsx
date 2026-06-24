@@ -126,7 +126,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
 
       <Controls.Root className="media-surface media-controls">
         <Tooltip.Provider>
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
@@ -176,9 +176,9 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className="media-time-controls">
+          <Controls.Group className="media-time-controls">
             <Time.Value type="current" className="media-time" />
             <TimeSlider.Root className="media-slider">
               <TimeSlider.Track className="media-slider__track">
@@ -191,9 +191,9 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
               </TimeSlider.Preview>
             </TimeSlider.Root>
             <Time.Value type="duration" className="media-time" />
-          </div>
+          </Controls.Group>
 
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className="media-surface media-popover media-menu media-menu--playback-rate">
@@ -202,7 +202,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
             </Menu.Root>
 
             <VolumePopover />
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

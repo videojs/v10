@@ -325,7 +325,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
       <Controls.Root className="media-controls">
         <Tooltip.Provider>
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
@@ -375,9 +375,9 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
 
-          <div className="media-time-controls">
+          <Controls.Group className="media-time-controls">
             <Time.Group className="media-time-group">
               <Time.Value type="current" className="media-time media-time--current" />
               <Time.Separator className="media-time-separator" />
@@ -402,9 +402,9 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-          </div>
+          </Controls.Group>
 
-          <div className="media-button-group">
+          <Controls.Group className="media-button-group">
             <VolumePopover />
 
             <SettingsMenu />
@@ -468,7 +468,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <Tooltip.Shortcut className="media-tooltip__kbd" />
               </Tooltip.Popup>
             </Tooltip.Root>
-          </div>
+          </Controls.Group>
         </Tooltip.Provider>
       </Controls.Root>
 

@@ -36,7 +36,7 @@ function getTemplateHTML() {
 
       <media-controls class="media-controls">
         <media-tooltip-group>
-          <div class="media-button-group">
+          <media-controls-group class="media-button-group">
             <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
               ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
@@ -48,11 +48,11 @@ function getTemplateHTML() {
             </media-tooltip>
 
             <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
-          </div>
+          </media-controls-group>
 
-          <div class="media-time-controls" aria-hidden="true"></div>
+          <media-controls-group class="media-time-controls" aria-hidden="true"></media-controls-group>
 
-          <div class="media-button-group">
+          <media-controls-group class="media-button-group">
             <media-mute-button commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
@@ -100,7 +100,7 @@ function getTemplateHTML() {
 
             <media-airplay-button commandfor="airplay-tooltip" class="media-button media-button--subtle media-button--icon media-button--airplay">
               ${renderIcon('airplay-enter', { class: 'media-icon media-icon--airplay-enter' })}
-              ${renderIcon('airplay-exit', { class: 'media-icon media-icon--airplay-exit' })}            
+              ${renderIcon('airplay-exit', { class: 'media-icon media-icon--airplay-exit' })}
             </media-airplay-button>
             <media-tooltip id="airplay-tooltip" side="top" class="media-tooltip">
               <media-tooltip-label></media-tooltip-label>
@@ -124,7 +124,7 @@ function getTemplateHTML() {
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
-          </div>
+          </media-controls-group>
         </media-tooltip-group>
       </media-controls>
 

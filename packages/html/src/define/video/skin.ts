@@ -40,7 +40,7 @@ function getTemplateHTML() {
 
       <media-controls class="media-surface media-controls">
         <media-tooltip-group>
-          <div class="media-button-group">
+          <media-controls-group class="media-button-group">
             <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
               ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
@@ -72,9 +72,9 @@ function getTemplateHTML() {
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
-          </div>
+          </media-controls-group>
 
-          <div class="media-time-controls">
+          <media-controls-group class="media-time-controls">
             <media-time type="current" class="media-time"></media-time>
             <media-time-slider class="media-slider">
               <media-slider-track class="media-slider__track">
@@ -94,9 +94,9 @@ function getTemplateHTML() {
               </media-slider-preview>
             </media-time-slider>
             <media-time type="duration" class="media-time"></media-time>
-          </div>
+          </media-controls-group>
 
-          <div class="media-button-group">
+          <media-controls-group class="media-button-group">
             <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
@@ -239,7 +239,7 @@ function getTemplateHTML() {
               <media-tooltip-label></media-tooltip-label>
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
-          </div>
+          </media-controls-group>
         </media-tooltip-group>
       </media-controls>
 
