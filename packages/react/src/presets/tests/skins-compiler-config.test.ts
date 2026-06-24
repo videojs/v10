@@ -28,6 +28,9 @@ describe('skins compiler config', () => {
     expect(code).toContain('from "@/ui/pip-button"');
     expect(code).toContain('from "@/ui/play-button"');
     expect(code).toContain('from "@/ui/poster"');
+    expect(code).toContain('from "@/ui/seek-indicator"');
+    expect(code).toContain('from "@/ui/status-indicator"');
+    expect(code).toContain('from "@/ui/volume-indicator"');
     expect(code).not.toContain('from "@/ui/text"');
     expect(code).not.toContain('from "@/ui/slider"');
     expect(code).toContain('from "@/utils/use-render"');
@@ -40,6 +43,10 @@ describe('skins compiler config', () => {
     const compactCode = compact(code);
     expect(compactCode).toContain(compact('export interface DefaultVideoSkinProps extends BaseVideoSkinProps'));
     expect(compactCode).toContain(compact('const iconButton = [button.base, button.subtle, button.icon];'));
+    expect(compactCode).toContain(
+      compact("const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;")
+    );
+    expect(compactCode).toContain(compact("const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;"));
     expect(compactCode).toContain(compact('children?: ReactNode | undefined;'));
     expect(compactCode).toContain(
       compact('DefaultVideoSkin({ className, children, poster, ...rest }: DefaultVideoSkinProps)')
@@ -68,6 +75,31 @@ describe('skins compiler config', () => {
     expect(compactCode).toContain(compact('<Controls.Root className={controls} data-controls="">'));
     expect(compactCode).toContain(compact('<Overlay className={overlay} />'));
     expect(compactCode).not.toContain(compact('<div className={overlay} />'));
+    expect(compactCode).not.toContain('inputFeedback.root');
+    expect(compactCode).toContain(
+      compact(
+        '<VolumeIndicator.Root className={cn(inputFeedback.island.root, inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}>'
+      )
+    );
+    expect(compactCode).toContain(compact('<VolumeIndicator.Fill className={inputFeedback.island.content}>'));
+    expect(compactCode).toContain(
+      compact('<VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />')
+    );
+    expect(compactCode).toContain(
+      compact(
+        '<StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={cn(inputFeedback.island.root, inputFeedback.island.base, inputFeedback.island.statusContent, inputFeedback.island.shownStatus)}>'
+      )
+    );
+    expect(compactCode).toContain(
+      compact(
+        '<SeekIndicator.Root className={cn(inputFeedback.bubble.root, inputFeedback.bubble.seekRoot, inputFeedback.bubble.base)}>'
+      )
+    );
+    expect(compactCode).toContain(
+      compact(
+        '<StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={cn(inputFeedback.bubble.root, inputFeedback.bubble.centerRoot, inputFeedback.bubble.base)}>'
+      )
+    );
     expect(compactCode).toContain(compact('<Tooltip.Trigger render={<PlayButton'));
     expect(compactCode).toContain(compact('<PlayButton className={cn(iconButton, playIcon.button)} type="button">'));
     expect(compactCode).toContain(

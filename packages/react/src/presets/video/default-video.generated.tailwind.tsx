@@ -13,6 +13,7 @@ import {
   fullscreenIcon,
   icon,
   iconFlipped,
+  inputFeedback,
   overlay,
   pipIcon,
   playIcon,
@@ -28,8 +29,11 @@ import type { ReactNode } from 'react';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
+  CaptionsOffIcon,
+  CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -39,6 +43,9 @@ import {
   RestartIcon,
   SeekIcon,
   SpinnerIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeOffIcon,
 } from '@/icons';
 import { Container } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
@@ -54,14 +61,21 @@ import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
+import { SeekIndicator } from '@/ui/seek-indicator';
 import { StatusAnnouncer } from '@/ui/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { isRenderProp } from '@/utils/use-render';
 import type { BaseVideoSkinProps } from '../types';
 
 const SEEK_TIME = 10;
+
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 const iconButton = [button.base, button.subtle, button.icon];
 
@@ -251,6 +265,55 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
       <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
 
       <StatusAnnouncer />
+
+      <VolumeIndicator.Root
+        className={cn(
+          inputFeedback.island.root,
+          inputFeedback.island.base,
+          inputFeedback.island.volume,
+          inputFeedback.island.shownVolume
+        )}
+      >
+        <VolumeIndicator.Fill className={inputFeedback.island.content}>
+          <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+          <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+          <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+          <VolumeIndicator.Value className={inputFeedback.island.value} />
+        </VolumeIndicator.Fill>
+      </VolumeIndicator.Root>
+
+      <StatusIndicator.Root
+        actions={TOP_STATUS_ACTIONS}
+        className={cn(
+          inputFeedback.island.root,
+          inputFeedback.island.base,
+          inputFeedback.island.statusContent,
+          inputFeedback.island.shownStatus
+        )}
+      >
+        <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+        <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+        <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
+        <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
+        <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
+        <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
+        <StatusIndicator.Value className={inputFeedback.island.value} />
+      </StatusIndicator.Root>
+
+      <SeekIndicator.Root
+        className={cn(inputFeedback.bubble.root, inputFeedback.bubble.seekRoot, inputFeedback.bubble.base)}
+      >
+        <ChevronIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek)} />
+        <SeekIndicator.Value className={inputFeedback.bubble.time} />
+      </SeekIndicator.Root>
+
+      <StatusIndicator.Root
+        actions={CENTER_STATUS_ACTIONS}
+        className={cn(inputFeedback.bubble.root, inputFeedback.bubble.centerRoot, inputFeedback.bubble.base)}
+      >
+        <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+        <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+      </StatusIndicator.Root>
     </Container>
   );
 }

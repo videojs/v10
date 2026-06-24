@@ -13,17 +13,23 @@ import {
   PlayButton,
   Poster,
   SeekButton,
+  SeekIndicator,
   StatusAnnouncer,
+  StatusIndicator,
   Text,
   Time,
   TimeSlider,
   Tooltip,
+  VolumeIndicator,
 } from '@videojs/core/components';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
+  CaptionsOffIcon,
+  CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  ChevronIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -33,6 +39,9 @@ import {
   RestartIcon,
   SeekIcon,
   SpinnerIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeOffIcon,
 } from '@videojs/icons/components';
 import {
   airplayIcon,
@@ -47,6 +56,7 @@ import {
   fullscreenIcon,
   icon,
   iconFlipped,
+  inputFeedback,
   overlay,
   pipIcon,
   playIcon,
@@ -58,6 +68,8 @@ import {
 } from './tailwind/video.tailwind';
 
 const SEEK_TIME = 10;
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 const iconButton = [button.base, button.subtle, button.icon];
 
 export interface DefaultVideoSkinProps {
@@ -226,6 +238,55 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
       <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
 
       <StatusAnnouncer />
+
+      <VolumeIndicator.Root
+        className={[
+          inputFeedback.island.root,
+          inputFeedback.island.base,
+          inputFeedback.island.volume,
+          inputFeedback.island.shownVolume,
+        ]}
+      >
+        <VolumeIndicator.Fill className={inputFeedback.island.content}>
+          <VolumeHighIcon className={[inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh]} />
+          <VolumeLowIcon className={[inputFeedback.island.icon, inputFeedback.island.shownVolumeLow]} />
+          <VolumeOffIcon className={[inputFeedback.island.icon, inputFeedback.island.shownVolumeOff]} />
+          <VolumeIndicator.Value className={inputFeedback.island.value} />
+        </VolumeIndicator.Fill>
+      </VolumeIndicator.Root>
+
+      <StatusIndicator.Root
+        actions={TOP_STATUS_ACTIONS}
+        className={[
+          inputFeedback.island.root,
+          inputFeedback.island.base,
+          inputFeedback.island.statusContent,
+          inputFeedback.island.shownStatus,
+        ]}
+      >
+        <CaptionsOnIcon className={[inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn]} />
+        <CaptionsOffIcon className={[inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff]} />
+        <FullscreenEnterIcon className={[inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter]} />
+        <FullscreenExitIcon className={[inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit]} />
+        <PipEnterIcon className={[inputFeedback.island.icon, inputFeedback.island.shownPipEnter]} />
+        <PipExitIcon className={[inputFeedback.island.icon, inputFeedback.island.shownPipExit]} />
+        <StatusIndicator.Value className={inputFeedback.island.value} />
+      </StatusIndicator.Root>
+
+      <SeekIndicator.Root
+        className={[inputFeedback.bubble.root, inputFeedback.bubble.seekRoot, inputFeedback.bubble.base]}
+      >
+        <ChevronIcon className={[inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek]} />
+        <SeekIndicator.Value className={inputFeedback.bubble.time} />
+      </SeekIndicator.Root>
+
+      <StatusIndicator.Root
+        actions={CENTER_STATUS_ACTIONS}
+        className={[inputFeedback.bubble.root, inputFeedback.bubble.centerRoot, inputFeedback.bubble.base]}
+      >
+        <PlayIcon className={[inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay]} />
+        <PauseIcon className={[inputFeedback.bubble.icon, inputFeedback.bubble.shownPause]} />
+      </StatusIndicator.Root>
     </Container>
   );
 }

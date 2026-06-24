@@ -1,5 +1,12 @@
 import { cn } from '@videojs/utils/style';
 
+const feedbackColor = '[color:var(--media-color-primary,oklch(1_0_0))]';
+const islandContent = cn(
+  'flex justify-between items-center gap-2 px-2.5 py-1',
+  // Increase contrast of content via blend mode
+  '**:mix-blend-difference'
+);
+
 /**
  * NOTE: tailwind.css is required to support the `@property --media-progress-fill` registration and animation keyframes. You should import from either:
  * - "@videojs/html/tailwind.css" for HTML skins
@@ -13,10 +20,11 @@ export const inputFeedback = {
     // Shift to full extent in larger containers
     '@2xl/media-root:bottom-0',
     // Color
-    '[color:var(--media-color-primary,oklch(1_0_0))]'
+    feedbackColor
   ),
 
   island: {
+    root: cn('absolute left-1/2 top-3 -translate-x-1/2 pointer-events-none', feedbackColor),
     base: cn(
       'group/input-indicator',
       // Surface override (darker than default)
@@ -45,11 +53,8 @@ export const inputFeedback = {
       '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
       'contrast-more:[--media-surface-background-color:oklch(0_0_0)]'
     ),
-    content: cn(
-      'flex justify-between items-center gap-2 px-2.5 py-1 w-full',
-      // Increase contrast of content via blend mode
-      '**:mix-blend-difference'
-    ),
+    content: cn(islandContent, 'w-full'),
+    statusContent: islandContent,
     // Volume island sizing + progress-fill gradient on the content child
     volume: cn(
       'w-[min(80%,12rem)]',
@@ -97,6 +102,18 @@ export const inputFeedback = {
   },
 
   bubble: {
+    root: cn(
+      'absolute pointer-events-none',
+      'top-[calc(50%-1.75rem)] -translate-y-1/2',
+      '@2xl/media-root:top-1/2',
+      feedbackColor
+    ),
+    seekRoot: cn(
+      'not-data-direction:left-1/2 not-data-direction:-translate-x-1/2',
+      'data-[direction=backward]:left-0',
+      'data-[direction=forward]:right-0'
+    ),
+    centerRoot: 'left-1/2 -translate-x-1/2',
     base: cn(
       'group/input-indicator',
       // Default placement - center column for status bubbles and undirected seeks
