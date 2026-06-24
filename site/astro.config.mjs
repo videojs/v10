@@ -30,6 +30,7 @@ import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
 import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
 import { satteriReadingTime } from './src/utils/satteriReadingTime';
 import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
+import { shikiStripPreStyle } from './src/utils/shikiStripPreStyle';
 
 // Netlify sets CONTEXT and BRANCH for each deploy. We use them to determine
 // the correct site URL:
@@ -143,7 +144,7 @@ export default defineConfig({
         ...http,
         ...astro,
       ],
-      transformers: [...shikiNotationTransformers],
+      transformers: [...shikiNotationTransformers, shikiStripPreStyle],
     },
     // Sätteri is Astro 7's native (Rust) Markdown processor. `syntaxHighlight`
     // and `shikiConfig` above are processor-independent, so our themes, langs,
