@@ -1,16 +1,20 @@
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
+import { type Throttled, throttle } from '@videojs/utils/function';
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import type { HlsEngineHost } from './types';
 
+// See throttledLoad
+const WIRELESS_BURST_MS = 100;
+
 /**
- * Add an AirPlay-capable fallback `<source>` to the attached video element so
+ * Adds an AirPlay-capable fallback `<source>` to the attached video element so
  * Safari can hand the original HLS manifest off to AirPlay receivers while
- * local playback continues through hls.js (MSE). When wireless-target changes,
- * suspends hls.js loading so we don't double-fetch alongside the
- * remote pipeline.
+ * local playback continues through hls.js (MSE).
+ * When wireless-target changes, suspends hls.js loading so we don't double-fetch
+ * alongside the AirPlay receiver.
  *
- * Implements the WebKit-recommended dual-source pattern:
+ * Implements the WebKit-recommended pattern:
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * No-op on non-WebKit platforms (Chromium, Firefox).
@@ -19,6 +23,14 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
   class HlsJsMediaAirPlay extends (BaseClass as Constructor<HlsEngineHost>) {
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
+    /**
+     * WebKit fires `webkitcurrentplaybacktargetiswirelesschanged` several times in
+     * a burst on the first AirPlay connect with values (`true → false → true`).
+     * Without this the transient `false` mid-burst would `startLoad()`
+     * against an MSE attachment that's being torn down for the handoff,
+     * which hls.js surfaces as a fatal InvalidStateError.
+     */
+    #throttledLoad: Throttled<[]> | null = null;
 
     constructor(...args: any[]) {
       super(...args);
@@ -45,13 +57,6 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       this.#setupLoadControl(target);
     }
 
-    #destroy(): void {
-      this.#disconnect?.abort();
-      this.#disconnect = null;
-      this.#sourceEl?.remove();
-      this.#sourceEl = null;
-    }
-
     #attachSource(target: WebKitVideoElement) {
       this.#sourceEl = document.createElement('source');
       this.#sourceEl.type = 'application/x-mpegURL';
@@ -64,24 +69,28 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
         if (target.webkitCurrentPlaybackTargetIsWireless) {
           this.engine?.stopLoad();
         } else {
-          // this.engine?.startLoad();
-          // TODO: Calling startLoad here causes an hls.js error, anyway works well in Mac without it
-          // I believe it relates to this event being triggered extra times
-          // on first time switching over to airplay. Listing the cases for future ref
-          // When player is created, regardless of airplay state: (false) | After playing, if airplay was connected will switch to true - good
-          // When connecting the first time: (true -> false -> true)
-          // Disconnecting: (false) - good
-          // Reconnecting: (true) - good
+          this.engine?.startLoad();
         }
       };
 
+      this.#throttledLoad = throttle(sync, WIRELESS_BURST_MS);
+
       this.#disconnect = new AbortController();
-      listen(target as EventTarget, 'webkitcurrentplaybacktargetiswirelesschanged', sync, {
+      listen(target as EventTarget, 'webkitcurrentplaybacktargetiswirelesschanged', this.#throttledLoad, {
         signal: this.#disconnect.signal,
       });
 
-      // AirPlay may already be active when the element was (re)attached.
-      sync();
+      // AirPlay may already be active at (re)attach.
+      this.#throttledLoad();
+    }
+
+    #destroy(): void {
+      this.#disconnect?.abort();
+      this.#disconnect = null;
+      this.#throttledLoad?.cancel();
+      this.#throttledLoad = null;
+      this.#sourceEl?.remove();
+      this.#sourceEl = null;
     }
   }
 
