@@ -5,63 +5,56 @@ export type EmptyProps = {
   readonly [__EMPTY_PROPS__]?: never;
 };
 
-export interface ComponentPart<Props extends object = EmptyProps> {
+export interface ComponentDefinition<
+  Props extends object = EmptyProps,
+  Parts extends ComponentRecord | undefined = undefined,
+> {
+  name?: string | undefined;
+  parts?: Parts | undefined;
+  dataAttrs?: Record<string, string> | undefined;
   readonly [__PROPS_BRAND__]?: Props;
 }
 
-export interface ComponentPartGroup<Parts extends ComponentPartRecord = ComponentPartRecord> {
-  parts: Parts;
+export type ComponentRecord = Record<string, ComponentDefinition<any, ComponentRecord | undefined>>;
+export type ComponentManifest<
+  Props extends object = any,
+  Parts extends ComponentRecord | undefined = ComponentRecord | undefined,
+> = ComponentDefinition<Props, Parts> & { name: string };
+
+type ComponentOptions<Props extends object, Parts extends ComponentRecord | undefined> = Omit<
+  ComponentDefinition<Props, Parts>,
+  typeof __PROPS_BRAND__
+>;
+
+export function hasParts<Props extends object, Parts extends ComponentRecord>(
+  component: ComponentDefinition<Props, Parts | undefined>
+): component is ComponentDefinition<Props, Parts> & { parts: Parts } {
+  return Boolean(component.parts);
 }
 
-export type ComponentPartRecord = Record<string, ComponentPart<any> | ComponentPartGroup>;
+export type InferProps<T> = T extends ComponentDefinition<infer Props, any> ? Props : never;
 
-export interface ComponentManifest<Props extends object = EmptyProps> {
-  name: string;
-  dataAttrs?: Record<string, string>;
-  readonly [__PROPS_BRAND__]?: Props;
-}
-
-export interface ComponentGroupManifest<Parts extends ComponentPartRecord = ComponentPartRecord> {
-  name: string;
-  parts: Parts;
-  dataAttrs?: Record<string, string>;
-}
-
-export type AnyComponentManifest = ComponentManifest<object> | ComponentGroupManifest<ComponentPartRecord>;
-
-type ComponentDefinition<Props extends object> = Omit<ComponentManifest<Props>, typeof __PROPS_BRAND__>;
-type ComponentGroupDefinition<Parts extends ComponentPartRecord> = ComponentGroupManifest<Parts>;
-
-interface DefineComponentFactory<Props extends object> {
-  <const Parts extends ComponentPartRecord>(manifest: ComponentGroupDefinition<Parts>): ComponentGroupManifest<Parts>;
-  (manifest: ComponentDefinition<Props>): ComponentManifest<Props>;
-}
-
-export type InferProps<T> =
-  T extends ComponentManifest<infer Props> ? Props : T extends ComponentPart<infer Props> ? Props : never;
-
-export type InferParts<T> =
-  T extends ComponentGroupManifest<infer Parts>
-    ? keyof Parts
-    : T extends ComponentPartGroup<infer Parts>
-      ? keyof Parts
-      : never;
+export type InferParts<T> = T extends ComponentDefinition<any, infer Parts> ? keyof NonNullable<Parts> : never;
 
 export type InferPartProps<T, K extends string> =
-  T extends ComponentGroupManifest<infer Parts> ? (K extends keyof Parts ? InferProps<Parts[K]> : never) : never;
+  T extends ComponentDefinition<any, infer Parts>
+    ? K extends keyof NonNullable<Parts>
+      ? InferProps<NonNullable<Parts>[K]>
+      : never
+    : never;
 
-export function defineComponentPart<Props extends object = EmptyProps>(): ComponentPart<Props> {
-  return {} as ComponentPart<Props>;
-}
-
-export function defineComponentPartGroup<const Parts extends ComponentPartRecord>(
-  parts: Parts
-): ComponentPartGroup<Parts> {
-  return { parts };
-}
-
-/** Define a component manifest. */
-export function defineComponent<Props extends object = EmptyProps>(): DefineComponentFactory<Props> {
-  return ((manifest: ComponentDefinition<Props> | ComponentGroupDefinition<ComponentPartRecord>) =>
-    manifest) as DefineComponentFactory<Props>;
+export function defineComponent<Props extends object = EmptyProps>(): ComponentDefinition<Props>;
+export function defineComponent<
+  Props extends object = EmptyProps,
+  const Parts extends ComponentRecord | undefined = undefined,
+>(options: ComponentOptions<Props, Parts> & { name: string }): ComponentManifest<Props, Parts>;
+export function defineComponent<
+  Props extends object = EmptyProps,
+  const Parts extends ComponentRecord | undefined = undefined,
+>(options: ComponentOptions<Props, Parts>): ComponentDefinition<Props, Parts>;
+export function defineComponent<
+  Props extends object = EmptyProps,
+  const Parts extends ComponentRecord | undefined = undefined,
+>(options?: ComponentOptions<Props, Parts>): ComponentDefinition<Props, Parts> {
+  return (options ?? {}) as ComponentDefinition<Props, Parts>;
 }

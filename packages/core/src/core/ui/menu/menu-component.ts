@@ -1,4 +1,4 @@
-import { defineComponent, defineComponentPart } from '../manifest';
+import { defineComponent } from '../manifest';
 import { MenuDataAttrs } from './menu-data-attrs';
 import type {
   MenuBackProps,
@@ -11,23 +11,23 @@ import type {
   MenuTriggerProps,
 } from './props';
 
-export default defineComponent()({
+export default defineComponent({
   name: 'Menu',
   parts: {
-    Root: defineComponentPart<MenuProps>(),
-    Trigger: defineComponentPart<MenuTriggerProps>(),
-    Content: defineComponentPart(),
-    View: defineComponentPart(),
-    Back: defineComponentPart<MenuBackProps>(),
-    Group: defineComponentPart(),
-    GroupLabel: defineComponentPart(),
-    Item: defineComponentPart<MenuItemProps>(),
-    ItemIndicator: defineComponentPart<MenuItemIndicatorProps>(),
-    ItemValue: defineComponentPart(),
-    CheckboxItem: defineComponentPart<MenuCheckboxItemProps>(),
-    RadioGroup: defineComponentPart<MenuRadioGroupProps>(),
-    RadioItem: defineComponentPart<MenuRadioItemProps>(),
-    Separator: defineComponentPart(),
+    Root: defineComponent<MenuProps>(),
+    Trigger: defineComponent<MenuTriggerProps>(),
+    Content: defineComponent(),
+    View: defineComponent(),
+    Back: defineComponent<MenuBackProps>(),
+    Group: defineComponent(),
+    GroupLabel: defineComponent(),
+    Item: defineComponent<MenuItemProps>(),
+    ItemIndicator: defineComponent<MenuItemIndicatorProps>(),
+    ItemValue: defineComponent(),
+    CheckboxItem: defineComponent<MenuCheckboxItemProps>(),
+    RadioGroup: defineComponent<MenuRadioGroupProps>(),
+    RadioItem: defineComponent<MenuRadioItemProps>(),
+    Separator: defineComponent(),
   },
   dataAttrs: MenuDataAttrs,
 });

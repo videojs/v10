@@ -49,11 +49,7 @@ export function defineComponentsConfig<const Config extends ComponentsConfig | r
 function isDefineComponentCall(node: ts.Node): node is ts.CallExpression {
   if (!ts.isCallExpression(node)) return false;
   const callee = node.expression;
-  if (ts.isIdentifier(callee) && callee.text === 'defineComponent') return true;
-  // Curried form: defineComponent<Props>()({ ... }).
-  return (
-    ts.isCallExpression(callee) && ts.isIdentifier(callee.expression) && callee.expression.text === 'defineComponent'
-  );
+  return ts.isIdentifier(callee) && callee.text === 'defineComponent';
 }
 
 function findDefaultExportCall(sourceFile: ts.SourceFile): ts.CallExpression | null {

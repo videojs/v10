@@ -5,7 +5,7 @@ import { describe, expect, it } from 'vitest';
 
 import { generateComponents } from '../generate-components';
 
-const STUB = 'const defineComponent: any = () => (m: any) => m; const defineComponentPart: any = () => ({});';
+const STUB = 'const defineComponent: any = (m?: any) => m ?? {};';
 
 function setup(): { dir: string; output: string; pattern: string } {
   const dir = mkdtempSync(join(tmpdir(), 'videojs-components-'));
@@ -21,10 +21,10 @@ function setup(): { dir: string; output: string; pattern: string } {
     join(dir, 'play-button', 'play-button-component.ts'),
     `import { PlayButtonDataAttrs } from './play-button-data-attrs';
      ${STUB}
-     export default defineComponent<{ disabled?: boolean }>()({
+     export default defineComponent<{ disabled?: boolean }>({
        name: 'PlayButton',
        dataAttrs: PlayButtonDataAttrs,
-     });`
+      });`
   );
 
   writeFileSync(join(dir, 'slider', 'slider-data-attrs.ts'), `export const SliderDataAttrs = {} as const;`);
@@ -32,20 +32,20 @@ function setup(): { dir: string; output: string; pattern: string } {
     join(dir, 'slider', 'slider-component.ts'),
     `import { SliderDataAttrs } from './slider-data-attrs';
      ${STUB}
-     export default defineComponent()({
-       name: 'Slider',
-       parts: {
-         Root: defineComponentPart<{ orientation?: 'horizontal' | 'vertical' }>(),
-         Track: defineComponentPart(),
-       },
-       dataAttrs: SliderDataAttrs,
-     });`
+      export default defineComponent({
+        name: 'Slider',
+        parts: {
+          Root: defineComponent<{ orientation?: 'horizontal' | 'vertical' }>(),
+          Track: defineComponent(),
+        },
+        dataAttrs: SliderDataAttrs,
+      });`
   );
 
   writeFileSync(
     join(dir, 'hotkey', 'hotkey-component.ts'),
     `${STUB}
-     export default defineComponent()({ name: 'Hotkey' });`
+     export default defineComponent({ name: 'Hotkey' });`
   );
 
   return { dir, output: join(dir, 'out.ts'), pattern: join(dir, '*/*-component.ts') };

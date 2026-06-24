@@ -18,7 +18,6 @@ import {
   pipIcon,
   playIcon,
   popup,
-  poster as posterClass,
   seek,
   slider,
   thumbnail,
@@ -92,11 +91,7 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
       {children}
 
       {poster && (
-        <Poster
-          src={isString(poster) ? poster : undefined}
-          render={isRenderProp(poster) ? poster : undefined}
-          className={posterClass}
-        />
+        <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
       )}
 
       <BufferingIndicator className={bufferingIndicator.root}>

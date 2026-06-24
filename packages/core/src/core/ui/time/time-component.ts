@@ -1,13 +1,13 @@
-import { defineComponent, defineComponentPart } from '../manifest';
+import { defineComponent } from '../manifest';
 import type { TimeProps } from './props';
 import { TimeDataAttrs } from './time-data-attrs';
 
-export default defineComponent()({
+export default defineComponent({
   name: 'Time',
   parts: {
-    Group: defineComponentPart(),
-    Separator: defineComponentPart(),
-    Value: defineComponentPart<TimeProps>(),
+    Group: defineComponent(),
+    Separator: defineComponent(),
+    Value: defineComponent<TimeProps>(),
   },
   dataAttrs: TimeDataAttrs,
 });

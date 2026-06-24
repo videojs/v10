@@ -1,11 +1,11 @@
-import { defineComponent, defineComponentPart } from '../manifest';
+import { defineComponent } from '../manifest';
 import { ControlsDataAttrs } from './controls-data-attrs';
 
-export default defineComponent()({
+export default defineComponent({
   name: 'Controls',
   parts: {
-    Root: defineComponentPart(),
-    Group: defineComponentPart(),
+    Root: defineComponent(),
+    Group: defineComponent(),
   },
   dataAttrs: ControlsDataAttrs,
 });

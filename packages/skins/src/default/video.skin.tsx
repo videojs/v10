@@ -62,7 +62,6 @@ import {
   pipIcon,
   playIcon,
   popup,
-  poster as posterClass,
   seek,
   slider,
   thumbnail,
@@ -84,7 +83,7 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
     <Container className={[container, className]}>
       {children}
 
-      <Poster className={posterClass} />
+      <Poster />
 
       <BufferingIndicator className={bufferingIndicator.root}>
         <SpinnerIcon className={icon} />

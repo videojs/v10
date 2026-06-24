@@ -5,63 +5,63 @@ import { createComponent, Slot } from '../../../jsx-runtime';
 import type { ContainerProps } from '../container/props';
 import type { GestureProps } from '../gesture/props';
 import type { HotkeyProps } from '../hotkey/props';
-import { defineComponent, defineComponentPart } from '../manifest';
+import { defineComponent } from '../manifest';
 
 const PlayButton = createComponent(
-  defineComponent()({
+  defineComponent({
     name: 'PlayButton',
   })
 );
 
 const Slider = createComponent(
-  defineComponent<{ orientation?: 'horizontal' | 'vertical'; thumbAlignment?: 'center' | 'edge' }>()({
+  defineComponent({
     name: 'Slider',
     parts: {
-      Root: defineComponentPart<{ orientation?: 'horizontal' | 'vertical'; thumbAlignment?: 'center' | 'edge' }>(),
-      Track: defineComponentPart(),
-      Fill: defineComponentPart(),
-      Thumb: defineComponentPart(),
-      Value: defineComponentPart<{ type?: 'current' | 'pointer' }>(),
+      Root: defineComponent<{ orientation?: 'horizontal' | 'vertical'; thumbAlignment?: 'center' | 'edge' }>(),
+      Track: defineComponent(),
+      Fill: defineComponent(),
+      Thumb: defineComponent(),
+      Value: defineComponent<{ type?: 'current' | 'pointer' }>(),
     },
   })
 );
 
 const Time = createComponent(
-  defineComponent()({
+  defineComponent({
     name: 'Time',
     parts: {
-      Value: defineComponentPart<{ type: 'current' | 'duration' }>(),
+      Value: defineComponent<{ type: 'current' | 'duration' }>(),
     },
   })
 );
 
 const Menu = createComponent(
-  defineComponent()({
+  defineComponent({
     name: 'Menu',
     parts: {
-      Root: defineComponentPart(),
-      Trigger: defineComponentPart<{ type?: 'quality' | 'playback-rate' | 'captions'; disabled?: boolean }>(),
-      RadioGroup: defineComponentPart<{ value: string; onValueChange: (value: string) => void }>(),
-      RadioItem: defineComponentPart<{ value: string; disabled?: boolean }>(),
-      ItemIndicator: defineComponentPart<{ checked?: boolean; forceMount?: boolean }>(),
+      Root: defineComponent(),
+      Trigger: defineComponent<{ type?: 'quality' | 'playback-rate' | 'captions'; disabled?: boolean }>(),
+      RadioGroup: defineComponent<{ value: string; onValueChange: (value: string) => void }>(),
+      RadioItem: defineComponent<{ value: string; disabled?: boolean }>(),
+      ItemIndicator: defineComponent<{ checked?: boolean; forceMount?: boolean }>(),
     },
   })
 );
 
 const Container = createComponent(
-  defineComponent<ContainerProps>()({
+  defineComponent<ContainerProps>({
     name: 'Container',
   })
 );
 
 const Hotkey = createComponent(
-  defineComponent<HotkeyProps>()({
+  defineComponent<HotkeyProps>({
     name: 'Hotkey',
   })
 );
 
 const Gesture = createComponent(
-  defineComponent<GestureProps>()({
+  defineComponent<GestureProps>({
     name: 'Gesture',
   })
 );

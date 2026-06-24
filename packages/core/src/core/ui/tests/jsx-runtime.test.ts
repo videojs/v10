@@ -1,18 +1,20 @@
 import { describe, expect, it } from 'vitest';
 
 import { createComponent } from '../../../jsx-runtime';
-import { defineComponent, defineComponentPart, defineComponentPartGroup } from '../manifest';
+import { defineComponent } from '../manifest';
 
 describe('createComponent', () => {
   it('creates nested component parts with dotted part paths', () => {
     const Slider = createComponent(
-      defineComponent()({
+      defineComponent({
         name: 'Slider',
         parts: {
-          Root: defineComponentPart(),
-          Thumbnail: defineComponentPartGroup({
-            Root: defineComponentPart(),
-            Image: defineComponentPart(),
+          Root: defineComponent(),
+          Thumbnail: defineComponent({
+            parts: {
+              Root: defineComponent(),
+              Image: defineComponent(),
+            },
           }),
         },
       })

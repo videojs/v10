@@ -1,13 +1,13 @@
 import { VolumeIndicatorDataAttrs } from '../input-feedback/volume-indicator-data-attrs';
-import { defineComponent, defineComponentPart } from '../manifest';
+import { defineComponent } from '../manifest';
 import type { VolumeIndicatorProps } from './props';
 
-export default defineComponent()({
+export default defineComponent({
   name: 'VolumeIndicator',
   parts: {
-    Root: defineComponentPart<VolumeIndicatorProps>(),
-    Fill: defineComponentPart(),
-    Value: defineComponentPart(),
+    Root: defineComponent<VolumeIndicatorProps>(),
+    Fill: defineComponent(),
+    Value: defineComponent(),
   },
   dataAttrs: VolumeIndicatorDataAttrs,
 });

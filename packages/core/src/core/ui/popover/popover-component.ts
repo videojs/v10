@@ -1,14 +1,14 @@
-import { defineComponent, defineComponentPart } from '../manifest';
+import { defineComponent } from '../manifest';
 import { PopoverDataAttrs } from './popover-data-attrs';
 import type { PopoverProps } from './props';
 
-export default defineComponent()({
+export default defineComponent({
   name: 'Popover',
   parts: {
-    Root: defineComponentPart<PopoverProps>(),
-    Trigger: defineComponentPart(),
-    Popup: defineComponentPart(),
-    Arrow: defineComponentPart(),
+    Root: defineComponent<PopoverProps>(),
+    Trigger: defineComponent(),
+    Popup: defineComponent(),
+    Arrow: defineComponent(),
   },
   dataAttrs: PopoverDataAttrs,
 });
