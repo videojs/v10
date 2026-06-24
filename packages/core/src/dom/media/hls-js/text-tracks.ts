@@ -138,7 +138,12 @@ export function HlsJsMediaTextTracksMixin<Base extends Constructor<HlsEngineHost
 
     #clearTracks(): void {
       const trackEls = this.target?.querySelectorAll?.('track[data-removeondestroy]') ?? [];
-      trackEls.forEach((trackEl) => trackEl.remove());
+      // Only remove the subtitle/caption tracks this mixin creates. Other
+      // removable tracks (e.g. the cue points metadata track) are owned by
+      // their own components and must not be wiped when subtitles are found.
+      trackEls.forEach((trackEl) => {
+        if (isCaptionOrSubtitleTrack(trackEl as HTMLTrackElement)) trackEl.remove();
+      });
     }
   }
 
