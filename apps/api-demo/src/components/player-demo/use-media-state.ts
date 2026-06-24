@@ -10,6 +10,7 @@ export interface MediaSnapshot {
   playbackRate: number;
   volume: number;
   muted: boolean;
+  buffered: number;
 }
 
 const DEFAULT_SNAPSHOT: MediaSnapshot = {
@@ -19,7 +20,26 @@ const DEFAULT_SNAPSHOT: MediaSnapshot = {
   playbackRate: 1,
   volume: 1,
   muted: false,
+  buffered: 0,
 };
+
+/** End (in seconds) of the buffered range covering the current time; 0 if none. */
+export function bufferedEnd(media: MediaFull): number {
+  const ranges = media.buffered;
+  if (!ranges || ranges.length === 0) return 0;
+  const time = media.currentTime;
+  for (let i = 0; i < ranges.length; i++) {
+    if (ranges.start(i) <= time && time <= ranges.end(i)) return ranges.end(i);
+  }
+  return ranges.end(ranges.length - 1);
+}
+
+/** Fraction (0–1) of the media duration that has buffered ahead of the current time. */
+export function bufferedRatio(media: MediaFull): number {
+  const duration = media.duration;
+  if (!Number.isFinite(duration) || duration <= 0) return 0;
+  return Math.min(1, Math.max(0, bufferedEnd(media) / duration));
+}
 
 function readSnapshot(media: MediaFull): MediaSnapshot {
   return {
@@ -29,6 +49,7 @@ function readSnapshot(media: MediaFull): MediaSnapshot {
     playbackRate: media.playbackRate,
     volume: media.volume,
     muted: media.muted,
+    buffered: bufferedEnd(media),
   };
 }
 
@@ -72,6 +93,8 @@ export function useRestoreFromParams(media: MediaFull | null) {
       if (params.has('volume') && Number.isFinite(volume)) media.volume = volume;
 
       if (params.has('muted')) media.muted = params.get('muted') === '1';
+
+      if (params.has('loop')) media.loop = params.get('loop') === '1';
 
       const time = Number(params.get('time'));
       if (params.has('time') && Number.isFinite(time)) media.currentTime = time;

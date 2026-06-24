@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 import { LOGGED_EVENTS } from './constants';
 import { entryColorClass, useMediaLog } from './media-log';
 import { Player } from './player';
+import { bufferedRatio } from './use-media-state';
 
 /**
  * Renders the live message log. Media events are logged automatically (yellow);
@@ -19,7 +20,11 @@ export function EventLog() {
 
     const controller = new AbortController();
     for (const type of LOGGED_EVENTS) {
-      media.addEventListener(type, () => log('event', type), { signal: controller.signal });
+      const handler =
+        type === 'progress'
+          ? () => log('event', `progress → ${Math.round(bufferedRatio(media) * 100)}% loaded`)
+          : () => log('event', type);
+      media.addEventListener(type, handler, { signal: controller.signal });
     }
 
     // `cuepointchange` is a custom event dispatched by the CuePoints component;
@@ -40,7 +45,7 @@ export function EventLog() {
   }, [entries.length]);
 
   return (
-    <div className="overflow-hidden border border-faded-black/15 bg-soot text-manila-light">
+    <div className="overflow-hidden border border-faded-black/15 bg-soot text-manila-light dark:border-warm-gray">
       <div className="flex items-center justify-between border-b border-manila-light/10 px-4 py-2.5">
         <span className="font-display text-xs uppercase tracking-wide">Message Log</span>
         <button

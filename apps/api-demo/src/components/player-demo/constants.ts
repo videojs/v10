@@ -12,8 +12,8 @@ export const DEFAULT_CUE_POINTS: CuePoint[] = [
   { time: 15, value: { anything: 'That can be serialized to JSON and makes sense for your use case' } },
 ];
 
-// The most common media events. `timeupdate` and `progress` fire continuously,
-// so they are intentionally omitted to keep the log readable.
+// The most common media events. `timeupdate` fires continuously, so it is
+// intentionally omitted to keep the log readable.
 export const LOGGED_EVENTS = [
   'loadstart',
   'loadedmetadata',
@@ -24,6 +24,7 @@ export const LOGGED_EVENTS = [
   'playing',
   'pause',
   'waiting',
+  'progress',
   'seeking',
   'seeked',
   'ratechange',
@@ -46,6 +47,7 @@ export const STATE_EVENTS = [
   'ended',
   'seeking',
   'seeked',
+  'progress',
   'ratechange',
   'volumechange',
 ] as const satisfies readonly (keyof MediaFullEvents)[];
