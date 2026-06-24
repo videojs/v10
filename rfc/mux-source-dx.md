@@ -1,5 +1,5 @@
 ---
-status: draft
+status: accepted
 ---
 
 # Mux Source & URL DX
@@ -7,9 +7,16 @@ status: draft
 How `<mux-video>` takes a source — and signs, refreshes, and derives URLs from
 it — without the surface changing when the playback engine does.
 
-> **Status:** `draft` — light RFC to align on direction. Motivated by [#1432]
-> (signed token refresh), under epic #977 (Mux Media Elements). The
-> recommendation is a proposal for the team to react to, not a settled decision.
+> **Status:** `accepted` — direction approved (see **Final Decision**). Motivated
+> by [#1432] (signed token refresh), under epic #977 (Mux Media Elements).
+>
+> **Review outcome — direction confirmed.** The team aligned on a
+> **source-based** surface (`src` + an optional `toMuxVideoURL` helper, *not*
+> `playback-id` / `tokens` attributes) with **player-owned** token refresh. The
+> engine-agnostic-refresh concern resolved into a known constraint: re-resolving
+> the master mid-session is a **media reload** on every engine except SPF —
+> acceptable for v1 (on par with Mux Player), seamless on SPF later. See **Risk**
+> and **Final Decision**.
 
 ## Problem Statement
 
@@ -87,6 +94,10 @@ from *how the engine fetches it*:
 └────────────────────────────────────────────────────────────────────────────┘
 ```
 
+(The diagram shows the conceptual space; the **accepted** surface is `src` only —
+`playback-id` / `tokens` live in the off-component `toMuxVideoURL` helper at the
+middle layer, not as component attributes. See **Recommendation**.)
+
 The engine-agnostic constraint maps cleanly onto this: the **top layer can't
 change when the bottom layer changes.** A token *refresh mechanism* belongs at
 the bottom (it's engine- and network-specific), but its *config surface*
@@ -101,11 +112,12 @@ Concretely: `<mux-video>` runs on **hls.js today** (`MuxVideoMedia` extends
 `HlsMedia`, which drives hls.js or native HLS —
 `packages/core/src/dom/media/mux/index.ts`), and the plan is to move it onto the
 **SPF engine** (already shipped separately as `<simple-hls-video>`), where Tier‑2
-refresh ([network-resilience.md]) will live. hls.js has its own async `xhrSetup`,
-so refresh *could* land there first — the decision to do it in SPF follows from
-phasing hls.js out. The engine-agnostic layering is exactly what makes that
+refresh ([network-resilience.md]) will live and can be **seamless**; on hls.js and
+native HLS a mid-session refresh is a media reload (see the **Risk** section),
+which is why SPF is the target. The engine-agnostic layering is exactly what makes that
 migration invisible to the user: the refresh *surface* stays put when the
-*engine* underneath it changes.
+*engine* underneath it changes. (The refresh *mechanism*'s fidelity varies by
+engine — see the **Risk** section.)
 
 The A-vs-B tension lives entirely in the middle layer: it's a question of *what
 inputs the resolver accepts*, not a question of engine behavior.
@@ -153,14 +165,6 @@ So A and B stop being either/or: the raw URL is the contract, the convenience
 inputs resolve through the same seam, and refresh + thumbnails derive from one
 resolved identity.
 
-**Recommended default shape:** the leanest config — a `src` plus an *optional*
-token-refresher (no `playback-id`, no `tokens` object). The player swaps the
-`?token=` on (or before) expiry using the refresher; `playback-id` + `tokens`
-stay available as a heavier opt-in for full convenience. This keeps the
-surface minimal (Goal B) while the player still owns refresh (unlike Option 2),
-and — with no `playback-id` input — sidesteps the `src` / `playback-id`
-precedence question entirely.
-
 - **Pros** — A and B coexist; refresh gets a stable, engine-agnostic home;
   thumbnails/poster derive from the resolved identity; per-feature config can
   ride on the resolver instead of multiplying attributes.
@@ -170,74 +174,65 @@ precedence question entirely.
 
 ## Recommendation
 
-**Option 3.** It's the only one that satisfies the engine-agnostic constraint
-*and* both DX goals, and the only one where [#1432]'s refresh has a natural
-place to live. Options 1 and 2 are really the two *ends* of Option 3 — the
-convenience inputs and the raw-URL base case — so adopting 3 doesn't foreclose
-either style of use, which also makes it the least-committal (most reversible)
-choice.
+**A source-based surface + a player-owned refresh mechanism.** Review refined the
+earlier all-in-one "Option 3" pick by *decoupling* two decisions that had been
+bundled:
 
-**What it looks like** — the recommended default is the leanest shape: a `src`
-plus an *optional* token-refresher. `playback-id` + `tokens` stay available as
-heavier opt-in convenience inputs (Goal A).
+- **Surface — source-based (confirmed).** The component takes a `src`
+  (Option 2's shape), not `playback-id` / `tokens` attributes. A standalone
+  `toMuxVideoURL` helper builds a URL from structured inputs for those who want
+  it, but the Mux-specific shape stays *out* of the component. Rationale: the
+  Video.js direction is to normalize toward `source` and carry fewer Mux-specific
+  props than Mux Player, and one surface beats "two ways to do the same thing" —
+  which also removes any `src` / `playback-id` precedence question.
+- **Refresh — player-owned (agreed).** The player owns refresh (Option 3's
+  mechanism), driven by one consumer-supplied async callback. On most engines the
+  refresh is a media reload (acceptable for v1, on par with Mux Player);
+  SPF makes it seamless. See **Token refresh** and **Risk** below.
 
 ```html
-<!-- Recommended default: src is the contract -->
+<!-- The component takes a source. -->
 <mux-video src="https://stream.mux.com/abc123.m3u8?token=…"></mux-video>
-
-<!-- Opt-in convenience: the resolver builds the signed URL + thumbnails -->
-<mux-video playback-id="abc123"></mux-video>
 ```
 
 ```ts
-// Illustrative only — shapes are open (see Open Questions).
+// Optional: build the URL from structured inputs with a standalone helper,
+// then hand the result to `src` — Mux specifics stay off the component.
+el.src = toMuxVideoURL({ playbackId: 'abc123', tokens: { playback: '…' } });
 
-// Lean default: keep src, supply a token-refresher; the player swaps `?token=`
-// on (or before) expiry. No playback-id → no src / playback-id precedence.
+// Refresh: supply one async callback. The player decodes the JWT's expiry and
+// re-resolves with a fresh token (proactive + reactive). Seamless on SPF; a
+// controlled reload elsewhere (on par with Mux Player). Exact shape is open.
 el.refreshToken = () => fetchFreshToken();
-
-// Heavier opt-in convenience: structured inputs the resolver expands and refreshes.
-el.tokens = { playback: () => fetchFreshToken(), thumbnail: '…', storyboard: '…' };
 ```
 
-Exact shapes (attribute vs property, event vs refresher) are open — see below.
-
-**If accepted** — the resolver seam and refresh mechanism get a full
-implementation design doc; a minimal `playback-token` attribute that appends
-`?token=` to the resolved URL — the shape `@mux/playback-core`'s `toMuxVideoURL`
-already uses ([#1432]) — can ship first as an independent step; [#1432]
-implements the refresh against the SPF engine ([network-resilience.md] Tier 2).
+**Next steps** — the surface and refresh mechanism get a full implementation
+design doc; a minimal `playback-token` pass-through (the `toMuxVideoURL` shape,
+[#1432]) can ship first to unblock signed playback; [#1432] implements refresh on
+the SPF engine ([network-resilience.md] Tier 2).
 
 ### Token refresh (#1432)
 
-Automatic refresh forces a surface decision. A static signed `src` **can't
-refresh itself** — its token is embedded and expiring, so *something* has to know
-how to get a fresh one. Any option that refreshes automatically therefore needs
-*some* surface beyond a static `src`; the only question is its shape:
+A static signed `src` **can't refresh itself** — the token is embedded and
+expiring. So refresh needs one extra thing from the consumer: an async callback
+that returns a fresh token (their backend signs it — how is their concern).
 
-- **`src`-based** — `src` + a callback returning a fresh **full URL** (no
-  `playback-id`, no `tokens`). Closest to Goal B.
-- **convenience-based** — `playback-id` + `tokens` + a refresher returning a
-  fresh **token**, which the resolver rebuilds into a URL. Goal A.
+The mechanism the team agreed on:
 
-This is why "everything depends on `src`" can't fully hold for [#1432] under any
-option — refresh always needs at least a callback. Option 3's seam carries both
-forms. Either one uses two triggers:
+- The consumer supplies **one async callback** (e.g. `el.refreshToken = () =>
+  Promise<jwt>`).
+- The **player decodes the JWT** to read its `exp` — mux-elements already has
+  this code — and watches the wall clock with some runway (NTP wiggle).
+- It refreshes **proactively** (before `exp`, avoiding any failed request) and/or
+  **reactively** (on a `403` expired-token response), then passes the fresh token
+  down through the engine.
+- The **player owns** this rather than asking the consumer to re-set `src`. On
+  SPF the refresh can be seamless; on other engines it's still a reload, but a
+  *controlled, proactive* one (refresh before expiry, restore position) — not
+  Option 2's reactive mid-playback break.
 
-- **Reactive** — on a `403` expired-token response, re-resolve and retry the
-  request. This is the Shaka / hls.js precedent ([#1432]) and the SPF Tier-2
-  behavior.
-- **Proactive** — decode the JWT `exp` and refresh *before* expiry, avoiding the
-  failed request entirely. No player library does this today; it's the
-  differentiator — but it's also net-new engine work: it needs a scheduler
-  (decode `exp`, set a timer) that the reactive, 4xx-triggered
-  `refreshPlaybackToken` hook ([network-resilience.md] Tier 2) doesn't provide.
-  Where that scheduler lives (resolver / engine / element) is open.
-
-The surface that feeds both is a stable per-token refresher (function) or an
-`onTokenExpiring` / `token-refresh` event the consumer answers with a fresh
-token. The engine-side counterpart is `refreshPlaybackToken(originalUrl,
-errorContext)` from [network-resilience.md].
+How seamless that refresh is depends on the engine — it's a media reload
+everywhere except SPF (the migration target). See the **Risk** section.
 
 ### Thumbnails & poster
 
@@ -254,24 +249,39 @@ images need alt semantics handled by the consuming UI, and an unrecoverable
 expired-token state should surface a clear, localized error (ties into #1431,
 playback-restriction error handling) rather than a silent stall.
 
+## Risk — refresh fidelity is engine-bound (resolved)
+
+A concern was raised in review that refresh might not be engine-agnostic — that
+the fresh token would have to reach every segment, and that re-fetching playlists
+would fight **HLS spec §6.3.4**. Investigation (including a capture of a real
+signed stream) resolved it:
+
+- **The token is on the master manifest only.** Mux re-signs the child playlists
+  and segments with its own short-lived CDN signatures (no JWT). So a refresh
+  re-resolves the *master* and the engine adopts the fresh child URLs. §6.3.4
+  governs *Media* Playlists, not the master — so the spec doesn't block it.
+- **The real constraint is the engine, not the spec.** Every engine (hls.js,
+  native, AVPlayer) assumes the master loads once per session, so re-resolving it
+  mid-session is treated as a **media reload** — except SPF, which can be built to
+  refresh without one. (The spec-sanctioned way to swap the master live is HLS
+  content steering, but that's a Mux Video server feature, out of scope.)
+
+| Engine | Mid-session token refresh |
+| ------ | ------------------------- |
+| SPF (this repo) | Can refresh **without a full media reload** — the migration target. |
+| hls.js | Master loads once → a re-resolve is a **media reload** (hackable, not seamless). |
+| Native HLS / AVPlayer | Master loads once → a full **`src` reload**. |
+
+So the **surface stays engine-agnostic**; only the *fidelity* varies — and a
+reload is acceptable: the team confirmed it'd be on par with Mux Player today,
+seamless on SPF later. Refresh is only needed for sessions that outlive the token
+window, and the JWT-`exp` decode is reusable from `@mux/playback-core`.
+
 ## Open Questions
 
-- **Precedence** — today there is no `playback-id` attribute; it's *derived*
-  from the `src` URL for analytics (`toPlaybackIdFromSrc`,
-  `packages/core/src/dom/media/mux/mux-data.ts`). *If* Option 3 adds
-  `playback-id` as a settable convenience input, a user could set both it and
-  `src` — so we'd need a rule. (Lean: `src` is the contract and `playback-id` is
-  a shorthand that *produces* a `src`, so an explicit `src` wins.) The recommended
-  default shape (`src` + token-refresher, no `playback-id`) avoids this entirely
-  — it only arises if the convenience inputs are used.
-- **Refresh surface** — three sub-questions:
-  - *How the consumer supplies a fresh token* — a refresher function the player
-    calls (`el.refreshToken = () => …`), an `onTokenExpiring` event the consumer
-    answers, or both.
-  - *When refresh runs by default* — reactive (after a `403`), proactive (before
-    expiry), or both.
-  - *If proactive, where the `exp`-decoding timer lives* — resolver, engine, or
-    element.
+- **Refresh surface** — the mechanism is decided (see *Token refresh*); what's
+  still open is the exact API shape — a `refreshToken` function vs an
+  `onTokenExpiring` event vs both.
 - **Resolver home & extensibility** — does the resolver live on the element, in
   core, or in a Mux adapter? Is it a public extension point for non-Mux
   providers, or Mux-internal for now? (Lean: internal first.)
@@ -291,11 +301,21 @@ playback-restriction error handling) rather than a silent stall.
 
 ## Final Decision
 
-*(Completed after review)*
+**Decision:** Source-based surface — `src` plus an optional standalone
+`toMuxVideoURL({ playbackId, tokens })` helper; no `playback-id` / `tokens`
+component attributes — with **player-owned** token refresh (the consumer supplies
+an async token callback; the player decodes the JWT and re-resolves the master
+proactively / reactively). Refresh is a controlled media reload on hls.js / native
+HLS and seamless on SPF.
 
-**Decision:**
-**Rationale:**
-**Date:**
+**Rationale:** Matches the Video.js direction — normalize toward `source`, fewer
+Mux-specific props than Mux Player, one surface not two. The team approved the
+direction and set the v1 bar (a source reload on refresh is on par with Mux Player
+today, improvable later), and confirmed the spec/engine reality: every engine
+assumes the master loads once, so a mid-session re-resolve is a media reload
+except on SPF — the right home for the seamless version.
+
+**Date:** 2026-06-24
 
 ## Related
 
