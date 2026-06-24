@@ -411,6 +411,8 @@ interface EmitUnit {
   atRulePath: readonly string[];
   /** Selector text for the rule (e.g. `.play-button:hover` or `.play-button`). */
   selector: string;
+  /** Whether this unit targets the base class selector with no selector variants. */
+  isBaseSelector: boolean;
   /** Declarations to emit inside the rule. */
   declarations: readonly Declaration[];
 }
@@ -438,6 +440,7 @@ function composeRules(
       entry = {
         atRulePath: u.atRulePath,
         selector: u.selector,
+        isBaseSelector: u.isBaseSelector,
         declarations: [],
         declSet: new Set(),
       };
@@ -536,7 +539,7 @@ function applyHoist(
   const rootValues = new Map<string, Set<string>>();
   const allValues = new Map<string, Set<string>>();
   for (const entry of merged.values()) {
-    const isRoot = entry.atRulePath.length === 0;
+    const isRoot = entry.atRulePath.length === 0 && entry.isBaseSelector;
     for (const d of entry.declarations) {
       if (!d.property.startsWith('--')) continue;
       const all = allValues.get(d.property) ?? new Set<string>();
@@ -584,6 +587,7 @@ function applyHoist(
     rootEntry = {
       atRulePath: [],
       selector: rootSelector,
+      isBaseSelector: true,
       declarations: [],
       declSet: new Set(),
     };
@@ -834,6 +838,7 @@ function buildEmitUnit(className: string, branch: UtilityCssBranch): EmitUnit {
   return {
     atRulePath,
     selector: `.${className}${selectorTail}`,
+    isBaseSelector: selectorTail.length === 0,
     declarations: branch.declarations,
   };
 }

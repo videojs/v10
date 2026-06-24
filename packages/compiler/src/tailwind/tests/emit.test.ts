@@ -358,6 +358,17 @@ describe('emitCss — hoist', () => {
     expect(/\.skin\s*{[^}]*--media-error-dialog-transition-duration/.test(out.css)).toBe(false);
   });
 
+  it('does not hoist a property that only appears on a selector variant', async () => {
+    const fullscreenVariant = { kind: 'pseudo' as const, selector: ':fullscreen', raw: ':fullscreen' };
+    const out = await emitCss({
+      rules: [rule('a', [{ property: '--media-border-radius', value: '0' }], [fullscreenVariant])],
+      hoist: { rootSelector: '.skin' },
+    });
+    if (out.kind !== 'merged') throw new Error('expected merged');
+    expect(out.css).toMatch(/\.a:fullscreen\s*{[^}]*--media-border-radius:\s*0/);
+    expect(/\.skin\s*{[^}]*--media-border-radius/.test(out.css)).toBe(false);
+  });
+
   it('only hoists CSS custom properties (no plain props)', async () => {
     const out = await emitCss({
       rules: [rule('a', [{ property: 'color', value: 'red' }]), rule('b', [{ property: 'color', value: 'red' }])],
