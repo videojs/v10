@@ -33,8 +33,8 @@ function makePresentation(overrides?: Partial<VideoTrack>): Presentation {
 }
 
 describe('liveWindowFor', () => {
-  it('returns the window + target duration for a live track', () => {
-    expect(liveWindowFor(makePresentation(), 'v-1')).toEqual({ start: 100, end: 110, targetDuration: 2 });
+  it('returns the window bounds for a live track', () => {
+    expect(liveWindowFor(makePresentation(), 'v-1')).toEqual({ start: 100, end: 110 });
   });
 
   it('returns null for a complete (finite-duration) playlist — VoD / ended live', () => {
@@ -56,13 +56,6 @@ describe('liveWindowFor', () => {
 
   it('returns null for a track with no segments', () => {
     expect(liveWindowFor(makePresentation({ segments: [] }), 'v-1')).toBeNull();
-  });
-
-  it('falls back to the last segment duration when target duration is absent', () => {
-    const presentation = makePresentation({
-      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 50, endList: false } },
-    });
-    expect(liveWindowFor(presentation, 'v-1')).toEqual({ start: 100, end: 110, targetDuration: 2 });
   });
 
   it('resolves a track by id regardless of type — audio-only', () => {
@@ -92,6 +85,6 @@ describe('liveWindowFor', () => {
         { id: 'audio-set', type: 'audio', switchingSets: [{ id: 'as', type: 'audio', tracks: [audio] }] },
       ],
     };
-    expect(liveWindowFor(presentation, 'a-1')).toEqual({ start: 200, end: 210, targetDuration: 2 });
+    expect(liveWindowFor(presentation, 'a-1')).toEqual({ start: 200, end: 210 });
   });
 });

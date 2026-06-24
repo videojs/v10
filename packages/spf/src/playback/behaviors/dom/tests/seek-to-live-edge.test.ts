@@ -10,7 +10,7 @@ import { type SeekToLiveEdgeConfig, seekToLiveEdge } from '../seek-to-live-edge'
 
 /**
  * 5-segment, 2s window starting at `startTime`: `[startTime, startTime + 10]`.
- * HOLD-BACK = 3 × targetDuration(2) = 6, so the live-edge start is
+ * With the injected 6s live latency, the live-edge start is
  * `(startTime + 10) − 6 = startTime + 4` (104 for the default 100).
  */
 function makePresentation(startTime = 100, mediaSequence = 50): Presentation {
@@ -90,7 +90,10 @@ function run(opts: {
     mediaElement: signal<HTMLMediaElement | undefined>(opts.mediaElement),
     mediaSource: signal<MediaSource | undefined>(opts.mediaSource),
   };
-  const cleanup = seekToLiveEdge.setup({ state, context, config: opts.config ?? {} }) as () => void;
+  // The engine injects this seam; here a fixed 6s latency (HLS 3 × targetDuration(2))
+  // stands in so the live-edge start lands at windowEnd − 6.
+  const config = { resolveLiveLatency: () => 6, ...opts.config };
+  const cleanup = seekToLiveEdge.setup({ state, context, config }) as () => void;
   return { cleanup, state, context };
 }
 
@@ -98,13 +101,13 @@ function run(opts: {
 const flush = () => Promise.resolve();
 
 describe('seekToLiveEdge', () => {
-  it('seeks near the live edge on entry (HOLD-BACK behind)', () => {
+  it('seeks near the live edge on entry (target live latency behind)', () => {
     const ms = fakeMediaSource();
     const el = fakeMediaElement();
 
     const { cleanup } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el, mediaSource: ms });
 
-    // Start HOLD-BACK (3 × 2s) behind the edge: 110 − 6 = 104, not the window start.
+    // Start the live latency (6s) behind the edge: 110 − 6 = 104, not the window start.
     expect(el.currentTime).toBe(104);
 
     cleanup();

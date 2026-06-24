@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack } from '../../types';
-import { mediaPlaylistReloadDelay } from '../reload-policy';
+import { liveLatencyFor, mediaPlaylistReloadDelay } from '../reload-policy';
 
 /** Minimal resolved-track stand-in carrying only what the policy reads. */
 function track(opts: {
@@ -45,5 +45,16 @@ describe('mediaPlaylistReloadDelay', () => {
 
   it('falls back to 6s when the playlist carries no usable target duration', () => {
     expect(mediaPlaylistReloadDelay(track({ targetDuration: 0 }), undefined)).toBe(6000);
+  });
+});
+
+describe('liveLatencyFor', () => {
+  it('is 3× the target duration (default HOLD-BACK)', () => {
+    expect(liveLatencyFor(track({ targetDuration: 2 }))).toBe(6);
+    expect(liveLatencyFor(track({ targetDuration: 4 }))).toBe(12);
+  });
+
+  it('falls back to 3× the 6s default when no usable target duration is declared', () => {
+    expect(liveLatencyFor(track({ targetDuration: 0 }))).toBe(18);
   });
 });

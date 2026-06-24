@@ -9,12 +9,7 @@
  * presentation or track, a track with no segments, or a **complete** playlist
  * (VoD, or live that has ended — a finite `Track.duration`).
  */
-import {
-  getMediaPlaylistMetadata,
-  isResolvedPresentation,
-  isResolvedTrack,
-  type MaybeResolvedPresentation,
-} from './types';
+import { isResolvedPresentation, isResolvedTrack, type MaybeResolvedPresentation } from './types';
 import { findTrackById } from './utils/tracks';
 
 export interface LiveWindow {
@@ -22,8 +17,6 @@ export interface LiveWindow {
   start: number;
   /** The live edge — latest time in the window (seconds). */
   end: number;
-  /** Playlist target duration (seconds); falls back to the last segment's duration. */
-  targetDuration: number;
 }
 
 export function liveWindowFor(
@@ -44,6 +37,5 @@ export function liveWindowFor(
   return {
     start: segments[0]!.startTime,
     end: last.startTime + last.duration,
-    targetDuration: getMediaPlaylistMetadata(track)?.targetDuration || last.duration,
   };
 }

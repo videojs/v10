@@ -20,17 +20,20 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import { mediaPlaylistReloadDelay } from '../../../media/hls/reload-policy';
-import type {
-  AudioTrack,
-  CanPlayTrack,
-  MaybeResolvedPresentation,
-  ResolvedTrack,
-  TextTrack,
-  VideoTrack,
+import { liveLatencyFor, mediaPlaylistReloadDelay } from '../../../media/hls/reload-policy';
+import {
+  type AudioTrack,
+  type CanPlayTrack,
+  isResolvedPresentation,
+  isResolvedTrack,
+  type MaybeResolvedPresentation,
+  type ResolvedTrack,
+  type TextTrack,
+  type VideoTrack,
 } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
+import { findTrackById } from '../../../media/utils/tracks';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -338,9 +341,20 @@ export function createSimpleHlsEngine(
       return bufferedAnchorFor(context.segments, context.bufferedRanges);
     });
 
+  // Format-specific live latency for `seekToLiveEdge`: look up the
+  // timeline-bearing track and apply the HLS HOLD-BACK rule. The behavior
+  // consumes this as a neutral `resolveLiveLatency` seam (a DASH engine would
+  // inject `suggestedPresentationDelay`).
+  const resolveLiveLatency = (presentation: MaybeResolvedPresentation | undefined, trackId: string | undefined) => {
+    if (!isResolvedPresentation(presentation) || !trackId) return 0;
+    const track = findTrackById(presentation, trackId);
+    return track && isResolvedTrack(track) ? liveLatencyFor(track) : 0;
+  };
+
   const finalConfig = {
     ...config,
     resolveBufferedAnchor,
+    resolveLiveLatency,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     // The resolve* loaders' RecurringRunner re-runs on this `reschedule`: the pure
     // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.

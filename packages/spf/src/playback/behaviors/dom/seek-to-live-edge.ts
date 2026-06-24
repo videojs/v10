@@ -1,10 +1,12 @@
 /**
  * Seek the playhead into the live window and keep it there:
  *
- * 1. A one-time seek of `currentTime` to HOLD-BACK behind the live edge
- *    (default 3 × TARGETDURATION, clamped to the window start) so playback
- *    begins near the edge and the segment loader dispatches an in-window range
- *    rather than starting at the back of the DVR window.
+ * 1. A one-time seek of `currentTime` to the target live latency behind the
+ *    edge (clamped to the window start) so playback begins near the edge and
+ *    the segment loader dispatches an in-window range rather than starting at
+ *    the back of the DVR window. The latency comes from the injected
+ *    `resolveLiveLatency` seam (HLS: `HOLD-BACK`), keeping this behavior free of
+ *    any delivery-format specifics.
  * 2. A live-window playhead guard: while playing (`!paused && !seeking &&
  *    readyState > 0`), reposition `currentTime` to the live edge when it falls
  *    *outside* the sliding window — a paused playhead the window slid past
@@ -26,13 +28,7 @@ import type { Behavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
-import { liveWindowFromState } from '../../primitives/live-window';
-
-/**
- * Multiple of TARGETDURATION to start behind the live edge — the HLS spec
- * default for HOLD-BACK when the playlist doesn't specify one (RFC 8216bis).
- */
-const HOLD_BACK_TARGET_MULTIPLIER = 3;
+import { getLiveEdge, type ResolveLiveLatency } from '../../primitives/live-window';
 
 /**
  * Tolerance (seconds) around the window edges before the guard repositions, so
@@ -63,6 +59,14 @@ export interface SeekToLiveEdgeContext {
 export interface SeekToLiveEdgeConfig {
   /** Reposition policy for the live-window guard. Defaults to `'window-exit'`. */
   repositionPolicy?: LiveRepositionPolicy;
+  /**
+   * Resolve the target live latency (seconds the playhead should trail the live
+   * edge) for the timeline-bearing track. Injected by the engine so the latency
+   * rule stays format-specific (HLS: `HOLD-BACK`, default 3× target duration;
+   * DASH would read `suggestedPresentationDelay`) while this behavior stays
+   * neutral. Absent → `0` (seek straight to the edge).
+   */
+  resolveLiveLatency?: ResolveLiveLatency;
 }
 
 function seekToLiveEdgeSetup({
@@ -87,14 +91,13 @@ function seekToLiveEdgeSetup({
   return effect(() => {
     const mediaElement = context.mediaElement.get();
     const mediaSource = context.mediaSource.get();
-    const liveWindow = liveWindowFromState(state);
-    if (!mediaElement || !liveWindow) return;
+    const edge = getLiveEdge({ state, config });
+    if (!mediaElement || !edge) return;
     // Gate on the seekable range being declarable/declared (see file JSDoc):
     // sync-live-seekable-range runs first while open, so seeks land in-window.
     if (!mediaSource || mediaSource.readyState !== 'open') return;
 
-    const { start: windowStart, end: windowEnd, targetDuration } = liveWindow;
-    const liveEdgeStart = Math.max(windowStart, windowEnd - HOLD_BACK_TARGET_MULTIPLIER * targetDuration);
+    const { start: windowStart, end: windowEnd, liveEdgeStart } = edge;
 
     // Initial entry: seek into the window once — even while paused — so the
     // loader dispatches an in-window range and preload shows the right frame.

@@ -10,7 +10,7 @@ import {
   type VideoSelectionSet,
   type VideoTrack,
 } from '../../../media/types';
-import { liveWindowFromState } from '../live-window';
+import { getLiveEdge, liveTrackId, liveWindowFromState } from '../live-window';
 
 function videoTrack(start: number): VideoTrack {
   return {
@@ -86,7 +86,6 @@ describe('liveWindowFromState', () => {
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
       start: 100,
       end: 110,
-      targetDuration: 2,
     });
   });
 
@@ -96,7 +95,6 @@ describe('liveWindowFromState', () => {
     expect(liveWindowFromState(state({ presentation: pres, videoId: undefined, audioId: 'a-1' }))).toEqual({
       start: 200,
       end: 210,
-      targetDuration: 2,
     });
   });
 
@@ -107,5 +105,42 @@ describe('liveWindowFromState', () => {
 
   it('returns null without a resolved presentation', () => {
     expect(liveWindowFromState(state({ presentation: undefined, videoId: 'v-1' }))).toBeNull();
+  });
+});
+
+describe('liveTrackId', () => {
+  it('prefers the selected video track', () => {
+    expect(liveTrackId(state({ videoId: 'v-1', audioId: 'a-1' }))).toBe('v-1');
+  });
+
+  it('falls back to the selected audio track when no video is selected', () => {
+    expect(liveTrackId(state({ videoId: undefined, audioId: 'a-1' }))).toBe('a-1');
+  });
+
+  it('is undefined when neither is selected', () => {
+    expect(liveTrackId(state({ videoId: undefined, audioId: undefined }))).toBeUndefined();
+  });
+});
+
+describe('getLiveEdge', () => {
+  // window [100, 110] for the selected video track.
+  const live = () => state({ presentation: presentation({ video: videoTrack(100) }), videoId: 'v-1' });
+
+  it('places liveEdgeStart the resolved latency behind the edge', () => {
+    const edge = getLiveEdge({ state: live(), config: { resolveLiveLatency: () => 6 } });
+    expect(edge).toEqual({ start: 100, end: 110, liveEdgeStart: 104 });
+  });
+
+  it('clamps liveEdgeStart to the window start when the latency exceeds the window', () => {
+    const edge = getLiveEdge({ state: live(), config: { resolveLiveLatency: () => 20 } });
+    expect(edge?.liveEdgeStart).toBe(100);
+  });
+
+  it('sits at the edge when no latency policy is supplied', () => {
+    expect(getLiveEdge({ state: live() })?.liveEdgeStart).toBe(110);
+  });
+
+  it('is null when there is no live window', () => {
+    expect(getLiveEdge({ state: state({ presentation: undefined, videoId: 'v-1' }) })).toBeNull();
   });
 });

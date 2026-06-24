@@ -3,6 +3,12 @@ import { getMediaPlaylistMetadata, type ResolvedTrack } from '../types';
 /** Reload cadence when a playlist carries no usable target duration. */
 const FALLBACK_TARGET_DURATION = 6;
 
+/**
+ * Default `HOLD-BACK` as a multiple of the target duration when the playlist
+ * declares none — the HLS spec default (RFC 8216bis `EXT-X-SERVER-CONTROL`).
+ */
+const HOLD_BACK_TARGET_MULTIPLIER = 3;
+
 /** Identity of a reload snapshot — window position + length. Changes when the window slid or grew. */
 function snapshotSignature(track: ResolvedTrack): string {
   return `${getMediaPlaylistMetadata(track)?.mediaSequence ?? 0}:${track.segments.length}`;
@@ -37,4 +43,16 @@ export function mediaPlaylistReloadDelay(current: ResolvedTrack, previous: Resol
   const target = targetDurationOf(current);
   const changed = !previous || snapshotSignature(current) !== snapshotSignature(previous);
   return (changed ? target : target / 2) * 1000;
+}
+
+/**
+ * Target live latency (seconds) for a resolved track — how far behind the live
+ * edge the playhead should sit. HLS derives it from `EXT-X-SERVER-CONTROL`
+ * `HOLD-BACK`, defaulting to {@link HOLD_BACK_TARGET_MULTIPLIER}× the target
+ * duration. This is the HLS side of the format-neutral `resolveLiveLatency`
+ * seam consumed by `seek-to-live-edge`; a DASH engine supplies its own
+ * (`suggestedPresentationDelay`).
+ */
+export function liveLatencyFor(track: ResolvedTrack): number {
+  return HOLD_BACK_TARGET_MULTIPLIER * targetDurationOf(track);
 }
