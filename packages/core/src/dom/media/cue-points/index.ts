@@ -86,6 +86,9 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
     this.#disconnect = new AbortController();
     // The engine clears cues on (re)load, so re-populate on each `loadstart`.
     listen(this.#target, 'loadstart', () => this.#setup(), { signal: this.#disconnect.signal });
+    // `#setup` may run before duration is known, leaving the trailing cue's end
+    // as a sentinel. Correct it once duration arrives without a full rebuild.
+    listen(this.#target, 'durationchange', () => this.#syncTrailingEnd(), { signal: this.#disconnect.signal });
     void this.#setup();
   }
 
@@ -109,6 +112,18 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
     // the full list, which would add duplicate cues for the new markers.
     // `#setup`'s `#trackDisconnect` guard makes the latest write win.
     await this.#setup();
+  }
+
+  /** Replace the trailing cue's sentinel end with the real duration once it is known. */
+  #syncTrailingEnd() {
+    const target = this.#target;
+    if (!target || !Number.isFinite(target.duration)) return;
+    const cues = getCuePointsTrack(target, this.#label)?.cues;
+    const last = cues?.length ? (cues[cues.length - 1] as VTTCue) : undefined;
+    if (last && last.endTime === Number.MAX_SAFE_INTEGER) {
+      last.endTime = target.duration;
+      notifyChange(target);
+    }
   }
 
   async #setup() {

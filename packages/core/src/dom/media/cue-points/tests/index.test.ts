@@ -187,6 +187,21 @@ describe('CuePoints', () => {
       expect(media.cuePointsTrack!.cues[0]!.endTime).toBe(Number.MAX_SAFE_INTEGER);
     });
 
+    it('corrects the trailing cue end once duration becomes known', async () => {
+      const media = createMedia(Number.NaN);
+      const cuePoints = new CuePoints({ cuePoints: [{ time: 10, value: 'a' }] });
+
+      cuePoints.attach(asTarget(media));
+      await flush();
+
+      expect(media.cuePointsTrack!.cues[0]!.endTime).toBe(Number.MAX_SAFE_INTEGER);
+
+      media.duration = 100;
+      media.dispatchEvent(new Event('durationchange'));
+
+      expect(media.cuePointsTrack!.cues[0]!.endTime).toBe(100);
+    });
+
     it('dispatches a change event on the text track list', async () => {
       const media = createMedia(100);
       const onChange = vi.fn();
