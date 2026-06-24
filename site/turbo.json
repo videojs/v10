@@ -10,8 +10,12 @@
       "dependsOn": ["^build"],
       "outputs": ["src/content/ejected-skins.json"]
     },
+    "cdn-manifest": {
+      "dependsOn": ["^build:cdn"],
+      "outputs": ["src/content/cdn-media.json"]
+    },
     "build": {
-      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins"],
+      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins", "cdn-manifest"],
       "env": [
         "OAUTH_CLIENT_ID",
         "OAUTH_CLIENT_SECRET",
@@ -23,7 +27,7 @@
       ]
     },
     "dev": {
-      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins"],
+      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins", "cdn-manifest"],
       "env": [
         "OAUTH_CLIENT_ID",
         "OAUTH_CLIENT_SECRET",

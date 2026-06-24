@@ -10,12 +10,27 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
   return skin;
 }
 
-function getCdnMediaSubpath(renderer: Renderer): string | null {
+// Renderer → media subpath name, independent of whether a CDN build exists.
+// Preset renderers (html5-video/audio, background-video) are covered by the
+// preset bundle and have no separate media script, so they map to null.
+function getMediaSubpath(renderer: Renderer): string | null {
   const map: Partial<Record<Renderer, string>> = {
     hls: 'hls-video',
   };
-
   return map[renderer] ?? null;
+}
+
+// Whether a renderer can be installed via CDN, given the set of media subpaths
+// that ship a CDN build (from the cdn-media manifest). Preset renderers always
+// can (no separate media script); a media renderer can only if its subpath is
+// in the manifest.
+export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean {
+  const subpath = getMediaSubpath(renderer);
+  return subpath === null || cdnMediaSubpaths.includes(subpath);
+}
+
+function getCdnMediaSubpath(renderer: Renderer): string | null {
+  return getMediaSubpath(renderer);
 }
 
 export function generateCdnCode(useCase: UseCase, skin: Skin, renderer: Renderer): string {
