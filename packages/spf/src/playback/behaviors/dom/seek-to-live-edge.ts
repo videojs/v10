@@ -53,6 +53,13 @@ export interface SeekToLiveEdgeState {
   presentation?: MaybeResolvedPresentation;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
+  /**
+   * The shared live anchor, published by `anchorLiveTracks` once the buffer pin
+   * lands (`undefined` until then). Gates the live-edge seek: seeking before the
+   * timeline is anchored would target the raw (pre-anchor) window, and the pin's
+   * later shift would strand the playhead off-window.
+   */
+  liveAnchor?: number;
 }
 
 export interface SeekToLiveEdgeContext {
@@ -75,14 +82,18 @@ type SeekToLiveEdgeFsmState = 'inactive' | 'live';
 
 /**
  * `'live'` once the seek preconditions hold: a media element, a (published →
- * open) MediaSource, and a derivable live edge. `'inactive'` otherwise.
+ * open) MediaSource, a derivable live edge, and an established live anchor
+ * (`anchorLiveTracks` has buffer-pinned the timeline — so the edge we seek to is
+ * the final native-PTS one, not the raw pre-anchor window). `'inactive'`
+ * otherwise.
  */
 function deriveState(
   mediaElement: HTMLMediaElement | undefined,
   mediaSource: MediaSource | undefined,
-  edge: LiveEdge | null
+  edge: LiveEdge | null,
+  anchored: boolean
 ): SeekToLiveEdgeFsmState {
-  return mediaElement && mediaSource && edge ? 'live' : 'inactive';
+  return mediaElement && mediaSource && edge && anchored ? 'live' : 'inactive';
 }
 
 function seekToLiveEdgeSetup({
@@ -94,6 +105,7 @@ function seekToLiveEdgeSetup({
     presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
     selectedVideoTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedVideoTrackId']>;
     selectedAudioTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedAudioTrackId']>;
+    liveAnchor?: ReadonlySignal<SeekToLiveEdgeState['liveAnchor']>;
   };
   context: {
     mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
@@ -102,7 +114,12 @@ function seekToLiveEdgeSetup({
   config?: SeekToLiveEdgeConfig;
 }): Reactor<SeekToLiveEdgeFsmState | 'destroying' | 'destroyed'> {
   const derivedStateSignal = computed(() =>
-    deriveState(context.mediaElement.get(), context.mediaSource.get(), getLiveEdge({ state, config }))
+    deriveState(
+      context.mediaElement.get(),
+      context.mediaSource.get(),
+      getLiveEdge({ state, config }),
+      state.liveAnchor?.get() !== undefined
+    )
   );
 
   return createMachineReactor<SeekToLiveEdgeFsmState>({

@@ -1,5 +1,5 @@
 import { isUndefined } from '@videojs/utils/predicate';
-import { getMediaPlaylistMetadata, type Track } from './types';
+import { getMediaPlaylistMetadata, isResolvedTrack, type Presentation, type Track } from './types';
 
 /**
  * The presentation's live timeline anchor: the wall-clock (PDT, epoch seconds)
@@ -95,4 +95,39 @@ export function positionTrackToAnchor<Tracks extends Track>(track: Tracks, ancho
     startDate: anchor,
     segments: track.segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift })),
   };
+}
+
+/**
+ * Position **every** track in a presentation onto the shared `anchor`, in one
+ * pass. A resolved track has its segment timeline shifted
+ * ({@link positionTrackToAnchor}); a not-yet-resolved shell gets the anchor
+ * stamped as `startDate`, so the media-playlist parser places its segments on
+ * the shared timeline at first resolve (`placeOnAnchor`). Because it covers
+ * unselected renditions too, any track selected later — an ABR rung, another
+ * audio language, late captions — is already anchored without a per-track
+ * positioning pass.
+ *
+ * Identity-preserving: returns the same presentation when nothing moved (every
+ * track already on the anchor), so an idempotent re-establish writes no new
+ * reference.
+ */
+export function positionAllTracksToAnchor(presentation: Presentation, anchor: PresentationAnchor): Presentation {
+  let changed = false;
+  const selectionSets = presentation.selectionSets.map((selectionSet) => ({
+    ...selectionSet,
+    switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
+      ...switchingSet,
+      tracks: switchingSet.tracks.map((track) => {
+        // Resolved → shift segments; shell → stamp the anchor for the parser.
+        const next = isResolvedTrack(track)
+          ? positionTrackToAnchor(track, anchor)
+          : track.startDate === anchor
+            ? track
+            : { ...track, startDate: anchor };
+        if (next !== track) changed = true;
+        return next;
+      }),
+    })),
+  }));
+  return changed ? ({ ...presentation, selectionSets } as Presentation) : presentation;
 }

@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import {
+  positionAllTracksToAnchor,
   positionTrackToAnchor,
   presentationAnchorEstimate,
   presentationAnchorFromBuffer,
 } from '../presentation-anchor';
-import { MEDIA_PLAYLIST_METADATA_KEY, type Track } from '../types';
+import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type Track } from '../types';
 
 /** Minimal live track: a window starting at `startTime`, 2s segments, PDT from `startDate`. */
 function track(
@@ -87,5 +88,47 @@ describe('positionTrackToAnchor', () => {
     expect(positionTrackToAnchor(t, 1000)).toBe(t); // startDate already 1000
     const noPdt = track({ startDate: undefined });
     expect(positionTrackToAnchor(noPdt, 900)).toBe(noPdt);
+  });
+});
+
+describe('positionAllTracksToAnchor', () => {
+  // A resolved video track plus an unselected, not-yet-resolved audio shell.
+  const audioShell = {
+    type: 'audio',
+    id: 'a-1',
+    url: 'a.m3u8',
+    mimeType: 'audio/mp4',
+    codecs: ['mp4a.40.2'],
+    bandwidth: 128_000,
+    groupId: 'aud',
+    name: 'English',
+    sampleRate: 48_000,
+    channels: 2,
+  };
+  const presentation = {
+    id: 'p',
+    url: 'm.m3u8',
+    startTime: 0,
+    selectionSets: [
+      { id: 'v', type: 'video', switchingSets: [{ id: 'vs', type: 'video', tracks: [track()] }] },
+      { id: 'a', type: 'audio', switchingSets: [{ id: 'as', type: 'audio', tracks: [audioShell] }] },
+    ],
+  } as unknown as Presentation;
+
+  it('shifts resolved tracks and stamps startDate on unresolved shells, in one pass', () => {
+    const positioned = positionAllTracksToAnchor(presentation, 900);
+    const video = positioned.selectionSets[0]!.switchingSets[0]!.tracks[0]!;
+    const audio = positioned.selectionSets[1]!.switchingSets[0]!.tracks[0]!;
+    // Resolved video shifted onto the anchor (startDate 1000 → 900, startTime 100 → 200).
+    expect(video.startDate).toBe(900);
+    expect(video.startTime).toBe(200);
+    // Unresolved audio shell: anchor stamped, no segments materialized.
+    expect(audio.startDate).toBe(900);
+    expect(audio.segments).toBeUndefined();
+  });
+
+  it('is identity-preserving when everything is already on the anchor', () => {
+    const once = positionAllTracksToAnchor(presentation, 900);
+    expect(positionAllTracksToAnchor(once, 900)).toBe(once);
   });
 });

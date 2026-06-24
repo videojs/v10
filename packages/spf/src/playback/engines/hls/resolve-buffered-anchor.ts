@@ -1,8 +1,7 @@
 import { untrack } from '../../../core/signals/primitives';
-import { type BufferedAnchor, bufferedAnchorFor } from '../../../media/buffered-anchor';
-import type { ResolvedTrack } from '../../../media/types';
+import { bufferedAnchorFor } from '../../../media/buffered-anchor';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
-import type { AnchorLiveTracksDeps } from '../../behaviors/anchor-live-tracks';
+import type { AnchorLiveTracksDeps, BufferedTrackAnchor } from '../../behaviors/anchor-live-tracks';
 
 /**
  * The engine context this resolver reads — the per-type SourceBuffer actors.
@@ -17,25 +16,30 @@ export interface BufferActorContext {
 
 /**
  * An engine's implementation of `anchorLiveTracks`' `resolveBufferedAnchor` seam.
- * Reads the buffer actors from the behavior's `context` deps — the actors'
- * DOM-free snapshot data (appended segments + native-PTS `bufferedRanges`) — to
- * report where a segment actually landed, so the model timeline can be pinned to
- * ground truth. Reads are untracked: the pin re-checks each reload, with no need
- * to re-fire on every buffer tick.
+ * Reads the first A/V buffer actor with ground truth (video preferred) from the
+ * behavior's `context` deps — the actor knows which track it's buffering
+ * (`initTrackId`) and exposes DOM-free snapshot data (appended segments +
+ * native-PTS `bufferedRanges`) — and reports where a segment actually landed so
+ * the model timeline can be pinned to ground truth. Reads are untracked: the pin
+ * re-checks each reload, with no need to re-fire on every buffer tick.
  *
  * Generic over the engine `Context` so it stays engine-agnostic; the only
  * requirement is the per-type buffer-actor slots (`BufferActorContext`).
  */
-export function resolveBufferedAnchor<Context extends BufferActorContext>(
-  track: ResolvedTrack,
-  { context }: AnchorLiveTracksDeps<Context>
-): BufferedAnchor | undefined {
+export function resolveBufferedAnchor<Context extends BufferActorContext>({
+  context,
+}: AnchorLiveTracksDeps<Context>): BufferedTrackAnchor | undefined {
   return untrack(() => {
-    const actor = (
-      track.type === 'video' ? context.videoBufferActor : track.type === 'audio' ? context.audioBufferActor : undefined
-    )?.get();
-    if (!actor) return undefined;
-    const { context: bufferContext } = actor.snapshot.get();
-    return bufferedAnchorFor(bufferContext.segments, bufferContext.bufferedRanges);
+    // Video preferred; under the no-skew assumption both agree, so this is just
+    // a tiebreak for which actor supplies the (shared) anchor.
+    for (const ref of [context.videoBufferActor, context.audioBufferActor]) {
+      const actor = ref?.get();
+      if (!actor) continue;
+      const { initTrackId, segments, bufferedRanges } = actor.snapshot.get().context;
+      if (!initTrackId) continue;
+      const anchor = bufferedAnchorFor(segments, bufferedRanges);
+      if (anchor) return { ...anchor, trackId: initTrackId };
+    }
+    return undefined;
   });
 }

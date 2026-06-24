@@ -117,6 +117,12 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * The shared live timeline anchor (wall clock at media-time 0), published by
+   * `anchorLiveTracks` once the buffer pin lands. `seekToLiveEdge` gates its
+   * live-edge seek on it. Absent for VoD / until the first segment buffers.
+   */
+  liveAnchor?: number;
 }
 
 /**

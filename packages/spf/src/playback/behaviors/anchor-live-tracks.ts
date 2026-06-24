@@ -1,69 +1,78 @@
 /**
- * Position every selected track's timeline so model coordinates coincide with
- * the SourceBuffer's native-PTS coordinates — the loader matches `currentTime`
- * (a native-PTS value, since segments append unmodified) against each segment's
- * `startTime`, so the two timelines must agree.
+ * Establish the live presentation's shared timeline anchor — the wall clock
+ * (PDT) at media-time 0 — once per source, and stamp it onto every track so the
+ * model's coordinates coincide with the SourceBuffer's native-PTS coordinates
+ * (the loader matches `currentTime`, a native-PTS value since segments append
+ * unmodified, against each segment's `startTime`).
  *
- * One **shared presentation anchor** — a `(media-time ↔ PDT)` correspondence —
- * drives all selected tracks (video, audio, *and* text); each track positions
- * itself onto it by its own per-segment PDT. See
- * [live-presentation-anchor](../../../../internal/decisions/live-presentation-anchor.md).
- * A two-state reactor holds it:
+ * One shared anchor drives all tracks. It's learned from whichever A/V track is
+ * first **actually buffered**: an injected `resolveBufferedAnchor` reads the
+ * buffer actor's snapshot — the track it's buffering (`initTrackId`) and where a
+ * segment landed (native PTS) — and the behavior reads that track's segment PDT
+ * from the presentation, so `presentationAnchorFromBuffer` yields the shared
+ * `(media-time ↔ PDT)` anchor. Established **once**, on entry to `anchored`; a
+ * source change re-enters and re-establishes. (The buffered track id comes from
+ * the actor, not the selection — it's what's *actually* buffered, which during a
+ * switch is more reliable than the intended selection.)
  *
- * - **`unanchored` (bootstrap).** Before any A/V track has buffer ground truth
- *   there's no authoritative anchor, so the manifest-only estimate
- *   (`presentationAnchorEstimate`, `averageDuration × sequence`) supplies a
- *   provisional one. Re-applied each reload — provisional, ungated — until the
- *   buffer upgrades it.
- * - **`anchored` (authoritative).** Once a selected A/V track is buffered, an
- *   injected `resolveBufferedAnchor` reports where a segment *actually* landed
- *   (native PTS); `presentationAnchorFromBuffer` turns that into the shared
- *   anchor, established **once** on entry (first track to buffer wins). Each
- *   selected track is then positioned onto it (`positionTrackToAnchor`) exactly
- *   once — including text and tracks selected later — and thereafter left to the
- *   parser's PDT-exact carry-forward. Re-positioning a pinned track every reload
- *   would *mask* a drifting baseline; positioning once *surfaces* it.
+ * On establishment, `positionAllTracksToAnchor` stamps the anchor onto *every*
+ * track in one pass: resolved tracks shift their segment timeline onto it; not-
+ * yet-resolved shells get it as `startDate` so the media-playlist parser places
+ * them on the shared timeline at first resolve (`placeOnAnchor`). This covers
+ * unselected renditions too, so any track selected later — an ABR rung, another
+ * audio language, late captions — resolves already anchored, with no per-track
+ * positioning pass. Text included: it has no SourceBuffer to pin, so the shared
+ * anchor is the only way to place it.
  *
- * Text has no SourceBuffer to pin, so the shared anchor is the *only* way to
- * place it; A/V and text run one code path. Cross-track A/V skew is intentionally
- * *not* corrected here — under the native-PTS default all tracks share the
- * encoder's PTS clock, so one anchor describes them all (see the decision doc).
+ * No pre-buffer estimate. Until ground truth exists a track rides its raw parser
+ * timeline — a valid timeline for fetching the first segments (the same segments
+ * are fetched either way), and nothing is playing yet, so nothing is
+ * mispositioned; the buffer pin supersedes it the moment a segment appends.
  *
  * DOM-free: the buffered ground truth arrives via the injected resolver (the
- * engine wires it from the buffer actor's `bufferedRanges`), so this behavior
- * never touches `HTMLMediaElement`.
+ * engine wires it from the buffer actor's snapshot), so this behavior never
+ * touches `HTMLMediaElement`. Cross-track A/V skew is intentionally not corrected
+ * here — under the native-PTS default all tracks share the encoder's PTS clock,
+ * so one anchor describes them all (see the decision doc).
  */
 
 import { isUndefined } from '@videojs/utils/predicate';
 import type { Behavior, BehaviorDeps, ContextSignals } from '../../core/composition/create-composition';
 import { createMachineReactor, type Reactor } from '../../core/reactors/create-machine-reactor';
-import { type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
+import { type Signal, update } from '../../core/signals/primitives';
 import type { BufferedAnchor } from '../../media/buffered-anchor';
 import {
   type PresentationAnchor,
-  positionTrackToAnchor,
-  presentationAnchorEstimate,
+  positionAllTracksToAnchor,
   presentationAnchorFromBuffer,
 } from '../../media/presentation-anchor';
-import {
-  isResolvedPresentation,
-  isResolvedTrack,
-  type MaybeResolvedPresentation,
-  type ResolvedTrack,
-  type TrackType,
-} from '../../media/types';
-import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
+import { isResolvedPresentation, isResolvedTrack, type MaybeResolvedPresentation } from '../../media/types';
+import { findTrackById } from '../../media/utils/tracks';
 
 export interface AnchorLiveTracksState {
   presentation?: MaybeResolvedPresentation;
-  selectedVideoTrackId?: string;
-  selectedAudioTrackId?: string;
-  selectedTextTrackId?: string;
+  /**
+   * The established shared anchor (wall clock at media-time 0), published once
+   * the buffer pin lands; `undefined` until then. Owned here; read by
+   * `seekToLiveEdge` to gate its live-edge seek until the timeline is anchored —
+   * seeking on the pre-anchor (raw) timeline would strand the playhead when the
+   * pin later shifts the window.
+   */
+  liveAnchor?: number;
+}
+
+/**
+ * A buffered anchor paired with the id of the track it was read from (the buffer
+ * actor's `initTrackId`), so the behavior can resolve that track's segment PDT
+ * from the presentation.
+ */
+export interface BufferedTrackAnchor extends BufferedAnchor {
+  trackId: string;
 }
 
 /**
  * The standard behavior setup deps (`{ state, context, config }`) passed to the
- * `resolveBufferedAnchor` factory. Generic over the engine's `Context` so this
+ * `resolveBufferedAnchor` seam. Generic over the engine's `Context` so this
  * behavior stays DOM-free — the engine (DOM boundary) names the concrete buffer
  * actors; here `Context` is opaque.
  */
@@ -75,26 +84,17 @@ export type AnchorLiveTracksDeps<Context extends object> = BehaviorDeps<
 
 export interface AnchorLiveTracksConfig<Context extends object = object> {
   /**
-   * Sequence number assumed to be the stream origin (time 0) for the bootstrap
-   * estimate. Default 0 — see `presentationAnchorEstimate`.
-   */
-  presumedStartSequence?: number;
-  /**
    * Buffered-ground-truth resolver, injected by the engine (the DOM boundary).
-   * Reports where a buffered segment actually sits in native PTS, or `undefined`
-   * before anything is buffered. Receives the behavior's setup deps (rather than
-   * closing over engine scope) so the engine reads its buffer actors from
-   * `context`. Absent → estimate-only (e.g. non-DOM tests).
+   * Reads the first A/V buffer actor with ground truth and reports where a
+   * buffered segment landed (native PTS) plus which track it belongs to, or
+   * `undefined` before anything is buffered. Receives the behavior's setup deps
+   * (rather than closing over engine scope) so the engine reads its buffer actors
+   * from `context`. Absent → never anchors (e.g. non-DOM tests with no buffer).
    */
-  resolveBufferedAnchor?: (track: ResolvedTrack, deps: AnchorLiveTracksDeps<Context>) => BufferedAnchor | undefined;
+  resolveBufferedAnchor?: (deps: AnchorLiveTracksDeps<Context>) => BufferedTrackAnchor | undefined;
 }
 
 type AnchorFsmState = 'unanchored' | 'anchored';
-
-// The shared anchor is learned from a buffered A/V track; text has none.
-const ANCHOR_SOURCE_TYPES = ['video', 'audio'] as const;
-// All selected tracks ride the shared anchor — text included.
-const POSITIONED_TYPES = ['video', 'audio', 'text'] as const;
 
 function anchorLiveTracksSetup<Context extends object>({
   state,
@@ -103,128 +103,57 @@ function anchorLiveTracksSetup<Context extends object>({
 }: {
   state: {
     presentation: Signal<AnchorLiveTracksState['presentation']>;
-    selectedVideoTrackId?: ReadonlySignal<AnchorLiveTracksState['selectedVideoTrackId']>;
-    selectedAudioTrackId?: ReadonlySignal<AnchorLiveTracksState['selectedAudioTrackId']>;
-    selectedTextTrackId?: ReadonlySignal<AnchorLiveTracksState['selectedTextTrackId']>;
+    liveAnchor: Signal<AnchorLiveTracksState['liveAnchor']>;
   };
   context: ContextSignals<Context>;
   config?: AnchorLiveTracksConfig<Context>;
 }): Reactor<AnchorFsmState | 'destroying' | 'destroyed'> {
-  const { presumedStartSequence = 0 } = config;
   // The deps handed to the injected resolver, so the engine reads its buffer
   // actors from `context` — no pre-composition closure over engine scope.
   const deps: AnchorLiveTracksDeps<Context> = { state, context, config };
 
-  // The shared anchor, established once from buffer ground truth on entry to
-  // `anchored`. `undefined` while unanchored — the estimate supplies a
-  // provisional anchor of the same shape instead.
-  let bufferAnchor: PresentationAnchor | undefined;
-  // Track ids already positioned to `bufferAnchor`. Positioned once, then left
-  // to the parser's carry-forward — re-positioning would mask a drifting
-  // baseline rather than surface it. The estimate phase is ungated (provisional).
-  const positioned = new Set<string>();
-
-  const selectedId = (type: TrackType): string | undefined =>
-    type === 'video'
-      ? state.selectedVideoTrackId?.get()
-      : type === 'audio'
-        ? state.selectedAudioTrackId?.get()
-        : state.selectedTextTrackId?.get();
-
-  function selectedTrack(presentation: MaybeResolvedPresentation, type: TrackType): ResolvedTrack | undefined {
-    const id = selectedId(type);
-    if (!id) return undefined;
-    const track = findTrack(presentation, type, id);
-    return track && isResolvedTrack(track) ? track : undefined;
-  }
-
-  // First selected A/V track with buffer ground truth wins (video preferred).
+  // The shared anchor from the first actually-buffered A/V track: the resolver
+  // reports the buffered segment + its track id; that track's segment carries the
+  // PDT the anchor is computed from. `undefined` until something is buffered.
   function deriveBufferAnchor(presentation: MaybeResolvedPresentation): PresentationAnchor | undefined {
-    for (const type of ANCHOR_SOURCE_TYPES) {
-      const track = selectedTrack(presentation, type);
-      const anchor = track && config.resolveBufferedAnchor?.(track, deps);
-      if (!track || !anchor) continue;
-      const presentationAnchor = presentationAnchorFromBuffer(track, anchor.segmentId, anchor.actualStart);
-      if (!isUndefined(presentationAnchor)) return presentationAnchor;
-    }
-    return undefined;
-  }
-
-  function deriveEstimate(presentation: MaybeResolvedPresentation): PresentationAnchor | undefined {
-    for (const type of ANCHOR_SOURCE_TYPES) {
-      const track = selectedTrack(presentation, type);
-      const estimate = track && presentationAnchorEstimate(track, { presumedStartSequence });
-      if (!isUndefined(estimate)) return estimate;
-    }
-    return undefined;
-  }
-
-  // `gate` true (authoritative): position each track once, then leave it. `gate`
-  // false (estimate): re-apply unconditionally — provisional, settles to a no-op
-  // once the estimate is stable.
-  function positionSelectedTracks(presentation: MaybeResolvedPresentation, anchor: PresentationAnchor, gate: boolean) {
-    const next: ResolvedTrack[] = [];
-    for (const type of POSITIONED_TYPES) {
-      const track = selectedTrack(presentation, type);
-      // No PDT yet → can't place it; retry next reload (don't mark positioned).
-      if (!track || isUndefined(track.startDate)) continue;
-      if (gate) {
-        if (positioned.has(track.id)) continue;
-        positioned.add(track.id);
-      }
-      const positionedTrack = positionTrackToAnchor(track, anchor);
-      // Identity-equal when nothing moved (already on the anchor).
-      if (positionedTrack !== track) next.push(positionedTrack);
-    }
-    if (next.length === 0) return;
-
-    update(state.presentation as Signal<MaybeResolvedPresentation>, (current) => {
-      if (!isResolvedPresentation(current)) return current;
-      let result = current;
-      for (const track of next) result = updateTrackInPresentation(result, track);
-      return result;
-    });
+    const buffered = config.resolveBufferedAnchor?.(deps);
+    if (!buffered) return undefined;
+    const track = findTrackById(presentation, buffered.trackId);
+    if (!track || !isResolvedTrack(track)) return undefined;
+    return presentationAnchorFromBuffer(track, buffered.segmentId, buffered.actualStart);
   }
 
   return createMachineReactor<AnchorFsmState>({
     initial: 'unanchored',
-    // Re-checks buffer availability on each reload / selection change (the
-    // resolver is read untracked by the engine, so reloads — not buffer ticks —
-    // drive the transition). An unresolved presentation drops back to bootstrap.
+    // Re-checks buffer availability on each reload (the resolver is read untracked
+    // by the engine, so reloads — not buffer ticks — drive the transition). An
+    // unresolved presentation drops back to idle.
     monitor: () => {
       const presentation = state.presentation.get();
       if (!isResolvedPresentation(presentation)) return 'unanchored';
       return isUndefined(deriveBufferAnchor(presentation)) ? 'unanchored' : 'anchored';
     },
     states: {
-      unanchored: {
-        // Reset per source so a new source re-bootstraps from its own estimate.
-        entry: () => {
-          bufferAnchor = undefined;
-          positioned.clear();
-        },
-        effects: () => {
-          const presentation = state.presentation.get();
-          if (!isResolvedPresentation(presentation)) return;
-          const estimate = deriveEstimate(presentation);
-          if (isUndefined(estimate)) return;
-          positionSelectedTracks(presentation, estimate, false);
-        },
-      },
+      // Reset the published anchor per source so a new source re-gates the seek.
+      unanchored: { entry: () => state.liveAnchor.set(undefined) },
       anchored: {
-        // Establish the shared anchor once (first track to buffer wins), and
-        // clear `positioned` so every selected track re-positions onto the
-        // authoritative anchor, superseding the estimate.
+        // Establish the shared anchor once and stamp it onto every track. Runs
+        // once per entry; a source change exits to `unanchored`, so the next
+        // source re-establishes. Re-deriving the same buffer anchor is idempotent
+        // (segment PDT and native-PTS start are stable), and
+        // `positionAllTracksToAnchor` writes no new reference when nothing moved —
+        // so a transient re-entry is a no-op.
         entry: () => {
           const presentation = state.presentation.get();
           if (!isResolvedPresentation(presentation)) return;
-          bufferAnchor = deriveBufferAnchor(presentation);
-          positioned.clear();
-        },
-        effects: () => {
-          const presentation = state.presentation.get();
-          if (!isResolvedPresentation(presentation) || isUndefined(bufferAnchor)) return;
-          positionSelectedTracks(presentation, bufferAnchor, true);
+          const anchor = deriveBufferAnchor(presentation);
+          if (isUndefined(anchor)) return;
+          update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
+            isResolvedPresentation(current) ? positionAllTracksToAnchor(current, anchor) : current
+          );
+          // Publish after stamping, so a consumer reacting to the anchor (e.g.
+          // seekToLiveEdge) sees the already-shifted window.
+          state.liveAnchor.set(anchor);
         },
       },
     },
@@ -232,20 +161,21 @@ function anchorLiveTracksSetup<Context extends object>({
 }
 
 /**
- * Manual `Behavior<>` literal (like `shareSignals`): declares only `presentation`
- * in stateKeys while reading the `selected*TrackId` slots defensively, so the
- * behavior stays composable in variants that wire selection differently. Generic
- * over `Context` (like `makeShareSignals`) so the engine — which names the
- * concrete buffer actors the `resolveBufferedAnchor` factory reads — supplies the
- * context type while this behavior stays DOM-free.
+ * Manual `Behavior<>` literal (like `shareSignals`), generic over `Context` (like
+ * `makeShareSignals`) so the engine — which names the concrete buffer actors the
+ * `resolveBufferedAnchor` seam reads — supplies the context type while this
+ * behavior stays DOM-free.
  */
 export function makeAnchorLiveTracks<Context extends object = object>(): Behavior<
-  { presentation: Signal<AnchorLiveTracksState['presentation']> },
+  {
+    presentation: Signal<AnchorLiveTracksState['presentation']>;
+    liveAnchor: Signal<AnchorLiveTracksState['liveAnchor']>;
+  },
   ContextSignals<Context>,
   AnchorLiveTracksConfig<Context>
 > {
   return {
-    stateKeys: ['presentation'],
+    stateKeys: ['presentation', 'liveAnchor'],
     contextKeys: [],
     setup: anchorLiveTracksSetup,
   };

@@ -20,11 +20,27 @@ buffered segment's actual native-PTS start `M₀`, paired with that segment's PD
 segment.startTime = M₀ + (segment.programDateTime − P₀)
 ```
 
-Established **once** per source (pin-once — it surfaces drift rather than
-masking it; the parser's PDT carry-forward maintains the timeline across
-reloads). Before any A/V track has buffer ground truth, the manifest estimate
-(the existing bootstrap) supplies an *estimated* anchor of the same shape, which
-the buffer pin later upgrades.
+Established **once** per source, on first buffer ground truth (pin-once — it
+surfaces drift rather than masking it; we don't re-correct, and the parser's PDT
+carry-forward maintains the timeline across reloads). On establishment the anchor
+is stamped onto **every** track in one pass: resolved tracks shift their segment
+timeline onto it; not-yet-resolved shells get it as `startDate`, so the
+media-playlist parser places their segments on the shared timeline at first
+resolve (`placeOnAnchor`). So a track selected later — an ABR rung, another audio
+language, late captions — resolves already anchored, with no per-track
+positioning pass. The established anchor is also published as a presentation-level
+`liveAnchor`, which `seekToLiveEdge` gates its live-edge seek on (see below).
+
+No pre-buffer estimate. Until ground truth exists a track rides its raw parser
+timeline — a valid timeline for fetching the first segments (the same segments
+are fetched either way), so the loader bootstraps the buffer, and thus the pin,
+without it. The one thing the estimate originally covered: `seekToLiveEdge` must
+not seek before the pin, or it targets the raw window and the pin's later shift
+strands the playhead off-window (confirmed by smoke test). We address that by
+**gating** that seek on the published anchor (`liveAnchor`, below) rather than
+bootstrapping it off a manifest estimate — the estimate's ~27 s turnover drift
+made it an unreliable seek target anyway. An earlier design kept the estimate as
+bootstrap; it's dropped in favor of the gate.
 
 This anchor covers **text tracks too** — they have no SourceBuffer to pin, so
 the shared anchor is the *only* way to place them. WebVTT cues are assumed
@@ -99,17 +115,26 @@ This promotes open question **[4] sync anchor** in
 
 ## Verification
 
-Implemented. `anchor-live-tracks` is a two-state reactor (`unanchored →
-anchored`): `unanchored` positions every selected track from the manifest
-estimate; entering `anchored` establishes the shared anchor once from the first
-selected A/V track with buffer ground truth, then positions all selected tracks
-(incl. text) onto it. The old per-track pin primitives
+Implemented. `anchor-live-tracks` is a reactor that, on first buffer ground truth
+(entry to `anchored`), establishes the shared anchor once and stamps it onto
+every track via `positionAllTracksToAnchor` — resolved tracks shifted, shells
+given `startDate` for the parser's `placeOnAnchor` to honor at first resolve. No
+estimate, no per-track positioning pass. The old per-track pin primitives
 (`anchorTrackToBufferedSegment` / `anchorTrackToSequenceOrigin`) are removed.
 
-Unit-covered (`anchor-live-tracks.test.ts`): one A/V pin placing audio + text by
-PDT; first-track-wins (video preferred); pre-pin estimate → buffer-pin upgrade;
-pin-once (no re-pin across reloads); inert when no PDT / no resolved track. Live
-end-to-end (a real stream with subtitles) is not yet smoke-tested.
+Unit-covered: the parser honors a pre-applied anchor (`parse-media-playlist.test.ts`);
+`positionAllTracksToAnchor` shifts resolved tracks + stamps shells, identity-
+preserving (`presentation-anchor.test.ts`); the behavior establishes from the
+buffered video track and stamps all tracks, first-track-wins, establishes once
+across reloads, and is inert without buffer truth or a selected track
+(`anchor-live-tracks.test.ts`); `seekToLiveEdge` holds its seek until `liveAnchor`
+is published (`seek-to-live-edge.test.ts`). Live A/V init smoke-tested on an
+ephemeral Mux LL-HLS stream: with no estimate, the seek is gated until the pin
+lands, then fires once to the live edge — clean startup, no stranding (an
+un-gated build stranded the playhead at the raw-window seek). Text anchoring
+against a live subtitled source is still unverified end-to-end; an intermittent
+~2 s audio *model* offset (buffers stay aligned) is tracked as a separate startup
+race.
 
 ## See also
 
