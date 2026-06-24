@@ -73,7 +73,7 @@ export function Getters() {
 
   return (
     <div className="flex flex-col gap-3">
-      <p className="text-xs text-warm-gray">Click a getter to log its current value.</p>
+      <p className="text-xs text-warm-gray dark:text-manila-dark">Click a getter to log its current value.</p>
       <div className="flex flex-wrap gap-2">
         {GETTERS.map((getter) => (
           <button
@@ -85,7 +85,7 @@ export function Getters() {
             }}
             className="rounded-xs border border-magenta/40 px-2 py-1 font-mono text-xs text-magenta transition-colors hover:bg-magenta hover:text-manila-light disabled:cursor-not-allowed disabled:opacity-50"
           >
-            {getter.expr}
+            {getter.expr.replace(/^media\./, '')}
           </button>
         ))}
       </div>

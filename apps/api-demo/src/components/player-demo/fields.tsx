@@ -5,7 +5,9 @@ import { NUMBER_INPUT_CLASS, SET_BUTTON_CLASS } from './styles';
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="flex flex-col gap-2">
-      <span className="font-display text-xs uppercase tracking-wide text-faded-black">{label}</span>
+      <span className="font-display text-xs uppercase tracking-wide text-faded-black dark:text-manila-light">
+        {label}
+      </span>
       {children}
     </div>
   );

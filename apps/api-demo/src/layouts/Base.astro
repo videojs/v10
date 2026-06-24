@@ -1,4 +1,6 @@
 ---
+import ThemeInit from '../components/ThemeInit.astro';
+import { ThemeToggle } from '../components/ThemeToggle';
 import '../styles/global.css';
 
 interface Props {
@@ -14,6 +16,7 @@ const { title, description = '' } = Astro.props;
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <meta name="theme-color" content="#f3e7d2" />
     <title>{title}</title>
     {description && <meta name="description" content={description} />}
 
@@ -29,10 +32,15 @@ const { title, description = '' } = Astro.props;
       href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Instrument+Sans:ital,wght@0,400..600;1,400..600&display=swap"
       rel="stylesheet"
     />
+
+    <ThemeInit />
   </head>
   <body
-    class="min-h-screen bg-manila-light font-sans text-faded-black antialiased selection:bg-gold selection:text-faded-black"
+    class="min-h-screen bg-manila-light font-sans text-faded-black antialiased selection:bg-gold selection:text-faded-black dark:bg-faded-black dark:text-manila-light"
   >
+    <div class="fixed top-4 right-4 z-50">
+      <ThemeToggle client:idle />
+    </div>
     <slot />
   </body>
 </html>
