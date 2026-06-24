@@ -26,8 +26,9 @@ without it, live HLS sources don't play correctly.
   reload loop, sliding-window tracking, `Infinity` duration semantics,
   live-edge seek + `setLiveSeekableRange`, and termination-on-`#EXT-X-ENDLIST`
   all land. The **live-window playhead guard** (reposition-on-window-exit) is
-  now implemented in `seek-to-live-edge`. **Not yet implemented:** the edge-only
-  `on-resume` reposition policy (a future use-case). Termination is
+  implemented as a reactor in `seek-to-live-edge` (window-update re-fire + a
+  `play` listener). **Not yet implemented:** an edge-only live mode (a future
+  use-case). Termination is
   `#EXT-X-ENDLIST`-based (the naive tier —
   sufficient for conformant content); the miss-counter fallback and reload
   jitter are deferred full-depth.
@@ -52,7 +53,7 @@ below is part of "live works (and terminates) at all"; richer live variants
 | Sliding-window segment tracking | ✅ Implemented | `placeOnPreviousTimeline` (`parse-media-playlist.ts`) carries the new window onto the established timeline via media-sequence overlap (PDT bridge on full turnover). Segment-loader `planTasks` re-evaluates the mutating `track.segments` on each load dispatch; back-buffer keeps last 2 segments. No explicit "no-longer-in-playlist" eviction signal — the keep-count heuristic + list shrink handle roll-off |
 | Live duration semantics | ✅ Implemented | Parser sets `Track.duration = Infinity` for unended live; `calculatePresentationDuration` (default resolver `getResolvedSelectedTrackDuration`) writes it; `updateMediaSourceDuration` propagates `mediaSource.duration = Infinity` once MS is open and buffers idle |
 | Live edge tracking + `setLiveSeekableRange` | ✅ Implemented (option **b**) | The live window (or null for VOD/ended) is derived once by the pure `liveWindowFor` (`media/live-window.ts`), consumed by two separate behaviors: `sync-live-seekable-range.ts` declares `setLiveSeekableRange(start, end)` reactively on each window slide (runs while paused too), and `seek-to-live-edge.ts` does the one-time seek to `liveEdgeStart` (the live latency behind the edge, via the `getLiveEdge` primitive). Separate from the reload loop (option b). Inert for VOD via `liveWindowFor` returning null. No `clearLiveSeekableRange()` on termination — unnecessary: the UA consults the live range only while `duration === Infinity`, so once `endOfStream` sets a finite duration it's ignored |
-| Live-window playhead guard | ✅ Implemented (`window-exit`) | While playing (`!paused && !seeking && readyState > 0`), reposition `currentTime` to `liveEdgeStart = max(windowStart, windowEnd − liveLatency)` (the latency from the injected `resolveLiveLatency` seam — HLS `HOLD-BACK`, 3× target duration) when the playhead falls **outside** the sliding window — covering *paused-too-long* (Scenario A; fires on the `playing` resume) and *fell-behind-on-poor-network* (Scenario B; fires on the reload / window-update re-fire of the effect, since `timeupdate` stops during a stall). Within-window pause and scrub-back are left untouched (DVR model). Lives in `seek-to-live-edge` so the live playhead position has a single owner (the one-time initial seek + the ongoing guard); secondary triggers are `playing` / `timeupdate` / `seeked` listeners. Reposition policy is a seam (`repositionPolicy`, default `'window-exit'`); the edge-only `'on-resume'` branch is not yet implemented. **Deferred:** playback-rate latency catch-up, MSE gap-jumping |
+| Live-window playhead guard | ✅ Implemented | `seek-to-live-edge` is a reactor (`inactive ↔ live`); the guard is the `live` state's `effects`. While playing (`!paused && !seeking`), it repositions `currentTime` to `liveEdgeStart` when the playhead has fallen behind the window start. Two triggers: the **window-update re-fire** (the effect reads the live edge, so each reload re-runs it — this catches *fell-behind-on-poor-network* (Scenario B), where `timeupdate` is silent during a stall) and a single **`play` listener** for immediate reposition on *resume* (Scenario A; the reload interval can be seconds) — `play`, not `playing`, since after a long pause the playhead sits behind the window at an unseekable position where `playing` never fires. Within-window pause / DVR scrub-back are left untouched. **Deferred:** playback-rate latency catch-up, MSE gap-jumping |
 | Reload jitter / backoff | ✅ Naive only | Target-duration cadence with unchanged-window throttle (half target). No thundering-herd jitter, no backoff on repeated identical-playlist responses (full depth, not implemented) |
 | Per-type reload coordination | ✅ Independent | Audio / video / text each own their `RecurringRunner` and reload on their own `#EXT-X-TARGETDURATION`. Resolved as **extended `resolveXTrack`** (same `setupTrackResolution` handles one-shot VOD and recurring live via the `RecurringRunner` abstraction) — no separate `reloadXTrack` family |
 | Termination detection | ✅ Naive depth | `#EXT-X-ENDLIST` recognized and surfaced (`MediaPlaylistMetadata.endList`); parser flips `Track.duration` finite (on `ENDLIST` or `PLAYLIST-TYPE:VOD`), which stops the reload loop. ENDLIST-only is the sanctioned naive tier (per [clusters.md](./clusters.md#naive-vs-full-implementation-depth)) and sufficient for conformant content (Mux always emits `ENDLIST`); the miss-counter fallback for non-conformant servers is deferred full-depth |
@@ -62,10 +63,12 @@ below is part of "live works (and terminates) at all"; richer live variants
 
 **Within this feature:**
 
-- **Edge-only `on-resume` reposition policy** — the `repositionPolicy` seam
-  exists (default `'window-exit'`, implemented), but the `'on-resume'`
-  (always-snap-to-edge / no-DVR) branch is inert. It lands as the
-  `[live-edge-only-mode]` use-case, not here.
+- **Edge-only live mode** — always snap to the live edge / no DVR (stop fetching
+  while paused, narrowed seekable, snap to edge on resume). Lands as the
+  `[live-edge-only-mode]` use-case, which introduces its own reposition behavior.
+  (An earlier `repositionPolicy` seam anticipating it was removed when the guard
+  became reload-driven — nothing consumed it, and "always-snap-on-resume" isn't
+  expressible without resume-detection the window-exit guard doesn't carry.)
 
 **Naive depth (sufficient for conformant content; full depth deferred):**
 
@@ -85,36 +88,31 @@ below is part of "live works (and terminates) at all"; richer live variants
 - **[dvr-event-stream-support](./dvr-event-stream-support.md)** — growing
   (non-sliding) window, back-seek through history. Extension with different
   windowing semantics; shares the reload loop and the `setLiveSeekableRange`
-  writer shape. Sits at the maximal-back-seek end of the same seekable
-  spectrum the guard's `repositionPolicy` exposes (edge-only ↔ in-window
-  scrub-back ↔ full-history back-seek).
+  writer shape. Sits at the maximal-back-seek end of the seekable spectrum
+  (edge-only ↔ in-window scrub-back ↔ full-history back-seek).
 - **[non-zero-pts-support](./non-zero-pts-support.md)** — live PTS advances
   from stream start, far from zero; the time-mapping primitive live consumes is
   a separate cluster B feature.
 - **[buffer-stall-recovery](./buffer-stall-recovery.md)** — mid-stream stall
   detection + unstick-in-place recovery (nudge → flush → reset). Coordinates
-  with this feature's planned
-  guard: an in-window stall is buffer-stall-recovery's territory; the
-  window-*exit* reposition is the live-specific terminal action.
+  with this feature's guard: an in-window stall is buffer-stall-recovery's
+  territory; the window-*exit* reposition is the live-specific terminal action.
 
 ## Likely cross-cutting impact
 
 The foundation is implemented, so most prior cross-cutting concerns are now
-realized. The remaining forward-looking impact is concentrated in the planned
-guard:
+realized. What remains is forward-looking:
 
-- **`repositionPolicy` composition seam.** The guard's reposition condition is
-  a policy point: `'window-exit'` (default — DVR model; reposition only when
-  the playhead is outside the window, in-window scrub-back preserved) vs
-  `'on-resume'` (edge-only — always snap to the live edge on resume). Per
+- **Edge-only mode is a future composition, not a runtime branch.** The guard
+  ships one behavior: window-exit (the DVR model — reposition only when the
+  playhead is outside the window, in-window scrub-back preserved). The edge-only
+  variant (stop fetching while paused + always-snap on resume + narrowed
+  seekable) is a future **Composition** (alternative-default-config + add +
+  alternative-impl) tracked as the `[live-edge-only-mode]` use-case. Per
   [clusters.md § Composition vs Policy vs middle pattern](./clusters.md#composition-vs-policy-vs-middle-pattern),
-  `'window-exit'` ships as the default config consumed by the guard behavior;
-  the **edge-only variant** (stop fetching segments while paused + always-snap
-  on resume + narrowed seekable) is a future **Composition**
-  (alternative-default-config + add + alternative-impl), tracked as a
-  `[live-edge-only-mode]` use-case rather than a runtime branch. Leaving the
-  seam in place costs only the policy indirection now and keeps the edge-only
-  mode a composition rather than a rewrite later.
+  it composes a variant rather than branching at runtime, and introduces its own
+  reposition behavior. (The `repositionPolicy` config seam that once anticipated
+  it was removed when the guard became reload-driven — see "What's not implemented".)
 - **Single owner of the live playhead position.** The guard writes
   `currentTime` (a seek). `seek-to-live-edge` already does the one-time initial
   seek; folding the guard into it keeps one writer of "where the live playhead
@@ -124,9 +122,10 @@ guard:
   plus the `currentTime` mirror.
 - **Primary trigger is the window-update signal, not `timeupdate`.** Scenario
   B's fall-behind happens *during a stall*, when `timeupdate` has stopped but
-  the window keeps sliding via reloads — so the guard must re-evaluate on the
-  reload / window-update signal. `playing` / `timeupdate` / `seeked` are
-  secondary triggers (resume case, prompt in-playback detection, overran-edge).
+  the window keeps sliding via reloads — so the guard re-evaluates on the
+  reload / window-update signal (the effect's tracked read of the live edge). A
+  single `play` listener is the secondary trigger, for immediate reposition on
+  resume (the reload interval can be seconds). `timeupdate` / `seeked` are unused.
 
 ## Implementation surface
 
@@ -137,7 +136,7 @@ guard:
 | `liveWindowFor` *(pure helper)* | `media/live-window.ts` | Derive the live window `{start,end}` from the track with the given id (type-agnostic via `findTrackById`), or `null` (VOD/ended/unresolved). Purely geometric — no delivery-format metadata. Centralizes all inertness so consumers don't re-derive the window. |
 | `liveWindowFromState` / `getLiveEdge` *(primitives)* | `playback/primitives/live-window.ts` | The state-reading call sites the live behaviors use. `liveWindowFromState` picks the timeline-bearing track — `selectedVideoTrackId ?? selectedAudioTrackId` (video positions both A/V; audio-only falls back to audio) — and calls `liveWindowFor`. `getLiveEdge({state,config})` adds the target playhead position (`liveEdgeStart = end − live latency`, clamped to start), bundling window geometry with the format-specific `config.resolveLiveLatency` policy so the behavior consumes one edge. Reads signals lazily (call inside an effect). |
 | `syncLiveSeekableRange` | `behaviors/dom/sync-live-seekable-range.ts` | Consume `liveWindowFromState`; `setLiveSeekableRange(start, end)` reactively on each window slide, including while paused. Duration is owned solely by `updateMediaSourceDuration`. Composed before `seekToLiveEdge`. |
-| `seekToLiveEdge` | `behaviors/dom/seek-to-live-edge.ts` | Consume `getLiveEdge`; one-time seek to `liveEdgeStart` + the live-window playhead guard (reposition-on-window-exit, `repositionPolicy` seam). Format-neutral — the live latency comes from the injected `resolveLiveLatency` seam, never read here. Gates on `mediaSource` open so the seek lands in the declared range. |
+| `seekToLiveEdge` | `behaviors/dom/seek-to-live-edge.ts` | A reactor (`inactive ↔ live`) consuming `getLiveEdge`. `live` `entry` does the one-time seek to `liveEdgeStart`; `live` `effects` runs the window-exit guard (window-update re-fire + `play` listener). Format-neutral — the live latency comes from the injected `resolveLiveLatency` seam, never read here. The `mediaSource`-open precondition orders the entry seek after `sync-live-seekable-range` declares the range, so the seek lands in-window. |
 | `anchorLiveTracks` | `behaviors/anchor-live-tracks.ts` | Pin live track timelines to the SourceBuffer's native-PTS ground truth (first appended segment) or manifest estimate; re-pin per reload as the window slides |
 | `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` | `behaviors/resolve-track.ts` | Own the reload loop via `RecurringRunner`; reschedule defaults to `mediaPlaylistReloadDelay`; per-type independent |
 | `calculatePresentationDuration` | `behaviors/calculate-presentation-duration.ts` | Populate `presentation.duration` via the config resolver (`Infinity` for unended live) |
@@ -155,8 +154,8 @@ for the `endOfStream` gate.
 `seek-to-live-edge` / `endOfStream` — distinct decision domains, not a
 multi-writer conflict). `presentation.streamType` (`'live'`). Per-track
 `segments` (live-mutating; written by reload parse, read by segment-loader).
-Live edge and the planned `liveEdgeStart` are **derived** from
-`track.segments`, not state slots.
+Live edge and `liveEdgeStart` are **derived** (via `getLiveEdge`) from
+`track.segments` + the injected latency, not state slots.
 
 **Engine composition:** `engines/hls/engine.ts` composes the live behaviors
 unconditionally (`anchorLiveTracks`, `calculatePresentationDuration`,
@@ -174,7 +173,6 @@ unconditionally (`anchorLiveTracks`, `calculatePresentationDuration`,
 | `resolveLiveLatency` | `seekToLiveEdge` config (engine-injected) | `liveLatencyFor` (HLS) | Format-neutral seam for the seconds the playhead trails the live edge. HLS injects `HOLD-BACK` (3× target duration); a DASH engine would inject `suggestedPresentationDelay`. Keeps `seek-to-live-edge` free of delivery-format specifics |
 | `DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration` | `media/buffer/forward-buffer.ts` | `30` | Seconds ahead of playhead to load |
 | `DEFAULT_BACK_BUFFER_CONFIG.keepSegments` | `media/buffer/back-buffer.ts` | `2` | Segments kept behind playhead |
-| `repositionPolicy` | `seek-to-live-edge` config (behavior-scoped) | `'window-exit'` | Reposition condition seam. `'window-exit'` implemented; `'on-resume'` (edge-only) is inert pending the `[live-edge-only-mode]` use-case, which adds the public engine-config surface |
 
 ## Verification
 
@@ -204,13 +202,12 @@ unconditionally (`anchorLiveTracks`, `calculatePresentationDuration`,
 
 **Live-window playhead guard** — `behaviors/dom/tests/seek-to-live-edge.test.ts`
 (`describe('live-window playhead guard')`, event-capable fake media element):
-playing-inside-window → no seek; `currentTime < windowStart` (playing) → seek to
-`liveEdgeStart`; `currentTime > windowEnd` (playing) → seek; paused-out-of-window
-→ no seek, then seek on `playing` resume; DVR mid-window scrub-back → **no** yank;
-`seeking` in flight → defer to `seeked`; sub-tolerance boundary → no jitter seek,
-beyond-tolerance → seek; window slides past frozen paused playhead across reloads
-→ no seek while paused, snaps in on resume; stalled-behind-window → repositions on
-the window-update re-fire; `on-resume` policy → inert (not yet implemented).
+playing-inside-window → no seek; behind-window-start on resume (`play`) → seek to
+`liveEdgeStart`; paused while the window slides → no seek, then seek on `play`
+resume; DVR mid-window scrub-back across a window update → **no** yank; `seeking`
+in flight → no seek, then seek once it settles; sub-tolerance boundary → no
+jitter seek, beyond-tolerance → seek; stalled-behind-window (playing, frozen
+`currentTime`) → repositions on the window-update re-fire.
 
 **Out of scope / deferred:** E2E (Chromium) — a local synthetic sliding-window
 stream (short target-duration) driving pause-beyond-window → resume-snaps-near-edge
@@ -231,13 +228,15 @@ covers the guard logic deterministically.
 
 **Resolved during guard implementation:**
 
-- **`repositionPolicy` seam shape** → behavior-scoped config on
-  `seek-to-live-edge` (default `'window-exit'`), **not** a public
-  `SimpleHlsEngineConfig` field. Avoids a speculative engine-config surface with
-  no current consumer (per `conventions/config.md`); the `[live-edge-only-mode]`
-  use-case adds the public field when it implements `'on-resume'`.
-- **Guard placement** → extends `seek-to-live-edge` (single owner of the live
-  playhead position), not a sibling behavior.
+- **`repositionPolicy` seam** → introduced as behavior-scoped config in the
+  initial guard, then **removed** when the guard became reload-driven
+  (window-update re-fire + `play` listener): nothing consumed it, and the
+  edge-only `'on-resume'` behavior isn't expressible without resume-detection the
+  window-exit guard doesn't carry. The `[live-edge-only-mode]` use-case defines
+  its own reposition behavior when built (per `conventions/config.md` —
+  anti-speculative-config).
+- **Guard placement** → the `live` state's `effects` in the `seek-to-live-edge`
+  reactor (single owner of the live playhead position), not a sibling behavior.
 
 ## Related features
 
@@ -245,11 +244,10 @@ covers the guard logic deterministically.
   loop; adds blocking reload, partial segments, delta playlists, preload hints.
 - **[dvr-event-stream-support](./dvr-event-stream-support.md)** — growing
   window + full-history back-seek on the same reload loop; the maximal-back-seek
-  end of the seekable spectrum the guard's `repositionPolicy` sits on (edge-only
-  ↔ in-window scrub-back ↔ full history).
+  end of the seekable spectrum (edge-only ↔ in-window scrub-back ↔ full history).
 - **[buffer-stall-recovery](./buffer-stall-recovery.md)** — in-window stall
-  detection + unstick-in-place recovery; coordinates with this feature's
-  planned guard (window-exit reposition is the live-specific terminal action).
+  detection + unstick-in-place recovery; coordinates with this feature's guard
+  (window-exit reposition is the live-specific terminal action).
 - **[non-zero-pts-support](./non-zero-pts-support.md)** — live PTS starts far
   from zero; cluster B foundation live consumes for correct `currentTime` /
   `seekable`.
@@ -263,14 +261,14 @@ covers the guard logic deterministically.
 - **source-replacement** — orthogonal; live → live source change tears down and
   rebuilds the reload loop via the same in-place cascade.
 - **`[live-edge-only-mode]`** *(future use-case)* — the edge-only composition
-  the `repositionPolicy: 'on-resume'` seam enables.
+  (always snap to the live edge / no DVR); introduces its own reposition behavior.
 
 ## See also
 
 - [clusters.md § Manifest reload loop](./clusters.md#manifest-reload-loop) —
   cluster A description; this feature is the foundation.
 - [clusters.md § Composition vs Policy vs middle pattern](./clusters.md#composition-vs-policy-vs-middle-pattern)
-  — the `repositionPolicy` seam / edge-only composition framing.
+  — the edge-only composition framing.
 - [live-timeline-anchoring](../../../decisions/live-timeline-anchoring.md) — PDT
   anchor that places the sliding-window timeline `anchorLiveTracks` consumes.
 - [mse-timestamp-offset](../../../decisions/mse-timestamp-offset.md) — native-PTS
