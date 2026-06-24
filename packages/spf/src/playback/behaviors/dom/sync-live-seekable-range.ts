@@ -57,13 +57,15 @@ function syncLiveSeekableRangeSetup({
   return effect(() => {
     const mediaSource = context.mediaSource.get();
     const liveWindow = liveWindowFromState(state);
-    if (!mediaSource || mediaSource.readyState !== 'open' || !liveWindow) return;
+    if (!mediaSource || !liveWindow) return;
 
     // Re-declared as the window slides so seekable tracks the live window
     // (the full DVR range remains seekable; seek-to-live-edge starts near the edge).
-    // No try/catch: `setLiveSeekableRange` throws only on a non-'open' readyState
-    // (checked synchronously just above — no await between, so it can't change) or
-    // an invalid range (`liveWindowFor` guarantees 0 ≤ start ≤ end).
+    // No readyState check, no try/catch: `setLiveSeekableRange` throws only on a
+    // non-'open' readyState or an invalid range, and neither can occur here —
+    // `setupMediaSource` publishes `context.mediaSource` only while open, and a
+    // non-null live window means the timeline-bearing track is still `Infinity`
+    // (so `endOfStream` hasn't ended the MS); `liveWindowFor` guarantees 0 ≤ start ≤ end.
     mediaSource.setLiveSeekableRange(liveWindow.start, liveWindow.end);
   });
 }

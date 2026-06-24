@@ -65,11 +65,23 @@ describe('syncLiveSeekableRange', () => {
     cleanup();
   });
 
-  it('does nothing until the MediaSource is open', () => {
-    const ms = fakeMediaSource('closed');
-    const cleanup = run({ presentation: makePresentation(), trackId: 'v-1', mediaSource: ms });
+  it('declares only once the MediaSource is published (open)', async () => {
+    // `setupMediaSource` publishes `context.mediaSource` only once open, so an
+    // unpublished (absent) MediaSource is the "not ready" gate — no `readyState`
+    // check needed (presence + a live window ⟹ open).
+    const ms = fakeMediaSource();
+    const state = {
+      presentation: signal<MaybeResolvedPresentation | undefined>(makePresentation()),
+      selectedVideoTrackId: signal<string | undefined>('v-1'),
+    };
+    const context = { mediaSource: signal<MediaSource | undefined>(undefined) };
+    const cleanup = syncLiveSeekableRange.setup({ state, context, config: {} }) as () => void;
 
-    expect(ms.setLiveSeekableRange).not.toHaveBeenCalled();
+    expect(ms.setLiveSeekableRange).not.toHaveBeenCalled(); // unpublished → no declaration
+
+    context.mediaSource.set(ms); // published (open)
+    await Promise.resolve(); // effect re-runs on a microtask
+    expect(ms.setLiveSeekableRange).toHaveBeenCalledWith(100, 110);
 
     cleanup();
   });
