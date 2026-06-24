@@ -19,11 +19,13 @@ seconds) used for two things:
    `targetDuration × offset`.
 
 Scope of this decision: the **anchor source** is PDT. The parser *surfaces*
-`Segment.programDateTime` (landed; see Verification). How that anchor drives a
-shared presentation timeline — the cross-track adjuster / per-track
-`presentationTimeOffset` derivation, and whether the model holds a single
-rolling anchor vs. per-segment measured times — is downstream and not fixed
-here.
+`Segment.programDateTime` (landed; see Verification). Whether the model holds a
+single rolling anchor vs. per-segment measured times is **fixed in
+[live-presentation-anchor](./live-presentation-anchor.md)** — a single
+presentation-level `(media-time ↔ PDT)` anchor, learned from the first A/V
+track to buffer and applied to all tracks (incl. text) by PDT. The remaining
+per-track `presentationTimeOffset` derivation for the skew case is downstream
+and not fixed here.
 
 This resolves open questions **[4] sync anchor** and **turnover `startTime`
 recovery** in
@@ -86,6 +88,9 @@ cross-track adjuster are not yet implemented.
 
 ## See also
 
+- [live-presentation-anchor](./live-presentation-anchor.md) — fixes how this
+  anchor drives a single shared presentation timeline (the deferred
+  single-rolling-anchor question).
 - [mse-timestamp-offset](./mse-timestamp-offset.md) — the buffer-layer half;
   the manifest→buffer offset this decision's anchor feeds into.
 - [live-presentation-modeling](../design/spf/live-presentation-modeling.md) —

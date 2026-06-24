@@ -197,10 +197,13 @@ count); a parts-only LL-HLS update is invisible to it, which
 `EXT-X-PROGRAM-DATE-TIME` is captured per-segment in the snapshot. It is
 the **wall-clock anchor common across separate renditions** — the spec's
 designated mechanism for keeping demuxed audio and video aligned. The
-model's job here is to *capture* PDT; the presentation-level anchor
-derivation and *how it drives per-track `timestampOffset`* is the
-deferred A/V-sync decision (see [Open questions](#open-questions) and
-[non-zero-pts-support](./features/non-zero-pts-support.md)). PDT alone
+model's job here is to *capture* PDT; the **presentation-level anchor
+derivation is now decided** — a single `(media-time ↔ PDT)` anchor learned
+from the first A/V track to buffer and applied to all tracks (incl. text) by
+PDT (see [live-presentation-anchor](../../decisions/live-presentation-anchor.md)).
+Only *how that anchor drives per-track `timestampOffset` in the skew case*
+remains the deferred A/V-sync decision (see [Open questions](#open-questions)
+and [non-zero-pts-support](./features/non-zero-pts-support.md)). PDT alone
 suffices as a sync anchor under the no-mid-stream-discontinuity
 assumption this foundation makes; `EXT-X-DISCONTINUITY(-SEQUENCE)` is
 deferred (it is not live-exclusive — ad-stitched VOD has it too — and is
@@ -338,15 +341,17 @@ prematurely fix.
   the timeline forward per fetch; `anchorLiveTracks` aligns renditions by PDT).
   So fetch scheduling is independent without the timeline reconciliation being
   forced independent, as this question anticipated.
-- **[4] How captured PDT feeds the A/V-sync anchor — DECIDED (anchor source).**
-  Resolved in [live-timeline-anchoring](../../decisions/live-timeline-anchoring.md):
-  align demuxed audio/video by equal PDT (same real instant), not by
-  sequence number or per-track zeroing. The parser now surfaces
-  `Segment.programDateTime`. Still open downstream: how that anchor drives a
-  shared presentation timeline (the cross-track adjuster / per-track
-  `presentationTimeOffset`), and the separate manifest→buffer offset
-  ([mse-timestamp-offset](../../decisions/mse-timestamp-offset.md)). Couples
-  back to discontinuity handling when that lands.
+- **[4] How captured PDT feeds the A/V-sync anchor — DECIDED.** Anchor *source*
+  resolved in [live-timeline-anchoring](../../decisions/live-timeline-anchoring.md)
+  (align demuxed audio/video by equal PDT, not sequence number or per-track
+  zeroing); the parser surfaces `Segment.programDateTime`. Anchor *structure*
+  resolved in [live-presentation-anchor](../../decisions/live-presentation-anchor.md):
+  a single presentation-level `(media-time ↔ PDT)` anchor, learned from the first
+  A/V track to buffer and applied to all tracks (incl. text) by PDT. Still open
+  downstream: the per-track `presentationTimeOffset` derivation for the *skew*
+  case, and the separate manifest→buffer offset
+  ([mse-timestamp-offset](../../decisions/mse-timestamp-offset.md)). Couples back
+  to discontinuity handling when that lands.
 - **Parser output shape — resurrect `MediaPlaylistInfo` or hang fields on
   `Track`?** The snapshot/merge model wants a faithful per-fetch
   representation; today's parser merges into `Track`. This is the parser
