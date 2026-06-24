@@ -255,6 +255,28 @@ describe('CuePoints', () => {
     });
   });
 
+  describe('cuePoints getter', () => {
+    it('falls back to the configured list before the track is populated', () => {
+      const media = createMedia(100);
+      const cuePoints = new CuePoints({ cuePoints: [{ time: 10, value: 'a' }] });
+      cuePoints.attach(asTarget(media));
+
+      // #setup is still pending: the track exists but its cues are not written yet.
+      expect(cuePoints.cuePoints).toEqual([{ time: 10, value: 'a' }]);
+    });
+
+    it('falls back to the configured list while cues are rewritten after a reload', async () => {
+      const media = createMedia(100);
+      const cuePoints = new CuePoints({ cuePoints: [{ time: 10, value: 'a' }] });
+      cuePoints.attach(asTarget(media));
+      await flush();
+
+      // The engine clears the track's cues on reload, before #setup rewrites them.
+      media.cuePointsTrack!.cues = [];
+      expect(cuePoints.cuePoints).toEqual([{ time: 10, value: 'a' }]);
+    });
+  });
+
   describe('cuePoints setter', () => {
     it('replaces previously set cue points', async () => {
       const media = createMedia(100);

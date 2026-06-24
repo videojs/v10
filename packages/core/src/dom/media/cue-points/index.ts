@@ -54,8 +54,11 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
   get cuePoints() {
     const target = this.#target;
     if (!target) return [...this.#cuePoints];
-    const track = getCuePointsTrack(target, this.#label);
-    return track?.cues ? Array.from(track.cues, (cue) => toCuePoint<Value>(cue as VTTCue)) : [];
+    const cues = getCuePointsTrack(target, this.#label)?.cues;
+    // Fall back to the configured list while the track is missing or not yet
+    // (re)populated — e.g. during `#setup` or right after a reload clears cues.
+    if (!cues?.length) return [...this.#cuePoints];
+    return Array.from(cues, (cue) => toCuePoint<Value>(cue as VTTCue));
   }
 
   set cuePoints(value) {
