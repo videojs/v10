@@ -29,10 +29,10 @@ describe('skins compiler config', () => {
     expect(code).toContain('from "@/ui/play-button"');
     expect(code).toContain('from "@/ui/poster"');
     expect(code).toContain('from "@/ui/seek-indicator"');
+    expect(code).toContain('from "@/ui/slider"');
     expect(code).toContain('from "@/ui/status-indicator"');
     expect(code).toContain('from "@/ui/volume-indicator"');
     expect(code).not.toContain('from "@/ui/text"');
-    expect(code).not.toContain('from "@/ui/slider"');
     expect(code).toContain('from "@/utils/use-render"');
     expect(code).toContain('from "@videojs/utils/predicate"');
     expect(code).toContain('from "@/icons"');
@@ -123,6 +123,10 @@ describe('skins compiler config', () => {
     expect(compactCode).toContain(
       compact('<TimeSlider.Thumb className={cn(slider.thumb.base, slider.thumb.interactive)} />')
     );
+    expect(compactCode).toContain(compact('<Slider.Thumbnail.Root className={thumbnail.root}>'));
+    expect(compactCode).toContain(compact('<Slider.Thumbnail.Image className={thumbnail.image} />'));
+    expect(compactCode).toContain(compact('<TimeSlider.Value type="pointer" className={thumbnail.time} />'));
+    expect(compactCode).toContain(compact('<SpinnerIcon className={cn(icon, thumbnail.spinner)} />'));
     expect(compactCode).toContain(compact('<TimeSlider.Preview className={slider.preview}>'));
     expect(compactCode).toContain(compact('<TimeSlider.Value type="pointer" className={slider.value} />'));
     expect(compactCode).not.toContain('SliderTrack');

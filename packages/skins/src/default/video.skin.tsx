@@ -14,6 +14,7 @@ import {
   Poster,
   SeekButton,
   SeekIndicator,
+  Slider,
   StatusAnnouncer,
   StatusIndicator,
   Text,
@@ -64,6 +65,7 @@ import {
   poster as posterClass,
   seek,
   slider,
+  thumbnail,
   time,
 } from './tailwind/video.tailwind';
 
@@ -148,6 +150,11 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
                 <TimeSlider.Buffer className={[slider.fill.base, slider.fill.buffer]} />
               </TimeSlider.Track>
               <TimeSlider.Thumb className={[slider.thumb.base, slider.thumb.interactive]} />
+              <Slider.Thumbnail.Root className={thumbnail.root}>
+                <Slider.Thumbnail.Image className={thumbnail.image} />
+                <TimeSlider.Value type="pointer" className={thumbnail.time} />
+                <SpinnerIcon className={[icon, thumbnail.spinner]} />
+              </Slider.Thumbnail.Root>
               <TimeSlider.Preview className={slider.preview}>
                 <TimeSlider.Value type="pointer" className={slider.value} />
               </TimeSlider.Preview>

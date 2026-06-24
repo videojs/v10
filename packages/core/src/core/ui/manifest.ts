@@ -9,7 +9,11 @@ export interface ComponentPart<Props extends object = EmptyProps> {
   readonly [__PROPS_BRAND__]?: Props;
 }
 
-export type ComponentPartRecord = Record<string, ComponentPart<any>>;
+export interface ComponentPartGroup<Parts extends ComponentPartRecord = ComponentPartRecord> {
+  parts: Parts;
+}
+
+export type ComponentPartRecord = Record<string, ComponentPart<any> | ComponentPartGroup>;
 
 export interface ComponentManifest<Props extends object = EmptyProps> {
   name: string;
@@ -36,13 +40,24 @@ interface DefineComponentFactory<Props extends object> {
 export type InferProps<T> =
   T extends ComponentManifest<infer Props> ? Props : T extends ComponentPart<infer Props> ? Props : never;
 
-export type InferParts<T> = T extends ComponentGroupManifest<infer Parts> ? keyof Parts : never;
+export type InferParts<T> =
+  T extends ComponentGroupManifest<infer Parts>
+    ? keyof Parts
+    : T extends ComponentPartGroup<infer Parts>
+      ? keyof Parts
+      : never;
 
 export type InferPartProps<T, K extends string> =
   T extends ComponentGroupManifest<infer Parts> ? (K extends keyof Parts ? InferProps<Parts[K]> : never) : never;
 
 export function defineComponentPart<Props extends object = EmptyProps>(): ComponentPart<Props> {
   return {} as ComponentPart<Props>;
+}
+
+export function defineComponentPartGroup<const Parts extends ComponentPartRecord>(
+  parts: Parts
+): ComponentPartGroup<Parts> {
+  return { parts };
 }
 
 /** Define a component manifest. */

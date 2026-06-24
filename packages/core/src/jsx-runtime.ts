@@ -1,8 +1,9 @@
 import type {
   AnyComponentManifest,
   ComponentGroupManifest,
-  InferPartProps,
-  InferParts,
+  ComponentPart,
+  ComponentPartGroup,
+  ComponentPartRecord,
   InferProps,
 } from './core/ui/manifest';
 
@@ -40,18 +41,20 @@ export interface Component<Props extends object> {
   readonly $$component: { name: string; part: string | null };
 }
 
-type PartComponentProps<M, K extends string> = K extends 'Root'
-  ? NonNullable<InferPartProps<M, K>>
-  : [NonNullable<InferPartProps<M, K>>] extends [never]
-    ? EmptyProps
-    : NonNullable<InferPartProps<M, K>>;
+type InferPartNodeProps<Node> = Node extends ComponentPart<infer Props> ? Props : never;
 
-type CompoundComponent<M> = {
-  [K in InferParts<M> & string]: Component<PartComponentProps<M, K>>;
+type PartComponentProps<Node> = [NonNullable<InferPartNodeProps<Node>>] extends [never]
+  ? EmptyProps
+  : NonNullable<InferPartNodeProps<Node>>;
+
+type CompoundComponent<Parts extends ComponentPartRecord> = {
+  [K in keyof Parts & string]: Parts[K] extends ComponentPartGroup<infer ChildParts>
+    ? CompoundComponent<ChildParts>
+    : Component<PartComponentProps<Parts[K]>>;
 };
 
 export type CreateComponentResult<M> = M extends ComponentGroupManifest
-  ? CompoundComponent<M>
+  ? CompoundComponent<M['parts']>
   : Component<InferProps<M>>;
 
 function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
@@ -71,13 +74,21 @@ export function createComponent<M extends AnyComponentManifest>(manifest: M): Cr
     return createRuntimeComponentPart(manifest.name, null) as CreateComponentResult<M>;
   }
 
-  const compound: Record<string, Component<never>> = {};
+  return createComponentParts(manifest.name, manifest.parts) as CreateComponentResult<M>;
+}
 
-  for (const part of Object.keys(manifest.parts)) {
-    compound[part] = createRuntimeComponentPart(manifest.name, part);
+function createComponentParts(name: string, parts: ComponentPartRecord, prefix = ''): Record<string, unknown> {
+  const compound: Record<string, unknown> = {};
+
+  for (const part of Object.keys(parts)) {
+    const path = prefix ? `${prefix}.${part}` : part;
+    const value = parts[part]!;
+
+    compound[part] =
+      'parts' in value ? createComponentParts(name, value.parts, path) : createRuntimeComponentPart(name, path);
   }
 
-  return compound as CreateComponentResult<M>;
+  return compound;
 }
 
 function createNode(type: ComponentType, props: Record<string, unknown>, key?: string | number | null): ComponentNode {

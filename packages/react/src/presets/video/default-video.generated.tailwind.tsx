@@ -21,6 +21,7 @@ import {
   poster as posterClass,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
@@ -62,6 +63,7 @@ import { PlayButton } from '@/ui/play-button';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
+import { Slider } from '@/ui/slider';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
@@ -167,6 +169,11 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
                 <TimeSlider.Buffer className={cn(slider.fill.base, slider.fill.buffer)} />
               </TimeSlider.Track>
               <TimeSlider.Thumb className={cn(slider.thumb.base, slider.thumb.interactive)} />
+              <Slider.Thumbnail.Root className={thumbnail.root}>
+                <Slider.Thumbnail.Image className={thumbnail.image} />
+                <TimeSlider.Value type="pointer" className={thumbnail.time} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
+              </Slider.Thumbnail.Root>
               <TimeSlider.Preview className={slider.preview}>
                 <TimeSlider.Value type="pointer" className={slider.value} />
               </TimeSlider.Preview>

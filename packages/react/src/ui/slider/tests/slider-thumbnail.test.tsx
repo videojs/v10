@@ -74,6 +74,19 @@ describe('SliderThumbnail', () => {
     expect(container.querySelector('[data-testid="thumbnail"]')).toBeTruthy();
   });
 
+  it('renders namespaced root and image parts', () => {
+    const { container } = render(
+      <SliderRoot>
+        <SliderThumbnail.Root data-testid="thumbnail-root">
+          <SliderThumbnail.Image data-testid="thumbnail-image" />
+        </SliderThumbnail.Root>
+      </SliderRoot>
+    );
+
+    expect(container.querySelector('[data-testid="thumbnail-root"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="thumbnail-image"]')).toBeTruthy();
+  });
+
   it('throws outside of SliderRoot', () => {
     expect(() => render(<SliderThumbnail />)).toThrow('Slider compound components must be used within a Slider.Root');
   });
