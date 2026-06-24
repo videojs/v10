@@ -225,6 +225,20 @@ describe('CuePoints', () => {
       expect(media.cuePointsTrack!.cues.map((c) => c.startTime)).toEqual([10, 20]);
     });
 
+    it('does not overlap the previous last cue when appending after it', async () => {
+      const media = createMedia(100);
+      const cuePoints = new CuePoints({ cuePoints: [{ time: 10, value: 'a' }] });
+      cuePoints.attach(asTarget(media));
+      await flush();
+
+      await cuePoints.addCuePoints([{ time: 50, value: 'b' }]);
+
+      expect(media.cuePointsTrack!.cues.map((c) => [c.startTime, c.endTime])).toEqual([
+        [10, 50],
+        [50, 100],
+      ]);
+    });
+
     it('does not mutate the caller array', async () => {
       const media = createMedia(100);
       const cuePoints = new CuePoints();
