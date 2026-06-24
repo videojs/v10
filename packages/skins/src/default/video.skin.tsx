@@ -14,6 +14,7 @@ import {
   Poster,
   SeekButton,
   StatusAnnouncer,
+  Text,
   Time,
   TimeSlider,
   Tooltip,
@@ -45,12 +46,12 @@ import {
   error,
   fullscreenIcon,
   icon,
-  iconContainer,
   iconFlipped,
   overlay,
   pipIcon,
   playIcon,
   popup,
+  seek,
   slider,
   time,
 } from './tailwind/video.tailwind';
@@ -101,8 +102,9 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <SeekButton seconds={-SEEK_TIME} className={[iconButton]}>
-                  <SeekIcon className={[icon, iconContainer, iconFlipped]} />
+                <SeekButton seconds={-SEEK_TIME} className={[iconButton, seek.button]}>
+                  <SeekIcon className={[icon, iconFlipped]} />
+                  <Text className={[seek.label, seek.labelBackward]}>{SEEK_TIME}</Text>
                 </SeekButton>
               </Tooltip.Trigger>
               <Tooltip.Popup className={popup.tooltip}>
@@ -113,8 +115,9 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
-                <SeekButton seconds={SEEK_TIME} className={[iconButton]}>
-                  <SeekIcon className={[icon, iconContainer]} />
+                <SeekButton seconds={SEEK_TIME} className={[iconButton, seek.button]}>
+                  <SeekIcon className={icon} />
+                  <Text className={[seek.label, seek.labelForward]}>{SEEK_TIME}</Text>
                 </SeekButton>
               </Tooltip.Trigger>
               <Tooltip.Popup className={popup.tooltip}>

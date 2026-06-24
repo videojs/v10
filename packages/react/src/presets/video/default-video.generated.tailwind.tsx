@@ -12,12 +12,12 @@ import {
   error,
   fullscreenIcon,
   icon,
-  iconContainer,
   iconFlipped,
   overlay,
   pipIcon,
   playIcon,
   popup,
+  seek,
   slider,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
@@ -112,8 +112,9 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} className={cn(iconButton)} type="button">
-                    <SeekIcon className={cn(icon, iconContainer, iconFlipped)} />
+                  <SeekButton seconds={-SEEK_TIME} className={cn(iconButton, seek.button)} type="button">
+                    <SeekIcon className={cn(icon, iconFlipped)} />
+                    <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
                   </SeekButton>
                 }
               />
@@ -126,8 +127,9 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} className={cn(iconButton)} type="button">
-                    <SeekIcon className={cn(icon, iconContainer)} />
+                  <SeekButton seconds={SEEK_TIME} className={cn(iconButton, seek.button)} type="button">
+                    <SeekIcon className={icon} />
+                    <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
                   </SeekButton>
                 }
               />

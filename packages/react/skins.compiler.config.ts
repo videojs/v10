@@ -51,6 +51,10 @@ export default defineConfig({
           transform: code.edit.jsx.addPropsSpread('rest'),
         }),
         code.edit.jsx.element({
+          when: code.match.jsx.tag('Text'),
+          transform: code.edit.jsx.replaceTag('span'),
+        }),
+        code.edit.jsx.element({
           when: code.match.jsx.tag('Poster'),
           transform: () => {
             return code.create.jsx.renderIf(

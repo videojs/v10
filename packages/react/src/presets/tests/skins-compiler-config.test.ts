@@ -28,6 +28,7 @@ describe('skins compiler config', () => {
     expect(code).toContain('from "@/ui/pip-button"');
     expect(code).toContain('from "@/ui/play-button"');
     expect(code).toContain('from "@/ui/poster"');
+    expect(code).not.toContain('from "@/ui/text"');
     expect(code).not.toContain('from "@/ui/slider"');
     expect(code).toContain('from "@/utils/use-render"');
     expect(code).toContain('from "@videojs/utils/predicate"');
@@ -69,8 +70,16 @@ describe('skins compiler config', () => {
     expect(compactCode).toContain(compact('<Tooltip.Trigger render={<PlayButton'));
     expect(compactCode).toContain(compact('<PlayButton className={cn(iconButton, playIcon.button)} type="button">'));
     expect(compactCode).toContain(
-      compact('<SeekButton seconds={-SEEK_TIME} className={cn(iconButton)} type="button">')
+      compact('<SeekButton seconds={-SEEK_TIME} className={cn(iconButton, seek.button)} type="button">')
     );
+    expect(compactCode).toContain(compact('<SeekIcon className={cn(icon, iconFlipped)} />'));
+    expect(compactCode).toContain(compact('<span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>'));
+    expect(compactCode).toContain(
+      compact('<SeekButton seconds={SEEK_TIME} className={cn(iconButton, seek.button)} type="button">')
+    );
+    expect(compactCode).toContain(compact('<span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>'));
+    expect(compactCode).not.toContain('iconContainer');
+    expect(compactCode).not.toContain('<Text');
     expect(compactCode).not.toContain(compact('render={<Button />}'));
     expect(compactCode).toContain(compact('<TimeSlider.Root className={slider.root}>'));
     expect(compactCode).toContain(compact('<TimeSlider.Track className={slider.track}>'));

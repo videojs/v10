@@ -29,6 +29,7 @@ import SeekIndicatorDef from './seek-indicator/seek-indicator-component';
 import SliderDef from './slider/slider-component';
 import StatusAnnouncerDef from './status-announcer/status-announcer-component';
 import StatusIndicatorDef from './status-indicator/status-indicator-component';
+import TextDef from './text/text-component';
 import ThumbnailDef from './thumbnail/thumbnail-component';
 import TimeDef from './time/time-component';
 import TimeSliderDef from './time-slider/time-slider-component';
@@ -64,6 +65,7 @@ export const SeekIndicator = createComponent(SeekIndicatorDef);
 export const Slider = createComponent(SliderDef);
 export const StatusAnnouncer = createComponent(StatusAnnouncerDef);
 export const StatusIndicator = createComponent(StatusIndicatorDef);
+export const Text = createComponent(TextDef);
 export const Thumbnail = createComponent(ThumbnailDef);
 export const Time = createComponent(TimeDef);
 export const TimeSlider = createComponent(TimeSliderDef);
@@ -100,6 +102,7 @@ export const COMPONENTS = {
   Slider: SliderDef,
   StatusAnnouncer: StatusAnnouncerDef,
   StatusIndicator: StatusIndicatorDef,
+  Text: TextDef,
   Thumbnail: ThumbnailDef,
   Time: TimeDef,
   TimeSlider: TimeSliderDef,

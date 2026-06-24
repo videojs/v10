@@ -109,7 +109,7 @@ Steps:
 - Import Tailwind token objects from existing `packages/skins/src/default/tailwind/video.tailwind.ts`.
 - Keep skin source target-neutral:
   - no `div`, `span`, `button`, `sup`
-  - no `render`
+  - no React `render` props; the only exception is the restricted settings radio-group children template documented below
   - no `aria-*`, `data-*`, `id`, `role`, `tabIndex`, or `style`
 - Replace obvious wrappers with semantic Core parts where they already exist.
 - Capture every missing semantic wrapper/lowering need in a gap list before inventing new API.
@@ -333,6 +333,244 @@ Next implementation sequence:
    - Add `default/audio.skin.tsx`, `minimal/video.skin.tsx`, and `minimal/audio.skin.tsx`.
    - Defer live/background variants until base audio/video generation is stable.
 
+### Current Default Video Parity Decisions
+
+This section records the current direction for closing the remaining gap between `packages/skins/src/default/video.skin.tsx` and the manual React Tailwind skin.
+
+Baseline decisions:
+- Source skin stays target-neutral: no lowercase intrinsic elements (`div`, `span`, `sup`, etc.) and no React hooks/render props. The settings radio-group children template is a compile-time template exception, not a general React escape hatch.
+- Source skin owns styling decisions and token placement. React lowering should not hide major styling/markup decisions in opaque helper components unless the behavior is inherently React-specific.
+- React lowering may still own React-specific mechanics: `render` props, `type="button"`, DOM attribute names, rest props, and imports.
+- Do not chase the current manual skin exactly when the manual shape only exists because older code needed wrappers. Prefer the simpler source shape when it preserves behavior and styling.
+
+Buffering indicator:
+- Do not keep the manual inner buffering `container` wrapper.
+- Move any still-needed `bufferingIndicator.container` styles into `bufferingIndicator.root`.
+- Generated/source target shape:
+
+```tsx
+<BufferingIndicator className={bufferingIndicator.root}>
+  <SpinnerIcon className={icon} />
+</BufferingIndicator>
+```
+
+Error dialog:
+- Keep the simplified generated/source structure.
+- Do not add `ErrorDialog.Dialog`, `ErrorDialog.Content`, or `ErrorDialog.Actions` solely to match the current manual React skin.
+- Generated/source target shape:
+
+```tsx
+<ErrorDialog.Root>
+  <ErrorDialog.Popup className={error.popup}>
+    <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+    <ErrorDialog.Description className={error.description} />
+    <ErrorDialog.Close className={[button.base, button.primary, error.close]}>OK</ErrorDialog.Close>
+  </ErrorDialog.Popup>
+</ErrorDialog.Root>
+```
+
+Seek buttons:
+- Keep the visible seek label, but do not use an extra icon-container wrapper span.
+- Add a source-neutral `Text` primitive that React lowers to `span`.
+- Move `iconContainer`-style grid/relative placement onto the seek button token.
+- Source target shape:
+
+```tsx
+<SeekButton seconds={-SEEK_TIME} className={[iconButton, seek.button]}>
+  <SeekIcon className={[icon, iconFlipped]} />
+  <Text className={[seek.label, seek.labelBackward]}>{SEEK_TIME}</Text>
+</SeekButton>
+
+<SeekButton seconds={SEEK_TIME} className={[iconButton, seek.button]}>
+  <SeekIcon className={icon} />
+  <Text className={[seek.label, seek.labelForward]}>{SEEK_TIME}</Text>
+</SeekButton>
+```
+
+React generated shape:
+
+```tsx
+<SeekButton seconds={-SEEK_TIME} className={cn(iconButton, seek.button)} type="button">
+  <SeekIcon className={cn(icon, iconFlipped)} />
+  <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
+</SeekButton>
+```
+
+Thumbnail preview:
+- We want nested thumbnail parts because the current thumbnail implementation already has root/image semantics internally.
+- Desired source/API shape:
+
+```tsx
+<Slider.Thumbnail.Root className={thumbnail.root}>
+  <Slider.Thumbnail.Image className={thumbnail.image} />
+  <TimeSlider.Value type="pointer" className={thumbnail.time} />
+  <SpinnerIcon className={[icon, thumbnail.spinner]} />
+</Slider.Thumbnail.Root>
+```
+
+- This requires nested component part support in the manifest/generated component system. Current manifests only support one level like `Slider.Thumbnail`.
+- Keep existing `<Slider.Thumbnail />` behavior as an alias to the image part if possible.
+
+Volume popover:
+- Use a special `VolumePopover.Root`, but reuse regular `Popover` parts as children.
+- The root owns volume availability/null behavior, similar to how `VolumeSlider.Root` owns the volume feature dependency.
+- Source target shape:
+
+```tsx
+<VolumePopover.Root openOnHover delay={200} closeDelay={100} side="top">
+  <Popover.Trigger>
+    <MuteButton className={muteIcon.button}>
+      <VolumeOffIcon className={[icon, muteIcon.volumeOff]} />
+      <VolumeLowIcon className={[icon, muteIcon.volumeLow]} />
+      <VolumeHighIcon className={[icon, muteIcon.volumeHigh]} />
+    </MuteButton>
+  </Popover.Trigger>
+
+  <Popover.Popup className={[popup.popover, popup.volume]}>
+    <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" className={slider.root}>
+      <VolumeSlider.Track className={slider.track}>
+        <VolumeSlider.Fill className={[slider.fill.base, slider.fill.fill]} />
+      </VolumeSlider.Track>
+      <VolumeSlider.Thumb className={[slider.thumb.base, slider.thumb.persistent]} />
+    </VolumeSlider.Root>
+  </Popover.Popup>
+</VolumePopover.Root>
+```
+
+- React lowering can continue converting `Popover.Trigger` children into `render` props.
+
+Settings menu:
+- The settings menu must remain style-owned by source. Do not solve it with an opaque React helper that contains all the styling/markup.
+- The radio groups are the right data boundary: `QualityRadioGroup`, `PlaybackRateRadioGroup`, and `CaptionsRadioGroup` already have Core state and React hooks that produce option records.
+- Do not add tailored compound parts like `QualityRadioGroup.Label`, `QualityRadioGroup.Tier`, or `QualityRadioGroup.Badge`. Those values are already returned by the React hooks as fields on each option.
+- Use a restricted source-level children render function as the option-row template. The group owns the hook data and the generated `map(...)`; the source owns the row markup/styling.
+- Treat the render function as a compile-time template language, not as a general React render prop in source. React can execute the generated render body, but HTML lowering must statically translate it to `<template>` placeholders.
+- Do not use `Menu.ItemIndicator` for generated settings rows. `Menu.RadioItem` / `<media-menu-radio-item>` already own checked state via `aria-checked`; the check icon should receive `menu.indicator` directly and use parent `group-aria-checked/menu-item` styles.
+- Keep a generic availability boundary around each setting section so React can conditionally render the whole submenu section while HTML can rely on existing `type="quality|playback-rate|captions"` / `data-availability` behavior. Placeholder name: `Menu.Setting`; final naming still needs confirmation.
+
+Source-template target shape:
+
+```tsx
+<Menu.Setting type="quality">
+  <Menu.Root>
+    <Menu.Trigger type="quality" className={[menu.item, 'media-menu__item--submenu']}>
+      <SwitchesIcon className={icon} />
+      <Text>Quality</Text>
+      <Text className={menu.hint}>
+        <Menu.ItemValue className={menu.hintLabel} />
+        <ChevronIcon className={[icon, menu.chevron]} />
+      </Text>
+    </Menu.Trigger>
+
+    <Menu.Content className={menu.submenuPanel}>
+      <Menu.Back className={menu.back}>
+        <ChevronIcon className={[icon, menu.chevron, iconFlipped]} />
+        <Text>Quality</Text>
+      </Menu.Back>
+
+      <Menu.Separator className={menu.separator} />
+
+      <QualityRadioGroup className={menu.group} label="Quality">
+        {({ option }) => (
+          <Menu.RadioItem className={menu.item} value={option.value} disabled={option.disabled}>
+            <Text>
+              <Text>{option.label}</Text>
+              {option.tier ? <Text className={menu.tier}>{option.tier}</Text> : null}
+            </Text>
+            {option.badge ? <Text className={[badge, menu.badge]}>{option.badge}</Text> : null}
+            <CheckIcon className={[icon, menu.indicator]} />
+          </Menu.RadioItem>
+        )}
+      </QualityRadioGroup>
+    </Menu.Content>
+  </Menu.Root>
+</Menu.Setting>
+```
+
+React lowering target concept:
+
+```tsx
+const quality = useQualityOptions();
+
+{quality?.state.availability === 'available' ? (
+  <Menu.Root>
+    {/* source-owned trigger/content markup */}
+    <Menu.RadioGroup className={menu.group} value={quality.value} onValueChange={quality.setValue} aria-label="Quality">
+      {quality.options.map((option) => (
+        <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
+          <span>
+            <span>{option.label}</span>
+            {option.tier ? <span className={menu.tier}>{option.tier}</span> : null}
+          </span>
+          {option.badge ? <span className={cn(badge, menu.badge)}>{option.badge}</span> : null}
+          <CheckIcon className={cn(icon, menu.indicator)} />
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  </Menu.Root>
+) : null}
+```
+
+HTML lowering target concept:
+
+```html
+<media-quality-radio-group class="...">
+  <template>
+    <media-menu-radio-item class="...">
+      <span>
+        <span data-part="label"></span>
+        <span data-part="tier" class="..."></span>
+      </span>
+      <span data-part="badge" class="..."></span>
+      <!-- check icon with menu.indicator classes, no media-menu-item-indicator wrapper -->
+    </media-menu-radio-item>
+  </template>
+</media-quality-radio-group>
+```
+
+Template-lowering constraints:
+- Allow a restricted children render function only as the direct child of `QualityRadioGroup`, `PlaybackRateRadioGroup`, and `CaptionsRadioGroup`.
+- The render function returns one `Menu.RadioItem` row template. `value={option.value}` and `disabled={option.disabled}` are allowed for React lowering and dropped for HTML template lowering because the HTML group sets those on cloned items.
+- Allow static JSX, static props, source-neutral `Text`, icons, `className` values, and `className` arrays.
+- Allow direct option field reads: `{option.label}`, `{option.tier}`, `{option.badge}`, `{option.value}`, and `{option.disabled}`.
+- Allow simple optional field guards such as `{option.tier ? <Text>{option.tier}</Text> : null}` and `{option.badge ? <Text>{option.badge}</Text> : null}`.
+- Disallow `options.map(...)` in source, function calls inside the template, spreads, event handlers, refs, hooks, computed expressions, dynamic component selection, and arbitrary `state` usage until a concrete need appears.
+- Unsupported template expressions should produce compiler diagnostics rather than silently generating incorrect React or HTML output.
+
+Input feedback:
+- Avoid adding `InputFeedback.Root` if we can move wrapper positioning styles onto the actual indicator roots.
+- Current root styles own absolute placement/grid. Move equivalent placement into `inputFeedback.island.*` and `inputFeedback.bubble.*` tokens.
+- Source target shape:
+
+```tsx
+<VolumeIndicator.Root className={[inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume]}>
+  {/* fill/value/icon children */}
+</VolumeIndicator.Root>
+
+<StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={[inputFeedback.island.base, inputFeedback.island.status, inputFeedback.island.shownStatus]}>
+  {/* status icon/value children */}
+</StatusIndicator.Root>
+
+<SeekIndicator.Root className={[inputFeedback.bubble.base, inputFeedback.bubble.seek]}>
+  {/* seek icon/value children */}
+</SeekIndicator.Root>
+
+<StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={[inputFeedback.bubble.base, inputFeedback.bubble.center]}>
+  {/* play/pause icon children */}
+</StatusIndicator.Root>
+```
+
+### Revised Near-Term Order
+
+1. Add `Text` primitive and React lowering to `span`.
+2. Update seek labels to use `Text`, and move `iconContainer` styles onto the seek button token.
+3. Simplify buffering token/source shape by merging container styles into root.
+4. Add poster class parity.
+5. Move input-feedback root positioning onto indicator roots.
+6. Add nested component part support for `Slider.Thumbnail.Root` / `Slider.Thumbnail.Image`.
+7. Add `VolumePopover.Root` and source volume popover structure.
+8. Implement settings menu render-function template lowering for React first, then HTML `<template>` lowering using the validated subset above.
+
 ## Phase 3 - Expand React Tailwind Coverage
 
 Purpose: move from one slice to all supported React Tailwind skins.
@@ -403,4 +641,4 @@ Gate question:
 
 ## Immediate Next Step
 
-Continue expanding `default/video` source parity one structural gap at a time. The next likely gap is overlay after deciding whether the missing shell belongs in Core parts, source abstractions, or React lowering.
+Continue expanding `default/video` source parity one structural gap at a time. The next implementation chunk should be `Text` plus seek-label parity, followed by buffering/poster simplification. Settings menu lowering now has a recorded direction: restricted render-function option templates, React hook/map generation, HTML `<template>` placeholder generation, and no `Menu.ItemIndicator` wrapper.
