@@ -133,6 +133,31 @@ function placeOnPreviousTimeline(
 }
 
 /**
+ * Place a first-resolved window on a *pre-applied* anchor — the track's
+ * `startDate` (wall clock at media-time 0) set on the unresolved shell before any
+ * segments exist. Each PDT-bearing segment lands at `segment.startDate − anchor`,
+ * so the window resolves already on the shared presentation timeline rather than
+ * a local-from-zero one (the `startDate` recomputed afterwards then reads back as
+ * the anchor). Falls back to the local base when no segment carries PDT — there's
+ * nothing to anchor against.
+ */
+function placeOnAnchor(segments: Segment[], anchor: number): { segments: Segment[]; startTime: number } {
+  const localBase = segments[0]?.startTime ?? 0;
+  const anchorSegment = segments.find((segment) => !isUndefined(segment.startDate));
+  if (!anchorSegment || isUndefined(anchorSegment.startDate)) {
+    return { segments, startTime: localBase };
+  }
+
+  const shift = anchorSegment.startDate - anchor - anchorSegment.startTime;
+  if (shift === 0) {
+    return { segments, startTime: localBase };
+  }
+
+  const placed = segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
+  return { segments: placed, startTime: localBase + shift };
+}
+
+/**
  * Parse an HLS media playlist into a resolved track with segments.
  *
  * `previous` is what was known about this track before this parse: the
@@ -285,12 +310,17 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   const complete = endList || playlistType === 'VOD';
   const trackDuration = complete ? totalDuration : Number.POSITIVE_INFINITY;
 
-  // Position this window on the timeline. First resolve (previous is the
-  // unresolved shell, no segments) anchors at 0; a live reload (previous is the
-  // prior resolved snapshot) carries the timeline forward from the overlap.
+  // Position this window on the timeline. A live reload (previous is the prior
+  // resolved snapshot) carries the timeline forward from the overlap. First
+  // resolve places relative to a pre-applied anchor (`startDate` set on the
+  // shell) when present — so a track resolves already on the shared presentation
+  // timeline — else anchors at the local base 0.
+  const presetAnchor = previous.startDate;
   const placed = isResolvedTrack(previous)
     ? placeOnPreviousTimeline(previous, segments, mediaSequence, targetDuration)
-    : { segments, startTime: 0 };
+    : isUndefined(presetAnchor)
+      ? { segments, startTime: 0 }
+      : placeOnAnchor(segments, presetAnchor);
 
   // Wall-clock anchor: `startDate − startTime` for the first PDT-bearing
   // segment (constant along a linear timeline). Maps this track's origin to

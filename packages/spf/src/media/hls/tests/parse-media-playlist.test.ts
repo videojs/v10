@@ -808,4 +808,54 @@ s0.ts`;
       expect((audio.startDate ?? 0) - (video.startDate ?? 0)).toBeCloseTo(2, 3);
     });
   });
+
+  describe('pre-applied anchor (startDate on the unresolved shell)', () => {
+    const shell: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'video-0',
+      url: 'https://example.com/video/playlist.m3u8',
+      bandwidth: 1400000,
+      codecs: ['avc1.4d401f'],
+      mimeType: 'video/mp4',
+    };
+    const epoch = (iso: string) => Date.parse(iso) / 1000;
+    const anchor = epoch('2026-01-01T00:00:00.000Z');
+
+    const withPdt = `#EXTM3U
+#EXT-X-TARGETDURATION:2
+#EXT-X-MEDIA-SEQUENCE:5
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:10.000Z
+#EXTINF:2,
+s5.m4s
+#EXTINF:2,
+s6.m4s`;
+
+    it('places first-resolve segments by PDT relative to the pre-applied startDate', () => {
+      const r = parseMediaPlaylist(withPdt, { ...shell, startDate: anchor });
+      // segment.startTime = segment PDT − anchor (10s and 12s past media-time 0).
+      expect(r.segments.map((s) => s.startTime)).toEqual([10, 12]);
+      expect(r.startTime).toBe(10);
+      // The recomputed track startDate reads back as the anchor.
+      expect(r.startDate).toBe(anchor);
+    });
+
+    it('anchors at the local base 0 when the shell carries no startDate (unchanged)', () => {
+      const r = parseMediaPlaylist(withPdt, shell);
+      expect(r.segments.map((s) => s.startTime)).toEqual([0, 2]);
+      expect(r.startTime).toBe(0);
+    });
+
+    it('falls back to the local base when the shell has a startDate but no segment carries PDT', () => {
+      const noPdt = `#EXTM3U
+#EXT-X-TARGETDURATION:2
+#EXT-X-MEDIA-SEQUENCE:5
+#EXTINF:2,
+s5.m4s
+#EXTINF:2,
+s6.m4s`;
+      const r = parseMediaPlaylist(noPdt, { ...shell, startDate: anchor });
+      expect(r.segments.map((s) => s.startTime)).toEqual([0, 2]);
+      expect(r.startDate).toBeUndefined();
+    });
+  });
 });
