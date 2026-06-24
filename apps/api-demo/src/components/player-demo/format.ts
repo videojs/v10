@@ -18,6 +18,11 @@ export function quote(value: string): string {
   return `"${value}"`;
 }
 
+/** Render a cue point's value for display: strings as-is, everything else as JSON. */
+export function cueValue(value: unknown): string {
+  return typeof value === 'string' ? value : JSON.stringify(value);
+}
+
 export function ranges(value: TimeRangeLike): string {
   if (!value || value.length === 0) return '(empty)';
   const parts: string[] = [];

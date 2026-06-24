@@ -20,6 +20,19 @@ export function bool(value: boolean): string {
   return value ? '1' : '0';
 }
 
+/**
+ * Replace the query string with just `src` (plus any `keep` entries), dropping
+ * every other persisted param.
+ */
+export function resetParamsToSrc(src: string, keep?: Record<string, string>): void {
+  if (typeof window === 'undefined') return;
+  const url = new URL(window.location.href);
+  url.search = '';
+  url.searchParams.set('src', src);
+  if (keep) for (const [key, value] of Object.entries(keep)) url.searchParams.set(key, value);
+  window.history.replaceState(window.history.state, '', url);
+}
+
 export function getInitialSrc(): string {
   return readParams().get('src') || DEFAULT_SRC;
 }

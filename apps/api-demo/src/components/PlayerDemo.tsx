@@ -1,6 +1,5 @@
 'use client';
 
-import '@videojs/react/video/skin.css';
 import { Demo } from './player-demo/demo';
 import { MediaLogProvider } from './player-demo/media-log';
 import { Player } from './player-demo/player';
