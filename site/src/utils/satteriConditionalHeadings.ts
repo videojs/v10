@@ -27,8 +27,7 @@ interface ConditionalHeading {
 }
 
 /**
- * Sätteri MDAST plugin that builds the conditional-heading list used for the
- * docs table of contents. Port of the former `remarkConditionalHeadings`.
+ * Builds the conditional-heading list used for the docs table of contents.
  *
  * - Tracks which `<FrameworkCase>` / `<StyleCase>` a heading lives in (walking
  *   ancestors) and attaches that context.

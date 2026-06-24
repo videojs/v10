@@ -146,13 +146,9 @@ export default defineConfig({
       ],
       transformers: [...shikiNotationTransformers, shikiStripPreStyle],
     },
-    // Sätteri is Astro 7's native (Rust) Markdown processor. `syntaxHighlight`
-    // and `shikiConfig` above are processor-independent, so our themes, langs,
-    // and transformers carry over unchanged. Our custom plugins are ported to
-    // Sätteri MDAST plugins; the code-block title is read from fence meta by
-    // `satteriCodeFrame`, so the old `shikiTransformMetadata` is retired.
-    // GFM and SmartyPants stay on by default (Astro's `markdown.gfm`/
-    // `smartypants` both default true), preserving the prior unified() output.
+    // `syntaxHighlight`/`shikiConfig` are applied by Astro's Shiki layer
+    // independently of the Markdown processor, so highlighting is configured
+    // here while the processor's custom transforms live in `mdastPlugins`.
     processor: satteri({
       mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCodeFrame()],
     }),

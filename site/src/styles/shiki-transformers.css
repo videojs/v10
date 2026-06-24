@@ -1,17 +1,11 @@
 @layer base {
-  /* Sätteri emits highlighted code as a raw `.astro-code` <pre>, bypassing the
-     MarkdownCode override that used to supply font/size. Restore the monospace
-     typography (matches `shared.codeBlock`: font-mono + text-code). */
+  /* matches `shared.codeBlock`: font-mono + text-code */
   .astro-code {
     font-family: var(--font-mono), monospace;
     font-variant-ligatures: none;
   }
 
-  /* Size the <code>, not the <pre>: `--text-code` is an `em`, and the React
-     `Code` components (`shared.pre` = "shiki astro-code") also put `text-code`
-     on their inner <code>. Sizing the <pre> too would compound the two `em`s
-     and shrink that code to ~12.25px. Keeping the size on <code> matches the
-     pre-Sätteri output, where MarkdownCode sized the <code> directly. */
+  /* reinforcing shared.codeBlock */
   .astro-code code {
     font-size: var(--text-code);
   }

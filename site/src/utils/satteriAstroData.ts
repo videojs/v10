@@ -10,8 +10,7 @@ export type MdastVisitorContext = Parameters<NonNullable<MdastPluginInstance['he
  * Shape of the document data bag `@astrojs/markdown-satteri` (and the MDX
  * integration's Sätteri path) seed before running plugins. Whatever a plugin
  * leaves on `astro.frontmatter` is surfaced to templates as
- * `render().remarkPluginFrontmatter` — the same contract the old remark plugins
- * used via `file.data.astro.frontmatter`.
+ * `render().remarkPluginFrontmatter`.
  */
 interface AstroData {
   frontmatter: Record<string, unknown>;

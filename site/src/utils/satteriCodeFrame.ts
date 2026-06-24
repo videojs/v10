@@ -5,19 +5,17 @@ import type { MdastVisitorContext } from './satteriAstroData';
 const TITLE_RE = /title=(?:"([^"]+)"|'([^']+)'|([^\s"']+))/;
 
 /**
- * Sätteri MDAST plugin that wraps standalone fenced code blocks in a
- * `<CodeFrame>` component so they render with the filename/language header and
- * copy button. Replaces the former `rehypePrepareCodeBlocks`.
+ * Wraps each standalone fenced code block in a `<CodeFrame>` component so it
+ * renders with a filename/language header and a copy button.
  *
- * Under Sätteri the highlight step rewrites each `<pre>` into raw HTML before
- * HAST plugins run, so the old `<pre>`/`<code>` component overrides never fire.
- * Wrapping at the MDAST stage keeps the frame as a real component while Sätteri
- * still highlights the inner code.
+ * This runs at the MDAST stage rather than as a `pre`/`code` component override
+ * because Shiki rewrites each `<pre>` into raw HTML before any HAST plugin or
+ * component override runs — wrapping the node here keeps a real component frame
+ * around the still-highlighted code.
  *
- * Code blocks already inside an authored `<TabsPanel>` are left untouched — the
- * tab group provides their frame, matching the previous `hasFrame` behaviour.
- * The title is read from the fence meta (e.g. ```ts title="App.ts"```), which
- * makes the old `shikiTransformMetadata` transformer unnecessary.
+ * Code blocks already inside an authored `<TabsPanel>` are left untouched: the
+ * tab group is their frame. The title comes from the fence meta
+ * (e.g. ```ts title="App.ts"```).
  */
 export function satteriCodeFrame() {
   return defineMdastPlugin({

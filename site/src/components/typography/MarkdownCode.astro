@@ -12,7 +12,5 @@ const { as: Tag = 'code', class: className, ...props } = Astro.props;
 ---
 
 {
-  /* Only inline code reaches this override; fenced code blocks are highlighted to
-    raw HTML by Sätteri and framed by CodeFrame. prettier-ignore */
-}
+  /* prettier-ignore */}
 <Tag class={twMerge(shared.code, className)} {...props}><slot /></Tag>
