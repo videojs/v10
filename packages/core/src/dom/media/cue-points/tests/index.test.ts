@@ -205,6 +205,26 @@ describe('CuePoints', () => {
       ]);
     });
 
+    it('does not duplicate cues when a reload runs mid-append', async () => {
+      const media = createMedia(100);
+      const cuePoints = new CuePoints({ cuePoints: [{ time: 10, value: 'a' }] });
+      cuePoints.attach(asTarget(media));
+      await flush();
+
+      // Simulate the engine dropping the cue-points track on reload, forcing
+      // addCuePoints down the async track-creation path.
+      media.trackEls = [];
+
+      // Start the append, then fire `loadstart` before it settles so #setup
+      // rewrites the full list while addCuePoints is still awaiting the track.
+      const appended = cuePoints.addCuePoints([{ time: 20, value: 'b' }]);
+      media.dispatchEvent(new Event('loadstart'));
+      await appended;
+      await flush();
+
+      expect(media.cuePointsTrack!.cues.map((c) => c.startTime)).toEqual([10, 20]);
+    });
+
     it('does not mutate the caller array', async () => {
       const media = createMedia(100);
       const cuePoints = new CuePoints();

@@ -101,12 +101,11 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
   /** Append cue points, keeping any already present. */
   async addCuePoints(cuePoints: CuePoint<Value>[]) {
     this.#cuePoints = [...this.#cuePoints, ...cuePoints];
-    const target = this.#target;
-    if (!target) return;
-    const track = await this.#ensureTrack(target);
-    if (!track) return;
-    writeCuePoints(target, track, cuePoints);
-    notifyChange(target);
+    // Rewrite the full set through `#setup` rather than appending only the new
+    // batch: appending races with `#setup` (e.g. a `loadstart` reload) writing
+    // the full list, which would add duplicate cues for the new markers.
+    // `#setup`'s `#trackDisconnect` guard makes the latest write win.
+    await this.#setup();
   }
 
   async #setup() {
