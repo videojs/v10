@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack } from '../../types';
-import { liveLatencyFor, mediaPlaylistReloadDelay } from '../reload-policy';
+import { type MaybeResolvedPresentation, MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack } from '../../types';
+import { liveLatencyFor, mediaPlaylistReloadDelay, resolveLiveLatency } from '../reload-policy';
 
 /** Minimal resolved-track stand-in carrying only what the policy reads. */
 function track(opts: {
@@ -56,5 +56,31 @@ describe('liveLatencyFor', () => {
 
   it('falls back to 3× the 6s default when no usable target duration is declared', () => {
     expect(liveLatencyFor(track({ targetDuration: 0 }))).toBe(18);
+  });
+});
+
+describe('resolveLiveLatency', () => {
+  /** Minimal presentation wrapping one video track, enough for findTrackById + liveLatencyFor. */
+  function presentation(targetDuration: number): MaybeResolvedPresentation {
+    const video = {
+      id: 'v-1',
+      segments: [{ id: 's0', url: 's0.m4s', duration: 2, startTime: 0 }],
+      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { targetDuration, mediaSequence: 0, endList: false } },
+    };
+    return {
+      id: 'p-1',
+      url: 'master.m3u8',
+      selectionSets: [{ switchingSets: [{ tracks: [video] }] }],
+    } as unknown as MaybeResolvedPresentation;
+  }
+
+  it('returns the timeline-bearing track latency (3× target duration)', () => {
+    expect(resolveLiveLatency(presentation(2), 'v-1')).toBe(6);
+  });
+
+  it('returns 0 when the presentation is unresolved, or the track id is absent / unknown', () => {
+    expect(resolveLiveLatency(undefined, 'v-1')).toBe(0);
+    expect(resolveLiveLatency(presentation(2), undefined)).toBe(0);
+    expect(resolveLiveLatency(presentation(2), 'missing')).toBe(0);
   });
 });

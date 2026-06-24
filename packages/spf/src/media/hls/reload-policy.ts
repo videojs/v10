@@ -1,4 +1,11 @@
-import { getMediaPlaylistMetadata, type ResolvedTrack } from '../types';
+import {
+  getMediaPlaylistMetadata,
+  isResolvedPresentation,
+  isResolvedTrack,
+  type MaybeResolvedPresentation,
+  type ResolvedTrack,
+} from '../types';
+import { findTrackById } from '../utils/tracks';
 
 /** Reload cadence when a playlist carries no usable target duration. */
 const FALLBACK_TARGET_DURATION = 6;
@@ -55,4 +62,19 @@ export function mediaPlaylistReloadDelay(current: ResolvedTrack, previous: Resol
  */
 export function liveLatencyFor(track: ResolvedTrack): number {
   return HOLD_BACK_TARGET_MULTIPLIER * targetDurationOf(track);
+}
+
+/**
+ * Resolve the target live latency for a presentation's timeline-bearing track —
+ * the HLS engine injects this as `seekToLiveEdge`'s format-neutral
+ * `resolveLiveLatency` seam. `0` when there is no resolved track to read (the
+ * behavior then seeks straight to the edge).
+ */
+export function resolveLiveLatency(
+  presentation: MaybeResolvedPresentation | undefined,
+  trackId: string | undefined
+): number {
+  if (!isResolvedPresentation(presentation) || !trackId) return 0;
+  const track = findTrackById(presentation, trackId);
+  return track && isResolvedTrack(track) ? liveLatencyFor(track) : 0;
 }
