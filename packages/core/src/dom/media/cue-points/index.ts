@@ -177,10 +177,6 @@ function writeCuePoints<Value>(media: HTMLMediaElement, track: TextTrack, cuePoi
     .sort((a, b) => b.time - a.time)
     .forEach((cuePoint) => {
       const text = JSON.stringify(cuePoint.value ?? null);
-      if (!isUndefined(cuePoint.endTime)) {
-        track.addCue(new VTTCue(cuePoint.time, cuePoint.endTime, text));
-        return;
-      }
       const cues = track.cues;
       const afterIndex = cues ? Array.prototype.findIndex.call(cues, (c: VTTCue) => c.startTime >= cuePoint.time) : -1;
       const after = afterIndex >= 0 ? (cues?.[afterIndex] as VTTCue | undefined) : undefined;
@@ -190,7 +186,11 @@ function writeCuePoints<Value>(media: HTMLMediaElement, track: TextTrack, cuePoi
       const previousIndex = afterIndex >= 0 ? afterIndex - 1 : (cues?.length ?? 0) - 1;
       const previous = previousIndex >= 0 ? (cues?.[previousIndex] as VTTCue | undefined) : undefined;
       if (previous && previous.endTime > cuePoint.time) previous.endTime = cuePoint.time;
-      const endTime = after?.startTime ?? (Number.isFinite(media.duration) ? media.duration : Number.MAX_SAFE_INTEGER);
+      // Default to the next cue's start (or media duration). An explicit endTime
+      // is honored but clamped to that, so a long marker can't overlap a follower.
+      const nextStart =
+        after?.startTime ?? (Number.isFinite(media.duration) ? media.duration : Number.MAX_SAFE_INTEGER);
+      const endTime = isUndefined(cuePoint.endTime) ? nextStart : Math.min(cuePoint.endTime, nextStart);
       track.addCue(new VTTCue(cuePoint.time, endTime, text));
     });
 }

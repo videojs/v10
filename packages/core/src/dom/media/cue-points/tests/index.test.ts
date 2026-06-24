@@ -159,6 +159,24 @@ describe('CuePoints', () => {
       expect([cue.startTime, cue.endTime]).toEqual([10, 12]);
     });
 
+    it('clamps an explicit endTime so it does not overlap a following cue', async () => {
+      const media = createMedia(100);
+      const cuePoints = new CuePoints({
+        cuePoints: [
+          { time: 10, endTime: 90, value: 'a' },
+          { time: 50, value: 'b' },
+        ],
+      });
+
+      cuePoints.attach(asTarget(media));
+      await flush();
+
+      expect(media.cuePointsTrack!.cues.map((c) => [c.startTime, c.endTime])).toEqual([
+        [10, 50],
+        [50, 100],
+      ]);
+    });
+
     it('uses MAX_SAFE_INTEGER when duration is not finite', async () => {
       const media = createMedia(Number.NaN);
       const cuePoints = new CuePoints({ cuePoints: [{ time: 5, value: 'a' }] });
