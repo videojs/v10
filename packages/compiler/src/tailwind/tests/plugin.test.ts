@@ -639,6 +639,14 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     expect(collapse(css)).toContain(collapse('.foo{display:flex;}'));
   });
 
+  it('preserves multi-branch utilities in extracted CSS assets', async () => {
+    const source = `function App(){ return <Foo className="container"/>; }`;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    const css = assets[0]!.source;
+    expect(collapse(css)).toContain(collapse('.foo{width:100%;}'));
+    expect(css).toMatch(/@media[^{]+{\s*\.foo\s*{\s*max-width:/);
+  });
+
   it('emits referenced theme variables in extracted CSS', async () => {
     // `p-4` lowers to `padding: calc(var(--spacing) * 4)` — the output must
     // define `--spacing` so it resolves without a separate Tailwind theme.

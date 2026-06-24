@@ -1,4 +1,14 @@
+import {
+  type DeclarationBlock as CssDeclarationBlock,
+  type Location2 as CssLocation,
+  type Rule as CssRule,
+  type StyleRule as CssStyleRule,
+  type StyleSheet as CssStyleSheet,
+  transform,
+} from 'lightningcss';
 import type { DesignSystem } from './design-system';
+
+const encoder = new TextEncoder();
 
 /** A CSS declaration extracted from a utility. */
 export interface Declaration {
@@ -80,25 +90,52 @@ export function analyzeUtility(utility: string, design: DesignSystem): UtilityCs
   const css = design.compileUtility(utility);
   if (!css) return null;
 
-  const trimmed = css.trim();
-  const outerOpen = findBlockOpen(trimmed, 0);
-  if (outerOpen === -1) return null;
-  const outerBlock = readBalancedBlock(trimmed, outerOpen);
-  if (!outerBlock) return null;
+  const stylesheet = parseStyleSheet(css);
+  if (!stylesheet) return null;
+  const context = createAnalysisContext(css);
 
   const branches: UtilityCssBranch[] = [];
-  walkNested(outerBlock.inner, [], branches);
+  collectRuleBranches(stylesheet.rules, [], branches, context);
 
-  // Tailwind appends `@property --tw-* { ... }` registrations after the utility
-  // rule. They live at the top level of the compiled output (siblings of the
-  // utility class), so we scan the whole string rather than the rule body.
-  const properties = parseProperties(trimmed);
+  // Tailwind appends `@property --tw-* { ... }` registrations after the utility rule.
+  const properties = collectProperties(context);
   const declarations = branches.flatMap((branch) => branch.declarations);
   const variants = branches[0]?.variants ?? [];
 
   return properties.length > 0
     ? { utility, branches, declarations, variants, properties }
     : { utility, branches, declarations, variants };
+}
+
+function parseStyleSheet(css: string): CssStyleSheet | null {
+  let stylesheet: CssStyleSheet | undefined;
+  try {
+    transform({
+      filename: 'tailwind-utility.css',
+      code: encoder.encode(css),
+      visitor: {
+        StyleSheet(sheet) {
+          stylesheet = sheet;
+        },
+      },
+    });
+  } catch {
+    return null;
+  }
+  return stylesheet ?? null;
+}
+
+interface AnalysisContext {
+  css: string;
+  lineStarts: readonly number[];
+}
+
+function createAnalysisContext(css: string): AnalysisContext {
+  const lineStarts = [0];
+  for (let i = 0; i < css.length; i++) {
+    if (css[i] === '\n') lineStarts.push(i + 1);
+  }
+  return { css, lineStarts };
 }
 
 /** Parse every `@property --name { ... }` block from a compiled utility. */
@@ -130,73 +167,197 @@ function parseProperties(css: string): PropertyRule[] {
   return out;
 }
 
-function walkNested(body: string, variants: readonly Variant[], branches: UtilityCssBranch[]): void {
-  let i = 0;
-  const n = body.length;
-  let declarations: Declaration[] = [];
-
-  const flushDeclarations = (): void => {
-    if (declarations.length === 0) return;
-    branches.push({ declarations, variants });
-    declarations = [];
-  };
-
-  while (i < n) {
-    while (i < n && /[\s;]/.test(body[i]!)) i++;
-    if (i >= n) break;
-
-    if (body[i] === '@') {
-      flushDeclarations();
-
-      const headerEnd = findBlockOpen(body, i);
-      if (headerEnd === -1) break;
-      const header = body.slice(i, headerEnd).trim();
-      const match = header.match(/^@([\w-]+)\s*([\s\S]*)$/);
-      if (!match) break;
-      const [, name, params] = match;
-      const block = readBalancedBlock(body, headerEnd);
-      if (!block) break;
-
-      walkNested(block.inner.trim(), [...variants, atRuleVariant(name!, params!.trim())], branches);
-      i = block.end + 1;
-      continue;
-    }
-
-    if (body[i] === '&') {
-      flushDeclarations();
-
-      const headerEnd = findBlockOpen(body, i);
-      if (headerEnd === -1) break;
-      // Preserve the leading character after `&` so `& *` (descendant) doesn't
-      // get folded down to bare `*` (which classifies as 'parent').
-      const rawTail = body.slice(i + 1, headerEnd);
-      const trimmedRight = rawTail.replace(/\s+$/, '');
-      const isDescendant = /^\s/.test(rawTail);
-      const selectorTail = isDescendant ? ` ${trimmedRight.trim()}` : trimmedRight.trim();
-      const block = readBalancedBlock(body, headerEnd);
-      if (!block) break;
-
-      walkNested(block.inner.trim(), [...variants, classifySelectorTail(selectorTail)], branches);
-      i = block.end + 1;
-      continue;
-    }
-
-    const declaration = readDeclaration(body, i);
-    if (!declaration) break;
-    if (declaration.declaration) declarations.push(declaration.declaration);
-    i = declaration.end;
-  }
-
-  flushDeclarations();
+function collectRuleBranches(
+  rules: readonly CssRule[],
+  variants: readonly Variant[],
+  branches: UtilityCssBranch[],
+  context: AnalysisContext
+): void {
+  for (const rule of rules) collectRuleBranch(rule, variants, branches, context);
 }
 
-function atRuleVariant(name: string, params: string): Variant {
+function collectRuleBranch(
+  rule: CssRule,
+  variants: readonly Variant[],
+  branches: UtilityCssBranch[],
+  context: AnalysisContext
+): void {
+  switch (rule.type) {
+    case 'style':
+      collectStyleRuleBranches(rule.value, variants, branches, context);
+      return;
+    case 'nesting': {
+      const selector = selectorTailFromStyleRule(rule.value.style, context);
+      collectStyleRuleBranches(rule.value.style, [...variants, classifySelectorTail(selector)], branches, context);
+      return;
+    }
+    case 'nested-declarations':
+      pushNestedDeclarationBranch(rule.value.declarations, rule.value.loc, variants, branches, context);
+      return;
+    case 'media':
+    case 'container':
+    case 'supports':
+    case 'layer-block':
+    case 'moz-document':
+    case 'scope':
+    case 'starting-style':
+      collectRuleBranches(rule.value.rules, [...variants, atRuleVariantFromRule(rule, context)], branches, context);
+      return;
+    default:
+      return;
+  }
+}
+
+function collectStyleRuleBranches(
+  rule: CssStyleRule,
+  variants: readonly Variant[],
+  branches: UtilityCssBranch[],
+  context: AnalysisContext
+): void {
+  if (rule.declarations) pushDeclarationBranch(rule.declarations, rule.loc, variants, branches, context);
+
+  for (const nestedRule of rule.rules ?? []) {
+    if (nestedRule.type === 'style') {
+      const selector = selectorTailFromStyleRule(nestedRule.value, context);
+      collectStyleRuleBranches(nestedRule.value, [...variants, classifySelectorTail(selector)], branches, context);
+      continue;
+    }
+    collectRuleBranch(nestedRule, variants, branches, context);
+  }
+}
+
+function pushDeclarationBranch(
+  block: CssDeclarationBlock,
+  loc: CssLocation,
+  variants: readonly Variant[],
+  branches: UtilityCssBranch[],
+  context: AnalysisContext
+): void {
+  const declarations = declarationsForBlock(block, loc, context);
+  if (declarations.length === 0) return;
+  branches.push({ declarations, variants });
+}
+
+function pushNestedDeclarationBranch(
+  block: CssDeclarationBlock,
+  loc: CssLocation,
+  variants: readonly Variant[],
+  branches: UtilityCssBranch[],
+  context: AnalysisContext
+): void {
+  const declarations = declarationsFromIndex(block, indexFromLocation(context, loc), context);
+  if (declarations.length === 0) return;
+  branches.push({ declarations, variants });
+}
+
+function atRuleVariantFromRule(rule: CssRule, context: AnalysisContext): Variant {
+  const header = ruleHeader(rule, context);
+  const match = header.match(/^@([\w-]+)\s*([\s\S]*)$/);
+  const name = match?.[1] ?? rule.type;
+  const params = match?.[2]?.trim() ?? '';
+
   return {
     kind:
       name === 'media' ? 'media' : name === 'container' ? 'container' : name === 'supports' ? 'supports' : 'at-rule',
     atRule: { name, params },
     raw: params ? `@${name} ${params}` : `@${name}`,
   };
+}
+
+function selectorTailFromStyleRule(rule: CssStyleRule, context: AnalysisContext): string {
+  const header = ruleHeader({ type: 'style', value: rule }, context);
+  if (!header.startsWith('&')) return header;
+
+  // Preserve the leading character after `&` so `& *` (descendant) doesn't get
+  // folded down to bare `*` (which classifies as 'parent').
+  const rawTail = header.slice(1);
+  const trimmedRight = rawTail.replace(/\s+$/, '');
+  return /^\s/.test(rawTail) ? ` ${trimmedRight.trim()}` : trimmedRight.trim();
+}
+
+function collectProperties(context: AnalysisContext): PropertyRule[] {
+  return parseProperties(context.css);
+}
+
+function declarationsForBlock(block: CssDeclarationBlock, loc: CssLocation, context: AnalysisContext): Declaration[] {
+  const declaredCount = (block.declarations?.length ?? 0) + (block.importantDeclarations?.length ?? 0);
+  if (declaredCount === 0) return [];
+
+  const open = findBlockOpen(context.css, indexFromLocation(context, loc));
+  if (open === -1) return [];
+  const sourceBlock = readBalancedBlock(context.css, open);
+  if (!sourceBlock) return [];
+
+  return parseLocalDeclarations(sourceBlock.inner).slice(0, declaredCount);
+}
+
+function declarationsFromIndex(block: CssDeclarationBlock, start: number, context: AnalysisContext): Declaration[] {
+  const declaredCount = (block.declarations?.length ?? 0) + (block.importantDeclarations?.length ?? 0);
+  if (declaredCount === 0) return [];
+  return parseLocalDeclarations(context.css.slice(start)).slice(0, declaredCount);
+}
+
+function ruleHeader(rule: CssRule, context: AnalysisContext): string {
+  const loc = ruleLocation(rule);
+  const start = indexFromLocation(context, loc);
+  const open = findBlockOpen(context.css, start);
+  return open === -1 ? context.css.slice(start).trim() : context.css.slice(start, open).trim();
+}
+
+function ruleLocation(rule: CssRule): CssLocation {
+  switch (rule.type) {
+    case 'media':
+    case 'style':
+    case 'supports':
+    case 'moz-document':
+    case 'layer-block':
+    case 'container':
+    case 'scope':
+    case 'starting-style':
+      return rule.value.loc;
+    default:
+      return { source_index: 0, line: 0, column: 1 };
+  }
+}
+
+function indexFromLocation(context: AnalysisContext, loc: CssLocation): number {
+  const lineStart = context.lineStarts[loc.line] ?? 0;
+  return lineStart + Math.max(0, loc.column - 1);
+}
+
+function parseLocalDeclarations(body: string): Declaration[] {
+  const declarations: Declaration[] = [];
+  let i = 0;
+
+  while (i < body.length) {
+    while (i < body.length && /[\s;]/.test(body[i]!)) i++;
+    if (i >= body.length) break;
+
+    if (body[i] === '@' || body[i] === '&') {
+      const next = skipNestedBlock(body, i);
+      if (next === -1) break;
+      i = next;
+      continue;
+    }
+
+    const declaration = readDeclaration(body, i);
+    if (!declaration) {
+      const next = skipNestedBlock(body, i);
+      if (next === -1) break;
+      i = next;
+      continue;
+    }
+    if (declaration.declaration) declarations.push(declaration.declaration);
+    i = declaration.end;
+  }
+  return declarations;
+}
+
+function skipNestedBlock(body: string, start: number): number {
+  const open = findBlockOpen(body, start);
+  if (open === -1) return -1;
+  const block = readBalancedBlock(body, open);
+  return block ? block.end + 1 : -1;
 }
 
 interface ReadDeclarationResult {
