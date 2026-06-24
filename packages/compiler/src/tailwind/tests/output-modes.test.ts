@@ -29,11 +29,14 @@ export const styles = {
   ),
   button: cn(
     'group',
-    'flex items-center',
+    'relative flex items-center',
     'disabled:opacity-50',
     'data-[availability=unsupported]:hidden',
     'aria-expanded:bg-current/10',
-    'focus-visible:outline-current'
+    'focus-visible:outline-current',
+    'before:absolute',
+    "before:content-['x']",
+    'after:absolute'
   ),
   icon: cn(
     'hidden opacity-0',
@@ -95,7 +98,7 @@ describe('tailwind output modes', () => {
       "export function Fixture() {
           return (<FixtureRoot className="container p-4 [--media-controls-transition-duration:100ms] [color:var(--media-color-primary,oklch(1_0_0))] [&_video]:block [&:fullscreen]:[--media-border-radius:0]">
             <Controls className="flex flex-wrap [--media-popover-side-offset:0.5rem] pointer-fine:transition-[scale,filter,opacity] motion-reduce:[--media-controls-transition-duration:50ms] contrast-more:[--media-surface-background-color:oklch(0_0_0)] [@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)] @2xl/media-root:flex-nowrap">
-              <Button className="group flex items-center disabled:opacity-50 data-[availability=unsupported]:hidden aria-expanded:bg-current/10 focus-visible:outline-current">
+              <Button className="group relative flex items-center disabled:opacity-50 data-[availability=unsupported]:hidden aria-expanded:bg-current/10 focus-visible:outline-current before:absolute before:content-['x'] after:absolute">
                 <Icon className="hidden opacity-0 group-data-paused:block group-data-paused:opacity-100 group-not-data-paused:opacity-0"/>
               </Button>
               <div className="absolute [left:var(--media-slider-pointer)] has-[[role=img]:not([data-hidden])]:opacity-100"/>
@@ -115,7 +118,10 @@ describe('tailwind output modes', () => {
           tailwind({
             mode: 'extract',
             input: cssPath,
-            vars: { hoist: { rootSelector: '.media-test-skin' } },
+            vars: {
+              hoist: { rootSelector: '.media-test-skin' },
+              properties: { mode: 'inline', variables: [{ match: /^--tw-content$/ }] },
+            },
           }),
         ],
       },
@@ -139,6 +145,8 @@ describe('tailwind output modes', () => {
 
     const css = result.assets[0]!.source;
     expect(css).not.toMatch(/\.media-test-skin\s*{[^}]*--media-border-radius/);
+    expect(css).not.toContain('--tw-content');
+    expect(css).not.toContain('var(--tw-content)');
     expect(css).toMatchInlineSnapshot(`
       ".media-test-skin {
         --default-transition-duration: 150ms;
@@ -153,6 +161,17 @@ describe('tailwind output modes', () => {
       .button {
         align-items: center;
         display: flex;
+        position: relative;
+      }
+
+      .button::after {
+        content: "";
+        position: absolute;
+      }
+
+      .button::before {
+        content: 'x';
+        position: absolute;
       }
 
       .button:disabled {
@@ -178,7 +197,7 @@ describe('tailwind output modes', () => {
 
       .fixture-root {
         --media-controls-transition-duration: 100ms;
-        color: var(--media-color-primary,oklch(1 0 0));
+        color: var(--media-color-primary, oklch(1 0 0));
         padding: calc(var(--spacing) * 4);
         width: 100%;
       }

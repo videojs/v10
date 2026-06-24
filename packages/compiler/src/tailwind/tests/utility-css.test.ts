@@ -124,6 +124,12 @@ describe('analyzeUtility — @property registrations', () => {
     });
   });
 
+  it('does not capture @property text from declaration values', () => {
+    const r = analyzeUtility("before:content-['@property_--fake_{}']", design);
+    expect(r).not.toBeNull();
+    expect(r!.properties?.map((p) => p.name)).toEqual(['--tw-content']);
+  });
+
   it('omits `properties` when a utility registers none', () => {
     const r = analyzeUtility('flex', design);
     expect(r!.properties).toBeUndefined();

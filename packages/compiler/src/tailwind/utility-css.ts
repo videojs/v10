@@ -1,6 +1,7 @@
 import {
   type DeclarationBlock as CssDeclarationBlock,
   type Location2 as CssLocation,
+  type PropertyRule as CssPropertyRule,
   type Rule as CssRule,
   type StyleRule as CssStyleRule,
   type StyleSheet as CssStyleSheet,
@@ -98,7 +99,7 @@ export function analyzeUtility(utility: string, design: DesignSystem): UtilityCs
   collectRuleBranches(stylesheet.rules, [], branches, context);
 
   // Tailwind appends `@property --tw-* { ... }` registrations after the utility rule.
-  const properties = collectProperties(context);
+  const properties = collectProperties(stylesheet.rules, context);
   const declarations = branches.flatMap((branch) => branch.declarations);
   const variants = branches[0]?.variants ?? [];
 
@@ -136,35 +137,6 @@ function createAnalysisContext(css: string): AnalysisContext {
     if (css[i] === '\n') lineStarts.push(i + 1);
   }
   return { css, lineStarts };
-}
-
-/** Parse every `@property --name { ... }` block from a compiled utility. */
-function parseProperties(css: string): PropertyRule[] {
-  const out: PropertyRule[] = [];
-  const re = /@property\s+(--[A-Za-z0-9_-]+)\s*\{/g;
-  let match = re.exec(css);
-  while (match !== null) {
-    const name = match[1]!;
-    const openIdx = match.index + match[0].length - 1;
-    const block = readBalancedBlock(css, openIdx);
-    if (!block) break;
-
-    const rule: PropertyRule = { name };
-    for (const decl of block.inner.split(';')) {
-      const colon = decl.indexOf(':');
-      if (colon === -1) continue;
-      const prop = decl.slice(0, colon).trim();
-      const value = decl.slice(colon + 1).trim();
-      if (!value) continue;
-      if (prop === 'syntax') rule.syntax = value;
-      else if (prop === 'inherits') rule.inherits = value === 'true';
-      else if (prop === 'initial-value') rule.initialValue = value;
-    }
-    out.push(rule);
-    re.lastIndex = block.end + 1;
-    match = re.exec(css);
-  }
-  return out;
 }
 
 function collectRuleBranches(
@@ -275,8 +247,59 @@ function selectorTailFromStyleRule(rule: CssStyleRule, context: AnalysisContext)
   return /^\s/.test(rawTail) ? ` ${trimmedRight.trim()}` : trimmedRight.trim();
 }
 
-function collectProperties(context: AnalysisContext): PropertyRule[] {
-  return parseProperties(context.css);
+function collectProperties(rules: readonly CssRule[], context: AnalysisContext): PropertyRule[] {
+  const properties: PropertyRule[] = [];
+  for (const rule of rules) collectPropertyRule(rule, properties, context);
+  return properties;
+}
+
+function collectPropertyRule(rule: CssRule, properties: PropertyRule[], context: AnalysisContext): void {
+  switch (rule.type) {
+    case 'property':
+      properties.push(propertyRuleFromAst(rule.value, context));
+      return;
+    case 'media':
+    case 'container':
+    case 'supports':
+    case 'layer-block':
+    case 'moz-document':
+    case 'scope':
+    case 'starting-style':
+      for (const child of rule.value.rules) collectPropertyRule(child, properties, context);
+      return;
+    default:
+      return;
+  }
+}
+
+function propertyRuleFromAst(rule: CssPropertyRule, context: AnalysisContext): PropertyRule {
+  // Use Lightning's AST for rule identity, but source text for descriptors so
+  // emitted CSS preserves Tailwind's authored values instead of serializer output.
+  const descriptors = propertyDescriptorsFromSource(rule, context);
+  return {
+    name: rule.name,
+    ...(descriptors.syntax ? { syntax: descriptors.syntax } : {}),
+    inherits: rule.inherits,
+    ...(descriptors.initialValue ? { initialValue: descriptors.initialValue } : {}),
+  };
+}
+
+function propertyDescriptorsFromSource(
+  rule: CssPropertyRule,
+  context: AnalysisContext
+): { syntax?: string; initialValue?: string } {
+  const open = findBlockOpen(context.css, indexFromLocation(context, rule.loc));
+  if (open === -1) return {};
+
+  const block = readBalancedBlock(context.css, open);
+  if (!block) return {};
+
+  const descriptors: { syntax?: string; initialValue?: string } = {};
+  for (const declaration of parseLocalDeclarations(block.inner)) {
+    if (declaration.property === 'syntax') descriptors.syntax = declaration.value;
+    else if (declaration.property === 'initial-value') descriptors.initialValue = declaration.value;
+  }
+  return descriptors;
 }
 
 function declarationsForBlock(block: CssDeclarationBlock, loc: CssLocation, context: AnalysisContext): Declaration[] {
