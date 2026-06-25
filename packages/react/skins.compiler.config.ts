@@ -6,8 +6,6 @@ const ICON_COMPONENTS_SOURCE = '@videojs/icons/components';
 const SOURCE_TAILWIND_SOURCE = './tailwind/video.tailwind';
 const GENERATED_TAILWIND_SOURCE = '@videojs/skins/default/tailwind/video.tailwind';
 
-const BUTTON_RENDER_TARGET = /Button$/;
-
 export default defineConfig({
   input: {
     'default-video': '../skins/src/default/video.skin.tsx',
@@ -20,74 +18,54 @@ export default defineConfig({
   plugins: [
     transform((code) => {
       // Types
-      const BaseVideoSkinProps = code.ref.import('./src/presets/types', 'BaseVideoSkinProps', { type: true });
-      const ReactNode = code.ref.import('react', 'ReactNode', { type: true });
+      const BaseVideoSkinProps = code.import('./src/presets/types', 'BaseVideoSkinProps', { type: true });
+      const ReactNode = code.import('react', 'ReactNode', { type: true });
 
       // Utils
-      const cn = code.ref.import('@videojs/utils/style', 'cn');
-      const isString = code.ref.import('@videojs/utils/predicate', 'isString');
-      const isRenderProp = code.ref.import('@/utils/use-render', 'isRenderProp');
+      const cn = code.import('@videojs/utils/style', 'cn');
+      const isString = code.import('@videojs/utils/predicate', 'isString');
+      const isRenderProp = code.import('@/utils/use-render', 'isRenderProp');
 
       // Components
-      const Poster = code.ref.import('@/ui/poster', 'Poster');
+      const Poster = code.import('@/ui/poster', 'Poster');
 
       return [
-        code.edit.import.rewrite({
+        code.imports({
           [CORE_COMPONENTS_SOURCE]: coreComponentImport,
           [ICON_COMPONENTS_SOURCE]: '@/icons',
           [SOURCE_TAILWIND_SOURCE]: GENERATED_TAILWIND_SOURCE,
         }),
+
         tailwind({ mode: 'preserve' }),
-        code.edit.jsx.element({
-          when: code.match.jsx.tag(/^(Tooltip|Popover)\.Trigger$/),
-          transform: code.edit.jsx.moveChildToProp('render'),
-        }),
-        code.edit.jsx.element({
-          when: code.match.jsx.tag('Controls.Root'),
-          transform: code.edit.jsx.addProp('data-controls', ''),
-        }),
-        code.edit.jsx.element({
-          when: code.match.jsx.tag('Container'),
-          transform: code.edit.jsx.addPropsSpread('rest'),
-        }),
-        code.edit.jsx.element({
-          when: code.match.jsx.tag('Text'),
-          transform: code.edit.jsx.replaceTag('span'),
-        }),
-        code.edit.jsx.element({
-          when: code.match.jsx.tag('Poster'),
-          transform: () => {
-            return code.create.jsx.renderIf(
-              'poster',
-              code.create.jsx.element(Poster, {
-                src: code.create.value.onlyIf({ value: 'poster', condition: isString }),
-                render: code.create.value.onlyIf({ value: 'poster', condition: isRenderProp }),
-              })
-            );
-          },
-        }),
-        code.edit.jsx.element({
-          when: code.match.jsx.tag(BUTTON_RENDER_TARGET),
-          transform: code.edit.jsx.addProp('type', 'button'),
-        }),
-        code.edit.jsx.prop({
-          when: code.match.all(code.match.jsx.prop('className'), code.match.value.array()),
-          transform: ({ value }) => code.create.value.call(cn, code.create.value.arrayItems(value)),
-        }),
-        code.edit.interface.property({
-          when: code.match.all(code.match.interface.name(/Props$/), code.match.interface.property('children')),
-          transform: code.edit.interface.setType(() =>
-            code.create.type.union(code.create.type.named(ReactNode), code.create.type.undefined())
-          ),
-        }),
-        code.edit.interface.declaration({
-          when: code.match.interface.name('DefaultVideoSkinProps'),
-          transform: code.edit.interface.extends(BaseVideoSkinProps),
-        }),
-        code.edit.function.declaration({
-          when: code.match.function.name('DefaultVideoSkin'),
-          transform: code.edit.function.addProps(['poster', { name: 'rest', spread: true }]),
-        }),
+
+        code
+          .interface(/Props$/)
+          .property('children')
+          .setType(() => code.type.union(code.type.named(ReactNode), code.type.undefined())),
+
+        code.interface('DefaultVideoSkinProps').extends(BaseVideoSkinProps),
+
+        code.jsx.element(/^(Tooltip|Popover)\.Trigger$/).childToProp('render'),
+        code.jsx.element('Controls.Root').addProp('data-controls', ''),
+        code.jsx.element('Container').spreadProps('rest'),
+        code.jsx.element('Text').replace('span'),
+
+        code.jsx.element('Poster').replace(() =>
+          code.jsx.if(
+            'poster',
+            code.jsx.create(Poster, {
+              src: code.value.when('poster', isString),
+              render: code.value.when('poster', isRenderProp),
+            })
+          )
+        ),
+
+        code.jsx
+          .props('className')
+          .where(code.value.isArray())
+          .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
+
+        code.function('DefaultVideoSkin').addProps(['poster', { name: 'rest', spread: true }]),
       ];
     }),
   ],

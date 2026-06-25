@@ -8,11 +8,17 @@ import { type ImportRewriteOptions, type ImportRule, transformImports } from './
 export interface ImportReference {
   readonly source: string;
   readonly name: string;
+  readonly default?: boolean | undefined;
   readonly type?: boolean | undefined;
 }
 
+export interface ImportOptions {
+  default?: boolean | undefined;
+  type?: boolean | undefined;
+}
+
 export interface RefHelpers {
-  import(source: string, name: string, options?: { type?: boolean | undefined }): ImportReference;
+  import(source: string, name: string, options?: ImportOptions): ImportReference;
 }
 
 export type ValueReference = string | ImportReference | ts.Expression;
@@ -48,11 +54,14 @@ export interface MatchHelpers {
 export interface CreateHelpers {
   value: {
     and(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
+    array(items: readonly ValueReference[], options?: ValueArrayOptions): ts.ArrayLiteralExpression | ts.AsExpression;
     arrayItems(value: ts.Expression): ts.Expression[];
-    call(callee: ValueReference, args: readonly ts.Expression[]): ts.CallExpression;
+    call(callee: ValueReference, args: readonly ValueReference[]): ts.CallExpression;
     conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
     identifier(value: string | ImportReference): ts.Identifier;
+    number(value: number): ts.NumericLiteral;
     onlyIf(options: ValueOnlyIfOptions): ts.ConditionalExpression;
+    string(value: string): ts.StringLiteral;
     undefined(): ts.Identifier;
   };
   jsx: {
@@ -93,11 +102,98 @@ export interface EditHelpers {
   };
 }
 
+export interface ValueHelpers {
+  and(left: ValueReference, right: ts.Expression): ts.BinaryExpression;
+  array(items: readonly ValueReference[], options?: ValueArrayOptions): ts.ArrayLiteralExpression | ts.AsExpression;
+  arrayItems(value: ts.Expression): ts.Expression[];
+  call(callee: ValueReference, args: readonly ValueReference[]): ts.CallExpression;
+  conditional(test: ts.Expression, whenTrue: ts.Expression, whenFalse: ts.Expression): ts.ConditionalExpression;
+  identifier(value: string | ImportReference): ts.Identifier;
+  isArray(): MatchPredicate;
+  number(value: number): ts.NumericLiteral;
+  string(value: string): ts.StringLiteral;
+  when(
+    value: ValueReference,
+    condition: ValueReference,
+    fallback?: ValueReference | undefined
+  ): ts.ConditionalExpression;
+  undefined(): ts.Identifier;
+}
+
+export interface JsxHelpers {
+  create(tag: string | ImportReference, props?: JsxPropsSpec): ts.JsxSelfClosingElement;
+  element(tag: string | RegExp): JsxElementSelection;
+  if(test: ValueReference, element: ts.Expression): ts.JsxExpression;
+  props(name: string): JsxPropsSelection;
+}
+
+export interface ValueArrayOptions {
+  asConst?: boolean | undefined;
+}
+
+export interface JsxElementSelection {
+  addProp(name: string, value?: JsxPropValue): CompilerTransform;
+  childToProp(prop: string): CompilerTransform;
+  replace(replacement: string | ImportReference | JsxElementReplacement): CompilerTransform;
+  spreadProps(value: ValueReference): CompilerTransform;
+}
+
+export type JsxElementReplacement = (context: JsxElementContext) => ts.Node | undefined;
+
+export interface JsxPropsSelection {
+  replace(transform: (context: JsxPropContext) => ts.Expression | undefined): CompilerTransform;
+  where(predicate: MatchPredicate): JsxPropsSelection;
+}
+
+export interface TypeHelpers {
+  named(value: string | ImportReference): ts.TypeReferenceNode;
+  union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
+  undefined(): ts.KeywordTypeNode;
+}
+
+export interface InterfaceSelection {
+  extends(value: string | ImportReference): CompilerTransform;
+  property(name: string): InterfacePropertySelection;
+}
+
+export interface InterfacePropertySelection {
+  setType(type: (context: InterfacePropertyContext) => ts.TypeNode): CompilerTransform;
+}
+
+export interface FunctionSelection {
+  addProps(props: readonly FunctionPropSpec[], parameterIndex?: number): CompilerTransform;
+  append(statements: StatementSpec): CompilerTransform;
+  beforeReturn(statements: StatementSpec): CompilerTransform;
+  prepend(statements: StatementSpec): CompilerTransform;
+}
+
+export interface ModuleSelection {
+  append(statements: StatementSpec): CompilerTransform;
+  prepend(statements: StatementSpec): CompilerTransform;
+}
+
+export interface StatementHelpers {
+  const(name: string, initializer: ValueReference, options?: ConstStatementOptions): ts.VariableStatement;
+}
+
+export interface ConstStatementOptions {
+  asConst?: boolean | undefined;
+  export?: boolean | undefined;
+  type?: ts.TypeNode | undefined;
+}
+
+export type StatementSpec = ts.Statement | readonly ts.Statement[];
+
 export interface TransformHelpers {
-  ref: RefHelpers;
-  match: MatchHelpers;
-  create: CreateHelpers;
-  edit: EditHelpers;
+  import(source: string, name: string, options?: ImportOptions): ImportReference;
+  imports(rules: Record<string, ImportRule>): CompilerTransform;
+  function(name: string | RegExp): FunctionSelection;
+  interface(name: string | RegExp): InterfaceSelection;
+  jsx: JsxHelpers;
+  module: ModuleSelection;
+  statement: StatementHelpers;
+  type: TypeHelpers;
+  value: ValueHelpers;
 }
 
 export type TransformStep = CompilerTransform | CompilerPlugin | null | undefined | false;
@@ -221,6 +317,7 @@ function createTransformHelpers(refs: MutableImportReference[], context: Compile
         [IMPORT_REF_SYMBOL]: true,
         source,
         name,
+        default: options.default,
         type: options.type,
         used: false,
       } as MutableImportReference;
@@ -232,8 +329,146 @@ function createTransformHelpers(refs: MutableImportReference[], context: Compile
   const match = createMatchHelpers();
   const create = createCreateHelpers();
   const edit = createEditHelpers(context);
+  const statement = createStatementHelpers();
+  const value = createValueHelpers(match, create);
 
-  return { ref, match, create, edit };
+  return {
+    import: ref.import,
+    imports: (rules) => edit.import.rewrite(rules),
+    function: (name) => createFunctionSelection(name, match, edit),
+    interface: (name) => createInterfaceSelection(name, match, edit),
+    jsx: createJsxHelpers(match, create, edit),
+    module: createModuleSelection(),
+    statement,
+    type: create.type,
+    value,
+  };
+}
+
+function createValueHelpers(match: MatchHelpers, create: CreateHelpers): ValueHelpers {
+  return {
+    and: create.value.and,
+    array: create.value.array,
+    arrayItems: create.value.arrayItems,
+    call: create.value.call,
+    conditional: create.value.conditional,
+    identifier: create.value.identifier,
+    isArray: match.value.array,
+    number: create.value.number,
+    string: create.value.string,
+    when(value, condition, fallback) {
+      return create.value.onlyIf({ value, condition, ...(fallback === undefined ? {} : { fallback }) });
+    },
+    undefined: create.value.undefined,
+  };
+}
+
+function createStatementHelpers(): StatementHelpers {
+  return {
+    const(name, initializer, options = {}) {
+      const modifiers = options.export ? [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)] : undefined;
+      const expression = options.asConst ? asConst(valueFromReference(initializer)) : valueFromReference(initializer);
+
+      return ts.factory.createVariableStatement(
+        modifiers,
+        ts.factory.createVariableDeclarationList(
+          [
+            ts.factory.createVariableDeclaration(
+              ts.factory.createIdentifier(name),
+              undefined,
+              options.type,
+              expression
+            ),
+          ],
+          ts.NodeFlags.Const
+        )
+      );
+    },
+  };
+}
+
+function createModuleSelection(): ModuleSelection {
+  return {
+    append: (statements) => editModuleStatements('append', statements),
+    prepend: (statements) => editModuleStatements('prepend', statements),
+  };
+}
+
+function createJsxHelpers(match: MatchHelpers, create: CreateHelpers, edit: EditHelpers): JsxHelpers {
+  return {
+    create: create.jsx.element,
+    element: (tag) => createJsxElementSelection(tag, match, edit),
+    if: create.jsx.renderIf,
+    props: (name) => createJsxPropsSelection(name, match, edit),
+  };
+}
+
+function createJsxElementSelection(tag: string | RegExp, match: MatchHelpers, edit: EditHelpers): JsxElementSelection {
+  const when = match.jsx.tag(tag);
+  return {
+    addProp: (name, value) => edit.jsx.element({ when, transform: edit.jsx.addProp(name, value) }),
+    childToProp: (prop) => edit.jsx.element({ when, transform: edit.jsx.moveChildToProp(prop) }),
+    replace(replacement) {
+      const transform: JsxElementEdit =
+        typeof replacement === 'function'
+          ? (_element, context) => replacement(context)
+          : edit.jsx.replaceTag(replacement);
+      return edit.jsx.element({ when, transform });
+    },
+    spreadProps: (value) => edit.jsx.element({ when, transform: edit.jsx.addPropsSpread(value) }),
+  };
+}
+
+function createJsxPropsSelection(
+  name: string,
+  match: MatchHelpers,
+  edit: EditHelpers,
+  predicates: readonly MatchPredicate[] = []
+): JsxPropsSelection {
+  const when = match.all(match.jsx.prop(name), ...predicates);
+  return {
+    replace: (transform) => edit.jsx.prop({ when, transform }),
+    where: (predicate) => createJsxPropsSelection(name, match, edit, [...predicates, predicate]),
+  };
+}
+
+function createInterfaceSelection(name: string | RegExp, match: MatchHelpers, edit: EditHelpers): InterfaceSelection {
+  const when = match.interface.name(name);
+  return {
+    extends: (value) => edit.interface.declaration({ when, transform: edit.interface.extends(value) }),
+    property: (property) => ({
+      setType: (type) =>
+        edit.interface.property({
+          when: match.all(when, match.interface.property(property)),
+          transform: edit.interface.setType(type),
+        }),
+    }),
+  };
+}
+
+function createFunctionSelection(name: string | RegExp, match: MatchHelpers, edit: EditHelpers): FunctionSelection {
+  const when = match.function.name(name);
+  return {
+    addProps: (props, parameterIndex) =>
+      edit.function.declaration({ when, transform: edit.function.addProps(props, parameterIndex) }),
+    append: (statements) =>
+      edit.function.declaration({
+        when,
+        transform: ({ function: declaration, factory }) => editFunctionBody(declaration, 'append', statements, factory),
+      }),
+    beforeReturn: (statements) =>
+      edit.function.declaration({
+        when,
+        transform: ({ function: declaration, factory }) =>
+          editFunctionBody(declaration, 'beforeReturn', statements, factory),
+      }),
+    prepend: (statements) =>
+      edit.function.declaration({
+        when,
+        transform: ({ function: declaration, factory }) =>
+          editFunctionBody(declaration, 'prepend', statements, factory),
+      }),
+  };
 }
 
 function createMatchHelpers(): MatchHelpers {
@@ -291,12 +526,16 @@ function createCreateHelpers(): CreateHelpers {
           right
         );
       },
+      array(items, options = {}) {
+        const array = ts.factory.createArrayLiteralExpression(items.map(valueFromReference));
+        return options.asConst ? asConst(array) : array;
+      },
       arrayItems(value) {
         if (!ts.isArrayLiteralExpression(value)) return [];
         return value.elements.filter((item): item is ts.Expression => !ts.isSpreadElement(item));
       },
       call(callee, args) {
-        return ts.factory.createCallExpression(valueFromReference(callee), undefined, [...args]);
+        return ts.factory.createCallExpression(valueFromReference(callee), undefined, args.map(valueFromReference));
       },
       conditional(test, whenTrue, whenFalse) {
         return ts.factory.createConditionalExpression(
@@ -311,6 +550,9 @@ function createCreateHelpers(): CreateHelpers {
         if (isImportReference(value)) value.used = true;
         return ts.factory.createIdentifier(typeof value === 'string' ? value : value.name);
       },
+      number(value) {
+        return ts.factory.createNumericLiteral(value);
+      },
       onlyIf(options) {
         const value = valueFromReference(options.value);
         return ts.factory.createConditionalExpression(
@@ -322,6 +564,9 @@ function createCreateHelpers(): CreateHelpers {
             ? ts.factory.createIdentifier('undefined')
             : valueFromReference(options.fallback)
         );
+      },
+      string(value) {
+        return ts.factory.createStringLiteral(value);
       },
       undefined() {
         return ts.factory.createIdentifier('undefined');
@@ -589,7 +834,12 @@ function materializeImportRefs(refs: readonly MutableImportReference[], context:
       let result = sourceFile;
       for (const ref of refs) {
         if (!ref.used) continue;
-        result = addNamedImport(result, { source: ref.source, name: ref.name, type: ref.type }, factory, context);
+        result = addNamedImport(
+          result,
+          { source: ref.source, name: ref.name, default: ref.default, type: ref.type },
+          factory,
+          context
+        );
       }
       return result;
     };
@@ -606,6 +856,82 @@ function pipeTransforms(transforms: readonly CompilerTransform[]): CompilerTrans
       return current;
     };
   };
+}
+
+function editModuleStatements(position: 'prepend' | 'append', statements: StatementSpec): CompilerTransform {
+  const nextStatements = normalizeStatements(statements);
+  return (context) => {
+    const factory = context.factory;
+
+    return (sourceFile) => {
+      if (nextStatements.length === 0) return sourceFile;
+
+      if (position === 'append') {
+        return factory.updateSourceFile(sourceFile, [...sourceFile.statements, ...nextStatements]);
+      }
+
+      let insertIndex = 0;
+      for (let i = 0; i < sourceFile.statements.length; i++) {
+        if (ts.isImportDeclaration(sourceFile.statements[i]!)) insertIndex = i + 1;
+      }
+
+      return factory.updateSourceFile(sourceFile, [
+        ...sourceFile.statements.slice(0, insertIndex),
+        ...nextStatements,
+        ...sourceFile.statements.slice(insertIndex),
+      ]);
+    };
+  };
+}
+
+function editFunctionBody(
+  declaration: ts.FunctionDeclaration,
+  position: 'prepend' | 'append' | 'beforeReturn',
+  statements: StatementSpec,
+  factory: ts.NodeFactory
+): ts.FunctionDeclaration | undefined {
+  if (!declaration.body) return undefined;
+
+  const nextStatements = normalizeStatements(statements);
+  if (nextStatements.length === 0) return undefined;
+
+  let bodyStatements: ts.Statement[];
+  if (position === 'prepend') {
+    bodyStatements = [...nextStatements, ...declaration.body.statements];
+  } else if (position === 'append') {
+    bodyStatements = [...declaration.body.statements, ...nextStatements];
+  } else {
+    const returnIndex = declaration.body.statements.findIndex(ts.isReturnStatement);
+    const insertIndex = returnIndex >= 0 ? returnIndex : declaration.body.statements.length;
+    bodyStatements = [
+      ...declaration.body.statements.slice(0, insertIndex),
+      ...nextStatements,
+      ...declaration.body.statements.slice(insertIndex),
+    ];
+  }
+
+  return factory.updateFunctionDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.asteriskToken,
+    declaration.name,
+    declaration.typeParameters,
+    declaration.parameters,
+    declaration.type,
+    factory.updateBlock(declaration.body, bodyStatements)
+  );
+}
+
+function normalizeStatements(statements: StatementSpec): ts.Statement[] {
+  return isStatementArray(statements) ? [...statements] : [statements];
+}
+
+function isStatementArray(statements: StatementSpec): statements is readonly ts.Statement[] {
+  return Array.isArray(statements);
+}
+
+function asConst(expression: ts.Expression): ts.AsExpression {
+  return ts.factory.createAsExpression(expression, ts.factory.createTypeReferenceNode('const'));
 }
 
 function liftSingleChildToProp(

@@ -4,6 +4,7 @@ import { resolveRelative } from './imports';
 export interface AddImportRef {
   source: string;
   name: string;
+  default?: boolean | undefined;
   type?: boolean | undefined;
 }
 
@@ -36,6 +37,25 @@ export function addNamedImport(
     if (!ts.isStringLiteral(stmt.moduleSpecifier)) continue;
     if (stmt.moduleSpecifier.text !== target) continue;
     const clause = stmt.importClause;
+    if (ref.default) {
+      if (!clause) continue;
+      if (clause.isTypeOnly !== Boolean(ref.type)) continue;
+      if (clause.name?.text === ref.name) return sourceFile;
+      if (clause.name) continue;
+
+      const updated = factory.updateImportDeclaration(
+        stmt,
+        stmt.modifiers,
+        factory.createImportClause(clause.isTypeOnly, factory.createIdentifier(ref.name), clause.namedBindings),
+        stmt.moduleSpecifier,
+        stmt.attributes
+      );
+      return factory.updateSourceFile(
+        sourceFile,
+        sourceFile.statements.map((s) => (s === stmt ? updated : s))
+      );
+    }
+
     if (!clause?.namedBindings || !ts.isNamedImports(clause.namedBindings)) continue;
     if (clause.isTypeOnly && !ref.type) continue;
     if (clause.namedBindings.elements.some((e) => e.name.text === ref.name)) {
@@ -70,8 +90,12 @@ export function addNamedImport(
     undefined,
     factory.createImportClause(
       Boolean(ref.type),
-      undefined,
-      factory.createNamedImports([factory.createImportSpecifier(false, undefined, factory.createIdentifier(ref.name))])
+      ref.default ? factory.createIdentifier(ref.name) : undefined,
+      ref.default
+        ? undefined
+        : factory.createNamedImports([
+            factory.createImportSpecifier(false, undefined, factory.createIdentifier(ref.name)),
+          ])
     ),
     factory.createStringLiteral(target)
   );

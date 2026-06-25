@@ -34,67 +34,38 @@ export function Skin({ children, className }: SkinProps) {
       config: {
         plugins: [
           transform((code) => {
-            const cn = code.ref.import('@fixture/style', 'cn');
-            const BaseSkinProps = code.ref.import('@fixture/react', 'BaseSkinProps', { type: true });
-            const Button = code.ref.import('@fixture/renderers', 'Button');
-            const SliderTrack = code.ref.import('@fixture/renderers', 'SliderTrack');
-            const isString = code.ref.import('@fixture/predicate', 'isString');
-            const ReactNode = code.ref.import('react', 'ReactNode', { type: true });
+            const cn = code.import('@fixture/style', 'cn');
+            const BaseSkinProps = code.import('@fixture/react', 'BaseSkinProps', { type: true });
+            const Button = code.import('@fixture/renderers', 'Button');
+            const SliderTrack = code.import('@fixture/renderers', 'SliderTrack');
+            const isString = code.import('@fixture/predicate', 'isString');
+            const ReactNode = code.import('react', 'ReactNode', { type: true });
 
             return [
-              code.edit.import.rewrite({ '@fixture/core': '@fixture/react' }),
-              code.edit.jsx.element({
-                when: code.match.jsx.tag('Tooltip.Trigger'),
-                transform: code.edit.jsx.moveChildToProp('render'),
-              }),
-              code.edit.jsx.element({
-                when: code.match.jsx.tag('Controls.Root'),
-                transform: code.edit.jsx.addProp('data-controls', ''),
-              }),
-              code.edit.jsx.element({
-                when: code.match.jsx.tag('Container'),
-                transform: code.edit.jsx.addPropsSpread('rest'),
-              }),
-              code.edit.jsx.element({
-                when: code.match.jsx.tag('Poster'),
-                transform: () => {
-                  return code.create.jsx.renderIf(
-                    'poster',
-                    code.create.jsx.element('Poster', {
-                      src: code.create.value.onlyIf({ value: 'poster', condition: isString }),
-                    })
-                  );
-                },
-              }),
-              code.edit.jsx.element({
-                when: code.match.jsx.tag('PlayButton'),
-                transform: code.edit.jsx.addProp('render', code.create.jsx.element(Button)),
-              }),
-              code.edit.jsx.element({
-                when: code.match.jsx.tag(/^Slider\.(Track)$/),
-                transform: (element, context) => {
-                  const part = context.tagName.split('.')[1];
-                  return part === 'Track' ? code.edit.jsx.replaceTag(SliderTrack)(element, context) : undefined;
-                },
-              }),
-              code.edit.jsx.prop({
-                when: code.match.all(code.match.jsx.prop('className'), code.match.value.array()),
-                transform: ({ value }) => code.create.value.call(cn, code.create.value.arrayItems(value)),
-              }),
-              code.edit.interface.declaration({
-                when: code.match.interface.name('SkinProps'),
-                transform: code.edit.interface.extends(BaseSkinProps),
-              }),
-              code.edit.interface.property({
-                when: code.match.all(code.match.interface.name(/Props$/), code.match.interface.property('children')),
-                transform: code.edit.interface.setType(() =>
-                  code.create.type.union(code.create.type.named(ReactNode), code.create.type.undefined())
-                ),
-              }),
-              code.edit.function.declaration({
-                when: code.match.function.name('Skin'),
-                transform: code.edit.function.addProps(['poster', { name: 'rest', spread: true }]),
-              }),
+              code.imports({ '@fixture/core': '@fixture/react' }),
+              code.jsx.element('Tooltip.Trigger').childToProp('render'),
+              code.jsx.element('Controls.Root').addProp('data-controls', ''),
+              code.jsx.element('Container').spreadProps('rest'),
+              code.jsx.element('Poster').replace(() =>
+                code.jsx.if(
+                  'poster',
+                  code.jsx.create('Poster', {
+                    src: code.value.when('poster', isString),
+                  })
+                )
+              ),
+              code.jsx.element('PlayButton').addProp('render', code.jsx.create(Button)),
+              code.jsx.element(/^Slider\.(Track)$/).replace(SliderTrack),
+              code.jsx
+                .props('className')
+                .where(code.value.isArray())
+                .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
+              code.interface('SkinProps').extends(BaseSkinProps),
+              code
+                .interface(/Props$/)
+                .property('children')
+                .setType(() => code.type.union(code.type.named(ReactNode), code.type.undefined())),
+              code.function('Skin').addProps(['poster', { name: 'rest', spread: true }]),
             ];
           }),
         ],
@@ -121,6 +92,67 @@ export function Skin({ children, className }: SkinProps) {
     expect(compact(result.code)).toContain(compact('<Controls.Root data-controls="">'));
     expect(compact(result.code)).toContain(compact('<Tooltip.Trigger render={<PlayButton'));
   });
+
+  it('materializes default lazy imports', async () => {
+    const source = `export function Skin(){ return <Action/>; }`;
+
+    const result = await compile(source, {
+      config: {
+        plugins: [
+          transform((code) => {
+            const Button = code.import('@fixture/renderers', 'Button', { default: true });
+
+            return [code.jsx.element('Action').addProp('render', code.jsx.create(Button))];
+          }),
+        ],
+      },
+    });
+
+    expect(result.code).toContain('import Button from "@fixture/renderers"');
+    expect(compact(result.code)).toContain(compact('<Action render={<Button />} />'));
+  });
+
+  it('adds module constants and function-scope statements', async () => {
+    const source = `import { Container } from '@fixture/core';
+
+export function DefaultVideoSkin({ poster }) {
+  return <Container />;
+}
+`;
+
+    const result = await compile(source, {
+      config: {
+        plugins: [
+          transform((code) => {
+            const usePoster = code.import('@fixture/react', 'usePoster');
+
+            return [
+              code.module.prepend(
+                code.statement.const('TOP_ACTIONS', code.value.array([code.value.string('togglePaused')]), {
+                  asConst: true,
+                  export: true,
+                })
+              ),
+              code
+                .function('DefaultVideoSkin')
+                .prepend(code.statement.const('posterState', code.value.call(usePoster, ['poster']))),
+              code
+                .function('DefaultVideoSkin')
+                .beforeReturn(code.statement.const('ready', code.value.call('Boolean', ['posterState']))),
+            ];
+          }),
+        ],
+      },
+    });
+
+    const compactCode = compact(result.code);
+
+    expect(result.code.indexOf('import { Container }')).toBeLessThan(result.code.indexOf('export const TOP_ACTIONS'));
+    expect(result.code).toContain('import { usePoster } from "@fixture/react"');
+    expect(compactCode).toContain(compact('export const TOP_ACTIONS = ["togglePaused"] as const;'));
+    expect(compactCode).toContain(compact('const posterState = usePoster(poster);'));
+    expect(compactCode).toContain(compact('const ready = Boolean(posterState);return <Container />;'));
+  });
 });
 
 describe('compileProject', () => {
@@ -137,14 +169,7 @@ describe('compileProject', () => {
           entryFileNames: '[name].tsx',
           banner: '// Generated\n',
         },
-        plugins: [
-          transform((code) => [
-            code.edit.jsx.element({
-              when: code.match.jsx.tag('Root'),
-              transform: code.edit.jsx.addProp('data-root', ''),
-            }),
-          ]),
-        ],
+        plugins: [transform((code) => [code.jsx.element('Root').addProp('data-root', '')])],
       },
       { configDir: workDir }
     );

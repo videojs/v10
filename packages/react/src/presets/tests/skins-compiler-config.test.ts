@@ -105,15 +105,11 @@ describe('skins compiler config', () => {
       )
     );
     expect(compactCode).toContain(compact('<Tooltip.Trigger render={<PlayButton'));
-    expect(compactCode).toContain(compact('<PlayButton className={cn(iconButton, playIcon.button)} type="button">'));
-    expect(compactCode).toContain(
-      compact('<SeekButton seconds={-SEEK_TIME} className={cn(iconButton, seek.button)} type="button">')
-    );
+    expect(compactCode).toContain(compact('<PlayButton className={cn(iconButton, playIcon.button)}>'));
+    expect(compactCode).toContain(compact('<SeekButton seconds={-SEEK_TIME} className={cn(iconButton, seek.button)}>'));
     expect(compactCode).toContain(compact('<SeekIcon className={cn(icon, iconFlipped)} />'));
     expect(compactCode).toContain(compact('<span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>'));
-    expect(compactCode).toContain(
-      compact('<SeekButton seconds={SEEK_TIME} className={cn(iconButton, seek.button)} type="button">')
-    );
+    expect(compactCode).toContain(compact('<SeekButton seconds={SEEK_TIME} className={cn(iconButton, seek.button)}>'));
     expect(compactCode).toContain(compact('<span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>'));
     expect(compactCode).not.toContain('iconContainer');
     expect(compactCode).not.toContain('<Text');
@@ -123,7 +119,7 @@ describe('skins compiler config', () => {
     expect(compactCode).toContain(compact('<FeatureAvailability is="volume" except="unsupported">'));
     expect(compactCode).toContain(compact('<Popover.Root openOnHover delay={200} closeDelay={100} side="top">'));
     expect(compactCode).toContain(compact('<Popover.Trigger render={<MuteControl />} />'));
-    expect(compactCode).toContain(compact('<MuteButton className={cn(iconButton, muteIcon.button)} type="button">'));
+    expect(compactCode).toContain(compact('<MuteButton className={cn(iconButton, muteIcon.button)}>'));
     expect(compactCode).toContain(compact('<VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />'));
     expect(compactCode).toContain(compact('<Popover.Popup className={cn(popup.popover, popup.volume)}>'));
     expect(compactCode).toContain(
