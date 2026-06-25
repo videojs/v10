@@ -300,17 +300,35 @@ describe('seekToLiveEdge', () => {
       cleanup();
     });
 
-    it('does not reposition while a seek is in progress; repositions once it settles', () => {
+    it('does not yank an in-flight seek to an in-window position (DVR scrub-back)', () => {
       const { el, cleanup } = started();
       el.paused = false;
-      el.currentTime = 90;
+      el.currentTime = 102; // scrubbing back to a valid position within [100, 110]
       el.seeking = true;
       el.dispatchEvent(new Event('play'));
-      expect(el.currentTime).toBe(90); // seek in flight → untouched
+      // In-window → never trips the `< windowStart` guard, so the seek proceeds
+      // untouched. The guard discriminates on position, not the `seeking` flag.
+      expect(el.currentTime).toBe(102);
+      cleanup();
+    });
 
-      el.seeking = false;
-      el.dispatchEvent(new Event('play'));
-      expect(el.currentTime).toBe(104);
+    it('rescues a seek stranded behind the window start, even while still seeking', async () => {
+      const { el, state, cleanup } = started();
+      el.paused = false;
+      // A scrub toward the back of the window lands on data that has since slid
+      // out and been evicted: the seek hangs (readyState drops, `seeking` stays
+      // true) and `currentTime` is frozen behind the window start.
+      el.seeking = true;
+      el.readyState = 1; // HAVE_METADATA — stalled, no data at the target
+      el.currentTime = 90;
+
+      // The window-update re-fire (a playlist reload — `timeupdate` is silent
+      // during the stall) catches it: 90 < new windowStart 200. Previously the
+      // `seeking` bail blocked this and the playhead stranded permanently.
+      state.presentation.set(makePresentation(200, 100));
+      await flush();
+
+      expect(el.currentTime).toBe(204); // snapped to the new live edge despite `seeking`
       cleanup();
     });
 

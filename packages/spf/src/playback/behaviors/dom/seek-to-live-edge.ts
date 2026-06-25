@@ -17,8 +17,10 @@
  * `entry`, it fires once per entry into `live`; a source change exits to
  * `inactive`, so the next source re-seeks (no closure latch to reset).
  *
- * Window-exit guard: while playing (not paused, not mid-seek), reposition to the
- * live edge when the playhead has fallen behind the window start. Two triggers:
+ * Window-exit guard: while playing (not paused), reposition to the live edge
+ * when the playhead has fallen behind the window start — including when a seek
+ * to a now-evicted position has stranded the playhead (such a seek can never
+ * settle, so we rescue rather than wait on it). Two triggers:
  * the **window-update re-fire** (the guard reads the live edge, so each reload /
  * slide re-runs it — this catches a stall, where `timeupdate` stops but the
  * playlist keeps reloading) and a **`play` listener** for immediate reactivity on
@@ -171,8 +173,16 @@ function seekToLiveEdgeSetup({
           const { start: windowStart, liveEdgeStart } = getLiveEdge({ state, config })!;
           const mediaElement = peek(context.mediaElement)!;
           const reposition = () => {
-            // Don't yank a paused viewer or fight an in-flight seek (DVR scrub-back).
-            if (mediaElement.paused || mediaElement.seeking) return;
+            // Don't yank a paused viewer. We deliberately DON'T bail on
+            // `mediaElement.seeking`: a seek whose target sits behind the window
+            // start can never complete (the data has slid out of the window and
+            // been evicted), so `seeking` would stay true forever and strand the
+            // playhead — the very stall this guard exists to rescue. The
+            // `currentTime < windowStart` test is itself the precise
+            // discriminator: an in-window DVR scrub-back lands at
+            // `currentTime >= windowStart` and never trips it, so only a stuck
+            // out-of-window seek is repositioned.
+            if (mediaElement.paused) return;
             if (mediaElement.currentTime < windowStart - REPOSITION_TOLERANCE) {
               mediaElement.currentTime = liveEdgeStart;
             }
