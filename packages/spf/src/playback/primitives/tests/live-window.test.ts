@@ -5,6 +5,7 @@ import {
   type AudioTrack,
   type MaybeResolvedPresentation,
   MEDIA_PLAYLIST_METADATA_KEY,
+  type PartiallyResolvedVideoTrack,
   type Presentation,
   type SelectionSet,
   type VideoSelectionSet,
@@ -96,6 +97,29 @@ describe('liveWindowFromState', () => {
       start: 200,
       end: 210,
     });
+  });
+
+  it('falls back to a resolved track when the selected track is not yet resolved (mid-switch)', () => {
+    // ABR/user switch in flight: the selected rendition (v-2) is still a shell.
+    // The window is presentation-level, so it must come from the resolved sibling
+    // (v-1) rather than blinking to null.
+    const shell: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'v-2',
+      url: 'https://example.com/v2.m3u8',
+      mimeType: 'video/mp4',
+      codecs: ['avc1.640028'],
+      bandwidth: 2_000_000,
+    };
+    const pres: Presentation = {
+      id: 'pres-1',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        { id: 'v-set', type: 'video', switchingSets: [{ id: 'vss', type: 'video', tracks: [videoTrack(100), shell] }] },
+      ],
+    };
+    expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-2' }))).toEqual({ start: 100, end: 110 });
   });
 
   it('returns null when no track is selected', () => {

@@ -14,6 +14,7 @@
 import type { ReadonlySignal } from '../../core/signals/primitives';
 import { type LiveWindow, liveWindowFor } from '../../media/live-window';
 import type { MaybeResolvedPresentation } from '../../media/types';
+import { getTracksByType } from '../../media/utils/tracks';
 
 export interface LiveWindowState {
   presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
@@ -31,7 +32,28 @@ export function liveTrackId(state: LiveWindowState): string | undefined {
 }
 
 export function liveWindowFromState(state: LiveWindowState): LiveWindow | null {
-  return liveWindowFor(state.presentation.get(), liveTrackId(state));
+  const presentation = state.presentation.get();
+
+  // Prefer the selected timeline-bearing track when it's resolved.
+  const selected = liveWindowFor(presentation, liveTrackId(state));
+  if (selected) return selected;
+
+  // The selected track isn't resolved yet (e.g. briefly mid ABR / user switch).
+  // The live window is a presentation-level property — all renditions are
+  // time-aligned and share the anchor — so fall back to any resolved track of the
+  // timeline-bearing type rather than letting the window blink to `null`. A null
+  // blink would flip `seekToLiveEdge` out of `live` and re-fire its one-time edge
+  // seek (yanking a viewer who has scrubbed back), and stall the seekable-range
+  // writer. A deselected track's window may trail live by up to one reload during
+  // the switch gap — acceptable, and the selected track's fresh window resumes the
+  // moment it resolves.
+  if (!presentation) return null;
+  const type = state.selectedVideoTrackId?.get() ? 'video' : 'audio';
+  for (const track of getTracksByType(presentation, type)) {
+    const window = liveWindowFor(presentation, track.id);
+    if (window) return window;
+  }
+  return null;
 }
 
 /**
