@@ -369,6 +369,19 @@ prematurely fix.
   that duration-finiteness alone can't express, plus the variant-specific
   `seekableStart` producer. Out of scope here; flagged so the foundation
   doesn't assume sliding-window everywhere.
+- **Model ↔ anchor ↔ resolve-track coupling — flagged for a holistic revisit.**
+  Making live work grew three concerns together: the mutable data model (per-track
+  `segments` lists + the single `presentation` signal read-modified-written across
+  reloads), the anchor logic (`bufferedAnchorFor` → `positionAllTracksToAnchor`,
+  which *rewrites* model `startTime`s onto the learned anchor — see
+  [live-presentation-anchor](../../decisions/live-presentation-anchor.md)), and the
+  `resolveXTrack` changes that drive both. The anchor mutating model timelines
+  while reloads concurrently merge new windows into the same `presentation` signal
+  is a lost-update hazard; the live-implementation fixes to date (the buffer-pin
+  off-by-one, the live-window-during-selection-churn fallback) were point fixes
+  inside this coupling, not a model for it. Revisit where timeline reconciliation
+  belongs (model vs behavior) and whether one concurrently-mutated `presentation`
+  signal is the right shape.
 
 ---
 

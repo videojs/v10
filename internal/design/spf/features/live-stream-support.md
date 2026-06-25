@@ -53,7 +53,7 @@ below is part of "live works (and terminates) at all"; richer live variants
 | Sliding-window segment tracking | ✅ Implemented | `placeOnPreviousTimeline` (`parse-media-playlist.ts`) carries the new window onto the established timeline via media-sequence overlap (PDT bridge on full turnover). Segment-loader `planTasks` re-evaluates the mutating `track.segments` on each load dispatch; back-buffer keeps last 2 segments. No explicit "no-longer-in-playlist" eviction signal — the keep-count heuristic + list shrink handle roll-off |
 | Live duration semantics | ✅ Implemented | Parser sets `Track.duration = Infinity` for unended live; `calculatePresentationDuration` (default resolver `getResolvedSelectedTrackDuration`) writes it; `updateMediaSourceDuration` propagates `mediaSource.duration = Infinity` once MS is open and buffers idle |
 | Live edge tracking + `setLiveSeekableRange` | ✅ Implemented (option **b**) | The live window (or null for VOD/ended) is derived once by the pure `liveWindowFor` (`media/live-window.ts`), consumed by two separate behaviors: `sync-live-seekable-range.ts` declares `setLiveSeekableRange(start, end)` reactively on each window slide (runs while paused too), and `seek-to-live-edge.ts` does the one-time seek to `liveEdgeStart` (the live latency behind the edge, via the `getLiveEdge` primitive). Separate from the reload loop (option b). Inert for VOD via `liveWindowFor` returning null. No `clearLiveSeekableRange()` on termination — unnecessary: the UA consults the live range only while `duration === Infinity`, so once `endOfStream` sets a finite duration it's ignored |
-| Live-window playhead guard | ✅ Implemented | `seek-to-live-edge` is a reactor (`inactive ↔ live`); the guard is the `live` state's `effects`. While playing (`!paused && !seeking`), it repositions `currentTime` to `liveEdgeStart` when the playhead has fallen behind the window start. Two triggers: the **window-update re-fire** (the effect reads the live edge, so each reload re-runs it — this catches *fell-behind-on-poor-network* (Scenario B), where `timeupdate` is silent during a stall) and a single **`play` listener** for immediate reposition on *resume* (Scenario A; the reload interval can be seconds) — `play`, not `playing`, since after a long pause the playhead sits behind the window at an unseekable position where `playing` never fires. Within-window pause / DVR scrub-back are left untouched. **Deferred:** playback-rate latency catch-up, MSE gap-jumping |
+| Live-window playhead guard | ✅ Implemented | `seek-to-live-edge` is a reactor (`inactive ↔ live`); the guard is the `live` state's `effects`. While playing (`!paused`), it repositions `currentTime` to `liveEdgeStart` when the playhead has fallen behind the window start — including a seek whose target has slid out of the window (it can never settle, so the guard rescues rather than waiting on `seeking`; the `currentTime < windowStart` test discriminates, since in-window scrub-back lands `≥ windowStart`). Two triggers: the **window-update re-fire** (the effect reads the live edge, so each reload re-runs it — this catches *fell-behind-on-poor-network* (Scenario B), where `timeupdate` is silent during a stall) and a single **`play` listener** for immediate reposition on *resume* (Scenario A; the reload interval can be seconds) — `play`, not `playing`, since after a long pause the playhead sits behind the window at an unseekable position where `playing` never fires. Within-window pause / DVR scrub-back are left untouched. **Deferred:** playback-rate latency catch-up, MSE gap-jumping |
 | Reload jitter / backoff | ✅ Naive only | Target-duration cadence with unchanged-window throttle (half target). No thundering-herd jitter, no backoff on repeated identical-playlist responses (full depth, not implemented) |
 | Per-type reload coordination | ✅ Independent | Audio / video / text each own their `RecurringRunner` and reload on their own `#EXT-X-TARGETDURATION`. Resolved as **extended `resolveXTrack`** (same `setupTrackResolution` handles one-shot VOD and recurring live via the `RecurringRunner` abstraction) — no separate `reloadXTrack` family |
 | Termination detection | ✅ Naive depth | `#EXT-X-ENDLIST` recognized and surfaced (`MediaPlaylistMetadata.endList`); parser flips `Track.duration` finite (on `ENDLIST` or `PLAYLIST-TYPE:VOD`), which stops the reload loop. ENDLIST-only is the sanctioned naive tier (per [clusters.md](./clusters.md#naive-vs-full-implementation-depth)) and sufficient for conformant content (Mux always emits `ENDLIST`); the miss-counter fallback for non-conformant servers is deferred full-depth |
@@ -205,8 +205,10 @@ unconditionally (`anchorPresentationTimeline`, `calculatePresentationDuration`,
 (`describe('live-window playhead guard')`, event-capable fake media element):
 playing-inside-window → no seek; behind-window-start on resume (`play`) → seek to
 `liveEdgeStart`; paused while the window slides → no seek, then seek on `play`
-resume; DVR mid-window scrub-back across a window update → **no** yank; `seeking`
-in flight → no seek, then seek once it settles; sub-tolerance boundary → no
+resume; DVR mid-window scrub-back across a window update → **no** yank; an
+in-window seek in flight → **no** yank (the guard discriminates on position, not
+the `seeking` flag); a seek stranded behind the window start while still
+`seeking` → rescued to `liveEdgeStart`; sub-tolerance boundary → no
 jitter seek, beyond-tolerance → seek; stalled-behind-window (playing, frozen
 `currentTime`) → repositions on the window-update re-fire.
 
@@ -226,6 +228,33 @@ covers the guard logic deterministically.
   touching playback rate.
 - **Miss-counter threshold** (if pursued). How many identical-manifest reloads
   constitute termination?
+- **Seekable-range "lip" ahead of buffered data.** `liveWindowFor` derives the
+  window start from the model's first listed segment, which can lead the
+  actually-buffered / fetchable boundary by ~a segment (observed ~2s on a
+  sliding-window source: declared `seekable.start` preceded the SourceBuffer's
+  first range). A seek into that lip lands on unloadable media and strands until
+  the window slides past it — the guard now rescues, but the lip is the trigger.
+  Follow-up: tighten the derived window start toward the fetchable boundary.
+- **Clamp-to-seekable as the general windowed-playhead mechanism.** A behavior
+  enforcing `currentTime ∈ seekable` off the **native** `seekable` range would be
+  timeline-agnostic (robust to non-zero start PTS — see
+  [non-zero-pts-support](./non-zero-pts-support.md)) and would subsume the
+  window-exit guard's reposition half (not the one-time entry seek). Deferred; it
+  raises the recovery-target decision — snap-to-edge for sliding live vs
+  hold-at-oldest for DVR — the same DVR-vs-sliding distinction
+  [dvr-event-stream-support](./dvr-event-stream-support.md) faces. Tracked as a
+  future feature.
+- **Back-of-window playback yanked to the live edge on discrete window slides.**
+  Now that out-of-window seeks are rescued (above), watching from the back of a
+  sliding window is unstable: the window start advances a full segment (~2s) per
+  reload, so a playhead parked near the back transiently drops below `windowStart`
+  and the guard repositions it — but to the live **edge**, not the new window
+  start, yanking the viewer forward. Aggravated by the reload-cadence /
+  segment-sized discreteness of the window update (and any lag in observing it).
+  The reposition **target** is the lever: snapping to `windowStart + margin` (or
+  clamp-to-seekable's hold-at-oldest) instead of the edge keeps a back-of-window
+  viewer in place. Same recovery-target decision as the clamp-to-seekable item;
+  observed live on the ~20s sliding source. Needs cleanup.
 
 **Resolved during guard implementation:**
 
@@ -238,6 +267,13 @@ covers the guard logic deterministically.
   anti-speculative-config).
 - **Guard placement** → the `live` state's `effects` in the `seek-to-live-edge`
   reactor (single owner of the live playhead position), not a sibling behavior.
+- **Out-of-window seek stall** → the guard originally bailed on
+  `mediaElement.seeking`, so a seek to a position that had slid out of the window
+  (data evicted, seek never settles) stranded the playhead permanently — the
+  guard couldn't rescue the very stall it exists for. Removed the `seeking` bail;
+  `currentTime < windowStart` is itself the discriminator (in-window scrub-back
+  lands `≥ windowStart`, so it's untouched). Fixed on `feat/spf-hls-live`;
+  reproduced + verified live on a Mux sliding-window source.
 
 ## Related features
 
@@ -281,5 +317,3 @@ covers the guard logic deterministically.
   — cluster A epic candidates.
 - [Mux Video Permutations Matrix](https://www.notion.so/32c97a7f89d08191b84dd30f06685490)
   — Stream Type section.
-</content>
-</invoke>
