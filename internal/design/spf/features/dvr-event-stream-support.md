@@ -172,7 +172,11 @@ Things this feature probably forces decisions on, not just additions:
   inference. (a) is simplest; (b) only covers spec-flagged event
   streams; (c) is the most adaptive but adds complexity. Likely
   combination: (b) when the tag is present; otherwise (a) until (c)
-  matures.
+  matures. Update: the parser already extracts `playlistType`
+  (`'VOD' | 'EVENT'`) into the media-playlist metadata, now consumer-reachable
+  via `getMediaPlaylistMetadata` on `@videojs/spf/hls` — so (b) is available
+  today (the `spf-segment-loading` sandbox uses it to classify DVR/EVENT vs
+  sliding live, replacing an earlier window-size heuristic).
 - **Seekable-range start derivation under server retention.** When
   the server keeps only the last N hours of segments and the
   playlist's first segment slides forward over time, the
