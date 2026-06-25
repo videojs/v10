@@ -21,7 +21,7 @@ epic NEW-B "Video-only Composition" — delivery-mode choice) into a single
 composition with two variant-decision-source paths
 (see *Variant-decision signal source* below).
 
-[`background-looping-video`](./README.md#index) *(forward-ref; not yet
+[`background-video`](./README.md#index) *(forward-ref; not yet
 documented)* is a related-but-distinct Mux product scenario that may
 compose this use case as part of a broader assembly (loop +
 autoplay-muted + GPU/thermal-aware caps). See
@@ -47,7 +47,7 @@ for product context.
   same engine factory and adapter, distinguished only by which signal
   sources the variant decision.
 - **Mux relevance:** [GitHub #873 (mux-background-video)](https://github.com/videojs/v10/issues/873)
-  is product-adjacent — distinct use case (`background-looping-video`) that
+  is product-adjacent — distinct use case (`background-video`) that
   shares constituent features but addresses a different delivery scenario.
 
 ## Target delivery context
@@ -125,7 +125,7 @@ variant-decision behavior is needed.
   be adapter-layer rather than engine-variant — boundary question.
 - **GPU/thermal-aware quality caps** — for low-attention consumer surfaces
   (ambient video, background tabs), cap video quality based on GPU/thermal
-  signals. Likely shared with `background-looping-video`'s broader scenario.
+  signals. Likely shared with `background-video`'s broader scenario.
 - **Buffer-target tuning** — depends on consumer surface. Background/ambient
   video may want shorter buffers (lower priority); foreground muted-autoplay
   may want normal buffers. Probably consumer-policy rather than engine
@@ -152,7 +152,7 @@ Phase 1 baseline:
   Phase 1 verification covers this.
 - **[`buffer-management`](../features/buffer-management.md)** — used as-is in
   Phase 1; Phase 3 surfaces alternative defaults / candidate Path-B behaviors
-  (loop-friendly buffer fetching is `background-looping-video`'s concern,
+  (loop-friendly buffer fetching is `background-video`'s concern,
   not this use case's).
 
 Phase 2 (when relevant):
@@ -225,11 +225,11 @@ implementation pass landed the shared-factory pattern (see that doc's
 - **Adapter shape proliferation.** Each use-case composition that gets its
   own adapter multiplies the adapter surface. Shared concern with
   `audio-only-mode-override` and forthcoming use cases.
-- **Relationship with `background-looping-video`.** Distinct use case (Mux's
+- **Relationship with `background-video`.** Distinct use case (Mux's
   background-video product scenario); shared constituent features but
-  different delivery scenario. Background-looping composes loop + autoplay-
+  different delivery scenario. Background composes loop + autoplay-
   muted + GPU/thermal-aware caps + likely silent-video delivery; this use
-  case is the narrower "deliver video-only" piece. Background-looping-video
+  case is the narrower "deliver video-only" piece. Background-video
   may compose this use case's engine factory as one of its building blocks,
   or share constituents at the feature level — cross-link as peer use cases.
 - **Test coverage for mixed-source video-only delivery.** New test coverage
@@ -265,8 +265,8 @@ implementation pass landed the shared-factory pattern (see that doc's
   muted-default behavior) or adapter level (adapter sets `muted = true` on
   the underlying media element). Likely adapter.
 - **GPU/thermal-aware quality caps boundary.** Likely shared with
-  `background-looping-video`; may belong at the use-case level there rather
-  than here. Worth scoping in the background-looping-video doc when it
+  `background-video`; may belong at the use-case level there rather
+  than here. Worth scoping in the background-video doc when it
   lands.
 - **Mux-billing integration.** Same shape as audio-only-mode-override —
   billing context likely surfaces at adapter / consumer level.
@@ -294,11 +294,11 @@ implementation pass landed the shared-factory pattern (see that doc's
   inverse-axis sibling. Same shape, audio-side instead of video-side. The
   joint resolution of the "engine variant factory shape" open question
   applies to both.
-- **`[background-looping-video]`** *(forward-ref; not yet documented)* —
+- **`[background-video]`** *(forward-ref; not yet documented)* —
   peer use case. Mux's background-video product scenario: loop +
   autoplay-muted + GPU/thermal-aware caps + likely silent-video delivery.
   **Distinct from this use case** despite shared Mux consumer context and
-  overlapping constituent features. Background-looping-video may compose
+  overlapping constituent features. Background-video may compose
   this use case's engine factory as one of its building blocks, or compose
   shared constituents directly — resolution depends on whether
   "use-case-composing-use-case" emerges as a pattern. Cross-link as peer.

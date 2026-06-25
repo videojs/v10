@@ -136,7 +136,7 @@ describe('HlsMedia', () => {
       media.addEventListener('streamtypechange', handler);
 
       // New `hlsJs` option values must recreate the engine to take effect.
-      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
       media.load();
 
       // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
@@ -147,7 +147,7 @@ describe('HlsMedia', () => {
     it('does not recreate the engine for an equivalent hlsJs config', () => {
       const { media, video } = setup();
 
-      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
       media.load();
 
       fireDurationChange(video, Infinity);
@@ -155,20 +155,22 @@ describe('HlsMedia', () => {
       media.addEventListener('streamtypechange', handler);
 
       // Same option values in a new object (e.g. an inline React prop).
-      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
       media.load();
 
       // No engine teardown → no streamType churn.
       expect(handler).not.toHaveBeenCalled();
     });
 
-    it('merges config assignments', () => {
+    it('resets free-form config when a new object is assigned', () => {
       const { media } = setup();
 
       media.config = { hlsJs: { maxBufferLength: 60 } };
 
-      // Keys from the previous assignment in `setup()` survive.
-      expect(media.config.preferPlayback).toBe('native');
+      // A new config object signals a fresh start: prior free-form keys
+      // (set in `setup()`) are dropped rather than merged.
+      expect(media.config.preferPlayback).toBeUndefined();
+      expect(media.config.contentType).toBeUndefined();
       expect(media.config.hlsJs).toEqual({ maxBufferLength: 60 });
     });
   });

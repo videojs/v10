@@ -191,85 +191,111 @@ describe('HTMLMediaElementHost', () => {
   });
 
   describe('component config binding', () => {
-    it('exposes the component instance under its configKey', () => {
+    it('applies a component namespace onto the component when config is set', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
       addComponent(host, component);
 
-      expect(host.config.fake).toBe(component);
-    });
-
-    it('reads live values from the component', () => {
-      const host = new HTMLAudioElementHost();
-      const component = new ConfigurableComponent();
-      addComponent(host, component);
-
-      component.value = 5;
-      expect((host.config.fake as ConfigurableComponent).value).toBe(5);
-    });
-
-    it('assigns onto the component when the namespace is written', () => {
-      const host = new HTMLAudioElementHost();
-      const component = new ConfigurableComponent();
-      addComponent(host, component);
-
-      host.config.fake = { value: 7, label: 'hi' };
-
-      expect(component.value).toBe(7);
-      expect(component.label).toBe('hi');
-    });
-
-    it('routes component keys through the config setter', () => {
-      const host = new HTMLAudioElementHost();
-      const component = new ConfigurableComponent();
-      addComponent(host, component);
-
-      host.config = { fake: { value: 3 }, hlsJs: { debug: true } };
+      host.config = { fake: { value: 3, label: 'a' } };
 
       expect(component.value).toBe(3);
-      // Component instance is not stored as a plain object on the host.
-      expect(host.config.fake).toBe(component);
-      // Non-component keys are stored on the host bag.
-      expect(host.config.hlsJs).toEqual({ debug: true });
+      expect(component.label).toBe('a');
     });
 
-    it('reflects a component added after the first config access', () => {
-      const host = new HTMLAudioElementHost();
-      // Access config before the component exists to build the proxy.
-      expect(host.config.fake).toBeUndefined();
-
-      const component = new ConfigurableComponent();
-      addComponent(host, component);
-
-      expect(host.config.fake).toBe(component);
-    });
-
-    it('includes the configKey in has/ownKeys', () => {
+    it('stores config as plain values, never component instances', () => {
       const host = new HTMLAudioElementHost();
       addComponent(host, new ConfigurableComponent());
 
-      expect('fake' in host.config).toBe(true);
-      expect(Object.keys(host.config)).toContain('fake');
+      host.config = { fake: { value: 3 }, hlsJs: { debug: true } };
+
+      // `config` is a plain bag of what was set — reading it back yields the
+      // assigned POJO, never the component instance.
+      expect(host.config.fake).toEqual({ value: 3 });
+      expect(host.config.fake).not.toBeInstanceOf(ConfigurableComponent);
+      expect(host.config.hlsJs).toEqual({ debug: true });
     });
 
-    it('merges host-level keys on assignment', () => {
+    it('returns the same object that was assigned', () => {
+      const host = new HTMLAudioElementHost();
+      const value = { fake: { value: 1 }, a: 2 };
+
+      host.config = value;
+
+      expect(host.config).toBe(value);
+    });
+
+    it('round-trips through JSON without leaking component instances', () => {
+      const host = new HTMLAudioElementHost();
+      addComponent(host, new ConfigurableComponent());
+
+      host.config = { fake: { value: 5, label: 'a' }, a: 1 };
+
+      // The stringified getter is valid input to the setter — plain values only.
+      const serialized = JSON.parse(JSON.stringify(host.config));
+      expect(serialized).toEqual({ fake: { value: 5, label: 'a' }, a: 1 });
+    });
+
+    it('does not apply config when the returned object is mutated directly', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      // Only the setter applies namespaces to components; mutating the bag in
+      // place bypasses it.
+      host.config.fake = { value: 7, label: 'hi' };
+
+      expect(component.value).toBe(0);
+      expect(component.label).toBe('');
+    });
+
+    it('replaces the entire config object on set', () => {
       const host = new HTMLAudioElementHost();
 
       host.config = { a: 1 };
       host.config = { b: 2 };
 
-      expect(host.config.a).toBe(1);
+      // A new object replaces the old one wholesale; prior keys are dropped.
+      expect(host.config.a).toBeUndefined();
       expect(host.config.b).toBe(2);
     });
 
-    it('removes the config binding when the component is removed', () => {
+    it('keeps component state when a later config omits its namespace', () => {
       const host = new HTMLAudioElementHost();
-      const remove = addComponent(host, new ConfigurableComponent());
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      host.config = { fake: { value: 5 }, a: 1 };
+      host.config = { b: 2 };
+
+      // The component retains its applied state even though the new config
+      // object no longer lists its namespace.
+      expect(component.value).toBe(5);
+      expect(host.config.fake).toBeUndefined();
+      expect(host.config.a).toBeUndefined();
+      expect(host.config.b).toBe(2);
+    });
+
+    it('overwrites component state only for keys present in the new config', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      host.config = { fake: { value: 5, label: 'a' } };
+      host.config = { fake: { value: 9 } };
+
+      expect(component.value).toBe(9);
+      expect(component.label).toBe('a');
+    });
+
+    it('stops applying config to a removed component', () => {
+      const host = new HTMLAudioElementHost();
+      const component = new ConfigurableComponent();
+      const remove = addComponent(host, component);
 
       remove();
+      host.config = { fake: { value: 7 } };
 
-      expect(host.config.fake).toBeUndefined();
-      expect('fake' in host.config).toBe(false);
+      expect(component.value).toBe(0);
     });
 
     it('adopts config set before the component was registered', () => {
@@ -281,7 +307,23 @@ describe('HTMLMediaElementHost', () => {
 
       expect(component.value).toBe(4);
       expect(component.label).toBe('early');
-      expect(host.config.fake).toBe(component);
+      // The plain value stays in the bag; it was never replaced.
+      expect(host.config.fake).toEqual({ value: 4, label: 'early' });
+    });
+
+    it('drops pre-registration component config after an intervening config reset', () => {
+      const host = new HTMLAudioElementHost();
+      host.config = { fake: { value: 4, label: 'early' } };
+      // A later config object replaces the bag wholesale, so the staged value is
+      // gone before the component registers.
+      host.config = { a: 1 };
+
+      const component = new ConfigurableComponent();
+      addComponent(host, component);
+
+      expect(component.value).toBe(0);
+      expect(component.label).toBe('');
+      expect(host.config.fake).toBeUndefined();
     });
   });
 });

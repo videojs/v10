@@ -270,7 +270,7 @@ snapshot between operations rather than awaiting `send()` directly.
   candidate (audio-only-tuned buffer-management behavior).
 - **[`video-only-mode-override`](../use-cases/video-only-mode-override.md)**
   *(coarse)* — Phase 1 baseline constituent (used as-is). Loop-
-  friendly buffer fetching is the peer `[background-looping-
+  friendly buffer fetching is the peer `[background-
   video]` use case's concern, not this one's; video-only-mode-
   override's Phase 3 may surface other defaults but not
   loop-around.

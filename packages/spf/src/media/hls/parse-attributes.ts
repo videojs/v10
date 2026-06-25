@@ -59,6 +59,14 @@ export function parseFrameRate(value: string): FrameRate | undefined {
   return { frameRateNumerator: Math.round(fps) };
 }
 
+// Audio codec identifiers, matched case-insensitively against each CODECS
+// entry's prefix. Beyond AAC (`mp4a.*`): Dolby (`ac-3`, `ec-3`, `ac-4`), Opus,
+// FLAC (`fLaC`), DTS (`dts*`), ALAC, and Vorbis. Recognizing these is what lets
+// capability probing filter undecodable audio renditions (e.g. an AC-3 5.1
+// track on a browser without AC-3) — an unrecognized codec parses empty and is
+// treated as unprobeable, so it would never be pruned.
+const AUDIO_CODEC_PREFIXES = ['mp4a.', 'ac-3', 'ec-3', 'ac-4', 'opus', 'flac', 'dts', 'alac', 'vorbis'];
+
 /**
  * Parse CODECS attribute into separate video and audio codecs.
  */
@@ -67,9 +75,10 @@ export function parseCodecs(codecs: string): { video?: string; audio?: string } 
   const result: { video?: string; audio?: string } = {};
 
   for (const codec of parts) {
+    const lower = codec.toLowerCase();
     if (codec.startsWith('avc1.') || codec.startsWith('hvc1.') || codec.startsWith('hev1.')) {
       result.video = codec;
-    } else if (codec.startsWith('mp4a.')) {
+    } else if (AUDIO_CODEC_PREFIXES.some((prefix) => lower.startsWith(prefix))) {
       result.audio = codec;
     }
   }

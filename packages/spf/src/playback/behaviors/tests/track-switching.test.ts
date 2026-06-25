@@ -5,18 +5,26 @@ import type {
   AudioSelectionSet,
   AudioTrack,
   MaybeResolvedPresentation,
+  PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
+  TextSelectionSet,
+  TextTrack,
   VideoSelectionSet,
   VideoTrack,
 } from '../../../media/types';
+import { applyContainerMimeType } from '../../../media/utils/tracks';
 import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import {
+  applyConstraints,
   applyRules,
   type SelectionRule,
   type SwitchVideoTrackConfig,
+  setupTrackSwitching,
   switchAudioTrack,
+  switchTextTrack,
   switchVideoTrack,
+  type TrackSwitchingStateMap,
 } from '../track-switching';
 
 // ============================================================================
@@ -736,6 +744,43 @@ describe('applyRules', () => {
 });
 
 // ============================================================================
+// applyConstraints — the hard-constraints pre-pass (pure; no signals)
+// ============================================================================
+
+describe('applyConstraints', () => {
+  const track = (id: string) => ({ id });
+  const all = [track('a'), track('b'), track('c')];
+  const noDeps = { state: {}, context: {}, config: {} };
+
+  const noA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'a');
+  const noC: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id !== 'c');
+
+  it('removes what each constraint excludes (pooled)', () => {
+    expect(applyConstraints([noA, noC], all, noDeps).map((t) => t.id)).toEqual(['b']);
+  });
+
+  it('is order-independent', () => {
+    expect(applyConstraints([noA, noC], all, noDeps)).toEqual(applyConstraints([noC, noA], all, noDeps));
+  });
+
+  it('preserves an empty result — no fall-through, unlike applyRules', () => {
+    const none: SelectionRule<{ id: string }> = () => [];
+    expect(applyConstraints([none], all, noDeps)).toEqual([]);
+  });
+
+  it('runs every constraint — no early-bail at a single survivor', () => {
+    const toA: SelectionRule<{ id: string }> = (tracks) => tracks.filter((t) => t.id === 'a');
+    let laterCalled = false;
+    const later: SelectionRule<{ id: string }> = (tracks) => {
+      laterCalled = true;
+      return tracks;
+    };
+    applyConstraints([toA, later], all, noDeps);
+    expect(laterCalled).toBe(true);
+  });
+});
+
+// ============================================================================
 // preferActiveCdn — active-CDN scope (shared by video + audio)
 // ============================================================================
 
@@ -813,8 +858,8 @@ describe('preferActiveCdn (active-CDN scope)', () => {
   });
 
   it('applies the scope when cdnPriority arrives after the first pick (composition-order independence)', async () => {
-    // Guards against the pick depending on `resolveCdnPriority` being composed
-    // *before* `switchVideoTrack`. The worst case — resolveCdnPriority last — is
+    // Guards against the pick depending on `deriveCdnPriority` being composed
+    // *before* `switchVideoTrack`. The worst case — deriveCdnPriority last — is
     // equivalent to cdnPriority being written after switch*'s first pick. The
     // scope subscribes to cdnPriority even while it's undefined, so a late write
     // must re-fire and correct the pick.
@@ -861,5 +906,468 @@ describe('preferActiveCdn (active-CDN scope)', () => {
     await flush();
     expect(state.selectedAudioTrackId.get()).toBe('aud-b');
     reactor.destroy();
+  });
+});
+
+// ============================================================================
+// excludeFailedCdns — the failover constraint (hard pre-pass) + scope interplay
+// ============================================================================
+
+describe('excludeFailedCdns (failover constraint)', () => {
+  const cdnVideoTrack = (id: string, host: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [],
+    id,
+    url: `https://${host}/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+  });
+
+  const multiCdn = () =>
+    createPresentation([
+      cdnVideoTrack('720p-a', 'cdn-a.example.com', 2_400_000),
+      cdnVideoTrack('720p-b', 'cdn-b.example.com', 2_400_000),
+      cdnVideoTrack('1080p-a', 'cdn-a.example.com', 4_800_000),
+      cdnVideoTrack('1080p-b', 'cdn-b.example.com', 4_800_000),
+    ]);
+
+  const makeState = (failedCdns?: string[]) => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(multiCdn()),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+    cdnPriority: signal<string[] | undefined>(['https://cdn-a.example.com', 'https://cdn-b.example.com']),
+    failedCdns: signal<string[] | undefined>(failedCdns),
+  });
+
+  it('excludes nothing when failedCdns is absent — picks the primary', async () => {
+    const state = makeState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+    reactor.destroy();
+  });
+
+  it('fails over to the next CDN when the primary is in cooldown', async () => {
+    const state = makeState(['https://cdn-a.example.com']);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // cdn-a's tracks are pruned by the constraint, so the scope falls to cdn-b.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+    reactor.destroy();
+  });
+
+  it('fails over reactively, then returns to the primary on recovery', async () => {
+    const state = makeState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    // cdn-a enters cooldown → prune → scope falls to cdn-b.
+    state.failedCdns.set(['https://cdn-a.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-b');
+
+    // cdn-a recovers → its tracks reappear → scope snaps back to the primary.
+    state.failedCdns.set([]);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    reactor.destroy();
+  });
+
+  it('clears the selection when every CDN is in cooldown, re-picking on recovery', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const state = makeState(undefined);
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    // All CDNs cooled down → constraints prune every track → no playable set →
+    // the selection clears (no pick) rather than lingering on an unreachable CDN.
+    state.failedCdns.set(['https://cdn-a.example.com', 'https://cdn-b.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalled();
+
+    // A CDN recovers → its tracks reappear → the candidate set refills and re-picks.
+    state.failedCdns.set(['https://cdn-b.example.com']);
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-a');
+
+    errorSpy.mockRestore();
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// excludeUnplayableTracks — the capability constraint (hard pre-pass)
+// ============================================================================
+
+describe('excludeUnplayableTracks (capability constraint)', () => {
+  const codecVideoTrack = (id: string, codec: string, bandwidth: number): PartiallyResolvedVideoTrack => ({
+    type: 'video',
+    codecs: [codec],
+    id,
+    url: `https://example.com/${id}.m3u8`,
+    bandwidth,
+    mimeType: 'video/mp4',
+  });
+
+  // Mixed HEVC + AVC ladder; the same bitrates on each codec.
+  const mixedCodecPresentation = () =>
+    createPresentation([
+      codecVideoTrack('720p-hevc', 'hvc1.1.6.L93.B0', 2_400_000),
+      codecVideoTrack('720p-avc', 'avc1.4d401f', 2_400_000),
+      codecVideoTrack('1080p-hevc', 'hvc1.1.6.L120.B0', 4_800_000),
+      codecVideoTrack('1080p-avc', 'avc1.640028', 4_800_000),
+    ]);
+
+  // Rejects HEVC, accepts everything else.
+  const rejectsHevc = (track: { codecs?: string[] }) => !track.codecs?.some((c) => c.startsWith('hvc1'));
+
+  const makeState = () => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(mixedCodecPresentation()),
+    bandwidthState: signal<BandwidthState | undefined>(createBandwidthState(10_000_000)),
+    selectedVideoTrackId: signal<string | undefined>(undefined),
+    userVideoTrackSelection: signal<Partial<VideoTrack> | undefined>(undefined),
+  });
+
+  it('prunes undecodable renditions before ranking — picks the best playable codec', async () => {
+    const state = makeState();
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: rejectsHevc } });
+    await flush();
+    // HEVC pruned upstream; ranker picks the highest-bitrate AVC that fits.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-avc');
+    reactor.destroy();
+  });
+
+  it('passes everything through when no canPlayTrack probe is wired', async () => {
+    const state = makeState();
+    const reactor = switchVideoTrack.setup({ state });
+    await flush();
+    // No probe → HEVC survives; same-bitrate tie keeps manifest order, so the
+    // first 1080p (HEVC) wins.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-hevc');
+    reactor.destroy();
+  });
+
+  it('still excludes an unplayable track the user selected (hard constraint beats the soft filter)', async () => {
+    const state = makeState();
+    state.userVideoTrackSelection.set({ id: '1080p-hevc' });
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: rejectsHevc } });
+    await flush();
+    // The user's HEVC pick is pruned by the constraint before the user filter
+    // runs; the filter finds no match and falls through to the playable set.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-avc');
+    reactor.destroy();
+  });
+
+  it('makes no pick when the constraint prunes every rendition', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const state = makeState();
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack: () => false } });
+    await flush();
+    // Every codec rejected from a cold start → empty candidate set → nothing
+    // selected, and the empty-from-constraints case is flagged. The late
+    // createSourceBuffer check stays as the backstop.
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+    reactor.destroy();
+  });
+
+  it('clears a prior pick when a later relabel prunes every rendition to empty', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const state = makeState();
+    // Accepts fMP4; rejects the non-fMP4 container MIME resolve-track relabels to.
+    const canPlayTrack = (track: { mimeType?: string }) => track.mimeType !== 'video/mp2t';
+    const reactor = switchVideoTrack.setup({ state, config: { canPlayTrack } });
+    await flush();
+    // Pick made while the tracks are still labeled video/mp4.
+    expect(state.selectedVideoTrackId.get()).toBe('1080p-hevc');
+
+    // resolve-track detects a TS container and relabels the whole video type;
+    // every rendition is now undecodable → candidate set empties → the now-stale
+    // pick clears (instead of lingering as an unplayable selection that stalls).
+    state.presentation.set(applyContainerMimeType(mixedCodecPresentation(), 'video', 'video/mp2t'));
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    expect(errorSpy).toHaveBeenCalled();
+
+    errorSpy.mockRestore();
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// setupTrackSwitching — resolveSelection seam
+//
+// The variant-supplied final-pick hook. Defaults to the chain head (video/audio
+// always-pick); a variant with optional selection (text) may resolve to
+// `undefined` to clear the slot. Exercised here directly via the helper rather
+// than through a variant, since no text variant exists yet.
+// ============================================================================
+
+describe('setupTrackSwitching (resolveSelection)', () => {
+  it('defaults to the chain head when resolveSelection is absent', async () => {
+    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
+      presentation: createPresentation(tracks),
+    });
+    const reactor = setupTrackSwitching({
+      state,
+      config: { selectionKey: 'selectedVideoTrackId', getTracks: () => tracks, rules: [] },
+    });
+    await flush();
+    // No rules → candidate order preserved → head is the pick.
+    expect(state.selectedVideoTrackId.get()).toBe('360p');
+    reactor.destroy();
+  });
+
+  it('clears the slot when resolveSelection returns undefined', async () => {
+    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
+      presentation: createPresentation(tracks),
+      selectedVideoTrackId: '720p',
+    });
+    const reactor = setupTrackSwitching({
+      state,
+      config: {
+        selectionKey: 'selectedVideoTrackId',
+        getTracks: () => tracks,
+        rules: [],
+        resolveSelection: () => undefined,
+      },
+    });
+    await flush();
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('threads the chain survivors to resolveSelection', async () => {
+    const seen: string[][] = [];
+    const state: TrackSwitchingStateMap<'selectedVideoTrackId'> = makeState({
+      presentation: createPresentation(tracks),
+    });
+    const reactor = setupTrackSwitching({
+      state,
+      config: {
+        selectionKey: 'selectedVideoTrackId',
+        getTracks: () => tracks,
+        rules: [],
+        resolveSelection: (candidates) => {
+          seen.push(candidates.map((track) => track.id));
+          return candidates[candidates.length - 1]!.id;
+        },
+      },
+    });
+    await flush();
+    expect(seen.at(-1)).toEqual(['360p', '720p', '1080p']);
+    expect(state.selectedVideoTrackId.get()).toBe('1080p');
+    reactor.destroy();
+  });
+});
+
+// ============================================================================
+// switchTextTrack — intent-resolved, optional selection
+// ============================================================================
+
+describe('switchTextTrack', () => {
+  const textTrack = (
+    id: string,
+    opts: { language?: string; default?: boolean; forced?: boolean; host?: string } = {}
+  ): PartiallyResolvedTextTrack => ({
+    type: 'text',
+    id,
+    url: `https://${opts.host ?? 'cdn-a.example.com'}/${id}.m3u8`,
+    bandwidth: 256,
+    mimeType: 'application/mp4',
+    groupId: 'text',
+    label: id,
+    kind: 'subtitles',
+    language: opts.language,
+    default: opts.default,
+    forced: opts.forced,
+  });
+
+  const textPresentation = (textTracks: PartiallyResolvedTextTrack[]): Presentation =>
+    ({
+      id: 'presentation-text',
+      url: 'https://example.com/playlist.m3u8',
+      selectionSets: [
+        {
+          id: 'text-set',
+          type: 'text' as const,
+          switchingSets: [{ id: 'text-switching', type: 'text' as const, tracks: textTracks }],
+        } as TextSelectionSet,
+      ],
+    }) as Presentation;
+
+  interface TextState {
+    presentation?: MaybeResolvedPresentation;
+    selectedTextTrackId?: string;
+    userTextTrackSelection?: Partial<TextTrack> | 'off';
+    cdnPriority?: string[];
+    failedCdns?: string[];
+  }
+
+  const makeTextState = (initial: Partial<TextState> = {}): StateSignals<TextState> => ({
+    presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
+    selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
+    userTextTrackSelection: signal<Partial<TextTrack> | 'off' | undefined>(initial.userTextTrackSelection),
+    cdnPriority: signal<string[] | undefined>(initial.cdnPriority),
+    failedCdns: signal<string[] | undefined>(initial.failedCdns),
+  });
+
+  const enEs = () => [textTrack('en', { language: 'en' }), textTrack('es', { language: 'es' })];
+
+  describe('default policy (auto — no user intent)', () => {
+    it('does not auto-select when no preference matches (opt-in)', async () => {
+      const state = makeTextState({ presentation: textPresentation(enEs()) });
+      const reactor = switchTextTrack.setup({ state });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBeUndefined();
+      reactor.destroy();
+    });
+
+    it('auto-selects the preferredSubtitleLanguage match', async () => {
+      const state = makeTextState({ presentation: textPresentation(enEs()) });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'es' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es');
+      reactor.destroy();
+    });
+
+    it('auto-selects the DEFAULT track when enableDefaultTrack and no preference', async () => {
+      const state = makeTextState({
+        presentation: textPresentation([
+          textTrack('en', { language: 'en' }),
+          textTrack('es', { language: 'es', default: true }),
+        ]),
+      });
+      const reactor = switchTextTrack.setup({ state, config: { enableDefaultTrack: true } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es');
+      reactor.destroy();
+    });
+
+    it('excludes FORCED tracks from auto-selection by default', async () => {
+      const state = makeTextState({
+        presentation: textPresentation([textTrack('es-forced', { language: 'es', forced: true })]),
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'es' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBeUndefined();
+      reactor.destroy();
+    });
+
+    it('includes FORCED tracks when includeForcedTracks is set', async () => {
+      const state = makeTextState({
+        presentation: textPresentation([textTrack('es-forced', { language: 'es', forced: true })]),
+      });
+      const reactor = switchTextTrack.setup({
+        state,
+        config: { preferredSubtitleLanguage: 'es', includeForcedTracks: true },
+      });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es-forced');
+      reactor.destroy();
+    });
+
+    it('clears the selection on src unload', async () => {
+      const state = makeTextState({ presentation: textPresentation(enEs()) });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'es' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es');
+      state.presentation.set(undefined);
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBeUndefined();
+      reactor.destroy();
+    });
+  });
+
+  describe('user intent', () => {
+    it('honors an explicit user selection over the default policy', async () => {
+      const state = makeTextState({
+        presentation: textPresentation(enEs()),
+        userTextTrackSelection: { language: 'es' },
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es');
+      reactor.destroy();
+    });
+
+    it("resolves explicit 'off' to no selection, even when a default would match", async () => {
+      const state = makeTextState({
+        presentation: textPresentation([textTrack('en', { language: 'en' })]),
+        userTextTrackSelection: 'off',
+        selectedTextTrackId: 'en',
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBeUndefined();
+      reactor.destroy();
+    });
+
+    it("keeps 'off' sticky across a candidate-set change (live refresh)", async () => {
+      const state = makeTextState({
+        presentation: textPresentation([textTrack('en', { language: 'en' })]),
+        userTextTrackSelection: 'off',
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBeUndefined();
+
+      // New resolved presentation (stays resolved) — re-runs the chain; 'off' holds.
+      state.presentation.set({ ...textPresentation(enEs()), id: 'pres-2' });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBeUndefined();
+      reactor.destroy();
+    });
+
+    it('falls through to the default policy when an explicit pick is stale (language gone)', async () => {
+      const state = makeTextState({
+        presentation: textPresentation([textTrack('en', { language: 'en' })]),
+        userTextTrackSelection: { language: 'es' },
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'en' } });
+      await flush();
+      // No 'es' candidate → explicit match empty → default policy picks 'en'.
+      expect(state.selectedTextTrackId.get()).toBe('en');
+      reactor.destroy();
+    });
+  });
+
+  describe('CDN constraints + scope', () => {
+    const esBothCdns = () => [
+      textTrack('es-a', { language: 'es', host: 'cdn-a.example.com' }),
+      textTrack('es-b', { language: 'es', host: 'cdn-b.example.com' }),
+    ];
+
+    it('co-locates captions on the active CDN (cdnPriority)', async () => {
+      const state = makeTextState({
+        presentation: textPresentation(esBothCdns()),
+        cdnPriority: ['https://cdn-a.example.com', 'https://cdn-b.example.com'],
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'es' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es-a');
+      reactor.destroy();
+    });
+
+    it('re-resolves to the surviving CDN when the active CDN fails', async () => {
+      const state = makeTextState({
+        presentation: textPresentation(esBothCdns()),
+        cdnPriority: ['https://cdn-a.example.com', 'https://cdn-b.example.com'],
+      });
+      const reactor = switchTextTrack.setup({ state, config: { preferredSubtitleLanguage: 'es' } });
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es-a');
+
+      state.failedCdns.set(['https://cdn-a.example.com']);
+      await flush();
+      expect(state.selectedTextTrackId.get()).toBe('es-b');
+      reactor.destroy();
+    });
   });
 });

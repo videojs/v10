@@ -9,6 +9,7 @@ import { metadataFeature } from './features/metadata';
 import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
 import { playbackRateFeature } from './features/playback-rate';
+import { qualityFeature } from './features/quality';
 import { remotePlaybackFeature } from './features/remote-playback';
 import { sourceFeature } from './features/source';
 import { streamTypeFeature } from './features/stream-type';
@@ -34,6 +35,8 @@ export const selectPiP = createSelector(pipFeature);
 export const selectPlayback = createSelector(playbackFeature);
 /** Select the playback rate state (playbackRate, playbackRates, setPlaybackRate). */
 export const selectPlaybackRate = createSelector(playbackRateFeature);
+/** Select the quality state (videoRenditionList, activeVideoRendition, selectVideoRendition). */
+export const selectQuality = createSelector(qualityFeature);
 /** Select the remote playback state (remote playback connection state, availability). */
 export const selectRemotePlayback = createSelector(remotePlaybackFeature);
 /** Select the source state (src, type). */

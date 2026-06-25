@@ -133,11 +133,11 @@ actual use.
   consolidate into a single use-case doc with a *Variant-decision signal
   source* section covering both paths. The Case-1 feature doc does not
   exist separately in those cases. Not every use case has a Case-1
-  sibling — `background-looping-video` has constituent features but no
+  sibling — `background-video` has constituent features but no
   single Case-1 axis-counterpart.
 
 - **Conflating sibling use cases** — e.g., `video-only-mode-override` and
-  `background-looping-video` both touch the video-only delivery
+  `background-video` both touch the video-only delivery
   composition but address different delivery scenarios (video-without-audio
   delivery vs Mux background-video product). Check at Step 5: distinct
   customer story? distinct composition specifics? If yes, separate docs
@@ -207,7 +207,7 @@ Common shapes:
   video-only-mode-override) → constituent features include the parallel
   Case-1 source-shape feature plus the baseline playback / buffer /
   selection features.
-- Product-scenario use cases (background-looping-video, shorts-player) →
+- Product-scenario use cases (background-video, shorts-player) →
   constituent features include multiple capability features the variant
   assembles.
 
@@ -404,7 +404,7 @@ phases in, ask: is this really one use case, or is the variant actually
 a decomposition into multiple use cases? Heuristic: a slice belongs in
 its own doc if it has (a) a distinct customer story, (b) distinct
 composition specifics, or (c) independent timeline. Worked example:
-`video-only-mode-override` vs `background-looping-video` — both
+`video-only-mode-override` vs `background-video` — both
 exercise video-only delivery composition, distinct customer
 stories, distinct composition specifics.
 

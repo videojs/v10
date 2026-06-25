@@ -17,6 +17,11 @@ export default defineConfig({
         __dirname,
         '../../site/src/utils/installation/detect-renderer.ts'
       ),
+      // The real manifest is generated at build time (gitignored) and bundled
+      // by tsdown. CLI tests are intentionally hermetic (`test` has no turbo
+      // build dependency), so they resolve a committed fixture that mirrors the
+      // manifest's shape and contents instead of forcing a CDN build.
+      '@/content/cdn-media.json': resolve(__dirname, 'src/utils/tests/fixtures/cdn-media.json'),
       '@/consts': resolve(__dirname, '../../site/src/consts.ts'),
     },
   },

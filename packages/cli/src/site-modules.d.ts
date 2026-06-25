@@ -8,7 +8,7 @@
 
 declare module '@/utils/installation/types' {
   export type Renderer = 'background-video' | 'hls' | 'html5-audio' | 'html5-video';
-  export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio';
+  export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
   export type UseCase = 'default-video' | 'default-audio' | 'background-video';
   export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
   export const VALID_RENDERERS: Record<UseCase, Renderer[]>;
@@ -58,4 +58,16 @@ declare module '@/utils/installation/detect-renderer' {
   }
 
   export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null;
+}
+
+declare module '@/utils/installation/cdn-code' {
+  import type { Renderer, Skin, UseCase } from '@/utils/installation/types';
+
+  export function generateCdnCode(useCase: UseCase, skin: Skin, renderer: Renderer): string;
+  export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean;
+}
+
+declare module '@/content/cdn-media.json' {
+  const entries: Array<{ id: string }>;
+  export default entries;
 }

@@ -1,6 +1,20 @@
 import type { Media } from '@videojs/core/dom';
-import { namedNodeMapToObject } from '@videojs/utils/dom';
+import { namedNodeMapToObject, serializeAttributes } from '@videojs/utils/dom';
+import { pick } from '@videojs/utils/object';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
+
+const VideoAttributes = [
+  'autoplay',
+  'controls',
+  'controlslist',
+  'crossorigin',
+  'disablepictureinpicture',
+  'disableremoteplayback',
+  'loop',
+  'muted',
+  'playsinline',
+  'preload',
+] as const;
 
 function getTemplateHTML(attrs: Record<string, string>) {
   return /*html*/ `
@@ -19,7 +33,7 @@ function getTemplateHTML(attrs: Record<string, string>) {
       }
     </style>
     <slot></slot>
-    <video ${serializeAttributes(attrs)}></video>
+    <video${serializeAttributes(pick(attrs, [...VideoAttributes]))}></video>
   `;
 }
 
@@ -74,30 +88,4 @@ export class BackgroundVideo extends MediaAttachMixin(HTMLElement) {
     const video = this.querySelector('video') ?? this.shadowRoot?.querySelector('video');
     return video instanceof HTMLVideoElement ? video : null;
   }
-}
-
-const VideoAttributes = [
-  'autoplay',
-  'controls',
-  'controlslist',
-  'crossorigin',
-  'disablepictureinpicture',
-  'disableremoteplayback',
-  'loop',
-  'muted',
-  'playsinline',
-  'preload',
-] as const;
-
-function serializeAttributes(attrs: Record<string, string>): string {
-  let html = '';
-  for (const key in attrs) {
-    // Skip forwarding non native video attributes.
-    if (!VideoAttributes.includes(key as any)) continue;
-
-    const value = attrs[key];
-    if (value === '') html += ` ${key}`;
-    else html += ` ${key}="${value}"`;
-  }
-  return html;
 }

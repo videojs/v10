@@ -14,6 +14,7 @@ import { metadataFeature } from './metadata';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
+import { qualityFeature } from './quality';
 import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
 import { textTrackFeature } from './text-track';
@@ -23,6 +24,7 @@ import { volumeFeature } from './volume';
 export const videoFeatures: VideoFeatures = [
   playbackFeature,
   playbackRateFeature,
+  qualityFeature,
   volumeFeature,
   timeFeature,
   sourceFeature,

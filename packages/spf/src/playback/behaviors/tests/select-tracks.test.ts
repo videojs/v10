@@ -11,7 +11,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../../media/types';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
+import { selectAudioTrack, selectVideoTrack } from '../select-tracks';
 
 function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
@@ -349,34 +349,6 @@ describe('selectAudioTrack', () => {
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
-
-    reactor.destroy();
-  });
-});
-
-describe('selectTextTrack', () => {
-  it('does not auto-select text track', async () => {
-    const textTracks = [
-      {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
-      },
-    ];
-
-    const presentation = createPresentation({ text: textTracks });
-    const state = makeState({ presentation });
-
-    const reactor = selectTextTrack.setup({ state, config: {} });
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedTextTrackId.get()).toBeUndefined();
 
     reactor.destroy();
   });

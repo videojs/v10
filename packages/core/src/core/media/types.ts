@@ -360,9 +360,14 @@ export interface VideoRenditionLike {
   readonly frameRate: number | undefined;
   readonly codec: string | undefined;
   selected: boolean;
+  active?: boolean | undefined;
 }
 
-export interface VideoRenditionListLike extends EventTargetLike<RenditionListEvents<VideoRenditionLike>> {
+interface VideoRenditionListEvents extends RenditionListEvents<VideoRenditionLike> {
+  activechange: EventLike;
+}
+
+export interface VideoRenditionListLike extends EventTargetLike<VideoRenditionListEvents> {
   readonly length: number;
   readonly [index: number]: VideoRenditionLike;
   [Symbol.iterator](): Iterator<VideoRenditionLike>;

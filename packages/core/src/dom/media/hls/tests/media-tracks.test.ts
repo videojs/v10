@@ -96,6 +96,18 @@ describe('HlsJsMediaMediaTracksMixin', () => {
     expect(engine.nextLevel).toBe(2);
   });
 
+  it('marks the active rendition from LEVEL_SWITCHED', () => {
+    const engine = createEngine();
+    const host = new HlsJsMediaMediaTracks(engine);
+
+    manifestParsed(engine, [{ url: ['a'] }, { url: ['b'] }, { url: ['c'] }]);
+
+    (engine as any).emit(Hls.Events.LEVEL_SWITCHED, { level: 1 });
+
+    expect([...host.videoRenditions].map((rendition) => rendition.active)).toEqual([false, true, false]);
+    expect(engine.nextLevel).toBe(-1);
+  });
+
   it('forwards an audio track selection to engine.audioTrack', async () => {
     const engine = createEngine();
     const host = new HlsJsMediaMediaTracks(engine);

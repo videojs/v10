@@ -18,12 +18,10 @@ const isCodeBlock = codeBlock === 'true';
 
 {
   isCodeBlock ? (
-    <Tag class={twMerge(shared.codeBlock, className)} {...props}>
-      <slot />
-    </Tag>
+    // prettier-ignore
+    <Tag class={twMerge(shared.codeBlock, className)} {...props}><slot /></Tag>
   ) : (
-    <Tag class={twMerge(shared.code, className)} {...props}>
-      <slot />
-    </Tag>
+    // prettier-ignore
+    <Tag class={twMerge(shared.code, className)} {...props}><slot /></Tag>
   )
 }

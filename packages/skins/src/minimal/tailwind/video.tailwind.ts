@@ -2,6 +2,7 @@ import { cn } from '@videojs/utils/style';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
@@ -74,6 +75,19 @@ export const root = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:scale-98',
           '[&_video::-webkit-media-text-track-container]:z-1',
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
+        ]
+      : [],
+    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
+    !isShadowDOM
+      ? [
+          'before:absolute before:inset-0 before:pointer-events-none',
+          'before:[background-image:var(--media-poster-placeholder,none)]',
+          'before:bg-no-repeat',
+          'before:[background-position:var(--media-object-position,center)]',
+          'before:[background-size:var(--media-object-fit,contain)]',
+          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
+          'before:transition-opacity before:duration-250',
+          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         ]
       : [],
     // Fullscreen
@@ -191,16 +205,31 @@ export const popup = {
 };
 
 /* ==========================================================================
+   Menu
+   ========================================================================== */
+
+const menuOffsets = cn(
+  '[--media-popover-side-offset:1.5rem] [--media-popover-boundary-offset:0.5rem]',
+  '@2xl/media-root:[--media-popover-side-offset:0.5rem]'
+);
+
+export const menu = {
+  ...baseMenu,
+  root: cn(baseMenu.root, menuOffsets),
+  settings: cn(baseMenu.settings, menuOffsets),
+};
+
+/* ==========================================================================
    Shared components (no overrides)
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { inputFeedback } from './components/input-feedback';
-export { menu } from './components/menu';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

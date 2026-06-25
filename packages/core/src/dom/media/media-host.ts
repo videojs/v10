@@ -1,4 +1,5 @@
 import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/media/constants';
 import {
   type EventLike,
   type MediaFull,
@@ -8,8 +9,7 @@ import {
   type TextTrackKind,
   type TextTrackLike,
 } from '../../core/media/types';
-import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
-import { getComponents, getProp, setProp } from './utils';
+import { getComponents, getOwner, getProp, setProp } from './utils';
 
 export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';
 
@@ -89,8 +89,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     const components = getComponents(this);
     for (const component of components.values()) {
       component.destroy?.();
-      const { configKey } = component.constructor as ComponentConstructor;
-      if (configKey) delete this.#config[configKey];
     }
     components.clear();
   }
@@ -149,7 +147,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     return this.#config;
   }
   set config(value: MediaConfig) {
-    Object.assign(this.#config, value);
+    this.#config = value;
+
+    for (const component of getComponents(this).values()) {
+      const ctor = component.constructor as ComponentConstructor;
+      const componentConfig = ctor.configKey && value[ctor.configKey];
+      if (componentConfig) Object.assign(component, componentConfig);
+    }
   }
 
   get title() {
@@ -182,12 +186,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   play() {
-    const play = getProp(this, 'play');
-    return play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
+    const owner = getOwner(this, 'play');
+    return owner?.play?.() ?? Promise.reject(new DOMException('No media is attached.', 'NotSupportedError'));
   }
 
   pause() {
-    getProp(this, 'pause')?.();
+    const owner = getOwner(this, 'pause');
+    owner?.pause?.();
   }
 
   get autoplay() {
@@ -242,11 +247,13 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   load() {
-    return getProp(this, 'load')?.();
+    const owner = getOwner(this, 'load');
+    return owner?.load?.();
   }
 
   canPlayType(type: string) {
-    return getProp(this, 'canPlayType')?.(type) ?? '';
+    const owner = getOwner(this, 'canPlayType');
+    return owner?.canPlayType?.(type) ?? '';
   }
 
   get volume() {
@@ -305,7 +312,8 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
 
   addTextTrack(kind: TextTrackKind, label?: string, language?: string) {
-    return getProp(this, 'addTextTrack')?.(kind, label, language) as TextTrackLike;
+    const owner = getOwner(this, 'addTextTrack');
+    return owner?.addTextTrack?.(kind, label, language) as TextTrackLike;
   }
 
   get remote() {

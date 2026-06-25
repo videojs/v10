@@ -2,6 +2,7 @@
 
 import process from 'node:process';
 
+import { unified } from '@astrojs/markdown-remark';
 import mdx from '@astrojs/mdx';
 import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
@@ -118,9 +119,6 @@ export default defineConfig({
   },
 
   markdown: {
-    // a lot of these are defaults but I'm setting them just to be explicit
-    smartypants: true,
-    gfm: true,
     syntaxHighlight: 'shiki',
     shikiConfig: {
       themes: {
@@ -148,8 +146,14 @@ export default defineConfig({
       ],
       transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
     },
-    remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
-    rehypePlugins: [rehypePrepareCodeBlocks],
+    // Astro 7 makes Sätteri the default Markdown processor, which does not run
+    // remark/rehype plugins. Stay on the unified() pipeline so our plugins keep
+    // working unchanged. unified() applies GFM + SmartyPants by default (which
+    // is why the previous explicit `gfm`/`smartypants` flags were dropped).
+    processor: unified({
+      remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
+      rehypePlugins: [rehypePrepareCodeBlocks],
+    }),
   },
 
   image: {
@@ -172,6 +176,11 @@ export default defineConfig({
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.
       exclude: ['@videojs/react', '@videojs/html', '@resvg/resvg-js'],
+      // react-dom (CJS) must be pre-bundled so its named exports (createRoot,
+      // hydrateRoot) are exposed as ESM bindings to the @astrojs/react client
+      // renderer. Excluding @videojs/react above shadows the include list the
+      // React integration injects, so re-declare them here.
+      include: ['react-dom', 'react-dom/client'],
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

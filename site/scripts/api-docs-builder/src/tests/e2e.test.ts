@@ -64,11 +64,12 @@
  *   simple-video  — Simple media element. Exercises: discovery via static
  *                   tagName in define/media/*.ts, minimal host (src rw,
  *                   engine readonly), shared attributes/events/CSS vars
- *                   from custom-media-element, slots parsed from template HTML.
+ *                   from custom-media-element.
  *   complex-video — Complex media element. Exercises: host with JSDoc
  *                   descriptions, multiple property types (string, boolean,
- *                   Record), host-vs-native attribute deduplication
- *                   (src, preload in host → omitted from nativeAttributes).
+ *                   Record), and the intentional content-attribute vs
+ *                   IDL-property overlap (src, preload appear in BOTH
+ *                   hostProperties and nativeAttributes — no dedup).
  *   extending-video — Extending media element. Exercises: host inheritance
  *                   (ExtendingHost extends ComplexHost). Builder must
  *                   walk the extends chain to include inherited properties.
@@ -1069,7 +1070,6 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - Host properties by following the CustomMediaElement(tag, Host) call to the
 //     host class and walking its getter/setter pairs
 //   - Shared native attributes from static properties, events, and CSS vars
-//   - Slots parsed from the template HTML (getVideoTemplateHTML / getCommonTemplateHTML)
 //   - JSDoc descriptions from host getter/setter pairs
 //
 // Key behaviors:
@@ -1077,8 +1077,13 @@ describe('Preset pipeline (end-to-end)', () => {
 //   - Exclusion: container.ts (re-exports, no inline class), background-video.ts
 //     (no CustomMediaElement — uses MediaAttachMixin(HTMLElement) directly)
 //   - Host inheritance: child host extends parent, builder walks the chain
-//   - Deduplication: properties in the host that overlap with native attributes
-//     (e.g., src, preload) appear in hostProperties and are omitted from nativeAttributes
+//   - Attribute overlap: nativeAttributes is the COMPLETE markup-settable set
+//     (no dedup). Host-owned names (e.g., src, preload) appear in BOTH
+//     hostProperties and nativeAttributes (content-attribute vs IDL-property).
+//   - Methods: native media methods are extracted ONCE per media type from the
+//     shared base host classes (media-host + video-host/audio-host).
+//   - Event buckets: element-specific (@fires-tagged) events live ONLY in
+//     elementSpecific, never in native.
 
 describe('Media element pipeline (end-to-end)', () => {
   const results = generateMediaElementReferences(FIXTURE_ROOT);
@@ -1094,7 +1099,7 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers media elements from define/media/ files', () => {
       const names = results.map((r) => r.name).sort();
-      expect(names).toEqual(['ComplexVideo', 'ExtendingVideo', 'SimpleVideo']);
+      expect(names).toEqual(['ComplexVideo', 'ExtendingVideo', 'MixinVideo', 'SimpleVideo', 'SpfAudio']);
     });
 
     it('excludes container (re-export, not inline class declaration)', () => {
@@ -1108,7 +1113,7 @@ describe('Media element pipeline (end-to-end)', () => {
     });
 
     it('produces one result per media element', () => {
-      expect(results.length).toBe(3);
+      expect(results.length).toBe(5);
     });
   });
 
@@ -1125,6 +1130,7 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts the tag name', () => {
       const ref = findElement('SimpleVideo')!.reference;
       expect(ref.tagName).toBe('simple-video');
+      expect(ref.mediaType).toBe('video');
     });
 
     it('extracts host properties with types and readonly flags', () => {
@@ -1137,7 +1143,8 @@ describe('Media element pipeline (end-to-end)', () => {
       });
       expect(props.src.description).toBeUndefined();
 
-      // engine: readonly object
+      // engine: readonly, unannotated getter — type inferred by the checker
+      // (would be 'unknown' if the builder only read syntactic annotations).
       expect(props.engine).toMatchObject({
         type: 'object',
         readonly: true,
@@ -1151,9 +1158,12 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.destroy).toBeUndefined();
     });
 
-    it('includes native attributes from static properties', () => {
+    it('includes the COMPLETE set of native attributes from static properties', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      // src is in the host, so it should be omitted from nativeAttributes
+      // nativeAttributes is the full markup-settable set from `static
+      // properties` — no dedup against host props. `src` is settable as an
+      // attribute even though the host also exposes it as a richer property,
+      // so it appears in BOTH places (MDN content-attribute vs IDL-property).
       expect(ref.nativeAttributes).toEqual(
         expect.arrayContaining([
           'autoplay',
@@ -1166,14 +1176,24 @@ describe('Media element pipeline (end-to-end)', () => {
           'preload',
         ])
       );
-      expect(ref.nativeAttributes).not.toContain('src');
+      expect(ref.nativeAttributes).toContain('src');
+    });
+
+    it('extracts native media methods from the shared base host classes', () => {
+      const ref = findElement('SimpleVideo')!.reference;
+      // Video methods = media-host methods + video-host methods, deduped + sorted.
+      // Lifecycle methods (attach/detach/destroy) and accessors are excluded.
+      expect(ref.methods).toEqual(['canPlayType', 'load', 'pause', 'play', 'requestFullscreen']);
     });
 
     it('includes events derived from VideoEvents capability contracts', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      // Events are extracted from VideoEvents in types.ts, which extends
-      // all capability event interfaces including TextTrackListEvents
-      expect(ref.events).toEqual([
+      // Events are extracted from VideoEvents in types.ts, which extends all
+      // capability event interfaces including TextTrackListEvents. Custom
+      // Video.js events from MediaStreamTypeEvents/MediaLiveEvents
+      // (streamtypechange) are NOT native and are excluded here — they only
+      // appear in elementSpecific, and only on elements that @fires them.
+      expect(ref.events.native).toEqual([
         'play',
         'playing',
         'waiting',
@@ -1198,6 +1218,20 @@ describe('Media element pipeline (end-to-end)', () => {
         'changetrack',
         'trackmodechange',
       ]);
+      // SimpleHost dispatches no events of its own.
+      expect(ref.events.elementSpecific).toEqual([]);
+    });
+
+    it('omits custom events entirely when the element does not @fires them', () => {
+      // Regression guard: streamtypechange lives in the VideoEvents contract via
+      // MediaStreamTypeEvents, but SimpleVideo has no @fires tag for it (and no
+      // streamType capability). A custom event must never leak into `native`
+      // (which points readers at MDN) — with no @fires it appears in NEITHER
+      // bucket. Mirrors dash-video / simple-hls-video in the real monorepo.
+      const ref = findElement('SimpleVideo')!.reference;
+      expect(ref.events.native).not.toContain('streamtypechange');
+      const elementSpecificNames = ref.events.elementSpecific.map((e) => e.name);
+      expect(elementSpecificNames).not.toContain('streamtypechange');
     });
 
     it('includes CSS custom properties from VideoCSSVars', () => {
@@ -1208,11 +1242,6 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(css['--media-video-border-radius']).toEqual({
         description: 'Border radius of the video element.',
       });
-    });
-
-    it('includes slots parsed from the video template HTML', () => {
-      const ref = findElement('SimpleVideo')!.reference;
-      expect(ref.slots).toEqual(expect.arrayContaining(['media', '']));
     });
   });
 
@@ -1234,7 +1263,16 @@ describe('Media element pipeline (end-to-end)', () => {
     it('extracts all host properties', () => {
       const props = findElement('ComplexVideo')!.reference.hostProperties;
       const propNames = Object.keys(props).sort();
-      expect(propNames).toEqual(['config', 'debug', 'engine', 'preferPlayback', 'preload', 'src', 'type']);
+      expect(propNames).toEqual([
+        'config',
+        'debug',
+        'engine',
+        'preferPlayback',
+        'preload',
+        'src',
+        'streamType',
+        'type',
+      ]);
     });
 
     it('extracts JSDoc descriptions from host getters', () => {
@@ -1261,18 +1299,45 @@ describe('Media element pipeline (end-to-end)', () => {
       expect(props.config.type).toContain('Record');
     });
 
-    it('deduplicates host props from nativeAttributes', () => {
+    it('keeps host-owned attributes in BOTH hostProperties and nativeAttributes', () => {
       const ref = findElement('ComplexVideo')!.reference;
-      // src and preload are in both the host AND native attributes.
-      // They should appear in hostProperties...
+      // src and preload are richer host properties AND genuinely settable as
+      // markup attributes — the intentional content-attribute vs IDL-property
+      // overlap. They appear in hostProperties...
       expect(ref.hostProperties.src).toBeDefined();
       expect(ref.hostProperties.preload).toBeDefined();
-      // ...and be omitted from nativeAttributes
-      expect(ref.nativeAttributes).not.toContain('src');
-      expect(ref.nativeAttributes).not.toContain('preload');
+      // ...and ALSO in nativeAttributes (no dedup).
+      expect(ref.nativeAttributes).toContain('src');
+      expect(ref.nativeAttributes).toContain('preload');
       // Other native attrs remain
       expect(ref.nativeAttributes).toContain('autoplay');
       expect(ref.nativeAttributes).toContain('controls');
+    });
+
+    it('extracts defaults from the co-located defaultProps export', () => {
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
+      // Literal values are emitted as source text (strings keep their quotes).
+      expect(props.src.default).toBe("''");
+      expect(props.debug.default).toBe('false');
+      expect(props.preload.default).toBe("'metadata'");
+      expect(props.preferPlayback.default).toBe("'mse'");
+      // `undefined` defaults are omitted — they convey nothing beyond the
+      // table's "—" placeholder.
+      expect(props.type.default).toBeUndefined();
+      // Empty object literals stay literal.
+      expect(props.config.default).toBe('{}');
+    });
+
+    it('resolves const-object member defaults through imports', () => {
+      // streamType: MediaStreamTypes.UNKNOWN — the builder resolves the member
+      // access to its literal value in the imported `as const` object.
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
+      expect(props.streamType.default).toBe("'unknown'");
+    });
+
+    it('omits defaults for properties without a defaultProps entry', () => {
+      const props = findElement('ComplexVideo')!.reference.hostProperties;
+      expect(props.engine.default).toBeUndefined();
     });
   });
 
@@ -1327,6 +1392,31 @@ describe('Media element pipeline (end-to-end)', () => {
       // engine is readonly in ComplexHost and not overridden
       expect(props.engine.readonly).toBe(true);
     });
+
+    it('resolves spread defaults through the parent defaultProps import', () => {
+      // extendingMediaDefaultProps = { ...complexMediaDefaultProps, ... } —
+      // the builder must follow the spread to the imported object literal.
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      expect(props.src.default).toBe("''");
+      expect(props.debug.default).toBe('false');
+      expect(props.streamType.default).toBe("'unknown'");
+    });
+
+    it('extracts own defaults alongside spread defaults', () => {
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      expect(props.playbackId.default).toBe("''");
+      expect(props.maxResolution.default).toBe('1080');
+    });
+
+    it('abbreviates non-empty object defaults', () => {
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      expect(props.tokens.default).toBe('{…}');
+    });
+
+    it('omits defaults for properties without an entry', () => {
+      const props = findElement('ExtendingVideo')!.reference.hostProperties;
+      expect(props.customDomain.default).toBeUndefined();
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -1340,18 +1430,205 @@ describe('Media element pipeline (end-to-end)', () => {
   describe('Event extraction from capability contracts', () => {
     it('video elements include text track events from VideoEvents', () => {
       const ref = findElement('SimpleVideo')!.reference;
-      expect(ref.events).toContain('addtrack');
-      expect(ref.events).toContain('removetrack');
-      expect(ref.events).toContain('changetrack');
-      expect(ref.events).toContain('trackmodechange');
+      expect(ref.events.native).toContain('addtrack');
+      expect(ref.events.native).toContain('removetrack');
+      expect(ref.events.native).toContain('changetrack');
+      expect(ref.events.native).toContain('trackmodechange');
     });
 
-    it('all video elements share the same event list', () => {
-      const simple = findElement('SimpleVideo')!.reference.events;
-      const complex = findElement('ComplexVideo')!.reference.events;
-      const extending = findElement('ExtendingVideo')!.reference.events;
+    it('all video elements share the same native event list', () => {
+      const simple = findElement('SimpleVideo')!.reference.events.native;
+      const complex = findElement('ComplexVideo')!.reference.events.native;
+      const extending = findElement('ExtendingVideo')!.reference.events.native;
       expect(complex).toEqual(simple);
       expect(extending).toEqual(simple);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // MIXIN MEDIA ELEMENT: MixinVideo
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // A media element whose host extends a chain of mixins
+  // (`MixinBVolumeMixin(MixinAFooMixin(MixinBaseHost))` — mirrors
+  // `MuxDataMediaMixin(GoogleCastMixin(HlsMedia))`). The builder must walk
+  // the call-expression extends, follow each mixin to its source file, and
+  // collect getters/setters from each mixin's inner class.
+  //
+  // Also exercises:
+  //   - overridesNative tagging for properties whose name matches an
+  //     HTMLMediaElement member (volume)
+  //   - Description fallback through the chain (src has JSDoc on the base,
+  //     overridden without JSDoc by MixinB)
+  //   - Element-specific event extraction via this.dispatchEvent(new Event(...))
+  //     in mixin code (foochange dispatched by MixinAFooMixin)
+
+  describe('MixinVideo (mixin chain)', () => {
+    it('extracts the tag name', () => {
+      const ref = findElement('MixinVideo')!.reference;
+      expect(ref.tagName).toBe('mixin-video');
+    });
+
+    it('walks function-declaration mixin (Shape A)', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.foo).toMatchObject({
+        type: 'string',
+        readonly: false,
+        description: 'Mixin A documentation.',
+      });
+    });
+
+    it('walks const-arrow mixin (Shape B)', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.volume).toBeDefined();
+      expect(props.volume.type).toBe('number');
+      expect(props.volume.readonly).toBe(false);
+    });
+
+    it('includes leaf-class own properties', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.bar).toMatchObject({
+        type: 'number',
+        readonly: false,
+        description: 'Leaf class own property.',
+      });
+    });
+
+    it('marks volume as overridesNative (HTMLMediaElement member)', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.volume.overridesNative).toBe(true);
+    });
+
+    it('does not mark non-native properties as overridesNative', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.foo.overridesNative).toBeUndefined();
+      expect(props.bar.overridesNative).toBeUndefined();
+    });
+
+    it('inherits parent description when child override has no JSDoc', () => {
+      // src has JSDoc on MixinBaseHost; MixinB overrides without JSDoc.
+      // The description should fall through from the base.
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.src.description).toBe('Source URL of the media.');
+    });
+
+    it('documents a @fires event ONLY in element-specific, never in native', () => {
+      // streamtypechange is in VideoEvents (via MediaStreamTypeEvents) AND carries
+      // a @fires tag on the mixin — mirrors HlsMedia. Element-specific events live
+      // ONLY in the elementSpecific bucket (where they carry their description);
+      // they are excluded from native so they are never listed twice.
+      const ref = findElement('MixinVideo')!.reference;
+      expect(ref.events.native).not.toContain('streamtypechange');
+      expect(ref.events.elementSpecific).toContainEqual({
+        name: 'streamtypechange',
+        description: 'Fired when the detected stream type changes.',
+      });
+    });
+
+    it('does not document a dispatched-but-untagged event', () => {
+      // foochange is dispatched via this.dispatchEvent(new Event('foochange')) but
+      // has no @fires tag, so it is not surfaced — documentation requires a tag.
+      const ref = findElement('MixinVideo')!.reference;
+      const elementSpecificNames = ref.events.elementSpecific.map((e) => e.name);
+      expect(elementSpecificNames).not.toContain('foochange');
+    });
+
+    it('separates native events from element-specific events', () => {
+      const ref = findElement('MixinVideo')!.reference;
+      const elementSpecificNames = ref.events.elementSpecific.map((e) => e.name);
+      expect(ref.events.native).toContain('play');
+      expect(ref.events.native).not.toContain('foochange');
+      expect(elementSpecificNames).not.toContain('play');
+    });
+
+    it('extracts defaults declared in a mixin file', () => {
+      const props = findElement('MixinVideo')!.reference.hostProperties;
+      expect(props.foo.default).toBe("''");
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CROSS-PACKAGE MIXIN AUDIO ELEMENT: SpfAudio
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // An audio element whose host's only mixin lives in a different workspace
+  // package (spf), reached through that package's barrel file — mirrors
+  // SimpleHlsAudioOnlyMedia extending SimpleHlsAudioOnlyMediaMixin from
+  // @videojs/spf/hls.
+  //
+  // Also exercises:
+  //   - @fires-declared event descriptions for events outside the native
+  //     contract (audiomodechange also has a dispatch site, manifestparsed does
+  //     not — the @fires tag alone surfaces both)
+  //   - Defaults co-located with the mixin (spfAudioOnlyMediaDefaultProps)
+  //   - AudioEvents capability contract
+
+  describe('SpfAudio (cross-package mixin, audio host)', () => {
+    it('extracts the tag name and audio media type', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      expect(ref.tagName).toBe('spf-audio');
+      expect(ref.mediaType).toBe('audio');
+    });
+
+    it('resolves the mixin through another package barrel', () => {
+      const props = findElement('SpfAudio')!.reference.hostProperties;
+      expect(props.src).toMatchObject({
+        type: 'string',
+        readonly: false,
+        description: 'Source URL of the HLS manifest.',
+      });
+      expect(props.preload).toMatchObject({
+        type: 'string',
+        readonly: false,
+        description: 'Preload hint forwarded to the internal audio element.',
+      });
+    });
+
+    it('extracts defaults declared next to the cross-package mixin', () => {
+      const props = findElement('SpfAudio')!.reference.hostProperties;
+      expect(props.src.default).toBe("''");
+      expect(props.preload.default).toBe("''");
+    });
+
+    it('uses AudioEvents for native events (no text track events)', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      expect(ref.events.native).toContain('play');
+      expect(ref.events.native).not.toContain('addtrack');
+    });
+
+    it('surfaces a @fires event with its tag description', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      expect(ref.events.elementSpecific).toContainEqual({
+        name: 'audiomodechange',
+        description: 'Fired when the audio-only rendition changes.',
+      });
+    });
+
+    it('includes @fires-declared events without a scanned dispatch site', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      expect(ref.events.elementSpecific).toContainEqual({
+        name: 'manifestparsed',
+        description: 'Fired after the multivariant playlist is parsed.',
+      });
+    });
+
+    it('sorts element-specific events by name', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      const names = ref.events.elementSpecific.map((e) => e.name);
+      expect(names).toEqual([...names].sort());
+    });
+
+    it('has empty AudioCSSVars', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      expect(ref.cssCustomProperties).toEqual({});
+    });
+
+    it('extracts audio methods from the shared base host (no video-only methods)', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      // Audio methods = media-host methods + audio-host methods. The fixture
+      // audio host adds none, so video-only methods (requestFullscreen) are absent.
+      expect(ref.methods).toEqual(['canPlayType', 'load', 'pause', 'play']);
+      expect(ref.methods).not.toContain('requestFullscreen');
     });
   });
 });

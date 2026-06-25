@@ -383,5 +383,55 @@ describe('HotkeyCoordinator', () => {
 
       expect(c.getAriaKeys('togglePaused')).toBeUndefined();
     });
+
+    it('returns the latest registered shortcut as the preferred display key', () => {
+      const c = setup();
+      c.add({ keys: 'Space', onActivate: vi.fn(), action: 'togglePaused' });
+      c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
+
+      expect(c.getShortcut('togglePaused')).toEqual({
+        aria: 'Space k',
+        shortcut: 'K',
+      });
+    });
+
+    it('filters shortcuts by action value', () => {
+      const c = setup();
+      c.add({ keys: 'ArrowLeft', onActivate: vi.fn(), action: 'seekStep', value: -5 });
+      c.add({ keys: 'j', onActivate: vi.fn(), action: 'seekStep', value: -10 });
+      c.add({ keys: 'l', onActivate: vi.fn(), action: 'seekStep', value: 10 });
+
+      expect(c.getShortcut('seekStep', -10)).toEqual({
+        aria: 'j',
+        shortcut: 'J',
+      });
+    });
+
+    it('excludes disabled bindings from shortcut lookup', () => {
+      const c = setup();
+      c.add({ keys: 'Space', onActivate: vi.fn(), action: 'togglePaused', disabled: true });
+      c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
+
+      expect(c.getShortcut('togglePaused')).toEqual({
+        aria: 'k',
+        shortcut: 'K',
+      });
+    });
+
+    it('notifies subscribers when shortcut lookup changes', () => {
+      const c = setup();
+      const subscriber = vi.fn();
+      const unsubscribe = c.subscribeShortcutChanges(subscriber);
+
+      const remove = c.add({ keys: 'k', onActivate: vi.fn(), action: 'togglePaused' });
+      remove();
+
+      expect(subscriber).toHaveBeenCalledTimes(2);
+
+      unsubscribe();
+      c.add({ keys: 'Space', onActivate: vi.fn(), action: 'togglePaused' });
+
+      expect(subscriber).toHaveBeenCalledTimes(2);
+    });
   });
 });

@@ -11,6 +11,7 @@
     { "path": "../../core" },
     { "path": "../../network" },
     { "path": "../../media" },
+    { "path": "../primitives" },
     { "path": "../actors" }
   ],
   "include": ["./*.ts", "./tests/**/*.ts"],

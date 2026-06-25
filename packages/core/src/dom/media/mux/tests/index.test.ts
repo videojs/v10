@@ -94,17 +94,22 @@ describe('MuxData', () => {
 
   it('exposes mux config under host.config.muxData with inferred types', () => {
     const media = new HlsMedia();
-    addComponent(media, new MuxData());
+    const muxData = new MuxData();
+    addComponent(media, muxData);
 
     // Type-level: `config.muxData` infers `Partial<MuxDataProps>` via the
-    // component's `configKey` augmentation, so these assignments/reads are
-    // checked. This line fails to compile if inference regresses.
-    media.config.muxData = { envKey: 'key', debug: true };
+    // component's `configKey` augmentation, so the assignment/read are checked.
+    // This fails to compile if inference regresses.
+    media.config = { muxData: { envKey: 'key', debug: true } };
     const envKey: string | undefined = media.config.muxData?.envKey;
 
     expect(envKey).toBe('key');
-    // Live binding: the write reached the component instance.
-    expect(media.config.muxData).toBeInstanceOf(MuxData);
+    // `config` stores the plain namespace POJO, not the component instance.
+    expect(media.config.muxData).toEqual({ envKey: 'key', debug: true });
+    expect(media.config.muxData).not.toBeInstanceOf(MuxData);
+    // The setter still routed those values onto the live component instance.
+    expect(muxData.envKey).toBe('key');
+    expect(muxData.debug).toBe(true);
   });
 
   it('stops re-monitoring after destroy', async () => {

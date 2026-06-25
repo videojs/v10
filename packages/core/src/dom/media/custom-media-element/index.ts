@@ -102,6 +102,10 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   tag: string,
   MediaHost: T
 ): CustomMediaConstructor<T> {
+  // Embed hosts (iframe) drive an external player rather than a native media
+  // element, so attribute changes are not mirrored onto the iframe target and
+  // there is no `<track>` / `<source>` syncing.
+  const syncTargetAttributes = tag !== 'iframe';
   const mediaHostAttrToProp = new Map<string, string>();
   let isDefined = false;
 
@@ -229,10 +233,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
         const disallowedKeys = [...mediaHostAttrToProp.keys()];
-        const attrs: Record<string, string> = omit(
-          pick(namedNodeMapToObject(this.attributes), allowedKeys),
-          disallowedKeys
-        );
+        const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
+        // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
+        const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
         if (tag && !attrs.part) attrs.part = tag;
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
@@ -260,7 +263,7 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       return this.#mediaHost;
     }
 
-    get target(): HTMLVideoElement | HTMLAudioElement | null {
+    get target(): HTMLElement | null {
       return (
         this.querySelector(':scope > [slot=media]') ??
         this.querySelector(tag) ??
@@ -269,7 +272,15 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       );
     }
 
-    disconnectedCallback(): void {
+    connectedCallback() {
+      if (tag !== 'iframe') return;
+      // Add data attribute for styling and avoiding cross-origin issues. e.g. backdrop-filter
+      if (!this.hasAttribute('data-cross-origin-frame')) {
+        this.setAttribute('data-cross-origin-frame', '');
+      }
+    }
+
+    disconnectedCallback() {
       if (this.hasAttribute('keep-alive')) return;
       // Defer so a synchronous reparent (remove + insert) doesn't tear down
       // the host and its registered components.
@@ -328,6 +339,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         return;
       }
 
+      if (!syncTargetAttributes) return;
+
       if (newValue === null) {
         this.target?.removeAttribute(attrName);
       } else if (this.target?.getAttribute(attrName) !== newValue) {
@@ -336,6 +349,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     }
 
     #syncMediaChildren(): void {
+      if (tag === 'iframe') return;
+
       const defaultSlot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement;
       const mediaChildren = new Set(
         defaultSlot

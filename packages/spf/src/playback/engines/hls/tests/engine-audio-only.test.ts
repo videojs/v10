@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
+import type { Presentation } from '../../../../media/types';
 import { createHlsAudioOnlyEngine } from '../engine-audio-only';
 
 // Mock appendSegment to succeed without real MP4 data
@@ -7,15 +8,27 @@ vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
 }));
 
+// Fallback for URLs a test's mock doesn't handle explicitly. Segment/init
+// requests resolve with an empty body — the appendSegment mock makes the bytes
+// inert — so the failover monitor isn't tripped by unmocked segment fetches (a
+// single failed fetch trips that CDN into cooldown, which empties the candidate
+// set). Genuinely unknown URLs still reject loudly.
+function unmockedFetchFallback(url: string): Promise<Response> {
+  // Non-empty body: `fetchStream` throws "Response has no body" on a null body
+  // (empty Uint8Array), which would itself trip the monitor.
+  if (/\.(m4s|mp4|ts|aac)(\?|$)/.test(url)) return Promise.resolve(new Response(new Uint8Array([0])));
+  return Promise.reject(new Error(`Unmocked URL: ${url}`));
+}
+
 describe('createHlsAudioOnlyEngine', () => {
   let originalFetch: typeof globalThis.fetch;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
-  // Tests assert at actor-presence and state-shape level, not at "init
-  // segment appended" level — so unmocked init/segment URLs in the manifests
-  // are intentional. The fetch loop's reject path leaks a console.error in
-  // each test; suppress only the expected patterns so genuine failures still
-  // surface.
+  // Tests assert at actor-presence and state-shape level, not at "init segment
+  // appended" level. Audio/video segment fetches resolve via
+  // `unmockedFetchFallback` (inert under the appendSegment mock); text-track
+  // segment fetches still reject and leak a console.error. Suppress only the
+  // expected patterns so genuine failures still surface.
   const expectedErrorPatterns = [
     /Unexpected error in segment loader.*Unmocked URL/s,
     /Failed to load text-track segment/,
@@ -62,6 +75,51 @@ describe('createHlsAudioOnlyEngine', () => {
     engine.destroy();
   });
 
+  it('wires the default canPlayTrack — prunes an undecodable (raw-AAC) audio source, making no pick', async () => {
+    const flush = () => Promise.resolve().then(() => Promise.resolve());
+    // No canPlayTrack override → relies on the engine's default. A raw-AAC
+    // (audio/aac) rendition is asserted unplayable, so it should be pruned
+    // rather than selected. (If the default weren't wired, the constraint would
+    // pass through and select it.)
+    const engine = createHlsAudioOnlyEngine();
+    engine.state.presentation.set({
+      id: 'pres-aac',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'a',
+          type: 'audio',
+          switchingSets: [
+            {
+              id: 'as',
+              type: 'audio',
+              tracks: [
+                {
+                  type: 'audio',
+                  id: 'aud-aac',
+                  codecs: ['mp4a.40.2'],
+                  url: 'https://example.com/aud.m3u8',
+                  bandwidth: 128_000,
+                  mimeType: 'audio/aac',
+                  groupId: 'audio',
+                  name: 'Default',
+                  sampleRate: 48_000,
+                  channels: 2,
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+    await flush();
+
+    expect(engine.state.selectedAudioTrackId.get()).toBeUndefined();
+
+    engine.destroy();
+  });
+
   it('does not seed bandwidthState (no ABR behavior subscribed at init)', () => {
     const engine = createHlsAudioOnlyEngine();
 
@@ -101,7 +159,7 @@ http://example.com/audio-seg1.m4s
         );
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -121,7 +179,9 @@ http://example.com/audio-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
         expect(owners.mediaSource).toBeDefined();
-        expect(owners.mediaSource?.readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
       },
       { timeout: 2000 }
     );
@@ -163,7 +223,7 @@ http://example.com/audio-seg1.m4s
         throw new Error('Audio-only variant fetched the video media playlist');
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 
@@ -184,7 +244,9 @@ http://example.com/audio-seg1.m4s
         expect(state.selectedAudioTrackId).toBeDefined();
         expect(owners.audioBufferActor).toBeDefined();
         expect(owners.mediaSource).toBeDefined();
-        expect((owners.mediaSource as MediaSource).readyState).toBe('open');
+        // readyState isn't asserted: with appendSegment mocked the stream completes
+        // instantly, so the MediaSource doesn't durably sit in 'open' (a created buffer
+        // actor implies addSourceBuffer ran, which requires an open MediaSource).
 
         // Video-side slots absent — no composed behavior in this variant
         // declares them. Behaviors that read these slots defensively
@@ -236,7 +298,7 @@ http://example.com/audio-seg1.m4s
         throw new Error(`Audio-only variant fetched a non-audio playlist: ${url}`);
       }
 
-      return Promise.reject(new Error(`Unmocked URL: ${url}`));
+      return unmockedFetchFallback(url);
     });
     globalThis.fetch = mockFetch;
 

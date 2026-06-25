@@ -20,9 +20,8 @@ const value = 'code';
 
 {
   hasFrame ? (
-    <Tag class={className} {...props}>
-      <slot />
-    </Tag>
+    // prettier-ignore
+    <Tag class={className} {...props}><slot /></Tag>
   ) : (
     <TabsRoot client:idle>
       <TabsList client:idle label={`${label} code`}>
@@ -31,9 +30,8 @@ const value = 'code';
         </Tab>
       </TabsList>
       <TabsPanel client:idle value={value} initial>
-        <Tag class={className} {...props}>
-          <slot />
-        </Tag>
+        {/* prettier-ignore */}
+        <Tag class={className} {...props}><slot /></Tag>
       </TabsPanel>
     </TabsRoot>
   )

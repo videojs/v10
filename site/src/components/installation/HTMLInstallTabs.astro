@@ -1,0 +1,10 @@
+---
+import { getCollection } from 'astro:content';
+import HTMLInstallTabsClient from './HTMLInstallTabsClient';
+
+// Read the generated CDN media manifest server-side and hand the list to the
+// client island, which decides per-renderer whether to offer the CDN option.
+const cdnMedia = (await getCollection('cdnMedia')).map((entry) => entry.id);
+---
+
+<HTMLInstallTabsClient client:idle cdnMedia={cdnMedia} />

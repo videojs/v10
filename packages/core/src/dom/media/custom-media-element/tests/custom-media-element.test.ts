@@ -73,6 +73,17 @@ class TestAudioHost extends HTMLAudioElementHost {
   destroy() {}
 }
 
+class TestIframeHost extends EventTarget {
+  target: EventTarget | null = null;
+  attach(target: EventTarget | null) {
+    this.target = target;
+  }
+  detach() {
+    this.target = null;
+  }
+  destroy() {}
+}
+
 let tagCounter = 0;
 
 function defineVideoElement() {
@@ -92,6 +103,13 @@ function defineVideoElementWithObjects() {
 function defineAudioElement() {
   const tag = `test-audio-${++tagCounter}`;
   const Ctor = CustomMediaElement('audio', TestAudioHost);
+  customElements.define(tag, Ctor);
+  return { Ctor, tag };
+}
+
+function defineIframeElement() {
+  const tag = `test-iframe-${++tagCounter}`;
+  const Ctor = CustomMediaElement('iframe', TestIframeHost as never);
   customElements.define(tag, Ctor);
   return { Ctor, tag };
 }
@@ -681,6 +699,18 @@ describe('CustomMediaElement', () => {
     });
   });
 
+  describe('connectedCallback', () => {
+    it('marks iframe embeds with data-cross-origin-frame for cross-origin-safe styling', () => {
+      const el = create(defineIframeElement());
+      expect(el.hasAttribute('data-cross-origin-frame')).toBe(true);
+    });
+
+    it('does not add data-cross-origin-frame to native media elements', () => {
+      const el = create(defineVideoElement());
+      expect(el.hasAttribute('data-cross-origin-frame')).toBe(false);
+    });
+  });
+
   describe('disconnectedCallback', () => {
     it('calls destroy on the MediaHost when disconnected', async () => {
       const el = create(defineVideoElement());
@@ -1004,6 +1034,59 @@ describe('CustomMediaElement', () => {
 
       (el as any).playbackId = 'xyz789';
       expect(el.getAttribute('playback-id')).toBe('xyz789');
+    });
+  });
+
+  describe('XSS prevention', () => {
+    it('does not inject nodes when poster contains a quote breakout attempt', () => {
+      const { tag } = defineVideoElement();
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} poster='" onerror="window.__xss=1'></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const shadow = el.shadowRoot!;
+
+      expect(shadow.querySelectorAll('[onerror]')).toHaveLength(0);
+      expect(shadow.querySelectorAll('[onload]')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('does not inject script elements when an attribute value contains angle brackets', () => {
+      const { Ctor } = defineVideoElement();
+      const maliciousValue = '"><script>window.__xss=1</script><video x="';
+
+      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      const container = document.createElement('div');
+      container.innerHTML = (Ctor as any).getTemplateHTML({ crossorigin: maliciousValue });
+
+      expect(container.querySelectorAll('script')).toHaveLength(0);
+      expect(container.querySelectorAll('img[onerror]')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('does not inject img elements when poster contains an angle-bracket payload', () => {
+      const { Ctor } = defineVideoElement();
+      const maliciousValue = '"><img src=x onerror="window.__xss=1">';
+
+      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      const container = document.createElement('div');
+      container.innerHTML = (Ctor as any).getTemplateHTML({ poster: maliciousValue });
+
+      expect(container.querySelectorAll('img')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('preserves the attribute value correctly after escaping', () => {
+      const { tag } = defineVideoElement();
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} poster="https://example.com/poster.jpg"></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const video = el.shadowRoot!.querySelector('video')!;
+
+      expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
     });
   });
 });

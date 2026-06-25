@@ -33,10 +33,10 @@
       "development": "./dist/dev/hls.js",
       "default": "./dist/default/hls.js"
     },
-    "./background-looping-video": {
-      "types": "./dist/dev/background-looping-video.d.ts",
-      "development": "./dist/dev/background-looping-video.js",
-      "default": "./dist/default/background-looping-video.js"
+    "./background-video": {
+      "types": "./dist/dev/background-video.d.ts",
+      "development": "./dist/dev/background-video.js",
+      "default": "./dist/default/background-video.js"
     }
   },
   "main": "dist/default/index.js",

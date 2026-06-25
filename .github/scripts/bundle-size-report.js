@@ -7,8 +7,8 @@
  * When --base is omitted, generates a local report showing current sizes.
  * When --base is provided, generates a comparison report with diffs.
  *
- * Reads JSON arrays of { name, size, type, category?, format, standaloneSize? }
- * entries produced by bundle-size.js.
+ * Reads JSON arrays of { name, size, type, category?, format, standaloneSize?,
+ * lazySize?, totalSize? } entries produced by bundle-size.js.
  */
 
 import { readFileSync } from 'node:fs';
@@ -42,6 +42,56 @@ function statusIcon(current, previous) {
   if (previous === 0) return '🔴';
   const pct = (diff / previous) * 100;
   return pct > 10 ? '🔴' : '🔺';
+}
+
+function entryStatusIcon(current, previous) {
+  if (!previous) return '🆕';
+  const currentSize = comparisonSize(current);
+  const previousSize = comparisonSize(previous);
+  if (Math.abs(currentSize - previousSize) > 300) {
+    return statusIcon(currentSize, previousSize);
+  }
+  const currentLazy = comparisonLazySize(current);
+  const previousLazy = comparisonLazySize(previous);
+  if (currentLazy !== previousLazy) {
+    return statusIcon(currentLazy, previousLazy);
+  }
+  return statusIcon(currentLazy, previousLazy);
+}
+
+function lazySize(entry) {
+  if (!entry) return 0;
+  return (
+    entry.lazySize ??
+    Math.max(0, (entry.totalSize ?? entry.size) - entry.size)
+  );
+}
+
+function lazyLabel(entry) {
+  const lazy = lazySize(entry);
+  return lazy > 0 ? formatBytes(lazy) : '—';
+}
+
+function lazyDelta(current, previous) {
+  const currentLazy = lazySize(current);
+  const previousLazy = lazySize(previous);
+  if (currentLazy === 0 && previousLazy === 0) return '—';
+  return formatDelta(currentLazy, previousLazy).bytes;
+}
+
+function comparisonSize(entry) {
+  return entry?.standaloneSize ?? entry?.size ?? 0;
+}
+
+function comparisonLazySize(entry) {
+  return entry?.standaloneLazySize ?? lazySize(entry);
+}
+
+function comparisonLazyDelta(current, previous) {
+  const currentLazy = comparisonLazySize(current);
+  const previousLazy = comparisonLazySize(previous);
+  if (currentLazy === 0 && previousLazy === 0) return '—';
+  return formatDelta(currentLazy, previousLazy).bytes;
 }
 
 /** Preferred display order for packages. Unlisted packages sort to the end. */
@@ -112,26 +162,37 @@ function generateCategoryBreakdowns(entries, pkg) {
 
     const label = CATEGORY_LABELS[cat] ?? cat;
     const isSkin = cat === 'skin';
+    const hasLazy = catEntries.some((entry) => lazySize(entry) > 0);
 
     lines.push('<details>');
     lines.push(`<summary><b>${label} (${catEntries.length})</b></summary>`);
     lines.push('');
 
     if (isSkin) {
-      lines.push('| Entry | Type | Size |');
-      lines.push('|---|---|--:|');
+      lines.push(
+        hasLazy
+          ? '| Entry | Type | Initial | Lazy |'
+          : '| Entry | Type | Initial |',
+      );
+      lines.push(hasLazy ? '|---|---|--:|--:|' : '|---|---|--:|');
     } else {
-      lines.push('| Entry | Size |');
-      lines.push('|---|--:|');
+      lines.push(
+        hasLazy ? '| Entry | Initial | Lazy |' : '| Entry | Initial |',
+      );
+      lines.push(hasLazy ? '|---|--:|--:|' : '|---|--:|');
     }
 
     for (const entry of catEntries) {
       const el = entryLabel(entry.name, pkg);
       const fmt = entry.format ?? 'js';
       if (isSkin) {
-        lines.push(`| ${el} | ${fmt} | ${formatBytes(entry.size)} |`);
+        const cells = [`${el}`, fmt, formatBytes(entry.size)];
+        if (hasLazy) cells.push(lazyLabel(entry));
+        lines.push(`| ${cells.join(' | ')} |`);
       } else {
-        lines.push(`| ${el} | ${formatBytes(entry.size)} |`);
+        const cells = [`${el}`, formatBytes(entry.size)];
+        if (hasLazy) cells.push(lazyLabel(entry));
+        lines.push(`| ${cells.join(' | ')} |`);
       }
     }
 
@@ -154,12 +215,15 @@ function generateFlatBreakdown(entries, pkg) {
   lines.push('<details>');
   lines.push(`<summary><b>Entries (${entries.length})</b></summary>`);
   lines.push('');
-  lines.push('| Entry | Size |');
-  lines.push('|---|--:|');
+  const hasLazy = entries.some((entry) => lazySize(entry) > 0);
+  lines.push(hasLazy ? '| Entry | Initial | Lazy |' : '| Entry | Initial |');
+  lines.push(hasLazy ? '|---|--:|--:|' : '|---|--:|');
 
   for (const entry of entries) {
     const el = entryLabel(entry.name, pkg);
-    lines.push(`| ${el} | ${formatBytes(entry.size)} |`);
+    const cells = [`${el}`, formatBytes(entry.size)];
+    if (hasLazy) cells.push(lazyLabel(entry));
+    lines.push(`| ${cells.join(' | ')} |`);
   }
 
   lines.push('');
@@ -174,8 +238,8 @@ function generateFlatBreakdown(entries, pkg) {
 // ---------------------------------------------------------------------------
 
 function generateComparisonReport(current, base) {
-  const baseMap = Object.fromEntries(base.map((e) => [e.name, e.size]));
   const currentMap = Object.fromEntries(current.map((e) => [e.name, e.size]));
+  const baseEntryMap = Object.fromEntries(base.map((e) => [e.name, e]));
 
   // Standalone size lookups — used to gate UI component diffs.
   // UI marginal sizes shift when root content changes (brotli compression is
@@ -230,7 +294,12 @@ function generateComparisonReport(current, base) {
       // New entry — always surface
       if (prevStandalone === undefined) return true;
       const curStandalone = currentStandaloneMap[e.name];
-      return Math.abs(curStandalone - prevStandalone) > 300;
+      const initialChanged = Math.abs(curStandalone - prevStandalone) > 300;
+      const currentLazy = comparisonLazySize(e);
+      const previousEntry = baseEntryMap[e.name];
+      const previousLazy = comparisonLazySize(previousEntry);
+      const lazyChanged = Math.abs(currentLazy - previousLazy) > 300;
+      return initialChanged || lazyChanged;
     });
 
     // Entries that existed in base but are missing in PR (removed)
@@ -250,24 +319,27 @@ function generateComparisonReport(current, base) {
       lines.push(`## ${pkgIcon} @videojs/${pkg}`);
       lines.push('');
 
-      lines.push('| Path | Base | PR | Diff | % | |');
-      lines.push('|---|--:|--:|--:|--:|:-:|');
+      lines.push('| Path | Base initial | PR initial | Diff | % | Lazy | |');
+      lines.push('|---|--:|--:|--:|--:|--:|:-:|');
 
       for (const entry of changed) {
         const el = entryLabel(entry.name, pkg);
-        const prev = baseMap[entry.name];
-        const d = formatDelta(entry.size, prev);
-        const status = statusIcon(entry.size, prev);
-        const baseSize = prev !== undefined ? formatBytes(prev) : '—';
+        const previousEntry = baseEntryMap[entry.name];
+        const prevInitial = previousEntry ? comparisonSize(previousEntry) : undefined;
+        const currentInitial = comparisonSize(entry);
+        const d = formatDelta(currentInitial, prevInitial);
+        const status = entryStatusIcon(entry, previousEntry);
+        const baseSize = prevInitial !== undefined ? formatBytes(prevInitial) : '—';
         lines.push(
-          `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${d.bytes} | ${d.pct} | ${status} |`,
+          `| ${el} | ${baseSize} | ${formatBytes(currentInitial)} | ${d.bytes} | ${d.pct} | ${comparisonLazyDelta(entry, previousEntry)} | ${status} |`,
         );
       }
 
       for (const entry of removed) {
         const el = entryLabel(entry.name, pkg);
+        const previousInitial = comparisonSize(entry);
         lines.push(
-          `| ${el} | ${formatBytes(entry.size)} | — | −${formatBytes(entry.size)} | −100% | 🗑️ |`,
+          `| ${el} | ${formatBytes(previousInitial)} | — | −${formatBytes(previousInitial)} | −100% | ${comparisonLazyDelta(undefined, entry)} | 🗑️ |`,
         );
       }
 
@@ -289,7 +361,9 @@ function generateComparisonReport(current, base) {
   lines.push('<details>');
   lines.push('<summary>ℹ️ How to interpret</summary>');
   lines.push('');
-  lines.push('All sizes are standalone totals (minified + brotli).');
+  lines.push(
+    'JS sizes are initial static graph totals (minified + brotli). Lazy dynamic chunks are shown separately when present.',
+  );
   lines.push('');
   lines.push('| Icon | Meaning |');
   lines.push('|---|---|');
@@ -299,7 +373,7 @@ function generateComparisonReport(current, base) {
   lines.push('| 🔽 | Decreased |');
   lines.push('| 🆕 | New (no baseline) |');
   lines.push('');
-  lines.push('Run `pnpm size` locally to check current sizes.');
+  lines.push('Run `pnpm size` locally to check current initial sizes.');
   lines.push('</details>');
 
   return lines.join('\n');
@@ -392,13 +466,18 @@ function generateLocalReport(current) {
 
         const label = CATEGORY_LABELS[cat] ?? cat;
         const isSkin = cat === 'skin';
+        const hasLazy = catEntries.some((entry) => lazySize(entry) > 0);
 
         lines.push('');
         lines.push(`  ${ansi.dim(label)}`);
 
         const header = isSkin
-          ? ['Entry', 'Type', 'Size']
-          : ['Entry', 'Size'];
+          ? hasLazy
+            ? ['Entry', 'Type', 'Initial', 'Lazy']
+            : ['Entry', 'Type', 'Initial']
+          : hasLazy
+            ? ['Entry', 'Initial', 'Lazy']
+            : ['Entry', 'Initial'];
         const rows = [header];
 
         for (const entry of catEntries) {
@@ -406,37 +485,50 @@ function generateLocalReport(current) {
             entry.name.replace(`@videojs/${pkg}`, '') || '.';
           const fmt = entry.format ?? 'js';
           if (isSkin) {
-            rows.push([
+            const row = [
               { text: subpath, style: ansi.cyan },
               { text: fmt, style: ansi.dim },
               colorSize(entry.size),
-            ]);
+            ];
+            if (hasLazy) row.push(colorSize(lazySize(entry)));
+            rows.push(row);
           } else {
-            rows.push([
+            const row = [
               { text: subpath, style: ansi.cyan },
               colorSize(entry.size),
-            ]);
+            ];
+            if (hasLazy) row.push(colorSize(lazySize(entry)));
+            rows.push(row);
           }
         }
 
         lines.push(printTable(rows));
       }
     } else {
-      const rows = [['Entry', 'Size']];
+      const hasLazy = entries.some((entry) => lazySize(entry) > 0);
+      const rows = [
+        hasLazy ? ['Entry', 'Initial', 'Lazy'] : ['Entry', 'Initial'],
+      ];
       for (const entry of entries) {
         const subpath =
           entry.name.replace(`@videojs/${pkg}`, '') || '.';
-        rows.push([
+        const row = [
           { text: subpath, style: ansi.cyan },
           colorSize(entry.size),
-        ]);
+        ];
+        if (hasLazy) row.push(colorSize(lazySize(entry)));
+        rows.push(row);
       }
       lines.push(printTable(rows));
     }
   }
 
   lines.push('');
-  lines.push(ansi.dim('Sizes are minified + brotli.'));
+  lines.push(
+    ansi.dim(
+      'Initial sizes are minified + brotli; lazy chunks are shown separately.',
+    ),
+  );
   lines.push('');
 
   return lines.join('\n');

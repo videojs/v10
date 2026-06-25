@@ -81,7 +81,6 @@ audio behaviors composed alongside video and text:
 ```ts
 // Track selection (reads config for initial preferences).
 selectAudioTrack,
-selectTextTrack,
 
 // Resolve selected tracks (fetch media playlists)
 resolveVideoTrack,

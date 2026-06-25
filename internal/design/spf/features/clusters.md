@@ -92,7 +92,7 @@ A feature's *implementation shape* falls along a spectrum:
 |---|---|---|---|
 | **Policy** | Pure config / function variation consumed by an existing behavior. No new behaviors | Inside an existing behavior | *(no documented examples yet — shape: a height cap consumed by a `selectQuality` config)* |
 | **Middle pattern** | A new state-producing behavior monitors an external signal and updates state; existing consumer behaviors update to respect that state. Heavier than pure policy but lighter than composition | New behavior + targeted edits to consumers | *(no documented examples yet — shapes: `ResizeObserver` → cap state → switching; CDN-tracking → selection state → failover; buffer-state monitor → ended signal; `initPTS` detection → offset state → append)* |
-| **Composition** | A different composed engine. Alternative compositions assemble a variant via one or more composition mechanisms (subtract / add / alternative-implementation / alternative-default-configuration), in any combination, to handle different *modes* or *delivery scenarios*. See [`use-cases/README.md`](../use-cases/README.md) for the full doc-type, mechanism taxonomy, and decomposition rubric | At the Adapter level, on initial conditions | *(no instance docs yet; candidates in [`use-cases/README.md`](../use-cases/README.md) Index — `audio-only-mode-override`, `video-only-mode-override`, `background-looping-video`)* |
+| **Composition** | A different composed engine. Alternative compositions assemble a variant via one or more composition mechanisms (subtract / add / alternative-implementation / alternative-default-configuration), in any combination, to handle different *modes* or *delivery scenarios*. See [`use-cases/README.md`](../use-cases/README.md) for the full doc-type, mechanism taxonomy, and decomposition rubric | At the Adapter level, on initial conditions | *(no instance docs yet; candidates in [`use-cases/README.md`](../use-cases/README.md) Index — `audio-only-mode-override`, `video-only-mode-override`, `background-video`)* |
 
 Composition is bounded to **modes** and **delivery scenarios** — see [`use-cases/README.md`](../use-cases/README.md) for the doc-type that captures composition variants. Most "feels like composition" items actually fit the middle pattern.
 
@@ -124,7 +124,7 @@ The selection model — which audio / video / text tracks are available, which i
 
 **Docs.** `subtitles`, `video-abr`, `audio-playback`, `multi-language-audio`, `hevc-variant-selection` (cluster D consumer, video codec axis), `5.1-surround-selection` (cluster D consumer, audio channel-count axis), `audio-abr` (audio sibling of video-abr), `multi-signal-abr` (algorithm extension to ABR with non-bandwidth signals).
 
-**Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` / `selectTextTrack`); the `selected*TrackId` slot family.
+**Foundational primitives.** Per-track resolution (`resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` sharing `setupTrackResolution`); per-track selection (`selectVideoTrack` / `selectAudioTrack` for the simple default-pick path; `switchVideoTrack` / `switchAudioTrack` / `switchTextTrack` for the track-switching chain); the `selected*TrackId` slot family.
 
 **Maps to Notion cluster C** ("Track & variant registry").
 
@@ -284,7 +284,7 @@ Two or more behaviors write to the same state slot from different decision domai
 
 **Signals.** A `selected*TrackId` or similar slot named on more than one behavior's writer list; a "default + user-action" pattern; orthogonal-by-design coordination.
 
-**Where it shows up.** `selectedTextTrackId` (default-on-load via `selectTextTrack` + DOM user-action via `syncTextTracks`). Proposed `selectedAudioTrackId` for multi-language audio (default + programmatic write).
+**Where it shows up.** Formerly `selectedTextTrackId` (default-on-load via `selectTextTrack` + DOM user-action via `syncTextTracks`) — since resolved to a single-writer output of `switchTextTrack`, with the dual-input relocated to the `userTextTrackSelection` *intent* slot (DOM `change` bridge + consumer via `shareSignals`). That's the canonical resolution of this pattern: route differing inputs to a shared intent slot and let one owner derive the resolved slot, rather than co-writing the resolved slot. Proposed `selectedAudioTrackId` for multi-language audio (default + programmatic write).
 
 **Skill action when this pattern is suspected.** Characterize the existing writer(s) and the proposed writer along three axes: (1) decision domain (config vs DOM vs intent vs derived), (2) trigger (one-shot transition vs ongoing reactive), (3) cost (cheap write vs side-effect-heavy write — e.g., audio writes trigger flush + re-resolve + replan). If the proposed writer doesn't share decision domain or cost with the existing pattern, the multi-writer convention may not transfer cleanly.
 

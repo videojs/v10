@@ -7,8 +7,10 @@ import {
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
+import { canPlayTrack } from '../../../media/dom/capabilities';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, MaybeResolvedPresentation } from '../../../media/types';
+import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation } from '../../../media/types';
+import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -16,6 +18,7 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
 import { setupAudioBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -23,9 +26,9 @@ import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { resolveCdnPriority } from '../../behaviors/resolve-cdn-priority';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
+import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 
@@ -54,11 +57,17 @@ export interface SimpleHlsAudioOnlyEngineState {
   userAudioTrackSelection?: Partial<AudioTrack>;
   /**
    * The CDNs the source is served from, in manifest priority order (mirrors
-   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `resolveCdnPriority`,
+   * HLS content steering's `PATHWAY-PRIORITY`). Owned by `deriveCdnPriority`,
    * read by `track-switching`'s `preferActiveCdn` scope. Only meaningful for
    * redundant-stream sources; a single-CDN source has one entry.
    */
   cdnPriority?: string[];
+  /**
+   * CDN ids currently in failover cooldown — read by `track-switching`'s
+   * `excludeFailedCdns` constraint, which prunes their tracks so the active-CDN
+   * scope falls to the next CDN. Empty / absent means all CDNs are eligible.
+   */
+  failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -90,18 +99,36 @@ export type SimpleHlsAudioOnlyEngineSignals = {
 export interface SimpleHlsAudioOnlyEngineConfig
   extends ShareSignalsConfig<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
   preferredAudioLanguage?: string;
+  /**
+   * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks`
+   * constraint. Defaults to the `MediaSource.isTypeSupported`-backed
+   * `canPlayTrack`; override to force-exclude a codec. Mirrors the default
+   * engine — without it, capability probing (and TS / raw-AAC detection) would
+   * be inert for audio-only playback.
+   */
+  canPlayTrack?: CanPlayTrack;
   resolveDuration?: PresentationDurationResolver;
   parsePresentation?: ParsePresentation;
   forwardBuffer?: Partial<ForwardBufferConfig>;
   backBuffer?: Partial<BackBufferConfig>;
+  /** Multi-CDN failover monitor tuning. Defaults: `DEFAULT_FAILOVER_MONITOR_CONFIG`. */
+  failover?: Partial<FailoverMonitorConfig>;
+  /**
+   * Derive a CDN grouping key from a track URL (used by `cdnPriority`, the
+   * failover trip, and the track-switching CDN rules — one function read by all).
+   * Defaults to the URL origin; override to key on e.g. Mux's `cdn=` param.
+   */
+  getCdnId?: GetCdnId;
 }
 
 // ============================================================================
 // Audio-Only HLS Playback Engine
 // ============================================================================
 
-// Materializes the consumer-input slot `userAudioTrackSelection` (only read by
-// switchAudioTrack, produced by no behavior) in addition to forwarding refs.
+// Materializes input slots no composed behavior produces — `userAudioTrackSelection`
+// (switchAudioTrack only reads it) — in addition to forwarding refs. `failedCdns`
+// is owned by `setupFailoverMonitor`, so it's already materialized and reachable
+// on the `onSignalsReady` refs without being listed here.
 const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
   'userAudioTrackSelection',
 ]);
@@ -112,7 +139,7 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  * Subtractive composition variant of `createSimpleHlsEngine`: omits
  * video-side behaviors (`resolveVideoTrack`, `switchVideoTrack`,
  * `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors
- * (`selectTextTrack`, `resolveTextTrack`, `syncTextTracks`,
+ * (`switchTextTrack`, `resolveTextTrack`, `syncTextTracks`,
  * `setupTextTrackActors`, `loadTextTrackSegments`). The remaining audio
  * pipeline composes unchanged.
  *
@@ -141,6 +168,7 @@ export function createHlsAudioOnlyEngine(
 ): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
   const finalConfig = {
     ...config,
+    canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
   };
@@ -160,7 +188,12 @@ export function createHlsAudioOnlyEngine(
       // not load-bearing here today. It earns its place for forward-consistency
       // with the default engine and for future failover / steering, where the
       // active CDN changes dynamically (and selection stays reactive either way).
-      resolveCdnPriority,
+      deriveCdnPriority,
+
+      // CDN failover cooldown: watches `failedCdns` (tripped directly by audio
+      // track resolution on a failed media-playlist fetch) and removes each CDN
+      // once its cooldown lapses.
+      setupFailoverMonitor,
 
       // Audio track selection — slot owner with filter reactivity.
       // Mid-stream flush on language switch is handled in segment-loader's

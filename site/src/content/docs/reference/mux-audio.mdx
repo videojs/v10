@@ -1,0 +1,61 @@
+---
+title: MuxAudio
+frameworkTitle:
+  html: mux-audio
+description: Audio element for Mux-hosted HLS streams
+---
+
+import MediaReference from "@/components/docs/api-reference/MediaReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React live demo disabled until #1343 (SSR-breaking media imports) is fixed; show source instead. */}
+import { TabsRoot, TabsList, Tab, TabsPanel } from "@/components/Tabs";
+import ServerCode from "@/components/Code/ServerCode.astro";
+import basicUsageReactTsx from "@/components/docs/demos/mux-audio/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/mux-audio/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/mux-audio/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/mux-audio/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/mux-audio/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/mux-audio/html/css/BasicUsage.ts?raw";
+
+Audio element for playing Mux-hosted HLS streams. Built on hls.js with Mux-specific optimizations.
+
+## Examples
+
+### Basic Usage
+
+{/* React: source-only until #1343 is fixed. Restore <Demo> with <BasicUsageDemoReact client:idle /> afterward. */}
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <TabsRoot client:idle>
+      <TabsList client:idle label="Basic usage source code">
+        <Tab client:idle value="App.tsx" initial>App.tsx</Tab>
+        <Tab client:idle value="App.css">App.css</Tab>
+      </TabsList>
+      <TabsPanel client:idle value="App.tsx" initial>
+        <ServerCode code={basicUsageReactTsx} lang="tsx" />
+      </TabsPanel>
+      <TabsPanel client:idle value="App.css">
+        <ServerCode code={basicUsageReactCss} lang="css" />
+      </TabsPanel>
+    </TabsRoot>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<MediaReference media="MuxAudio" />

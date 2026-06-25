@@ -49,6 +49,10 @@ export const hlsMediaDefaultProps: HlsMediaProps = {
 
 class HlsMediaEvent extends Event {}
 
+/**
+ * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
+ * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
+ */
 export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsMedia | NativeHlsMedia | null = null;
   #mediaElement: HTMLVideoElement | null = null;
@@ -84,10 +88,20 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     this.removeEventListener('loadstart', this.#stopTargetLoadStartEvent);
   }
 
+  /**
+   * Underlying playback engine — the hls.js `Hls` instance when playing via
+   * MSE, otherwise `null`. An advanced escape hatch for direct engine access;
+   * normal playback is driven through this element's own properties and methods.
+   */
   get engine() {
     return this.#delegate?.engine ?? null;
   }
 
+  /**
+   * Playback configuration: a preferred playback path, an explicit content
+   * type, and options forwarded to hls.js. Reassigning reloads the engine when
+   * an engine-relevant option changes.
+   */
   get config(): HlsMediaConfig {
     return super.config;
   }
@@ -101,18 +115,22 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     return this.#delegate?.error ?? null;
   }
 
+  /** Populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get videoTracks() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoTracks : undefined;
   }
 
+  /** Populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioTracks() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioTracks : undefined;
   }
 
+  /** Selectable quality levels, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get videoRenditions() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoRenditions : undefined;
   }
 
+  /** Selectable audio variants, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioRenditions() {
     return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioRenditions : undefined;
   }

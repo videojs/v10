@@ -23,6 +23,7 @@ export default defineConfig({
     '@/utils/installation/types': resolve(__dirname, '../../site/src/utils/installation/types.ts'),
     '@/utils/installation/cdn-code': resolve(__dirname, '../../site/src/utils/installation/cdn-code.ts'),
     '@/utils/installation/detect-renderer': resolve(__dirname, '../../site/src/utils/installation/detect-renderer.ts'),
+    '@/content/cdn-media.json': resolve(__dirname, '../../site/src/content/cdn-media.json'),
     '@/consts': resolve(__dirname, '../../site/src/consts.ts'),
   },
 });
