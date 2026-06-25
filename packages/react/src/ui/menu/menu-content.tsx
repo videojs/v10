@@ -12,6 +12,7 @@ import {
   getRootPositionOptions,
   isEventWithinElement,
   isMenuNavigationKey,
+  observeMenuViewContent,
   resolveOffsets,
   resolvePositioningBoundary,
   syncMenuViewRoot,
@@ -240,6 +241,18 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     if (!state.open) return;
 
     syncMenuViewRoot(internalRef.current, activeSubMenuId !== null);
+  }, [isSubmenu, state.open, activeSubMenuId]);
+
+  useLayoutEffect(() => {
+    if (isSubmenu) return;
+    if (!state.open) return;
+
+    const contentElement = internalRef.current;
+    if (!contentElement) return;
+
+    return observeMenuViewContent(contentElement, () => {
+      syncMenuViewRoot(contentElement, activeSubMenuId !== null);
+    });
   }, [isSubmenu, state.open, activeSubMenuId]);
 
   useLayoutEffect(() => {

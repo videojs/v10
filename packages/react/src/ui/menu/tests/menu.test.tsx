@@ -331,6 +331,48 @@ function expectNoMenuStateAttrs(element: HTMLElement): void {
   }
 }
 
+function createRect(width: number, height: number): DOMRect {
+  return {
+    x: 0,
+    y: 0,
+    width,
+    height,
+    top: 0,
+    right: width,
+    bottom: height,
+    left: 0,
+    toJSON: () => ({}),
+  } as DOMRect;
+}
+
+function mockMenuViewSize(element: HTMLElement, getHeight: () => number): void {
+  element.getBoundingClientRect = vi.fn(() => createRect(160, getHeight()));
+
+  Object.defineProperty(element, 'scrollWidth', {
+    configurable: true,
+    get: () => 160,
+  });
+
+  Object.defineProperty(element, 'scrollHeight', {
+    configurable: true,
+    get: getHeight,
+  });
+}
+
+function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
+  return (
+    <MenuRoot defaultOpen>
+      <MenuTrigger>Settings</MenuTrigger>
+      <MenuContent data-testid="content">
+        <MenuView data-testid="root-view">
+          <MenuItem>Speed</MenuItem>
+          {showCaptions ? <MenuItem>Captions</MenuItem> : null}
+        </MenuView>
+      </MenuContent>
+    </MenuRoot>
+  );
+}
+
 describe('MenuContent', () => {
   it('scopes menu state data attributes to content elements', async () => {
     render(
@@ -455,6 +497,20 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-content').hasAttribute('data-menu-viewport')).toBe(true);
     expect(screen.getByTestId('root-view').hasAttribute('data-menu-root-view')).toBe(true);
     expect(screen.getByTestId('root-view').hasAttribute('data-menu-view')).toBe(true);
+  });
+
+  it('remeasures an open root view when menu items are added', async () => {
+    const { rerender } = render(<DynamicMenuFixture showCaptions={false} />);
+    const content = screen.getByTestId('content');
+    const rootView = screen.getByTestId('root-view');
+
+    mockMenuViewSize(rootView, () => rootView.children.length * 20);
+
+    rerender(<DynamicMenuFixture showCaptions />);
+
+    await waitFor(() => {
+      expect(content.style.getPropertyValue('--media-menu-height')).toBe('40px');
+    });
   });
 
   it('forces layout while the submenu starting style is applied', async () => {

@@ -252,7 +252,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     return {
       ...this.config.hlsJs,
       preferPlayback: this.config.preferPlayback,
-      contentType: this.config.contentType,
+      contentType: this.config.contentType ?? inferContentType(this.#src),
     };
   }
 

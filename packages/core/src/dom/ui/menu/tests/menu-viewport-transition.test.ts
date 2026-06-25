@@ -4,6 +4,7 @@ import {
   getMenuRootViewAttrs,
   getMenuViewportAttrs,
   getMenuViewportElement,
+  observeMenuViewContent,
   syncMenuViewRoot,
   syncMenuViewTransition,
 } from '../menu-viewport-transition';
@@ -36,6 +37,15 @@ function createRect(width: number, height: number): DOMRect {
     left: 0,
     toJSON: () => ({}),
   } as DOMRect;
+}
+
+function nextFrame(): Promise<void> {
+  return new Promise((resolve) => requestAnimationFrame(() => resolve()));
+}
+
+async function waitForMutationFrame(): Promise<void> {
+  await Promise.resolve();
+  await nextFrame();
 }
 
 function mockMenuViewSize(
@@ -123,6 +133,29 @@ describe('menu-viewport-transition', () => {
     applyAttrs(content, getMenuViewportAttrs());
 
     expect(getMenuViewportElement(content)).toBe(content);
+  });
+
+  it('observes child and availability changes in menu content', async () => {
+    const content = addElement();
+    const item = document.createElement('div');
+    const onChange = vi.fn();
+    const cleanup = observeMenuViewContent(content, onChange);
+
+    content.append(item);
+    await waitForMutationFrame();
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    item.setAttribute('data-availability', 'available');
+    await waitForMutationFrame();
+
+    expect(onChange).toHaveBeenCalledTimes(2);
+
+    cleanup();
+    item.setAttribute('data-availability', 'unavailable');
+    await waitForMutationFrame();
+
+    expect(onChange).toHaveBeenCalledTimes(2);
   });
 
   it('toggles menu viewport data attributes for active and exiting phases', () => {

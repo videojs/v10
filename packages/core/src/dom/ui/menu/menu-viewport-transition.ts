@@ -44,6 +44,7 @@ const MENU_VIEW_ACTIVE_STATE = 'active';
 const MENU_VIEW_INACTIVE_STATE = 'inactive';
 const MENU_ROOT_VIEW_ATTR = 'data-menu-root-view';
 const MENU_VIEWPORT_ATTR = 'data-menu-viewport';
+const MENU_VIEW_LAYOUT_ATTRS = ['data-availability'];
 const MENU_WIDTH_VAR = '--media-menu-width';
 const MENU_HEIGHT_VAR = '--media-menu-height';
 const MENU_VIEW_MEASURE_STYLE_PROPERTIES = [
@@ -271,6 +272,34 @@ export function syncMenuViewRoot(
 
   setMenuViewState(rootView, MENU_VIEW_ACTIVE_STATE);
   setViewportSize(content, size);
+}
+
+export function observeMenuViewContent(content: HTMLElement, onChange: () => void): () => void {
+  if (typeof MutationObserver === 'undefined') return () => {};
+
+  let rafId = 0;
+
+  function scheduleChange(): void {
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      onChange();
+    });
+  }
+
+  const observer = new MutationObserver(scheduleChange);
+
+  observer.observe(content, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: MENU_VIEW_LAYOUT_ATTRS,
+  });
+
+  return () => {
+    cancelAnimationFrame(rafId);
+    observer.disconnect();
+  };
 }
 
 export function syncMenuViewTransition(

@@ -18,6 +18,7 @@ import {
   type MenuOpenChangeReason,
   type MenuViewTransitionState,
   type NavigationState,
+  observeMenuViewContent,
   type PositioningBoundary,
   resolveOffsets,
   resolvePositioningBoundary,
@@ -85,6 +86,7 @@ export class MenuElement extends MediaElement {
 
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
+  #cleanupContentObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
@@ -145,6 +147,8 @@ export class MenuElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cleanupContentObserver?.();
+    this.#cleanupContentObserver = null;
     this.#cleanupTrigger();
     this.#menu?.destroy();
     this.#menu = null;
@@ -239,9 +243,15 @@ export class MenuElement extends MediaElement {
     }
 
     if (!state.open) {
+      this.#cleanupContentObserver?.();
+      this.#cleanupContentObserver = null;
       this.#position.cleanup();
       return;
     }
+
+    this.#cleanupContentObserver ??= observeMenuViewContent(this, () => {
+      this.requestUpdate();
+    });
 
     syncMenuViewRoot(this, this.#navState.stack.length > 0);
 

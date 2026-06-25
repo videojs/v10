@@ -3,7 +3,7 @@ import { MediaError } from '../../../../core/media/media-error';
 import type { RemotePlaybackLike } from '../../../../core/media/types';
 import { addComponent, type Component } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
-import { ContentTypes, HlsJsMedia } from '../index';
+import { ContentTypes, Hls, HlsJsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -160,6 +160,26 @@ describe('HlsJsMedia', () => {
 
       // No engine teardown → no streamType churn.
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('recreates the engine when inferred content type changes', () => {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsJsMedia();
+      media.attach(video);
+
+      media.src = 'https://example.com/video.mp4';
+      media.load();
+
+      expect(media.engine).toBeNull();
+
+      media.src = 'https://example.com/video.m3u8';
+      media.load();
+
+      expect(media.engine).not.toBeNull();
     });
 
     it('resets free-form config when a new object is assigned', () => {
