@@ -19,7 +19,26 @@ One broadcast yields **two** sources to test:
 Both are CMAF/fMP4, which is what the SPF MSE pipeline appends (it does not
 transmux MPEG-TS, so generic TS live test streams won't play there).
 
-## Prerequisites
+## Local source (no Mux, no creds)
+
+For a sliding-window live source without a Mux account, `local-live.sh` uses
+ffmpeg's own HLS muxer to write **demuxed CMAF/fMP4** (master + audio group +
+fMP4 init/segments) to a temp dir, served with CORS and **no caching**:
+
+```sh
+./local-live.sh                # serves http://localhost:8080/master.m3u8
+# then open the sandbox at that src (start `pnpm dev` first):
+open "http://localhost:5173/spf-segment-loading/?src=http://localhost:8080/master.m3u8&muted=true&autoplay=true&preload=auto"
+```
+
+The no-cache part is load-bearing (`http-server -c-1`): a live playlist served
+with a positive `max-age` makes reloads return a stale media-sequence, so the
+client's window never advances and playback stalls — a server misconfiguration,
+not a player bug. Mux gets this right; a plain static file server does not by
+default. (This is VOD-free and doesn't model DVR/EVENT — use the Mux flow above
+for those.)
+
+## Prerequisites (Mux flow)
 
 - `ffmpeg`, `curl`, `jq` on `PATH`.
 - A Mux access token (Mux dashboard → Settings → Access Tokens). Provide it via
