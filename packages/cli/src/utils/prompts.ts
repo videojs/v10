@@ -3,12 +3,16 @@ import cdnMedia from '@/content/cdn-media.json';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
+import { buildOptions } from '@/utils/installation/renderer-options';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
-import { VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from './config.js';
 
+// Media subpaths that ship a CDN build, from the generated manifest (bundled at
+// build time). Mirrors how the installation page reads the `cdnMedia` content
+// collection — same source of truth, so the CLI gates CDN exactly like the UI.
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
 
+/** Whether a renderer can be installed via CDN (parity with the install page). */
 export function supportsCdnInstall(renderer: Renderer): boolean {
   return rendererSupportsCdn(renderer, CDN_MEDIA_SUBPATHS);
 }
@@ -32,17 +36,14 @@ const PRESET_OPTIONS: Array<{ value: UseCase; label: string }> = [
   { value: 'background-video', label: 'Background Video' },
 ];
 
+// Reuse the installation page's option builder so labels and ordering (Files →
+// streaming formats → hosting services) stay in lockstep with the UI. Grouped
+// section headers are a UI affordance clack's single-select can't render, but
+// the order and labels carry the same taxonomy.
 function mediaOptionsForUseCase(useCase: UseCase): Array<{ value: Renderer; label: string }> {
-  const RENDERER_LABELS: Record<Renderer, string> = {
-    'background-video': 'Background Video',
-    hls: 'HLS',
-    'html5-audio': 'HTML5 Audio',
-    'html5-video': 'HTML5 Video',
-  };
-
-  return VALID_RENDERERS[useCase].map((r) => ({
-    value: r,
-    label: RENDERER_LABELS[r],
+  return buildOptions(useCase).map((option) => ({
+    value: option.value as Renderer,
+    label: option.label,
   }));
 }
 
@@ -69,7 +70,7 @@ function installMethodOptions(
     { value: 'bun', label: 'bun' },
   ];
   // CDN is HTML-only, and only when the renderer ships a CDN build — matching
-  // the install page, which hides the CDN tab for renderers without one.
+  // the install page, which hides the CDN tab for renderers like Vimeo.
   if (framework === 'html' && supportsCdnInstall(renderer)) {
     options.unshift({ value: 'cdn', label: 'CDN' });
   }

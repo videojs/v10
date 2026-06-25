@@ -7,7 +7,15 @@
  */
 
 declare module '@/utils/installation/types' {
-  export type Renderer = 'background-video' | 'hls' | 'html5-audio' | 'html5-video';
+  export type Renderer =
+    | 'background-video'
+    | 'dash'
+    | 'hls'
+    | 'html5-audio'
+    | 'html5-video'
+    | 'mux-audio'
+    | 'mux-video'
+    | 'vimeo';
   export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
   export type UseCase = 'default-video' | 'default-audio' | 'background-video';
   export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
@@ -65,6 +73,27 @@ declare module '@/utils/installation/cdn-code' {
 
   export function generateCdnCode(useCase: UseCase, skin: Skin, renderer: Renderer): string;
   export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean;
+}
+
+declare module '@/utils/installation/renderer-options' {
+  import type { Renderer, UseCase } from '@/utils/installation/types';
+
+  // Mirrors the site's `SelectOption`/`SelectGroup` shapes, narrowed to the
+  // fields the CLI uses. The site module imports those types from a React
+  // component; the CLI only ever reads `value`/`label`.
+  interface RendererOption {
+    value: Renderer | null;
+    label: string;
+    disabled?: boolean;
+  }
+  interface RendererGroup {
+    label: string;
+    options: RendererOption[];
+  }
+
+  export const RENDERER_LABELS: Record<Renderer, string>;
+  export function buildOptions(useCase: UseCase): RendererOption[];
+  export function buildGroups(useCase: UseCase): RendererGroup[] | null;
 }
 
 declare module '@/content/cdn-media.json' {

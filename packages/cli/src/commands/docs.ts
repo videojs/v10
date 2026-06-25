@@ -1,5 +1,6 @@
 import * as p from '@clack/prompts';
 import { validateInstallationOptions } from '@/utils/installation/codegen';
+import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
 import type { InstallMethod, Renderer, UseCase } from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
@@ -58,7 +59,9 @@ function mapPresetToUseCase(preset: string): UseCase {
   return result;
 }
 
-const ALL_RENDERERS: Renderer[] = ['html5-video', 'html5-audio', 'hls', 'background-video'];
+// Derived from the shared label map so the CLI's accepted renderers never drift
+// from the installation page's.
+const ALL_RENDERERS = Object.keys(RENDERER_LABELS) as Renderer[];
 
 function validateMedia(media: string): Renderer {
   if (!ALL_RENDERERS.includes(media as Renderer)) {
@@ -114,7 +117,7 @@ Installation flags (for docs how-to/installation):
   --preset <video|audio|background-video>
   --skin <default|minimal|none>
   --source-url <url>
-  --media <html5-video|html5-audio|hls|background-video>
+  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video>
   --install-method <cdn|npm|pnpm|yarn|bun>`;
 
 export async function handleDocs(flags: ParsedFlags, positionals: string[]): Promise<void> {
@@ -184,10 +187,12 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
     }
 
     // The interactive prompt hides CDN for renderers without a CDN build; guard
-    // the non-interactive flag path so a `--install-method cdn` request for one
+    // the non-interactive flag path so `--media vimeo --install-method cdn`
     // can't emit a broken snippet.
     if (opts.installMethod === 'cdn' && !supportsCdnInstall(opts.renderer)) {
-      console.error('Error: this source type has no CDN build. Install it with npm, pnpm, yarn, or bun.');
+      console.error(
+        `Error: ${RENDERER_LABELS[opts.renderer]} has no CDN build. Install it with npm, pnpm, yarn, or bun.`
+      );
       process.exit(1);
     }
 
