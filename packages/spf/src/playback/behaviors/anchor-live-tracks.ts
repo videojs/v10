@@ -125,24 +125,32 @@ function anchorLiveTracksSetup<Context extends object>({
 
   return createMachineReactor<AnchorFsmState>({
     initial: 'unanchored',
-    // Re-checks buffer availability on each reload (the resolver is read untracked
-    // by the engine, so reloads — not buffer ticks — drive the transition). An
-    // unresolved presentation drops back to idle.
+    // Checks buffer availability on each reload until anchored (the resolver is
+    // read untracked by the engine, so reloads — not buffer ticks — drive the
+    // transition). An unresolved presentation drops back to idle.
     monitor: () => {
       const presentation = state.presentation.get();
       if (!isResolvedPresentation(presentation)) return 'unanchored';
+      // Sticky per source: once the anchor is published, stay `anchored` for the
+      // lifetime of this resolved presentation. Only a source change — which
+      // resets the presentation to an unresolved value (handled above) — reverts.
+      // A *transient* loss of buffer ground truth (underrun, flush, seek) must NOT
+      // drop the established anchor: doing so re-opens the seekToLiveEdge gate and
+      // re-fires its one-time live-edge seek, jumping the playhead. "Pin-once"
+      // means pin once per source — see live-presentation-anchor.md.
+      if (state.liveAnchor.get() !== undefined) return 'anchored';
       return isUndefined(deriveBufferAnchor(presentation)) ? 'unanchored' : 'anchored';
     },
     states: {
       // Reset the published anchor per source so a new source re-gates the seek.
       unanchored: { entry: () => state.liveAnchor.set(undefined) },
       anchored: {
-        // Establish the shared anchor once and stamp it onto every track. Runs
-        // once per entry; a source change exits to `unanchored`, so the next
-        // source re-establishes. Re-deriving the same buffer anchor is idempotent
-        // (segment PDT and native-PTS start are stable), and
-        // `positionAllTracksToAnchor` writes no new reference when nothing moved —
-        // so a transient re-entry is a no-op.
+        // Establish the shared anchor once and stamp it onto every track. The
+        // sticky monitor keeps us `anchored` for the source once `liveAnchor` is
+        // published, so this runs exactly once per source; only a source change
+        // (exit to `unanchored`) re-arms it. (Were it to re-enter, re-deriving the
+        // same buffer anchor is idempotent and `positionAllTracksToAnchor` writes
+        // no new reference when nothing moved — so it would still be a no-op.)
         entry: () => {
           const presentation = state.presentation.get();
           if (!isResolvedPresentation(presentation)) return;

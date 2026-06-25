@@ -148,6 +148,62 @@ describe('anchorLiveTracks', () => {
     cleanup();
   });
 
+  it('keeps the established anchor through a transient loss of buffer ground truth (sticky per source)', async () => {
+    let hasBuffer = true;
+    const { cleanup, state } = run({
+      presentation: makePresentation([makeVideoTrack()]),
+      config: {
+        resolveBufferedAnchor: () =>
+          hasBuffer ? { trackId: 'v-1', segmentId: 'segment-85', actualStart: 500 } : undefined,
+      },
+    });
+
+    expect(state.liveAnchor.get()).toBe(500);
+
+    // Buffer ground truth momentarily vanishes (underrun / flush / seek), then a
+    // reload fires. The established anchor must persist — dropping it re-opens the
+    // seekToLiveEdge gate and re-fires its one-time live-edge seek. Only a source
+    // change (unresolved presentation) reverts.
+    hasBuffer = false;
+    const carried = makeVideoTrack();
+    carried.startTime = 500;
+    carried.startDate = 500;
+    carried.segments = [{ ...carried.segments[0]!, startTime: 500, startDate: 1000 }];
+    state.presentation.set(makePresentation([carried]));
+    await flush();
+    await flush();
+
+    expect(state.liveAnchor.get()).toBe(500);
+
+    cleanup();
+  });
+
+  it('reverts the anchor on a source change, then re-establishes for the new source', async () => {
+    let actualStart = 500;
+    const { cleanup, state } = run({
+      presentation: makePresentation([makeVideoTrack()]),
+      config: { resolveBufferedAnchor: () => ({ trackId: 'v-1', segmentId: 'segment-85', actualStart }) },
+    });
+
+    expect(state.liveAnchor.get()).toBe(500);
+
+    // Source change → presentation reset to an unresolved value: the anchor clears
+    // so the new source re-gates the seek.
+    state.presentation.set({ url: 'https://example.com/new.m3u8' });
+    await flush();
+    await flush();
+    expect(state.liveAnchor.get()).toBeUndefined();
+
+    // New source resolves with its own buffer truth → re-establishes.
+    actualStart = 700;
+    state.presentation.set(makePresentation([makeVideoTrack()]));
+    await flush();
+    await flush();
+    expect(state.liveAnchor.get()).toBe(300); // video seg PDT 1000 − actualStart 700
+
+    cleanup();
+  });
+
   it('establishes once — a later reload is left to the parser (no re-establish even if buffer drifts)', async () => {
     let actualStart = 500;
     const { cleanup, state } = run({
