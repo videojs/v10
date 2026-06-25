@@ -77,7 +77,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
         </TabsPanel>
       </TabsRoot>
       {!supportsCdn && (
-        <p className={clsx(shared.p, shared.pMaxWidth)}>
+        <p className={clsx(shared.p, shared.prose)}>
           This source type isn't available via CDN — install it with a package manager (npm, pnpm, yarn, or bun).
         </p>
       )}
