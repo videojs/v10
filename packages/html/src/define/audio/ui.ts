@@ -2,6 +2,7 @@
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
 import { MediaContainerElement } from '../../media/container-element';
+import { MediaFeatureElement } from '../../ui/feature/media-feature-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
@@ -33,6 +34,7 @@ defineTime();
 defineMenu();
 
 // Standalone elements.
+safeDefine(MediaFeatureElement);
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
 safeDefine(LiveButtonElement);

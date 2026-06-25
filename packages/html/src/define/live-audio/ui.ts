@@ -2,6 +2,7 @@
 // elements without creating a skin element. Use this entry when building an
 // ejected (light DOM) player layout for live HLS / DASH streams.
 import { MediaContainerElement } from '../../media/container-element';
+import { MediaFeatureElement } from '../../ui/feature/media-feature-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
@@ -28,6 +29,7 @@ defineVolumeSlider();
 defineTime();
 
 // Standalone elements.
+safeDefine(MediaFeatureElement);
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
 safeDefine(LiveButtonElement);

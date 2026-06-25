@@ -14,6 +14,7 @@ import {
   icon,
   iconFlipped,
   inputFeedback,
+  muteIcon,
   overlay,
   pipIcon,
   playIcon,
@@ -53,12 +54,15 @@ import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { FeatureAvailability } from '@/ui/feature-availability';
 import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
+import { MuteButton } from '@/ui/mute-button';
 import { Overlay } from '@/ui/overlay';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
+import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
@@ -69,6 +73,7 @@ import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
+import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { BaseVideoSkinProps } from '../types';
 
@@ -83,6 +88,16 @@ const iconButton = [button.base, button.subtle, button.icon];
 export interface DefaultVideoSkinProps extends BaseVideoSkinProps {
   className?: string;
   children?: ReactNode | undefined;
+}
+
+function MuteControl() {
+  return (
+    <MuteButton className={cn(iconButton, muteIcon.button)} type="button">
+      <VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />
+      <VolumeLowIcon className={cn(icon, muteIcon.volumeLow)} />
+      <VolumeHighIcon className={cn(icon, muteIcon.volumeHigh)} />
+    </MuteButton>
+  );
 }
 
 export function DefaultVideoSkin({ className, children, poster, ...rest }: DefaultVideoSkinProps) {
@@ -177,6 +192,23 @@ export function DefaultVideoSkin({ className, children, poster, ...rest }: Defau
           </Time.Group>
 
           <Controls.Group className={buttonGroupEnd}>
+            <FeatureAvailability is="volume" when="unsupported">
+              <MuteControl />
+            </FeatureAvailability>
+            <FeatureAvailability is="volume" except="unsupported">
+              <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+                <Popover.Trigger render={<MuteControl />} />
+                <Popover.Popup className={cn(popup.popover, popup.volume)}>
+                  <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" className={slider.root}>
+                    <VolumeSlider.Track className={slider.track}>
+                      <VolumeSlider.Fill className={cn(slider.fill.base, slider.fill.fill)} />
+                    </VolumeSlider.Track>
+                    <VolumeSlider.Thumb className={cn(slider.thumb.base, slider.thumb.persistent)} />
+                  </VolumeSlider.Root>
+                </Popover.Popup>
+              </Popover.Root>
+            </FeatureAvailability>
+
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={

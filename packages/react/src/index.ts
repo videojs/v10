@@ -44,6 +44,7 @@ export { Controls } from './ui/controls';
 export type { ControlsGroupProps } from './ui/controls/controls-group';
 export type { ControlsRootProps } from './ui/controls/controls-root';
 export { ErrorDialog, type ErrorDialogContextValue, useErrorDialogContext } from './ui/error-dialog';
+export { FeatureAvailability, type FeatureAvailabilityProps } from './ui/feature-availability';
 export { FullscreenButton, type FullscreenButtonProps } from './ui/fullscreen-button/fullscreen-button';
 export { Gesture, type GestureProps, MediaGesture, type MediaGestureProps } from './ui/gesture/gesture';
 export { type UseDoubleTapGestureOptions, useDoubleTapGesture } from './ui/gesture/use-doubletap-gesture';

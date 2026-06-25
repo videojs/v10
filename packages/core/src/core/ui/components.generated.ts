@@ -10,6 +10,7 @@ import CastButtonDef from './cast-button/cast-button-component';
 import ContainerDef from './container/container-component';
 import ControlsDef from './controls/controls-component';
 import ErrorDialogDef from './error-dialog/error-dialog-component';
+import FeatureAvailabilityDef from './feature-availability/feature-availability-component';
 import FullscreenButtonDef from './fullscreen-button/fullscreen-button-component';
 import GestureDef from './gesture/gesture-component';
 import HotkeyDef from './hotkey/hotkey-component';
@@ -46,6 +47,7 @@ export const CastButton = createComponent(CastButtonDef);
 export const Container = createComponent(ContainerDef);
 export const Controls = createComponent(ControlsDef);
 export const ErrorDialog = createComponent(ErrorDialogDef);
+export const FeatureAvailability = createComponent(FeatureAvailabilityDef);
 export const FullscreenButton = createComponent(FullscreenButtonDef);
 export const Gesture = createComponent(GestureDef);
 export const Hotkey = createComponent(HotkeyDef);
@@ -83,6 +85,7 @@ export const COMPONENTS = {
   Container: ContainerDef,
   Controls: ControlsDef,
   ErrorDialog: ErrorDialogDef,
+  FeatureAvailability: FeatureAvailabilityDef,
   FullscreenButton: FullscreenButtonDef,
   Gesture: GestureDef,
   Hotkey: HotkeyDef,

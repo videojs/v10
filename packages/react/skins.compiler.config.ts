@@ -39,7 +39,7 @@ export default defineConfig({
         }),
         tailwind({ mode: 'preserve' }),
         code.edit.jsx.element({
-          when: code.match.jsx.tag('Tooltip.Trigger'),
+          when: code.match.jsx.tag(/^(Tooltip|Popover)\.Trigger$/),
           transform: code.edit.jsx.moveChildToProp('render'),
         }),
         code.edit.jsx.element({

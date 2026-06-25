@@ -5,12 +5,15 @@ import {
   Container,
   Controls,
   ErrorDialog,
+  FeatureAvailability,
   FullscreenButton,
   Gesture,
   Hotkey,
+  MuteButton,
   Overlay,
   PiPButton,
   PlayButton,
+  Popover,
   Poster,
   SeekButton,
   SeekIndicator,
@@ -22,6 +25,7 @@ import {
   TimeSlider,
   Tooltip,
   VolumeIndicator,
+  VolumeSlider,
 } from '@videojs/core/components';
 import {
   AirPlayEnterIcon,
@@ -58,6 +62,7 @@ import {
   icon,
   iconFlipped,
   inputFeedback,
+  muteIcon,
   overlay,
   pipIcon,
   playIcon,
@@ -76,6 +81,16 @@ const iconButton = [button.base, button.subtle, button.icon];
 export interface DefaultVideoSkinProps {
   className?: string;
   children?: unknown;
+}
+
+function MuteControl() {
+  return (
+    <MuteButton className={[iconButton, muteIcon.button]}>
+      <VolumeOffIcon className={[icon, muteIcon.volumeOff]} />
+      <VolumeLowIcon className={[icon, muteIcon.volumeLow]} />
+      <VolumeHighIcon className={[icon, muteIcon.volumeHigh]} />
+    </MuteButton>
+  );
 }
 
 export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps) {
@@ -162,6 +177,25 @@ export function DefaultVideoSkin({ className, children }: DefaultVideoSkinProps)
           </Time.Group>
 
           <Controls.Group className={buttonGroupEnd}>
+            <FeatureAvailability is="volume" when="unsupported">
+              <MuteControl />
+            </FeatureAvailability>
+            <FeatureAvailability is="volume" except="unsupported">
+              <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+                <Popover.Trigger>
+                  <MuteControl />
+                </Popover.Trigger>
+                <Popover.Popup className={[popup.popover, popup.volume]}>
+                  <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" className={slider.root}>
+                    <VolumeSlider.Track className={slider.track}>
+                      <VolumeSlider.Fill className={[slider.fill.base, slider.fill.fill]} />
+                    </VolumeSlider.Track>
+                    <VolumeSlider.Thumb className={[slider.thumb.base, slider.thumb.persistent]} />
+                  </VolumeSlider.Root>
+                </Popover.Popup>
+              </Popover.Root>
+            </FeatureAvailability>
+
             <Tooltip.Root side="top">
               <Tooltip.Trigger>
                 <CastButton className={[iconButton, castIcon.button]}>

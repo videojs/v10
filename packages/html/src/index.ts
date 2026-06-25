@@ -39,6 +39,7 @@ export { ContextPartElement, type PartContextValue } from './ui/context-part-ele
 export { ControlsElement } from './ui/controls/controls-element';
 export { ControlsGroupElement } from './ui/controls/controls-group-element';
 export { ErrorDialogElement } from './ui/error-dialog/error-dialog-element';
+export { MediaFeatureElement } from './ui/feature/media-feature-element';
 export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-button-element';
 export { GestureElement } from './ui/gesture/gesture-element';
 export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';

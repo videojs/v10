@@ -24,14 +24,18 @@ describe('skins compiler config', () => {
     expect(code).toContain('from "@/ui/airplay-button"');
     expect(code).toContain('from "@/ui/buffering-indicator"');
     expect(code).toContain('from "@/ui/error-dialog"');
+    expect(code).toContain('from "@/ui/feature-availability"');
+    expect(code).toContain('from "@/ui/mute-button"');
     expect(code).toContain('from "@/ui/overlay"');
     expect(code).toContain('from "@/ui/pip-button"');
     expect(code).toContain('from "@/ui/play-button"');
+    expect(code).toContain('from "@/ui/popover"');
     expect(code).toContain('from "@/ui/poster"');
     expect(code).toContain('from "@/ui/seek-indicator"');
     expect(code).toContain('from "@/ui/slider"');
     expect(code).toContain('from "@/ui/status-indicator"');
     expect(code).toContain('from "@/ui/volume-indicator"');
+    expect(code).toContain('from "@/ui/volume-slider"');
     expect(code).not.toContain('from "@/ui/text"');
     expect(code).toContain('from "@/utils/use-render"');
     expect(code).toContain('from "@videojs/utils/predicate"');
@@ -114,6 +118,23 @@ describe('skins compiler config', () => {
     expect(compactCode).not.toContain('iconContainer');
     expect(compactCode).not.toContain('<Text');
     expect(compactCode).not.toContain(compact('render={<Button />}'));
+    expect(compactCode).toContain(compact('function MuteControl()'));
+    expect(compactCode).toContain(compact('<FeatureAvailability is="volume" when="unsupported">'));
+    expect(compactCode).toContain(compact('<FeatureAvailability is="volume" except="unsupported">'));
+    expect(compactCode).toContain(compact('<Popover.Root openOnHover delay={200} closeDelay={100} side="top">'));
+    expect(compactCode).toContain(compact('<Popover.Trigger render={<MuteControl />} />'));
+    expect(compactCode).toContain(compact('<MuteButton className={cn(iconButton, muteIcon.button)} type="button">'));
+    expect(compactCode).toContain(compact('<VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />'));
+    expect(compactCode).toContain(compact('<Popover.Popup className={cn(popup.popover, popup.volume)}>'));
+    expect(compactCode).toContain(
+      compact('<VolumeSlider.Root orientation="vertical" thumbAlignment="edge" className={slider.root}>')
+    );
+    expect(compactCode).toContain(compact('<VolumeSlider.Fill className={cn(slider.fill.base, slider.fill.fill)} />'));
+    expect(compactCode).toContain(
+      compact('<VolumeSlider.Thumb className={cn(slider.thumb.base, slider.thumb.persistent)} />')
+    );
+    expect(compactCode).not.toContain('functionVolumePopover');
+    expect(compactCode).not.toContain('VolumePopover');
     expect(compactCode).toContain(compact('<TimeSlider.Root className={slider.root}>'));
     expect(compactCode).toContain(compact('<TimeSlider.Track className={slider.track}>'));
     expect(compactCode).toContain(compact('<TimeSlider.Fill className={cn(slider.fill.base, slider.fill.fill)} />'));

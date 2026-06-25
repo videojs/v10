@@ -8,6 +8,7 @@ import { BufferingIndicatorElement } from '../../ui/buffering-indicator/bufferin
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
 import { CastButtonElement } from '../../ui/cast-button/cast-button-element';
+import { MediaFeatureElement } from '../../ui/feature/media-feature-element';
 import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-button-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
@@ -58,6 +59,7 @@ safeDefine(AirPlayButtonElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);
+safeDefine(MediaFeatureElement);
 safeDefine(FullscreenButtonElement);
 safeDefine(GestureElement);
 safeDefine(HotkeyElement);
