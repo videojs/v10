@@ -1,41 +1,18 @@
 import { useStore } from '@nanostores/react';
 import { useEffect } from 'react';
-import { Select, type SelectOption } from '@/components/Select';
+import { Select } from '@/components/Select';
 import { renderer, sourceUrl, useCase } from '@/stores/installation';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
-import type { Renderer, UseCase } from '@/utils/installation/types';
+import { buildGroups, buildOptions } from '@/utils/installation/renderer-options';
 import { VALID_RENDERERS } from '@/utils/installation/types';
-
-const RENDERER_LABELS: Record<Renderer, string> = {
-  'background-video': 'Background Video',
-  // cloudflare: 'Cloudflare',
-  // dash: 'DASH',
-  hls: 'HLS',
-  'html5-audio': 'HTML5 Audio',
-  'html5-video': 'HTML5 Video',
-  // jwplayer: 'JW Player',
-  // 'mux-audio': 'Mux',
-  // 'mux-background-video': 'Mux Background Video',
-  // 'mux-video': 'Mux',
-  // spotify: 'Spotify',
-  // vimeo: 'Vimeo',
-  // wistia: 'Wistia',
-  // youtube: 'YouTube',
-};
-
-function buildOptions(useCase: UseCase): SelectOption<Renderer>[] {
-  return VALID_RENDERERS[useCase].map((r) => ({
-    value: r,
-    label: RENDERER_LABELS[r],
-  }));
-}
 
 export default function RendererSelect() {
   const $renderer = useStore(renderer);
   const $useCase = useStore(useCase);
   const $sourceUrl = useStore(sourceUrl);
 
-  const options = buildOptions($useCase);
+  const groups = buildGroups($useCase);
+  const options = groups ? undefined : buildOptions($useCase);
   const detection = detectRenderer($sourceUrl, $useCase);
   const detectedRenderer = detection?.renderer ?? null;
 
@@ -105,6 +82,7 @@ export default function RendererSelect() {
             if (value) renderer.set(value);
           }}
           options={options}
+          groups={groups ?? undefined}
           aria-label="Select renderer"
         />
       </div>

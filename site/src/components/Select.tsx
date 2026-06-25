@@ -10,10 +10,18 @@ export interface SelectOption<T = string> {
   disabled?: boolean;
 }
 
+export interface SelectGroup<T = string> {
+  label: string;
+  options: SelectOption<T>[];
+}
+
 export interface SelectProps<T = string> {
   value: T | null;
   onChange: (value: T | null) => void;
-  options: SelectOption<T>[];
+  /** Flat options. Provide this or `groups`, not both. */
+  options?: SelectOption<T>[];
+  /** Grouped options, rendered as labelled sections. Provide this or `options`. */
+  groups?: SelectGroup<T>[];
   className?: string;
   'aria-label'?: string;
   'data-testid'?: string;
@@ -23,12 +31,35 @@ export function Select<T extends string = string>({
   value,
   onChange,
   options,
+  groups,
   className,
   'aria-label': ariaLabel,
   'data-testid': dataTestId,
 }: SelectProps<T>) {
+  // Base UI resolves the selected value's label for the trigger from `items`,
+  // so it always receives the flattened set regardless of grouping.
+  const flatOptions = options ?? groups?.flatMap((group) => group.options) ?? [];
+
+  const renderItem = (option: SelectOption<T>) => (
+    <BaseSelect.Item
+      key={option.value}
+      value={option.value}
+      disabled={option.disabled}
+      className={clsx(
+        'flex items-center gap-2 p-2',
+        option.disabled ? 'opacity-50 cursor-default' : 'cursor-pointer intent:bg-manila-75 dark:intent:bg-warm-gray',
+        option.value === value && 'bg-manila-75 dark:bg-warm-gray'
+      )}
+    >
+      <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
+      <BaseSelect.ItemIndicator className="ml-auto inline-flex items-center">
+        <Check width={'1rem'} />
+      </BaseSelect.ItemIndicator>
+    </BaseSelect.Item>
+  );
+
   return (
-    <BaseSelect.Root value={value} onValueChange={onChange} items={options}>
+    <BaseSelect.Root value={value} onValueChange={onChange} items={flatOptions}>
       <BaseSelect.Trigger
         className={twMerge(
           clsx(
@@ -61,25 +92,14 @@ export function Select<T extends string = string>({
             }
           >
             <BaseSelect.List>
-              {options.map((option) => (
-                <BaseSelect.Item
-                  key={option.value}
-                  value={option.value}
-                  disabled={option.disabled}
-                  className={clsx(
-                    'flex items-center gap-2 p-2',
-                    option.disabled
-                      ? 'opacity-50 cursor-default'
-                      : 'cursor-pointer intent:bg-manila-75 dark:intent:bg-warm-gray',
-                    option.value === value && 'bg-manila-75 dark:bg-warm-gray'
-                  )}
-                >
-                  <BaseSelect.ItemText>{option.label}</BaseSelect.ItemText>
-                  <BaseSelect.ItemIndicator className="ml-auto inline-flex items-center">
-                    <Check width={'1rem'} />
-                  </BaseSelect.ItemIndicator>
-                </BaseSelect.Item>
-              ))}
+              {groups
+                ? groups.map((group) => (
+                    <BaseSelect.Group key={group.label}>
+                      <BaseSelect.GroupLabel className="p-2 font-bold">{group.label}</BaseSelect.GroupLabel>
+                      {group.options.map(renderItem)}
+                    </BaseSelect.Group>
+                  ))
+                : flatOptions.map(renderItem)}
             </BaseSelect.List>
           </BaseSelect.Popup>
         </BaseSelect.Positioner>
