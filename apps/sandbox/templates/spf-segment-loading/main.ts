@@ -10,7 +10,7 @@ import '@app/styles.css';
 
 import { effect, snapshot } from '@videojs/spf';
 import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
-import { createSimpleHlsEngine } from '@videojs/spf/hls';
+import { createSimpleHlsEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
@@ -155,7 +155,6 @@ function updateThroughputDisplay() {
 // so the seekable range IS the DVR window — no SPF-specific surface needed.
 const AT_EDGE_THRESHOLD = 3; // seconds behind live edge still counts as "at edge"
 const BEHIND_START_THRESHOLD = 5; // seconds from window start → DVR-exhaustion warning
-const DVR_WINDOW_THRESHOLD = 60; // seekable span beyond this reads as DVR vs sliding live
 const WINDOW_START_EPSILON = 0.5; // nudge off the exact start so we don't clamp/stall
 
 function seekableEnd(): number {
@@ -204,10 +203,27 @@ function renderLivePanel() {
   const fromStart = t - start;
   const anchor = engine.state.presentationAnchor.get();
 
-  const windowKind = !Number.isFinite(windowLen)
-    ? 'unknown'
-    : windowLen >= DVR_WINDOW_THRESHOLD
-      ? `DVR (${windowLen.toFixed(0)}s seekable)`
+  // HLS surfaces #EXT-X-PLAYLIST-TYPE directly, so classify DVR/EVENT from the
+  // manifest rather than waiting for the seekable window to grow past a guess.
+  // The tag lives on a resolved track's media-playlist metadata, which lands a
+  // beat after streamType flips to 'live'. `playlistType` is `undefined` both
+  // before resolution and for a genuine sliding window, so gate on metadata
+  // presence: show "resolving" until some timeline-type track has metadata,
+  // then commit — otherwise an EVENT source flickers through "sliding live".
+  const videoTracks = getVideoTracks(presentation);
+  const audioTracks = getAudioTracks(presentation);
+  const meta = [
+    videoTracks.find((tk) => tk.id === engine.state.selectedVideoTrackId.get()),
+    videoTracks[0],
+    audioTracks.find((tk) => tk.id === engine.state.selectedAudioTrackId.get()),
+    audioTracks[0],
+  ]
+    .map((tk) => (tk ? getMediaPlaylistMetadata(tk) : undefined))
+    .find((m) => m !== undefined);
+  const windowKind = !meta
+    ? 'live (resolving…)'
+    : meta.playlistType === 'EVENT'
+      ? `DVR / EVENT${Number.isFinite(windowLen) ? ` (${windowLen.toFixed(0)}s seekable)` : ''}`
       : 'sliding live';
 
   const rows: [string, string, string?][] = [
