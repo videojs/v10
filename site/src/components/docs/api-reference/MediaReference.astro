@@ -52,12 +52,29 @@ const REACT_PROP_NAMES: Record<string, string> = {
   crossorigin: 'crossOrigin',
 };
 
+// Custom Video.js attributes aren't part of the native media API, so they're
+// described inline rather than deferred to MDN — the way the Events section
+// calls out element-specific events.
+const CUSTOM_ATTRIBUTES: Record<string, { react: string; summary: string; values: string[] }> = {
+  'stream-type': {
+    react: 'streamType',
+    summary: 'The kind of stream being played, detected from the source.',
+    values: ['on-demand', 'live', 'll-live', 'unknown'],
+  },
+};
+
+const attrSpelling = (attr: string): string =>
+  framework === 'react' ? (CUSTOM_ATTRIBUTES[attr]?.react ?? REACT_PROP_NAMES[attr] ?? attr) : attr;
+
 const sortedNativeAttributes = [...(ref.nativeAttributes ?? [])].sort();
-const attributeNames =
-  framework === 'react' ? sortedNativeAttributes.map((attr) => REACT_PROP_NAMES[attr] ?? attr) : sortedNativeAttributes;
+const standardAttributeNames = sortedNativeAttributes.filter((attr) => !(attr in CUSTOM_ATTRIBUTES)).map(attrSpelling);
+const customAttributes = sortedNativeAttributes
+  .filter((attr) => attr in CUSTOM_ATTRIBUTES)
+  .map((attr) => ({ name: attrSpelling(attr), ...CUSTOM_ATTRIBUTES[attr]! }));
 
 const sortedNativeEvents = [...(ref.events.native ?? [])].sort();
 const sortedMethods = [...(ref.methods ?? [])].sort();
+const sortedNativeProperties = [...(ref.nativeProperties ?? [])].sort();
 
 // React exposes synthetic event props for the standard media events only.
 // Track-list and Picture-in-Picture events have no prop and must be handled
@@ -97,51 +114,100 @@ const elementSpecificEvents = ref.events.elementSpecific;
   <H2 id={model.heading.id}>{model.heading.text}</H2>
 
   {
+    nativeAttrsSection && (
+      <>
+        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
+        {framework === "html" ? (
+          <P>
+            Forwards these media attributes to the internal{" "}
+            <MarkdownCode>{mediaTag}</MarkdownCode> element. The standard ones
+            behave as described in the{" "}
+            <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
+            <span class="code-list">
+              {standardAttributeNames.map((attr) => (
+                <CodeChip value={attr} />
+              ))}
+            </span>
+          </P>
+        ) : (
+          <P>
+            Renders a native <MarkdownCode>{mediaTag}</MarkdownCode> element and
+            accepts these media attributes as React props. The standard ones
+            behave as described in the{" "}
+            <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
+            <span class="code-list">
+              {standardAttributeNames.map((attr) => (
+                <CodeChip value={attr} />
+              ))}
+            </span>
+          </P>
+        )}
+        {customAttributes.map((attr) => (
+          <P>
+            <MarkdownCode>{attr.name}</MarkdownCode> — {attr.summary} One of{" "}
+            <span class="code-list">
+              {attr.values.map((value) => (
+                <CodeChip value={value} />
+              ))}
+            </span>
+          </P>
+        ))}
+      </>
+    )
+  }
+
+  {
     hostPropsSection && (
       <>
         <H3 id={hostPropsSection.id}>{hostPropsSection.title}</H3>
-        <MediaHostPropsTable
-          hostProperties={ref.hostProperties}
-          componentName={media}
-        />
+        {Object.keys(ref.hostProperties).length > 0 && (
+          <MediaHostPropsTable
+            hostProperties={ref.hostProperties}
+            componentName={media}
+          />
+        )}
+        {sortedNativeProperties.length > 0 && (
+          <>
+            <P>
+              Also exposes these properties from the native media API. See{" "}
+              <A href={mdnMethodsUrl}>HTMLMediaElement</A> for details:{" "}
+              <span class="code-list">
+                {sortedNativeProperties.map((property) => (
+                  <CodeChip value={property} />
+                ))}
+              </span>
+            </P>
+            {framework === "react" && (
+              <P>
+                In React, access these through a{" "}
+                <MarkdownCode>ref</MarkdownCode> to the element.
+              </P>
+            )}
+          </>
+        )}
       </>
     )
   }
 
   {
-    nativeAttrsSection && framework === "html" && (
+    methodsSection && (
       <>
-        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
+        <H3 id={methodsSection.id}>{methodsSection.title}</H3>
         <P>
-          Forwards these media attributes to the internal{" "}
-          <MarkdownCode>{mediaTag}</MarkdownCode> element. The standard ones
-          behave as described in the{" "}
-          <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
+          Supports these methods from the native media API. See{" "}
+          <A href={mdnMethodsUrl}>HTMLMediaElement</A> for the core methods:{" "}
           <span class="code-list">
-            {attributeNames.map((attr) => (
-              <CodeChip value={attr} />
+            {sortedMethods.map((method) => (
+              <CodeChip value={method} />
             ))}
           </span>
         </P>
-      </>
-    )
-  }
-
-  {
-    nativeAttrsSection && framework === "react" && (
-      <>
-        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
-        <P>
-          Renders a native <MarkdownCode>{mediaTag}</MarkdownCode> element and
-          accepts these media attributes as React props. The standard ones
-          behave as described in the{" "}
-          <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
-          <span class="code-list">
-            {attributeNames.map((attr) => (
-              <CodeChip value={attr} />
-            ))}
-          </span>
-        </P>
+        {framework === "react" && (
+          <P>
+            In React, call these through a <MarkdownCode>ref</MarkdownCode> to
+            the element.
+          </P>
+        )}
       </>
     )
   }
@@ -221,29 +287,6 @@ const elementSpecificEvents = ref.events.elementSpecific;
               </P>
             )}
           </>
-        )}
-      </>
-    )
-  }
-
-  {
-    methodsSection && (
-      <>
-        <H3 id={methodsSection.id}>{methodsSection.title}</H3>
-        <P>
-          Supports these methods from the native media API. See{" "}
-          <A href={mdnMethodsUrl}>HTMLMediaElement</A> for the core methods:{" "}
-          <span class="code-list">
-            {sortedMethods.map((method) => (
-              <CodeChip value={method} />
-            ))}
-          </span>
-        </P>
-        {framework === "react" && (
-          <P>
-            In React, call these through a <MarkdownCode>ref</MarkdownCode> to
-            the element.
-          </P>
         )}
       </>
     )

@@ -1082,6 +1082,9 @@ describe('Preset pipeline (end-to-end)', () => {
 //     hostProperties and nativeAttributes (content-attribute vs IDL-property).
 //   - Methods: native media methods are extracted ONCE per media type from the
 //     shared base host classes (media-host + video-host/audio-host).
+//   - Native properties: like methods, the native passthrough accessors are
+//     extracted ONCE per media type from the shared base host classes, filtered
+//     to genuine native members and deduped against hostProperties.
 //   - Event buckets: element-specific (@fires-tagged) events live ONLY in
 //     elementSpecific, never in native.
 
@@ -1184,6 +1187,21 @@ describe('Media element pipeline (end-to-end)', () => {
       // Video methods = media-host methods + video-host methods, deduped + sorted.
       // Lifecycle methods (attach/detach/destroy) and accessors are excluded.
       expect(ref.methods).toEqual(['canPlayType', 'load', 'pause', 'play', 'requestFullscreen']);
+    });
+
+    it('extracts native passthrough properties from the shared base host classes', () => {
+      const ref = findElement('SimpleVideo')!.reference;
+      // Video native properties = media-host + video-host accessors, filtered to
+      // genuine native members and deduped against hostProperties. `currentTime`
+      // and `volume` come from media-host; `videoWidth` is video-only.
+      expect(ref.nativeProperties).toEqual(['currentTime', 'videoWidth', 'volume']);
+      // `streamType`/`isFullscreen` are accessors but NOT native members → excluded.
+      expect(ref.nativeProperties).not.toContain('streamType');
+      expect(ref.nativeProperties).not.toContain('isFullscreen');
+      // `src` is native but re-declared in hostProperties → deduped out (shown in
+      // the rich table instead).
+      expect(ref.hostProperties.src).toBeDefined();
+      expect(ref.nativeProperties).not.toContain('src');
     });
 
     it('includes events derived from VideoEvents capability contracts', () => {
@@ -1629,6 +1647,16 @@ describe('Media element pipeline (end-to-end)', () => {
       // audio host adds none, so video-only methods (requestFullscreen) are absent.
       expect(ref.methods).toEqual(['canPlayType', 'load', 'pause', 'play']);
       expect(ref.methods).not.toContain('requestFullscreen');
+    });
+
+    it('extracts native properties from the shared base host (no video-only props)', () => {
+      const ref = findElement('SpfAudio')!.reference;
+      // Audio native properties = media-host accessors only (audio host adds
+      // none), filtered to native members and deduped against hostProperties
+      // (src is re-declared by the mixin). videoWidth is video-only → absent.
+      expect(ref.nativeProperties).toEqual(['currentTime', 'volume']);
+      expect(ref.nativeProperties).not.toContain('videoWidth');
+      expect(ref.nativeProperties).not.toContain('src');
     });
   });
 });

@@ -1035,6 +1035,46 @@ function extractPublicMethodNames(filePath: string, className: string): string[]
   return names;
 }
 
+/**
+ * Collect public accessor (getter/setter) names declared directly on a named
+ * class. Excludes `protected`/`private` accessors (e.g. `protected get target`)
+ * and `_`/`#` names. A get/set pair collapses to one name. Mirrors
+ * `extractPublicMethodNames` — used to surface the native media properties
+ * forwarded from the base host classes, the same way methods are. Returns []
+ * if the file or class isn't found.
+ */
+function extractAccessorNames(filePath: string, className: string): string[] {
+  if (!fs.existsSync(filePath)) return [];
+
+  const content = fs.readFileSync(filePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
+
+  let classNode: ts.ClassDeclaration | undefined;
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isClassDeclaration(node) && node.name?.text === className) {
+      classNode = node;
+    }
+  });
+  if (!classNode) return [];
+
+  const names = new Set<string>();
+  for (const member of classNode.members) {
+    if (!ts.isGetAccessorDeclaration(member) && !ts.isSetAccessorDeclaration(member)) continue;
+    if (!member.name || !ts.isIdentifier(member.name)) continue;
+    if (
+      member.modifiers?.some(
+        (m) => m.kind === ts.SyntaxKind.PrivateKeyword || m.kind === ts.SyntaxKind.ProtectedKeyword
+      )
+    ) {
+      continue;
+    }
+    const name = member.name.text;
+    if (name.startsWith('_') || name.startsWith('#')) continue;
+    names.add(name);
+  }
+  return [...names];
+}
+
 /** Merge two method-name lists, dedupe by name, and sort alphabetically. */
 function mergeMethodNames(a: readonly string[], b: readonly string[]): string[] {
   return [...new Set([...a, ...b])].sort();
@@ -1325,6 +1365,15 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const videoMethods = mergeMethodNames(baseMethods, extractPublicMethodNames(videoHostPath, 'HTMLVideoElementHost'));
   const audioMethods = mergeMethodNames(baseMethods, extractPublicMethodNames(audioHostPath, 'HTMLAudioElementHost'));
 
+  // Supported native media properties mirror methods: the getter/setter
+  // accessors forwarded from the shared base host classes, collected ONCE per
+  // media type. These names are filtered to genuine native members and surfaced
+  // with an MDN link (the rich `hostProperties` table covers the Video.js
+  // additions). See the per-source filter below.
+  const baseAccessors = extractAccessorNames(mediaHostPath, 'HTMLMediaElementHost');
+  const videoAccessors = mergeMethodNames(baseAccessors, extractAccessorNames(videoHostPath, 'HTMLVideoElementHost'));
+  const audioAccessors = mergeMethodNames(baseAccessors, extractAccessorNames(audioHostPath, 'HTMLAudioElementHost'));
+
   // Extract CSS vars using the existing handler (needs a TS program).
   // Ensure `lib.dom.d.ts` is loaded so HTMLMediaElement / HTMLVideoElement /
   // HTMLAudioElement member names can be resolved for the `overridesNative`
@@ -1418,12 +1467,24 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
     const methods = source.mediaType === 'video' ? videoMethods : audioMethods;
 
+    // Native passthrough properties: base-host accessors that are genuine native
+    // members (the `∩ nativeNames` filter relies on lib.dom.d.ts membership, so
+    // Video.js-specific base getters like streamType/liveEdgeStart/config and
+    // non-native helpers like isFullscreen are excluded). Names already in the
+    // rich `hostProperties` table (re-declared natives like src/preload) are
+    // dropped so each property appears once — deliberately diverging from
+    // `nativeAttributes`, which does NOT dedupe against host props.
+    const nativeProperties = (source.mediaType === 'video' ? videoAccessors : audioAccessors)
+      .filter((name) => nativeNames.has(name) && !(name in hostProperties))
+      .sort();
+
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
       mediaType: source.mediaType,
       hostProperties,
       nativeAttributes,
+      nativeProperties,
       events: { native, elementSpecific },
       methods,
       cssCustomProperties,
