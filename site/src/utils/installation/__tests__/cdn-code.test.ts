@@ -4,7 +4,7 @@ import { generateCdnCode, rendererSupportsCdn } from '../cdn-code';
 describe('generateCdnCode', () => {
   // Media subpaths that ship a CDN build. The media script is emitted only for
   // renderers whose subpath is in this set.
-  const manifest = ['hls-video', 'dash-video', 'mux-video', 'mux-audio'];
+  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio'];
 
   it('generates video preset CDN tags for html5-video', () => {
     expect(generateCdnCode('default-video', 'video', 'html5-video', manifest)).toEqual(

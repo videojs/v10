@@ -1,6 +1,12 @@
 import { VJS10_DEMO_DASH, VJS10_DEMO_VIDEO, VJS10_DEMO_VIMEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import {
+  getMediaSubpath,
+  type InstallMethod,
+  type Renderer,
+  type Skin,
+  type UseCase,
+} from '@/utils/installation/types';
 
 export interface InstallationOptions {
   framework: 'html' | 'react';
@@ -66,17 +72,6 @@ function getSkinImportParts(skin: Exclude<Skin, 'none'>): { group: string; skinF
   if (skin === 'minimal-video') return { group: 'video', skinFile: 'minimal-skin' };
   if (skin === 'minimal-audio') return { group: 'audio', skinFile: 'minimal-skin' };
   return { group: skin, skinFile: 'skin' };
-}
-
-function getMediaImportSubpath(renderer: Renderer): string | null {
-  const map: Partial<Record<Renderer, string>> = {
-    hls: 'hlsjs-video',
-    dash: 'dash-video',
-    'mux-video': 'mux-video',
-    'mux-audio': 'mux-audio',
-    vimeo: 'vimeo-video',
-  };
-  return map[renderer] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -198,14 +193,14 @@ ${skinMediaComment}
 
 function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer): string {
   if (useCase === 'background-video') {
-    const mediaSubpath = getMediaImportSubpath(renderer);
+    const mediaSubpath = getMediaSubpath(renderer);
     const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
     return `import '@videojs/html/background/player';
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';${mediaImport}`;
   }
   const group = skin === 'none' ? getGroupFromUseCase(useCase) : getSkinImportParts(skin).group;
-  const mediaSubpath = getMediaImportSubpath(renderer);
+  const mediaSubpath = getMediaSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
   if (skin === 'none') {
     return `import '@videojs/html/${group}/player';${mediaImport}`;
@@ -264,15 +259,6 @@ function isPresetRenderer(renderer: Renderer): boolean {
   return renderer === 'html5-video' || renderer === 'html5-audio' || renderer === 'background-video';
 }
 
-function getRendererMediaSubpath(renderer: Renderer): string {
-  const map: Partial<Record<Renderer, string>> = {
-    hls: 'hlsjs-video',
-    dash: 'dash-video',
-    vimeo: 'vimeo-video',
-  };
-  return map[renderer] ?? renderer;
-}
-
 export function generateReactCreateCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
 ): Record<'MyPlayer.tsx', string> {
@@ -305,7 +291,7 @@ export function generateReactCreateCode(
       presetImport = `import { ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {
       presetImport = '';
-      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getRendererMediaSubpath(renderer)}';`;
+      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
     }
   } else {
     const { skinFile } = getSkinImportParts(skin);
@@ -315,7 +301,7 @@ export function generateReactCreateCode(
       presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {
       presetImport = `import { ${skinComponent} } from '@videojs/react/${group}';`;
-      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getRendererMediaSubpath(renderer)}';`;
+      mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
     }
   }
 

@@ -22,3 +22,17 @@ export const VALID_RENDERERS: Record<UseCase, Renderer[]> = {
   'default-audio': ['html5-audio', 'mux-audio'],
   'background-video': ['background-video'],
 };
+
+// Renderer → media subpath name, independent of whether a CDN build exists.
+// Preset renderers (html5-video/audio, background-video) are covered by their
+// preset bundle and have no separate media script, so they map to null.
+export function getMediaSubpath(renderer: Renderer): string | null {
+  const map: Partial<Record<Renderer, string>> = {
+    hls: 'hlsjs-video',
+    dash: 'dash-video',
+    'mux-video': 'mux-video',
+    'mux-audio': 'mux-audio',
+    vimeo: 'vimeo-video',
+  };
+  return map[renderer] ?? null;
+}

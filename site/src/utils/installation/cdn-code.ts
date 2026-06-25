@@ -1,4 +1,4 @@
-import type { Renderer, Skin, UseCase } from '@/utils/installation/types';
+import { getMediaSubpath, type Renderer, type Skin, type UseCase } from '@/utils/installation/types';
 
 const CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 
@@ -8,20 +8,6 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
   if (skin === 'minimal-video') return 'video-minimal';
   if (skin === 'minimal-audio') return 'audio-minimal';
   return skin;
-}
-
-// Renderer → media subpath name, independent of whether a CDN build exists.
-// Preset renderers (html5-video/audio, background-video) are covered by the
-// preset bundle and have no separate media script, so they map to null.
-function getMediaSubpath(renderer: Renderer): string | null {
-  const map: Partial<Record<Renderer, string>> = {
-    hls: 'hlsjs-video',
-    dash: 'dash-video',
-    'mux-video': 'mux-video',
-    'mux-audio': 'mux-audio',
-    vimeo: 'vimeo-video',
-  };
-  return map[renderer] ?? null;
 }
 
 // Whether a renderer can be installed via CDN, given the set of media subpaths
