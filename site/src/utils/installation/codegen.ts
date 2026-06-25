@@ -1,4 +1,4 @@
-import { VJS10_DEMO_VIDEO } from '@/consts';
+import { VJS10_DEMO_DASH, VJS10_DEMO_VIDEO, VJS10_DEMO_VIMEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
 
@@ -26,15 +26,36 @@ export function validateInstallationOptions(opts: InstallationOptions): Validati
 // ---------------------------------------------------------------------------
 
 function getDefaultSourceUrl(renderer: Renderer): string {
-  return renderer === 'hls' ? VJS10_DEMO_VIDEO.hls : VJS10_DEMO_VIDEO.mp4;
+  const map: Record<Renderer, string> = {
+    'html5-video': VJS10_DEMO_VIDEO.mp4,
+    // Pre-existing quirk: the audio default points at a video .mp4. Fixing it
+    // needs a real audio asset we don't have — tracked as a follow-up.
+    'html5-audio': VJS10_DEMO_VIDEO.mp4,
+    hls: VJS10_DEMO_VIDEO.hls,
+    'background-video': VJS10_DEMO_VIDEO.mp4,
+    dash: VJS10_DEMO_DASH,
+    // Mux media take a stream.mux.com source; the demo HLS URL is already one.
+    'mux-video': VJS10_DEMO_VIDEO.hls,
+    'mux-audio': VJS10_DEMO_VIDEO.hls,
+    vimeo: VJS10_DEMO_VIMEO,
+  };
+  return map[renderer];
 }
 
 function resolveSourceUrl(sourceUrl: string, renderer: Renderer): string {
   return sourceUrl.trim() || getDefaultSourceUrl(renderer);
 }
 
+// Whether the rendered media element takes the `playsinline` attribute. Vimeo
+// renders an <iframe> and mux-audio renders audio, so neither gets it.
 function isVideoLikeRenderer(renderer: Renderer): boolean {
-  return renderer === 'html5-video' || renderer === 'hls' || renderer === 'background-video';
+  return (
+    renderer === 'html5-video' ||
+    renderer === 'hls' ||
+    renderer === 'background-video' ||
+    renderer === 'dash' ||
+    renderer === 'mux-video'
+  );
 }
 
 function getGroupFromUseCase(useCase: UseCase): string {
@@ -50,6 +71,10 @@ function getSkinImportParts(skin: Exclude<Skin, 'none'>): { group: string; skinF
 function getMediaImportSubpath(renderer: Renderer): string | null {
   const map: Partial<Record<Renderer, string>> = {
     hls: 'hlsjs-video',
+    dash: 'dash-video',
+    'mux-video': 'mux-video',
+    'mux-audio': 'mux-audio',
+    vimeo: 'vimeo-video',
   };
   return map[renderer] ?? null;
 }
@@ -90,9 +115,13 @@ export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bu
 function getRendererTag(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'background-video',
+    dash: 'dash-video',
     hls: 'hlsjs-video',
     'html5-audio': 'audio',
     'html5-video': 'video',
+    'mux-audio': 'mux-audio',
+    'mux-video': 'mux-video',
+    vimeo: 'vimeo-video',
   };
   return map[renderer];
 }
@@ -200,9 +229,13 @@ export function generateHTMLUsageCode(
 function getRendererComponent(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'BackgroundVideo',
+    dash: 'DashVideo',
     hls: 'HlsJsVideo',
     'html5-audio': 'Audio',
     'html5-video': 'Video',
+    'mux-audio': 'MuxAudio',
+    'mux-video': 'MuxVideo',
+    vimeo: 'VimeoVideo',
   };
   return map[renderer];
 }
@@ -233,6 +266,8 @@ function isPresetRenderer(renderer: Renderer): boolean {
 function getRendererMediaSubpath(renderer: Renderer): string {
   const map: Partial<Record<Renderer, string>> = {
     hls: 'hlsjs-video',
+    dash: 'dash-video',
+    vimeo: 'vimeo-video',
   };
   return map[renderer] ?? renderer;
 }

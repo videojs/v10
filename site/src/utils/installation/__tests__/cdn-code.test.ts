@@ -15,6 +15,26 @@ describe('generateCdnCode', () => {
     );
   });
 
+  it('includes the dash media bundle when renderer is dash', () => {
+    expect(generateCdnCode('default-video', 'video', 'dash')).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/dash-video.js"></script>`
+    );
+  });
+
+  it('includes the mux media bundle when renderer is mux-video', () => {
+    expect(generateCdnCode('default-video', 'video', 'mux-video')).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-video.js"></script>`
+    );
+  });
+
+  it('never emits a CDN media script for vimeo (no CDN build)', () => {
+    expect(generateCdnCode('default-video', 'video', 'vimeo')).toEqual(
+      `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>`
+    );
+  });
+
   it('generates background preset CDN tags', () => {
     expect(generateCdnCode('background-video', 'video', 'background-video')).toEqual(
       `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/background.js"></script>`
@@ -35,7 +55,8 @@ describe('generateCdnCode', () => {
 });
 
 describe('rendererSupportsCdn', () => {
-  const manifest = ['hlsjs-video'];
+  // Mirrors the manifest entries that ship a CDN build.
+  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio'];
 
   it('returns true for preset renderers (covered by the preset bundle, no media subpath)', () => {
     expect(rendererSupportsCdn('html5-video', manifest)).toBe(true);
@@ -43,11 +64,14 @@ describe('rendererSupportsCdn', () => {
     expect(rendererSupportsCdn('background-video', manifest)).toBe(true);
   });
 
-  it('returns true for a media renderer whose subpath is in the manifest', () => {
+  it('returns true for media renderers whose subpath is in the manifest', () => {
     expect(rendererSupportsCdn('hls', manifest)).toBe(true);
+    expect(rendererSupportsCdn('dash', manifest)).toBe(true);
+    expect(rendererSupportsCdn('mux-video', manifest)).toBe(true);
+    expect(rendererSupportsCdn('mux-audio', manifest)).toBe(true);
   });
 
-  it('returns false for a media renderer whose subpath is absent from the manifest', () => {
-    expect(rendererSupportsCdn('hls', [])).toBe(false);
+  it('returns false for vimeo, which has no CDN build', () => {
+    expect(rendererSupportsCdn('vimeo', manifest)).toBe(false);
   });
 });

@@ -133,6 +133,41 @@ describe('generateHTMLUsageCode', () => {
     expect(result.js).toContain("import '@videojs/html/media/hlsjs-video'");
   });
 
+  it('uses the dash-video tag, playsinline, and media import for DASH', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'dash' });
+    expect(result.html).toContain('<dash-video src=');
+    expect(result.html).toContain('playsinline');
+    expect(result.html).toContain('.mpd');
+    expect(result.js).toContain("import '@videojs/html/media/dash-video'");
+  });
+
+  it('uses the mux-video tag, playsinline, and media import for Mux video', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'mux-video' });
+    expect(result.html).toContain('<mux-video src=');
+    expect(result.html).toContain('playsinline');
+    expect(result.js).toContain("import '@videojs/html/media/mux-video'");
+  });
+
+  it('uses the vimeo-video tag and media import, without playsinline (iframe)', () => {
+    const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'vimeo' });
+    expect(result.html).toContain('<vimeo-video src=');
+    expect(result.html).not.toContain('playsinline');
+    expect(result.html).toContain('vimeo.com');
+    expect(result.js).toContain("import '@videojs/html/media/vimeo-video'");
+  });
+
+  it('uses the mux-audio tag without playsinline for the audio use case', () => {
+    const result = generateHTMLUsageCode({
+      ...baseHTML,
+      useCase: 'default-audio',
+      skin: 'audio',
+      renderer: 'mux-audio',
+    });
+    expect(result.html).toContain('<mux-audio src=');
+    expect(result.html).not.toContain('playsinline');
+    expect(result.js).toContain("import '@videojs/html/media/mux-audio'");
+  });
+
   it('uses minimal skin tag', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, skin: 'minimal-video' });
     expect(result.html).toContain('<video-minimal-skin>');
@@ -177,6 +212,28 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain("import { VideoSkin } from '@videojs/react/video'");
     expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
     expect(code).toContain('<HlsJsVideo src={src} playsInline />');
+  });
+
+  it('uses separate media import for DASH', () => {
+    const result = generateReactCreateCode({ ...baseReact, renderer: 'dash' });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain("import { DashVideo } from '@videojs/react/media/dash-video'");
+    expect(code).toContain('<DashVideo src={src} playsInline />');
+  });
+
+  it('uses separate media import for Mux video', () => {
+    const result = generateReactCreateCode({ ...baseReact, renderer: 'mux-video' });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain("import { MuxVideo } from '@videojs/react/media/mux-video'");
+    expect(code).toContain('<MuxVideo src={src} playsInline />');
+  });
+
+  it('uses separate media import for Vimeo without playsInline (iframe)', () => {
+    const result = generateReactCreateCode({ ...baseReact, renderer: 'vimeo' });
+    const code = result['MyPlayer.tsx'];
+    expect(code).toContain("import { VimeoVideo } from '@videojs/react/media/vimeo-video'");
+    expect(code).toContain('<VimeoVideo src={src} />');
+    expect(code).not.toContain('playsInline');
   });
 
   it('uses audio features and components', () => {
