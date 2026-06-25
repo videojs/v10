@@ -57,19 +57,13 @@ function createVideo(initialWireless = false): HTMLVideoElement & { webkitCurren
 
 describe('HlsJsMediaAirPlayMixin', () => {
   beforeEach(() => {
-    // The event-driven sync is throttled, so drive timers deterministically.
-    vi.useFakeTimers();
     // Stub the WebKit AirPlay capability check (jsdom lacks it).
     (globalThis as any).WebKitPlaybackTargetAvailabilityEvent = class {};
   });
 
   afterEach(() => {
-    vi.useRealTimers();
     delete (globalThis as any).WebKitPlaybackTargetAvailabilityEvent;
   });
-
-  // The throttle window after which a coalesced wireless-target change fires.
-  const flushWirelessSync = () => vi.advanceTimersByTime(100);
 
   it('appends a fallback <source> element on MEDIA_ATTACHED', () => {
     const engine = createEngine('https://example.com/master.m3u8');
@@ -120,13 +114,14 @@ describe('HlsJsMediaAirPlayMixin', () => {
 
     video.webkitCurrentPlaybackTargetIsWireless = true;
     video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
-    flushWirelessSync();
 
     expect(engine.stopLoad).toHaveBeenCalled();
     expect(engine.startLoad).not.toHaveBeenCalled();
   });
 
-  it('calls startLoad when AirPlay deactivates', () => {
+  it('does not call startLoad when AirPlay deactivates', () => {
+    // Safari re-sets the source when AirPlay turns off, so hls.js resumes
+    // loading on its own — the bridge never calls startLoad.
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo(true);
@@ -136,30 +131,26 @@ describe('HlsJsMediaAirPlayMixin', () => {
 
     video.webkitCurrentPlaybackTargetIsWireless = false;
     video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
-    flushWirelessSync();
 
-    expect(engine.startLoad).toHaveBeenCalled();
+    expect(engine.startLoad).not.toHaveBeenCalled();
   });
 
-  it('collapses the connect burst to the settled wireless state', () => {
+  it('never calls startLoad across the connect burst', () => {
     // WebKit fires `true → false → true` on first connect. The transient
-    // `false` must not call startLoad against the MSE mid-handoff; the throttle
-    // coalesces the burst so only the settled `true` (stopLoad) is acted on.
+    // `false` must not resume loading against the MSE mid-handoff; the bridge
+    // only ever suspends, so startLoad is never called.
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
     host.target = video;
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-    (engine.stopLoad as ReturnType<typeof vi.fn>).mockClear();
     (engine.startLoad as ReturnType<typeof vi.fn>).mockClear();
 
     for (const wireless of [true, false, true]) {
       video.webkitCurrentPlaybackTargetIsWireless = wireless;
       video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
     }
-    flushWirelessSync();
 
-    expect(engine.stopLoad).toHaveBeenCalledTimes(1);
     expect(engine.startLoad).not.toHaveBeenCalled();
   });
 
@@ -170,7 +161,6 @@ describe('HlsJsMediaAirPlayMixin', () => {
     host.target = video;
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
-    flushWirelessSync();
 
     expect(engine.stopLoad).toHaveBeenCalled();
   });
@@ -189,7 +179,6 @@ describe('HlsJsMediaAirPlayMixin', () => {
     (engine.stopLoad as ReturnType<typeof vi.fn>).mockClear();
     video.webkitCurrentPlaybackTargetIsWireless = true;
     video.dispatchEvent(new Event('webkitcurrentplaybacktargetiswirelesschanged'));
-    flushWirelessSync();
     expect(engine.stopLoad).not.toHaveBeenCalled();
   });
 
