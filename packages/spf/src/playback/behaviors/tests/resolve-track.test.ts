@@ -534,7 +534,7 @@ http://example.com/seg0.m4s`;
 });
 
 describe('resolveVideoTrack — concurrent anchor stamp during fetch', () => {
-  // Regression: anchor-live-tracks establishes the shared live anchor and stamps
+  // Regression: anchor-presentation-timeline establishes the shared presentation anchor and stamps
   // every track's timeline while a track resolution's playlist fetch is in
   // flight. The resolution must parse against the track as stamped — not the
   // pre-fetch snapshot — or it clobbers the stamp and strands the track off the
@@ -591,7 +591,7 @@ http://example.com/seg0.m4s`;
     const reactor = resolveVideoTrack.setup({ state });
 
     await started;
-    // Establish + stamp the anchor mid-fetch, exactly as anchor-live-tracks does.
+    // Establish + stamp the anchor mid-fetch, exactly as anchor-presentation-timeline does.
     state.presentation.set(positionAllTracksToAnchor(state.presentation.get() as Presentation, ANCHOR));
     releaseFetch();
 

@@ -78,17 +78,17 @@ function run(opts: {
   mediaElement?: HTMLMediaElement;
   mediaSource?: MediaSource;
   config?: SeekToLiveEdgeConfig;
-  liveAnchor?: number;
+  presentationAnchor?: number;
 }) {
   // Built as vars (not inline literals) so the defensively-read
   // `selectedVideoTrackId` isn't rejected by the excess-property check against
-  // the behavior's declared `{ presentation }` state slice. `liveAnchor` defaults
+  // the behavior's declared `{ presentation }` state slice. `presentationAnchor` defaults
   // to a defined value (the timeline is anchored) so the seek gate is open;
-  // pass `liveAnchor: undefined` to exercise the pre-anchor gate.
+  // pass `presentationAnchor: undefined` to exercise the pre-anchor gate.
   const state = {
     presentation: signal<MaybeResolvedPresentation | undefined>(opts.presentation),
     selectedVideoTrackId: signal<string | undefined>(opts.trackId),
-    liveAnchor: signal<number | undefined>('liveAnchor' in opts ? opts.liveAnchor : 1000),
+    presentationAnchor: signal<number | undefined>('presentationAnchor' in opts ? opts.presentationAnchor : 1000),
   };
   const context = {
     mediaElement: signal<HTMLMediaElement | undefined>(opts.mediaElement),
@@ -136,19 +136,19 @@ describe('seekToLiveEdge', () => {
     cleanup();
   });
 
-  it('does not seek until the timeline is anchored (liveAnchor published)', () => {
+  it('does not seek until the timeline is anchored (presentationAnchor published)', () => {
     const ms = fakeMediaSource();
     const el = fakeMediaElement();
 
-    // Pre-anchor: anchorLiveTracks hasn't buffer-pinned yet, so the window is the
+    // Pre-anchor: anchorPresentationTimeline hasn't buffer-pinned yet, so the window is the
     // raw (pre-shift) one. Seeking now would strand the playhead when the pin
-    // later shifts the window; the gate holds the seek until `liveAnchor` lands.
+    // later shifts the window; the gate holds the seek until `presentationAnchor` lands.
     const { cleanup } = run({
       presentation: makePresentation(),
       trackId: 'v-1',
       mediaElement: el,
       mediaSource: ms,
-      liveAnchor: undefined,
+      presentationAnchor: undefined,
     });
 
     expect(el.currentTime).toBe(0);

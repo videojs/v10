@@ -137,8 +137,8 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   const text = await fetchResolvableText(track, { signal });
 
                   // Re-read `previous` *after* the fetch: a concurrent write during
-                  // the await — notably anchor-live-tracks shifting this track onto
-                  // the shared live anchor — must be carried forward, not clobbered.
+                  // the await — notably anchor-presentation-timeline shifting this track onto
+                  // the shared presentation anchor — must be carried forward, not clobbered.
                   // Parsing against the pre-fetch snapshot would strand the track
                   // off the anchor for good (anchoring is pin-once). Correctness
                   // rests on a run-to-completion invariant: NOTHING may yield

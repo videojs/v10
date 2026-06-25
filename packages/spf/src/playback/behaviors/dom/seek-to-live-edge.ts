@@ -54,12 +54,12 @@ export interface SeekToLiveEdgeState {
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   /**
-   * The shared live anchor, published by `anchorLiveTracks` once the buffer pin
+   * The shared presentation anchor, published by `anchorPresentationTimeline` once the buffer pin
    * lands (`undefined` until then). Gates the live-edge seek: seeking before the
    * timeline is anchored would target the raw (pre-anchor) window, and the pin's
    * later shift would strand the playhead off-window.
    */
-  liveAnchor?: number;
+  presentationAnchor?: number;
 }
 
 export interface SeekToLiveEdgeContext {
@@ -82,8 +82,8 @@ type SeekToLiveEdgeFsmState = 'inactive' | 'live';
 
 /**
  * `'live'` once the seek preconditions hold: a media element, a (published →
- * open) MediaSource, a derivable live edge, and an established live anchor
- * (`anchorLiveTracks` has buffer-pinned the timeline — so the edge we seek to is
+ * open) MediaSource, a derivable live edge, and an established presentation anchor
+ * (`anchorPresentationTimeline` has buffer-pinned the timeline — so the edge we seek to is
  * the final native-PTS one, not the raw pre-anchor window). `'inactive'`
  * otherwise.
  */
@@ -105,7 +105,7 @@ function seekToLiveEdgeSetup({
     presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
     selectedVideoTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedVideoTrackId']>;
     selectedAudioTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedAudioTrackId']>;
-    liveAnchor?: ReadonlySignal<SeekToLiveEdgeState['liveAnchor']>;
+    presentationAnchor?: ReadonlySignal<SeekToLiveEdgeState['presentationAnchor']>;
   };
   context: {
     mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
@@ -118,7 +118,7 @@ function seekToLiveEdgeSetup({
       context.mediaElement.get(),
       context.mediaSource.get(),
       getLiveEdge({ state, config }),
-      state.liveAnchor?.get() !== undefined
+      state.presentationAnchor?.get() !== undefined
     )
   );
 
@@ -175,7 +175,7 @@ function seekToLiveEdgeSetup({
 }
 
 /**
- * Manual `Behavior<>` literal (like `anchorLiveTracks` /
+ * Manual `Behavior<>` literal (like `anchorPresentationTimeline` /
  * `calculatePresentationDuration`): declares only `presentation` in stateKeys
  * while reading `selectedVideoTrackId` defensively (contributed by
  * `switchVideoTrack`), so it composes without a stateKeys/type conflict.

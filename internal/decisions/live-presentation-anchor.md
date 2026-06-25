@@ -29,7 +29,7 @@ media-playlist parser places their segments on the shared timeline at first
 resolve (`placeOnAnchor`). So a track selected later — an ABR rung, another audio
 language, late captions — resolves already anchored, with no per-track
 positioning pass. The established anchor is also published as a presentation-level
-`liveAnchor`, which `seekToLiveEdge` gates its live-edge seek on (see below).
+`presentationAnchor`, which `seekToLiveEdge` gates its live-edge seek on (see below).
 
 No pre-buffer estimate. Until ground truth exists a track rides its raw parser
 timeline — a valid timeline for fetching the first segments (the same segments
@@ -37,7 +37,7 @@ are fetched either way), so the loader bootstraps the buffer, and thus the pin,
 without it. The one thing the estimate originally covered: `seekToLiveEdge` must
 not seek before the pin, or it targets the raw window and the pin's later shift
 strands the playhead off-window (confirmed by smoke test). We address that by
-**gating** that seek on the published anchor (`liveAnchor`, below) rather than
+**gating** that seek on the published anchor (`presentationAnchor`, below) rather than
 bootstrapping it off a manifest estimate — the estimate's ~27 s turnover drift
 made it an unreliable seek target anyway. An earlier design kept the estimate as
 bootstrap; it's dropped in favor of the gate.
@@ -60,7 +60,7 @@ single shared anchor.
 [live-timeline-anchoring](./live-timeline-anchoring.md) settled the anchor
 *source* — PDT, the universal wall clock shared across renditions — but left
 open how that anchor drives a shared presentation timeline. Today's
-`anchor-live-tracks` pins each selected A/V track to its own buffer
+`anchor-presentation-timeline` pins each selected A/V track to its own buffer
 independently, and doesn't anchor text at all.
 
 Two facts make a single shared anchor sufficient — and per-track pinning
@@ -84,7 +84,7 @@ it does not require returning to per-track pinning.
 
 ## Alternatives Considered
 
-- **Per-track buffer pins (today's `anchor-live-tracks`).** Pin each selected
+- **Per-track buffer pins (today's `anchor-presentation-timeline`).** Pin each selected
   A/V track to its own buffered segment. Rejected: under the no-skew assumption
   the pins necessarily *agree*, so the extra pins are redundant restatement;
   and the approach structurally **cannot anchor text**, which has no
@@ -115,7 +115,7 @@ This promotes open question **[4] sync anchor** in
 
 ## Verification
 
-Implemented. `anchor-live-tracks` is a reactor that, on first buffer ground truth
+Implemented. `anchor-presentation-timeline` is a reactor that, on first buffer ground truth
 (entry to `anchored`), establishes the shared anchor once and stamps it onto
 every track via `positionAllTracksToAnchor` — resolved tracks shifted, shells
 given `startDate` for the parser's `placeOnAnchor` to honor at first resolve. No
@@ -127,7 +127,7 @@ Unit-covered: the parser honors a pre-applied anchor (`parse-media-playlist.test
 preserving (`presentation-anchor.test.ts`); the behavior establishes from the
 buffered video track and stamps all tracks, first-track-wins, establishes once
 across reloads, and is inert without buffer truth or a selected track
-(`anchor-live-tracks.test.ts`); `seekToLiveEdge` holds its seek until `liveAnchor`
+(`anchor-presentation-timeline.test.ts`); `seekToLiveEdge` holds its seek until `presentationAnchor`
 is published (`seek-to-live-edge.test.ts`). Live A/V init smoke-tested on an
 ephemeral Mux LL-HLS stream: with no estimate, the seek is gated until the pin
 lands, then fires once to the live edge — clean startup, no stranding (an
@@ -148,4 +148,4 @@ race.
 - [live-presentation-modeling](../design/spf/live-presentation-modeling.md) —
   open question [4], promoted to presentation-level here.
 - [live-stream-support](../design/spf/features/live-stream-support.md) — the
-  `anchor-live-tracks` behavior that implements this.
+  `anchor-presentation-timeline` behavior that implements this.

@@ -34,7 +34,7 @@ import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
-import { makeAnchorLiveTracks } from '../../behaviors/anchor-live-tracks';
+import { makeAnchorPresentationTimeline } from '../../behaviors/anchor-presentation-timeline';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
@@ -118,11 +118,11 @@ export interface SimpleHlsEngineState {
   currentTime?: number;
   loadActivated?: boolean;
   /**
-   * The shared live timeline anchor (wall clock at media-time 0), published by
-   * `anchorLiveTracks` once the buffer pin lands. `seekToLiveEdge` gates its
+   * The shared presentation timeline anchor (wall clock at media-time 0), published by
+   * `anchorPresentationTimeline` once the buffer pin lands. `seekToLiveEdge` gates its
    * live-edge seek on it. Absent for VoD / until the first segment buffers.
    */
-  liveAnchor?: number;
+  presentationAnchor?: number;
 }
 
 /**
@@ -194,7 +194,7 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
   resolveDuration?: PresentationDurationResolver;
   /**
    * Sequence number assumed to be the stream origin (time 0) for the live
-   * timeline anchor (`anchorLiveTracks`). Default 0. Only meaningful for live
+   * timeline anchor (`anchorPresentationTimeline`). Default 0. Only meaningful for live
    * sources; ignored for VoD (the anchor is a no-op without `#EXT-X-PROGRAM-DATE-TIME`).
    */
   presumedStartSequence?: number;
@@ -383,7 +383,7 @@ export function createSimpleHlsEngine(
 
       // Re-base selected live tracks' timelines onto the shared presentation
       // anchor (estimate, then buffer ground truth). No-op for VoD (no PDT).
-      makeAnchorLiveTracks<SimpleHlsEngineContext>(),
+      makeAnchorPresentationTimeline<SimpleHlsEngineContext>(),
 
       // Presentation duration (finite for complete playlists, Infinity for live)
       calculatePresentationDuration,

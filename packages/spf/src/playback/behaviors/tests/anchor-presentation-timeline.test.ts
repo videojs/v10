@@ -11,7 +11,7 @@ import {
   type VideoTrack,
 } from '../../../media/types';
 import { findTrack } from '../../../media/utils/tracks';
-import { type AnchorLiveTracksConfig, makeAnchorLiveTracks } from '../anchor-live-tracks';
+import { type AnchorPresentationTimelineConfig, makeAnchorPresentationTimeline } from '../anchor-presentation-timeline';
 
 const META = { [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 85, targetDuration: 5, endList: false } };
 
@@ -80,14 +80,14 @@ function makePresentation(tracks: (ResolvedTrack | PartiallyResolvedTextTrack)[]
   return { id: 'pres-1', url: 'https://example.com/master.m3u8', startTime: 0, selectionSets } as Presentation;
 }
 
-function run(opts: { presentation?: MaybeResolvedPresentation; config?: AnchorLiveTracksConfig }) {
+function run(opts: { presentation?: MaybeResolvedPresentation; config?: AnchorPresentationTimelineConfig }) {
   const state = {
     presentation: signal<MaybeResolvedPresentation | undefined>(opts.presentation),
-    liveAnchor: signal<number | undefined>(undefined),
+    presentationAnchor: signal<number | undefined>(undefined),
   };
   // The manual `Behavior<>` literal widens the setup return to `BehaviorCleanup`;
   // narrow back to the reactor's destroy handle for teardown.
-  const reactor = makeAnchorLiveTracks().setup({ state, context: {}, config: opts.config ?? {} }) as {
+  const reactor = makeAnchorPresentationTimeline().setup({ state, context: {}, config: opts.config ?? {} }) as {
     destroy: () => void;
   };
   return { cleanup: () => reactor.destroy(), state };
@@ -102,13 +102,13 @@ function resolved(presentation: MaybeResolvedPresentation, type: ResolvedTrack['
   return track as ResolvedTrack;
 }
 
-describe('anchorLiveTracks', () => {
+describe('anchorPresentationTimeline', () => {
   it('does nothing until a track has buffer ground truth', () => {
     // No resolveBufferedAnchor → never anchors; the track keeps its raw timeline.
     const { cleanup, state } = run({ presentation: makePresentation([makeVideoTrack()]) });
 
     expect(resolved(state.presentation.get()!, 'video', 'v-1').startTime).toBe(0);
-    expect(state.liveAnchor.get()).toBeUndefined();
+    expect(state.presentationAnchor.get()).toBeUndefined();
 
     cleanup();
   });
@@ -132,7 +132,7 @@ describe('anchorLiveTracks', () => {
     expect(text?.startDate).toBe(500);
     expect(isResolvedTrack(text!)).toBe(false);
     // The anchor is published for seekToLiveEdge to gate on.
-    expect(state.liveAnchor.get()).toBe(500);
+    expect(state.presentationAnchor.get()).toBe(500);
 
     cleanup();
   });
@@ -158,7 +158,7 @@ describe('anchorLiveTracks', () => {
       },
     });
 
-    expect(state.liveAnchor.get()).toBe(500);
+    expect(state.presentationAnchor.get()).toBe(500);
 
     // Buffer ground truth momentarily vanishes (underrun / flush / seek), then a
     // reload fires. The established anchor must persist — dropping it re-opens the
@@ -173,7 +173,7 @@ describe('anchorLiveTracks', () => {
     await flush();
     await flush();
 
-    expect(state.liveAnchor.get()).toBe(500);
+    expect(state.presentationAnchor.get()).toBe(500);
 
     cleanup();
   });
@@ -185,21 +185,21 @@ describe('anchorLiveTracks', () => {
       config: { resolveBufferedAnchor: () => ({ trackId: 'v-1', segmentId: 'segment-85', actualStart }) },
     });
 
-    expect(state.liveAnchor.get()).toBe(500);
+    expect(state.presentationAnchor.get()).toBe(500);
 
     // Source change → presentation reset to an unresolved value: the anchor clears
     // so the new source re-gates the seek.
     state.presentation.set({ url: 'https://example.com/new.m3u8' });
     await flush();
     await flush();
-    expect(state.liveAnchor.get()).toBeUndefined();
+    expect(state.presentationAnchor.get()).toBeUndefined();
 
     // New source resolves with its own buffer truth → re-establishes.
     actualStart = 700;
     state.presentation.set(makePresentation([makeVideoTrack()]));
     await flush();
     await flush();
-    expect(state.liveAnchor.get()).toBe(300); // video seg PDT 1000 − actualStart 700
+    expect(state.presentationAnchor.get()).toBe(300); // video seg PDT 1000 − actualStart 700
 
     cleanup();
   });

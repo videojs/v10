@@ -1,7 +1,7 @@
 import { untrack } from '../../../core/signals/primitives';
 import { bufferedAnchorFor } from '../../../media/buffered-anchor';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
-import type { AnchorLiveTracksDeps, BufferedTrackAnchor } from '../../behaviors/anchor-live-tracks';
+import type { AnchorPresentationTimelineDeps, BufferedTrackAnchor } from '../../behaviors/anchor-presentation-timeline';
 
 /**
  * The engine context this resolver reads — the per-type SourceBuffer actors.
@@ -15,7 +15,7 @@ export interface BufferActorContext {
 }
 
 /**
- * An engine's implementation of `anchorLiveTracks`' `resolveBufferedAnchor` seam.
+ * An engine's implementation of `anchorPresentationTimeline`' `resolveBufferedAnchor` seam.
  * Reads the first A/V buffer actor with ground truth (video preferred) from the
  * behavior's `context` deps — the actor knows which track it's buffering
  * (`initTrackId`) and exposes DOM-free snapshot data (appended segments +
@@ -28,7 +28,7 @@ export interface BufferActorContext {
  */
 export function resolveBufferedAnchor<Context extends BufferActorContext>({
   context,
-}: AnchorLiveTracksDeps<Context>): BufferedTrackAnchor | undefined {
+}: AnchorPresentationTimelineDeps<Context>): BufferedTrackAnchor | undefined {
   return untrack(() => {
     // Video preferred; under the no-skew assumption both agree, so this is just
     // a tiebreak for which actor supplies the (shared) anchor.

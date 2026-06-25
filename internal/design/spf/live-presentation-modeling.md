@@ -338,7 +338,7 @@ prematurely fix.
   anticipated split: **fetch scheduling is per-track** — each `resolveXTrack`
   owns a `RecurringRunner` paced by its own `TARGETDURATION` — while
   cross-track **timeline reconciliation** stays separate (the parser carries
-  the timeline forward per fetch; `anchorLiveTracks` aligns renditions by PDT).
+  the timeline forward per fetch; `anchorPresentationTimeline` aligns renditions by PDT).
   So fetch scheduling is independent without the timeline reconciliation being
   forced independent, as this question anticipated.
 - **[4] How captured PDT feeds the A/V-sync anchor — DECIDED.** Anchor *source*

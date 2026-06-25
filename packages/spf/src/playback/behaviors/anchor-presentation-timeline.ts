@@ -1,7 +1,7 @@
 /**
- * Establish the live presentation's shared timeline anchor — the wall clock
- * (PDT) at media-time 0 — once per source, and stamp it onto every track so the
- * model's coordinates coincide with the SourceBuffer's native-PTS coordinates
+ * Establish the presentation's shared timeline anchor — for live HLS, the wall
+ * clock (PDT) at media-time 0 — once per source, and stamp it onto every track so
+ * the model's coordinates coincide with the SourceBuffer's native-PTS coordinates
  * (the loader matches `currentTime`, a native-PTS value since segments append
  * unmodified, against each segment's `startTime`).
  *
@@ -34,6 +34,14 @@
  * touches `HTMLMediaElement`. Cross-track A/V skew is intentionally not corrected
  * here — under the native-PTS default all tracks share the encoder's PTS clock,
  * so one anchor describes them all (see the decision doc).
+ *
+ * Format-neutral by design (hence not named for live): the mechanism — pin one
+ * track from buffer ground truth, derive one shared offset, stamp every track
+ * onto it — is independent of how that offset is *sourced*. Live HLS sources it
+ * from PDT (`presentationAnchorFromBuffer`); a non-zero-PTS VOD source would
+ * derive it from the observed first PTS instead (no PDT), reusing this behavior
+ * through the same `resolveBufferedAnchor` seam. See
+ * [non-zero-pts-support](../../../../internal/design/spf/features/non-zero-pts-support.md).
  */
 
 import { isUndefined } from '@videojs/utils/predicate';
@@ -49,7 +57,7 @@ import {
 import { isResolvedPresentation, isResolvedTrack, type MaybeResolvedPresentation } from '../../media/types';
 import { findTrackById } from '../../media/utils/tracks';
 
-export interface AnchorLiveTracksState {
+export interface AnchorPresentationTimelineState {
   presentation?: MaybeResolvedPresentation;
   /**
    * The established shared anchor (wall clock at media-time 0), published once
@@ -58,7 +66,7 @@ export interface AnchorLiveTracksState {
    * seeking on the pre-anchor (raw) timeline would strand the playhead when the
    * pin later shifts the window.
    */
-  liveAnchor?: number;
+  presentationAnchor?: number;
 }
 
 /**
@@ -76,13 +84,13 @@ export interface BufferedTrackAnchor extends BufferedAnchor {
  * behavior stays DOM-free — the engine (DOM boundary) names the concrete buffer
  * actors; here `Context` is opaque.
  */
-export type AnchorLiveTracksDeps<Context extends object> = BehaviorDeps<
-  { presentation: Signal<AnchorLiveTracksState['presentation']> },
+export type AnchorPresentationTimelineDeps<Context extends object> = BehaviorDeps<
+  { presentation: Signal<AnchorPresentationTimelineState['presentation']> },
   ContextSignals<Context>,
-  AnchorLiveTracksConfig<Context>
+  AnchorPresentationTimelineConfig<Context>
 >;
 
-export interface AnchorLiveTracksConfig<Context extends object = object> {
+export interface AnchorPresentationTimelineConfig<Context extends object = object> {
   /**
    * Buffered-ground-truth resolver, injected by the engine (the DOM boundary).
    * Reads the first A/V buffer actor with ground truth and reports where a
@@ -91,26 +99,26 @@ export interface AnchorLiveTracksConfig<Context extends object = object> {
    * (rather than closing over engine scope) so the engine reads its buffer actors
    * from `context`. Absent → never anchors (e.g. non-DOM tests with no buffer).
    */
-  resolveBufferedAnchor?: (deps: AnchorLiveTracksDeps<Context>) => BufferedTrackAnchor | undefined;
+  resolveBufferedAnchor?: (deps: AnchorPresentationTimelineDeps<Context>) => BufferedTrackAnchor | undefined;
 }
 
 type AnchorFsmState = 'unanchored' | 'anchored';
 
-function anchorLiveTracksSetup<Context extends object>({
+function anchorPresentationTimelineSetup<Context extends object>({
   state,
   context,
   config = {},
 }: {
   state: {
-    presentation: Signal<AnchorLiveTracksState['presentation']>;
-    liveAnchor: Signal<AnchorLiveTracksState['liveAnchor']>;
+    presentation: Signal<AnchorPresentationTimelineState['presentation']>;
+    presentationAnchor: Signal<AnchorPresentationTimelineState['presentationAnchor']>;
   };
   context: ContextSignals<Context>;
-  config?: AnchorLiveTracksConfig<Context>;
+  config?: AnchorPresentationTimelineConfig<Context>;
 }): Reactor<AnchorFsmState | 'destroying' | 'destroyed'> {
   // The deps handed to the injected resolver, so the engine reads its buffer
   // actors from `context` — no pre-composition closure over engine scope.
-  const deps: AnchorLiveTracksDeps<Context> = { state, context, config };
+  const deps: AnchorPresentationTimelineDeps<Context> = { state, context, config };
 
   // The shared anchor from the first actually-buffered A/V track: the resolver
   // reports the buffered segment + its track id; that track's segment carries the
@@ -138,15 +146,15 @@ function anchorLiveTracksSetup<Context extends object>({
       // drop the established anchor: doing so re-opens the seekToLiveEdge gate and
       // re-fires its one-time live-edge seek, jumping the playhead. "Pin-once"
       // means pin once per source — see live-presentation-anchor.md.
-      if (state.liveAnchor.get() !== undefined) return 'anchored';
+      if (state.presentationAnchor.get() !== undefined) return 'anchored';
       return isUndefined(deriveBufferAnchor(presentation)) ? 'unanchored' : 'anchored';
     },
     states: {
       // Reset the published anchor per source so a new source re-gates the seek.
-      unanchored: { entry: () => state.liveAnchor.set(undefined) },
+      unanchored: { entry: () => state.presentationAnchor.set(undefined) },
       anchored: {
         // Establish the shared anchor once and stamp it onto every track. The
-        // sticky monitor keeps us `anchored` for the source once `liveAnchor` is
+        // sticky monitor keeps us `anchored` for the source once `presentationAnchor` is
         // published, so this runs exactly once per source; only a source change
         // (exit to `unanchored`) re-arms it. (Were it to re-enter, re-deriving the
         // same buffer anchor is idempotent and `positionAllTracksToAnchor` writes
@@ -161,7 +169,7 @@ function anchorLiveTracksSetup<Context extends object>({
           );
           // Publish after stamping, so a consumer reacting to the anchor (e.g.
           // seekToLiveEdge) sees the already-shifted window.
-          state.liveAnchor.set(anchor);
+          state.presentationAnchor.set(anchor);
         },
       },
     },
@@ -174,17 +182,17 @@ function anchorLiveTracksSetup<Context extends object>({
  * `resolveBufferedAnchor` seam reads — supplies the context type while this
  * behavior stays DOM-free.
  */
-export function makeAnchorLiveTracks<Context extends object = object>(): Behavior<
+export function makeAnchorPresentationTimeline<Context extends object = object>(): Behavior<
   {
-    presentation: Signal<AnchorLiveTracksState['presentation']>;
-    liveAnchor: Signal<AnchorLiveTracksState['liveAnchor']>;
+    presentation: Signal<AnchorPresentationTimelineState['presentation']>;
+    presentationAnchor: Signal<AnchorPresentationTimelineState['presentationAnchor']>;
   },
   ContextSignals<Context>,
-  AnchorLiveTracksConfig<Context>
+  AnchorPresentationTimelineConfig<Context>
 > {
   return {
-    stateKeys: ['presentation', 'liveAnchor'],
+    stateKeys: ['presentation', 'presentationAnchor'],
     contextKeys: [],
-    setup: anchorLiveTracksSetup,
+    setup: anchorPresentationTimelineSetup,
   };
 }
