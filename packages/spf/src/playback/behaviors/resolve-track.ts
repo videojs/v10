@@ -132,16 +132,27 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // `fetchResolvableText` is the behavior's failover-decorated
                   // fetch: it trips the CDN on a failed fetch (network error or
                   // non-OK status). A parse failure is a content issue, not a
-                  // CDN-availability one, so it doesn't trip.
+                  // CDN-availability one, so it doesn't trip. The gate-time `track`
+                  // supplies only the playlist URL (stable across the fetch).
                   const text = await fetchResolvableText(track, { signal });
-                  const mediaTrack = parseMediaPlaylist(text, track);
 
-                  // Updater handles undefined inputs by returning current
-                  // unchanged; isResolvedPresentation narrows for the patch.
-                  // State-exit on resolving→unresolved fires runner.abortAll
-                  // before any URL change settles, and per the Fetch spec the
-                  // signal abort cancels in-flight body reads — so by the
-                  // time we reach this point the presentation we resolved
+                  // Re-read `previous` *after* the fetch: a concurrent write during
+                  // the await — notably anchor-live-tracks shifting this track onto
+                  // the shared live anchor — must be carried forward, not clobbered.
+                  // Parsing against the pre-fetch snapshot would strand the track
+                  // off the anchor for good (anchoring is pin-once). Correctness
+                  // rests on a run-to-completion invariant: NOTHING may yield
+                  // (await) between this re-read and the write below, so no writer
+                  // can interleave. `parseMediaPlaylist` is synchronous — keep it
+                  // that way, or move the read into the updater.
+                  const live = peek(state.presentation);
+                  const previous = live ? findTrackToResolve(live, trackId) : undefined;
+                  if (!previous) throw new Error('resolve-track: selected track not found');
+                  const mediaTrack = parseMediaPlaylist(text, previous);
+
+                  // State-exit on resolving→unresolved fires runner.abortAll before
+                  // any URL change settles, and per the Fetch spec the signal abort
+                  // cancels in-flight body reads — so the presentation we resolve
                   // against is the live one.
                   update(state.presentation, (current) => {
                     if (!isResolvedPresentation(current)) return current;

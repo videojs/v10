@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { TaskLike } from '../../../core/tasks/task';
+import { positionAllTracksToAnchor } from '../../../media/presentation-anchor';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
@@ -527,6 +528,79 @@ http://example.com/seg0.m4s`;
     const reactor = resolveVideoTrack.setup({ state });
 
     await vi.waitFor(() => expect(state.presentation.get()?.streamType).toBe('live'));
+
+    reactor.destroy();
+  });
+});
+
+describe('resolveVideoTrack — concurrent anchor stamp during fetch', () => {
+  // Regression: anchor-live-tracks establishes the shared live anchor and stamps
+  // every track's timeline while a track resolution's playlist fetch is in
+  // flight. The resolution must parse against the track as stamped — not the
+  // pre-fetch snapshot — or it clobbers the stamp and strands the track off the
+  // anchor permanently (anchoring is pin-once). Observed live as video never
+  // buffering: its model timeline sat ~hundreds of seconds off currentTime.
+  it('honors a startDate stamped onto the shell mid-fetch (parses against the live snapshot)', async () => {
+    const unresolved: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-1',
+      url: 'http://example.com/variant1.m3u8',
+      bandwidth: 1_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        { id: 'video-set', type: 'video', switchingSets: [{ id: 'sw-1', type: 'video', tracks: [unresolved] }] },
+      ],
+      startTime: 0,
+    };
+    const state = makeState({ presentation, selectedVideoTrackId: 'track-1' });
+
+    // Wall clock at media-time 0, 20s before the first segment's PDT — so an
+    // anchored first segment lands at startTime 20 and the track's startDate
+    // reads back as the anchor. Without the stamp, the track would resolve at
+    // local base 0 with startDate = the raw first-segment PDT instead.
+    const ANCHOR = 1_672_531_200;
+    const PLAYLIST = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:4
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXT-X-PROGRAM-DATE-TIME:2023-01-01T00:00:20.000Z
+#EXTINF:4.0,
+http://example.com/seg0.m4s`;
+
+    // Gate the fetch so the stamp lands while the request is in flight.
+    let releaseFetch!: () => void;
+    const inFlight = new Promise<void>((resolve) => {
+      releaseFetch = resolve;
+    });
+    let markStarted!: () => void;
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      markStarted();
+      await inFlight;
+      return new Response(PLAYLIST);
+    });
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await started;
+    // Establish + stamp the anchor mid-fetch, exactly as anchor-live-tracks does.
+    state.presentation.set(positionAllTracksToAnchor(state.presentation.get() as Presentation, ANCHOR));
+    releaseFetch();
+
+    await vi.waitFor(() => {
+      expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true);
+    });
+
+    const resolved = findTrackById(state.presentation.get()!, 'track-1');
+    expect(resolved.startDate).toBe(ANCHOR);
 
     reactor.destroy();
   });
