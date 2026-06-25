@@ -122,6 +122,12 @@ function seekToLiveEdgeSetup({
     )
   );
 
+  // The source (manifest url) the initial edge seek has already fired for. The
+  // seek is once *per source* — `entry` fires on every entry into `live`, but a
+  // transient precondition flip (e.g. the live window briefly unknown mid
+  // track-switch) re-enters `live` for the *same* source and must not re-seek.
+  let seekedForSource: string | undefined;
+
   return createMachineReactor<SeekToLiveEdgeFsmState>({
     initial: 'inactive',
     monitor: () => derivedStateSignal.get(),
@@ -129,11 +135,19 @@ function seekToLiveEdgeSetup({
       inactive: {},
 
       live: {
-        // One-time seek into the window so the loader dispatches an in-window
-        // range and preload shows the right frame. Fires once per entry into
-        // `live`; a source change exits to `inactive`, so a new source re-seeks.
-        // Live-specific — a future DVR mode skips this (starts in place).
+        // One-time-per-source seek into the window so the loader dispatches an
+        // in-window range and preload shows the right frame. The business rule is
+        // "on initial load of a source, jump near the live edge — once" — not
+        // "whenever the live preconditions hold." Latching on the source url makes
+        // that explicit: a genuine source change (new url) re-seeks; a transient
+        // re-entry into `live` does not (which would otherwise yank a viewer who
+        // has scrubbed back into the DVR window). The window-exit guard below is
+        // the separate, continuous rule. Live-specific — a future DVR mode skips
+        // even the first seek (starts in place).
         entry: () => {
+          const source = peek(state.presentation)?.url;
+          if (source !== undefined && source === seekedForSource) return;
+          seekedForSource = source;
           // The monitor guarantees a media element + live edge while in `live`.
           const mediaElement = context.mediaElement.get()!;
           const { liveEdgeStart } = getLiveEdge({ state, config })!;

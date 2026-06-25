@@ -183,6 +183,63 @@ describe('seekToLiveEdge', () => {
     cleanup();
   });
 
+  it('seeks once per source — a transient re-entry into live does not re-fire the edge seek', async () => {
+    const ms = fakeMediaSource();
+    const el = fakeMediaElement();
+
+    const { cleanup, state } = run({
+      presentation: makePresentation(),
+      trackId: 'v-1',
+      mediaElement: el,
+      mediaSource: ms,
+    });
+    expect(el.currentTime).toBe(104); // initial edge seek
+
+    // Viewer scrubs back into the DVR window (still inside it, above the start).
+    el.currentTime = 100;
+
+    // A transient precondition flip (here the anchor blinks, standing in for the
+    // live edge briefly going unknown mid track-switch) takes the reactor
+    // inactive → live for the SAME source.
+    state.presentationAnchor.set(undefined);
+    await flush();
+    state.presentationAnchor.set(1000);
+    await flush();
+
+    // Not yanked back to the edge — the seek is once per source.
+    expect(el.currentTime).toBe(100);
+
+    cleanup();
+  });
+
+  it('re-seeks on a genuine source change (new url)', async () => {
+    const ms = fakeMediaSource();
+    const el = fakeMediaElement();
+
+    const { cleanup, state } = run({
+      presentation: makePresentation(),
+      trackId: 'v-1',
+      mediaElement: el,
+      mediaSource: ms,
+    });
+    expect(el.currentTime).toBe(104);
+    el.currentTime = 100; // viewer moved
+
+    // Source change goes through an unresolved presentation (exits live), then a
+    // new resolved source with a different url.
+    state.presentation.set(undefined);
+    await flush();
+    const next = makePresentation(200, 80);
+    next.url = 'https://example.com/other.m3u8';
+    state.presentation.set(next);
+    await flush();
+
+    // New source → re-seeks to its live edge (window [200,210], 6s latency → 204).
+    expect(el.currentTime).toBe(204);
+
+    cleanup();
+  });
+
   describe('live-window playhead guard', () => {
     function started() {
       const ms = fakeMediaSource();
