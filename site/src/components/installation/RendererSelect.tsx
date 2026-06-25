@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Select } from '@/components/Select';
 import { renderer, sourceUrl, useCase } from '@/stores/installation';
 import { articleFor, detectRenderer } from '@/utils/installation/detect-renderer';
-import { buildGroups, buildOptions } from '@/utils/installation/renderer-options';
+import { buildOptions } from '@/utils/installation/renderer-options';
 import { VALID_RENDERERS } from '@/utils/installation/types';
 
 export default function RendererSelect() {
@@ -11,8 +11,7 @@ export default function RendererSelect() {
   const $useCase = useStore(useCase);
   const $sourceUrl = useStore(sourceUrl);
 
-  const groups = buildGroups($useCase);
-  const options = groups ? undefined : buildOptions($useCase);
+  const options = buildOptions($useCase);
   const detection = detectRenderer($sourceUrl, $useCase);
   const detectedRenderer = detection?.renderer ?? null;
 
@@ -82,7 +81,6 @@ export default function RendererSelect() {
             if (value) renderer.set(value);
           }}
           options={options}
-          groups={groups ?? undefined}
           aria-label="Select renderer"
         />
       </div>

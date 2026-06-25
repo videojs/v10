@@ -52,8 +52,10 @@ describe('validateInstallationOptions', () => {
 });
 
 describe('generateHTMLInstallCode', () => {
+  const manifest = ['hlsjs-video', 'dash-video', 'mux-video', 'mux-audio'];
+
   it('returns install commands for all methods', () => {
-    const result = generateHTMLInstallCode(baseHTML);
+    const result = generateHTMLInstallCode(baseHTML, manifest);
     expect(result.npm).toBe('npm install @videojs/html');
     expect(result.pnpm).toBe('pnpm add @videojs/html');
     expect(result.yarn).toBe('yarn add @videojs/html');
@@ -61,13 +63,13 @@ describe('generateHTMLInstallCode', () => {
   });
 
   it('returns CDN script tags', () => {
-    const result = generateHTMLInstallCode(baseHTML);
+    const result = generateHTMLInstallCode(baseHTML, manifest);
     expect(result.cdn).toContain('<script');
     expect(result.cdn).toContain('cdn.jsdelivr.net');
   });
 
   it('includes HLS media script in CDN output', () => {
-    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' });
+    const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' }, manifest);
     expect(result.cdn).toContain('media/hlsjs-video.js');
   });
 });

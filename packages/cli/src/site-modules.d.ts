@@ -39,7 +39,8 @@ declare module '@/utils/installation/codegen' {
   export function validateInstallationOptions(opts: InstallationOptions): ValidationResult;
 
   export function generateHTMLInstallCode(
-    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
+    cdnMediaSubpaths: readonly string[]
   ): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 
   export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string>;
@@ -71,29 +72,29 @@ declare module '@/utils/installation/detect-renderer' {
 declare module '@/utils/installation/cdn-code' {
   import type { Renderer, Skin, UseCase } from '@/utils/installation/types';
 
-  export function generateCdnCode(useCase: UseCase, skin: Skin, renderer: Renderer): string;
+  export function generateCdnCode(
+    useCase: UseCase,
+    skin: Skin,
+    renderer: Renderer,
+    cdnMediaSubpaths: readonly string[]
+  ): string;
   export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean;
 }
 
 declare module '@/utils/installation/renderer-options' {
   import type { Renderer, UseCase } from '@/utils/installation/types';
 
-  // Mirrors the site's `SelectOption`/`SelectGroup` shapes, narrowed to the
-  // fields the CLI uses. The site module imports those types from a React
-  // component; the CLI only ever reads `value`/`label`.
+  // Mirrors the site's `SelectOption` shape, narrowed to the fields the CLI
+  // uses. The site module imports that type from a React component; the CLI only
+  // ever reads `value`/`label`.
   interface RendererOption {
     value: Renderer | null;
     label: string;
     disabled?: boolean;
   }
-  interface RendererGroup {
-    label: string;
-    options: RendererOption[];
-  }
 
   export const RENDERER_LABELS: Record<Renderer, string>;
   export function buildOptions(useCase: UseCase): RendererOption[];
-  export function buildGroups(useCase: UseCase): RendererGroup[] | null;
 }
 
 declare module '@/content/cdn-media.json' {

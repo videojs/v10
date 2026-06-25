@@ -59,8 +59,6 @@ function mapPresetToUseCase(preset: string): UseCase {
   return result;
 }
 
-// Derived from the shared label map so the CLI's accepted renderers never drift
-// from the installation page's.
 const ALL_RENDERERS = Object.keys(RENDERER_LABELS) as Renderer[];
 
 function validateMedia(media: string): Renderer {
@@ -187,7 +185,7 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
     }
 
     // The interactive prompt hides CDN for renderers without a CDN build; guard
-    // the non-interactive flag path so `--media vimeo --install-method cdn`
+    // the non-interactive flag path so a `--install-method cdn` request for one
     // can't emit a broken snippet.
     if (opts.installMethod === 'cdn' && !supportsCdnInstall(opts.renderer)) {
       console.error(

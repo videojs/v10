@@ -84,10 +84,11 @@ function getMediaImportSubpath(renderer: Renderer): string | null {
 // ---------------------------------------------------------------------------
 
 export function generateHTMLInstallCode(
-  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+  opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
+  cdnMediaSubpaths: readonly string[]
 ): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string> {
   return {
-    cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer),
+    cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths),
     npm: 'npm install @videojs/html',
     pnpm: 'pnpm add @videojs/html',
     yarn: 'yarn add @videojs/html',

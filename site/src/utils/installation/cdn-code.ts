@@ -27,27 +27,28 @@ function getMediaSubpath(renderer: Renderer): string | null {
 // Whether a renderer can be installed via CDN, given the set of media subpaths
 // that ship a CDN build (from the cdn-media manifest). Preset renderers always
 // can (no separate media script); media renderers can only if their subpath is
-// in the manifest. Vimeo has no CDN build, so it resolves to false.
+// in the manifest.
 export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean {
   const subpath = getMediaSubpath(renderer);
   return subpath === null || cdnMediaSubpaths.includes(subpath);
 }
 
-// The media subpath to load via CDN, or null when none is needed. Vimeo has no
-// CDN build; the install UI hides the CDN option when it's selected, so this is
-// never reached for it, but we guard here too.
-function getCdnMediaSubpath(renderer: Renderer): string | null {
-  if (renderer === 'vimeo') return null;
-  return getMediaSubpath(renderer);
-}
-
-export function generateCdnCode(useCase: UseCase, skin: Skin, renderer: Renderer): string {
+export function generateCdnCode(
+  useCase: UseCase,
+  skin: Skin,
+  renderer: Renderer,
+  cdnMediaSubpaths: readonly string[]
+): string {
   const name = getCdnFileName(useCase, skin);
-  const mediaSubpath = getCdnMediaSubpath(renderer);
+  const mediaSubpath = getMediaSubpath(renderer);
 
   const scriptLines = [`<script type="module" src="${CDN_BASE}/${name}.js"></script>`];
 
-  if (mediaSubpath) {
+  // Emit a media script only when that media ships a CDN build, per the
+  // manifest. A media renderer whose subpath isn't in the manifest gets just the
+  // preset script; if it gains a CDN build later, the manifest carries it and
+  // this starts emitting automatically — no code change needed.
+  if (mediaSubpath !== null && cdnMediaSubpaths.includes(mediaSubpath)) {
     scriptLines.push(`<script type="module" src="${CDN_BASE}/media/${mediaSubpath}.js"></script>`);
   }
 

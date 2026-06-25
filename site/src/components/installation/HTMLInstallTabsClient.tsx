@@ -60,7 +60,7 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
         </TabsList>
         {supportsCdn && (
           <TabsPanel value="cdn" initial>
-            <HTMLCdnCodeBlock />
+            <HTMLCdnCodeBlock cdnMedia={cdnMedia} />
           </TabsPanel>
         )}
         <TabsPanel value="npm" initial={!supportsCdn}>
