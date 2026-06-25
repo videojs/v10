@@ -40,6 +40,8 @@ without it, live HLS sources don't play correctly.
   [ll-hls-support](./ll-hls-support.md) and
   [dvr-event-stream-support](./dvr-event-stream-support.md) build on this
   feature.
+- **Open hardening follow-ups:** tracked under the Live/DVR Seekable and Anchor
+  Hardening epic (#1742).
 
 ## Phases of complexity
 
@@ -235,6 +237,7 @@ covers the guard logic deterministically.
   first range). A seek into that lip lands on unloadable media and strands until
   the window slides past it — the guard now rescues, but the lip is the trigger.
   Follow-up: tighten the derived window start toward the fetchable boundary.
+  Tracked in #1743.
 - **Clamp-to-seekable as the general windowed-playhead mechanism.** A behavior
   enforcing `currentTime ∈ seekable` off the **native** `seekable` range would be
   timeline-agnostic (robust to non-zero start PTS — see
@@ -242,8 +245,8 @@ covers the guard logic deterministically.
   window-exit guard's reposition half (not the one-time entry seek). Deferred; it
   raises the recovery-target decision — snap-to-edge for sliding live vs
   hold-at-oldest for DVR — the same DVR-vs-sliding distinction
-  [dvr-event-stream-support](./dvr-event-stream-support.md) faces. Tracked as a
-  future feature.
+  [dvr-event-stream-support](./dvr-event-stream-support.md) faces. Tracked in
+  #1744.
 - **Back-of-window playback yanked to the live edge on discrete window slides.**
   Now that out-of-window seeks are rescued (above), watching from the back of a
   sliding window is unstable: the window start advances a full segment (~2s) per
@@ -254,7 +257,7 @@ covers the guard logic deterministically.
   The reposition **target** is the lever: snapping to `windowStart + margin` (or
   clamp-to-seekable's hold-at-oldest) instead of the edge keeps a back-of-window
   viewer in place. Same recovery-target decision as the clamp-to-seekable item;
-  observed live on the ~20s sliding source. Needs cleanup.
+  observed live on the ~20s sliding source. Needs cleanup. Tracked in #1745.
 
 **Resolved during guard implementation:**
 

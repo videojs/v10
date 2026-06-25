@@ -381,7 +381,7 @@ prematurely fix.
   off-by-one, the live-window-during-selection-churn fallback) were point fixes
   inside this coupling, not a model for it. Revisit where timeline reconciliation
   belongs (model vs behavior) and whether one concurrently-mutated `presentation`
-  signal is the right shape.
+  signal is the right shape. Tracked in #1746.
 
 ---
 
