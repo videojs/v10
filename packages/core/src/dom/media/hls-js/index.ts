@@ -5,7 +5,7 @@ import { bridgeEvents } from '../../../core/utils/bridge-events';
 import type { MediaConfig } from '../media-host';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
-import { HlsJsMedia } from './hlsjs';
+import { HlsJsOnlyMedia } from './hls-js-only';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
 
@@ -53,8 +53,8 @@ class HlsMediaEvent extends Event {}
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
  */
-export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
-  #delegate: HlsJsMedia | NativeHlsMedia | null = null;
+export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
+  #delegate: HlsJsOnlyMedia | NativeHlsMedia | null = null;
   #mediaElement: HTMLVideoElement | null = null;
   #src = hlsMediaDefaultProps.src;
   #preload = hlsMediaDefaultProps.preload;
@@ -117,22 +117,22 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   /** Populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get videoTracks() {
-    return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoTracks : undefined;
+    return this.#delegate instanceof HlsJsOnlyMedia ? this.#delegate.videoTracks : undefined;
   }
 
   /** Populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioTracks() {
-    return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioTracks : undefined;
+    return this.#delegate instanceof HlsJsOnlyMedia ? this.#delegate.audioTracks : undefined;
   }
 
   /** Selectable quality levels, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get videoRenditions() {
-    return this.#delegate instanceof HlsJsMedia ? this.#delegate.videoRenditions : undefined;
+    return this.#delegate instanceof HlsJsOnlyMedia ? this.#delegate.videoRenditions : undefined;
   }
 
   /** Selectable audio variants, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioRenditions() {
-    return this.#delegate instanceof HlsJsMedia ? this.#delegate.audioRenditions : undefined;
+    return this.#delegate instanceof HlsJsOnlyMedia ? this.#delegate.audioRenditions : undefined;
   }
 
   get src() {
@@ -210,7 +210,7 @@ export class HlsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       const useMse =
         Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
-      this.#delegate = useMse ? new HlsJsMedia({ config: { ...this.config?.hlsJs } }) : new NativeHlsMedia();
+      this.#delegate = useMse ? new HlsJsOnlyMedia({ config: { ...this.config?.hlsJs } }) : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 

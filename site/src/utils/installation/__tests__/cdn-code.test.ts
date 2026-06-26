@@ -11,7 +11,7 @@ describe('generateCdnCode', () => {
   it('includes hls media bundle when renderer is hls', () => {
     expect(generateCdnCode('default-video', 'minimal-video', 'hls')).toEqual(
       `<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video-minimal.js"></script>
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hls-video.js"></script>`
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/hlsjs-video.js"></script>`
     );
   });
 
@@ -35,7 +35,7 @@ describe('generateCdnCode', () => {
 });
 
 describe('rendererSupportsCdn', () => {
-  const manifest = ['hls-video'];
+  const manifest = ['hlsjs-video'];
 
   it('returns true for preset renderers (covered by the preset bundle, no media subpath)', () => {
     expect(rendererSupportsCdn('html5-video', manifest)).toBe(true);

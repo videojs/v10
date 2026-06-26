@@ -26,7 +26,7 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   autoStartLoad: false,
 };
 
-class HlsJsMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
+class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
 
   constructor(params: { config: Partial<HlsConfig> }) {
@@ -73,16 +73,16 @@ interface HlsJsMediaCapabilities
   readonly error: MediaError | null;
 }
 
-const HlsJsMediaComposed = HlsJsMediaPreloadMixin(
+const HlsJsOnlyMediaComposed = HlsJsMediaPreloadMixin(
   HlsJsMediaLiveMixin(
     HlsJsMediaStreamTypeMixin(
       HlsJsMediaMediaTracksMixin(
         HlsJsMediaMetadataTracksMixin(
-          HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsMediaBase)))
+          HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
         )
       )
     )
   )
-) as unknown as MixinReturn<WithMediaTracks<typeof HlsJsMediaBase>, HlsJsMediaCapabilities>;
+) as unknown as MixinReturn<WithMediaTracks<typeof HlsJsOnlyMediaBase>, HlsJsMediaCapabilities>;
 
-export class HlsJsMedia extends HlsJsMediaComposed {}
+export class HlsJsOnlyMedia extends HlsJsOnlyMediaComposed {}

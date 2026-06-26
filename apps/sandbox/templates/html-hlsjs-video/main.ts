@@ -1,6 +1,6 @@
 import '@app/styles.css';
 import '@videojs/html/video/player';
-import '@videojs/html/media/hls-video';
+import '@videojs/html/media/hlsjs-video';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';
@@ -32,9 +32,9 @@ async function render() {
   document.getElementById('root')!.innerHTML = html`
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+        <hlsjs-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
-        </hls-video>
+        </hlsjs-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>

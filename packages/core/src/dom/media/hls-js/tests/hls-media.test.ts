@@ -3,7 +3,7 @@ import { MediaError } from '../../../../core/media/media-error';
 import type { RemotePlaybackLike } from '../../../../core/media/types';
 import { addComponent, type Component } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
-import { ContentTypes, HlsMedia } from '../index';
+import { ContentTypes, HlsJsMedia } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -27,7 +27,7 @@ function setup() {
   const video = document.createElement('video');
   document.body.appendChild(video);
 
-  const media = new HlsMedia();
+  const media = new HlsJsMedia();
   media.attach(video);
 
   const handler = vi.fn();
@@ -39,7 +39,7 @@ function setup() {
   return { media, video, handler };
 }
 
-describe('HlsMedia', () => {
+describe('HlsJsMedia', () => {
   describe('error event delegation', () => {
     it('dispatches only the enriched error, not the raw native error', () => {
       const { video, handler } = setup();
@@ -82,7 +82,7 @@ describe('HlsMedia', () => {
       const video = document.createElement('video');
       document.body.appendChild(video);
 
-      const media = new HlsMedia();
+      const media = new HlsJsMedia();
       media.attach(video);
 
       const pauseHandler = vi.fn();
@@ -102,7 +102,7 @@ describe('HlsMedia', () => {
       const video = document.createElement('video');
       document.body.appendChild(video);
 
-      const media = new HlsMedia();
+      const media = new HlsJsMedia();
       media.attach(video);
 
       const handler = vi.fn();
@@ -180,7 +180,7 @@ describe('HlsMedia', () => {
       const video = document.createElement('video');
       document.body.appendChild(video);
 
-      const media = new HlsMedia();
+      const media = new HlsJsMedia();
       media.attach(video);
 
       const component: Component = {
@@ -253,7 +253,7 @@ describe('HlsMedia', () => {
 
   describe('streamType', () => {
     it('defaults to `unknown` before load', () => {
-      const media = new HlsMedia();
+      const media = new HlsJsMedia();
       expect(media.streamType).toBe('unknown');
     });
 
@@ -303,7 +303,7 @@ describe('HlsMedia', () => {
       expect(media.streamType).toBe('live');
 
       handler.mockClear();
-      // `config.hlsJs.debug` is part of `HlsMedia`'s engine props — toggling it
+      // `config.hlsJs.debug` is part of `HlsJsMedia`'s engine props — toggling it
       // recreates the native delegate without switching playback engines.
       media.config = { ...media.config, hlsJs: { debug: true } };
       media.load();
@@ -362,7 +362,7 @@ describe('HlsMedia', () => {
     });
 
     it('dispatches `streamtypechange` when set before a delegate exists', () => {
-      const media = new HlsMedia();
+      const media = new HlsJsMedia();
       const handler = vi.fn();
       media.addEventListener('streamtypechange', handler);
 
@@ -417,7 +417,7 @@ describe('HlsMedia', () => {
 
   describe('live edge', () => {
     it('defaults to `NaN` for both values before load', () => {
-      const media = new HlsMedia();
+      const media = new HlsJsMedia();
       expect(media.liveEdgeStart).toBeNaN();
       expect(media.targetLiveWindow).toBeNaN();
     });

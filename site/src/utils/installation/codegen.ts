@@ -49,7 +49,7 @@ function getSkinImportParts(skin: Exclude<Skin, 'none'>): { group: string; skinF
 
 function getMediaImportSubpath(renderer: Renderer): string | null {
   const map: Partial<Record<Renderer, string>> = {
-    hls: 'hls-video',
+    hls: 'hlsjs-video',
   };
   return map[renderer] ?? null;
 }
@@ -90,7 +90,7 @@ export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bu
 function getRendererTag(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'background-video',
-    hls: 'hls-video',
+    hls: 'hlsjs-video',
     'html5-audio': 'audio',
     'html5-video': 'video',
   };
@@ -200,7 +200,7 @@ export function generateHTMLUsageCode(
 function getRendererComponent(renderer: Renderer): string {
   const map: Record<Renderer, string> = {
     'background-video': 'BackgroundVideo',
-    hls: 'HlsVideo',
+    hls: 'HlsJsVideo',
     'html5-audio': 'Audio',
     'html5-video': 'Video',
   };
@@ -232,7 +232,7 @@ function isPresetRenderer(renderer: Renderer): boolean {
 
 function getRendererMediaSubpath(renderer: Renderer): string {
   const map: Partial<Record<Renderer, string>> = {
-    hls: 'hls-video',
+    hls: 'hlsjs-video',
   };
   return map[renderer] ?? renderer;
 }

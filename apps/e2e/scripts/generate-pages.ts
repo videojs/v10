@@ -20,7 +20,7 @@ const OUT_DIR = resolve(__dirname, '../apps/vite/src/pages');
 // ---------------------------------------------------------------------------
 
 interface MediaTypeConfig {
-  /** Custom element tag (e.g. 'hls-video', 'mux-video') */
+  /** Custom element tag (e.g. 'hlsjs-video', 'mux-video') */
   element: string;
   /** Side-effect imports to register the element */
   imports: string[];
@@ -43,9 +43,9 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     hasPoster: true,
     isAudio: false,
   },
-  'hls-video': {
-    element: 'hls-video',
-    imports: ['@videojs/html/media/hls-video'],
+  'hlsjs-video': {
+    element: 'hlsjs-video',
+    imports: ['@videojs/html/media/hlsjs-video'],
     attrs: 'playsinline crossorigin="anonymous"',
     hasStoryboard: true,
     hasPoster: true,
@@ -104,14 +104,14 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
 // React component names for media elements
 const REACT_MEDIA: Record<string, { component: string; importPath: string }> = {
   video: { component: 'Video', importPath: '@videojs/react/video' },
-  'hls-video': { component: 'HlsVideo', importPath: '@videojs/react/media/hls-video' },
+  'hlsjs-video': { component: 'HlsJsVideo', importPath: '@videojs/react/media/hlsjs-video' },
   audio: { component: 'Audio', importPath: '@videojs/react/audio' },
 };
 
 // CDN import paths (override standard imports)
 const CDN_IMPORTS: Record<string, string[]> = {
   video: ['@videojs/html/cdn/video'],
-  'hls-video': ['@videojs/html/cdn/video', '@videojs/html/cdn/media/hls-video'],
+  'hlsjs-video': ['@videojs/html/cdn/video', '@videojs/html/cdn/media/hlsjs-video'],
 };
 
 // ---------------------------------------------------------------------------
@@ -347,7 +347,7 @@ createRoot(document.getElementById('root')!).render(<App />);
 const PAGES: PageDef[] = [
   // HTML Video
   { name: 'HTML Video MP4', path: 'html-video-mp4', framework: 'html', media: 'video', resource: 'mp4' },
-  { name: 'HTML Video HLS', path: 'html-video-hls', framework: 'html', media: 'hls-video', resource: 'hlsTs' },
+  { name: 'HTML Video HLS', path: 'html-video-hls', framework: 'html', media: 'hlsjs-video', resource: 'hlsTs' },
   {
     name: 'HTML Simple HLS Video fMP4',
     path: 'html-simple-hls-video-fmp4',
@@ -371,7 +371,7 @@ const PAGES: PageDef[] = [
 
   // React Video
   { name: 'React Video MP4', path: 'react-video-mp4', framework: 'react', media: 'video', resource: 'mp4' },
-  { name: 'React Video HLS', path: 'react-video-hls', framework: 'react', media: 'hls-video', resource: 'hlsTs' },
+  { name: 'React Video HLS', path: 'react-video-hls', framework: 'react', media: 'hlsjs-video', resource: 'hlsTs' },
 
   // React Audio
   { name: 'React Audio MP4', path: 'react-audio-mp4', framework: 'react', media: 'audio', resource: 'mp4' },
@@ -382,7 +382,7 @@ const PAGES: PageDef[] = [
     name: 'CDN Video HLS',
     path: 'cdn-video-hls',
     framework: 'html',
-    media: 'hls-video',
+    media: 'hlsjs-video',
     resource: 'hlsTs',
     category: 'cdn',
   },

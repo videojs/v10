@@ -1,8 +1,8 @@
 'use client';
 
 import { GoogleCast } from '@videojs/core/dom/media/google-cast';
-import type { HlsMediaProps } from '@videojs/core/dom/media/hls';
-import { HlsMedia, hlsMediaDefaultProps } from '@videojs/core/dom/media/hls';
+import type { HlsMediaProps } from '@videojs/core/dom/media/hls-js';
+import { HlsJsMedia, hlsMediaDefaultProps } from '@videojs/core/dom/media/hls-js';
 import { addComponent } from '@videojs/core/dom/media/media-host';
 import { MuxData } from '@videojs/core/dom/media/mux';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
@@ -19,7 +19,7 @@ export interface MuxVideoProps
 }
 
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
-  const media = useMediaInstance(HlsMedia, (media) => {
+  const media = useMediaInstance(HlsJsMedia, (media) => {
     addComponent(media, new MuxData({ playerSoftwareName: 'mux-video' }));
     addComponent(media, new GoogleCast());
   });

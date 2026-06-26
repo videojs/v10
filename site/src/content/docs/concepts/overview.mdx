@@ -117,7 +117,7 @@ Media components are the components that actually display your media. They're es
 Media components can be format specific (HLS, DASH), service specific (YouTube, Vimeo, Mux), or use case specific (background video).
 
 <FrameworkCase frameworks={["html"]}>
-Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hls-video>` register themselves.
+Media elements are discovered automatically. Plain `<video>` and `<audio>` elements are found via a `querySelector`, while custom media elements like `<hlsjs-video>` register themselves.
 </FrameworkCase>
 
 <Aside type="note">
@@ -128,7 +128,7 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 ```tsx
 <Player.Provider>
   <VideoSkin>
-    <HlsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
+    <HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
 </Player.Provider>
 ```
@@ -137,7 +137,7 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 ```html
 <video-player>
   <video-skin>
-    <hls-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hls-video> <!-- [!code focus] -->
+    <hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video> <!-- [!code focus] -->
   </video-skin>
 </video-player>
 ```

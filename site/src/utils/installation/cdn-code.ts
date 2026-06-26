@@ -15,7 +15,7 @@ function getCdnFileName(useCase: UseCase, skin: Skin): string {
 // preset bundle and have no separate media script, so they map to null.
 function getMediaSubpath(renderer: Renderer): string | null {
   const map: Partial<Record<Renderer, string>> = {
-    hls: 'hls-video',
+    hls: 'hlsjs-video',
   };
   return map[renderer] ?? null;
 }

@@ -1,7 +1,7 @@
 ---
-title: HlsVideo
+title: HlsJsVideo
 frameworkTitle:
-  html: hls-video
+  html: hlsjs-video
 description: HLS video element powered by hls.js for adaptive bitrate streaming
 ---
 
@@ -13,14 +13,14 @@ import Demo from "@/components/docs/demos/Demo.astro";
 {/* React live demo disabled until #1343 (SSR-breaking media imports) is fixed; show source instead. */}
 import { TabsRoot, TabsList, Tab, TabsPanel } from "@/components/Tabs";
 import ServerCode from "@/components/Code/ServerCode.astro";
-import basicUsageReactTsx from "@/components/docs/demos/hls-video/react/css/BasicUsage.tsx?raw";
-import basicUsageReactCss from "@/components/docs/demos/hls-video/react/css/BasicUsage.css?raw";
+import basicUsageReactTsx from "@/components/docs/demos/hlsjs-video/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/hlsjs-video/react/css/BasicUsage.css?raw";
 
 {/* HTML demos */}
-import BasicUsageDemoHtml from "@/components/docs/demos/hls-video/html/css/BasicUsage.astro";
-import basicUsageHtml from "@/components/docs/demos/hls-video/html/css/BasicUsage.html?raw";
-import basicUsageHtmlCss from "@/components/docs/demos/hls-video/html/css/BasicUsage.css?raw";
-import basicUsageHtmlTs from "@/components/docs/demos/hls-video/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtml from "@/components/docs/demos/hlsjs-video/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/hlsjs-video/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/hlsjs-video/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/hlsjs-video/html/css/BasicUsage.ts?raw";
 
 HLS video element powered by [hls.js](https://github.com/video-dev/hls.js/) for adaptive bitrate streaming. It's the recommended choice for HLS playback: full feature support across every browser. For alternatives, see [NativeHlsVideo](/docs/framework/html/reference/native-hls-video/) (browser-native HLS) or [SimpleHlsVideo](/docs/framework/html/reference/simple-hls-video/) (lightweight HLS).
 
@@ -58,4 +58,4 @@ HLS video element powered by [hls.js](https://github.com/video-dev/hls.js/) for 
   </StyleCase>
 </FrameworkCase>
 
-<MediaReference media="HlsVideo" />
+<MediaReference media="HlsJsVideo" />

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HlsMedia } from '../../hls';
+import { HlsJsMedia } from '../../hls-js';
 import { addComponent } from '../../media-host';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
@@ -14,7 +14,7 @@ function createSdk() {
 }
 
 class FakeMedia extends EventTarget {
-  engine: HlsMedia['engine'] = null;
+  engine: HlsJsMedia['engine'] = null;
   src = '';
 }
 
@@ -75,7 +75,7 @@ describe('MuxData', () => {
 
     expect(monitor).toHaveBeenCalledTimes(1);
 
-    const engine = {} as NonNullable<HlsMedia['engine']>;
+    const engine = {} as NonNullable<HlsJsMedia['engine']>;
     media.engine = engine;
     media.src = 'https://stream.mux.com/abc123.m3u8';
     media.dispatchEvent(new Event('loadstart'));
@@ -93,7 +93,7 @@ describe('MuxData', () => {
   });
 
   it('exposes mux config under host.config.muxData with inferred types', () => {
-    const media = new HlsMedia();
+    const media = new HlsJsMedia();
     const muxData = new MuxData();
     addComponent(media, muxData);
 

@@ -68,7 +68,7 @@ describe('generateHTMLInstallCode', () => {
 
   it('includes HLS media script in CDN output', () => {
     const result = generateHTMLInstallCode({ ...baseHTML, renderer: 'hls' });
-    expect(result.cdn).toContain('media/hls-video.js');
+    expect(result.cdn).toContain('media/hlsjs-video.js');
   });
 });
 
@@ -130,7 +130,7 @@ describe('generateHTMLUsageCode', () => {
 
   it('includes HLS media import in JS', () => {
     const result = generateHTMLUsageCode({ ...baseHTML, renderer: 'hls' });
-    expect(result.js).toContain("import '@videojs/html/media/hls-video'");
+    expect(result.js).toContain("import '@videojs/html/media/hlsjs-video'");
   });
 
   it('uses minimal skin tag', () => {
@@ -175,8 +175,8 @@ describe('generateReactCreateCode', () => {
     const result = generateReactCreateCode({ ...baseReact, renderer: 'hls' });
     const code = result['MyPlayer.tsx'];
     expect(code).toContain("import { VideoSkin } from '@videojs/react/video'");
-    expect(code).toContain("import { HlsVideo } from '@videojs/react/media/hls-video'");
-    expect(code).toContain('<HlsVideo src={src} playsInline />');
+    expect(code).toContain("import { HlsJsVideo } from '@videojs/react/media/hlsjs-video'");
+    expect(code).toContain('<HlsJsVideo src={src} playsInline />');
   });
 
   it('uses audio features and components', () => {
