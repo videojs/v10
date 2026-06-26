@@ -300,6 +300,22 @@ describe('handleDocs', () => {
         ).rejects.toThrow(ExitError);
         expect(errors()).toContain('no CDN build');
       });
+
+      it('errors when --media is not valid for the chosen --preset (dash + audio)', async () => {
+        await expect(
+          handleDocs(htmlFlags({ preset: 'audio', skin: 'default', media: 'dash' }), ['how-to/installation'])
+        ).rejects.toThrow(ExitError);
+        const err = errors();
+        expect(err).toContain('media type "dash" is not valid for the "audio" preset');
+        expect(err).toContain('html5-audio');
+      });
+
+      it('errors when --media is an audio-only renderer for the video preset (mux-audio + video)', async () => {
+        await expect(
+          handleDocs(htmlFlags({ preset: 'video', skin: 'default', media: 'mux-audio' }), ['how-to/installation'])
+        ).rejects.toThrow(ExitError);
+        expect(errors()).toContain('media type "mux-audio" is not valid for the "video" preset');
+      });
     });
 
     describe('React framework', () => {

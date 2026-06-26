@@ -67,6 +67,7 @@ declare module '@/utils/installation/detect-renderer' {
   }
 
   export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null;
+  export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase): boolean;
 }
 
 declare module '@/utils/installation/cdn-code' {

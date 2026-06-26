@@ -1,7 +1,8 @@
 import * as p from '@clack/prompts';
 import { validateInstallationOptions } from '@/utils/installation/codegen';
+import { isRendererValidForUseCase } from '@/utils/installation/detect-renderer';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import type { InstallMethod, Renderer, UseCase } from '@/utils/installation/types';
+import { type InstallMethod, type Renderer, type UseCase, VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
@@ -58,6 +59,12 @@ function mapPresetToUseCase(preset: string): UseCase {
   }
   return result;
 }
+
+const PRESET_NAMES: Record<UseCase, string> = {
+  'default-video': 'video',
+  'default-audio': 'audio',
+  'background-video': 'background-video',
+};
 
 const ALL_RENDERERS = Object.keys(RENDERER_LABELS) as Renderer[];
 
@@ -181,6 +188,17 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
     const validation = validateInstallationOptions(opts);
     if (!validation.valid) {
       console.error(`Error: ${validation.reason}`);
+      process.exit(1);
+    }
+
+    // The interactive prompt builds its renderer list from VALID_RENDERERS[useCase],
+    // so an invalid renderer/use-case pairing can only arrive via the explicit
+    // `--media` flag. Reject it here to keep the CLI at parity with the UI.
+    if (!isRendererValidForUseCase(opts.renderer, opts.useCase)) {
+      const validMedia = VALID_RENDERERS[opts.useCase].join(', ');
+      console.error(
+        `Error: media type "${opts.renderer}" is not valid for the "${PRESET_NAMES[opts.useCase]}" preset. Valid options: ${validMedia}`
+      );
       process.exit(1);
     }
 
