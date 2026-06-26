@@ -27,6 +27,12 @@ export default defineConfig({
       __dirname,
       '../../site/src/utils/installation/renderer-options.ts'
     ),
+    '@/utils/installation/usecase-options': resolve(__dirname, '../../site/src/utils/installation/usecase-options.ts'),
+    '@/utils/installation/skin-options': resolve(__dirname, '../../site/src/utils/installation/skin-options.ts'),
+    '@/utils/installation/install-method-options': resolve(
+      __dirname,
+      '../../site/src/utils/installation/install-method-options.ts'
+    ),
     '@/content/cdn-media.json': resolve(__dirname, '../../site/src/content/cdn-media.json'),
     '@/consts': resolve(__dirname, '../../site/src/consts.ts'),
   },

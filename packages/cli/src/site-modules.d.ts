@@ -97,6 +97,45 @@ declare module '@/utils/installation/renderer-options' {
   export function buildOptions(useCase: UseCase): RendererOption[];
 }
 
+declare module '@/utils/installation/usecase-options' {
+  import type { UseCase } from '@/utils/installation/types';
+
+  interface UseCaseOption {
+    value: UseCase | null;
+    label: string;
+    disabled?: boolean;
+  }
+
+  export const USE_CASE_LABELS: Record<UseCase, string>;
+  export function buildOptions(): UseCaseOption[];
+}
+
+declare module '@/utils/installation/skin-options' {
+  import type { Skin, UseCase } from '@/utils/installation/types';
+
+  interface SkinOption {
+    value: Skin | null;
+    label: string;
+    disabled?: boolean;
+  }
+
+  export const SKIN_LABELS: Record<Skin, string>;
+  export function buildOptions(useCase: UseCase): SkinOption[];
+}
+
+declare module '@/utils/installation/install-method-options' {
+  import type { InstallMethod } from '@/utils/installation/types';
+
+  interface InstallMethodOption {
+    value: InstallMethod | null;
+    label: string;
+    disabled?: boolean;
+  }
+
+  export const INSTALL_METHOD_LABELS: Record<InstallMethod, string>;
+  export function buildOptions(options: { includeCdn: boolean }): InstallMethodOption[];
+}
+
 declare module '@/content/cdn-media.json' {
   const entries: Array<{ id: string }>;
   export default entries;
