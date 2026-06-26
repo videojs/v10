@@ -19,16 +19,17 @@ import InlineMarkdown from './InlineMarkdown.astro';
 
 interface Props {
   component: string;
+  slug?: string;
   partOrder?: string[];
 }
 
-const { component, partOrder } = Astro.props;
+const { component, slug, partOrder } = Astro.props;
 const { framework } = Astro.params;
 if (!framework || !isValidFramework(framework)) {
   throw new Error(`Invalid or missing framework param.`);
 }
 
-const entry = await getEntry('componentReference', kebabCase(component));
+const entry = await getEntry('componentReference', slug ?? kebabCase(component));
 const apiRef: ComponentReference | null = entry?.data ?? null;
 if (!apiRef) return;
 

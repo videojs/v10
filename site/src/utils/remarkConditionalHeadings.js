@@ -14,9 +14,8 @@ const FEATURE_REF_DIR = path.resolve(__dirname, '../content/generated-feature-re
 const UTIL_REF_DIR = path.resolve(__dirname, '../content/generated-util-reference');
 const MEDIA_REF_DIR = path.resolve(__dirname, '../content/generated-media-reference');
 
-function readComponentRefJson(componentName) {
-  const kebab = kebabCase(componentName);
-  const filePath = path.join(COMPONENT_REF_DIR, `${kebab}.json`);
+function readComponentRefJson(slug) {
+  const filePath = path.join(COMPONENT_REF_DIR, `${slug}.json`);
   try {
     return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   } catch {
@@ -142,7 +141,10 @@ function injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSl
   const componentName = typeof componentAttr?.value === 'string' ? componentAttr.value : null;
   if (!componentName) return;
 
-  const json = readComponentRefJson(componentName);
+  const slugAttr = node.attributes?.find((a) => a.name === 'slug');
+  const slugValue = typeof slugAttr?.value === 'string' ? slugAttr.value : null;
+
+  const json = readComponentRefJson(slugValue ?? kebabCase(componentName));
   if (!json) return;
 
   const partOrderAttr = node.attributes?.find((a) => a.name === 'partOrder');
@@ -226,7 +228,10 @@ function injectMediaReferenceHeadings(node, headingsWithMetadata, reservedSlugs)
   const mediaName = typeof mediaAttr?.value === 'string' ? mediaAttr.value : null;
   if (!mediaName) return;
 
-  const json = readMediaRefJson(kebabCase(mediaName));
+  const slugAttr = node.attributes?.find((a) => a.name === 'slug');
+  const slugValue = typeof slugAttr?.value === 'string' ? slugAttr.value : null;
+
+  const json = readMediaRefJson(slugValue ?? kebabCase(mediaName));
   if (!json) return;
 
   const mediaModel = createMediaReferenceModel(mediaName, json);
