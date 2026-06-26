@@ -3,7 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
-import { resolveComponentSlug, resolveMediaSlug } from './api-reference-overrides';
+import { resolveReferenceSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from './mediaReferenceModel';
@@ -142,7 +142,7 @@ function injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSl
   const componentName = typeof componentAttr?.value === 'string' ? componentAttr.value : null;
   if (!componentName) return;
 
-  const json = readComponentRefJson(resolveComponentSlug(componentName));
+  const json = readComponentRefJson(resolveReferenceSlug(componentName));
   if (!json) return;
 
   const partOrderAttr = node.attributes?.find((a) => a.name === 'partOrder');
@@ -226,7 +226,7 @@ function injectMediaReferenceHeadings(node, headingsWithMetadata, reservedSlugs)
   const mediaName = typeof mediaAttr?.value === 'string' ? mediaAttr.value : null;
   if (!mediaName) return;
 
-  const json = readMediaRefJson(resolveMediaSlug(mediaName));
+  const json = readMediaRefJson(resolveReferenceSlug(mediaName));
   if (!json) return;
 
   const mediaModel = createMediaReferenceModel(mediaName, json);

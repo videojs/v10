@@ -39,7 +39,7 @@ export const NAME_OVERRIDES: Record<string, string> = {
 
 Use overrides only when the standard conversion fails (e.g., acronyms like PiP). Prefer aligning component naming with the standard conversion when possible.
 
-Media elements use a separate `MEDIA_SLUG_OVERRIDES` map in the same file for the rare case where a component's PascalCase name doesn't kebab-case to its element tag name (e.g. `HlsJsVideo` → `hlsjs-video`).
+The same map covers media elements whose PascalCase name doesn't kebab-case to their element tag name (e.g. `'hlsjs-video': 'HlsJsVideo'`). It is keyed by the generated-reference file slug regardless of component vs. media.
 
 ## Multi-Part Components
 
