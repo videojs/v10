@@ -1,5 +1,3 @@
-// Adapted from muxinc/elements playback-core `text-tracks.ts` (MIT).
-
 import { listen } from '@videojs/utils/dom';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { Component, HTMLMediaTargetLike } from '../media-host';
@@ -48,7 +46,7 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
   set label(value) {
     if (this.#label === value) return;
     this.#label = value;
-    void this.#setup();
+    this.#setup();
   }
 
   get cuePoints() {
@@ -63,7 +61,7 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
 
   set cuePoints(value) {
     this.#cuePoints = value ?? [];
-    void this.#setup();
+    this.#setup();
   }
 
   get activeCuePoint() {
@@ -89,7 +87,7 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
     // `#setup` may run before duration is known, leaving the trailing cue's end
     // as a sentinel. Correct it once duration arrives without a full rebuild.
     listen(this.#target, 'durationchange', () => this.#syncTrailingEnd(), { signal: this.#disconnect.signal });
-    void this.#setup();
+    this.#setup();
   }
 
   detach() {
@@ -129,15 +127,19 @@ export class CuePoints<Value = unknown> implements CuePointsProps<Value>, Compon
   async #setup() {
     const target = this.#target;
     if (!target || !this.#disconnect) return;
+
     // Reset per-track listeners so a re-setup doesn't leave duplicate `cuechange` handlers.
     this.#trackDisconnect?.abort();
     this.#trackDisconnect = new AbortController();
+
     const { signal } = this.#trackDisconnect;
     const track = await this.#ensureTrack(target);
     if (signal.aborted || !track) return;
+
     clearCues(track);
     writeCuePoints(target, track, this.#cuePoints);
     notifyChange(target);
+
     listen(
       track,
       'cuechange',
