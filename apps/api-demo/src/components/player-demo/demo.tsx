@@ -1,5 +1,5 @@
 import type { CuePoint } from '@videojs/core/dom/media/cue-points';
-import { HlsVideo } from '@videojs/react/media/hls-video';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { useMemo, useState } from 'react';
 import { DEFAULT_CUE_POINTS } from './constants';
 import { Controls, TransportControls } from './controls';
@@ -60,7 +60,7 @@ export function Demo() {
       <div className="flex flex-col gap-6">
         <div className="z-10 flex flex-col gap-6 bg-manila-light lg:sticky lg:top-4 dark:bg-faded-black">
           <div className="relative aspect-video w-full overflow-hidden rounded-3xl shadow-2xl ring-1 ring-faded-black/10 dark:ring-manila-light/10">
-            <HlsVideo
+            <HlsJsVideo
               src={src}
               config={mediaConfig}
               poster={posterFor(src)}

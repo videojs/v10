@@ -2,7 +2,7 @@
 
 An Astro demo app that showcases the Video.js 10 **media API**.
 
-The homepage renders the React `HlsVideo` player (with the default skin) and a
+The homepage renders the React `HlsJsVideo` player (with the default skin) and a
 panel of controls wired directly to the media instance via `useMedia()`. It is a
 hands-on playground for the media API:
 
