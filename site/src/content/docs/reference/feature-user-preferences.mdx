@@ -1,0 +1,103 @@
+---
+title: User preferences
+description: Opt-in storage for player user preferences
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Persists selected media preferences across player instances. To opt in, add it to your `features` array as shown below. It is not included in the default presets.
+
+<FeatureReference feature="userPreferences" />
+
+### Usage
+
+The feature stores one JSON object in `localStorage` under `media:user-preferences` by default.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="player.tsx"
+import { createPlayer, features } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+export const Player = createPlayer({
+  features: [...videoFeatures, features.userPreferences],
+});
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="player.ts"
+import { createPlayer, features } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const player = createPlayer({
+  features: [...videoFeatures, features.userPreferences],
+});
+```
+</FrameworkCase>
+
+Pass a config object to change the storage key or provide a custom storage backend.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="player.tsx"
+import { createPlayer, features } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+export const Player = createPlayer({
+  features: [
+    ...videoFeatures,
+    features.userPreferences({ key: 'my-player:preferences' }),
+  ],
+});
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="player.ts"
+import { createPlayer, features } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const player = createPlayer({
+  features: [
+    ...videoFeatures,
+    features.userPreferences({ key: 'my-player:preferences' }),
+  ],
+});
+```
+</FrameworkCase>
+
+### Stored preferences
+
+Built-in features currently persist:
+
+- Playback rate
+- Volume and muted state
+- Captions/subtitles selection
+
+Quality selection is not persisted. Rendition ids and quality ladders vary across sources, so storing a quality choice is easy to make fragile.
+
+When the default `localStorage` backend is used, changes from another same-origin tab are applied through the browser `storage` event.
+
+### Custom storage
+
+Custom storage should provide a [Web Storage-compatible API](https://developer.mozilla.org/en-US/docs/Web/API/Web_Storage_API). The feature only uses `getItem()` and `setItem()`, so the storage object can be any adapter with those methods.
+
+```ts
+const memory = new Map<string, string>();
+
+const storage = {
+  getItem(key: string) {
+    return memory.get(key) ?? null;
+  },
+  setItem(key: string, value: string) {
+    memory.set(key, value);
+  },
+};
+
+const player = createPlayer({
+  features: [
+    ...videoFeatures,
+    features.userPreferences({ storage }),
+  ],
+});
+```

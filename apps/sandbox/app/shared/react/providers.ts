@@ -6,23 +6,23 @@ import { liveVideoFeatures } from '@videojs/react/live-video';
 import { videoFeatures } from '@videojs/react/video';
 
 export const { Provider: VideoProvider } = createPlayer({
-  features: [...videoFeatures, features.orientationLock],
+  features: [...videoFeatures, features.orientationLock, features.userPreferences],
 });
 
 export const { Provider: AudioProvider } = createPlayer({
-  features: audioFeatures,
+  features: [...audioFeatures, features.userPreferences],
 });
 
 export const { Provider: BackgroundVideoProvider } = createPlayer({
-  features: backgroundFeatures,
+  features: [...backgroundFeatures, features.userPreferences],
 });
 
 // Live providers register `liveFeature` so the LiveButton can read
 // `liveEdgeStart` / `targetLiveWindow` and seek to the live edge.
 export const { Provider: LiveVideoProvider } = createPlayer({
-  features: liveVideoFeatures,
+  features: [...liveVideoFeatures, features.userPreferences],
 });
 
 export const { Provider: LiveAudioProvider } = createPlayer({
-  features: liveAudioFeatures,
+  features: [...liveAudioFeatures, features.userPreferences],
 });

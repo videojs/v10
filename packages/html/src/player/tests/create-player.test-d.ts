@@ -1,5 +1,12 @@
 import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/core/dom';
-import { audioFeatures, backgroundFeatures, definePlayerFeature, features, videoFeatures } from '@videojs/core/dom';
+import {
+  audioFeatures,
+  backgroundFeatures,
+  definePlayerFeature,
+  features,
+  userPreferencesFeature,
+  videoFeatures,
+} from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 
@@ -52,6 +59,20 @@ describe('createPlayer', () => {
 
     assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(defaultResult);
     assertType<CreatePlayerResult<PlayerStore<[typeof configuredOrientationLock]>>>(configuredResult);
+  });
+
+  it('accepts user preferences with and without config', () => {
+    const configuredUserPreferences = userPreferencesFeature({ key: 'custom:user-preferences' });
+
+    const defaultResult = createPlayer({ features: [...videoFeatures, userPreferencesFeature()] });
+    const configuredResult = createPlayer({ features: [...audioFeatures, configuredUserPreferences] });
+
+    assertType<CreatePlayerResult<PlayerStore<[...typeof videoFeatures, ReturnType<typeof userPreferencesFeature>]>>>(
+      defaultResult
+    );
+    assertType<CreatePlayerResult<PlayerStore<[...typeof audioFeatures, typeof configuredUserPreferences]>>>(
+      configuredResult
+    );
   });
 
   it('resolves extended video features to generic PlayerStore', () => {

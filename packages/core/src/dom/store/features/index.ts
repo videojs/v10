@@ -15,4 +15,5 @@ export * from './source';
 export * from './stream-type';
 export * from './text-track';
 export * from './time';
+export * from './user-preferences';
 export * from './volume';

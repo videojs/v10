@@ -7,13 +7,13 @@ import '@app/styles.css';
 // player with play/mute controls. SimpleHlsVideo registers itself via
 // useMediaAttach so the store discovers it without any querySelector.
 
-import { Container, createPlayer, MuteButton, PlayButton } from '@videojs/react';
+import { Container, createPlayer, features, MuteButton, PlayButton } from '@videojs/react';
 import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeOffIcon } from '@videojs/react/icons';
 import { SimpleHlsVideo } from '@videojs/react/media/simple-hls-video';
 import { videoFeatures } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
 
-const { Provider } = createPlayer({ features: videoFeatures });
+const { Provider } = createPlayer({ features: [...videoFeatures, features.userPreferences] });
 
 const buttonStyle: React.CSSProperties = {
   background: 'none',

@@ -29,6 +29,11 @@ interface FeatureSource {
   stateTypeName?: string;
 }
 
+interface InterfaceSource {
+  decl: ts.InterfaceDeclaration;
+  sourceFile: ts.SourceFile;
+}
+
 // ─── Discovery ────────────────────────────────────────────────────
 
 function discoverFeatureSources(featuresDir: string): FeatureSource[] {
@@ -197,22 +202,26 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
   const sources = discoverFeatureSources(featuresDir);
   if (sources.length === 0) return [];
 
-  // Create a TS program with the state file for the checker
+  // Create a TS program with the shared state file and feature files for the checker.
+  // Most feature state interfaces live in media/state.ts, but opt-in utility
+  // features can keep their state type next to the implementation.
   const tsconfigPath = path.join(monorepoRoot, 'tsconfig.base.json');
   const config = tae.loadConfig(tsconfigPath);
   config.options.rootDir = monorepoRoot;
-  const program = ts.createProgram([stateFilePath], config.options);
+  const program = ts.createProgram([stateFilePath, ...sources.map((source) => source.filePath)], config.options);
   const checker = program.getTypeChecker();
-  const stateSourceFile = program.getSourceFile(stateFilePath);
-  if (!stateSourceFile) return [];
 
   // Build a map of interface name → declaration
-  const interfaces = new Map<string, ts.InterfaceDeclaration>();
-  ts.forEachChild(stateSourceFile, (node) => {
-    if (ts.isInterfaceDeclaration(node)) {
-      interfaces.set(node.name.text, node);
-    }
-  });
+  const interfaces = new Map<string, InterfaceSource>();
+  for (const sourceFile of program.getSourceFiles()) {
+    if (!sourceFile.fileName.startsWith(monorepoRoot)) continue;
+
+    ts.forEachChild(sourceFile, (node) => {
+      if (ts.isInterfaceDeclaration(node)) {
+        interfaces.set(node.name.text, { decl: node, sourceFile });
+      }
+    });
+  }
 
   const results: FeatureResult[] = [];
   for (const source of sources) {
@@ -228,11 +237,11 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
       continue;
     }
 
-    const interfaceDecl = interfaces.get(source.stateTypeName);
-    if (!interfaceDecl) continue;
+    const interfaceSource = interfaces.get(source.stateTypeName);
+    if (!interfaceSource) continue;
 
-    const description = getJSDocDescription(interfaceDecl);
-    const { state, actions } = extractInterfaceMembers(interfaceDecl, checker, stateSourceFile);
+    const description = getJSDocDescription(interfaceSource.decl);
+    const { state, actions } = extractInterfaceMembers(interfaceSource.decl, checker, interfaceSource.sourceFile);
 
     const ref: FeatureReference = {
       name: source.name,

@@ -12,6 +12,7 @@ import { sourceFeature } from './source';
 import { streamTypeFeature } from './stream-type';
 import { textTrackFeature } from './text-track';
 import { timeFeature } from './time';
+import { userPreferencesFeature } from './user-preferences';
 import { volumeFeature } from './volume';
 
 export { audioFeatures, backgroundFeatures, videoFeatures } from './presets';
@@ -32,5 +33,6 @@ export {
   streamTypeFeature as streamType,
   textTrackFeature as textTrack,
   timeFeature as time,
+  userPreferencesFeature as userPreferences,
   volumeFeature as volume,
 };

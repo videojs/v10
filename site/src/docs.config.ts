@@ -160,6 +160,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-stream-type' },
       { slug: 'reference/feature-text-tracks' },
       { slug: 'reference/feature-time' },
+      { slug: 'reference/feature-user-preferences' },
       { slug: 'reference/feature-volume' },
     ],
   },
