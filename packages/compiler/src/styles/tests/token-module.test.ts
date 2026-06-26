@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { clearTokenModuleCache, EvaluationError, loadTokenModule } from '../evaluator';
+import { clearTokenModuleCache, loadTokenModule, TokenEvaluationError } from '..';
 
 let dir: string;
 
@@ -189,12 +189,12 @@ describe('loadTokenModule — relative imports', () => {
 describe('loadTokenModule — diagnostics', () => {
   it('rejects function expressions', () => {
     const file = write('mod.ts', `export const a = (b) => b;\n`);
-    expect(() => loadTokenModule(file)).toThrow(EvaluationError);
+    expect(() => loadTokenModule(file)).toThrow(TokenEvaluationError);
   });
 
   it('rejects ternary expressions', () => {
     const file = write('mod.ts', `export const a = true ? 'x' : 'y';\n`);
-    expect(() => loadTokenModule(file)).toThrow(EvaluationError);
+    expect(() => loadTokenModule(file)).toThrow(TokenEvaluationError);
   });
 
   it('rejects unsupported call expressions', () => {

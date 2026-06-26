@@ -2,8 +2,8 @@ import { mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import type { CompiledRule } from '../emit';
-import { emitCss } from '../emit';
+import type { CompiledRule } from '../css/render';
+import { renderCss as emitCss } from '../css/render';
 
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 

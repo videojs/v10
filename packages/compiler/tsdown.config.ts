@@ -5,6 +5,7 @@ export default defineConfig({
     index: './src/index.ts',
     cli: './src/cli.ts',
     'bundlers/vite': './src/bundlers/vite.ts',
+    'styles/index': './src/styles/index.ts',
     'tailwind/index': './src/tailwind/index.ts',
   },
   platform: 'neutral',

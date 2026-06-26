@@ -57,13 +57,24 @@ export interface AnalyzeStylesOptions {
   visit: StyleVisitor;
 }
 
+export function readStyleAttribute(element: JsxElementLike): StyleAttributeInfo | undefined {
+  const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
+  const classNameAttr = findClassNameAttribute(attrs);
+  if (!classNameAttr) return undefined;
+
+  const expression = readAttributeExpression(classNameAttr);
+  if (!expression) return undefined;
+
+  return decompose(element, classNameAttr, expression);
+}
+
 /**
  * TS transformer that walks every JSX `className` attribute and invokes a
  * visitor with structural info. The visitor decides whether to replace the
  * attribute's value (returning a new expression) or leave it alone.
  *
  * The visitor is purely structural — it does not know about Tailwind or
- * any other style system. Higher-level plugins (e.g. `tailwindPlugin`)
+ * any other style system. Higher-level plugins (e.g. `tailwind`)
  * compose it.
  */
 export function analyzeStyles(options: AnalyzeStylesOptions): ts.TransformerFactory<ts.SourceFile> {
@@ -93,19 +104,13 @@ function visitJsxElement(
   visit: StyleVisitor,
   context: ts.TransformationContext
 ): JsxElementLike {
-  const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
-  const classNameAttr = findClassNameAttribute(attrs);
-  if (!classNameAttr) return element;
-
-  const expression = readAttributeExpression(classNameAttr);
-  if (!expression) return element;
-
-  const info: StyleAttributeInfo = decompose(element, classNameAttr, expression);
+  const info = readStyleAttribute(element);
+  if (!info) return element;
 
   const replacement = visit(info, factory);
   if (replacement === undefined) return element;
 
-  return rewriteAttribute(element, classNameAttr, replacement, factory, context);
+  return rewriteStyleAttribute(info, replacement, factory, context);
 }
 
 function findClassNameAttribute(attrs: ts.JsxAttributes): ts.JsxAttribute | undefined {
@@ -197,13 +202,13 @@ function readDottedPath(expr: ts.Expression): readonly string[] | null {
   return null;
 }
 
-function rewriteAttribute(
-  element: JsxElementLike,
-  attribute: ts.JsxAttribute,
+export function rewriteStyleAttribute(
+  info: StyleAttributeInfo,
   replacement: ts.Expression,
   factory: ts.NodeFactory,
-  _context: ts.TransformationContext
+  _context?: ts.TransformationContext | undefined
 ): JsxElementLike {
+  const { attribute, element } = info;
   const newAttribute = factory.updateJsxAttribute(
     attribute,
     attribute.name,

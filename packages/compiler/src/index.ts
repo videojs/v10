@@ -15,6 +15,8 @@ export {
 } from './config';
 export {
   compilerDiagnosticToJsonEvent,
+  DiagnosticError,
+  type DiagnosticErrorDetails,
   type DiagnosticFormat,
   type DiagnosticJsonEvent,
   type DiagnosticJsonFrameLine,

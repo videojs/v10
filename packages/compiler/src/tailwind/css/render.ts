@@ -1,6 +1,6 @@
 import { isAbsolute, resolve } from 'node:path';
 import { bundleAsync } from 'lightningcss';
-import type { Declaration, UtilityCss, UtilityCssBranch } from './utility-css';
+import type { Declaration, UtilityCss, UtilityCssBranch } from '../utility-css';
 
 /** A compiled rule: a class name + the utility's declarations and variants. */
 export interface CompiledRule {
@@ -16,8 +16,8 @@ export interface CompiledRule {
   group?: string;
 }
 
-/** Output of `emitCss`. Discriminated by `kind`. */
-export type EmittedCss =
+/** Output of `renderCss`. Discriminated by `kind`. */
+export type RenderedCss =
   | { kind: 'merged'; css: string }
   | {
       kind: 'split';
@@ -33,7 +33,7 @@ export type EmittedCss =
  * Catches Tailwind's internal `--tw-*` resets (always-the-same-default) plus
  * any user-set tokens that happen to be uniform.
  *
- * Pass `false` to disable. If `hoist` is omitted, `emitCss` does **not**
+ * Pass `false` to disable. If `hoist` is omitted, `renderCss` does **not**
  * hoist — callers opt in by configuration.
  */
 export interface HoistOptions {
@@ -41,7 +41,7 @@ export interface HoistOptions {
   rootSelector: string;
 }
 
-export interface EmitCssOptions {
+export interface RenderCssOptions {
   /** Compiled rules to emit. */
   rules: readonly CompiledRule[];
   /**
@@ -84,7 +84,7 @@ export interface EmitCssOptions {
   inlineVars?: true | RegExp;
   /**
    * Resolve a referenced `@theme` variable (e.g. `--spacing`) to its value.
-   * When set, `emitCss` emits a leading rule defining every theme variable the
+   * When set, `renderCss` emits a leading rule defining every theme variable the
    * output references but doesn't itself declare, so the CSS resolves without a
    * separate Tailwind theme/preflight on the page. Typically
    * `design.resolveThemeVar`. Returns `undefined` to leave a variable alone
@@ -160,7 +160,7 @@ interface RegisteredPropertyVariable {
  * chains flatten before prepending — the consumer's `tailwind.css` (or
  * any other base file) lands at the top of the output as a single block.
  */
-export async function emitCss(opts: EmitCssOptions): Promise<EmittedCss> {
+export async function renderCss(opts: RenderCssOptions): Promise<RenderedCss> {
   const mode = opts.mode ?? 'merged';
   const configDir = opts.configDir ?? process.cwd();
 

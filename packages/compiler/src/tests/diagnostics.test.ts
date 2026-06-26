@@ -2,13 +2,13 @@ import type ts from 'typescript';
 import { describe, expect, it } from 'vitest';
 import { CompilerError, compile } from '..';
 import {
+  DiagnosticError,
   diagnosticLocationFromNode,
   formatCompilerDiagnostic,
   formatCompilerDiagnosticJsonLine,
   formatDiagnosticSummaryJsonLine,
 } from '../diagnostics';
 import { jsx } from '../jsx';
-import { DiagnosticError } from '../tailwind';
 
 describe('formatCompilerDiagnostic', () => {
   it('renders a diagnostic code frame', () => {

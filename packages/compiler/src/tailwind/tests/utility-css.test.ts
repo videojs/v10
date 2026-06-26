@@ -92,6 +92,22 @@ describe('analyzeUtility — variants', () => {
     expect(grp).toBeDefined();
     expect(grp!.selector).toContain('group');
   });
+
+  it('captures named group variants', () => {
+    const r = analyzeUtility('group-data-paused/media-root:opacity-100', design);
+    expect(r).not.toBeNull();
+    const grp = r!.variants.find((v) => v.kind === 'group');
+    expect(grp).toBeDefined();
+    expect(grp!.selector).toContain('group\\/media-root');
+  });
+
+  it('captures peer variants', () => {
+    const r = analyzeUtility('peer-disabled:opacity-50', design);
+    expect(r).not.toBeNull();
+    const peer = r!.variants.find((v) => v.kind === 'peer');
+    expect(peer).toBeDefined();
+    expect(peer!.selector).toContain('peer');
+  });
 });
 
 describe('analyzeUtility — branches', () => {

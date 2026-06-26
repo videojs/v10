@@ -1,7 +1,7 @@
 import { kebabCase } from '@videojs/utils/string';
-import { type DiagnosticLocation, diagnosticLocationFromNode } from '../diagnostics';
+import { DiagnosticError, diagnosticLocationFromNode } from '../diagnostics';
 import { type JsxElementLike, tagName } from '../jsx';
-import type { StyleSegment } from '../styles';
+import type { StyleSegment } from './analyze';
 
 /** Result of deriving a CSS class name for a JSX element. */
 export interface DerivedClassName {
@@ -55,45 +55,6 @@ export interface DeriveClassNameOptions {
   tokenNamespaces?: ReadonlySet<string>;
   /** Local identifiers known to resolve to style tokens. */
   tokenRoots?: ReadonlySet<string>;
-}
-
-/**
- * Diagnostic thrown when no rule matches — typically a bare HTML element
- * with arbitrary class strings and no token-path indication of intent.
- * Resolution is up to the consumer (move classes onto a component,
- * extract a token, or customize `resolve.name`).
- */
-export class DiagnosticError extends Error {
-  public readonly diagnosticCode: string;
-  public readonly fileName?: string;
-  public readonly line?: number;
-  public readonly column?: number;
-  public readonly endLine?: number;
-  public readonly endColumn?: number;
-  public readonly sourceText?: string;
-
-  constructor(
-    message: string,
-    location?: (DiagnosticLocation & { diagnosticCode?: string | undefined }) | string | undefined,
-    line?: number
-  ) {
-    super(message);
-    this.name = 'DiagnosticError';
-    if (typeof location === 'string') {
-      this.fileName = location;
-      if (line !== undefined) this.line = line;
-      this.diagnosticCode = 'tailwind-diagnostic';
-      return;
-    }
-
-    this.diagnosticCode = location?.diagnosticCode ?? 'tailwind-diagnostic';
-    if (location?.file) this.fileName = location.file;
-    if (location?.line !== undefined) this.line = location.line;
-    if (location?.column !== undefined) this.column = location.column;
-    if (location?.endLine !== undefined) this.endLine = location.endLine;
-    if (location?.endColumn !== undefined) this.endColumn = location.endColumn;
-    if (location?.sourceText) this.sourceText = location.sourceText;
-  }
 }
 
 /**
@@ -156,7 +117,7 @@ export function deriveClassName(opts: DeriveClassNameOptions): DerivedClassName 
       `Resolve by: (a) using a JSX component instead of <${tag}>, ` +
       `(b) extracting the classes into a single token reference, ` +
       `or (c) customizing \`resolve.name\`.`,
-    { ...diagnosticLocationFromNode(opts.element), diagnosticCode: 'tailwind-class-name' }
+    { ...diagnosticLocationFromNode(opts.element), diagnosticCode: 'style-class-name' }
   );
 }
 

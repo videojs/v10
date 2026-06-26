@@ -7,6 +7,7 @@ export interface ButtonOptions {
 
 export interface ButtonProps {
   role: 'button';
+  type: 'button';
   tabIndex: 0;
   onClick: (event: UIEvent) => void;
   onPointerDown: (event: UIEvent) => void;
@@ -20,6 +21,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
 
   return {
     role: 'button',
+    type: 'button',
     tabIndex: 0,
 
     onClick(event) {

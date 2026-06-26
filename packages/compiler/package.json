@@ -19,6 +19,10 @@
       "types": "./dist/bundlers/vite.d.ts",
       "default": "./dist/bundlers/vite.js"
     },
+    "./styles": {
+      "types": "./dist/styles/index.d.ts",
+      "default": "./dist/styles/index.js"
+    },
     "./tailwind": {
       "types": "./dist/tailwind/index.d.ts",
       "default": "./dist/tailwind/index.js"

@@ -23,6 +23,49 @@ export interface DiagnosticLocation {
   sourceText?: string | undefined;
 }
 
+export interface DiagnosticErrorDetails extends DiagnosticLocation {
+  diagnosticCode?: string | undefined;
+  plugin?: string | undefined;
+}
+
+/** Error type that carries compiler diagnostic metadata through transform failures. */
+export class DiagnosticError extends Error {
+  public readonly diagnosticCode: string;
+  public readonly fileName?: string;
+  public readonly file?: string;
+  public readonly line?: number;
+  public readonly column?: number;
+  public readonly endLine?: number;
+  public readonly endColumn?: number;
+  public readonly sourceText?: string;
+  public readonly plugin?: string;
+
+  constructor(message: string, location?: DiagnosticErrorDetails | string | undefined, line?: number) {
+    super(message);
+    this.name = 'DiagnosticError';
+
+    if (typeof location === 'string') {
+      this.fileName = location;
+      this.file = location;
+      if (line !== undefined) this.line = line;
+      this.diagnosticCode = 'compiler-diagnostic';
+      return;
+    }
+
+    this.diagnosticCode = location?.diagnosticCode ?? 'compiler-diagnostic';
+    if (location?.file) {
+      this.fileName = location.file;
+      this.file = location.file;
+    }
+    if (location?.line !== undefined) this.line = location.line;
+    if (location?.column !== undefined) this.column = location.column;
+    if (location?.endLine !== undefined) this.endLine = location.endLine;
+    if (location?.endColumn !== undefined) this.endColumn = location.endColumn;
+    if (location?.sourceText) this.sourceText = location.sourceText;
+    if (location?.plugin) this.plugin = location.plugin;
+  }
+}
+
 export interface FormatDiagnosticOptions {
   color?: boolean | undefined;
   cwd?: string | undefined;

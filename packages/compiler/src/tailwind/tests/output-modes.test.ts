@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { compile as compileSource } from '../../compile';
-import { clearTokenModuleCache } from '../evaluator';
+import { clearTokenModuleCache } from '../../styles';
 import { tailwind } from '../plugin';
 
 const MINIMAL_CSS = `

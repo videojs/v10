@@ -18,8 +18,8 @@ export type TokenValue = string | { readonly [key: string]: TokenValue };
  * (function expressions, ternaries, spreads of non-objects, …). Messages
  * include the file + line so consumers can point users at the offending decl.
  */
-export class EvaluationError extends Error {
-  public readonly diagnosticCode = 'tailwind-evaluation';
+export class TokenEvaluationError extends Error {
+  public readonly diagnosticCode = 'style-token-evaluation';
   public readonly fileName?: string;
   public readonly line?: number;
   public readonly column?: number;
@@ -29,7 +29,7 @@ export class EvaluationError extends Error {
 
   constructor(message: string, location?: DiagnosticLocation | undefined) {
     super(message);
-    this.name = 'EvaluationError';
+    this.name = 'TokenEvaluationError';
     if (location?.file) this.fileName = location.file;
     if (location?.line !== undefined) this.line = location.line;
     if (location?.column !== undefined) this.column = location.column;
@@ -336,13 +336,13 @@ function resolveRelativeModule(specifier: string, fromFile: string): string {
     const candidate = `${base}${ext}`;
     if (existsSync(candidate)) return candidate;
   }
-  throw new EvaluationError(`Cannot resolve token module '${specifier}' from '${fromFile}'`);
+  throw new TokenEvaluationError(`Cannot resolve token module '${specifier}' from '${fromFile}'`);
 }
 
 /* ─────────────────────────────────────────────────────────────────────────
  * Diagnostics
  * ───────────────────────────────────────────────────────────────────────── */
 
-function evalError(node: ts.Node, fromFile: string, message: string): EvaluationError {
-  return new EvaluationError(message, { ...diagnosticLocationFromNode(node), file: fromFile });
+function evalError(node: ts.Node, fromFile: string, message: string): TokenEvaluationError {
+  return new TokenEvaluationError(message, { ...diagnosticLocationFromNode(node), file: fromFile });
 }

@@ -1,20 +1,32 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { basename, dirname, extname, isAbsolute, join, resolve as resolvePath } from 'node:path';
-import ts from 'typescript';
+import { isAbsolute, resolve as resolvePath } from 'node:path';
+import type ts from 'typescript';
 import type { CompilerContext, CompilerPlugin } from '../config';
 import { diagnosticLocationFromNode } from '../diagnostics';
 import { tagName } from '../jsx';
-import { analyzeStyles, type StyleSegment, type StyleVisitor } from '../styles';
-import { type DesignSystem, loadDesignSystem } from './design-system';
 import {
-  type CompiledRule,
-  type EmittedCss,
-  emitCss,
-  type HoistOptions,
-  type RegisteredPropertiesOptions,
-} from './emit';
-import { EvaluationError, loadTokenModule, type TokenValue } from './evaluator';
-import { type DeriveClassNameOptions, DiagnosticError, deriveClassName, type ResolveName } from './naming';
+  buildTokenEnv,
+  classNameScanner,
+  collectExtractUtilities,
+  collectUtilities,
+  type DeriveClassNameOptions,
+  DiagnosticError,
+  defineStylingPlugin,
+  deriveClassName,
+  isClassNameStyleReference,
+  type ResolveName,
+  type ResolveTokenModule,
+  rewriteStyleAttribute,
+  type StyleAttributeSegmentsInfo,
+  type StyleResolution,
+  type StyleSegment,
+  type StylingPlugin,
+  styling,
+  type TokenEnv,
+  type TokenValue,
+} from '../styles';
+import { cssAssets } from './css/assets';
+import { type CompiledRule, type HoistOptions, type RegisteredPropertiesOptions, renderCss } from './css/render';
+import { type DesignSystem, loadDesignSystem } from './design-system';
 import { analyzeUtility, type UtilityCss } from './utility-css';
 
 /** Styling mode for Tailwind-backed className handling. */
@@ -35,8 +47,6 @@ export type TailwindMode =
 
 /** Per-rule grouping hook. */
 export type ResolveGroup = (info: { className: string; segments: readonly StyleSegment[] }) => string | undefined;
-
-export type ResolveTokenModule = (specifier: string, fromFile: string) => string | null | undefined;
 
 export interface TailwindResolveOptions {
   /** Resolve bare token imports in skin sources to token modules on disk. Relative imports use the default resolver. */
@@ -80,212 +90,171 @@ export interface TailwindOptions {
   emit?: TailwindEmitOptions | undefined;
   /** CSS custom property handling options for extract mode. */
   vars?: TailwindVarsOptions | undefined;
+  /** Styling pipeline plugins that run around Tailwind's default stages. */
+  plugins?: readonly StylingPlugin[] | undefined;
 }
 
-interface TailwindTransformOptions extends Omit<TailwindOptions, 'input' | 'output'> {
+interface TailwindPipelineState {
   mode: TailwindMode;
   sourcePath?: string | undefined;
-  onRules?: ((rules: readonly CompiledRule[]) => void) | undefined;
+  design?: DesignSystem | undefined;
+  env?: TokenEnv | undefined;
+  rules: CompiledRule[];
+  signatures: Map<string, string>;
+}
+
+interface TailwindClassNameResolution {
+  info: StyleAttributeSegmentsInfo;
+  utilities: readonly string[];
+  passThrough: readonly ts.Expression[];
 }
 
 export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
-  return {
-    name: 'tailwind',
-    async setup(context) {
-      const mode = options.mode ?? 'preserve';
+  const state: TailwindPipelineState = {
+    mode: options.mode ?? 'preserve',
+    rules: [],
+    signatures: new Map(),
+  };
 
-      if (mode === 'preserve') return {};
+  return styling({
+    plugins: [
+      tailwindConfigStage(options, state),
+      classNameScanner(),
+      tailwindResolveStage(state),
+      tailwindTransformStage(options, state),
+      tailwindRenderStage(options, state),
+      ...(options.plugins ?? []),
+    ],
+  });
+}
 
-      if (mode === 'inline') {
+function tailwindConfigStage(options: TailwindOptions, state: TailwindPipelineState): StylingPlugin {
+  return defineStylingPlugin({
+    name: 'tailwind:config',
+    async config(context) {
+      state.mode = options.mode ?? 'preserve';
+      state.sourcePath = context.compiler.filename;
+      state.env = buildTokenEnv(state.sourcePath, options.resolve?.tokenModule);
+      state.rules = [];
+      state.signatures = new Map();
+      if (state.mode === 'extract') {
+        state.design = await resolveDesignSystem(options, context.compiler);
+      }
+    },
+  });
+}
+
+function tailwindResolveStage(state: TailwindPipelineState): StylingPlugin {
+  return defineStylingPlugin({
+    name: 'tailwind:resolve',
+    resolve(reference) {
+      if (state.mode === 'preserve') return null;
+      if (!isClassNameStyleReference(reference)) return null;
+      const info = reference.data.info;
+      if (info.kind !== 'segments') return null;
+
+      const env = state.env?.values ?? new Map<string, TokenValue>();
+      if (state.mode === 'inline') {
+        const utilities = collectUtilities(info.segments, env);
+        if (utilities === null) return null;
+        return tailwindResolution(reference, { info, utilities, passThrough: [] });
+      }
+
+      return tailwindResolution(reference, { info, ...collectExtractUtilities(info.segments, env) });
+    },
+  });
+}
+
+function tailwindTransformStage(options: TailwindOptions, state: TailwindPipelineState): StylingPlugin {
+  return defineStylingPlugin({
+    name: 'tailwind:transform',
+    transform(resolution, context) {
+      if (resolution.kind !== 'tailwind:className') return null;
+      const data = resolution.data as TailwindClassNameResolution;
+
+      if (state.mode === 'inline') {
         return {
-          transform: tailwindPlugin({ ...options, mode, sourcePath: context.filename }),
+          element: rewriteStyleAttribute(
+            data.info,
+            context.factory.createStringLiteral(data.utilities.join(' ')),
+            context.factory
+          ),
         };
       }
 
-      const design = await resolveDesignSystem(options, context);
-      const rules: CompiledRule[] = [];
+      if (state.mode !== 'extract') return null;
+      if (!state.design) throw new Error('@videojs/compiler: tailwind extract mode requires `design` or `input`');
 
-      return {
-        transform: tailwindPlugin({
-          ...options,
-          mode,
-          design,
-          sourcePath: context.filename,
-          onRules: (nextRules) => {
-            rules.push(...nextRules);
-          },
-        }),
-        async finish() {
-          if (rules.length === 0) return;
-          const vars = options.vars;
-          const emitted = await emitCss({
-            rules,
-            ...(options.emit ?? {}),
-            ...(vars?.hoist !== undefined ? { hoist: vars.hoist } : {}),
-            ...(vars?.inline !== undefined ? { inlineVars: vars.inline } : {}),
-            ...(vars?.properties ? { properties: vars.properties } : {}),
-            resolveThemeVar: (name) => design.resolveThemeVar(name),
-            ...(vars?.hoist ? { themeSelector: vars.hoist.rootSelector } : {}),
-          });
-          addCssAssets(context, options.output, emitted);
-        },
+      const segments = data.info.segments;
+      const naming: DeriveClassNameOptions = {
+        element: data.info.element,
+        segments,
+        ...(options.resolve?.name ? { resolveName: options.resolve.name } : {}),
+        ...(state.env?.hasSource ? { tokenNamespaces: state.env.namespaces, tokenRoots: state.env.roots } : {}),
       };
+      const derived = deriveClassName(naming);
+      const preserved: string[] = [];
+      const ruleUtilities: string[] = [];
+
+      for (const utility of data.utilities) {
+        const css = analyzeUtility(utility, state.design);
+        if (css && css.declarations.length > 0) {
+          ruleUtilities.push(utility);
+          state.rules.push(buildCompiledRule(derived.className, css, segments, options.resolve?.group));
+          continue;
+        }
+        if (!preserved.includes(utility)) preserved.push(utility);
+      }
+
+      if (ruleUtilities.length > 0) {
+        const signature = [...ruleUtilities].sort().join(' ');
+        const previous = state.signatures.get(derived.className);
+        if (previous === undefined) {
+          state.signatures.set(derived.className, signature);
+        } else if (previous !== signature) {
+          throw collisionError(data.info.element, derived.className, previous, signature);
+        }
+      }
+
+      const baseName = preserved.length > 0 ? `${derived.className} ${preserved.join(' ')}` : derived.className;
+      const replacement =
+        data.passThrough.length === 0
+          ? context.factory.createStringLiteral(baseName)
+          : context.factory.createArrayLiteralExpression([
+              context.factory.createStringLiteral(baseName),
+              ...data.passThrough,
+            ]);
+
+      return { element: rewriteStyleAttribute(data.info, replacement, context.factory) };
     },
-  };
+  });
 }
 
-/**
- * TS transformer that rewrites JSX `className` attributes per the chosen
- * Tailwind target. Built on top of `analyzeStyles` (generic JSX walker) +
- * `analyzeUtility` + `deriveClassName` + `emitCss`. Token references are resolved
- * by statically evaluating the imported token module — see `evaluator.ts`.
- */
-export function tailwindPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
-  if (options.mode === 'preserve') {
-    return () => (sourceFile) => sourceFile;
-  }
-  if (options.mode === 'inline') {
-    return inlinedPlugin(options);
-  }
-  if (!options.design) {
-    throw new Error('@videojs/compiler: tailwind extract mode requires `design` or `input`');
-  }
-  return vanillaCssPlugin({ ...options, design: options.design });
+function tailwindRenderStage(options: TailwindOptions, state: TailwindPipelineState): StylingPlugin {
+  return defineStylingPlugin({
+    name: 'tailwind:render',
+    async render(_bundle, context) {
+      if (state.mode !== 'extract' || state.rules.length === 0 || !state.design) return null;
+      const vars = options.vars;
+      const rendered = await renderCss({
+        rules: state.rules,
+        ...(options.emit ?? {}),
+        ...(vars?.hoist !== undefined ? { hoist: vars.hoist } : {}),
+        ...(vars?.inline !== undefined ? { inlineVars: vars.inline } : {}),
+        ...(vars?.properties ? { properties: vars.properties } : {}),
+        resolveThemeVar: (name) => state.design!.resolveThemeVar(name),
+        ...(vars?.hoist ? { themeSelector: vars.hoist.rootSelector } : {}),
+      });
+      return cssAssets(context.compiler, options.output, rendered);
+    },
+  });
 }
 
-/* ─────────────────────────────────────────────────────────────────────────
- * Target: tailwind-inlined
- * ───────────────────────────────────────────────────────────────────────── */
-
-function inlinedPlugin(options: TailwindTransformOptions): ts.TransformerFactory<ts.SourceFile> {
-  const env = buildTokenEnv(options.sourcePath, options.resolve?.tokenModule);
-
-  return (transformContext) => {
-    return (sourceFile) => {
-      const visit: StyleVisitor = (info, factory) => {
-        if (info.kind !== 'segments' || !info.segments) return undefined;
-        const flat = flattenToLiteral(info.segments, env.values);
-        if (flat === null) return undefined;
-        return factory.createStringLiteral(flat);
-      };
-
-      return analyzeStyles({ visit })(transformContext)(sourceFile);
-    };
-  };
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Target: vanilla-css
- * ───────────────────────────────────────────────────────────────────────── */
-
-function vanillaCssPlugin(
-  options: TailwindTransformOptions & { design: DesignSystem }
-): ts.TransformerFactory<ts.SourceFile> {
-  const { design, resolve, onRules } = options;
-
-  const env = buildTokenEnv(options.sourcePath, resolve?.tokenModule);
-
-  return (transformContext) => {
-    return (sourceFile) => {
-      const rules: CompiledRule[] = [];
-      // Per derived class name, the sorted utility signature of the first
-      // element that produced it. Lets us detect when two *different* source
-      // elements collapse onto the same class name with *different* styles —
-      // emitCss would silently merge their declarations into one rule.
-      const signatures = new Map<string, string>();
-
-      const visit: StyleVisitor = (info, factory) => {
-        if (info.kind !== 'segments' || !info.segments) return undefined;
-        // Capture the narrowed segments so the closures below keep the type.
-        const segments = info.segments;
-
-        const naming: DeriveClassNameOptions = {
-          element: info.element,
-          segments,
-          ...(resolve?.name ? { resolveName: resolve.name } : {}),
-          ...(env.hasSource ? { tokenNamespaces: env.namespaces, tokenRoots: env.roots } : {}),
-        };
-        const derived = deriveClassName(naming);
-
-        // Resolve each segment against the env. Literals resolve to themselves;
-        // tokens resolve via path walking; opaques and unresolved tokens are
-        // *passed through* — those are runtime expressions (e.g. a `className`
-        // prop the consumer composes onto the element). We rewrite the
-        // className to the derived semantic name and preserve pass-throughs in
-        // an array so target generators can choose how to merge.
-        const passThrough: ts.Expression[] = [];
-        const preserved: string[] = [];
-        // Rule-producing utilities only. Preserved marker classes stay on the
-        // element and don't participate in generated CSS rule merging.
-        const ruleUtilities: string[] = [];
-
-        // Compile one utility: emit a rule when it produces declarations,
-        // otherwise *preserve* it as a literal class. Utilities that yield no
-        // declarations are markers (`group`, `peer`, `group/<name>`) or classes
-        // Tailwind doesn't recognize — dropping them would silently break every
-        // descendant `group-*` / `peer-*` variant that targets the marker.
-        const handleUtility = (utility: string): void => {
-          const css = analyzeUtility(utility, design);
-          if (css && css.declarations.length > 0) {
-            ruleUtilities.push(utility);
-            rules.push(buildCompiledRule(derived.className, css, segments, resolve?.group));
-            return;
-          }
-          if (!preserved.includes(utility)) preserved.push(utility);
-        };
-
-        for (const seg of segments) {
-          if (seg.kind === 'literal') {
-            for (const utility of seg.value.split(/\s+/)) {
-              if (utility) handleUtility(utility);
-            }
-            continue;
-          }
-          if (seg.kind === 'token') {
-            const literal = resolveTokenPath(seg.path, env.values);
-            if (literal !== null) {
-              for (const utility of literal.split(/\s+/)) {
-                if (utility) handleUtility(utility);
-              }
-              continue;
-            }
-            // Fall through — token didn't resolve, treat as pass-through.
-          }
-          passThrough.push(seg.node);
-        }
-
-        // Collision guard: two distinct elements that derive the same class
-        // name must resolve to the same utilities. Identical recurrences (e.g.
-        // many `<Tooltip.Popup>` with the same token) share a signature and are
-        // fine; differing ones would merge conflicting declarations into one
-        // rule, so we fail loudly with a fixable diagnostic.
-        if (ruleUtilities.length > 0) {
-          const signature = [...ruleUtilities].sort().join(' ');
-          const previous = signatures.get(derived.className);
-          if (previous === undefined) {
-            signatures.set(derived.className, signature);
-          } else if (previous !== signature) {
-            throw collisionError(info.element, derived.className, previous, signature);
-          }
-        }
-
-        const baseName = preserved.length > 0 ? `${derived.className} ${preserved.join(' ')}` : derived.className;
-
-        if (passThrough.length === 0) {
-          return factory.createStringLiteral(baseName);
-        }
-        return factory.createArrayLiteralExpression([factory.createStringLiteral(baseName), ...passThrough]);
-      };
-
-      const transformed = analyzeStyles({ visit })(transformContext)(sourceFile);
-
-      if (rules.length === 0) return transformed;
-
-      onRules?.(rules);
-
-      return transformed;
-    };
-  };
+function tailwindResolution(
+  reference: StyleResolution['reference'],
+  data: TailwindClassNameResolution
+): StyleResolution<TailwindClassNameResolution> {
+  return { kind: 'tailwind:className', reference, data };
 }
 
 async function resolveDesignSystem(options: TailwindOptions, context: CompilerContext): Promise<DesignSystem> {
@@ -295,262 +264,6 @@ async function resolveDesignSystem(options: TailwindOptions, context: CompilerCo
   }
   const input = isAbsolute(options.input) ? options.input : resolvePath(context.configDir, options.input);
   return loadDesignSystem(input);
-}
-
-function addCssAssets(context: CompilerContext, output: string | undefined, emitted: EmittedCss): void {
-  if (emitted.kind === 'merged') {
-    context.addAsset({
-      type: 'css',
-      fileName: output ?? defaultCssFileName(context),
-      source: emitted.css,
-      sourceFile: context.filename,
-    });
-    return;
-  }
-
-  const indexFile = output ?? defaultCssFileName(context);
-  context.addAsset({ type: 'css', fileName: indexFile, source: emitted.index, sourceFile: context.filename });
-  const dir = dirname(indexFile);
-  for (const [group, source] of emitted.groups) {
-    context.addAsset({
-      type: 'css',
-      fileName: join(dir, `${group}.css`),
-      source,
-      sourceFile: context.filename,
-    });
-  }
-}
-
-function defaultCssFileName(context: CompilerContext): string {
-  const file = basename(context.outputFile ?? context.filename);
-  const ext = extname(file);
-  return `${ext ? file.slice(0, -ext.length) : file}.css`;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Token environment
- * ───────────────────────────────────────────────────────────────────────── */
-
-/**
- * Discover the token-namespace imports in the skin source and evaluate each
- * referenced module on disk. Also folds local `const X = [<resolvable>]`
- * declarations into the env so JSX `className={X}` references resolve.
- *
- * Reads + reparses the source file from disk rather than walking the in-flight
- * SourceFile — earlier transforms in the pipeline (e.g. `transformImports`)
- * may have rewritten relative specifiers to bare ones, which would defeat the
- * on-disk module resolution we need here.
- *
- * If `sourcePath` is undefined or unreadable, returns an empty map; the plugin
- * then leaves token-bearing className expressions alone.
- */
-interface TokenEnv {
-  values: Map<string, TokenValue>;
-  namespaces: Set<string>;
-  roots: Set<string>;
-  hasSource: boolean;
-}
-
-function buildTokenEnv(sourcePath: string | undefined, tokenModuleResolver?: ResolveTokenModule | undefined): TokenEnv {
-  const env: TokenEnv = {
-    values: new Map<string, TokenValue>(),
-    namespaces: new Set<string>(),
-    roots: new Set<string>(),
-    hasSource: false,
-  };
-  if (!sourcePath || !existsSync(sourcePath)) return env;
-  env.hasSource = true;
-
-  const source = readFileSync(sourcePath, 'utf8');
-  const sourceFile = ts.createSourceFile(sourcePath, source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
-
-  // First pass: import declarations.
-  for (const stmt of sourceFile.statements) {
-    if (!ts.isImportDeclaration(stmt)) continue;
-    const specifier = stmt.moduleSpecifier;
-    if (!ts.isStringLiteral(specifier)) continue;
-    const id = specifier.text;
-    const absolutePath = resolveTokenImport(id, sourcePath, tokenModuleResolver);
-    if (!absolutePath) continue;
-
-    let exports: Record<string, TokenValue>;
-    try {
-      exports = loadTokenModule(absolutePath);
-    } catch (error) {
-      if (error instanceof EvaluationError) {
-        // Token grammar violation — skip this import so the className is
-        // treated as opaque rather than crashing the build.
-        continue;
-      }
-      throw error;
-    }
-
-    const clause = stmt.importClause;
-    if (!clause) continue;
-
-    if (clause.namedBindings && ts.isNamedImports(clause.namedBindings)) {
-      for (const spec of clause.namedBindings.elements) {
-        const sourceName = spec.propertyName?.text ?? spec.name.text;
-        const localName = spec.name.text;
-        const value = exports[sourceName];
-        if (value !== undefined) {
-          setTokenValue(env, localName, value);
-          if (isTokenNamespaceImport(sourceName, localName, value)) env.namespaces.add(localName);
-        }
-      }
-      continue;
-    }
-
-    if (clause.namedBindings && ts.isNamespaceImport(clause.namedBindings)) {
-      env.namespaces.add(clause.namedBindings.name.text);
-      setTokenValue(env, clause.namedBindings.name.text, exports as TokenValue);
-    }
-  }
-
-  // Second pass: top-level `const X = <expr>` declarations whose RHS resolves
-  // statically against the env. Lets skins write
-  //   const iconButton = [styles.button.base, styles.button.icon];
-  // and reference `iconButton` in `className={iconButton}` without losing
-  // the resolution.
-  for (const stmt of sourceFile.statements) {
-    if (!ts.isVariableStatement(stmt)) continue;
-    for (const decl of stmt.declarationList.declarations) {
-      if (!ts.isIdentifier(decl.name) || !decl.initializer) continue;
-      const value = tryEvaluateLocal(decl.initializer, env.values);
-      if (value !== null) setTokenValue(env, decl.name.text, value);
-    }
-  }
-
-  return env;
-}
-
-function setTokenValue(env: TokenEnv, name: string, value: TokenValue): void {
-  env.values.set(name, value);
-  env.roots.add(name);
-}
-
-function isTokenNamespaceImport(sourceName: string, localName: string, value: TokenValue): boolean {
-  if (typeof value === 'string') return false;
-  return sourceName === 'tokens' || sourceName === 'styles' || localName === 'tokens' || localName === 'styles';
-}
-
-/**
- * Evaluate a local declaration's RHS against `env`. Supports className arrays,
- * dotted access, identifier lookup, and string literals — same surface as the
- * token-module evaluator, but without nested object literals (skins don't
- * declare those locally) and without recursion across files.
- */
-function tryEvaluateLocal(node: ts.Expression, env: Map<string, TokenValue>): TokenValue | null {
-  if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
-    return node.text;
-  }
-  if (ts.isIdentifier(node)) {
-    const v = env.get(node.text);
-    return v ?? null;
-  }
-  if (ts.isPropertyAccessExpression(node)) {
-    const root = tryEvaluateLocal(node.expression, env);
-    if (root === null || typeof root === 'string') return null;
-    if (!ts.isIdentifier(node.name)) return null;
-    const next = root[node.name.text];
-    return next ?? null;
-  }
-  if (ts.isArrayLiteralExpression(node)) {
-    const parts: string[] = [];
-    for (const item of node.elements) {
-      if (ts.isSpreadElement(item)) return null;
-      const v = tryEvaluateLocal(item, env);
-      if (v === null || typeof v !== 'string') return null;
-      if (v) parts.push(v);
-    }
-    return parts.join(' ');
-  }
-  if (ts.isParenthesizedExpression(node)) return tryEvaluateLocal(node.expression, env);
-  return null;
-}
-
-const MODULE_EXTENSIONS = ['.ts', '.tsx', '/index.ts', '/index.tsx'] as const;
-
-function resolveTokenImport(
-  specifier: string,
-  fromFile: string,
-  tokenModuleResolver?: ResolveTokenModule | undefined
-): string | null {
-  if (specifier.startsWith('.')) return resolveModulePath(specifier, fromFile);
-  const resolved = tokenModuleResolver?.(specifier, fromFile);
-  if (!resolved) return null;
-  return isAbsolute(resolved) ? resolved : resolvePath(dirname(fromFile), resolved);
-}
-
-function resolveModulePath(specifier: string, fromFile: string): string | null {
-  const base = isAbsolute(specifier) ? specifier : resolvePath(dirname(fromFile), specifier);
-  if (extname(base) && existsSync(base)) return base;
-  for (const ext of MODULE_EXTENSIONS) {
-    const candidate = `${base}${ext}`;
-    if (existsSync(candidate)) return candidate;
-  }
-  return null;
-}
-
-/* ─────────────────────────────────────────────────────────────────────────
- * Segment → utility resolution
- * ───────────────────────────────────────────────────────────────────────── */
-
-/**
- * Resolve every segment to a string. Returns `null` for opaque expressions
- * or token paths that can't be walked against the env (so the caller can
- * leave the source unchanged).
- */
-function collectUtilities(segments: readonly StyleSegment[], env: Map<string, TokenValue>): string[] | null {
-  const out: string[] = [];
-  for (const seg of segments) {
-    if (seg.kind === 'literal') {
-      pushUtilities(out, seg.value);
-      continue;
-    }
-    if (seg.kind === 'token') {
-      const literal = resolveTokenPath(seg.path, env);
-      if (literal === null) return null;
-      pushUtilities(out, literal);
-      continue;
-    }
-    return null;
-  }
-  return out;
-}
-
-function flattenToLiteral(segments: readonly StyleSegment[], env: Map<string, TokenValue>): string | null {
-  const utilities = collectUtilities(segments, env);
-  if (utilities === null) return null;
-  return utilities.join(' ');
-}
-
-/**
- * Walk `path` (e.g. `['styles', 'button', 'icon']`) against the env. The head
- * segment is the local namespace name (or a top-level local const); subsequent
- * segments index into the resolved object. Returns `null` if the path doesn't
- * resolve to a string.
- */
-function resolveTokenPath(path: readonly string[], env: Map<string, TokenValue>): string | null {
-  if (path.length === 0) return null;
-  const [head, ...rest] = path;
-  const root = env.get(head!);
-  if (root === undefined) return null;
-
-  let cursor: TokenValue = root;
-  for (const key of rest) {
-    if (typeof cursor === 'string') return null;
-    const next = cursor[key];
-    if (next === undefined) return null;
-    cursor = next;
-  }
-  return typeof cursor === 'string' ? cursor : null;
-}
-
-function pushUtilities(out: string[], raw: string): void {
-  for (const u of raw.split(/\s+/)) {
-    if (u.length > 0) out.push(u);
-  }
 }
 
 function buildCompiledRule(
@@ -566,12 +279,12 @@ function buildCompiledRule(
 function collisionError(element: ts.Node, className: string, first: string, next: string): DiagnosticError {
   const tag = tagName(element as Parameters<typeof tagName>[0]);
   return new DiagnosticError(
-    `vanilla-css: class name '${className}' is derived from elements with different styles` +
+    `style extraction: class name '${className}' is derived from elements with different styles` +
       `.\n` +
       `  <${tag}> resolves to: ${next}\n` +
       `  an earlier element resolved to: ${first}\n` +
       `Merging these would put conflicting declarations in a single '.${className}' rule. ` +
       `Disambiguate with a distinct token, a distinct component, or \`resolve.name\`.`,
-    { ...diagnosticLocationFromNode(element), diagnosticCode: 'tailwind-class-collision' }
+    { ...diagnosticLocationFromNode(element), diagnosticCode: 'style-class-collision' }
   );
 }

@@ -3,12 +3,11 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { compile as compileSource } from '../../compile';
-import { type CompilerTransform, jsx } from '../../config';
+import type { CompilerPlugin } from '../../config';
+import { clearTokenModuleCache } from '../../styles';
 import type { DesignSystem } from '../design-system';
 import { loadDesignSystem } from '../design-system';
-import type { CompiledRule } from '../emit';
-import { clearTokenModuleCache } from '../evaluator';
-import { tailwind, tailwindPlugin } from '../plugin';
+import { tailwind } from '../plugin';
 
 const MINIMAL_CSS = `
 @import "tailwindcss";
@@ -45,15 +44,16 @@ const writeFixture = (relative: string, content: string): string => {
 };
 
 const collapse = (s: string): string => s.replace(/\s+/g, '');
+const tailwindPlugin = tailwind;
 
 const compile = (
   source: string,
   options: {
     filename?: string | undefined;
     target?: 'jsx' | undefined;
-    plugins?: readonly CompilerTransform[] | undefined;
+    plugins?: readonly CompilerPlugin[] | undefined;
   } = {}
-) => compileSource(source, { filename: options.filename, config: { target: jsx({ transforms: options.plugins }) } });
+) => compileSource(source, { filename: options.filename, config: { plugins: options.plugins } });
 
 const compileTailwind = (source: string, options: Parameters<typeof tailwind>[0], filename?: string) =>
   compileSource(source, { filename, config: { plugins: [tailwind(options)] } });
@@ -68,22 +68,13 @@ describe('tailwindPlugin — mode: preserve', () => {
     expect(code).toContain('"flex items-center"');
   });
 
-  it('skips extracted rule callbacks', async () => {
+  it('does not emit CSS assets', async () => {
     const source = `function App(){ return <Foo className="flex"/>; }`;
-    let called = 0;
-    await compile(source, {
+    const { assets } = await compile(source, {
       target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'preserve',
-          onRules: () => {
-            called++;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'preserve' })],
     });
-    expect(called).toBe(0);
+    expect(assets).toEqual([]);
   });
 });
 
@@ -120,7 +111,7 @@ function App(){ return <Foo className={['flex', styles.button.base]}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toContain('"flex rounded p-2"');
   });
@@ -132,7 +123,7 @@ function App(){ return <Foo className={['flex', styles.unknown]}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, mode: 'inline', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'inline' })],
     });
     expect(code).toMatch(/className=\{\[/);
   });
@@ -171,23 +162,12 @@ describe('tailwindPlugin — mode: extract', () => {
 
   it('extracts className array utilities and preserves group marker classes', async () => {
     const source = `function App(){ return <PlayButton className={['flex', 'group']}/>; }`;
-    let captured: readonly CompiledRule[] | undefined;
-    const { code } = await compile(source, {
+    const { assets, code } = await compile(source, {
       target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"play-button group"');
-    expect(captured).toBeDefined();
-    expect(captured!.map((r) => r.className)).toContain('play-button');
-    expect(captured!.flatMap((r) => r.utility.declarations)).toContainEqual({ property: 'display', value: 'flex' });
+    expect(collapse(assets[0]!.source)).toContain(collapse('.play-button{display:flex;}'));
   });
 
   it('keeps dynamic className array expressions', async () => {
@@ -250,7 +230,7 @@ function App(){ return <div className={slider.root}/>; }`;
     const { code } = await compile(source, {
       filename: sourcePath,
       target: 'jsx',
-      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"slider-root"');
   });
@@ -270,7 +250,7 @@ function App(){ return <div><ChevronIcon className={[icon, menu.chevron]}/><Chev
     const { code } = await compile(source, {
       filename: sourcePath,
       target: 'jsx',
-      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"menu-chevron"');
     expect(code).toContain('"input-feedback-bubble-shown-seek"');
@@ -307,7 +287,7 @@ function App(){ return <span className={[styles.seek.label, styles.seek.labelBac
     const { code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
 
     expect(code).toContain('"seek-label-backward"');
@@ -328,7 +308,7 @@ function App({ type, className }){
     const { code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
 
     expect(code).toContain('"slider-fill-base"');
@@ -395,7 +375,6 @@ function App(){ return <ChevronIcon className={menu.chevron}/>; }`;
         tailwindPlugin({
           design,
           mode: 'extract',
-          sourcePath,
           resolve: {
             name: (ctx) => ctx.componentName ?? ctx.defaultName,
           },
@@ -405,45 +384,23 @@ function App(){ return <ChevronIcon className={menu.chevron}/>; }`;
     expect(code).toContain('"chevron-icon"');
   });
 
-  it('reports extracted rules through onRules', async () => {
+  it('renders extracted rules to CSS assets', async () => {
     const source = `function App(){ return <Foo className="flex"/>; }`;
-    let captured: readonly CompiledRule[] | undefined;
-    await compile(source, {
+    const { assets } = await compile(source, {
       target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(captured).toBeDefined();
-    expect(captured!.length).toBeGreaterThan(0);
-    expect(captured![0]!.className).toBe('foo');
-    expect(captured![0]!.utility.declarations).toContainEqual({ property: 'display', value: 'flex' });
+    expect(collapse(assets[0]!.source)).toContain(collapse('.foo{display:flex;}'));
   });
 
-  it('emits one rule per extracted utility', async () => {
+  it('renders declarations from each extracted utility', async () => {
     const source = `function App(){ return <Foo className={['flex', 'opacity-50']}/>; }`;
-    let captured: readonly CompiledRule[] | undefined;
-    await compile(source, {
+    const { assets } = await compile(source, {
       target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(captured!.length).toBe(2);
-    expect(captured![0]!.className).toBe('foo');
-    expect(captured![1]!.className).toBe('foo');
+    const css = assets[0]!.source;
+    expect(collapse(css)).toContain(collapse('.foo{display:flex;opacity:50%;}'));
   });
 
   it('resolves imported tokens before extraction', async () => {
@@ -456,23 +413,13 @@ function App(){ return <ChevronIcon className={menu.chevron}/>; }`;
 function App(){ return <Foo className={styles.button}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
-    let captured: readonly CompiledRule[] | undefined;
-    await compile(source, {
+    const { assets, code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          sourcePath,
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(captured!.length).toBe(2);
-    expect(captured![0]!.className).toBe('button');
+    expect(code).toContain('"button"');
+    expect(collapse(assets[0]!.source)).toContain(collapse('.button{display:flex;gap:calc(var(--spacing) * 2);}'));
   });
 
   it('resolves imported tokens with explicit extensions before extraction', async () => {
@@ -488,7 +435,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [tailwindPlugin({ design, mode: 'extract', sourcePath })],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"button"');
   });
@@ -503,66 +450,51 @@ function App(){ return <Foo className={styles.button}/>; }`;
 function App(){ return <Foo className={styles.button}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
-    let captured: readonly CompiledRule[] | undefined;
-    const { code } = await compile(source, {
+    const { assets, code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
       plugins: [
         tailwindPlugin({
           design,
           mode: 'extract',
-          sourcePath,
           resolve: {
             tokenModule: (specifier) => (specifier === '@fixture/tokens' ? tokenPath : null),
-          },
-          onRules: (rules) => {
-            captured = rules;
           },
         }),
       ],
     });
 
     expect(code).toContain('"button"');
-    expect(captured!.length).toBe(2);
+    expect(collapse(assets[0]!.source)).toContain(collapse('.button{display:flex;gap:calc(var(--spacing) * 2);}'));
   });
 
   it('assigns rule groups with resolve.group', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
-    let captured: readonly CompiledRule[] | undefined;
-    await compile(source, {
+    const { assets } = await compile(source, {
       target: 'jsx',
       plugins: [
         tailwindPlugin({
           design,
           mode: 'extract',
+          emit: { mode: 'split' },
           resolve: {
             group: ({ className }) => (className.startsWith('play-') ? 'controls' : undefined),
-          },
-          onRules: (rules) => {
-            captured = rules;
           },
         }),
       ],
     });
-    expect(captured![0]!.group).toBe('controls');
+    const controls = assets.find((asset) => asset.fileName.endsWith('controls.css'));
+    expect(controls).toBeDefined();
+    expect(collapse(controls!.source)).toContain(collapse('.play-button{display:flex;}'));
   });
 
   it('skips dynamic conditional class expressions', async () => {
     const source = `function App(){ return <Foo className={isOn ? 'a' : 'b'}/>; }`;
-    let captured: readonly CompiledRule[] | undefined;
-    const { code } = await compile(source, {
+    const { assets, code } = await compile(source, {
       target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(captured).toBeUndefined();
+    expect(assets).toEqual([]);
     expect(code).toContain('isOn');
   });
 
@@ -577,25 +509,16 @@ const iconButton = [styles.button.base, styles.button.icon];
 function App(){ return <PlayButton className={iconButton}/>; }`;
     const sourcePath = writeFixture('skin.tsx', source);
 
-    let captured: readonly CompiledRule[] | undefined;
-    const { code } = await compile(source, {
+    const { assets, code } = await compile(source, {
       target: 'jsx',
       filename: sourcePath,
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          sourcePath,
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"icon-button"');
-    expect(captured!.length).toBe(3);
-    const utilities = captured!.map((r) => r.utility.utility).sort();
-    expect(utilities).toEqual(['flex', 'h-4', 'w-4']);
+    const css = assets[0]!.source;
+    expect(collapse(css)).toContain(
+      collapse('.icon-button{display:flex;height:calc(var(--spacing) * 4);width:calc(var(--spacing) * 4);}')
+    );
   });
 
   it('preserves dynamic className suffixes after extraction', async () => {
@@ -611,23 +534,13 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     const source = `function App(){
       return <PlayButton className="flex"><PlayIcon className="opacity-50"/></PlayButton>;
     }`;
-    let captured: readonly CompiledRule[] | undefined;
-    const { code } = await compile(source, {
+    const { assets, code } = await compile(source, {
       target: 'jsx',
-      plugins: [
-        tailwindPlugin({
-          design,
-          mode: 'extract',
-          onRules: (rules) => {
-            captured = rules;
-          },
-        }),
-      ],
+      plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(captured!.length).toBe(2);
-    const names = captured!.map((r) => r.className);
-    expect(names).toContain('play-button');
-    expect(names).toContain('play-icon');
+    const css = assets[0]!.source;
+    expect(collapse(css)).toContain(collapse('.play-button{display:flex;}'));
+    expect(collapse(css)).toContain(collapse('.play-icon{opacity:50%;}'));
     expect(collapse(code)).toContain(collapse(`<PlayButton className="play-button">`));
     expect(collapse(code)).toContain(collapse(`<PlayIcon className="play-icon"/>`));
   });

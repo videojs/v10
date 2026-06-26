@@ -5,7 +5,7 @@ import ts from 'typescript';
  * referenced anywhere else in the SourceFile, when `<expr>` is provably
  * side-effect-free (a className array of literals/token refs).
  *
- * Source-to-source rewrites (`tailwindPlugin` resolving local className arrays
+ * Source-to-source rewrites (`tailwind` resolving local className arrays
  * into class strings, `replace`/`childAsProp` replacing JSX) frequently leave
  * locals stranded. This pass cleans them up so the generated artifact doesn't
  * trip TypeScript's `noUnusedLocals` warning.

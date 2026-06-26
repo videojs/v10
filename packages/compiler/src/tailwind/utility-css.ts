@@ -3,6 +3,8 @@ import {
   type Location2 as CssLocation,
   type PropertyRule as CssPropertyRule,
   type Rule as CssRule,
+  type Selector as CssSelector,
+  type SelectorList as CssSelectorList,
   type StyleRule as CssStyleRule,
   type StyleSheet as CssStyleSheet,
   transform,
@@ -10,6 +12,11 @@ import {
 import type { DesignSystem } from './design-system';
 
 const encoder = new TextEncoder();
+
+type AtRuleCssRule = Extract<
+  CssRule,
+  { type: 'media' | 'container' | 'supports' | 'layer-block' | 'moz-document' | 'scope' | 'starting-style' }
+>;
 
 /** A CSS declaration extracted from a utility. */
 export interface Declaration {
@@ -70,7 +77,7 @@ export interface UtilityCss {
   /**
    * `@property` registrations Tailwind emitted for this utility. These supply
    * the typed defaults for `--tw-*` variables referenced (but not set) by the
-   * declarations — see `emitCss`'s `properties` option.
+   * declarations — see the Tailwind CSS renderer's `properties` option.
    */
   properties?: readonly PropertyRule[];
 }
@@ -159,8 +166,8 @@ function collectRuleBranch(
       collectStyleRuleBranches(rule.value, variants, branches, context);
       return;
     case 'nesting': {
-      const selector = selectorTailFromStyleRule(rule.value.style, context);
-      collectStyleRuleBranches(rule.value.style, [...variants, classifySelectorTail(selector)], branches, context);
+      const variant = selectorVariantFromStyleRule(rule.value.style, context);
+      collectStyleRuleBranches(rule.value.style, [...variants, variant], branches, context);
       return;
     }
     case 'nested-declarations':
@@ -190,8 +197,8 @@ function collectStyleRuleBranches(
 
   for (const nestedRule of rule.rules ?? []) {
     if (nestedRule.type === 'style') {
-      const selector = selectorTailFromStyleRule(nestedRule.value, context);
-      collectStyleRuleBranches(nestedRule.value, [...variants, classifySelectorTail(selector)], branches, context);
+      const variant = selectorVariantFromStyleRule(nestedRule.value, context);
+      collectStyleRuleBranches(nestedRule.value, [...variants, variant], branches, context);
       continue;
     }
     collectRuleBranch(nestedRule, variants, branches, context);
@@ -222,18 +229,51 @@ function pushNestedDeclarationBranch(
   branches.push({ declarations, variants });
 }
 
-function atRuleVariantFromRule(rule: CssRule, context: AnalysisContext): Variant {
+function atRuleVariantFromRule(rule: AtRuleCssRule, context: AnalysisContext): Variant {
   const header = ruleHeader(rule, context);
-  const match = header.match(/^@([\w-]+)\s*([\s\S]*)$/);
-  const name = match?.[1] ?? rule.type;
-  const params = match?.[2]?.trim() ?? '';
+  const name = atRuleName(rule);
+  const params = atRuleParams(header);
 
   return {
-    kind:
-      name === 'media' ? 'media' : name === 'container' ? 'container' : name === 'supports' ? 'supports' : 'at-rule',
+    kind: atRuleKind(rule),
     atRule: { name, params },
     raw: params ? `@${name} ${params}` : `@${name}`,
   };
+}
+
+function atRuleKind(rule: AtRuleCssRule): VariantKind {
+  switch (rule.type) {
+    case 'media':
+    case 'container':
+    case 'supports':
+      return rule.type;
+    default:
+      return 'at-rule';
+  }
+}
+
+function atRuleName(rule: AtRuleCssRule): string {
+  switch (rule.type) {
+    case 'media':
+    case 'container':
+    case 'supports':
+    case 'scope':
+    case 'starting-style':
+      return rule.type;
+    case 'layer-block':
+      return 'layer';
+    case 'moz-document':
+      return '-moz-document';
+  }
+}
+
+function atRuleParams(header: string): string {
+  const trimmed = header.trim();
+  if (!trimmed.startsWith('@')) return '';
+
+  let i = 1;
+  while (i < trimmed.length && !/\s/.test(trimmed[i]!)) i++;
+  return trimmed.slice(i).trim();
 }
 
 function selectorTailFromStyleRule(rule: CssStyleRule, context: AnalysisContext): string {
@@ -245,6 +285,11 @@ function selectorTailFromStyleRule(rule: CssStyleRule, context: AnalysisContext)
   const rawTail = header.slice(1);
   const trimmedRight = rawTail.replace(/\s+$/, '');
   return /^\s/.test(rawTail) ? ` ${trimmedRight.trim()}` : trimmedRight.trim();
+}
+
+function selectorVariantFromStyleRule(rule: CssStyleRule, context: AnalysisContext): Variant {
+  const tail = selectorTailFromStyleRule(rule, context);
+  return classifySelector(rule.selectors, tail);
 }
 
 function collectProperties(rules: readonly CssRule[], context: AnalysisContext): PropertyRule[] {
@@ -526,13 +571,43 @@ function readBalancedBlock(body: string, openIdx: number): BalancedBlock | null 
   return null;
 }
 
-function classifySelectorTail(tail: string): Variant {
-  if (/^:is\(:where\(\.group/.test(tail)) return { kind: 'group', selector: tail, raw: tail };
-  if (/^:is\(:where\(\.peer/.test(tail)) return { kind: 'peer', selector: tail, raw: tail };
-  if (tail.startsWith('[')) return { kind: 'attribute', selector: tail, raw: tail };
-  if (tail.startsWith(':')) return { kind: 'pseudo', selector: tail, raw: tail };
-  if (tail.startsWith('>') || tail.startsWith('+') || tail.startsWith('~') || tail.startsWith(' ')) {
+function classifySelector(selectors: CssSelectorList, tail: string): Variant {
+  const components = selectorTailComponents(selectors[0] ?? []);
+
+  if (selectorContainsClass(components, 'group')) return { kind: 'group', selector: tail, raw: tail };
+  if (selectorContainsClass(components, 'peer')) return { kind: 'peer', selector: tail, raw: tail };
+  if (components.some((component) => component.type === 'attribute')) {
+    return { kind: 'attribute', selector: tail, raw: tail };
+  }
+  if (components.some((component) => component.type === 'pseudo-class' || component.type === 'pseudo-element')) {
+    return { kind: 'pseudo', selector: tail, raw: tail };
+  }
+  if (components.some((component) => component.type === 'combinator')) {
     return { kind: 'descendant', selector: tail, raw: tail };
   }
   return { kind: 'parent', selector: tail, raw: tail };
+}
+
+function selectorTailComponents(selector: CssSelector): CssSelector {
+  return selector[0]?.type === 'nesting' ? selector.slice(1) : selector;
+}
+
+function selectorContainsClass(selector: CssSelector, className: string): boolean {
+  for (const component of selector) {
+    if (component.type === 'class' && classNameMatches(component.name, className)) return true;
+    for (const nested of selectorLists(component)) {
+      if (selectorContainsClass(nested, className)) return true;
+    }
+  }
+  return false;
+}
+
+function classNameMatches(actual: string, expected: string): boolean {
+  return actual === expected || actual.startsWith(`${expected}/`) || actual.startsWith(`${expected}\\/`);
+}
+
+function selectorLists(component: CssSelector[number]): readonly CssSelector[] {
+  if (!('selectors' in component) || !component.selectors) return [];
+  const selectors = component.selectors;
+  return Array.isArray(selectors[0]) ? (selectors as CssSelector[]) : [selectors as CssSelector];
 }

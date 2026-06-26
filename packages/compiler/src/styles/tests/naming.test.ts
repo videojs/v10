@@ -1,9 +1,10 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
+import { DiagnosticError } from '../../diagnostics';
 import type { JsxElementLike } from '../../jsx';
 import { parse } from '../../parse';
-import type { StyleSegment } from '../../styles';
-import { DiagnosticError, deriveClassName } from '../naming';
+import type { StyleSegment } from '../analyze';
+import { deriveClassName } from '../naming';
 
 /** Parse a tiny TSX snippet and return its first JsxElement / JsxSelfClosingElement. */
 function firstElement(source: string): JsxElementLike {
