@@ -38,6 +38,16 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
     return () => observer.disconnect();
   }, []);
 
+  // When CDN availability flips, the tab set remounts and resets to its initial
+  // tab (cdn when available, else npm). That reset swaps in new DOM nodes rather
+  // than toggling `data-tab-active` on existing ones, so the observer above
+  // doesn't catch it — sync the store explicitly. Without this, a stale `cdn`
+  // can survive onto a renderer with no CDN build (e.g. Vimeo), where the usage
+  // block would then wrongly drop its required JS import lines.
+  useEffect(() => {
+    installMethod.set(supportsCdn ? 'cdn' : 'npm');
+  }, [supportsCdn]);
+
   return (
     <div ref={ref}>
       {/* Remount the tab set when CDN availability changes so the active tab
