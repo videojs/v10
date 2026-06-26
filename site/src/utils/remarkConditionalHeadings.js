@@ -3,6 +3,7 @@ import * as path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
+import { resolveComponentSlug, resolveMediaSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from './mediaReferenceModel';
@@ -141,10 +142,7 @@ function injectComponentReferenceHeadings(node, headingsWithMetadata, reservedSl
   const componentName = typeof componentAttr?.value === 'string' ? componentAttr.value : null;
   if (!componentName) return;
 
-  const slugAttr = node.attributes?.find((a) => a.name === 'slug');
-  const slugValue = typeof slugAttr?.value === 'string' ? slugAttr.value : null;
-
-  const json = readComponentRefJson(slugValue ?? kebabCase(componentName));
+  const json = readComponentRefJson(resolveComponentSlug(componentName));
   if (!json) return;
 
   const partOrderAttr = node.attributes?.find((a) => a.name === 'partOrder');
@@ -228,10 +226,7 @@ function injectMediaReferenceHeadings(node, headingsWithMetadata, reservedSlugs)
   const mediaName = typeof mediaAttr?.value === 'string' ? mediaAttr.value : null;
   if (!mediaName) return;
 
-  const slugAttr = node.attributes?.find((a) => a.name === 'slug');
-  const slugValue = typeof slugAttr?.value === 'string' ? slugAttr.value : null;
-
-  const json = readMediaRefJson(slugValue ?? kebabCase(mediaName));
+  const json = readMediaRefJson(resolveMediaSlug(mediaName));
   if (!json) return;
 
   const mediaModel = createMediaReferenceModel(mediaName, json);
