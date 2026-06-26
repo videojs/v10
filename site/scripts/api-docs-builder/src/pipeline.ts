@@ -34,6 +34,7 @@ import { kebabToPascal, partKebabFromSource, sortProps } from './utils.js';
 // Components whose PascalCase name doesn't match simple kebab-to-pascal conversion.
 export const NAME_OVERRIDES: Record<string, string> = {
   'pip-button': 'PiPButton',
+  'airplay-button': 'AirPlayButton',
 };
 
 // Parts whose HTML element file doesn't follow the `{component}-{part}-element.ts` convention.
