@@ -10,7 +10,7 @@ export const streamTypeFeature = definePlayerFeature({
     streamType: MediaStreamTypes.UNKNOWN,
   }),
 
-  // Prefer the media's own `streamType` (e.g. `HlsMedia`, which derives it from
+  // Prefer the media's own `streamType` (e.g. `HlsJsMedia`, which derives it from
   // manifest metadata and dispatches `streamtypechange`).  For plain elements
   // without that capability, fall back to duration-based detection so the
   // store still reports `live`/`on-demand` for native MP4 / native HLS.

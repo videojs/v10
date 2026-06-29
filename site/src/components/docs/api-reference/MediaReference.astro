@@ -1,6 +1,5 @@
 ---
 import { getEntry } from 'astro:content';
-import { kebabCase } from 'es-toolkit/string';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import A from '@/components/typography/A.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
@@ -14,6 +13,7 @@ import Th from '@/components/typography/Th.astro';
 import Thead from '@/components/typography/Thead.astro';
 import Tr from '@/components/typography/Tr.astro';
 import type { MediaReference } from '@/types/media-reference';
+import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
 import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
 import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
 import CodeChip from './CodeChip.astro';
@@ -26,7 +26,7 @@ interface Props {
 const { media } = Astro.props;
 const framework = Astro.params.framework === 'react' ? 'react' : 'html';
 
-const entry = await getEntry('mediaReference', kebabCase(media));
+const entry = await getEntry('mediaReference', resolveReferenceSlug(media));
 const ref: MediaReference | null = entry?.data ?? null;
 if (!ref) return;
 

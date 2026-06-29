@@ -1,3 +1,4 @@
+import cdnMedia from '@/content/cdn-media.json';
 import {
   generateHTMLInstallCode,
   generateHTMLUsageCode,
@@ -7,6 +8,8 @@ import {
   type InstallationOptions,
 } from '@/utils/installation/codegen';
 
+const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
+
 export function formatInstallationCode(opts: InstallationOptions): string {
   if (opts.framework === 'html') {
     return formatHTMLInstallation(opts);
@@ -15,7 +18,7 @@ export function formatInstallationCode(opts: InstallationOptions): string {
 }
 
 function formatHTMLInstallation(opts: InstallationOptions): string {
-  const install = generateHTMLInstallCode(opts);
+  const install = generateHTMLInstallCode(opts, CDN_MEDIA_SUBPATHS);
   const usage = generateHTMLUsageCode(opts);
   const sections: string[] = [];
 

@@ -5,9 +5,10 @@
   "scripts": {
     "api-docs": "tsx scripts/api-docs-builder/src/index.ts",
     "ejected-skins": "tsx scripts/build-ejected-skins.ts",
+    "cdn-manifest": "tsx scripts/build-cdn-manifest.ts",
     "dev": "NETLIFY_DEV=1 astro dev",
     "build": "astro build",
-    "clean": "rm -rf dist .netlify src/content/generated-component-reference src/content/generated-util-reference src/content/ejected-skins.json",
+    "clean": "rm -rf dist .netlify src/content/generated-component-reference src/content/generated-util-reference src/content/ejected-skins.json src/content/cdn-media.json",
     "astro": "astro",
     "test": "vitest run",
     "test:watch": "vitest",

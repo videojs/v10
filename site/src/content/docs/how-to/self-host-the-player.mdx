@@ -35,7 +35,7 @@ You get one file (plus a sourcemap), no runtime requests to a CDN, and only the 
 To skip the bundler, copy the prebuilt CDN bundle to your server as-is.
 
 <Aside type="caution" title="Copy the whole cdn/ directory">
-The CDN entry files like `video.js` and `media/hls-video.js` are not standalone. They import shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them. Copying a single file breaks at runtime, so mirror the entire `cdn/` directory and keep its layout intact.
+The CDN entry files like `video.js` and `media/hlsjs-video.js` are not standalone. They import shared, content-hashed chunks (`default-*.js`, `ui-*.js`, and more) that live alongside them. Copying a single file breaks at runtime, so mirror the entire `cdn/` directory and keep its layout intact.
 </Aside>
 
 ```bash
@@ -58,7 +58,7 @@ Hashed chunk names change between releases, so re-copy the directory whenever yo
 
 HLS and other non-default media need their own module on top of the player. Match it in your self-hosted build:
 
-- **Bundle:** add the media import to your entry file (`import '@videojs/html/media/hls-video';`) and use the matching `<hls-video>` element with your `.m3u8` source.
-- **Mirror:** serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hls-video.js"></script>`).
+- **Bundle:** add the media import to your entry file (`import '@videojs/html/media/hlsjs-video';`) and use the matching `<hlsjs-video>` element with your `.m3u8` source.
+- **Mirror:** serve the media file too and add its script tag (`<script type="module" src="/videojs/media/hlsjs-video.js"></script>`).
 
 Without the media module the player UI renders but the video never loads, with no console error.

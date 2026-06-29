@@ -7,7 +7,15 @@
  */
 
 declare module '@/utils/installation/types' {
-  export type Renderer = 'background-video' | 'hls' | 'html5-audio' | 'html5-video';
+  export type Renderer =
+    | 'background-video'
+    | 'dash'
+    | 'hls'
+    | 'html5-audio'
+    | 'html5-video'
+    | 'mux-audio'
+    | 'mux-video'
+    | 'vimeo';
   export type Skin = 'video' | 'audio' | 'minimal-video' | 'minimal-audio' | 'none';
   export type UseCase = 'default-video' | 'default-audio' | 'background-video';
   export type InstallMethod = 'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun';
@@ -31,7 +39,8 @@ declare module '@/utils/installation/codegen' {
   export function validateInstallationOptions(opts: InstallationOptions): ValidationResult;
 
   export function generateHTMLInstallCode(
-    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>
+    opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
+    cdnMediaSubpaths: readonly string[]
   ): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string>;
 
   export function generateReactInstallCode(): Record<'npm' | 'pnpm' | 'yarn' | 'bun', string>;
@@ -58,4 +67,37 @@ declare module '@/utils/installation/detect-renderer' {
   }
 
   export function detectRenderer(url: string, useCase: UseCase): DetectionResult | null;
+}
+
+declare module '@/utils/installation/cdn-code' {
+  import type { Renderer, Skin, UseCase } from '@/utils/installation/types';
+
+  export function generateCdnCode(
+    useCase: UseCase,
+    skin: Skin,
+    renderer: Renderer,
+    cdnMediaSubpaths: readonly string[]
+  ): string;
+  export function rendererSupportsCdn(renderer: Renderer, cdnMediaSubpaths: readonly string[]): boolean;
+}
+
+declare module '@/utils/installation/renderer-options' {
+  import type { Renderer, UseCase } from '@/utils/installation/types';
+
+  // Mirrors the site's `SelectOption` shape, narrowed to the fields the CLI
+  // uses. The site module imports that type from a React component; the CLI only
+  // ever reads `value`/`label`.
+  interface RendererOption {
+    value: Renderer | null;
+    label: string;
+    disabled?: boolean;
+  }
+
+  export const RENDERER_LABELS: Record<Renderer, string>;
+  export function buildOptions(useCase: UseCase): RendererOption[];
+}
+
+declare module '@/content/cdn-media.json' {
+  const entries: Array<{ id: string }>;
+  export default entries;
 }

@@ -3,8 +3,8 @@ import { expect, test } from '@playwright/test';
 test.describe('XSS prevention — CustomMediaElement shadow root', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/pages/html-video-hls.html');
-    // Wait for hls-video to be defined before creating elements dynamically.
-    await page.waitForFunction(() => !!customElements.get('hls-video'));
+    // Wait for hlsjs-video to be defined before creating elements dynamically.
+    await page.waitForFunction(() => !!customElements.get('hlsjs-video'));
   });
 
   test('quote injection in crossorigin does not fire onerror handler', async ({ page }) => {
@@ -13,8 +13,8 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
       (window as any).__xss = undefined;
       const container = document.createElement('div');
       document.body.appendChild(container);
-      container.innerHTML = '<hls-video crossorigin="&quot; onerror=&quot;window.__xss=1&quot;"></hls-video>';
-      const el = container.querySelector('hls-video')!;
+      container.innerHTML = '<hlsjs-video crossorigin="&quot; onerror=&quot;window.__xss=1&quot;"></hlsjs-video>';
+      const el = container.querySelector('hlsjs-video')!;
       return {
         xss: (window as any).__xss,
         hasOnerror: el.shadowRoot?.querySelector('[onerror]') !== null,
@@ -33,8 +33,8 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
       const container = document.createElement('div');
       document.body.appendChild(container);
       container.innerHTML =
-        '<hls-video crossorigin="&quot;&gt;&lt;img src=x onerror=&quot;window.__xss=1&quot;&gt;"></hls-video>';
-      const el = container.querySelector('hls-video')!;
+        '<hlsjs-video crossorigin="&quot;&gt;&lt;img src=x onerror=&quot;window.__xss=1&quot;&gt;"></hlsjs-video>';
+      const el = container.querySelector('hlsjs-video')!;
       return {
         xss: (window as any).__xss,
         hasImg: el.shadowRoot?.querySelector('img') !== null,
@@ -51,8 +51,8 @@ test.describe('XSS prevention — CustomMediaElement shadow root', () => {
     const result = await page.evaluate(() => {
       const container = document.createElement('div');
       document.body.appendChild(container);
-      container.innerHTML = '<hls-video crossorigin="anonymous"></hls-video>';
-      const el = container.querySelector('hls-video')!;
+      container.innerHTML = '<hlsjs-video crossorigin="anonymous"></hlsjs-video>';
+      const el = container.querySelector('hlsjs-video')!;
       const video = el.shadowRoot?.querySelector('video');
       return { crossorigin: video?.getAttribute('crossorigin') };
     });

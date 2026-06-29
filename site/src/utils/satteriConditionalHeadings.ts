@@ -5,6 +5,7 @@ import { kebabCase } from 'es-toolkit/string';
 import GithubSlugger from 'github-slugger';
 import type { MdastPluginInput, MdxJsxFlowElement } from 'satteri';
 import { defineMdastPlugin } from 'satteri';
+import { resolveReferenceSlug } from './api-reference-overrides';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from './componentReferenceModel';
 import { buildFeatureReferenceTocHeadings, createFeatureReferenceModel } from './featureReferenceModel';
 import { buildMediaReferenceTocHeadings, createMediaReferenceModel } from './mediaReferenceModel';
@@ -155,7 +156,7 @@ function readRefJson(dir: string, key: string): unknown {
 function injectComponentReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const componentName = getStringAttr(node, 'component');
   if (!componentName) return;
-  const json = readRefJson(COMPONENT_REF_DIR, kebabCase(componentName));
+  const json = readRefJson(COMPONENT_REF_DIR, resolveReferenceSlug(componentName));
   if (!json) return;
   const partOrder = extractArrayAttr(node, 'partOrder');
   const model = createComponentReferenceModel(
@@ -188,7 +189,7 @@ function injectUtilReferenceHeadings(node: MdxJsxFlowElement, headings: Conditio
 function injectMediaReferenceHeadings(node: MdxJsxFlowElement, headings: ConditionalHeading[]) {
   const mediaName = getStringAttr(node, 'media');
   if (!mediaName) return;
-  const json = readRefJson(MEDIA_REF_DIR, kebabCase(mediaName));
+  const json = readRefJson(MEDIA_REF_DIR, resolveReferenceSlug(mediaName));
   if (!json) return;
   const model = createMediaReferenceModel(mediaName, json);
   headings.push(...buildMediaReferenceTocHeadings(model));

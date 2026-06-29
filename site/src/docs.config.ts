@@ -87,7 +87,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/background-video' },
       { slug: 'reference/dash-video' },
-      { slug: 'reference/hls-video' },
+      { slug: 'reference/hlsjs-video' },
       { slug: 'reference/mux-audio' },
       { slug: 'reference/mux-video' },
       { slug: 'reference/native-hls-video' },

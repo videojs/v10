@@ -6,7 +6,7 @@ import { definePlayerFeature } from '../../feature';
 /**
  * Player feature exposing `liveEdgeStart` and `targetLiveWindow` in store
  * state for media that implements `MediaLiveCapability` (currently
- * `HlsMedia` and its delegates).
+ * `HlsJsMedia` and its delegates).
  *
  * - `liveEdgeStart` — presentation time marking the start of the Live Edge
  *   Window. Playing at the live edge when `currentTime >= liveEdgeStart`.

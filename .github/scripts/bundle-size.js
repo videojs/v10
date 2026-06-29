@@ -84,7 +84,7 @@ const PRESET_CONFIGS = [
  * Export name lookup tables for preset virtual bundles.
  *
  * Each key is `{preset}/{variant}` where variant is 'skin', 'player', 'media',
- * 'hls-media', or 'features'. Values are `{ path, name }` where path is relative
+ * 'hlsjs-video', or 'features'. Values are `{ path, name }` where path is relative
  * to the package dist/default/ directory and name is the exported identifier.
  */
 const PRESET_EXPORTS = {
@@ -97,7 +97,7 @@ const PRESET_EXPORTS = {
     'audio/player': { path: 'define/audio/player.js', name: 'AudioPlayerElement' },
     'background/skin': { path: 'define/background/skin.js', name: 'BackgroundVideoSkinElement' },
     'background/player': { path: 'define/background/player.js', name: 'BackgroundVideoPlayerElement' },
-    'hls-media': { path: 'define/media/hls-video.js', name: 'HlsVideoElement' },
+    'hlsjs-video': { path: 'define/media/hlsjs-video.js', name: 'HlsJsVideoElement' },
   },
   react: {
     'video/skin': { path: 'presets/video/skin.js', name: 'VideoSkin' },
@@ -108,7 +108,7 @@ const PRESET_EXPORTS = {
     'audio/media': { path: 'media/audio.js', name: 'Audio' },
     'background/skin': { path: 'presets/background/skin.js', name: 'BackgroundVideoSkin' },
     'background/media': { path: 'media/background-video/index.js', name: 'BackgroundVideo' },
-    'hls-media': { path: 'media/hls-video/index.js', name: 'HlsVideo' },
+    'hlsjs-video': { path: 'media/hlsjs-video/index.js', name: 'HlsJsVideo' },
     'video/features': { path: '../../../core/dist/default/dom/store/features/presets.js', name: 'videoFeatures' },
     'audio/features': { path: '../../../core/dist/default/dom/store/features/presets.js', name: 'audioFeatures' },
     'background/features': { path: '../../../core/dist/default/dom/store/features/presets.js', name: 'backgroundFeatures' },
@@ -143,7 +143,7 @@ function buildPresetEntry(pkgShortName, config, distDir) {
   if (!addExport(`${config.preset}/player`)) return null;
   if (!addExport(`${config.preset}/media`)) return null;
   if (!addExport(`${config.preset}/features`)) return null;
-  if (config.hls && !addExport('hls-media')) return null;
+  if (config.hls && !addExport('hlsjs-video')) return null;
 
   return lines.length > 0 ? lines.join('\n') : null;
 }

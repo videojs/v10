@@ -10,7 +10,7 @@ pnpm dev:sandbox             # sandbox + workspace package watch
 pnpm dev                     # also runs the docs site
 ```
 
-Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hls-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
+Open the printed URL. The root route renders an interactive shell — a navbar with dropdowns for platform (HTML, React, CDN), preset (`video`, `hlsjs-video`, `audio`, etc.), skin, styling (CSS or Tailwind), and source — that previews the selected combination in an iframe. Use the **Open** button to pop the preview out into its own tab.
 
 The shell covers the main combinatorial matrix. One-off templates not in that matrix (e.g. `firefox-mse-repro`, `spf-segment-loading`, `simple-hls-html`) are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
 

@@ -14,7 +14,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/media/media-played-ranges/index': './src/dom/media/media-played-ranges/index.ts',
     // Media
     'dom/media/dash/index': './src/dom/media/dash/index.ts',
-    'dom/media/hls/index': './src/dom/media/hls/index.ts',
+    'dom/media/hls-js/index': './src/dom/media/hls-js/index.ts',
     'dom/media/native-hls/index': './src/dom/media/native-hls/index.ts',
     'dom/media/simple-hls-audio-only/index': './src/dom/media/simple-hls-audio-only/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',

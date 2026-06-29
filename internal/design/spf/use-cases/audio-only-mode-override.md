@@ -213,7 +213,7 @@ artifact; how the variant is signaled is orthogonal.
 
 - **Adapter shape proliferation.** Each use-case composition that gets its own
   adapter multiplies the adapter surface. As more use cases land
-  (background-looping-video, video-only-mode-override, audio-podcast mode,
+  (background-video, video-only-mode-override, audio-podcast mode,
   etc.), the inventory of `SimpleXHlsMediaElement` classes grows. Worth flagging
   as a registry-level concern; may surface a future "use-case adapter factory"
   pattern.
@@ -401,7 +401,7 @@ configuration drives end-of-stream correctly with no per-type changes.
 - **[`video-only-mode-override`](./video-only-mode-override.md)** *(coarse)* —
   inverse-axis sibling. Same shape, video-side instead of audio-side: subtract
   audio behaviors from any source to deliver video-only. Distinct from
-  `[background-looping-video]` despite shared constituent features.
+  `[background-video]` despite shared constituent features.
 
 ## See also
 
