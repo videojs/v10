@@ -133,7 +133,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-audio-menu" type="audio-track" data-setting="audio-track" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('speech', { class: 'media-icon' })}
-                    <span>Audio</span>
+                    <media-text key="menuAudioTrack"></media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -183,7 +183,7 @@ function getTemplateHTML() {
               <media-menu id="settings-audio-menu" class="media-menu__panel">
                 <media-menu-back class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
-                  Audio
+                  <media-text key="menuAudioTrack"></media-text>
                 </media-menu-back>
                 <div class="media-menu__separator"></div>
                 <media-audio-track-radio-group class="media-menu__group">
