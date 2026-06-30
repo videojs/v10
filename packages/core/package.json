@@ -16,6 +16,7 @@
     "videojs"
   ],
   "sideEffects": [
+    "./dist/*/i18n.js",
     "**/i18n/registry.js"
   ],
   "exports": {

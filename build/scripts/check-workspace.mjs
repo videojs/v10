@@ -383,6 +383,11 @@ function checkI18nLocales() {
     const localesDir = join(PACKAGES_DIR, `${pkg}/src/i18n/locales`);
     const expectedPlatform = new Set(['all', 'en', ...shippedTags]);
 
+    if (!existsSync(localesDir)) {
+      warnings.push(`Missing generated re-export directory packages/${pkg}/src/i18n/locales`);
+      continue;
+    }
+
     for (const tag of expectedPlatform) {
       const filePath = join(localesDir, `${tag}.ts`);
       if (!existsSync(filePath)) {
