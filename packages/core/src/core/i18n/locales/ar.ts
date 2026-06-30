@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'أغلق',
   menuSettings: 'الإعدادات',
   menuQuality: 'الجودة',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'السرعة',
   menuCaptions: 'التسميات التوضيحية',
   menuPlaybackRate: 'سرعة التشغيل',

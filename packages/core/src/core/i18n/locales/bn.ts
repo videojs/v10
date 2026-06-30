@@ -51,6 +51,7 @@ export default {
   errorDialogDismiss: 'বন্ধ করুন',
   menuSettings: 'সেটিংস',
   menuQuality: 'গুণমান',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'গতি',
   menuCaptions: 'ক্যাপশন',
   menuPlaybackRate: 'প্লেব্যাক রেট',

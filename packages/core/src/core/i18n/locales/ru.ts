@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Закрыть',
   menuSettings: 'Настройки',
   menuQuality: 'Качество',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Скорость',
   menuCaptions: 'Субтитры',
   menuPlaybackRate: 'Скорость воспроизведения',

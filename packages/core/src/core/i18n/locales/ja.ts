@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: '閉じる',
   menuSettings: '設定',
   menuQuality: '画質',
+  menuAudioTrack: 'Audio',
   menuSpeed: '速度',
   menuCaptions: 'キャプション',
   menuPlaybackRate: '再生速度',

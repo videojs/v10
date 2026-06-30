@@ -50,6 +50,7 @@ export default {
   errorDialogDismiss: 'ปิด',
   menuSettings: 'การตั้งค่า',
   menuQuality: 'คุณภาพ',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'ความเร็ว',
   menuCaptions: 'คำบรรยาย',
   menuPlaybackRate: 'อัตราการเล่น',

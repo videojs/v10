@@ -54,6 +54,7 @@ export default {
   mediaErrorFallback: 'An error occurred. Please try again.',
   menuSettings: 'Settings',
   menuQuality: 'Quality',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Speed',
   menuCaptions: 'Captions',
   menuPlaybackRate: 'Playback rate',

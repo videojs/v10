@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Zapri',
   menuSettings: 'Nastavitve',
   menuQuality: 'Kakovost',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Hitrost',
   menuCaptions: 'Podnapisi',
   menuPlaybackRate: 'Hitrost predvajanja',

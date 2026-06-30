@@ -50,6 +50,7 @@ export default {
   errorDialogDismiss: 'Đóng',
   menuSettings: 'Cài đặt',
   menuQuality: 'Chất lượng',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Tốc độ',
   menuCaptions: 'Phụ đề',
   menuPlaybackRate: 'Tốc độ phát lại',

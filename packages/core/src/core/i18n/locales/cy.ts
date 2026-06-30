@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Cau',
   menuSettings: 'Gosodiadau',
   menuQuality: 'Ansawdd',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Cyflymder',
   menuCaptions: 'Capsiynau',
   menuPlaybackRate: 'Cyfradd chwarae',

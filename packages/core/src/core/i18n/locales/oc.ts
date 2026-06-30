@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Tampar',
   menuSettings: 'Paramètres',
   menuQuality: 'Qualitat',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Velocitat',
   menuCaptions: 'Legendas',
   menuPlaybackRate: 'Velocitat de lectura',

@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: '닫기',
   menuSettings: '설정',
   menuQuality: '품질',
+  menuAudioTrack: 'Audio',
   menuSpeed: '속도',
   menuCaptions: '캡션',
   menuPlaybackRate: '재생 속도',

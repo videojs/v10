@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'बंद',
   menuSettings: 'सेटिंग्ज',
   menuQuality: 'गुणवत्ता',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'गती',
   menuCaptions: 'मथळे',
   menuPlaybackRate: 'प्लेबॅक दर',

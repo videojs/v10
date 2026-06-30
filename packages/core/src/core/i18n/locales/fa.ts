@@ -51,6 +51,7 @@ export default {
   errorDialogDismiss: 'بستن',
   menuSettings: 'تنظیمات',
   menuQuality: 'کیفیت',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'سرعت',
   menuCaptions: 'زیرنویس‌ها',
   menuPlaybackRate: 'سرعت پخش',

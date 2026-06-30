@@ -51,6 +51,7 @@ export default {
   errorDialogDismiss: 'Bağla',
   menuSettings: 'Parametrlər',
   menuQuality: 'Keyfiyyət',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Sürət',
   menuCaptions: 'Başlıqlar',
   menuPlaybackRate: 'Oynatma sürəti',

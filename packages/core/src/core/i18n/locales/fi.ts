@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'OK',
   menuSettings: 'Asetukset',
   menuQuality: 'Laatu',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Nopeus',
   menuCaptions: 'Tekstitykset',
   menuPlaybackRate: 'Toistonopeus',

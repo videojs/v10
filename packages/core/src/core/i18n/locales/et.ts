@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Sule',
   menuSettings: 'Seaded',
   menuQuality: 'Kvaliteet',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Kiirus',
   menuCaptions: 'Subtiitrid',
   menuPlaybackRate: 'Taasesituse kiirus',

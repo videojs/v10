@@ -51,6 +51,7 @@ export default {
   errorDialogDismiss: 'Zavřít',
   menuSettings: 'Nastavení',
   menuQuality: 'Kvalita',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Rychlost',
   menuCaptions: 'Titulky',
   menuPlaybackRate: 'Rychlost přehrávání',

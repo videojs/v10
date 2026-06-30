@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Dùin',
   menuSettings: 'Roghainnean',
   menuQuality: 'Càileachd',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Astar',
   menuCaptions: 'Caipseanan',
   menuPlaybackRate: 'Reat cluich',

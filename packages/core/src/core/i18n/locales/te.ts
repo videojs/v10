@@ -50,6 +50,7 @@ export default {
   errorDialogDismiss: 'మూసివేయండి',
   menuSettings: 'సెట్టింగ్‌లు',
   menuQuality: 'నాణ్యత',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'వేగం',
   menuCaptions: 'శీర్షికలు',
   menuPlaybackRate: 'ప్లేబ్యాక్ రేట్',

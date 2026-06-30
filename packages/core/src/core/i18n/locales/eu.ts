@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Itxi',
   menuSettings: 'Ezarpenak',
   menuQuality: 'Kalitatea',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Abiadura',
   menuCaptions: 'Azpitituluak',
   menuPlaybackRate: 'Erreprodukzio-abiadura',

@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'OK',
   menuSettings: 'Indstillinger',
   menuQuality: 'Kvalitet',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Hastighed',
   menuCaptions: 'Undertekster',
   menuPlaybackRate: 'Afspilningshastighed',
