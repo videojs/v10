@@ -256,7 +256,7 @@ function SettingsMenu(): ReactNode {
                   render={(props) => (
                     <div {...props}>
                       <SpeechIcon className={icon} />
-                      <span>Audio</span>
+                      <span>{t('menuAudioTrack')}</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
                         <MenuChevron />
@@ -267,14 +267,14 @@ function SettingsMenu(): ReactNode {
                 <Menu.Content className={menu.submenuPanel}>
                   <Menu.Back className={menu.back}>
                     <MenuChevron flipped />
-                    Audio
+                    {t('menuAudioTrack')}
                   </Menu.Back>
                   <Menu.Separator className={menu.separator} />
                   <Menu.RadioGroup
                     className={menu.group}
                     value={audioTrack.value}
                     onValueChange={audioTrack.setValue}
-                    aria-label="Audio tracks"
+                    aria-label={t('menuAudioTrack')}
                   >
                     {audioTrack.options.map((option) => (
                       <Menu.RadioItem
