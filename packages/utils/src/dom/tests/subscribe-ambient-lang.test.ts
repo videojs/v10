@@ -6,6 +6,7 @@ describe('subscribeAmbientLang', () => {
   afterEach(() => {
     document.documentElement.removeAttribute('lang');
     vi.restoreAllMocks();
+    vi.unstubAllGlobals();
   });
 
   it('invokes callback when html lang changes', async () => {
@@ -37,5 +38,27 @@ describe('subscribeAmbientLang', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('shares one observer across subscribers', () => {
+    const RealObserver = globalThis.MutationObserver;
+    const disconnect = vi.fn();
+    const Observer = vi.fn(function (this: MutationObserver, callback: MutationCallback) {
+      const observer = new RealObserver(callback);
+      vi.spyOn(observer, 'disconnect').mockImplementation(disconnect);
+      return observer;
+    });
+    vi.stubGlobal('MutationObserver', Observer);
+
+    const offA = subscribeAmbientLang(vi.fn());
+    const offB = subscribeAmbientLang(vi.fn());
+
+    expect(Observer).toHaveBeenCalledTimes(1);
+
+    offA();
+    expect(disconnect).not.toHaveBeenCalled();
+
+    offB();
+    expect(disconnect).toHaveBeenCalledTimes(1);
   });
 });
