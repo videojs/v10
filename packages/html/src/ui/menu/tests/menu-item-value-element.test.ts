@@ -253,6 +253,25 @@ describe('MenuItemValueElement', () => {
     });
   });
 
+  it('translates the fallback audio track label', async () => {
+    registerI18n('x-test-audio-hint', { menuAudioTrack: 'Audio test' });
+    const { value } = setup(
+      createAudioTrackStore({
+        audioTrackList: [
+          { id: '0', kind: '', label: '', language: '', enabled: false },
+          { id: '1', kind: '', label: '', language: '', enabled: true },
+        ],
+      }),
+      'audio-track',
+      'x-test-audio-hint'
+    );
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('Audio test');
+    });
+  });
+
   it('renders the active caption track label', async () => {
     registerI18n('x-test-captions-hint', { menuCaptions: 'Legendes' });
     const { value } = setup(
