@@ -67,7 +67,7 @@ export function getMenuItemSettingState(
     const track = state.tracks.find((candidate) => candidate.value === state.value);
 
     return {
-      label: track?.label ?? '',
+      label: track?.labelKey ?? track?.label ?? '',
       availability: state.availability,
     };
   }
