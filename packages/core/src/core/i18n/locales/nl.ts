@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Sluiten',
   menuSettings: 'Instellingen',
   menuQuality: 'Kwaliteit',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Snelheid',
   menuCaptions: 'Ondertiteling',
   menuPlaybackRate: 'Afspeelsnelheid',

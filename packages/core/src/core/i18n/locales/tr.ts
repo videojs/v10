@@ -51,6 +51,7 @@ export default {
   errorDialogDismiss: 'Kapat',
   menuSettings: 'Ayarlar',
   menuQuality: 'Kalite',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Hız',
   menuCaptions: 'Altyazılar',
   menuPlaybackRate: 'Oynatma hızı',

@@ -50,6 +50,7 @@ export default {
   errorDialogDismiss: 'Zatvori',
   menuSettings: 'Postavke',
   menuQuality: 'Kvaliteta',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Brzina',
   menuCaptions: 'Titlovi',
   menuPlaybackRate: 'Brzina reprodukcije',

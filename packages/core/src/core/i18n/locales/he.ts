@@ -50,6 +50,7 @@ export default {
   errorDialogDismiss: 'סְגוֹר',
   menuSettings: 'הגדרות',
   menuQuality: 'איכות',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'מהירות',
   menuCaptions: 'כתוביות',
   menuPlaybackRate: 'קצב ניגון',

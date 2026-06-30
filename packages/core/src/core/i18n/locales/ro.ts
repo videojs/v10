@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Închidere',
   menuSettings: 'Setări',
   menuQuality: 'Calitate',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Viteză',
   menuCaptions: 'Subtitrări',
   menuPlaybackRate: 'Rată de redare',

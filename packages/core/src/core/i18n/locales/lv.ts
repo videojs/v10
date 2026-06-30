@@ -51,6 +51,7 @@ export default {
   errorDialogDismiss: 'Aizvērt',
   menuSettings: 'Iestatījumi',
   menuQuality: 'Kvalitāte',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Ātrums',
   menuCaptions: 'Subtitri',
   menuPlaybackRate: 'Atskaņošanas ātrums',

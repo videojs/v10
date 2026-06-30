@@ -50,6 +50,7 @@ export default {
   errorDialogDismiss: '關閉',
   menuSettings: '設定',
   menuQuality: '畫質',
+  menuAudioTrack: 'Audio',
   menuSpeed: '速度',
   menuCaptions: '字幕',
   menuPlaybackRate: '播放速率',

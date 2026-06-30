@@ -53,6 +53,7 @@ export default {
   errorDialogDismiss: 'Κλείσιμο',
   menuSettings: 'Ρυθμίσεις',
   menuQuality: 'Ποιότητα',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Ταχύτητα',
   menuCaptions: 'Λεζάντες',
   menuPlaybackRate: 'Ρυθμός αναπαραγωγής',

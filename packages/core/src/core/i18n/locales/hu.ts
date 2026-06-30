@@ -52,6 +52,7 @@ export default {
   errorDialogDismiss: 'Bezárás',
   menuSettings: 'Beállítások',
   menuQuality: 'Minőség',
+  menuAudioTrack: 'Audio',
   menuSpeed: 'Sebesség',
   menuCaptions: 'Feliratok',
   menuPlaybackRate: 'Lejátszási sebesség',

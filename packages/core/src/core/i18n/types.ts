@@ -60,6 +60,7 @@ export type TranslationParams = {
   mediaErrorFallback: never;
   menuSettings: never;
   menuQuality: never;
+  menuAudioTrack: never;
   menuSpeed: never;
   menuCaptions: never;
   menuPlaybackRate: never;
