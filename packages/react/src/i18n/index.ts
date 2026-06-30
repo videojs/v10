@@ -24,5 +24,6 @@ export type {
   I18nProviderProps,
 } from './create-i18n';
 
+export { createI18n } from './create-i18n';
 export { I18nContext, useLocale, useTranslator } from './instance';
 export { I18nProvider } from './provider';
