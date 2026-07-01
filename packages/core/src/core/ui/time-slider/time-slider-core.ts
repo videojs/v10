@@ -1,5 +1,5 @@
 import { defaults } from '@videojs/utils/object';
-import { formatDuration, type TimeFormatOptions } from '@videojs/utils/time';
+import { formatTimeAsPhrase, type TimeFormatOptions } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../media/state';
@@ -20,7 +20,7 @@ export interface TimeSliderProps extends SliderProps {
    * resuming on release if it was playing before.
    */
   pauseOnDrag?: boolean | undefined;
-  /** Options for `formatDuration` when building the slider thumb `aria-valuetext`. */
+  /** Options for `formatTimeAsPhrase` when building the slider thumb `aria-valuetext`. */
   formatOptions?: TimeFormatOptions | undefined;
 }
 
@@ -92,13 +92,13 @@ export class TimeSliderCore extends SliderCore {
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {
     const formatOptions = this.#props.formatOptions;
-    const current = formatDuration(this.#announceValue(state), formatOptions);
+    const current = formatTimeAsPhrase(this.#announceValue(state), formatOptions);
     if (!Number.isFinite(state.duration)) {
       return { current };
     }
     return {
       current,
-      duration: formatDuration(state.duration, formatOptions),
+      duration: formatTimeAsPhrase(state.duration, formatOptions),
     };
   }
 

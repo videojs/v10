@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatDuration, formatTime, formatTimeAsPhrase, formatVolumePercent, secondsToIsoDuration } from '../format';
+import { formatTime, formatTimeAsPhrase, formatVolumePercent, secondsToIsoDuration } from '../format';
 
 describe('formatTime', () => {
   it('formats seconds only', () => {
@@ -57,98 +57,46 @@ describe('formatTime', () => {
 });
 
 describe('formatTimeAsPhrase', () => {
-  it('formats zero seconds', () => {
-    expect(formatTimeAsPhrase(0)).toBe('0 seconds');
+  it('formats positive duration', () => {
+    expect(formatTimeAsPhrase(90)).toContain('1');
+    expect(formatTimeAsPhrase(90)).toMatch(/minute/i);
+    expect(formatTimeAsPhrase(90)).toMatch(/30/);
+    expect(formatTimeAsPhrase(300)).toMatch(/5/);
+    expect(formatTimeAsPhrase(300)).toMatch(/minute/i);
   });
 
-  it('formats seconds only', () => {
-    expect(formatTimeAsPhrase(1)).toBe('1 second');
-    expect(formatTimeAsPhrase(30)).toBe('30 seconds');
+  it('adds remaining suffix for negative seconds', () => {
+    expect(formatTimeAsPhrase(-30)).toMatch(/30/);
+    expect(formatTimeAsPhrase(-30)).toMatch(/remaining$/i);
   });
 
-  it('formats minutes and seconds', () => {
-    expect(formatTimeAsPhrase(60)).toBe('1 minute');
-    expect(formatTimeAsPhrase(90)).toBe('1 minute, 30 seconds');
-    expect(formatTimeAsPhrase(125)).toBe('2 minutes, 5 seconds');
+  it('uses formatRemaining only for negative durations', () => {
+    expect(formatTimeAsPhrase(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/^quedan /);
+    expect(formatTimeAsPhrase(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/30/);
+    expect(formatTimeAsPhrase(90, { formatRemaining: () => 'should-not-appear' })).toBe(formatTimeAsPhrase(90));
   });
 
-  it('formats hours, minutes, and seconds', () => {
-    expect(formatTimeAsPhrase(3600)).toBe('1 hour');
-    expect(formatTimeAsPhrase(3661)).toBe('1 hour, 1 minute, 1 second');
-    expect(formatTimeAsPhrase(7325)).toBe('2 hours, 2 minutes, 5 seconds');
+  it('omits English remaining suffix for non-English locales without formatRemaining', () => {
+    const formatted = formatTimeAsPhrase(-30, { locale: 'es' });
+    expect(formatted).toMatch(/30/);
+    expect(formatted).not.toMatch(/remaining$/i);
   });
 
-  it('handles singular vs plural', () => {
-    expect(formatTimeAsPhrase(1)).toBe('1 second');
-    expect(formatTimeAsPhrase(2)).toBe('2 seconds');
-    expect(formatTimeAsPhrase(60)).toBe('1 minute');
-    expect(formatTimeAsPhrase(120)).toBe('2 minutes');
-    expect(formatTimeAsPhrase(3600)).toBe('1 hour');
-    expect(formatTimeAsPhrase(7200)).toBe('2 hours');
-  });
-
-  it('adds remaining suffix for negative values', () => {
-    expect(formatTimeAsPhrase(-30)).toBe('30 seconds remaining');
-    expect(formatTimeAsPhrase(-90)).toBe('1 minute, 30 seconds remaining');
-    expect(formatTimeAsPhrase(-3661)).toBe('1 hour, 1 minute, 1 second remaining');
+  it('uses Intl.DurationFormat', () => {
+    const en = formatTimeAsPhrase(125, { locale: 'en' });
+    const de = formatTimeAsPhrase(125, { locale: 'de' });
+    expect(en.length).toBeGreaterThan(0);
+    expect(de.length).toBeGreaterThan(0);
+    expect(en).not.toBe(de);
   });
 
   it('handles invalid values', () => {
     expect(formatTimeAsPhrase(NaN)).toBe('');
     expect(formatTimeAsPhrase(Infinity)).toBe('');
   });
-});
 
-describe('formatDuration', () => {
-  it('formats positive duration', () => {
-    expect(formatDuration(90)).toContain('1');
-    expect(formatDuration(90)).toMatch(/minute/i);
-    expect(formatDuration(90)).toMatch(/30/);
-    expect(formatDuration(300)).toMatch(/5/);
-    expect(formatDuration(300)).toMatch(/minute/i);
-  });
-
-  it('adds remaining suffix for negative seconds', () => {
-    expect(formatDuration(-30)).toMatch(/30/);
-    expect(formatDuration(-30)).toMatch(/remaining$/i);
-  });
-
-  it('uses formatRemaining only for negative durations', () => {
-    expect(formatDuration(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/^quedan /);
-    expect(formatDuration(-30, { formatRemaining: (duration) => `quedan ${duration}` })).toMatch(/30/);
-    expect(formatDuration(90, { formatRemaining: () => 'should-not-appear' })).toBe(formatDuration(90));
-  });
-
-  it('omits English remaining suffix for non-English locales without formatRemaining', () => {
-    const formatted = formatDuration(-30, { locale: 'es' });
-    expect(formatted).toMatch(/30/);
-    expect(formatted).not.toMatch(/remaining$/i);
-  });
-
-  it('uses Intl.DurationFormat when supported; otherwise matches formatTimeAsPhrase', () => {
-    const DurationFormatConstructor = (Intl as typeof Intl & { DurationFormat?: unknown }).DurationFormat;
-    const hasDurationFormat = typeof DurationFormatConstructor === 'function';
-    const phrase = formatTimeAsPhrase(125);
-    if (hasDurationFormat) {
-      const en = formatDuration(125, { locale: 'en' });
-      const de = formatDuration(125, { locale: 'de' });
-      expect(en.length).toBeGreaterThan(0);
-      expect(de.length).toBeGreaterThan(0);
-      expect(en).not.toBe(de);
-    } else {
-      expect(formatDuration(125, { locale: 'en' })).toBe(phrase);
-      expect(formatDuration(125, { locale: 'ja' })).toBe(phrase);
-    }
-  });
-
-  it('handles invalid values', () => {
-    expect(formatDuration(NaN)).toBe('');
-    expect(formatDuration(Infinity)).toBe('');
-  });
-
-  it('falls back to formatTimeAsPhrase when locale is invalid', () => {
-    const phrase = formatTimeAsPhrase(90);
-    expect(formatDuration(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toBe(phrase);
+  it('throws when Intl.DurationFormat rejects the locale', () => {
+    expect(() => formatTimeAsPhrase(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toThrow(RangeError);
   });
 });
 

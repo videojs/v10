@@ -35,6 +35,9 @@ export type TranslationParams = {
   timeDuration: never;
   timeRemaining: never;
   timeRemainingPhrase: { duration: string };
+  timeToggleElapsed: { duration: string };
+  timeToggleDuration: { duration: string };
+  timeToggleRemaining: { duration: string };
   playbackRateAria: { rate: number | string };
   timeSliderValueTextRange: { current: string; duration: string };
   volumeSliderValueTextMuted: { percent: number | string };
@@ -84,6 +87,9 @@ type ParametricTranslations = {
   playbackRateAria: Contains<'{rate}'>;
   timeSliderValueTextRange: Contains<'{current}'> & Contains<'{duration}'>;
   timeRemainingPhrase: Contains<'{duration}'>;
+  timeToggleElapsed: Contains<'{duration}'>;
+  timeToggleDuration: Contains<'{duration}'>;
+  timeToggleRemaining: Contains<'{duration}'>;
   volumeSliderValueTextMuted: Contains<'{percent}'>;
   indicatorVolumeWithValue: Contains<'{value}'>;
   menuAutoWithLabel: Contains<'{label}'>;
