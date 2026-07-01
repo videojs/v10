@@ -185,7 +185,7 @@ function CaptionsTrigger(): ReactNode {
             <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
               <span>{option.label}</span>
               <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
-                <CheckIcon className={icon} />
+                <CheckIcon className={cn(icon, menu.icon)} />
               </Menu.ItemIndicator>
             </Menu.RadioItem>
           ))}
@@ -217,9 +217,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className={bufferingIndicator.root}>
-            <div className={bufferingIndicator.container}>
-              <SpinnerIcon className={icon} />
-            </div>
+            <SpinnerIcon className={icon} />
           </div>
         )}
       />

@@ -44,7 +44,6 @@ export type {
 export {
   isWebKitAirPlayCapable,
   supportsWebKitAirPlay,
-  type WebKitAirPlayMedia,
   type WebKitDocument,
   type WebKitFullscreenElement,
   type WebKitPresentationMode,

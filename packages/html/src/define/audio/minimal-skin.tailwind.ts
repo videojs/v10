@@ -9,6 +9,7 @@ import {
   iconFlipped,
   iconState,
   menu,
+  playButton,
   playbackRate,
   popup,
   root,
@@ -48,15 +49,20 @@ function getTemplateHTML() {
       <div class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
+            <span class="${playButton.wrapper}">
+              <media-buffering-indicator class="${playButton.bufferingRoot}">
+                ${renderIcon('spinner', { class: icon })}
+              </media-buffering-indicator>
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button, playButton.control)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
               <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
-              <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
-            </media-tooltip>
+                <media-tooltip-label></media-tooltip-label>
+                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              </media-tooltip>
+            </span>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
               <span class="${iconContainer}">
@@ -83,7 +89,7 @@ function getTemplateHTML() {
 
           <div class="${time.controls}">
             <media-time-group class="${time.group}">
-              <media-time type="current" class="${time.current}"></media-time>
+              <media-time toggle type="current" class="${time.current}"></media-time>
               <media-time-separator class="${time.separator}"></media-time-separator>
               <media-time type="duration" class="${time.duration}"></media-time>
             </media-time-group>
@@ -109,7 +115,7 @@ function getTemplateHTML() {
                   <media-menu-radio-item class="${menu.item}">
                     <span data-part="label"></span>
                     <media-menu-item-indicator force-mount class="${menu.indicator}">
-                      ${renderIcon('check', { class: icon })}
+                      ${renderIcon('check', { class: cn(icon, menu.icon) })}
                     </media-menu-item-indicator>
                   </media-menu-radio-item>
                 </template>

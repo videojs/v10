@@ -2,6 +2,7 @@ import { isFunction, isObject, isUndefined } from '@videojs/utils/predicate';
 
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 import type {
+  MediaAudioTrackCapability,
   MediaBufferCapability,
   MediaErrorCapability,
   MediaLiveCapability,
@@ -83,6 +84,12 @@ export function isMediaVideoRenditionCapable(value: unknown): value is MediaVide
   if (!isObject(value)) return false;
   const media = value as Record<string, unknown>;
   return !isUndefined(media.videoRenditions);
+}
+
+export function isMediaAudioTrackCapable(value: unknown): value is MediaAudioTrackCapability {
+  if (!isObject(value)) return false;
+  const media = value as Record<string, unknown>;
+  return !isUndefined(media.audioTracks);
 }
 
 export function isMediaVideoDimensionsCapable(value: unknown): value is MediaVideoDimensionsCapability {

@@ -20,24 +20,3 @@
     translate: 1px 0;
   }
 }
-
-@keyframes media-slide-in-forward {
-  from {
-    translate: -60% 0;
-    opacity: 0;
-  }
-}
-
-@keyframes media-slide-in-backward {
-  from {
-    translate: 60% 0;
-    opacity: 0;
-  }
-}
-
-@keyframes media-pop-in {
-  from {
-    scale: 0.8;
-    opacity: 0;
-  }
-}

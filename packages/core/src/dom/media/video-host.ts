@@ -38,6 +38,10 @@ export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLi
     setProp(this, 'disablePictureInPicture', value);
   }
 
+  get webkitCurrentPlaybackTargetIsWireless() {
+    return (this.target as WebKitVideoElement | null)?.webkitCurrentPlaybackTargetIsWireless;
+  }
+
   get webkitPresentationMode() {
     return (this.target as WebKitVideoElement | null)?.webkitPresentationMode;
   }

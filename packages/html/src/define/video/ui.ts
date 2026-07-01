@@ -3,6 +3,7 @@
 // (light DOM) player layout.
 import { MediaContainerElement } from '../../media/container-element';
 import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
+import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { CaptionsButtonElement } from '../../ui/captions-button/captions-button-element';
 import { CaptionsRadioGroupElement } from '../../ui/captions-radio-group/captions-radio-group-element';
@@ -52,6 +53,7 @@ defineMenu();
 
 // Standalone elements.
 safeDefine(AirPlayButtonElement);
+safeDefine(AudioTrackRadioGroupElement);
 safeDefine(BufferingIndicatorElement);
 safeDefine(CaptionsButtonElement);
 safeDefine(CastButtonElement);

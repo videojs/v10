@@ -1,3 +1,4 @@
+export * from './audio-track';
 export * from './buffer';
 export * from './controls';
 export * from './error';

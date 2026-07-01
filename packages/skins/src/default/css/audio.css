@@ -104,6 +104,26 @@
 }
 
 /* ==========================================================================
+   Buffering (spinner over play button — overlay only, no layout change)
+   ========================================================================== */
+
+.media-default-skin--audio .media-button--play__wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.media-default-skin--audio .media-button--play__wrapper .media-buffering-indicator {
+  color: inherit;
+}
+
+.media-default-skin--audio
+  .media-button--play__wrapper:has(.media-buffering-indicator[data-visible])
+  .media-button--play
+  .media-icon {
+  opacity: 0;
+}
+
+/* ==========================================================================
    Sliders
    ========================================================================== */
 

@@ -6,6 +6,7 @@ import {
   error,
   icon,
   iconState,
+  playButton,
   popup,
   root,
   slider,
@@ -40,7 +41,11 @@ function getTemplateHTML() {
       <div class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
+            <span class="${playButton.wrapper}">
+              <media-buffering-indicator class="${playButton.bufferingRoot}">
+                ${renderIcon('spinner', { class: icon })}
+              </media-buffering-indicator>
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button, playButton.control)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
@@ -49,6 +54,7 @@ function getTemplateHTML() {
                 <media-tooltip-label></media-tooltip-label>
                 <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
               </media-tooltip>
+            </span>
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>

@@ -7,6 +7,7 @@ import {
   logMissingFeature,
   type SliderApi,
   selectBuffer,
+  selectPlayback,
   selectTime,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
@@ -30,6 +31,7 @@ export class TimeSliderElement extends MediaElement {
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
+    pauseOnDrag: { type: Boolean, attribute: 'pause-on-drag' },
   } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
   label = TimeSliderCore.defaultProps.label;
@@ -39,11 +41,13 @@ export class TimeSliderElement extends MediaElement {
   orientation = TimeSliderCore.defaultProps.orientation;
   disabled = TimeSliderCore.defaultProps.disabled;
   thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
+  pauseOnDrag = TimeSliderCore.defaultProps.pauseOnDrag;
 
   readonly #core = new TimeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
+  readonly #playbackState = new PlayerController(this, playerContext, selectPlayback);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
@@ -74,9 +78,11 @@ export class TimeSliderElement extends MediaElement {
       },
       changeThrottle: this.changeThrottle,
       onDragStart: () => {
+        this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -93,14 +99,23 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    this.#resumeIfDragPaused();
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#resumeIfDragPaused();
     this.#slider?.destroy();
     super.destroyCallback();
+  }
+
+  // createSlider's destroy() does not fire onDragEnd, so a teardown mid-drag
+  // would leave playback paused. Called from both disconnect and destroy paths
+  // before super so the PlayerController is still attached.
+  #resumeIfDragPaused(): void {
+    this.#core.endDrag(this.#playbackState.value);
   }
 
   protected override willUpdate(_changed: PropertyValues): void {

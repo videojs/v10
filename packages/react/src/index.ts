@@ -33,6 +33,12 @@ export {
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
+export {
+  type AudioTrackOption,
+  type AudioTrackOptionsProps,
+  type AudioTrackOptionsResult,
+  useAudioTrackOptions,
+} from './ui/audio-track';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';
 export {

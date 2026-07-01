@@ -1,4 +1,4 @@
-import { MenuCore, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR } from '@videojs/core';
+import { MenuCore, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR, PopoverCSSVars } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -18,6 +18,7 @@ import {
   type MenuOpenChangeReason,
   type MenuViewTransitionState,
   type NavigationState,
+  observeMenuViewContent,
   type PositioningBoundary,
   resolveOffsets,
   resolvePositioningBoundary,
@@ -85,6 +86,7 @@ export class MenuElement extends MediaElement {
 
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
+  #cleanupContentObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
@@ -145,6 +147,8 @@ export class MenuElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cleanupContentObserver?.();
+    this.#cleanupContentObserver = null;
     this.#cleanupTrigger();
     this.#menu?.destroy();
     this.#menu = null;
@@ -239,9 +243,15 @@ export class MenuElement extends MediaElement {
     }
 
     if (!state.open) {
+      this.#cleanupContentObserver?.();
+      this.#cleanupContentObserver = null;
       this.#position.cleanup();
       return;
     }
+
+    this.#cleanupContentObserver ??= observeMenuViewContent(this, () => {
+      this.requestUpdate();
+    });
 
     syncMenuViewRoot(this, this.#navState.stack.length > 0);
 
@@ -252,15 +262,28 @@ export class MenuElement extends MediaElement {
     const triggerRect = this.#currentTrigger?.getBoundingClientRect();
     const boundaryRect = getPositioningBoundaryRect(boundaryElement);
     const offsets = resolveOffsets(this);
-
-    if (supportsAnchorPositioning()) {
-      applyStyles(
-        this,
-        getAnchorPositionStyle(this.id, positionOptions, triggerRect, undefined, boundaryRect, offsets)
+    const anchorSupported = supportsAnchorPositioning();
+    const getNextStyle = () =>
+      getAnchorPositionStyle(
+        this.id,
+        positionOptions,
+        triggerRect,
+        anchorSupported ? undefined : getPopupPositionRect(this),
+        boundaryRect,
+        offsets
       );
-    } else {
-      const selfRect = getPopupPositionRect(this);
-      applyStyles(this, getAnchorPositionStyle(this.id, positionOptions, triggerRect, selfRect, boundaryRect, offsets));
+    let nextStyle = getNextStyle();
+
+    if (anchorSupported) {
+      applyStyles(this, nextStyle);
+    }
+
+    const availableWidth = nextStyle[PopoverCSSVars.availableWidth];
+    syncMenuViewRoot(this, this.#navState.stack.length > 0, availableWidth ? { availableWidth } : undefined);
+
+    if (!anchorSupported) {
+      nextStyle = getNextStyle();
+      applyStyles(this, nextStyle);
     }
 
     this.#position.sync(this.#currentTrigger, boundaryElement);
