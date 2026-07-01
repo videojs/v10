@@ -8,8 +8,8 @@ import {
 import { createTransition } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
 
-import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicators/input-indicator-element';
 import { I18nController } from '../../i18n/instance';
+import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
 export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicatorCore.State> {
