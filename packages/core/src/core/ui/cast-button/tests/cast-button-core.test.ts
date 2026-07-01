@@ -1,5 +1,5 @@
 import type { MediaRemotePlaybackState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { CastButtonState } from '../cast-button-core';
 import { CastButtonCore } from '../cast-button-core';
 
@@ -23,9 +23,18 @@ function createState(overrides: Partial<CastButtonState> = {}): CastButtonState 
   };
 }
 
+function stubCastSupport(): void {
+  vi.stubGlobal('chrome', {});
+}
+
 describe('CastButtonCore', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
   describe('getState', () => {
     it('projects castState and availability', () => {
+      stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackState: 'connected' });
       core.setMedia(media);
@@ -38,6 +47,7 @@ describe('CastButtonCore', () => {
     });
 
     it('marks disabled when no cast device is available', () => {
+      stubCastSupport();
       const core = new CastButtonCore();
       core.setMedia(createMediaState({ remotePlaybackAvailability: 'unavailable' }));
       const state = core.getState();
@@ -57,6 +67,7 @@ describe('CastButtonCore', () => {
     });
 
     it('marks disabled when the disabled prop is set, even if available', () => {
+      stubCastSupport();
       const core = new CastButtonCore({ disabled: true });
       core.setMedia(createMediaState({ remotePlaybackAvailability: 'available' }));
       const state = core.getState();
@@ -126,6 +137,7 @@ describe('CastButtonCore', () => {
 
   describe('toggle', () => {
     it('calls toggleRemotePlayback when available', async () => {
+      stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackState: 'disconnected' });
       await core.toggle(media);
@@ -140,6 +152,7 @@ describe('CastButtonCore', () => {
     });
 
     it('does nothing when no cast device is available', async () => {
+      stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackAvailability: 'unavailable' });
       await core.toggle(media);
@@ -154,6 +167,7 @@ describe('CastButtonCore', () => {
     });
 
     it('propagates errors from toggleRemotePlayback', async () => {
+      stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({
         toggleRemotePlayback: vi.fn(async () => {
