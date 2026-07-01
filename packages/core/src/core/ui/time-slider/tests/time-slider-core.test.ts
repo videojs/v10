@@ -1,4 +1,4 @@
-import { formatDuration } from '@videojs/utils/time';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../../media/state';
@@ -161,8 +161,8 @@ describe('TimeSliderCore', () => {
       expect(attrs['aria-label']).toBe('seek');
       expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
       expect(core.getValueTextParams(state)).toEqual({
-        current: formatDuration(90),
-        duration: formatDuration(300),
+        current: formatTimeAsPhrase(90),
+        duration: formatTimeAsPhrase(300),
       });
       expect(attrs.role).toBe('slider');
     });
@@ -186,8 +186,8 @@ describe('TimeSliderCore', () => {
 
       expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
       expect(core.getValueTextParams(state)).toEqual({
-        current: formatDuration(0),
-        duration: formatDuration(0),
+        current: formatTimeAsPhrase(0),
+        duration: formatTimeAsPhrase(0),
       });
     });
 
@@ -201,8 +201,8 @@ describe('TimeSliderCore', () => {
       expect(attrs['aria-valuenow']).toBe(150);
       expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
       expect(core.getValueTextParams(state)).toEqual({
-        current: formatDuration(150),
-        duration: formatDuration(300),
+        current: formatTimeAsPhrase(150),
+        duration: formatTimeAsPhrase(300),
       });
     });
   });

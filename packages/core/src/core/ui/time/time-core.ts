@@ -1,5 +1,5 @@
 import { defaults } from '@videojs/utils/object';
-import { formatDuration, formatTime, secondsToIsoDuration, type TimeFormatOptions } from '@videojs/utils/time';
+import { formatTime, formatTimeAsPhrase, secondsToIsoDuration, type TimeFormatOptions } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
@@ -18,7 +18,7 @@ export interface TimeProps {
   label?: TranslationKeyOrString | ((state: TimeState) => TranslationKeyOrString) | undefined;
   /** Whether the time display can be toggled. */
   toggle?: boolean | undefined;
-  /** Options for `formatDuration` when building spoken-duration copy (`phrase` state and screen readers), not digital clock text. */
+  /** Options for `formatTimeAsPhrase` when building spoken-duration copy (`phrase` state and screen readers), not digital clock text. */
   formatOptions?: TimeFormatOptions | undefined;
 }
 
@@ -37,10 +37,10 @@ export interface TimeState {
   datetime: string;
 }
 
-const TOGGLE_LABELS: Record<TimeType, string> = {
-  current: 'Show elapsed time',
-  duration: 'Show duration',
-  remaining: 'Show remaining time',
+const TOGGLE_LABEL_KEYS: Record<TimeType, 'timeToggleElapsed' | 'timeToggleDuration' | 'timeToggleRemaining'> = {
+  current: 'timeToggleElapsed',
+  duration: 'timeToggleDuration',
+  remaining: 'timeToggleRemaining',
 };
 
 const DEFAULT_LABEL_KEYS: Record<TimeType, 'timeCurrent' | 'timeDuration' | 'timeRemaining'> = {
@@ -101,10 +101,10 @@ export class TimeCore {
 
     if (type === 'remaining') {
       // Use negative to trigger "remaining" suffix
-      return formatDuration(seconds < 0 ? seconds : -Math.abs(seconds), formatOptions);
+      return formatTimeAsPhrase(seconds < 0 ? seconds : -Math.abs(seconds), formatOptions);
     }
 
-    return formatDuration(seconds, formatOptions);
+    return formatTimeAsPhrase(seconds, formatOptions);
   }
 
   #getDatetime(): string {
@@ -129,13 +129,17 @@ export class TimeCore {
 
     const toggleType = this.#getToggleType(type, state.type);
 
-    return `${state.phrase}. ${TOGGLE_LABELS[toggleType]}.`;
+    return TOGGLE_LABEL_KEYS[toggleType];
+  }
+
+  getLabelParams(state: TimeState): { duration: string } | undefined {
+    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    return custom === undefined && this.#props.toggle ? { duration: state.phrase } : undefined;
   }
 
   getAttrs(state: TimeState, type = this.#props.type) {
     return {
       'aria-label': this.getLabel(state, type),
-      'aria-valuetext': this.#props.toggle ? undefined : state.phrase,
       role: this.#props.toggle ? 'button' : undefined,
       tabIndex: this.#props.toggle ? 0 : undefined,
     };
