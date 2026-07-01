@@ -1,6 +1,6 @@
 ---
 title: createI18n
-description: Factory that creates an isolated React i18n context stack with I18nProvider and hooks
+description: Factory that creates a React i18n provider with custom loading options
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
@@ -9,7 +9,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["react"]}>
 
-`createI18n` mirrors <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>: it returns a dedicated `I18nProvider`, `useTranslator`, and `useLocale` for apps that need an isolated i18n stack. Most apps import the default exports from `@videojs/react/i18n` instead.
+`createI18n` returns an `I18nProvider`, `useTranslator`, and `useLocale` wired to the shared React i18n context used by the stock skins and controls. Use it when you need options such as a custom locale loader. Most apps import the default exports from `@videojs/react/i18n` instead.
 
 ```tsx
 import { createI18n } from '@videojs/react/i18n';
