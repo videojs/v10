@@ -35,7 +35,8 @@ import {
   useSyncExternalStore,
 } from 'react';
 
-import { createI18nBase, type I18nBase, type I18nContextValue } from './base';
+import type { I18nBase, I18nContextValue } from './base';
+import { i18nBase } from './instance';
 
 function ambientLangServerSnapshot(): string | undefined {
   return undefined;
@@ -96,12 +97,12 @@ export interface CreateI18nResult {
 }
 
 /**
- * Creates an isolated i18n context stack (`I18nProvider`, hooks) mirroring {@link createPlayer}.
+ * Creates an i18n provider and hooks for the shared React i18n context.
  *
  * @param options - Optional hooks such as custom built-in locale loading.
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
-  return createI18nWithBase(createI18nBase(), options);
+  return createI18nWithBase(i18nBase, options);
 }
 
 export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions): CreateI18nResult {
