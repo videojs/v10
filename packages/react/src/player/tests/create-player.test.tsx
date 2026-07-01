@@ -190,11 +190,6 @@ describe('createPlayer', () => {
     });
 
     it('provides a stable context value across parent re-renders (fix for #1296)', () => {
-      // Without memoization, the Provider rebuilds its context value on every
-      // render. Every `useContext(PlayerContext)` consumer then re-renders on
-      // any parent re-render, which (combined with callback-ref usage in
-      // media components) detaches and re-attaches the underlying media on
-      // every parent state change. At end-of-stream this rewinds the video.
       const { Provider } = createPlayer({ features: [mockSlice] });
 
       const receivedValues: unknown[] = [];

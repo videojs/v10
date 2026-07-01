@@ -91,15 +91,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       return store.attach({ media, container });
     }, [media, container, store]);
 
-    // Memoize the context value so its identity only changes when one of its
-    // members actually changes. Without this, every render of a component
-    // above the Provider rebuilds the value object, which forces every
-    // `useContext(PlayerContext)` consumer to re-render even when nothing
-    // it depends on changed. `setMedia` and `setContainer` are `useState`
-    // setters and are identity-stable; `store` and `popupGroup` are also
-    // initialized once via `useState(() => ...)` and never change for the
-    // lifetime of the Provider. They're listed in the dep array to satisfy
-    // `useExhaustiveDependencies`. See #1296.
     const value = useMemo(
       () => ({ store, media, setMedia, container, setContainer, popupGroup }),
       [store, media, container, popupGroup]
