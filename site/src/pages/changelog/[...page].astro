@@ -34,14 +34,7 @@ const { page } = Astro.props;
     class="mx-auto mb-10 w-full max-w-4xl overflow-hidden rounded-xs border border-manila-dark text-center md:mb-20 dark:border-transparent dark:bg-soot"
   >
     <div class="mx-auto max-w-3xl px-5 py-20">
-      <h1 class="mb-4 font-display text-h15 uppercase lg:text-h1">Changelog</h1>
-      <p class="font-display text-h5 leading-tight text-balance">
-        {
-          page.data.length === 0
-            ? "Coming soon"
-            : "New features, fixes, and improvements in every Video.js release"
-        }
-      </p>
+      <h1 class="font-display text-h15 uppercase lg:text-h1">Changelog</h1>
     </div>
     <FooterEasterEgg variant="extra-short" />
   </header>
