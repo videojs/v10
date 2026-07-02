@@ -1,3 +1,4 @@
+import { CuePoints } from '@videojs/core/dom/media/cue-points';
 import { CustomMediaElement } from '@videojs/core/dom/media/custom-media-element';
 import { GoogleCast } from '@videojs/core/dom/media/google-cast';
 import { HlsJsMedia } from '@videojs/core/dom/media/hls-js';
@@ -8,6 +9,7 @@ import { MediaAttachMixin } from '../../store/media-attach-mixin';
 export class MuxVideo extends MediaAttachMixin(CustomMediaElement('video', HlsJsMedia)) {
   constructor() {
     super();
+    addComponent(this.host, new CuePoints());
     addComponent(this.host, new MuxData({ playerSoftwareName: 'mux-video' }));
     addComponent(this.host, new GoogleCast());
   }

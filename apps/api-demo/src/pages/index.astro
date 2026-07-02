@@ -1,0 +1,48 @@
+---
+import Footer from '../components/Footer.astro';
+import PlayerDemo from '../components/PlayerDemo';
+import Base from '../layouts/Base.astro';
+---
+
+<Base
+  title="Video.js — Media API Demo"
+  description="An interactive playground for the Video.js 10 media API: drive the React HlsJsVideo player with setters and getters, watch every event and action in a live log, and share your setup via the URL."
+>
+  <main
+    id="main-content"
+    class="mx-auto flex min-h-screen w-full max-w-305 flex-col items-center px-5 py-16 md:py-24"
+  >
+    <a
+      href="/"
+      class="text-xs tracking-wide mb-7 inline-flex items-center gap-2 rounded-full border border-faded-black/20 bg-manila-25 px-4 py-1.5 font-display uppercase transition-colors hover:border-faded-black/40 hover:bg-manila-50 dark:border-manila-light/20 dark:bg-soot dark:hover:border-manila-light/40 dark:hover:bg-warm-gray"
+    >
+      <span class="size-2 rounded-full bg-orange"></span>
+      Media API
+    </a>
+
+    <h1
+      class="text-3xl md:text-5xl mb-5 text-center font-display text-balance uppercase"
+    >
+      The Media API, Live
+    </h1>
+
+    <p
+      class="text-base md:text-lg mb-12 max-w-2xl text-center text-balance text-warm-gray dark:text-manila-dark"
+    >
+      An interactive playground for the Video.js&nbsp;10 <a
+        href="https://github.com/video-dev/media-ui-extensions"
+        class="underline hover:decoration-gold"
+        target="_blank"
+        rel="noopener noreferrer">media API</a
+      >. Drive the
+      <code class="text-sm font-mono">HlsJsVideo</code> player straight through its
+      media instance, follow a live color-coded log of events, actions, and getter
+      reads, and share your setup via the URL.
+    </p>
+
+    <div class="w-full">
+      <PlayerDemo client:only="react" />
+    </div>
+  </main>
+  <Footer />
+</Base>
