@@ -25,7 +25,7 @@ export class SnapshotController<S, R = S> implements ReactiveController {
    * @param state - The store to snapshot.
    */
   constructor(host: ReactiveControllerHost, state: Store<S>);
-  constructor(host: ReactiveControllerHost, state: Store<S>, selector?: (state: S) => R) {
+  constructor(host: ReactiveControllerHost, _state: Store<S>, _selector?: (state: S) => R) {
     host.addController(this);
   }
 

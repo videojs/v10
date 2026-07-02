@@ -29,6 +29,28 @@ describe('createTransition', () => {
       await promise;
       expect(handler.state.current).toEqual({ active: true, status: 'idle' });
     });
+
+    it('cancels active animations and flushes styles when restarting an active transition', async () => {
+      const handler = createTransition();
+      const el = document.createElement('div');
+      const getOffsetHeight = vi.spyOn(el, 'offsetHeight', 'get');
+      const cancel = vi.fn();
+      Object.defineProperty(el, 'getAnimations', {
+        value: vi.fn(() => [{ cancel }]),
+      });
+
+      await handler.open();
+      await vi.waitFor(() => {
+        expect(handler.state.current.status).toBe('idle');
+      });
+
+      handler.open(el);
+
+      await vi.waitFor(() => {
+        expect(cancel).toHaveBeenCalled();
+      });
+      expect(getOffsetHeight).toHaveBeenCalled();
+    });
   });
 
   describe('close', () => {

@@ -1,4 +1,4 @@
-import { createPlayer } from '@videojs/react';
+import { createPlayer, isMediaSourceCapable, isMediaVideoDimensionsCapable } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 const Player = createPlayer({
@@ -12,22 +12,24 @@ function MediaInfo() {
 
   return (
     <dl className="info-panel">
-      <div>
-        <dt>tagName</dt>
-        <dd>{media.tagName.toLowerCase()}</dd>
-      </div>
-      <div>
-        <dt>src</dt>
-        <dd>{media.currentSrc || '—'}</dd>
-      </div>
-      <div>
-        <dt>videoWidth</dt>
-        <dd>{media.videoWidth}px</dd>
-      </div>
-      <div>
-        <dt>videoHeight</dt>
-        <dd>{media.videoHeight}px</dd>
-      </div>
+      {isMediaSourceCapable(media) && (
+        <div>
+          <dt>src</dt>
+          <dd>{media.currentSrc || '—'}</dd>
+        </div>
+      )}
+      {isMediaVideoDimensionsCapable(media) && (
+        <>
+          <div>
+            <dt>videoWidth</dt>
+            <dd>{media.videoWidth}px</dd>
+          </div>
+          <div>
+            <dt>videoHeight</dt>
+            <dd>{media.videoHeight}px</dd>
+          </div>
+        </>
+      )}
     </dl>
   );
 }

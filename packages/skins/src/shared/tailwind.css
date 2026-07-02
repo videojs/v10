@@ -1,0 +1,10 @@
+/* -------------------------------------------------------------------------- */
+/* Supporting @keyframes, @properties and @theme for Tailwind CSS             */
+/* -------------------------------------------------------------------------- */
+
+@import "./global/video/keyframes.css";
+@import "./global/video/properties.css";
+
+@theme {
+  --animate-media-shake: media-shake 300ms ease-in-out;
+}

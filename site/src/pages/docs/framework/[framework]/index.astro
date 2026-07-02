@@ -15,11 +15,9 @@ if (!isValidFramework(framework)) {
   return new Response('Not Found', { status: 404 });
 }
 
+// astro check can't see usage inside return statements in frontmatter (false positive ts(6133))
 const preferences = getPreferencesServer(Astro.cookies);
-const { url } = resolveIndexRedirect({
-  preferences,
-  params: { framework },
-});
+const { url } = resolveIndexRedirect({ preferences, params: { framework } });
 
 return Astro.redirect(url, 307);
 ---

@@ -211,7 +211,7 @@ describe('initiateAuthPopup', () => {
 
 describe('createEndpointCoordinator', () => {
   it('returns URL immediately when authenticated', async () => {
-    const createUpload = vi.fn<[], Promise<CreateUploadResult>>().mockResolvedValue({
+    const createUpload = vi.fn<() => Promise<CreateUploadResult>>().mockResolvedValue({
       data: { uploadId: 'upload-1', uploadUrl: 'https://upload.mux.com/xyz' },
     });
 
@@ -229,7 +229,7 @@ describe('createEndpointCoordinator', () => {
 
   it('calls onStateChange with uploading when authenticated', async () => {
     const onStateChange = vi.fn();
-    const createUpload = vi.fn<[], Promise<CreateUploadResult>>().mockResolvedValue({
+    const createUpload = vi.fn<() => Promise<CreateUploadResult>>().mockResolvedValue({
       data: { uploadId: 'upload-1', uploadUrl: 'https://upload.mux.com/xyz' },
     });
 
@@ -248,13 +248,13 @@ describe('createEndpointCoordinator', () => {
   it('pauses on 401, waits for auth, then retries', async () => {
     let authCallback: (() => void) | null = null;
     const createUpload = vi
-      .fn<[], Promise<CreateUploadResult>>()
+      .fn<() => Promise<CreateUploadResult>>()
       .mockResolvedValueOnce({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } })
       .mockResolvedValueOnce({
         data: { uploadId: 'upload-1', uploadUrl: 'https://upload.mux.com/xyz' },
       });
 
-    const initiateLogin = vi.fn<[], Promise<LoginResult>>().mockResolvedValue({
+    const initiateLogin = vi.fn<() => Promise<LoginResult>>().mockResolvedValue({
       data: { authorizationUrl: 'https://auth.example.com' },
     });
 
@@ -289,7 +289,7 @@ describe('createEndpointCoordinator', () => {
     let authCallback: (() => void) | null = null;
     const onStateChange = vi.fn();
     const createUpload = vi
-      .fn<[], Promise<CreateUploadResult>>()
+      .fn<() => Promise<CreateUploadResult>>()
       .mockResolvedValueOnce({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } })
       .mockResolvedValueOnce({
         data: { uploadId: 'upload-1', uploadUrl: 'https://upload.mux.com/xyz' },
@@ -297,7 +297,7 @@ describe('createEndpointCoordinator', () => {
 
     const coordinator = createEndpointCoordinator({
       createUpload,
-      initiateLogin: vi.fn<[], Promise<LoginResult>>().mockResolvedValue({
+      initiateLogin: vi.fn<() => Promise<LoginResult>>().mockResolvedValue({
         data: { authorizationUrl: 'https://auth.example.com' },
       }),
       openAuthPopup: (_url: string, onComplete: () => void) => {
@@ -318,7 +318,7 @@ describe('createEndpointCoordinator', () => {
   });
 
   it('propagates non-401 errors', async () => {
-    const createUpload = vi.fn<[], Promise<CreateUploadResult>>().mockResolvedValue({
+    const createUpload = vi.fn<() => Promise<CreateUploadResult>>().mockResolvedValue({
       error: { code: 'INTERNAL_SERVER_ERROR', message: 'Server error' },
     });
 
@@ -332,11 +332,11 @@ describe('createEndpointCoordinator', () => {
   });
 
   it('propagates login initiation errors', async () => {
-    const createUpload = vi.fn<[], Promise<CreateUploadResult>>().mockResolvedValue({
+    const createUpload = vi.fn<() => Promise<CreateUploadResult>>().mockResolvedValue({
       error: { code: 'UNAUTHORIZED', message: 'Not authenticated' },
     });
 
-    const initiateLogin = vi.fn<[], Promise<LoginResult>>().mockResolvedValue({
+    const initiateLogin = vi.fn<() => Promise<LoginResult>>().mockResolvedValue({
       error: { message: 'OAuth configuration missing' },
     });
 
@@ -352,13 +352,13 @@ describe('createEndpointCoordinator', () => {
   it('propagates errors from retry after auth', async () => {
     let authCallback: (() => void) | null = null;
     const createUpload = vi
-      .fn<[], Promise<CreateUploadResult>>()
+      .fn<() => Promise<CreateUploadResult>>()
       .mockResolvedValueOnce({ error: { code: 'UNAUTHORIZED', message: 'Not authenticated' } })
       .mockResolvedValueOnce({ error: { code: 'INTERNAL_SERVER_ERROR', message: 'Server exploded' } });
 
     const coordinator = createEndpointCoordinator({
       createUpload,
-      initiateLogin: vi.fn<[], Promise<LoginResult>>().mockResolvedValue({
+      initiateLogin: vi.fn<() => Promise<LoginResult>>().mockResolvedValue({
         data: { authorizationUrl: 'https://auth.example.com' },
       }),
       openAuthPopup: (_url: string, onComplete: () => void) => {

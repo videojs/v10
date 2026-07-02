@@ -4,7 +4,7 @@
  *
  * Aliases created:
  *   .opencode  → .claude       (directory)
- *   agents     → .claude       (directory)
+ *   .agents    → .claude       (directory)
  *   AGENTS.md  → CLAUDE.md     (file)
  *
  * Cross-platform notes:
@@ -17,11 +17,11 @@
 import { existsSync, symlinkSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const root = resolve(import.meta.dirname, '..');
+const root = resolve(import.meta.dirname, '../..');
 
 const aliases = [
   { target: '.claude', path: '.opencode', type: 'junction' },
-  { target: '.claude', path: 'agents', type: 'junction' },
+  { target: '.claude', path: '.agents', type: 'junction' },
   { target: 'CLAUDE.md', path: 'AGENTS.md', type: 'file' },
 ];
 

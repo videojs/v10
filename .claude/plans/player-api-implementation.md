@@ -1423,7 +1423,7 @@ fullscreen.fullscreenAvailability
 // Picture-in-Picture availability
 pip.pipAvailability
 
-// Airplay/Cast availability
+// AirPlay/Cast availability
 cast.castAvailability
 ```
 

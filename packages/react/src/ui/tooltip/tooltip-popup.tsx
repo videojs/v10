@@ -1,8 +1,14 @@
 'use client';
 
-import type { TooltipState } from '@videojs/core';
-import { TooltipCSSVars } from '@videojs/core';
-import { getAnchorPositionStyle, getPopupPositionRect, resolveOffsets } from '@videojs/core/dom';
+import { TooltipCSSVars, type TooltipState } from '@videojs/core';
+import {
+  getAnchorPositionStyle,
+  getPopupPositionRect,
+  getPositioningBoundaryRect,
+  isEventWithinElement,
+  resolveOffsets,
+  resolvePositioningBoundary,
+} from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { CSSProperties } from 'react';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -11,6 +17,8 @@ import type { UIComponentProps } from '../../utils/types';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { useTooltipContext } from './context';
+import { TooltipLabel } from './tooltip-label';
+import { TooltipShortcut } from './tooltip-shortcut';
 
 export interface TooltipPopupProps extends UIComponentProps<'div', TooltipState> {}
 
@@ -18,10 +26,10 @@ const POPUP_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0
 
 /** Container for the tooltip content. Positioned relative to the trigger using CSS anchor positioning with a JavaScript fallback. */
 export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(function TooltipPopup(
-  { render, className, style, ...elementProps },
+  { render, className, style, children, ...elementProps },
   forwardedRef
 ) {
-  const { core, tooltip, state, stateAttrMap, anchorName, popupId, content } = useTooltipContext();
+  const { core, tooltip, state, stateAttrMap, anchorName, popupId, boundary, container } = useTooltipContext();
   const internalRef = useRef<HTMLDivElement>(null);
 
   const popupRef = useCallback(
@@ -42,7 +50,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
 
   // CSS Anchor Positioning — computed from state, no measurement needed.
   // `position-anchor` is set imperatively in the ref callback above
-  // because React's style prop silently drops unrecognised CSS properties.
+  // because React's style prop silently drops unrecognized CSS properties.
   const anchorStyle = useMemo(() => {
     if (!supportsAnchorPositioning()) return null;
     const { positionAnchor: _, ...rest } = getAnchorPositionStyle(
@@ -61,7 +69,6 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
   const [manualStyle, setManualStyle] = useState<CSSProperties | null>(null);
 
   useLayoutEffect(() => {
-    if (supportsAnchorPositioning()) return;
     if (!state.open) {
       setManualStyle(null);
       return;
@@ -73,29 +80,39 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
       if (!triggerEl || !popupEl) return;
 
       const triggerRect = triggerEl.getBoundingClientRect();
-      const popupRect = getPopupPositionRect(popupEl);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
+      const root = popupEl.getRootNode() as Document | ShadowRoot;
+      const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
+      const popupRect = supportsAnchorPositioning() ? undefined : getPopupPositionRect(popupEl);
+      const boundaryRect = getPositioningBoundaryRect(boundaryElement);
       const offsets = resolveOffsets(popupEl, TooltipCSSVars);
 
-      setManualStyle(
-        getAnchorPositionStyle(
-          anchorName,
-          posOpts,
-          triggerRect,
-          popupRect,
-          boundaryRect,
-          offsets,
-          TooltipCSSVars
-        ) as CSSProperties
+      const { positionAnchor: _, ...nextStyle } = getAnchorPositionStyle(
+        anchorName,
+        posOpts,
+        triggerRect,
+        popupRect,
+        boundaryRect,
+        offsets,
+        TooltipCSSVars
       );
+
+      setManualStyle(nextStyle as CSSProperties);
     }
 
     measure();
     const triggerEl = tooltip.triggerElement;
     const popupEl = internalRef.current;
+    const boundaryElement = popupEl
+      ? resolvePositioningBoundary(boundary, {
+          container,
+          root: popupEl.getRootNode() as Document | ShadowRoot,
+        })
+      : null;
 
     let rafId = 0;
-    function reposition(): void {
+    function reposition(event?: Event): void {
+      if (event && isEventWithinElement(event, internalRef.current)) return;
+
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(measure);
     }
@@ -118,6 +135,9 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
     if (popupEl && resizeObserver) {
       resizeObserver.observe(popupEl);
     }
+    if (boundaryElement && resizeObserver) {
+      resizeObserver.observe(boundaryElement);
+    }
 
     window.addEventListener('scroll', reposition, { capture: true, passive: true });
     window.addEventListener('resize', reposition);
@@ -128,17 +148,27 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };
-  }, [state.open, anchorName, posOpts, tooltip]);
+  }, [state.open, anchorName, posOpts, tooltip, boundary, container]);
 
   // Anchor path uses computed styles; manual path uses measured styles;
   // fallback resets UA [popover] defaults until positioning is computed.
-  const positioningStyle = anchorStyle ?? manualStyle ?? POPUP_RESET;
+  const positioningStyle = manualStyle ?? anchorStyle ?? POPUP_RESET;
 
   // --- Visibility ---
 
   if (!state.open) {
     return null;
   }
+
+  const body =
+    children !== undefined ? (
+      children
+    ) : (
+      <>
+        <TooltipLabel />
+        <TooltipShortcut />
+      </>
+    );
 
   // Remap DOM focus events to React synthetic event names.
   const { onFocusOut, ...restPopupProps } = tooltip.popupProps;
@@ -156,8 +186,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
           style: positioningStyle,
           ...core.getPopupAttrs(state),
         },
-        // Forwarded content as default children — explicit children override.
-        { children: content },
+        { children: body },
         { ...restPopupProps, onBlur: onFocusOut },
         elementProps,
       ],

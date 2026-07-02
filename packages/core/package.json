@@ -1,7 +1,7 @@
 {
   "name": "@videojs/core",
   "type": "module",
-  "version": "10.0.0-beta.22",
+  "version": "10.0.0-beta.24",
   "description": "Core components and utilities for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -31,6 +31,11 @@
       "types": "./dist/dev/dom/media/*/index.d.ts",
       "development": "./dist/dev/dom/media/*/index.js",
       "default": "./dist/default/dom/media/*/index.js"
+    },
+    "./media/predicate": {
+      "types": "./dist/dev/media/predicate.d.ts",
+      "development": "./dist/dev/media/predicate.js",
+      "default": "./dist/default/media/predicate.js"
     }
   },
   "main": "dist/default/index.js",
@@ -51,7 +56,8 @@
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
-    "dashjs": "^5.0.0",
+    "@vimeo/player": "^2.30.3",
+    "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
     "mux-embed": "^5.17.10"
   },
@@ -59,8 +65,7 @@
     "@types/chrome": "^0.1.40",
     "@types/chromecast-caf-sender": "^1.0.11",
     "jsdom": "^26.1.0",
-    "tsdown": "^0.21.4",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.21.9",
     "vitest": "^4.1.0"
   },
   "publishConfig": {

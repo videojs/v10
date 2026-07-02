@@ -3,7 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { combine } from '../combine';
 import { defineSlice } from '../slice';
 import { flush } from '../state';
-import { createStore } from '../store';
+import { createStore, isStore } from '../store';
 
 describe('store', () => {
   // Mock target that mimics HTMLVideoElement
@@ -96,6 +96,13 @@ describe('store', () => {
         store,
         signal: expect.any(AbortSignal),
       });
+    });
+
+    it('identifies stores across package entrypoints', () => {
+      const store = createStore<MockMedia>()(audioSlice);
+
+      expect(isStore(store)).toBe(true);
+      expect(Symbol.for('@videojs/store') in store).toBe(true);
     });
   });
 

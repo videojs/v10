@@ -1,10 +1,17 @@
 import '@app/styles.css';
-import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
-import { CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
+import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
+import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
-import { onSkinChange, onSourceChange } from '@app/shared/sandbox-listener';
-import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
+import {
+  onAutoplayChange,
+  onLoopChange,
+  onMutedChange,
+  onPreloadChange,
+  onSkinChange,
+  onSourceChange,
+} from '@app/shared/sandbox-listener';
+import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
 
 const html = String.raw;
@@ -19,19 +26,25 @@ const loadLatest = createLatestLoader();
 // CDN module loading — mirrors the exact import graph of each CDN bundle.
 // ---------------------------------------------------------------------------
 
-async function loadCdnPreset(preset: Preset, skin: Skin) {
+async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
   switch (preset) {
     case 'video':
-    case 'hls-video':
+    case 'hlsjs-video':
     case 'mux-video':
     case 'native-hls-video':
     case 'simple-hls-video':
     case 'dash-video':
-      if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
-      else await import('@videojs/html/cdn/video');
+      if (live) {
+        if (skin === 'minimal') await import('@videojs/html/cdn/live-video-minimal');
+        else await import('@videojs/html/cdn/live-video');
+      } else {
+        if (skin === 'minimal') await import('@videojs/html/cdn/video-minimal');
+        else await import('@videojs/html/cdn/video');
+      }
       break;
     case 'audio':
     case 'mux-audio':
+    case 'simple-hls-audio-only':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
       break;
@@ -43,8 +56,8 @@ async function loadCdnPreset(preset: Preset, skin: Skin) {
 
 async function loadCdnMedia(preset: Preset) {
   switch (preset) {
-    case 'hls-video':
-      await import('@videojs/html/cdn/media/hls-video');
+    case 'hlsjs-video':
+      await import('@videojs/html/cdn/media/hlsjs-video');
       break;
     case 'mux-video':
       await import('@videojs/html/cdn/media/mux-video');
@@ -58,6 +71,9 @@ async function loadCdnMedia(preset: Preset) {
     case 'simple-hls-video':
       await import('@videojs/html/cdn/media/simple-hls-video');
       break;
+    case 'simple-hls-audio-only':
+      await import('@videojs/html/cdn/media/simple-hls-audio-only');
+      break;
     case 'dash-video':
       await import('@videojs/html/cdn/media/dash-video');
       break;
@@ -68,25 +84,31 @@ async function loadCdnMedia(preset: Preset) {
 // Rendering — produces the exact HTML markup the installation builder generates.
 // ---------------------------------------------------------------------------
 
-function getPlayerTag(preset: Preset): string {
-  if (preset === 'background-video') return 'background-video-player';
-  if (preset === 'audio' || preset === 'mux-audio') return 'audio-player';
-  return 'video-player';
+function isAudioPreset(preset: Preset): boolean {
+  return preset === 'audio' || preset === 'mux-audio' || preset === 'simple-hls-audio-only';
 }
 
-function getSkinTag(preset: Preset, skin: Skin): string {
+function getPlayerTag(preset: Preset, live: boolean): string {
+  if (preset === 'background-video') return 'background-video-player';
+  if (isAudioPreset(preset)) return live ? 'live-audio-player' : 'audio-player';
+  return live ? 'live-video-player' : 'video-player';
+}
+
+function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
   if (preset === 'background-video') return 'background-video-skin';
-  if (preset === 'audio' || preset === 'mux-audio') return CSS_SKIN_TAGS[skin].audio;
+  if (isAudioPreset(preset)) return CSS_SKIN_TAGS[skin].audio;
+  if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
   return CSS_SKIN_TAGS[skin].video;
 }
 
 function getMediaTag(preset: Preset): string {
   const tags: Partial<Record<Preset, string>> = {
-    'hls-video': 'hls-video',
+    'hlsjs-video': 'hlsjs-video',
     'mux-video': 'mux-video',
     'mux-audio': 'mux-audio',
     'native-hls-video': 'native-hls-video',
     'simple-hls-video': 'simple-hls-video',
+    'simple-hls-audio-only': 'simple-hls-audio-only',
     'dash-video': 'dash-video',
     audio: 'audio',
     'background-video': 'background-video',
@@ -96,7 +118,7 @@ function getMediaTag(preset: Preset): string {
 }
 
 function loadStylesheets(preset: Preset, skin: Skin) {
-  if (preset === 'audio' || preset === 'mux-audio') loadAudioStylesheets(skin);
+  if (isAudioPreset(preset)) loadAudioStylesheets(skin);
   else if (preset !== 'background-video') loadVideoStylesheets(skin);
   // Background CSS is loaded via dynamic import in loadCdnPreset.
 }
@@ -104,7 +126,7 @@ function loadStylesheets(preset: Preset, skin: Skin) {
 function isVideoPreset(preset: Preset): boolean {
   return (
     preset === 'video' ||
-    preset === 'hls-video' ||
+    preset === 'hlsjs-video' ||
     preset === 'mux-video' ||
     preset === 'native-hls-video' ||
     preset === 'simple-hls-video' ||
@@ -112,23 +134,32 @@ function isVideoPreset(preset: Preset): boolean {
   );
 }
 
+function canPlayLive(preset: Preset): boolean {
+  return (
+    preset === 'hlsjs-video' || preset === 'mux-video' || preset === 'native-hls-video' || preset === 'simple-hls-video'
+  );
+}
+
 async function render() {
+  const live = canPlayLive(preset) && isLiveSource(state.source);
+
   await loadLatest(async () => {
-    await loadCdnPreset(preset, state.skin);
+    await loadCdnPreset(preset, state.skin, live);
     await loadCdnMedia(preset);
   });
 
   loadStylesheets(preset, state.skin);
 
   const root = document.getElementById('root')!;
-  const playerTag = getPlayerTag(preset);
-  const skinTag = getSkinTag(preset, state.skin);
+  const playerTag = getPlayerTag(preset, live);
+  const skinTag = getSkinTag(preset, state.skin, live);
   const mediaTag = getMediaTag(preset);
   const source = SOURCES[state.source];
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
   const sourceAttr = preset === 'background-video' ? `src="${BACKGROUND_VIDEO_SRC}"` : `src="${source.url}"`;
+  const mediaAttrs = renderMediaAttrs(state);
 
   // Background video needs viewport dimensions instead of flex centering.
   if (preset === 'background-video') {
@@ -147,12 +178,12 @@ async function render() {
     return;
   }
 
-  if (preset === 'audio' || preset === 'mux-audio') {
+  if (isAudioPreset(preset)) {
     root.innerHTML = html`
       <div class="w-full max-w-xl mx-auto">
         <${playerTag}>
           <${skinTag}>
-            <${mediaTag} ${sourceAttr}></${mediaTag}>
+            <${mediaTag} ${sourceAttr} ${mediaAttrs}></${mediaTag}>
           </${skinTag}>
         </${playerTag}>
       </div>
@@ -163,7 +194,7 @@ async function render() {
   root.innerHTML = html`
     <${playerTag}>
       <${skinTag} class="aspect-video max-w-4xl mx-auto">
-        <${mediaTag} ${sourceAttr} playsinline crossorigin="anonymous">
+        <${mediaTag} ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </${mediaTag}>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
@@ -181,5 +212,25 @@ onSkinChange((skin) => {
 
 onSourceChange((source) => {
   state.source = source;
+  render();
+});
+
+onAutoplayChange((autoplay) => {
+  state.autoplay = autoplay;
+  render();
+});
+
+onMutedChange((muted) => {
+  state.muted = muted;
+  render();
+});
+
+onLoopChange((loop) => {
+  state.loop = loop;
+  render();
+});
+
+onPreloadChange((preload) => {
+  state.preload = preload;
   render();
 });

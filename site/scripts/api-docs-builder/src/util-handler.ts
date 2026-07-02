@@ -395,12 +395,15 @@ function extractPublicMembers(
   for (const member of classDecl.members) {
     // Skip private, protected, static, constructor
     if (
-      member.modifiers?.some(
-        (m) =>
-          m.kind === ts.SyntaxKind.PrivateKeyword ||
-          m.kind === ts.SyntaxKind.ProtectedKeyword ||
-          m.kind === ts.SyntaxKind.StaticKeyword
-      )
+      ts.canHaveModifiers(member) &&
+      ts
+        .getModifiers(member)
+        ?.some(
+          (m: ts.ModifierLike) =>
+            m.kind === ts.SyntaxKind.PrivateKeyword ||
+            m.kind === ts.SyntaxKind.ProtectedKeyword ||
+            m.kind === ts.SyntaxKind.StaticKeyword
+        )
     )
       continue;
 
@@ -502,7 +505,7 @@ function getNodeJSDoc(node: ts.Node): string | undefined {
   if (typeof doc.comment === 'string') return doc.comment;
 
   // Handle JSDocComment array
-  return doc.comment.map((c: ts.JSDocText | ts.JSDocLink) => ('text' in c ? c.text : '')).join('');
+  return doc.comment.map((c: ts.JSDocComment) => ('text' in c ? c.text : '')).join('');
 }
 
 function getJSDocParamDescription(node: ts.Node, paramName: string): string | undefined {
@@ -517,7 +520,7 @@ function getJSDocParamDescription(node: ts.Node, paramName: string): string | un
         const raw =
           typeof tag.comment === 'string'
             ? tag.comment
-            : tag.comment.map((c: ts.JSDocText | ts.JSDocLink) => ('text' in c ? c.text : '')).join('');
+            : tag.comment.map((c: ts.JSDocComment) => ('text' in c ? c.text : '')).join('');
         return raw.replace(/^\s*-\s+/, '');
       }
     }
@@ -550,7 +553,7 @@ function getJSDocTagValue(node: ts.Node, tagName: string): string | undefined {
         if (!tag.comment) return undefined;
         if (typeof tag.comment === 'string') return tag.comment.trim();
         return tag.comment
-          .map((c: ts.JSDocText | ts.JSDocLink) => ('text' in c ? c.text : ''))
+          .map((c: ts.JSDocComment) => ('text' in c ? c.text : ''))
           .join('')
           .trim();
       }
@@ -947,7 +950,7 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     for (const modulePath of modulesToScan) {
       if (!fs.existsSync(modulePath)) continue;
 
-      let ast: tae.Module;
+      let ast: tae.ModuleNode;
       try {
         ast = tae.parseFromProgram(modulePath, program);
       } catch {

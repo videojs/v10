@@ -3,9 +3,22 @@
  *
  * Exercises: multiple getter/setter pairs with JSDoc descriptions,
  * readonly properties, boolean type, overlap with native attributes
- * (src, preload) that should be deduplicated by the builder.
+ * (src, preload) that should be deduplicated by the builder, and default
+ * values declared in a co-located `*DefaultProps` export (mirrors
+ * hlsMediaDefaultProps) including a const-object member reference.
  */
+import { MediaStreamTypes } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../simple';
+
+export const complexMediaDefaultProps = {
+  src: '',
+  type: undefined,
+  preferPlayback: 'mse',
+  config: {},
+  debug: false,
+  preload: 'metadata',
+  streamType: MediaStreamTypes.UNKNOWN,
+};
 
 export class ComplexHost extends HTMLVideoElementHost {
   #src: string = '';
@@ -15,6 +28,7 @@ export class ComplexHost extends HTMLVideoElementHost {
   #debug: boolean = false;
   #preload: string = 'metadata';
   #engine: object | null = null;
+  #streamType: string = complexMediaDefaultProps.streamType;
 
   get src(): string {
     return this.#src;
@@ -70,5 +84,14 @@ export class ComplexHost extends HTMLVideoElementHost {
   /** The underlying playback engine instance. */
   get engine(): object | null {
     return this.#engine;
+  }
+
+  /** Current stream type. */
+  get streamType(): string {
+    return this.#streamType;
+  }
+
+  set streamType(value: string) {
+    this.#streamType = value;
   }
 }

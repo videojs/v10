@@ -1,0 +1,54 @@
+---
+title: Live
+description: Live edge state for the player store
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Exposes live-edge state so components can render a "jump to live" button, detect DVR vs. standard live, or hide live-only UI for on-demand sources.
+
+`liveEdgeStart` is the presentation time at which the Live Edge Window begins — playback is "at the live edge" when `currentTime >= liveEdgeStart`. `targetLiveWindow` reports the seekable range size: `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand or unknown. Both values are `NaN` when the media doesn't expose live-edge state (anything other than an HLS source today).
+
+The live feature is included by the `liveVideoFeatures` and `liveAudioFeatures` presets; apps that build a custom preset can compose it in directly.
+
+<FeatureReference feature="live" />
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectLive` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectLive` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to live state. Returns `undefined` if the live feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="LiveEdgeIndicator.tsx"
+import { selectLive, selectTime, usePlayer } from '@videojs/react';
+
+function LiveEdgeIndicator() {
+  const live = usePlayer(selectLive);
+  const time = usePlayer(selectTime);
+  if (!live || Number.isNaN(live.targetLiveWindow)) return null;
+
+  const atEdge = time != null && time.currentTime >= live.liveEdgeStart;
+  return <span className="live-indicator">{atEdge ? 'LIVE' : 'BEHIND LIVE'}</span>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="live-edge-button.ts"
+import { createPlayer, MediaElement, selectLive } from '@videojs/html';
+import { liveVideoFeatures } from '@videojs/html/live-video';
+
+const { PlayerController, context } = createPlayer({ features: liveVideoFeatures });
+
+class LiveEdgeButton extends MediaElement {
+  readonly #live = new PlayerController(this, context, selectLive);
+}
+```
+</FrameworkCase>

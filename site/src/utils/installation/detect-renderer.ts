@@ -7,20 +7,29 @@ export interface DetectionResult {
 }
 
 const DOMAIN_RULES: Array<{ match: (hostname: string) => boolean; renderer: Renderer; label: string }> = [
+  // Mux is matched by hostname before the `.m3u8` extension rule below, so a
+  // `stream.mux.com` URL resolves to a Mux renderer (with Mux Data) rather than
+  // generic HLS. The two Mux rules are ordered video-then-audio; the loop's
+  // use-case guard skips the invalid one and `continue`s to the next.
+  {
+    match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
+    renderer: 'mux-video',
+    label: 'Mux',
+  },
+  {
+    match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
+    renderer: 'mux-audio',
+    label: 'Mux',
+  },
+  {
+    match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
+    renderer: 'vimeo',
+    label: 'Vimeo',
+  },
   // {
   //   match: (h) => h === 'youtube.com' || h === 'www.youtube.com' || h === 'youtu.be' || h === 'm.youtube.com',
   //   renderer: 'youtube',
   //   label: 'YouTube',
-  // },
-  // {
-  //   match: (h) => h === 'vimeo.com' || h === 'www.vimeo.com' || h === 'player.vimeo.com',
-  //   renderer: 'vimeo',
-  //   label: 'Vimeo',
-  // },
-  // {
-  //   match: (h) => h === 'stream.mux.com' || h === 'mux.com' || h === 'www.mux.com',
-  //   renderer: 'mux-video',
-  //   label: 'Mux',
   // },
   // {
   //   match: (h) => h === 'open.spotify.com',
@@ -77,10 +86,11 @@ export function detectRenderer(url: string, useCase: UseCase): DetectionResult |
   const parsed = parseUrl(trimmed);
   if (!parsed) return null;
 
-  // Check domain rules first
+  // Check domain rules first. When a host matches but its renderer isn't valid
+  // for the current use case, keep looking (so e.g. a Mux URL in an audio use
+  // case falls through from the mux-video rule to the mux-audio rule).
   for (const rule of DOMAIN_RULES) {
-    if (rule.match(parsed.hostname)) {
-      if (!isRendererValidForUseCase(rule.renderer, useCase)) return null;
+    if (rule.match(parsed.hostname) && isRendererValidForUseCase(rule.renderer, useCase)) {
       return { renderer: rule.renderer, label: rule.label };
     }
   }
@@ -93,10 +103,10 @@ export function detectRenderer(url: string, useCase: UseCase): DetectionResult |
     return { renderer: 'hls', label: 'HLS' };
   }
 
-  // if (ext === '.mpd') {
-  //   if (!isRendererValidForUseCase('dash', useCase)) return null;
-  //   return { renderer: 'dash', label: 'DASH' };
-  // }
+  if (ext === '.mpd') {
+    if (!isRendererValidForUseCase('dash', useCase)) return null;
+    return { renderer: 'dash', label: 'DASH' };
+  }
 
   if (VIDEO_EXTENSIONS.has(ext)) {
     if (!isRendererValidForUseCase('html5-video', useCase)) return null;
@@ -117,19 +127,13 @@ export function isRendererValidForUseCase(renderer: Renderer, useCase: UseCase):
 
 const RENDERER_ARTICLES: Record<Renderer, 'a' | 'an'> = {
   'background-video': 'a',
-  // cloudflare: 'a',
-  // dash: 'a',
+  dash: 'a',
   hls: 'an',
   'html5-audio': 'an',
   'html5-video': 'an',
-  // jwplayer: 'a',
-  // 'mux-audio': 'a',
-  // 'mux-background-video': 'a',
-  // 'mux-video': 'a',
-  // spotify: 'a',
-  // vimeo: 'a',
-  // wistia: 'a',
-  // youtube: 'a',
+  'mux-audio': 'a',
+  'mux-video': 'a',
+  vimeo: 'a',
 };
 
 export function articleFor(renderer: Renderer): 'a' | 'an' {

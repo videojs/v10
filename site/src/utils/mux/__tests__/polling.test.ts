@@ -6,12 +6,12 @@ describe('pollForPlaybackId', () => {
   describe('successful flow', () => {
     it('polls until assetId is available, then polls until playbackId', async () => {
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValueOnce({ data: { status: 'waiting' } })
         .mockResolvedValueOnce({ data: { status: 'asset_created', assetId: 'asset-1' } });
 
       const getAssetStatus = vi
-        .fn<[string], Promise<AssetStatusResult>>()
+        .fn<(id: string) => Promise<AssetStatusResult>>()
         .mockResolvedValueOnce({ data: { status: 'preparing' } })
         .mockResolvedValueOnce({ data: { status: 'ready', playbackId: 'playback-1' } });
 
@@ -31,11 +31,11 @@ describe('pollForPlaybackId', () => {
 
     it('returns immediately when assetId is available on first poll', async () => {
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValue({ data: { status: 'asset_created', assetId: 'asset-1' } });
 
       const getAssetStatus = vi
-        .fn<[string], Promise<AssetStatusResult>>()
+        .fn<(id: string) => Promise<AssetStatusResult>>()
         .mockResolvedValue({ data: { status: 'ready', playbackId: 'playback-1' } });
 
       const result = await pollForPlaybackId({
@@ -54,7 +54,7 @@ describe('pollForPlaybackId', () => {
   describe('error handling', () => {
     it('returns error when upload status is errored', async () => {
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValue({ data: { status: 'errored' } });
 
       const result = await pollForPlaybackId({
@@ -69,11 +69,11 @@ describe('pollForPlaybackId', () => {
 
     it('returns error when asset status is errored', async () => {
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValue({ data: { status: 'asset_created', assetId: 'asset-1' } });
 
       const getAssetStatus = vi
-        .fn<[string], Promise<AssetStatusResult>>()
+        .fn<(id: string) => Promise<AssetStatusResult>>()
         .mockResolvedValue({ data: { status: 'errored' } });
 
       const result = await pollForPlaybackId({
@@ -88,7 +88,7 @@ describe('pollForPlaybackId', () => {
 
     it('returns error when getUploadStatus API call fails', async () => {
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValue({ error: { message: 'Network error' } });
 
       const result = await pollForPlaybackId({
@@ -103,11 +103,11 @@ describe('pollForPlaybackId', () => {
 
     it('returns error when getAssetStatus API call fails', async () => {
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValue({ data: { status: 'asset_created', assetId: 'asset-1' } });
 
       const getAssetStatus = vi
-        .fn<[string], Promise<AssetStatusResult>>()
+        .fn<(id: string) => Promise<AssetStatusResult>>()
         .mockResolvedValue({ error: { message: 'Asset not found' } });
 
       const result = await pollForPlaybackId({
@@ -139,7 +139,7 @@ describe('pollForPlaybackId', () => {
 
     it('throws when signal is aborted during upload status polling', async () => {
       const controller = new AbortController();
-      const getUploadStatus = vi.fn<[string], Promise<UploadStatusResult>>().mockImplementation(async () => {
+      const getUploadStatus = vi.fn<(id: string) => Promise<UploadStatusResult>>().mockImplementation(async () => {
         controller.abort();
         return { data: { status: 'waiting' } };
       });
@@ -158,10 +158,10 @@ describe('pollForPlaybackId', () => {
     it('throws when signal is aborted during asset status polling', async () => {
       const controller = new AbortController();
       const getUploadStatus = vi
-        .fn<[string], Promise<UploadStatusResult>>()
+        .fn<(id: string) => Promise<UploadStatusResult>>()
         .mockResolvedValue({ data: { status: 'asset_created', assetId: 'asset-1' } });
 
-      const getAssetStatus = vi.fn<[string], Promise<AssetStatusResult>>().mockImplementation(async () => {
+      const getAssetStatus = vi.fn<(id: string) => Promise<AssetStatusResult>>().mockImplementation(async () => {
         controller.abort();
         return { data: { status: 'preparing' } };
       });

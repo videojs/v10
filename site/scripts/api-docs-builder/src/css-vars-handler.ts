@@ -42,7 +42,7 @@ export function extractCSSVars(filePath: string, program: ts.Program, componentN
   const vars: Array<{ name: string; description: string }> = [];
   const expectedName = `${componentName}CSSVars`;
 
-  function visit(node: ts.Node) {
+  const visit = (node: ts.Node) => {
     if (ts.isVariableStatement(node)) {
       for (const decl of node.declarationList.declarations) {
         if (!ts.isIdentifier(decl.name) || decl.name.text !== expectedName || !decl.initializer) {
@@ -74,7 +74,7 @@ export function extractCSSVars(filePath: string, program: ts.Program, componentN
     }
 
     ts.forEachChild(node, visit);
-  }
+  };
 
   visit(sourceFile);
 

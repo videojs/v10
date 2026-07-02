@@ -1,3 +1,7 @@
+import type { MediaFeatureAvailability, MediaStreamType, TextTrackKind } from './types';
+
+export type { TextTrackKind };
+
 export interface MediaPlaybackState {
   /**
    * Whether playback is paused.
@@ -36,8 +40,6 @@ export interface MediaPlaybackState {
   /** Toggle play/pause. Returns `true` if playback started. */
   togglePaused(): boolean;
 }
-
-import type { MediaFeatureAvailability } from './types';
 
 export interface MediaVolumeState {
   /**
@@ -122,6 +124,38 @@ export interface MediaSourceState {
   loadSource(src: string): string;
 }
 
+export interface MediaStreamTypeState {
+  /**
+   * Current stream delivery type.
+   *
+   * Components use this to toggle live-specific UI (e.g. a live indicator,
+   * a "jump to live edge" affordance, or hiding the time display).
+   *
+   * @see {@link MediaStreamTypes} for the canonical string values.
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0010-stream-type.md
+   */
+  streamType: MediaStreamType;
+}
+
+export interface MediaLiveState {
+  /**
+   * Presentation time marking the start of the Live Edge Window.
+   *
+   * Playing at the live edge when `currentTime >= liveEdgeStart`. `NaN`
+   * when the stream isn't live or the value is unknown.
+   *
+   * @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0007-live-edge.md
+   */
+  liveEdgeStart: number;
+  /**
+   * Offset representing the seekable range size for live content.
+   *
+   * `0` for standard latency live, `Infinity` for DVR, `NaN` for on-demand
+   * or unknown.
+   */
+  targetLiveWindow: number;
+}
+
 export interface MediaBufferState {
   /**
    * Buffered time ranges as [start, end] tuples.
@@ -196,6 +230,40 @@ export interface MediaPlaybackRateState {
   setPlaybackRate(rate: number): void;
 }
 
+export interface MediaVideoRendition {
+  id?: string;
+  width?: number;
+  height?: number;
+  bitrate?: number;
+  frameRate?: number;
+  codec?: string;
+  selected: boolean;
+}
+
+export interface MediaQualityState {
+  /** Video renditions available for manual quality selection. */
+  videoRenditionList: MediaVideoRendition[];
+  /** Video rendition currently playing, including when automatic ABR is selected. */
+  activeVideoRendition: MediaVideoRendition | null;
+  /** Select a video rendition by menu value, or automatic ABR with `"auto"`. */
+  selectVideoRendition(value: string): void;
+}
+
+export interface MediaAudioTrack {
+  id?: string;
+  kind?: string;
+  label: string;
+  language: string;
+  enabled: boolean;
+}
+
+export interface MediaAudioTrackState {
+  /** Audio tracks available for manual track selection. */
+  audioTrackList: MediaAudioTrack[];
+  /** Select an audio track by menu value. */
+  selectAudioTrack(value: string): void;
+}
+
 /**
  * A text cue.
  *
@@ -206,13 +274,6 @@ export interface MediaTextCue {
   endTime: number;
   text: string;
 }
-
-/**
- * The kind of text track.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
- */
-export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
 
 /**
  * The mode of a text track.
@@ -227,6 +288,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
+  id?: string;
   kind: Kind;
   label: string;
   language: string;
@@ -246,6 +308,8 @@ export interface MediaTextTrackState {
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */
   toggleSubtitles(forceShow?: boolean): boolean;
+  /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
+  selectSubtitlesTrack(value: string): void;
 }
 
 export interface MediaError {

@@ -8,8 +8,8 @@
   position: absolute;
   width: 1px;
   height: 1px;
-  opacity: 0;
   pointer-events: none;
+  opacity: 0;
 }
 
 .media-thumbnail {

@@ -1,5 +1,19 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.23...@videojs/cli@10.0.0-beta.24) (2026-05-19)
+
+
+### Miscellaneous Chores
+
+* **@videojs/cli:** Synchronize videojs versions
+
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.22...@videojs/cli@10.0.0-beta.23) (2026-04-27)
+
+
+### Features
+
+* **packages:** support cli:omit markers for llm-only doc content ([#1466](https://github.com/videojs/v10/issues/1466)) ([85e28a5](https://github.com/videojs/v10/commit/85e28a59205c4b008f693a6ceb5821487a3fedfa))
+
 ## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.21...@videojs/cli@10.0.0-beta.22) (2026-04-18)
 
 

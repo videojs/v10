@@ -2,10 +2,11 @@ import { cn } from '@videojs/utils/style';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
-import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
+import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
 /* ==========================================================================
@@ -35,12 +36,17 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-error-dialog-transition-timing-function:ease-out]',
     '[--media-popup-transition-duration:100ms]',
     '[--media-popup-transition-timing-function:ease-out]',
-    '[--media-tooltip-background-color:oklch(1_0_0/0.1)]',
-    '[--media-tooltip-border-color:transparent]',
+    '[--media-tooltip-background-color:oklch(0_0_0/0.5)]',
+    '[--media-tooltip-border-color:oklch(1_0_0/0.1)]',
     '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
     '[--media-tooltip-text-color:currentColor]',
     '[--media-tooltip-side-offset:0.5rem]',
+    '[--media-tooltip-boundary-offset:0.5rem]',
+    '[--media-popover-background-color:var(--media-tooltip-background-color)]',
+    '[--media-popover-border-color:var(--media-tooltip-border-color)]',
+    '[--media-popover-backdrop-filter:var(--media-tooltip-backdrop-filter)]',
     '[--media-popover-side-offset:1.5rem]',
+    '[--media-popover-boundary-offset:var(--media-tooltip-boundary-offset)]',
     'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -48,16 +54,16 @@ export const root = (isShadowDOM: boolean) =>
     'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-    '@2xl/media-root:[&>*]:[--media-popover-side-offset:0rem]',
-    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    '@2xl/media-root:*:[--media-popover-side-offset:0.5rem]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5rem]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:[&>*]:[--media-caption-track-y:-3rem]',
+    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3rem]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -69,6 +75,19 @@ export const root = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:scale-98',
           '[&_video::-webkit-media-text-track-container]:z-1',
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
+        ]
+      : [],
+    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
+    !isShadowDOM
+      ? [
+          'before:absolute before:inset-0 before:pointer-events-none',
+          'before:[background-image:var(--media-poster-placeholder,none)]',
+          'before:bg-no-repeat',
+          'before:[background-position:var(--media-object-position,center)]',
+          'before:[background-size:var(--media-object-fit,contain)]',
+          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
+          'before:transition-opacity before:duration-250',
+          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         ]
       : [],
     // Fullscreen
@@ -92,16 +111,17 @@ export const controls = cn(
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function)',
   'duration-(--media-controls-transition-duration)',
-  '[@media(pointer:fine)]:will-change-[translate,filter,opacity]',
-  '[@media(pointer:fine)]:transition-[translate,filter,opacity]',
-  '[@media(pointer:coarse)]:will-change-[translate,opacity]',
-  '[@media(pointer:coarse)]:transition-[translate,opacity]',
+  'pointer-fine:will-change-[translate,filter,opacity]',
+  'pointer-fine:transition-[translate,filter,opacity]',
+  'pointer-coarse:will-change-[translate,opacity]',
+  'pointer-coarse:transition-[translate,opacity]',
   // Hidden state
   'not-data-visible:opacity-0 not-data-visible:pointer-events-none',
   'motion-safe:not-data-visible:translate-y-full',
-  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm',
+  'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
-  '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2'
+  '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2',
+  '@2xl/media-root:*:[--media-popover-side-offset:0rem]'
 );
 
 /* ==========================================================================
@@ -136,28 +156,35 @@ export const error = {
 };
 
 /* ==========================================================================
-   Preview
+   Thumbnail
    ========================================================================== */
 
-export const preview = {
-  ...basePreview,
+export const thumbnail = {
+  ...baseThumbnail,
   root: cn(
-    '[--media-preview-max-width:11rem] [--media-preview-padding:-0.5rem] [--media-preview-inset:calc(100cqi-100%)]',
-    'absolute [left:clamp(calc(var(--media-preview-max-width)/2+var(--media-preview-padding)),var(--media-slider-pointer),calc(100%-var(--media-preview-max-width)/2-var(--media-preview-padding)+var(--media-preview-inset)))] bottom-full -translate-x-1/2',
-    '@2xl/media-root:bottom-[calc(100%+0.25rem)] @2xl/media-root:[left:var(--media-slider-pointer)]',
+    baseThumbnail.root,
+    '[--media-slider-thumbnail-max-width:11rem]',
+    '[--media-slider-thumbnail-max-height:8rem]',
+    '[--media-slider-thumbnail-padding:-0.5rem]',
+    '[--media-slider-thumbnail-inset:calc(100cqi-100%)]',
+    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-full -translate-x-1/2',
+    '@2xl/media-root:[left:var(--media-slider-pointer)]',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
-    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
-    '[&:has([role=img][data-loading])]:max-h-24',
-    basePreview.root
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
   ),
-  thumbnailWrapper: cn(
-    basePreview.thumbnailWrapper,
+  imageWrapper: cn(
+    baseThumbnail.imageWrapper,
     'after:absolute after:inset-0 after:rounded-[inherit]',
     'after:ring-1 after:ring-black/5 after:shadow-sm after:shadow-black/20'
   ),
-  thumbnail: cn(basePreview.thumbnail, 'max-w-(--media-preview-max-width)'),
+  image: cn(
+    baseThumbnail.image,
+    'max-w-(--media-slider-thumbnail-max-width)',
+    'max-h-(--media-slider-thumbnail-max-height)'
+  ),
 };
 
 /* ==========================================================================
@@ -184,14 +211,31 @@ export const popup = {
 };
 
 /* ==========================================================================
+   Menu
+   ========================================================================== */
+
+const menuOffsets = cn(
+  '[--media-popover-side-offset:1.5rem] [--media-popover-boundary-offset:0.5rem]',
+  '@2xl/media-root:[--media-popover-side-offset:0.5rem]'
+);
+
+export const menu = {
+  ...baseMenu,
+  root: cn(baseMenu.root, menuOffsets),
+  settings: cn(baseMenu.settings, menuOffsets),
+};
+
+/* ==========================================================================
    Shared components (no overrides)
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { inputFeedback } from './components/input-feedback';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';

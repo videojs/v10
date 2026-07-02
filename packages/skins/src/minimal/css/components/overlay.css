@@ -5,24 +5,30 @@
 .media-minimal-skin .media-overlay {
   position: absolute;
   inset: 0;
-  border-radius: inherit;
-  background-image: linear-gradient(to top, oklch(0 0 0 / 0.7), oklch(0 0 0 / 0.5) 7.5rem, oklch(0 0 0 / 0));
-  backdrop-filter: blur(0) saturate(1);
-  opacity: 0;
   pointer-events: none;
-  transition-property: opacity, backdrop-filter;
-  transition-duration: var(--media-controls-transition-duration);
+  background-image: linear-gradient(to top, oklch(0 0 0 / 0.7), oklch(0 0 0 / 0.5) 7.5rem, oklch(0 0 0 / 0));
+  border-radius: inherit;
+  opacity: 0;
+  backdrop-filter: blur(0) saturate(1);
   transition-timing-function: ease-out;
+  transition-duration: var(--media-controls-transition-duration);
+  transition-property: opacity, backdrop-filter;
 }
 
 .media-minimal-skin .media-error ~ .media-overlay {
-  transition-duration: var(--media-error-dialog-transition-duration);
   transition-delay: var(--media-error-dialog-transition-delay);
+  transition-duration: var(--media-error-dialog-transition-duration);
 }
 
 .media-minimal-skin .media-controls[data-visible] ~ .media-overlay,
 .media-minimal-skin .media-error[data-open] ~ .media-overlay {
   opacity: 1;
+}
+
+.media-minimal-skin .media-buffering-indicator[data-visible] ~ .media-overlay {
+  background: oklch(0 0 0 / 0.35);
+  opacity: 1;
+  backdrop-filter: blur(8px);
 }
 
 .media-minimal-skin .media-error[data-open] ~ .media-overlay {

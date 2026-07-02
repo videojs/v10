@@ -62,7 +62,7 @@ const tiles = [
             </h2>
             {Array.isArray(tile.body) ? (
               <div class="text-p2 text-warm-gray dark:text-manila-dark">
-                {tile.body.map((line, i) => (
+                {tile.body.map((line) => (
                   <p class="mb-2 last:mb-0">{line}</p>
                 ))}
               </div>
@@ -71,7 +71,7 @@ const tiles = [
                 {tile.body}
               </p>
             )}
-            {tile.cta.href ? (
+            {"href" in tile.cta ? (
               <a
                 href={tile.cta.href}
                 target="_blank"

@@ -11,6 +11,4 @@ type Props<Tag extends HTMLTag = 'strong'> = Polymorphic<{ as: Tag }> & {
 const { as: Tag = 'strong', class: className, ...props } = Astro.props;
 ---
 
-<Tag class={twMerge(shared.strong, className)} {...props}>
-  <slot />
-</Tag>
+<Tag class={twMerge(shared.strong, className)} {...props}><slot /></Tag>

@@ -35,7 +35,7 @@ Icons are grouped into visual sets. Each set contains the same icon names with d
 Import icons as React components. They accept standard SVG props and support ref forwarding.
 
 ```tsx
-import { PlayIcon, PauseIcon } from '@videojs/icons/react';
+import { PlayIcon, PauseIcon } from '@videojs/react/icons';
 
 function Controls() {
   return (
@@ -49,7 +49,7 @@ function Controls() {
 Import from a specific icon set:
 
 ```tsx
-import { PlayIcon } from '@videojs/icons/react/minimal';
+import { PlayIcon } from '@videojs/react/icons/minimal';
 ```
 
 ### HTML
@@ -57,7 +57,7 @@ import { PlayIcon } from '@videojs/icons/react/minimal';
 Import icons as SVG strings for use in plain HTML or web components.
 
 ```ts
-import { playIcon, pauseIcon } from '@videojs/icons/html';
+import { playIcon, pauseIcon } from '@videojs/html/icons';
 
 button.innerHTML = playIcon;
 ```
@@ -65,7 +65,19 @@ button.innerHTML = playIcon;
 Import from a specific icon set:
 
 ```ts
-import { playIcon } from '@videojs/icons/html/minimal';
+import { playIcon } from '@videojs/html/icons/minimal';
+```
+
+Register the `<media-icon>` custom element separately when you want HTML skins to render icons lazily:
+
+```ts
+import '@videojs/html/icons/element';
+```
+
+Import a specific element icon set when eager family registration is preferred:
+
+```ts
+import '@videojs/html/icons/element/minimal';
 ```
 
 ## Styling
@@ -100,8 +112,8 @@ The build automatically:
 Create a new directory under `src/assets/` (e.g., `src/assets/custom/`), add SVG files, and rebuild. The set is automatically available via:
 
 ```ts
-import { PlayIcon } from '@videojs/icons/react/custom';
-import { playIcon } from '@videojs/icons/html/custom';
+import { PlayIcon } from '@videojs/react/icons/custom';
+import { playIcon } from '@videojs/html/icons/custom';
 ```
 
 ## Development

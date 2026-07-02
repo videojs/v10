@@ -6,7 +6,7 @@ import {
   renderTemplate,
   type ShadowStyle,
 } from '@videojs/utils/dom';
-import rootStyles from './base.css?inline';
+import globalStyles from './global.css?inline';
 import sharedStyles from './shared.css?inline';
 
 const STYLES_ID = '__media-styles';
@@ -18,6 +18,23 @@ const sharedSheet = createShadowStyle(sharedStyles);
  * via `adoptedStyleSheets` (or `<style>` fallback).
  */
 export class SkinElement extends ReactiveElement {
+  static get observedAttributes(): string[] {
+    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+    return [...super.observedAttributes, 'placeholdersrc'];
+  }
+
+  override attributeChangedCallback(attr: string, oldValue: string | null, newValue: string | null): void {
+    super.attributeChangedCallback(attr, oldValue, newValue);
+
+    if (attr === 'placeholdersrc') {
+      if (newValue) {
+        this.style.setProperty('--media-poster-placeholder', `url(${newValue})`);
+      } else {
+        this.style.removeProperty('--media-poster-placeholder');
+      }
+    }
+  }
+
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
   static styles?: ShadowStyle;
   static template?: HTMLTemplateElement | null;
@@ -25,7 +42,7 @@ export class SkinElement extends ReactiveElement {
   constructor() {
     super();
 
-    ensureGlobalStyle(STYLES_ID, rootStyles);
+    ensureGlobalStyle(STYLES_ID, globalStyles);
 
     if (!this.shadowRoot) {
       const ctor = this.constructor as typeof SkinElement;

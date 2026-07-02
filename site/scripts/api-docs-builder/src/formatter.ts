@@ -106,7 +106,7 @@ export function formatProperties(props: tae.PropertyNode[], allExports?: tae.Exp
 
     const entry: PropDef = { type: abbreviated ?? expandedType };
     if (abbreviated && expandedType !== abbreviated) entry.detailedType = expandedType;
-    if (prop.documentation?.defaultValue !== undefined) entry.default = prop.documentation.defaultValue;
+    if (prop.documentation?.defaultValue !== undefined) entry.default = String(prop.documentation.defaultValue);
     if (!prop.optional) entry.required = true;
     if (prop.documentation?.description !== undefined) entry.description = prop.documentation.description;
 

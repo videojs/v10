@@ -1,3 +1,5 @@
+// Github, Linkedin, Twitter are deprecated brand icons (lucide-icons/lucide#670).
+// Lucide will remove them in v1.0 — replace with simple-icons or custom SVGs then.
 import { AtSign, Github, Globe, Linkedin, Twitter } from 'lucide-react';
 import { Fragment } from 'react';
 import { Tooltip, TooltipProvider } from '../Tooltip';

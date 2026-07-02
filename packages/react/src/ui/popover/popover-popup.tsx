@@ -1,7 +1,14 @@
 'use client';
 
 import type { PopoverState } from '@videojs/core';
-import { getAnchorPositionStyle, getPopupPositionRect, resolveOffsets } from '@videojs/core/dom';
+import {
+  getAnchorPositionStyle,
+  getPopupPositionRect,
+  getPositioningBoundaryRect,
+  isEventWithinElement,
+  resolveOffsets,
+  resolvePositioningBoundary,
+} from '@videojs/core/dom';
 import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import type { CSSProperties } from 'react';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
@@ -20,7 +27,7 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { core, popover, state, stateAttrMap, anchorName, popupId } = usePopoverContext();
+  const { core, popover, state, stateAttrMap, anchorName, popupId, boundary, container } = usePopoverContext();
   const internalRef = useRef<HTMLDivElement>(null);
 
   const popupRef = useCallback(
@@ -52,7 +59,6 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
   const [manualStyle, setManualStyle] = useState<CSSProperties | null>(null);
 
   useLayoutEffect(() => {
-    if (supportsAnchorPositioning()) return;
     if (!state.open) {
       setManualStyle(null);
       return;
@@ -64,21 +70,38 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
       if (!triggerEl || !popupEl) return;
 
       const triggerRect = triggerEl.getBoundingClientRect();
-      const popupRect = getPopupPositionRect(popupEl);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
+      const root = popupEl.getRootNode() as Document | ShadowRoot;
+      const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
+      const popupRect = supportsAnchorPositioning() ? undefined : getPopupPositionRect(popupEl);
+      const boundaryRect = getPositioningBoundaryRect(boundaryElement);
       const offsets = resolveOffsets(popupEl);
 
-      setManualStyle(
-        getAnchorPositionStyle(anchorName, posOpts, triggerRect, popupRect, boundaryRect, offsets) as CSSProperties
+      const { positionAnchor: _, ...nextStyle } = getAnchorPositionStyle(
+        anchorName,
+        posOpts,
+        triggerRect,
+        popupRect,
+        boundaryRect,
+        offsets
       );
+
+      setManualStyle(nextStyle as CSSProperties);
     }
 
     measure();
     const triggerEl = popover.triggerElement;
     const popupEl = internalRef.current;
+    const boundaryElement = popupEl
+      ? resolvePositioningBoundary(boundary, {
+          container,
+          root: popupEl.getRootNode() as Document | ShadowRoot,
+        })
+      : null;
 
     let rafId = 0;
-    function reposition(): void {
+    function reposition(event?: Event): void {
+      if (event && isEventWithinElement(event, internalRef.current)) return;
+
       cancelAnimationFrame(rafId);
       rafId = requestAnimationFrame(measure);
     }
@@ -101,6 +124,9 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
     if (popupEl && resizeObserver) {
       resizeObserver.observe(popupEl);
     }
+    if (boundaryElement && resizeObserver) {
+      resizeObserver.observe(boundaryElement);
+    }
 
     window.addEventListener('scroll', reposition, { capture: true, passive: true });
     window.addEventListener('resize', reposition);
@@ -111,11 +137,11 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };
-  }, [state.open, anchorName, posOpts, popover]);
+  }, [state.open, anchorName, posOpts, popover, boundary, container]);
 
   // Anchor path uses computed styles; manual path uses measured styles;
   // fallback resets UA [popover] defaults until positioning is computed.
-  const positioningStyle = anchorStyle ?? manualStyle ?? POPOVER_RESET;
+  const positioningStyle = manualStyle ?? anchorStyle ?? POPOVER_RESET;
 
   // --- Visibility ---
 

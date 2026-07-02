@@ -1,7 +1,7 @@
 import { Atom, Globe } from 'lucide-react';
 import type { ReactNode } from 'react';
 import ImageRadioGroup from '@/components/ImageRadioGroup';
-import type { SupportedFramework, SupportedStyle } from '@/types/docs';
+import type { SupportedFramework } from '@/types/docs';
 import { FRAMEWORK_LABELS, isValidFramework, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import { resolveFrameworkChange } from '@/utils/docs/routing';
 
@@ -12,18 +12,16 @@ const FRAMEWORK_IMAGES: Record<SupportedFramework, ReactNode> = {
 
 interface Props {
   currentFramework: SupportedFramework;
-  currentStyle: SupportedStyle<SupportedFramework>;
   currentSlug: string;
 }
 
-export default function JSPickerClient({ currentFramework, currentStyle, currentSlug }: Props) {
+export default function JSPickerClient({ currentFramework, currentSlug }: Props) {
   const handleFrameworkChange = (newFramework: SupportedFramework | null) => {
     if (newFramework === null) return;
     if (!isValidFramework(newFramework)) return;
 
     const { url, shouldReplace } = resolveFrameworkChange({
       currentFramework,
-      currentStyle,
       currentSlug,
       newFramework,
     });

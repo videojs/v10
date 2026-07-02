@@ -1,5 +1,74 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.23...@videojs/html@10.0.0-beta.24) (2026-05-19)
+
+
+### Features
+
+* **core:** menu core layer and DOM keyboard navigation ([#1503](https://github.com/videojs/v10/issues/1503)) ([e3c1b28](https://github.com/videojs/v10/commit/e3c1b280325493909ef1da193855832b8c51fb48))
+* **packages:** add live button component ([#1473](https://github.com/videojs/v10/issues/1473)) ([e37d5df](https://github.com/videojs/v10/commit/e37d5df87352088a9287bd46b14759965c154b76))
+* **packages:** add playback rate menu ([#1527](https://github.com/videojs/v10/issues/1527)) ([ad831d2](https://github.com/videojs/v10/commit/ad831d25f00187929e6eed93770422fa7003071c))
+* **packages:** add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/issues/1388)) ([0620814](https://github.com/videojs/v10/commit/0620814a6726da5705b28b1e576dfa3a49b92108))
+* **packages:** ship bundled markdown docs in html and react tarballs ([#1560](https://github.com/videojs/v10/issues/1560)) ([20e77d3](https://github.com/videojs/v10/commit/20e77d37fa458c52eb6b14269fd8582bee72281a))
+
+
+### Bug Fixes
+
+* **ci:** use biome to sort CSS properties ([#1490](https://github.com/videojs/v10/issues/1490)) ([8e2b7e4](https://github.com/videojs/v10/commit/8e2b7e4f6d20a0b4f780c34ec2670ec1f9bd25e6))
+* **html:** set min dimensions on background-video host ([#1523](https://github.com/videojs/v10/issues/1523)) ([a1e37dd](https://github.com/videojs/v10/commit/a1e37dd66f0403fae64b751242747312ec5df9ad))
+* **icons:** use icon exports in ejected skins ([#1489](https://github.com/videojs/v10/issues/1489)) ([d0b36ed](https://github.com/videojs/v10/commit/d0b36ed5b80f9614687d0dd584232cf74d4fb3ca))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.24
+    * @videojs/element bumped to 10.0.0-beta.24
+    * @videojs/spf bumped to 10.0.0-beta.24
+    * @videojs/store bumped to 10.0.0-beta.24
+    * @videojs/utils bumped to 10.0.0-beta.24
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.24
+    * @videojs/skins bumped to 10.0.0-beta.24
+
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.22...@videojs/html@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Features
+
+* **html:** observe cast attributes on mux elements ([#1386](https://github.com/videojs/v10/issues/1386)) ([76a1e4a](https://github.com/videojs/v10/commit/76a1e4a8c9b85151070b3b10c87692131b529c92))
+* **html:** re-export reactive primitives from @videojs/element ([#1472](https://github.com/videojs/v10/issues/1472)) ([466abb6](https://github.com/videojs/v10/commit/466abb6d200b790d9de64be0e0c87c56d60e64a5))
+* **packages:** add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/issues/1399)) ([d9c0049](https://github.com/videojs/v10/commit/d9c00491e7984aeaa01eec2d4450ac148129c205))
+
+
+### Bug Fixes
+
+* **html:** raise testTimeout to 15s for parallel-load reliability ([#1448](https://github.com/videojs/v10/issues/1448)) ([b934937](https://github.com/videojs/v10/commit/b9349375cbcd8436173afc0d6a03cab182829718))
+
+
+### Code Refactoring
+
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.23
+    * @videojs/element bumped to 10.0.0-beta.23
+    * @videojs/spf bumped to 10.0.0-beta.23
+    * @videojs/store bumped to 10.0.0-beta.23
+    * @videojs/utils bumped to 10.0.0-beta.23
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.23
+    * @videojs/skins bumped to 10.0.0-beta.23
+
 ## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/html@10.0.0-beta.21...@videojs/html@10.0.0-beta.22) (2026-04-18)
 
 

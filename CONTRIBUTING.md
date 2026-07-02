@@ -36,7 +36,7 @@ You’ll need the following installed:
 
 ```sh
 git clone https://github.com/{your-github-username}/v10.git
-cd vjs-10
+cd v10
 
 git remote add upstream git@github.com:videojs/v10.git
 git fetch upstream
@@ -84,9 +84,12 @@ pnpm dev
 This will run the entire workspace in developer mode, meaning all applications (examples and website) will also be started on their respective ports.
 
 ```sh
-# Run the documentation site
-pnpm dev:site
+pnpm dev:site       # just the documentation site
+pnpm dev:packages   # just the library packages (no apps)
+pnpm dev:sandbox    # just the sandbox playground
 ```
+
+See [Manual Testing with the Sandbox](#-manual-testing-with-the-sandbox) for how to use the sandbox to exercise player changes in the browser.
 
 Sometimes you may want to do (non-dev) builds, say, to validate the full build process or evaluate production artifacts.
 
@@ -113,11 +116,23 @@ For the bulk of our core code, we use [Biome](https://biomejs.dev). Between IDE 
 To ensure your code follows our lint rules with:
 
 ```sh
-pnpm lint
-pnpm lint:fix
+pnpm lint                    # check the whole workspace
+pnpm lint:fix                # check and auto-fix the whole workspace
+pnpm lint:fix:file <file>    # check and auto-fix a single file
 ```
 
 Pre‑commit hooks automatically lint staged files via **simple-git-hooks** and **lint‑staged**.
+
+### 🔎 Typechecking
+
+We use TypeScript project references for fast, incremental typechecking across the workspace:
+
+```sh
+pnpm typecheck
+```
+
+> [!TIP]
+> Typecheck runs against built `.d.ts` files. If you add or change exported types in a package, run `pnpm -F <pkg> build` first so the new declarations are emitted before typechecking.
 
 ### 🧪 Testing
 
@@ -163,6 +178,35 @@ pnpm test:e2e:vite               # Chromium only (fast feedback)
 > [!TIP]
 > Snapshot baselines are checked into git. When you update them, review the PNG diffs in your PR to make sure the visual changes are intentional.
 
+### 🏖 Manual Testing with the Sandbox
+
+The sandbox (`apps/sandbox/`) is a Vite playground for manually exercising player changes in a browser. The root URL renders an interactive shell — a navbar with dropdowns for platform, preset, skin, styling, and source — that previews the selected combination in an iframe. One-off templates outside the main matrix are reachable by navigating directly to `/<template-name>/`. See `apps/sandbox/templates/` for the full list.
+
+```sh
+pnpm dev:sandbox                 # sandbox + workspace package watch
+pnpm dev                         # also runs the docs site
+```
+
+Sandbox code lives in two parallel directories:
+
+- **`apps/sandbox/templates/`** — source of truth, checked into git.
+- **`apps/sandbox/src/`** — your scratch copy, fully gitignored.
+
+On `pnpm dev:sandbox`, `setup.ts` copies any file from `templates/` that doesn't already exist in `src/`. Existing files in `src/` are never overwritten, so your local changes persist across restarts.
+
+> [!IMPORTANT]
+> Because `src/` is gitignored, edits you make there will not appear in `git status`. When you want to promote a sandbox change into the repo, run `pnpm -F @videojs/sandbox sync` — it shows a diff of every changed file and prompts before copying `src/` → `templates/`. To throw away local edits and restore from templates, run `pnpm -F @videojs/sandbox reset`.
+
+See [`apps/sandbox/README.md`](./apps/sandbox/README.md) for the full model, including the `app/` shell, the `@app/*` alias for shared code, and how to add a new sandbox entry point.
+
+### ✅ Workspace Consistency
+
+Before opening a PR, run the workspace consistency check to catch common mistakes (CI coverage, scope mismatches, broken define imports, etc.):
+
+```sh
+pnpm check:workspace
+```
+
 ### 📦 Dependencies
 
 To add a dependency to a specific package, you can use [`pnpm` filtering][pnpm-filtering] from the workspace root:
@@ -190,25 +234,31 @@ Video.js 10 includes tooling for AI-assisted development with [Claude Code](http
 
 ### Slash Commands
 
-| Command          | Purpose                               |
-| ---------------- | ------------------------------------- |
-| `/commit-pr`     | Commit changes and create/update a PR |
-| `/review-branch` | Review changes in the current branch  |
-| `/gh-issue <n>`  | Analyze an issue and generate a plan  |
+| Command          | Purpose                                           |
+| ---------------- | ------------------------------------------------- |
+| `/commit-pr`     | Commit changes and create/update a PR             |
+| `/review-branch` | Review changes in the current branch              |
+| `/gh-issue <n>`  | Analyze an issue and generate a plan              |
+| `/create-issue`  | Create a GitHub issue following repo conventions  |
+| `/claude-update` | Update `CLAUDE.md` and skills for new patterns    |
+| `/create-skill`  | Scaffold a new skill                              |
 
 ### Skills
 
-Domain-specific knowledge lives in `.claude/skills/`:
+Domain-specific knowledge lives in `.claude/skills/`. A few of the most-used skills:
 
-| Skill       | Use When                                |
-| ----------- | --------------------------------------- |
-| `api`       | Designing APIs, reviewing architecture  |
-| `component` | Building UI components                  |
-| `aria`      | Accessibility implementation and review |
-| `docs`       | Writing documentation                  |
-| `git`       | Commit messages, PR conventions         |
+| Skill           | Use When                                                 |
+| --------------- | -------------------------------------------------------- |
+| `api`           | Designing APIs, reviewing architecture                   |
+| `component`     | Building HTML or React components                        |
+| `aria`          | Accessibility implementation and review                  |
+| `docs`          | Writing concept guides, how-tos, and READMEs             |
+| `api-reference` | Scaffolding component/util reference pages               |
+| `design`        | Writing internal Design Docs                             |
+| `rfc`           | Writing RFCs for proposals that need buy-in              |
+| `git`           | Commit messages, PR conventions                          |
 
-See [`.claude/skills/README.md`](./.claude/skills/README.md) for workflow mappings.
+See [`.claude/skills/README.md`](./.claude/skills/README.md) for the full list and workflow mappings.
 
 ### Maintaining AI Docs
 

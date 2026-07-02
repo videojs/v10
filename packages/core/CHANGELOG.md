@@ -1,5 +1,60 @@
 # Changelog
 
+## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24) (2026-05-19)
+
+
+### Features
+
+* **core:** menu core layer and DOM keyboard navigation ([#1503](https://github.com/videojs/v10/issues/1503)) ([e3c1b28](https://github.com/videojs/v10/commit/e3c1b280325493909ef1da193855832b8c51fb48))
+* **packages:** add live button component ([#1473](https://github.com/videojs/v10/issues/1473)) ([e37d5df](https://github.com/videojs/v10/commit/e37d5df87352088a9287bd46b14759965c154b76))
+* **packages:** add playback rate menu ([#1527](https://github.com/videojs/v10/issues/1527)) ([ad831d2](https://github.com/videojs/v10/commit/ad831d25f00187929e6eed93770422fa7003071c))
+* **packages:** add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/issues/1388)) ([0620814](https://github.com/videojs/v10/commit/0620814a6726da5705b28b1e576dfa3a49b92108))
+* **spf:** HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/issues/1512)) ([0cfd3bb](https://github.com/videojs/v10/commit/0cfd3bb395332b19cf85e9dc7eb08f656bec3e2b))
+
+
+### Bug Fixes
+
+* **core:** resolve cast button ssr hydration mismatch ([#1518](https://github.com/videojs/v10/issues/1518)) ([ff7d901](https://github.com/videojs/v10/commit/ff7d901bc40a0e12c9140ecb40764ad8de2eab9c))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.24
+    * @videojs/store bumped to 10.0.0-beta.24
+    * @videojs/utils bumped to 10.0.0-beta.24
+
+## [10.0.0-beta.23](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.22...@videojs/core@10.0.0-beta.23) (2026-04-27)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** unify fullscreen and pip on media capabilities ([#1469](https://github.com/videojs/v10/issues/1469))
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380))
+
+### Features
+
+* **core:** add HLS stream-type detection and live duration ([#1387](https://github.com/videojs/v10/issues/1387)) ([587c302](https://github.com/videojs/v10/commit/587c302fe5c9f5f558c7358cd84f6438b9b890b7))
+* **core:** add liveEdgeStart and targetLiveWindow properties ([#1445](https://github.com/videojs/v10/issues/1445)) ([e3d4ff9](https://github.com/videojs/v10/commit/e3d4ff9d681ec4c31247542f7c2136d341e05303))
+* **html:** observe cast attributes on mux elements ([#1386](https://github.com/videojs/v10/issues/1386)) ([76a1e4a](https://github.com/videojs/v10/commit/76a1e4a8c9b85151070b3b10c87692131b529c92))
+* **packages:** add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/issues/1399)) ([d9c0049](https://github.com/videojs/v10/commit/d9c00491e7984aeaa01eec2d4450ac148129c205))
+
+
+### Code Refactoring
+
+* **core:** unify fullscreen and pip on media capabilities ([#1469](https://github.com/videojs/v10/issues/1469)) ([bb72a84](https://github.com/videojs/v10/commit/bb72a84dc1a6d125befeb136fd114d29e2180854))
+* **packages:** rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/issues/1380)) ([413874c](https://github.com/videojs/v10/commit/413874c1e079ccfa43067180161fe86c78b185bd))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.23
+    * @videojs/store bumped to 10.0.0-beta.23
+    * @videojs/utils bumped to 10.0.0-beta.23
+
 ## [10.0.0-beta.22](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.21...@videojs/core@10.0.0-beta.22) (2026-04-18)
 
 

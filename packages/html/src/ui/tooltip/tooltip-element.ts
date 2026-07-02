@@ -1,4 +1,11 @@
-import { type ButtonState, TooltipCore, TooltipCSSVars, TooltipDataAttrs, type TooltipInput } from '@videojs/core';
+import {
+  type ButtonState,
+  POPUP_HOST_ATTR,
+  TooltipCore,
+  TooltipCSSVars,
+  TooltipDataAttrs,
+  type TooltipInput,
+} from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -7,22 +14,31 @@ import {
   getAnchorNameStyle,
   getAnchorPositionStyle,
   getPopupPositionRect,
+  getPositioningBoundaryRect,
+  HOTKEY_SHORTCUT_CHANGE_EVENT,
+  type PositioningBoundary,
   resolveOffsets,
+  resolvePositioningBoundary,
   type TooltipApi,
   type TooltipChangeDetails,
+  type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
-import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
+import { applyStyles, listen, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 
+import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
+import { TooltipLabelElement } from './tooltip-label-element';
+import { TooltipShortcutElement } from './tooltip-shortcut-element';
 
 type TriggerElement = HTMLElement & {
   getLabel(): string | undefined;
+  getShortcut?: (() => string | undefined) | undefined;
   $state: State<ButtonState>;
 };
 
@@ -42,7 +58,8 @@ export class TooltipElement extends MediaElement {
     closeDelay: { type: Number, attribute: 'close-delay' },
     disableHoverablePopup: { type: Boolean, attribute: 'disable-hoverable-popup' },
     disabled: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props>;
+    boundary: { type: String },
+  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary'>;
 
   open = TooltipCore.defaultProps.open;
   defaultOpen = TooltipCore.defaultProps.defaultOpen;
@@ -52,9 +69,11 @@ export class TooltipElement extends MediaElement {
   closeDelay = TooltipCore.defaultProps.closeDelay;
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   disabled = TooltipCore.defaultProps.disabled;
+  boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
+  readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
@@ -67,6 +86,8 @@ export class TooltipElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
+
+    this.setAttribute(POPUP_HOST_ATTR, '');
 
     this.#disconnect = new AbortController();
 
@@ -115,6 +136,10 @@ export class TooltipElement extends MediaElement {
     this.#tooltip = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
+  }
+
+  close(reason: TooltipOpenChangeReason = 'imperative-action'): void {
+    this.#tooltip?.close(reason);
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -172,26 +197,26 @@ export class TooltipElement extends MediaElement {
 
     // Apply positioning styles to self.
     const posOpts = { side: state.side, align: state.align };
+    const boundaryElement = this.#getBoundaryElement();
+    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+    const boundaryRect = getPositioningBoundaryRect(boundaryElement);
+    const offsets = resolveOffsets(this, TooltipCSSVars);
 
     if (supportsAnchorPositioning()) {
-      // Native CSS Anchor Positioning — no JS rect measurements needed.
       applyStyles(
         this,
-        getAnchorPositionStyle(this.id, posOpts, undefined, undefined, undefined, undefined, TooltipCSSVars)
+        getAnchorPositionStyle(this.id, posOpts, triggerRect, undefined, boundaryRect, offsets, TooltipCSSVars)
       );
     } else {
       // JS fallback: measure rects and resolve CSS var offsets.
-      const triggerRect = this.#currentTrigger?.getBoundingClientRect();
       const selfRect = getPopupPositionRect(this);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
-      const offsets = resolveOffsets(this, TooltipCSSVars);
       applyStyles(
         this,
         getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets, TooltipCSSVars)
       );
     }
 
-    this.#position.sync(this.#currentTrigger);
+    this.#position.sync(this.#currentTrigger, boundaryElement);
   }
 
   // --- Trigger management ---
@@ -213,12 +238,34 @@ export class TooltipElement extends MediaElement {
         triggerEl.$state.subscribe(() => this.#syncContent(triggerEl), {
           signal: this.#triggerAbort.signal,
         });
+        listen(triggerEl, HOTKEY_SHORTCUT_CHANGE_EVENT, () => this.#syncContent(triggerEl), {
+          signal: this.#triggerAbort.signal,
+        });
       }
     }
   }
 
   #syncContent(triggerEl: TriggerElement): void {
-    this.textContent = triggerEl.getLabel() ?? '';
+    const label = triggerEl.getLabel() ?? '';
+    const shortcut = triggerEl.getShortcut?.();
+
+    let labelEl = TooltipLabelElement.findIn(this);
+    let shortcutEl = TooltipShortcutElement.findIn(this);
+
+    if (!labelEl && !shortcutEl) {
+      if (this.#hostHasAuthoredTooltipContent()) return;
+
+      labelEl = TooltipLabelElement.create();
+      shortcutEl = TooltipShortcutElement.create();
+      this.replaceChildren(labelEl, shortcutEl);
+    }
+
+    labelEl?.setSyncedText(label);
+    shortcutEl?.setSyncedShortcut(shortcut);
+  }
+
+  #hostHasAuthoredTooltipContent(): boolean {
+    return Array.from(this.childNodes).some((node) => node.nodeType !== Node.TEXT_NODE || !!node.textContent?.trim());
   }
 
   #cleanupTrigger(): void {
@@ -229,5 +276,12 @@ export class TooltipElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #getBoundaryElement(): Element | null {
+    return resolvePositioningBoundary(this.boundary, {
+      container: this.#containerCtx.value?.container ?? null,
+      root: this.getRootNode() as Document | ShadowRoot,
+    });
   }
 }

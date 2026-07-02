@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ComponentReference } from '@/types/component-reference';
 import { buildComponentReferenceTocHeadings, createComponentReferenceModel } from '../componentReferenceModel';
 
 describe('createComponentReferenceModel', () => {
@@ -16,8 +17,9 @@ describe('createComponentReferenceModel', () => {
         },
       },
       dataAttributes: {},
+      cssCustomProperties: {},
       platforms: {},
-    };
+    } as ComponentReference;
 
     const model = createComponentReferenceModel('PlayButton', apiReference);
 

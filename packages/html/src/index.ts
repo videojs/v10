@@ -1,6 +1,17 @@
 // Core
 export * from '@videojs/core/dom';
-
+// Media predicates
+export * from '@videojs/core/media/predicate';
+export type {
+  Destroyable,
+  PropertyDeclaration,
+  PropertyDeclarationMap,
+  PropertyValues,
+  ReactiveController,
+  ReactiveControllerHost,
+} from '@videojs/element';
+// Element — reactive primitives for users extending MediaElement
+export { DestroyMixin, ReactiveElement } from '@videojs/element';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
@@ -14,14 +25,17 @@ export * from './store/container-mixin';
 export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
-// UI Components
+export { AirPlayButtonElement } from './ui/airplay-button/airplay-button-element';
 export { AlertDialogCloseElement } from './ui/alert-dialog/alert-dialog-close-element';
 export { AlertDialogDescriptionElement } from './ui/alert-dialog/alert-dialog-description-element';
 export { AlertDialogElement } from './ui/alert-dialog/alert-dialog-element';
 export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-element';
 export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
+// UI Components
+export { AudioTrackRadioGroupElement } from './ui/audio-track-radio-group/audio-track-radio-group-element';
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
+export { CaptionsRadioGroupElement } from './ui/captions-radio-group/captions-radio-group-element';
 export { CastButtonElement } from './ui/cast-button/cast-button-element';
 export { ContextPartElement, type PartContextValue } from './ui/context-part-element';
 export { ControlsElement } from './ui/controls/controls-element';
@@ -31,17 +45,42 @@ export { FullscreenButtonElement } from './ui/fullscreen-button/fullscreen-butto
 export { GestureElement } from './ui/gesture/gesture-element';
 export { AriaKeyShortcutsController } from './ui/hotkey/aria-key-shortcuts-controller';
 export { HotkeyElement } from './ui/hotkey/hotkey-element';
+export { LiveButtonElement } from './ui/live-button/live-button-element';
 export { MediaButtonElement } from './ui/media-button-element';
 // Primitives
 export * from './ui/media-element';
 export { MediaUIElement } from './ui/media-ui-element';
+export {
+  type MenuContextValue,
+  type MenuGroupContextValue,
+  type MenuRadioGroupContextValue,
+  menuContext,
+  menuGroupContext,
+  menuRadioGroupContext,
+} from './ui/menu/context';
+export { MenuBackElement } from './ui/menu/menu-back-element';
+export { MenuCheckboxItemElement } from './ui/menu/menu-checkbox-item-element';
+export { MenuElement } from './ui/menu/menu-element';
+export { MenuGroupElement } from './ui/menu/menu-group-element';
+export { MenuGroupLabelElement } from './ui/menu/menu-group-label-element';
+export { MenuItemElement } from './ui/menu/menu-item-element';
+export { MenuItemIndicatorElement } from './ui/menu/menu-item-indicator-element';
+export { MenuItemValueElement } from './ui/menu/menu-item-value-element';
+export { MenuRadioGroupElement } from './ui/menu/menu-radio-group-element';
+export { MenuRadioItemElement } from './ui/menu/menu-radio-item-element';
+export { MenuSeparatorElement } from './ui/menu/menu-separator-element';
+export { MenuViewElement } from './ui/menu/menu-view-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';
+export { PlaybackRateRadioGroupElement } from './ui/playback-rate-radio-group/playback-rate-radio-group-element';
 export { PopoverElement } from './ui/popover/popover-element';
 export { PosterElement } from './ui/poster/poster-element';
+export { QualityRadioGroupElement } from './ui/quality-radio-group/quality-radio-group-element';
 export { SeekButtonElement } from './ui/seek-button/seek-button-element';
+export { SeekIndicatorElement } from './ui/seek-indicator/seek-indicator-element';
+export { SeekIndicatorValueElement } from './ui/seek-indicator/seek-indicator-value-element';
 export { type SliderContextValue, sliderContext } from './ui/slider/context';
 export { SliderBufferElement } from './ui/slider/slider-buffer-element';
 export { SliderElement } from './ui/slider/slider-element';
@@ -52,6 +91,9 @@ export { SliderThumbElement } from './ui/slider/slider-thumb-element';
 export { SliderThumbnailElement } from './ui/slider/slider-thumbnail-element';
 export { SliderTrackElement } from './ui/slider/slider-track-element';
 export { SliderValueElement } from './ui/slider/slider-value-element';
+export { StatusAnnouncerElement } from './ui/status-announcer/status-announcer-element';
+export { StatusIndicatorElement } from './ui/status-indicator/status-indicator-element';
+export { StatusIndicatorValueElement } from './ui/status-indicator/status-indicator-value-element';
 export { ThumbnailElement } from './ui/thumbnail/thumbnail-element';
 export { TimeElement } from './ui/time/time-element';
 export { TimeGroupElement } from './ui/time/time-group-element';
@@ -60,4 +102,9 @@ export { TimeSliderElement } from './ui/time-slider/time-slider-element';
 export { tooltipGroupContext } from './ui/tooltip/context';
 export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';
+export { TooltipLabelElement } from './ui/tooltip/tooltip-label-element';
+export { TooltipShortcutElement } from './ui/tooltip/tooltip-shortcut-element';
+export { VolumeIndicatorElement } from './ui/volume-indicator/volume-indicator-element';
+export { VolumeIndicatorFillElement } from './ui/volume-indicator/volume-indicator-fill-element';
+export { VolumeIndicatorValueElement } from './ui/volume-indicator/volume-indicator-value-element';
 export { VolumeSliderElement } from './ui/volume-slider/volume-slider-element';

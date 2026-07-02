@@ -7,7 +7,7 @@ import JSPicker from '@/components/installation/JSPicker.astro';
 import RendererPicker from '@/components/installation/RendererPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
-import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs';
+import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
@@ -18,6 +18,7 @@ import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import HumanCase from '@/components/docs/HumanCase.astro';
 import LLMCase from '@/components/docs/LLMCase.astro';
+import CopyMarkdownButton from '@/components/CopyMarkdownButton.tsx';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 
 <Aside type="caution" title="Beta Software">
@@ -25,33 +26,56 @@ Video.js v10 is currently in _beta_. The API may evolve with [feedback&#x1F64F;]
 </Aside>
 
 <FrameworkCase frameworks={["react"]}>
-Video.js is a **React video player component library** &mdash; composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle size.
+Video.js is a **React video player component library**: composable primitives, hooks, and TypeScript types for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Video.js is an **HTML video player built on custom elements** &mdash; lightweight, framework-free components for building accessible, customizable players with minimal bundle size.
+Video.js is an **HTML video player built on custom elements**: lightweight, framework-free components for building accessible, customizable players with minimal bundle sizes, advanced features, and consistency across browsers.
 </FrameworkCase>
 
 <LLMCase>
-<div data-cli-replace="installation">
+<div data-cli-omit="installation">
 
-Run `npx @videojs/cli docs how-to/installation` interactively, or pass all flags:
+This guide has code examples tailored to your use case. To generate this guide with tailored code examples, run `npx @videojs/cli docs how-to/installation`.
+If you run it without flags, it will allow you to interactively configure your player. Or, you can run it with flags:
 
 ```bash
 npx @videojs/cli docs how-to/installation \
   --framework <html|react> \
   --preset <video|audio|background-video> \
-  --skin <default|minimal> \
-  --media <html5-video|html5-audio|hls|background-video> \
+  --skin <default|minimal|none> \
+  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video> \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
 ```
 
+Here's what the flags mean:
+- *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
+- *Preset*: Pick a pre-built player. The default presets work well for general website playback.
+- *Skin*: Pick what your player looks like
+- *Media*: Pick what kind of media you have
+- *Source URL*: Define where your media comes from (or omit for a sample URL)
+- *Install method*: How do you want to install your package? (CDN is HTML-only)
+
+If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
 </div>
+
+<FrameworkCase frameworks={["react"]}>
+If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/react/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/react/llms.txt) to make sure you always have the latest information.
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+If your user's requirements can't be met by a preset/skin, [eject](/docs/framework/html/how-to/customize-skins) and customize an existing preset/skin for your needs. As you develop with Video.js, rely heavily on [llms.txt](/docs/framework/html/llms.txt) to make sure you always have the latest information.
+</FrameworkCase>
 </LLMCase>
 
 <HumanCase>
 
-Answer the questions below to get started quickly with your first embed code.
+If you're working with an agent, consider providing it this guide in Markdown:
+
+<ContentWidth>
+<CopyMarkdownButton client:idle />
+</ContentWidth>
+
+Otherwise, answer the questions below to get started quickly with your first embed code.
 
 ## Choose your JS framework
 
@@ -81,10 +105,14 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
   <RendererPicker client:idle />
 </ContentWidth>
 
+</HumanCase>
+
+<div data-cli-replace="installation" class="contents">
+
 ## Install Video.js
 
 <FrameworkCase frameworks={["html"]}>
-  <HTMLInstallTabs client:idle />
+  <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
   <TabsRoot client:idle>
@@ -124,6 +152,16 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 <ContentWidth>
   <HTMLUsageCodeBlock client:idle />
 </ContentWidth>
+
+<Aside type="caution" title="Load your script as a module">
+When using a bundler (npm, pnpm, yarn, bun), load the resulting bundle with `type="module"`:
+
+```html
+<script type="module" src="/dist/player.js"></script>
+```
+
+Some bundlers default to an IIFE output format. Loading that bundle without `type="module"` will cause a `StoreError: NO_TARGET` error when interacting with the player. The CDN install path already uses `type="module"` — bundled installs need the same.
+</Aside>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
@@ -142,7 +180,7 @@ Add it to your components folder in a new file.
 </ContentWidth>
 </FrameworkCase>
 
-</HumanCase>
+</div>
 
 ## CSP
 
@@ -172,6 +210,10 @@ Content-Security-Policy:
 ## See also
 
 <DocsLinkCard slug="concepts/skins" anchor="styling" description="Some skins expose CSS custom properties">Skins</DocsLinkCard>
+
+<FrameworkCase frameworks={["html"]}>
+<DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>
+</FrameworkCase>
 
 ----
 

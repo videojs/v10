@@ -1,0 +1,30 @@
+---
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+
+interface Props {
+  value: string;
+}
+
+const { value } = Astro.props;
+---
+
+<span class="code-list__item"><MarkdownCode>{value}</MarkdownCode></span>
+
+<style>
+  /* The separator is a pseudo-element, so it stays glued to its chip with no
+     text node between them — the formatter can't inject a space before the
+     comma, and there is no break opportunity there. The trailing space inside
+     the separator is the only break opportunity, so a wrap always lands after
+     the comma, never before it.
+
+     Keeping the chip on a single line in this dedicated component is what makes
+     it whitespace-clean: the formatter splits the same markup across lines when
+     it sits inside a `.map()` callback, which is what introduced the stray
+     spaces in the first place. */
+  .code-list__item:not(:last-child)::after {
+    content: ", ";
+  }
+  .code-list__item:last-child::after {
+    content: ".";
+  }
+</style>

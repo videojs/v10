@@ -5,13 +5,17 @@
 .media-minimal-skin .media-buffering-indicator {
   position: absolute;
   inset: 0;
+  z-index: 10;
   display: none;
-  align-items: center;
-  justify-content: center;
+  place-content: center;
   color: oklch(1 0 0);
   pointer-events: none;
 
+  &:not([data-visible]) {
+    --media-spinner-animation: none;
+  }
+
   &[data-visible] {
-    display: flex;
+    display: grid;
   }
 }

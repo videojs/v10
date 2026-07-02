@@ -1,22 +1,34 @@
+import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaErrorsMixin } from './errors';
+import { NativeHlsMediaLiveMixin } from './live';
+import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
+export type StreamType = MediaStreamType;
+
+export const StreamTypes = MediaStreamTypes;
 
 export interface NativeHlsMediaProps {
   src: string;
   preload: PreloadType;
+  streamType: StreamType;
 }
 
 export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   src: '',
   preload: 'metadata',
+  streamType: MediaStreamTypes.UNKNOWN,
 };
 
-class NativeHlsMediaBase extends HTMLVideoElementHost implements NativeHlsMediaProps {
+class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsMediaProps, 'streamType'> {
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 
+  /**
+   * Underlying playback engine — always `null`. Native HLS has no JS engine;
+   * the browser handles playback directly.
+   */
   get engine() {
     return null;
   }
@@ -30,6 +42,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements NativeHlsMediaP
     if (this.target) this.target.src = src;
   }
 
+  /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
   get preload() {
     return this.#preload;
   }
@@ -41,17 +54,12 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements NativeHlsMediaP
 
   attach(target: HTMLVideoElement) {
     super.attach(target);
+
     if (this.preload !== target.preload) target.preload = this.preload;
     if (this.src) target.src = this.src;
   }
-
-  detach() {
-    super.detach();
-  }
-
-  destroy() {
-    this.detach();
-  }
 }
 
-export class NativeHlsMedia extends NativeHlsMediaErrorsMixin(NativeHlsMediaBase) {}
+export class NativeHlsMedia extends NativeHlsMediaLiveMixin(
+  NativeHlsMediaStreamTypeMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase))
+) {}

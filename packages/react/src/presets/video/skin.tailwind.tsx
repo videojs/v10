@@ -1,22 +1,5 @@
 import {
-  CaptionsOffIcon,
-  CaptionsOnIcon,
-  CastEnterIcon,
-  CastExitIcon,
-  FullscreenEnterIcon,
-  FullscreenExitIcon,
-  PauseIcon,
-  PipEnterIcon,
-  PipExitIcon,
-  PlayIcon,
-  RestartIcon,
-  SeekIcon,
-  SpinnerIcon,
-  VolumeHighIcon,
-  VolumeLowIcon,
-  VolumeOffIcon,
-} from '@videojs/icons/react';
-import {
+  badge,
   bufferingIndicator,
   button,
   buttonGroupEnd,
@@ -27,42 +10,81 @@ import {
   iconContainer,
   iconFlipped,
   iconState,
+  inputFeedback,
+  menu,
   overlay,
-  playbackRate,
   popup,
   poster,
-  preview,
   root,
   seek,
   slider,
+  thumbnail,
   time,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
+  CaptionsOffIcon,
+  CaptionsOnIcon,
+  CastEnterIcon,
+  CastExitIcon,
+  CheckIcon,
+  ChevronIcon,
+  FullscreenEnterIcon,
+  FullscreenExitIcon,
+  GearIcon,
+  PauseIcon,
+  PipEnterIcon,
+  PipExitIcon,
+  PlayIcon,
+  QualityIcon,
+  RestartIcon,
+  SeekIcon,
+  SpeechIcon,
+  SpeedIcon,
+  SpinnerIcon,
+  VolumeHighIcon,
+  VolumeLowIcon,
+  VolumeOffIcon,
+} from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
+import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
-import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { FullscreenButton } from '@/ui/fullscreen-button';
+import { Gesture } from '@/ui/gesture';
+import { Hotkey } from '@/ui/hotkey';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateButton } from '@/ui/playback-rate-button';
+import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
+import { useQualityOptions } from '@/ui/quality';
 import { SeekButton } from '@/ui/seek-button';
+import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
+import { StatusAnnouncer } from '@/ui/status-announcer';
+import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
+import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
 import { isRenderProp } from '@/utils/use-render';
 import type { VideoSkinProps } from './skin';
 
 const SEEK_TIME = 10;
+const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
+const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
 /* --------------------------------------- Components ---------------------------------------- */
 
@@ -141,13 +163,255 @@ function VolumePopover(): ReactNode {
   );
 }
 
+function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
+  return <ChevronIcon className={cn(icon, menu.icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
+}
+
+function SettingsMenu(): ReactNode {
+  const playbackRate = usePlaybackRateOptions();
+  const quality = useQualityOptions();
+  const audioTrack = useAudioTrackOptions();
+  const captions = useCaptionsOptions();
+  const hasPlaybackRate = playbackRate?.state.availability === 'available';
+  const hasQuality = quality?.state.availability === 'available';
+  const hasAudioTrack = audioTrack?.state.availability === 'available';
+  const hasCaptions = captions?.state.availability === 'available';
+
+  if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
+
+  return (
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        aria-label="Settings"
+        className="media-button--settings"
+        render={<Button className={cn(button.icon, menu.settingsTrigger)} />}
+      >
+        <GearIcon className={cn(icon, menu.settingsIcon)} />
+      </Menu.Trigger>
+      <Menu.Content className={menu.settings}>
+        <Menu.View className={menu.rootView}>
+          <div className={menu.group}>
+            {hasQuality ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="quality"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <QualityIcon className={cn(icon, menu.icon)} />
+                      <span>Quality</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Quality
+                  </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={quality.value}
+                    onValueChange={quality.setValue}
+                    aria-label="Quality"
+                  >
+                    {quality.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>
+                          {option.label}
+                          {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
+                        </span>
+                        {option.badge ? <span className={badge}>{option.badge}</span> : null}
+                        <Menu.ItemIndicator
+                          checked={option.value === quality.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={cn(icon, menu.icon)} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+
+            {hasAudioTrack ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="audio-track"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <SpeechIcon className={icon} />
+                      <span>Audio</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Audio
+                  </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={audioTrack.value}
+                    onValueChange={audioTrack.setValue}
+                    aria-label="Audio tracks"
+                  >
+                    {audioTrack.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === audioTrack.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={icon} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+
+            {hasPlaybackRate ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="playback-rate"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <SpeedIcon className={cn(icon, menu.icon)} />
+                      <span>Speed</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Speed
+                  </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={playbackRate.value}
+                    onValueChange={playbackRate.setValue}
+                    aria-label="Playback rate"
+                  >
+                    {playbackRate.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === playbackRate.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={cn(icon, menu.icon)} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+
+            {hasCaptions ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="captions"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <CaptionsOffIcon className={cn(icon, menu.icon)} />
+                      <span>Captions</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Captions
+                  </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={captions.value}
+                    onValueChange={captions.setValue}
+                    aria-label="Captions"
+                  >
+                    {captions.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === captions.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={cn(icon, menu.icon)} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+          </div>
+        </Menu.View>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, ...rest } = props;
+  const { children, className, poster: posterProp, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn(root(false), className)} {...rest}>
+    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (
@@ -161,9 +425,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className={bufferingIndicator.root}>
-            <div className={bufferingIndicator.container}>
-              <SpinnerIcon className={icon} />
-            </div>
+            <SpinnerIcon className={icon} />
           </div>
         )}
       />
@@ -198,7 +460,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -212,7 +477,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -226,7 +494,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 
@@ -238,34 +509,22 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <div className={preview.root}>
-                <Slider.Thumbnail className={preview.thumbnail} />
-                <TimeSlider.Value type="pointer" className={preview.time} />
-                <SpinnerIcon className={cn(icon, preview.spinner)} />
+              <div className={thumbnail.root}>
+                <Slider.Thumbnail className={thumbnail.image} />
+                <TimeSlider.Value type="pointer" className={thumbnail.time} />
+                <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
               </div>
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={slider.value} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
-            <Time.Value type="duration" className={time.duration} />
+            <Time.Value toggle type="remaining" className={time.duration} />
           </div>
 
-          <div className={buttonGroupEnd}>
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />} />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Toggle playback rate</Tooltip.Popup>
-            </Tooltip.Root>
-
+          <div className={cn(buttonGroupEnd, menu.settingsGroup)}>
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className={iconState.captions.button} render={<Button />}>
-                    <CaptionsOffIcon className={cn(icon, iconState.captions.off)} />
-                    <CaptionsOnIcon className={cn(icon, iconState.captions.on)} />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+            <SettingsMenu />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
@@ -276,7 +535,25 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className={iconState.airplay.button} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icon, iconState.airplay.enter)} />
+                    <AirPlayExitIcon className={cn(icon, iconState.airplay.exit)} />
+                  </AirPlayButton>
+                }
+              />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -288,7 +565,10 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -300,13 +580,82 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>
       </Controls.Root>
 
       <div className={overlay} />
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="f" action="toggleFullscreen" />
+      <Hotkey keys="c" action="toggleSubtitles" />
+      <Hotkey keys="i" action="togglePictureInPicture" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={SEEK_TIME / 2} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-(SEEK_TIME / 2)} />
+      <Hotkey keys="l" action="seekStep" value={SEEK_TIME} />
+      <Hotkey keys="j" action="seekStep" value={-SEEK_TIME} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Gestures */}
+      <Gesture type="tap" action="togglePaused" pointer="mouse" region="center" />
+      <Gesture type="tap" action="toggleControls" pointer="touch" />
+      <Gesture type="doubletap" action="seekStep" value={-SEEK_TIME} region="left" />
+      <Gesture type="doubletap" action="toggleFullscreen" region="center" />
+      <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
+      <div className={inputFeedback.root}>
+        <VolumeIndicator.Root
+          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
+        >
+          <VolumeIndicator.Fill className={inputFeedback.island.content}>
+            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
+            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
+            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
+            <VolumeIndicator.Value className={inputFeedback.island.value} />
+          </VolumeIndicator.Fill>
+        </VolumeIndicator.Root>
+
+        <StatusIndicator.Root
+          actions={TOP_STATUS_ACTIONS}
+          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
+        >
+          <div className={inputFeedback.island.content}>
+            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
+            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
+            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
+            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
+            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
+            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
+            <StatusIndicator.Value className={inputFeedback.island.value} />
+          </div>
+        </StatusIndicator.Root>
+
+        <SeekIndicator.Root className={inputFeedback.bubble.base}>
+          <ChevronIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek)} />
+          <SeekIndicator.Value className={inputFeedback.bubble.time} />
+        </SeekIndicator.Root>
+
+        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
+          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
+          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
+        </StatusIndicator.Root>
+      </div>
     </Container>
   );
 }

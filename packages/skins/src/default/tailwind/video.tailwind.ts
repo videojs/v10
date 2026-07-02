@@ -3,11 +3,13 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
+import { inputFeedback as baseInputFeedback } from './components/input-feedback';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
-import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 import { surface } from './components/surface';
+import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
 /* ==========================================================================
@@ -17,7 +19,7 @@ import { time as baseTime } from './components/time';
 export const root = (isShadowDOM: boolean) =>
   cn(
     baseRoot,
-    'bg-black',
+    'bg-black overflow-clip',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/15',
@@ -28,13 +30,13 @@ export const root = (isShadowDOM: boolean) =>
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
-    '[--media-spring-transition:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
+    '[--media-spring-timing-function:linear(0,0.034_1.5%,0.763_9.7%,1.066_13.9%,1.198_19.9%,1.184_21.8%,0.963_37.5%,0.997_50.9%,1)]',
     '[--media-video-border-radius:var(--media-border-radius,2rem)]',
     '[--media-controls-transition-duration:100ms]',
     '[--media-controls-transition-timing-function:ease-out]',
     '[--media-error-dialog-transition-duration:350ms]',
     '[--media-error-dialog-transition-delay:100ms]',
-    '[--media-error-dialog-transition-timing-function:var(--media-spring-transition)]',
+    '[--media-error-dialog-transition-timing-function:var(--media-spring-timing-function)]',
     '[--media-popup-transition-duration:100ms]',
     '[--media-popup-transition-timing-function:ease-out]',
     '[--media-surface-background-color:oklch(1_0_0/0.1)]',
@@ -46,7 +48,9 @@ export const root = (isShadowDOM: boolean) =>
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
     '[--media-tooltip-side-offset:0.75rem]',
+    '[--media-tooltip-boundary-offset:0.5rem]',
     '[--media-popover-side-offset:0.5rem]',
+    '[--media-popover-boundary-offset:0.5rem]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
@@ -54,15 +58,15 @@ export const root = (isShadowDOM: boolean) =>
     'contrast-more:[--media-surface-inner-border-color:oklch(1_0_0/0.25)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-outer-border-color:transparent]',
     'contrast-more:[--media-surface-outer-border-color:transparent]',
-    '[@media(pointer:fine)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    '[@media(pointer:coarse)]:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:-0.5rem]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5.5rem]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:[&>*]:[--media-caption-track-y:-3.5rem]',
+    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3.5rem]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -74,6 +78,19 @@ export const root = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:scale-98',
           '[&_video::-webkit-media-text-track-container]:z-1',
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
+        ]
+      : [],
+    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
+    !isShadowDOM
+      ? [
+          'before:absolute before:inset-0 before:pointer-events-none',
+          'before:[background-image:var(--media-poster-placeholder,none)]',
+          'before:bg-no-repeat',
+          'before:[background-position:var(--media-object-position,center)]',
+          'before:[background-size:var(--media-object-fit,contain)]',
+          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
+          'before:transition-opacity before:duration-250',
+          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         ]
       : [],
     // Fullscreen
@@ -97,14 +114,14 @@ export const controls = cn(
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function) origin-bottom',
   'duration-(--media-controls-transition-duration)',
-  '[@media(pointer:fine)]:will-change-[scale,filter,opacity]',
-  '[@media(pointer:fine)]:transition-[scale,filter,opacity]',
-  '[@media(pointer:coarse)]:will-change-[scale,opacity]',
-  '[@media(pointer:coarse)]:transition-[scale,opacity]',
+  'pointer-fine:will-change-[scale,filter,opacity]',
+  'pointer-fine:transition-[scale,filter,opacity]',
+  'pointer-coarse:will-change-[scale,opacity]',
+  'pointer-coarse:transition-[scale,opacity]',
   // Hidden state
   'not-data-visible:pointer-events-none not-data-visible:opacity-0',
   'motion-safe:not-data-visible:scale-90',
-  '[@media(pointer:fine)]:motion-safe:not-data-visible:blur-sm',
+  'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
   '@2xl/media-root:bottom-3 @2xl/media-root:inset-x-3 @2xl/media-root:flex-nowrap @2xl/media-root:gap-x-0.5 @2xl/media-root:p-1'
 );
@@ -130,23 +147,30 @@ export const time = {
 };
 
 /* ==========================================================================
-   Preview (with video surface)
+   Thumbnail (with video surface)
    ========================================================================== */
 
-export const preview = {
-  ...basePreview,
+export const thumbnail = {
+  ...baseThumbnail,
   root: cn(
-    '[--media-preview-max-width:11rem] [--media-preview-padding:-1.125rem] [--media-preview-inset:calc((100cqi-100%)/2)]',
-    'absolute [left:clamp(calc(var(--media-preview-max-width)/2+var(--media-preview-padding)-var(--media-preview-inset)),var(--media-slider-pointer),calc(100%-var(--media-preview-max-width)/2-var(--media-preview-padding)+var(--media-preview-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
+    baseThumbnail.root,
+    surface,
+    '[--media-slider-thumbnail-max-width:11rem]',
+    '[--media-slider-thumbnail-max-height:8rem]',
+    '[--media-slider-thumbnail-padding:-1.125rem]',
+    '[--media-slider-thumbnail-inset:calc((100cqi-100%)/2)]',
+    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)-var(--media-slider-thumbnail-inset)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
-    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    '[&:has([role=img][data-hidden])]:opacity-0 [&:has([role=img][data-hidden])]:scale-80 [&:has([role=img][data-hidden])]:blur-sm',
-    '[&:has([role=img][data-loading])]:max-h-24',
-    surface,
-    basePreview.root
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
   ),
-  thumbnail: cn(basePreview.thumbnail, 'max-w-(--media-preview-max-width)'),
+  image: cn(
+    baseThumbnail.image,
+    'max-w-(--media-slider-thumbnail-max-width)',
+    'max-h-(--media-slider-thumbnail-max-height)'
+  ),
 };
 
 /* ==========================================================================
@@ -169,13 +193,22 @@ export const popup = {
 };
 
 /* ==========================================================================
-   Buffering (with video surface)
+   Menu
    ========================================================================== */
 
-export const bufferingIndicator = {
-  ...baseBufferingIndicator,
-  container: cn(baseBufferingIndicator.container, surface),
+const menuOffsets = '[--media-popover-side-offset:0.5rem] [--media-popover-boundary-offset:0.5rem]';
+
+export const menu = {
+  ...baseMenu,
+  root: cn(baseMenu.root, menuOffsets),
+  settings: cn(baseMenu.settings, menuOffsets),
 };
+
+/* ==========================================================================
+   Buffering
+   ========================================================================== */
+
+export const bufferingIndicator = baseBufferingIndicator;
 
 /* ==========================================================================
    Error (with video surface)
@@ -189,10 +222,23 @@ export const error = {
 };
 
 /* ==========================================================================
+   Input Feedback (islands use video surface)
+   ========================================================================== */
+
+export const inputFeedback = {
+  ...baseInputFeedback,
+  island: {
+    ...baseInputFeedback.island,
+    base: cn(baseInputFeedback.island.base, surface),
+  },
+};
+
+/* ==========================================================================
    Shared components (no overrides)
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';

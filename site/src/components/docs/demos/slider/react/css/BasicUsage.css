@@ -7,17 +7,17 @@
 
 .media-slider {
   position: relative;
-  width: 100%;
   display: flex;
   align-items: center;
+  width: 100%;
   height: 20px;
   cursor: pointer;
 }
 
 .media-slider-track {
   position: absolute;
-  left: 0;
   right: 0;
+  left: 0;
   height: 4px;
   background: rgba(255, 255, 255, 0.3);
   border-radius: 9999px;
@@ -32,8 +32,8 @@
   position: absolute;
   top: 0;
   left: 0;
-  height: 100%;
   width: var(--media-slider-fill);
+  height: 100%;
   background: white;
   border-radius: 9999px;
 }
@@ -45,9 +45,9 @@
   height: 14px;
   background: white;
   border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   transform: translateX(-50%) scale(0);
   transition: transform 150ms ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .media-slider[data-interactive] .media-slider-thumb {

@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MediaBufferState, MediaTimeState } from '../../../media/state';
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../../media/state';
 import type { SliderInput } from '../../slider/slider-core';
 import { TimeSliderCore } from '../time-slider-core';
 
@@ -43,6 +43,7 @@ describe('TimeSliderCore', () => {
         min: 0,
         max: 100,
         changeThrottle: 100,
+        pauseOnDrag: false,
       });
     });
   });
@@ -240,6 +241,78 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
 
       expect(state.orientation).toBe('vertical');
+    });
+  });
+
+  describe('startDrag/endDrag', () => {
+    function createPlaybackState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
+      return {
+        paused: false,
+        ended: false,
+        started: true,
+        waiting: false,
+        play: vi.fn(async () => {}),
+        pause: vi.fn(),
+        togglePaused: vi.fn(() => false),
+        ...overrides,
+      };
+    }
+
+    it('does nothing when pauseOnDrag is false (default)', () => {
+      const core = new TimeSliderCore();
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      expect(playback.pause).not.toHaveBeenCalled();
+
+      core.endDrag(playback);
+      expect(playback.play).not.toHaveBeenCalled();
+    });
+
+    it('pauses on startDrag and resumes on endDrag when playing', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      expect(playback.pause).toHaveBeenCalledTimes(1);
+
+      core.endDrag(playback);
+      expect(playback.play).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not resume on endDrag when playback was already paused', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState({ paused: true });
+
+      core.startDrag(playback);
+      expect(playback.pause).not.toHaveBeenCalled();
+
+      core.endDrag(playback);
+      expect(playback.play).not.toHaveBeenCalled();
+    });
+
+    it('resumes on endDrag even if pauseOnDrag is turned off mid-drag', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      expect(playback.pause).toHaveBeenCalledTimes(1);
+
+      core.setProps({ pauseOnDrag: false });
+
+      core.endDrag(playback);
+      expect(playback.play).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not resume on a second endDrag', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      core.endDrag(playback);
+      core.endDrag(playback);
+
+      expect(playback.play).toHaveBeenCalledTimes(1);
     });
   });
 });

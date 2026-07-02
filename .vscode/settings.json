@@ -10,6 +10,7 @@
     // Auto fix all Biome issues on save.
     "source.fixAll.biome": "always",
     "source.organizeImports.biome": "always",
+    "source.action.useSortedProperties.biome": "always",
     // Disable built-in organize imports to avoid conflicts with Biome.
     "source.organizeImports": "never"
   },
@@ -17,6 +18,8 @@
   "biome.requireConfiguration": true,
   "editor.defaultFormatter": "biomejs.biome",
   "js/ts.tsdk.path": "node_modules/typescript/lib",
+  // Built-in CSS validation overlaps Biome; disable it for CSS diagnostics only.
+  "css.validate": false,
 
   "[astro]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode"

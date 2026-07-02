@@ -7,9 +7,11 @@
 @import "./components/time.css";
 @import "./components/button.css";
 @import "./components/button-group.css";
+@import "./components/badge.css";
 @import "./components/icons.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "../../shared/css/audio/icon-state.css";
 
 /* ==========================================================================
@@ -28,7 +30,9 @@
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
   --media-tooltip-side-offset: 0.75rem;
+  --media-tooltip-boundary-offset: 0.75rem;
   --media-popover-side-offset: 0.75rem;
+  --media-popover-boundary-offset: 0.75rem;
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
@@ -62,17 +66,17 @@
   inset: 0;
   z-index: 20;
   display: flex;
-  align-items: center;
   gap: 0.75rem;
+  align-items: center;
   padding-inline: 1.25rem 0.125rem;
-  transition-property: opacity, filter;
-  transition-duration: var(--media-error-dialog-transition-duration);
+  color: var(--media-text-color);
+  background-color: var(--media-surface-background-color);
+  border-radius: calc(infinity * 1px);
+  backdrop-filter: var(--media-surface-backdrop-filter);
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: ease-out;
-  border-radius: calc(infinity * 1px);
-  background-color: var(--media-surface-background-color);
-  backdrop-filter: var(--media-surface-backdrop-filter);
-  color: var(--media-text-color);
+  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-property: opacity, filter;
 }
 
 .media-default-skin .media-error[data-starting-style] .media-error__dialog,
@@ -85,8 +89,8 @@
 }
 
 .media-default-skin--audio .media-error__content {
-  flex: 1;
   display: flex;
+  flex: 1;
   gap: 0.5rem;
   align-items: center;
 }
@@ -97,6 +101,26 @@
 
 .media-default-skin--audio .media-controls {
   color: var(--media-text-color);
+}
+
+/* ==========================================================================
+   Buffering (spinner over play button — overlay only, no layout change)
+   ========================================================================== */
+
+.media-default-skin--audio .media-button--play__wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.media-default-skin--audio .media-button--play__wrapper .media-buffering-indicator {
+  color: inherit;
+}
+
+.media-default-skin--audio
+  .media-button--play__wrapper:has(.media-buffering-indicator[data-visible])
+  .media-button--play
+  .media-icon {
+  opacity: 0;
 }
 
 /* ==========================================================================

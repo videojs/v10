@@ -7,22 +7,21 @@ import { twMerge } from '@/utils/twMerge';
 type Props = ComponentProps<typeof Image>;
 const { class: className, src, ...rest } = Astro.props;
 
-const isRemote = typeof src === 'string' && src.startsWith('http');
+const imgClass = twMerge('my-8 h-auto max-w-full', className);
 ---
 
 {
-  isRemote ? (
-    <img
-      class={twMerge("my-8 h-auto max-w-full", className)}
-      src={src}
-      {...rest}
-    />
+  typeof src === "string" ? (
+    src.startsWith("http") ? (
+      <img class={imgClass} src={src} {...rest} />
+    ) : (
+      // Non-HTTP string: public path or relative URL. Astro's Image needs
+      // inferSize to skip the width/height requirement for string src.
+      <Image class={imgClass} inferSize={true} src={src} {...rest} />
+    )
   ) : (
-    <Image
-      class={twMerge("my-8 h-auto max-w-full", className)}
-      inferSize
-      src={src}
-      {...rest}
-    />
+    // ImageMetadata (ESM-imported image): width/height come from metadata,
+    // no inferSize needed.
+    <Image class={imgClass} src={src} {...rest} />
   )
 }

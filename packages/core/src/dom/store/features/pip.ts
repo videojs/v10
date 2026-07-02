@@ -1,15 +1,14 @@
-import { listen } from '@videojs/utils/dom';
+import { listen, type WebKitVideoElement } from '@videojs/utils/dom';
 
 import type { MediaPictureInPictureState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
+import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import {
   exitPictureInPicture,
-  isPictureInPictureElement,
+  isPictureInPicture,
   isPictureInPictureEnabled,
   requestPictureInPicture,
 } from '../../presentation/pip';
-import type { WebKitVideoElement } from '../../presentation/types';
 
 export const pipFeature = definePlayerFeature({
   name: 'pip',
@@ -21,8 +20,8 @@ export const pipFeature = definePlayerFeature({
       const { media, container } = target();
 
       // Exit fullscreen first if active
-      if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+      if (isFullscreen(container, media)) {
+        await exitFullscreen(media);
       }
 
       return requestPictureInPicture(media);
@@ -36,12 +35,12 @@ export const pipFeature = definePlayerFeature({
     async togglePictureInPicture() {
       const { media, container } = target();
 
-      if (isPictureInPictureElement(media)) {
+      if (isPictureInPicture(media)) {
         return exitPictureInPicture(media);
       }
 
-      if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+      if (isFullscreen(container, media)) {
+        await exitFullscreen(media);
       }
 
       return requestPictureInPicture(media);
@@ -57,7 +56,7 @@ export const pipFeature = definePlayerFeature({
 
     const sync = () =>
       set({
-        pip: isPictureInPictureElement(media),
+        pip: isPictureInPicture(media),
       });
 
     sync();

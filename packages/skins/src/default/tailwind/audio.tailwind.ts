@@ -1,5 +1,4 @@
 import { cn } from '@videojs/utils/style';
-import { bufferingIndicator as baseBufferingIndicator } from './components/buffering';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { popup as basePopup } from './components/popup';
@@ -24,7 +23,9 @@ export const root = cn(
   '[--media-popup-transition-duration:100ms]',
   '[--media-popup-transition-timing-function:ease-out]',
   '[--media-tooltip-side-offset:0.75rem]',
+  '[--media-tooltip-boundary-offset:0.75rem]',
   '[--media-popover-side-offset:0.75rem]',
+  '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -46,7 +47,19 @@ export const root = cn(
    Controls
    ========================================================================== */
 
-export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:[&_*]:invisible');
+export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:**:invisible');
+
+export const playButton = {
+  wrapper: 'group/play inline-flex relative',
+  /** `peer/play-buffering` on `bufferingRoot`; merge onto the play trigger after the peer in DOM. */
+  control: 'peer-data-visible/play-buffering:[&>svg]:opacity-0',
+  bufferingRoot: cn(
+    'peer/play-buffering',
+    'absolute inset-0 z-10 hidden place-content-center pointer-events-none text-inherit',
+    'not-data-visible:[--media-spinner-animation:none]',
+    'data-visible:grid'
+  ),
+};
 
 /* ==========================================================================
    Sliders
@@ -65,15 +78,6 @@ export const popup = {
   ...basePopup,
   popover: cn(surface, basePopup.popover),
   tooltip: cn(surface, basePopup.tooltip),
-};
-
-/* ==========================================================================
-   Buffering (with audio surface)
-   ========================================================================== */
-
-export const bufferingIndicator = {
-  ...baseBufferingIndicator,
-  container: cn(baseBufferingIndicator.container, surface),
 };
 
 /* ==========================================================================
@@ -101,9 +105,12 @@ export const error = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
+export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { menu } from './components/menu';
 export { playbackRate } from './components/playback-rate';
 export { seek } from './components/seek';
 export { time } from './components/time';

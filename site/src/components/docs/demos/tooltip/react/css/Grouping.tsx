@@ -8,21 +8,21 @@ export default function Grouping() {
           <Tooltip.Trigger className="trigger">Play</Tooltip.Trigger>
           <Tooltip.Popup className="media-tooltip">
             <Tooltip.Arrow className="arrow" />
-            Play video
+            <Tooltip.Label>Play video</Tooltip.Label>
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
           <Tooltip.Trigger className="trigger">Mute</Tooltip.Trigger>
           <Tooltip.Popup className="media-tooltip">
             <Tooltip.Arrow className="arrow" />
-            Mute audio
+            <Tooltip.Label>Mute audio</Tooltip.Label>
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
           <Tooltip.Trigger className="trigger">Fullscreen</Tooltip.Trigger>
           <Tooltip.Popup className="media-tooltip">
             <Tooltip.Arrow className="arrow" />
-            Enter fullscreen
+            <Tooltip.Label>Enter fullscreen</Tooltip.Label>
           </Tooltip.Popup>
         </Tooltip.Root>
       </Tooltip.Provider>

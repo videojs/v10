@@ -1,7 +1,8 @@
-import { ControlsCore, ControlsDataAttrs } from '@videojs/core';
+import { ControlsCore, ControlsDataAttrs, POPUP_HOST_SELECTOR } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectControls } from '@videojs/core/dom';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
+import { isFunction } from '@videojs/utils/predicate';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -14,6 +15,7 @@ export class ControlsElement extends MediaElement {
   readonly #core = new ControlsCore();
   readonly #mediaState = new PlayerController(this, playerContext, selectControls);
   readonly #provider = new ContextProvider(this, { context: controlsContext });
+  #visible = true;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -38,5 +40,21 @@ export class ControlsElement extends MediaElement {
       state,
       stateAttrMap: ControlsDataAttrs,
     });
+
+    const wasVisible = this.#visible;
+    this.#visible = state.visible;
+
+    if (wasVisible && !state.visible) {
+      this.#closeOwnedOverlays();
+    }
+  }
+
+  #closeOwnedOverlays(): void {
+    for (const element of this.querySelectorAll(POPUP_HOST_SELECTOR)) {
+      const host = element as Element & { close?: unknown };
+      if (!isFunction(host.close)) continue;
+
+      host.close('imperative-action');
+    }
   }
 }

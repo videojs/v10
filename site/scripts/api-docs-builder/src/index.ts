@@ -1,6 +1,12 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { generateComponentReferences, generateFeatureReferences, generatePresetReferences } from './pipeline.js';
+import { MediaReferenceSchema } from '../../../src/types/media-reference.js';
+import {
+  generateComponentReferences,
+  generateFeatureReferences,
+  generateMediaElementReferences,
+  generatePresetReferences,
+} from './pipeline.js';
 import { ComponentReferenceSchema, FeatureReferenceSchema, PresetReferenceSchema } from './types.js';
 import { generateUtilReferences } from './util-handler.js';
 
@@ -19,6 +25,7 @@ const MONOREPO_ROOT = path.resolve(import.meta.dirname, '../../../../');
 const COMPONENT_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-component-reference');
 const UTIL_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-util-reference');
 const FEATURE_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-feature-reference');
+const MEDIA_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-media-reference');
 const PRESET_OUTPUT_PATH = path.join(MONOREPO_ROOT, 'site/src/content/generated-preset-reference');
 
 /**
@@ -36,7 +43,13 @@ function main() {
   };
 
   // Ensure output directories exist
-  for (const dir of [COMPONENT_OUTPUT_PATH, UTIL_OUTPUT_PATH, FEATURE_OUTPUT_PATH, PRESET_OUTPUT_PATH]) {
+  for (const dir of [
+    COMPONENT_OUTPUT_PATH,
+    UTIL_OUTPUT_PATH,
+    FEATURE_OUTPUT_PATH,
+    MEDIA_OUTPUT_PATH,
+    PRESET_OUTPUT_PATH,
+  ]) {
     if (!fs.existsSync(dir)) {
       fs.mkdirSync(dir, { recursive: true });
     }
@@ -115,6 +128,38 @@ function main() {
   }
 
   log.info(`Done! Generated ${featureSuccessCount} feature files.`);
+
+  // Generate media element references
+  const mediaResults = generateMediaElementReferences(MONOREPO_ROOT);
+
+  if (mediaResults.length === 0) {
+    log.info('No media elements found.');
+  } else {
+    log.info(`Found ${mediaResults.length} media elements. Processing...`);
+  }
+
+  let mediaSuccessCount = 0;
+  for (const result of mediaResults) {
+    const validated = MediaReferenceSchema.safeParse(result.reference);
+    if (!validated.success) {
+      log.error(`Schema validation failed for media element ${result.name}:`);
+      for (const issue of validated.error.issues) {
+        log.error(`  - ${issue.path.join('.')}: ${issue.message}`);
+      }
+      errorCount++;
+      continue;
+    }
+
+    const outputFile = path.join(MEDIA_OUTPUT_PATH, `${validated.data.tagName}.json`);
+    const json = `${JSON.stringify(validated.data, null, 2)}\n`;
+    fs.writeFileSync(outputFile, json);
+
+    log.success(`✅ Generated ${path.basename(outputFile)}`);
+    mediaSuccessCount++;
+    successCount++;
+  }
+
+  log.info(`Done! Generated ${mediaSuccessCount} media element files.`);
 
   // Generate preset references
   const presetResults = generatePresetReferences(MONOREPO_ROOT);

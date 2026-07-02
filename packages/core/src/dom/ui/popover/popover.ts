@@ -4,8 +4,17 @@ import type { PopoverInput } from '../../../core/ui/popover/popover-core';
 import { createDismissLayer } from '../dismiss-layer';
 import type { UIFocusEvent, UIPointerEvent } from '../event';
 import type { TransitionApi } from '../transition';
+import type { PopupGroup } from './popup-group';
 
-export type PopoverOpenChangeReason = 'click' | 'hover' | 'focus' | 'escape' | 'outside-click' | 'blur';
+export type PopoverOpenChangeReason =
+  | 'click'
+  | 'hover'
+  | 'focus'
+  | 'escape'
+  | 'outside-click'
+  | 'blur'
+  | 'imperative-action'
+  | 'group-open';
 
 export interface PopoverChangeDetails {
   reason: PopoverOpenChangeReason;
@@ -22,6 +31,7 @@ export interface PopoverOptions {
   openOnHover?: () => boolean;
   delay?: () => number;
   closeDelay?: () => number;
+  group?: () => PopupGroup | undefined;
 }
 
 export interface PopoverTriggerProps {
@@ -59,6 +69,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   let popupEl: HTMLElement | null = null;
   let hoverTimeout: ReturnType<typeof setTimeout> | null = null;
   const capturedPointers = new Set<number>();
+  let ignoreNextBlurClose = false;
+  let blurGuardTimeout: ReturnType<typeof setTimeout> | null = null;
 
   const layer = createDismissLayer({
     transition: options.transition,
@@ -73,6 +85,11 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   });
 
   const state = layer.input;
+  const groupMember = {
+    close(reason: 'group-open') {
+      applyClose(reason);
+    },
+  };
 
   // --- Hover management ---
 
@@ -97,6 +114,35 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     return canHover();
   }
 
+  function clearBlurGuard(): void {
+    ignoreNextBlurClose = false;
+    if (blurGuardTimeout !== null) {
+      clearTimeout(blurGuardTimeout);
+      blurGuardTimeout = null;
+    }
+  }
+
+  function armBlurGuard(): void {
+    // Trusted pointer gestures can transiently retarget focus to the shadow host
+    // or body before the click handler runs. Let inside menu actions decide.
+    ignoreNextBlurClose = true;
+    if (blurGuardTimeout !== null) clearTimeout(blurGuardTimeout);
+    blurGuardTimeout = setTimeout(clearBlurGuard, 500);
+  }
+
+  function consumeBlurGuard(): boolean {
+    if (!ignoreNextBlurClose) return false;
+
+    clearBlurGuard();
+    return true;
+  }
+
+  function isTriggerDisabled(): boolean {
+    if (!triggerEl) return false;
+    if (triggerEl.hasAttribute('disabled')) return true;
+    return triggerEl.getAttribute('aria-disabled') === 'true';
+  }
+
   // --- Open/close ---
 
   /**
@@ -118,6 +164,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     const opening = layer.open();
     if (!opening) return;
 
+    options.group?.()?.open(groupMember);
+
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(true, details);
 
@@ -130,6 +178,8 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
     const closing = layer.close(popupEl);
     if (!closing) return;
+
+    options.group?.()?.close(groupMember);
 
     const details: PopoverChangeDetails = event ? { reason, event } : { reason };
     onOpenChange(false, details);
@@ -161,14 +211,21 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     // the listener is on document, so contains() would always fail.
     const path = event.composedPath();
 
-    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) return;
+    if ((triggerEl && path.includes(triggerEl)) || (popupEl && path.includes(popupEl))) {
+      armBlurGuard();
+      return;
+    }
+
+    clearBlurGuard();
 
     applyClose('outside-click', event);
   }
 
   // Cleanup hover timeout on destroy.
   layer.signal.addEventListener('abort', () => {
+    options.group?.()?.close(groupMember);
     clearHoverTimeout();
+    clearBlurGuard();
     capturedPointers.clear();
     triggerEl = null;
     popupEl = null;
@@ -179,6 +236,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   const triggerProps: PopoverTriggerProps = {
     onClick(event) {
       if (!canToggleOnClick()) return;
+      if (isTriggerDisabled()) return;
 
       // During a close animation (open=true, status=ending), treat
       // the click as a re-open rather than a second close attempt.
@@ -273,7 +331,27 @@ export function createPopover(options: PopoverOptions): PopoverApi {
         return;
       }
 
-      applyClose('blur');
+      if (consumeBlurGuard()) return;
+
+      if (relatedTarget !== null) {
+        applyClose('blur');
+        return;
+      }
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (!state.current.active || state.current.status === 'ending' || state.current.status === 'starting') {
+            return;
+          }
+
+          const active = document.activeElement;
+          if (active && (triggerEl?.contains(active) || popupEl?.contains(active))) {
+            return;
+          }
+
+          applyClose('blur');
+        });
+      });
     },
   };
 

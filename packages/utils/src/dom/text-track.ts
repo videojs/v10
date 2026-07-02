@@ -1,3 +1,10 @@
+export type CaptionOrSubtitleKind = 'captions' | 'subtitles';
+
+/** Whether a text track is a captions or subtitles track. */
+export function isCaptionOrSubtitleTrack(track: { kind: string }): track is { kind: CaptionOrSubtitleKind } {
+  return track.kind === 'captions' || track.kind === 'subtitles';
+}
+
 /** Find the `<track>` element that owns the given `TextTrack`. */
 export function findTrackElement(media: EventTarget, track: unknown): HTMLTrackElement | null {
   if (!(media instanceof HTMLElement)) return null;

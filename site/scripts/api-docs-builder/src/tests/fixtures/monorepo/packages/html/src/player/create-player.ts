@@ -8,6 +8,6 @@ interface HtmlPlayerOptions {
 }
 
 /** Create an HTML player instance. */
-export function createPlayer(options: HtmlPlayerOptions): HtmlPlayerInstance {
+export function createPlayer(_options: HtmlPlayerOptions): HtmlPlayerInstance {
   return {} as HtmlPlayerInstance;
 }

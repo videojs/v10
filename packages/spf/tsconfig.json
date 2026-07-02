@@ -3,7 +3,8 @@
   "compilerOptions": {
     "composite": true,
     "declarationDir": "types",
-    "lib": ["ES2022", "DOM", "DOM.Iterable"]
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "exactOptionalPropertyTypes": false
   },
   "references": [{ "path": "../utils" }],
   "include": ["src/**/*.ts"]

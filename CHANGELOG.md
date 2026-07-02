@@ -2,6 +2,92 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.24] - 2026-05-19
+
+### 🚀 Features
+- *(packages)* Add live button component ([#1473](https://github.com/videojs/v10/pull/1473)) by [@luwes](https://github.com/luwes)
+- *(packages)* Add UI support for gestures and hotkeys ([#1388](https://github.com/videojs/v10/pull/1388)) by [@sampotts](https://github.com/sampotts)
+- *(spf)* HLS engine composition walkthrough + doc-driven cleanups ([#1512](https://github.com/videojs/v10/pull/1512)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(core)* Menu core layer and DOM keyboard navigation ([#1503](https://github.com/videojs/v10/pull/1503)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Add playback rate menu ([#1527](https://github.com/videojs/v10/pull/1527)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* Ship bundled markdown docs in html and react tarballs ([#1560](https://github.com/videojs/v10/pull/1560)) by [@decepulis](https://github.com/decepulis)
+
+### 🐛 Bug Fixes
+- *(icons)* Avoid hidden spinner animations ([#1476](https://github.com/videojs/v10/pull/1476)) by [@sampotts](https://github.com/sampotts)
+- *(ci)* Use biome to sort CSS properties ([#1490](https://github.com/videojs/v10/pull/1490)) by [@sampotts](https://github.com/sampotts)
+- *(icons)* Use icon exports in ejected skins ([#1489](https://github.com/videojs/v10/pull/1489)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Add 'use client' to ejected skin Next.js output ([#1488](https://github.com/videojs/v10/pull/1488)) by [@ronald-urbina](https://github.com/ronald-urbina)
+- *(skin)* Fix safari button alignment issue when zoomed ([#1495](https://github.com/videojs/v10/pull/1495)) by [@sampotts](https://github.com/sampotts)
+- *(build)* Resolve link-aliases root from repo root ([#1501](https://github.com/videojs/v10/pull/1501)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(html)* Set min dimensions on background-video host ([#1523](https://github.com/videojs/v10/pull/1523)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(core)* Resolve cast button ssr hydration mismatch ([#1518](https://github.com/videojs/v10/pull/1518)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(skin)* Fix minimal tailwind root sizing ([#1540](https://github.com/videojs/v10/pull/1540)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(react)* Replace any with unknown in isRenderProp type guard ([#1500](https://github.com/videojs/v10/pull/1500)) by [@ronald-urbina](https://github.com/ronald-urbina)
+- *(docs)* Improve agentic discovery of llms.txt and eject ([#1564](https://github.com/videojs/v10/pull/1564)) by [@decepulis](https://github.com/decepulis)
+- *(spf)* Conventions, per-type specialization, config threading ([#1537](https://github.com/videojs/v10/pull/1537)) by [@cjpillsbury](https://github.com/cjpillsbury)
+
+### 📚 Documentation
+- *(design)* Menus ([#1078](https://github.com/videojs/v10/pull/1078)) by [@sampotts](https://github.com/sampotts)
+- *(design)* Add design doc for live presets ([#1395](https://github.com/videojs/v10/pull/1395)) by [@luwes](https://github.com/luwes)
+- *(site)* Warn that bundled HTML installs need type="module" ([#1530](https://github.com/videojs/v10/pull/1530)) by [@R-Delfino95](https://github.com/R-Delfino95)
+- *(site)* Add 'use client' to homepage React snippet ([#1529](https://github.com/videojs/v10/pull/1529)) by [@R-Delfino95](https://github.com/R-Delfino95)
+- Fix grammar in features concept guide ([#1511](https://github.com/videojs/v10/pull/1511)) by [@ronald-urbina](https://github.com/ronald-urbina)
+- *(site)* Add "Why Video.js?" concept page ([#1526](https://github.com/videojs/v10/pull/1526)) by [@decepulis](https://github.com/decepulis)
+- *(design)* I18n ([#1122](https://github.com/videojs/v10/pull/1122)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Fix feature export names in features and presets guides ([#1513](https://github.com/videojs/v10/pull/1513)) by [@ronald-urbina](https://github.com/ronald-urbina)
+- *(site)* Use togglePaused in playback feature example ([#1522](https://github.com/videojs/v10/pull/1522)) by [@R-Delfino95](https://github.com/R-Delfino95)
+- *(claude)* Add css to tailwind migration skill ([#1548](https://github.com/videojs/v10/pull/1548)) by [@sampotts](https://github.com/sampotts)
+
+### 🧪 Testing
+- *(sandbox)* Adapt playback rate E2E to menu UX ([#1545](https://github.com/videojs/v10/pull/1545)) by [@sampotts](https://github.com/sampotts)
+
+### ⚙️ Miscellaneous Tasks
+- *(ci)* Configure noUnknownProperty to allow corner-shape ([#1502](https://github.com/videojs/v10/pull/1502)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Upgrade astro to 6.3.1 ([#1499](https://github.com/videojs/v10/pull/1499)) by [@decepulis](https://github.com/decepulis)
+- *(ci)* Scope triage label to external authors ([#1550](https://github.com/videojs/v10/pull/1550)) by [@decepulis](https://github.com/decepulis)
+
+### New Contributors
+* @R-Delfino95 made their first contribution in [#1522](https://github.com/videojs/v10/pull/1522)
+* @spuppo-mux made their first contribution in [#1540](https://github.com/videojs/v10/pull/1540)
+
+## [@videojs/core@10.0.0-beta.23] - 2026-04-27
+
+### 🚀 Features
+- *(html)* Observe cast attributes on mux elements ([#1386](https://github.com/videojs/v10/pull/1386)) by [@luwes](https://github.com/luwes)
+- *(core)* Add HLS stream-type detection and live duration ([#1387](https://github.com/videojs/v10/pull/1387)) by [@luwes](https://github.com/luwes)
+- *(packages)* Add live-video and live-audio presets ([#1399](https://github.com/videojs/v10/pull/1399)) by [@luwes](https://github.com/luwes)
+- *(packages)* Support cli:omit markers for llm-only doc content ([#1466](https://github.com/videojs/v10/pull/1466)) by [@decepulis](https://github.com/decepulis)
+- *(html)* Re-export reactive primitives from @videojs/element ([#1472](https://github.com/videojs/v10/pull/1472)) by [@decepulis](https://github.com/decepulis)
+- *(core)* Add liveEdgeStart and targetLiveWindow properties ([#1445](https://github.com/videojs/v10/pull/1445)) by [@luwes](https://github.com/luwes)
+
+### 🐛 Bug Fixes
+- *(react)* Rename MediaGesture and MediaHotkey to Gesture and Hotkey ([#1374](https://github.com/videojs/v10/pull/1374)) by [@mihar-22](https://github.com/mihar-22)
+- *(site)* Only report Sentry errors from deployed function runtime ([#1393](https://github.com/videojs/v10/pull/1393)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Work around #1111 in create-player/player-controller demos ([#1403](https://github.com/videojs/v10/pull/1403)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add astro check CI and reduce errors/hints ([#1109](https://github.com/videojs/v10/pull/1109)) by [@decepulis](https://github.com/decepulis)
+- *(html)* Raise testTimeout to 15s for parallel-load reliability ([#1448](https://github.com/videojs/v10/pull/1448)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(site)* Exclude clientcode suspense fallback from llms and search ([#1467](https://github.com/videojs/v10/pull/1467)) by [@decepulis](https://github.com/decepulis)
+
+### 💼 Other
+- *(cli)* Decouple cli tests from upstream builds ([#1402](https://github.com/videojs/v10/pull/1402)) by [@decepulis](https://github.com/decepulis)
+
+### 🚜 Refactor
+- *(react)* Replace prototype-walking and inferred class props ([#1376](https://github.com/videojs/v10/pull/1376)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* [**breaking**] Rename cast to google-cast and remote-playback ([#1380](https://github.com/videojs/v10/pull/1380)) by [@luwes](https://github.com/luwes)
+- *(core)* [**breaking**] Unify fullscreen and pip on media capabilities ([#1469](https://github.com/videojs/v10/pull/1469)) by [@luwes](https://github.com/luwes)
+
+### 📚 Documentation
+- *(root)* Fix stale references and document sandbox workflow ([#1464](https://github.com/videojs/v10/pull/1464)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add how-to guide for building custom components ([#1008](https://github.com/videojs/v10/pull/1008)) by [@decepulis](https://github.com/decepulis)
+
+### ⚡ Performance
+- *(site)* Trim site build time ([#1379](https://github.com/videojs/v10/pull/1379)) by [@decepulis](https://github.com/decepulis)
+
+### ⚙️ Miscellaneous Tasks
+- *(ci)* Exclude epic and priority labels from triage agent ([#1377](https://github.com/videojs/v10/pull/1377)) by [@decepulis](https://github.com/decepulis)
+- Update README milestone link ([#1444](https://github.com/videojs/v10/pull/1444)) by [@decepulis](https://github.com/decepulis)
+- *(root)* Migrate typecheck to @typescript/native-preview (tsgo) ([#1400](https://github.com/videojs/v10/pull/1400)) by [@mihar-22](https://github.com/mihar-22)
+
 ## [@videojs/core@10.0.0-beta.22] - 2026-04-18
 
 ### 🚀 Features
@@ -1248,6 +1334,8 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.24]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24
+[@videojs/core@10.0.0-beta.23]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.22...@videojs/core@10.0.0-beta.23
 [@videojs/core@10.0.0-beta.22]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.21...@videojs/core@10.0.0-beta.22
 [@videojs/core@10.0.0-beta.21]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.20...@videojs/core@10.0.0-beta.21
 [@videojs/core@10.0.0-beta.20]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.19...@videojs/core@10.0.0-beta.20

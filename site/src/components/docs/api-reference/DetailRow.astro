@@ -25,7 +25,7 @@ interface Props {
   colspan: number;
 }
 
-const { id, name, type, attributeName, detailedType, description, colspan } = Astro.props;
+const { id, name, attributeName, detailedType, description, colspan } = Astro.props;
 
 const hasDetail = Boolean(attributeName || detailedType || description);
 ---

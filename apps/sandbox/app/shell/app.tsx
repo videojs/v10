@@ -1,4 +1,5 @@
 import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import {
   DASH_SOURCE_IDS,
@@ -17,17 +18,23 @@ import { Preview } from './preview';
 function getPagePath(platform: Platform, preset: Preset): string {
   if (platform === 'cdn') return '/cdn/';
   if (preset === 'background-video') return `/${platform}-background-video/`;
+  if (preset === 'vimeo-video') return `/${platform}-vimeo-video/`;
   return `/${platform}-${preset}/`;
 }
 
 function readParams() {
   const params = new URLSearchParams(location.search);
+  const preload = params.get('preload');
   return {
     platform: (params.get('platform') ?? 'html') as Platform,
     styling: (params.get('styling') ?? 'css') as Styling,
     preset: (params.get('preset') ?? 'video') as Preset,
     skin: (params.get('skin') ?? 'default') as 'default' | 'minimal',
     source: (params.get('source') ?? 'hls-1') as SourceId,
+    autoplay: params.get('autoplay') === '1',
+    muted: params.get('muted') === '1',
+    loop: params.get('loop') === '1',
+    preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
   };
 }
 
@@ -38,15 +45,29 @@ export function App() {
   const [preset, setPreset] = useState<Preset>(initial.preset);
   const [skin, setSkin] = useState(initial.skin);
   const [source, setSource] = useState(initial.source);
+  const [autoplay, setAutoplay] = useState(initial.autoplay);
+  const [muted, setMuted] = useState(initial.muted);
+  const [loop, setLoop] = useState(initial.loop);
+  const [preload, setPreload] = useState<PreloadValue>(initial.preload);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const pagePath = getPagePath(platform, preset);
 
-  // Keep the URL in sync with all state (including skin + source)
+  // Keep the URL in sync with all state.
   useEffect(() => {
-    const params = new URLSearchParams({ platform, styling, preset, skin, source });
+    const params = new URLSearchParams({
+      platform,
+      styling,
+      preset,
+      skin,
+      source,
+      autoplay: autoplay ? '1' : '0',
+      muted: muted ? '1' : '0',
+      loop: loop ? '1' : '0',
+      preload,
+    });
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, preset, skin, source]);
+  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload]);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
@@ -55,6 +76,22 @@ export function App() {
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'source-change', source }, '*');
   }, [source]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'autoplay-change', autoplay }, '*');
+  }, [autoplay]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'muted-change', muted }, '*');
+  }, [muted]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'loop-change', loop }, '*');
+  }, [loop]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'preload-change', preload }, '*');
+  }, [preload]);
 
   // Constrain source to MP4 when switching to audio
   useEffect(() => {
@@ -77,9 +114,9 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // CDN and background video do not have a Tailwind skin variant.
+  // CDN, background video, and vimeo video do not have a Tailwind skin variant.
   useEffect(() => {
-    if ((platform === 'cdn' || preset === 'background-video') && styling === 'tailwind') {
+    if ((platform === 'cdn' || preset === 'background-video' || preset === 'vimeo-video') && styling === 'tailwind') {
       setStyling('css');
     }
   }, [platform, preset, styling]);
@@ -102,11 +139,20 @@ export function App() {
         onSkinChange={setSkin}
         source={source}
         onSourceChange={handleSourceChange}
+        autoplay={autoplay}
+        onAutoplayChange={setAutoplay}
+        muted={muted}
+        onMutedChange={setMuted}
+        loop={loop}
+        onLoopChange={setLoop}
+        preload={preload}
+        onPreloadChange={setPreload}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
-        isSimpleHlsVideo={preset === 'simple-hls-video'}
+        isSimpleHls={preset.startsWith('simple-hls-')}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
+        isVimeoVideo={preset === 'vimeo-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}
@@ -120,6 +166,10 @@ export function App() {
         skin={skin}
         styling={styling}
         source={source}
+        autoplay={autoplay}
+        muted={muted}
+        loop={loop}
+        preload={preload}
       />
     </div>
   );

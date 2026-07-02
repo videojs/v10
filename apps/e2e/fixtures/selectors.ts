@@ -9,6 +9,28 @@
  *
  * Each selector uses a CSS `,` (or) to match either renderer.
  */
+
+/** Toolbar: HTML wraps controls in `<media-controls>`, React in `<div class="media-controls">`. */
+function withinControls(selector: string): string {
+  return `media-controls ${selector}, .media-controls ${selector}`;
+}
+
+function unchecked(selector: string): string {
+  return selector
+    .split(',')
+    .map((part) => `${part.trim()}[aria-checked="false"]`)
+    .join(', ');
+}
+
+const menu = '[role="menu"]';
+const item = '[role="menuitem"]';
+const option = '[role="menuitemradio"]';
+const activeMenu = `${menu}[data-menu-view-state="active"]`;
+const playbackRateOptions = [
+  `#playback-rate-menu ${option}`,
+  withinControls(`.media-menu--playback-rate ${option}`),
+].join(', ');
+
 export const SELECTORS = {
   // Player containers
   // HTML: <video-player>, React: wrapper div around VideoSkin
@@ -28,7 +50,21 @@ export const SELECTORS = {
   fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
   pipButton: 'media-pip-button, .media-button--pip',
   captionsButton: 'media-captions-button, .media-button--captions',
-  playbackRateButton: 'media-playback-rate-button, .media-button--playback-rate',
+  playbackRateButton: [
+    withinControls('media-playback-rate-button'),
+    withinControls('.media-button--playback-rate'),
+    withinControls('button[aria-haspopup="menu"][aria-label^="Playback rate"]:not(.media-menu__item)'),
+  ].join(', '),
+  playbackRateUncheckedOptions: unchecked(playbackRateOptions),
+  activeMenuOptions: `${activeMenu} ${option}`,
+  activeMenuUncheckedOptions: unchecked(`${activeMenu} ${option}`),
+  settingsButton: [
+    withinControls('.media-button--settings'),
+    withinControls('button[commandfor="settings-menu"]'),
+    withinControls('button[aria-label="Settings"]'),
+  ].join(', '),
+  settingsCaptionsItem: `${item}:has-text("Captions")`,
+  settingsSpeedItem: `${item}:has-text("Speed")`,
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
@@ -39,10 +75,15 @@ export const SELECTORS = {
   // Display elements
   // HTML uses attribute `type`, React uses `data-type`
   currentTime: 'media-time[type="current"], [data-type="current"].media-time',
-  duration: 'media-time[type="duration"], [data-type="duration"].media-time',
+  duration: [
+    'media-time[type="duration"]',
+    'media-time[type="remaining"]',
+    '[data-type="duration"].media-time',
+    '[data-type="remaining"].media-time',
+  ].join(', '),
   poster: 'media-poster, img[data-visible]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
-  thumbnail: 'media-slider-thumbnail, .media-preview__thumbnail',
+  thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
 
   // Popover & tooltip
   tooltip: 'media-tooltip, .media-tooltip',
@@ -50,7 +91,7 @@ export const SELECTORS = {
   errorDialog: 'media-error-dialog, .media-error',
 
   // Media element — matches all renderer custom elements and native media
-  media: 'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video, mux-video, mux-audio',
+  media: 'video, audio, hlsjs-video, simple-hls-video, native-hls-video, dash-video, mux-video, mux-audio',
 } as const;
 
 /** Data attributes used for player state (same across both renderers). */

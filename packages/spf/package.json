@@ -1,7 +1,7 @@
 {
   "name": "@videojs/spf",
   "type": "module",
-  "version": "10.0.0-beta.22",
+  "version": "10.0.0-beta.24",
   "description": "Stream Processing Framework for Video.js 10",
   "license": "Apache-2.0",
   "repository": {
@@ -28,10 +28,15 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
-    "./playback-engine": {
-      "types": "./dist/dev/dom/playback-engine.d.ts",
-      "development": "./dist/dev/dom/playback-engine.js",
-      "default": "./dist/default/dom/playback-engine.js"
+    "./hls": {
+      "types": "./dist/dev/hls.d.ts",
+      "development": "./dist/dev/hls.js",
+      "default": "./dist/default/hls.js"
+    },
+    "./background-video": {
+      "types": "./dist/dev/background-video.d.ts",
+      "development": "./dist/dev/background-video.js",
+      "default": "./dist/default/background-video.js"
     }
   },
   "main": "dist/default/index.js",
@@ -47,7 +52,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'",
-    "size": "node scripts/measure-size.js --playback-engine",
+    "size": "node scripts/measure-size.js --hls",
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
@@ -60,8 +65,7 @@
     "@vitest/coverage-v8": "^4.1.0",
     "jsdom": "^26.1.0",
     "playwright": "^1.59.1",
-    "tsdown": "^0.21.4",
-    "typescript": "^6.0.2",
+    "tsdown": "^0.21.9",
     "vitest": "^4.1.0"
   },
   "publishConfig": {

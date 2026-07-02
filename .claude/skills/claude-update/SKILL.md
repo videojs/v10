@@ -27,7 +27,8 @@ update AI documentation to incorporate them as appropriate.
 | Component patterns            | `component` skill    |
 | Accessibility                 | `aria` skill         |
 | API design / DX               | `api` skill          |
-| Documentation                 | `docs` skill   |
+| Documentation                 | `docs` skill         |
+| CSS → Tailwind migration      | `css-to-tailwind` skill |
 
 **Decision:** Ask "Who needs this?" — if domain-specific, use a skill.
 

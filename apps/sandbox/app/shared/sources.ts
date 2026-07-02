@@ -31,6 +31,31 @@ export const SOURCES = {
     type: 'hls',
     subType: 'mp4',
   },
+  'hls-6': {
+    label: 'HLS - Tailwind (portrait)',
+    url: 'https://stream.mux.com/vth873zxidmhBVVRWBKcPTxnSQ302QqUm.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
+  'hls-multi-audio': {
+    label: 'HLS - Multi-language audio',
+    url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
+  'hls-live': {
+    label: 'HLS - Live Stream Big Buck Bunny',
+    url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+    live: true,
+  },
+  'hls-audio-only-cmaf': {
+    label: 'HLS - Audio only (CMAF/fmp4)',
+    url: 'https://stream.mux.com/2NEjLyf6ETnskbfAtbM00Vdzb97B00OKUUQcRD6LZpBRw.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
@@ -60,12 +85,26 @@ export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
+export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
+
+/** Returns true when the given source represents a live stream and should use the live-video skin. */
+export function isLiveSource(id: SourceId): boolean {
+  return (SOURCES[id] as { live?: boolean }).live === true;
+}
+
 export function getPosterSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/thumbnail.jpg` : undefined;
 }
 
+export function getPlaceholderSrc(source: SourceId): string | undefined {
+  const id = getMuxAssetId(source);
+  return id ? `https://image.mux.com/${id}/thumbnail.jpg?width=20` : undefined;
+}
+
 export function getStoryboardSrc(source: SourceId): string | undefined {
+  // Storyboards aren't generated for live streams, so skip the request entirely.
+  if (isLiveSource(source)) return undefined;
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/storyboard.vtt` : undefined;
 }

@@ -1,16 +1,15 @@
-import { listen } from '@videojs/utils/dom';
-
+import { isWebKitAirPlayCapable, listen, type WebkitAvailabilityEvent } from '@videojs/utils/dom';
+import { isMediaRemotePlaybackCapable } from '../../../core/media/predicate';
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
-import { isMediaRemotePlaybackCapable } from '../../media/predicate';
-import { exitFullscreen, isFullscreenElement } from '../../presentation/fullscreen';
+import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';
 import { isRemotePlaybackConnected, requestRemotePlayback } from '../../presentation/remote-playback';
 
 export const remotePlaybackFeature = definePlayerFeature({
   name: 'remotePlayback',
   state: ({ target }): MediaRemotePlaybackState => ({
     remotePlaybackState: 'disconnected',
-    remotePlaybackAvailability: 'unavailable',
+    remotePlaybackAvailability: 'unsupported',
 
     async toggleRemotePlayback() {
       const { media, container } = target();
@@ -19,11 +18,11 @@ export const remotePlaybackFeature = definePlayerFeature({
         return requestRemotePlayback(media);
       }
 
-      if (isFullscreenElement(container, media)) {
-        await exitFullscreen();
+      if (isFullscreen(container, media)) {
+        await exitFullscreen(media);
       }
 
-      return requestRemotePlayback(media);
+      return await requestRemotePlayback(media);
     },
   }),
 
@@ -32,6 +31,31 @@ export const remotePlaybackFeature = definePlayerFeature({
 
     if (!isMediaRemotePlaybackCapable(media)) return;
 
+    // Safari's W3C `media.remote` events don't fire reliably for AirPlay
+    // session changes. When WebKit's AirPlay APIs are available, drive both
+    // state slices off the WebKit events and skip the W3C listeners entirely
+    // so the two paths can't double-write or conflict.
+    if (isWebKitAirPlayCapable(media)) {
+      const syncConnection = () => {
+        set({
+          remotePlaybackState: media.webkitCurrentPlaybackTargetIsWireless ? 'connected' : 'disconnected',
+        });
+      };
+
+      const syncAvailability = (event: Event) => {
+        const { availability } = event as WebkitAvailabilityEvent;
+        set({ remotePlaybackAvailability: availability === 'available' ? 'available' : 'unavailable' });
+      };
+
+      listen(media, 'webkitplaybacktargetavailabilitychanged', syncAvailability, { signal });
+      listen(media, 'webkitcurrentplaybacktargetiswirelesschanged', syncConnection, { signal });
+
+      // Sync initial connection state in case AirPlay was already active.
+      syncConnection();
+      return;
+    }
+
+    // W3C Remote Playback path (Chromium / Edge with the cast extension).
     const syncState = () => set({ remotePlaybackState: media.remote.state as RemotePlaybackConnectionState });
 
     syncState();
@@ -49,7 +73,7 @@ export const remotePlaybackFeature = definePlayerFeature({
       });
 
     signal.addEventListener('abort', () => {
-      media.remote?.cancelWatchAvailability().catch(() => {});
+      media.remote?.cancelWatchAvailability?.().catch(() => {});
     });
   },
 });

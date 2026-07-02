@@ -9,4 +9,7 @@ interface Props {
 const { schema } = Astro.props;
 ---
 
+{
+  /* astro(4000) is expected — JSON-LD is static data that should be inline (withastro/astro#3544) */
+}
 <script type="application/ld+json" set:html={JSON.stringify(schema)} />

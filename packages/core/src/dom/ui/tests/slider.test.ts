@@ -562,57 +562,6 @@ describe('createSlider', () => {
       slider.destroy();
     });
 
-    it('numeric keys jump to N * 10%', () => {
-      const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ onValueChange }));
-
-      slider.thumbProps.onKeyDown(keyboardEvent('5'));
-      expect(onValueChange).toHaveBeenCalledWith(50);
-
-      onValueChange.mockClear();
-      slider.thumbProps.onKeyDown(keyboardEvent('0'));
-      expect(onValueChange).toHaveBeenCalledWith(0);
-
-      onValueChange.mockClear();
-      slider.thumbProps.onKeyDown(keyboardEvent('9'));
-      expect(onValueChange).toHaveBeenCalledWith(90);
-
-      slider.destroy();
-    });
-
-    it('numeric keys do not fire when metaKey is held', () => {
-      const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ onValueChange }));
-
-      slider.thumbProps.onKeyDown(keyboardEvent('5', { metaKey: true }));
-
-      expect(onValueChange).not.toHaveBeenCalled();
-
-      slider.destroy();
-    });
-
-    it('numeric keys do not fire when ctrlKey is held', () => {
-      const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ onValueChange }));
-
-      slider.thumbProps.onKeyDown(keyboardEvent('5', { ctrlKey: true }));
-
-      expect(onValueChange).not.toHaveBeenCalled();
-
-      slider.destroy();
-    });
-
-    it('numeric keys do not fire when altKey is held', () => {
-      const onValueChange = vi.fn();
-      const slider = createSlider(createOptions({ onValueChange }));
-
-      slider.thumbProps.onKeyDown(keyboardEvent('5', { altKey: true }));
-
-      expect(onValueChange).not.toHaveBeenCalled();
-
-      slider.destroy();
-    });
-
     it('clamps to 0-100 range', () => {
       const onValueChange = vi.fn();
       const slider = createSlider(createOptions({ getPercent: () => 99, getStepPercent: () => 5, onValueChange }));

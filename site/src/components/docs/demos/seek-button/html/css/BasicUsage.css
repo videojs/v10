@@ -7,23 +7,23 @@
 }
 
 .buttons {
-  display: flex;
-  gap: 8px;
   position: absolute;
   bottom: 10px;
   left: 10px;
+  display: flex;
+  gap: 8px;
 }
 
 .media-seek-button {
   padding-block: 8px;
-  background: rgba(255, 255, 255, 0.7);
-  backdrop-filter: blur(10px);
-  color: black;
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 9999px;
   padding-inline: 20px;
+  color: black;
   white-space: nowrap;
   cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
 }
 
 .media-seek-button .backward {

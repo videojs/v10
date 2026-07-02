@@ -22,8 +22,6 @@
     "declarationMap": true,
     "emitDeclarationOnly": true,
     "sourceMap": true,
-    "allowSyntheticDefaultImports": true,
-    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedDeclarations": false,
     "isolatedModules": true,

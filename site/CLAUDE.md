@@ -15,7 +15,7 @@ The site deploys via Netlify from two branches:
 | Branch | Deploys to | Content |
 | --- | --- | --- |
 | `site/v10` (production) | **videojs.org** | Stable docs matching the latest release |
-| `main` (branch deploy) | **next.videojs.org** | Pre-release docs (may include unreleased APIs) |
+| `main` (branch deploy) | **main.videojs.org** | Pre-release docs (may include unreleased APIs) |
 
 **On release:** The CD workflow (`.github/workflows/cd.yml`) publishes packages to npm, then force-pushes `main`'s HEAD to `site/v10`. This keeps the production docs in sync with the latest release.
 
@@ -29,7 +29,7 @@ git push origin site/v10
 
 The next release force-pushes `main` to `site/v10`, which already includes the cherry-picked commit (since it originated on `main`). All fixes must land on `main` first — the `site/v10` branch has branch protection that restricts direct pushes to the CD bot.
 
-**Branch deploys (next.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs.
+**Branch deploys (main.videojs.org)** serve `X-Robots-Tag: noindex` headers to prevent search engines from indexing pre-release docs. They also render a top banner (`src/components/PrereleaseBanner.astro`) that links back to the stable site. The banner is gated by `isPrereleaseSite(Astro.site)` from `src/consts.ts` — change `PRERELEASE_URL` there if the pre-release hostname moves.
 
 ## Commands
 
@@ -581,16 +581,32 @@ vi.mock('@/types/docs', async () => {
 
 ## Technology Stack
 
-- **[Astro 5.14.4](https://astro.build)**: Static site generation with island architecture
+- **[Astro 7](https://astro.build)**: Static site generation with island architecture (Rust compiler; Markdown runs on the native **Sätteri** processor with custom MDAST plugins — see "MDX Processing Plugins" below)
+- **[Vite 8](https://vite.dev)**: Underlying dev server and bundler, via Rolldown (see "Dependency Optimization" gotcha below)
 - **[React 19](https://react.dev)**: Client-side interactive components (`client:load`)
 - **[React Compiler](https://react.dev/learn/react-compiler)**: Enabled via `babel-plugin-react-compiler` targeting React 19
 - **[Tailwind v4](https://tailwindcss.com)**: CSS utility classes via `@tailwindcss/vite`
 - **[Nanostores 1.0.1](https://github.com/nanostores/nanostores)**: Cross-island state
 - **[Base UI 1.2.0](https://base-ui.com)**: Headless accessible components
 - **[Algolia DocSearch v4](https://docsearch.algolia.com)**: Search via Algolia-hosted indexes (docs + blog)
-- **[Shiki 3.13.0](https://shiki.style)**: Syntax highlighting
-- **[Vitest 3.2.4](https://vitest.dev)**: Testing framework
+- **[Shiki 4](https://shiki.style)**: Syntax highlighting
+- **[Vitest 4](https://vitest.dev)**: Testing framework
 - **[clsx](https://github.com/lukeed/clsx)**: Class name concatenation utility
+
+### Dependency Optimization (Vite) — gotcha
+
+`astro.config.mjs` sets `vite.optimizeDeps` (e.g. `exclude` for the workspace
+`@videojs/*` packages and the native `@resvg/resvg-js` binding). Since the
+Astro 6 / Vite 7 upgrade (and still under Astro 7 / Vite 8), this root-level
+`optimizeDeps` **shadows** the
+per-environment `optimizeDeps.include` that renderer integrations
+(`@astrojs/react`) inject via Vite's Environment API — so React's CJS deps stop
+being pre-bundled in **dev only**. The symptom is every React island failing to
+hydrate with `SyntaxError: Importing binding name 'createRoot' is not found`
+(prod is unaffected — Rollup bundles everything). Fix: re-declare the needed
+entries in the site's own `optimizeDeps.include` (currently `react-dom` and
+`react-dom/client`). If you add another renderer integration, include its
+client deps here too.
 
 ## API Reference Generation
 
@@ -680,23 +696,45 @@ OAuth and Mux integration exist to support the **video uploader** on the install
 
 ## MDX Processing Plugins
 
-Four plugins transform MDX content during build. Registered in `astro.config.mjs`:
+The Markdown pipeline uses **Sätteri** (`markdown.processor: satteri({ mdastPlugins })`
+in `astro.config.mjs`), Astro 7's native Rust processor. Custom transforms are
+Sätteri **MDAST plugins** (`defineMdastPlugin` from `satteri`), not remark/rehype.
 
-**`remarkConditionalHeadings`** (`src/utils/remarkConditionalHeadings.js`)
-Walks the MDX AST and tracks headings inside `<FrameworkCase>` / `<StyleCase>` components, attaching conditional metadata (which frameworks/styles a heading belongs to). Also reads `<ComponentReference>` and `<UtilReference>` component props, loads the generated JSON, and injects heading entries so API reference sections appear in the table of contents. Outputs to `frontmatter.conditionalHeadings`.
+> **Syntax highlighting is independent of the processor.** `markdown.syntaxHighlight`
+> and `shikiConfig` (themes, pre-registered langs, and `transformers`) are applied by
+> Astro's Shiki layer regardless of processor, so the notation transformers carry over
+> unchanged. GFM and SmartyPants stay on by default (Astro's `markdown.gfm`/`smartypants`
+> default true), matching the previous output.
+>
+> **Plugins write frontmatter via `ctx.data.astro.frontmatter.*`.** The markdown-satteri
+> adapter seeds the document data bag with `{ astro: { frontmatter, headings } }` and
+> surfaces `data.astro.frontmatter` back as `render().remarkPluginFrontmatter` — the same
+> contract the old remark plugins used via `file.data.astro.frontmatter`. Stateful plugins
+> are written as factories (`() => defineMdastPlugin(...)`) so per-document state resets.
 
-**`remarkReadingTime`** (`src/utils/remarkReadingTime.mjs`)
-Calculates reading time and injects `frontmatter.minutesRead` (text) and `frontmatter.readingTimeMinutes` (number).
+**`satteriConditionalHeadings`** (`src/utils/satteriConditionalHeadings.ts`)
+Collects headings (slugged with GithubSlugger in document order, so slugs match the ids the
+markdown-satteri `heading-ids` plugin emits), tracking which `<FrameworkCase>` / `<StyleCase>`
+each lives in via `ctx.parent()`. Reads `<ComponentReference>` / `<FeatureReference>` /
+`<UtilReference>` / `<MediaReference>` props, loads the generated JSON, and injects heading
+entries so API-reference sections appear in the TOC. Outputs `frontmatter.conditionalHeadings`.
 
-**`rehypePrepareCodeBlocks`** (`src/utils/rehypePrepareCodeBlocks.js`)
-Tags `<code>` children of `<pre>` with a `codeBlock` property, and marks `<pre>` blocks with `hasFrame: true` when inside a `<TabsPanel>` JSX component. This controls code block styling (framed vs. standalone).
+**`satteriReadingTime`** (`src/utils/satteriReadingTime.ts`)
+Accumulates text/code node content and injects `frontmatter.minutesRead` (text) and
+`frontmatter.readingTimeMinutes` (number).
 
-**`shikiTransformMetadata`** (`src/utils/shikiTransformMetadata.js`)
-Shiki transformer that extracts `title="..."` from code fence metadata, enabling titled code blocks:
+**`satteriCodeFrame`** (`src/utils/satteriCodeFrame.ts`)
+Wraps standalone fenced code blocks in a `<CodeFrame>` component (filename/lang header + copy
+button, reusing the `Tabs` chrome). Blocks already inside an authored `<TabsPanel>` are left
+alone. The title is read from the fence meta (e.g. ```` ```ts title="App.ts"````), which is why
+no Shiki title transformer is needed.
 
-~~~markdown
-```tsx title="Example.tsx"
-~~~
+> **Why `CodeFrame` instead of a `pre`/`code` component override:** under Sätteri the Shiki
+> highlight step rewrites each `<pre>` into raw HTML *before* HAST plugins run, so the old
+> `pre: Pre` override never fired. Wrapping at the MDAST stage keeps a real component frame
+> while Sätteri still highlights the inner code. The raw `.astro-code` `<pre>` gets its
+> monospace font/size from a rule in `src/styles/shiki-transformers.css` (previously supplied
+> by the `MarkdownCode` `codeBlock` branch).
 
 ## Custom Astro Integration: LLM Markdown
 

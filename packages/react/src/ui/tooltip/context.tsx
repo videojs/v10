@@ -1,8 +1,13 @@
 'use client';
 
 import type { StateAttrMap, TooltipCore } from '@videojs/core';
-import type { TooltipApi } from '@videojs/core/dom';
+import type { MediaContainer, PositioningBoundary, TooltipApi } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
+
+export interface TooltipContent {
+  label?: string | undefined;
+  shortcut?: string | undefined;
+}
 
 export interface TooltipContextValue {
   core: TooltipCore;
@@ -11,8 +16,10 @@ export interface TooltipContextValue {
   stateAttrMap: StateAttrMap<TooltipCore.State>;
   anchorName: string;
   popupId: string;
-  content: string | undefined;
-  setContent: (content: string | undefined) => void;
+  content: TooltipContent | undefined;
+  setContent: (content: TooltipContent | undefined) => void;
+  boundary: PositioningBoundary;
+  container: MediaContainer | null;
 }
 
 const TooltipContext = createContext<TooltipContextValue | null>(null);

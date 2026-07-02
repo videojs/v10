@@ -6,6 +6,10 @@ const INSTALLATION_DOC = `# Installation
 
 Intro paragraph.
 
+<!-- cli:omit installation -->
+Run the CLI to generate install code.
+<!-- /cli:omit installation -->
+
 <!-- cli:replace installation -->
 Placeholder for CLI-generated code.
 <!-- /cli:replace installation -->
@@ -205,6 +209,8 @@ describe('handleDocs', () => {
         expect(out).toContain('## HTML');
         expect(out).toContain('<video-player>');
         expect(out).not.toContain('<!-- cli:replace');
+        expect(out).not.toContain('<!-- cli:omit');
+        expect(out).not.toContain('Run the CLI to generate install code');
         expect(out).toContain('Intro paragraph');
         expect(out).toContain('## Next steps');
       });
@@ -235,6 +241,14 @@ describe('handleDocs', () => {
         expect(output()).toContain('minimal');
       });
 
+      it('generates headless (no skin) variant with skin none', async () => {
+        await handleDocs(htmlFlags({ skin: 'none' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<video-player>');
+        expect(out).not.toContain('<video-skin>');
+        expect(out).not.toContain("'@videojs/html/video/skin'");
+      });
+
       it('includes custom source URL in generated code', async () => {
         await handleDocs(htmlFlags({ 'source-url': 'https://example.com/my-video.mp4' }), ['how-to/installation']);
         expect(output()).toContain('https://example.com/my-video.mp4');
@@ -250,6 +264,41 @@ describe('handleDocs', () => {
           'how-to/installation',
         ]);
         expect(output()).toContain('background-video-player');
+      });
+
+      it('generates DASH media variant', async () => {
+        await handleDocs(htmlFlags({ media: 'dash' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<dash-video src=');
+        expect(out).toContain("import '@videojs/html/media/dash-video'");
+      });
+
+      it('generates Mux media variant', async () => {
+        await handleDocs(htmlFlags({ media: 'mux-video' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<mux-video src=');
+        expect(out).toContain("import '@videojs/html/media/mux-video'");
+      });
+
+      it('generates Vimeo media variant via npm', async () => {
+        await handleDocs(htmlFlags({ media: 'vimeo' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<vimeo-video src=');
+        expect(out).toContain("import '@videojs/html/media/vimeo-video'");
+      });
+
+      it('generates a CDN media script for renderers with a CDN build (mux)', async () => {
+        await handleDocs(htmlFlags({ media: 'mux-video', 'install-method': 'cdn' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<script');
+        expect(out).toContain('media/mux-video.js');
+      });
+
+      it('errors when requesting CDN for a renderer without a CDN build (vimeo)', async () => {
+        await expect(
+          handleDocs(htmlFlags({ media: 'vimeo', 'install-method': 'cdn' }), ['how-to/installation'])
+        ).rejects.toThrow(ExitError);
+        expect(errors()).toContain('no CDN build');
       });
     });
 

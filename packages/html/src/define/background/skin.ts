@@ -1,11 +1,11 @@
 import { ReactiveElement } from '@videojs/element';
-import { ensureGlobalStyle, namedNodeMapToObject } from '@videojs/utils/dom';
+import { ensureGlobalStyle } from '@videojs/utils/dom';
 import { safeDefine } from '../safe-define';
 import styles from './skin.css?inline';
 
 const STYLES_ID = '__media-background-styles';
 
-function getTemplateHTML(_attrs: Record<string, string>) {
+function getTemplateHTML() {
   return /*html*/ `
     <media-container>
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
@@ -27,7 +27,7 @@ export class BackgroundVideoSkinElement extends ReactiveElement {
 
     if (!this.shadowRoot) {
       this.attachShadow((this.constructor as typeof BackgroundVideoSkinElement).shadowRootOptions);
-      this.shadowRoot!.innerHTML = getTemplateHTML(namedNodeMapToObject(this.attributes));
+      this.shadowRoot!.innerHTML = getTemplateHTML();
     }
   }
 }

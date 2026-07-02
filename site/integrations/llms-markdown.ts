@@ -49,6 +49,15 @@ export default function llmsMarkdown(): AstroIntegration {
           },
         });
 
+        // Wrap [data-cli-omit] content with text markers the CLI strips from its output
+        turndown.addRule('cli-omit', {
+          filter: (node) => node.nodeType === 1 && (node as Element).getAttribute('data-cli-omit') !== null,
+          replacement: (content, node) => {
+            const id = (node as Element).getAttribute('data-cli-omit');
+            return `\n<!-- cli:omit ${id} -->\n${content}\n<!-- /cli:omit ${id} -->\n`;
+          },
+        });
+
         // Track all docs and blog pages for llms.txt index
         const docsPages: PageEntry[] = [];
         const blogPages: PageEntry[] = [];

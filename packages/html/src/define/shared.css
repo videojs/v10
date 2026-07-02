@@ -1,3 +1,7 @@
+/* -------------------------------------------------------------------------- */
+/* Shared styles for all HTML skins                                           */
+/* -------------------------------------------------------------------------- */
+
 media-tooltip-group {
   display: contents;
 }
@@ -6,6 +10,11 @@ media-tooltip-group {
   /* `display:grid` fixes a weird issue with Safari when setting aspect-ratio */
   display: grid;
   width: 100%;
+}
+
+media-container {
+  min-width: 0;
+  min-height: 0;
 }
 
 /* Hide volume popover when volume control is unsupported (e.g., iOS Safari). */

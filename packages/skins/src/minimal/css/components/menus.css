@@ -1,0 +1,232 @@
+/* ==========================================================================
+   Menus
+   Note: Menus use `.media-popover` styles for positioning and transitions.
+   ========================================================================== */
+
+.media-minimal-skin .media-menu {
+  --menu-transition-duration: 250ms;
+  --menu-max-height: 14rem;
+  --menu-padding: 0.5rem;
+  --menu-border-radius: 1rem;
+  --menu-item-border-radius: calc(var(--menu-border-radius) - var(--menu-padding));
+  box-sizing: border-box;
+  max-width: var(--media-popover-available-width, none);
+  max-height: min(var(--media-popover-available-height, var(--menu-max-height)), var(--menu-max-height));
+  padding: var(--menu-padding);
+  overflow: auto;
+  overscroll-behavior: none;
+  background-color: var(--media-popover-background-color);
+  border-radius: var(--menu-border-radius);
+  box-shadow:
+    0 0 0 1px var(--media-popover-border-color),
+    0 4px 6px -1px oklch(0 0 0 / 0.1),
+    0 2px 4px -2px oklch(0 0 0 / 0.1);
+  backdrop-filter: var(--media-popover-backdrop-filter);
+
+  @media (prefers-reduced-motion: reduce) {
+    --menu-transition-duration: 0ms;
+  }
+
+  & .media-menu__panel {
+    position: absolute;
+    inset: 0;
+    padding: var(--menu-padding);
+    overflow: auto;
+    overscroll-behavior: none;
+    outline: none;
+    translate: 0 0;
+    transition-timing-function: ease-in-out;
+    transition-duration: var(--menu-transition-duration);
+    transition-property: translate, filter;
+    will-change: translate, filter;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      overflow: hidden;
+    }
+
+    /* Root settings view — slides out when a submenu is active */
+    &[data-menu-root-view][data-menu-view-state="inactive"] {
+      filter: blur(8px);
+      translate: -100% 0;
+
+      /* Hide the indicator while transitioning */
+      & .media-menu__group::before {
+        display: none;
+      }
+    }
+
+    /* Submenu panels — slide in/out alongside the root view */
+    &[data-submenu] {
+      z-index: 10;
+
+      &:not([data-open], [data-ending-style]) {
+        translate: -100% 0;
+        transition-property: none;
+      }
+
+      &[data-starting-style],
+      &[data-ending-style] {
+        pointer-events: none;
+        filter: blur(8px);
+      }
+
+      &[data-starting-style][data-direction="forward"],
+      &[data-ending-style][data-direction="back"] {
+        translate: 100% 0;
+      }
+
+      &[data-ending-style][data-direction="forward"],
+      &[data-starting-style][data-direction="back"] {
+        translate: -100% 0;
+      }
+    }
+  }
+
+  & .media-menu__separator {
+    margin: 0.25rem 0;
+    border-bottom: 1px solid oklch(1 0 0 / 0.1);
+  }
+
+  & .media-menu__group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+
+    @supports (top: anchor(top)) {
+      &::before {
+        position: absolute;
+        position-anchor: --media-menu-item-highlight-anchor;
+        inset: anchor(inside);
+        pointer-events: none;
+        content: "";
+        background-color: oklch(from currentColor l c h / 0.1);
+        border-radius: var(--menu-item-border-radius);
+        transition: inset ease-in-out 100ms;
+      }
+    }
+  }
+
+  & .media-menu__item,
+  & .media-menu__back {
+    display: flex;
+    gap: 0.375rem;
+    align-items: center;
+    padding: 0.375rem 0.5rem;
+    text-align: left;
+    text-shadow: 0 1px 0 var(--media-current-shadow-color);
+    cursor: pointer;
+    user-select: none;
+    outline: 2px solid transparent;
+    outline-offset: -2px;
+    border-radius: var(--menu-item-border-radius);
+    transition: background-color, color;
+    transition-timing-function: ease-out;
+    transition-duration: 100ms;
+
+    &:focus-visible {
+      outline-color: currentColor;
+      outline-offset: 2px;
+    }
+
+    &:hover,
+    &[data-highlighted] {
+      background-color: oklch(from currentColor l c h / 0.1);
+
+      @supports (top: anchor(top)) {
+        anchor-name: --media-menu-item-highlight-anchor;
+        background-color: transparent;
+      }
+    }
+
+    & .media-icon {
+      flex-shrink: 0;
+      color: oklch(from currentColor l c h / 0.5);
+      filter: drop-shadow(0 1px 0 var(--media-current-shadow-color));
+    }
+  }
+
+  & .media-menu__indicator {
+    flex-shrink: 0;
+    margin-right: -0.25rem;
+    margin-left: auto;
+    opacity: 0;
+  }
+
+  & .media-menu__item {
+    justify-content: space-between;
+    font-variant-numeric: tabular-nums;
+    color: inherit;
+
+    &[aria-disabled="true"] {
+      pointer-events: none;
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    &[aria-checked="true"] .media-menu__indicator {
+      opacity: 1;
+    }
+
+    &[data-availability="unavailable"],
+    &[data-availability="unsupported"] {
+      display: none;
+    }
+  }
+
+  & .media-menu__tier {
+    padding-top: 1px;
+    padding-left: 0.125rem;
+    font-size: 0.5625rem;
+    font-weight: 600;
+    line-height: 1;
+    color: oklch(from currentColor l c h / 0.7);
+  }
+
+  & .media-menu__back {
+    width: 100%;
+    margin-bottom: 0.125rem;
+  }
+
+  & .media-menu__hint {
+    display: inline-flex;
+    gap: 0.25rem;
+    align-items: center;
+    min-width: 0;
+    padding-left: 0.5rem;
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: oklch(from currentColor l c h / 0.65);
+  }
+
+  & .media-menu__hint-label {
+    max-width: 6rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  & .media-menu__chevron {
+    width: 0.875rem;
+    height: 0.875rem;
+  }
+
+  /* Settings menu */
+  &.media-menu--settings {
+    width: var(--media-menu-width);
+    min-width: 12rem;
+    height: var(--media-menu-height);
+    overflow: hidden;
+    /* Add height and width transitions. */
+    transition:
+      var(--media-popup-transition),
+      height var(--media-popup-transition-timing-function) var(--menu-transition-duration),
+      width var(--media-popup-transition-timing-function) var(--menu-transition-duration);
+
+    /* Don't transition width and height on open/close. */
+    &[data-starting-style],
+    &[data-ending-style] {
+      transition: var(--media-popup-transition);
+    }
+  }
+}

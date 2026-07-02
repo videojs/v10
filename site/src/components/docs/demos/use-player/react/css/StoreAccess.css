@@ -16,9 +16,9 @@
 
 .controls button {
   padding: 4px 12px;
-  border-radius: 6px;
-  border: 1px solid #ccc;
-  background: white;
-  cursor: pointer;
   font-size: 0.8125rem;
+  cursor: pointer;
+  background: white;
+  border: 1px solid #ccc;
+  border-radius: 6px;
 }

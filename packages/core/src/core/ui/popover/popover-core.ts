@@ -94,7 +94,7 @@ export class PopoverCore {
 
   getTriggerAttrs(state: PopoverState, popupId?: string) {
     return {
-      'aria-expanded': state.open ? 'true' : 'false',
+      'aria-expanded': state.open && state.status !== 'ending' ? 'true' : 'false',
       'aria-haspopup': 'dialog',
       'aria-controls': popupId,
     };
