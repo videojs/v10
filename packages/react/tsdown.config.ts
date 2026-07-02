@@ -4,7 +4,7 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
-import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/built-in-locales.ts';
+import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 
