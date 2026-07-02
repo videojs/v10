@@ -9,7 +9,7 @@ export * from '@videojs/core/media/predicate';
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
-// Media utilities
+// i18n
 export {
   type Contains,
   type CreateI18nOptions,

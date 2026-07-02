@@ -18,6 +18,8 @@ export interface Change {
 }
 
 export function getChanges(): Change[] {
+  // `src/` is gitignored and generated from `templates/` on setup/build.
+  fs.ensureDirSync(SRC);
   const res: Result = compareSync(SRC, TEMPLATES, { compareContent: true });
 
   return (res.diffSet ?? [])
@@ -98,9 +100,13 @@ export async function mirrorTemplatesToSrc(): Promise<string[]> {
         continue;
       }
 
-      if (await fs.pathExists(targetPath)) continue;
+      if (await fs.pathExists(targetPath)) {
+        const existing = await fs.readFile(targetPath, 'utf8');
+        const next = await fs.readFile(templatePath, 'utf8');
+        if (existing === next) continue;
+      }
 
-      await fs.copy(templatePath, targetPath);
+      await fs.copy(templatePath, targetPath, { overwrite: true });
       created.push(targetPath);
     }
   }
