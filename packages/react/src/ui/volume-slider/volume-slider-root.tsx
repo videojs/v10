@@ -5,7 +5,7 @@ import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } fr
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
-import { useLocale, useTranslator } from '../../i18n/instance';
+import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';

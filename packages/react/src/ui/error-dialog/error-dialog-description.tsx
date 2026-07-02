@@ -2,9 +2,9 @@
 
 import type { AlertDialogCore } from '@videojs/core';
 import { resolveErrorDialogDescription } from '@videojs/core';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import { forwardRef, type ReactNode } from 'react';
-import { useTranslator } from '../../i18n/instance';
+import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useAlertDialogContext } from '../alert-dialog/context';

@@ -8,7 +8,7 @@ import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { ForwardedRef, KeyboardEvent, MouseEvent } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 
-import { useLocale, useTranslator } from '../../i18n/instance';
+import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';

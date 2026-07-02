@@ -35,8 +35,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 
-import type { I18nBase, I18nContextValue } from './base';
-import { i18nBase } from './instance';
+import { I18nContext, type I18nContextValue, useLocale, useTranslator } from './context';
 
 function ambientLangServerSnapshot(): string | undefined {
   return undefined;
@@ -79,7 +78,7 @@ export interface I18nProviderProps {
   onActiveLocaleChange?: (locale: Locale) => void;
 }
 
-export type { I18nContextValue } from './base';
+export type { I18nContextValue } from './context';
 
 type AddLocaleRoot = () => () => void;
 
@@ -92,8 +91,8 @@ interface I18nProviderRootProps extends I18nProviderProps {
 export interface CreateI18nResult {
   I18nContext: Context<I18nContextValue | null>;
   I18nProvider: (props: I18nProviderProps) => ReactNode;
-  useTranslator: I18nBase['useTranslator'];
-  useLocale: () => Locale;
+  useTranslator: typeof useTranslator;
+  useLocale: typeof useLocale;
 }
 
 /**
@@ -102,12 +101,7 @@ export interface CreateI18nResult {
  * @param options - Optional hooks such as custom built-in locale loading.
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
-  return createI18nWithBase(i18nBase, options);
-}
-
-export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions): CreateI18nResult {
   const loadLocale = options?.loadLocale ?? defaultLoadLocale;
-  const { I18nContext } = base;
   const LocaleRootContext = createContext<AddLocaleRoot | undefined>(undefined);
 
   function I18nProviderRoot({
@@ -270,5 +264,9 @@ export function createI18nWithBase(base: I18nBase, options?: CreateI18nOptions):
     return <I18nProviderRoot {...rootProps} />;
   }
 
-  return { I18nContext, I18nProvider, useTranslator: base.useTranslator, useLocale: base.useLocale };
+  return { I18nContext, I18nProvider, useTranslator, useLocale };
 }
+
+const built = createI18n();
+
+export const I18nProvider = built.I18nProvider;

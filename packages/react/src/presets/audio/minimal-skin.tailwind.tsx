@@ -18,7 +18,7 @@ import {
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { useTranslator } from '@/i18n/instance';
+import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
   PauseIcon,

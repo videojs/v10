@@ -1,10 +1,10 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import { forwardRef, useCallback } from 'react';
 
-import { useTranslator } from '../../i18n/instance';
+import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSubMenuContext } from './context';

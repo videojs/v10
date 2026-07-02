@@ -8,7 +8,7 @@ import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
-import { useTranslator } from '../i18n/instance';
+import { useTranslator } from '../i18n/context';
 import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';

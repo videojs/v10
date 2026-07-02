@@ -1,10 +1,10 @@
 'use client';
 
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import type { ReactNode } from 'react';
 
-import { useTranslator } from '../../i18n/instance';
+import { useTranslator } from '../../i18n/context';
 import { useAudioTrackOptions } from '../audio-track/use-audio-track-options';
 import { useCaptionsOptions } from '../captions-radio-group/use-captions-options';
 import { usePlaybackRateOptions } from '../playback-rate/use-playback-rate-options';

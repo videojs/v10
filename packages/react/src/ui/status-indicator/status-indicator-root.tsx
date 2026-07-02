@@ -4,7 +4,7 @@ import { createInputIndicatorLabels, StatusIndicatorCore, StatusIndicatorDataAtt
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
-import { useTranslator } from '../../i18n/instance';
+import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useInputIndicatorRoot } from '../input-indicators/use-input-indicator-root';

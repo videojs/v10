@@ -10,7 +10,7 @@ import {
 import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
 import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
 
-import { useTranslator } from '../../i18n/instance';
+import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';

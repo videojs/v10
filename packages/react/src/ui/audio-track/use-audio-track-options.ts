@@ -2,10 +2,10 @@
 
 import { AudioTrackRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import { useCallback, useState } from 'react';
 
-import { useTranslator } from '../../i18n/instance';
+import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 
 export interface AudioTrackOptionsProps extends AudioTrackRadioGroupCore.Props {}
