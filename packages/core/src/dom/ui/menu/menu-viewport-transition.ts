@@ -335,12 +335,24 @@ export function observeMenuViewContent(content: HTMLElement, onChange: () => voi
     });
   }
 
-  const observer = new MutationObserver(scheduleChange);
+  const observer = new MutationObserver((records) => {
+    const changed = records.some((record) => {
+      if (record.type !== 'attributes') return true;
+
+      const name = record.attributeName;
+      if (!name) return true;
+
+      return record.oldValue !== (record.target as Element).getAttribute(name);
+    });
+
+    if (changed) scheduleChange();
+  });
 
   observer.observe(content, {
     childList: true,
     subtree: true,
     attributes: true,
+    attributeOldValue: true,
     attributeFilter: MENU_VIEW_LAYOUT_ATTRS,
   });
 

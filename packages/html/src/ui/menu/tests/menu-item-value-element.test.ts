@@ -172,6 +172,26 @@ describe('MenuItemValueElement', () => {
     });
   });
 
+  it('does not rewrite an unchanged label', async () => {
+    const { value } = setup(createPlaybackRateStore({ playbackRate: 1.5 }), 'playback-rate');
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('1.5×');
+    });
+
+    const mutations: MutationRecord[] = [];
+    const observer = new MutationObserver((records) => mutations.push(...records));
+    observer.observe(value, { childList: true, characterData: true, subtree: true });
+
+    value.requestUpdate();
+    await value.updateComplete;
+    await nextFrame();
+    observer.disconnect();
+
+    expect(mutations).toHaveLength(0);
+  });
+
   it('renders Off when captions are disabled', async () => {
     const { value } = setup(
       createTextTrackStore({

@@ -172,11 +172,21 @@ describe('menu-viewport-transition', () => {
 
     expect(onChange).toHaveBeenCalledTimes(2);
 
-    cleanup();
-    item.setAttribute('data-availability', 'unavailable');
+    item.setAttribute('data-availability', 'available');
     await waitForMutationFrame();
 
     expect(onChange).toHaveBeenCalledTimes(2);
+
+    item.setAttribute('data-availability', 'unavailable');
+    await waitForMutationFrame();
+
+    expect(onChange).toHaveBeenCalledTimes(3);
+
+    cleanup();
+    item.setAttribute('data-availability', 'available');
+    await waitForMutationFrame();
+
+    expect(onChange).toHaveBeenCalledTimes(3);
   });
 
   it('toggles menu viewport data attributes for active and exiting phases', () => {
