@@ -45,10 +45,10 @@
       "development": "./dist/dev/i18n.js",
       "default": "./dist/default/i18n.js"
     },
-    "./i18n/base": {
-      "types": "./dist/dev/i18n/base.d.ts",
-      "development": "./dist/dev/i18n/base.js",
-      "default": "./dist/default/i18n/base.js"
+    "./i18n/runtime": {
+      "types": "./dist/dev/i18n/runtime.d.ts",
+      "development": "./dist/dev/i18n/runtime.js",
+      "default": "./dist/default/i18n/runtime.js"
     },
     "./i18n/locales/*": {
       "types": "./dist/dev/i18n/locales/*.d.ts",
