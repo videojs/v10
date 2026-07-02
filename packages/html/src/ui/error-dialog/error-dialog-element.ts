@@ -16,7 +16,7 @@ import {
   createTransition,
   selectError,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
@@ -28,6 +28,10 @@ import { alertDialogContext } from '../alert-dialog/context';
 import { MediaElement } from '../media-element';
 
 let idCounter = 0;
+
+function hasAuthoredContent(host: HTMLElement): boolean {
+  return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
+}
 
 export class ErrorDialogElement extends MediaElement {
   static readonly tagName = 'media-error-dialog';
@@ -43,6 +47,8 @@ export class ErrorDialogElement extends MediaElement {
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
   #lastError: MediaError | null = null;
   #lastDescription: TranslationKeyOrString | null = null;
+  #seenCopyParts = new WeakSet<HTMLElement>();
+  #authoredCopyParts = new WeakSet<HTMLElement>();
 
   constructor() {
     super();
@@ -126,12 +132,12 @@ export class ErrorDialogElement extends MediaElement {
   #syncDialogCopy(error: MediaError | null): void {
     const t = this.#i18n.value;
     const title = this.querySelector('media-alert-dialog-title');
-    if (title) {
+    if (title && !this.#hasAuthoredCopy(title)) {
       title.textContent = resolveTranslationPhrase(t, getErrorDialogTitleLabel());
     }
 
     const desc = this.querySelector('media-alert-dialog-description');
-    if (desc) {
+    if (desc && !this.#hasAuthoredCopy(desc)) {
       const description = error ? resolveErrorDialogDescription(error) : null;
       if (description) {
         this.#lastDescription = description;
@@ -141,8 +147,18 @@ export class ErrorDialogElement extends MediaElement {
     }
 
     const close = this.querySelector('media-alert-dialog-close');
-    if (close) {
+    if (close && !this.#hasAuthoredCopy(close)) {
       close.textContent = resolveTranslationPhrase(t, getErrorDialogDismissLabel());
     }
+  }
+
+  #hasAuthoredCopy(el: HTMLElement): boolean {
+    if (!this.#seenCopyParts.has(el)) {
+      this.#seenCopyParts.add(el);
+      if (hasAuthoredContent(el)) {
+        this.#authoredCopyParts.add(el);
+      }
+    }
+    return this.#authoredCopyParts.has(el);
   }
 }

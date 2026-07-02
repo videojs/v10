@@ -47,7 +47,7 @@ describe('createI18n (HTML)', () => {
     expect(text.textContent).toBe('Fallback label');
   });
 
-  it('media-text restores child text when key is removed', async () => {
+  it('media-text keeps child text with a key', async () => {
     registerI18n('de', { play: 'Los' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
@@ -56,13 +56,29 @@ describe('createI18n (HTML)', () => {
     text.setAttribute('key', 'play');
     provider.appendChild(text);
     document.body.appendChild(provider);
-    await vi.waitFor(() => {
-      expect(text.textContent).toBe('Los');
-    });
-    text.removeAttribute('key');
-    await vi.waitFor(() => {
-      expect(text.textContent).toBe('Fallback label');
-    });
+    await text.updateComplete;
+    expect(text.textContent).toBe('Fallback label');
+  });
+
+  it('media-text falls back to child text when key is missing', async () => {
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'de');
+    const text = new MediaTextElement();
+    text.textContent = 'Fallback label';
+    text.setAttribute('key', 'missingLabel');
+    provider.appendChild(text);
+    document.body.appendChild(provider);
+    await text.updateComplete;
+    expect(text.textContent).toBe('Fallback label');
+  });
+
+  it('media-text falls back to child text without a provider', async () => {
+    const text = new MediaTextElement();
+    text.textContent = 'Fallback label';
+    text.setAttribute('key', 'play');
+    document.body.appendChild(text);
+    await text.updateComplete;
+    expect(text.textContent).toBe('Fallback label');
   });
 
   it('media-text is empty without a key or child text', async () => {

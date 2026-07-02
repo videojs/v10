@@ -13,7 +13,7 @@ import {
   selectQuality,
   selectTextTrack,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { i18nContext } from '../../i18n/context';

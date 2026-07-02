@@ -130,6 +130,19 @@ describe('TooltipElement', () => {
     expect(TooltipShortcutElement.findIn(tooltip)?.textContent).toBe('K');
   });
 
+  it('preserves authored label content', async () => {
+    const { tooltip } = setup();
+    const labelEl = TooltipLabelElement.create();
+    const shortcutEl = TooltipShortcutElement.create();
+    labelEl.textContent = 'Custom label';
+    tooltip.replaceChildren(labelEl, shortcutEl);
+
+    await tooltip.updateComplete;
+
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Custom label');
+    expect(TooltipShortcutElement.findIn(tooltip)?.textContent).toBe('K');
+  });
+
   it('preserves authored content without tooltip parts', async () => {
     const { tooltip } = setup();
     tooltip.textContent = 'Custom tooltip';

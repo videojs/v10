@@ -1,6 +1,6 @@
 import { AudioTrackRadioGroupCore, AudioTrackRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
-import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/runtime';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';

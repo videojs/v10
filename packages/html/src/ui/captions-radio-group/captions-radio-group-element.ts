@@ -1,6 +1,6 @@
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
-import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/runtime';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';

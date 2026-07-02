@@ -24,7 +24,7 @@ import {
   type TooltipChangeDetails,
   type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
@@ -279,7 +279,7 @@ export class TooltipElement extends MediaElement {
   }
 
   #hostHasAuthoredTooltipContent(): boolean {
-    return Array.from(this.childNodes).some((node) => node.nodeType !== Node.TEXT_NODE || !!node.textContent?.trim());
+    return Array.from(this.childNodes).some((node) => !!node.textContent?.trim());
   }
 
   #cleanupTrigger(): void {
