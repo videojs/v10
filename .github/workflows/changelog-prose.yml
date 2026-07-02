@@ -144,7 +144,7 @@ jobs:
 
             5. **Create a PR:**
                - Create branch: `docs/changelog-prose-${{ steps.version.outputs.version }}`
-               - Stage and commit the changed file: `docs(changelog): add prose for ${{ steps.version.outputs.version }}`
+               - Stage and commit the changed file: `docs(site): add changelog prose for ${{ steps.version.outputs.version }}` (commitlint's scope-enum has no `changelog` scope, so use `site`)
                - Push the branch and open a PR targeting `main`.
                - Include a link to the release in the PR body.
                - Keep the PR description concise.
