@@ -1,10 +1,14 @@
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
+import { createTranslator, resolveTranslationPhrase, translations } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { isInteractiveActivation } from '@videojs/utils/dom';
+
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
+
+const translator = createTranslator(translations, 'en');
 
 export class TimeElement extends MediaElement {
   static readonly tagName = 'media-time';
@@ -14,7 +18,7 @@ export class TimeElement extends MediaElement {
     negativeSign: { type: String, attribute: 'negative-sign' },
     label: { type: String },
     toggle: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
+  } satisfies PropertyDeclarationMap<keyof Omit<TimeCore.Props, 'formatOptions'>>;
 
   type: TimeType = TimeCore.defaultProps.type;
   negativeSign = TimeCore.defaultProps.negativeSign;
@@ -81,6 +85,9 @@ export class TimeElement extends MediaElement {
       negativeSign: this.negativeSign,
       label: this.label,
       toggle: this.toggle,
+      formatOptions: {
+        formatRemaining: (duration) => resolveTranslationPhrase(translator, 'timeRemainingPhrase', { duration }),
+      },
     });
     this.#core.setMedia(media);
     const state = this.#core.getState();
@@ -89,7 +96,11 @@ export class TimeElement extends MediaElement {
     this.#signSpan.textContent = state.negative ? this.negativeSign : '';
     this.#textNode.textContent = state.text;
 
-    applyElementProps(this, this.#core.getAttrs(state, this.type));
+    const attrs = this.#core.getAttrs(state, this.type);
+    applyElementProps(this, {
+      ...attrs,
+      'aria-label': resolveTranslationPhrase(translator, attrs['aria-label'], this.#core.getLabelParams(state)),
+    });
     applyStateDataAttrs(this, state, TimeDataAttrs);
   }
 
@@ -134,7 +145,6 @@ export class TimeElement extends MediaElement {
   #clearAttrs(): void {
     applyElementProps(this, {
       'aria-label': undefined,
-      'aria-valuetext': undefined,
       role: undefined,
       tabIndex: undefined,
       'data-type': undefined,

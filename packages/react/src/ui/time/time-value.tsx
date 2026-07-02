@@ -2,12 +2,16 @@
 
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
+import { createTranslator, resolveTranslationPhrase, translations } from '@videojs/core/i18n';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import type { ForwardedRef, KeyboardEvent, MouseEvent } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
+
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+
+const translator = createTranslator(translations, 'en');
 
 export interface ValueProps extends Omit<UIComponentProps<'time', TimeCore.State>, 'children'>, TimeCore.Props {}
 
@@ -25,7 +29,17 @@ export const Value = forwardRef(function Value(
   componentProps: ValueProps,
   forwardedRef: ForwardedRef<HTMLTimeElement>
 ) {
-  const { render, className, style, type, negativeSign, label, toggle = false, ...elementProps } = componentProps;
+  const {
+    render,
+    className,
+    style,
+    type,
+    negativeSign,
+    label,
+    toggle = false,
+    formatOptions,
+    ...elementProps
+  } = componentProps;
 
   const time = usePlayer(selectTime);
   const [core] = useState(() => new TimeCore());
@@ -37,7 +51,18 @@ export const Value = forwardRef(function Value(
     setActiveType(defaultType);
   }, [defaultType, toggle]);
 
-  core.setProps({ type: activeType, negativeSign, label, toggle });
+  core.setProps({
+    type: activeType,
+    negativeSign,
+    label,
+    toggle,
+    formatOptions: {
+      ...formatOptions,
+      formatRemaining:
+        formatOptions?.formatRemaining ??
+        ((duration) => resolveTranslationPhrase(translator, 'timeRemainingPhrase', { duration })),
+    },
+  });
 
   if (!time) {
     if (__DEV__) logMissingFeature('Time.Value', 'time');
@@ -46,6 +71,7 @@ export const Value = forwardRef(function Value(
 
   core.setMedia(time);
   const state = core.getState();
+  const attrs = core.getAttrs(state, defaultType);
 
   const content = state.negative ? (
     <>
@@ -89,7 +115,8 @@ export const Value = forwardRef(function Value(
         {
           dateTime: state.datetime,
           children: content,
-          ...core.getAttrs(state, defaultType),
+          ...attrs,
+          'aria-label': resolveTranslationPhrase(translator, attrs['aria-label'], core.getLabelParams(state)),
           ...(toggle ? { onClick: handleClick, onKeyDown: handleKeyDown } : undefined),
         },
         elementProps,

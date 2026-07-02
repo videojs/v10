@@ -155,7 +155,7 @@ afterEach(() => {
 
 describe('PlaybackRateRadioGroupElement', () => {
   it('renders radio items from the available playback rates', async () => {
-    const { menu, trigger } = setup({ playbackRates: [1, 1.25, 1.5], playbackRate: 1.25 });
+    const { menu, options, trigger } = setup({ playbackRates: [1, 1.25, 1.5], playbackRate: 1.25 });
 
     await waitForMenu(menu, trigger);
 
@@ -165,6 +165,8 @@ describe('PlaybackRateRadioGroupElement', () => {
     await waitForAssertion(() => {
       expect(items.map((item) => item.getAttribute('aria-checked'))).toEqual(['false', 'true', 'false']);
     });
+    expect(options.getAttribute('aria-label')).toBe('playbackRateAria');
+    expect(options.getAttribute('data-rate')).toBe('1.25');
   });
 
   it('renders radio items from a template', async () => {
@@ -206,7 +208,7 @@ describe('PlaybackRateButtonElement', () => {
     await trigger.updateComplete;
 
     expect(trigger.getAttribute('role')).toBe('button');
-    expect(trigger.getAttribute('aria-label')).toBe('Playback rate 2');
+    expect(trigger.getAttribute('aria-label')).toBe('playbackRateAria');
     expect(trigger.getAttribute('data-rate')).toBe('2');
   });
 

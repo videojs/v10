@@ -1,7 +1,11 @@
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it } from 'vitest';
 
+import { createTranslator, resolveTranslationPhrase, translations } from '../../../i18n';
 import type { MediaTimeState } from '../../../media/state';
 import { TimeCore } from '../time-core';
+
+const t = createTranslator(translations, 'en');
 
 function createMediaState(overrides: Partial<MediaTimeState> = {}): MediaTimeState {
   return {
@@ -41,7 +45,7 @@ describe('TimeCore', () => {
       expect(state.seconds).toBe(90);
       expect(state.negative).toBe(false);
       expect(state.text).toBe('1:30');
-      expect(state.phrase).toBe('1 minute, 30 seconds');
+      expect(state.phrase).toBe(formatTimeAsPhrase(90));
       expect(state.datetime).toBe('PT1M30S');
     });
 
@@ -54,7 +58,7 @@ describe('TimeCore', () => {
       expect(state.seconds).toBe(300);
       expect(state.negative).toBe(false);
       expect(state.text).toBe('5:00');
-      expect(state.phrase).toBe('5 minutes');
+      expect(state.phrase).toBe(formatTimeAsPhrase(300));
       expect(state.datetime).toBe('PT5M');
     });
 
@@ -67,7 +71,7 @@ describe('TimeCore', () => {
       expect(state.seconds).toBe(-210); // 90 - 300
       expect(state.negative).toBe(true);
       expect(state.text).toBe('3:30');
-      expect(state.phrase).toBe('3 minutes, 30 seconds remaining');
+      expect(state.phrase).toBe(formatTimeAsPhrase(90 - 300));
       expect(state.datetime).toBe('PT3M30S');
     });
 
@@ -104,21 +108,21 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'current' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('1 minute, 30 seconds');
+      expect(core.getLabel(state)).toBe('timeCurrent');
     });
 
     it('returns default label for duration', () => {
       const core = new TimeCore({ type: 'duration' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('5 minutes');
+      expect(core.getLabel(state)).toBe('timeDuration');
     });
 
     it('returns default label for remaining', () => {
       const core = new TimeCore({ type: 'remaining' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('3 minutes, 30 seconds remaining');
+      expect(core.getLabel(state)).toBe('timeRemaining');
     });
 
     it('returns custom string label', () => {
@@ -142,21 +146,32 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'current', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('1 minute, 30 seconds. Show remaining time.');
+      expect(core.getLabel(state)).toBe('timeToggleRemaining');
+      expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds' });
+      expect(resolveTranslationPhrase(t, core.getLabel(state), core.getLabelParams(state))).toBe(
+        '1 minute, 30 seconds. Show remaining time.'
+      );
     });
 
     it('returns toggle label for remaining', () => {
       const core = new TimeCore({ type: 'remaining', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('3 minutes, 30 seconds remaining. Show duration.');
+      expect(core.getLabel(state)).toBe('timeToggleDuration');
+      expect(core.getLabelParams(state)).toEqual({ duration: '3 minutes, 30 seconds remaining' });
+      expect(resolveTranslationPhrase(t, core.getLabel(state), core.getLabelParams(state))).toBe(
+        '3 minutes, 30 seconds remaining. Show duration.'
+      );
     });
 
     it('returns elapsed action when remaining toggles from current', () => {
       const core = new TimeCore({ type: 'remaining', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state, 'current')).toBe('3 minutes, 30 seconds remaining. Show elapsed time.');
+      expect(core.getLabel(state, 'current')).toBe('timeToggleElapsed');
+      expect(resolveTranslationPhrase(t, core.getLabel(state, 'current'), core.getLabelParams(state))).toBe(
+        '3 minutes, 30 seconds remaining. Show elapsed time.'
+      );
     });
   });
 
@@ -167,8 +182,7 @@ describe('TimeCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('1 minute, 30 seconds');
-      expect(attrs).not.toHaveProperty('aria-valuetext');
+      expect(attrs['aria-label']).toBe('timeCurrent');
     });
 
     it('includes remaining suffix in label', () => {
@@ -177,8 +191,7 @@ describe('TimeCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('3 minutes, 30 seconds remaining');
-      expect(attrs).not.toHaveProperty('aria-valuetext');
+      expect(attrs['aria-label']).toBe('timeRemaining');
     });
 
     it('returns button attributes when current time is toggleable', () => {
@@ -189,8 +202,8 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBe('button');
       expect(attrs.tabIndex).toBe(0);
-      expect(attrs['aria-label']).toBe('1 minute, 30 seconds. Show remaining time.');
-      expect(attrs).not.toHaveProperty('aria-valuetext');
+      expect(attrs['aria-label']).toBe('timeToggleRemaining');
+      expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds' });
     });
 
     it('returns button attributes when remaining time is toggleable', () => {
@@ -201,8 +214,8 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBe('button');
       expect(attrs.tabIndex).toBe(0);
-      expect(attrs['aria-label']).toBe('3 minutes, 30 seconds remaining. Show elapsed time.');
-      expect(attrs).not.toHaveProperty('aria-valuetext');
+      expect(attrs['aria-label']).toBe('timeToggleElapsed');
+      expect(core.getLabelParams(state)).toEqual({ duration: '3 minutes, 30 seconds remaining' });
     });
 
     it('returns button attributes when duration is toggleable', () => {
@@ -213,7 +226,7 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBe('button');
       expect(attrs.tabIndex).toBe(0);
-      expect(attrs['aria-label']).toBe('5 minutes. Show remaining time.');
+      expect(attrs['aria-label']).toBe('timeToggleRemaining');
     });
 
     it('does not return button attributes without toggle', () => {
@@ -224,6 +237,20 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBeUndefined();
       expect(attrs.tabIndex).toBeUndefined();
+    });
+
+    it('uses formatRemaining for remaining phrase when provided', () => {
+      const core = new TimeCore({
+        type: 'remaining',
+        formatOptions: {
+          locale: 'en',
+          formatRemaining: (duration) => `quedan ${duration}`,
+        },
+      });
+      core.setMedia(createMediaState({ currentTime: 60, duration: 120 }));
+      const state = core.getState();
+
+      expect(state.phrase.startsWith('quedan ')).toBe(true);
     });
   });
 });

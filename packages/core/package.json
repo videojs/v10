@@ -15,7 +15,10 @@
     "player",
     "videojs"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/*/i18n.js",
+    "**/i18n/registry.js"
+  ],
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
@@ -36,6 +39,21 @@
       "types": "./dist/dev/media/predicate.d.ts",
       "development": "./dist/dev/media/predicate.js",
       "default": "./dist/default/media/predicate.js"
+    },
+    "./i18n": {
+      "types": "./dist/dev/i18n.d.ts",
+      "development": "./dist/dev/i18n.js",
+      "default": "./dist/default/i18n.js"
+    },
+    "./i18n/base": {
+      "types": "./dist/dev/i18n/base.d.ts",
+      "development": "./dist/dev/i18n/base.js",
+      "default": "./dist/default/i18n/base.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     }
   },
   "main": "dist/default/index.js",
@@ -45,6 +63,8 @@
     "dist"
   ],
   "scripts": {
+    "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
+    "prebuild": "pnpm run generate:locales",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",

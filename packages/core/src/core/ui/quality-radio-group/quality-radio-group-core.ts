@@ -3,6 +3,7 @@ import { defaults } from '@videojs/utils/object';
 import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
+import type { TranslationKeyOrString } from '../../i18n/types';
 import type { MediaQualityState, MediaVideoRendition } from '../../media/state';
 import type { ButtonState } from '../types';
 
@@ -18,6 +19,7 @@ export interface QualityRadioGroupProps {
 export interface QualityRadioGroupRendition {
   value: string;
   label: string;
+  labelKey?: TranslationKeyOrString | undefined;
   tier?: string | undefined;
   badge?: string | undefined;
 }
@@ -25,6 +27,8 @@ export interface QualityRadioGroupRendition {
 export interface QualityRadioGroupState extends ButtonState {
   renditions: readonly QualityRadioGroupRendition[];
   autoLabel: string;
+  autoLabelKey?: TranslationKeyOrString | undefined;
+  autoLabelParams?: { label: string } | undefined;
   value: string;
   disabled: boolean;
   availability: 'available' | 'unavailable';
@@ -116,6 +120,7 @@ export class QualityRadioGroupCore {
   readonly state = createState<QualityRadioGroupState>({
     renditions: [],
     autoLabel: 'Auto',
+    autoLabelKey: 'menuAuto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'unavailable',
@@ -143,7 +148,7 @@ export class QualityRadioGroupCore {
       return label;
     }
 
-    return 'Quality';
+    return 'menuQuality';
   }
 
   getRenditionLabel(rendition: MediaVideoRendition): string {
@@ -196,6 +201,9 @@ export class QualityRadioGroupCore {
       return {
         value: this.getRenditionValue(rendition, index),
         label: this.getRenditionLabel(rendition),
+        ...(this.#props.formatRendition === QualityRadioGroupCore.defaultProps.formatRendition &&
+          !getRenditionSize(rendition) &&
+          !rendition.bitrate && { labelKey: 'menuQuality' }),
         ...(tier && { tier }),
         ...(badge && { badge }),
       };
@@ -212,6 +220,8 @@ export class QualityRadioGroupCore {
     this.state.patch({
       renditions: media.videoRenditionList.map(toRendition),
       autoLabel: selectedIndex === -1 && active ? `Auto (${active.label})` : 'Auto',
+      autoLabelKey: selectedIndex === -1 && active ? 'menuAutoWithLabel' : 'menuAuto',
+      autoLabelParams: selectedIndex === -1 && active ? { label: active.label } : undefined,
       value:
         selectedIndex === -1
           ? QUALITY_AUTO_VALUE

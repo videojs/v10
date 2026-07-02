@@ -1,14 +1,14 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaLiveState, MediaTimeState } from '../../media/state';
-import type { ButtonState } from '../types';
+import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
+import type { ButtonState, TranslationKeyOrString } from '../types';
 
 export interface LiveButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: LiveButtonState) => string) | undefined;
+  label?: TranslationKeyOrString | ((state: LiveButtonState) => TranslationKeyOrString) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -82,18 +82,12 @@ export class LiveButtonCore {
     this.#props = defaults(props, LiveButtonCore.defaultProps);
   }
 
-  getLabel(state: LiveButtonState): string {
-    const { label } = this.#props;
+  getLabel(state: LiveButtonState): TranslationKeyOrString {
+    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    if (custom !== undefined) return custom;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
-
-    if (state.liveEdge) return 'Playing live';
-    return 'Seek to live edge';
+    if (state.liveEdge) return 'playingLive';
+    return 'seekToLiveEdge';
   }
 
   getAttrs(state: LiveButtonState) {

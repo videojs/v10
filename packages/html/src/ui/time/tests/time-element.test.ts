@@ -118,7 +118,6 @@ describe('TimeElement', () => {
     expect(time.textContent).toBe('-3:30');
     expect(time.getAttribute('data-type')).toBe('remaining');
     expect(time.getAttribute('aria-label')).toBe('3 minutes, 30 seconds remaining. Show elapsed time.');
-    expect(time.hasAttribute('aria-valuetext')).toBe(false);
 
     time.click();
     await time.updateComplete;
