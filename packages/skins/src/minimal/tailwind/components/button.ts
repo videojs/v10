@@ -7,9 +7,8 @@ export const button = {
     'outline-2 outline-transparent -outline-offset-2',
     'transition-[background-color,outline-offset,scale] will-change-[scale] duration-150 ease-out',
     'focus-visible:outline-current focus-visible:outline-offset-2',
-    'not-disabled:not-data-disabled:active:scale-[0.98]',
-    'disabled:cursor-not-allowed disabled:opacity-50 disabled:grayscale',
-    'data-[disabled]:cursor-not-allowed data-[disabled]:opacity-50 data-[disabled]:grayscale',
+    'not-aria-disabled:active:scale-[0.98]',
+    'aria-disabled:cursor-not-allowed aria-disabled:opacity-50 aria-disabled:grayscale',
     'supports-[corner-shape:squircle]:rounded-[1rem]',
     'supports-[corner-shape:squircle]:[corner-shape:squircle]'
   ),
@@ -20,7 +19,7 @@ export const button = {
     'focus-visible:bg-current/10',
     'aria-expanded:bg-current/10'
   ),
-  icon: cn('grid w-[2.375rem] aspect-square p-0', 'not-disabled:not-data-disabled:active:scale-90'),
+  icon: cn('grid w-[2.375rem] aspect-square p-0', 'not-aria-disabled:active:scale-90'),
   /**
    * Live variant: wide pill button with a status dot rendered via `::before`
    * (gray → red at the live edge) and "LIVE" as the button's own text.
