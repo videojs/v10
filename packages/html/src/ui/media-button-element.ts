@@ -18,7 +18,8 @@ import {
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
-import { I18nController } from '../i18n/instance';
+import { i18nContext } from '../i18n/context';
+import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/player-controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
@@ -62,7 +63,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   #disconnect: AbortController | null = null;
   #hotkeyRegistry: AriaKeyShortcutsController | null = null;
   #lastHotkeyShortcut: string | undefined;
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   override connectedCallback(): void {
     super.connectedCallback();

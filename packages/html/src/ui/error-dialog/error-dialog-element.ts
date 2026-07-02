@@ -20,7 +20,8 @@ import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { alertDialogContext } from '../alert-dialog/context';
@@ -36,7 +37,7 @@ export class ErrorDialogElement extends MediaElement {
   readonly #titleId = `vjs-error-dialog-title-${idCounter++}`;
   readonly #descriptionId = `vjs-error-dialog-desc-${idCounter++}`;
   readonly #errorState = new PlayerController(this, playerContext, selectError);
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;

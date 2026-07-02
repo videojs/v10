@@ -20,15 +20,12 @@ export type {
   CreateI18nOptions,
   CreateI18nResult,
   I18nContextValue,
-  I18nLitContext,
   Locale,
   TranslationParams,
   Translations,
   Translator,
 } from './i18n';
-// i18n — `@videojs/html/i18n` registers `<media-i18n-provider>` / `<media-text>`.
 export {
-  context as i18nContext,
   createI18n,
   createTranslator,
   getI18nTranslations,
@@ -45,6 +42,9 @@ export {
   resolvePlayerLocale,
   resolveProviderLocale,
 } from './i18n';
+export type { I18nContext as I18nLitContext } from './i18n/context';
+// i18n — `@videojs/html/i18n` registers `<media-i18n-provider>` / `<media-text>`.
+export { i18nContext } from './i18n/context';
 // Media
 export { MediaContainerElement } from './media/container-element';
 // Player

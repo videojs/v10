@@ -4,7 +4,8 @@ import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -26,7 +27,7 @@ export class TimeElement extends MediaElement {
 
   readonly #core = new TimeCore();
   readonly #state = new PlayerController(this, playerContext, selectTime);
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   readonly #signSpan = document.createElement('span');
   readonly #textNode = document.createTextNode('');

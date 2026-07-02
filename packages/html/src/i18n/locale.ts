@@ -3,8 +3,7 @@ import { localeFromDomLang as domLangFromString, effectiveLocale, nearestLang } 
 
 /** DOM `lang` values are untyped strings; align with core {@link Locale} at the boundary. */
 export function localeFromDomLang(raw: string | undefined): Locale | undefined {
-  const tag = domLangFromString(raw);
-  return tag === undefined ? undefined : (tag as Locale);
+  return (domLangFromString(raw) as Locale) ?? undefined;
 }
 
 /** Delegates to {@link effectiveLocale}; result is typed as {@link Locale} for player UI. */

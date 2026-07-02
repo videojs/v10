@@ -1,0 +1,148 @@
+import {
+  createTranslator,
+  loadLocale as defaultLoadLocale,
+  getBrowserTranslations,
+  getI18nTranslations,
+  type Locale,
+  localeLookupChain,
+  onI18nRegistryChange,
+  registerI18n,
+  shouldAttemptBrowserTranslation,
+  type Translations,
+} from '@videojs/core/i18n';
+import type { PropertyValues, ReactiveElement } from '@videojs/element';
+import { ContextProvider } from '@videojs/element/context';
+import { mergeLocaleOverlays, subscribeAmbientLang } from '@videojs/utils/dom';
+import type { Constructor } from '@videojs/utils/types';
+
+import type { I18nContext, I18nContextValue } from './context';
+import { fallbackTranslator } from './controller';
+import { resolveProviderLocale } from './locale';
+import type { LocaleLoader, ReactiveElementMixinBase } from './types';
+
+export interface I18nProviderConfig {
+  i18nContext: I18nContext;
+  /** Override lazy loading of shipped locale packs (tests or custom loaders). */
+  loadLocale?: LocaleLoader | undefined;
+}
+
+export type I18nProviderMixin = <Base extends ReactiveElementMixinBase>(
+  Base: Base
+) => Constructor<ReactiveElement> & Base;
+
+export function createI18nProviderMixin({
+  i18nContext,
+  loadLocale = defaultLoadLocale,
+}: I18nProviderConfig): I18nProviderMixin {
+  return <Base extends ReactiveElementMixinBase>(Base: Base) => {
+    class I18nProviderElement extends Base {
+      static properties = {
+        ...Base.properties,
+        lang: { type: String, reflect: true },
+      };
+
+      lang = '';
+
+      readonly #i18nProvider = new ContextProvider(this, {
+        context: i18nContext,
+        initialValue: {
+          translator: fallbackTranslator,
+          locale: 'en',
+        },
+      });
+
+      #registryUnsubscribe: (() => void) | undefined;
+      #ambientUnsubscribe: (() => void) | undefined;
+      #lazyLayer: Partial<Translations> = {};
+      #lazySeq = 0;
+      /** Tracks locale used for `#lazyLayer`; ambient `lang` can change without the `lang` property. */
+      #resolvedLocaleForLazy: Locale | undefined;
+      /** Locale snapshot when the current `#lazySeq` async load was started (see `willUpdate` drift guard). */
+      #lazyResetStartedForLocale: Locale | undefined;
+      #i18nValue: I18nContextValue = {
+        translator: fallbackTranslator,
+        locale: 'en',
+      };
+
+      protected get i18nValue(): I18nContextValue {
+        return this.#i18nValue;
+      }
+
+      override connectedCallback(): void {
+        super.connectedCallback();
+        this.#registryUnsubscribe = onI18nRegistryChange(() => this.requestUpdate());
+        this.#ambientUnsubscribe = subscribeAmbientLang(() => this.requestUpdate());
+        this.#resetLazyAndLoad();
+        this.requestUpdate();
+      }
+
+      override disconnectedCallback(): void {
+        super.disconnectedCallback();
+        this.#registryUnsubscribe?.();
+        this.#registryUnsubscribe = undefined;
+        this.#ambientUnsubscribe?.();
+        this.#ambientUnsubscribe = undefined;
+        this.#lazySeq += 1;
+        this.#lazyLayer = {};
+        this.#resolvedLocaleForLazy = undefined;
+        this.#lazyResetStartedForLocale = undefined;
+      }
+
+      protected override willUpdate(changed: PropertyValues): void {
+        super.willUpdate(changed);
+        const locale = resolveProviderLocale(this);
+        if (this.#resolvedLocaleForLazy !== locale) {
+          const hadLocale = this.#resolvedLocaleForLazy !== undefined;
+          this.#resolvedLocaleForLazy = locale;
+          const localeDriftedBeforeFirstPaint =
+            !hadLocale && this.#lazyResetStartedForLocale !== undefined && locale !== this.#lazyResetStartedForLocale;
+          if (hadLocale || localeDriftedBeforeFirstPaint) {
+            this.#resetLazyAndLoad();
+          }
+        }
+      }
+
+      protected override updated(changed: PropertyValues): void {
+        super.updated(changed);
+        this.#publish();
+      }
+
+      #resetLazyAndLoad(): void {
+        const localeSnapshot = resolveProviderLocale(this);
+        this.#lazyResetStartedForLocale = localeSnapshot;
+        this.#lazySeq += 1;
+        const seq = this.#lazySeq;
+        this.#lazyLayer = {};
+        void (async () => {
+          const { merged, loadedTags } = await mergeLocaleOverlays(localeSnapshot, loadLocale, localeLookupChain);
+          if (seq !== this.#lazySeq) return;
+          if (shouldAttemptBrowserTranslation(localeSnapshot, loadedTags, merged)) {
+            const browser = await getBrowserTranslations(localeSnapshot);
+            if (seq !== this.#lazySeq) return;
+            if (Object.keys(browser).length) registerI18n(localeSnapshot, browser);
+          }
+          if (seq !== this.#lazySeq) return;
+          this.#lazyLayer = merged;
+          this.requestUpdate();
+        })();
+      }
+
+      #resolvedLocale(): Locale {
+        return resolveProviderLocale(this);
+      }
+
+      #publish(): void {
+        const locale = this.#resolvedLocale();
+        const registryLayer = getI18nTranslations(locale);
+        const translations: Translations = {
+          ...registryLayer,
+          ...this.#lazyLayer,
+        };
+        const translator = createTranslator(translations, locale);
+        this.#i18nValue = { translator, locale };
+        this.#i18nProvider.setValue(this.#i18nValue);
+      }
+    }
+    return I18nProviderElement;
+  };
+}

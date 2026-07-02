@@ -13,7 +13,8 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -43,7 +44,7 @@ export class VolumeSliderElement extends MediaElement {
   readonly #core = new VolumeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;

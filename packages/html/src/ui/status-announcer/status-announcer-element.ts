@@ -3,7 +3,8 @@ import { getMediaSnapshot, subscribeToInputActions } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -17,7 +18,7 @@ export class StatusAnnouncerElement extends MediaElement {
 
   closeDelay: number | undefined;
 
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #core = new StatusAnnouncerCore();
   readonly #player = new PlayerController(this, playerContext);
   readonly #container = new ContextConsumer(this, {

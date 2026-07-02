@@ -7,7 +7,7 @@ import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
-import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/built-in-locales.ts';
+import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
 

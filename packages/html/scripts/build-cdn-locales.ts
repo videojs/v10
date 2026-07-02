@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-import { SHIPPED_LOCALE_TAGS } from '../../core/src/core/i18n/built-in-locales.ts';
+import { SHIPPED_LOCALE_TAGS } from '../../core/src/core/i18n/locales.ts';
 
 const REGISTRY = '@videojs/html/cdn/i18n-registry';
 const outDir = resolve(dirname(fileURLToPath(import.meta.url)), '../src/cdn/locales');
