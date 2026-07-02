@@ -19,7 +19,8 @@ import type { FC, ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
-import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
+import { Container } from './container';
+import { PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   features: Features;

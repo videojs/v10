@@ -1,12 +1,14 @@
 'use client';
 
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
+import { resolveControlAttrs, resolveControlLabel } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import type { Selector } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
+import { useTranslator } from '../i18n/instance';
 import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
@@ -66,6 +68,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     const setTooltipContent = tooltipCtx?.setContent;
     const feature = usePlayer(selector);
     const shortcut = useHotkeyShortcut(hotkeyAction, hotkeyValue?.(coreProps));
+    const translator = useTranslator();
 
     const [core] = useState(() => new CoreClass());
 
@@ -86,7 +89,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
-    const label = state ? core.getLabel(state) : undefined;
+    const label = state ? resolveControlLabel(translator, core, state) : undefined;
     const tooltipText = state ? (tooltipLabel?.(core, state) ?? label) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
@@ -101,7 +104,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return null;
     }
 
-    const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcut.aria };
+    const attrs = { ...resolveControlAttrs(translator, core, state), 'aria-keyshortcuts': shortcut.aria };
 
     return renderElement(
       'button',

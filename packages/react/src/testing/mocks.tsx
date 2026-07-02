@@ -11,6 +11,7 @@ import type { ReactNode } from 'react';
 import type { Mock } from 'vitest';
 import { vi } from 'vitest';
 
+import { I18nProvider } from '../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../player/context';
 
 interface MockStore {
@@ -58,7 +59,11 @@ export function createPlayerWrapper(storeState: Record<string, unknown> = {}): {
     store,
     value,
     Wrapper({ children }: { children: ReactNode }) {
-      return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
+      return (
+        <PlayerContextProvider value={value}>
+          <I18nProvider>{children}</I18nProvider>
+        </PlayerContextProvider>
+      );
     },
   };
 }

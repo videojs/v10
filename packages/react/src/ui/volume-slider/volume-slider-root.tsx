@@ -1,10 +1,11 @@
 'use client';
 
-import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
+import { resolveControlAttrs, VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
+import { useLocale, useTranslator } from '../../i18n/instance';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -44,9 +45,12 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     } = componentProps;
 
     const volume = usePlayer(selectVolume);
+    const translator = useTranslator();
+    const locale = useLocale();
 
     const [core] = useState(() => new VolumeSliderCore());
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
+    core.setFormatLocale(locale);
 
     // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
@@ -112,7 +116,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           thumbRef,
           thumbProps,
           stateAttrMap: VolumeSliderDataAttrs,
-          getAttrs: (sliderState) => core.getAttrs(sliderState as VolumeSliderCore.State),
+          getAttrs: (sliderState) => resolveControlAttrs(translator, core, sliderState as VolumeSliderCore.State),
           formatValue: (value) => `${Math.round(value)}%`,
         }}
       >
