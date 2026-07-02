@@ -1,12 +1,15 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
+import type { TaskLike } from '../../../core/tasks/task';
+import { positionAllTracksToAnchor } from '../../../media/presentation-anchor';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   Presentation,
+  ResolvedTrack,
 } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
 import { type ResolveTrackState, resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../resolve-track';
@@ -406,6 +409,198 @@ http://example.com/a-seg1.m4s
     });
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+});
+
+describe('resolveVideoTrack — live reload', () => {
+  const LIVE_PLAYLIST = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:4
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXTINF:4.0,
+http://example.com/seg0.m4s`;
+
+  function liveVideoPresentation(): Presentation {
+    const unresolved: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-1',
+      url: 'http://example.com/variant1.m3u8',
+      bandwidth: 1_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+    return {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        { id: 'video-set', type: 'video', switchingSets: [{ id: 'sw-1', type: 'video', tracks: [unresolved] }] },
+      ],
+      startTime: 0,
+    };
+  }
+
+  // Flush pending macrotasks so "did NOT happen" assertions are meaningful.
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('re-resolves while the window is incomplete (reschedule resolves)', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
+
+    // Re-run twice, then stop — bounds the loop without timers.
+    let cycles = 0;
+    const reschedule = async () => cycles++ < 2;
+    const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
+
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(3)); // initial + 2 reloads
+    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true);
+
+    await flush();
+    expect(fetchSpy).toHaveBeenCalledTimes(3);
+
+    reactor.destroy();
+  });
+
+  it('resolves once and never reloads when no reschedule is configured (VoD/non-live)', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    await flush();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+
+  it('stops reloading once the playlist completes (reschedule returns null)', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    // Complete (ENDLIST) → finite duration → reschedule stops after the first resolve.
+    const fetchSpy = vi
+      .spyOn(globalThis, 'fetch')
+      .mockImplementation(async () => new Response(`${LIVE_PLAYLIST}\n#EXT-X-ENDLIST`));
+
+    // Observe the resolved track; stop (false) once it's complete.
+    const reschedule = async (task: TaskLike<ResolvedTrack>) => {
+      const current = await task.run().catch(() => undefined);
+      return !(current && Number.isFinite(current.duration));
+    };
+    const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
+
+    await vi.waitFor(() => expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true));
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    await flush();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+
+  it('stops resolving on a fetch failure (an errored run is terminal — no retry)', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    let calls = 0;
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      calls += 1;
+      throw new TypeError('Failed to fetch');
+    });
+
+    // Even a reschedule that would keep going can't revive an errored run — the
+    // rejected run ends the recurrence (retry, if wanted, belongs in the fetch layer).
+    const reschedule = async () => true;
+    const reactor = resolveVideoTrack.setup({ state, config: { reschedule } });
+
+    await vi.waitFor(() => expect(calls).toBe(1));
+    await flush();
+    expect(calls).toBe(1); // no retry
+    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('sets presentation.streamType from the parsed playlist', async () => {
+    const state = makeState({ presentation: liveVideoPresentation(), selectedVideoTrackId: 'track-1' });
+    // No EXT-X-PLAYLIST-TYPE:VOD → live.
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(LIVE_PLAYLIST));
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await vi.waitFor(() => expect(state.presentation.get()?.streamType).toBe('live'));
+
+    reactor.destroy();
+  });
+});
+
+describe('resolveVideoTrack — concurrent anchor stamp during fetch', () => {
+  // Regression: anchor-presentation-timeline establishes the shared presentation anchor and stamps
+  // every track's timeline while a track resolution's playlist fetch is in
+  // flight. The resolution must parse against the track as stamped — not the
+  // pre-fetch snapshot — or it clobbers the stamp and strands the track off the
+  // anchor permanently (anchoring is pin-once). Observed live as video never
+  // buffering: its model timeline sat ~hundreds of seconds off currentTime.
+  it('honors a startDate stamped onto the shell mid-fetch (parses against the live snapshot)', async () => {
+    const unresolved: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'track-1',
+      url: 'http://example.com/variant1.m3u8',
+      bandwidth: 1_000_000,
+      mimeType: 'video/mp4',
+      codecs: [],
+    };
+    const presentation: Presentation = {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        { id: 'video-set', type: 'video', switchingSets: [{ id: 'sw-1', type: 'video', tracks: [unresolved] }] },
+      ],
+      startTime: 0,
+    };
+    const state = makeState({ presentation, selectedVideoTrackId: 'track-1' });
+
+    // Wall clock at media-time 0, 20s before the first segment's PDT — so an
+    // anchored first segment lands at startTime 20 and the track's startDate
+    // reads back as the anchor. Without the stamp, the track would resolve at
+    // local base 0 with startDate = the raw first-segment PDT instead.
+    const ANCHOR = 1_672_531_200;
+    const PLAYLIST = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:4
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="http://example.com/init.mp4"
+#EXT-X-PROGRAM-DATE-TIME:2023-01-01T00:00:20.000Z
+#EXTINF:4.0,
+http://example.com/seg0.m4s`;
+
+    // Gate the fetch so the stamp lands while the request is in flight.
+    let releaseFetch!: () => void;
+    const inFlight = new Promise<void>((resolve) => {
+      releaseFetch = resolve;
+    });
+    let markStarted!: () => void;
+    const started = new Promise<void>((resolve) => {
+      markStarted = resolve;
+    });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => {
+      markStarted();
+      await inFlight;
+      return new Response(PLAYLIST);
+    });
+
+    const reactor = resolveVideoTrack.setup({ state });
+
+    await started;
+    // Establish + stamp the anchor mid-fetch, exactly as anchor-presentation-timeline does.
+    state.presentation.set(positionAllTracksToAnchor(state.presentation.get() as Presentation, ANCHOR));
+    releaseFetch();
+
+    await vi.waitFor(() => {
+      expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'track-1')!)).toBe(true);
+    });
+
+    const resolved = findTrackById(state.presentation.get()!, 'track-1');
+    expect(resolved.startDate).toBe(ANCHOR);
 
     reactor.destroy();
   });

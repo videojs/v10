@@ -10,7 +10,7 @@ import '@app/styles.css';
 
 import { effect, snapshot } from '@videojs/spf';
 import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
-import { createSimpleHlsEngine } from '@videojs/spf/hls';
+import { createSimpleHlsEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
@@ -28,6 +28,12 @@ const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
 const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
 const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
 const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
+const liveInfoDiv = document.getElementById('live-info') as HTMLDivElement;
+const seekLiveBtn = document.getElementById('seek-live') as HTMLButtonElement;
+const seekBack10Btn = document.getElementById('seek-back-10') as HTMLButtonElement;
+const seekBack30Btn = document.getElementById('seek-back-30') as HTMLButtonElement;
+const seekWindowStartBtn = document.getElementById('seek-window-start') as HTMLButtonElement;
+const liveSeekButtons = [seekLiveBtn, seekBack10Btn, seekBack30Btn, seekWindowStartBtn];
 
 // ── Query params ──────────────────────────────────────────────────────────────
 const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMObjwuUOBn4JrQ.m3u8';
@@ -140,6 +146,116 @@ function updateThroughputDisplay() {
   const est = Math.min(fast, slow);
   throughputDiv.textContent = `📶 Est: ${formatBandwidth(est)}  (fast: ${formatBandwidth(fast)}, slow: ${formatBandwidth(slow)})`;
   throughputDiv.className = 'has-data';
+}
+
+// ── Live / DVR panel ────────────────────────────────────────────────────────
+// All values are derived sandbox-side from the resolved presentation's
+// streamType plus the native <video> (seekable / currentTime / buffered). The
+// engine mirrors the live window onto video.seekable via setLiveSeekableRange,
+// so the seekable range IS the DVR window — no SPF-specific surface needed.
+const AT_EDGE_THRESHOLD = 3; // seconds behind live edge still counts as "at edge"
+const BEHIND_START_THRESHOLD = 5; // seconds from window start → DVR-exhaustion warning
+const WINDOW_START_EPSILON = 0.5; // nudge off the exact start so we don't clamp/stall
+
+function seekableEnd(): number {
+  return video.seekable.length ? video.seekable.end(video.seekable.length - 1) : NaN;
+}
+function seekableStart(): number {
+  return video.seekable.length ? video.seekable.start(0) : NaN;
+}
+function bufferedAhead(): number {
+  if (!video.buffered.length) return NaN;
+  return video.buffered.end(video.buffered.length - 1) - video.currentTime;
+}
+function wallClock(anchor: number, mediaTime: number): string {
+  return new Date((anchor + mediaTime) * 1000).toLocaleTimeString();
+}
+
+function renderLivePanel() {
+  if (!engine) return;
+  const presentation = engine.state.presentation.get();
+  const streamType = presentation?.streamType;
+  const isLive = streamType === 'live';
+
+  // Seek controls only make sense on a live/DVR source.
+  for (const btn of liveSeekButtons) btn.disabled = !isLive;
+
+  if (!presentation) {
+    liveInfoDiv.textContent = 'Waiting for presentation…';
+    return;
+  }
+  if (!streamType) {
+    liveInfoDiv.textContent = 'Resolving stream type…';
+    return;
+  }
+  if (!isLive) {
+    liveInfoDiv.innerHTML =
+      `<div class="k">stream type</div><div class="v">on-demand</div>` +
+      `<div class="k">duration</div><div class="v">${video.duration.toFixed(2)}s</div>`;
+    return;
+  }
+
+  const end = seekableEnd();
+  const start = seekableStart();
+  const t = video.currentTime;
+  const windowLen = end - start;
+  const liveGap = end - t;
+  const fromStart = t - start;
+  const anchor = engine.state.presentationAnchor.get();
+
+  // HLS surfaces #EXT-X-PLAYLIST-TYPE directly, so classify DVR/EVENT from the
+  // manifest rather than waiting for the seekable window to grow past a guess.
+  // The tag lives on a resolved track's media-playlist metadata, which lands a
+  // beat after streamType flips to 'live'. `playlistType` is `undefined` both
+  // before resolution and for a genuine sliding window, so gate on metadata
+  // presence: show "resolving" until some timeline-type track has metadata,
+  // then commit — otherwise an EVENT source flickers through "sliding live".
+  const videoTracks = getVideoTracks(presentation);
+  const audioTracks = getAudioTracks(presentation);
+  const meta = [
+    videoTracks.find((tk) => tk.id === engine.state.selectedVideoTrackId.get()),
+    videoTracks[0],
+    audioTracks.find((tk) => tk.id === engine.state.selectedAudioTrackId.get()),
+    audioTracks[0],
+  ]
+    .map((tk) => (tk ? getMediaPlaylistMetadata(tk) : undefined))
+    .find((m) => m !== undefined);
+  const windowKind = !meta
+    ? 'live (resolving…)'
+    : meta.playlistType === 'EVENT'
+      ? `DVR / EVENT${Number.isFinite(windowLen) ? ` (${windowLen.toFixed(0)}s seekable)` : ''}`
+      : 'sliding live';
+
+  const rows: [string, string, string?][] = [
+    ['stream type', 'live'],
+    ['window', windowKind],
+    ['seekable', Number.isFinite(start) ? `${start.toFixed(2)} – ${end.toFixed(2)}` : 'none'],
+    ['window length', Number.isFinite(windowLen) ? `${windowLen.toFixed(2)}s` : '—'],
+    ['currentTime', t.toFixed(2)],
+    [
+      'live gap',
+      Number.isFinite(liveGap) ? `${liveGap.toFixed(2)}s ${liveGap <= AT_EDGE_THRESHOLD ? '(at edge)' : ''}` : '—',
+      liveGap <= AT_EDGE_THRESHOLD ? 'edge' : undefined,
+    ],
+    [
+      'from window start',
+      Number.isFinite(fromStart) ? `${fromStart.toFixed(2)}s` : '—',
+      Number.isFinite(fromStart) && fromStart < BEHIND_START_THRESHOLD ? 'warn' : undefined,
+    ],
+    ['buffer ahead', Number.isFinite(bufferedAhead()) ? `${bufferedAhead().toFixed(2)}s` : '—'],
+    ['duration', String(video.duration)],
+    [
+      'anchor (epoch s)',
+      anchor === undefined ? 'not yet established' : anchor.toFixed(2),
+      anchor === undefined ? 'muted' : undefined,
+    ],
+    ['playhead clock', anchor === undefined ? '—' : wallClock(anchor, t)],
+    ['live edge clock', anchor === undefined || !Number.isFinite(end) ? '—' : wallClock(anchor, end)],
+  ];
+
+  liveInfoDiv.innerHTML = rows
+    .map(([k, v, cls]) => `<div class="k">${k}</div><div class="v${cls ? ` ${cls}` : ''}">${v}</div>`)
+    .join('');
 }
 
 // Signature of the currently-rendered video rendition set. Lets the picker
@@ -812,6 +928,32 @@ preloadSelect.addEventListener('change', () => {
 document.getElementById('open-new-tab')!.addEventListener('click', () => {
   window.open(shareLink.href, '_blank', 'noopener');
 });
+
+// ── Live / DVR seek controls ────────────────────────────────────────────────
+// Pure DOM seeks against the native seekable range. The browser clamps to the
+// window, and the engine's window-exit guard repositions only if we land before
+// the start — so back-seeks that stay inside [start, end] hold.
+function seekTo(target: number, label: string) {
+  if (!Number.isFinite(target)) {
+    log(`${label}: seekable range not available yet`, 'warning');
+    return;
+  }
+  video.currentTime = target;
+  log(`${label} → ${target.toFixed(2)}s`, 'info');
+  renderLivePanel();
+}
+seekLiveBtn.addEventListener('click', () => seekTo(seekableEnd(), 'Seek to live'));
+seekBack10Btn.addEventListener('click', () => seekTo(Math.max(seekableStart(), video.currentTime - 10), 'Seek −10s'));
+seekBack30Btn.addEventListener('click', () => seekTo(Math.max(seekableStart(), video.currentTime - 30), 'Seek −30s'));
+seekWindowStartBtn.addEventListener('click', () =>
+  seekTo(seekableStart() + WINDOW_START_EPSILON, 'Seek to window start')
+);
+
+// Live values change every frame — poll, and refresh immediately on seek/range
+// changes so the panel doesn't lag a tick behind a button press.
+setInterval(renderLivePanel, 250);
+video.addEventListener('seeked', renderLivePanel);
+video.addEventListener('durationchange', renderLivePanel);
 
 // ── Video element events ──────────────────────────────────────────────────────
 video.addEventListener('timeupdate', updateNowPlayingQuality);

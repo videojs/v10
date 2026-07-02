@@ -559,6 +559,11 @@ file format-specific architectural docs as siblings to this one
   presentation
 - [text-track-architecture.md](./text-track-architecture.md) — peer
   architectural doc (text-track-specific deep-dive)
+- [live-presentation-modeling.md](./live-presentation-modeling.md) —
+  companion that extends this model for presentations that *change over
+  time* (live / DVR / event): the snapshot/merge segment model,
+  `streamType`, refetch policy as a distinct category, and the PDT sync
+  anchor. This doc covers the one-shot / VOD snapshot
 - [conventions/signals.md](./conventions/signals.md) — pipeline-pattern
   multi-writer slot convention (`state.presentation` is the canonical
   worked example)

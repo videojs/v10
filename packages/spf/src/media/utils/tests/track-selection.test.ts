@@ -131,4 +131,12 @@ describe('getResolvedSelectedTrackDuration', () => {
   it('returns undefined when there is no presentation', () => {
     expect(getResolvedSelectedTrackDuration({})).toBeUndefined();
   });
+
+  it('returns Infinity for a live track (parser sets Track.duration = Infinity)', () => {
+    const state: TrackSelectionState = {
+      presentation: createPresentation({ video: [resolvedVideoTrack({ duration: Number.POSITIVE_INFINITY })] }),
+      selectedVideoTrackId: 'video-1',
+    };
+    expect(getResolvedSelectedTrackDuration(state)).toBe(Number.POSITIVE_INFINITY);
+  });
 });

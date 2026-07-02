@@ -172,7 +172,11 @@ Things this feature probably forces decisions on, not just additions:
   inference. (a) is simplest; (b) only covers spec-flagged event
   streams; (c) is the most adaptive but adds complexity. Likely
   combination: (b) when the tag is present; otherwise (a) until (c)
-  matures.
+  matures. Update: the parser already extracts `playlistType`
+  (`'VOD' | 'EVENT'`) into the media-playlist metadata, now consumer-reachable
+  via `getMediaPlaylistMetadata` on `@videojs/spf/hls` — so (b) is available
+  today (the `spf-segment-loading` sandbox uses it to classify DVR/EVENT vs
+  sliding live, replacing an earlier window-size heuristic).
 - **Seekable-range start derivation under server retention.** When
   the server keeps only the last N hours of segments and the
   playlist's first segment slides forward over time, the
@@ -214,7 +218,11 @@ Things this feature probably forces decisions on, not just additions:
   `Infinity` duration semantics, termination detection (`ENDLIST` +
   miss-counter), and the `setLiveSeekableRange` writer-behavior
   shape. DVR/event-stream supplies the windowing variance and the
-  variant-specific seekable-range start producer.
+  variant-specific seekable-range start producer. Its live-window
+  playhead guard's window-exit behavior (preserve in-window
+  scrub-back on the sliding window) is the analog of this feature's
+  full-history back-seek; the edge-only end of that spectrum — no
+  scrub-back — is the `[live-edge-only-mode]` use-case.
 - **[ll-hls-support](./ll-hls-support.md)** — orthogonal cluster A
   extension. DVR + LL-HLS compose; both extensions sit atop the
   same reload-loop foundation but address different concerns
