@@ -34,14 +34,19 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;
   protected abstract readonly mediaState: PlayerController<any, InferMediaState<Core> | undefined>;
 
-  protected abstract activate(state: InferMediaState<Core>, event?: UIEvent): void;
+  protected abstract activate(state: InferMediaState<Core>, event?: UIEvent): void | Promise<void>;
 
   protected getIsButtonDisabled(): boolean {
     return this.disabled || !this.mediaState.value;
   }
 
   protected handleActivate(event: UIEvent): void {
-    this.activate(this.mediaState.value!, event);
+    // `createButton` invokes `onActivate` synchronously from click/keyup
+    // handlers, so any rejection here would be unhandled. Log in dev for
+    // visibility but absorb the failure at this UI boundary.
+    Promise.resolve(this.activate(this.mediaState.value!, event)).catch((error) => {
+      if (__DEV__) console.error(`[${this.localName}]`, error);
+    });
   }
 
   /** Override to set the hotkey action name for `aria-keyshortcuts`. */

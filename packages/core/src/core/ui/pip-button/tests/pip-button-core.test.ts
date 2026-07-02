@@ -19,6 +19,8 @@ function createState(overrides: Partial<PiPButtonState> = {}): PiPButtonState {
   return {
     pip: false,
     availability: 'available',
+    disabled: false,
+    hidden: false,
     label: '',
     ...overrides,
   };
@@ -34,14 +36,27 @@ describe('PiPButtonCore', () => {
 
       expect(state.pip).toBe(true);
       expect(state.availability).toBe('available');
+      expect(state.disabled).toBe(false);
+      expect(state.hidden).toBe(false);
     });
 
-    it('reflects unsupported availability', () => {
+    it('marks disabled and hidden when unsupported', () => {
       const core = new PiPButtonCore();
       core.setMedia(createMediaState({ pipAvailability: 'unsupported' }));
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+    });
+
+    it('marks disabled when the disabled prop is set', () => {
+      const core = new PiPButtonCore({ disabled: true });
+      core.setMedia(createMediaState({ pipAvailability: 'available' }));
+      const state = core.getState();
+
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(false);
     });
   });
 
@@ -76,10 +91,16 @@ describe('PiPButtonCore', () => {
       expect(attrs['aria-label']).toBe('Enter picture-in-picture');
     });
 
-    it('sets aria-disabled when disabled', () => {
-      const core = new PiPButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+    it('sets aria-disabled when state.disabled is true', () => {
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets the hidden attribute when state.hidden is true', () => {
+      const core = new PiPButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe('');
     });
   });
 
@@ -98,7 +119,7 @@ describe('PiPButtonCore', () => {
       expect(media.exitPictureInPicture).toHaveBeenCalled();
     });
 
-    it('does nothing when disabled', async () => {
+    it('does nothing when the disabled prop is set', async () => {
       const core = new PiPButtonCore({ disabled: true });
       const media = createMediaState();
       await core.toggle(media);
@@ -112,14 +133,14 @@ describe('PiPButtonCore', () => {
       expect(media.requestPictureInPicture).not.toHaveBeenCalled();
     });
 
-    it('catches PiP errors silently', async () => {
+    it('propagates errors from requestPictureInPicture', async () => {
       const core = new PiPButtonCore();
       const media = createMediaState({
         requestPictureInPicture: vi.fn(async () => {
           throw new Error('permission denied');
         }),
       });
-      await expect(core.toggle(media)).resolves.toBeUndefined();
+      await expect(core.toggle(media)).rejects.toThrow('permission denied');
     });
   });
 });

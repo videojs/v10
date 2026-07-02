@@ -17,7 +17,12 @@ export interface CaptionsButtonProps {
 }
 
 export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
+  /** Whether caption/subtitle tracks are present. */
   availability: 'available' | 'unavailable';
+  /** Non-interactive but still focusable (mirrors `aria-disabled`). */
+  disabled: boolean;
+  /** Removed from the layout because no caption tracks are present. */
+  hidden: boolean;
 }
 
 export class CaptionsButtonCore {
@@ -30,6 +35,11 @@ export class CaptionsButtonCore {
   readonly state = createState<CaptionsButtonState>({
     subtitlesShowing: false,
     availability: 'unavailable',
+    // Hidden by default until tracks are reported; matches the derivation
+    // invariants (`disabled = props.disabled || availability !== 'available'`,
+    // `hidden = availability === 'unavailable'`).
+    disabled: true,
+    hidden: true,
     label: '',
   });
 
@@ -60,7 +70,8 @@ export class CaptionsButtonCore {
   getAttrs(state: CaptionsButtonState) {
     return {
       'aria-label': this.getLabel(state),
-      'aria-disabled': this.#props.disabled ? 'true' : undefined,
+      'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -74,14 +85,20 @@ export class CaptionsButtonCore {
       ? 'available'
       : 'unavailable';
 
-    this.state.patch({ subtitlesShowing: media.subtitlesShowing, availability });
+    this.state.patch({
+      subtitlesShowing: media.subtitlesShowing,
+      availability,
+      disabled: this.#props.disabled || availability !== 'available',
+      hidden: availability === 'unavailable',
+    });
     this.state.patch({ label: this.getLabel(this.state.current) });
 
     return this.state.current;
   }
 
   toggle(media: MediaTextTrackState): void {
-    if (this.#props.disabled) return;
+    this.setMedia(media);
+    if (this.getState().disabled) return;
     if (this.#props.menuTrigger && getCaptionTrackCount(media) > 1) return;
     media.toggleSubtitles();
   }
