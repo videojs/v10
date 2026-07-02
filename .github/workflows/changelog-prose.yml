@@ -3,21 +3,51 @@ name: Changelog Prose
 on:
   release:
     types: [published]
-
-permissions:
-  actions: read
-  contents: write
-  pull-requests: write
-  issues: read
+  # claude-code-action does not support the `release` event, so the dispatch
+  # job relays core releases into a workflow_dispatch run. Manual dispatch
+  # also lets us backfill prose for a release that was missed.
+  workflow_dispatch:
+    inputs:
+      tag_name:
+        description: 'Release tag (e.g. @videojs/core@10.0.0-beta.24)'
+        required: true
+        type: string
+      release_url:
+        description: 'Release URL (defaults to the tag release page)'
+        required: false
+        type: string
 
 concurrency:
-  group: changelog-prose-${{ github.event.release.tag_name }}
+  group: changelog-prose-${{ github.event.release.tag_name || inputs.tag_name }}
   cancel-in-progress: true
 
 jobs:
-  prose:
-    if: startsWith(github.event.release.tag_name, '@videojs/core@')
+  dispatch:
+    if: github.event_name == 'release' && startsWith(github.event.release.tag_name, '@videojs/core@')
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
+
+    steps:
+      - name: Relay release to workflow_dispatch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.event.release.tag_name }}
+          RELEASE_URL: ${{ github.event.release.html_url }}
+        run: |
+          gh workflow run changelog-prose.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --field tag_name="$TAG_NAME" \
+            --field release_url="$RELEASE_URL"
+
+  prose:
+    if: github.event_name == 'workflow_dispatch' && startsWith(inputs.tag_name, '@videojs/core@')
+    runs-on: ubuntu-latest
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+      issues: read
 
     steps:
       - name: Checkout code
@@ -27,10 +57,18 @@ jobs:
 
       - name: Parse version
         id: version
+        env:
+          TAG_NAME: ${{ inputs.tag_name }}
+          RELEASE_URL: ${{ inputs.release_url }}
         run: |
-          TAG="${{ github.event.release.tag_name }}"
-          VERSION="${TAG#@videojs/core@}"
+          VERSION="${TAG_NAME#@videojs/core@}"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          if [ -n "$RELEASE_URL" ]; then
+            echo "release_url=$RELEASE_URL" >> "$GITHUB_OUTPUT"
+          else
+            ENCODED_TAG=$(jq -rn --arg tag "$TAG_NAME" '$tag | @uri')
+            echo "release_url=https://github.com/${GITHUB_REPOSITORY}/releases/tag/${ENCODED_TAG}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Guard — check raw changelog exists
         id: guard
@@ -55,7 +93,7 @@ jobs:
             You are the changelog prose writer for Video.js 10.
 
             Version: ${{ steps.version.outputs.version }}
-            Release URL: ${{ github.event.release.html_url }}
+            Release URL: ${{ steps.version.outputs.release_url }}
 
             Your task is to rewrite a raw changelog file into polished narrative prose, then open a PR with the result.
 
