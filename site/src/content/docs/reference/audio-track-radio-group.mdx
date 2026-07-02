@@ -1,0 +1,79 @@
+---
+title: AudioTrackRadioGroup
+frameworkTitle:
+  html: media-audio-track-radio-group
+description: A menu radio group for selecting an audio track
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Creates radio items from the player audio track state and selects the enabled track.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  const audioTrack = useAudioTrackOptions();
+
+  <Menu.RadioGroup value={audioTrack.value} onValueChange={audioTrack.setValue}>
+    <Menu.GroupLabel>Audio</Menu.GroupLabel>
+    {audioTrack.options.map((option) => (
+      <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+        {option.label}
+        <Menu.ItemIndicator checked={option.value === audioTrack.value} />
+      </Menu.RadioItem>
+    ))}
+  </Menu.RadioGroup>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-audio-track-radio-group>
+    <template>
+      <media-menu-radio-item>
+        <span data-part="label"></span>
+        <media-menu-item-indicator></media-menu-item-indicator>
+      </media-menu-radio-item>
+    </template>
+  </media-audio-track-radio-group>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The group is available when the configured media exposes more than one audio track. Labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels.
+
+<FrameworkCase frameworks={["react"]}>
+`useAudioTrackOptions` returns `null` when the <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-audio-track-radio-group>` generates `<media-menu-radio-item>` children. Add an optional `<template>` with a single `<media-menu-radio-item>` to customize each generated item.
+</FrameworkCase>
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-audio-track` | `string` | Current audio track value. |
+| `data-disabled` | Present / absent | Present when audio track selection is disabled. |
+| `data-availability` | `"available"` / `"unavailable"` | Whether multiple audio tracks are available. |
+
+<FrameworkCase frameworks={["html"]}>
+  ```css
+  media-audio-track-radio-group[data-availability="unavailable"] {
+    display: none;
+  }
+  ```
+</FrameworkCase>
+
+## Accessibility
+
+The group uses the menu radio group pattern. It receives an accessible label from the `label` prop or defaults to `Audio`.
+
+<FrameworkCase frameworks={["html"]}>
+  <ComponentReference component="AudioTrackRadioGroup" />
+</FrameworkCase>

@@ -15,7 +15,7 @@ export interface MenuItemProps extends UIComponentProps<'div', MenuState> {
   onSelect?: () => void;
   /** Whether the item is disabled. */
   disabled?: boolean;
-  /** Setting kind for submenu triggers (`playback-rate` or `captions`). */
+  /** Setting kind for submenu triggers (`playback-rate`, `quality`, `audio-track`, or `captions`). */
   type?: MenuItemSettingType | undefined;
 }
 
