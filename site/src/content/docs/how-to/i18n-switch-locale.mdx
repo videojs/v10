@@ -1,0 +1,196 @@
+---
+title: Switch locale dynamically
+description: Change the player language at runtime in HTML and React
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js re-resolves translations when the active locale changes. How you trigger that depends on the platform.
+
+### Prerequisites
+
+- <DocsLink slug="how-to/i18n-register-locale">Locale packs registered or lazy-loadable</DocsLink>
+
+## Ambient `<html lang>`
+
+The simplest switch updates the document language and lets providers pick it up:
+
+```ts
+document.documentElement.lang = 'fr';
+```
+
+<Aside type="note">
+Ambient switching only applies when no provider sets an explicit locale. React `I18nProvider locale={…}`, HTML `<media-i18n-provider lang="…">`, and `element.lang` on a provider all override `<html lang>` until you remove or update that override.
+</Aside>
+
+<FrameworkCase frameworks={["html"]}>
+
+Player elements and skins observe `lang` on `<html>` and ancestors. No remount required.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+`Container`'s <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> reads `langRootRef` from the player shell. Updating `<html lang>` is enough when you are not forcing `locale` on an outer provider.
+
+</FrameworkCase>
+
+## Explicit provider locale
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { useState } from 'react';
+import { I18nProvider } from '@videojs/react/i18n';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+function App() {
+  const [locale, setLocale] = useState<'en' | 'es' | 'fr'>('en');
+
+  return (
+    <>
+      <button type="button" onClick={() => setLocale('es')}>
+        Español
+      </button>
+      <Provider>
+        <I18nProvider locale={locale}>
+          <VideoSkin>
+            <Video src="..." playsInline />
+          </VideoSkin>
+        </I18nProvider>
+      </Provider>
+    </>
+  );
+}
+```
+
+Changing `locale` triggers lazy `loadLocale` for built-in packs.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<media-i18n-provider lang="es" id="provider">
+  <video-player>...</video-player>
+</media-i18n-provider>
+
+<script type="module">
+  document.querySelector('#lang-picker').addEventListener('change', (e) => {
+    document.getElementById('provider').lang = e.target.value;
+  });
+</script>
+```
+
+Or set `document.documentElement.lang` if the player inherits ambient language.
+
+</FrameworkCase>
+
+## Avoid flash while switching
+
+Async lazy loads can briefly show English. Preload copy before the active locale changes with one of three common patterns:
+
+### Pre-register at bootstrap (React and HTML)
+
+<DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> writes to a global registry that providers read synchronously. Register every locale you plan to switch between once at startup; `loadLocale` skips tags already in the registry.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { registerI18n } from '@videojs/react/i18n';
+import es from '@videojs/react/i18n/locales/es';
+import fr from '@videojs/react/i18n/locales/fr';
+
+registerI18n('es', es);
+registerI18n('fr', fr);
+
+// Switching locale is instant: no remount, no lazy-load gap
+<I18nProvider locale={userLocale}>
+  <VideoSkin>...</VideoSkin>
+</I18nProvider>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+import es from '@videojs/html/i18n/locales/es';
+import fr from '@videojs/html/i18n/locales/fr';
+
+registerI18n('es', es);
+registerI18n('fr', fr);
+```
+
+```html
+<media-i18n-provider id="provider">
+  <video-player>...</video-player>
+</media-i18n-provider>
+
+<script type="module">
+  document.getElementById('provider').lang = 'fr';
+</script>
+```
+
+</FrameworkCase>
+
+### Prefetch before switching (React)
+
+When you cannot register every locale up front, import and register immediately before updating `locale`:
+
+```tsx
+import { registerI18n } from '@videojs/react/i18n';
+
+async function switchTo(next: 'es' | 'fr') {
+  const { default: translations } = await import(`@videojs/react/i18n/locales/${next}`);
+  registerI18n(next, translations);
+  setLocale(next);
+}
+
+<I18nProvider locale={locale}>
+  ...
+</I18nProvider>
+```
+
+You still pay the import cost once per locale, but later switches to the same tag stay synchronous.
+
+### Scoped overrides with `translations` (React)
+
+Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> when overrides should apply to one subtree only, or when you want copy colocated with the switch handler:
+
+```tsx
+async function switchTo(next: string) {
+  const { default: translations } = await import(`@videojs/react/i18n/locales/${next}`);
+  setState({ locale: next, translations });
+}
+
+<I18nProvider locale={state.locale} translations={state.translations}>
+  ...
+</I18nProvider>
+```
+
+| Approach | Scope | Best for |
+| --- | --- | --- |
+| `registerI18n` at bootstrap | Global, all providers | Language picker with a fixed set of locales |
+| `registerI18n` before switch | Global, all providers | On-demand prefetch before changing `locale` |
+| `I18nProvider translations` | Single provider subtree | Scoped overrides, SSR first paint |
+
+<Aside type="note">
+`registerI18n` merges into the global registry. Repeated calls add or replace keys for the same tag, they do not wipe other locales. Registry updates notify mounted providers via `onI18nRegistryChange`, so late registrations still refresh wired controls.
+</Aside>
+
+<Aside type="tip">
+For server-rendered first paint, see <DocsLink slug="how-to/i18n-ssr">SSR and hydration</DocsLink>.
+</Aside>
+
+## CDN
+
+Reload or navigate with an updated `locale` query parameter, or load a different locale module before playback. CDN shells typically full-reload on locale change because locale script tags are not hot-swappable.
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-ssr">SSR with locale</DocsLink>
+- <DocsLink slug="reference/use-locale">`useLocale`</DocsLink>: Read the active locale in React

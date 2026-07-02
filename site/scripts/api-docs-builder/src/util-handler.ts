@@ -34,7 +34,6 @@
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
-import { kebabCase } from 'es-toolkit/string';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import {
@@ -44,6 +43,7 @@ import {
   type UtilReference,
   UtilReferenceSchema,
 } from '../../../src/types/util-reference.js';
+import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
 import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
 
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
@@ -75,9 +75,11 @@ interface EntryPoint {
 // (e.g., "create-player" for React, "html-create-player" for HTML).
 const UTIL_ENTRY_POINTS: EntryPoint[] = [
   { index: 'packages/react/src/index.ts', framework: 'react' },
+  { index: 'packages/react/src/i18n/index.ts', framework: 'react' },
   { index: 'packages/store/src/react/hooks/index.ts', framework: 'react' },
   { index: 'packages/html/src/index.ts', framework: 'html' },
   { index: 'packages/store/src/html/controllers/index.ts', framework: 'html' },
+  { index: 'packages/core/src/core/i18n/index.ts', framework: null },
   { index: 'packages/core/src/dom/store/selectors.ts', framework: null },
   { index: 'packages/store/src/core/selector.ts', framework: null },
 ];
@@ -154,6 +156,25 @@ function getDisplayName(name: string): string {
     return name.replace(/^create/, '');
   }
   return name;
+}
+
+function normalizeDescription(description: unknown): string | undefined {
+  if (!description) return undefined;
+  if (typeof description === 'string') return description;
+  if (Array.isArray(description)) {
+    const text = description
+      .map((part) => {
+        if (typeof part === 'string') return part;
+        if (part && typeof part === 'object' && 'text' in part && typeof part.text === 'string') {
+          return part.text;
+        }
+        return '';
+      })
+      .join('')
+      .trim();
+    return text || undefined;
+  }
+  return undefined;
 }
 
 // ─── Extraction: Functions ─────────────────────────────────────────
@@ -843,7 +864,7 @@ function processExport(
   if (!isUtilExport(exportNode)) return;
 
   const displayName = getDisplayName(exportNode.name);
-  const slug = resolveSlugCollision(kebabCase(displayName), entryPoint.framework, seenSlugs);
+  const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 
@@ -861,7 +882,7 @@ function processExport(
     return;
   }
 
-  const description = exportNode.documentation?.description;
+  const description = normalizeDescription(exportNode.documentation?.description);
   const data: UtilReference = {
     name: displayName,
     overloads,
@@ -892,7 +913,7 @@ function processRawExport(
   if (!isRawUtilExport(info)) return;
 
   const displayName = getDisplayName(info.name);
-  const slug = resolveSlugCollision(kebabCase(displayName), entryPoint.framework, seenSlugs);
+  const slug = resolveSlugCollision(utilReferenceSlug(displayName), entryPoint.framework, seenSlugs);
 
   let overloads: UtilOverload[];
 

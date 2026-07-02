@@ -1,0 +1,12 @@
+---
+title: onI18nRegistryChange
+description: Subscribe to global i18n registry mutations
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+
+`onI18nRegistryChange` registers a callback that runs whenever any locale layer changes, for example after `registerI18n` or browser translation prefetch. Returns an unsubscribe function.
+
+React `I18nProvider` uses this to invalidate translators when the registry updates.
+
+<UtilReference util="onI18nRegistryChange" />

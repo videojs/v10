@@ -1,0 +1,83 @@
+---
+title: Override translation keys
+description: Patch individual i18n strings without replacing an entire locale pack
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+`registerI18n` **merges**. Each call adds or replaces keys for that locale tag without wiping prior registrations. Use this to tweak shipped packs or A/B test copy.
+
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge order and key naming.
+
+## Override after a built-in pack
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+import es from '@videojs/html/i18n/locales/es';
+
+registerI18n('es', es);
+registerI18n('es', { play: 'Comenzar' }); // only `play` changes
+```
+
+Later registrations win for the same key. The rest of the `es` pack stays intact.
+
+## React provider overrides
+
+Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. This layer sits **above** registry and lazy packs:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { I18nProvider } from '@videojs/react/i18n';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+<Provider>
+  <I18nProvider locale="es" translations={{ play: 'Comenzar' }}>
+    <VideoSkin>
+      <Video src="..." playsInline />
+    </VideoSkin>
+  </I18nProvider>
+</Provider>
+```
+
+Nested providers inherit the parent locale when you only pass `translations`:
+
+```tsx
+<I18nProvider locale="de">
+  <I18nProvider translations={{ play: 'Override' }}>
+    {/* locale stays `de`; only `play` differs */}
+  </I18nProvider>
+</I18nProvider>
+```
+
+</FrameworkCase>
+
+## HTML reflected text
+
+Use <DocsLink slug="reference/media-text">`<media-text>`</DocsLink> for static copy outside buttons:
+
+```html
+<media-i18n-provider lang="es">
+  <media-text key="play"></media-text>
+</media-i18n-provider>
+```
+
+Override the key in the registry or set `lang` on the provider to a locale where you patched `play`.
+
+## Parametric keys
+
+Keep required placeholders when overriding:
+
+```ts
+// ✅
+registerI18n('es', { seekForward: 'Adelantar {seconds} segundos' });
+
+// ❌ TypeScript error: missing {seconds}
+registerI18n('es', { seekForward: 'Adelantar' });
+```
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>
+- <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink>: Inspect the merged map

@@ -12,7 +12,13 @@ function interpolate(template: string, params?: Record<string, string | number>)
   });
 }
 
-/** Builds a typed translator from a resolved translation map (typically from {@link getI18nTranslations}). */
+/**
+ * Builds a typed translator from a resolved translation map (typically from `getI18nTranslations`).
+ *
+ * @param translations - Merged translation map for the active locale.
+ * @param locale - BCP 47 tag associated with the map (reserved for future locale-aware behavior).
+ * @public
+ */
 export function createTranslator(translations: Translations, locale: Locale): Translator {
   void locale;
 

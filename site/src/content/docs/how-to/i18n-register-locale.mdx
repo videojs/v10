@@ -1,0 +1,153 @@
+---
+title: Register a custom locale
+description: Register translation packs for HTML, React, and CDN players
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Register strings once with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the page or pass `locale` to a provider. Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to opaque keys and the registry.
+
+### Prerequisites
+
+- A locale tag ([BCP 47](https://www.rfc-editor.org/rfc/rfc5646), e.g. `es`, `pt-BR`)
+- A partial translation map keyed by camelCase tokens (`play`, `pause`, …)
+
+## Use a shipped pack
+
+Built-in packs live in `@videojs/*/i18n/locales/*`. Import and register before the player renders:
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts title="main.ts"
+import '@videojs/html/video';
+import { registerI18n } from '@videojs/html/i18n';
+import es from '@videojs/html/i18n/locales/es';
+
+registerI18n('es', es);
+```
+
+```html title="index.html"
+<html lang="es">
+  <video-player>
+    <video-skin>
+      <video src="..." playsinline></video>
+    </video-skin>
+  </video-player>
+</html>
+```
+
+If you skip `registerI18n`, the built-in provider still **lazy-loads** `es` when `lang="es"`. Explicit registration avoids the async gap on first paint.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx title="app.tsx"
+import { registerI18n } from '@videojs/react/i18n';
+import es from '@videojs/react/i18n/locales/es';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+registerI18n('es', es);
+
+export function App() {
+  return (
+    <Provider>
+      <VideoSkin>
+        <Video src="..." playsInline />
+      </VideoSkin>
+    </Provider>
+  );
+}
+```
+
+Preset skins use `Container`, which includes <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Set `<html lang="es">` or wrap with `<I18nProvider locale="es">`.
+
+</FrameworkCase>
+
+## Register your own pack
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts title="my-es.ts"
+import type { Translations } from '@videojs/html/i18n';
+
+const es = {
+  play: 'Reproducir',
+  pause: 'Pausa',
+  mute: 'Silenciar',
+  unmute: 'Activar sonido',
+} satisfies Partial<Translations>;
+
+export default es;
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts title="my-es.ts"
+import type { Translations } from '@videojs/react/i18n';
+
+const es = {
+  play: 'Reproducir',
+  pause: 'Pausa',
+  mute: 'Silenciar',
+  unmute: 'Activar sonido',
+} satisfies Partial<Translations>;
+
+export default es;
+```
+
+</FrameworkCase>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n'; // or @videojs/react/i18n
+import es from './my-es';
+
+registerI18n('es', es);
+```
+
+All keys are optional. Missing keys fall back through the BCP 47 chain to English.
+
+## CDN
+
+Load the player and a locale chunk. Locale modules call `registerI18n` on import:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/locales/es.js"></script>
+
+<html lang="es">
+  <video-player>
+    <video-skin>
+      <video src="..." playsinline></video>
+    </video-skin>
+  </video-player>
+</html>
+```
+
+<Aside type="note">
+CDN locale files import `registerI18n` from the shared `cdn/i18n.js` bundle so every chunk shares one registry instance.
+</Aside>
+
+## Custom CDN locale
+
+```js title="my-locale.js"
+import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
+
+registerI18n('es', {
+  play: 'Reproducir',
+  pause: 'Pausa',
+});
+```
+
+Load your module after the player script, before playback starts.
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-override-translations">Override individual keys</DocsLink>
+- <DocsLink slug="reference/translations">`Translations`</DocsLink> type
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale at runtime</DocsLink>
+- <DocsLink slug="reference/register-i18n">`registerI18n` reference</DocsLink>

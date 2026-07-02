@@ -1,0 +1,100 @@
+---
+title: SSR and locale
+description: Render translated player UI on the server without a flash of English
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Server-rendered pages should output the correct `lang` **and** supply translations on the first client render. Lazy `loadLocale` runs after hydration. Without preloaded copy, controls briefly show English.
+
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for provider resolution and merge order.
+
+## Set `<html lang>`
+
+Render the document language on the server:
+
+```html
+<html lang="es">
+```
+
+React providers use a server snapshot of `undefined` for ambient lang, then read `<html lang>` on hydration. Passing `locale` explicitly avoids any mismatch.
+
+## Preload translations (React)
+
+Import the locale pack on the server (or in a server component) and pass it to <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { I18nProvider } from '@videojs/react/i18n';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+export async function Player({ locale }: { locale: string }) {
+  const { default: translations } = await import(`@videojs/react/i18n/locales/${locale}`);
+
+  return (
+    <Provider>
+      <I18nProvider locale={locale} translations={translations}>
+        <VideoSkin>
+          <Video src="..." playsInline />
+        </VideoSkin>
+      </I18nProvider>
+    </Provider>
+  );
+}
+```
+
+`translations` on the first render skips the async lazy layer. Labels match on server and client.
+
+</FrameworkCase>
+
+## Register on the server
+
+For custom packs, call <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> in server bootstrap code before rendering players:
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+import es from './locales/es';
+
+registerI18n('es', es);
+```
+
+The registry is module singleton state. Registration in server entry points carries into the client bundle when shared.
+
+## next-intl and app routers
+
+```tsx
+import { getLocale } from 'next-intl/server';
+
+const locale = await getLocale();
+const { default: translations } = await import(`@videojs/react/i18n/locales/${locale}`);
+
+<I18nProvider locale={locale} translations={translations}>
+  ...
+</I18nProvider>
+```
+
+Match your app's locale negotiation. Video.js does not replace framework i18n; it consumes the tag you pass.
+
+## HTML custom elements
+
+SSR HTML players should emit `lang` on `<html>` or on <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink>. Register packs in the entry module loaded before custom elements upgrade:
+
+```ts
+import '@videojs/html/video';
+import { registerI18n } from '@videojs/html/i18n';
+import es from '@videojs/html/i18n/locales/es';
+
+registerI18n('es', es);
+```
+
+<Aside type="caution">
+Do not rely on browser-only APIs (`getBrowserTranslations`) during SSR. Ship packs or register strings explicitly.
+</Aside>
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale at runtime</DocsLink>
+- <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink>

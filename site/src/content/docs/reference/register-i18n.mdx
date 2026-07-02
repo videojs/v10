@@ -1,0 +1,22 @@
+---
+title: registerI18n
+description: Register or merge translation strings for a BCP 47 locale tag in the global i18n registry
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`registerI18n` merges a partial translation map into the process-wide registry for a locale tag. English defaults are registered by the i18n bundle. Call `registerI18n` for custom locales or to patch shipped packs before the player renders.
+
+Import from `@videojs/html/i18n` or `@videojs/react/i18n`. Keys are opaque camelCase tokens (`play`, `pause`). See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> and <DocsLink slug="reference/translations">`Translations`</DocsLink>.
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+
+registerI18n('es', {
+  play: 'Reproducir',
+  pause: 'Pausar',
+});
+```
+
+<UtilReference util="registerI18n" />
