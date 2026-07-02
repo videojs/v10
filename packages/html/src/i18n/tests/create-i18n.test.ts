@@ -7,11 +7,13 @@ import { createI18n } from '../../i18n/create-i18n';
 import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 
 describe('createI18n (HTML)', () => {
-  afterEach(() => {
+  afterEach(async () => {
     resetI18nRegistryForTesting();
     resetBrowserTranslationCacheForTesting();
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
+    await Promise.resolve();
+    await Promise.resolve();
     vi.restoreAllMocks();
   });
 
@@ -35,6 +37,39 @@ describe('createI18n (HTML)', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(text.textContent).toBe('Los');
+  });
+
+  it('media-text keeps child text without a key', async () => {
+    const text = new MediaTextElement();
+    text.textContent = 'Fallback label';
+    document.body.appendChild(text);
+    await text.updateComplete;
+    expect(text.textContent).toBe('Fallback label');
+  });
+
+  it('media-text restores child text when key is removed', async () => {
+    registerI18n('de', { play: 'Los' });
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'de');
+    const text = new MediaTextElement();
+    text.textContent = 'Fallback label';
+    text.setAttribute('key', 'play');
+    provider.appendChild(text);
+    document.body.appendChild(provider);
+    await vi.waitFor(() => {
+      expect(text.textContent).toBe('Los');
+    });
+    text.removeAttribute('key');
+    await vi.waitFor(() => {
+      expect(text.textContent).toBe('Fallback label');
+    });
+  });
+
+  it('media-text is empty without a key or child text', async () => {
+    const text = new MediaTextElement();
+    document.body.appendChild(text);
+    await text.updateComplete;
+    expect(text.textContent).toBe('');
   });
 
   it('inherits ambient html lang when provider has no lang', async () => {
@@ -97,6 +132,24 @@ describe('createI18n (HTML)', () => {
     });
   });
 
+  it('updates media-text when provider lang changes', async () => {
+    registerI18n('de', { play: 'Los' });
+    registerI18n('fr', { play: 'Lire' });
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'de');
+    const text = new MediaTextElement();
+    text.setAttribute('key', 'play');
+    provider.appendChild(text);
+    document.body.appendChild(provider);
+    await vi.waitFor(() => {
+      expect(text.textContent).toBe('Los');
+    });
+    provider.setAttribute('lang', 'fr');
+    await vi.waitFor(() => {
+      expect(text.textContent).toBe('Lire');
+    });
+  });
+
   it('discards stale builtin load when provider lang is set right after insert', async () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loadLocale: async (tag) => {
@@ -149,9 +202,9 @@ describe('createI18n (HTML)', () => {
   });
 
   it('I18nController falls back to English without provider', async () => {
-    const { I18nController: Ctor } = createI18n();
+    const { context, I18nController: Ctor } = createI18n();
     class Probe extends ReactiveElement {
-      readonly #i18n = new Ctor(this);
+      readonly #i18n = new Ctor(this, context);
       override connectedCallback(): void {
         super.connectedCallback();
         this.textContent = this.#i18n.value('play');

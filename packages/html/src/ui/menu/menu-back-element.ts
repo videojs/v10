@@ -3,7 +3,8 @@ import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { MediaElement } from '../media-element';
 import { menuContext } from './context';
 
@@ -16,7 +17,7 @@ export class MenuBackElement extends MediaElement {
 
   label = 'menuBack';
 
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #ctx = new ContextConsumer(this, { context: menuContext, subscribe: true });
 
   #disconnect: AbortController | null = null;

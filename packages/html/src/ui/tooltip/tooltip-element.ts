@@ -31,8 +31,8 @@ import type { State } from '@videojs/store';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, listen, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
-
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
@@ -77,7 +77,7 @@ export class TooltipElement extends MediaElement {
   boundary: PositioningBoundary = 'container';
 
   readonly #core = new TooltipCore();
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);

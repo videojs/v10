@@ -3,7 +3,8 @@ import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlayba
 import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
@@ -22,7 +23,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   formatRate = PlaybackRateRadioGroupCore.defaultProps.formatRate;
 
   readonly #core = new PlaybackRateRadioGroupCore();
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
 
   #ratesKey = '';

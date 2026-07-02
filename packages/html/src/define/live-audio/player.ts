@@ -1,5 +1,5 @@
 import { liveAudioFeatures } from '@videojs/core/dom';
-import { I18nProviderMixin } from '../../i18n/provider';
+import { I18nProviderMixin } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';

@@ -1,12 +1,13 @@
-import { MediaI18nProviderElement, MediaTextElement } from '../i18n/elements';
+import { I18nProviderElement } from '../i18n/provider-element';
+import { TextElement } from '../ui/text/text-element';
 import { safeDefine } from './safe-define';
 
-safeDefine(MediaI18nProviderElement);
-safeDefine(MediaTextElement);
+safeDefine(I18nProviderElement);
+safeDefine(TextElement);
 
 declare global {
   interface HTMLElementTagNameMap {
-    [MediaI18nProviderElement.tagName]: MediaI18nProviderElement;
-    [MediaTextElement.tagName]: MediaTextElement;
+    [I18nProviderElement.tagName]: I18nProviderElement;
+    [TextElement.tagName]: TextElement;
   }
 }

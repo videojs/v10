@@ -18,7 +18,8 @@ import {
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -47,7 +48,7 @@ export class LiveButtonElement extends MediaElement {
   protected readonly live = new PlayerController(this, playerContext, selectLive);
   protected readonly time = new PlayerController(this, playerContext, selectTime);
   protected readonly buffer = new PlayerController(this, playerContext, selectBuffer);
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   get $state(): State<LiveButtonCore.State> {
     return this.core.state;

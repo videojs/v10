@@ -3,7 +3,8 @@ import { applyStateDataAttrs, logMissingFeature, selectAudioTrack } from '@video
 import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
@@ -24,7 +25,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
   formatTrack = AudioTrackRadioGroupCore.defaultProps.formatTrack;
 
   readonly #core = new AudioTrackRadioGroupCore();
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectAudioTrack);
 
   #tracksKey = '';

@@ -4,13 +4,14 @@ import { applyElementProps, applyStateDataAttrs, logMissingFeature } from '@vide
 import type { PropertyValues } from '@videojs/element';
 import { isFunction } from '@videojs/utils/predicate';
 
-import { I18nController } from '../i18n/instance';
+import { i18nContext } from '../i18n/context';
+import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/player-controller';
 import { MediaElement } from './media-element';
 
 /** Abstract base for HTML custom elements that display media state with data attributes. */
 export abstract class MediaUIElement<Core extends MediaUIComponent> extends MediaElement {
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   protected abstract readonly core: Core;
   protected abstract readonly stateAttrMap: StateAttrMap<InferComponentState<Core>>;

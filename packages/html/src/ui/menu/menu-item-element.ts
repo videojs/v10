@@ -16,7 +16,8 @@ import {
 import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -48,7 +49,7 @@ export class MenuItemElement extends MediaElement {
   readonly #qualityCore = new QualityRadioGroupCore();
   readonly #audioTrackCore = new AudioTrackRadioGroupCore();
   readonly #captionsCore = new CaptionsRadioGroupCore();
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
   #playbackRateValue: PlayerController<AnyPlayerStore, PlaybackRateState> | null = null;
   #qualityValue: PlayerController<AnyPlayerStore, QualityState> | null = null;
   #audioTrackValue: PlayerController<AnyPlayerStore, AudioTrackState> | null = null;

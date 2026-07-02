@@ -16,14 +16,22 @@ export {
   onI18nRegistryChange,
   registerI18n,
 } from '@videojs/core/i18n';
+export { I18nTextMixin, MediaTextElement } from '../ui/text/text-element';
+export type {
+  I18nContext,
+  I18nContext as I18nLitContext,
+  I18nContextValue,
+} from './context';
+export { i18nContext, i18nContext as context } from './context';
+export { I18nController } from './controller';
 export type {
   CreateI18nOptions,
   CreateI18nResult,
-  I18nContextValue,
-  I18nLitContext,
 } from './create-i18n';
 export { createI18n } from './create-i18n';
-export { MediaI18nProviderElement, MediaTextElement } from './elements';
-export { context, I18nController, I18nTextMixin } from './instance';
 export { localeFromDomLang, resolvePlayerLocale, resolveProviderLocale } from './locale';
-export { I18nProviderMixin } from './provider';
+export {
+  I18nProviderElement,
+  I18nProviderMixin,
+  MediaI18nProviderElement,
+} from './provider-element';

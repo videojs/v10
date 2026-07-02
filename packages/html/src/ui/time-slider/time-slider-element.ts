@@ -15,7 +15,8 @@ import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { formatTime } from '@videojs/utils/time';
 
-import { I18nController } from '../../i18n/instance';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -49,7 +50,7 @@ export class TimeSliderElement extends MediaElement {
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
   readonly #playbackState = new PlayerController(this, playerContext, selectPlayback);
-  readonly #i18n = new I18nController(this);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
