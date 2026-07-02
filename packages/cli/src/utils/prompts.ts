@@ -3,8 +3,11 @@ import cdnMedia from '@/content/cdn-media.json';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
-import { buildOptions } from '@/utils/installation/renderer-options';
+import { buildOptions as buildInstallMethodOptions } from '@/utils/installation/install-method-options';
+import { buildOptions as buildRendererOptions } from '@/utils/installation/renderer-options';
+import { buildOptions as buildSkinOptions } from '@/utils/installation/skin-options';
 import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import { buildOptions as buildUseCaseOptions } from '@/utils/installation/usecase-options';
 import type { Framework } from './config.js';
 
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
@@ -26,49 +29,42 @@ export async function promptFramework(): Promise<Framework> {
   return value;
 }
 
-const PRESET_OPTIONS: Array<{ value: UseCase; label: string }> = [
-  { value: 'default-video', label: 'Video' },
-  { value: 'default-audio', label: 'Audio' },
-  { value: 'background-video', label: 'Background Video' },
-];
+// All option lists below reuse the installation page's shared builders so labels
+// and ordering stay in lockstep with the UI — there's a single source of truth
+// per picker, no drift between the CLI prompt and the docs page.
 
-// Reuse the installation page's option builder so labels and ordering stay in
-// lockstep with the UI.
+function useCaseOptions(): Array<{ value: UseCase; label: string }> {
+  return buildUseCaseOptions().map((option) => ({
+    value: option.value as UseCase,
+    label: option.label,
+  }));
+}
+
 function mediaOptionsForUseCase(useCase: UseCase): Array<{ value: Renderer; label: string }> {
-  return buildOptions(useCase).map((option) => ({
+  return buildRendererOptions(useCase).map((option) => ({
     value: option.value as Renderer,
     label: option.label,
   }));
 }
 
 function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: string }> {
-  if (useCase === 'background-video') {
-    return [{ value: 'video', label: 'Default' }];
-  }
-  const isAudio = useCase === 'default-audio';
-  return [
-    { value: isAudio ? 'audio' : 'video', label: 'Default' },
-    { value: isAudio ? 'minimal-audio' : 'minimal-video', label: 'Minimal' },
-    { value: 'none', label: 'None (headless)' },
-  ];
+  return buildSkinOptions(useCase).map((option) => ({
+    value: option.value as Skin,
+    label: option.label,
+  }));
 }
 
 function installMethodOptions(
   framework: Framework,
   renderer: Renderer
 ): Array<{ value: InstallMethod; label: string }> {
-  const options: Array<{ value: InstallMethod; label: string }> = [
-    { value: 'npm', label: 'npm' },
-    { value: 'pnpm', label: 'pnpm' },
-    { value: 'yarn', label: 'yarn' },
-    { value: 'bun', label: 'bun' },
-  ];
   // CDN is HTML-only, and only when the renderer ships a CDN build — matching
   // the install page, which hides the CDN tab for renderers without one.
-  if (framework === 'html' && supportsCdnInstall(renderer)) {
-    options.unshift({ value: 'cdn', label: 'CDN' });
-  }
-  return options;
+  const includeCdn = framework === 'html' && supportsCdnInstall(renderer);
+  return buildInstallMethodOptions({ includeCdn }).map((option) => ({
+    value: option.value as InstallMethod,
+    label: option.label,
+  }));
 }
 
 export interface PartialInstallFlags {
@@ -104,7 +100,7 @@ export async function promptInstallOptions(
     (await (async () => {
       const value = await p.select({
         message: 'Preset',
-        options: PRESET_OPTIONS,
+        options: useCaseOptions(),
       });
       if (p.isCancel(value)) process.exit(0);
       return value;
