@@ -6,11 +6,13 @@ import {
   PlayIcon,
   RestartIcon,
   SeekIcon,
+  SpinnerIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
@@ -126,18 +128,30 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
       <div className="media-controls">
         <Tooltip.Provider>
           <div className="media-button-group">
-            <Tooltip.Root side="top" boundary="viewport">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className="media-button--play" render={<Button />}>
-                    <RestartIcon className="media-icon media-icon--restart" />
-                    <PlayIcon className="media-icon media-icon--play" />
-                    <PauseIcon className="media-icon media-icon--pause" />
-                  </PlayButton>
-                }
+            <span className="media-button--play__wrapper">
+              <BufferingIndicator
+                render={(props) => (
+                  <div {...props} className="media-buffering-indicator">
+                    <SpinnerIcon className="media-icon" />
+                  </div>
+                )}
               />
-              <Tooltip.Popup className="media-tooltip" />
-            </Tooltip.Root>
+              <Tooltip.Root side="top" boundary="viewport">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className="media-button--play" render={<Button />}>
+                      <RestartIcon className="media-icon media-icon--restart" />
+                      <PlayIcon className="media-icon media-icon--play" />
+                      <PauseIcon className="media-icon media-icon--pause" />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className="media-tooltip">
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className="media-tooltip__kbd" />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </span>
 
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
@@ -150,7 +164,10 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -164,13 +181,16 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 
           <div className="media-time-controls">
             <Time.Group className="media-time-group">
-              <Time.Value type="current" className="media-time media-time--current" />
+              <Time.Value toggle type="current" className="media-time media-time--current" />
               <Time.Separator className="media-time-separator" />
               <Time.Value type="duration" className="media-time media-time--duration" />
             </Time.Group>

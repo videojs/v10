@@ -17,7 +17,7 @@ import {
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -155,7 +155,10 @@ function CaptionsTrigger(): ReactNode {
             </CaptionsButton>
           }
         />
-        <Tooltip.Popup className={cn(popup.tooltip)} />
+        <Tooltip.Popup className={cn(popup.tooltip)}>
+          <Tooltip.Label />
+          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+        </Tooltip.Popup>
       </Tooltip.Root>
     );
   }
@@ -182,7 +185,7 @@ function CaptionsTrigger(): ReactNode {
             <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
               <span>{option.label}</span>
               <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
-                <CheckIcon className={icon} />
+                <CheckIcon className={cn(icon, menu.icon)} />
               </Menu.ItemIndicator>
             </Menu.RadioItem>
           ))}
@@ -193,10 +196,14 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, ...rest } = props;
+  const { children, className, poster: posterProp, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn(root(false), className)} {...rest}>
+    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (
@@ -210,9 +217,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className={bufferingIndicator.root}>
-            <div className={bufferingIndicator.container}>
-              <SpinnerIcon className={icon} />
-            </div>
+            <SpinnerIcon className={icon} />
           </div>
         )}
       />
@@ -247,7 +252,10 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
@@ -269,7 +277,10 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -281,7 +292,10 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)} />
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -293,7 +307,10 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -305,7 +322,10 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

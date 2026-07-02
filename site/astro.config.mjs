@@ -2,6 +2,7 @@
 
 import process from 'node:process';
 
+import { satteri } from '@astrojs/markdown-satteri';
 import mdx from '@astrojs/mdx';
 import netlify from '@astrojs/netlify';
 import react from '@astrojs/react';
@@ -25,11 +26,11 @@ import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
-import rehypePrepareCodeBlocks from './src/utils/rehypePrepareCodeBlocks';
-import remarkConditionalHeadings from './src/utils/remarkConditionalHeadings';
-import { remarkReadingTime } from './src/utils/remarkReadingTime.mjs';
+import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
+import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
+import { satteriReadingTime } from './src/utils/satteriReadingTime';
 import { shikiNotationTransformers } from './src/utils/shikiNotationTransformers';
-import shikiTransformMetadata from './src/utils/shikiTransformMetadata';
+import { shikiStripPreStyle } from './src/utils/shikiStripPreStyle';
 
 // Netlify sets CONTEXT and BRANCH for each deploy. We use them to determine
 // the correct site URL:
@@ -118,9 +119,6 @@ export default defineConfig({
   },
 
   markdown: {
-    // a lot of these are defaults but I'm setting them just to be explicit
-    smartypants: true,
-    gfm: true,
     syntaxHighlight: 'shiki',
     shikiConfig: {
       themes: {
@@ -146,10 +144,14 @@ export default defineConfig({
         ...http,
         ...astro,
       ],
-      transformers: [shikiTransformMetadata, ...shikiNotationTransformers],
+      transformers: [...shikiNotationTransformers, shikiStripPreStyle],
     },
-    remarkPlugins: [remarkConditionalHeadings, remarkReadingTime],
-    rehypePlugins: [rehypePrepareCodeBlocks],
+    // `syntaxHighlight`/`shikiConfig` are applied by Astro's Shiki layer
+    // independently of the Markdown processor, so highlighting is configured
+    // here while the processor's custom transforms live in `mdastPlugins`.
+    processor: satteri({
+      mdastPlugins: [satteriReadingTime(), satteriConditionalHeadings(), satteriCodeFrame()],
+    }),
   },
 
   image: {
@@ -172,6 +174,11 @@ export default defineConfig({
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.
       exclude: ['@videojs/react', '@videojs/html', '@resvg/resvg-js'],
+      // react-dom (CJS) must be pre-bundled so its named exports (createRoot,
+      // hydrateRoot) are exposed as ESM bindings to the @astrojs/react client
+      // renderer. Excluding @videojs/react above shadows the include list the
+      // React integration injects, so re-declare them here.
+      include: ['react-dom', 'react-dom/client'],
     },
     resolve: {
       dedupe: ['react', 'react-dom'],

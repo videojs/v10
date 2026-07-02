@@ -1,13 +1,19 @@
 import type { MaybeResolvedPresentation, TrackType } from '../types';
 
 /**
- * Identify the CDN a URL is served from, used to group redundant-stream
- * variants that point at the same content on different hosts. Defaults to the
- * URL's origin (scheme + host + port); falls back to the raw string when the
- * URL can't be parsed, so the return value is always a stable grouping key.
- *
- * Sub-feature 1 (sticky CDN pick) uses origin-based identity; a more advanced
- * or consumer-configurable derivation can replace this default later.
+ * Derive a stable grouping key for the CDN a URL is served from. Synchronous and
+ * pure (deliberately not a `resolve*` — no fetch). Consumers override the
+ * default via the engine's `getCdnId` config (e.g. to key on Mux's `cdn=` query
+ * param instead of the host); every CDN-identity site reads that same function
+ * so keys stay comparable across `cdnPriority`, `failedCdns`, and the
+ * track-switching constraint + scope.
+ */
+export type GetCdnId = (url: string) => string;
+
+/**
+ * Default {@link GetCdnId}: the URL's origin (scheme + host + port); falls back
+ * to the raw string when the URL can't be parsed, so the return value is always
+ * a stable grouping key.
  */
 export function getCdnId(url: string): string {
   try {
@@ -34,9 +40,11 @@ const CDN_TYPE_PRIORITY: Record<TrackType, number> = { video: 0, audio: 1, text:
  *
  * Redundant-stream sources list the same content on multiple hosts (e.g. Mux's
  * `?redundant_streams=true`), so each host contributes its own candidate tracks;
- * this collapses them to the set of CDNs across every track type.
+ * this collapses them to the set of CDNs across every track type. The CDN-id
+ * derivation defaults to {@link getCdnId}; pass a consumer-configured `getId` to
+ * key on something other than origin.
  */
-export function getOrderedCdnIds(presentation: MaybeResolvedPresentation): string[] {
+export function getOrderedCdnIds(presentation: MaybeResolvedPresentation, getId: GetCdnId = getCdnId): string[] {
   const seen = new Set<string>();
   const ids: string[] = [];
   // Stable sort keeps manifest order among same-type selection sets.
@@ -46,7 +54,7 @@ export function getOrderedCdnIds(presentation: MaybeResolvedPresentation): strin
   for (const selectionSet of selectionSets) {
     for (const switchingSet of selectionSet.switchingSets) {
       for (const track of switchingSet.tracks) {
-        const id = getCdnId(track.url);
+        const id = getId(track.url);
         if (seen.has(id)) continue;
         seen.add(id);
         ids.push(id);
@@ -54,4 +62,14 @@ export function getOrderedCdnIds(presentation: MaybeResolvedPresentation): strin
     }
   }
   return ids;
+}
+
+/**
+ * Add a CDN id to a failed-CDN list, preserving order and ignoring duplicates.
+ * Idempotent: re-adding an already-present id returns the same array reference
+ * (so a no-op trip doesn't churn the `failedCdns` signal). The failover trip in
+ * `resolve-track` and the segment loaders feed this into `failedCdns` via `update`.
+ */
+export function addFailedCdn(failed: string[] | undefined, cdn: string): string[] {
+  return failed?.includes(cdn) ? failed : [...(failed ?? []), cdn];
 }

@@ -1,3 +1,5 @@
+import { escapeHtml } from '../string/escape-html';
+
 /**
  * Convert a NamedNodeMap to a plain object.
  */
@@ -15,9 +17,9 @@ export function namedNodeMapToObject(namedNodeMap: NamedNodeMap) {
 export function serializeAttributes(attrs: Record<string, string>) {
   let html = '';
   for (const key in attrs) {
-    const value = attrs[key];
+    const value = attrs[key]!;
     if (value === '') html += ` ${key}`;
-    else html += ` ${key}="${value}"`;
+    else html += ` ${key}="${escapeHtml(value)}"`;
   }
   return html;
 }

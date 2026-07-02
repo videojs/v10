@@ -17,6 +17,9 @@ export class MenuItemValueElement extends MediaElement {
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
 
-    this.textContent = this.#ctx.value?.label ?? '';
+    const label = this.#ctx.value?.label ?? '';
+    if (this.textContent !== label) {
+      this.textContent = label;
+    }
   }
 }

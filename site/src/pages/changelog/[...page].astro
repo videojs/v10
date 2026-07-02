@@ -1,0 +1,49 @@
+---
+
+import type { CollectionEntry } from 'astro:content';
+import { getCollection } from 'astro:content';
+import type { GetStaticPaths, Page } from 'astro';
+import BlogPagination from '@/components/blog/BlogPagination.astro';
+import ChangelogEntryCard from '@/components/changelog/ChangelogEntryCard.astro';
+import FooterEasterEgg from '@/components/FooterEasterEgg.astro';
+import { BLOG_PAGE_SIZE } from '@/consts';
+import Blog from '@/layouts/Blog.astro';
+
+export const getStaticPaths = (async ({ paginate }) => {
+  const entries = (await getCollection('changelog')).sort(
+    (a, b) =>
+      b.data.date.valueOf() - a.data.date.valueOf() ||
+      b.data.version.localeCompare(a.data.version, undefined, { numeric: true })
+  );
+
+  return paginate(entries, { pageSize: BLOG_PAGE_SIZE });
+}) satisfies GetStaticPaths;
+
+interface Props {
+  page: Page<CollectionEntry<'changelog'>>;
+}
+
+const { page } = Astro.props;
+---
+
+<Blog
+  title="Changelog"
+  description="New features, fixes, and improvements in every Video.js release"
+>
+  <header
+    class="mx-auto mb-10 w-full max-w-4xl overflow-hidden rounded-xs border border-manila-dark text-center md:mb-20 dark:border-transparent dark:bg-soot"
+  >
+    <div class="mx-auto max-w-3xl px-5 py-20">
+      <h1 class="font-display text-h15 uppercase lg:text-h1">Changelog</h1>
+    </div>
+    <FooterEasterEgg variant="extra-short" />
+  </header>
+  <div class="mx-auto grid w-full max-w-3xl gap-10">
+    {page.data.map((entry) => <ChangelogEntryCard entry={entry} />)}
+  </div>
+  {
+    page.lastPage > 1 && (
+      <BlogPagination page={page} label="Changelog pagination" />
+    )
+  }
+</Blog>

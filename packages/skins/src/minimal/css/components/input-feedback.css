@@ -1,6 +1,6 @@
 /* ==========================================================================
-  Input Feedback
-  ========================================================================== */
+   Input Feedback
+   ========================================================================== */
 
 .media-minimal-skin .media-input-feedback {
   position: absolute;
@@ -116,123 +116,123 @@
     border-radius: calc(Infinity * 1px);
     box-shadow: 0 1px 0 var(--media-current-shadow-color-subtle);
   }
+
+  &[data-level="high"] .media-icon--volume-high,
+  &[data-level="low"] .media-icon--volume-low,
+  &[data-level="off"] .media-icon--volume-off {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-min] .media-input-feedback-island__content,
+    &[data-max] .media-input-feedback-island__content {
+      animation: media-shake 300ms ease-in-out;
+    }
+  }
 }
 
-.media-minimal-skin .media-input-feedback-island--volume[data-level="high"] .media-icon--volume-high,
-.media-minimal-skin .media-input-feedback-island--volume[data-level="low"] .media-icon--volume-low,
-.media-minimal-skin .media-input-feedback-island--volume[data-level="off"] .media-icon--volume-off {
-  display: block;
-}
-
-.media-minimal-skin .media-input-feedback-island--status[data-status="captions-on"] .media-icon--captions-on,
-.media-minimal-skin .media-input-feedback-island--status[data-status="captions-off"] .media-icon--captions-off,
-.media-minimal-skin .media-input-feedback-island--status[data-status="fullscreen"] .media-icon--fullscreen-enter,
-.media-minimal-skin .media-input-feedback-island--status[data-status="exit-fullscreen"] .media-icon--fullscreen-exit,
-.media-minimal-skin .media-input-feedback-island--status[data-status="pip"] .media-icon--pip-enter,
-.media-minimal-skin .media-input-feedback-island--status[data-status="exit-pip"] .media-icon--pip-exit {
-  display: block;
-}
-
-/* --- Boundary shake ------------------------------------------------------- */
-
-@media (prefers-reduced-motion: no-preference) {
-  .media-minimal-skin .media-input-feedback-island--volume[data-min] .media-input-feedback-island__content,
-  .media-minimal-skin .media-input-feedback-island--volume[data-max] .media-input-feedback-island__content {
-    animation: media-shake 300ms ease-in-out;
+.media-minimal-skin .media-input-feedback-island--status {
+  &[data-status="captions-on"] .media-icon--captions-on,
+  &[data-status="captions-off"] .media-icon--captions-off,
+  &[data-status="fullscreen"] .media-icon--fullscreen-enter,
+  &[data-status="exit-fullscreen"] .media-icon--fullscreen-exit,
+  &[data-status="pip"] .media-icon--pip-enter,
+  &[data-status="exit-pip"] .media-icon--pip-exit {
+    display: block;
   }
 }
 
 /* --- Bubble ---------------------------------------------------------------- */
 
 .media-minimal-skin .media-input-feedback-bubble {
-  display: flex;
-  flex-direction: column;
+  display: grid;
   grid-row: 1;
-  grid-column: 2; /* default to center for status bubbles and undirected seeks */
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
-  transition: opacity 250ms ease-out;
-
-  @container media-root (width > 24rem) {
-    padding: 2rem;
-  }
-
-  &[data-starting-style],
-  &[data-ending-style] {
-    opacity: 0;
-    transition-timing-function: ease-in;
-    transition-duration: 200ms;
-  }
-}
-/* Direction placement — seek bubbles move to the side implied by their direction. */
-.media-minimal-skin .media-input-feedback-bubble[data-direction="backward"] {
-  grid-column: 1;
-  justify-self: left;
-}
-
-.media-minimal-skin .media-input-feedback-bubble:not([data-direction]) {
   grid-column: 2;
-  transition-timing-function:
-    ease-out, linear(0, 0.12 1.5%, 1.35 9.7%, 2.2 13.9%, 3 19.9%, 2.7 21.8%, 0.62 37.5%, 0.96 50.9%, 1);
-  transition-duration: 600ms;
-  transition-property: opacity, scale;
+  place-content: center;
+  padding: 1rem;
+  text-align: center;
 
-  @media (prefers-reduced-motion: reduce) {
-    transition: opacity 100ms ease-out;
-  }
-
-  &[data-starting-style],
-  &[data-ending-style] {
-    opacity: 0;
-    scale: 0.8;
-    transition-timing-function: ease-in;
+  /* Central bubble (play, pause) */
+  &:not([data-direction]) {
+    transition-timing-function: ease-out;
     transition-duration: 200ms;
+    transition-property: opacity, scale;
+
+    &[data-starting-style],
+    &[data-ending-style] {
+      opacity: 0;
+      scale: 0.85;
+    }
+
+    &[data-ending-style] {
+      transition-timing-function: ease-in;
+      transition-duration: 100ms;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      transition-duration: 50ms;
+      transition-property: opacity;
+    }
   }
-}
 
-.media-minimal-skin .media-input-feedback-bubble[data-direction="forward"] {
-  grid-column: 3;
-  justify-self: right;
-}
+  /* Directional bubbles (seek) */
+  &[data-direction] {
+    gap: 0.25rem;
 
-/* --- Bubble icons ---------------------------------------------------------- */
+    @container media-root (width > 24rem) {
+      padding: 1.5rem;
+    }
+  }
 
-.media-minimal-skin .media-input-feedback-bubble .media-icon {
-  display: none;
-  width: 36px;
-  height: 36px;
-}
+  &[data-direction="backward"] {
+    grid-column: 1;
+    justify-self: left;
+  }
 
-/* seek: seek icon, flipped for backward */
-.media-minimal-skin .media-input-feedback-bubble[data-direction] .media-icon--seek {
-  display: block;
-}
+  &[data-direction="forward"] {
+    grid-column: 3;
+    justify-self: right;
+  }
 
-.media-minimal-skin .media-input-feedback-bubble[data-direction="backward"] .media-icon--seek {
-  transform: scaleX(-1);
-}
+  /* Icons */
+  .media-icon {
+    display: none;
+    width: calc(var(--media-icon-size) * 2);
+    height: calc(var(--media-icon-size) * 2);
+  }
 
-@media (prefers-reduced-motion: no-preference) {
-  .media-minimal-skin
-    .media-input-feedback-bubble[data-direction="forward"]:not([data-starting-style])
+  .media-icon--seek {
+    width: calc(var(--media-icon-size) * 1.5);
+    height: calc(var(--media-icon-size) * 1.5);
+  }
+
+  &[data-direction] .media-icon--seek,
+  &[data-status="pause"] .media-icon--pause,
+  &[data-status="play"] .media-icon--play {
+    display: block;
+  }
+
+  &[data-direction="backward"] .media-icon--seek {
+    scale: -1 1;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
     .media-icon--seek {
-    animation: media-slide-in-forward 300ms ease-in-out;
-  }
+      transition-timing-function: ease-in-out;
+      transition-duration: 200ms;
+      transition-property: translate, opacity;
+    }
 
-  .media-minimal-skin
-    .media-input-feedback-bubble[data-direction="backward"]:not([data-starting-style])
-    .media-icon--seek {
-    animation: media-slide-in-backward 300ms ease-in-out;
-  }
+    &[data-starting-style] .media-icon--seek,
+    &[data-ending-style] .media-icon--seek {
+      opacity: 0;
+    }
 
-  .media-minimal-skin .media-input-feedback-island--status[data-status]:not([data-starting-style]) .media-icon,
-  .media-minimal-skin .media-input-feedback-bubble[data-status]:not([data-starting-style]) .media-icon {
-    animation: media-pop-in 250ms ease-out;
+    &[data-direction="forward"][data-starting-style] .media-icon--seek {
+      translate: -60% 0;
+    }
+    &[data-direction="backward"][data-starting-style] .media-icon--seek {
+      translate: 60% 0;
+    }
   }
-}
-
-.media-minimal-skin .media-input-feedback-bubble[data-status="pause"] .media-icon--pause,
-.media-minimal-skin .media-input-feedback-bubble[data-status="play"] .media-icon--play {
-  display: block;
 }

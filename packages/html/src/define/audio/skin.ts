@@ -31,12 +31,20 @@ function getTemplateHTML() {
       <div class="media-surface media-controls">
         <media-tooltip-group>
           <div class="media-button-group">
-            <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
-              ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
-              ${renderIcon('play', { class: 'media-icon media-icon--play' })}
-              ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
-            </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip"></media-tooltip>
+            <span class="media-button--play__wrapper">
+              <media-buffering-indicator class="media-buffering-indicator">
+                ${renderIcon('spinner', { class: 'media-icon' })}
+              </media-buffering-indicator>
+              <media-play-button commandfor="play-tooltip" class="media-button media-button--subtle media-button--icon media-button--play">
+                ${renderIcon('restart', { class: 'media-icon media-icon--restart' })}
+                ${renderIcon('play', { class: 'media-icon media-icon--play' })}
+                ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
+              </media-play-button>
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip">
+                <media-tooltip-label></media-tooltip-label>
+                <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+              </media-tooltip>
+            </span>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -44,7 +52,10 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
               <span class="media-icon__container">
@@ -52,7 +63,10 @@ function getTemplateHTML() {
                 <span class="media-icon__label">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip"></media-tooltip>
+            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="media-surface media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
           </div>
 
           <div class="media-time-controls">
@@ -67,7 +81,7 @@ function getTemplateHTML() {
                 <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
               </media-slider-preview>
             </media-time-slider>
-            <media-time type="duration" class="media-time"></media-time>
+            <media-time toggle type="remaining" class="media-time"></media-time>
           </div>
 
           <div class="media-button-group">

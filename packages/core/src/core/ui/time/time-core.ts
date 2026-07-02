@@ -15,6 +15,8 @@ export interface TimeProps {
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
   label?: string | ((state: TimeState) => string) | undefined;
+  /** Whether the time display can be toggled. */
+  toggle?: boolean | undefined;
 }
 
 export interface TimeState {
@@ -32,10 +34,10 @@ export interface TimeState {
   datetime: string;
 }
 
-const DEFAULT_LABELS: Record<TimeType, string> = {
-  current: 'Current time',
-  duration: 'Duration',
-  remaining: 'Remaining',
+const TOGGLE_LABELS: Record<TimeType, string> = {
+  current: 'Show elapsed time',
+  duration: 'Show duration',
+  remaining: 'Show remaining time',
 };
 
 export class TimeCore {
@@ -43,6 +45,7 @@ export class TimeCore {
     type: 'current',
     negativeSign: '-',
     label: '',
+    toggle: false,
   };
 
   #props = { ...TimeCore.defaultProps };
@@ -98,7 +101,15 @@ export class TimeCore {
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
-  getLabel(state: TimeState): string {
+  #getToggleType(type: TimeType, currentType: TimeType): TimeType {
+    if (type === 'current') {
+      return currentType === 'remaining' ? 'current' : 'remaining';
+    }
+
+    return currentType === 'duration' ? 'remaining' : 'duration';
+  }
+
+  getLabel(state: TimeState, type = this.#props.type): string {
     const { label } = this.#props;
 
     if (isFunction(label)) {
@@ -108,13 +119,20 @@ export class TimeCore {
       return label;
     }
 
-    return DEFAULT_LABELS[this.#props.type];
+    if (!this.#props.toggle) {
+      return state.phrase;
+    }
+
+    const toggleType = this.#getToggleType(type, state.type);
+
+    return `${state.phrase}. ${TOGGLE_LABELS[toggleType]}.`;
   }
 
-  getAttrs(state: TimeState) {
+  getAttrs(state: TimeState, type = this.#props.type) {
     return {
-      'aria-label': this.getLabel(state),
-      'aria-valuetext': state.phrase,
+      'aria-label': this.getLabel(state, type),
+      role: this.#props.toggle ? 'button' : undefined,
+      tabIndex: this.#props.toggle ? 0 : undefined,
     };
   }
 

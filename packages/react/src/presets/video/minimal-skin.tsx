@@ -1,6 +1,6 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -17,8 +17,11 @@ import {
   PipEnterIcon,
   PipExitIcon,
   PlayIcon,
+  QualityIcon,
   RestartIcon,
   SeekIcon,
+  SpeechIcon,
+  SpeedIcon,
   SpinnerIcon,
   VolumeHighIcon,
   VolumeLowIcon,
@@ -26,6 +29,7 @@ import {
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
+import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
@@ -41,6 +45,7 @@ import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
+import { useQualityOptions } from '@/ui/quality';
 import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
@@ -105,11 +110,15 @@ function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
 
 function SettingsMenu(): ReactNode {
   const playbackRate = usePlaybackRateOptions();
+  const quality = useQualityOptions();
+  const audioTrack = useAudioTrackOptions();
   const captions = useCaptionsOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
+  const hasQuality = quality?.state.availability === 'available';
+  const hasAudioTrack = audioTrack?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
 
-  if (!hasPlaybackRate && !hasCaptions) return null;
+  if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
 
   return (
     <Menu.Root side="top" align="center">
@@ -119,13 +128,118 @@ function SettingsMenu(): ReactNode {
       <Menu.Content className="media-popover media-menu media-menu--settings">
         <Menu.View className="media-menu__panel">
           <div className="media-menu__group">
-            {hasPlaybackRate && playbackRate ? (
+            {hasQuality ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="quality"
+                  className="media-menu__item media-menu__item--submenu"
+                  render={(props) => (
+                    <div {...props}>
+                      <QualityIcon className="media-icon" />
+                      <span>Quality</span>
+                      <span className="media-menu__hint">
+                        <Menu.ItemValue className="media-menu__hint-label" />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className="media-menu__panel">
+                  <Menu.Back className="media-menu__back">
+                    <MenuChevron flipped />
+                    Quality
+                  </Menu.Back>
+                  <Menu.Separator className="media-menu__separator" />
+                  <Menu.RadioGroup
+                    className="media-menu__group"
+                    value={quality.value}
+                    onValueChange={quality.setValue}
+                    aria-label="Quality"
+                  >
+                    {quality.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className="media-menu__item"
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>
+                          {option.label}
+                          {option.tier ? <sup className="media-menu__tier">{option.tier}</sup> : null}
+                        </span>
+                        {option.badge ? <span className="media-badge">{option.badge}</span> : null}
+                        <Menu.ItemIndicator
+                          checked={option.value === quality.value}
+                          forceMount
+                          className="media-menu__indicator"
+                        >
+                          <CheckIcon className="media-icon" />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+
+            {hasAudioTrack ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="audio-track"
+                  className="media-menu__item media-menu__item--submenu"
+                  render={(props) => (
+                    <div {...props}>
+                      <SpeechIcon className="media-icon" />
+                      <span>Audio</span>
+                      <span className="media-menu__hint">
+                        <Menu.ItemValue className="media-menu__hint-label" />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className="media-menu__panel">
+                  <Menu.Back className="media-menu__back">
+                    <MenuChevron flipped />
+                    Audio
+                  </Menu.Back>
+                  <Menu.Separator className="media-menu__separator" />
+                  <Menu.RadioGroup
+                    className="media-menu__group"
+                    value={audioTrack.value}
+                    onValueChange={audioTrack.setValue}
+                    aria-label="Audio tracks"
+                  >
+                    {audioTrack.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className="media-menu__item"
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === audioTrack.value}
+                          forceMount
+                          className="media-menu__indicator"
+                        >
+                          <CheckIcon className="media-icon" />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+
+            {hasPlaybackRate ? (
               <Menu.Root>
                 <Menu.Trigger
                   type="playback-rate"
                   className="media-menu__item media-menu__item--submenu"
                   render={(props) => (
                     <div {...props}>
+                      <SpeedIcon className="media-icon" />
                       <span>Speed</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />
@@ -139,6 +253,7 @@ function SettingsMenu(): ReactNode {
                     <MenuChevron flipped />
                     Speed
                   </Menu.Back>
+                  <Menu.Separator className="media-menu__separator" />
                   <Menu.RadioGroup
                     className="media-menu__group"
                     value={playbackRate.value}
@@ -166,13 +281,15 @@ function SettingsMenu(): ReactNode {
                 </Menu.Content>
               </Menu.Root>
             ) : null}
-            {hasCaptions && captions ? (
+
+            {hasCaptions ? (
               <Menu.Root>
                 <Menu.Trigger
                   type="captions"
                   className="media-menu__item media-menu__item--submenu"
                   render={(props) => (
                     <div {...props}>
+                      <CaptionsOffIcon className="media-icon" />
                       <span>Captions</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />
@@ -186,6 +303,7 @@ function SettingsMenu(): ReactNode {
                     <MenuChevron flipped />
                     Captions
                   </Menu.Back>
+                  <Menu.Separator className="media-menu__separator" />
                   <Menu.RadioGroup
                     className="media-menu__group"
                     value={captions.value}
@@ -221,10 +339,18 @@ function SettingsMenu(): ReactNode {
 }
 
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, poster, ...rest } = props;
+  const { children, className, poster, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
 
   return (
-    <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} {...rest}>
+    <Container
+      className={cn('media-minimal-skin media-minimal-skin--video', className)}
+      style={containerStyle}
+      {...rest}
+    >
       {children}
 
       {poster && (
@@ -266,7 +392,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -280,7 +409,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -294,13 +426,16 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 
           <div className="media-time-controls">
             <Time.Group className="media-time-group">
-              <Time.Value type="current" className="media-time media-time--current" />
+              <Time.Value toggle type="current" className="media-time media-time--current" />
               <Time.Separator className="media-time-separator" />
               <Time.Value type="duration" className="media-time media-time--duration" />
             </Time.Group>
@@ -339,7 +474,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -351,7 +489,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -363,7 +504,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -375,7 +519,10 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-tooltip" />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

@@ -101,5 +101,14 @@ export { syncPreload } from './playback/behaviors/sync-preload';
 // Features — Track Switching (video ABR + audio language selection)
 // =============================================================================
 
-export type { SwitchVideoTrackConfig, TrackSwitchingState } from './playback/behaviors/track-switching';
-export { DEFAULT_INITIAL_BANDWIDTH, switchAudioTrack, switchVideoTrack } from './playback/behaviors/track-switching';
+export type {
+  SwitchTextTrackConfig,
+  SwitchVideoTrackConfig,
+  TrackSwitchingState,
+} from './playback/behaviors/track-switching';
+export {
+  DEFAULT_INITIAL_BANDWIDTH,
+  switchAudioTrack,
+  switchTextTrack,
+  switchVideoTrack,
+} from './playback/behaviors/track-switching';

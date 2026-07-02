@@ -15,19 +15,21 @@ const buildModes: BuildMode[] = ['dev', 'prod'];
 
 const presets = [
   'video',
+  'video-headless',
   'video-minimal',
   'video-ui',
   'video-minimal-ui',
   'live-video',
   'live-video-minimal',
   'audio',
+  'audio-headless',
   'audio-minimal',
   'audio-ui',
   'audio-minimal-ui',
   'background',
 ];
 const media = [
-  'hls-video',
+  'hlsjs-video',
   'mux-audio',
   'mux-video',
   'native-hls-video',

@@ -75,7 +75,12 @@ export const SELECTORS = {
   // Display elements
   // HTML uses attribute `type`, React uses `data-type`
   currentTime: 'media-time[type="current"], [data-type="current"].media-time',
-  duration: 'media-time[type="duration"], [data-type="duration"].media-time',
+  duration: [
+    'media-time[type="duration"]',
+    'media-time[type="remaining"]',
+    '[data-type="duration"].media-time',
+    '[data-type="remaining"].media-time',
+  ].join(', '),
   poster: 'media-poster, img[data-visible]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
   thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
@@ -86,7 +91,7 @@ export const SELECTORS = {
   errorDialog: 'media-error-dialog, .media-error',
 
   // Media element — matches all renderer custom elements and native media
-  media: 'video, audio, hls-video, simple-hls-video, native-hls-video, dash-video, mux-video, mux-audio',
+  media: 'video, audio, hlsjs-video, simple-hls-video, native-hls-video, dash-video, mux-video, mux-audio',
 } as const;
 
 /** Data attributes used for player state (same across both renderers). */

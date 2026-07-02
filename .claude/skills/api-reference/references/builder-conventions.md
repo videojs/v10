@@ -28,15 +28,18 @@ The builder derives PascalCase from kebab-case using `kebabCase` from es-toolkit
 
 ## NAME_OVERRIDES
 
-When kebab-to-pascal conversion doesn't produce the correct name, add an override in `site/scripts/api-docs-builder/src/index.ts`:
+When kebab-to-pascal conversion doesn't produce the correct name, add an override in `site/src/utils/api-reference-overrides.ts` (the shared map the builder imports and the reference pages invert for slug lookup):
 
 ```ts
-const NAME_OVERRIDES: Record<string, string> = {
+export const NAME_OVERRIDES: Record<string, string> = {
   'pip-button': 'PiPButton',
+  'airplay-button': 'AirPlayButton',
 };
 ```
 
 Use overrides only when the standard conversion fails (e.g., acronyms like PiP). Prefer aligning component naming with the standard conversion when possible.
+
+The same map covers media elements whose PascalCase name doesn't kebab-case to their element tag name (e.g. `'hlsjs-video': 'HlsJsVideo'`). It is keyed by the generated-reference file slug regardless of component vs. media.
 
 ## Multi-Part Components
 

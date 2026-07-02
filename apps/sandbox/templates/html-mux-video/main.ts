@@ -12,7 +12,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getPlaceholderSrc, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -26,13 +26,14 @@ async function render() {
 
   const storyboard = getStoryboardSrc(state.source);
   const poster = getPosterSrc(state.source);
+  const placeholder = getPlaceholderSrc(state.source);
   const mediaAttrs = renderMediaAttrs(state);
   const playerTag = live ? 'live-video-player' : 'video-player';
 
   document.getElementById('root')!.innerHTML = html`
     <${playerTag}>
-      <${tag} class="aspect-video max-w-4xl mx-auto">
-        <mux-video src="${SOURCES[state.source].url}" debug ${mediaAttrs} playsinline crossorigin="anonymous">
+      <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
+        <mux-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </mux-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

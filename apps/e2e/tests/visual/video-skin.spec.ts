@@ -50,6 +50,87 @@ for (const { name, path } of VISUAL_PAGES) {
   });
 }
 
+// --- Portrait media layout ---
+
+test.describe('Visual — HTML Portrait Layout', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/pages/html-video-mp4.html', { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => customElements.get('video-skin'));
+    await page.evaluate(() => {
+      const root = document.getElementById('root');
+      if (!root) return;
+
+      root.innerHTML = `
+        <video-player>
+          <video-skin style="width: 320px; aspect-ratio: 16/9">
+            <video width="270" height="480" playsinline></video>
+          </video-skin>
+        </video-player>
+      `;
+    });
+  });
+
+  test('keeps the authored skin aspect ratio', async ({ page }) => {
+    const box = await page.evaluate(() => {
+      const container = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-container');
+      const rect = container?.getBoundingClientRect();
+
+      return rect ? { height: rect.height, width: rect.width } : null;
+    });
+
+    expect(box).not.toBeNull();
+    expect(box!.width / box!.height).toBeCloseTo(16 / 9, 1);
+  });
+
+  test('caps portrait thumbnails to the configured max height', async ({ page }) => {
+    const src = `data:image/svg+xml,${encodeURIComponent(
+      '<svg xmlns="http://www.w3.org/2000/svg" width="270" height="480" viewBox="0 0 270 480"><rect width="270" height="480" fill="black"/></svg>'
+    )}`;
+
+    await page.evaluate((url) => {
+      const thumbnail = document
+        .querySelector('video-skin')
+        ?.shadowRoot?.querySelector('media-slider-thumbnail') as HTMLElement & {
+        thumbnails?: Array<{ url: string; startTime: number; width: number; height: number }>;
+      };
+
+      if (!thumbnail) return;
+      thumbnail.thumbnails = [{ url, startTime: 0, width: 270, height: 480 }];
+    }, src);
+
+    await page.waitForFunction(() => {
+      const thumbnail = document.querySelector('video-skin')?.shadowRoot?.querySelector('media-slider-thumbnail');
+
+      return (
+        thumbnail &&
+        !thumbnail.hasAttribute('data-hidden') &&
+        !thumbnail.hasAttribute('data-loading') &&
+        parseFloat(getComputedStyle(thumbnail).height) > 0
+      );
+    });
+
+    const size = await page.evaluate(() => {
+      const thumbnail = document.querySelector('video-skin')!.shadowRoot!.querySelector('media-slider-thumbnail')!;
+      const style = getComputedStyle(thumbnail);
+      const probe = document.createElement('div');
+      probe.style.height = style.getPropertyValue('--media-slider-thumbnail-max-height');
+      document.body.append(probe);
+
+      const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);
+      probe.remove();
+
+      return {
+        height: parseFloat(style.height),
+        configuredMaxHeight,
+        maxHeight: parseFloat(style.maxHeight),
+      };
+    });
+
+    expect(size.maxHeight).toBeCloseTo(size.configuredMaxHeight, 0);
+    expect(size.height).toBeLessThanOrEqual(size.maxHeight);
+  });
+});
+
 // --- Captions snapshot (dedicated page with subtitle track baked in) ---
 
 test.describe('Visual — Captions', () => {

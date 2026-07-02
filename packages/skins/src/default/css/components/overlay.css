@@ -25,6 +25,12 @@
   opacity: 1;
 }
 
+.media-default-skin .media-buffering-indicator[data-visible] ~ .media-overlay {
+  background: oklch(0 0 0 / 0.35);
+  opacity: 1;
+  backdrop-filter: blur(8px);
+}
+
 .media-default-skin .media-error[data-open] ~ .media-overlay {
   backdrop-filter: blur(16px) saturate(1.5);
 }

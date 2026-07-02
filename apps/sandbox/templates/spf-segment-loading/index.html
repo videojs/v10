@@ -118,9 +118,9 @@
         border: 1px solid #ddd;
         border-radius: 4px;
       }
-      #rendition-picker h2, #audio-track-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+      #rendition-picker h2, #audio-track-picker h2, #text-track-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
 
-      #audio-track-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      #audio-track-buttons, #text-track-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
       .audio-track-btn {
         padding: 6px 12px;
         font-family: monospace;
@@ -249,6 +249,11 @@
     <div id="audio-track-picker">
       <h2>Audio Tracks</h2>
       <div id="audio-track-buttons">Waiting for presentation…</div>
+    </div>
+
+    <div id="text-track-picker">
+      <h2>Subtitles / Captions</h2>
+      <div id="text-track-buttons">Waiting for presentation…</div>
     </div>
 
     <div id="resolution-status">

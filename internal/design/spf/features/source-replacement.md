@@ -110,7 +110,7 @@ source change, not via the resolved/unresolved cascade):
 | Behavior | Per-source reset |
 |---|---|
 | `trackLoadTriggers` | `loadActivated` reset to `false` on `(mediaElement, presentation.url)` identity change |
-| `selectAudioTrack` / `selectTextTrack` / `switchVideoQuality` | Re-run pickers when presentation transitions to resolved with new content |
+| `selectAudioTrack` / `switchTextTrack` / `switchVideoQuality` | Re-pick when presentation transitions to resolved with new content |
 
 **Cross-source preservation:**
 

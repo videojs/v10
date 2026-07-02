@@ -13,23 +13,23 @@ export const root = cn(
   baseRoot,
   '[--media-controls-background-color:oklch(1_0_0)]',
   '[--media-controls-backdrop-filter:blur(16px)_saturate(1.5)]',
-  '[--media-controls-border-color:oklch(0_0_0/0.05)]',
+  '[--media-controls-border-color:oklch(0_0_0/0.1)]',
   '[--media-controls-text-color:var(--media-color-primary,oklch(0_0_0))]',
   '[--media-error-dialog-transition-duration:250ms]',
   '[--media-error-dialog-transition-delay:100ms]',
   '[--media-popup-transition-duration:100ms]',
   '[--media-popup-transition-timing-function:ease-out]',
-  '[--media-tooltip-background-color:oklch(1_0_0/0.1)]',
-  '[--media-tooltip-border-color:oklch(0_0_0/0.05)]',
+  '[--media-tooltip-background-color:oklch(1_0_0)]',
+  '[--media-tooltip-border-color:oklch(0_0_0/0.1)]',
   '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
   '[--media-tooltip-text-color:currentColor]',
   '[--media-tooltip-side-offset:0.75rem]',
   '[--media-tooltip-boundary-offset:0.75rem]',
-  '[--media-popover-background-color:oklch(1_0_0/0.1)]',
-  '[--media-popover-border-color:oklch(0_0_0/0.05)]',
-  '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
-  '[--media-popover-side-offset:0.75rem]',
-  '[--media-popover-boundary-offset:0.75rem]',
+  '[--media-popover-background-color:var(--media-tooltip-background-color)]',
+  '[--media-popover-border-color:var(--media-tooltip-border-color)]',
+  '[--media-popover-backdrop-filter:var(--media-tooltip-backdrop-filter)]',
+  '[--media-popover-side-offset:var(--media-tooltip-side-offset)]',
+  '[--media-popover-boundary-offset:var(--media-tooltip-boundary-offset)]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -57,6 +57,18 @@ export const controls = cn(
   // Border
   'ring-1 ring-(color:--media-controls-border-color)'
 );
+
+export const playButton = {
+  wrapper: 'group/play inline-flex relative',
+  /** `peer/play-buffering` on `bufferingRoot`; merge onto the play trigger after the peer in DOM. */
+  control: 'peer-data-visible/play-buffering:[&>svg]:opacity-0',
+  bufferingRoot: cn(
+    'peer/play-buffering',
+    'absolute inset-0 z-10 hidden place-content-center pointer-events-none text-inherit',
+    'not-data-visible:[--media-spinner-animation:none]',
+    'data-visible:grid'
+  ),
+};
 
 /* ==========================================================================
    Popup
@@ -104,6 +116,7 @@ export const error = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';

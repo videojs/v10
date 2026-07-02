@@ -3,8 +3,10 @@
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
 import type { ReactNode } from 'react';
 
+import { useAudioTrackOptions } from '../audio-track/use-audio-track-options';
 import { useCaptionsOptions } from '../captions-radio-group/use-captions-options';
 import { usePlaybackRateOptions } from '../playback-rate/use-playback-rate-options';
+import { useQualityOptions } from '../quality/use-quality-options';
 import { MenuItemSettingContextProvider } from './context';
 import type { MenuItemSettingType } from './menu-item-type';
 
@@ -42,9 +44,39 @@ function CaptionsMenuItemSettingProvider({ children }: { children: ReactNode }):
   );
 }
 
+function QualityMenuItemSettingProvider({ children }: { children: ReactNode }): ReactNode {
+  const quality = useQualityOptions();
+  if (!quality) return children;
+
+  const { state, options, value } = quality;
+  const label = options.find((option) => option.value === value)?.label ?? 'Auto';
+
+  return (
+    <MenuItemSettingContextProvider value={{ type: 'quality', label, availability: state.availability }}>
+      {children}
+    </MenuItemSettingContextProvider>
+  );
+}
+
+function AudioTrackMenuItemSettingProvider({ children }: { children: ReactNode }): ReactNode {
+  const audioTrack = useAudioTrackOptions();
+  if (!audioTrack) return children;
+
+  const { state, options, value } = audioTrack;
+  const label = options.find((option) => option.value === value)?.label ?? '';
+
+  return (
+    <MenuItemSettingContextProvider value={{ type: 'audio-track', label, availability: state.availability }}>
+      {children}
+    </MenuItemSettingContextProvider>
+  );
+}
+
 export function MenuItemSettingProvider({ type, children }: MenuItemSettingProviderProps): ReactNode {
   if (type === 'playback-rate')
     return <PlaybackRateMenuItemSettingProvider>{children}</PlaybackRateMenuItemSettingProvider>;
+  if (type === 'quality') return <QualityMenuItemSettingProvider>{children}</QualityMenuItemSettingProvider>;
+  if (type === 'audio-track') return <AudioTrackMenuItemSettingProvider>{children}</AudioTrackMenuItemSettingProvider>;
   if (type === 'captions') return <CaptionsMenuItemSettingProvider>{children}</CaptionsMenuItemSettingProvider>;
   return children;
 }

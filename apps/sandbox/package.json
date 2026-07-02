@@ -21,7 +21,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@tailwindcss/vite": "^4.2.1",
+    "@tailwindcss/vite": "^4.3.1",
     "@types/fs-extra": "^11.0.4",
     "@types/prompts": "^2.4.9",
     "@types/react": "^19.2.14",
@@ -35,7 +35,7 @@
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "rimraf": "^6.1.3",
-    "tailwindcss": "^4.2.1",
+    "tailwindcss": "^4.3.1",
     "tsx": "^4.21.0",
     "vite": "^8.0.0"
   }

@@ -1,5 +1,17 @@
-import type { MediaPlaybackRateState, MediaTextTrackState } from '@videojs/core';
-import { CAPTIONS_OFF_VALUE, type CaptionsRadioGroupCore, type PlaybackRateRadioGroupCore } from '@videojs/core';
+import type {
+  MediaAudioTrackState,
+  MediaPlaybackRateState,
+  MediaQualityState,
+  MediaTextTrackState,
+} from '@videojs/core';
+import {
+  type AudioTrackRadioGroupCore,
+  CAPTIONS_OFF_VALUE,
+  type CaptionsRadioGroupCore,
+  type PlaybackRateRadioGroupCore,
+  QUALITY_AUTO_VALUE,
+  type QualityRadioGroupCore,
+} from '@videojs/core';
 
 import type { MenuItemSettingType } from './menu-item-type';
 
@@ -12,9 +24,11 @@ export function getMenuItemSettingState(
   type: MenuItemSettingType,
   cores: {
     playbackRate: PlaybackRateRadioGroupCore;
+    quality: QualityRadioGroupCore;
+    audioTrack: AudioTrackRadioGroupCore;
     captions: CaptionsRadioGroupCore;
   },
-  media: MediaPlaybackRateState | MediaTextTrackState
+  media: MediaPlaybackRateState | MediaQualityState | MediaAudioTrackState | MediaTextTrackState
 ): MenuItemSettingState {
   if (type === 'playback-rate') {
     cores.playbackRate.setMedia(media as MediaPlaybackRateState);
@@ -22,6 +36,33 @@ export function getMenuItemSettingState(
 
     return {
       label: cores.playbackRate.getRateLabel(state.rate),
+      availability: state.availability,
+    };
+  }
+
+  if (type === 'quality') {
+    cores.quality.setMedia(media as MediaQualityState);
+    const state = cores.quality.getState();
+
+    if (state.value === QUALITY_AUTO_VALUE) {
+      return { label: state.autoLabel, availability: state.availability };
+    }
+
+    const rendition = state.renditions.find((candidate) => candidate.value === state.value);
+
+    return {
+      label: rendition?.label ?? 'Auto',
+      availability: state.availability,
+    };
+  }
+
+  if (type === 'audio-track') {
+    cores.audioTrack.setMedia(media as MediaAudioTrackState);
+    const state = cores.audioTrack.getState();
+    const track = state.tracks.find((candidate) => candidate.value === state.value);
+
+    return {
+      label: track?.label ?? '',
       availability: state.availability,
     };
   }

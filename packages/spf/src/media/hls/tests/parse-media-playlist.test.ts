@@ -296,4 +296,91 @@ subtitle.vtt
       expect(result.initialization).toBeUndefined();
     });
   });
+
+  describe('container detection (non-fMP4)', () => {
+    const unresolvedVideo: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'video-0',
+      url: 'https://example.com/video/playlist.m3u8',
+      bandwidth: 1400000,
+      codecs: ['avc1.4d401f'],
+      mimeType: 'video/mp4',
+    };
+    const unresolvedAudio: PartiallyResolvedAudioTrack = {
+      type: 'audio',
+      id: 'audio-0',
+      url: 'https://example.com/audio/playlist.m3u8',
+      bandwidth: 128000,
+      codecs: ['mp4a.40.2'],
+      groupId: 'audio',
+      name: 'Default',
+      sampleRate: 48000,
+      channels: 2,
+      mimeType: 'audio/mp4',
+    };
+
+    it('relabels to video/mp2t when there is no EXT-X-MAP and segments are .ts', () => {
+      const playlist = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXTINF:6.0,
+segment0.ts
+#EXTINF:6.0,
+segment1.ts
+#EXT-X-ENDLIST`;
+      expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp2t');
+    });
+
+    it('uses video/mp2t for audio TS renditions too (no audio/mp2t)', () => {
+      const playlist = `#EXTM3U
+#EXTINF:6.0,
+a0.ts
+#EXT-X-ENDLIST`;
+      expect(parseMediaPlaylist(playlist, unresolvedAudio).mimeType).toBe('video/mp2t');
+    });
+
+    it('ignores the query string when checking the .ts extension', () => {
+      const playlist = `#EXTM3U
+#EXTINF:6.0,
+https://cdn.example.com/path/segment0.ts?token=abc123&expires=1
+#EXT-X-ENDLIST`;
+      expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp2t');
+    });
+
+    it('keeps the fMP4 default when an EXT-X-MAP init segment is present (even with a .ts-less map)', () => {
+      const playlist = `#EXTM3U
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:6.0,
+segment0.ts
+#EXT-X-ENDLIST`;
+      // EXT-X-MAP present ⇒ fMP4 by definition; never relabel.
+      expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp4');
+    });
+
+    it('relabels to audio/aac when there is no EXT-X-MAP and segments are .aac (raw ADTS)', () => {
+      const playlist = `#EXTM3U
+#EXTINF:9.98,
+fileSequence0.aac
+#EXTINF:9.98,
+fileSequence1.aac
+#EXT-X-ENDLIST`;
+      expect(parseMediaPlaylist(playlist, unresolvedAudio).mimeType).toBe('audio/aac');
+    });
+
+    it('keeps the fMP4 default for an .aac rendition that has an EXT-X-MAP', () => {
+      const playlist = `#EXTM3U
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:9.98,
+fileSequence0.aac
+#EXT-X-ENDLIST`;
+      expect(parseMediaPlaylist(playlist, unresolvedAudio).mimeType).toBe('audio/mp4');
+    });
+
+    it('keeps the fMP4 default when there is no map but the extension is unrecognized (e.g. .mp4)', () => {
+      const playlist = `#EXTM3U
+#EXTINF:6.0,
+segment0.mp4
+#EXT-X-ENDLIST`;
+      expect(parseMediaPlaylist(playlist, unresolvedVideo).mimeType).toBe('video/mp4');
+    });
+  });
 });

@@ -1,5 +1,6 @@
 import A from './A.astro';
 import Blockquote from './Blockquote.astro';
+import CodeFrame from './CodeFrame.astro';
 import Em from './Em.astro';
 import H1Warning from './H1Warning.astro';
 import H2Markdown from './H2Markdown.astro';
@@ -13,7 +14,6 @@ import Li from './Li.astro';
 import MarkdownCode from './MarkdownCode.astro';
 import Ol from './Ol.astro';
 import P from './P.astro';
-import Pre from './Pre.astro';
 import Strong from './Strong.astro';
 import Table from './Table.astro';
 import Tbody from './Tbody.astro';
@@ -40,8 +40,8 @@ const defaultMarkdownComponents = {
   blockquote: Blockquote,
   hr: Hr,
   img: Img,
-  pre: Pre,
   code: MarkdownCode,
+  CodeFrame,
   table: Table,
   thead: Thead,
   tbody: Tbody,

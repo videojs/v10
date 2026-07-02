@@ -46,7 +46,11 @@ export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOption
     state,
     value: state.value,
     options: [
-      { value: CAPTIONS_OFF_VALUE, label: 'Off', disabled: state.disabled },
+      {
+        value: CAPTIONS_OFF_VALUE,
+        label: 'Off',
+        disabled: state.disabled,
+      },
       ...state.tracks.map((track) => ({
         value: track.value,
         label: track.label,

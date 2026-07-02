@@ -27,6 +27,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/overview' },
       { slug: 'how-to/build-with-ai' },
       { slug: 'concepts/v10-roadmap', sidebarLabel: 'Roadmap' },
+      { href: '/changelog', sidebarLabel: 'Changelog' },
       { slug: 'concepts/browser-support' },
     ],
   },
@@ -35,6 +36,7 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
     contents: [
+      { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
       { slug: 'concepts/features' },
       { slug: 'concepts/skins' },
       { slug: 'concepts/presets' },
@@ -46,7 +48,11 @@ export const sidebar: Sidebar = [
     sidebarLabel: 'How to',
     llmsDescription:
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
-    contents: [{ slug: 'how-to/customize-skins' }, { slug: 'how-to/build-your-own-component' }],
+    contents: [
+      { slug: 'how-to/customize-skins' },
+      { slug: 'how-to/build-your-own-component' },
+      { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
+    ],
   },
   {
     sidebarLabel: 'Components',
@@ -58,6 +64,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/airplay-button' },
       { slug: 'reference/buffering-indicator' },
       { slug: 'reference/captions-button' },
+      { slug: 'reference/cast-button' },
       { slug: 'reference/controls' },
       { slug: 'reference/fullscreen-button' },
       { slug: 'reference/mute-button' },
@@ -73,6 +80,20 @@ export const sidebar: Sidebar = [
       { slug: 'reference/time-slider' },
       { slug: 'reference/tooltip' },
       { slug: 'reference/volume-slider' },
+    ],
+  },
+  {
+    sidebarLabel: 'Media Elements',
+    llmsDescription: 'API Reference for media elements that handle streaming protocols and media playback.',
+    contents: [
+      { slug: 'reference/background-video' },
+      { slug: 'reference/dash-video' },
+      { slug: 'reference/hlsjs-video' },
+      { slug: 'reference/mux-audio' },
+      { slug: 'reference/mux-video' },
+      { slug: 'reference/native-hls-video' },
+      { slug: 'reference/simple-hls-audio-only' },
+      { slug: 'reference/simple-hls-video' },
     ],
   },
   {
@@ -134,6 +155,8 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-pip', sidebarLabel: 'Picture-in-picture' },
       { slug: 'reference/feature-playback' },
       { slug: 'reference/feature-playback-rate' },
+      { slug: 'reference/feature-quality' },
+      { slug: 'reference/feature-audio-track' },
       { slug: 'reference/feature-remote-playback' },
       { slug: 'reference/feature-source' },
       { slug: 'reference/feature-stream-type' },

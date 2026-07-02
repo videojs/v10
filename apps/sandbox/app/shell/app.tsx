@@ -18,6 +18,7 @@ import { Preview } from './preview';
 function getPagePath(platform: Platform, preset: Preset): string {
   if (platform === 'cdn') return '/cdn/';
   if (preset === 'background-video') return `/${platform}-background-video/`;
+  if (preset === 'vimeo-video') return `/${platform}-vimeo-video/`;
   return `/${platform}-${preset}/`;
 }
 
@@ -113,9 +114,9 @@ export function App() {
     }
   }, [preset, source, setSource]);
 
-  // CDN and background video do not have a Tailwind skin variant.
+  // CDN, background video, and vimeo video do not have a Tailwind skin variant.
   useEffect(() => {
-    if ((platform === 'cdn' || preset === 'background-video') && styling === 'tailwind') {
+    if ((platform === 'cdn' || preset === 'background-video' || preset === 'vimeo-video') && styling === 'tailwind') {
       setStyling('css');
     }
   }, [platform, preset, styling]);
@@ -151,6 +152,7 @@ export function App() {
         isSimpleHls={preset.startsWith('simple-hls-')}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
+        isVimeoVideo={preset === 'vimeo-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

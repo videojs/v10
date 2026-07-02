@@ -29,7 +29,7 @@ const loadLatest = createLatestLoader();
 async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
   switch (preset) {
     case 'video':
-    case 'hls-video':
+    case 'hlsjs-video':
     case 'mux-video':
     case 'native-hls-video':
     case 'simple-hls-video':
@@ -56,8 +56,8 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
 
 async function loadCdnMedia(preset: Preset) {
   switch (preset) {
-    case 'hls-video':
-      await import('@videojs/html/cdn/media/hls-video');
+    case 'hlsjs-video':
+      await import('@videojs/html/cdn/media/hlsjs-video');
       break;
     case 'mux-video':
       await import('@videojs/html/cdn/media/mux-video');
@@ -103,7 +103,7 @@ function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
 
 function getMediaTag(preset: Preset): string {
   const tags: Partial<Record<Preset, string>> = {
-    'hls-video': 'hls-video',
+    'hlsjs-video': 'hlsjs-video',
     'mux-video': 'mux-video',
     'mux-audio': 'mux-audio',
     'native-hls-video': 'native-hls-video',
@@ -126,7 +126,7 @@ function loadStylesheets(preset: Preset, skin: Skin) {
 function isVideoPreset(preset: Preset): boolean {
   return (
     preset === 'video' ||
-    preset === 'hls-video' ||
+    preset === 'hlsjs-video' ||
     preset === 'mux-video' ||
     preset === 'native-hls-video' ||
     preset === 'simple-hls-video' ||
@@ -136,7 +136,7 @@ function isVideoPreset(preset: Preset): boolean {
 
 function canPlayLive(preset: Preset): boolean {
   return (
-    preset === 'hls-video' || preset === 'mux-video' || preset === 'native-hls-video' || preset === 'simple-hls-video'
+    preset === 'hlsjs-video' || preset === 'mux-video' || preset === 'native-hls-video' || preset === 'simple-hls-video'
   );
 }
 

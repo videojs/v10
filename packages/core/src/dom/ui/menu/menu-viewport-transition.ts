@@ -1,9 +1,12 @@
+import { resolveCSSLength } from '@videojs/utils/dom';
+import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { TransitionDataAttrs } from '../../../core/ui/transition';
 import { forceLayout } from '../../utils/layout';
 import type { MenuViewTransitionState } from './create-menu-view-transition';
 
 export interface MenuViewportTransitionOptions {
   minWidth?: number;
+  availableWidth?: number | string;
 }
 
 export interface MenuViewportAttrs {
@@ -28,6 +31,7 @@ interface InlineStyleSnapshotEntry {
 
 interface PendingMenuViewTransition {
   entering: HTMLElement;
+  availableWidth: number | null;
   fromSize: MenuViewSize;
   toSize: MenuViewSize;
 }
@@ -44,6 +48,7 @@ const MENU_VIEW_ACTIVE_STATE = 'active';
 const MENU_VIEW_INACTIVE_STATE = 'inactive';
 const MENU_ROOT_VIEW_ATTR = 'data-menu-root-view';
 const MENU_VIEWPORT_ATTR = 'data-menu-viewport';
+const MENU_VIEW_LAYOUT_ATTRS = ['data-availability'];
 const MENU_WIDTH_VAR = '--media-menu-width';
 const MENU_HEIGHT_VAR = '--media-menu-height';
 const MENU_VIEW_MEASURE_STYLE_PROPERTIES = [
@@ -128,6 +133,19 @@ function resolveMinWidth(options: MenuViewportTransitionOptions | undefined): nu
   return options?.minWidth ?? DEFAULT_MENU_VIEWPORT_MIN_WIDTH;
 }
 
+function resolveAvailableWidth(
+  content: HTMLElement,
+  options: MenuViewportTransitionOptions | undefined
+): number | null {
+  const inlineWidth = content.style.getPropertyValue(PopoverCSSVars.availableWidth);
+  const value =
+    options?.availableWidth || inlineWidth || getComputedStyle(content).getPropertyValue(PopoverCSSVars.availableWidth);
+
+  const width = typeof value === 'number' ? value : resolveCSSLength(content, value);
+
+  return Number.isFinite(width) && width > 0 ? width : null;
+}
+
 function snapshotInlineStyle(element: HTMLElement): InlineStyleSnapshotEntry[] {
   return MENU_VIEW_MEASURE_STYLE_PROPERTIES.map((property) => ({
     property,
@@ -146,8 +164,14 @@ function restoreInlineStyle(element: HTMLElement, snapshot: InlineStyleSnapshotE
   }
 }
 
-function measureMenuView(view: HTMLElement, minWidth: number): MenuViewSize {
+function measureMenuView(
+  content: HTMLElement,
+  view: HTMLElement,
+  minWidth: number,
+  options?: MenuViewportTransitionOptions
+): MenuViewSize {
   const snapshot = snapshotInlineStyle(view);
+  const availableWidth = resolveAvailableWidth(content, options);
 
   try {
     view.style.setProperty('position', 'absolute');
@@ -161,10 +185,19 @@ function measureMenuView(view: HTMLElement, minWidth: number): MenuViewSize {
     view.style.setProperty('max-width', 'none');
     forceLayout(view);
 
-    const rect = view.getBoundingClientRect();
+    let rect = view.getBoundingClientRect();
+    const naturalWidth = Math.ceil(Math.max(minWidth, rect.width, view.scrollWidth));
+    const width = Math.ceil(availableWidth ? Math.max(minWidth, Math.min(naturalWidth, availableWidth)) : naturalWidth);
+
+    if (width !== naturalWidth) {
+      view.style.setProperty('width', `${width}px`);
+      view.style.setProperty('max-width', `${width}px`);
+      forceLayout(view);
+      rect = view.getBoundingClientRect();
+    }
 
     return {
-      width: Math.ceil(Math.max(minWidth, rect.width, view.scrollWidth)),
+      width,
       height: Math.ceil(Math.max(rect.height, view.scrollHeight)),
     };
   } finally {
@@ -199,10 +232,11 @@ function prepareEnteringMenuView(
   options?: MenuViewportTransitionOptions
 ): void {
   const minWidth = resolveMinWidth(options);
-  const fromSize = measureMenuView(rootView, minWidth);
-  const toSize = measureMenuView(entering, minWidth);
+  const availableWidth = resolveAvailableWidth(content, options);
+  const fromSize = measureMenuView(content, rootView, minWidth, options);
+  const toSize = measureMenuView(content, entering, minWidth, options);
 
-  state.pending = { entering, fromSize, toSize };
+  state.pending = { entering, availableWidth, fromSize, toSize };
   setMenuViewState(rootView, MENU_VIEW_ACTIVE_STATE);
   setViewportSize(content, fromSize);
   forceLayout(content);
@@ -216,13 +250,15 @@ function startEnteringMenuView(
   options?: MenuViewportTransitionOptions
 ): void {
   const minWidth = resolveMinWidth(options);
+  const availableWidth = resolveAvailableWidth(content, options);
   const current =
-    state.pending?.entering === entering
+    state.pending?.entering === entering && state.pending.availableWidth === availableWidth
       ? state.pending
       : {
           entering,
-          fromSize: measureMenuView(rootView, minWidth),
-          toSize: measureMenuView(entering, minWidth),
+          availableWidth,
+          fromSize: measureMenuView(content, rootView, minWidth, options),
+          toSize: measureMenuView(content, entering, minWidth, options),
         };
 
   state.pending = null;
@@ -244,8 +280,8 @@ function startExitingMenuView(
   transitionState.pending = null;
 
   const minWidth = resolveMinWidth(options);
-  const fromSize = measureMenuView(exiting, minWidth);
-  const toSize = measureMenuView(rootView, minWidth);
+  const fromSize = measureMenuView(content, exiting, minWidth, options);
+  const toSize = measureMenuView(content, rootView, minWidth, options);
 
   setViewportSize(content, fromSize);
   setMenuViewState(rootView, MENU_VIEW_INACTIVE_STATE);
@@ -260,17 +296,70 @@ export function syncMenuViewRoot(
   hasActiveChildView: boolean,
   options?: MenuViewportTransitionOptions
 ): void {
-  if (!content || hasActiveChildView) return;
+  if (!content) return;
 
   const viewport = getViewportElement(content);
   const rootView = getRootViewElement(viewport);
 
-  if (!rootView || getActiveMenuViewElement(viewport)) return;
+  if (!rootView) return;
 
-  const size = measureMenuView(rootView, resolveMinWidth(options));
+  const activeView = getActiveMenuViewElement(viewport);
+
+  if (activeView) {
+    if (rootView.getAttribute(MENU_VIEW_STATE_ATTR) === MENU_VIEW_INACTIVE_STATE) {
+      const size = measureMenuView(content, activeView, resolveMinWidth(options), options);
+      setViewportSize(content, size);
+    }
+
+    return;
+  }
+
+  if (hasActiveChildView) return;
+
+  const size = measureMenuView(content, rootView, resolveMinWidth(options), options);
 
   setMenuViewState(rootView, MENU_VIEW_ACTIVE_STATE);
   setViewportSize(content, size);
+}
+
+export function observeMenuViewContent(content: HTMLElement, onChange: () => void): () => void {
+  if (typeof MutationObserver === 'undefined') return () => {};
+
+  let rafId = 0;
+
+  function scheduleChange(): void {
+    cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(() => {
+      rafId = 0;
+      onChange();
+    });
+  }
+
+  const observer = new MutationObserver((records) => {
+    const changed = records.some((record) => {
+      if (record.type !== 'attributes') return true;
+
+      const name = record.attributeName;
+      if (!name) return true;
+
+      return record.oldValue !== (record.target as Element).getAttribute(name);
+    });
+
+    if (changed) scheduleChange();
+  });
+
+  observer.observe(content, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeOldValue: true,
+    attributeFilter: MENU_VIEW_LAYOUT_ATTRS,
+  });
+
+  return () => {
+    cancelAnimationFrame(rafId);
+    observer.disconnect();
+  };
 }
 
 export function syncMenuViewTransition(
@@ -289,7 +378,10 @@ export function syncMenuViewTransition(
   const state = getViewportTransitionState(content);
   const phaseKey = `${viewState.phase}:${viewState.direction}`;
 
-  if (state.phaseKeys.get(view) === phaseKey) return;
+  const shouldResyncActiveView =
+    viewState.phase === 'active' && rootView.getAttribute(MENU_VIEW_STATE_ATTR) !== MENU_VIEW_INACTIVE_STATE;
+
+  if (state.phaseKeys.get(view) === phaseKey && !shouldResyncActiveView) return;
 
   state.phaseKeys.set(view, phaseKey);
 

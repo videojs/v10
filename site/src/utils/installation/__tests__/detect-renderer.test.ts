@@ -3,15 +3,36 @@ import { articleFor, detectRenderer, isRendererValidForUseCase } from '../detect
 
 describe('detectRenderer', () => {
   describe('domain rules', () => {
-    // Domain-specific rules (YouTube, Vimeo, Mux, Spotify, Cloudflare, JW Player, Wistia)
-    // are commented out until their renderer elements are implemented.
-    // Mux stream.mux.com URLs with .m3u8 extension are detected as HLS via extension rules.
-
-    it('detects stream.mux.com .m3u8 as HLS', () => {
+    it('detects stream.mux.com as Mux (video), taking precedence over the .m3u8 extension rule', () => {
       expect(detectRenderer('https://stream.mux.com/abc123.m3u8', 'default-video')).toEqual({
-        renderer: 'hls',
-        label: 'HLS',
+        renderer: 'mux-video',
+        label: 'Mux',
       });
+    });
+
+    it('resolves a Mux host to mux-audio in an audio use case (falls through from the mux-video rule)', () => {
+      expect(detectRenderer('https://stream.mux.com/abc123.m3u8', 'default-audio')).toEqual({
+        renderer: 'mux-audio',
+        label: 'Mux',
+      });
+    });
+
+    it('detects vimeo.com as Vimeo', () => {
+      expect(detectRenderer('https://vimeo.com/648359100', 'default-video')).toEqual({
+        renderer: 'vimeo',
+        label: 'Vimeo',
+      });
+    });
+
+    it('detects player.vimeo.com as Vimeo', () => {
+      expect(detectRenderer('https://player.vimeo.com/video/648359100', 'default-video')).toEqual({
+        renderer: 'vimeo',
+        label: 'Vimeo',
+      });
+    });
+
+    it('returns null for a Vimeo URL in an audio use case (no audio fallthrough)', () => {
+      expect(detectRenderer('https://vimeo.com/648359100', 'default-audio')).toBeNull();
     });
   });
 
@@ -23,7 +44,16 @@ describe('detectRenderer', () => {
       });
     });
 
-    // .mpd detection commented out until DASH renderer is implemented
+    it('detects .mpd as DASH', () => {
+      expect(detectRenderer('https://example.com/video.mpd', 'default-video')).toEqual({
+        renderer: 'dash',
+        label: 'DASH',
+      });
+    });
+
+    it('returns null for .mpd in an audio use case', () => {
+      expect(detectRenderer('https://example.com/video.mpd', 'default-audio')).toBeNull();
+    });
 
     it('detects .mp4 as HTML5 Video', () => {
       expect(detectRenderer('https://example.com/video.mp4', 'default-video')).toEqual({
@@ -167,5 +197,20 @@ describe('isRendererValidForUseCase', () => {
 
   it('html5-video is not valid for background-video', () => {
     expect(isRendererValidForUseCase('html5-video', 'background-video')).toBe(false);
+  });
+
+  it('dash and mux-video are valid for default-video', () => {
+    expect(isRendererValidForUseCase('dash', 'default-video')).toBe(true);
+    expect(isRendererValidForUseCase('mux-video', 'default-video')).toBe(true);
+  });
+
+  it('vimeo is valid for default-video but not default-audio', () => {
+    expect(isRendererValidForUseCase('vimeo', 'default-video')).toBe(true);
+    expect(isRendererValidForUseCase('vimeo', 'default-audio')).toBe(false);
+  });
+
+  it('mux-audio is valid for default-audio but not default-video', () => {
+    expect(isRendererValidForUseCase('mux-audio', 'default-audio')).toBe(true);
+    expect(isRendererValidForUseCase('mux-audio', 'default-video')).toBe(false);
   });
 });

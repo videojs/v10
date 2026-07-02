@@ -118,7 +118,7 @@ When the user goes fullscreen, the **container** goes fullscreen — not the vid
 Media discovery is handled by the provider, not the container. When a media component like `<Video>` registers itself via context, the provider wires it to the store and all of the player's features.
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
-Media discovery is handled by the provider, not the container. Custom media elements like `<hls-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are picked up automatically via a `querySelector` fallback. No `slot="media"` attribute is needed.
+Media discovery is handled by the provider, not the container. Custom media elements like `<hlsjs-video>` register themselves via context when they connect. Plain `<video>` and `<audio>` elements are picked up automatically via a `querySelector` fallback. No `slot="media"` attribute is needed.
 </FrameworkCase>
 
 ### Interaction surface
