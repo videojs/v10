@@ -1,9 +1,11 @@
 import type { MediaAudioTrackState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
@@ -90,16 +92,19 @@ defineElement(MenuRadioGroupElement.tagName, MenuRadioGroupElement);
 defineElement(MenuRadioItemElement.tagName, MenuRadioItemElement);
 defineElement(MenuItemIndicatorElement.tagName, MenuItemIndicatorElement);
 defineElement(AudioTrackRadioGroupElement.tagName, AudioTrackRadioGroupElement);
+defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 defineElement('test-audio-track-player', TestPlayerProviderElement);
 
 function setup({
   audioTrackList,
   selectAudioTrack,
   template,
+  locale,
 }: {
   audioTrackList?: MediaAudioTrackState['audioTrackList'] | undefined;
   selectAudioTrack?: MediaAudioTrackState['selectAudioTrack'] | undefined;
   template?: string | undefined;
+  locale?: string | undefined;
 } = {}) {
   const store = createAudioTrackStore({ audioTrackList, selectAudioTrack });
   const provider = document.createElement('test-audio-track-player') as TestPlayerProviderElement;
@@ -116,7 +121,15 @@ function setup({
 
   menu.append(options);
   provider.append(menu);
-  document.body.append(provider);
+
+  if (locale) {
+    const i18n = new MediaI18nProviderElement();
+    i18n.setAttribute('lang', locale);
+    i18n.append(provider);
+    document.body.append(i18n);
+  } else {
+    document.body.append(provider);
+  }
 
   return { menu, options };
 }
@@ -136,6 +149,7 @@ async function waitForMenu(menu: MenuElement, options?: AudioTrackRadioGroupElem
 }
 
 afterEach(() => {
+  resetI18nRegistryForTesting();
   document.body.innerHTML = '';
 });
 
@@ -167,6 +181,25 @@ describe('AudioTrackRadioGroupElement', () => {
     expect(item.className).toBe('custom-item');
     expect(item.querySelector('[data-part~="label"]')?.textContent).toBe('English');
     expect(indicators.map((indicator) => indicator.checked)).toEqual([true, false]);
+  });
+
+  it('renders translated default labels', async () => {
+    const { menu, options } = setup({
+      locale: 'x-test-audio',
+      audioTrackList: [
+        { id: '0', label: '', language: '', enabled: true },
+        { id: '1', label: 'English', language: 'en', enabled: false },
+      ],
+    });
+
+    await waitForMenu(menu, options);
+
+    registerI18n('x-test-audio', { menuAudioTrack: 'Sound' });
+
+    await waitForAssertion(() => {
+      const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+      expect(items.map((item) => item.textContent)).toEqual(['Sound', 'English']);
+    });
   });
 
   it('sets the selected audio track', async () => {

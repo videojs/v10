@@ -1,11 +1,13 @@
-import { readdirSync, writeFileSync } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { globSync, readdirSync, writeFileSync } from 'node:fs';
+import { basename, dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
+import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { baseConfig } from '../../build/tsdown.ts';
+import pkg from './package.json' with { type: 'json' };
 
 type BuildMode = 'dev' | 'prod';
 
@@ -38,7 +40,14 @@ const media = [
   'dash-video',
 ];
 
+const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
+  src: file,
+  name: `locales/${basename(file, '.ts')}`,
+}));
+
 const entries = [
+  { src: 'src/cdn/i18n.ts', name: 'i18n' },
+  ...localeEntries,
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
   ...media.map((name) => ({ src: `src/cdn/media/${name}.ts`, name: `media/${name}` })),
 ];
@@ -108,6 +117,7 @@ for (const mode of buildModes) {
       __DEV__: isProd ? 'false' : 'true',
     },
     plugins: [
+      cdnI18nExternalPlugin({ prod: isProd, version: pkg.version }),
       inlineCssPlugin({ skinsDir, minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
       ...(!isProd ? [dtsStubsPlugin(outDir)] : []),

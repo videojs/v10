@@ -5,8 +5,8 @@ export {
   resolveBrowserTranslationTarget,
   shouldAttemptBrowserTranslation,
 } from './browser-translation';
-export { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS, SHIPPED_LOCALE_TAGS } from './built-in-locales';
 export { loadLocale } from './load-locale';
+export { BUILT_IN_LOCALES, DEFAULT_LOCALE, LOCALE_ALIAS_TAGS, SHIPPED_LOCALE_TAGS } from './locales';
 export { default as translations } from './locales/en';
 export {
   canonicalLocaleRegistryKey,

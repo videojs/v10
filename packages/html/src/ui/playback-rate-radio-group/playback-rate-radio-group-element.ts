@@ -1,7 +1,10 @@
 import { PlaybackRateRadioGroupCore, PlaybackRateRadioGroupDataAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
+import { resolveTranslationPhrase } from '@videojs/core/i18n/base';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
@@ -20,9 +23,11 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   formatRate = PlaybackRateRadioGroupCore.defaultProps.formatRate;
 
   readonly #core = new PlaybackRateRadioGroupCore();
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
 
   #ratesKey = '';
+  #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -53,9 +58,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = this.#core.getRateValue(state.rate);
-      if (!this.hasAttribute('aria-label') && !this.hasAttribute('aria-labelledby')) {
-        this.setAttribute('aria-label', this.#core.getLabel(state));
-      }
+      this.#applyAriaLabel(this.#core.getLabel(state), this.#core.getLabelParams(state));
       applyElementProps(this, {
         'aria-disabled': state.disabled ? 'true' : undefined,
       });
@@ -135,6 +138,16 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
     }
 
     return null;
+  }
+
+  #applyAriaLabel(label: string, params?: Record<string, string | number>): void {
+    if (this.hasAttribute('aria-labelledby')) return;
+
+    const current = this.getAttribute('aria-label');
+    if (current !== null && current !== this.#ariaLabel) return;
+
+    this.#ariaLabel = resolveTranslationPhrase(this.#i18n.value, label, params);
+    this.setAttribute('aria-label', this.#ariaLabel);
   }
 
   #handleValueChange = (event: Event): void => {

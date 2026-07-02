@@ -51,6 +51,8 @@ export const BUILT_IN_LOCALES = [
   'zh-TW',
 ] as const;
 
+export const DEFAULT_LOCALE = 'en';
+
 /** Shorthand tags (`pt`, `zh`) that resolve to regional packs via the i18n lookup chain. */
 export const LOCALE_ALIAS_TAGS = ['pt', 'zh'] as const;
 

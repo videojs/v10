@@ -1,14 +1,15 @@
 import { videoFeatures } from '@videojs/core/dom';
+import { I18nProviderMixin } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin } = createPlayer({
+const { ProviderMixin: StoreProviderMixin } = createPlayer({
   features: videoFeatures,
 });
 
-export class VideoPlayerElement extends ProviderMixin(MediaElement) {
+export class VideoPlayerElement extends I18nProviderMixin(StoreProviderMixin(MediaElement)) {
   static readonly tagName = 'video-player';
 }
 

@@ -1,6 +1,8 @@
 // Registers the video player, container, and all video UI custom elements
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
+
+import { I18nProviderElement } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { AirPlayButtonElement } from '../../ui/airplay-button/airplay-button-element';
 import { AudioTrackRadioGroupElement } from '../../ui/audio-track-radio-group/audio-track-radio-group-element';
@@ -21,6 +23,7 @@ import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
+import { TextElement } from '../../ui/text/text-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
@@ -42,6 +45,7 @@ import { VideoPlayerElement } from './player';
 
 safeDefine(VideoPlayerElement);
 safeDefine(MediaContainerElement);
+safeDefine(I18nProviderElement);
 
 // Compound groups.
 defineControls();
@@ -71,6 +75,7 @@ safeDefine(PopoverElement);
 safeDefine(PosterElement);
 safeDefine(QualityRadioGroupElement);
 safeDefine(SeekButtonElement);
+safeDefine(TextElement);
 safeDefine(TooltipLabelElement);
 safeDefine(TooltipShortcutElement);
 safeDefine(TooltipElement);

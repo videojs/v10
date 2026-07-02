@@ -2,7 +2,7 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import packageJson from './package.json' with { type: 'json' };
-import { SHIPPED_LOCALE_TAGS } from './src/core/i18n/built-in-locales.ts';
+import { SHIPPED_LOCALE_TAGS } from './src/core/i18n/locales.ts';
 
 const localeEntries = Object.fromEntries([
   ['i18n/locales/all', './src/core/i18n/locales/all.ts'],

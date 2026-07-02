@@ -42,11 +42,11 @@ function getTemplateHTML() {
       <media-error-dialog class="${error.root}">
         <div class="${error.dialog}">
           <div class="${error.content}">
-            <media-alert-dialog-title class="${error.title}">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-title class="${error.title}"></media-alert-dialog-title>
             <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
           </div>
           <div class="${error.actions}">
-            <media-alert-dialog-close class="${cn(button.base, button.primary)}">OK</media-alert-dialog-close>
+            <media-alert-dialog-close class="${cn(button.base, button.primary)}"></media-alert-dialog-close>
           </div>
         </div>
       </media-error-dialog>

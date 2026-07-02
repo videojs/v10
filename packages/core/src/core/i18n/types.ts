@@ -1,4 +1,4 @@
-import type { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS } from './built-in-locales';
+import type { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS } from './locales';
 
 /** Matches strings that include the literal substring `needle` (for example a `{param}` token). */
 export type Contains<Needle extends string> = `${string}${Needle}${string}`;
