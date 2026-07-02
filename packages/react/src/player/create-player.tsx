@@ -97,11 +97,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       [store, media, container, popupGroup]
     );
 
-    return (
-      <PlayerContextProvider value={value}>
-        {children}
-      </PlayerContextProvider>
-    );
+    return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
   }
 
   if (__DEV__ && config.displayName) {
