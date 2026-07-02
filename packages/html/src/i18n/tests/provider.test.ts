@@ -1,7 +1,7 @@
 import { type Locale, registerI18n, resetI18nRegistryForTesting, type Translator } from '@videojs/core/i18n';
-import { ReactiveElement } from '@videojs/element';
+import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SkinElement } from '../../define/skin-element';
 import { i18nContext, MediaTextElement } from '../index';
@@ -10,8 +10,40 @@ const skinTemplate = document.createElement('template');
 skinTemplate.innerHTML =
   '<button aria-labelledby="settings-label"><media-text id="settings-label" key="menuSettings"></media-text></button>';
 
+const missingKeyTemplate = document.createElement('template');
+missingKeyTemplate.innerHTML =
+  '<button aria-labelledby="missing-label"><media-text id="missing-label" key="missingLabel"></media-text></button>';
+
+const childTextTemplate = document.createElement('template');
+childTextTemplate.innerHTML =
+  '<button aria-labelledby="fallback-label"><media-text id="fallback-label">Fallback label</media-text></button>';
+
+const firstUpdateTemplate = document.createElement('template');
+firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text key="menuSettings"></test-skin-i18n-first-text>';
+
 class TestSkinElement extends SkinElement {
   static override readonly template = skinTemplate;
+}
+
+class TestMissingKeyElement extends SkinElement {
+  static override readonly template = missingKeyTemplate;
+}
+
+class TestChildTextElement extends SkinElement {
+  static override readonly template = childTextTemplate;
+}
+
+class TestFirstUpdateElement extends SkinElement {
+  static override readonly template = firstUpdateTemplate;
+}
+
+class TestFirstTextElement extends MediaTextElement {
+  firstText: string | undefined;
+
+  protected override updated(changed: PropertyValues): void {
+    super.updated(changed);
+    this.firstText ??= this.textContent ?? '';
+  }
 }
 
 class TestI18nProviderElement extends ReactiveElement {
@@ -28,6 +60,22 @@ if (!customElements.get('test-skin-i18n')) {
   customElements.define('test-skin-i18n', TestSkinElement);
 }
 
+if (!customElements.get('test-skin-i18n-missing-key')) {
+  customElements.define('test-skin-i18n-missing-key', TestMissingKeyElement);
+}
+
+if (!customElements.get('test-skin-i18n-child-text')) {
+  customElements.define('test-skin-i18n-child-text', TestChildTextElement);
+}
+
+if (!customElements.get('test-skin-i18n-first-update')) {
+  customElements.define('test-skin-i18n-first-update', TestFirstUpdateElement);
+}
+
+if (!customElements.get('test-skin-i18n-first-text')) {
+  customElements.define('test-skin-i18n-first-text', TestFirstTextElement);
+}
+
 if (!customElements.get('test-skin-i18n-provider')) {
   customElements.define('test-skin-i18n-provider', TestI18nProviderElement);
 }
@@ -37,8 +85,12 @@ if (!customElements.get(MediaTextElement.tagName)) {
 }
 
 describe('provider', () => {
-  it('uses its own translator for shadow labels', async () => {
+  afterEach(() => {
+    document.body.innerHTML = '';
     resetI18nRegistryForTesting();
+  });
+
+  it('uses its own translator for shadow labels', async () => {
     registerI18n('xx', { menuSettings: 'Skin settings' });
     const root = document.createElement('div');
     root.innerHTML = /*html*/ `
@@ -56,8 +108,59 @@ describe('provider', () => {
     const button = skin.shadowRoot!.querySelector('button')!;
     expect(button.getAttribute('aria-labelledby')).toBe('settings-label');
     expect(text.textContent).toBe('Skin settings');
+  });
 
-    root.remove();
-    resetI18nRegistryForTesting();
+  it('falls back to the key when a shadow label is missing', async () => {
+    const skin = document.createElement('test-skin-i18n-missing-key') as TestMissingKeyElement;
+    document.body.append(skin);
+
+    await skin.updateComplete;
+    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    await text.updateComplete;
+
+    expect(text.textContent).toBe('missingLabel');
+  });
+
+  it('updates shadow labels when lang changes', async () => {
+    registerI18n('xx', { menuSettings: 'Skin settings' });
+    registerI18n('yy', { menuSettings: 'Other settings' });
+    const skin = document.createElement('test-skin-i18n') as TestSkinElement;
+    skin.lang = 'xx';
+    document.body.append(skin);
+
+    await skin.updateComplete;
+    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    await text.updateComplete;
+
+    expect(text.textContent).toBe('Skin settings');
+
+    skin.lang = 'yy';
+
+    await vi.waitFor(() => expect(text.textContent).toBe('Other settings'));
+  });
+
+  it('publishes lang before child text updates', async () => {
+    registerI18n('xx', { menuSettings: 'Skin settings' });
+    const skin = document.createElement('test-skin-i18n-first-update') as TestFirstUpdateElement;
+    skin.lang = 'xx';
+    document.body.append(skin);
+
+    await skin.updateComplete;
+    const text = skin.shadowRoot!.querySelector('test-skin-i18n-first-text') as TestFirstTextElement;
+    await text.updateComplete;
+
+    expect(text.firstText).toBe('Skin settings');
+    expect(text.textContent).toBe('Skin settings');
+  });
+
+  it('keeps child text when key is undefined', async () => {
+    const skin = document.createElement('test-skin-i18n-child-text') as TestChildTextElement;
+    document.body.append(skin);
+
+    await skin.updateComplete;
+    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    await text.updateComplete;
+
+    expect(text.textContent).toBe('Fallback label');
   });
 });

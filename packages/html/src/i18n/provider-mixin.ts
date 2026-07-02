@@ -1,5 +1,6 @@
 import {
   createTranslator,
+  DEFAULT_LOCALE,
   loadLocale as defaultLoadLocale,
   getBrowserTranslations,
   getI18nTranslations,
@@ -47,7 +48,7 @@ export function createI18nProviderMixin({
         context: i18nContext,
         initialValue: {
           translator: fallbackTranslator,
-          locale: 'en',
+          locale: DEFAULT_LOCALE,
         },
       });
 
@@ -61,7 +62,7 @@ export function createI18nProviderMixin({
       #lazyResetStartedForLocale: Locale | undefined;
       #i18nValue: I18nContextValue = {
         translator: fallbackTranslator,
-        locale: 'en',
+        locale: DEFAULT_LOCALE,
       };
 
       protected get i18nValue(): I18nContextValue {
@@ -73,6 +74,7 @@ export function createI18nProviderMixin({
         this.#registryUnsubscribe = onI18nRegistryChange(() => this.requestUpdate());
         this.#ambientUnsubscribe = subscribeAmbientLang(() => this.requestUpdate());
         this.#resetLazyAndLoad();
+        this.#publish();
         this.requestUpdate();
       }
 
@@ -100,10 +102,6 @@ export function createI18nProviderMixin({
             this.#resetLazyAndLoad();
           }
         }
-      }
-
-      protected override updated(changed: PropertyValues): void {
-        super.updated(changed);
         this.#publish();
       }
 
