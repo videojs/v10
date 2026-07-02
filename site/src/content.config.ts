@@ -164,8 +164,8 @@ const ejectedSkins = defineCollection({
     platform: z.enum(['html', 'react']),
     style: z.enum(['css', 'tailwind']),
     html: z.string().optional(),
-    tsx: z.string().optional(),
-    jsx: z.string().optional(),
+    tsx: z.record(z.string(), z.string()).optional(),
+    jsx: z.record(z.string(), z.string()).optional(),
     css: z.string().optional(),
   }),
 });
