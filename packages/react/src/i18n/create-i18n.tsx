@@ -99,6 +99,7 @@ export interface CreateI18nResult {
  * Creates an i18n provider and hooks for the shared React i18n context.
  *
  * @param options - Optional hooks such as custom built-in locale loading.
+ * @public
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   const loadLocale = options?.loadLocale ?? defaultLoadLocale;
@@ -272,6 +273,13 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   return { I18nContext, I18nProvider, useTranslator, useLocale };
 }
 
-const built = createI18n();
+const defaultI18n = createI18n();
 
-export const I18nProvider = built.I18nProvider;
+/**
+ * Resolves locale and supplies a typed translator to descendants. Preset skins mount this
+ * inside {@link PlayerContainer} with `langRootRef`; use an explicit provider for forced
+ * locales, SSR copy, or controls outside the player shell.
+ *
+ * @public
+ */
+export const I18nProvider = defaultI18n.I18nProvider;

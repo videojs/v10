@@ -21,8 +21,14 @@ export interface I18nContextValue {
   onActiveLocaleChange?: (locale: Locale) => void;
 }
 
+/** React context carrying the active translator and locale. @public */
 export const I18nContext = createContext<I18nContextValue | null>(null);
 
+/**
+ * Returns the translator for the nearest `I18nProvider`, or English defaults when none is mounted.
+ *
+ * @public
+ */
 export function useTranslator(): Translator {
   const ctx = useContext(I18nContext);
   const [registryEpoch, invalidateRegistry] = useReducer((epoch: number) => epoch + 1, 0);
@@ -42,6 +48,11 @@ export function useTranslator(): Translator {
   return ctx.translator;
 }
 
+/**
+ * Returns the active BCP 47 locale tag from the nearest `I18nProvider`, or `'en'` when none is mounted.
+ *
+ * @public
+ */
 export function useLocale(): Locale {
   const ctx = useContext(I18nContext);
   return ctx?.locale ?? 'en';
