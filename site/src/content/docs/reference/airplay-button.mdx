@@ -15,12 +15,17 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/airplay-button/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/airplay-button/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/airplay-button/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/airplay-button/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/airplay-button/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/airplay-button/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/airplay-button/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/airplay-button/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/airplay-button/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/airplay-button/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/airplay-button/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/airplay-button/html/tailwind/BasicUsage.ts?raw";
 
 ## Anatomy
 
@@ -110,6 +115,13 @@ Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when discon
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -120,6 +132,14 @@ Renders a `<button>` with an automatic `aria-label`: "Start AirPlay" when discon
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

@@ -1,0 +1,25 @@
+<section class="relative block max-w-70">
+    <video-player>
+        <media-container>
+            <video
+                class="pointer-events-none absolute h-px w-px opacity-0"
+                src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+                preload="auto"
+                muted
+                playsinline
+                crossorigin="anonymous"
+            >
+                <track
+                    kind="metadata"
+                    label="thumbnails"
+                    src="/docs/demos/thumbnail/basic.vtt"
+                    default
+                />
+            </video>
+            <media-thumbnail
+                class="block w-auto min-w-0 max-w-60 data-hidden:hidden"
+                time="12"
+            ></media-thumbnail>
+        </media-container>
+    </video-player>
+</section>

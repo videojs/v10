@@ -14,12 +14,17 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/popover/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/popover/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/popover/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/popover/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/popover/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/popover/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/popover/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/popover/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/popover/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/popover/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/popover/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/popover/html/tailwind/BasicUsage.ts?raw";
 
 ## Anatomy
 
@@ -137,6 +142,13 @@ The trigger receives `aria-expanded` reflecting the open state. When `modal` is 
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -149,6 +161,14 @@ The trigger receives `aria-expanded` reflecting the open state. When `modal` is 
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

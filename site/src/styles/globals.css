@@ -185,6 +185,29 @@
   }
 }
 
+/*
+  Stock Tailwind tokens consumed by the docs demos (src/components/docs/demos).
+  The site theme above resets the default color and text scales, but demo
+  snippets must remain copy-paste compatible with a stock Tailwind setup, so
+  these values are verbatim from tailwindcss/theme.css. Do not use them for
+  site UI; extend the site theme above instead.
+*/
+/* biome-ignore assist/source/useSortedProperties: grouped to mirror tailwindcss/theme.css. */
+@theme {
+  --color-gray-200: oklch(92.8% 0.006 264.531);
+  --color-gray-300: oklch(87.2% 0.01 258.338);
+  --color-gray-500: oklch(55.1% 0.027 264.364);
+  --color-gray-700: oklch(37.3% 0.034 259.733);
+  --color-neutral-100: oklch(97% 0 0);
+  --color-neutral-900: oklch(20.5% 0 0);
+  --color-blue-500: oklch(62.3% 0.214 259.815);
+
+  --text-xs: 0.75rem;
+  --text-xs--line-height: calc(1 / 0.75);
+  --text-sm: 0.875rem;
+  --text-sm--line-height: calc(1.25 / 0.875);
+}
+
 @custom-variant intent (&:hover,
 &:focus-within);
 @custom-variant supports-container {

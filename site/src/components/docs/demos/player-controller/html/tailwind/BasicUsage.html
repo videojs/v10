@@ -1,0 +1,36 @@
+<demo-ctrl-player class="relative">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+        ></video>
+        <div class="flex items-center gap-4 border-t border-black/10 bg-black/5 p-3">
+            <demo-ctrl-actions class="flex gap-1.5">
+                <button
+                    type="button"
+                    class="play cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1 text-[13px]"
+                >
+                    Play
+                </button>
+                <button
+                    type="button"
+                    class="pause cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1 text-[13px]"
+                >
+                    Pause
+                </button>
+                <button
+                    type="button"
+                    class="volume cursor-pointer rounded-md border border-gray-300 bg-white px-3 py-1 text-[13px]"
+                >
+                    50% Volume
+                </button>
+            </demo-ctrl-actions>
+            <demo-ctrl-state class="text-[13px] text-gray-700 tabular-nums">
+                <span class="text">Paused: Yes | Time: 0.0s | Volume: 100%</span>
+            </demo-ctrl-state>
+        </div>
+    </media-container>
+</demo-ctrl-player>

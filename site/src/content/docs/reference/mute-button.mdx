@@ -14,23 +14,33 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/mute-button/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/mute-button/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/mute-button/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/mute-button/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/mute-button/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/mute-button/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/mute-button/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/mute-button/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/mute-button/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/mute-button/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/mute-button/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/mute-button/html/tailwind/BasicUsage.ts?raw";
 
 {/* React demos — Volume Levels */}
 import VolumeLevelsDemoReact from "@/components/docs/demos/mute-button/react/css/VolumeLevels";
 import volumeLevelsReactTsx from "@/components/docs/demos/mute-button/react/css/VolumeLevels.tsx?raw";
 import volumeLevelsReactCss from "@/components/docs/demos/mute-button/react/css/VolumeLevels.css?raw";
+import VolumeLevelsDemoReactTailwind from "@/components/docs/demos/mute-button/react/tailwind/VolumeLevels";
+import volumeLevelsReactTailwindTsx from "@/components/docs/demos/mute-button/react/tailwind/VolumeLevels.tsx?raw";
 
 {/* HTML demos — Volume Levels */}
 import VolumeLevelsDemoHtml from "@/components/docs/demos/mute-button/html/css/VolumeLevels.astro";
 import volumeLevelsHtml from "@/components/docs/demos/mute-button/html/css/VolumeLevels.html?raw";
 import volumeLevelsHtmlCss from "@/components/docs/demos/mute-button/html/css/VolumeLevels.css?raw";
 import volumeLevelsHtmlTs from "@/components/docs/demos/mute-button/html/css/VolumeLevels.ts?raw";
+import VolumeLevelsDemoHtmlTailwind from "@/components/docs/demos/mute-button/html/tailwind/VolumeLevels.astro";
+import volumeLevelsTailwindHtml from "@/components/docs/demos/mute-button/html/tailwind/VolumeLevels.html?raw";
+import volumeLevelsTailwindHtmlTs from "@/components/docs/demos/mute-button/html/tailwind/VolumeLevels.ts?raw";
 
 ## Anatomy
 
@@ -107,6 +117,13 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -117,6 +134,14 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -132,6 +157,13 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
       <VolumeLevelsDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: volumeLevelsReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <VolumeLevelsDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -142,6 +174,14 @@ Renders a `<button>` with an automatic `aria-label`: "Unmute" when muted, "Mute"
       { title: "index.ts", code: volumeLevelsHtmlTs, lang: "ts" },
     ]}>
       <VolumeLevelsDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: volumeLevelsTailwindHtml, lang: "html" },
+      { title: "index.ts", code: volumeLevelsTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <VolumeLevelsDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

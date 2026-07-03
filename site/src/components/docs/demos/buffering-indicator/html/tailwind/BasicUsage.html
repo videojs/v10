@@ -1,0 +1,14 @@
+<video-player class="relative flex h-full w-full">
+    <media-container>
+        <video
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <media-buffering-indicator class="pointer-events-none absolute inset-0 z-30 flex items-center justify-center">
+            <div class="hidden size-12 animate-spin rounded-full border-4 border-white/30 border-t-white [animation-duration:0.8s] in-data-visible:block"></div>
+        </media-buffering-indicator>
+    </media-container>
+</video-player>

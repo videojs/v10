@@ -10,6 +10,8 @@ import StyleCase from "@/components/docs/StyleCase.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/create-player/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/create-player/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/create-player/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/create-player/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/create-player/react/tailwind/BasicUsage.tsx?raw";
 
 `createPlayer` is the entry point for setting up a Video.js player in React. It accepts a configuration object with a `features` array and returns hooks and components for building a player.
 
@@ -36,6 +38,15 @@ const Player = createPlayer({ features: videoFeatures });
       ]}
     >
       <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <BasicUsageDemoReactTailwind client:idle />
     </Demo>
   </StyleCase>
 </FrameworkCase>

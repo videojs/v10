@@ -15,12 +15,16 @@ import { TabsRoot, TabsList, Tab, TabsPanel } from "@/components/Tabs";
 import ServerCode from "@/components/Code/ServerCode.astro";
 import basicUsageReactTsx from "@/components/docs/demos/simple-hls-video/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/simple-hls-video/react/css/BasicUsage.css?raw";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/simple-hls-video/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/simple-hls-video/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/simple-hls-video/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/simple-hls-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/simple-hls-video/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/simple-hls-video/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/simple-hls-video/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/simple-hls-video/html/tailwind/BasicUsage.ts?raw";
 
 Lightweight HLS video element optimized for minimal bundle size. For full hls.js feature support, use [HlsJsVideo](/docs/framework/html/reference/hlsjs-video/) instead.
 
@@ -44,6 +48,16 @@ Lightweight HLS video element optimized for minimal bundle size. For full hls.js
       </TabsPanel>
     </TabsRoot>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <TabsRoot client:idle>
+      <TabsList client:idle label="Basic usage source code">
+        <Tab client:idle value="App.tsx" initial>App.tsx</Tab>
+      </TabsList>
+      <TabsPanel client:idle value="App.tsx" initial>
+        <ServerCode code={basicUsageReactTailwindTsx} lang="tsx" />
+      </TabsPanel>
+    </TabsRoot>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -54,6 +68,14 @@ Lightweight HLS video element optimized for minimal bundle size. For full hls.js
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

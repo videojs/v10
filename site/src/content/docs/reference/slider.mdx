@@ -15,21 +15,31 @@ import Demo from "@/components/docs/demos/Demo.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/slider/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/slider/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/slider/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/slider/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/slider/react/tailwind/BasicUsage.tsx?raw";
 
 import WithPreviewDemoReact from "@/components/docs/demos/slider/react/css/WithPreview";
 import withPreviewReactTsx from "@/components/docs/demos/slider/react/css/WithPreview.tsx?raw";
 import withPreviewReactCss from "@/components/docs/demos/slider/react/css/WithPreview.css?raw";
+import WithPreviewDemoReactTailwind from "@/components/docs/demos/slider/react/tailwind/WithPreview";
+import withPreviewReactTailwindTsx from "@/components/docs/demos/slider/react/tailwind/WithPreview.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/slider/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/slider/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/slider/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/slider/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/slider/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/slider/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/slider/html/tailwind/BasicUsage.ts?raw";
 
 import WithPreviewDemoHtml from "@/components/docs/demos/slider/html/css/WithPreview.astro";
 import withPreviewHtml from "@/components/docs/demos/slider/html/css/WithPreview.html?raw";
 import withPreviewHtmlCss from "@/components/docs/demos/slider/html/css/WithPreview.css?raw";
 import withPreviewHtmlTs from "@/components/docs/demos/slider/html/css/WithPreview.ts?raw";
+import WithPreviewDemoHtmlTailwind from "@/components/docs/demos/slider/html/tailwind/WithPreview.astro";
+import withPreviewTailwindHtml from "@/components/docs/demos/slider/html/tailwind/WithPreview.html?raw";
+import withPreviewTailwindHtmlTs from "@/components/docs/demos/slider/html/tailwind/WithPreview.ts?raw";
 
 ## Anatomy
 
@@ -148,6 +158,15 @@ A slider with track, fill, and thumb.
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -160,6 +179,16 @@ A slider with track, fill, and thumb.
       ]}
     >
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+        { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>
@@ -179,6 +208,15 @@ A slider with a pointer-tracking preview that displays the value at the current 
       <WithPreviewDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: withPreviewReactTailwindTsx, lang: "tsx" },
+      ]}
+    >
+      <WithPreviewDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -191,6 +229,16 @@ A slider with a pointer-tracking preview that displays the value at the current 
       ]}
     >
       <WithPreviewDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: withPreviewTailwindHtml, lang: "html" },
+        { title: "index.ts", code: withPreviewTailwindHtmlTs, lang: "ts" },
+      ]}
+    >
+      <WithPreviewDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

@@ -1,0 +1,18 @@
+<video-player class="relative">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <media-mute-button
+            class="absolute bottom-2.5 left-2.5 cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 text-black backdrop-blur-[10px]"
+        >
+            <span class="hidden in-data-muted:inline">Unmute</span>
+            <span class="hidden not-in-data-muted:inline">Mute</span>
+        </media-mute-button>
+    </media-container>
+</video-player>

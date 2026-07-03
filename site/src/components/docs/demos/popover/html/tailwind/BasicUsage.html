@@ -1,0 +1,27 @@
+<video-player class="relative block">
+    <media-container class="relative block">
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <div class="absolute bottom-2.5 left-2.5">
+            <button
+                type="button"
+                commandfor="popover-demo"
+                class="cursor-pointer rounded-full border border-white/30 bg-white/70 px-4 py-1.5 text-black backdrop-blur-[10px]"
+            >Settings</button>
+            <media-popover
+                id="popover-demo"
+                class="rounded-lg bg-black/85 px-4 py-3 text-sm whitespace-nowrap text-white backdrop-blur-[10px]"
+            >
+                <div>
+                    Popover content
+                </div>
+            </media-popover>
+        </div>
+    </media-container>
+</video-player>

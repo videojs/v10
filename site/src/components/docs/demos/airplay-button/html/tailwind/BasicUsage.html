@@ -1,0 +1,20 @@
+<video-player class="relative block">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <media-airplay-button
+            class="absolute right-2.5 bottom-2.5 cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 text-black backdrop-blur-[10px] data-[availability=unavailable]:cursor-not-allowed data-[availability=unavailable]:opacity-50 data-[availability=unavailable]:grayscale data-[availability=unsupported]:cursor-not-allowed data-[availability=unsupported]:opacity-50 data-[availability=unsupported]:grayscale"
+        >
+            <span class="hidden in-data-[airplay-state=connected]:inline">Stop AirPlay</span>
+            <span class="hidden in-data-[availability=available]:not-in-data-[airplay-state=connected]:inline">Start AirPlay</span>
+            <span class="hidden in-data-[availability=unavailable]:inline">No AirPlay devices found</span>
+            <span class="hidden in-data-[availability=unsupported]:inline">AirPlay not supported</span>
+        </media-airplay-button>
+    </media-container>
+</video-player>

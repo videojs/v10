@@ -1,0 +1,20 @@
+<video-player class="relative">
+    <media-container>
+        <video
+            class="w-full"
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <media-mute-button
+            class="absolute bottom-2.5 left-2.5 cursor-pointer rounded-full border border-white/30 bg-white/70 px-5 py-2 text-black backdrop-blur-[10px]"
+        >
+            <span class="hidden in-data-[volume-level=off]:inline">Off</span>
+            <span class="hidden in-data-[volume-level=low]:inline">Low</span>
+            <span class="hidden in-data-[volume-level=medium]:inline">Medium</span>
+            <span class="hidden in-data-[volume-level=high]:inline">High</span>
+        </media-mute-button>
+    </media-container>
+</video-player>
