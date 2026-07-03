@@ -276,6 +276,46 @@ describe('createI18n (HTML)', () => {
     expect(third('play')).toBe('RegistryPlay');
   });
 
+  it('provider keeps translator stable across unrelated updates', async () => {
+    registerI18n('x-stable', { play: 'StablePlay' });
+    const {
+      context,
+      I18nController: Ctor,
+      ProviderMixin,
+    } = createI18n({
+      loadLocale: async (tag) => (tag === 'x-stable' ? { pause: 'LazyPause' } : undefined),
+    });
+    class StableProvider extends ProviderMixin(ReactiveElement) {}
+    class Probe extends ReactiveElement {
+      readonly i18n = new Ctor(this, context);
+    }
+    customElements.define('i18n-stable-provider', StableProvider);
+    customElements.define('i18n-stable-provider-probe', Probe);
+    const provider = new StableProvider();
+    const probe = new Probe();
+    provider.setAttribute('lang', 'x-stable');
+    provider.appendChild(probe);
+    document.body.appendChild(provider);
+
+    await vi.waitFor(() => {
+      expect(probe.i18n.value('pause')).toBe('LazyPause');
+    });
+
+    const first = probe.i18n.value;
+    provider.requestUpdate();
+    await provider.updateComplete;
+    await probe.updateComplete;
+
+    expect(probe.i18n.value).toBe(first);
+
+    registerI18n('x-stable', { replay: 'StableReplay' });
+
+    await vi.waitFor(() => {
+      expect(probe.i18n.value).not.toBe(first);
+      expect(probe.i18n.value('replay')).toBe('StableReplay');
+    });
+  });
+
   it('media-text refreshes fallback English without a provider when the registry changes', async () => {
     const text = new MediaTextElement();
     text.setAttribute('key', 'play');

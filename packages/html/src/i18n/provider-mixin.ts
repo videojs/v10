@@ -54,6 +54,7 @@ export function createI18nProviderMixin({
 
       #registryUnsubscribe: (() => void) | undefined;
       #ambientUnsubscribe: (() => void) | undefined;
+      #registryEpoch = 0;
       #lazyLayer: Partial<Translations> = {};
       #lazySeq = 0;
       /** Tracks locale used for `#lazyLayer`; ambient `lang` can change without the `lang` property. */
@@ -64,6 +65,9 @@ export function createI18nProviderMixin({
         translator: getFallbackTranslator(),
         locale: DEFAULT_LOCALE,
       };
+      #publishedLocale: Locale | undefined;
+      #publishedRegistryEpoch = -1;
+      #publishedLazyLayer: Partial<Translations> | undefined;
 
       protected get i18nValue(): I18nContextValue {
         return this.#i18nValue;
@@ -71,7 +75,10 @@ export function createI18nProviderMixin({
 
       override connectedCallback(): void {
         super.connectedCallback();
-        this.#registryUnsubscribe = onI18nRegistryChange(() => this.requestUpdate());
+        this.#registryUnsubscribe = onI18nRegistryChange(() => {
+          this.#registryEpoch += 1;
+          this.requestUpdate();
+        });
         this.#ambientUnsubscribe = subscribeAmbientLang(() => this.requestUpdate());
         this.#resetLazyAndLoad();
         this.#publish();
@@ -131,6 +138,13 @@ export function createI18nProviderMixin({
 
       #publish(): void {
         const locale = this.#resolvedLocale();
+        if (
+          this.#publishedLocale === locale &&
+          this.#publishedRegistryEpoch === this.#registryEpoch &&
+          this.#publishedLazyLayer === this.#lazyLayer
+        ) {
+          return;
+        }
         const registryLayer = getI18nTranslations(locale);
         const translations: Translations = {
           ...registryLayer,
@@ -138,6 +152,9 @@ export function createI18nProviderMixin({
         };
         const translator = createTranslator(translations, locale);
         this.#i18nValue = { translator, locale };
+        this.#publishedLocale = locale;
+        this.#publishedRegistryEpoch = this.#registryEpoch;
+        this.#publishedLazyLayer = this.#lazyLayer;
         this.#i18nProvider.setValue(this.#i18nValue);
       }
     }
