@@ -10,8 +10,11 @@ import type { ReactiveController, ReactiveControllerHost } from '@videojs/elemen
 import { ContextConsumer } from '@videojs/element/context';
 import type { I18nContext } from './context';
 
+let fallbackTranslator: Translator | undefined;
+
 export function getFallbackTranslator(): Translator {
-  return createTranslator(getI18nTranslations(DEFAULT_LOCALE), DEFAULT_LOCALE);
+  fallbackTranslator ??= createTranslator(getI18nTranslations(DEFAULT_LOCALE), DEFAULT_LOCALE);
+  return fallbackTranslator;
 }
 
 export class I18nController implements ReactiveController {
@@ -38,7 +41,9 @@ export class I18nController implements ReactiveController {
   }
 
   hostConnected(): void {
+    fallbackTranslator = undefined;
     this.#unsubscribeRegistry = onI18nRegistryChange(() => {
+      fallbackTranslator = undefined;
       if (!this.#consumer.value) {
         this.#host.requestUpdate();
       }

@@ -254,6 +254,28 @@ describe('createI18n (HTML)', () => {
     });
   });
 
+  it('I18nController keeps fallback translator stable until the registry changes', async () => {
+    const { context, I18nController: Ctor } = createI18n();
+    class Probe extends ReactiveElement {
+      readonly i18n = new Ctor(this, context);
+    }
+    customElements.define('i18n-probe-fallback-stability', Probe);
+    const el = new Probe();
+    document.body.appendChild(el);
+    await el.updateComplete;
+
+    const first = el.i18n.value;
+    const second = el.i18n.value;
+    expect(second).toBe(first);
+
+    registerI18n('en', { play: 'RegistryPlay' });
+    await el.updateComplete;
+
+    const third = el.i18n.value;
+    expect(third).not.toBe(first);
+    expect(third('play')).toBe('RegistryPlay');
+  });
+
   it('media-text refreshes fallback English without a provider when the registry changes', async () => {
     const text = new MediaTextElement();
     text.setAttribute('key', 'play');
