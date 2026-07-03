@@ -233,6 +233,41 @@ describe('createI18n (HTML)', () => {
     expect(el.textContent).toBe('Play');
   });
 
+  it('I18nController refreshes fallback English when the registry changes', async () => {
+    const { context, I18nController: Ctor } = createI18n();
+    class Probe extends ReactiveElement {
+      readonly #i18n = new Ctor(this, context);
+      protected override updated(): void {
+        this.textContent = this.#i18n.value('play');
+      }
+    }
+    customElements.define('i18n-probe-fallback-registry', Probe);
+    const el = new Probe();
+    document.body.appendChild(el);
+    await el.updateComplete;
+    expect(el.textContent).toBe('Play');
+
+    registerI18n('en', { play: 'RegistryPlay' });
+
+    await vi.waitFor(() => {
+      expect(el.textContent).toBe('RegistryPlay');
+    });
+  });
+
+  it('media-text refreshes fallback English without a provider when the registry changes', async () => {
+    const text = new MediaTextElement();
+    text.setAttribute('key', 'play');
+    document.body.appendChild(text);
+    await text.updateComplete;
+    expect(text.textContent).toBe('Play');
+
+    registerI18n('en', { play: 'RegistryPlay' });
+
+    await vi.waitFor(() => {
+      expect(text.textContent).toBe('RegistryPlay');
+    });
+  });
+
   it('registers browser translations when no locale pack exists', async () => {
     vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({ play: 'BrowserPlay' });
 

@@ -17,7 +17,7 @@ import { mergeLocaleOverlays, subscribeAmbientLang } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
 import type { I18nContext, I18nContextValue } from './context';
-import { fallbackTranslator } from './controller';
+import { getFallbackTranslator } from './controller';
 import { resolveProviderLocale } from './locale';
 import type { LocaleLoader, ReactiveElementMixinBase } from './types';
 
@@ -47,7 +47,7 @@ export function createI18nProviderMixin({
       readonly #i18nProvider = new ContextProvider(this, {
         context: i18nContext,
         initialValue: {
-          translator: fallbackTranslator,
+          translator: getFallbackTranslator(),
           locale: DEFAULT_LOCALE,
         },
       });
@@ -61,7 +61,7 @@ export function createI18nProviderMixin({
       /** Locale snapshot when the current `#lazySeq` async load was started (see `willUpdate` drift guard). */
       #lazyResetStartedForLocale: Locale | undefined;
       #i18nValue: I18nContextValue = {
-        translator: fallbackTranslator,
+        translator: getFallbackTranslator(),
         locale: DEFAULT_LOCALE,
       };
 

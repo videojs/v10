@@ -3,17 +3,21 @@ import {
   DEFAULT_LOCALE,
   getI18nTranslations,
   type Locale,
+  onI18nRegistryChange,
   type Translator,
 } from '@videojs/core/i18n';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { I18nContext } from './context';
 
-export const fallbackTranslator = createTranslator(getI18nTranslations(DEFAULT_LOCALE), DEFAULT_LOCALE);
+export function getFallbackTranslator(): Translator {
+  return createTranslator(getI18nTranslations(DEFAULT_LOCALE), DEFAULT_LOCALE);
+}
 
 export class I18nController implements ReactiveController {
   readonly #host: ReactiveControllerHost & HTMLElement;
   readonly #consumer: ContextConsumer<I18nContext, ReactiveControllerHost & HTMLElement>;
+  #unsubscribeRegistry: (() => void) | undefined;
 
   constructor(host: ReactiveControllerHost & HTMLElement, context: I18nContext) {
     this.#host = host;
@@ -26,16 +30,25 @@ export class I18nController implements ReactiveController {
   }
 
   get value(): Translator {
-    return this.#consumer.value?.translator ?? fallbackTranslator;
+    return this.#consumer.value?.translator ?? getFallbackTranslator();
   }
 
   get locale(): Locale {
     return this.#consumer.value?.locale ?? DEFAULT_LOCALE;
   }
 
-  hostConnected(): void {}
+  hostConnected(): void {
+    this.#unsubscribeRegistry = onI18nRegistryChange(() => {
+      if (!this.#consumer.value) {
+        this.#host.requestUpdate();
+      }
+    });
+  }
 
-  hostDisconnected(): void {}
+  hostDisconnected(): void {
+    this.#unsubscribeRegistry?.();
+    this.#unsubscribeRegistry = undefined;
+  }
 }
 
 export namespace I18nController {
