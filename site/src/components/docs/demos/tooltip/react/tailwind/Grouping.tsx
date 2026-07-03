@@ -10,7 +10,7 @@ export default function Grouping() {
           </Tooltip.Trigger>
           <Tooltip.Popup className="pointer-events-none m-0 rounded-md border-0 bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]">
             <Tooltip.Arrow className="fill-black/85" />
-            Play video
+            <Tooltip.Label>Play video</Tooltip.Label>
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
@@ -19,7 +19,7 @@ export default function Grouping() {
           </Tooltip.Trigger>
           <Tooltip.Popup className="pointer-events-none m-0 rounded-md border-0 bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]">
             <Tooltip.Arrow className="fill-black/85" />
-            Mute audio
+            <Tooltip.Label>Mute audio</Tooltip.Label>
           </Tooltip.Popup>
         </Tooltip.Root>
         <Tooltip.Root>
@@ -28,7 +28,7 @@ export default function Grouping() {
           </Tooltip.Trigger>
           <Tooltip.Popup className="pointer-events-none m-0 rounded-md border-0 bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]">
             <Tooltip.Arrow className="fill-black/85" />
-            Enter fullscreen
+            <Tooltip.Label>Enter fullscreen</Tooltip.Label>
           </Tooltip.Popup>
         </Tooltip.Root>
       </Tooltip.Provider>

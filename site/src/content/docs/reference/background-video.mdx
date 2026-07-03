@@ -20,12 +20,17 @@ import Tr from "@/components/typography/Tr.astro";
 import BasicUsageDemoReact from "@/components/docs/demos/background-video/react/css/BasicUsage";
 import basicUsageReactTsx from "@/components/docs/demos/background-video/react/css/BasicUsage.tsx?raw";
 import basicUsageReactCss from "@/components/docs/demos/background-video/react/css/BasicUsage.css?raw";
+import BasicUsageDemoReactTailwind from "@/components/docs/demos/background-video/react/tailwind/BasicUsage";
+import basicUsageReactTailwindTsx from "@/components/docs/demos/background-video/react/tailwind/BasicUsage.tsx?raw";
 
 {/* HTML demos */}
 import BasicUsageDemoHtml from "@/components/docs/demos/background-video/html/css/BasicUsage.astro";
 import basicUsageHtml from "@/components/docs/demos/background-video/html/css/BasicUsage.html?raw";
 import basicUsageHtmlCss from "@/components/docs/demos/background-video/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/background-video/html/css/BasicUsage.ts?raw";
+import BasicUsageDemoHtmlTailwind from "@/components/docs/demos/background-video/html/tailwind/BasicUsage.astro";
+import basicUsageTailwindHtml from "@/components/docs/demos/background-video/html/tailwind/BasicUsage.html?raw";
+import basicUsageTailwindHtmlTs from "@/components/docs/demos/background-video/html/tailwind/BasicUsage.ts?raw";
 
 Decorative background video. By default it's muted, looped, and autoplaying — use the opt-out attributes below to change that. Renders a `<video>` inside a shadow DOM, positioned to fill its container.
 
@@ -42,6 +47,13 @@ Decorative background video. By default it's muted, looped, and autoplaying — 
       <BasicUsageDemoReact client:idle />
     </Demo>
   </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTailwindTsx, lang: "tsx" },
+    ]}>
+      <BasicUsageDemoReactTailwind client:idle />
+    </Demo>
+  </StyleCase>
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
@@ -52,6 +64,14 @@ Decorative background video. By default it's muted, looped, and autoplaying — 
       { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
     ]}>
       <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+  <StyleCase styles={["tailwind"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageTailwindHtml, lang: "html" },
+      { title: "index.ts", code: basicUsageTailwindHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtmlTailwind />
     </Demo>
   </StyleCase>
 </FrameworkCase>

@@ -9,7 +9,7 @@ export default function BasicUsage() {
         </Tooltip.Trigger>
         <Tooltip.Popup className="pointer-events-none m-0 rounded-md border-0 bg-black/85 px-2.5 py-1 text-[13px] whitespace-nowrap text-white backdrop-blur-[10px] [--media-tooltip-side-offset:8px]">
           <Tooltip.Arrow className="fill-black/85" />
-          Tooltip content
+          <Tooltip.Label>Tooltip content</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
     </div>
