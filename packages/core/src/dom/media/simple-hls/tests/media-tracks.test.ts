@@ -10,7 +10,7 @@ type SimpleHlsEngine = SimpleHlsMediaAPI['engine'];
 function createEngine() {
   return {
     state: {
-      presentation: signal<any>(undefined),
+      videoRenditions: signal<any>(undefined),
       selectedVideoTrackId: signal<string | undefined>(undefined),
       userVideoTrackSelection: signal<{ id?: string } | undefined>(undefined),
     },
@@ -24,6 +24,7 @@ type FakeEngine = ReturnType<typeof createEngine>;
 class FakeHost extends HTMLVideoElementHost {
   #createEngine: () => FakeEngine;
   #engine: FakeEngine;
+  #src = '';
 
   constructor(create: () => FakeEngine) {
     super();
@@ -37,12 +38,12 @@ class FakeHost extends HTMLVideoElementHost {
 
   // Mirror the real adapter: a new src destroys the engine and starts a fresh one.
   get src() {
-    return this.#engine.state.presentation.get()?.url ?? '';
+    return this.#src;
   }
 
   set src(value: string) {
+    this.#src = value;
     this.#engine = this.#createEngine();
-    if (value) this.#engine.state.presentation.set({ url: value });
   }
 
   destroy() {}
@@ -50,22 +51,18 @@ class FakeHost extends HTMLVideoElementHost {
 
 const Host = SimpleHlsMediaMediaTracksMixin(MediaTracksMixin(FakeHost));
 
-function videoTrack(id: string, width: number, height: number, bandwidth: number) {
-  return { id, type: 'video', url: `${id}.m3u8`, width, height, bandwidth, codecs: ['avc1.640028'] };
+function rendition(
+  id: string,
+  width: number,
+  height: number,
+  bandwidth: number,
+  frameRate?: { frameRateNumerator: number; frameRateDenominator?: number }
+) {
+  return { id, url: `${id}.m3u8`, width, height, bandwidth, codecs: ['avc1.640028'], frameRate };
 }
 
-function presentationWith(tracks: Array<ReturnType<typeof videoTrack>>) {
-  return {
-    url: 'https://example.com/master.m3u8',
-    id: 'presentation',
-    selectionSets: [
-      { id: 'video-selection', type: 'video', switchingSets: [{ id: 'video-switching', type: 'video', tracks }] },
-    ],
-  };
-}
-
-const HD = videoTrack('v-1080', 1920, 1080, 6_000_000);
-const SD = videoTrack('v-360', 640, 360, 800_000);
+const HD = rendition('v-1080', 1920, 1080, 6_000_000);
+const SD = rendition('v-360', 640, 360, 800_000);
 
 // Drain the effect microtask and the nested microtask the rendition-list
 // primitives use to dispatch add/remove/change events.
@@ -74,39 +71,51 @@ function flush() {
 }
 
 describe('SimpleHlsMediaMediaTracksMixin', () => {
-  it('projects the engine presentation onto a selected video track with renditions', async () => {
+  it('projects the engine renditions onto a selected video track', async () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
-    engine.state.presentation.set(presentationWith([HD, SD]));
+    engine.state.videoRenditions.set([HD, SD]);
     await flush();
 
     expect(host.videoTracks.length).toBe(1);
     expect(host.videoTracks[0]?.selected).toBe(true);
     expect(host.videoRenditions.length).toBe(2);
-    expect([...host.videoRenditions].map((rendition) => rendition.id)).toEqual(['v-1080', 'v-360']);
-    expect([...host.videoRenditions].map((rendition) => rendition.height)).toEqual([1080, 360]);
-    expect([...host.videoRenditions].map((rendition) => rendition.bitrate)).toEqual([6_000_000, 800_000]);
+    expect([...host.videoRenditions].map((r) => r.id)).toEqual(['v-1080', 'v-360']);
+    expect([...host.videoRenditions].map((r) => r.height)).toEqual([1080, 360]);
+    expect([...host.videoRenditions].map((r) => r.bitrate)).toEqual([6_000_000, 800_000]);
+  });
+
+  it('reduces the model frame rate to a number on the projected rendition', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.videoRenditions.set([
+      rendition('v-1080', 1920, 1080, 6_000_000, { frameRateNumerator: 30000, frameRateDenominator: 1001 }),
+    ]);
+    await flush();
+
+    expect(host.videoRenditions[0]?.frameRate).toBeCloseTo(29.97, 2);
   });
 
   it('marks the active rendition from selectedVideoTrackId', async () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
-    engine.state.presentation.set(presentationWith([HD, SD]));
+    engine.state.videoRenditions.set([HD, SD]);
     await flush();
 
     engine.state.selectedVideoTrackId.set('v-360');
     await flush();
 
-    expect([...host.videoRenditions].map((rendition) => rendition.active)).toEqual([false, true]);
+    expect([...host.videoRenditions].map((r) => r.active)).toEqual([false, true]);
   });
 
   it('forwards a rendition selection to userVideoTrackSelection', async () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
-    engine.state.presentation.set(presentationWith([HD, SD]));
+    engine.state.videoRenditions.set([HD, SD]);
     await flush();
 
     host.videoRenditions.selectedIndex = 1;
@@ -119,7 +128,7 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
-    engine.state.presentation.set(presentationWith([HD, SD]));
+    engine.state.videoRenditions.set([HD, SD]);
     await flush();
 
     host.videoRenditions.selectedIndex = 1;
@@ -131,40 +140,18 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     expect(engine.state.userVideoTrackSelection.get()).toBeUndefined();
   });
 
-  it('does not rebuild renditions when a resolve mutates presentation without changing the track set', async () => {
+  it('rebuilds renditions when the engine emits a new set', async () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
-    let added = 0;
-    let removed = 0;
-    host.videoRenditions.addEventListener('addrendition', () => added++);
-    host.videoRenditions.addEventListener('removerendition', () => removed++);
-
-    engine.state.presentation.set(presentationWith([HD, SD]));
-    await flush();
-    expect(added).toBe(2);
-
-    // A media-playlist resolution replaces the presentation object with the
-    // same renditions — the projection should be a no-op.
-    engine.state.presentation.set(presentationWith([HD, SD]));
-    await flush();
-
-    expect(added).toBe(2);
-    expect(removed).toBe(0);
-  });
-
-  it('rebuilds renditions when the track set changes', async () => {
-    const engine = createEngine();
-    const host = new Host(() => engine);
-
-    engine.state.presentation.set(presentationWith([HD, SD]));
+    engine.state.videoRenditions.set([HD, SD]);
     await flush();
     expect(host.videoRenditions.length).toBe(2);
 
-    engine.state.presentation.set(presentationWith([HD]));
+    engine.state.videoRenditions.set([HD]);
     await flush();
 
-    expect([...host.videoRenditions].map((rendition) => rendition.id)).toEqual(['v-1080']);
+    expect([...host.videoRenditions].map((r) => r.id)).toEqual(['v-1080']);
   });
 
   it('re-wires the projection to the fresh engine created on src change', async () => {
@@ -177,12 +164,12 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
 
     // src change tears down engine[0] and creates engine[1].
     host.src = 'https://example.com/next.m3u8';
-    engines[1]!.state.presentation.set(presentationWith([HD, SD]));
+    engines[1]!.state.videoRenditions.set([HD, SD]);
     await flush();
     expect(host.videoRenditions.length).toBe(2);
 
     // The disconnected first engine must no longer drive the projection.
-    engines[0]!.state.presentation.set(presentationWith([HD]));
+    engines[0]!.state.videoRenditions.set([HD]);
     await flush();
     expect(host.videoRenditions.length).toBe(2);
   });
@@ -191,7 +178,7 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
-    engine.state.presentation.set(presentationWith([HD, SD]));
+    engine.state.videoRenditions.set([HD, SD]);
     await flush();
     expect(host.videoTracks.length).toBe(1);
 

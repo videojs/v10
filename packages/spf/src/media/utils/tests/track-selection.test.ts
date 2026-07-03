@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { AudioTrack, Presentation, VideoTrack } from '../../types';
-import { getResolvedSelectedTrackDuration, type TrackSelectionState } from '../track-selection';
+import { getResolvedSelectedTrackDuration, getVideoRenditions, type TrackSelectionState } from '../track-selection';
 
 function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]; duration?: number }): Presentation {
   const selectionSets = [];
@@ -130,5 +130,50 @@ describe('getResolvedSelectedTrackDuration', () => {
 
   it('returns undefined when there is no presentation', () => {
     expect(getResolvedSelectedTrackDuration({})).toBeUndefined();
+  });
+});
+
+describe('getVideoRenditions', () => {
+  it('maps the first video switching set to normalized rendition info', () => {
+    const presentation = createPresentation({
+      video: [
+        resolvedVideoTrack({ id: 'hd', url: 'hd.m3u8', width: 1920, height: 1080, bandwidth: 6_000_000 }),
+        resolvedVideoTrack({ id: 'sd', url: 'sd.m3u8', width: 640, height: 360, bandwidth: 800_000 }),
+      ],
+    });
+
+    expect(getVideoRenditions({ presentation })).toEqual([
+      {
+        id: 'hd',
+        url: 'hd.m3u8',
+        width: 1920,
+        height: 1080,
+        codecs: ['avc1.42E01E'],
+        bandwidth: 6_000_000,
+        frameRate: undefined,
+      },
+      {
+        id: 'sd',
+        url: 'sd.m3u8',
+        width: 640,
+        height: 360,
+        codecs: ['avc1.42E01E'],
+        bandwidth: 800_000,
+        frameRate: undefined,
+      },
+    ]);
+  });
+
+  it('carries the raw FrameRate through (DOM consumers normalize)', () => {
+    const frameRate = { frameRateNumerator: 30000, frameRateDenominator: 1001 };
+    const presentation = createPresentation({ video: [resolvedVideoTrack({ frameRate })] });
+
+    expect(getVideoRenditions({ presentation })[0]?.frameRate).toEqual(frameRate);
+  });
+
+  it('returns an empty array when the presentation is unresolved or has no video', () => {
+    expect(getVideoRenditions({})).toEqual([]);
+    expect(getVideoRenditions({ presentation: { url: 'x.m3u8' } })).toEqual([]);
+    expect(getVideoRenditions({ presentation: createPresentation({ audio: [resolvedAudioTrack()] }) })).toEqual([]);
   });
 });

@@ -1,11 +1,13 @@
 import type {
   AudioTrack,
+  FrameRate,
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
   PartiallyResolvedTextTrack,
   PartiallyResolvedVideoTrack,
   TextTrack,
   TrackType,
+  VideoSelectionSet,
   VideoTrack,
 } from '../types';
 import { isResolvedTrack } from '../types';
@@ -79,4 +81,42 @@ export function getResolvedSelectedTrackDuration(state: TrackSelectionState): nu
     if (audio && isResolvedTrack(audio)) return audio.duration;
   }
   return undefined;
+}
+
+/**
+ * A selectable video rendition (quality level) from the presentation. Each
+ * video track in the selected video switching set is one rendition, carried in
+ * the model's own vocabulary (`bandwidth`, `codecs`, `FrameRate`); DOM
+ * consumers map these onto their platform shapes.
+ */
+export interface VideoRenditionInfo {
+  id: string;
+  url: string;
+  width?: number;
+  height?: number;
+  codecs?: string[];
+  bandwidth: number;
+  frameRate?: FrameRate;
+}
+
+/**
+ * Read the selectable video renditions from a presentation — the tracks of the
+ * first video switching set. Returns an empty array when the presentation is
+ * unresolved or carries no video.
+ *
+ * @param presentation - The engine's current (maybe-resolved) presentation.
+ */
+export function getVideoRenditions(state: TrackSelectionState): VideoRenditionInfo[] {
+  const { presentation } = state;
+  const videoSet = presentation?.selectionSets?.find((set): set is VideoSelectionSet => set.type === 'video');
+
+  return (videoSet?.switchingSets[0]?.tracks ?? []).map((track) => ({
+    id: track.id,
+    url: track.url,
+    width: track.width,
+    height: track.height,
+    codecs: track.codecs,
+    bandwidth: track.bandwidth,
+    frameRate: track.frameRate,
+  }));
 }

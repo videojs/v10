@@ -18,7 +18,7 @@ import {
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
-import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
+import { getResolvedSelectedTrackDuration, type VideoRenditionInfo } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -29,6 +29,7 @@ import {
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
+import { deriveVideoRenditions } from '../../behaviors/derive-video-renditions';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -103,6 +104,13 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * Selectable video quality levels of the resolved presentation, ascending by
+   * declaration order. Derived from `presentation` by `deriveVideoRenditions`;
+   * a read-only projection consumers bind to (e.g. the DOM media adapter's
+   * `videoRenditions`). Cleared on src unload.
+   */
+  videoRenditions?: VideoRenditionInfo[];
 }
 
 /**
@@ -320,6 +328,10 @@ export function createSimpleHlsEngine(
       // redundant streams (the norm) never hit it — the first-listed CDN is
       // already the primary we'd pick anyway.
       deriveCdnPriority,
+
+      // Projects the resolved presentation's video quality levels onto the
+      // `videoRenditions` slot for consumers (e.g. the DOM media adapter).
+      deriveVideoRenditions,
 
       // CDN failover cooldown: owns the expiry half of failover — watches
       // `failedCdns` (tripped directly by track resolution on a failed

@@ -1,9 +1,10 @@
 import { effect, untrack } from '@videojs/spf';
-import type { SimpleHlsMediaAPI } from '@videojs/spf/hls';
+import type { SimpleHlsEngineState, SimpleHlsMediaAPI } from '@videojs/spf/hls';
 import type { Constructor } from '@videojs/utils/types';
 import type { MediaVideoRenditionCapability, MediaVideoTrackCapability } from '../../../core/media/types';
 
 type SimpleHlsEngine = SimpleHlsMediaAPI['engine'];
+type VideoRenditionInfo = NonNullable<SimpleHlsEngineState['videoRenditions']>[number];
 
 /**
  * Host surface the projection reads from: the SPF adapter (engine + src) plus
@@ -16,24 +17,6 @@ type MediaTracksHost = {
   destroy(): void;
 } & MediaVideoTrackCapability &
   MediaVideoRenditionCapability;
-
-/** A video rendition as parsed onto the engine's presentation (each SPF video track is one quality level). */
-type SpfVideoTrack = Extract<
-  NonNullable<NonNullable<ReturnType<SimpleHlsEngine['state']['presentation']['get']>>['selectionSets']>[number],
-  { type: 'video' }
->['switchingSets'][number]['tracks'][number];
-
-function videoTracksOf(engine: SimpleHlsEngine): SpfVideoTrack[] {
-  const presentation = engine.state.presentation.get();
-  const videoSet = presentation?.selectionSets?.find((set) => set.type === 'video');
-  return videoSet?.switchingSets[0]?.tracks ?? [];
-}
-
-function toFrameRate(frameRate: SpfVideoTrack['frameRate']): number | undefined {
-  if (!frameRate) return undefined;
-  const { frameRateNumerator, frameRateDenominator } = frameRate;
-  return frameRateDenominator ? frameRateNumerator / frameRateDenominator : frameRateNumerator;
-}
 
 /**
  * Projects the SPF engine's video renditions onto the media element's
@@ -52,8 +35,6 @@ function toFrameRate(frameRate: SpfVideoTrack['frameRate']): number | undefined 
 export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class SimpleHlsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
     #disconnect: AbortController | null = null;
-    /** Ids of the renditions currently projected, in order — used to skip rebuilds on segment resolution. */
-    #renditionSignature = '';
 
     constructor(...args: any[]) {
       super(...args);
@@ -92,46 +73,35 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
       this.videoRenditions.addEventListener('change', this.#switchRendition, { signal });
 
       const disposeEffects = [
-        // Track `presentation` only; active-rendition reflection reads
-        // `selectedVideoTrackId` untracked so a resolve doesn't re-rebuild.
-        effect(() => this.#projectRenditions(engine, videoTracksOf(engine))),
+        // The engine dedups `videoRenditions` (emits a new array only when the
+        // rendition set changes), so this rebuilds only on real changes. Active
+        // reflection reads `selectedVideoTrackId` in its own effect.
+        effect(() => this.#projectRenditions(engine, engine.state.videoRenditions.get() ?? [])),
         effect(() => this.#reflectActiveRendition(engine.state.selectedVideoTrackId.get())),
       ];
 
-      signal.addEventListener(
-        'abort',
-        () => {
-          for (const dispose of disposeEffects) dispose();
-        },
-        { once: true }
-      );
+      disposeEffects.forEach((dispose) => {
+        signal.addEventListener('abort', dispose, { once: true });
+      });
     }
 
-    #getSignaturesFor(tracks: SpfVideoTrack[]) {
-      return tracks.map((track) => track.id).join('|');
-    }
-
-    #projectRenditions(engine: SimpleHlsEngine, tracks: SpfVideoTrack[]): void {
-      const signature = this.#getSignaturesFor(tracks);
-      if (signature === this.#renditionSignature) return;
-      this.#renditionSignature = signature;
-
+    #projectRenditions(engine: SimpleHlsEngine, renditions: VideoRenditionInfo[]): void {
       this.#removeVideoTracks();
-      if (!tracks.length) return;
+      if (!renditions.length) return;
 
       const videoTrack = this.addVideoTrack('main');
       videoTrack.selected = true;
 
-      for (const track of tracks) {
+      for (const info of renditions) {
         const rendition = videoTrack.addRendition(
-          track.url,
-          track.width,
-          track.height,
-          track.codecs?.join(','),
-          track.bandwidth,
-          toFrameRate(track.frameRate)
+          info.url,
+          info.width,
+          info.height,
+          info.codecs?.join(','),
+          info.bandwidth,
+          toFrameRate(info.frameRate)
         );
-        rendition.id = track.id;
+        rendition.id = info.id;
       }
 
       this.#reflectActiveRendition(untrack(() => engine.state.selectedVideoTrackId.get()));
@@ -166,4 +136,11 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
   }
 
   return SimpleHlsMediaMediaTracks as unknown as Base;
+}
+
+/** Reduce the model's `FrameRate` (num/den) to the single number a DOM `VideoRendition` expects. */
+function toFrameRate(frameRate: VideoRenditionInfo['frameRate']): number | undefined {
+  if (!frameRate) return undefined;
+  const { frameRateNumerator, frameRateDenominator } = frameRate;
+  return frameRateDenominator ? frameRateNumerator / frameRateDenominator : frameRateNumerator;
 }
