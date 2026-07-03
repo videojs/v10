@@ -81,11 +81,18 @@ export interface I18nProviderProps {
 export type { I18nContextValue } from './context';
 
 type AddLocaleRoot = () => () => void;
+type I18nProviderComponent = (props: I18nProviderProps) => ReactNode;
 
 interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: Locale;
   localeFromProp?: boolean;
   parentAddLocaleRoot?: AddLocaleRoot;
+}
+
+const I18nProviderContext = createContext<I18nProviderComponent | undefined>(undefined);
+
+export function useI18nProvider(): I18nProviderComponent {
+  return useContext(I18nProviderContext) ?? I18nProvider;
 }
 
 export interface CreateI18nResult {
@@ -241,9 +248,11 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
     );
 
     return (
-      <LocaleRootContext.Provider value={addLocaleRoot}>
-        <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
-      </LocaleRootContext.Provider>
+      <I18nProviderContext.Provider value={I18nProvider}>
+        <LocaleRootContext.Provider value={addLocaleRoot}>
+          <I18nContext.Provider value={value}>{children}</I18nContext.Provider>
+        </LocaleRootContext.Provider>
+      </I18nProviderContext.Provider>
     );
   }
 

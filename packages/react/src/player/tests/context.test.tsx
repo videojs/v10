@@ -1,7 +1,8 @@
-import { render, renderHook } from '@testing-library/react';
+import { cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createI18n } from '../../i18n/create-i18n';
 import { createMockStore } from '../../testing/mocks';
 import { Container } from '../container';
 import {
@@ -16,6 +17,11 @@ import {
   usePlayer,
   usePlayerContext,
 } from '../context';
+
+afterEach(() => {
+  cleanup();
+  document.documentElement.removeAttribute('lang');
+});
 
 function createWrapper(value: PlayerContextValue) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -268,5 +274,33 @@ describe('Container', () => {
     );
 
     expect(store.attach).not.toHaveBeenCalled();
+  });
+
+  it('uses the nearest createI18n provider for lang roots', async () => {
+    const value = createContextValue();
+    const { I18nProvider, useTranslator } = createI18n({
+      loadLocale: async (tag) => (tag === 'x-container' ? { play: 'Container play' } : undefined),
+    });
+
+    function Label() {
+      const t = useTranslator();
+      return <span>{t('play')}</span>;
+    }
+
+    render(
+      <I18nProvider>
+        <div lang="x-container">
+          <PlayerContextProvider value={value}>
+            <Container>
+              <Label />
+            </Container>
+          </PlayerContextProvider>
+        </div>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('Container play')).not.toBeNull();
+    });
   });
 });
