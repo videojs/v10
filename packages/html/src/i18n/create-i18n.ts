@@ -1,5 +1,4 @@
-import { createContext } from '@videojs/element/context';
-import type { I18nContext, I18nContextValue } from './context';
+import { type I18nContext, i18nContext } from './context';
 import { I18nController } from './controller';
 import { createI18nProviderMixin, type I18nProviderMixin } from './provider-mixin';
 import { createTextMixin, type I18nTextMixin } from './text-mixin';
@@ -18,15 +17,14 @@ export interface CreateI18nResult {
 }
 
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
-  const context = createContext<I18nContextValue, symbol>(Symbol('@videojs/i18n'));
   const ProviderMixin = createI18nProviderMixin({
-    i18nContext: context,
+    i18nContext,
     loadLocale: options?.loadLocale,
   });
-  const TextMixin = createTextMixin({ i18nContext: context });
+  const TextMixin = createTextMixin({ i18nContext });
 
   return {
-    context,
+    context: i18nContext,
     I18nController,
     ProviderMixin,
     TextMixin,

@@ -191,21 +191,21 @@ describe('createI18n (HTML)', () => {
     });
   });
 
-  it('isolates Lit i18n context between createI18n() factories', async () => {
+  it('shares Lit i18n context between createI18n() factories', async () => {
     registerI18n('de', { play: 'Los' });
     const { ProviderMixin: AProvider, TextMixin: AText } = createI18n();
     const { TextMixin: BText } = createI18n();
-    class IsoProvider extends AProvider(ReactiveElement) {}
-    class IsoTextA extends AText(ReactiveElement) {}
-    class IsoTextB extends BText(ReactiveElement) {}
-    customElements.define('i18n-iso-provider', IsoProvider);
-    customElements.define('i18n-iso-text-a', IsoTextA);
-    customElements.define('i18n-iso-text-b', IsoTextB);
+    class SharedProvider extends AProvider(ReactiveElement) {}
+    class SharedTextA extends AText(ReactiveElement) {}
+    class SharedTextB extends BText(ReactiveElement) {}
+    customElements.define('i18n-shared-provider', SharedProvider);
+    customElements.define('i18n-shared-text-a', SharedTextA);
+    customElements.define('i18n-shared-text-b', SharedTextB);
 
-    const provider = new IsoProvider();
+    const provider = new SharedProvider();
     provider.setAttribute('lang', 'de');
-    const textSame = new IsoTextA();
-    const textOther = new IsoTextB();
+    const textSame = new SharedTextA();
+    const textOther = new SharedTextB();
     textSame.setAttribute('key', 'play');
     textOther.setAttribute('key', 'play');
     provider.appendChild(textSame);
@@ -214,7 +214,7 @@ describe('createI18n (HTML)', () => {
     await Promise.resolve();
     await Promise.resolve();
     expect(textSame.textContent).toBe('Los');
-    expect(textOther.textContent).toBe('Play');
+    expect(textOther.textContent).toBe('Los');
   });
 
   it('I18nController falls back to English without provider', async () => {
