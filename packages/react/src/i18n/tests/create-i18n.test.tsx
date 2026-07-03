@@ -946,6 +946,52 @@ describe('createI18n', () => {
     expect(onActiveLocaleChange).not.toHaveBeenCalledWith('de');
   });
 
+  it('reports ancestor locale when nested langRootRef unmounts', async () => {
+    registerI18n('de', { play: 'Abspielen' });
+    registerI18n('fr', { play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    const onActiveLocaleChange = vi.fn();
+    const { I18nProvider, useLocale, useTranslator } = createI18n();
+    const rootRef = createRef<HTMLDivElement>();
+
+    function Probe(): ReactElement {
+      return (
+        <span>
+          {useLocale()}:{useTranslator()('play')}
+        </span>
+      );
+    }
+
+    const { rerender } = render(
+      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
+        <section lang="fr">
+          <I18nProvider langRootRef={rootRef}>
+            <div ref={rootRef}>
+              <Probe />
+            </div>
+          </I18nProvider>
+        </section>
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('fr:Lire')).not.toBeNull();
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('fr');
+    });
+
+    rerender(
+      <I18nProvider onActiveLocaleChange={onActiveLocaleChange}>
+        <Probe />
+      </I18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('de:Abspielen')).not.toBeNull();
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('de');
+    });
+  });
+
   it('passes through when a nested provider only supplies langRootRef under an explicit locale', async () => {
     registerI18n('de', { play: 'Abspielen' });
 
