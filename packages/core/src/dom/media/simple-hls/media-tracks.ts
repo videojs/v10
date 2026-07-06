@@ -65,19 +65,19 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
 
     #connect(): void {
       this.#disconnect?.abort();
-      const controller = new AbortController();
-      this.#disconnect = controller;
-      const { signal } = controller;
+      this.#disconnect = new AbortController();
+      const { signal } = this.#disconnect;
       const { engine } = this;
 
       this.videoRenditions.addEventListener('change', this.#switchRendition, { signal });
 
       const disposeEffects = [
-        // The engine dedups `videoRenditions` (emits a new array only when the
+        // The engine dedupes `videoRenditions` (emits a new array only when the
         // rendition set changes), so this rebuilds only on real changes. Active
         // reflection reads `selectedVideoTrackId` in its own effect.
         effect(() => this.#projectRenditions(engine, engine.state.videoRenditions.get() ?? [])),
         effect(() => this.#reflectActiveRendition(engine.state.selectedVideoTrackId.get())),
+        effect(() => this.#reflectSelectedRendition(engine.state.userVideoTrackSelection.get()?.id)),
       ];
 
       disposeEffects.forEach((dispose) => {
@@ -105,11 +105,18 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
       }
 
       this.#reflectActiveRendition(untrack(() => engine.state.selectedVideoTrackId.get()));
+      this.#reflectSelectedRendition(untrack(() => engine.state.userVideoTrackSelection.get()?.id));
     }
 
     #reflectActiveRendition(activeId: string | undefined): void {
       for (const rendition of this.videoRenditions) {
         rendition.active = rendition.id === activeId;
+      }
+    }
+
+    #reflectSelectedRendition(selectedId: string | undefined): void {
+      for (const rendition of this.videoRenditions) {
+        rendition.selected = !!selectedId && rendition.id === selectedId;
       }
     }
 

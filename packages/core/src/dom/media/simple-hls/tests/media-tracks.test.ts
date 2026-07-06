@@ -140,6 +140,60 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     expect(engine.state.userVideoTrackSelection.get()).toBeUndefined();
   });
 
+  it('preserves the manual pin selection across a rebuild', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.videoRenditions.set([HD, SD]);
+    await flush();
+    host.videoRenditions.selectedIndex = 1; // pin SD
+    await flush();
+    expect(engine.state.userVideoTrackSelection.get()).toEqual({ id: 'v-360' });
+
+    // Engine emits a changed set (a rendition added) that still contains the pin.
+    const UHD = rendition('v-2160', 3840, 2160, 18_000_000);
+    engine.state.videoRenditions.set([HD, SD, UHD]);
+    await flush();
+
+    // The pinned rendition stays selected — the UI must not fall back to Auto.
+    const { selectedIndex } = host.videoRenditions;
+    expect(selectedIndex).not.toBe(-1);
+    expect([...host.videoRenditions][selectedIndex]?.id).toBe('v-360');
+    // Restoring the pin must not spuriously rewrite/clear the engine selection.
+    expect(engine.state.userVideoTrackSelection.get()).toEqual({ id: 'v-360' });
+  });
+
+  it('reflects a programmatic userVideoTrackSelection onto the selected rendition', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.videoRenditions.set([HD, SD]);
+    await flush();
+
+    engine.state.userVideoTrackSelection.set({ id: 'v-360' });
+    await flush();
+
+    const { selectedIndex } = host.videoRenditions;
+    expect([...host.videoRenditions][selectedIndex]?.id).toBe('v-360');
+    // Reflection must not loop back into a rewrite.
+    expect(engine.state.userVideoTrackSelection.get()).toEqual({ id: 'v-360' });
+  });
+
+  it('reflects a cleared pin as Auto (selectedIndex -1)', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.videoRenditions.set([HD, SD]);
+    await flush();
+    engine.state.userVideoTrackSelection.set({ id: 'v-360' });
+    await flush();
+    expect(host.videoRenditions.selectedIndex).not.toBe(-1);
+
+    engine.state.userVideoTrackSelection.set(undefined);
+    await flush();
+    expect(host.videoRenditions.selectedIndex).toBe(-1);
+  });
+
   it('rebuilds renditions when the engine emits a new set', async () => {
     const engine = createEngine();
     const host = new Host(() => engine);
