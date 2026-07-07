@@ -90,11 +90,12 @@ function resolveModulePath(fromFile: string, specifier: string): string {
   const dir = path.dirname(fromFile);
   const resolved = path.resolve(dir, specifier);
 
-  // Try exact match, then with extensions
+  // Try exact match, then with extensions. Require a file — a bare
+  // directory specifier must fall through to index resolution below.
   const extensions = ['', '.ts', '.tsx'];
   for (const ext of extensions) {
     const full = resolved + ext;
-    if (fs.existsSync(full)) return full;
+    if (fs.existsSync(full) && fs.statSync(full).isFile()) return full;
   }
 
   // Try index files
@@ -107,18 +108,31 @@ function resolveModulePath(fromFile: string, specifier: string): string {
 }
 
 function resolveLocalModules(indexPath: string): string[] {
-  const sourceFile = ts.createSourceFile(indexPath, fs.readFileSync(indexPath, 'utf-8'), ts.ScriptTarget.Latest, true);
-
+  const visited = new Set<string>([indexPath]);
   const localPaths: string[] = [];
 
-  ts.forEachChild(sourceFile, (node) => {
-    if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
-      const specifier = node.moduleSpecifier.text;
-      if (specifier.startsWith('.')) {
-        localPaths.push(resolveModulePath(indexPath, specifier));
+  // Post-order: a module's own re-exports are pushed before the module
+  // itself, so declaring files are scanned (and win seenKeys dedup) before
+  // the directory indexes that re-export them.
+  function collect(filePath: string): void {
+    const sourceFile = ts.createSourceFile(filePath, fs.readFileSync(filePath, 'utf-8'), ts.ScriptTarget.Latest, true);
+
+    ts.forEachChild(sourceFile, (node) => {
+      if (ts.isExportDeclaration(node) && node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        const specifier = node.moduleSpecifier.text;
+        if (!specifier.startsWith('.')) return;
+
+        const resolved = resolveModulePath(filePath, specifier);
+        if (visited.has(resolved) || !fs.existsSync(resolved)) return;
+        visited.add(resolved);
+
+        collect(resolved);
+        localPaths.push(resolved);
       }
-    }
-  });
+    });
+  }
+
+  collect(indexPath);
 
   return localPaths;
 }

@@ -59,6 +59,17 @@ export interface ComponentSource {
   htmlPath?: string;
   /** Path to index.parts.ts (if multi-part) */
   partsIndexPath?: string;
+  /** Extra part-scoped data-attrs files ({kebab}-{x}-data-attrs.ts with a `@parts` tag) */
+  extraDataAttrs?: ExtraDataAttrsSource[];
+}
+
+export interface ExtraDataAttrsSource {
+  /** Path to the extra data-attrs file */
+  path: string;
+  /** PascalCase export prefix for data-attrs variable lookup (e.g., MenuItem for menu-item-data-attrs.ts) */
+  componentName: string;
+  /** Part kebabs listed in the file's `@parts` JSDoc tag */
+  parts: string[];
 }
 
 /**

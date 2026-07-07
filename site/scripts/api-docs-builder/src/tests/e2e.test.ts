@@ -23,7 +23,9 @@
  *                     Core instantiation, sub-parts with/without HTML elements,
  *                     React-only parts (no platforms.html), sub-part data-attr
  *                     inheritance (stateAttrMap heuristic), non-boolean type
- *                     inference (number, string literal union via type alias).
+ *                     inference (number, string literal union via type alias),
+ *                     extra @parts-tagged data-attrs files attaching to the
+ *                     listed parts (gauge-label-data-attrs.ts).
  *   slider/         — Base multi-part component. Exercises: base component whose
  *                     parts are re-exported by domain variants.
  *   volume-slider/  — Domain variant. Exercises: re-exported parts from slider,
@@ -35,6 +37,10 @@
  *   create* factory, mixin display name stripping, selector discovery,
  *   @label overloads, slug collision (react vs html create-player),
  *   framework assignment.
+ *   ui/rate-options/ — Hook re-exported through a directory index
+ *   (entry index → ./ui/rate-options → ./use-rate-options), with a
+ *   namespace merged onto the function (Props/Result pattern).
+ *   Exercises: recursive re-export resolution in util discovery.
  *
  * Features (packages/core/src/dom/store/features/):
  *   playback.ts  — Simple feature. Exercises: boolean state properties,
@@ -343,6 +349,28 @@ describe('Component pipeline (end-to-end)', () => {
       expect(label.platforms.react).toEqual({});
       expect(label.platforms.html).toBeUndefined();
     });
+
+    // Extra data-attrs files ({component}-{x}-data-attrs.ts, next to the
+    // main {component}-data-attrs.ts) declare their target parts with a
+    // @parts JSDoc tag. This covers attrs that a DOM layer applies to
+    // parts directly, invisible to the per-part stateAttrMap heuristic
+    // (e.g. menu-item-data-attrs.ts applied by create-menu.ts).
+    it('extra @parts-tagged data-attrs file attaches to listed parts', () => {
+      const parts = findComponent('Gauge')!.reference.parts!;
+
+      // label: no other attrs — gets the extra file's attrs
+      expect(parts.label!.dataAttributes['data-emphasized']).toMatchObject({
+        description: 'Present when the value is emphasized.',
+      });
+
+      // fill: extra attrs merge with attrs inherited via stateAttrMap
+      expect(parts.fill!.dataAttributes['data-emphasized']).toBeDefined();
+      expect(parts.fill!.dataAttributes['data-percentage']).toBeDefined();
+
+      // parts not listed in @parts are untouched
+      expect(parts.track!.dataAttributes).toEqual({});
+      expect(parts.indicator!.dataAttributes['data-emphasized']).toBeUndefined();
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────
@@ -537,6 +565,23 @@ describe('Util pipeline (end-to-end)', () => {
       expect(findByName('usePlayer', 'react')).toBeDefined();
       expect(findByName('useStore', 'react')).toBeDefined();
       expect(findByName('useFormat', 'react')).toBeDefined();
+    });
+
+    // Entry indexes often re-export hooks through a directory index
+    // (entry index → ./ui/rate-options → ./use-rate-options). Discovery
+    // must follow re-export hops to the declaring module so JSDoc and
+    // overload extraction read the real source file. The fixture also
+    // merges a namespace onto the hook (the repo's Props/Result pattern),
+    // which must not break FunctionNode detection.
+    it('discovers hooks re-exported through a directory index', () => {
+      const entry = findByName('useRateOptions', 'react');
+      expect(entry).toBeDefined();
+      expect(entry!.slug).toBe('use-rate-options');
+      expect(entry!.data.description).toContain('Create rate menu options');
+
+      const overload = entry!.data.overloads[0]!;
+      expect(overload.parameters.props).toBeDefined();
+      expect(overload.parameters.props!.description).toContain('formatRate');
     });
 
     it('discovers controllers from HTML entry points', () => {

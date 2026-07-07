@@ -23,6 +23,7 @@ import type {
   CSSVarsExtraction,
   DataAttrDef,
   DataAttrsExtraction,
+  ExtraDataAttrsSource,
   PartReference,
   PartSource,
   PropDef,
@@ -105,6 +106,38 @@ export function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSS
 
 // ─── Discovery ─────────────────────────────────────────────────────
 
+// Extra data-attrs files in a component dir ({kebab}-{x}-data-attrs.ts)
+// declare their target parts with a `@parts item, radio-item` JSDoc tag.
+// They cover attrs a DOM layer applies to part elements directly, which
+// the per-part stateAttrMap heuristic can't see (e.g. menu-item-data-attrs
+// applied by create-menu).
+function discoverExtraDataAttrs(componentDir: string, componentKebab: string): ExtraDataAttrsSource[] {
+  const extras: ExtraDataAttrsSource[] = [];
+  const mainFile = `${componentKebab}-data-attrs.ts`;
+
+  for (const file of fs.readdirSync(componentDir)) {
+    if (!file.endsWith('-data-attrs.ts') || file === mainFile) continue;
+
+    const filePath = path.join(componentDir, file);
+    const partsTag = fs.readFileSync(filePath, 'utf-8').match(/@parts\s+([^\n*]+)/);
+    if (!partsTag) continue;
+
+    const parts = partsTag[1]!
+      .split(',')
+      .map((part) => part.trim())
+      .filter(Boolean);
+    if (parts.length === 0) continue;
+
+    extras.push({
+      path: filePath,
+      componentName: kebabToPascal(file.replace(/-data-attrs\.ts$/, '')),
+      parts,
+    });
+  }
+
+  return extras;
+}
+
 export function discoverComponents(monorepoRoot: string): ComponentSource[] {
   const coreUiPath = path.join(monorepoRoot, 'packages/core/src/core/ui');
   const htmlUiPath = path.join(monorepoRoot, 'packages/html/src/ui');
@@ -142,6 +175,9 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
     const partsIndexFile = path.join(reactUiPath, dir.name, 'index.parts.ts');
     if (fs.existsSync(partsIndexFile)) source.partsIndexPath = partsIndexFile;
 
+    const extraDataAttrs = discoverExtraDataAttrs(componentDir, dir.name);
+    if (extraDataAttrs.length > 0) source.extraDataAttrs = extraDataAttrs;
+
     if (source.corePath) {
       components.push(source);
     }
@@ -154,7 +190,6 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
 
 export function createComponentProgram(sources: ComponentSource[], monorepoRoot: string): ts.Program {
   const htmlUiPath = path.join(monorepoRoot, 'packages/html/src/ui');
-  const coreUiPath = path.join(monorepoRoot, 'packages/core/src/core/ui');
   const files: string[] = [];
 
   for (const source of sources) {
@@ -163,6 +198,7 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
     if (source.cssVarsPath) files.push(source.cssVarsPath);
     if (source.htmlPath) files.push(source.htmlPath);
     if (source.partsIndexPath) files.push(source.partsIndexPath);
+    if (source.extraDataAttrs) files.push(...source.extraDataAttrs.map((extra) => extra.path));
 
     if (source.partsIndexPath) {
       const htmlDir = path.join(htmlUiPath, source.kebab);
@@ -455,6 +491,17 @@ function buildMultiPartReference(
       }
 
       partsRecord[part.kebab] = partRef;
+    }
+  }
+
+  for (const extra of source.extraDataAttrs ?? []) {
+    const extraData = extractDataAttrs(extra.path, program, extra.componentName);
+    if (!extraData) continue;
+
+    const extraAttrs = buildDataAttrs(extraData);
+    for (const partKebab of extra.parts) {
+      const partRef = partsRecord[partKebab];
+      if (partRef) partRef.dataAttributes = { ...partRef.dataAttributes, ...extraAttrs };
     }
   }
 
