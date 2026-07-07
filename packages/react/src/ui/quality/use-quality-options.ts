@@ -36,6 +36,13 @@ function resolveAutoLabel(t: Translator, label: string): string {
   return resolveTranslation(t, label);
 }
 
+/**
+ * Create quality menu options (including an `Auto` option) from the player
+ * video rendition state. Returns `null` when the quality feature is not
+ * configured.
+ *
+ * @param props - Optional `label`, `formatRendition`, and `disabled` overrides.
+ */
 export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsResult | null {
   'use no memo';
 

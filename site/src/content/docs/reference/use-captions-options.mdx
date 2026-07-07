@@ -1,0 +1,35 @@
+---
+title: useCaptionsOptions
+description: Hook to build captions menu options from the player text track state
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useCaptionsOptions` returns the currently showing caption track, the available options (starting with an `Off` option), and a `setValue` callback for wiring caption selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> is not configured.
+
+```tsx title="CaptionsMenu.tsx"
+import { Menu, useCaptionsOptions } from "@videojs/react";
+
+function CaptionsMenu() {
+  const captions = useCaptionsOptions();
+  if (captions?.state.availability !== "available") return null;
+
+  return (
+    <Menu.RadioGroup value={captions.value} onValueChange={captions.setValue} aria-label="Captions">
+      {captions.options.map((option) => (
+        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+          <Menu.ItemIndicator checked={option.value === captions.value} />
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  );
+}
+```
+
+Option labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels. The result also exposes `showMenu`, which is `true` when more than one caption or subtitle track is available — the same threshold <DocsLink slug="reference/captions-button">CaptionsButton</DocsLink> uses to open a menu instead of toggling in `menuTrigger` mode.
+
+See <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
+
+<UtilReference util="useCaptionsOptions" />

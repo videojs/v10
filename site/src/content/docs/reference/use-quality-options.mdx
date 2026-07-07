@@ -1,0 +1,35 @@
+---
+title: useQualityOptions
+description: Hook to build video quality menu options from the player rendition state
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useQualityOptions` returns the current quality value, the available options, and a `setValue` callback for wiring quality selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
+
+```tsx title="QualityMenu.tsx"
+import { Menu, useQualityOptions } from "@videojs/react";
+
+function QualityMenu() {
+  const quality = useQualityOptions();
+  if (quality?.state.availability !== "available") return null;
+
+  return (
+    <Menu.RadioGroup value={quality.value} onValueChange={quality.setValue} aria-label="Quality">
+      {quality.options.map((option) => (
+        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+          <Menu.ItemIndicator checked={option.value === quality.value} />
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  );
+}
+```
+
+The first option is always `Auto`; selecting it returns control to adaptive bitrate selection. Options carry optional `tier` and `badge` fields (e.g. `4K`, `HD`) for richer labels. Pass `formatRendition` to customize the visible rendition labels.
+
+See <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
+
+<UtilReference util="useQualityOptions" />

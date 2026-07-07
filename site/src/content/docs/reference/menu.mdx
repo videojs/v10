@@ -108,7 +108,7 @@ Menus open from a trigger and close when you select an item, click outside, move
 
 Create a submenu by putting another menu inside the root menu's content. Its trigger stays in the root list, and its content becomes the next view. In HTML, give the submenu a matching `id` and point the trigger at it with `commandfor`. Wrap the root list in `Menu.View` or `<media-menu-view>` when the root list and submenus share one animated viewport.
 
-Set `type="playback-rate"`, `type="quality"`, `type="audio-track"`, or `type="captions"` on a submenu trigger when it represents a media setting. `Menu.ItemValue` and `<media-menu-item-value>` read that setting context and display the current value, such as `1.5x`, `Auto`, `English`, or `Off`. See <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink> and <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink> for the generated option groups.
+Set `type="playback-rate"`, `type="quality"`, `type="audio-track"`, or `type="captions"` on a submenu trigger when it represents a media setting. `Menu.ItemValue` and `<media-menu-item-value>` read that setting context and display the current value, such as `1.5x`, `Auto`, `English`, or `Off`. See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink>, <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink>, <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink>, and <DocsLink slug="reference/captions-radio-group">CaptionsRadioGroup</DocsLink> for the generated option groups.
 
 ## Styling
 

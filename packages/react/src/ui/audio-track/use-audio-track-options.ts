@@ -24,6 +24,12 @@ export interface AudioTrackOptionsResult {
   setValue: (value: string) => void;
 }
 
+/**
+ * Create audio track menu options from the player audio track state. Returns
+ * `null` when the audio track feature is not configured.
+ *
+ * @param props - Optional `label`, `formatTrack`, and `disabled` overrides.
+ */
 export function useAudioTrackOptions(props?: AudioTrackOptionsProps): AudioTrackOptionsResult | null {
   'use no memo';
 

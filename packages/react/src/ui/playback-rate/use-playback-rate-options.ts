@@ -28,6 +28,12 @@ export interface PlaybackRateOptionsResult {
   setValue: (value: string) => void;
 }
 
+/**
+ * Create playback rate menu options from the player playback rate state.
+ * Returns `null` when the playback rate feature is not configured.
+ *
+ * @param props - Optional `label`, `formatRate`, and `disabled` overrides.
+ */
 export function usePlaybackRateOptions(props?: PlaybackRateOptionsProps): PlaybackRateOptionsResult | null {
   const media = usePlayer(selectPlaybackRate);
   const [core] = useState(() => new PlaybackRateRadioGroupCoreClass());

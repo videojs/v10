@@ -1,0 +1,79 @@
+---
+title: CaptionsRadioGroup
+frameworkTitle:
+  html: media-captions-radio-group
+description: A menu radio group for selecting caption and subtitle tracks
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Creates radio items from the player text track state and selects the showing caption or subtitle track.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  const captions = useCaptionsOptions();
+
+  <Menu.RadioGroup value={captions.value} onValueChange={captions.setValue}>
+    <Menu.GroupLabel>Captions</Menu.GroupLabel>
+    {captions.options.map((option) => (
+      <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+        {option.label}
+        <Menu.ItemIndicator checked={option.value === captions.value} />
+      </Menu.RadioItem>
+    ))}
+  </Menu.RadioGroup>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-captions-radio-group>
+    <template>
+      <media-menu-radio-item>
+        <span data-part="label"></span>
+        <media-menu-item-indicator></media-menu-item-indicator>
+      </media-menu-radio-item>
+    </template>
+  </media-captions-radio-group>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The group is available when the configured media exposes at least one caption or subtitle track. The first generated option is `Off`; selecting it hides captions. Track labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels.
+
+<FrameworkCase frameworks={["react"]}>
+<DocsLink slug="reference/use-captions-options">`useCaptionsOptions`</DocsLink> returns `null` when the <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-captions-radio-group>` generates `<media-menu-radio-item>` children, including the `Off` item. Add an optional `<template>` with a single `<media-menu-radio-item>` to customize each generated item.
+</FrameworkCase>
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-active` | Present / absent | Present when captions are enabled. |
+| `data-disabled` | Present / absent | Present when track selection is disabled. |
+| `data-availability` | `"available"` / `"unavailable"` | Whether caption or subtitle tracks are available. |
+
+<FrameworkCase frameworks={["html"]}>
+  ```css
+  media-captions-radio-group[data-availability="unavailable"] {
+    display: none;
+  }
+  ```
+</FrameworkCase>
+
+## Accessibility
+
+The group uses the menu radio group pattern. It receives an accessible label from the `label` prop or defaults to `Enable captions` / `Disable captions` based on the current state.
+
+<FrameworkCase frameworks={["html"]}>
+  <ComponentReference component="CaptionsRadioGroup" />
+</FrameworkCase>
