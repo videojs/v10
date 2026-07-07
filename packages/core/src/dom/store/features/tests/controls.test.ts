@@ -392,9 +392,9 @@ describe('controlsFeature', () => {
       expect(store.state.userActive).toBe(true);
       expect(store.state.controlsVisible).toBe(true);
 
-      // Advance past the original deadline — still active because the tap reset
-      // the timer. Without the fix the gesture early-return would skip setActive
-      // and the controls would hide here.
+      // Advance past the original deadline — still active because the tap reset the
+      // timer. Without the fix a control tap wouldn't count as activity and the
+      // controls would hide here.
       vi.advanceTimersByTime(500);
       flush();
 

@@ -1,4 +1,4 @@
-import { isInteractiveTarget, listen } from '@videojs/utils/dom';
+import { listen } from '@videojs/utils/dom';
 import { isNull } from '@videojs/utils/predicate';
 import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '../../../core/media/predicate';
 import type { MediaControlsState } from '../../../core/media/state';
@@ -105,22 +105,13 @@ export const controlsFeature = definePlayerFeature({
       }
 
       if (event.pointerType === 'touch' && Date.now() - pointerDownTime < TAP_THRESHOLD) {
-        // The gesture coordinator ignores interactive targets, so a tap on a control
-        // never reaches toggleControls — reset the idle timer here, or repeated
-        // control taps (mute, seek 10s) wouldn't keep controls visible on iOS Safari.
-        if (isInteractiveTarget(event)) {
-          setActive();
-          return;
-        }
-
-        // When a toggleControls touch tap gesture is registered, it handles toggle — skip inline handler.
+        // A claimed tap belongs to the gesture layer, which owns the toggle — nothing
+        // to do here. An unclaimed tap (e.g. on a control button the coordinator
+        // ignores) falls through and resets the idle timer below; without that,
+        // repeatedly tapping a control lets the controls auto-hide mid-interaction.
         const coordinator = findGestureCoordinator(container as HTMLElement);
 
-        if (
-          coordinator?.bindings.some(
-            (b) => b.type === 'tap' && b.action === 'toggleControls' && (!b.pointer || b.pointer === 'touch')
-          )
-        ) {
+        if (coordinator?.claimsTap(event, 'toggleControls')) {
           return;
         }
 
