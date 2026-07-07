@@ -17,6 +17,11 @@ Guidance for converting legacy CSS to Tailwind **v4** class strings while preser
 
 Theme and shared animation tokens are declared in CSS (**`@theme`**, keyed custom properties consumed by utilities). Apps use **`@import "tailwindcss"`**; **`packages/skins`** layers shared **`@keyframes` / `@property` / `@theme`** in **`shared/tailwind.css`**. When a pattern repeats across components, prefer **`@utility`** or **`@custom-variant`** in CSS (see **`site`** / **`apps/sandbox`** styles) rather than proliferating arbitrary values in TS presets.
 
+## Video.js migration constraints
+
+- Never add legacy `media-*` semantic or BEM marker classes to Tailwind markup or class strings, such as `media-button--mute` or `media-popover--volume`. Use Tailwind utilities, exported Tailwind component classes, named groups/container variants, data attributes, or custom-element selectors instead. Named Tailwind variants such as `@container/media-root` and `group/controls` are valid.
+- Treat Tailwind v4's `--spacing` as the base spacing variable. Convert `calc(var(--spacing) * N)` to the native utility (`p-N`, `gap-N`, etc.) where one exists. For arbitrary values and custom properties with a literal multiplier, use Tailwind v4's build-time `--spacing(N)` function, such as `rounded-[--spacing(7)]`, rather than carrying the `calc(var(--spacing) * N)` expression into the class string. Keep a `calc(var(--spacing) * var(...))` expression when the multiplier is runtime-derived. Do not carry over `--base-size` or `--size`; resolve font and icon sizes to rem values.
+
 See [references/migration.md](references/migration.md) for v4-focused rules.
 
 ## When to use

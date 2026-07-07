@@ -48,26 +48,26 @@ function getTemplateHTML() {
             </media-tooltip>
 
             <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
-          </div>
 
-          <div class="media-time-controls" aria-hidden="true"></div>
-
-          <div class="media-button-group">
             <media-mute-button commandfor="live-video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
               ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
               ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
               ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             </media-mute-button>
 
-            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-popover media-popover--volume">
-              <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
+            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
+              <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                 </media-slider-track>
                 <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
+          </div>
 
+          <div class="media-time-controls" aria-hidden="true"></div>
+
+          <div class="media-button-group">
             <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
               ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}

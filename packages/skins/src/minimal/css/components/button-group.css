@@ -4,10 +4,10 @@
 
 .media-minimal-skin .media-button-group {
   display: flex;
-  gap: 0.075rem;
+  gap: 1px;
   align-items: center;
 
   @container media-root (width > 42rem) {
-    gap: 0.125rem;
+    gap: calc(var(--spacing) * 0.5);
   }
 }

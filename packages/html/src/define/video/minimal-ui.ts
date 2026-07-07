@@ -21,10 +21,6 @@ import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
-import { TooltipElement } from '../../ui/tooltip/tooltip-element';
-import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
-import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
-import { TooltipShortcutElement } from '../../ui/tooltip/tooltip-shortcut-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -33,6 +29,7 @@ import {
   defineMenu,
   defineTime,
   defineTimeSlider,
+  defineTooltips,
   defineVolumeSlider,
 } from '../ui/compounds';
 import '../i18n';
@@ -73,7 +70,4 @@ safeDefine(PopoverElement);
 safeDefine(PosterElement);
 safeDefine(QualityRadioGroupElement);
 safeDefine(SeekButtonElement);
-safeDefine(TooltipLabelElement);
-safeDefine(TooltipShortcutElement);
-safeDefine(TooltipElement);
-safeDefine(TooltipGroupElement);
+defineTooltips();

@@ -22,10 +22,6 @@ export const root = cn(
   '[--media-error-dialog-transition-delay:100ms]',
   '[--media-popup-transition-duration:100ms]',
   '[--media-popup-transition-timing-function:ease-out]',
-  '[--media-tooltip-side-offset:0.75rem]',
-  '[--media-tooltip-boundary-offset:0.75rem]',
-  '[--media-popover-side-offset:0.75rem]',
-  '[--media-popover-boundary-offset:0.75rem]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -47,7 +43,15 @@ export const root = cn(
    Controls
    ========================================================================== */
 
-export const controls = cn(baseControls, surface, 'text-(--media-text-color)', 'peer-data-open/error:**:invisible');
+export const controls = cn(
+  baseControls,
+  surface,
+  '[--base-boundary-offset:2]',
+  'text-(--media-text-color)',
+  'peer-data-open/error:**:invisible'
+);
+
+export const spacer = 'grow';
 
 export const playButton = {
   wrapper: 'group/play inline-flex relative',

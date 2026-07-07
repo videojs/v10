@@ -40,22 +40,24 @@
   );
   --media-border-color: oklch(0 0 0 / 0.1);
   --media-surface-background-color: oklch(1 0 0 / 0.1);
-  --media-surface-inner-border-color: oklch(1 0 0 / 0.05);
+  --media-surface-inner-border-color: oklch(1 0 0 / 0.1);
   --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
-  --media-video-border-radius: var(--media-border-radius, 2rem);
+
+  /* We have to create an alias so that the shadow DOM can inherit the custom property value */
+  --media-video-border-radius: var(--media-border-radius, 1.75rem);
+
   --media-controls-transition-duration: 100ms;
   --media-controls-transition-timing-function: ease-out;
+
   --media-error-dialog-transition-duration: 350ms;
   --media-error-dialog-transition-delay: 100ms;
   --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
+
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
-  --media-tooltip-side-offset: 0.75rem;
-  --media-tooltip-boundary-offset: 0.5rem;
-  --media-popover-side-offset: 0.5rem;
-  --media-popover-boundary-offset: 0.5rem;
+
   overflow: clip;
   background: oklch(0 0 0);
 
@@ -76,7 +78,7 @@
     --media-surface-outer-border-color: transparent;
   }
 
-  &:has(.media-controls:not([data-visible])) {
+  &:has(.media-controls--root:not([data-visible])) {
     /* Slight delay to hide controls on non-touch devices after interaction */
     @media (pointer: fine) {
       --media-controls-transition-duration: 300ms;
@@ -102,6 +104,20 @@
 
   &:fullscreen {
     --media-border-radius: 0;
+
+    &::after {
+      display: none;
+    }
+
+    @media (width >= 1280px) {
+      --scale: 1.25;
+    }
+    @media (width >= 1536px) {
+      --scale: 1.5;
+    }
+    @media (width >= 1920px) {
+      --scale: 1.75;
+    }
   }
 }
 
@@ -121,12 +137,12 @@
 .media-default-skin--video .media-error__dialog {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
-  max-width: 18rem;
-  padding: 0.75rem;
+  gap: calc(var(--spacing) * 3);
+  max-width: calc(var(--spacing) * 72);
+  padding: calc(var(--spacing) * 3);
   color: oklch(1 0 0);
   text-shadow: 0 1px 0 oklch(0 0 0 / 0.25);
-  border-radius: 1.75rem;
+  border-radius: calc(var(--spacing) * 7);
   transition-delay: var(--media-error-dialog-transition-delay);
   transition-timing-function: var(--media-error-dialog-transition-timing-function);
   transition-duration: var(--media-error-dialog-transition-duration);
@@ -145,85 +161,167 @@
 .media-default-skin--video .media-error__content {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.5rem 0.5rem 0.375rem;
+  gap: calc(var(--spacing) * 2);
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 2) calc(var(--spacing) * 1.5);
   text-shadow: inherit;
 }
 
 .media-default-skin--video .media-error__title {
-  font-size: 1rem;
+  font-size: var(--font-size-medium);
 }
 
 /* ==========================================================================
    Controls (hide/show behavior)
    ========================================================================== */
 
-.media-default-skin--video .media-controls {
-  position: absolute;
-  inset-inline: 0.5rem;
-  bottom: 0.5rem;
+.media-default-skin--video .media-controls--root {
+  --inset-factor: 2;
+  --inset: calc(var(--spacing) * var(--inset-factor));
+  --base-boundary-offset: var(--inset-factor);
+
   z-index: 10;
-  flex-wrap: wrap;
+  display: contents;
   color: var(--media-color-primary, oklch(1 0 0));
-  transform-origin: bottom;
   transition-timing-function: var(--media-controls-transition-timing-function);
-  transition-duration: var(--media-controls-transition-duration);
+  /* Speed up the entry transition */
+  transition-duration: calc(var(--media-controls-transition-duration) / 2);
 
-  @media (pointer: fine) {
-    transition-property: scale, filter, opacity;
-    will-change: scale, filter, opacity;
+  & .media-controls--primary,
+  & .media-controls--secondary {
+    position: absolute;
+    z-index: 10;
   }
 
-  @media (pointer: coarse) {
-    transition-property: scale, opacity;
-    will-change: scale, opacity;
+  & .media-controls--primary {
+    inset-inline: var(--inset);
+    bottom: var(--inset);
+    column-gap: calc(0.0625 * var(--base-size));
+    transform-origin: bottom;
   }
 
-  &:not([data-visible]) {
-    pointer-events: none;
-    opacity: 0;
-    scale: 0.95;
+  & .media-controls--secondary {
+    top: var(--inset);
+    right: var(--inset);
+    container-type: normal;
+    transform-origin: top;
+  }
 
-    @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
-      filter: blur(8px);
+  @container media-root (width < 32rem) {
+    & .media-controls--primary,
+    & .media-controls--secondary {
+      transition-timing-function: inherit;
+      transition-duration: inherit;
+
+      @media (pointer: fine) {
+        transition-property: filter, opacity, scale, translate;
+        will-change: filter, opacity, scale, translate;
+      }
+
+      @media (pointer: coarse) {
+        transition-property: opacity, scale, translate;
+        will-change: opacity, scale, translate;
+      }
     }
 
-    @media (prefers-reduced-motion: reduce) {
-      scale: 1;
+    &:after {
+      display: none;
+    }
+
+    &:not([data-visible]) {
+      & .media-controls--primary,
+      & .media-controls--secondary {
+        pointer-events: none;
+        opacity: 0;
+        scale: 0.95;
+        transition-duration: var(--media-controls-transition-duration);
+
+        @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+          filter: blur(8px);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          scale: 1;
+        }
+      }
+
+      & .media-controls--primary {
+        @media (prefers-reduced-motion: no-preference) {
+          translate: 0 4px;
+        }
+      }
+
+      & .media-controls--secondary {
+        @media (prefers-reduced-motion: no-preference) {
+          translate: 0 -4px;
+        }
+      }
+    }
+  }
+
+  @container media-root (width >= 32rem) {
+    position: absolute;
+    inset-inline: var(--inset);
+    bottom: var(--inset);
+    display: flex;
+    transform-origin: bottom;
+
+    & .media-controls--primary,
+    & .media-controls--secondary {
+      display: contents;
+
+      &::after {
+        display: none;
+      }
+    }
+
+    &:not([data-visible]) {
+      pointer-events: none;
+      opacity: 0;
+      scale: 0.95;
+      transition-duration: var(--media-controls-transition-duration);
+
+      @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+        filter: blur(8px);
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        scale: 1;
+      }
+
+      @media (prefers-reduced-motion: no-preference) {
+        translate: 0 4px;
+      }
     }
   }
 
   & .media-time-controls {
-    flex: 0 0 100%;
-    order: -1;
-    padding-inline: 0.625rem;
+    flex: 1;
+
+    @container media-controls (width >= 30rem) {
+      padding-inline: calc(var(--spacing) * 2.5);
+    }
   }
 
-  & .media-button-group:first-child {
-    flex: 1;
-    text-align: left;
+  @media (pointer: fine) {
+    transition-property: filter, opacity, scale, translate;
+    will-change: filter, opacity, scale, translate;
   }
 
-  & .media-button-group:last-child {
-    flex: 1;
-    justify-content: end;
+  @media (pointer: coarse) {
+    transition-property: opacity, scale, translate;
+    will-change: opacity, scale, translate;
   }
 
   @container media-root (width > 42rem) {
-    inset-inline: 0.75rem;
-    bottom: 0.75rem;
-    flex-wrap: nowrap;
-    column-gap: 0.125rem;
-    padding: 0.25rem;
+    --inset-factor: 3;
+    column-gap: calc(var(--spacing) * 0.5);
+  }
+}
 
-    & .media-time-controls {
-      flex: 1;
-      order: unset;
-    }
-
-    & .media-button-group:first-child,
-    & .media-button-group:last-child {
-      flex: 0 0 auto;
+.media-default-skin--video:not(.media-default-skin--live) .media-controls--root {
+  & .media-button--seek {
+    @container media-root (width < 32rem) {
+      display: none;
     }
   }
 }
@@ -233,7 +331,7 @@
 }
 
 /* Hide cursor when controls are hidden */
-.media-default-skin--video:has(.media-controls:not([data-visible])) {
+.media-default-skin--video:has(.media-controls--root:not([data-visible])) {
   cursor: none;
 }
 
@@ -247,32 +345,21 @@
 }
 
 .media-default-skin--video .media-slider__thumbnail {
-  --media-slider-thumbnail-max-width: 11rem;
-  --media-slider-thumbnail-max-height: 8rem;
-  --media-slider-thumbnail-padding: -1.125rem;
+  --max-width: calc(var(--spacing) * 44);
+  --max-height: calc(var(--spacing) * 32);
+  --padding: calc(var(--spacing) * -4.5);
   /**
     Inset is the difference between the container width and the slider (100%) width.
     Divided by 2 as we render the time on both sides.
   */
-  --media-slider-thumbnail-inset: calc((100cqi - 100%) / 2);
+  --inset: calc((100cqi - 100%) / 2);
 
   position: absolute;
-  bottom: calc(100% + 1.2rem);
+  bottom: calc(100% + calc(var(--spacing) * 4.8));
   left: clamp(
-    calc(
-      var(--media-slider-thumbnail-max-width) /
-      2 +
-      var(--media-slider-thumbnail-padding) -
-      var(--media-slider-thumbnail-inset)
-    ),
+    calc(var(--max-width) / 2 + var(--padding) - var(--inset)),
     var(--media-slider-pointer),
-    calc(
-      100% -
-      var(--media-slider-thumbnail-max-width) /
-      2 -
-      var(--media-slider-thumbnail-padding) +
-      var(--media-slider-thumbnail-inset)
-    )
+    calc(100% - var(--max-width) / 2 - var(--padding) + var(--inset))
   );
   pointer-events: none;
   opacity: 0;
@@ -285,8 +372,8 @@
   transition-property: scale, opacity, filter;
 
   & .media-thumbnail__image {
-    max-width: var(--media-slider-thumbnail-max-width);
-    max-height: var(--media-slider-thumbnail-max-height);
+    max-width: var(--max-width);
+    max-height: var(--max-height);
   }
 }
 .media-default-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {

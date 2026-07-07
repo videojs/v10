@@ -16,9 +16,11 @@ import { time as baseTime } from './components/time';
 export const root = (isShadowDOM: boolean) =>
   cn(
     baseRoot,
+    'group/skin',
     'bg-black overflow-clip',
     // Border ring (::after)
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
+    '[&:fullscreen]:after:hidden',
     'after:inset-0 after:ring-1 after:ring-inset after:ring-black/15 dark:after:ring-white/15',
     // Video element
     {
@@ -36,17 +38,17 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-error-dialog-transition-timing-function:ease-out]',
     '[--media-popup-transition-duration:100ms]',
     '[--media-popup-transition-timing-function:ease-out]',
-    '[--media-tooltip-background-color:oklch(0_0_0/0.5)]',
-    '[--media-tooltip-border-color:oklch(1_0_0/0.1)]',
-    '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
+    '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
+    '[--media-popover-background-color:oklch(0_0_0/0.5)]',
+    '[--media-popover-border-color:oklch(1_0_0/0.1)]',
+    '[--media-tooltip-backdrop-filter:var(--media-popover-backdrop-filter)]',
+    '[--media-tooltip-background-color:var(--media-popover-background-color)]',
+    '[--media-tooltip-border-color:var(--media-popover-border-color)]',
     '[--media-tooltip-text-color:currentColor]',
-    '[--media-tooltip-side-offset:0.5rem]',
-    '[--media-tooltip-boundary-offset:0.5rem]',
-    '[--media-popover-background-color:var(--media-tooltip-background-color)]',
-    '[--media-popover-border-color:var(--media-tooltip-border-color)]',
-    '[--media-popover-backdrop-filter:var(--media-tooltip-backdrop-filter)]',
-    '[--media-popover-side-offset:1.5rem]',
-    '[--media-popover-boundary-offset:var(--media-tooltip-boundary-offset)]',
+    // Fullscreen scale
+    'min-[1280px]:[&:fullscreen]:[--scale:1.25]',
+    'min-[1536px]:[&:fullscreen]:[--scale:1.5]',
+    'min-[1920px]:[&:fullscreen]:[--scale:1.75]',
     'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -54,16 +56,15 @@ export const root = (isShadowDOM: boolean) =>
     'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-    '@2xl/media-root:*:[--media-popover-side-offset:0.5rem]',
     'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
     'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
     'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
-    '[--media-caption-track-y:-0.5rem]',
+    '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5rem]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3rem]',
+    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-20)]',
+    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:--spacing(-12)]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -106,11 +107,13 @@ export const controls = cn(
   baseControls,
   // Position & wrapping layout (small)
   'absolute bottom-1 inset-x-1',
-  'p-1 gap-x-2 flex-wrap rounded-xl',
-  'text-white z-10',
+  '[--base-side-offset:2] [--base-boundary-offset:1]',
+  'gap-x-2 flex-wrap rounded-[--spacing(3)] group/controls',
+  'text-white z-20',
   'peer-data-open/error:hidden',
   'ease-(--media-controls-transition-timing-function)',
-  'duration-(--media-controls-transition-duration)',
+  'duration-[calc(var(--media-controls-transition-duration)/2)]',
+  'not-data-visible:duration-(--media-controls-transition-duration)',
   'pointer-fine:will-change-[translate,filter,opacity]',
   'pointer-fine:transition-[translate,filter,opacity]',
   'pointer-coarse:will-change-[translate,opacity]',
@@ -120,8 +123,7 @@ export const controls = cn(
   'motion-safe:not-data-visible:translate-y-full',
   'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
-  '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2',
-  '@2xl/media-root:*:[--media-popover-side-offset:0rem]'
+  '@2xl/media-root:flex-nowrap @2xl/media-root:[--controls-padding:2] @2xl/media-root:[--base-side-offset:0]'
 );
 
 /* ==========================================================================
@@ -131,6 +133,8 @@ export const controls = cn(
 export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-root:flex-none');
 export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-root:flex-none');
 
+export const spacer = 'grow';
+
 /* ==========================================================================
    Time
    ========================================================================== */
@@ -139,8 +143,12 @@ export const time = {
   ...baseTime,
   controls: cn(
     baseTime.controls,
-    'grow-0 shrink-0 basis-full order-[-1] px-2.5',
-    '@2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]'
+    '[--slider-height:--spacing(5)] grow-0 shrink-0 basis-full order-[-1] px-1.5',
+    '@2xl/media-root:[--slider-height:--spacing(8)] @2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]',
+    '@2xl/media-root:[mask-position:100%_0] @2xl/media-root:[mask-size:200%_100%]',
+    '@2xl/media-root:[transition:mask-position_50ms_ease-out]',
+    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-image:linear-gradient(to_right,transparent_10%,black_25%,black_100%)]',
+    'group-has-[[data-volume-level][aria-expanded=true]]/controls:@2xl/media-root:[mask-position:0_0]'
   ),
 };
 
@@ -151,8 +159,9 @@ export const time = {
 export const error = {
   ...baseError,
   root: cn(baseError.root, 'pointer-events-none outline-none'),
-  dialog: cn(baseError.dialog, 'pointer-events-auto'),
-  title: cn(baseError.title, 'text-lg'),
+  dialog: cn(baseError.dialog, 'pointer-events-auto max-w-64 p-4 rounded-none'),
+  content: cn(baseError.content, 'p-0 py-1.5'),
+  title: 'text-(length:--font-size-medium)',
 };
 
 /* ==========================================================================
@@ -163,11 +172,11 @@ export const thumbnail = {
   ...baseThumbnail,
   root: cn(
     baseThumbnail.root,
-    '[--media-slider-thumbnail-max-width:11rem]',
-    '[--media-slider-thumbnail-max-height:8rem]',
-    '[--media-slider-thumbnail-padding:-0.5rem]',
-    '[--media-slider-thumbnail-inset:calc(100cqi-100%)]',
-    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-full -translate-x-1/2',
+    '[--max-width:--spacing(44)]',
+    '[--max-height:--spacing(32)]',
+    '[--padding:--spacing(-2)]',
+    '[--inset:calc(100cqi-100%)]',
+    'absolute [left:clamp(calc(var(--max-width)/2+var(--padding)),var(--media-slider-pointer),calc(100%-var(--max-width)/2-var(--padding)+var(--inset)))] bottom-full -translate-x-1/2',
     '@2xl/media-root:[left:var(--media-slider-pointer)]',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
@@ -180,11 +189,7 @@ export const thumbnail = {
     'after:absolute after:inset-0 after:rounded-[inherit]',
     'after:ring-1 after:ring-black/5 after:shadow-sm after:shadow-black/20'
   ),
-  image: cn(
-    baseThumbnail.image,
-    'max-w-(--media-slider-thumbnail-max-width)',
-    'max-h-(--media-slider-thumbnail-max-height)'
-  ),
+  image: cn(baseThumbnail.image, 'max-w-(--max-width)', 'max-h-(--max-height)'),
 };
 
 /* ==========================================================================
@@ -202,27 +207,17 @@ export const slider = {
 
 export const popup = {
   ...basePopup,
-  volume: cn(
-    basePopup.popover,
-    'py-3 px-0 bg-transparent rounded-xl',
-    '[@media(prefers-reduced-transparency:reduce)]:bg-(--media-controls-background-color)',
-    'contrast-more:bg-(--media-controls-background-color)'
-  ),
+  volume: cn(basePopup.popover, 'p-0 bg-transparent'),
 };
 
 /* ==========================================================================
    Menu
    ========================================================================== */
 
-const menuOffsets = cn(
-  '[--media-popover-side-offset:1.5rem] [--media-popover-boundary-offset:0.5rem]',
-  '@2xl/media-root:[--media-popover-side-offset:0.5rem]'
-);
-
 export const menu = {
   ...baseMenu,
-  root: cn(baseMenu.root, menuOffsets),
-  settings: cn(baseMenu.settings, menuOffsets),
+  root: baseMenu.root,
+  settings: baseMenu.settings,
 };
 
 /* ==========================================================================

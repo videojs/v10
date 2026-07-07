@@ -43,13 +43,17 @@ const itemBase = cn(
 );
 
 const menuTokens = cn(
-  '[--menu-transition-duration:250ms] [--menu-max-height:14rem] [--menu-padding:0.25rem]',
-  '[--menu-border-radius:0.75rem] [--menu-item-border-radius:calc(var(--menu-border-radius)_-_var(--menu-padding))]',
+  '[--menu-transition-duration:250ms]',
+  '[--menu-max-height:--spacing(56)]',
+  '[--menu-padding:--spacing(1)]',
+  '[--menu-border-radius:--spacing(3)]',
+  '[--menu-item-border-radius:calc(var(--menu-border-radius)_-_var(--menu-padding))]',
   'motion-reduce:[--menu-transition-duration:0ms]'
 );
 
 const group = cn(
   'flex flex-col gap-0.5',
+  '[anchor-scope:--media-menu-item-highlight-anchor]',
   'supports-[top:anchor(top)]:before:absolute',
   'supports-[top:anchor(top)]:before:[position-anchor:--media-menu-item-highlight-anchor]',
   'supports-[top:anchor(top)]:before:[inset:anchor(inside)]',
@@ -66,7 +70,7 @@ const menuHostShell = cn(
   popup.popover,
   surface,
   menuTokens,
-  'max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--menu-max-height)),var(--menu-max-height))]',
+  'min-w-max max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--menu-max-height)),var(--menu-max-height))]',
   'box-border rounded-(--menu-border-radius) p-(--menu-padding) overscroll-none'
 );
 
@@ -79,9 +83,10 @@ export const menu = {
     // Add height and width transitions.
     '[--media-popup-transition:var(--media-popup-base-transition),height_var(--media-popup-transition-timing-function)_var(--menu-transition-duration),width_var(--media-popup-transition-timing-function)_var(--menu-transition-duration)]',
     // Don't transition width and height on open/close.
-    'data-starting-style:[--media-popup-transition:var(--media-popup-base-transition)] data-ending-style:[--media-popup-transition:var(--media-popup-base-transition)]',
-    'min-w-48 w-(--media-menu-width) h-(--media-menu-height)',
-    '!overflow-hidden'
+    'data-starting-style:[--media-popup-transition:var(--media-popup-base-transition)]',
+    'data-ending-style:[--media-popup-transition:var(--media-popup-base-transition)]',
+    'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
+    'overflow-hidden!'
   ),
   group,
   item: cn(
@@ -91,7 +96,7 @@ export const menu = {
     'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
   ),
   separator: 'my-1 border-b border-[oklch(0_0_0/0.1)] shadow-[0_1px_0_0_oklch(1_0_0/0.075)]',
-  tier: 'pl-0.5 pt-px text-[0.5625rem] font-semibold leading-none text-current/70',
+  tier: 'pl-0.5 pt-px text-(length:--font-size-tiny) font-semibold leading-none text-current/70',
   indicator: 'ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
   icon: 'shrink-0 text-current/65 drop-shadow-[0_1px_0_var(--media-current-shadow-color)]',
   /** Root settings view — slides out when a submenu is active. */
@@ -99,10 +104,10 @@ export const menu = {
   /** Submenu panel — slides in/out alongside the root view. */
   submenuPanel,
   back: cn(itemBase, 'mb-0.5 w-full'),
-  hint: 'ml-auto inline-flex min-w-0 items-center gap-1 pl-2 text-xs text-current/65',
+  hint: 'ml-auto inline-flex min-w-0 items-center gap-1 pl-2 text-current/65',
   hintLabel: 'max-w-24 overflow-hidden text-ellipsis whitespace-nowrap',
   chevron: 'size-3.5',
   settingsGroup: 'group/settings',
-  settingsTrigger: 'group hidden group-has-[[data-availability=available]]/settings:grid',
+  settingsTrigger: 'group',
   settingsIcon: 'transition-transform duration-150 ease-in-out group-aria-expanded:rotate-90 motion-reduce:duration-0',
 };
