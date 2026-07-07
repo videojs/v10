@@ -216,7 +216,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={-SEEK_TIME} render={<Button />}>
+                  <SeekButton seconds={-SEEK_TIME} render={<Button className={button.seek} />}>
                     <span className={iconContainer}>
                       <SeekIcon className={cn(icon, iconFlipped)} />
                       <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
@@ -233,7 +233,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <SeekButton seconds={SEEK_TIME} render={<Button />}>
+                  <SeekButton seconds={SEEK_TIME} render={<Button className={button.seek} />}>
                     <span className={iconContainer}>
                       <SeekIcon className={icon} />
                       <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>

@@ -6,14 +6,14 @@
   display: flex;
   flex: 1;
   flex-direction: row-reverse;
-  gap: 0.75rem;
+  gap: calc(var(--spacing) * 3);
   align-items: center;
   container: media-time-controls / inline-size;
 }
 
 .media-minimal-skin .media-time-group {
   display: flex;
-  gap: 0.25rem;
+  gap: calc(var(--spacing) * 1);
   align-items: center;
 }
 
@@ -25,13 +25,13 @@
   cursor: pointer;
   outline: 2px solid transparent;
   outline-offset: -2px;
-  border-radius: 0.25rem;
+  border-radius: calc(var(--spacing) * 1);
   transition-timing-function: ease-out;
   transition-duration: 100ms;
   transition-property: outline-color, outline-offset;
 
   @supports (corner-shape: squircle) {
-    border-radius: 1rem;
+    border-radius: calc(var(--spacing) * 4);
     corner-shape: squircle;
   }
 

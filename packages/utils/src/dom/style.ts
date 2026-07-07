@@ -17,42 +17,62 @@ export function resolveCSSLength(el: Element, value: string): number {
 
   const parsed = Number.parseFloat(trimmed);
 
-  if (Number.isNaN(parsed)) return 0;
-  if (/^-?\d*\.?\d+$/.test(trimmed) || trimmed.endsWith('px')) return parsed;
+  if (!Number.isNaN(parsed) && (/^-?\d*\.?\d+$/.test(trimmed) || trimmed.endsWith('px'))) return parsed;
 
   const doc = el.ownerDocument;
   const root = doc?.documentElement;
 
-  if (trimmed.endsWith('rem')) {
+  if (!Number.isNaN(parsed) && trimmed.endsWith('rem')) {
     const rootFontSize = root ? Number.parseFloat(getComputedStyle(root).fontSize) || 16 : 16;
     return parsed * rootFontSize;
   }
 
-  if (trimmed.endsWith('em')) {
+  if (!Number.isNaN(parsed) && trimmed.endsWith('em')) {
     const fontSize = el instanceof HTMLElement ? Number.parseFloat(getComputedStyle(el).fontSize) || 16 : 16;
     return parsed * fontSize;
   }
 
-  if (!doc) return parsed;
+  if (!doc) return Number.isNaN(parsed) ? 0 : parsed;
 
   const measurementEl = doc.createElement('div');
   measurementEl.style.position = 'absolute';
   measurementEl.style.visibility = 'hidden';
   measurementEl.style.pointerEvents = 'none';
   measurementEl.style.inlineSize = trimmed;
+
+  if (!measurementEl.style.inlineSize) return 0;
+
   measurementEl.style.blockSize = '0';
   measurementEl.style.padding = '0';
   measurementEl.style.border = '0';
   measurementEl.style.inset = '0';
 
+  const computed = getComputedStyle(el);
+  measurementEl.style.fontSize = computed.fontSize;
+
+  for (let i = 0; i < computed.length; i++) {
+    const name = computed.item(i);
+
+    if (name.startsWith('--')) {
+      measurementEl.style.setProperty(name, computed.getPropertyValue(name));
+    }
+  }
+
   const parent = doc.body ?? doc.documentElement;
 
-  if (!parent) return parsed;
+  if (!parent) return Number.isNaN(parsed) ? 0 : parsed;
 
   parent.appendChild(measurementEl);
+
+  if (getComputedStyle(measurementEl).inlineSize === 'auto') {
+    measurementEl.remove();
+    return 0;
+  }
 
   const pixels = measurementEl.getBoundingClientRect().width;
   measurementEl.remove();
 
-  return Number.isFinite(pixels) ? pixels : parsed;
+  if (Number.isFinite(pixels)) return pixels;
+
+  return Number.isNaN(parsed) ? 0 : parsed;
 }

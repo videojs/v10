@@ -4,9 +4,9 @@ export const slider = {
   root: cn(
     'group/slider relative flex flex-1 items-center justify-center rounded-full outline-none cursor-pointer',
     // Horizontal
-    'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-full data-[orientation=horizontal]:h-8',
+    'data-[orientation=horizontal]:min-w-20 data-[orientation=horizontal]:w-(--slider-width,100%) data-[orientation=horizontal]:h-(--slider-height,--spacing(8))',
     // Vertical
-    'data-[orientation=vertical]:w-8 data-[orientation=vertical]:h-20'
+    'data-[orientation=vertical]:w-(--slider-width,--spacing(8)) data-[orientation=vertical]:h-(--slider-height,--spacing(20))'
   ),
   track: cn(
     'relative isolate overflow-hidden rounded-[inherit] select-none',
@@ -64,7 +64,7 @@ export const slider = {
     interactive: cn(
       'size-2.5',
       'opacity-0 focus-visible:opacity-100 group-hover/slider:opacity-100',
-      'group-active/slider:size-3'
+      'group-active/slider:size-3 group-focus-within/slider:size-3'
     ),
   },
   preview: cn(

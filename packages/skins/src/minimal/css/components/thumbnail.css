@@ -8,7 +8,7 @@
   & .media-thumbnail__image-wrapper {
     position: relative;
     background-color: oklch(0 0 0 / 0.9);
-    border-radius: 0.5rem;
+    border-radius: calc(var(--spacing) * 2);
   }
   & .media-thumbnail__image {
     display: block;
@@ -17,7 +17,7 @@
 
   & .media-thumbnail__time {
     display: block;
-    margin-top: 0.5rem;
+    margin-top: calc(var(--spacing) * 2);
     text-align: center;
   }
 

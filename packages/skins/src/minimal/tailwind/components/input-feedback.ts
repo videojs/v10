@@ -8,11 +8,9 @@ import { cn } from '@videojs/utils/style';
 export const inputFeedback = {
   root: cn(
     // Layout
-    'absolute inset-x-0 top-0 bottom-14 pointer-events-none',
+    'absolute inset-0 pointer-events-none',
     'grid grid-cols-3 items-center justify-items-center overflow-hidden',
     'rounded-[inherit]',
-    // Shift to full extent in larger containers
-    '@2xl/media-root:bottom-0',
     // Color
     '[color:var(--media-color-primary,oklch(1_0_0))]'
   ),
@@ -34,7 +32,7 @@ export const inputFeedback = {
       'data-starting-style:ease-in',
       'data-ending-style:duration-400',
       'data-ending-style:ease-in',
-      '[background-image:linear-gradient(to_bottom,oklch(0_0_0/0.35),oklch(0_0_0/0.2)_3rem,oklch(0_0_0/0))]',
+      '[background-image:linear-gradient(to_bottom,oklch(0_0_0/0.35),oklch(0_0_0/0.2)_--spacing(12),oklch(0_0_0/0))]',
       'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)',
       // Pointer-dependent transition props
       'pointer-fine:will-change-[translate,filter,opacity]',
@@ -51,13 +49,13 @@ export const inputFeedback = {
       '*:last:ml-auto',
       // Reduced transparency / high contrast: solid content background
       '[@media(prefers-reduced-transparency:reduce)]:bg-(--media-controls-background-color)',
-      '[@media(prefers-reduced-transparency:reduce)]:rounded-lg',
-      'contrast-more:bg-(--media-controls-background-color) contrast-more:rounded-lg'
+      '[@media(prefers-reduced-transparency:reduce)]:rounded-[--spacing(2)]',
+      'contrast-more:bg-(--media-controls-background-color) contrast-more:rounded-[--spacing(2)]'
     ),
     // Volume island sizing + progress-fill on nested __progress element
     volume: cn(
       // Content is sized
-      '*:data-feedback-island-content:w-[min(80%,14rem)]'
+      '*:data-feedback-island-content:w-[min(80%,--spacing(56))]'
     ),
     // Progress bar (nested inside content) — its own element in the minimal variant
     volumeProgress: cn(

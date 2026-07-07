@@ -9,8 +9,6 @@ import styles from './minimal-skin.css?inline';
 // Register the player, container, and all UI custom elements.
 import './minimal-ui';
 
-const SEEK_TIME = 10;
-
 function getTemplateHTML() {
   return /*html*/ `
     <media-container class="media-minimal-skin media-minimal-skin--video">
@@ -51,27 +49,20 @@ function getTemplateHTML() {
               <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
             </media-tooltip>
 
-            <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
-              <span class="media-icon__container">
-                ${renderIcon('seek', { class: 'media-icon media-icon--flipped' })}
-                <span class="media-icon__label">${SEEK_TIME}</span>
-              </span>
-            </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" class="media-tooltip">
-              <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
-            </media-tooltip>
+            <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
+              ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
+              ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
+              ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
+            </media-mute-button>
 
-            <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="media-button media-button--subtle media-button--icon media-button--seek">
-              <span class="media-icon__container">
-                ${renderIcon('seek', { class: 'media-icon' })}
-                <span class="media-icon__label">${SEEK_TIME}</span>
-              </span>
-            </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" class="media-tooltip">
-              <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
-            </media-tooltip>
+            <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="media-popover media-popover--volume">
+              <media-volume-slider class="media-slider" orientation="horizontal" thumb-alignment="edge">
+                <media-slider-track class="media-slider__track">
+                  <media-slider-fill class="media-slider__fill"></media-slider-fill>
+                </media-slider-track>
+                <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
+              </media-volume-slider>
+            </media-popover>
           </div>
 
           <div class="media-time-controls">
@@ -103,20 +94,14 @@ function getTemplateHTML() {
           </div>
 
           <div class="media-button-group">
-            <media-mute-button commandfor="video-volume-popover" class="media-button media-button--subtle media-button--icon media-button--mute">
-              ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
-              ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
-              ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
-            </media-mute-button>
-
-            <media-popover id="video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="media-popover media-popover--volume">
-              <media-volume-slider class="media-slider" orientation="vertical" thumb-alignment="edge">
-                <media-slider-track class="media-slider__track">
-                  <media-slider-fill class="media-slider__fill"></media-slider-fill>
-                </media-slider-track>
-                <media-slider-thumb class="media-slider__thumb media-slider__thumb--persistent"></media-slider-thumb>
-              </media-volume-slider>
-            </media-popover>
+            <media-captions-button commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
+              ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
+              ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
+            </media-captions-button>
+            <media-tooltip id="captions-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <button commandfor="settings-menu" aria-labelledby="settings-label" class="media-button media-button--subtle media-button--icon media-button--settings">
               ${renderIcon('gear', { class: 'media-icon media-icon--settings' })}

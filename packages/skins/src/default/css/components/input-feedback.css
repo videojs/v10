@@ -4,19 +4,13 @@
 
 .media-default-skin .media-input-feedback {
   position: absolute;
-  inset-inline: 0;
-  top: 0;
-  bottom: 3.5rem; /* Shift up a little in smaller containers */
+  inset: 0;
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
   align-items: center;
   justify-items: center;
   color: var(--media-color-primary, oklch(1 0 0));
   pointer-events: none;
-
-  @container media-root (width > 24rem) {
-    bottom: 0;
-  }
 }
 
 /* --- Feedback islands ------------------------------------------------------- */
@@ -24,7 +18,7 @@
 .media-default-skin .media-input-feedback-island {
   --media-surface-background-color: oklch(0 0 0 / 0.25);
   position: absolute;
-  top: 0.75rem;
+  top: calc(var(--spacing) * 3);
   font-weight: 500;
   color: inherit;
   pointer-events: none;
@@ -35,11 +29,11 @@
 
   .media-input-feedback-island__content {
     display: flex;
-    gap: 0.5rem;
+    gap: calc(var(--spacing) * 2);
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    padding: 0.25rem 0.625rem;
+    padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
 
     /* Increase contrast of the content */
     * {
@@ -91,7 +85,7 @@
 }
 
 .media-default-skin .media-input-feedback-island--volume {
-  width: min(80%, 12rem);
+  width: min(80%, calc(var(--spacing) * 48));
 
   .media-input-feedback-island__content {
     --media-progress-fill: var(--media-volume-fill);
@@ -138,7 +132,7 @@
   grid-row: 1;
   grid-column: 2;
   place-content: center;
-  padding: 1rem;
+  padding: calc(var(--spacing) * 4);
   text-align: center;
 
   /* Central bubble (play, pause) */
@@ -169,10 +163,10 @@
 
   /* Directional bubbles (seek) */
   &[data-direction] {
-    gap: 0.25rem;
+    gap: calc(var(--spacing) * 1);
 
     @container media-root (width > 24rem) {
-      padding: 1.5rem;
+      padding: calc(var(--spacing) * 6);
     }
   }
 

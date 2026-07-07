@@ -36,7 +36,25 @@ Legacy **`tailwind.config.js`** theme spreads are not the primary path here—ex
 - `border-radius: 8px` → prefer `rounded-lg` (or a theme radius key) if equivalent/acceptable
 - `font-size`, `spacing`, `colors`, `shadow`, `z-index`, `radius` should map to **`@theme` or default v4 scales** when acceptable
 
-### 3. Handle site one-offs without arbitrary-value classes
+### 3. Use Tailwind's `--spacing` scale
+
+Tailwind v4 spacing utilities are based on the `--spacing` variable. Translate spacing calculations directly to native utilities:
+
+- `padding: calc(var(--spacing) * 2)` → `p-2`
+- `margin-inline: calc(var(--spacing) * 3)` → `mx-3`
+- `gap: var(--spacing)` → `gap-1`
+
+Use built-in responsive or named container variants (`md:`, `@md:`, `@md/media-root:`) for media-query behavior. If a scoped design needs to scale all spacing, overriding `--spacing` at that scope is valid because native utilities inherit it. Ignore `--base-size` and `--size`; resolve font and icon sizes to rem values.
+
+For arbitrary values, Tailwind v4 also provides the build-time `--spacing(N)` function. Use it for literal spacing multipliers that do not map cleanly to a native utility:
+
+- `border-radius: calc(var(--spacing) * 7)` → `rounded-[--spacing(7)]`
+- `[--max-width:calc(var(--spacing)*44)]` → `[--max-width:--spacing(44)]`
+- `[bottom:calc(100% + var(--spacing) * 4.8)]` → `[bottom:calc(100%+--spacing(4.8))]`
+
+`rounded-(--spacing(7))` is not the equivalent syntax: the parenthesized form is for a custom-property utility and would look for `var(--spacing(7))`. Keep `calc(var(--spacing) * var(...))` when the multiplier is runtime-derived because `--spacing()` only replaces literal values.
+
+### 4. Handle site one-offs without arbitrary-value classes
 
 For site code:
 
@@ -44,7 +62,7 @@ For site code:
 - For responsive, dark-mode, or other variants, define an inline custom property and consume it with syntax such as `md:min-h-(--md-min-h)`.
 - Add a theme token or semantic utility when the value repeats.
 
-### 4. Avoid arbitrary values for common scale values
+### 5. Avoid arbitrary values for common scale values
 
 Bad:
 
@@ -60,7 +78,7 @@ Good:
 - `rounded-lg`
 - `text-sm`
 
-### 5. Prefer theme-backed utilities
+### 6. Prefer theme-backed utilities
 
 Avoid:
 
@@ -74,11 +92,11 @@ Prefer:
 
 (Adapt names to the project's **`@theme`** variable names; add tokens to CSS when missing.)
 
-### 6. Prefer named variants and utilities
+### 7. Prefer named variants and utilities
 
 Use existing responsive, state, data, ARIA, and custom variants. Add **`@utility`**, **`@custom-variant`**, or an **`@theme`** token when a pattern repeats instead of copying bracket syntax.
 
-### 7. Preserve responsive, state, and media behavior
+### 8. Preserve responsive, state, and media behavior
 
 - `@media (min-width: 768px)` → `md:` (match project breakpoints from **`@theme`** / default v4 screens)
 - Named container queries (e.g. **`@container media-root`**) → match existing utilities such as **`@*/media-root:`** / **`max-*` / `@2xl`** patterns used in skins—do not silently switch to plain `md:` if the source is container-based
@@ -86,7 +104,11 @@ Use existing responsive, state, data, ARIA, and custom variants. Add **`@utility
 - `:focus-visible` → `focus-visible:`
 - `[data-state='open']` → `data-[state=open]:`
 
-### 8. After migration — short report
+### 9. Avoid legacy semantic class hooks
+
+Do not add `media-*` semantic or BEM marker classes to Tailwind templates, including forms such as `media-button--*`, `media-popover--*`, `media-menu__*`, or `media-sr-only`. Use the corresponding Tailwind utility, component class, data attribute, or custom-element selector. Before reporting completion, scan Tailwind source files for `media-...--` and `media-...__` marker classes.
+
+### 10. After migration — short report
 
 Include:
 

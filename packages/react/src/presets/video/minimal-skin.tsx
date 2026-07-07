@@ -28,7 +28,6 @@ import {
   PlayIcon,
   QualityIcon,
   RestartIcon,
-  SeekIcon,
   SpeechIcon,
   SpeedIcon,
   SpinnerIcon,
@@ -41,6 +40,7 @@ import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
+import { CaptionsButton } from '@/ui/captions-button';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
@@ -56,7 +56,6 @@ import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { useQualityOptions } from '@/ui/quality';
-import { SeekButton } from '@/ui/seek-button';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
 import { StatusAnnouncer } from '@/ui/status-announcer';
@@ -100,10 +99,10 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="right">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className="media-popover media-popover--volume">
-        <VolumeSlider.Root className="media-slider" orientation="vertical" thumbAlignment="edge">
+        <VolumeSlider.Root className="media-slider" orientation="horizontal" thumbAlignment="edge">
           <VolumeSlider.Track className="media-slider__track">
             <VolumeSlider.Fill className="media-slider__fill" />
           </VolumeSlider.Track>
@@ -409,39 +408,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
               </Tooltip.Popup>
             </Tooltip.Root>
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
-                    <span className="media-icon__container">
-                      <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                      <span className="media-icon__label">{SEEK_TIME}</span>
-                    </span>
-                  </SeekButton>
-                }
-              />
-              <Tooltip.Popup className="media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
-
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
-                    <span className="media-icon__container">
-                      <SeekIcon className="media-icon media-icon--seek" />
-                      <span className="media-icon__label">{SEEK_TIME}</span>
-                    </span>
-                  </SeekButton>
-                }
-              />
-              <Tooltip.Popup className="media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+            <VolumePopover />
           </div>
 
           <div className="media-time-controls">
@@ -465,6 +432,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
                 <SpinnerIcon className="media-thumbnail__spinner media-icon" />
               </div>
+
               <TimeSlider.Preview className="media-slider__preview">
                 <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
               </TimeSlider.Preview>
@@ -472,7 +440,20 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
-            <VolumePopover />
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <CaptionsButton className="media-button--captions" render={<Button />}>
+                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+                  </CaptionsButton>
+                }
+              />
+              <Tooltip.Popup className="media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
+            </Tooltip.Root>
 
             <SettingsMenu />
 

@@ -9,6 +9,7 @@ import {
   popup,
   root,
   slider,
+  spacer,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
@@ -158,7 +159,7 @@ export function MinimalLiveAudioSkinTailwind(props: MinimalLiveAudioSkinProps): 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
 
-          <div className="grow" aria-hidden="true" />
+          <div className={spacer} aria-hidden="true" />
 
           <div className={buttonGroup}>
             <VolumePopover />

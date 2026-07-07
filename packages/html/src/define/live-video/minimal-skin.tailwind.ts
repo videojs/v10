@@ -15,6 +15,7 @@ import {
   poster,
   root,
   slider,
+  spacer,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -65,30 +66,31 @@ function getTemplateHTML() {
               </media-tooltip>
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
+
+              <media-mute-button commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+                ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
+                ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
+                ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+              </media-mute-button>
+
+              <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="right" class="${cn(popup.volume)}">
+                <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
+                  <media-slider-track class="${slider.track}">
+                    <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                  </media-slider-track>
+                  <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+                </media-volume-slider>
+              </media-popover>
           </div>
 
-          <div class="grow" aria-hidden="true"></div>
+          <div class="${spacer}" aria-hidden="true"></div>
 
           <div class="${buttonGroupEnd}">
-            <media-mute-button commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
-            </media-mute-button>
-
-            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.volume)}">
-              <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
-                <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                </media-slider-track>
-                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
-              </media-volume-slider>
-            </media-popover>
               <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
               </media-captions-button>
-              <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root, 'media-menu--captions')}">
+              <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root)}">
                 <media-captions-radio-group class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">

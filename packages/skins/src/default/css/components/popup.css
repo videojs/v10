@@ -12,7 +12,7 @@
 
 .media-default-skin .media-popover,
 .media-default-skin .media-tooltip {
-  --popup-translate-distance: 0.5rem;
+  --popup-translate-distance: calc(0.5 * var(--base-size));
   margin: 0;
   overflow: visible;
   color: inherit;
@@ -94,8 +94,8 @@
   }
 }
 .media-default-skin .media-popover--volume {
-  padding: 0.75rem 0;
-  border-radius: calc(infinity * 1px);
+  padding: calc(var(--spacing) * 3) 0;
+  border-radius: calc(Infinity * 1px);
 
   &:has(media-volume-slider[data-availability="unsupported"]) {
     display: none;
@@ -103,15 +103,15 @@
 }
 
 .media-default-skin .media-tooltip {
-  padding: 0.25rem 0.625rem;
-  font-size: 0.75rem;
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2.5);
+  font-size: var(--font-size-base);
   white-space: nowrap;
-  border-radius: calc(infinity * 1px);
+  border-radius: calc(Infinity * 1px);
 
   /* `display: flex` must not apply while closed — it overrides UA `[popover]` hiding. */
   &[data-open] {
     display: flex;
-    column-gap: 0.25rem;
+    column-gap: calc(var(--spacing) * 1);
     align-items: center;
   }
 
@@ -128,11 +128,11 @@
     min-width: 1.5em;
     padding: 0.1em;
     font-family: inherit;
-    font-size: 90%;
+    font-size: var(--font-size-small);
     font-weight: 600;
     line-height: 1.25;
     text-align: center;
     background-color: oklch(from currentColor l c h / 0.3);
-    border-radius: 0.25rem;
+    border-radius: calc(var(--spacing) * 1);
   }
 }

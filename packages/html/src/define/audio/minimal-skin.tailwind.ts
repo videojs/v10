@@ -107,6 +107,21 @@ function getTemplateHTML() {
           </div>
 
           <div class="${buttonGroup}">
+            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
+              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
+              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
+              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
+            </media-mute-button>
+
+            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
+              <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
+                <media-slider-track class="${slider.track}">
+                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                </media-slider-track>
+                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
+              </media-volume-slider>
+            </media-popover>
+
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}">
             </media-playback-rate-button>
             <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
@@ -122,20 +137,6 @@ function getTemplateHTML() {
               </media-playback-rate-radio-group>
             </media-menu>
 
-            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
-            </media-mute-button>
-
-            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
-              <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
-                <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                </media-slider-track>
-                <media-slider-thumb class="${slider.thumb.base}"></media-slider-thumb>
-              </media-volume-slider>
-            </media-popover>
           </div>
         </media-tooltip-group>
       </div>

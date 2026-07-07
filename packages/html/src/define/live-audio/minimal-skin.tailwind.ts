@@ -10,6 +10,7 @@ import {
   popup,
   root,
   slider,
+  spacer,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -59,7 +60,7 @@ function getTemplateHTML() {
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
 
-          <div class="grow" aria-hidden="true"></div>
+          <div class="${spacer}" aria-hidden="true"></div>
 
           <div class="${buttonGroup}">
             <media-mute-button commandfor="live-audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">

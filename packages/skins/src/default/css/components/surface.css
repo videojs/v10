@@ -18,6 +18,8 @@
     pointer-events: none;
     content: "";
     border-radius: inherit;
-    box-shadow: inset 0 0 0 1px var(--media-surface-inner-border-color);
+    box-shadow:
+      inset 0 1px 0 0 var(--media-surface-inner-border-color),
+      inset 0 0 0 1px oklch(from var(--media-surface-inner-border-color) l c h / calc(alpha * 0.5));
   }
 }
