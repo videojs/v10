@@ -89,8 +89,8 @@ jobs:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
             --model sonnet
-            --max-turns 20
-            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Read" "Edit" "Write" "Glob" "Grep"
+            --max-turns 50
+            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Bash(jq:*)" "Bash(cat:*)" "Bash(ls:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(grep:*)" "Bash(sed:*)" "Bash(wc:*)" "Read" "Edit" "Write" "Glob" "Grep"
           prompt: |
             You are the changelog prose writer for Video.js 10.
 
