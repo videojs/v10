@@ -1,5 +1,37 @@
 # Changelog
 
+## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.24...@videojs/skins@10.0.0-beta.25) (2026-07-07)
+
+
+### Features
+
+* **packages:** add poster placeholder blur-up pattern ([#1632](https://github.com/videojs/v10/issues/1632)) ([0742851](https://github.com/videojs/v10/commit/07428519a5a183061a2be561bb63ecdb7e15907b))
+* **packages:** add quality menu UI ([#1694](https://github.com/videojs/v10/issues/1694)) ([16ab909](https://github.com/videojs/v10/commit/16ab90987ac1629735310649faca62ad36d61526))
+* **packages:** add settings menu ([#1615](https://github.com/videojs/v10/issues/1615)) ([00b6f0b](https://github.com/videojs/v10/commit/00b6f0be1d89f7c4c001a539ee2962888448c8c4))
+* **packages:** add time display toggle ([#1669](https://github.com/videojs/v10/issues/1669)) ([be4d5a1](https://github.com/videojs/v10/commit/be4d5a11550d6cc599a7ac491a9422ee923511b4))
+* **packages:** airplay button ([#1531](https://github.com/videojs/v10/issues/1531)) ([338020e](https://github.com/videojs/v10/commit/338020e1d5a2289f50f92237ff9e8db0457682e4))
+* **packages:** compound tooltips with label and shortcut parts ([#1494](https://github.com/videojs/v10/issues/1494)) ([035b509](https://github.com/videojs/v10/commit/035b509c7a77e74153ea5b36536fce424ce27d2d))
+* **skin:** show scrubber preview timestamps ([#1652](https://github.com/videojs/v10/issues/1652)) ([7453d53](https://github.com/videojs/v10/commit/7453d538a8d25e56fd288ef64fc0af901250e459))
+
+
+### Bug Fixes
+
+* **packages:** fix ejected skin slider setup ([#1660](https://github.com/videojs/v10/issues/1660)) ([3d2225e](https://github.com/videojs/v10/commit/3d2225e77e95b9edeefbeab24da67eebd7f94dd3))
+* **skin:** add missing classnames to tailwind menus ([#1712](https://github.com/videojs/v10/issues/1712)) ([ff694a0](https://github.com/videojs/v10/commit/ff694a0dd81426576b14d99f3113853668afe4cb))
+* **skin:** aspect ratio related fixes ([#1726](https://github.com/videojs/v10/issues/1726)) ([a6d30a9](https://github.com/videojs/v10/commit/a6d30a9e6176bf806aa1ea02e36578758e3eee49))
+* **skin:** improve buffering, overlays, and input feedback ([#1547](https://github.com/videojs/v10/issues/1547)) ([0de3fef](https://github.com/videojs/v10/commit/0de3fef878fcb9f8167776a2c1011d134989da93))
+* **skin:** improvements to menu styles ([#1725](https://github.com/videojs/v10/issues/1725)) ([f3652bd](https://github.com/videojs/v10/commit/f3652bd90be293268449295f96439a465b7a1bc3))
+* **skin:** minor design tweaks ([#1597](https://github.com/videojs/v10/issues/1597)) ([23c6224](https://github.com/videojs/v10/commit/23c622444655745cbaed0e92a573fabb66fdc855))
+* **skin:** prevent initial pause icon flash ([#1622](https://github.com/videojs/v10/issues/1622)) ([996239e](https://github.com/videojs/v10/commit/996239e029928b5d70e787badfdd6c07a4889927))
+* **skin:** restore overflow on audio skins ([#1623](https://github.com/videojs/v10/issues/1623)) ([93c92ff](https://github.com/videojs/v10/commit/93c92ff6464016447c634673ee1ab2fdc6130903))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.25
+
 ## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.23...@videojs/skins@10.0.0-beta.24) (2026-05-19)
 
 

@@ -1,5 +1,30 @@
 # Changelog
 
+## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.24...@videojs/utils@10.0.0-beta.25) (2026-07-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **media:** add Google Cast by default to HLS, DASH media ([#1661](https://github.com/videojs/v10/issues/1661))
+
+### Features
+
+* **core:** add i18n foundation with English locale and UI wiring ([#1589](https://github.com/videojs/v10/issues/1589)) ([768bf09](https://github.com/videojs/v10/commit/768bf09da07a728874da232c7cdefb653534e078))
+* **core:** add vimeo media host and html/react components ([#1667](https://github.com/videojs/v10/issues/1667)) ([1b31f3e](https://github.com/videojs/v10/commit/1b31f3e8d7ecef111b84dbd3f9053efc626f256d))
+* **core:** Support AirPlay on MSE ([#1692](https://github.com/videojs/v10/issues/1692)) ([3f2f4a4](https://github.com/videojs/v10/commit/3f2f4a4a5a8c41a22fa0dbefd46ed4e725dfa109))
+* **media:** add Google Cast by default to HLS, DASH media ([#1661](https://github.com/videojs/v10/issues/1661)) ([0ffe1a9](https://github.com/videojs/v10/commit/0ffe1a91979ddd53b8f5339765b8c086da7bcc1e))
+
+
+### Bug Fixes
+
+* **core:** disable toggle captions when there are no captions ([#1598](https://github.com/videojs/v10/issues/1598)) ([760870f](https://github.com/videojs/v10/commit/760870fdf28394021166df7f4ad575730dc65dbd))
+* **packages:** escape HTML special chars in serializeAttributes to prevent XSS ([#1670](https://github.com/videojs/v10/issues/1670)) ([accf4bf](https://github.com/videojs/v10/commit/accf4bfa34f89a8ed90bd005a414507ad1491f43))
+
+
+### Reverts
+
+* **core:** unmerge i18n stack base ([#1707](https://github.com/videojs/v10/issues/1707)) ([edfec1c](https://github.com/videojs/v10/commit/edfec1c93ef656c9b2ac105c9b1e1042d17cf956))
+
 ## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.23...@videojs/utils@10.0.0-beta.24) (2026-05-19)
 
 

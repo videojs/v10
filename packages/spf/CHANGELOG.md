@@ -1,5 +1,34 @@
 # Changelog
 
+## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.24...@videojs/spf@10.0.0-beta.25) (2026-07-07)
+
+
+### Features
+
+* **site:** API reference pages for media elements ([#1342](https://github.com/videojs/v10/issues/1342)) ([d799be1](https://github.com/videojs/v10/commit/d799be1063518b85ad3f030bda07b9132e2db074))
+* **spf:** Add maxResolution to SPF Background Video ([#1654](https://github.com/videojs/v10/issues/1654)) ([33873bc](https://github.com/videojs/v10/commit/33873bc4ae9864b43961a2da666f11de4218bde3))
+* **spf:** background looping video (phase 1) ([#1602](https://github.com/videojs/v10/issues/1602)) ([3741e8d](https://github.com/videojs/v10/commit/3741e8de12bb214acd2bae8974092e875f17b7bc))
+* **spf:** basic audio only use case + use-case-composition doc-type + implementation skills ([#1584](https://github.com/videojs/v10/issues/1584)) ([1a3cb45](https://github.com/videojs/v10/commit/1a3cb45b292aad421fb7429451de59ef41a0a07b))
+* **spf:** capability probing ([#1676](https://github.com/videojs/v10/issues/1676)) ([bce79ec](https://github.com/videojs/v10/commit/bce79ec424cf39134284f4d7b142ab2eb9fe8a91))
+* **spf:** multi cdn failover ([#1671](https://github.com/videojs/v10/issues/1671)) ([b89f1e9](https://github.com/videojs/v10/commit/b89f1e944cdc8ee63e52095e712ed3e8f0bab236))
+* **spf:** multi-cdn support ([#1668](https://github.com/videojs/v10/issues/1668)) ([00aa624](https://github.com/videojs/v10/commit/00aa6247b8be5c539ecf76c636ae89b44a80ea1c))
+* **spf:** multi-track audio + skills building features and behaviors ([#1605](https://github.com/videojs/v10/issues/1605)) ([057f325](https://github.com/videojs/v10/commit/057f32573e5a5178e1508dd21fa5f98f05a4eb2a))
+* **spf:** text tracks switching ([#1687](https://github.com/videojs/v10/issues/1687)) ([23538e3](https://github.com/videojs/v10/commit/23538e364919bf290895972d821b9cd12d3e3e18))
+
+
+### Bug Fixes
+
+* **core:** disable toggle captions when there are no captions ([#1598](https://github.com/videojs/v10/issues/1598)) ([760870f](https://github.com/videojs/v10/commit/760870fdf28394021166df7f4ad575730dc65dbd))
+* **spf:** add emptied listener to track-current-time behavior ([#1634](https://github.com/videojs/v10/issues/1634)) ([efc7c23](https://github.com/videojs/v10/commit/efc7c23b7b692d0442530ecd3e57515af8b0afa1))
+* **spf:** refactor track switching to rules ([#1658](https://github.com/videojs/v10/issues/1658)) ([d9f9efd](https://github.com/videojs/v10/commit/d9f9efde88ace721a93e571c9ff3b00569208cb6))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.25
+
 ## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.23...@videojs/spf@10.0.0-beta.24) (2026-05-19)
 
 

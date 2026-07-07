@@ -1,5 +1,72 @@
 # Changelog
 
+## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.24...@videojs/core@10.0.0-beta.25) (2026-07-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename hls media stack to hlsjs naming ([#1753](https://github.com/videojs/v10/issues/1753))
+* **core:** move media capability predicates to core layer ([#1705](https://github.com/videojs/v10/issues/1705))
+* **media:** add Google Cast by default to HLS, DASH media ([#1661](https://github.com/videojs/v10/issues/1661))
+
+### Features
+
+* **core:** add built-in locale packs and lazy loadLocale ([#1590](https://github.com/videojs/v10/issues/1590)) ([9170a58](https://github.com/videojs/v10/commit/9170a5879e5a41089d575e41dc4eca7bf9677b65))
+* **core:** add i18n foundation with English locale and UI wiring ([#1589](https://github.com/videojs/v10/issues/1589)) ([768bf09](https://github.com/videojs/v10/commit/768bf09da07a728874da232c7cdefb653534e078))
+* **core:** add media tracks and renditions support ([#1664](https://github.com/videojs/v10/issues/1664)) ([67b39fe](https://github.com/videojs/v10/commit/67b39fe4bd44a557ce45884b1d84b0a0d62592e3))
+* **core:** add quality selection state ([#1693](https://github.com/videojs/v10/issues/1693)) ([74da682](https://github.com/videojs/v10/commit/74da6821d7c60f79bc07d36bbc4cb49fd5c6045e))
+* **core:** add vimeo media host and html/react components ([#1667](https://github.com/videojs/v10/issues/1667)) ([1b31f3e](https://github.com/videojs/v10/commit/1b31f3e8d7ecef111b84dbd3f9053efc626f256d))
+* **core:** lock fullscreen orientation ([#1656](https://github.com/videojs/v10/issues/1656)) ([62d0524](https://github.com/videojs/v10/commit/62d0524b83bcf37157ef806dd141723ece2f5168))
+* **core:** Support AirPlay on MSE ([#1692](https://github.com/videojs/v10/issues/1692)) ([3f2f4a4](https://github.com/videojs/v10/commit/3f2f4a4a5a8c41a22fa0dbefd46ed4e725dfa109))
+* **media:** add Google Cast by default to HLS, DASH media ([#1661](https://github.com/videojs/v10/issues/1661)) ([0ffe1a9](https://github.com/videojs/v10/commit/0ffe1a91979ddd53b8f5339765b8c086da7bcc1e))
+* **packages:** add audio tracks menu ([#1714](https://github.com/videojs/v10/issues/1714)) ([5d44c4d](https://github.com/videojs/v10/commit/5d44c4debf7a2ca50f6f0519e5cd3ff040bcc933))
+* **packages:** add pauseOnDrag to time slider ([#1596](https://github.com/videojs/v10/issues/1596)) ([131e176](https://github.com/videojs/v10/commit/131e176ddef6e94dc04d2176fb90276db6744706))
+* **packages:** add quality menu UI ([#1694](https://github.com/videojs/v10/issues/1694)) ([16ab909](https://github.com/videojs/v10/commit/16ab90987ac1629735310649faca62ad36d61526))
+* **packages:** add resolved rendition to auto label ([#1698](https://github.com/videojs/v10/issues/1698)) ([9275f93](https://github.com/videojs/v10/commit/9275f93504c87a9423e78fdc6113695de0307009))
+* **packages:** add settings menu ([#1615](https://github.com/videojs/v10/issues/1615)) ([00b6f0b](https://github.com/videojs/v10/commit/00b6f0be1d89f7c4c001a539ee2962888448c8c4))
+* **packages:** add time display toggle ([#1669](https://github.com/videojs/v10/issues/1669)) ([be4d5a1](https://github.com/videojs/v10/commit/be4d5a11550d6cc599a7ac491a9422ee923511b4))
+* **packages:** airplay button ([#1531](https://github.com/videojs/v10/issues/1531)) ([338020e](https://github.com/videojs/v10/commit/338020e1d5a2289f50f92237ff9e8db0457682e4))
+* **packages:** compound tooltips with label and shortcut parts ([#1494](https://github.com/videojs/v10/issues/1494)) ([035b509](https://github.com/videojs/v10/commit/035b509c7a77e74153ea5b36536fce424ce27d2d))
+* **packages:** constrain popovers to positioning boundary ([#1627](https://github.com/videojs/v10/issues/1627)) ([e7aa0a6](https://github.com/videojs/v10/commit/e7aa0a66699ffa7296ca714313a4bf05290192fb))
+* **site:** API reference pages for media elements ([#1342](https://github.com/videojs/v10/issues/1342)) ([d799be1](https://github.com/videojs/v10/commit/d799be1063518b85ad3f030bda07b9132e2db074))
+* **spf:** basic audio only use case + use-case-composition doc-type + implementation skills ([#1584](https://github.com/videojs/v10/issues/1584)) ([1a3cb45](https://github.com/videojs/v10/commit/1a3cb45b292aad421fb7429451de59ef41a0a07b))
+
+
+### Bug Fixes
+
+* **core:** disable toggle captions when there are no captions ([#1598](https://github.com/videojs/v10/issues/1598)) ([760870f](https://github.com/videojs/v10/commit/760870fdf28394021166df7f4ad575730dc65dbd))
+* **core:** focus selected radio menu items ([#1645](https://github.com/videojs/v10/issues/1645)) ([e9a619e](https://github.com/videojs/v10/commit/e9a619e03aa28fc773f88d6aa53e9fb9d1208009))
+* **core:** prevent mobile controls flash on first tap after auto-hide ([#1556](https://github.com/videojs/v10/issues/1556)) ([48a984a](https://github.com/videojs/v10/commit/48a984aecd39e08c39e786b79c17f64244a983fe))
+* **core:** remove 1-9 digit key seek from slider keyboard handler ([#1690](https://github.com/videojs/v10/issues/1690)) ([47aca0f](https://github.com/videojs/v10/commit/47aca0f798b51b98741cf5d63ba8395e8ff0ad3d))
+* **core:** update trigger aria-expanded on close ([#1644](https://github.com/videojs/v10/issues/1644)) ([2f5e23e](https://github.com/videojs/v10/commit/2f5e23e10097dcd377f2556a97c21589a4dad24a))
+* **core:** upgrade dash.js to 5.2.0 ([#1724](https://github.com/videojs/v10/issues/1724)) ([0460a48](https://github.com/videojs/v10/commit/0460a48d93f2ad5ce5473e7c919f1967367585fa))
+* **html:** avoid menu item value render loop ([#1791](https://github.com/videojs/v10/issues/1791)) ([47e74a1](https://github.com/videojs/v10/commit/47e74a139e62e17e8151ff889c90a5a8497a6dcc))
+* **packages:** escape HTML special chars in serializeAttributes to prevent XSS ([#1670](https://github.com/videojs/v10/issues/1670)) ([accf4bf](https://github.com/videojs/v10/commit/accf4bfa34f89a8ed90bd005a414507ad1491f43))
+* **packages:** handle menu child mutations ([#1739](https://github.com/videojs/v10/issues/1739)) ([9ab7ade](https://github.com/videojs/v10/commit/9ab7adefb729a4a3c5f5285436d532cf6b0532b4))
+* **site:** update use-media reference for mediahost architecture ([#1702](https://github.com/videojs/v10/issues/1702)) ([9bcdf5f](https://github.com/videojs/v10/commit/9bcdf5ffc234e5fb8ba5c12dfbd7c7db79b1f8b9))
+* **skin:** improve buffering, overlays, and input feedback ([#1547](https://github.com/videojs/v10/issues/1547)) ([0de3fef](https://github.com/videojs/v10/commit/0de3fef878fcb9f8167776a2c1011d134989da93))
+* **skin:** improvements to menu styles ([#1725](https://github.com/videojs/v10/issues/1725)) ([f3652bd](https://github.com/videojs/v10/commit/f3652bd90be293268449295f96439a465b7a1bc3))
+
+
+### Reverts
+
+* **core:** unmerge i18n stack base ([#1707](https://github.com/videojs/v10/issues/1707)) ([edfec1c](https://github.com/videojs/v10/commit/edfec1c93ef656c9b2ac105c9b1e1042d17cf956))
+
+
+### Code Refactoring
+
+* **core:** move media capability predicates to core layer ([#1705](https://github.com/videojs/v10/issues/1705)) ([f0f9eed](https://github.com/videojs/v10/commit/f0f9eed544e668c67fbeb80aff39e818e905c3e9))
+* **packages:** rename hls media stack to hlsjs naming ([#1753](https://github.com/videojs/v10/issues/1753)) ([d321522](https://github.com/videojs/v10/commit/d321522cf0d8421a6ecec0f170b1ee88b4953139))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.25
+    * @videojs/store bumped to 10.0.0-beta.25
+    * @videojs/utils bumped to 10.0.0-beta.25
+
 ## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24) (2026-05-19)
 
 

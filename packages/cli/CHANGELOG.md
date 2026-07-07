@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.24...@videojs/cli@10.0.0-beta.25) (2026-07-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** rename hls media stack to hlsjs naming ([#1753](https://github.com/videojs/v10/issues/1753))
+
+### Features
+
+* add a CDN media-availability manifest and read it across install surfaces ([#1737](https://github.com/videojs/v10/issues/1737)) ([f1f2129](https://github.com/videojs/v10/commit/f1f2129739d1fd817eab0f6354a49eff5a91cade))
+* add DASH, Mux, and Vimeo as installation source types (UI + CLI) ([#1732](https://github.com/videojs/v10/issues/1732)) ([01cea7a](https://github.com/videojs/v10/commit/01cea7a3d115be81c132c1348d461635311d32b3))
+
+
+### Code Refactoring
+
+* **packages:** rename hls media stack to hlsjs naming ([#1753](https://github.com/videojs/v10/issues/1753)) ([d321522](https://github.com/videojs/v10/commit/d321522cf0d8421a6ecec0f170b1ee88b4953139))
+
 ## [10.0.0-beta.24](https://github.com/videojs/v10/compare/@videojs/cli@10.0.0-beta.23...@videojs/cli@10.0.0-beta.24) (2026-05-19)
 
 
