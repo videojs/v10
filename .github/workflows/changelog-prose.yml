@@ -35,10 +35,12 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_URL: ${{ github.event.release.html_url }}
         run: |
+          # --raw-field, not --field: tag names start with "@", which --field
+          # expands as a read-from-file reference and fails.
           gh workflow run changelog-prose.yml \
             --repo "$GITHUB_REPOSITORY" \
-            --field tag_name="$TAG_NAME" \
-            --field release_url="$RELEASE_URL"
+            --raw-field tag_name="$TAG_NAME" \
+            --raw-field release_url="$RELEASE_URL"
 
   prose:
     if: github.event_name == 'workflow_dispatch' && startsWith(inputs.tag_name, '@videojs/core@')
