@@ -98,7 +98,7 @@ React and HTML demos for the same variant should use matching BEM structures.
 
 ### Video and poster sources
 
-All demos use these URLs:
+Demos default to these URLs:
 
 These demo assets are hosted by [Mux](https://www.mux.com?utm_source=videojs&utm_campaign=vjs10):
 
@@ -106,6 +106,15 @@ These demo assets are hosted by [Mux](https://www.mux.com?utm_source=videojs&utm
 Video: https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4
 Poster: https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.jpg
 ```
+
+Components that need adaptive streams use `<HlsJsVideo>` / `<hlsjs-video>` with an HLS source instead. Pick by what the component consumes:
+
+```
+Renditions (quality):          https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8
+Multi-language audio (+ renditions): https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8
+```
+
+The default mp4 has a single rendition and a single audio track — quality and audio-track demos render nothing against it.
 
 All demo videos use `autoplay muted playsinline loop` (React: `autoPlay muted playsInline loop`).
 

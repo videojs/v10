@@ -24,20 +24,16 @@ export interface RateOptionsResult {
  * @param props - Optional `formatRate` and `disabled` overrides.
  */
 export function useRateOptions(props?: RateOptionsProps): RateOptionsResult | null {
-  const formatRate = props?.formatRate ?? ((rate: number) => `${rate}×`);
-  const disabled = props?.disabled ?? false;
-
-  if (disabled) return null;
-
-  return {
-    rate: 1,
-    options: [{ rate: 1, label: formatRate(1), disabled }],
-    setRate: () => {},
-  };
+  return props?.disabled ? null : { rate: 1, options: [], setRate: () => {} };
 }
 
 export namespace useRateOptions {
   export type Props = RateOptionsProps;
   export type Result = RateOptionsResult;
   export type Option = RateOption;
+}
+
+/** Internal helper — matches the use* convention but is never re-exported to the entry point. */
+export function useRateInternals(): number {
+  return 1;
 }

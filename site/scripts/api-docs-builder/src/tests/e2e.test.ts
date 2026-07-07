@@ -40,7 +40,10 @@
  *   ui/rate-options/ — Hook re-exported through a directory index
  *   (entry index → ./ui/rate-options → ./use-rate-options), with a
  *   namespace merged onto the function (Props/Result pattern).
- *   Exercises: recursive re-export resolution in util discovery.
+ *   Exercises: recursive re-export resolution in util discovery,
+ *   entry-visibility filtering (useRateInternals is scanned but never
+ *   re-exported to the entry), and skipping re-exports that resolve to
+ *   a directory with no index.ts (./legacy holds only compiled JS).
  *
  * Features (packages/core/src/dom/store/features/):
  *   playback.ts  — Simple feature. Exercises: boolean state properties,
@@ -582,6 +585,22 @@ describe('Util pipeline (end-to-end)', () => {
       const overload = entry!.data.overloads[0]!;
       expect(overload.parameters.props).toBeDefined();
       expect(overload.parameters.props!.description).toContain('formatRate');
+    });
+
+    // Whole modules are scanned, but only names visible from the entry
+    // point (through named re-exports and local `export *` chains) are
+    // public API. useRateInternals matches the use* convention and lives
+    // in a scanned file, but is never re-exported up to the entry.
+    it('excludes exports that are not visible from the entry point', () => {
+      expect(findByName('useRateInternals', 'react')).toBeUndefined();
+    });
+
+    // rate-options/index.ts re-exports './legacy', which resolves to a
+    // directory with no index.ts (only compiled index.js). Discovery must
+    // skip it — not crash reading a directory — and the unreachable export
+    // stays undocumented.
+    it('skips re-exports that resolve to a directory without index.ts', () => {
+      expect(findByName('useLegacyRate', 'react')).toBeUndefined();
     });
 
     it('discovers controllers from HTML entry points', () => {

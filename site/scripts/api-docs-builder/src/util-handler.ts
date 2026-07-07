@@ -45,6 +45,7 @@ import {
 } from '../../../src/types/util-reference.js';
 import { utilReferenceSlug } from '../../../src/utils/utilReferenceSlug.js';
 import { abbreviateType, formatDetailedType, formatType } from './formatter.js';
+import { getJSDocTagValue, hasJSDocTag } from './utils.js';
 
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
 
@@ -107,7 +108,18 @@ function resolveModulePath(fromFile: string, specifier: string): string {
   return resolved;
 }
 
+function isFile(filePath: string): boolean {
+  return fs.existsSync(filePath) && fs.statSync(filePath).isFile();
+}
+
+// Memoized: getUtilEntries resolves the same entry point twice (program
+// creation + discovery), and each pass re-reads every module in the graph.
+const localModulesCache = new Map<string, string[]>();
+
 function resolveLocalModules(indexPath: string): string[] {
+  const cached = localModulesCache.get(indexPath);
+  if (cached) return cached;
+
   const visited = new Set<string>([indexPath]);
   const localPaths: string[] = [];
 
@@ -123,8 +135,13 @@ function resolveLocalModules(indexPath: string): string[] {
         if (!specifier.startsWith('.')) return;
 
         const resolved = resolveModulePath(filePath, specifier);
-        if (visited.has(resolved) || !fs.existsSync(resolved)) return;
+        if (visited.has(resolved)) return;
         visited.add(resolved);
+
+        // resolveModulePath falls back to the raw path when nothing matches;
+        // skip anything that isn't a readable file (e.g. a directory with no
+        // index.ts) instead of crashing on the read.
+        if (!isFile(resolved)) return;
 
         collect(resolved);
         localPaths.push(resolved);
@@ -133,8 +150,63 @@ function resolveLocalModules(indexPath: string): string[] {
   }
 
   collect(indexPath);
+  localModulesCache.set(indexPath, localPaths);
 
   return localPaths;
+}
+
+// Names actually exported from an entry point, resolving local `export *`
+// chains. External star re-exports (`@videojs/*`) are skipped — they can't
+// make a locally-declared symbol visible. Discovery scans whole modules, so
+// without this filter a deep-scanned file's internal exports (never
+// re-exported up to the entry) would be documented as public API.
+function collectVisibleExportNames(indexPath: string, visited = new Set<string>()): Set<string> {
+  const names = new Set<string>();
+  if (visited.has(indexPath) || !isFile(indexPath)) return names;
+  visited.add(indexPath);
+
+  const sourceFile = ts.createSourceFile(indexPath, fs.readFileSync(indexPath, 'utf-8'), ts.ScriptTarget.Latest, true);
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (ts.isExportDeclaration(node)) {
+      if (node.exportClause && ts.isNamedExports(node.exportClause)) {
+        for (const spec of node.exportClause.elements) {
+          names.add(spec.name.text);
+          if (spec.propertyName) names.add(spec.propertyName.text);
+        }
+      } else if (node.exportClause && ts.isNamespaceExport(node.exportClause)) {
+        names.add(node.exportClause.name.text);
+      } else if (node.moduleSpecifier && ts.isStringLiteral(node.moduleSpecifier)) {
+        const specifier = node.moduleSpecifier.text;
+        if (!specifier.startsWith('.')) return;
+        for (const name of collectVisibleExportNames(resolveModulePath(indexPath, specifier), visited)) {
+          names.add(name);
+        }
+      }
+      return;
+    }
+
+    const modifiers = ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined;
+    const isExported = modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
+    if (!isExported) return;
+
+    if (ts.isVariableStatement(node)) {
+      for (const decl of node.declarationList.declarations) {
+        if (ts.isIdentifier(decl.name)) names.add(decl.name.text);
+      }
+    } else if (
+      (ts.isFunctionDeclaration(node) ||
+        ts.isClassDeclaration(node) ||
+        ts.isInterfaceDeclaration(node) ||
+        ts.isTypeAliasDeclaration(node) ||
+        ts.isEnumDeclaration(node)) &&
+      node.name
+    ) {
+      names.add(node.name.text);
+    }
+  });
+
+  return names;
 }
 
 // ─── Phase 2: Convention Matching ──────────────────────────────────
@@ -564,39 +636,6 @@ function getJSDocParamDescription(node: ts.Node, paramName: string): string | un
   return undefined;
 }
 
-function hasJSDocTag(node: ts.Node, tagName: string): boolean {
-  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
-  if (!jsDocNodes?.length) return false;
-
-  for (const doc of jsDocNodes) {
-    if (!doc.tags) continue;
-    for (const tag of doc.tags) {
-      if (tag.tagName.text === tagName) return true;
-    }
-  }
-  return false;
-}
-
-function getJSDocTagValue(node: ts.Node, tagName: string): string | undefined {
-  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
-  if (!jsDocNodes?.length) return undefined;
-
-  for (const doc of jsDocNodes) {
-    if (!doc.tags) continue;
-    for (const tag of doc.tags) {
-      if (tag.tagName.text === tagName) {
-        if (!tag.comment) return undefined;
-        if (typeof tag.comment === 'string') return tag.comment.trim();
-        return tag.comment
-          .map((c: ts.JSDocComment) => ('text' in c ? c.text : ''))
-          .join('')
-          .trim();
-      }
-    }
-  }
-  return undefined;
-}
-
 // ─── Shared AST Helpers ─────────────────────────────────────────────
 
 function buildParamEntry(
@@ -975,6 +1014,7 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     const localModules = resolveLocalModules(indexPath);
     // When the entry point is a leaf module (no re-exports), scan it directly
     const modulesToScan = localModules.length > 0 ? localModules : [indexPath];
+    const visibleNames = collectVisibleExportNames(indexPath);
     const failedModules: string[] = [];
 
     // Collect all TAE exports for type resolution (formatDetailedType)
@@ -996,6 +1036,9 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
       allExports.push(...ast.exports);
 
       for (const exportNode of ast.exports) {
+        // Whole modules are scanned, but only exports that are actually
+        // visible from the entry point are public API.
+        if (!visibleNames.has(exportNode.name)) continue;
         processExport(exportNode, modulePath, entryPoint, program, seenKeys, seenSlugs, entries, allExports);
       }
     }
@@ -1024,6 +1067,7 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     for (const modulePath of failedModules) {
       const rawExports = discoverExportsFromRawAST(modulePath, program);
       for (const info of rawExports) {
+        if (!visibleNames.has(info.name)) continue;
         processRawExport(info, entryPoint, program, seenKeys, seenSlugs, entries);
       }
     }
@@ -1035,7 +1079,7 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
 
       const rawExports = discoverExportsFromRawAST(modulePath, program);
       for (const info of rawExports) {
-        if (!info.isClass) continue;
+        if (!info.isClass || !visibleNames.has(info.name)) continue;
         processRawExport(info, entryPoint, program, seenKeys, seenSlugs, entries);
       }
     }

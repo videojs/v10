@@ -11,7 +11,7 @@ import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
 const Player = createPlayer({ features: videoFeatures });
-const src = 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8';
+const src = 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8';
 
 function SettingsMenu(): ReactNode {
   const playbackRate = usePlaybackRateOptions();

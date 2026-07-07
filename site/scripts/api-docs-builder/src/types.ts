@@ -64,11 +64,8 @@ export interface ComponentSource {
 }
 
 export interface ExtraDataAttrsSource {
-  /** Path to the extra data-attrs file */
   path: string;
-  /** PascalCase export prefix for data-attrs variable lookup (e.g., MenuItem for menu-item-data-attrs.ts) */
-  componentName: string;
-  /** Part kebabs listed in the file's `@parts` JSDoc tag */
+  /** Part kebabs listed in the `@parts` JSDoc tag on the file's export */
   parts: string[];
 }
 
