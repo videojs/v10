@@ -29,9 +29,20 @@ Oh hey by the way. A lot of this knowledge is encoded in the `docs` Claude skill
 
 First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
 
-1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content?
-2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. 
+1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work — design decisions, trade-offs, and context. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content? Diátaxis calls this mode "explanation."
+2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. Address a real user goal, assume competence, and link to concept pages instead of explaining inline.
 3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using the `api-reference` skill and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
+
+<Aside type="note">
+Diátaxis has a fourth mode — learning-oriented **tutorials**. We deliberately don't have a tutorials section; learning-oriented content lives in the Getting started how-to guides instead.
+</Aside>
+
+To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask two questions: does the content inform **action** (practical steps) or **cognition** (understanding)? And does it serve the reader's **study** (acquiring skills) or their **work** (applying them)?
+
+| | Informs action | Informs cognition |
+|---|---|---|
+| **Serves work** | How-to guide | Reference page |
+| **Serves study** | How-to guide (Getting started) | Concept page |
 
 **When in doubt, write a concept page.** Most new documentation should be concept pages. Use this table to decide between the two:
 
@@ -43,6 +54,8 @@ First, read and understand [Diátaxis](https://diataxis.fr/). We organize docume
 | Scannable, minimal prose | Explains "why" at each step |
 | No prerequisites | Has prerequisites |
 | Jump in anywhere | Sequential |
+
+Whichever mode you choose, **don't mix modes on one page**. Step-by-step instructions creeping into a concept page belong in a how-to guide; background explanation swelling a how-to step belongs in a concept page — link to it instead. Each mode serves a different reader need, and blending them dilutes both.
 
 ## 2. Create a guide in the correct content folder
 
