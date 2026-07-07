@@ -36,12 +36,12 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Understanding-oriented pages that explain how and why things work. Read these to build a mental model of the library.',
     contents: [
-      { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
       { slug: 'concepts/features' },
       { slug: 'concepts/skins' },
       { slug: 'concepts/presets' },
       { slug: 'concepts/ui-components' },
       { slug: 'concepts/accessibility' },
+      { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
     ],
   },
   {
