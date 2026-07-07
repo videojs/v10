@@ -91,7 +91,7 @@
  * from `presentation.duration` once per source; this behavior writes the
  * final value from the buffered end. Decision domains don't overlap.
  */
-import { defineBehavior } from '../../../core/composition/create-composition';
+import type { Behavior } from '../../../core/composition/create-composition';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { effect } from '../../../core/signals/effect';
 import { computed, type ReadonlySignal, signal } from '../../../core/signals/primitives';
@@ -169,8 +169,9 @@ function endOfStreamSetup({
   };
   context: {
     mediaSource: ReadonlySignal<EndOfStreamContext['mediaSource']>;
-    videoBufferActor: ReadonlySignal<EndOfStreamContext['videoBufferActor']>;
-    audioBufferActor: ReadonlySignal<EndOfStreamContext['audioBufferActor']>;
+    // See behavior definition for details on these optional context signals.
+    videoBufferActor?: ReadonlySignal<SourceBufferActor | undefined>;
+    audioBufferActor?: ReadonlySignal<SourceBufferActor | undefined>;
   };
 }): () => void {
   // Behavior-local mirror of `mediaSource.readyState === 'open'`. Subscribes
@@ -198,8 +199,8 @@ function endOfStreamSetup({
       state.presentation.get(),
       context.mediaSource.get(),
       msIsOpen.get(),
-      context.videoBufferActor.get(),
-      context.audioBufferActor.get(),
+      context.videoBufferActor?.get(),
+      context.audioBufferActor?.get(),
       state.currentTime.get()
     )
   );
@@ -253,8 +254,24 @@ function endOfStreamSetup({
   };
 }
 
-export const endOfStream = defineBehavior({
+/**
+ * `endOfStream` uses a manual `Behavior<>` literal (rather than
+ * `defineBehavior`) because it reads `videoBufferActor` /
+ * `audioBufferActor` defensively without declaring them in its
+ * contextKeys — those slots are contributed by other behaviors and
+ * compose conditionally per engine variant. The `Behavior<>` literal
+ * opts out of the exhaustiveness check so the typed context shape can
+ * include the optional fields used at runtime. See the comment on
+ * `endOfStreamSetup`'s context param for the discipline.
+ */
+export const endOfStream: Behavior<
+  {
+    presentation: ReadonlySignal<EndOfStreamState['presentation']>;
+    currentTime: ReadonlySignal<EndOfStreamState['currentTime']>;
+  },
+  { mediaSource: ReadonlySignal<EndOfStreamContext['mediaSource']> }
+> = {
   stateKeys: ['presentation', 'currentTime'],
-  contextKeys: ['mediaSource', 'videoBufferActor', 'audioBufferActor'],
+  contextKeys: ['mediaSource'],
   setup: endOfStreamSetup,
-});
+};

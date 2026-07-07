@@ -4,7 +4,7 @@ import type { TransitionState } from '../../core/ui/transition';
 
 export interface TransitionApi {
   state: State<TransitionState>;
-  open(): Promise<void>;
+  open(el?: HTMLElement | null): Promise<void>;
   close(el: HTMLElement | null): Promise<void>;
   cancel(): void;
   destroy(): void;
@@ -15,7 +15,8 @@ export interface TransitionApi {
  *
  * **Open:** patches `{ active: true, status: 'starting' }`, then after a
  * double-RAF patches `{ status: 'idle' }` so the browser paints the
- * initial ("from") state before transitioning.
+ * initial ("from") state before transitioning. Reopening an active transition
+ * flushes styles first so CSS transitions can restart.
  *
  * **Close:** patches `{ status: 'ending' }` (keeping `active: true` so the
  * element stays mounted), then after a double-RAF waits for
@@ -28,17 +29,27 @@ export function createTransition(): TransitionApi {
   let rafId1 = 0;
   let rafId2 = 0;
 
-  function open(): Promise<void> {
+  function open(el: HTMLElement | null = null): Promise<void> {
     cancelAnimationFrame(rafId1);
     cancelAnimationFrame(rafId2);
     rafId1 = 0;
     rafId2 = 0;
+
+    const restarting = state.current.active;
+
+    if (restarting) {
+      state.patch({ status: 'idle' });
+    }
 
     state.patch({ active: true, status: 'starting' });
 
     return new Promise<void>((resolve) => {
       rafId1 = requestAnimationFrame(() => {
         rafId1 = 0;
+        if (restarting) {
+          cancelAnimations(el);
+          flushStyles(el);
+        }
         rafId2 = requestAnimationFrame(() => {
           rafId2 = 0;
           if (destroyed || !state.current.active) return resolve();
@@ -94,6 +105,19 @@ export function createTransition(): TransitionApi {
       cancel();
     },
   };
+}
+
+function flushStyles(el: HTMLElement | null): void {
+  if (!el) return;
+  void el.offsetHeight;
+}
+
+function cancelAnimations(el: HTMLElement | null): void {
+  const animations = el?.getAnimations?.({ subtree: true }) ?? [];
+
+  for (const animation of animations) {
+    animation.cancel();
+  }
 }
 
 function waitForAnimations(el: HTMLElement | null): Promise<void> {

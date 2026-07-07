@@ -7,7 +7,7 @@ export default function BasicUsage() {
         <Tooltip.Trigger className="trigger">Hover me</Tooltip.Trigger>
         <Tooltip.Popup className="media-tooltip">
           <Tooltip.Arrow className="arrow" />
-          Tooltip content
+          <Tooltip.Label>Tooltip content</Tooltip.Label>
         </Tooltip.Popup>
       </Tooltip.Root>
     </div>

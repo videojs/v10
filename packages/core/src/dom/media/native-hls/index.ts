@@ -25,6 +25,10 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   #src = nativeHlsMediaDefaultProps.src;
   #preload = nativeHlsMediaDefaultProps.preload;
 
+  /**
+   * Underlying playback engine — always `null`. Native HLS has no JS engine;
+   * the browser handles playback directly.
+   */
   get engine() {
     return null;
   }
@@ -38,6 +42,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
     if (this.target) this.target.src = src;
   }
 
+  /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
   get preload() {
     return this.#preload;
   }
@@ -49,16 +54,9 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   attach(target: HTMLVideoElement) {
     super.attach(target);
+
     if (this.preload !== target.preload) target.preload = this.preload;
     if (this.src) target.src = this.src;
-  }
-
-  detach() {
-    super.detach();
-  }
-
-  destroy() {
-    this.detach();
   }
 }
 

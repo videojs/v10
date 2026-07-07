@@ -25,9 +25,10 @@ type NavbarProps = {
   onPreloadChange: (value: PreloadValue) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
-  isSimpleHlsVideo: boolean;
+  isSimpleHls: boolean;
   isMuxVideo: boolean;
   isMuxAudio: boolean;
+  isVimeoVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -44,14 +45,16 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
-  'hls-video': 'HLS Video',
+  'hlsjs-video': 'HLS Video',
   'native-hls-video': 'Native HLS Video',
   'mux-video': 'Mux Video',
   'mux-audio': 'Mux Audio',
   'simple-hls-video': 'Simple HLS Video',
+  'simple-hls-audio-only': 'Simple HLS Audio-Only',
   'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
+  'vimeo-video': 'Vimeo Video',
 };
 
 export function Navbar({
@@ -75,9 +78,10 @@ export function Navbar({
   onPreloadChange,
   availableSources,
   isBackgroundVideo,
-  isSimpleHlsVideo,
+  isSimpleHls,
   isMuxVideo,
   isMuxAudio,
+  isVimeoVideo,
   platforms,
   stylings,
   presets,
@@ -106,7 +110,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || platform === 'cdn'),
+            disabled: s === 'tailwind' && (isBackgroundVideo || isVimeoVideo || platform === 'cdn'),
           }))}
         />
 
@@ -131,12 +135,12 @@ export function Navbar({
           onChange={onSourceChange}
           options={availableSources
             .filter((id) => {
-              if (isSimpleHlsVideo) return sources[id].subType === 'mp4';
+              if (isSimpleHls) return sources[id].subType === 'mp4';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })
             .map((id) => ({ value: id, label: sources[id].label }))}
-          disabled={isBackgroundVideo}
+          disabled={isBackgroundVideo || isVimeoVideo}
         />
       </div>
 

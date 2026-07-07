@@ -773,18 +773,18 @@ function evaluateTemplate(templateBody: string, context: Record<string, unknown>
     .trim();
 }
 
-function escapeAttributeValue(value: string): string {
-  return value.replaceAll('&', '&amp;').replaceAll('"', '&quot;');
+function escapeHtml(value: string): string {
+  return value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
 }
 
 function createRenderMediaIcon(iconSet: 'default' | 'minimal') {
   return (name: string, attrs?: Record<string, string>): string => {
     const family = iconSet === 'minimal' ? ' family="minimal"' : '';
     const attrText = Object.entries(attrs ?? {})
-      .map(([key, value]) => ` ${key}="${escapeAttributeValue(value)}"`)
+      .map(([key, value]) => ` ${key}="${escapeHtml(value)}"`)
       .join('');
 
-    return `<media-icon name="${escapeAttributeValue(name)}"${family}${attrText}></media-icon>`;
+    return `<media-icon name="${escapeHtml(name)}"${family}${attrText}></media-icon>`;
   };
 }
 

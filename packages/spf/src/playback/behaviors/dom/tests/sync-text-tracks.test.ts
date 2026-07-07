@@ -5,7 +5,7 @@ import {
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../../media/dom/text/text-track-slots';
-import type { MaybeResolvedPresentation } from '../../../../media/types';
+import type { MaybeResolvedPresentation, TextTrack } from '../../../../media/types';
 import { createTextTracksActor, type TextTracksActor } from '../../../actors/dom/text-tracks';
 import { syncTextTracks } from '../sync-text-tracks';
 
@@ -18,6 +18,7 @@ const baseConfig = {
 interface State {
   presentation?: MaybeResolvedPresentation;
   selectedTextTrackId?: string | undefined;
+  userTextTrackSelection?: Partial<TextTrack> | 'off' | undefined;
 }
 
 interface Context {
@@ -58,6 +59,7 @@ function setup(initialState: State = {}, initialContext: Context = {}) {
   const state = {
     presentation: signal<MaybeResolvedPresentation | undefined>(initialState.presentation),
     selectedTextTrackId: signal<string | undefined>(initialState.selectedTextTrackId),
+    userTextTrackSelection: signal<Partial<TextTrack> | 'off' | undefined>(initialState.userTextTrackSelection),
   };
   const context = {
     mediaElement: signal<HTMLMediaElement | undefined>(initialContext.mediaElement),
@@ -201,7 +203,7 @@ describe('syncTextTracks', () => {
     reactor.destroy();
   });
 
-  it('bridges external mode change → selectedTextTrackId', async () => {
+  it('bridges external mode change → userTextTrackSelection (language intent)', async () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([
       { id: 'track-en', language: 'en' },
@@ -221,12 +223,15 @@ describe('syncTextTracks', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.selectedTextTrackId.get()).toBe('track-es');
+    // Language-based intent (sticky across sources), not the resolved id.
+    expect(state.userTextTrackSelection.get()).toEqual({ language: 'es' });
+    // This behavior never writes the resolved id (switchTextTrack owns it).
+    expect(state.selectedTextTrackId.get()).toBeUndefined();
 
     reactor.destroy();
   });
 
-  it('clears selectedTextTrackId when external code disables all tracks', async () => {
+  it("writes 'off' intent when external code disables all tracks", async () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([
       { id: 'track-en', language: 'en' },
@@ -246,7 +251,53 @@ describe('syncTextTracks', () => {
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.selectedTextTrackId.get()).toBeUndefined();
+    expect(state.userTextTrackSelection.get()).toBe('off');
+
+    reactor.destroy();
+  });
+
+  it('ignores its own mode echo when the resolved selection drives the change (no write-back)', async () => {
+    const mediaElement = document.createElement('video');
+    const presentation = makePresentation([
+      { id: 'track-en', language: 'en' },
+      { id: 'track-es', language: 'es' },
+    ]);
+
+    const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    context.mediaElement.set(mediaElement);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // The resolver moves the selection; the mirror drives the DOM modes, which
+    // fires a 'change'. showingId === selectedTextTrackId → echo → not written back.
+    state.selectedTextTrackId.set('track-es');
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    const [enEl, esEl] = Array.from(mediaElement.children) as HTMLTrackElement[];
+    expect(enEl!.track.mode).toBe('disabled');
+    expect(esEl!.track.mode).toBe('showing');
+    expect(state.userTextTrackSelection.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it("does not write 'off' when a resolver correction disables the DOM selection", async () => {
+    const mediaElement = document.createElement('video');
+    const presentation = makePresentation([
+      { id: 'track-en', language: 'en' },
+      { id: 'track-es', language: 'es' },
+    ]);
+
+    const { state, context, reactor } = setup({ presentation, selectedTextTrackId: 'track-en' });
+    context.mediaElement.set(mediaElement);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    // Resolver clears the resolved id (e.g. the picked track's CDN failed). The
+    // mirror disables every track → 'change' shows nothing, which equals the
+    // resolved id (undefined) → echo → no spurious 'off' intent.
+    state.selectedTextTrackId.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.userTextTrackSelection.get()).toBeUndefined();
 
     reactor.destroy();
   });
@@ -286,7 +337,7 @@ describe('syncTextTracks', () => {
     reactor.destroy();
   });
 
-  it('preserves selectedTextTrackId on src unload (selectTextTrack owns the clear)', async () => {
+  it('never writes selectedTextTrackId on src unload (switchTextTrack owns it)', async () => {
     const mediaElement = document.createElement('video');
     const presentation = makePresentation([{ id: 'track-en', language: 'en' }]);
 
@@ -297,6 +348,8 @@ describe('syncTextTracks', () => {
     state.presentation.set(undefined);
     await new Promise((resolve) => setTimeout(resolve, 50));
 
+    // This behavior reads but never writes the resolved id, so unload leaves it
+    // untouched (switchTextTrack clears it on its own src-unload exit).
     expect(state.selectedTextTrackId.get()).toBe('track-en');
 
     reactor.destroy();

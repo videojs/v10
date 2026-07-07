@@ -73,6 +73,17 @@ class TestAudioHost extends HTMLAudioElementHost {
   destroy() {}
 }
 
+class TestIframeHost extends EventTarget {
+  target: EventTarget | null = null;
+  attach(target: EventTarget | null) {
+    this.target = target;
+  }
+  detach() {
+    this.target = null;
+  }
+  destroy() {}
+}
+
 let tagCounter = 0;
 
 function defineVideoElement() {
@@ -96,6 +107,13 @@ function defineAudioElement() {
   return { Ctor, tag };
 }
 
+function defineIframeElement() {
+  const tag = `test-iframe-${++tagCounter}`;
+  const Ctor = CustomMediaElement('iframe', TestIframeHost as never);
+  customElements.define(tag, Ctor);
+  return { Ctor, tag };
+}
+
 function create(def: { Ctor: new () => any; tag: string }) {
   const el = new def.Ctor();
   document.body.appendChild(el);
@@ -103,12 +121,17 @@ function create(def: { Ctor: new () => any; tag: string }) {
 }
 
 class TrackingVideoHost extends HTMLVideoElementHost {
-  calls: string[] = [];
+  #calls: string[] = [];
   #src = '';
   #volume = 1;
   #muted = false;
   #currentTime = 0;
   #playbackRate = 1;
+  #preload: '' | 'none' | 'metadata' | 'auto' | null = 'metadata';
+
+  get calls() {
+    return this.#calls;
+  }
 
   get src() {
     return this.#src;
@@ -153,6 +176,16 @@ class TrackingVideoHost extends HTMLVideoElementHost {
   override set playbackRate(value: number) {
     this.calls.push(`set:playbackRate:${value}`);
     this.#playbackRate = value;
+  }
+
+  override get preload() {
+    return this.#preload ?? 'metadata';
+  }
+
+  override set preload(value: '' | 'none' | 'metadata' | 'auto') {
+    const preload = value as '' | 'none' | 'metadata' | 'auto' | null;
+    this.calls.push(`set:preload:${preload}`);
+    this.#preload = preload;
   }
 
   destroy() {}
@@ -247,6 +280,7 @@ describe('CustomMediaElement', () => {
       expect(observed).toContain('poster');
       expect(observed).toContain('autopictureinpicture');
       expect(observed).toContain('disablepictureinpicture');
+      expect(observed).toContain('stream-type');
     });
 
     it('includes standard attributes for audio elements', () => {
@@ -259,6 +293,7 @@ describe('CustomMediaElement', () => {
       expect(observed).toContain('muted');
       expect(observed).toContain('preload');
       expect(observed).toContain('src');
+      expect(observed).toContain('stream-type');
     });
   });
 
@@ -276,6 +311,27 @@ describe('CustomMediaElement', () => {
       expect(observed).not.toContain('current-time');
       expect(observed).not.toContain('volume');
       expect(observed).not.toContain('playback-rate');
+    });
+  });
+
+  describe('stream-type reflection', () => {
+    it('sets the host streamType from the stream-type attribute', () => {
+      const el = create(defineVideoElement());
+      el.setAttribute('stream-type', 'live');
+      expect(el.streamType).toBe('live');
+    });
+
+    it('reflects the streamType property to the stream-type attribute', () => {
+      const el = create(defineVideoElement());
+      el.streamType = 'live';
+      expect(el.getAttribute('stream-type')).toBe('live');
+      expect(el.streamType).toBe('live');
+    });
+
+    it('does not forward stream-type to the inner media element', () => {
+      const el = create(defineVideoElement());
+      el.setAttribute('stream-type', 'live');
+      expect(el.target!.hasAttribute('stream-type')).toBe(false);
     });
   });
 
@@ -393,22 +449,22 @@ describe('CustomMediaElement', () => {
       const el = create(defineVideoElement());
       const target = el.target!;
 
-      el.setAttribute('preload', 'metadata');
-      expect(target.getAttribute('preload')).toBe('metadata');
+      el.setAttribute('crossorigin', 'anonymous');
+      expect(target.getAttribute('crossorigin')).toBe('anonymous');
 
-      el.removeAttribute('preload');
-      expect(target.hasAttribute('preload')).toBe(false);
+      el.removeAttribute('crossorigin');
+      expect(target.hasAttribute('crossorigin')).toBe(false);
     });
 
     it('updates forwarded attribute value when changed', () => {
       const el = create(defineVideoElement());
       const target = el.target!;
 
-      el.setAttribute('preload', 'metadata');
-      expect(target.getAttribute('preload')).toBe('metadata');
+      el.setAttribute('crossorigin', 'anonymous');
+      expect(target.getAttribute('crossorigin')).toBe('anonymous');
 
-      el.setAttribute('preload', 'auto');
-      expect(target.getAttribute('preload')).toBe('auto');
+      el.setAttribute('crossorigin', 'use-credentials');
+      expect(target.getAttribute('crossorigin')).toBe('use-credentials');
     });
   });
 
@@ -448,28 +504,27 @@ describe('CustomMediaElement', () => {
 
     it('string property getter returns the attribute value', () => {
       const el = create(defineVideoElement());
-      el.setAttribute('preload', 'auto');
-      expect(el.preload).toBe('auto');
+      el.setAttribute('controlslist', 'nodownload');
+      expect(el.controlsList).toBe('nodownload');
     });
 
     it('string property getter returns null when attribute is absent', () => {
       const el = create(defineVideoElement());
-      expect(el.preload).toBeNull();
       expect(el.controlsList).toBeNull();
     });
 
     it('string property setter sets the attribute and forwards to target', () => {
       const el = create(defineVideoElement());
-      el.preload = 'metadata';
-      expect(el.getAttribute('preload')).toBe('metadata');
-      expect(el.target!.getAttribute('preload')).toBe('metadata');
+      el.controlsList = 'nodownload';
+      expect(el.getAttribute('controlslist')).toBe('nodownload');
+      expect(el.target!.getAttribute('controlslist')).toBe('nodownload');
     });
 
     it('removing attribute resets string property getter to null', () => {
       const el = create(defineVideoElement());
-      el.preload = 'metadata';
-      el.removeAttribute('preload');
-      expect(el.preload).toBeNull();
+      el.controlsList = 'nodownload';
+      el.removeAttribute('controlslist');
+      expect(el.controlsList).toBeNull();
     });
 
     it('property accessors work for all non-MediaHost video attributes', () => {
@@ -487,9 +542,9 @@ describe('CustomMediaElement', () => {
       expect(el.playsInline).toBe(true);
       expect(el.hasAttribute('playsinline')).toBe(true);
 
-      el.preload = 'metadata';
-      expect(el.preload).toBe('metadata');
-      expect(el.getAttribute('preload')).toBe('metadata');
+      el.controlsList = 'nodownload';
+      expect(el.controlsList).toBe('nodownload');
+      expect(el.getAttribute('controlslist')).toBe('nodownload');
 
       el.crossOrigin = 'anonymous';
       expect(el.crossOrigin).toBe('anonymous');
@@ -644,20 +699,47 @@ describe('CustomMediaElement', () => {
     });
   });
 
+  describe('connectedCallback', () => {
+    it('marks iframe embeds with data-cross-origin-frame for cross-origin-safe styling', () => {
+      const el = create(defineIframeElement());
+      expect(el.hasAttribute('data-cross-origin-frame')).toBe(true);
+    });
+
+    it('does not add data-cross-origin-frame to native media elements', () => {
+      const el = create(defineVideoElement());
+      expect(el.hasAttribute('data-cross-origin-frame')).toBe(false);
+    });
+  });
+
   describe('disconnectedCallback', () => {
-    it('calls destroy on the MediaHost when disconnected', () => {
+    it('calls destroy on the MediaHost when disconnected', async () => {
       const el = create(defineVideoElement());
       expect(el.destroyed).toBe(false);
 
       el.remove();
+      // Destroy is deferred a microtask to allow synchronous reparenting.
+      await Promise.resolve();
       expect(el.destroyed).toBe(true);
     });
 
-    it('does not destroy when keep-alive attribute is set', () => {
+    it('does not destroy when keep-alive attribute is set', async () => {
       const el = create(defineVideoElement());
       el.setAttribute('keep-alive', '');
 
       el.remove();
+      await Promise.resolve();
+      expect(el.destroyed).toBe(false);
+    });
+
+    it('does not destroy when synchronously moved to a new parent', async () => {
+      const el = create(defineVideoElement());
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+
+      // Moving fires disconnectedCallback + connectedCallback synchronously.
+      container.appendChild(el);
+      await Promise.resolve();
+
       expect(el.destroyed).toBe(false);
     });
   });
@@ -697,6 +779,15 @@ describe('CustomMediaElement', () => {
       const el = create(defineTrackingVideoElement());
       el.src = 'https://example.com/video.mp4';
       expect(el.src).toBe('https://example.com/video.mp4');
+    });
+
+    it('preload setter delegates through the MediaHost', () => {
+      const el = create(defineTrackingVideoElement());
+      el.preload = 'metadata';
+
+      expect(el.getAttribute('preload')).toBe('metadata');
+      expect(el.preload).toBe('metadata');
+      expect(el.calls).toContain('set:preload:metadata');
     });
 
     it('number setter delegates directly to the MediaHost', () => {
@@ -943,6 +1034,59 @@ describe('CustomMediaElement', () => {
 
       (el as any).playbackId = 'xyz789';
       expect(el.getAttribute('playback-id')).toBe('xyz789');
+    });
+  });
+
+  describe('XSS prevention', () => {
+    it('does not inject nodes when poster contains a quote breakout attempt', () => {
+      const { tag } = defineVideoElement();
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} poster='" onerror="window.__xss=1'></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const shadow = el.shadowRoot!;
+
+      expect(shadow.querySelectorAll('[onerror]')).toHaveLength(0);
+      expect(shadow.querySelectorAll('[onload]')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('does not inject script elements when an attribute value contains angle brackets', () => {
+      const { Ctor } = defineVideoElement();
+      const maliciousValue = '"><script>window.__xss=1</script><video x="';
+
+      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      const container = document.createElement('div');
+      container.innerHTML = (Ctor as any).getTemplateHTML({ crossorigin: maliciousValue });
+
+      expect(container.querySelectorAll('script')).toHaveLength(0);
+      expect(container.querySelectorAll('img[onerror]')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('does not inject img elements when poster contains an angle-bracket payload', () => {
+      const { Ctor } = defineVideoElement();
+      const maliciousValue = '"><img src=x onerror="window.__xss=1">';
+
+      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      const container = document.createElement('div');
+      container.innerHTML = (Ctor as any).getTemplateHTML({ poster: maliciousValue });
+
+      expect(container.querySelectorAll('img')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('preserves the attribute value correctly after escaping', () => {
+      const { tag } = defineVideoElement();
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} poster="https://example.com/poster.jpg"></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const video = el.shadowRoot!.querySelector('video')!;
+
+      expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
     });
   });
 });

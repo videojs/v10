@@ -8,6 +8,7 @@ import {
   iconFlipped,
   iconState,
   menu,
+  playButton,
   playbackRate,
   popup,
   root,
@@ -23,16 +24,19 @@ import {
   PlayIcon,
   RestartIcon,
   SeekIcon,
+  SpinnerIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
 import { Container, usePlayer } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
-import { PlaybackRateMenu, usePlaybackRateMenu } from '@/ui/playback-rate-menu';
+import { usePlaybackRateOptions } from '@/ui/playback-rate';
+import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
 import { Time } from '@/ui/time';
@@ -120,20 +124,35 @@ function VolumePopover(): ReactNode {
   );
 }
 
-function PlaybackRateMenuItems(): ReactNode {
-  const { options, setValue, value } = usePlaybackRateMenu();
+function PlaybackRateRadioGroup(): ReactNode {
+  const state = usePlaybackRateOptions();
+  if (!state) return null;
+
+  const { options, setValue, value } = state;
 
   return (
-    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} label="Playback rate">
+    <Menu.RadioGroup className={menu.group} value={value} onValueChange={setValue} aria-label="Playback rate">
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
           <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
-            <CheckIcon className={icon} />
+            <CheckIcon className={cn(icon, menu.icon)} />
           </Menu.ItemIndicator>
         </Menu.RadioItem>
       ))}
     </Menu.RadioGroup>
+  );
+}
+
+function PlaybackRateTrigger(): ReactNode {
+  const state = usePlaybackRateOptions();
+  if (!state) return null;
+
+  return (
+    <Menu.Trigger
+      disabled={state.disabled}
+      render={<PlaybackRateButton className={playbackRate.button} render={<Button />} />}
+    />
   );
 }
 
@@ -163,18 +182,30 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top" boundary="viewport">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className={iconState.play.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, iconState.play.restart)} />
-                    <PlayIcon className={cn(icon, iconState.play.play)} />
-                    <PauseIcon className={cn(icon, iconState.play.pause)} />
-                  </PlayButton>
-                }
+            <span className={playButton.wrapper}>
+              <BufferingIndicator
+                render={(props) => (
+                  <div {...props} className={cn(playButton.bufferingRoot, props.className)}>
+                    <SpinnerIcon className={icon} />
+                  </div>
+                )}
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top" boundary="viewport">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className={cn(iconState.play.button, playButton.control)} render={<Button />}>
+                      <RestartIcon className={cn(icon, iconState.play.restart)} />
+                      <PlayIcon className={cn(icon, iconState.play.play)} />
+                      <PauseIcon className={cn(icon, iconState.play.pause)} />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className={cn(popup.tooltip)}>
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </span>
 
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
@@ -187,7 +218,10 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek backward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top" boundary="viewport">
@@ -201,13 +235,16 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>Seek forward {SEEK_TIME} seconds</Tooltip.Popup>
+              <Tooltip.Popup className={cn(popup.tooltip)}>
+                <Tooltip.Label />
+                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
 
           <div className={time.controls}>
             <Time.Group className={time.group}>
-              <Time.Value type="current" className={time.current} />
+              <Time.Value toggle type="current" className={time.current} />
               <Time.Separator className={time.separator} />
               <Time.Value type="duration" className={time.duration} />
             </Time.Group>
@@ -218,16 +255,19 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
                 <TimeSlider.Buffer render={<SliderBuffer />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
+              <TimeSlider.Preview className={slider.preview}>
+                <TimeSlider.Value type="pointer" className={slider.value} />
+              </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>
 
           <div className={buttonGroup}>
-            <PlaybackRateMenu.Root side="top" align="center" boundary="viewport">
-              <PlaybackRateMenu.Trigger className={playbackRate.button} render={<Button />} />
-              <PlaybackRateMenu.Content className={cn(popup.popover, menu.root)}>
-                <PlaybackRateMenuItems />
-              </PlaybackRateMenu.Content>
-            </PlaybackRateMenu.Root>
+            <Menu.Root side="top" align="center" boundary="viewport">
+              <PlaybackRateTrigger />
+              <Menu.Content className={cn(popup.popover, menu.root)}>
+                <PlaybackRateRadioGroup />
+              </Menu.Content>
+            </Menu.Root>
 
             <VolumePopover />
           </div>

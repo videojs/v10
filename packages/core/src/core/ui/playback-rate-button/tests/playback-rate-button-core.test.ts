@@ -134,6 +134,13 @@ describe('PlaybackRateButtonCore', () => {
       expect(media.setPlaybackRate).toHaveBeenCalledWith(0.5);
     });
 
+    it('does nothing when menuTrigger is set', () => {
+      const core = new PlaybackRateButtonCore({ menuTrigger: true });
+      const media = createMediaState({ playbackRate: 1 });
+      core.cycle(media);
+      expect(media.setPlaybackRate).not.toHaveBeenCalled();
+    });
+
     it('does nothing when disabled', () => {
       const core = new PlaybackRateButtonCore({ disabled: true });
       const media = createMediaState();

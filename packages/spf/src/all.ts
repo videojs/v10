@@ -98,8 +98,17 @@ export { resolvePresentation } from './playback/behaviors/resolve-presentation';
 export { syncPreload } from './playback/behaviors/sync-preload';
 
 // =============================================================================
-// Features (F9 - Quality Switching)
+// Features — Track Switching (video ABR + audio language selection)
 // =============================================================================
 
-export type { QualitySwitchingConfig, QualitySwitchingState } from './playback/behaviors/quality-switching';
-export { DEFAULT_INITIAL_BANDWIDTH, switchVideoQuality } from './playback/behaviors/quality-switching';
+export type {
+  SwitchTextTrackConfig,
+  SwitchVideoTrackConfig,
+  TrackSwitchingState,
+} from './playback/behaviors/track-switching';
+export {
+  DEFAULT_INITIAL_BANDWIDTH,
+  switchAudioTrack,
+  switchTextTrack,
+  switchVideoTrack,
+} from './playback/behaviors/track-switching';

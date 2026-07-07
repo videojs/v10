@@ -1,13 +1,16 @@
+export * from './audio-track';
 export * from './buffer';
 export * from './controls';
 export * from './error';
 export * as features from './feature.parts';
 export * from './fullscreen';
 export * from './live';
+export * from './orientation-lock';
 export * from './pip';
 export * from './playback';
 export * from './playback-rate';
 export * from './presets';
+export * from './quality';
 export * from './remote-playback';
 export * from './source';
 export * from './stream-type';

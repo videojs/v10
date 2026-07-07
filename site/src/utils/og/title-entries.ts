@@ -13,7 +13,7 @@ const STATIC_PAGES: { path: string; title: string }[] = [
   { path: 'blog', title: 'Blog' },
 ];
 
-export type OgTitleEntryKind = 'static' | 'blog' | 'blog-index' | 'author' | 'docs';
+export type OgTitleEntryKind = 'static' | 'blog' | 'blog-index' | 'author' | 'docs' | 'changelog' | 'changelog-index';
 export type OgTitleSource = 'static' | 'title' | 'ogTitle' | 'frameworkTitle' | 'name';
 
 export interface OgTitleEntry {
@@ -56,6 +56,36 @@ export async function listOgTitleEntries(): Promise<OgTitleEntry[]> {
       kind: 'blog-index',
       path: `blog/${page}`,
       title: 'Blog',
+      source: 'static',
+    });
+  }
+
+  const changelogEntries = await getCollection('changelog');
+
+  entries.push({
+    kind: 'changelog-index',
+    path: 'changelog',
+    title: 'Changelog',
+    source: 'static',
+  });
+
+  for (const entry of changelogEntries) {
+    entries.push({
+      kind: 'changelog',
+      path: `changelog/${entry.id}`,
+      title: `v${entry.data.version} Changelog`,
+      source: 'title',
+      collectionId: entry.id,
+    });
+  }
+
+  const totalChangelogPages = Math.ceil(changelogEntries.length / BLOG_PAGE_SIZE);
+
+  for (let page = 2; page <= totalChangelogPages; page += 1) {
+    entries.push({
+      kind: 'changelog-index',
+      path: `changelog/${page}`,
+      title: 'Changelog',
       source: 'static',
     });
   }

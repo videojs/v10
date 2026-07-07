@@ -8,9 +8,10 @@
 @import "./components/time.css";
 @import "./components/button.css";
 @import "./components/button-group.css";
+@import "./components/badge.css";
 @import "./components/icons.css";
 @import "./components/poster.css";
-@import "./components/preview.css";
+@import "./components/thumbnail.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
 @import "./components/menus.css";
@@ -35,14 +36,17 @@
   --media-error-dialog-transition-timing-function: ease-out;
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
-  --media-tooltip-background-color: oklch(1 0 0 / 0.1);
-  --media-tooltip-border-color: transparent;
+  --media-tooltip-background-color: oklch(0 0 0 / 0.5);
+  --media-tooltip-border-color: oklch(1 0 0 / 0.1);
   --media-tooltip-backdrop-filter: blur(16px) saturate(1.5);
   --media-tooltip-text-color: currentColor;
   --media-tooltip-side-offset: 0.5rem;
   --media-tooltip-boundary-offset: 0.5rem;
+  --media-popover-background-color: var(--media-tooltip-background-color);
+  --media-popover-border-color: var(--media-tooltip-border-color);
+  --media-popover-backdrop-filter: var(--media-tooltip-backdrop-filter);
   --media-popover-side-offset: 1.5rem;
-  --media-popover-boundary-offset: 0.5rem;
+  --media-popover-boundary-offset: var(--media-tooltip-boundary-offset);
   overflow: clip;
   background: oklch(0 0 0);
 
@@ -162,9 +166,7 @@
   z-index: 10;
   flex-wrap: wrap;
   column-gap: 0.5rem;
-  max-width: 56rem;
   padding: 0.25rem;
-  margin-inline: auto;
   color: oklch(1 0 0);
   border-radius: 0.75rem;
   transition-timing-function: var(--media-controls-transition-timing-function);
@@ -263,21 +265,28 @@
    Slider preview
    ========================================================================== */
 
-.media-minimal-skin--video .media-slider__preview {
-  --media-preview-max-width: 11rem;
-  --media-preview-padding: -0.5rem;
+.media-minimal-skin--video .media-slider__thumbnail {
+  --media-slider-thumbnail-max-width: 11rem;
+  --media-slider-thumbnail-max-height: 8rem;
+  --media-slider-thumbnail-padding: -0.5rem;
   /**
     Inset is the difference between the container width and the slider (100%) width.
     We only add to the end as we render the time there.
   */
-  --media-preview-inset: calc(100cqi - 100%);
+  --media-slider-thumbnail-inset: calc(100cqi - 100%);
 
   position: absolute;
   bottom: 100%;
   left: clamp(
-    calc(var(--media-preview-max-width) / 2 + var(--media-preview-padding)),
+    calc(var(--media-slider-thumbnail-max-width) / 2 + var(--media-slider-thumbnail-padding)),
     var(--media-slider-pointer),
-    calc(100% - var(--media-preview-max-width) / 2 - var(--media-preview-padding) + var(--media-preview-inset))
+    calc(
+      100% -
+      var(--media-slider-thumbnail-max-width) /
+      2 -
+      var(--media-slider-thumbnail-padding) +
+      var(--media-slider-thumbnail-inset)
+    )
   );
   opacity: 0;
   filter: blur(8px);
@@ -289,11 +298,10 @@
   transition-property: scale, opacity, filter;
 
   @container media-root (width > 42rem) {
-    bottom: calc(100% + 0.25rem);
     left: var(--media-slider-pointer);
   }
 
-  & .media-preview__thumbnail-wrapper {
+  & .media-thumbnail__image-wrapper {
     position: relative;
 
     &::after {
@@ -308,16 +316,19 @@
     }
   }
 
-  & .media-preview__thumbnail {
-    max-width: var(--media-preview-max-width);
-  }
-
-  &:has(.media-preview__thumbnail[data-loading]) {
-    max-height: 6rem;
+  & .media-thumbnail__image {
+    max-width: var(--media-slider-thumbnail-max-width);
+    max-height: var(--media-slider-thumbnail-max-height);
   }
 }
-.media-minimal-skin--video .media-slider[data-pointing] .media-slider__preview:has([role="img"]:not([data-hidden])) {
+.media-minimal-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
   opacity: 1;
   filter: blur(0);
   scale: 1;
+}
+.media-minimal-skin--video
+  .media-slider__thumbnail:has([role="img"]:not([data-hidden]))
+  + .media-slider__preview
+  .media-slider__value {
+  display: none;
 }

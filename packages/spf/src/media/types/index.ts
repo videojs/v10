@@ -144,7 +144,14 @@ export type VideoTrack = Track &
     width?: number;
     height?: number;
     frameRate?: FrameRate;
-    audioGroupId?: string;
+    /**
+     * Audio groups (`EXT-X-STREAM-INF:AUDIO`) this video rendition can pair
+     * with. A list because one rendition is typically listed across multiple
+     * `EXT-X-STREAM-INF` entries — one per audio group (the HLS cross-product) —
+     * which the parser collapses into a single track carrying every group it
+     * advertised.
+     */
+    audioGroupIds?: string[];
   };
 
 /**
@@ -173,6 +180,21 @@ export type TextTrack = Track & {
   autoselect?: boolean;
   forced?: boolean;
 };
+
+/**
+ * Predicate that answers "can this environment decode this track?" — the
+ * capability-probing surface, read by the track-switching hard-constraint
+ * pre-pass (`excludeUnplayableTracks`) to drop undecodable renditions before
+ * selection. Kept DOM-free here (a plain function type over a minimal track
+ * shape) so DOM-free behaviors can consume it; the DOM implementation
+ * (`canPlayTrack` in `media/dom/capabilities.ts`) wraps
+ * `MediaSource.isTypeSupported`.
+ *
+ * Takes the minimal codec-bearing shape both video and audio candidates
+ * carry. `mimeType` is optional so unprobeable candidates (no MIME) can be
+ * passed straight through as playable rather than dropped.
+ */
+export type CanPlayTrack = (track: { mimeType?: string; codecs?: string[] }) => boolean;
 
 /**
  * Minimal text-track cue shape — start time, end time, and display text.

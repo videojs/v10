@@ -29,7 +29,7 @@ export function createSimpleHlsEngine(
       // Track selection (reads config for initial preferences)
       selectVideoTrack,
       selectAudioTrack,
-      selectTextTrack,
+      switchTextTrack,
 
       // Resolve selected tracks (fetch media playlists)
       resolveVideoTrack,
@@ -143,13 +143,13 @@ The first three entries are the lead-in:
 
 ```ts
 syncPreload,
-trackPlaybackInitiated,
+trackLoadTriggers,
 resolvePresentation,
 ```
 
 **`syncPreload`** bidirectionally syncs `state.preload` and the media element's `preload` property — DOM-side values feed state on attach or source change, and state-side values propagate back to the element. A configurable default (`'metadata'`) backfills when neither side has supplied a value. This makes the preload mode reactive — anything downstream that wants to react to preload changes (for example, "should we eagerly fetch the manifest?") can subscribe to a signal instead of polling the DOM.
 
-**`trackPlaybackInitiated`** sets `state.playbackInitiated` to `true` once the user has tried to play (the element is no longer paused). It's a small reactor that watches the media element's `play`/`pause` events. Why it matters: behaviors that should only run after the user interacts (or after autoplay fires) can gate on `state.playbackInitiated`.
+**`trackLoadTriggers`** sets `state.loadActivated` to `true` once a load-overriding event has fired for the current source — DOM `play` or `seeking`, or immediately on entry if the element is already in such a state (covering autoplay, native controls, or direct-DOM `play()` paths). The slot is sticky-true within a source identity (a URL or `mediaElement` change resets it). Why it matters: combined with `state.preload`, this is the engine's loading-semantics contract — behaviors that should defer work under `preload="none"` can gate on `!isBlockingPreload(preload) || loadActivated`, mirroring native `HTMLMediaElement` behavior. The adapter's `play()` co-writes `loadActivated = true` to signal programmatic intent. See [`features/preload-modes.md`](../../../internal/design/spf/features/preload-modes.md) for the full feature surface.
 
 **`resolvePresentation`** is the first behavior that does real network work. It watches `state.presentation` and, when it sees an unresolved value (`{ url }` with no `id`), fetches the multivariant playlist, parses it, and writes the resolved `Presentation` back to the same slot. The lifecycle lives in one slot: a caller writes `{ url }`, the resolver replaces it with a fully populated `Presentation`. Behaviors that only need the URL read `presentation.url`; behaviors that need resolved fields use `isResolvedPresentation` (or check for `selectionSets`) to narrow.
 
@@ -187,21 +187,21 @@ Once the manifest is resolved, the engine picks one track per type:
 ```ts
 selectVideoTrack,
 selectAudioTrack,
-selectTextTrack,
+switchTextTrack,
 ```
 
-Each is a separate `defineBehavior` export from `playback/behaviors/select-tracks.ts`, with narrow `stateKeys` matching exactly the slots it touches:
+Video and audio use `defineBehavior` exports from `playback/behaviors/select-tracks.ts`, with narrow `stateKeys` matching exactly the slots they touch:
 
 - `selectVideoTrack` declares `['presentation', 'selectedVideoTrackId']`
 - `selectAudioTrack` declares `['presentation', 'selectedAudioTrackId']`
-- `selectTextTrack` declares `['presentation', 'selectedTextTrackId']` and reads `config` for preferred-language / default-track preferences
+- `switchTextTrack` (from `playback/behaviors/track-switching.ts`) declares `['presentation', 'selectedTextTrackId']` and resolves the standing `userTextTrackSelection` intent against the constrained, CDN-scoped renditions — reading `config` for preferred-language / default-track preferences. Unlike the simple `select*` variants it can resolve to no selection (captions are opt-in / off-able).
 
 The behaviors share a small `pickFirstTrackId` helper for the presentation traversal, but the bodies are inlined per type. No engine-side wrappers, no `config.type` discriminant carried at runtime — each export is type-honest about which signal it writes (`state.selectedVideoTrackId.set(...)` vs. `state.selectedAudioTrackId.set(...)`).
 
 The behaviors themselves are split across two locations on purpose:
 
-- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack`. No signals, no effects. Just functions that take a `Presentation` and a config and return an id.
-- **Orchestrations** live in `playback/behaviors/select-tracks.ts` — `selectVideoTrack`, `selectAudioTrack`, `selectTextTrack`. These wrap the pure logic in `effect()`, gate on preconditions, and write the chosen id to `state.selected{Video,Audio,Text}TrackId`.
+- **Pure logic** lives in `media/primitives/select-tracks.ts` — `pickVideoTrack`, `pickAudioTrack`, `pickTextTrack` / `pickTextTrackFromTracks`. No signals, no effects. Just functions that take a `Presentation` (or track list) and a config and return an id.
+- **Orchestrations** live in `playback/behaviors/select-tracks.ts` (`selectVideoTrack`, `selectAudioTrack`) and `playback/behaviors/track-switching.ts` (`switchTextTrack`, plus the `switch*` ABR variants). These wrap the pure logic in `effect()`, gate on preconditions, and write the chosen id to `state.selected{Video,Audio,Text}TrackId`.
 
 The split keeps the framework-free helpers reusable outside SPF, while the SPF-integrated behaviors stay thin and easy to swap.
 

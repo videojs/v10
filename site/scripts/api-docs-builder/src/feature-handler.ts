@@ -12,6 +12,7 @@
  *   - Feature files: *.ts in the features directory (excluding index, presets, feature.parts)
  *   - Feature exports: const matching *Feature (singular, not *Features)
  *   - State type: explicit return type annotation on the state() arrow function
+ *   - Silent features: state() returns an empty object
  *   - State interfaces: exported from packages/core/src/core/media/state.ts
  */
 import * as fs from 'node:fs';
@@ -25,7 +26,7 @@ const SKIP_FILES = new Set(['index.ts', 'presets.ts', 'feature.parts.ts']);
 interface FeatureSource {
   filePath: string;
   name: string;
-  stateTypeName: string;
+  stateTypeName?: string;
 }
 
 // ─── Discovery ────────────────────────────────────────────────────
@@ -54,6 +55,7 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
 
         let name: string | undefined;
         let stateTypeName: string | undefined;
+        let silent = false;
 
         for (const prop of arg.properties) {
           if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
@@ -66,11 +68,13 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
             const fn = prop.initializer;
             if ((ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) && fn.type && ts.isTypeReferenceNode(fn.type)) {
               stateTypeName = fn.type.typeName.getText(sourceFile);
+            } else if (isEmptyState(fn)) {
+              silent = true;
             }
           }
         }
 
-        if (name && stateTypeName) {
+        if (name && (stateTypeName || silent)) {
           sources.push({ filePath, name, stateTypeName });
         }
       }
@@ -78,6 +82,24 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
   }
 
   return sources;
+}
+
+function isEmptyState(node: ts.Expression): boolean {
+  if (!ts.isArrowFunction(node) && !ts.isFunctionExpression(node)) return false;
+  if (ts.isBlock(node.body)) return false;
+
+  const body = unwrapParentheses(node.body);
+  return ts.isObjectLiteralExpression(body) && body.properties.length === 0;
+}
+
+function unwrapParentheses(node: ts.Expression): ts.Expression {
+  let expression = node;
+
+  while (ts.isParenthesizedExpression(expression)) {
+    expression = expression.expression;
+  }
+
+  return expression;
 }
 
 // ─── Type Formatting ──────────────────────────────────────────────
@@ -194,6 +216,18 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
 
   const results: FeatureResult[] = [];
   for (const source of sources) {
+    if (!source.stateTypeName) {
+      const ref: FeatureReference = {
+        name: source.name,
+        slug: source.name,
+        state: {},
+        actions: {},
+      };
+
+      results.push({ name: source.name, slug: source.name, reference: ref });
+      continue;
+    }
+
     const interfaceDecl = interfaces.get(source.stateTypeName);
     if (!interfaceDecl) continue;
 

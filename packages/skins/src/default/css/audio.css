@@ -7,10 +7,11 @@
 @import "./components/time.css";
 @import "./components/button.css";
 @import "./components/button-group.css";
+@import "./components/badge.css";
 @import "./components/icons.css";
-@import "./components/menus.css";
 @import "./components/slider.css";
 @import "./components/popup.css";
+@import "./components/menus.css";
 @import "../../shared/css/audio/icon-state.css";
 
 /* ==========================================================================
@@ -100,6 +101,26 @@
 
 .media-default-skin--audio .media-controls {
   color: var(--media-text-color);
+}
+
+/* ==========================================================================
+   Buffering (spinner over play button — overlay only, no layout change)
+   ========================================================================== */
+
+.media-default-skin--audio .media-button--play__wrapper {
+  position: relative;
+  display: inline-flex;
+}
+
+.media-default-skin--audio .media-button--play__wrapper .media-buffering-indicator {
+  color: inherit;
+}
+
+.media-default-skin--audio
+  .media-button--play__wrapper:has(.media-buffering-indicator[data-visible])
+  .media-button--play
+  .media-icon {
+  opacity: 0;
 }
 
 /* ==========================================================================

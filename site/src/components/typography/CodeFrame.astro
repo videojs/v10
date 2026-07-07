@@ -1,0 +1,26 @@
+---
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
+
+/**
+ * Injected by the `satteriCodeFrame` MDAST plugin,
+ * which wraps each standalone code block in `<CodeFrame>`.
+ * Sätteri will handle passing a `<pre>` to the slot.
+ */
+interface Props {
+  title?: string;
+  lang?: string;
+}
+
+const { title, lang } = Astro.props;
+const label = title || lang || 'code';
+const value = 'code';
+---
+
+<TabsRoot client:idle>
+  <TabsList client:idle label={`${label} code`}>
+    <Tab client:idle value={value} initial>{label}</Tab>
+  </TabsList>
+  <TabsPanel client:idle value={value} initial>
+    <slot />
+  </TabsPanel>
+</TabsRoot>

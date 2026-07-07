@@ -47,6 +47,7 @@ import { Menu } from '@videojs/react';
         <Menu.Content>
           <Menu.Back />
           <Menu.RadioGroup value={quality} onValueChange={setQuality}>
+            <Menu.GroupLabel>Quality</Menu.GroupLabel>
             <Menu.RadioItem value="auto">Auto</Menu.RadioItem>
             <Menu.RadioItem value="1080p">1080p</Menu.RadioItem>
             <Menu.RadioItem value="720p">720p</Menu.RadioItem>
@@ -59,6 +60,7 @@ import { Menu } from '@videojs/react';
         <Menu.Content>
           <Menu.Back />
           <Menu.RadioGroup value={speed} onValueChange={setSpeed}>
+            <Menu.GroupLabel>Speed</Menu.GroupLabel>
             <Menu.RadioItem value="0.5">0.5×</Menu.RadioItem>
             <Menu.RadioItem value="1">Normal</Menu.RadioItem>
             <Menu.RadioItem value="2">2×</Menu.RadioItem>
@@ -98,6 +100,7 @@ import '@videojs/html/ui/menu';
   <media-menu id="quality-menu">
     <media-menu-back></media-menu-back>
     <media-menu-radio-group value="auto">
+      <media-menu-group-label>Quality</media-menu-group-label>
       <media-menu-radio-item value="auto">Auto</media-menu-radio-item>
       <media-menu-radio-item value="1080p">1080p</media-menu-radio-item>
       <media-menu-radio-item value="720p">720p</media-menu-radio-item>
@@ -107,6 +110,7 @@ import '@videojs/html/ui/menu';
   <media-menu id="speed-menu">
     <media-menu-back></media-menu-back>
     <media-menu-radio-group value="1">
+      <media-menu-group-label>Speed</media-menu-group-label>
       <media-menu-radio-item value="0.5">0.5×</media-menu-radio-item>
       <media-menu-radio-item value="1">Normal</media-menu-radio-item>
       <media-menu-radio-item value="2">2×</media-menu-radio-item>
@@ -123,7 +127,7 @@ All parts are exported under `Menu.*` (React) or as `<media-menu-*>` elements (H
 ```ts
 import { Menu } from '@videojs/react';
 // Menu.Root, Menu.Trigger, Menu.Content, Menu.Back,
-// Menu.Item, Menu.Label, Menu.Separator, Menu.Group,
+// Menu.Item, Menu.GroupLabel, Menu.Separator, Menu.Group,
 // Menu.RadioGroup, Menu.RadioItem, Menu.CheckboxItem, Menu.ItemIndicator
 ```
 
@@ -269,13 +273,13 @@ Standard menu item for actions. Activating fires `onSelect` and closes the menu.
 
 ---
 
-#### Label
+#### GroupLabel
 
 Non-interactive heading within a group. Not keyboard-navigable.
 
 **Props:** `render`.
 
-**ARIA (automatic):** `role="presentation"`.
+**ARIA (automatic):** Provides an `id` and registers it with the nearest `Group` or `RadioGroup`. The group receives `aria-labelledby` unless the consumer passed `aria-label` or `aria-labelledby` directly.
 
 ---
 
@@ -295,10 +299,9 @@ Groups related items for assistive technology.
 
 | Prop | Type | Description |
 |------|------|-------------|
-| `label` | `string` | Accessible label (`aria-label`). |
 | `render` | `RenderProp<MenuState>` | Custom render element. |
 
-**ARIA (automatic):** `role="group"`, `aria-label`.
+**ARIA (automatic):** `role="group"`, `aria-labelledby` from child `GroupLabel` when present. Consumers may pass `aria-label` or `aria-labelledby` directly.
 
 ---
 
@@ -313,10 +316,9 @@ Single-selection group. Manages value state — controlled or uncontrolled. In a
 | `value` | `string` | — | Controlled selected value. |
 | `defaultValue` | `string` | — | Initial value (uncontrolled). |
 | `onValueChange` | `(value: string) => void` | — | Fired when selection changes. |
-| `label` | `string` | — | Accessible group label. |
 | `render` | `RenderProp<MenuState>` | — | Custom render element. |
 
-**ARIA (automatic):** `role="group"`, `aria-label`.
+**ARIA (automatic):** `role="group"`, `aria-labelledby` from child `GroupLabel` when present. Consumers may pass `aria-label` or `aria-labelledby` directly.
 
 ---
 
@@ -337,8 +339,6 @@ Item within a RadioGroup. Represents one selectable option.
 **Data attributes:** `data-item`, `data-highlighted`. Use `[aria-checked="true"]` and `[aria-disabled="true"]` in CSS for checked and disabled styling.
 
 **Behavior:** In a submenu, selecting a RadioItem auto-pops back to the parent view after calling `onValueChange`.
-
----
 
 #### CheckboxItem
 
@@ -378,7 +378,7 @@ Visual indicator that renders when the parent RadioItem or CheckboxItem is check
 | View | `<media-menu-view>` |
 | Back | `<media-menu-back>` |
 | Item | `<media-menu-item>` |
-| Label | `<media-menu-label>` |
+| GroupLabel | `<media-menu-group-label>` |
 | Separator | `<media-menu-separator>` |
 | Group | `<media-menu-group>` |
 | RadioGroup | `<media-menu-radio-group>` |
@@ -617,7 +617,8 @@ The menu follows the [WAI-ARIA Menu Pattern](https://www.w3.org/WAI/ARIA/apg/pat
 <!-- Quality submenu (when active — replaces root view in the viewport) -->
 <div role="menu" tabindex="-1" data-submenu data-open>
   <button aria-label="Back"></button>
-  <div role="group" aria-label="Quality">
+  <div role="group" aria-labelledby="quality-label">
+    <div id="quality-label">Quality</div>
     <div role="menuitemradio" aria-checked="false" tabindex="0">Auto</div>
     <div role="menuitemradio" aria-checked="true" tabindex="-1">1080p</div>
   </div>
@@ -634,7 +635,6 @@ The menu follows the [WAI-ARIA Menu Pattern](https://www.w3.org/WAI/ARIA/apg/pat
 | RadioItem | `menuitemradio` |
 | CheckboxItem | `menuitemcheckbox` |
 | Group / RadioGroup | `group` |
-| Label | `presentation` |
 | Separator | `separator` |
 
 **Focus management:**
@@ -781,7 +781,7 @@ menu-content.tsx
 menu-view.tsx
 menu-back.tsx
 menu-item.tsx
-menu-label.tsx
+menu-group-label.tsx
 menu-separator.tsx
 menu-group.tsx
 menu-radio-group.tsx
@@ -797,7 +797,7 @@ menu-element.ts
 menu-view-element.ts
 menu-back-element.ts
 menu-item-element.ts
-menu-label-element.ts
+menu-group-label-element.ts
 menu-separator-element.ts
 menu-group-element.ts
 menu-radio-group-element.ts

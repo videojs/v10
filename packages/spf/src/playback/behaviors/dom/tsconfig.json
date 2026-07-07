@@ -12,6 +12,7 @@
     { "path": "../../../network" },
     { "path": "../../../media" },
     { "path": "../../../media/dom" },
+    { "path": "../../primitives" },
     { "path": "../" },
     { "path": "../../actors" },
     { "path": "../../actors/dom" }

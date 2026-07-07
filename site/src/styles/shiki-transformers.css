@@ -1,4 +1,15 @@
 @layer base {
+  /* matches `shared.codeBlock`: font-mono + text-code */
+  .astro-code {
+    font-family: var(--font-mono), monospace;
+    font-variant-ligatures: none;
+  }
+
+  /* reinforcing shared.codeBlock */
+  .astro-code code {
+    font-size: var(--text-code);
+  }
+
   .astro-code .line {
     display: inline-block;
   }

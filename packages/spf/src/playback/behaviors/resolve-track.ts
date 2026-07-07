@@ -2,12 +2,14 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
-import { parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
+import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
 import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
-import { findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
-import { fetchResolvable, getResponseText } from '../../network/fetch';
-import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from './track-types';
+import type { GetCdnId } from '../../media/utils/cdn';
+import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
+import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
+import { failoverFetch } from '../primitives/failover-fetch';
+import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 
 // ============================================================================
 // Specialization helper
@@ -29,6 +31,7 @@ export interface ResolveTrackState {
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
+  failedCdns?: string[];
 }
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
@@ -43,11 +46,22 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
     presentation: MaybeResolvedPresentation,
     trackId: string
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
+  /** Fetch a track's media-playlist text — already failover-decorated by the behavior. */
+  fetchResolvableText?: FetchText;
+}
+
+/**
+ * Engine-config slice each `resolve*` behavior reads to build its failover-
+ * decorated playlist fetch.
+ */
+interface ResolveTrackConfig {
+  /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
+  getCdnId?: GetCdnId;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve },
+  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
@@ -104,8 +118,11 @@ function setupTrackResolution<K extends SelectedTrackKey>({
               // likely eventually passed down via config or a new "definitions" argument (CJP).
               new Task(
                 async (signal) => {
-                  const response = await fetchResolvable(track, { signal });
-                  const text = await getResponseText(response);
+                  // `fetchResolvableText` is the behavior's failover-decorated
+                  // fetch: it trips the CDN on a failed fetch (network error or
+                  // non-OK status). A parse failure is a content issue, not a
+                  // CDN-availability one, so it doesn't trip.
+                  const text = await fetchResolvableText(track, { signal });
                   const mediaTrack = parseMediaPlaylist(text, track);
 
                   // Updater handles undefined inputs by returning current
@@ -115,9 +132,21 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // signal abort cancels in-flight body reads — so by the
                   // time we reach this point the presentation we resolved
                   // against is the live one.
-                  update(state.presentation, (current) =>
-                    isResolvedPresentation(current) ? updateTrackInPresentation(current, mediaTrack) : current
-                  );
+                  update(state.presentation, (current) => {
+                    if (!isResolvedPresentation(current)) return current;
+                    const patched = updateTrackInPresentation(current, mediaTrack);
+                    // Container is uniform within a type (an ABR ladder shares
+                    // its container), so a detected non-fMP4 rendition (TS,
+                    // raw AAC) implies every rendition of *this* type matches —
+                    // relabel them all from one resolved playlist instead of
+                    // fetching each. Scoped to this track's own type: never cross
+                    // audio↔video (mixed-container sources exist, e.g. muxed-TS
+                    // video + raw-.aac audio), which also keeps per-type
+                    // resolutions' writes disjoint (no race).
+                    return NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
+                      ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
+                      : patched;
+                  });
                 },
                 { id: track.id }
               )
@@ -163,11 +192,24 @@ const TEXT_TRACK_RESOLUTION_CONFIG = {
 export const resolveVideoTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedVideoTrackId'],
   contextKeys: [],
-  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedVideoTrackId'>; config?: object }) =>
-    setupTrackResolution({
+  setup: ({
+    state,
+    config = {},
+  }: {
+    state: ResolveTrackStateMap<'selectedVideoTrackId'>;
+    config?: ResolveTrackConfig;
+  }) => {
+    // Engine `config` layers over the per-type defaults (mirrors the other
+    // per-type variants, see track-types.ts); `failoverFetch` reads its
+    // `selectedKey` + `getCdnId` from the merged result. `fetchResolvableText`
+    // is then placed AFTER the spread so the failover-decorated fetch wins —
+    // unlike segments, playlists expose no overridable per-type fetch.
+    const trackConfig = { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config };
+    return setupTrackResolution({
       state,
-      config: { ...VIDEO_TRACK_RESOLUTION_CONFIG, ...config },
-    }),
+      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+    });
+  },
 });
 
 /**
@@ -177,11 +219,20 @@ export const resolveVideoTrack = defineBehavior({
 export const resolveAudioTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedAudioTrackId'],
   contextKeys: [],
-  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedAudioTrackId'>; config?: object }) =>
-    setupTrackResolution({
+  setup: ({
+    state,
+    config = {},
+  }: {
+    state: ResolveTrackStateMap<'selectedAudioTrackId'>;
+    config?: ResolveTrackConfig;
+  }) => {
+    // Key order is load-bearing — see resolveVideoTrack.
+    const trackConfig = { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config };
+    return setupTrackResolution({
       state,
-      config: { ...AUDIO_TRACK_RESOLUTION_CONFIG, ...config },
-    }),
+      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+    });
+  },
 });
 
 /**
@@ -191,9 +242,18 @@ export const resolveAudioTrack = defineBehavior({
 export const resolveTextTrack = defineBehavior({
   stateKeys: ['presentation', 'selectedTextTrackId'],
   contextKeys: [],
-  setup: ({ state, config = {} }: { state: ResolveTrackStateMap<'selectedTextTrackId'>; config?: object }) =>
-    setupTrackResolution({
+  setup: ({
+    state,
+    config = {},
+  }: {
+    state: ResolveTrackStateMap<'selectedTextTrackId'>;
+    config?: ResolveTrackConfig;
+  }) => {
+    // Key order is load-bearing — see resolveVideoTrack.
+    const trackConfig = { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config };
+    return setupTrackResolution({
       state,
-      config: { ...TEXT_TRACK_RESOLUTION_CONFIG, ...config },
-    }),
+      config: { ...trackConfig, fetchResolvableText: failoverFetch(defaultFetchResolvableText, state, trackConfig) },
+    });
+  },
 });

@@ -46,6 +46,8 @@ export interface MediaSnapshot {
   muted?: boolean | undefined;
   fullscreen?: boolean | undefined;
   subtitlesShowing?: boolean | undefined;
+  /** When false, caption toggles are unavailable and status feedback is suppressed. */
+  subtitlesAvailable?: boolean | undefined;
   pip?: boolean | undefined;
   currentTime?: number | undefined;
   duration?: number | undefined;
@@ -111,6 +113,7 @@ export function deriveStatus(
     case 'volumeStep':
       return deriveVolumeStatus(event, snapshot, labels);
     case 'toggleSubtitles': {
+      if (snapshot.subtitlesAvailable === false) return null;
       const showing = snapshot.subtitlesShowing !== undefined ? !snapshot.subtitlesShowing : true;
       return {
         status: showing ? 'captions-on' : 'captions-off',

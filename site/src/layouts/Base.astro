@@ -10,6 +10,7 @@ import BannerInit from '@/components/BannerInit.astro';
 import { PreferenceSync } from '@/components/docs/PreferenceSync';
 import LegacyBanner from '@/components/LegacyBanner.astro';
 import Posthog from '@/components/Posthog.astro';
+import PrereleaseBanner from '@/components/PrereleaseBanner.astro';
 import ThemeInit from '@/components/ThemeInit.astro';
 
 interface Props {
@@ -172,6 +173,7 @@ const fullTitle =
       </a>
       <PreferenceSync client:idle />
 
+      <PrereleaseBanner />
       <LegacyBanner />
       <slot />
     </div>

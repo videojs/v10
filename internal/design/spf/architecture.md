@@ -116,7 +116,7 @@ The orchestration hub. Initializes all features in a fixed order, wiring shared 
 | 0a | `syncPreload` | Bidirectional sync of `mediaElement.preload` ↔ `state.preload` (backfilled to `'metadata'` by default) before any buffering decisions |
 | 0b | `trackPlaybackInitiated` | `play` event → `state.playbackInitiated = true` |
 | 1 | `resolvePresentation` | Fetch multivariant playlist, parse tracks |
-| 2 | `selectVideoTrack` / `selectAudioTrack` / `selectTextTrack` | Choose initial tracks |
+| 2 | `selectVideoTrack` / `selectAudioTrack` / `switchTextTrack` | Choose initial tracks |
 | 3 | `resolveTrack` | Fetch media playlist for each selected track |
 | 3.5 | `calculatePresentationDuration` | Derive duration from playlists |
 | 4 | `setupMediaSource` | Create `MediaSource`, attach to `<video>` |

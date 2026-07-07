@@ -1,3 +1,5 @@
+import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
+
 import type { PartiallyResolvedTextTrack, TextTrack } from '../../types';
 
 /**
@@ -28,7 +30,12 @@ export function addSubtitlesTracksToMedia(
     el.label = modelTrack.label;
     el.toggleAttribute('data-src-track', true);
     if (modelTrack.language) el.srclang = modelTrack.language;
-    if (modelTrack.default) el.default = true;
+    // Deliberately NOT propagating `modelTrack.default` to the `default`
+    // attribute: that makes the browser auto-activate the slot on insertion,
+    // which fires a `change` that `syncTextTracks` records as user intent —
+    // auto-enabling captions past SPF's opt-in policy (`enableDefaultTrack`
+    // governs DEFAULT=YES handling in `switchTextTrack`, not the browser). SPF
+    // owns selection; these slots are containers, so they carry no selection hint.
     mediaElement.appendChild(el);
   }
 }
@@ -44,7 +51,7 @@ export function getShowingSubtitlesTrackFromMedia(mediaElement: HTMLMediaElement
   const elements = mediaElement.querySelectorAll<HTMLTrackElement>(SPF_TRACK_SELECTOR);
   for (const el of elements) {
     const track = el.track;
-    if (track.mode === 'showing' && (track.kind === 'subtitles' || track.kind === 'captions')) {
+    if (track.mode === 'showing' && isCaptionOrSubtitleTrack(track)) {
       return track;
     }
   }
@@ -72,7 +79,7 @@ export function removeAllSubtitlesTracksFromMedia(mediaElement: HTMLMediaElement
 export function syncTextTrackModes(textTracks: TextTrackList, selectedId: string | undefined): void {
   for (let i = 0; i < textTracks.length; i++) {
     const track = textTracks[i]!;
-    if (track.kind !== 'subtitles' && track.kind !== 'captions') continue;
+    if (!isCaptionOrSubtitleTrack(track)) continue;
     track.mode = track.id === selectedId ? 'showing' : 'disabled';
   }
 }

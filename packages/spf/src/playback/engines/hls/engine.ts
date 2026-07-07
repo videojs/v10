@@ -8,6 +8,7 @@ import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composi
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
+import { canPlayTrack } from '../../../media/dom/capabilities';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
   addSubtitlesTracksToMedia,
@@ -15,7 +16,8 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { MaybeResolvedPresentation, VideoTrack } from '../../../media/types';
+import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
+import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -26,6 +28,7 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -35,11 +38,11 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
-import { switchVideoQuality } from '../../behaviors/quality-switching';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
-import { selectAudioTrack, selectTextTrack } from '../../behaviors/select-tracks';
+import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
+import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -64,6 +67,40 @@ export interface SimpleHlsEngineState {
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
   userVideoTrackSelection?: Partial<VideoTrack>;
+  /**
+   * Consumer-driven constraint narrowing the audio candidate set. Sibling
+   * of `userVideoTrackSelection`. Partial-track shape — `{ language: 'es' }`,
+   * `{ id: 'audio-en' }`, etc. `selectAudioTrack` reads this and re-picks
+   * when it changes. Multi-language-audio Tier 2 programmatic-write path.
+   */
+  userAudioTrackSelection?: Partial<AudioTrack>;
+  /**
+   * Consumer-driven *intent* for text selection, resolved into
+   * `selectedTextTrackId` by `switchTextTrack`. A language-based partial
+   * (`{ language: 'es' }`) selects captions, `'off'` disables them, and absence
+   * means auto (the engine's `preferredSubtitleLanguage` / DEFAULT-track policy).
+   * Also the write path for the DOM caption UI (via `syncTextTracks`); unlike the
+   * resolved id it persists across source changes (sticky preference).
+   */
+  userTextTrackSelection?: Partial<TextTrack> | 'off';
+  /**
+   * The CDNs the source is served from (track-URL origins), in manifest
+   * priority order — most-preferred first (mirrors HLS content steering's
+   * `PATHWAY-PRIORITY`). Owned by `deriveCdnPriority`, read by
+   * `track-switching`'s `preferActiveCdn` scope, which narrows to the
+   * highest-priority CDN with surviving tracks so video / audio / text stay on
+   * one host. Only meaningful for redundant-stream sources; a single-CDN source
+   * has one entry.
+   */
+  cdnPriority?: string[];
+  /**
+   * CDN ids (origins) currently in failover cooldown — written by the CDN
+   * monitor when a host fails too often, read by `track-switching`'s
+   * `excludeFailedCdns` hard constraint, which prunes their tracks so the
+   * active-CDN scope falls to the next CDN in `cdnPriority`. Empty / absent
+   * means all CDNs are eligible.
+   */
+  failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
 }
@@ -107,6 +144,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
    */
   initialBandwidth?: number;
+  /**
+   * Codec capability probe injected into `track-switching`'s
+   * `excludeUnplayableTracks` constraint — drops renditions the environment
+   * can't decode before selection. Defaults to the `MediaSource.isTypeSupported`
+   * -backed `canPlayTrack`; supply your own to override (e.g. force-exclude a
+   * codec).
+   */
+  canPlayTrack?: CanPlayTrack;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;
@@ -178,6 +223,21 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
    */
   quality?: Partial<QualityConfig>;
+  /**
+   * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
+   * excluded after a failed fetch trips it. Defaults:
+   * `DEFAULT_FAILOVER_MONITOR_CONFIG` (300s). Only meaningful for redundant-stream
+   * sources.
+   */
+  failover?: Partial<FailoverMonitorConfig>;
+  /**
+   * How to derive a CDN grouping key from a track URL — used to build
+   * `cdnPriority`, to record the failover trip in `failedCdns`, and by the
+   * track-switching CDN scope + failover constraint. One function, read by all of
+   * them, so the keys stay comparable. Defaults to the URL origin; override to
+   * key on something else (e.g. Mux's `cdn=` query param).
+   */
+  getCdnId?: GetCdnId;
 }
 
 // ============================================================================
@@ -187,9 +247,17 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
 /**
  * Generic `shareSignals` instantiated against the HLS engine's full state
  * and context — captures composition signal refs into the consumer's
- * `onSignalsReady` callback at setup time.
+ * `onSignalsReady` callback at setup time, and materializes input slots that no
+ * composed behavior produces: `user*TrackSelection` (track-switching only reads
+ * them). `failedCdns` is owned by `setupFailoverMonitor`, so it's already
+ * materialized and reachable on the `onSignalsReady` refs without being listed
+ * here.
  */
-const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>();
+const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
+  'userVideoTrackSelection',
+  'userAudioTrackSelection',
+  'userTextTrackSelection',
+]);
 
 /**
  * Create an HLS playback engine.
@@ -222,6 +290,7 @@ export function createSimpleHlsEngine(
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
   const finalConfig = {
     ...config,
+    canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
@@ -236,13 +305,30 @@ export function createSimpleHlsEngine(
       trackLoadTriggers,
       resolvePresentation,
 
-      // Track selection (reads config for initial preferences).
-      // Video selection lives in switchVideoQuality, which owns the
-      // default-pick + ABR-driven adjustment for selectedVideoTrackId.
-      selectAudioTrack,
-      selectTextTrack,
+      // Session-level CDN priority for redundant-stream sources. Owns
+      // `cdnPriority`; `track-switching`'s preferActiveCdn scope reads it so
+      // every type stays on one CDN. No-op for single-CDN sources.
+      //
+      // Placed before switch* so `cdnPriority` is set before the first pick —
+      // but this ordering is only *mildly* load-bearing, not required for
+      // correctness. Selection is reactive: a late `cdnPriority` re-fires the
+      // pick and converges on the same result (see the late-arrival test in
+      // track-switching.test.ts). Order affects only a transient, and only for
+      // an *asymmetric* manifest (a type listing a non-primary CDN first):
+      // composing this after switch* would let that type fire one wasted
+      // media-playlist fetch to the wrong CDN before correcting. Symmetric
+      // redundant streams (the norm) never hit it — the first-listed CDN is
+      // already the primary we'd pick anyway.
+      deriveCdnPriority,
 
-      // Resolve selected tracks (fetch media playlists)
+      // CDN failover cooldown: owns the expiry half of failover — watches
+      // `failedCdns` (tripped directly by track resolution on a failed
+      // media-playlist fetch) and removes each CDN once its cooldown lapses.
+      setupFailoverMonitor,
+
+      // Resolve selected tracks (fetch media playlists). Composed before the
+      // switch* slot owners; selection is reactive, so a resolve* re-fires once
+      // its switch* sets the id (same convergence for all three types).
       resolveVideoTrack,
       resolveAudioTrack,
       resolveTextTrack,
@@ -262,7 +348,17 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
-      switchVideoQuality,
+      switchVideoTrack,
+      switchAudioTrack,
+      // Mid-stream audio-buffer flush on language switch is handled in
+      // `segment-loader`'s `planTasks` (predicate: language differs from
+      // the previously-buffered track) — not in switchAudioTrack itself.
+
+      // Text selection: resolves `userTextTrackSelection` intent (incl. 'off',
+      // or the configured preferred-language / DEFAULT-track policy) against the
+      // failed-CDN-pruned, active-CDN-scoped text renditions. Optional selection
+      // (captions are opt-in), so it can resolve to none.
+      switchTextTrack,
 
       // Segment loading
       loadVideoSegments,
@@ -283,7 +379,7 @@ export function createSimpleHlsEngine(
     ],
     {
       config: finalConfig,
-      // Seed bandwidthState so switchVideoQuality fires on initial subscribe
+      // Seed bandwidthState so switchVideoTrack fires on initial subscribe
       // with the `initialBandwidth` fallback rather than waiting for the
       // first chunk. The empty sample buffer means `getBandwidthEstimate`
       // returns the configured initial bandwidth until real samples land.

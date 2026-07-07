@@ -6,6 +6,7 @@
   --media-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
   --media-current-shadow-color-subtle: oklch(from var(--media-current-shadow-color) l c h / calc(alpha * 0.4));
   --media-icon-size: 18px;
+  --media-color-scrollbar-thumb: oklch(from currentColor l c h / 0.3);
   position: relative;
   display: block;
   width: 100%;
@@ -24,6 +25,8 @@
   letter-spacing: normal;
   outline: 2px solid transparent;
   outline-offset: -4px;
+  scrollbar-color: var(--media-color-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
   border-radius: var(--media-border-radius, 0.75rem);
   isolation: isolate;
   transition-timing-function: ease-out;
@@ -33,5 +36,15 @@
   &:focus-visible {
     outline-color: currentColor;
     outline-offset: 2px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--media-color-scrollbar-thumb);
+    border-radius: 9999px;
+  }
+
+  @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
+    --media-color-scrollbar-thumb: oklch(from currentColor l c h / 0.8);
+    scrollbar-width: auto;
   }
 }

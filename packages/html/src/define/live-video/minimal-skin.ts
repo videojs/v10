@@ -42,7 +42,10 @@ function getTemplateHTML() {
               ${renderIcon('play', { class: 'media-icon media-icon--play' })}
               ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
             </media-play-button>
-            <media-tooltip id="play-tooltip" side="top" class="media-tooltip"></media-tooltip>
+            <media-tooltip id="play-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-live-button class="media-button media-button--subtle media-button--live"></media-live-button>
           </div>
@@ -65,29 +68,62 @@ function getTemplateHTML() {
               </media-volume-slider>
             </media-popover>
 
-            <media-captions-button commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
+            <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="media-button media-button--subtle media-button--icon media-button--captions">
               ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
               ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             </media-captions-button>
-            <media-tooltip id="captions-tooltip" side="top" class="media-tooltip"></media-tooltip>
+            <media-menu id="captions-menu" side="top" align="center" class="media-popover media-menu media-menu--captions">
+              <media-captions-radio-group class="media-menu__group">
+                <template>
+                  <media-menu-radio-item class="media-menu__item">
+                    <span data-part="label"></span>
+                    <media-menu-item-indicator force-mount class="media-menu__indicator">
+                      ${renderIcon('check', { class: 'media-icon' })}
+                    </media-menu-item-indicator>
+                  </media-menu-radio-item>
+                </template>
+              </media-captions-radio-group>
+            </media-menu>
+            <media-tooltip id="captions-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-cast-button commandfor="cast-tooltip" class="media-button media-button--subtle media-button--icon media-button--cast">
               ${renderIcon('cast-enter', { class: 'media-icon media-icon--cast-enter' })}
               ${renderIcon('cast-exit', { class: 'media-icon media-icon--cast-exit' })}
             </media-cast-button>
-            <media-tooltip id="cast-tooltip" side="top" class="media-tooltip"></media-tooltip>
+            <media-tooltip id="cast-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
+
+            <media-airplay-button commandfor="airplay-tooltip" class="media-button media-button--subtle media-button--icon media-button--airplay">
+              ${renderIcon('airplay-enter', { class: 'media-icon media-icon--airplay-enter' })}
+              ${renderIcon('airplay-exit', { class: 'media-icon media-icon--airplay-exit' })}            
+            </media-airplay-button>
+            <media-tooltip id="airplay-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-pip-button commandfor="pip-tooltip" class="media-button media-button--subtle media-button--icon media-button--pip">
               ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
               ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
             </media-pip-button>
-            <media-tooltip id="pip-tooltip" side="top" class="media-tooltip"></media-tooltip>
+            <media-tooltip id="pip-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
 
             <media-fullscreen-button commandfor="fullscreen-tooltip" class="media-button media-button--subtle media-button--icon media-button--fullscreen">
               ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
               ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
             </media-fullscreen-button>
-            <media-tooltip id="fullscreen-tooltip" side="top" class="media-tooltip"></media-tooltip>
+            <media-tooltip id="fullscreen-tooltip" side="top" class="media-tooltip">
+              <media-tooltip-label></media-tooltip-label>
+              <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
+            </media-tooltip>
           </div>
         </media-tooltip-group>
       </media-controls>

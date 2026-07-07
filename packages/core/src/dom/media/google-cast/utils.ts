@@ -1,6 +1,10 @@
+import { loadScript } from '@videojs/utils/dom';
+
 export class InvalidStateError extends Error {}
 export class NotSupportedError extends Error {}
 export class NotFoundError extends Error {}
+
+export const GOOGLE_CAST_FRAMEWORK_URL = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
 
 const HLS_RESPONSE_HEADERS = ['application/x-mpegURL', 'application/vnd.apple.mpegurl', 'audio/mpegurl'];
 
@@ -49,21 +53,17 @@ export function requiresCastFramework() {
   return Boolean(globalThis.chrome);
 }
 
-export function loadCastFramework() {
-  const sdkUrl = 'https://www.gstatic.com/cv/js/sender/v1/cast_sender.js?loadCastFramework=1';
-  if (globalThis.chrome?.cast || document.querySelector(`script[src="${sdkUrl}"]`)) return;
-
-  const script = document.createElement('script');
-  script.src = sdkUrl;
-  document.head.append(script);
+export async function loadCastFramework() {
+  if (globalThis.chrome?.cast) return;
+  await loadScript(GOOGLE_CAST_FRAMEWORK_URL);
 }
 
-export function castContext() {
+export function getCastContext() {
   return typeof cast === 'undefined' ? undefined : cast.framework?.CastContext.getInstance();
 }
 
 export function currentSession() {
-  return castContext()?.getCurrentSession();
+  return getCastContext()?.getCurrentSession();
 }
 
 export function currentMedia() {
@@ -98,7 +98,7 @@ export function setPlaybackRate(rate: number) {
 export type CastOptions = cast.framework.CastOptions;
 
 export function setCastOptions(options: Partial<CastOptions>) {
-  castContext()!.setOptions({
+  getCastContext()!.setOptions({
     ...getDefaultCastOptions(),
     ...options,
   });

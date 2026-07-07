@@ -7,7 +7,6 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
-import { PlaybackRateMenuElement } from '../../playback-rate-menu/playback-rate-menu-element';
 import { PopoverElement } from '../../popover/popover-element';
 import { TooltipElement } from '../../tooltip/tooltip-element';
 import { ControlsElement } from '../controls-element';
@@ -98,12 +97,12 @@ afterEach(() => {
 });
 
 describe('ControlsElement', () => {
-  it('closes owned popovers, menus, playback-rate menus, and tooltips when controls hide', async () => {
+  it('closes owned popovers, menus, and tooltips when controls hide', async () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);
     const popover = createDefinedElement(PopoverElement);
     const menu = createDefinedElement(MenuElement);
-    const playbackRateMenu = createDefinedElement(PlaybackRateMenuElement);
+    const playbackRateMenu = createDefinedElement(MenuElement);
     const tooltip = createDefinedElement(TooltipElement);
     const popoverClose = vi.spyOn(popover, 'close');
     const menuClose = vi.spyOn(menu, 'close');

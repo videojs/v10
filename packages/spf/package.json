@@ -32,6 +32,11 @@
       "types": "./dist/dev/hls.d.ts",
       "development": "./dist/dev/hls.js",
       "default": "./dist/default/hls.js"
+    },
+    "./background-video": {
+      "types": "./dist/dev/background-video.d.ts",
+      "development": "./dist/dev/background-video.js",
+      "default": "./dist/default/background-video.js"
     }
   },
   "main": "dist/default/index.js",

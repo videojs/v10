@@ -33,7 +33,6 @@ export const MenuBack = forwardRef<HTMLButtonElement, MenuBackProps>(function Me
     { render, className, style },
     {
       state: parentMenu?.state ?? ({} as MenuState),
-      stateAttrMap: parentMenu?.stateAttrMap,
       ref: forwardedRef,
       props: [
         {

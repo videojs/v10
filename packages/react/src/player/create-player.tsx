@@ -16,7 +16,7 @@ import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { Container, PlayerContextProvider, useMedia, usePlayerContext } from './context';
@@ -70,7 +70,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
   function Provider({ children }: ProviderProps): ReactNode {
-    const [store] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
+    const [store, setStore] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
@@ -79,14 +79,24 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     useEffect(() => {
       if (!media) return;
+
+      // The store may have been destroyed during an asynchronous gap between React
+      // effect cleanup and re-setup (e.g., React <Activity> hide → reveal). The
+      // useState initializer does not re-run in this case.
+      if (store.destroyed) {
+        setStore(createStore<PlayerTarget>()(combine(...config.features)));
+        return;
+      }
+
       return store.attach({ media, container });
     }, [media, container, store]);
 
-    return (
-      <PlayerContextProvider value={{ store, media, setMedia, container, setContainer, popupGroup }}>
-        {children}
-      </PlayerContextProvider>
+    const value = useMemo(
+      () => ({ store, media, setMedia, container, setContainer, popupGroup }),
+      [store, media, container, popupGroup]
     );
+
+    return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
   }
 
   if (__DEV__ && config.displayName) {

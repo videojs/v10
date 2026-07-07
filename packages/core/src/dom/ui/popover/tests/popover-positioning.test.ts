@@ -112,6 +112,95 @@ describe('getManualPositionStyle', () => {
     // top = trigger.top = 200
     expect(style.top).toBe('200px');
   });
+
+  it('shifts top and bottom popups horizontally inside the boundary', () => {
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const rightEdgeTrigger = makeDOMRect(250, 100, 40, 20);
+    const leftEdgeTrigger = makeDOMRect(10, 100, 40, 20);
+    const edgePopup = makeDOMRect(0, 0, 100, 50);
+
+    const topStyle = getManualPositionStyle(
+      rightEdgeTrigger,
+      edgePopup,
+      { side: 'top', align: 'center' },
+      undefined,
+      boundary
+    );
+    const bottomStyle = getManualPositionStyle(
+      leftEdgeTrigger,
+      edgePopup,
+      { side: 'bottom', align: 'center' },
+      undefined,
+      boundary
+    );
+
+    expect(topStyle.top).toBe('50px');
+    expect(topStyle.left).toBe('200px');
+    expect(bottomStyle.top).toBe('120px');
+    expect(bottomStyle.left).toBe('0px');
+  });
+
+  it('shifts left and right popups vertically inside the boundary', () => {
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const bottomEdgeTrigger = makeDOMRect(100, 170, 40, 20);
+    const topEdgeTrigger = makeDOMRect(100, 10, 40, 20);
+    const edgePopup = makeDOMRect(0, 0, 80, 80);
+
+    const rightStyle = getManualPositionStyle(
+      bottomEdgeTrigger,
+      edgePopup,
+      { side: 'right', align: 'center' },
+      undefined,
+      boundary
+    );
+    const leftStyle = getManualPositionStyle(
+      topEdgeTrigger,
+      edgePopup,
+      { side: 'left', align: 'center' },
+      undefined,
+      boundary
+    );
+
+    expect(rightStyle.top).toBe('120px');
+    expect(rightStyle.left).toBe('140px');
+    expect(leftStyle.top).toBe('0px');
+    expect(leftStyle.left).toBe('20px');
+  });
+
+  it('respects boundary offset when shifting cross-axis overflow', () => {
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const edgeTrigger = makeDOMRect(250, 100, 40, 20);
+    const edgePopup = makeDOMRect(0, 0, 100, 50);
+    const offsets: ManualOffsets = { sideOffset: 0, alignOffset: 0, boundaryOffset: 12 };
+
+    const style = getManualPositionStyle(
+      edgeTrigger,
+      edgePopup,
+      { side: 'bottom', align: 'center' },
+      offsets,
+      boundary
+    );
+
+    expect(style.top).toBe('120px');
+    expect(style.left).toBe('188px');
+  });
+
+  it('does not shift side-axis overflow', () => {
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const edgeTrigger = makeDOMRect(100, 210, 40, 20);
+    const edgePopup = makeDOMRect(0, 0, 80, 50);
+
+    const style = getManualPositionStyle(
+      edgeTrigger,
+      edgePopup,
+      { side: 'bottom', align: 'center' },
+      undefined,
+      boundary
+    );
+
+    expect(style.top).toBe('230px');
+    expect(style.left).toBe('80px');
+  });
 });
 
 describe('getPopoverCSSVars', () => {
@@ -324,6 +413,22 @@ describe('getAnchorPositionStyle (CSS Anchor Positioning)', () => {
 
     expect(style.positionAnchor).toBe('--my-popover');
     expect(style.position).toBe('fixed');
+  });
+
+  it('uses CSS cross-axis shifting when boundary rects are available', async () => {
+    const getStyle = await importWithAnchorSupport();
+    const boundary = makeDOMRect(0, 0, 300, 200);
+    const trigger = makeDOMRect(20, 100, 30, 20);
+    const style = getStyle('my-popover', { side: 'top', align: 'center' }, trigger, undefined, boundary, {
+      sideOffset: 0,
+      alignOffset: 0,
+      boundaryOffset: 8,
+    });
+
+    expect(style.positionAnchor).toBe('--my-popover');
+    expect(style.bottom).toBe('calc(anchor(top) + var(--media-popover-side-offset, 0px))');
+    expect(style.left).toBe('35px');
+    expect(style.translate).toBe('clamp(-27px, -50%, calc(257px - 100%)) 0');
   });
 
   it('places popover above trigger for side=top using CSS var offset', async () => {

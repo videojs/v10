@@ -2,11 +2,18 @@
 
 import { getRenderedIndicatorState, type IndicatorLifecycleState, isIndicatorPresent } from '@videojs/core';
 import { createTransition } from '@videojs/core/dom';
-import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 
 import { useDestroy } from '../../utils/use-destroy';
 
-export function useRenderedIndicatorState<State extends IndicatorLifecycleState>(currentState: State) {
+export interface RenderedIndicatorOptions {
+  replayOnUpdate?: boolean | undefined;
+}
+
+export function useRenderedIndicatorState<State extends IndicatorLifecycleState>(
+  currentState: State,
+  options: RenderedIndicatorOptions = {}
+) {
   const elementRef = useRef<HTMLElement>(null);
   const currentStateRef = useRef(currentState);
   const snapshotRef = useRef(currentState);
@@ -22,13 +29,18 @@ export function useRenderedIndicatorState<State extends IndicatorLifecycleState>
 
   const { generation, open } = currentState;
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (open) {
       const nextState = currentStateRef.current;
       if (nextState.generation !== generation) return;
 
       snapshotRef.current = nextState;
-      void transition.open();
+      const transitionState = transition.state.current;
+      if (!transitionState.active || options.replayOnUpdate !== false) {
+        void transition.open(elementRef.current);
+      } else if (transitionState.status === 'ending') {
+        transition.cancel();
+      }
       return;
     }
 
@@ -36,7 +48,7 @@ export function useRenderedIndicatorState<State extends IndicatorLifecycleState>
     if (active && status !== 'ending') {
       void transition.close(elementRef.current);
     }
-  }, [generation, open, transition]);
+  }, [generation, open, options.replayOnUpdate, transition]);
 
   return {
     elementRef,

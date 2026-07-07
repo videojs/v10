@@ -1,9 +1,8 @@
 import { listen } from '@videojs/utils/dom';
-
+import { isMediaBufferCapable, isMediaSeekCapable, isMediaStreamTypeCapable } from '../../../core/media/predicate';
 import type { MediaStreamTypeState } from '../../../core/media/state';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
-import { isMediaBufferCapable, isMediaSeekCapable, isMediaStreamTypeCapable } from '../../media/predicate';
 
 export const streamTypeFeature = definePlayerFeature({
   name: 'streamType',
@@ -11,7 +10,7 @@ export const streamTypeFeature = definePlayerFeature({
     streamType: MediaStreamTypes.UNKNOWN,
   }),
 
-  // Prefer the media's own `streamType` (e.g. `HlsMedia`, which derives it from
+  // Prefer the media's own `streamType` (e.g. `HlsJsMedia`, which derives it from
   // manifest metadata and dispatches `streamtypechange`).  For plain elements
   // without that capability, fall back to duration-based detection so the
   // store still reports `live`/`on-demand` for native MP4 / native HLS.

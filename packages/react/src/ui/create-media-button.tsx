@@ -3,6 +3,7 @@
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
 import type { Selector } from '@videojs/store';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
@@ -10,7 +11,8 @@ import { usePlayer } from '../player/context';
 import type { renderElement as renderElementFn } from '../utils/use-render';
 import { renderElement } from '../utils/use-render';
 import { useButton } from './hooks/use-button';
-import { useAriaKeyShortcuts } from './hotkey/use-aria-key-shortcuts';
+import { useHotkeyShortcut } from './hotkey/use-hotkey-shortcut';
+import { useOptionalMenuTriggerChildContext } from './menu/context';
 import { useOptionalTooltipContext } from './tooltip/context';
 
 interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
@@ -20,13 +22,24 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   selector: Selector<object, InferMediaState<Core> | undefined>;
   action: (core: Core, state: InferMediaState<Core>) => void;
   hotkeyAction?: string;
+  hotkeyValue?: (props: Record<string, unknown>) => number | undefined;
+  tooltipLabel?: (core: Core, state: InferComponentState<Core>) => string | undefined;
 }
 
 /** Creates a media button React component from a core class and config. */
 export function createMediaButton<Core extends Required<MediaButtonComponent>, Props extends object>(
   config: MediaButtonConfig<Core>
 ): ForwardRefExoticComponent<Props & RefAttributes<HTMLButtonElement>> {
-  const { displayName, core: CoreClass, stateAttrMap, selector, action, hotkeyAction } = config;
+  const {
+    displayName,
+    core: CoreClass,
+    stateAttrMap,
+    selector,
+    action,
+    hotkeyAction,
+    hotkeyValue,
+    tooltipLabel,
+  } = config;
 
   // Props that exist in the core's defaultProps are routed to setProps; the rest go to the DOM element.
   const corePropKeys = new Set(Object.keys(CoreClass.defaultProps));
@@ -49,10 +62,17 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     }
 
     const tooltipCtx = useOptionalTooltipContext();
+    const menuTriggerChild = useOptionalMenuTriggerChildContext();
+    const setTooltipContent = tooltipCtx?.setContent;
     const feature = usePlayer(selector);
-    const shortcuts = useAriaKeyShortcuts(hotkeyAction);
+    const shortcut = useHotkeyShortcut(hotkeyAction, hotkeyValue?.(coreProps));
 
     const [core] = useState(() => new CoreClass());
+
+    if (corePropKeys.has('menuTrigger') && isUndefined(coreProps.menuTrigger)) {
+      coreProps.menuTrigger = menuTriggerChild;
+    }
+
     core.setProps(coreProps);
 
     const { getButtonProps, buttonRef } = useButton({
@@ -67,20 +87,21 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
     const label = state ? core.getLabel(state) : undefined;
+    const tooltipText = state ? (tooltipLabel?.(core, state) ?? label) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
     useLayoutEffect(() => {
-      if (!tooltipCtx) return;
-      tooltipCtx.setContent(label);
-      return () => tooltipCtx.setContent(undefined);
-    }, [tooltipCtx, label]);
+      if (!setTooltipContent) return;
+      setTooltipContent(tooltipText ? { label: tooltipText, shortcut: shortcut.shortcut } : undefined);
+      return () => setTooltipContent(undefined);
+    }, [setTooltipContent, tooltipText, shortcut.shortcut]);
 
     if (!feature || !state) {
       if (__DEV__) logMissingFeature(displayName, selector.displayName ?? displayName);
       return null;
     }
 
-    const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcuts };
+    const attrs = { ...core.getAttrs(state), 'aria-keyshortcuts': shortcut.aria };
 
     return renderElement(
       'button',
@@ -89,7 +110,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
         state,
         stateAttrMap,
         ref: [forwardedRef, buttonRef],
-        props: [attrs, elementProps, getButtonProps()],
+        props: [getButtonProps(), elementProps, attrs],
       }
     );
   });

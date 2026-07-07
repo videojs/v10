@@ -12,42 +12,59 @@ import { TimeSliderRoot } from '../time-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderApi, mockTimeState, mockBufferState } = vi.hoisted(() => ({
-  mockSliderApi: () => ({
-    input: {
-      current: {
-        pointerPercent: 0,
-        dragPercent: 0,
-        dragging: false,
-        pointing: false,
-        focused: false,
-      },
-      subscribe: vi.fn(() => vi.fn()),
+const { mockSliderApi, mockTimeState, mockBufferState, mockPlaybackState, capturedSliderOptions } = vi.hoisted(() => {
+  const capturedSliderOptions: { current: { onDragStart?: () => void; onDragEnd?: () => void } } = {
+    current: {},
+  };
+  return {
+    mockSliderApi: (options: { onDragStart?: () => void; onDragEnd?: () => void }) => {
+      capturedSliderOptions.current = options;
+      return {
+        input: {
+          current: {
+            pointerPercent: 0,
+            dragPercent: 0,
+            dragging: false,
+            pointing: false,
+            focused: false,
+          },
+          subscribe: vi.fn(() => vi.fn()),
+        },
+        rootProps: {
+          onPointerDown: vi.fn(),
+          onPointerMove: vi.fn(),
+          onPointerLeave: vi.fn(),
+        },
+        thumbProps: {
+          onKeyDown: vi.fn(),
+          onFocus: vi.fn(),
+          onBlur: vi.fn(),
+        },
+        adjustForAlignment: <S,>(state: S): S => state,
+        destroy: vi.fn(),
+      };
     },
-    rootProps: {
-      onPointerDown: vi.fn(),
-      onPointerMove: vi.fn(),
-      onPointerLeave: vi.fn(),
+    mockTimeState: {
+      currentTime: 30,
+      duration: 120,
+      seeking: false,
+      seek: vi.fn(),
     },
-    thumbProps: {
-      onKeyDown: vi.fn(),
-      onFocus: vi.fn(),
-      onBlur: vi.fn(),
+    mockBufferState: {
+      buffered: [[0, 60]] as [number, number][],
+      seekable: [[0, 120]] as [number, number][],
     },
-    adjustForAlignment: <S,>(state: S): S => state,
-    destroy: vi.fn(),
-  }),
-  mockTimeState: {
-    currentTime: 30,
-    duration: 120,
-    seeking: false,
-    seek: vi.fn(),
-  },
-  mockBufferState: {
-    buffered: [[0, 60]] as [number, number][],
-    seekable: [[0, 120]] as [number, number][],
-  },
-}));
+    mockPlaybackState: {
+      paused: false,
+      ended: false,
+      started: true,
+      waiting: false,
+      play: vi.fn(() => Promise.resolve()),
+      pause: vi.fn(),
+    },
+    capturedSliderOptions,
+  };
+});
 
 // --- Module mocks ---
 
@@ -61,13 +78,13 @@ vi.mock('@videojs/store/react', () => ({
   useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
     if (!selector) return _store;
     try {
-      const result = selector({ time: mockTimeState, buffer: mockBufferState });
+      const result = selector({ time: mockTimeState, buffer: mockBufferState, playback: mockPlaybackState });
       if (result !== undefined) return result;
     } catch {
       // fall through
     }
     try {
-      return selector({ ...mockTimeState, ...mockBufferState });
+      return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState });
     } catch {
       return undefined;
     }
@@ -193,5 +210,127 @@ describe('TimeSlider compound', () => {
 
     const output = container.querySelector('[data-testid="value"]');
     expect(output?.textContent).toBeTruthy();
+  });
+});
+
+describe('TimeSliderRoot pauseOnDrag', () => {
+  it('does nothing when pauseOnDrag is false (default)', () => {
+    mockPlaybackState.paused = false;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <TimeSliderRoot />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).not.toHaveBeenCalled();
+
+    capturedSliderOptions.current.onDragEnd?.();
+    expect(mockPlaybackState.play).not.toHaveBeenCalled();
+  });
+
+  it('pauses on drag-start and resumes on drag-end when playing', () => {
+    mockPlaybackState.paused = false;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <TimeSliderRoot pauseOnDrag />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).toHaveBeenCalledTimes(1);
+
+    capturedSliderOptions.current.onDragEnd?.();
+    expect(mockPlaybackState.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not resume on drag-end when player was already paused', () => {
+    mockPlaybackState.paused = true;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <TimeSliderRoot pauseOnDrag />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).not.toHaveBeenCalled();
+
+    capturedSliderOptions.current.onDragEnd?.();
+    expect(mockPlaybackState.play).not.toHaveBeenCalled();
+  });
+
+  it('forwards user-provided onDragStart and onDragEnd', () => {
+    mockPlaybackState.paused = false;
+    const onDragStart = vi.fn();
+    const onDragEnd = vi.fn();
+
+    const { Wrapper } = createPlayerWrapper();
+    render(
+      <Wrapper>
+        <TimeSliderRoot pauseOnDrag onDragStart={onDragStart} onDragEnd={onDragEnd} />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(onDragStart).toHaveBeenCalled();
+
+    capturedSliderOptions.current.onDragEnd?.();
+    expect(onDragEnd).toHaveBeenCalled();
+  });
+
+  it('resumes on drag-end even if pauseOnDrag is turned off mid-drag', () => {
+    mockPlaybackState.paused = false;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    const { rerender } = render(
+      <Wrapper>
+        <TimeSliderRoot pauseOnDrag />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).toHaveBeenCalledTimes(1);
+
+    rerender(
+      <Wrapper>
+        <TimeSliderRoot pauseOnDrag={false} />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragEnd?.();
+    expect(mockPlaybackState.play).toHaveBeenCalledTimes(1);
+  });
+
+  it('resumes on unmount if a drag paused playback', () => {
+    mockPlaybackState.paused = false;
+    mockPlaybackState.play.mockClear();
+    mockPlaybackState.pause.mockClear();
+
+    const { Wrapper } = createPlayerWrapper();
+    const { unmount } = render(
+      <Wrapper>
+        <TimeSliderRoot pauseOnDrag />
+      </Wrapper>
+    );
+
+    capturedSliderOptions.current.onDragStart?.();
+    expect(mockPlaybackState.pause).toHaveBeenCalledTimes(1);
+
+    unmount();
+    expect(mockPlaybackState.play).toHaveBeenCalledTimes(1);
   });
 });

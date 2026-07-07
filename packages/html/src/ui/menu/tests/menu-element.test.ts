@@ -7,9 +7,16 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playerContext } from '../../../player/context';
 import { ControlsElement } from '../../controls/controls-element';
 import { MediaElement } from '../../media-element';
+import { MenuBackElement } from '../menu-back-element';
 import { MenuCheckboxItemElement } from '../menu-checkbox-item-element';
 import { MenuElement } from '../menu-element';
+import { MenuGroupElement } from '../menu-group-element';
+import { MenuGroupLabelElement } from '../menu-group-label-element';
 import { MenuItemElement } from '../menu-item-element';
+import { MenuItemIndicatorElement } from '../menu-item-indicator-element';
+import { MenuRadioGroupElement } from '../menu-radio-group-element';
+import { MenuRadioItemElement } from '../menu-radio-item-element';
+import { MenuSeparatorElement } from '../menu-separator-element';
 import { MenuViewElement } from '../menu-view-element';
 
 let tagCounter = 0;
@@ -91,11 +98,106 @@ async function waitForAssertion(assertion: () => void): Promise<void> {
   throw error;
 }
 
+const menuStateAttrs = ['data-open', 'data-side', 'data-align', 'data-starting-style', 'data-ending-style'] as const;
+
+function expectNoMenuStateAttrs(element: HTMLElement): void {
+  for (const attr of menuStateAttrs) {
+    expect(element.hasAttribute(attr), `${element.localName} should not have ${attr}`).toBe(false);
+  }
+}
+
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
 describe('MenuElement', () => {
+  it('scopes menu state data attributes to menu elements', async () => {
+    const root = createElement(MenuElement);
+    const label = createElement(MenuGroupLabelElement);
+    const group = createElement(MenuGroupElement);
+    const item = createElement(MenuItemElement);
+    const checkboxItem = createElement(MenuCheckboxItemElement);
+    const radioGroup = createElement(MenuRadioGroupElement);
+    const radioItem = createElement(MenuRadioItemElement);
+    const indicator = createElement(MenuItemIndicatorElement);
+    const separator = createElement(MenuSeparatorElement);
+    const rootView = createElement(MenuViewElement);
+    const trigger = createElement(MenuItemElement);
+    const child = createElement(MenuElement);
+    const back = createElement(MenuBackElement);
+    const childItem = createElement(MenuItemElement);
+
+    root.open = true;
+    root.side = 'top';
+    root.align = 'end';
+    label.textContent = 'Playback';
+    item.textContent = 'Copy link';
+    checkboxItem.textContent = 'Autoplay';
+    radioGroup.value = 'auto';
+    radioItem.value = 'auto';
+    radioItem.textContent = 'Auto';
+    indicator.checked = true;
+    trigger.id = 'child-trigger';
+    trigger.commandfor = 'child-menu';
+    trigger.textContent = 'Quality';
+    child.id = 'child-menu';
+    back.textContent = 'Back';
+    childItem.textContent = 'Auto';
+
+    radioItem.append(indicator);
+    radioGroup.append(radioItem);
+    group.append(label, item, checkboxItem, radioGroup);
+    rootView.append(trigger);
+    child.append(back, childItem);
+    root.append(group, separator, rootView, child);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await label.updateComplete;
+    await group.updateComplete;
+    await item.updateComplete;
+    await checkboxItem.updateComplete;
+    await radioGroup.updateComplete;
+    await radioItem.updateComplete;
+    await indicator.updateComplete;
+    await separator.updateComplete;
+    await rootView.updateComplete;
+    await trigger.updateComplete;
+    await child.updateComplete;
+    await back.updateComplete;
+    await childItem.updateComplete;
+
+    expect(root.hasAttribute('data-open')).toBe(true);
+    expect(root.getAttribute('data-side')).toBe('top');
+    expect(root.getAttribute('data-align')).toBe('end');
+
+    for (const element of [label, group, separator, item, checkboxItem, radioGroup, radioItem, indicator, trigger]) {
+      expectNoMenuStateAttrs(element);
+    }
+
+    expect(item.hasAttribute('data-item')).toBe(true);
+    expect(checkboxItem.hasAttribute('data-item')).toBe(true);
+    expect(radioItem.hasAttribute('data-item')).toBe(true);
+    expect(trigger.hasAttribute('data-item')).toBe(true);
+
+    trigger.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+
+    await root.updateComplete;
+    await child.updateComplete;
+    await back.updateComplete;
+    await waitForAssertion(() => {
+      expect(child.getAttribute('data-menu-view-state')).toBe('active');
+    });
+
+    expect(child.hasAttribute('data-submenu')).toBe(true);
+    expect(child.hasAttribute('data-menu-view')).toBe(true);
+    expect(child.hasAttribute('data-open')).toBe(true);
+    expect(child.hasAttribute('data-side')).toBe(false);
+    expect(child.hasAttribute('data-align')).toBe(false);
+    expectNoMenuStateAttrs(back);
+    expectNoMenuStateAttrs(childItem);
+  });
+
   it('marks root and nested menu views with generic view attributes', async () => {
     const root = createElement(MenuElement);
     const rootView = createElement(MenuViewElement);
@@ -261,6 +363,66 @@ describe('MenuElement', () => {
     expect(onOpenChange).not.toHaveBeenCalledWith(
       expect.objectContaining({ detail: expect.objectContaining({ open: false }) })
     );
+  });
+
+  it('wires group labels to group elements with aria-labelledby', async () => {
+    const root = createElement(MenuElement);
+    const group = createElement(MenuGroupElement);
+    const radioGroup = createElement(MenuRadioGroupElement);
+    const groupLabel = createElement(MenuGroupLabelElement);
+    const radioLabel = createElement(MenuGroupLabelElement);
+
+    root.open = true;
+    groupLabel.textContent = 'Playback';
+    radioLabel.textContent = 'Quality';
+
+    group.append(groupLabel);
+    radioGroup.append(radioLabel);
+    root.append(group, radioGroup);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await group.updateComplete;
+    await radioGroup.updateComplete;
+    await groupLabel.updateComplete;
+    await radioLabel.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(group.getAttribute('aria-labelledby')).toBe(groupLabel.id);
+      expect(radioGroup.getAttribute('aria-labelledby')).toBe(radioLabel.id);
+    });
+  });
+
+  it('lets explicit group labels override generated aria-labelledby', async () => {
+    const root = createElement(MenuElement);
+    const ariaLabelGroup = createElement(MenuGroupElement);
+    const ariaLabelledByGroup = createElement(MenuRadioGroupElement);
+    const ariaLabel = createElement(MenuGroupLabelElement);
+    const ariaLabelledByLabel = createElement(MenuGroupLabelElement);
+
+    root.open = true;
+    ariaLabelGroup.setAttribute('aria-label', 'Playback');
+    ariaLabelledByGroup.setAttribute('aria-labelledby', 'external-label');
+
+    ariaLabelGroup.append(ariaLabel);
+    ariaLabelledByGroup.append(ariaLabelledByLabel);
+    root.append(ariaLabelGroup, ariaLabelledByGroup);
+    document.body.append(root);
+
+    await root.updateComplete;
+    await ariaLabelGroup.updateComplete;
+    await ariaLabelledByGroup.updateComplete;
+    await ariaLabel.updateComplete;
+    await ariaLabelledByLabel.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(ariaLabel.id).not.toBe('');
+      expect(ariaLabelledByLabel.id).not.toBe('');
+    });
+
+    expect(ariaLabelGroup.getAttribute('aria-label')).toBe('Playback');
+    expect(ariaLabelGroup.hasAttribute('aria-labelledby')).toBe(false);
+    expect(ariaLabelledByGroup.getAttribute('aria-labelledby')).toBe('external-label');
   });
 
   it('highlights pointer-entered items without moving focus', async () => {

@@ -1,11 +1,14 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
 import {
+  AirPlayEnterIcon,
+  AirPlayExitIcon,
   CaptionsOffIcon,
   CaptionsOnIcon,
   CastEnterIcon,
   CastExitIcon,
+  CheckIcon,
   FullscreenEnterIcon,
   FullscreenExitIcon,
   PauseIcon,
@@ -19,8 +22,10 @@ import {
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
+import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -28,6 +33,7 @@ import { FullscreenButton } from '@/ui/fullscreen-button';
 import { Gesture } from '@/ui/gesture';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
+import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
@@ -91,11 +97,78 @@ function VolumePopover(): ReactNode {
  * flexible spacer stretches between the start and end button groups so they
  * sit at opposite edges of the control bar.
  */
-export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
-  const { children, className, poster, ...rest } = props;
+function CaptionsTrigger(): ReactNode {
+  const captions = useCaptionsOptions();
+  if (!captions) return null;
+
+  const { disabled } = captions;
+
+  if (!captions.showMenu) {
+    return (
+      <Tooltip.Root side="top">
+        <Tooltip.Trigger
+          render={
+            <CaptionsButton className="media-button--captions" render={<Button />}>
+              <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+              <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+            </CaptionsButton>
+          }
+        />
+        <Tooltip.Popup className="media-surface media-tooltip">
+          <Tooltip.Label />
+          <Tooltip.Shortcut className="media-tooltip__kbd" />
+        </Tooltip.Popup>
+      </Tooltip.Root>
+    );
+  }
+
+  const { options, setValue, value } = captions;
 
   return (
-    <Container className={cn('media-default-skin media-default-skin--video', className)} {...rest}>
+    <Menu.Root side="top" align="center">
+      <Menu.Trigger
+        disabled={disabled}
+        render={
+          <CaptionsButton className="media-button--captions" render={<Button />}>
+            <CaptionsOffIcon className="media-icon media-icon--captions-off" />
+            <CaptionsOnIcon className="media-icon media-icon--captions-on" />
+          </CaptionsButton>
+        }
+      />
+      <Menu.Content className="media-surface media-popover media-menu media-menu--captions">
+        <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Captions">
+          {options.map((option) => (
+            <Menu.RadioItem
+              key={option.value}
+              className="media-menu__item"
+              value={option.value}
+              disabled={option.disabled}
+            >
+              <span>{option.label}</span>
+              <Menu.ItemIndicator checked={option.value === value} forceMount className="media-menu__indicator">
+                <CheckIcon className="media-icon" />
+              </Menu.ItemIndicator>
+            </Menu.RadioItem>
+          ))}
+        </Menu.RadioGroup>
+      </Menu.Content>
+    </Menu.Root>
+  );
+}
+
+export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
+  const { children, className, poster, placeholder, style, ...rest } = props;
+
+  const containerStyle = placeholder
+    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
+    : style;
+
+  return (
+    <Container
+      className={cn('media-default-skin media-default-skin--video', className)}
+      style={containerStyle}
+      {...rest}
+    >
       {children}
 
       {poster && (
@@ -105,9 +178,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className="media-buffering-indicator">
-            <div className="media-surface">
-              <SpinnerIcon className="media-icon" />
-            </div>
+            <SpinnerIcon className="media-icon" />
           </div>
         )}
       />
@@ -139,7 +210,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <LiveButton className="media-button media-button--subtle media-button--live" />
@@ -150,17 +224,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
           <div className="media-button-group">
             <VolumePopover />
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CaptionsButton className="media-button--captions" render={<Button />}>
-                    <CaptionsOffIcon className="media-icon media-icon--captions-off" />
-                    <CaptionsOnIcon className="media-icon media-icon--captions-on" />
-                  </CaptionsButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip" />
-            </Tooltip.Root>
+            <CaptionsTrigger />
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
@@ -171,7 +235,25 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
+            </Tooltip.Root>
+
+            <Tooltip.Root side="top">
+              <Tooltip.Trigger
+                render={
+                  <AirPlayButton className="media-button--airplay" render={<Button />}>
+                    <AirPlayEnterIcon className="media-icon media-icon--airplay-enter" />
+                    <AirPlayExitIcon className="media-icon media-icon--airplay-exit" />
+                  </AirPlayButton>
+                }
+              />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -183,7 +265,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
@@ -195,7 +280,10 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className="media-surface media-tooltip" />
+              <Tooltip.Popup className="media-surface media-tooltip">
+                <Tooltip.Label />
+                <Tooltip.Shortcut className="media-tooltip__kbd" />
+              </Tooltip.Popup>
             </Tooltip.Root>
           </div>
         </Tooltip.Provider>

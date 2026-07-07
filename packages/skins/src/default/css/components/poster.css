@@ -12,7 +12,8 @@
   transition: opacity 0.25s;
 }
 .media-default-skin media-poster:not([data-visible]),
-.media-default-skin > img:not([data-visible]) {
+.media-default-skin > img:not([data-visible]),
+.media-default-skin > img[data-visible]:not([data-loaded]) {
   opacity: 0;
 }
 .media-default-skin media-poster ::slotted(img),
@@ -29,6 +30,30 @@
   object-fit: var(--media-object-fit, contain);
   object-position: var(--media-object-position, center);
   border-radius: inherit;
+}
+
+/* Blurred placeholder: HTML path targets media-poster::before, React path targets the skin container::before */
+.media-default-skin media-poster::before,
+.media-default-skin::before {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  content: "";
+  background-image: var(--media-poster-placeholder, none);
+  background-repeat: no-repeat;
+  background-position: var(--media-object-position, center);
+  background-size: var(--media-object-fit, contain);
+  filter: blur(var(--media-poster-placeholder-blur, 20px));
+}
+
+/* React path: hidden by default, transitions in while poster loads */
+.media-default-skin::before {
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+/* Show placeholder while the poster is visible but not yet loaded */
+.media-default-skin:has(img[data-visible]:not([data-loaded]))::before {
+  opacity: 1;
 }
 
 .media-default-skin:fullscreen media-poster ::slotted(img),
