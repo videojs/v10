@@ -8,6 +8,19 @@ description: A menu radio group for selecting video quality
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/quality-radio-group/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/quality-radio-group/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/quality-radio-group/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/quality-radio-group/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/quality-radio-group/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/quality-radio-group/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/quality-radio-group/html/css/BasicUsage.ts?raw";
 
 Creates radio items from the player video rendition state and selects automatic or manual quality.
 
@@ -15,16 +28,11 @@ Creates radio items from the player video rendition state and selects automatic 
 
 <FrameworkCase frameworks={["react"]}>
   ```tsx
-  const quality = useQualityOptions();
-
-  <Menu.RadioGroup value={quality.value} onValueChange={quality.setValue}>
-    <Menu.GroupLabel>Quality</Menu.GroupLabel>
-    {quality.options.map((option) => (
-      <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-        {option.label}
-        <Menu.ItemIndicator checked={option.value === quality.value} />
-      </Menu.RadioItem>
-    ))}
+  <Menu.RadioGroup>
+    <Menu.GroupLabel />
+    <Menu.RadioItem>
+      <Menu.ItemIndicator />
+    </Menu.RadioItem>
   </Menu.RadioGroup>
   ```
 </FrameworkCase>
@@ -75,6 +83,33 @@ The group is available when the configured media exposes more than one video ren
 ## Accessibility
 
 The group uses the menu radio group pattern. It receives an accessible label from the `label` prop or defaults to `Quality`.
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
   <ComponentReference component="QualityRadioGroup" />

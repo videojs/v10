@@ -1,0 +1,27 @@
+<video-player class="video-player">
+    <media-container>
+        <video
+            src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+            autoplay
+            muted
+            playsinline
+            loop
+        >
+            <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srclang="en" label="English" />
+            <track kind="subtitles" src="/docs/demos/captions-button/captions.vtt" srclang="es" label="Spanish" />
+        </video>
+        <div class="menu-bar">
+            <button type="button" commandfor="captions-menu" class="settings-trigger">Captions</button>
+            <media-menu id="captions-menu" side="top" align="end" class="menu">
+                <media-captions-radio-group class="menu-group">
+                    <template>
+                        <media-menu-radio-item class="menu-item">
+                            <span data-part="label"></span>
+                            <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                        </media-menu-radio-item>
+                    </template>
+                </media-captions-radio-group>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>

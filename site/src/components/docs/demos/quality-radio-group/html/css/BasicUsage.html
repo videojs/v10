@@ -1,0 +1,30 @@
+<video-player class="video-player">
+    <media-container>
+        <hlsjs-video
+            class="video-media"
+            src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
+            autoplay
+            crossorigin="anonymous"
+            muted
+            playsinline
+            loop
+        ></hlsjs-video>
+        <div class="menu-bar">
+            <button type="button" commandfor="quality-menu" class="settings-trigger">Quality</button>
+            <media-menu id="quality-menu" side="top" align="end" class="menu">
+                <media-quality-radio-group class="menu-group">
+                    <template>
+                        <media-menu-radio-item class="menu-item">
+                            <span>
+                                <span data-part="label"></span>
+                                <sup data-part="tier" class="menu-tier"></sup>
+                            </span>
+                            <span data-part="badge" class="menu-badge"></span>
+                            <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                        </media-menu-radio-item>
+                    </template>
+                </media-quality-radio-group>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>
