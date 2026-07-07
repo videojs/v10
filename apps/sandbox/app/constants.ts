@@ -3,7 +3,7 @@ export const PLATFORMS = ['html', 'react', 'cdn'] as const;
 export const STYLINGS = ['css', 'tailwind'] as const;
 export const PRESETS = [
   'video',
-  'hls-video',
+  'hlsjs-video',
   'native-hls-video',
   'mux-video',
   'mux-audio',

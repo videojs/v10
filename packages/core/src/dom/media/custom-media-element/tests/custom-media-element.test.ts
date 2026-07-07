@@ -1036,4 +1036,57 @@ describe('CustomMediaElement', () => {
       expect(el.getAttribute('playback-id')).toBe('xyz789');
     });
   });
+
+  describe('XSS prevention', () => {
+    it('does not inject nodes when poster contains a quote breakout attempt', () => {
+      const { tag } = defineVideoElement();
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} poster='" onerror="window.__xss=1'></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const shadow = el.shadowRoot!;
+
+      expect(shadow.querySelectorAll('[onerror]')).toHaveLength(0);
+      expect(shadow.querySelectorAll('[onload]')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('does not inject script elements when an attribute value contains angle brackets', () => {
+      const { Ctor } = defineVideoElement();
+      const maliciousValue = '"><script>window.__xss=1</script><video x="';
+
+      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      const container = document.createElement('div');
+      container.innerHTML = (Ctor as any).getTemplateHTML({ crossorigin: maliciousValue });
+
+      expect(container.querySelectorAll('script')).toHaveLength(0);
+      expect(container.querySelectorAll('img[onerror]')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('does not inject img elements when poster contains an angle-bracket payload', () => {
+      const { Ctor } = defineVideoElement();
+      const maliciousValue = '"><img src=x onerror="window.__xss=1">';
+
+      // JSDOM shadow DOM has parsing quirks; test getTemplateHTML directly in a plain container.
+      const container = document.createElement('div');
+      container.innerHTML = (Ctor as any).getTemplateHTML({ poster: maliciousValue });
+
+      expect(container.querySelectorAll('img')).toHaveLength(0);
+      expect((globalThis as any).__xss).toBeUndefined();
+    });
+
+    it('preserves the attribute value correctly after escaping', () => {
+      const { tag } = defineVideoElement();
+      const container = document.createElement('div');
+      document.body.appendChild(container);
+      container.innerHTML = `<${tag} poster="https://example.com/poster.jpg"></${tag}>`;
+
+      const el = container.querySelector(tag)!;
+      const video = el.shadowRoot!.querySelector('video')!;
+
+      expect(video.getAttribute('poster')).toBe('https://example.com/poster.jpg');
+    });
+  });
 });

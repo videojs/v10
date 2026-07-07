@@ -1,9 +1,9 @@
 'use client';
 
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
-import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectTime } from '@videojs/core/dom';
+import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { formatTime } from '@videojs/utils/time';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -34,17 +34,26 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       thumbAlignment,
       onDragStart,
       onDragEnd,
+      pauseOnDrag,
       ...elementProps
     } = componentProps;
 
     const time = usePlayer(selectTime);
     const buffer = usePlayer(selectBuffer);
+    const playback = usePlayer(selectPlayback);
 
     const [core] = useState(() => new TimeSliderCore());
-    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment });
+    core.setProps({ label, step, largeStep, orientation, disabled, thumbAlignment, pauseOnDrag });
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
+    const playbackRef = useLatestRef(playback);
+
+    // Resume playback if the slider unmounts mid-drag — createSlider's destroy()
+    // does not fire onDragEnd, so without this the player would stay paused.
+    useEffect(() => {
+      return () => core.endDrag(playbackRef.current);
+    }, [core]);
 
     const duration = time?.duration ?? 0;
 
@@ -79,8 +88,14 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
         const media = mediaRef.current;
         if (media) media.seek(core.rawValueFromPercent(percent));
       },
-      onDragStart,
-      onDragEnd,
+      onDragStart: () => {
+        core.startDrag(playbackRef.current);
+        onDragStart?.();
+      },
+      onDragEnd: () => {
+        core.endDrag(playbackRef.current);
+        onDragEnd?.();
+      },
     });
 
     if (!time) {

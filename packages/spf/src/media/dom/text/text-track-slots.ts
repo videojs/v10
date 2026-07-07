@@ -30,7 +30,12 @@ export function addSubtitlesTracksToMedia(
     el.label = modelTrack.label;
     el.toggleAttribute('data-src-track', true);
     if (modelTrack.language) el.srclang = modelTrack.language;
-    if (modelTrack.default) el.default = true;
+    // Deliberately NOT propagating `modelTrack.default` to the `default`
+    // attribute: that makes the browser auto-activate the slot on insertion,
+    // which fires a `change` that `syncTextTracks` records as user intent —
+    // auto-enabling captions past SPF's opt-in policy (`enableDefaultTrack`
+    // governs DEFAULT=YES handling in `switchTextTrack`, not the browser). SPF
+    // owns selection; these slots are containers, so they carry no selection hint.
     mediaElement.appendChild(el);
   }
 }

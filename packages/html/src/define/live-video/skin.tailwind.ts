@@ -36,9 +36,7 @@ function getTemplateHTML() {
       </media-poster>
 
       <media-buffering-indicator class="${bufferingIndicator.root}">
-        <div class="${bufferingIndicator.container}">
-          ${renderIcon('spinner')}
-        </div>
+        ${renderIcon('spinner', { class: icon })}
       </media-buffering-indicator>
 
       <media-error-dialog class="${error.root}">
@@ -96,7 +94,7 @@ function getTemplateHTML() {
                     <media-menu-radio-item class="${menu.item}">
                       <span data-part="label"></span>
                       <media-menu-item-indicator force-mount class="${menu.indicator}">
-                        ${renderIcon('check', { class: icon })}
+                        ${renderIcon('check', { class: cn(icon, menu.icon) })}
                       </media-menu-item-indicator>
                     </media-menu-radio-item>
                   </template>

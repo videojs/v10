@@ -1,5 +1,5 @@
 import Mux from 'mux-embed';
-import { Hls, type HlsMedia } from '../hls';
+import { Hls, type HlsJsMedia } from '../hls-js';
 import { getPlayerVersion } from './env';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
@@ -18,7 +18,7 @@ export interface MuxDataProps {
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
 export interface MuxDataMedia extends EventTarget {
-  readonly engine?: HlsMedia['engine'];
+  readonly engine?: HlsJsMedia['engine'];
   readonly src: string;
 }
 

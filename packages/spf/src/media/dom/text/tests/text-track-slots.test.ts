@@ -43,11 +43,14 @@ describe('addSubtitlesTracksToMedia', () => {
     expect(tracks[1]!.hasAttribute('data-src-track')).toBe(true);
   });
 
-  it('marks elements as default when the model is default', () => {
+  it('does not propagate the model default to the <track> default attribute', () => {
+    // Setting `default` makes the browser auto-activate the slot on insertion,
+    // which syncTextTracks would record as user intent — bypassing SPF's opt-in
+    // selection policy. SPF owns selection, so slots carry no selection hint.
     const media = document.createElement('video');
     addSubtitlesTracksToMedia(media, [makeModelTrack({ default: true })]);
 
-    expect((media.children[0] as HTMLTrackElement).default).toBe(true);
+    expect((media.children[0] as HTMLTrackElement).default).toBe(false);
   });
 
   it('omits srclang when the model has no language', () => {

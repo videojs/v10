@@ -9,11 +9,17 @@ export const PresetSkinDefSchema = z.object({
   cssImport: z.string().optional(),
 });
 
+export const PresetFeatureRefSchema = z.object({
+  name: z.string(),
+  slug: z.string(),
+  hasReference: z.boolean(),
+});
+
 export const PresetReferenceSchema = z.object({
   name: z.string(),
   description: z.string().optional(),
   featureBundle: z.string(),
-  features: z.array(z.string()),
+  features: z.array(PresetFeatureRefSchema),
   html: z.object({
     skins: z.array(PresetSkinDefSchema),
     mediaElement: z.string().optional(),
@@ -25,4 +31,5 @@ export const PresetReferenceSchema = z.object({
 });
 
 export type PresetSkinDef = z.infer<typeof PresetSkinDefSchema>;
+export type PresetFeatureRef = z.infer<typeof PresetFeatureRefSchema>;
 export type PresetReference = z.infer<typeof PresetReferenceSchema>;

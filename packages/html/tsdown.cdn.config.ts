@@ -29,7 +29,7 @@ const presets = [
   'background',
 ];
 const media = [
-  'hls-video',
+  'hlsjs-video',
   'mux-audio',
   'mux-video',
   'native-hls-video',

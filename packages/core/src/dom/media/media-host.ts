@@ -1,4 +1,5 @@
 import type { EventListenerFor, EventType, QueriedElement } from '@videojs/utils/dom';
+import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/media/constants';
 import {
   type EventLike,
   type MediaFull,
@@ -8,7 +9,6 @@ import {
   type TextTrackKind,
   type TextTrackLike,
 } from '../../core/media/types';
-import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants';
 import { getComponents, getOwner, getProp, setProp } from './utils';
 
 export { addComponent, getComponents, getOwner, getProp, setProp } from './utils';

@@ -1,13 +1,10 @@
-/** WebKit-only addition to HTMLMediaElement exposing the active AirPlay flag. */
-export interface WebKitAirPlayMedia extends HTMLMediaElement {
-  readonly webkitCurrentPlaybackTargetIsWireless: boolean;
-}
-
 /** WebKit presentation mode values for iOS Safari. */
 export type WebKitPresentationMode = 'inline' | 'fullscreen' | 'picture-in-picture';
 
 /** Extended HTMLVideoElement with WebKit vendor APIs. */
 export interface WebKitVideoElement extends HTMLVideoElement {
+  /**  Whether the current playback target is wireless (WebKit) */
+  webkitCurrentPlaybackTargetIsWireless?: boolean;
   /** Current WebKit presentation mode (iOS Safari). */
   webkitPresentationMode?: WebKitPresentationMode;
   /** Set WebKit presentation mode (iOS Safari). */
@@ -39,6 +36,6 @@ export function supportsWebKitAirPlay(): boolean {
 }
 
 /** Whether `media` exposes WebKit's AirPlay APIs. */
-export function isWebKitAirPlayCapable(media: EventTarget): media is WebKitAirPlayMedia {
+export function isWebKitAirPlayCapable(media: EventTarget): media is WebKitVideoElement {
   return supportsWebKitAirPlay() && 'webkitCurrentPlaybackTargetIsWireless' in media;
 }

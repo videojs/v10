@@ -3,6 +3,7 @@
 import type { HTMLTag, Polymorphic } from 'astro/types';
 import { clsx } from 'clsx';
 import { twMerge } from '@/utils/twMerge';
+import { shared } from './styles';
 
 type Props<Tag extends HTMLTag = 'p'> = Polymorphic<{ as: Tag }> & {
   maxWidth?: boolean;
@@ -13,7 +14,7 @@ const { as: Tag = 'p', maxWidth = true, class: className, ...props } = Astro.pro
 ---
 
 <Tag
-  class={twMerge(clsx("my-4", maxWidth && "mx-auto max-w-3xl"), className)}
+  class={twMerge(clsx(shared.p, maxWidth && shared.prose), className)}
   {...props}
 >
   <slot />

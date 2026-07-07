@@ -1,7 +1,7 @@
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
+import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../../core/media/constants';
 import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../../core/media/types';
-import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';

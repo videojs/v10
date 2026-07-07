@@ -1,11 +1,12 @@
 ---
 import GithubSlugger from 'github-slugger';
+import { ArrowUpRight } from 'lucide-react';
 import DropdownIcon from '@/assets/icons/dropdown-arrow.svg?react';
-import type { Guide, Section, SupportedFramework } from '@/types/docs';
-import { isSection } from '@/types/docs';
+import type { SidebarItem as SidebarItemType, SupportedFramework } from '@/types/docs';
+import { isLink, isSection } from '@/types/docs';
 
 type Props = {
-  item: Guide | Section;
+  item: SidebarItemType;
   framework: SupportedFramework;
   docTitles: Map<string, string>;
   depth?: number;
@@ -16,9 +17,11 @@ const currentPath = Astro.url.pathname;
 const slugger = new GithubSlugger();
 
 // Helper to check if this item or any of its children contains the active path
-function containsActivePath(item: Guide | Section): boolean {
+function containsActivePath(item: SidebarItemType): boolean {
   if (isSection(item)) {
     return item.contents.some((child) => containsActivePath(child));
+  } else if (isLink(item)) {
+    return false;
   } else {
     const itemPath = `/docs/framework/${framework}/${item.slug}`;
     return itemPath === currentPath;
@@ -86,6 +89,21 @@ function getGroupRotate(depth: number) {
         ))}
       </div>
     </details>
+  ) : isLink(item) ? (
+    <a
+      class:list={[
+        "flex items-center gap-1.5 py-2 text-p3 text-faded-black dark:text-manila-light",
+        "cursor-pointer",
+        depth === 0 && "font-bold",
+        depth > 0 && "border-l border-manila-75 pl-4 dark:border-warm-gray",
+      ]}
+      style={`margin-left: calc(var(--spacing) * ${(depth - 1) * 4})`}
+      href={item.href}
+    >
+      {item.devOnly ? "[Dev only] " : ""}
+      {item.sidebarLabel}
+      <ArrowUpRight size="1em" aria-hidden="true" />
+    </a>
   ) : (
     <a
       aria-current={isActive ? "page" : undefined}

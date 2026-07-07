@@ -1739,11 +1739,13 @@ http://example.com/video-seg1.m4s
         expect(tracks[0]!.srclang).toBe('en');
         expect(tracks[0]!.default).toBe(false);
 
-        // Spanish track (DEFAULT)
+        // Spanish track (DEFAULT=YES in the manifest) — the `default` attribute
+        // is deliberately NOT propagated to the <track> element (it would make the
+        // browser auto-activate it, bypassing SPF's opt-in selection policy).
         expect(tracks[1]!.kind).toBe('subtitles');
         expect(tracks[1]!.label).toBe('Spanish');
         expect(tracks[1]!.srclang).toBe('es');
-        expect(tracks[1]!.default).toBe(true);
+        expect(tracks[1]!.default).toBe(false);
 
         // French track
         expect(tracks[2]!.kind).toBe('subtitles');

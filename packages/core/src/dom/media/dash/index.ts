@@ -41,6 +41,11 @@ export class DashMedia
     super.destroy();
   }
 
+  /**
+   * Underlying playback engine — the dash.js `MediaPlayerClass` instance. An
+   * advanced escape hatch for direct engine access; normal playback is driven
+   * through this element's own properties and methods.
+   */
   get engine() {
     return this.#engine;
   }

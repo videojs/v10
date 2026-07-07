@@ -249,6 +249,21 @@ export interface MediaQualityState {
   selectVideoRendition(value: string): void;
 }
 
+export interface MediaAudioTrack {
+  id?: string;
+  kind?: string;
+  label: string;
+  language: string;
+  enabled: boolean;
+}
+
+export interface MediaAudioTrackState {
+  /** Audio tracks available for manual track selection. */
+  audioTrackList: MediaAudioTrack[];
+  /** Select an audio track by menu value. */
+  selectAudioTrack(value: string): void;
+}
+
 /**
  * A text cue.
  *

@@ -5,6 +5,7 @@ import type {
   LiveVideoFeatures,
   VideoFeatures,
 } from '../../media/types';
+import { audioTrackFeature } from './audio-track';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
@@ -24,6 +25,7 @@ export const videoFeatures: VideoFeatures = [
   playbackFeature,
   playbackRateFeature,
   qualityFeature,
+  audioTrackFeature,
   volumeFeature,
   timeFeature,
   sourceFeature,

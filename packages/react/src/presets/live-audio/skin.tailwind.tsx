@@ -5,14 +5,16 @@ import {
   error,
   icon,
   iconState,
+  playButton,
   popup,
   root,
   slider,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
+import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
@@ -119,21 +121,30 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top" boundary="viewport">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className={iconState.play.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, iconState.play.restart)} />
-                    <PlayIcon className={cn(icon, iconState.play.play)} />
-                    <PauseIcon className={cn(icon, iconState.play.pause)} />
-                  </PlayButton>
-                }
+            <span className={playButton.wrapper}>
+              <BufferingIndicator
+                render={(props) => (
+                  <div {...props} className={cn(playButton.bufferingRoot, props.className)}>
+                    <SpinnerIcon className={icon} />
+                  </div>
+                )}
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
-                <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top" boundary="viewport">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className={cn(iconState.play.button, playButton.control)} render={<Button />}>
+                      <RestartIcon className={cn(icon, iconState.play.restart)} />
+                      <PlayIcon className={cn(icon, iconState.play.play)} />
+                      <PauseIcon className={cn(icon, iconState.play.pause)} />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className={cn(popup.tooltip)}>
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </span>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>

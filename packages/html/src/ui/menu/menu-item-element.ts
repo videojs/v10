@@ -1,8 +1,14 @@
-import { CaptionsRadioGroupCore, PlaybackRateRadioGroupCore, QualityRadioGroupCore } from '@videojs/core';
+import {
+  AudioTrackRadioGroupCore,
+  CaptionsRadioGroupCore,
+  PlaybackRateRadioGroupCore,
+  QualityRadioGroupCore,
+} from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
 import {
   applyElementProps,
   completeMenuItemSelection,
+  selectAudioTrack,
   selectPlaybackRate,
   selectQuality,
   selectTextTrack,
@@ -19,6 +25,7 @@ import type { MenuItemSettingType } from './menu-item-type';
 
 type PlaybackRateState = ReturnType<typeof selectPlaybackRate>;
 type QualityState = ReturnType<typeof selectQuality>;
+type AudioTrackState = ReturnType<typeof selectAudioTrack>;
 type TextTrackState = ReturnType<typeof selectTextTrack>;
 
 export class MenuItemElement extends MediaElement {
@@ -33,14 +40,16 @@ export class MenuItemElement extends MediaElement {
   disabled = false;
   /** ID of a nested `<media-menu>` to open when this item is activated. */
   commandfor: string | undefined = undefined;
-  /** Setting kind for submenu triggers (`playback-rate`, `quality`, or `captions`). */
+  /** Setting kind for submenu triggers (`playback-rate`, `quality`, `audio-track`, or `captions`). */
   type: MenuItemSettingType | null = null;
 
   readonly #playbackRateCore = new PlaybackRateRadioGroupCore();
   readonly #qualityCore = new QualityRadioGroupCore();
+  readonly #audioTrackCore = new AudioTrackRadioGroupCore();
   readonly #captionsCore = new CaptionsRadioGroupCore();
   #playbackRateValue: PlayerController<AnyPlayerStore, PlaybackRateState> | null = null;
   #qualityValue: PlayerController<AnyPlayerStore, QualityState> | null = null;
+  #audioTrackValue: PlayerController<AnyPlayerStore, AudioTrackState> | null = null;
   #captionsValue: PlayerController<AnyPlayerStore, TextTrackState> | null = null;
   readonly #ctx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   readonly #settingProvider = new ContextProvider(this, { context: menuItemSettingContext });
@@ -145,7 +154,12 @@ export class MenuItemElement extends MediaElement {
 
     const setting = getMenuItemSettingState(
       this.type,
-      { playbackRate: this.#playbackRateCore, quality: this.#qualityCore, captions: this.#captionsCore },
+      {
+        playbackRate: this.#playbackRateCore,
+        quality: this.#qualityCore,
+        audioTrack: this.#audioTrackCore,
+        captions: this.#captionsCore,
+      },
       value
     );
 
@@ -162,7 +176,9 @@ export class MenuItemElement extends MediaElement {
     this.#settingUnavailable = unavailable;
   }
 
-  #getSettingValue(type: MenuItemSettingType): PlaybackRateState | QualityState | TextTrackState | undefined {
+  #getSettingValue(
+    type: MenuItemSettingType
+  ): PlaybackRateState | QualityState | AudioTrackState | TextTrackState | undefined {
     if (type === 'playback-rate') {
       this.#playbackRateValue ??= new PlayerController(this, playerContext, selectPlaybackRate);
       return this.#playbackRateValue.value;
@@ -171,6 +187,11 @@ export class MenuItemElement extends MediaElement {
     if (type === 'quality') {
       this.#qualityValue ??= new PlayerController(this, playerContext, selectQuality);
       return this.#qualityValue.value;
+    }
+
+    if (type === 'audio-track') {
+      this.#audioTrackValue ??= new PlayerController(this, playerContext, selectAudioTrack);
+      return this.#audioTrackValue.value;
     }
 
     this.#captionsValue ??= new PlayerController(this, playerContext, selectTextTrack);

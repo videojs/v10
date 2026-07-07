@@ -40,17 +40,19 @@ import {
   PipEnterIcon,
   PipExitIcon,
   PlayIcon,
+  QualityIcon,
   RestartIcon,
   SeekIcon,
+  SpeechIcon,
   SpeedIcon,
   SpinnerIcon,
-  SwitchesIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
+import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
@@ -162,18 +164,20 @@ function VolumePopover(): ReactNode {
 }
 
 function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
-  return <ChevronIcon className={cn(icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
+  return <ChevronIcon className={cn(icon, menu.icon, menu.chevron, flipped ? iconFlipped : undefined)} />;
 }
 
 function SettingsMenu(): ReactNode {
   const playbackRate = usePlaybackRateOptions();
   const quality = useQualityOptions();
+  const audioTrack = useAudioTrackOptions();
   const captions = useCaptionsOptions();
   const hasPlaybackRate = playbackRate?.state.availability === 'available';
   const hasQuality = quality?.state.availability === 'available';
+  const hasAudioTrack = audioTrack?.state.availability === 'available';
   const hasCaptions = captions?.state.availability === 'available';
 
-  if (!hasPlaybackRate && !hasQuality && !hasCaptions) return null;
+  if (!hasPlaybackRate && !hasQuality && !hasAudioTrack && !hasCaptions) return null;
 
   return (
     <Menu.Root side="top" align="center">
@@ -187,14 +191,14 @@ function SettingsMenu(): ReactNode {
       <Menu.Content className={menu.settings}>
         <Menu.View className={menu.rootView}>
           <div className={menu.group}>
-            {hasQuality && quality ? (
+            {hasQuality ? (
               <Menu.Root>
                 <Menu.Trigger
                   type="quality"
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
-                      <SwitchesIcon className={icon} />
+                      <QualityIcon className={cn(icon, menu.icon)} />
                       <span>Quality</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -222,11 +226,63 @@ function SettingsMenu(): ReactNode {
                         value={option.value}
                         disabled={option.disabled}
                       >
-                        <span>{option.label}</span>
-                        {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
-                        {option.badge ? <span className={cn(badge, menu.badge)}>{option.badge}</span> : null}
+                        <span>
+                          {option.label}
+                          {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
+                        </span>
+                        {option.badge ? <span className={badge}>{option.badge}</span> : null}
                         <Menu.ItemIndicator
                           checked={option.value === quality.value}
+                          forceMount
+                          className={menu.indicator}
+                        >
+                          <CheckIcon className={cn(icon, menu.icon)} />
+                        </Menu.ItemIndicator>
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
+            ) : null}
+
+            {hasAudioTrack ? (
+              <Menu.Root>
+                <Menu.Trigger
+                  type="audio-track"
+                  className={cn(menu.item, 'media-menu__item--submenu')}
+                  render={(props) => (
+                    <div {...props}>
+                      <SpeechIcon className={icon} />
+                      <span>Audio</span>
+                      <span className={menu.hint}>
+                        <Menu.ItemValue className={menu.hintLabel} />
+                        <MenuChevron />
+                      </span>
+                    </div>
+                  )}
+                />
+                <Menu.Content className={menu.submenuPanel}>
+                  <Menu.Back className={menu.back}>
+                    <MenuChevron flipped />
+                    Audio
+                  </Menu.Back>
+                  <Menu.Separator className={menu.separator} />
+                  <Menu.RadioGroup
+                    className={menu.group}
+                    value={audioTrack.value}
+                    onValueChange={audioTrack.setValue}
+                    aria-label="Audio tracks"
+                  >
+                    {audioTrack.options.map((option) => (
+                      <Menu.RadioItem
+                        key={option.value}
+                        className={menu.item}
+                        value={option.value}
+                        disabled={option.disabled}
+                      >
+                        <span>{option.label}</span>
+                        <Menu.ItemIndicator
+                          checked={option.value === audioTrack.value}
                           forceMount
                           className={menu.indicator}
                         >
@@ -238,14 +294,15 @@ function SettingsMenu(): ReactNode {
                 </Menu.Content>
               </Menu.Root>
             ) : null}
-            {hasPlaybackRate && playbackRate ? (
+
+            {hasPlaybackRate ? (
               <Menu.Root>
                 <Menu.Trigger
                   type="playback-rate"
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
-                      <SpeedIcon className={icon} />
+                      <SpeedIcon className={cn(icon, menu.icon)} />
                       <span>Speed</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -279,7 +336,7 @@ function SettingsMenu(): ReactNode {
                           forceMount
                           className={menu.indicator}
                         >
-                          <CheckIcon className={icon} />
+                          <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
                     ))}
@@ -287,14 +344,15 @@ function SettingsMenu(): ReactNode {
                 </Menu.Content>
               </Menu.Root>
             ) : null}
-            {hasCaptions && captions ? (
+
+            {hasCaptions ? (
               <Menu.Root>
                 <Menu.Trigger
                   type="captions"
                   className={cn(menu.item, 'media-menu__item--submenu')}
                   render={(props) => (
                     <div {...props}>
-                      <CaptionsOffIcon className={icon} />
+                      <CaptionsOffIcon className={cn(icon, menu.icon)} />
                       <span>Captions</span>
                       <span className={menu.hint}>
                         <Menu.ItemValue className={menu.hintLabel} />
@@ -328,7 +386,7 @@ function SettingsMenu(): ReactNode {
                           forceMount
                           className={menu.indicator}
                         >
-                          <CheckIcon className={icon} />
+                          <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
                     ))}
@@ -367,9 +425,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className={bufferingIndicator.root}>
-            <div className={bufferingIndicator.container}>
-              <SpinnerIcon className={icon} />
-            </div>
+            <SpinnerIcon className={icon} />
           </div>
         )}
       />
@@ -462,7 +518,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className={slider.value} />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-            <Time.Value type="duration" className={time.duration} />
+            <Time.Value toggle type="remaining" className={time.duration} />
           </div>
 
           <div className={cn(buttonGroupEnd, menu.settingsGroup)}>

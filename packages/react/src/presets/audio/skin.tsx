@@ -6,11 +6,13 @@ import {
   PlayIcon,
   RestartIcon,
   SeekIcon,
+  SpinnerIcon,
   VolumeHighIcon,
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons';
 import { Container, usePlayer } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
@@ -126,21 +128,30 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
       <div className="media-surface media-controls">
         <Tooltip.Provider>
           <div className="media-button-group">
-            <Tooltip.Root side="top" boundary="viewport">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className="media-button--play" render={<Button />}>
-                    <RestartIcon className="media-icon media-icon--restart" />
-                    <PlayIcon className="media-icon media-icon--play" />
-                    <PauseIcon className="media-icon media-icon--pause" />
-                  </PlayButton>
-                }
+            <span className="media-button--play__wrapper">
+              <BufferingIndicator
+                render={(props) => (
+                  <div {...props} className="media-buffering-indicator">
+                    <SpinnerIcon className="media-icon" />
+                  </div>
+                )}
               />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top" boundary="viewport">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className="media-button--play" render={<Button />}>
+                      <RestartIcon className="media-icon media-icon--restart" />
+                      <PlayIcon className="media-icon media-icon--play" />
+                      <PauseIcon className="media-icon media-icon--pause" />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className="media-surface media-tooltip">
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className="media-tooltip__kbd" />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </span>
 
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
@@ -189,7 +200,7 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
                 <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
               </TimeSlider.Preview>
             </TimeSlider.Root>
-            <Time.Value type="duration" className="media-time" />
+            <Time.Value toggle type="remaining" className="media-time" />
           </div>
 
           <div className="media-button-group">

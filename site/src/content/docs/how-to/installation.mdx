@@ -7,7 +7,7 @@ import JSPicker from '@/components/installation/JSPicker.astro';
 import RendererPicker from '@/components/installation/RendererPicker';
 import SkinPickerSection from '@/components/installation/SkinPickerSection.astro';
 import UseCasePicker from '@/components/installation/UseCasePicker';
-import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs';
+import HTMLInstallTabs from '@/components/installation/HTMLInstallTabs.astro';
 import HTMLUsageCodeBlock from '@/components/installation/HTMLUsageCodeBlock';
 import ReactCreateCodeBlock from '@/components/installation/ReactCreateCodeBlock';
 import ReactUsageCodeBlock from '@/components/installation/ReactUsageCodeBlock';
@@ -43,7 +43,7 @@ npx @videojs/cli docs how-to/installation \
   --framework <html|react> \
   --preset <video|audio|background-video> \
   --skin <default|minimal|none> \
-  --media <html5-video|html5-audio|hls|background-video> \
+  --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video> \
   --source-url <url> \
   --install-method <cdn|npm|pnpm|yarn|bun>
 ```
@@ -112,7 +112,7 @@ Video.js supports a wide range of file types and hosting services. It's easy to 
 ## Install Video.js
 
 <FrameworkCase frameworks={["html"]}>
-  <HTMLInstallTabs client:idle />
+  <HTMLInstallTabs />
 </FrameworkCase>
 <FrameworkCase frameworks={["react"]}>
   <TabsRoot client:idle>

@@ -8,6 +8,7 @@ import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
+import { NAME_OVERRIDES } from '../../../src/utils/api-reference-overrides.js';
 import { extractCore } from './core-handler.js';
 import { extractCSSVars } from './css-vars-handler.js';
 import { extractDataAttrs } from './data-attrs-handler.js';
@@ -31,10 +32,9 @@ import { kebabToPascal, partKebabFromSource, sortProps } from './utils.js';
 
 // ─── Overrides ─────────────────────────────────────────────────────
 
-// Components whose PascalCase name doesn't match simple kebab-to-pascal conversion.
-export const NAME_OVERRIDES: Record<string, string> = {
-  'pip-button': 'PiPButton',
-};
+// `NAME_OVERRIDES` is the source of truth shared with the site's reference
+// pages — re-exported here for the builder's existing import surface.
+export { NAME_OVERRIDES };
 
 // Parts whose HTML element file doesn't follow the `{component}-{part}-element.ts` convention.
 // Key: `{component}/{part-kebab}`, Value: element file basename (without `.ts`).
@@ -552,11 +552,17 @@ export interface PresetSkinDef {
   cssImport?: string;
 }
 
+export interface PresetFeatureRef {
+  name: string;
+  slug: string;
+  hasReference: boolean;
+}
+
 export interface PresetReference {
   name: string;
   description?: string;
   featureBundle: string;
-  features: string[];
+  features: PresetFeatureRef[];
   html: {
     skins: PresetSkinDef[];
     mediaElement?: string;
@@ -582,16 +588,29 @@ export interface HostPropertyDef {
   type: string;
   description?: string;
   readonly: boolean;
+  overridesNative?: boolean;
+  /** Serialized default value from the host's `*DefaultProps` export. */
+  default?: string;
+}
+
+export interface MediaEventDef {
+  name: string;
+  /** Description from a `@fires` JSDoc tag on the dispatching class or mixin. */
+  description?: string;
 }
 
 export interface MediaElementReference {
   name: string;
   tagName: string;
+  mediaType: 'video' | 'audio';
   hostProperties: Record<string, HostPropertyDef>;
   nativeAttributes: string[];
-  events: string[];
+  events: {
+    native: string[];
+    elementSpecific: MediaEventDef[];
+  };
+  methods: string[];
   cssCustomProperties: Record<string, { description: string }>;
-  slots: string[];
 }
 
 export interface MediaElementResult {

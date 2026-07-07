@@ -44,3 +44,9 @@ export const VJS10_DEMO_VIDEO: VideoSource = {
   mp4: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4',
   poster: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp',
 };
+
+// Standalone third-party samples for source types that aren't the shared Mux
+// asset above: Mux doesn't serve DASH, and Vimeo is a hosting service. The DASH
+// value matches the sample used by the site's DASH reference demo.
+export const VJS10_DEMO_DASH = 'https://dash.akamaized.net/akamai/streamroot/050714/Spring_4Ktest.mpd';
+export const VJS10_DEMO_VIMEO = 'https://vimeo.com/648359100';

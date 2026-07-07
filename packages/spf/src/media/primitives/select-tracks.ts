@@ -1,5 +1,12 @@
 import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../abr/quality-selection';
-import type { AudioSelectionSet, MaybeResolvedPresentation, TrackType, VideoSelectionSet } from '../types';
+import type {
+  AudioSelectionSet,
+  MaybeResolvedPresentation,
+  PartiallyResolvedTextTrack,
+  TextTrack,
+  TrackType,
+  VideoSelectionSet,
+} from '../types';
 import { SelectedTrackIdKeyByType } from '../utils/track-selection';
 
 /**
@@ -100,7 +107,7 @@ export interface TextSelectionConfig {
  * select, or `undefined` to leave the slot unset.
  *
  * Behaviors that own a track-selection slot (`selectAudioTrack`,
- * `selectTextTrack`, `selectVideoTrack`, `switchVideoTrack`) accept a
+ * `selectVideoTrack`, `switchVideoTrack`) accept a
  * `TrackPicker` via config. The behavior passes its own config straight
  * through as the picker's second argument — pickers that need richer
  * options (language preferences, default-track filtering, bandwidth-aware
@@ -288,9 +295,10 @@ export function pickAudioTrack(
 }
 
 /**
- * Pick text track to activate. Conforms to the `TrackPicker` contract so it
- * can be used directly as a default picker for `selectTextTrack` without an
- * adapter wrapper.
+ * Pick text track to activate from a presentation. Conforms to the
+ * `TrackPicker` contract. The candidate-list core (`pickTextTrackFromTracks`)
+ * is the opt-in default policy `switchTextTrack`'s terminal applies once it has
+ * narrowed the renditions.
  *
  * Selection priority (if enabled):
  * 1. User preference (preferredSubtitleLanguage)
@@ -303,33 +311,42 @@ export function pickTextTrack(
   presentation: MaybeResolvedPresentation,
   config?: TextSelectionConfig
 ): string | undefined {
-  const textSet = presentation.selectionSets?.find((set) => set.type === 'text');
-  if (!textSet?.switchingSets?.[0]?.tracks.length) return undefined;
+  const tracks = presentation.selectionSets?.find((set) => set.type === 'text')?.switchingSets?.[0]?.tracks;
+  if (!tracks?.length) return undefined;
+  return pickTextTrackFromTracks(tracks, config);
+}
 
-  const tracks = textSet.switchingSets[0].tracks;
-
-  // Filter out FORCED tracks by default (following hls.js/http-streaming pattern)
-  // Per Apple spec: regular tracks MUST contain forced content when both exist
+/**
+ * Default text-track policy over an explicit candidate list (rather than a whole
+ * presentation): the opt-in three-tier pick `pickTextTrack` delegates to, factored
+ * out so a caller that has already narrowed the candidates — a constrained,
+ * CDN-scoped track-switching chain — applies the same policy without re-deriving
+ * from the presentation.
+ *
+ * Priority: `preferredSubtitleLanguage` match → `DEFAULT=YES + AUTOSELECT=YES`
+ * (only when `enableDefaultTrack`) → `undefined` (opt-in). FORCED tracks are
+ * excluded unless `includeForcedTracks` (Apple-spec: a regular track must carry
+ * forced content when both exist, so a forced-only track is redundant).
+ */
+export function pickTextTrackFromTracks(
+  tracks: readonly (PartiallyResolvedTextTrack | TextTrack)[],
+  config?: TextSelectionConfig
+): string | undefined {
   const availableTracks = config?.includeForcedTracks ? tracks : tracks.filter((track) => !track.forced);
-
   if (availableTracks.length === 0) return undefined;
 
   const { preferredSubtitleLanguage, enableDefaultTrack = false } = config ?? {};
 
-  // 1. Preferred language match (if specified)
   if (preferredSubtitleLanguage) {
     const languageMatch = availableTracks.find((track) => track.language === preferredSubtitleLanguage);
     if (languageMatch) return languageMatch.id;
   }
 
-  // 2. DEFAULT track (if enabled AND track has both DEFAULT=YES + AUTOSELECT=YES)
-  //    Note: Parser only sets default=true when BOTH attributes present
   if (enableDefaultTrack) {
     const defaultTrack = availableTracks.find((track) => track.default === true);
     if (defaultTrack) return defaultTrack.id;
   }
 
-  // 3. User opt-in (no auto-selection)
   return undefined;
 }
 

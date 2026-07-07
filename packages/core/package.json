@@ -31,6 +31,11 @@
       "types": "./dist/dev/dom/media/*/index.d.ts",
       "development": "./dist/dev/dom/media/*/index.js",
       "default": "./dist/default/dom/media/*/index.js"
+    },
+    "./media/predicate": {
+      "types": "./dist/dev/media/predicate.d.ts",
+      "development": "./dist/dev/media/predicate.js",
+      "default": "./dist/default/media/predicate.js"
     }
   },
   "main": "dist/default/index.js",
@@ -52,7 +57,7 @@
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
     "@vimeo/player": "^2.30.3",
-    "dashjs": "^5.0.0",
+    "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
     "mux-embed": "^5.17.10"
   },

@@ -1,5 +1,7 @@
 // Core
 export * from '@videojs/core/dom';
+// Media predicates
+export * from '@videojs/core/media/predicate';
 export type {
   Destroyable,
   PropertyDeclaration,
@@ -10,7 +12,6 @@ export type {
 } from '@videojs/element';
 // Element — reactive primitives for users extending MediaElement
 export { DestroyMixin, ReactiveElement } from '@videojs/element';
-
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
@@ -24,13 +25,14 @@ export * from './store/container-mixin';
 export * from './store/media-attach-mixin';
 export * from './store/provider-mixin';
 export * from './store/types';
-// UI Components
 export { AirPlayButtonElement } from './ui/airplay-button/airplay-button-element';
 export { AlertDialogCloseElement } from './ui/alert-dialog/alert-dialog-close-element';
 export { AlertDialogDescriptionElement } from './ui/alert-dialog/alert-dialog-description-element';
 export { AlertDialogElement } from './ui/alert-dialog/alert-dialog-element';
 export { AlertDialogTitleElement } from './ui/alert-dialog/alert-dialog-title-element';
 export { type AlertDialogContextValue, alertDialogContext } from './ui/alert-dialog/context';
+// UI Components
+export { AudioTrackRadioGroupElement } from './ui/audio-track-radio-group/audio-track-radio-group-element';
 export { BufferingIndicatorElement } from './ui/buffering-indicator/buffering-indicator-element';
 export { CaptionsButtonElement } from './ui/captions-button/captions-button-element';
 export { CaptionsRadioGroupElement } from './ui/captions-radio-group/captions-radio-group-element';

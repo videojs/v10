@@ -77,74 +77,54 @@ export const inputFeedback = {
     // Captions state → which icon shows
     shownCaptionsOn: 'group-data-[status=captions-on]/input-indicator:block',
     shownCaptionsOff: 'group-data-[status=captions-off]/input-indicator:block',
-    shownFullscreenEnter: cn(
-      'group-data-[status=fullscreen]/input-indicator:block',
-      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=fullscreen]/input-indicator:animate-media-pop-in'
-    ),
-    shownFullscreenExit: cn(
-      'group-data-[status=exit-fullscreen]/input-indicator:block',
-      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=exit-fullscreen]/input-indicator:animate-media-pop-in'
-    ),
-    shownPipEnter: cn(
-      'group-data-[status=pip]/input-indicator:block',
-      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=pip]/input-indicator:animate-media-pop-in'
-    ),
-    shownPipExit: cn(
-      'group-data-[status=exit-pip]/input-indicator:block',
-      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=exit-pip]/input-indicator:animate-media-pop-in'
-    ),
+    shownFullscreenEnter: 'group-data-[status=fullscreen]/input-indicator:block',
+    shownFullscreenExit: 'group-data-[status=exit-fullscreen]/input-indicator:block',
+    shownPipEnter: 'group-data-[status=pip]/input-indicator:block',
+    shownPipExit: 'group-data-[status=exit-pip]/input-indicator:block',
     value: 'ml-auto',
   },
 
   bubble: {
     base: cn(
       'group/input-indicator',
-      // Default placement — center column for status bubbles and undirected seeks
+      // Default placement
       'col-start-2 row-start-1',
-      'flex flex-col items-center justify-center p-4',
-      'transition-opacity duration-250 ease-out',
-      'data-starting-style:opacity-0',
-      'data-ending-style:opacity-0',
-      'data-starting-style:duration-200',
-      'data-starting-style:ease-in',
-      'data-ending-style:duration-200',
-      'data-ending-style:ease-in',
-      '@2xl/media-root:p-8',
+      'grid place-content-center text-center p-4',
+      'data-direction:gap-1',
+      '@2xl/media-root:data-direction:p-6',
+      // Central bubble (play, pause)
+      'not-data-direction:bg-black/35 not-data-direction:rounded-full not-data-direction:backdrop-blur-sm',
       'not-data-direction:[transition-property:opacity,scale]',
-      'not-data-direction:duration-600',
-      'not-data-direction:[transition-timing-function:ease-out,linear(0,0.12_1.5%,1.35_9.7%,2.2_13.9%,3_19.9%,2.7_21.8%,0.62_37.5%,0.96_50.9%,1)]',
+      'not-data-direction:duration-200 not-data-direction:ease-out',
       'motion-reduce:not-data-direction:transition-opacity',
-      'motion-reduce:not-data-direction:duration-100',
-      'motion-reduce:not-data-direction:ease-out',
-      'not-data-direction:data-starting-style:scale-80',
-      'not-data-direction:data-ending-style:scale-80',
-      'not-data-direction:data-starting-style:duration-200',
-      'not-data-direction:data-starting-style:ease-in',
-      'not-data-direction:data-ending-style:duration-200',
+      'motion-reduce:not-data-direction:duration-50',
+      'not-data-direction:data-starting-style:opacity-0',
+      'not-data-direction:data-ending-style:opacity-0',
+      'not-data-direction:data-starting-style:scale-[0.85]',
+      'not-data-direction:data-ending-style:scale-[0.85]',
+      'not-data-direction:data-ending-style:duration-100',
       'not-data-direction:data-ending-style:ease-in',
       // Direction placement
       'data-[direction=backward]:col-start-1 data-[direction=backward]:justify-self-start',
       'data-[direction=forward]:col-start-3 data-[direction=forward]:justify-self-end'
     ),
     // Icons in the bubble
-    icon: 'hidden w-9 h-9',
-    // seek icon: shown for seekStep + seekToPercent; flipped for backward; slides in on active
+    icon: 'hidden size-[calc(var(--media-icon-size)*1.5)]',
+    // Seek icon: shown for seekStep + seekToPercent; flipped for backward.
     shownSeek: cn(
       'group-data-direction/input-indicator:block',
-      'group-data-[direction=backward]/input-indicator:-scale-x-100',
-      // Slide animation (keyframes registered in companion CSS)
-      'group-not-data-starting-style/input-indicator:group-data-[direction=forward]/input-indicator:animate-media-slide-in-forward',
-      'group-not-data-starting-style/input-indicator:group-data-[direction=backward]/input-indicator:animate-media-slide-in-backward',
-      'motion-reduce:group-data-direction/input-indicator:animate-none'
+      'group-data-[direction=backward]/input-indicator:[scale:-1_1]',
+      'motion-safe:transition-[translate,opacity] motion-safe:duration-200 motion-safe:ease-in-out',
+      'motion-safe:group-data-starting-style/input-indicator:opacity-0',
+      'motion-safe:group-data-ending-style/input-indicator:opacity-0',
+      'motion-safe:group-data-[direction=forward]/input-indicator:group-data-starting-style/input-indicator:[translate:-60%_0]',
+      'motion-safe:group-data-[direction=backward]/input-indicator:group-data-starting-style/input-indicator:[translate:60%_0]'
     ),
     // togglePaused: pause icon when paused, play icon when playing
-    shownPause: cn(
-      'group-data-[status=pause]/input-indicator:block',
-      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=pause]/input-indicator:animate-media-pop-in'
-    ),
+    shownPause: 'group-data-[status=pause]/input-indicator:block',
     shownPlay: cn(
       'group-data-[status=play]/input-indicator:block',
-      'motion-safe:group-not-data-starting-style/input-indicator:group-data-[status=play]/input-indicator:animate-media-pop-in'
+      'group-data-[status=play]/input-indicator:translate-x-px'
     ),
     time: 'tabular-nums',
   },

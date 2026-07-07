@@ -31,6 +31,12 @@ export const SOURCES = {
     type: 'hls',
     subType: 'mp4',
   },
+  'hls-6': {
+    label: 'HLS - Tailwind (portrait)',
+    url: 'https://stream.mux.com/vth873zxidmhBVVRWBKcPTxnSQ302QqUm.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'hls-multi-audio': {
     label: 'HLS - Multi-language audio',
     url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',

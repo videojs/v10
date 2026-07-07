@@ -2,44 +2,52 @@
    Popups & Tooltips
    ========================================================================== */
 
+.media-default-skin {
+  --media-popup-transition:
+    opacity var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
+    filter var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
+    transform var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
+    scale var(--media-popup-transition-timing-function) var(--media-popup-transition-duration);
+}
+
 .media-default-skin .media-popover,
 .media-default-skin .media-tooltip {
+  --popup-translate-distance: 0.5rem;
   margin: 0;
   overflow: visible;
   color: inherit;
   border: 0;
-  filter: blur(0px);
-  transition-timing-function: var(--media-popup-transition-timing-function);
-  transition-duration:
-    var(--media-popup-transition-duration),
-    var(--media-popup-transition-duration),
-    var(--media-popup-transition-duration) var(--popup-transition-duration,);
-  transition-property:
-    scale,
-    opacity,
-    filter var(--popup-transition-property,);
+  transition: var(--media-popup-transition);
 
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    filter: blur(8px);
-    scale: 0.85;
+    filter: blur(4px);
+    /* We have to use transform here for translate as the translate property is used for positioning by core. */
+    transform: translate(var(--popup-translate-x-distance, 0), var(--popup-translate-y-distance, 0));
+    scale: 0.95;
   }
 
   &[data-ending-style] {
+    transform: none;
+    /* Speed up the exit transition. */
     transition-duration: max(0ms, calc(var(--media-popup-transition-duration) - 50ms));
   }
 
   &[data-side="top"] {
+    --popup-translate-y-distance: var(--popup-translate-distance);
     transform-origin: bottom;
   }
   &[data-side="bottom"] {
+    --popup-translate-y-distance: calc(var(--popup-translate-distance) * -1);
     transform-origin: top;
   }
   &[data-side="left"] {
+    --popup-translate-x-distance: var(--popup-translate-distance);
     transform-origin: right;
   }
   &[data-side="right"] {
+    --popup-translate-x-distance: calc(var(--popup-translate-distance) * -1);
     transform-origin: left;
   }
 

@@ -1,3 +1,4 @@
+// Ampersand must be escaped first to avoid double-encoding the entities below.
 export function escapeHtml(str: string): string {
   return str
     .replace(/&/g, '&amp;')

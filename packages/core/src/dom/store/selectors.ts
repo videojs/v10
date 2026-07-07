@@ -1,5 +1,6 @@
 import { createSelector } from '@videojs/store';
 
+import { audioTrackFeature } from './features/audio-track';
 import { bufferFeature } from './features/buffer';
 import { controlsFeature } from './features/controls';
 import { errorFeature } from './features/error';
@@ -16,6 +17,8 @@ import { textTrackFeature } from './features/text-track';
 import { timeFeature } from './features/time';
 import { volumeFeature } from './features/volume';
 
+/** Select the audio track state (audioTrackList, selectAudioTrack). */
+export const selectAudioTrack = createSelector(audioTrackFeature);
 /** Select the buffer state (buffered ranges, percent buffered). */
 export const selectBuffer = createSelector(bufferFeature);
 /** Select the controls state (controls visible, user-active). */

@@ -130,9 +130,11 @@ layer onto specific phases per the
 ## Likely cross-cutting impact
 
 - **Selection behaviors** — `selectVideoTrack` / `switchVideoQuality`
-  / `selectAudioTrack` / `selectTextTrack` pickers read filtered set,
-  not raw `presentation.selectionSets`. Same shape as the
-  `userVideoTrackSelection` constraint pattern in `video-abr`.
+  / `selectAudioTrack` pickers read filtered set, not raw
+  `presentation.selectionSets`. Same shape as the `userVideoTrackSelection`
+  constraint pattern in `video-abr`. (`switchTextTrack` is excluded — its
+  capability constraint is omitted, since `canPlayTrack`/`isTypeSupported`
+  is the wrong probe for SPF-parsed WebVTT text.)
 - **`mse-mms-pipeline` late-failure path** — `createSourceBuffer`'s
   throw on unsupported codec becomes a defensive fallback. With
   upstream filtering it should rarely fire; the throw stays as a

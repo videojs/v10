@@ -2,7 +2,7 @@ import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { MediaBufferState, MediaTimeState } from '../../media/state';
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
 export interface TimeSliderProps extends SliderProps {
@@ -14,6 +14,11 @@ export interface TimeSliderProps extends SliderProps {
   max?: number | undefined;
   /** Leading+trailing throttle (ms) for `onValueChange` during drag. */
   changeThrottle?: number | undefined;
+  /**
+   * When true, pause playback while the user is dragging the thumb,
+   * resuming on release if it was playing before.
+   */
+  pauseOnDrag?: boolean | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -27,10 +32,12 @@ export class TimeSliderCore extends SliderCore {
     ...SliderCore.defaultProps,
     label: 'Seek',
     changeThrottle: 100,
+    pauseOnDrag: false,
   };
 
   #props = { ...TimeSliderCore.defaultProps };
   #media: (MediaTimeState & MediaBufferState) | null = null;
+  #wasPlayingBeforeDrag = false;
 
   constructor(props?: TimeSliderProps) {
     super();
@@ -70,6 +77,32 @@ export class TimeSliderCore extends SliderCore {
 
   override getLabel(state: SliderState): string {
     return super.getLabel(state) || 'Seek';
+  }
+
+  /**
+   * Pause playback when a drag begins if `pauseOnDrag` is enabled, remembering
+   * whether media was playing so `endDrag` can resume it.
+   */
+  startDrag(playback: MediaPlaybackState | null | undefined): void {
+    this.#wasPlayingBeforeDrag = false;
+    if (this.#props.pauseOnDrag && playback && !playback.paused) {
+      this.#wasPlayingBeforeDrag = true;
+      playback.pause();
+    }
+  }
+
+  /**
+   * Resume playback if `startDrag` paused it. Resume depends only on the intent
+   * captured at drag start, so it survives `pauseOnDrag` being toggled mid-drag.
+   * Safe to call on teardown — a no-op unless a drag paused playback.
+   */
+  endDrag(playback: MediaPlaybackState | null | undefined): void {
+    if (this.#wasPlayingBeforeDrag) {
+      playback?.play().catch(() => {
+        // Resume play() can reject (autoplay policy, etc.) — surface via existing error feature.
+      });
+    }
+    this.#wasPlayingBeforeDrag = false;
   }
 
   override getAttrs(state: TimeSliderState) {

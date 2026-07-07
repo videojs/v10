@@ -178,9 +178,7 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
       <BufferingIndicator
         render={(props) => (
           <div {...props} className="media-buffering-indicator">
-            <div className="media-surface">
-              <SpinnerIcon className="media-icon" />
-            </div>
+            <SpinnerIcon className="media-icon" />
           </div>
         )}
       />

@@ -7,7 +7,4 @@
 
 @theme {
   --animate-media-shake: media-shake 300ms ease-in-out;
-  --animate-media-slide-in-forward: media-slide-in-forward 300ms ease-in-out;
-  --animate-media-slide-in-backward: media-slide-in-backward 300ms ease-in-out;
-  --animate-media-pop-in: media-pop-in 250ms ease-out;
 }
