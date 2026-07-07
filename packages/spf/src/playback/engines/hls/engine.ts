@@ -18,7 +18,11 @@ import {
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
-import { getResolvedSelectedTrackDuration, type VideoRenditionInfo } from '../../../media/utils/track-selection';
+import {
+  type AudioTrackInfo,
+  getResolvedSelectedTrackDuration,
+  type VideoRenditionInfo,
+} from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
@@ -28,6 +32,7 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { deriveAudioTracks } from '../../behaviors/derive-audio-tracks';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { deriveVideoRenditions } from '../../behaviors/derive-video-renditions';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
@@ -111,6 +116,13 @@ export interface SimpleHlsEngineState {
    * `videoRenditions`). Cleared on src unload.
    */
   videoRenditions?: VideoRenditionInfo[];
+  /**
+   * Selectable audio tracks (one per language) of the resolved presentation.
+   * Derived from `presentation` by `deriveAudioTracks`; a read-only projection
+   * consumers bind to (e.g. the DOM media adapter's `audioTracks`). Cleared on
+   * src unload.
+   */
+  audioTracks?: AudioTrackInfo[];
 }
 
 /**
@@ -332,6 +344,10 @@ export function createSimpleHlsEngine(
       // Projects the resolved presentation's video quality levels onto the
       // `videoRenditions` slot for consumers (e.g. the DOM media adapter).
       deriveVideoRenditions,
+
+      // Projects the resolved presentation's audio tracks (one per language)
+      // onto the `audioTracks` slot for consumers (e.g. the DOM media adapter).
+      deriveAudioTracks,
 
       // CDN failover cooldown: owns the expiry half of failover — watches
       // `failedCdns` (tripped directly by track resolution on a failed

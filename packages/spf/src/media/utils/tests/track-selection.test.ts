@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { AudioTrack, Presentation, VideoTrack } from '../../types';
-import { getResolvedSelectedTrackDuration, getVideoRenditions, type TrackSelectionState } from '../track-selection';
+import {
+  getAudioTracks,
+  getResolvedSelectedTrackDuration,
+  getVideoRenditions,
+  type TrackSelectionState,
+} from '../track-selection';
 
 function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]; duration?: number }): Presentation {
   const selectionSets = [];
@@ -175,5 +180,40 @@ describe('getVideoRenditions', () => {
     expect(getVideoRenditions({})).toEqual([]);
     expect(getVideoRenditions({ presentation: { url: 'x.m3u8' } })).toEqual([]);
     expect(getVideoRenditions({ presentation: createPresentation({ audio: [resolvedAudioTrack()] }) })).toEqual([]);
+  });
+});
+
+describe('getAudioTracks', () => {
+  it('collapses per-(language × group) tracks to one entry per language', () => {
+    const presentation = createPresentation({
+      audio: [
+        resolvedAudioTrack({ id: 'en-hi', language: 'en', name: 'English', groupId: 'audio-hi', default: true }),
+        resolvedAudioTrack({ id: 'es-hi', language: 'es', name: 'Spanish', groupId: 'audio-hi' }),
+        resolvedAudioTrack({ id: 'en-lo', language: 'en', name: 'English', groupId: 'audio-lo' }),
+        resolvedAudioTrack({ id: 'es-lo', language: 'es', name: 'Spanish', groupId: 'audio-lo' }),
+      ],
+    });
+
+    const tracks = getAudioTracks({ presentation });
+    expect(tracks.map((t) => t.name)).toEqual(['English', 'Spanish']);
+    expect(tracks.map((t) => t.language)).toEqual(['en', 'es']);
+    expect(tracks[0]).toMatchObject({ id: 'en-hi', default: true, trackIds: ['en-hi', 'en-lo'] });
+    expect(tracks[1]).toMatchObject({ id: 'es-hi', trackIds: ['es-hi', 'es-lo'] });
+  });
+
+  it('keeps same-language tracks with different names distinct', () => {
+    const presentation = createPresentation({
+      audio: [
+        resolvedAudioTrack({ id: 'en', language: 'en', name: 'English' }),
+        resolvedAudioTrack({ id: 'en-cc', language: 'en', name: 'English (commentary)' }),
+      ],
+    });
+
+    expect(getAudioTracks({ presentation }).map((t) => t.name)).toEqual(['English', 'English (commentary)']);
+  });
+
+  it('returns an empty array when the presentation is unresolved or has no audio', () => {
+    expect(getAudioTracks({})).toEqual([]);
+    expect(getAudioTracks({ presentation: createPresentation({ video: [resolvedVideoTrack()] }) })).toEqual([]);
   });
 });

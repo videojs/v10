@@ -1,4 +1,5 @@
 import type {
+  AudioSelectionSet,
   AudioTrack,
   FrameRate,
   MaybeResolvedPresentation,
@@ -119,4 +120,47 @@ export function getVideoRenditions(state: TrackSelectionState): VideoRenditionIn
     bandwidth: track.bandwidth,
     frameRate: track.frameRate,
   }));
+}
+
+/**
+ * A selectable audio track — one per distinct language, collapsing the model's
+ * per-(language × quality-group) tracks. `trackIds` lists the underlying track
+ * ids so consumers can map a resolved `selectedAudioTrackId` back to its group.
+ */
+export interface AudioTrackInfo {
+  id: string;
+  language?: string;
+  name: string;
+  default?: boolean;
+  trackIds: string[];
+}
+
+/**
+ * Read the selectable audio tracks from a presentation — the tracks of the first
+ * audio switching set, collapsed to one entry per (language, name) in manifest
+ * order. Returns an empty array when the presentation is unresolved or carries
+ * no audio.
+ */
+export function getAudioTracks(state: TrackSelectionState): AudioTrackInfo[] {
+  const { presentation } = state;
+  const audioSet = presentation?.selectionSets?.find((set): set is AudioSelectionSet => set.type === 'audio');
+
+  const byLanguage = new Map<string, AudioTrackInfo>();
+  for (const track of audioSet?.switchingSets[0]?.tracks ?? []) {
+    const key = `${track.language ?? ''}.${track.name}`;
+    const existing = byLanguage.get(key);
+    if (existing) {
+      existing.trackIds.push(track.id);
+      if (track.default) existing.default = true;
+    } else {
+      byLanguage.set(key, {
+        id: track.id,
+        language: track.language,
+        name: track.name,
+        default: track.default,
+        trackIds: [track.id],
+      });
+    }
+  }
+  return [...byLanguage.values()];
 }

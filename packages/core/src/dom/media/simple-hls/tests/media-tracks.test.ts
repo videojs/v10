@@ -13,6 +13,9 @@ function createEngine() {
       videoRenditions: signal<any>(undefined),
       selectedVideoTrackId: signal<string | undefined>(undefined),
       userVideoTrackSelection: signal<{ id?: string } | undefined>(undefined),
+      audioTracks: signal<any>(undefined),
+      selectedAudioTrackId: signal<string | undefined>(undefined),
+      userAudioTrackSelection: signal<{ language?: string; name?: string } | undefined>(undefined),
     },
     context: {},
     destroy: async () => {},
@@ -63,6 +66,14 @@ function rendition(
 
 const HD = rendition('v-1080', 1920, 1080, 6_000_000);
 const SD = rendition('v-360', 640, 360, 800_000);
+
+function audioTrack(id: string, language: string, name: string, trackIds: string[], isDefault = false) {
+  return { id, language, name, default: isDefault, trackIds };
+}
+
+// Two languages, each collapsing two quality groups (hi/lo).
+const EN = audioTrack('en-hi', 'en', 'English', ['en-hi', 'en-lo'], true);
+const ES = audioTrack('es-hi', 'es', 'Spanish', ['es-hi', 'es-lo']);
 
 // Drain the effect microtask and the nested microtask the rendition-list
 // primitives use to dispatch add/remove/change events.
@@ -228,17 +239,74 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     expect(host.videoRenditions.length).toBe(2);
   });
 
+  it('projects the engine audio tracks (one per language)', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.audioTracks.set([EN, ES]);
+    await flush();
+
+    expect(host.audioTracks.length).toBe(2);
+    expect([...host.audioTracks].map((t) => t.label)).toEqual(['English', 'Spanish']);
+    expect([...host.audioTracks].map((t) => t.language)).toEqual(['en', 'es']);
+    expect(host.audioTracks[0]?.kind).toBe('main'); // default
+    expect(host.audioTracks[1]?.kind).toBe('alternative');
+  });
+
+  it('reflects the enabled audio track from selectedAudioTrackId (matching any quality group)', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.audioTracks.set([EN, ES]);
+    // A resolved id from the *low* Spanish group still enables the Spanish track.
+    engine.state.selectedAudioTrackId.set('es-lo');
+    await flush();
+
+    expect([...host.audioTracks].map((t) => t.enabled)).toEqual([false, true]);
+  });
+
+  it('feeds an enabled audio track back to userAudioTrackSelection by language + name', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.audioTracks.set([EN, ES]);
+    engine.state.selectedAudioTrackId.set('en-hi');
+    await flush();
+
+    const [, spanish] = [...host.audioTracks];
+    spanish!.enabled = true;
+    await flush();
+
+    expect(engine.state.userAudioTrackSelection.get()).toEqual({ language: 'es', name: 'Spanish' });
+  });
+
+  it('does not write a selection when reflection re-enables the already-playing track', async () => {
+    const engine = createEngine();
+    const host = new Host(() => engine);
+
+    engine.state.audioTracks.set([EN, ES]);
+    engine.state.selectedAudioTrackId.set('en-hi');
+    await flush();
+
+    // Reflection enabled English (the playing track); no user change happened.
+    expect(host.audioTracks[0]?.enabled).toBe(true);
+    expect(engine.state.userAudioTrackSelection.get()).toBeUndefined();
+  });
+
   it('removes projected tracks on destroy', async () => {
     const engine = createEngine();
     const host = new Host(() => engine);
 
     engine.state.videoRenditions.set([HD, SD]);
+    engine.state.audioTracks.set([EN, ES]);
     await flush();
     expect(host.videoTracks.length).toBe(1);
+    expect(host.audioTracks.length).toBe(2);
 
     host.destroy();
 
     expect(host.videoTracks.length).toBe(0);
     expect(host.videoRenditions.length).toBe(0);
+    expect(host.audioTracks.length).toBe(0);
   });
 });
