@@ -115,7 +115,7 @@ By default, Video.js casts to Google's [Default Media Receiver](https://develope
 ```tsx
 <HlsJsVideo
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
-  config={{ googleCast: { receiver: 'YOUR_APP_ID' } }}
+  config={{ googleCast: { receiver: 'YOUR_APP_ID' } }} // [!code focus]
 />
 ```
 </FrameworkCase>
@@ -123,7 +123,7 @@ By default, Video.js casts to Google's [Default Media Receiver](https://develope
 <FrameworkCase frameworks={["html"]}>
 ```ts
 const video = document.querySelector('hlsjs-video');
-video.config = { googleCast: { receiver: 'YOUR_APP_ID' } };
+video.config = { googleCast: { receiver: 'YOUR_APP_ID' } }; // [!code focus]
 ```
 </FrameworkCase>
 
@@ -135,7 +135,7 @@ Send extra data (auth tokens, user IDs) to the receiver with each load request v
 ```tsx
 <HlsJsVideo
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
-  config={{ googleCast: { customData: { token: 'abc123', userId: 'u_789' } } }}
+  config={{ googleCast: { customData: { token: 'abc123', userId: 'u_789' } } }} // [!code focus]
 />
 ```
 </FrameworkCase>
@@ -143,7 +143,7 @@ Send extra data (auth tokens, user IDs) to the receiver with each load request v
 <FrameworkCase frameworks={["html"]}>
 ```ts
 const video = document.querySelector('hlsjs-video');
-video.config = { googleCast: { customData: { token: 'abc123', userId: 'u_789' } } };
+video.config = { googleCast: { customData: { token: 'abc123', userId: 'u_789' } } }; // [!code focus]
 ```
 </FrameworkCase>
 
@@ -187,7 +187,7 @@ Set `streamType` to tell the receiver whether the stream is `'on-demand'` or `'l
 ```tsx
 <HlsJsVideo
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
-  config={{ googleCast: { streamType: 'live' } }}
+  config={{ googleCast: { streamType: 'live' } }} // [!code focus]
 />
 ```
 </FrameworkCase>
@@ -195,7 +195,7 @@ Set `streamType` to tell the receiver whether the stream is `'on-demand'` or `'l
 <FrameworkCase frameworks={["html"]}>
 ```ts
 const video = document.querySelector('hlsjs-video');
-video.config = { googleCast: { streamType: 'live' } };
+video.config = { googleCast: { streamType: 'live' } }; // [!code focus]
 ```
 </FrameworkCase>
 
