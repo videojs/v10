@@ -1,13 +1,13 @@
 ---
 title: Internationalization
-description: How Video.js translates player UI copy with opaque keys, a global registry, and locale providers
+description: How Video.js translates player UI copy with English phrase keys, a global registry, and locale providers
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js translates control labels, ARIA text, tooltips, and error copy through a single **global registry**. Components ask for strings by **opaque key** (`play`, `pause`, `seekForward`), not by English text, so locale files stay stable when copy changes.
+Video.js translates control labels, ARIA text, tooltips, and error copy through a single **global registry**. Components ask for strings by current English phrase (`Play`, `Pause`, `Seek forward {seconds} seconds`), so missing translations stay readable.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -44,13 +44,13 @@ export function App() {
 
 Register a locale once (or rely on lazy-loaded built-in packs), set `lang`, and skins pick up translated strings automatically.
 
-## Opaque keys
+## Phrase keys
 
-Core controls expose keys, not visible labels. `PlayButtonCore.getLabel()` returns `'play'`; the translator turns that into `'Play'`, `'Reproducir'`, or your override.
+Core controls expose current English phrases. `PlayButtonCore.getLabel()` returns `'Play'`; the translator turns that into `'Play'`, `'Reproducir'`, or your override.
 
-Keys are typed in <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>. TypeScript catches missing `{param}` placeholders and wrong argument names at compile time.
+Phrase params are typed in <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>. TypeScript catches missing `{param}` placeholders and wrong argument names at compile time.
 
-Parametric strings use `{placeholder}` tokens, for example `seekForward: 'Seek forward {seconds} seconds'` and `timeRemainingPhrase: '{duration} remaining'`.
+Parametric strings use `{placeholder}` tokens, for example `'Seek forward {seconds} seconds'` and `'{duration} remaining'`.
 
 ## Global registry
 
@@ -60,7 +60,7 @@ Parametric strings use `{placeholder}` tokens, for example `seekForward: 'Seek f
 | --- | --- |
 | <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> | Add or merge a locale layer |
 | <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink> | Read the merged map for a locale |
-| <DocsLink slug="reference/has-registered-i18n">`hasRegisteredI18n`</DocsLink> | Check whether a tag is in the registry |
+| <DocsLink slug="reference/has-registered-locale">`hasRegisteredLocale`</DocsLink> | Check whether a tag is in the registry |
 | <DocsLink slug="reference/on-i18n-registry-change">`onI18nRegistryChange`</DocsLink> | Subscribe to registry updates |
 
 Import from `@videojs/html/i18n` or `@videojs/react/i18n` depending on your framework.
@@ -108,7 +108,7 @@ es-MX  →  es  →  en
 zh-Hant-HK  →  zh-hant  →  zh  →  en
 ```
 
-`getI18nTranslations`, lazy `loadLocale`, and providers all use the same chain via `localeLookupChain`.
+`getI18nTranslations`, lazy `loadLocale`, and providers all use the same chain via `findLocaleKeys`.
 
 ## Merge priority
 
@@ -136,19 +136,19 @@ CDN consumers load self-registering modules:
 ## Common pitfalls
 
 ```tsx
-// ❌ Don't: key is the English word; keys are opaque tokens
-registerI18n('es', { Play: 'Reproducir' });
+// ❌ Don't: old camelCase keys are ignored
+registerI18n('es', { play: 'Reproducir' });
 
 // ✅ Do
-registerI18n('es', { play: 'Reproducir' });
+registerI18n('es', { Play: 'Reproducir' });
 ```
 
 ```tsx
 // ❌ Don't: parametric key without the placeholder
-registerI18n('es', { seekForward: 'Adelante 10 segundos' }); // TS error: missing {seconds}
+registerI18n('es', { 'Seek forward {seconds} seconds': 'Adelante 10 segundos' }); // TS error: missing {seconds}
 
 // ✅ Do
-registerI18n('es', { seekForward: 'Adelantar {seconds} segundos' });
+registerI18n('es', { 'Seek forward {seconds} seconds': 'Adelantar {seconds} segundos' });
 ```
 
 <Aside type="tip">

@@ -13,8 +13,8 @@ import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
 // or @videojs/react/i18n
 
 const t = createTranslator(getI18nTranslations('fr'), 'fr');
-t('play');
-t('seekForward', { seconds: 5 });
+t('Play');
+t('Seek forward {seconds} seconds', { seconds: 5 });
 ```
 
 <UtilReference util="createTranslator" />

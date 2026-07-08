@@ -3,7 +3,7 @@ import { kebabCase } from 'es-toolkit/string';
 const UTIL_SLUG_OVERRIDES: Record<string, string> = {
   registerI18n: 'register-i18n',
   getI18nTranslations: 'get-i18n-translations',
-  hasRegisteredI18n: 'has-registered-i18n',
+  hasRegisteredLocale: 'has-registered-locale',
   onI18nRegistryChange: 'on-i18n-registry-change',
   createI18n: 'create-i18n',
   createTranslator: 'create-translator',

@@ -17,16 +17,14 @@ import es from '@videojs/html/i18n/locales/es';
 ## Definition
 
 ```ts
-type BuiltInLocale =
-  | (typeof BUILT_IN_LOCALES)[number]
-  | (typeof LOCALE_ALIAS_TAGS)[number];
+type BuiltInLocale = (typeof LOCALES)[number];
 ```
 
-`BUILT_IN_LOCALES` lists regional packs (`es`, `pt-BR`, `zh-CN`, …). `LOCALE_ALIAS_TAGS` adds shorthand tags (`pt`, `zh`) that resolve to regional packs through the lookup chain.
+`LOCALES` lists shipped packs (`es`, `pt-BR`, `zh-CN`, …). Bare language tags such as `pt` and `zh` are handled by the normal locale lookup chain when there is a matching registered or loaded layer.
 
 ## Lazy loading
 
-Providers call `loadLocale(tag)` for tags in `SHIPPED_LOCALE_TAGS` when a pack is not already registered. Explicit `registerI18n` or CDN locale modules skip the async gap on first paint.
+Providers call `loadLocale(tag)` for tags in the resolved locale chain when a pack is not already registered. Explicit `registerI18n` or CDN locale modules skip the async gap on first paint.
 
 ## Examples
 
