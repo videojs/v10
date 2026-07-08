@@ -1,10 +1,5 @@
 import type { Locale } from '@videojs/core/i18n';
-import { effectiveLocale, nearestLang, resolveLocaleAttr } from '@videojs/utils/dom';
-
-/** DOM `lang` values are untyped strings; align with core {@link Locale} at the boundary. */
-export function localeFromDomLang(raw: string | undefined): Locale | undefined {
-  return resolveLocaleAttr<Locale>(raw);
-}
+import { effectiveLocale, nearestLang, resolveLangAttr } from '@videojs/utils/dom';
 
 /** Delegates to {@link effectiveLocale}; result is typed as {@link Locale} for player UI. */
 export function resolvePlayerLocale(explicit: Locale | undefined, inherited: Locale | undefined): Locale {
@@ -13,8 +8,8 @@ export function resolvePlayerLocale(explicit: Locale | undefined, inherited: Loc
 
 /** Effective locale for an i18n provider element (explicit `lang` → ancestor `lang` chain → `en`). */
 export function resolveProviderLocale(host: HTMLElement & { lang?: string }): Locale {
-  const explicit = localeFromDomLang(host.lang);
+  const explicit = resolveLangAttr<Locale>(host.lang);
   const root = host.parentElement ?? (typeof document !== 'undefined' ? document.documentElement : null);
-  const inherited = localeFromDomLang(nearestLang(root));
+  const inherited = resolveLangAttr<Locale>(nearestLang(root));
   return resolvePlayerLocale(explicit, inherited);
 }

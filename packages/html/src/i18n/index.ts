@@ -29,7 +29,7 @@ export type {
   CreateI18nResult,
 } from './create-i18n';
 export { createI18n } from './create-i18n';
-export { localeFromDomLang, resolvePlayerLocale, resolveProviderLocale } from './locale';
+export { resolvePlayerLocale, resolveProviderLocale } from './locale';
 export {
   I18nProviderElement,
   I18nProviderMixin,

@@ -34,7 +34,6 @@ export {
   I18nController,
   I18nProviderMixin,
   I18nTextMixin,
-  localeFromDomLang,
   MediaI18nProviderElement,
   MediaTextElement,
   onI18nRegistryChange,
