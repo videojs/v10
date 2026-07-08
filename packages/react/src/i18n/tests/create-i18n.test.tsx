@@ -37,7 +37,7 @@ describe('createI18n', () => {
   it('merges translations prop above registry and lazy built-ins', async () => {
     registerI18n('en', { Play: 'Registry', Pause: 'RegistryPause' });
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) =>
+      loader: async (tag) =>
         tag === 'en'
           ? {
               Play: 'Lazy',
@@ -393,7 +393,7 @@ describe('createI18n', () => {
     });
 
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) => {
+      loader: async (tag) => {
         if (tag === 'en') {
           return { Play: 'EnLazy' };
         }
@@ -440,7 +440,7 @@ describe('createI18n', () => {
 
   it('loads built-ins for unregistered locales via lazy loader', async () => {
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) => (tag === 'xx' ? { Play: 'BuiltinXX' } : undefined),
+      loader: async (tag) => (tag === 'xx' ? { Play: 'BuiltinXX' } : undefined),
     });
 
     function Probe(): ReactElement {
@@ -485,7 +485,7 @@ describe('createI18n', () => {
     });
 
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) => {
+      loader: async (tag) => {
         if (tag === 'de') {
           return deLoad;
         }
@@ -662,7 +662,7 @@ describe('createI18n', () => {
   it('ignores rejected built-in locale loads', async () => {
     registerI18n('de', { Play: 'RegistryPlay' });
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async () => {
+      loader: async () => {
         throw new Error('load failed');
       },
     });
@@ -748,7 +748,7 @@ describe('createI18n', () => {
     } satisfies Partial<Translations>);
 
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) => (tag === 'fr' ? { Play: 'Lire' } : undefined),
+      loader: async (tag) => (tag === 'fr' ? { Play: 'Lire' } : undefined),
     });
 
     function Probe(): ReactElement {

@@ -276,10 +276,35 @@ describe('Container', () => {
     expect(store.attach).not.toHaveBeenCalled();
   });
 
+  it('does not create an i18n provider by default', async () => {
+    const value = createContextValue();
+    const loader = vi.fn(async (tag: string) => (tag === 'x-container' ? { Play: 'Container play' } : undefined));
+    const { useTranslator } = createI18n({ loader });
+
+    function Label() {
+      const t = useTranslator();
+      return <span>{t('Play')}</span>;
+    }
+
+    render(
+      <div lang="x-container">
+        <PlayerContextProvider value={value}>
+          <Container>
+            <Label />
+          </Container>
+        </PlayerContextProvider>
+      </div>
+    );
+
+    expect(screen.queryByText('Play')).not.toBeNull();
+    await Promise.resolve();
+    expect(loader).not.toHaveBeenCalled();
+  });
+
   it('uses the nearest createI18n provider for lang roots', async () => {
     const value = createContextValue();
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) => (tag === 'x-container' ? { Play: 'Container play' } : undefined),
+      loader: async (tag) => (tag === 'x-container' ? { Play: 'Container play' } : undefined),
     });
 
     function Label() {

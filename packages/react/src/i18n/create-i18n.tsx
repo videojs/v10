@@ -2,7 +2,7 @@
 
 import {
   createTranslator,
-  loadLocale as defaultLoadLocale,
+  loadLocale as defaultLoader,
   findLocaleKeys,
   getBrowserTranslations,
   getI18nTranslations,
@@ -43,7 +43,7 @@ function ambientLangServerSnapshot(): string | undefined {
 
 export interface CreateI18nOptions {
   /** Override lazy loading of shipped locale packs (tests or custom loaders). */
-  loadLocale?: (tag: string) => Promise<Partial<Translations> | undefined>;
+  loader?: (tag: string) => Promise<Partial<Translations> | undefined>;
 }
 
 export interface I18nProviderProps {
@@ -91,8 +91,8 @@ interface I18nProviderRootProps extends I18nProviderProps {
 
 const I18nProviderContext = createContext<I18nProviderComponent | undefined>(undefined);
 
-export function useI18nProvider(): I18nProviderComponent {
-  return useContext(I18nProviderContext) ?? I18nProvider;
+export function useOptionalI18nProvider(): I18nProviderComponent | undefined {
+  return useContext(I18nProviderContext);
 }
 
 export interface CreateI18nResult {
@@ -109,7 +109,7 @@ export interface CreateI18nResult {
  * @public
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
-  const loadLocale = options?.loadLocale ?? defaultLoadLocale;
+  const loader = options?.loader ?? defaultLoader;
   const LocaleRootContext = createContext<AddLocaleRoot | undefined>(undefined);
 
   function I18nProviderRoot({
@@ -204,7 +204,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       const locale = resolvedLocale;
       void (async () => {
         try {
-          const { merged, loadedTags } = await mergeLocaleOverlays(locale, loadLocale, findLocaleKeys);
+          const { merged, loadedTags } = await mergeLocaleOverlays(locale, loader, findLocaleKeys);
           if (seq !== lazySeqRef.current) return;
           if (shouldAttemptBrowserTranslation(locale, loadedTags, merged)) {
             const browser = await getBrowserTranslations(locale);
@@ -285,9 +285,8 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
 const defaultI18n = createI18n();
 
 /**
- * Resolves locale and supplies a typed translator to descendants. Preset skins mount this
- * inside {@link PlayerContainer} with `langRootRef`; use an explicit provider for forced
- * locales, SSR copy, or controls outside the player shell.
+ * Resolves locale and supplies a typed translator to descendants. Mount this explicitly for
+ * translated controls, forced locales, SSR copy, or locale-aware player roots.
  *
  * @public
  */
