@@ -1,6 +1,6 @@
 ---
 title: media-text
-description: HTML custom element that renders a translated string by opaque key
+description: HTML custom element that renders a translated string by phrase
 ---
 
 import DocsLink from "@/components/docs/DocsLink.astro";
@@ -8,11 +8,11 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["html"]}>
 
-`<media-text>` renders the translated value for a registry key inside a <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> (or any ancestor with the i18n provider mixin). Use it for standalone labels, tooltips, or demos — skin controls resolve keys internally.
+`<media-text>` renders the translated value for a registry phrase inside a <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> (or any ancestor with the i18n provider mixin). Use it for standalone labels, tooltips, or demos — skin controls resolve phrases internally.
 
 ```html
 <media-i18n-provider lang="ja">
-  <media-text key="play"></media-text>
+  <media-text key="Play"></media-text>
 </media-i18n-provider>
 ```
 
@@ -20,8 +20,8 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 | Attribute | Description |
 | --- | --- |
-| `key` | Opaque translation key (`play`, `pause`, `timeRemainingPhrase`, …). |
+| `key` | English translation phrase (`Play`, `Pause`, `{duration} remaining`, …). |
 
-Parametric keys are not yet supported on `<media-text>` — use `createTranslator` in script for interpolated strings.
+Parametric phrases are not yet supported on `<media-text>` — use `createTranslator` in script for interpolated strings.
 
 </FrameworkCase>

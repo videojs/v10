@@ -195,7 +195,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/register-i18n', sidebarLabel: 'registerI18n' },
       { slug: 'reference/get-i18n-translations', sidebarLabel: 'getI18nTranslations' },
-      { slug: 'reference/has-registered-i18n', sidebarLabel: 'hasRegisteredI18n' },
+      { slug: 'reference/has-registered-locale', sidebarLabel: 'hasRegisteredLocale' },
       { slug: 'reference/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
       { slug: 'reference/create-translator', sidebarLabel: 'createTranslator' },
       {

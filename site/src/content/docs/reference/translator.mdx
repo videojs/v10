@@ -1,11 +1,11 @@
 ---
 title: Translator
-description: Typed function that resolves opaque translation keys to localized strings
+description: Typed function that resolves English translation phrases to localized strings
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-`Translator` is the callable returned by <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink> and <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink>. It turns opaque keys from core controls into localized copy and interpolates `{placeholder}` tokens when params are required.
+`Translator` is the callable returned by <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink> and <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink>. It turns current English phrases from core controls into localized copy and interpolates `{placeholder}` tokens when params are required.
 
 ## Import
 
@@ -23,10 +23,10 @@ type Translator = <K extends keyof TranslationParams>(
 ) => string;
 ```
 
-- Plain keys: `t('play')`
-- Parametric keys: `t('seekForward', { seconds: 10 })`
+- Plain phrases: `t('Play')`
+- Parametric phrases: `t('Seek forward {seconds} seconds', { seconds: 10 })`
 
-Missing keys in the active map resolve to the key string (`'play'`) so partial locale packs degrade visibly during development.
+Missing phrases in the active map resolve to the source English (`'Play'`) so partial locale packs stay readable.
 
 ## Create manually
 
@@ -35,7 +35,7 @@ import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
 // or @videojs/react/i18n
 
 const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
-t('pause'); // localized or key fallback
+t('Pause'); // localized or English fallback
 ```
 
 ## React hook
@@ -45,11 +45,11 @@ import { useTranslator } from '@videojs/react/i18n';
 
 function Label() {
   const t = useTranslator();
-  return <span>{t('play')}</span>;
+  return <span>{t('Play')}</span>;
 }
 ```
 
-Control components resolve keys from core `getLabel()` through `resolveControlLabel` / `resolveControlAttrs`. You rarely call `t()` directly unless building custom UI.
+Control components resolve phrases from core `getLabel()` through their framework adapters. You rarely call `t()` directly unless building custom UI.
 
 ## Related
 

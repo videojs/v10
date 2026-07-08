@@ -9,7 +9,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["react"]}>
 
-`useTranslator` returns the translator from the nearest <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Control components pass opaque keys from core `getLabel()` — for example `t('play')` and `t('seekForward', { seconds: 10 })`.
+`useTranslator` returns the translator from the nearest <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Control components pass current English phrases from core `getLabel()` — for example `t('Play')` and `t('Seek forward {seconds} seconds', { seconds: 10 })`.
 
 When no provider is mounted, the hook falls back to English registry strings so standalone demos do not throw.
 

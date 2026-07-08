@@ -1,6 +1,6 @@
 ---
 title: Translations
-description: Partial map of opaque translation keys to localized strings
+description: Partial map of English translation phrases to localized strings
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
@@ -34,16 +34,16 @@ import type { Translations } from '@videojs/html/i18n';
 // or @videojs/react/i18n
 
 const es = {
-  play: 'Reproducir',
-  pause: 'Pausa',
-  seekForward: 'Adelantar {seconds} segundos',
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+  'Seek forward {seconds} seconds': 'Adelantar {seconds} segundos',
 } satisfies Partial<Translations>;
 
 registerI18n('es', es);
 ```
 
 ```tsx
-<I18nProvider locale="de" translations={{ play: 'Abspielen' }} />
+<I18nProvider locale="de" translations={{ Play: 'Abspielen' }} />
 ```
 
 Only supplied keys override lower layers. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge priority.

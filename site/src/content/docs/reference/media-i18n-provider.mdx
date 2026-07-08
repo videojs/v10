@@ -10,7 +10,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 `<media-i18n-provider>` applies the i18n provider mixin to a standalone subtree. Built-in `<video-player>` and skins already include this mixin — use the element when rendering **controls outside a player** or when sibling players need different locales.
 
-Register locale strings with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the provider or an ancestor. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for opaque keys and fallback behavior.
+Register locale strings with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the provider or an ancestor. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for phrase keys and fallback behavior.
 
 ```html
 <script type="module">
@@ -22,7 +22,7 @@ Register locale strings with <DocsLink slug="reference/register-i18n">`registerI
 </script>
 
 <media-i18n-provider lang="es">
-  <media-text key="play"></media-text>
+  <media-text key="Play"></media-text>
 </media-i18n-provider>
 ```
 

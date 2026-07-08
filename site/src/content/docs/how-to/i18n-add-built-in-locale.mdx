@@ -13,7 +13,7 @@ This guide is for **contributors** adding or updating shipped packs. App authors
 ### Prerequisites
 
 - Familiarity with <DocsLink slug="concepts/i18n">Internationalization</DocsLink> and <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>
-- English defaults in `packages/core/src/core/i18n/locales/en.ts` as the source of keys
+- English defaults in `packages/core/src/core/i18n/locales/en.ts` as the source of phrases
 
 ## 1. Add the locale file
 
@@ -23,24 +23,24 @@ Create `packages/core/src/core/i18n/locales/{tag}.ts` using the BCP 47 tag as th
 import type { Translations } from '../types';
 
 export default {
-  play: '…',
-  pause: '…',
-  // all keys from en.ts; completeness is preferred
+  Play: '…',
+  Pause: '…',
+  // all phrases from en.ts; completeness is preferred
 } satisfies Partial<Translations>;
 ```
 
-Use **opaque keys** from `en.ts`, not English sentences as keys. Parametric strings must include the same `{placeholder}` tokens (TypeScript enforces this via `satisfies Partial<Translations>`).
+Use the current English phrases from `en.ts`. Parametric strings must include the same `{placeholder}` tokens (TypeScript enforces this via `satisfies Partial<Translations>`).
 
 Copy guidelines:
 
-- `liveBadge`: sentence case (`Live`); skins uppercase via CSS where needed
-- `seek`: slider aria label (`Seek`), not legacy "Progress" wording
-- `timeRemainingPhrase`: `'{duration} remaining'` pattern with `{duration}` placeholder
+- `Live`: sentence case; skins uppercase via CSS where needed
+- `Seek`: slider aria label, not legacy "Progress" wording
+- `'{duration} remaining'`: pattern with `{duration}` placeholder
 - Button and error strings: short aria-label style, aligned with V10 core label usage
 
 ## 2. Register the tag in built-in metadata
 
-Add the tag to `BUILT_IN_LOCALES` in `packages/core/src/core/i18n/built-in-locales.ts`. Add alias tags (`pt`, `zh`) to `LOCALE_ALIAS_TAGS` only when intentional.
+Add the tag to `LOCALES` in `packages/core/src/core/i18n/locales.ts`.
 
 ## 3. Regenerate loaders
 

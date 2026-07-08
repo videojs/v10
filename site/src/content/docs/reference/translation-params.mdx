@@ -1,11 +1,11 @@
 ---
 title: TranslationParams
-description: Typed contract for translation keys and their placeholder arguments
+description: Typed contract for translation phrases and their placeholder arguments
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-`TranslationParams` maps every opaque translation key to its argument shape. Keys with `never` accept only `t('key')`. Keys with an object accept `t('key', { … })` with typed placeholder names.
+`TranslationParams` maps every current English translation phrase to its argument shape. Phrases with `never` accept only `t('Phrase')`. Phrases with an object accept `t('Phrase {value}', { … })` with typed placeholder names.
 
 ## Import
 
@@ -18,45 +18,45 @@ import type { TranslationParams } from '@videojs/html/i18n';
 
 ```ts
 type TranslationParams = {
-  play: never;
-  pause: never;
-  seekForward: { seconds: number | string };
-  timeRemainingPhrase: { duration: string };
+  Play: never;
+  Pause: never;
+  'Seek forward {seconds} seconds': { seconds: number | string };
+  '{duration} remaining': { duration: string };
   // …
 };
 ```
 
-English defaults and the full key list live in `packages/core/src/core/i18n/locales/en.ts`. The authoritative TypeScript map is `packages/core/src/core/i18n/types.ts`.
+English defaults and the full phrase list live in `packages/core/src/core/i18n/locales/en.ts`. The authoritative TypeScript map is `packages/core/src/core/i18n/types.ts`.
 
-## Parametric keys
+## Parametric phrases
 
-| Key | Placeholders | Example English value |
-| --- | --- | --- |
-| `seekForward` | `{seconds}` | `Seek forward {seconds} seconds` |
-| `seekBackward` | `{seconds}` | `Seek backward {seconds} seconds` |
-| `playbackRateAria` | `{rate}` | `Playback rate {rate}` |
-| `timeSliderValueTextRange` | `{current}`, `{duration}` | `{current} of {duration}` |
-| `timeRemainingPhrase` | `{duration}` | `{duration} remaining` |
-| `volumeSliderValueTextMuted` | `{percent}` | `{percent}, muted` |
-| `indicatorVolumeWithValue` | `{value}` | `Volume {value}` |
+| Phrase | Placeholders |
+| --- | --- |
+| `Seek forward {seconds} seconds` | `{seconds}` |
+| `Seek backward {seconds} seconds` | `{seconds}` |
+| `Playback rate {rate}` | `{rate}` |
+| `{current} of {duration}` | `{current}`, `{duration}` |
+| `{duration} remaining` | `{duration}` |
+| `{percent}, muted` | `{percent}` |
+| `Volume {value}` | `{value}` |
 
-All other keys are plain strings with no parameters.
+All other phrases are plain strings with no parameters.
 
 ## Usage with Translator
 
 ```ts
 const t: Translator = createTranslator(translations, 'es');
 
-t('play');
-t('seekForward', { seconds: 10 });
-t('timeRemainingPhrase', { duration: '1 minute' });
+t('Play');
+t('Seek forward {seconds} seconds', { seconds: 10 });
+t('{duration} remaining', { duration: '1 minute' });
 ```
 
 TypeScript rejects missing placeholders when defining <DocsLink slug="reference/translations">`Translations`</DocsLink> overlays:
 
 ```ts
 registerI18n('es', {
-  seekForward: 'Adelantar', // error: missing {seconds}
+  'Seek forward {seconds} seconds': 'Adelantar', // error: missing {seconds}
 });
 ```
 
@@ -64,4 +64,4 @@ registerI18n('es', {
 
 - <DocsLink slug="reference/translations">`Translations`</DocsLink>
 - <DocsLink slug="reference/translator">`Translator`</DocsLink>
-- <DocsLink slug="concepts/i18n">Internationalization</DocsLink>: Opaque keys overview
+- <DocsLink slug="concepts/i18n">Internationalization</DocsLink>: Phrase keys overview

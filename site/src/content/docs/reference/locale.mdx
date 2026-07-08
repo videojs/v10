@@ -24,7 +24,7 @@ The `(string & {})` pattern keeps custom tags (`'xx'`, `'en-US'`) type-safe with
 
 ## Resolution
 
-Providers and `getI18nTranslations` normalize tags and walk the parent chain (`es-MX` → `es` → `en`) via `localeLookupChain`. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for explicit vs ambient resolution.
+Providers and `getI18nTranslations` normalize tags and walk the parent chain (`es-MX` → `es` → `en`) via `findLocaleKeys`. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for explicit vs ambient resolution.
 
 ## Examples
 

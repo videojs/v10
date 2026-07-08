@@ -7,12 +7,12 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Register strings once with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the page or pass `locale` to a provider. Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to opaque keys and the registry.
+Register strings once with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the page or pass `locale` to a provider. Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to phrase keys and the registry.
 
 ### Prerequisites
 
 - A locale tag ([BCP 47](https://www.rfc-editor.org/rfc/rfc5646), e.g. `es`, `pt-BR`)
-- A partial translation map keyed by camelCase tokens (`play`, `pause`, …)
+- A partial translation map keyed by current English phrases (`Play`, `Pause`, …)
 
 ## Use a shipped pack
 
@@ -74,10 +74,10 @@ Preset skins use `Container`, which includes <DocsLink slug="reference/i18n-prov
 import type { Translations } from '@videojs/html/i18n';
 
 const es = {
-  play: 'Reproducir',
-  pause: 'Pausa',
-  mute: 'Silenciar',
-  unmute: 'Activar sonido',
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+  Mute: 'Silenciar',
+  Unmute: 'Activar sonido',
 } satisfies Partial<Translations>;
 
 export default es;
@@ -91,10 +91,10 @@ export default es;
 import type { Translations } from '@videojs/react/i18n';
 
 const es = {
-  play: 'Reproducir',
-  pause: 'Pausa',
-  mute: 'Silenciar',
-  unmute: 'Activar sonido',
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+  Mute: 'Silenciar',
+  Unmute: 'Activar sonido',
 } satisfies Partial<Translations>;
 
 export default es;
@@ -138,8 +138,8 @@ CDN locale files import `registerI18n` from the shared `cdn/i18n.js` bundle so e
 import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
 
 registerI18n('es', {
-  play: 'Reproducir',
-  pause: 'Pausa',
+  Play: 'Reproducir',
+  Pause: 'Pausa',
 });
 ```
 
