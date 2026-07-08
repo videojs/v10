@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { I18nProvider } from '../../../i18n';
@@ -7,17 +7,17 @@ import { createPlayerWrapper } from '../../../testing/mocks';
 import { ErrorDialog } from '..';
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   cleanup();
 });
 
 describe('ErrorDialog', () => {
   it('shows translated title, description, and dismiss label when locale is es', () => {
     registerI18n('es', {
-      errorDialogTitle: 'Algo salió mal.',
-      errorDialogDismiss: 'Aceptar',
-      mediaErrorNetwork: 'Error de red.',
-      mediaErrorFallback: 'Ocurrió un error. Inténtalo de nuevo.',
+      'Something went wrong.': 'Algo salió mal.',
+      OK: 'Aceptar',
+      'A network error caused the media download to fail.': 'Error de red.',
+      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
     });
 
     const error = {

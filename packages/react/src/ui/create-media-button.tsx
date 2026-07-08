@@ -1,10 +1,10 @@
 'use client';
 
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
-import { resolveControlAttrs, resolveControlLabel } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { Selector } from '@videojs/store';
-import { isUndefined } from '@videojs/utils/predicate';
+import { isString, isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
@@ -26,6 +26,18 @@ interface MediaButtonConfig<Core extends Required<MediaButtonComponent>> {
   hotkeyAction?: string;
   hotkeyValue?: (props: Record<string, unknown>) => number | undefined;
   tooltipLabel?: (core: Core, state: InferComponentState<Core>) => string | undefined;
+}
+
+type LabelParams = Record<string, string | number>;
+type LabelParamsCore<State> = {
+  getLabelParams?: (state: State) => LabelParams | undefined;
+};
+
+function getLabelParams<Core extends MediaButtonComponent>(
+  core: Core,
+  state: InferComponentState<Core>
+): LabelParams | undefined {
+  return (core as LabelParamsCore<InferComponentState<Core>>).getLabelParams?.(state);
 }
 
 /** Creates a media button React component from a core class and config. */
@@ -89,7 +101,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
-    const label = state ? resolveControlLabel(translator, core, state) : undefined;
+    const label = state ? resolveTranslation(translator, core.getLabel(state), getLabelParams(core, state)) : undefined;
     const tooltipText = state ? (tooltipLabel?.(core, state) ?? label) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
@@ -104,7 +116,15 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return null;
     }
 
-    const attrs = { ...resolveControlAttrs(translator, core, state), 'aria-keyshortcuts': shortcut.aria };
+    const attrs = core.getAttrs(state) as Record<string, unknown>;
+    const ariaLabel = attrs['aria-label'];
+    const resolvedAttrs = {
+      ...attrs,
+      ...(isString(ariaLabel)
+        ? { 'aria-label': resolveTranslation(translator, ariaLabel, getLabelParams(core, state)) }
+        : undefined),
+      'aria-keyshortcuts': shortcut.aria,
+    };
 
     return renderElement(
       'button',
@@ -113,7 +133,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
         state,
         stateAttrMap,
         ref: [forwardedRef, buttonRef],
-        props: [getButtonProps(), elementProps, attrs],
+        props: [getButtonProps(), elementProps, resolvedAttrs],
       }
     );
   });

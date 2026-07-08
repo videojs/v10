@@ -1,7 +1,8 @@
 'use client';
 
-import { resolveControlAttrs, VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
+import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
@@ -116,7 +117,18 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
           thumbRef,
           thumbProps,
           stateAttrMap: VolumeSliderDataAttrs,
-          getAttrs: (sliderState) => resolveControlAttrs(translator, core, sliderState as VolumeSliderCore.State),
+          getAttrs: (sliderState) => {
+            const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
+            return {
+              ...attrs,
+              'aria-label': resolveTranslation(translator, attrs['aria-label']),
+              'aria-valuetext': resolveTranslation(
+                translator,
+                attrs['aria-valuetext'],
+                core.getValueTextParams(sliderState as VolumeSliderCore.State)
+              ),
+            };
+          },
           formatValue: (value) => `${Math.round(value)}%`,
         }}
       >

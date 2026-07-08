@@ -2,7 +2,7 @@
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -13,7 +13,7 @@ import { Menu } from '../../menu';
 import { useCaptionsOptions } from '../use-captions-options';
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   cleanup();
 });
 
@@ -132,7 +132,7 @@ describe('useCaptionsOptions', () => {
 
   it('translates default track labels', () => {
     registerI18n('xx', {
-      menuCaptions: 'Captions translated',
+      Captions: 'Captions translated',
     });
 
     renderCaptionsMenu({

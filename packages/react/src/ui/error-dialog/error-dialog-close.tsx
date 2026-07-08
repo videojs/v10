@@ -2,7 +2,7 @@
 
 import type { AlertDialogCore } from '@videojs/core';
 import { getErrorDialogDismissLabel } from '@videojs/core';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useCallback } from 'react';
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -23,7 +23,7 @@ export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogClosePr
     dialog.close();
   }, [dialog, disabled]);
 
-  const content: ReactNode = children ?? resolveTranslationPhrase(t, getErrorDialogDismissLabel());
+  const content: ReactNode = children ?? resolveTranslation(t, getErrorDialogDismissLabel());
 
   return renderElement(
     'button',

@@ -1,13 +1,8 @@
 'use client';
 
-import {
-  LiveButtonCore,
-  LiveButtonDataAttrs,
-  type LiveButtonMediaState,
-  resolveControlAttrs,
-  resolveControlLabel,
-} from '@videojs/core';
+import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
 import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -75,7 +70,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     if (media) core.setMedia(media);
     const state = media ? core.getState() : null;
-    const labelText = state ? resolveControlLabel(translator, core, state) : undefined;
+    const labelText = state ? resolveTranslation(translator, core.getLabel(state)) : undefined;
 
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
@@ -88,7 +83,8 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
       return null;
     }
 
-    const attrs = resolveControlAttrs(translator, core, state);
+    const attrs = core.getAttrs(state);
+    const labelAttr = attrs['aria-label'];
     const content = children ?? LiveButtonCore.defaultText;
 
     return renderElement(
@@ -98,7 +94,15 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
         state,
         stateAttrMap: LiveButtonDataAttrs,
         ref: [forwardedRef, buttonRef],
-        props: [attrs, { children: content, ...elementProps }, getButtonProps()],
+        props: [
+          attrs,
+          {
+            children: content,
+            ...elementProps,
+            'aria-label': labelAttr ? resolveTranslation(translator, labelAttr) : labelAttr,
+          },
+          getButtonProps(),
+        ],
       }
     );
   }

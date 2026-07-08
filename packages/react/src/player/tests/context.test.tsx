@@ -279,12 +279,12 @@ describe('Container', () => {
   it('uses the nearest createI18n provider for lang roots', async () => {
     const value = createContextValue();
     const { I18nProvider, useTranslator } = createI18n({
-      loadLocale: async (tag) => (tag === 'x-container' ? { play: 'Container play' } : undefined),
+      loadLocale: async (tag) => (tag === 'x-container' ? { Play: 'Container play' } : undefined),
     });
 
     function Label() {
       const t = useTranslator();
-      return <span>{t('play')}</span>;
+      return <span>{t('Play')}</span>;
     }
 
     render(

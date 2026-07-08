@@ -3,10 +3,10 @@
 import {
   createTranslator,
   loadLocale as defaultLoadLocale,
+  findLocaleKeys,
   getBrowserTranslations,
   getI18nTranslations,
   type Locale,
-  localeLookupChain,
   onI18nRegistryChange,
   registerI18n,
   shouldAttemptBrowserTranslation,
@@ -61,13 +61,13 @@ export interface I18nProviderProps {
   langRootRef?: RefObject<Element | null>;
   /**
    * Per-locale string overrides merged on top of the global registry and any lazy built-in
-   * packs for {@link locale}. Use registry keys such as `play`, `pause`, and `replay`—the same
-   * keys returned by core control `getLabel`—not visible button text. Applies to translated
+   * packs for {@link locale}. Use the current English phrases returned by core controls, such as
+   * `Play`, `Pause`, and `Replay`. Applies to translated
    * `aria-label` values and tooltip copy for skin controls wired through `useTranslator`.
    *
    * @example
    * ```tsx
-   * <I18nProvider locale="ja" translations={{ play: '再生', pause: '一時停止' }}>
+   * <I18nProvider locale="ja" translations={{ Play: '再生', Pause: '一時停止' }}>
    *   <VideoSkin />
    * </I18nProvider>
    * ```
@@ -204,7 +204,7 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
       const locale = resolvedLocale;
       void (async () => {
         try {
-          const { merged, loadedTags } = await mergeLocaleOverlays(locale, loadLocale, localeLookupChain);
+          const { merged, loadedTags } = await mergeLocaleOverlays(locale, loadLocale, findLocaleKeys);
           if (seq !== lazySeqRef.current) return;
           if (shouldAttemptBrowserTranslation(locale, loadedTags, merged)) {
             const browser = await getBrowserTranslations(locale);

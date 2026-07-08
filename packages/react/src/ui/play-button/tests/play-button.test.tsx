@@ -1,5 +1,5 @@
 import { cleanup, render, screen } from '@testing-library/react';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createI18n, I18nProvider } from '../../../i18n';
@@ -7,14 +7,14 @@ import { createPlayerWrapper } from '../../../testing/mocks';
 import { PlayButton } from '../play-button';
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   cleanup();
 });
 
 describe('PlayButton', () => {
   it('applies translated aria-label and updates when locale changes', () => {
-    registerI18n('es', { play: 'Reproducir' });
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('es', { Play: 'Reproducir' });
+    registerI18n('fr', { Play: 'Lire' });
 
     const { Wrapper } = createPlayerWrapper({
       paused: true,
@@ -62,7 +62,7 @@ describe('PlayButton', () => {
 
     render(
       <Wrapper>
-        <CustomI18nProvider locale="en" translations={{ play: 'Custom play' }}>
+        <CustomI18nProvider locale="en" translations={{ Play: 'Custom play' }}>
           <PlayButton data-testid="play" />
         </CustomI18nProvider>
       </Wrapper>

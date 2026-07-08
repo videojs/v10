@@ -143,7 +143,7 @@ function CaptionsTrigger(): ReactNode {
           className="media-menu__group"
           value={value}
           onValueChange={setValue}
-          aria-label={t('menuCaptions')}
+          aria-label={t('Captions')}
         >
           {options.map((option) => (
             <Menu.RadioItem

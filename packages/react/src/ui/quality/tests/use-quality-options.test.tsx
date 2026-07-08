@@ -2,7 +2,7 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { MediaVideoRendition } from '@videojs/core';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -12,7 +12,7 @@ import { Menu } from '../../menu';
 import { useQualityOptions } from '../use-quality-options';
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   cleanup();
 });
 
@@ -97,7 +97,7 @@ describe('useQualityOptions', () => {
 
   it('translates default auto labels', () => {
     registerI18n('xx', {
-      menuAutoWithLabel: 'Auto translated ({label})',
+      'Auto ({label})': 'Auto translated ({label})',
     });
 
     renderQualityOptions({

@@ -7,7 +7,7 @@ import {
   onI18nRegistryChange,
   type Translations,
   type Translator,
-} from '@videojs/core/i18n/runtime';
+} from '@videojs/core/i18n';
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 
 export interface I18nContextValue {
