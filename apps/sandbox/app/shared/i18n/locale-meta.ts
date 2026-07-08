@@ -1,9 +1,18 @@
-import { SHIPPED_LOCALE_TAGS } from '@videojs/core/i18n';
+import { LOCALES } from '@videojs/core/i18n';
 
-/** Shipped locale packs (picker + CDN loaders). */
-export const SANDBOX_SHIPPED_LOCALE_TAGS = ['en', ...SHIPPED_LOCALE_TAGS] as const;
+type LocaleAlias = 'pt' | 'zh';
 
-export type SandboxShippedLocaleTag = (typeof SANDBOX_SHIPPED_LOCALE_TAGS)[number];
+function localeAliases(tags: readonly string[]): LocaleAlias[] {
+  const aliases: LocaleAlias[] = [];
+  if (tags.some((tag) => tag.startsWith('pt-'))) aliases.push('pt');
+  if (tags.some((tag) => tag.startsWith('zh-'))) aliases.push('zh');
+  return aliases;
+}
+
+/** Locale packs available through Video.js (picker + CDN loaders). */
+export const SANDBOX_LOCALE_PACKS = ['en', ...LOCALES, ...localeAliases(LOCALES)] as const;
+
+export type SandboxLocalePack = (typeof SANDBOX_LOCALE_PACKS)[number];
 
 /**
  * Chrome Translator API tags (desktop).
@@ -51,11 +60,11 @@ const CHROME_TRANSLATOR_LOCALE_TAGS = [
   'zh-Hant',
 ] as const;
 
-const shippedSandboxLocaleSet = new Set<string>(SANDBOX_SHIPPED_LOCALE_TAGS);
+const sandboxLocalePackSet = new Set<string>(SANDBOX_LOCALE_PACKS);
 
 export type SandboxBrowserLocaleTag = Extract<
   (typeof CHROME_TRANSLATOR_LOCALE_TAGS)[number],
-  Exclude<(typeof CHROME_TRANSLATOR_LOCALE_TAGS)[number], SandboxShippedLocaleTag | 'en'>
+  Exclude<(typeof CHROME_TRANSLATOR_LOCALE_TAGS)[number], SandboxLocalePack | 'en'>
 >;
 
 /**
@@ -63,14 +72,14 @@ export type SandboxBrowserLocaleTag = Extract<
  * Derived from {@link CHROME_TRANSLATOR_LOCALE_TAGS} so unsupported tags never appear in the picker.
  */
 export const SANDBOX_BROWSER_LOCALE_TAGS: readonly SandboxBrowserLocaleTag[] = CHROME_TRANSLATOR_LOCALE_TAGS.filter(
-  (tag): tag is SandboxBrowserLocaleTag => tag !== 'en' && !shippedSandboxLocaleSet.has(tag)
+  (tag): tag is SandboxBrowserLocaleTag => tag !== 'en' && !sandboxLocalePackSet.has(tag)
 );
 
 /** All tags exposed in the sandbox language picker. */
-export type SandboxLocaleTag = SandboxShippedLocaleTag | SandboxBrowserLocaleTag;
+export type SandboxLocaleTag = SandboxLocalePack | SandboxBrowserLocaleTag;
 
 export const SANDBOX_LOCALE_TAGS: readonly SandboxLocaleTag[] = [
-  ...SANDBOX_SHIPPED_LOCALE_TAGS,
+  ...SANDBOX_LOCALE_PACKS,
   ...SANDBOX_BROWSER_LOCALE_TAGS,
 ];
 
@@ -109,6 +118,6 @@ function localeOptions(tags: readonly SandboxLocaleTag[]): SandboxLocaleOption[]
 export const SANDBOX_LOCALE_OPTIONS = localeOptions(SANDBOX_LOCALE_TAGS);
 
 export const SANDBOX_LOCALE_OPTION_GROUPS: SandboxLocaleOptionGroup[] = [
-  { label: 'Built-in packs', options: localeOptions(SANDBOX_SHIPPED_LOCALE_TAGS) },
+  { label: 'Built-in packs', options: localeOptions(SANDBOX_LOCALE_PACKS) },
   { label: 'Browser API only', options: localeOptions(SANDBOX_BROWSER_LOCALE_TAGS) },
 ];
