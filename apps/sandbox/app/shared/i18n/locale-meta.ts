@@ -1,13 +1,4 @@
-import { LOCALES } from '@videojs/core/i18n';
-
-type LocaleAlias = 'pt' | 'zh';
-
-function localeAliases(tags: readonly string[]): LocaleAlias[] {
-  const aliases: LocaleAlias[] = [];
-  if (tags.some((tag) => tag.startsWith('pt-'))) aliases.push('pt');
-  if (tags.some((tag) => tag.startsWith('zh-'))) aliases.push('zh');
-  return aliases;
-}
+import { LOCALES, localeAliases } from '@videojs/core/i18n';
 
 /** Locale packs available through Video.js (picker + CDN loaders). */
 export const SANDBOX_LOCALE_PACKS = ['en', ...LOCALES, ...localeAliases(LOCALES)] as const;

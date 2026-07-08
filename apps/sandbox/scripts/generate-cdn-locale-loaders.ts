@@ -1,19 +1,12 @@
 import { writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-import { LOCALES } from '@videojs/core/i18n';
+import { LOCALES, localeAliases } from '@videojs/core/i18n';
 
 const outPath = resolve(import.meta.dirname, '../app/shared/i18n/cdn-locale-loaders.generated.ts');
 
 function localeObjectKey(tag: string): string {
   return /^[A-Za-z_$][A-Za-z0-9_$]*$/.test(tag) ? tag : `'${tag}'`;
-}
-
-function localeAliases(tags: readonly string[]): string[] {
-  const aliases: string[] = [];
-  if (tags.some((tag) => tag.startsWith('pt-'))) aliases.push('pt');
-  if (tags.some((tag) => tag.startsWith('zh-'))) aliases.push('zh');
-  return aliases;
 }
 
 const localePacks = [...LOCALES, ...localeAliases(LOCALES)];

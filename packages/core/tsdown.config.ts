@@ -2,17 +2,7 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import packageJson from './package.json' with { type: 'json' };
-import { LOCALES } from './src/core/i18n/locales.ts';
-
-function localeAliases(tags: readonly string[]): string[] {
-  const counts = new Map<string, number>();
-  for (const tag of tags) {
-    if (!tag.includes('-')) continue;
-    const lang = tag.split('-')[0];
-    counts.set(lang, (counts.get(lang) ?? 0) + 1);
-  }
-  return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang);
-}
+import { LOCALES, localeAliases } from './src/core/i18n/locales.ts';
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 

@@ -4,19 +4,9 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
-import { LOCALES } from '../core/src/core/i18n/locales.ts';
+import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
-
-function localeAliases(tags: readonly string[]): string[] {
-  const counts = new Map<string, number>();
-  for (const tag of tags) {
-    if (!tag.includes('-')) continue;
-    const lang = tag.split('-')[0];
-    counts.set(lang, (counts.get(lang) ?? 0) + 1);
-  }
-  return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang);
-}
 
 const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
