@@ -7,9 +7,21 @@ import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
-import { SHIPPED_LOCALE_TAGS } from '../core/src/core/i18n/locales.ts';
+import { LOCALES } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
+
+function localeAliases(tags: readonly string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const tag of tags) {
+    if (!tag.includes('-')) continue;
+    const lang = tag.split('-')[0];
+    counts.set(lang, (counts.get(lang) ?? 0) + 1);
+  }
+  return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang);
+}
+
+const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const defineEntries = Object.fromEntries(
   globSync('src/define/**/*.ts')
@@ -37,7 +49,7 @@ const iconEntries = Object.fromEntries(
 const i18nLocaleEntries = Object.fromEntries([
   ['i18n/locales/all', 'src/i18n/locales/all.ts'],
   ['i18n/locales/en', 'src/i18n/locales/en.ts'],
-  ...SHIPPED_LOCALE_TAGS.map((tag) => [`i18n/locales/${tag}`, `src/i18n/locales/${tag}.ts`]),
+  ...localeTags.map((tag) => [`i18n/locales/${tag}`, `src/i18n/locales/${tag}.ts`]),
 ]);
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
