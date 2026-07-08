@@ -4,11 +4,11 @@ import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin: StoreProviderMixin } = createPlayer({
+const { ProviderMixin } = createPlayer({
   features: liveVideoFeatures,
 });
 
-export class LiveVideoPlayerElement extends StoreProviderMixin(MediaElement) {
+export class LiveVideoPlayerElement extends ProviderMixin(MediaElement) {
   static readonly tagName = 'live-video-player';
 }
 

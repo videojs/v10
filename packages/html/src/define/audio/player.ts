@@ -4,11 +4,11 @@ import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';
 import { safeDefine } from '../safe-define';
 
-const { ProviderMixin: StoreProviderMixin } = createPlayer({
+const { ProviderMixin } = createPlayer({
   features: audioFeatures,
 });
 
-export class AudioPlayerElement extends StoreProviderMixin(MediaElement) {
+export class AudioPlayerElement extends ProviderMixin(MediaElement) {
   static readonly tagName = 'audio-player';
 }
 
