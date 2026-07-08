@@ -14,9 +14,9 @@ import {
 } from '@videojs/core/i18n';
 import {
   effectiveLocale,
-  localeFromDomLang,
   mergeLocaleOverlays,
   nearestLang,
+  resolveLocaleAttr,
   subscribeAmbientLang,
 } from '@videojs/utils/dom';
 import {
@@ -163,10 +163,10 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         if (langRootRef) {
           const root = langRootElementRef.current ?? langRootRef.current;
           if (!root) return undefined;
-          return localeFromDomLang<Locale>(nearestLang(root));
+          return resolveLocaleAttr<Locale>(nearestLang(root));
         }
         const root = typeof document !== 'undefined' ? document.documentElement : null;
-        return localeFromDomLang<Locale>(nearestLang(root));
+        return resolveLocaleAttr<Locale>(nearestLang(root));
       },
       ambientLangServerSnapshot
     );
