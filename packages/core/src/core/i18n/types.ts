@@ -70,8 +70,14 @@ export type TranslationParams = {
 
 export type TranslationKey = keyof TranslationParams;
 
+type ParametricKey = {
+  [K in keyof TranslationParams]: TranslationParams[K] extends never ? never : K;
+}[keyof TranslationParams];
+
+type EnsureParametricTranslations<Translations extends Record<ParametricKey, string>> = Translations;
+
 /** Placeholder shape for each phrase that accepts `t(phrase, params)`. */
-type ParametricTranslations = {
+type ParametricTranslations = EnsureParametricTranslations<{
   'Seek forward {seconds} seconds': Contains<'{seconds}'>;
   'Seek backward {seconds} seconds': Contains<'{seconds}'>;
   'Playback rate {rate}': Contains<'{rate}'>;
@@ -83,7 +89,7 @@ type ParametricTranslations = {
   '{percent}, muted': Contains<'{percent}'>;
   'Volume {value}': Contains<'{value}'>;
   'Auto ({label})': Contains<'{label}'>;
-};
+}>;
 
 /** Player copy keyed by the default English UI string; all entries are optional overlays. */
 export type Translations = {
