@@ -1,4 +1,6 @@
 import { SimpleHlsAudioOnlyMediaMixin } from '@videojs/spf/hls';
 import { HTMLAudioElementHost } from '../audio-host';
 
-export class SimpleHlsAudioOnlyMedia extends SimpleHlsAudioOnlyMediaMixin(HTMLAudioElementHost) {}
+const SimpleHlsAudioOnlyMediaBase = SimpleHlsAudioOnlyMediaMixin(HTMLAudioElementHost);
+
+export class SimpleHlsAudioOnlyMedia extends SimpleHlsAudioOnlyMediaBase {}

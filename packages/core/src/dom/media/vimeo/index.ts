@@ -46,7 +46,9 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   config: {},
 };
 
-export class VimeoMedia extends MediaPlayedRangesMixin(EventTarget) implements Partial<Video> {
+const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
+
+export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
   #loadComplete = createPublicPromise<void>();

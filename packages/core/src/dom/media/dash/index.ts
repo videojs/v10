@@ -11,8 +11,10 @@ export const dashMediaDefaultProps: DashMediaProps = {
   src: '',
 };
 
+const DashMediaBase = MediaTracksMixin(HTMLVideoElementHost);
+
 export class DashMedia
-  extends MediaTracksMixin(HTMLVideoElementHost)
+  extends DashMediaBase
   implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
 {
   #engine: dashjs.MediaPlayerClass;
