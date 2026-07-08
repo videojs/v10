@@ -20,3 +20,4 @@ export {
 export { resolveTranslation } from './resolve-translation';
 export { createTranslator } from './translator';
 export type * from './types';
+export type { Contains } from '@videojs/utils/types';
