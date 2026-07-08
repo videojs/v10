@@ -261,7 +261,7 @@ function SettingsMenu(): ReactNode {
                     className="media-menu__group"
                     value={playbackRate.value}
                     onValueChange={playbackRate.setValue}
-                    aria-label={t('menuPlaybackRate')}
+                    aria-label={t('Playback rate')}
                   >
                     {playbackRate.options.map((option) => (
                       <Menu.RadioItem
