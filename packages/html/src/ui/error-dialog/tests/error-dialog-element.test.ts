@@ -69,9 +69,9 @@ describe('ErrorDialogElement', () => {
 
   it('shows translated dialog copy when es locale is registered', async () => {
     registerI18n('es', {
-      errorDialogTitle: 'Algo salió mal.',
-      errorDialogDismiss: 'Aceptar',
-      mediaErrorFallback: 'Ocurrió un error. Inténtalo de nuevo.',
+      'Something went wrong.': 'Algo salió mal.',
+      OK: 'Aceptar',
+      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
@@ -98,9 +98,9 @@ describe('ErrorDialogElement', () => {
 
   it('preserves authored title copy', async () => {
     registerI18n('es', {
-      errorDialogTitle: 'Algo salió mal.',
-      errorDialogDismiss: 'Aceptar',
-      mediaErrorFallback: 'Ocurrió un error. Inténtalo de nuevo.',
+      'Something went wrong.': 'Algo salió mal.',
+      OK: 'Aceptar',
+      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);

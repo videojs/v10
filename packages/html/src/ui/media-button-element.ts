@@ -24,15 +24,15 @@ import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controll
 import { MediaElement } from './media-element';
 
 type LabelParams = Record<string, string | number>;
-type LabelParamsCore<State> = {
-  getLabelParams?: (state: State) => LabelParams | undefined;
+type LabelParamsCore<Core extends MediaButtonComponent> = Core & {
+  getLabelParams?: (state: InferComponentState<Core>) => LabelParams | undefined;
 };
 
 function getLabelParams<Core extends MediaButtonComponent>(
   core: Core,
   state: InferComponentState<Core>
 ): LabelParams | undefined {
-  return (core as LabelParamsCore<InferComponentState<Core>>).getLabelParams?.(state);
+  return (core as LabelParamsCore<Core>).getLabelParams?.(state);
 }
 
 /** Abstract base for HTML custom elements that render a media-control button. */
@@ -119,7 +119,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   getResolvedLabel(): string | undefined {
     const media = this.mediaState.value;
     if (!media) return undefined;
-    const state = this.core.getState();
+    const state = this.core.getState() as InferComponentState<Core>;
     return resolveTranslation(this.#i18n.value, this.core.getLabel(state), getLabelParams(this.core, state));
   }
 
@@ -138,7 +138,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     if (!media) return;
 
     this.core.setMedia(media);
-    const state = this.core.getState();
+    const state = this.core.getState() as InferComponentState<Core>;
     const attrs = (this.core.getAttrs?.(state) ?? {}) as Record<string, unknown>;
     if (typeof attrs['aria-label'] === 'string') {
       attrs['aria-label'] = resolveTranslation(this.#i18n.value, attrs['aria-label'], getLabelParams(this.core, state));

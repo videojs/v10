@@ -130,12 +130,12 @@ export class ErrorDialogElement extends MediaElement {
 
   #syncDialogCopy(error: MediaError | null): void {
     const t = this.#i18n.value;
-    const title = this.querySelector('media-alert-dialog-title');
+    const title = this.querySelector<HTMLElement>('media-alert-dialog-title');
     if (title && !this.#hasAuthoredCopy(title)) {
       title.textContent = resolveTranslation(t, getErrorDialogTitleLabel());
     }
 
-    const desc = this.querySelector('media-alert-dialog-description');
+    const desc = this.querySelector<HTMLElement>('media-alert-dialog-description');
     if (desc && !this.#hasAuthoredCopy(desc)) {
       const description = error ? resolveErrorDialogDescription(error) : null;
       if (description) {
@@ -145,7 +145,7 @@ export class ErrorDialogElement extends MediaElement {
       desc.textContent = resolveTranslation(t, copy);
     }
 
-    const close = this.querySelector('media-alert-dialog-close');
+    const close = this.querySelector<HTMLElement>('media-alert-dialog-close');
     if (close && !this.#hasAuthoredCopy(close)) {
       close.textContent = resolveTranslation(t, getErrorDialogDismissLabel());
     }
