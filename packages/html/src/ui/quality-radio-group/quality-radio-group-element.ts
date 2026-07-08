@@ -1,6 +1,6 @@
 import { QUALITY_AUTO_VALUE, QualityRadioGroupCore, QualityRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectQuality } from '@videojs/core/dom';
-import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/runtime';
+import { resolveTranslation, type Translator } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
@@ -10,6 +10,14 @@ import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+
+function resolveAutoLabel(translator: Translator, label: string): string {
+  const match = /^Auto \((.+)\)$/.exec(label);
+  if (match) {
+    return resolveTranslation(translator, 'Auto ({label})', { label: match[1]! });
+  }
+  return resolveTranslation(translator, label);
+}
 
 export class QualityRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-quality-radio-group';
@@ -61,7 +69,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.#applyAriaLabel(this.label || 'menuQuality');
+      this.#applyAriaLabel(this.label || 'Quality');
       this.#syncContent(state);
     }
 
@@ -75,13 +83,8 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
     const renditionsKey = `${state.renditions
-      .map(
-        (rendition) =>
-          `${rendition.value}:${rendition.label}:${rendition.labelKey ?? ''}:${rendition.tier ?? ''}:${rendition.badge ?? ''}`
-      )
-      .join(
-        '|'
-      )}::${state.autoLabel}:${state.autoLabelKey ?? ''}:${state.autoLabelParams?.label ?? ''}::${this.#i18n.locale}::${templateKey}`;
+      .map((rendition) => `${rendition.value}:${rendition.label}:${rendition.tier ?? ''}:${rendition.badge ?? ''}`)
+      .join('|')}::${state.autoLabel}::${this.#i18n.locale}::${templateKey}`;
 
     if (renditionsKey !== this.#renditionsKey || translator !== this.#renditionsTranslator) {
       this.#renditionsKey = renditionsKey;
@@ -95,7 +98,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       this.append(
         this.#createItem(
           QUALITY_AUTO_VALUE,
-          resolveTranslationPhrase(translator, state.autoLabelKey ?? state.autoLabel, state.autoLabelParams),
+          resolveAutoLabel(translator, state.autoLabel),
           undefined,
           undefined,
           template
@@ -105,7 +108,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
         ...state.renditions.map((rendition) =>
           this.#createItem(
             rendition.value,
-            resolveTranslationPhrase(translator, rendition.labelKey ?? rendition.label),
+            resolveTranslation(translator, rendition.label),
             rendition.tier,
             rendition.badge,
             template
@@ -192,7 +195,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     const current = this.getAttribute('aria-label');
     if (current !== null && current !== this.#ariaLabel) return;
 
-    this.#ariaLabel = resolveTranslationPhrase(this.#i18n.value, label);
+    this.#ariaLabel = resolveTranslation(this.#i18n.value, label);
     this.setAttribute('aria-label', this.#ariaLabel);
   }
 

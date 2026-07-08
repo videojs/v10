@@ -5,7 +5,7 @@ import type {
   MediaTextTrackState,
 } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -167,7 +167,7 @@ function setup(
 
 describe('MenuItemValueElement', () => {
   afterEach(() => {
-    resetI18nRegistryForTesting();
+    resetI18nRegistry();
     document.body.innerHTML = '';
   });
 
@@ -224,7 +224,7 @@ describe('MenuItemValueElement', () => {
   });
 
   it('renders the active quality label when quality is automatic', async () => {
-    registerI18n('x-test-quality-hint', { menuAutoWithLabel: 'Automatico ({label})' });
+    registerI18n('x-test-quality-hint', { 'Auto ({label})': 'Automatico ({label})' });
     const { value } = setup(
       createQualityStore({
         activeVideoRendition: { id: '1', height: 720, selected: false },
@@ -274,7 +274,7 @@ describe('MenuItemValueElement', () => {
   });
 
   it('translates the fallback audio track label', async () => {
-    registerI18n('x-test-audio-hint', { menuAudioTrack: 'Audio test' });
+    registerI18n('x-test-audio-hint', { Audio: 'Audio test' });
     const { value } = setup(
       createAudioTrackStore({
         audioTrackList: [
@@ -293,7 +293,7 @@ describe('MenuItemValueElement', () => {
   });
 
   it('renders the active caption track label', async () => {
-    registerI18n('x-test-captions-hint', { menuCaptions: 'Legendes' });
+    registerI18n('x-test-captions-hint', { Captions: 'Legendes' });
     const { value } = setup(
       createTextTrackStore({
         textTrackList: [

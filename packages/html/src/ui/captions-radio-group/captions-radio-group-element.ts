@@ -1,6 +1,6 @@
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
-import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/runtime';
+import { resolveTranslation, type Translator } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
@@ -60,7 +60,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.#applyAriaLabel(this.label || 'menuCaptions');
+      this.#applyAriaLabel(this.label || 'Captions');
       this.#syncContent(state);
     }
 
@@ -73,7 +73,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
-    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}:${track.labelKey ?? ''}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
     if (tracksKey !== this.#tracksKey || translator !== this.#tracksTranslator) {
       this.#tracksKey = tracksKey;
@@ -84,10 +84,10 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
         child.remove();
       }
 
-      this.append(this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslationPhrase(translator, 'menuOff'), template));
+      this.append(this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslation(translator, 'Off'), template));
       this.append(
         ...state.tracks.map((track) =>
-          this.#createItem(track.value, resolveTranslationPhrase(translator, track.labelKey ?? track.label), template)
+          this.#createItem(track.value, resolveTranslation(translator, track.label), template)
         )
       );
     }
@@ -150,7 +150,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     const current = this.getAttribute('aria-label');
     if (current !== null && current !== this.#ariaLabel) return;
 
-    this.#ariaLabel = resolveTranslationPhrase(this.#i18n.value, label);
+    this.#ariaLabel = resolveTranslation(this.#i18n.value, label);
     this.setAttribute('aria-label', this.#ariaLabel);
   }
 

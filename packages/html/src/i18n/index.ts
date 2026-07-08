@@ -10,9 +10,9 @@ export type {
 
 export {
   createTranslator,
+  findLocaleKeys,
   getI18nTranslations,
-  hasRegisteredI18n,
-  localeLookupChain,
+  hasRegisteredLocale,
   onI18nRegistryChange,
   registerI18n,
 } from '@videojs/core/i18n';

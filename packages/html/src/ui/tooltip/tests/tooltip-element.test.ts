@@ -1,7 +1,7 @@
 import type { ButtonState } from '@videojs/core';
 import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createState, createStore } from '@videojs/store';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -97,7 +97,7 @@ function setup() {
 defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
@@ -177,7 +177,7 @@ describe('TooltipElement', () => {
   });
 
   it('shows translated label from the trigger control', async () => {
-    registerI18n('es', { play: 'Reproducir' });
+    registerI18n('es', { Play: 'Reproducir' });
 
     ensureDefined(TestPlayerProviderElement);
     ensureDefined(PlayButtonElement);
@@ -206,8 +206,8 @@ describe('TooltipElement', () => {
   });
 
   it('updates tooltip text when provider locale changes', async () => {
-    registerI18n('es', { play: 'Reproducir' });
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('es', { Play: 'Reproducir' });
+    registerI18n('fr', { Play: 'Lire' });
 
     ensureDefined(TestPlayerProviderElement);
     ensureDefined(PlayButtonElement);
@@ -242,7 +242,7 @@ describe('TooltipElement', () => {
   });
 
   it('falls back to translating getLabel when getResolvedLabel is undefined', async () => {
-    registerI18n('es', { play: 'Reproducir' });
+    registerI18n('es', { Play: 'Reproducir' });
 
     class StubTrigger extends HTMLElement {
       static readonly tagName = 'stub-tooltip-trigger';
@@ -250,7 +250,7 @@ describe('TooltipElement', () => {
       readonly $state = { subscribe: () => () => {} };
 
       getLabel(): string {
-        return 'play';
+        return 'Play';
       }
 
       getResolvedLabel(): undefined {

@@ -1,5 +1,5 @@
 import * as coreI18n from '@videojs/core/i18n';
-import { registerI18n, resetBrowserTranslationCacheForTesting, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetBrowserTranslationCacheForTesting, resetI18nRegistry } from '@videojs/core/i18n';
 import { ReactiveElement } from '@videojs/element';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -8,7 +8,7 @@ import { MediaI18nProviderElement, MediaTextElement } from '../../i18n/index';
 
 describe('createI18n (HTML)', () => {
   afterEach(async () => {
-    resetI18nRegistryForTesting();
+    resetI18nRegistry();
     resetBrowserTranslationCacheForTesting();
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
@@ -18,7 +18,7 @@ describe('createI18n (HTML)', () => {
   });
 
   it('media-i18n-provider uses explicit lang for registry copy', async () => {
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('fr', { Play: 'Lire' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'fr');
     document.body.appendChild(provider);
@@ -27,11 +27,11 @@ describe('createI18n (HTML)', () => {
   });
 
   it('media-text shows translation key inside provider', async () => {
-    registerI18n('de', { play: 'Los' });
+    registerI18n('de', { Play: 'Los' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await Promise.resolve();
@@ -48,12 +48,12 @@ describe('createI18n (HTML)', () => {
   });
 
   it('media-text keeps child text with a key', async () => {
-    registerI18n('de', { play: 'Los' });
+    registerI18n('de', { Play: 'Los' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
     text.textContent = 'Fallback label';
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await text.updateComplete;
@@ -75,7 +75,7 @@ describe('createI18n (HTML)', () => {
   it('media-text falls back to child text without a provider', async () => {
     const text = new MediaTextElement();
     text.textContent = 'Fallback label';
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     document.body.appendChild(text);
     await text.updateComplete;
     expect(text.textContent).toBe('Fallback label');
@@ -89,11 +89,11 @@ describe('createI18n (HTML)', () => {
   });
 
   it('inherits ambient html lang when provider has no lang', async () => {
-    registerI18n('es', { play: 'Ir' });
+    registerI18n('es', { Play: 'Ir' });
     document.documentElement.lang = 'es';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await Promise.resolve();
@@ -102,12 +102,12 @@ describe('createI18n (HTML)', () => {
   });
 
   it('updates media-text when html lang changes', async () => {
-    registerI18n('x-test-de', { play: 'Los' });
-    registerI18n('x-test-fr', { play: 'Lire' });
+    registerI18n('x-test-de', { Play: 'Los' });
+    registerI18n('x-test-fr', { Play: 'Lire' });
     document.documentElement.lang = 'x-test-de';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await vi.waitFor(() => {
@@ -122,8 +122,8 @@ describe('createI18n (HTML)', () => {
   it('reloads builtin lazy overlays when ambient html lang changes', async () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loadLocale: async (tag) => {
-        if (tag === 'x-test-lazy-de') return { play: 'BuiltinDe' };
-        if (tag === 'x-test-lazy-fr') return { play: 'BuiltinFr' };
+        if (tag === 'x-test-lazy-de') return { Play: 'BuiltinDe' };
+        if (tag === 'x-test-lazy-fr') return { Play: 'BuiltinFr' };
         return undefined;
       },
     });
@@ -135,7 +135,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'x-test-lazy-de';
     const provider = new LazyAmbientProvider();
     const text = new LazyAmbientText();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await vi.waitFor(() => {
@@ -149,12 +149,12 @@ describe('createI18n (HTML)', () => {
   });
 
   it('updates media-text when provider lang changes', async () => {
-    registerI18n('de', { play: 'Los' });
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('de', { Play: 'Los' });
+    registerI18n('fr', { Play: 'Lire' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await vi.waitFor(() => {
@@ -169,8 +169,8 @@ describe('createI18n (HTML)', () => {
   it('discards stale builtin load when provider lang is set right after insert', async () => {
     const { ProviderMixin, TextMixin } = createI18n({
       loadLocale: async (tag) => {
-        if (tag === 'en') return { play: 'BuiltinEn' };
-        if (tag === 'de') return { play: 'BuiltinDe' };
+        if (tag === 'en') return { Play: 'BuiltinEn' };
+        if (tag === 'de') return { Play: 'BuiltinDe' };
         return undefined;
       },
     });
@@ -182,7 +182,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'en';
     const provider = new DriftProvider();
     const text = new DriftText();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
     provider.setAttribute('lang', 'de');
@@ -192,7 +192,7 @@ describe('createI18n (HTML)', () => {
   });
 
   it('shares Lit i18n context between createI18n() factories', async () => {
-    registerI18n('de', { play: 'Los' });
+    registerI18n('de', { Play: 'Los' });
     const { ProviderMixin: AProvider, TextMixin: AText } = createI18n();
     const { TextMixin: BText } = createI18n();
     class SharedProvider extends AProvider(ReactiveElement) {}
@@ -206,8 +206,8 @@ describe('createI18n (HTML)', () => {
     provider.setAttribute('lang', 'de');
     const textSame = new SharedTextA();
     const textOther = new SharedTextB();
-    textSame.setAttribute('key', 'play');
-    textOther.setAttribute('key', 'play');
+    textSame.setAttribute('key', 'Play');
+    textOther.setAttribute('key', 'Play');
     provider.appendChild(textSame);
     provider.appendChild(textOther);
     document.body.appendChild(provider);
@@ -223,7 +223,7 @@ describe('createI18n (HTML)', () => {
       readonly #i18n = new Ctor(this, context);
       override connectedCallback(): void {
         super.connectedCallback();
-        this.textContent = this.#i18n.value('play');
+        this.textContent = this.#i18n.value('Play');
       }
     }
     customElements.define('i18n-probe-fallback', Probe);
@@ -238,7 +238,7 @@ describe('createI18n (HTML)', () => {
     class Probe extends ReactiveElement {
       readonly #i18n = new Ctor(this, context);
       protected override updated(): void {
-        this.textContent = this.#i18n.value('play');
+        this.textContent = this.#i18n.value('Play');
       }
     }
     customElements.define('i18n-probe-fallback-registry', Probe);
@@ -247,7 +247,7 @@ describe('createI18n (HTML)', () => {
     await el.updateComplete;
     expect(el.textContent).toBe('Play');
 
-    registerI18n('en', { play: 'RegistryPlay' });
+    registerI18n('en', { Play: 'RegistryPlay' });
 
     await vi.waitFor(() => {
       expect(el.textContent).toBe('RegistryPlay');
@@ -268,22 +268,22 @@ describe('createI18n (HTML)', () => {
     const second = el.i18n.value;
     expect(second).toBe(first);
 
-    registerI18n('en', { play: 'RegistryPlay' });
+    registerI18n('en', { Play: 'RegistryPlay' });
     await el.updateComplete;
 
     const third = el.i18n.value;
     expect(third).not.toBe(first);
-    expect(third('play')).toBe('RegistryPlay');
+    expect(third('Play')).toBe('RegistryPlay');
   });
 
   it('provider keeps translator stable across unrelated updates', async () => {
-    registerI18n('x-stable', { play: 'StablePlay' });
+    registerI18n('x-stable', { Play: 'StablePlay' });
     const {
       context,
       I18nController: Ctor,
       ProviderMixin,
     } = createI18n({
-      loadLocale: async (tag) => (tag === 'x-stable' ? { pause: 'LazyPause' } : undefined),
+      loadLocale: async (tag) => (tag === 'x-stable' ? { Pause: 'LazyPause' } : undefined),
     });
     class StableProvider extends ProviderMixin(ReactiveElement) {}
     class Probe extends ReactiveElement {
@@ -298,7 +298,7 @@ describe('createI18n (HTML)', () => {
     document.body.appendChild(provider);
 
     await vi.waitFor(() => {
-      expect(probe.i18n.value('pause')).toBe('LazyPause');
+      expect(probe.i18n.value('Pause')).toBe('LazyPause');
     });
 
     const first = probe.i18n.value;
@@ -308,22 +308,22 @@ describe('createI18n (HTML)', () => {
 
     expect(probe.i18n.value).toBe(first);
 
-    registerI18n('x-stable', { replay: 'StableReplay' });
+    registerI18n('x-stable', { Replay: 'StableReplay' });
 
     await vi.waitFor(() => {
       expect(probe.i18n.value).not.toBe(first);
-      expect(probe.i18n.value('replay')).toBe('StableReplay');
+      expect(probe.i18n.value('Replay')).toBe('StableReplay');
     });
   });
 
   it('media-text refreshes fallback English without a provider when the registry changes', async () => {
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     document.body.appendChild(text);
     await text.updateComplete;
     expect(text.textContent).toBe('Play');
 
-    registerI18n('en', { play: 'RegistryPlay' });
+    registerI18n('en', { Play: 'RegistryPlay' });
 
     await vi.waitFor(() => {
       expect(text.textContent).toBe('RegistryPlay');
@@ -331,12 +331,12 @@ describe('createI18n (HTML)', () => {
   });
 
   it('registers browser translations when no locale pack exists', async () => {
-    vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({ play: 'BrowserPlay' });
+    vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({ Play: 'BrowserPlay' });
 
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'xx');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
 
@@ -346,13 +346,13 @@ describe('createI18n (HTML)', () => {
   });
 
   it('skips browser translation when locale is already registered', async () => {
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('fr', { Play: 'Lire' });
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations');
 
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'fr');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'play');
+    text.setAttribute('key', 'Play');
     provider.appendChild(text);
     document.body.appendChild(provider);
 
@@ -364,11 +364,11 @@ describe('createI18n (HTML)', () => {
 
   it('registers browser translations when a shipped locale pack is missing keys', async () => {
     const getBrowserTranslations = vi.spyOn(coreI18n, 'getBrowserTranslations').mockResolvedValue({
-      menuSettings: 'Paramètres',
+      Settings: 'Paramètres',
     } satisfies Partial<coreI18n.Translations>);
 
     const { ProviderMixin, TextMixin } = createI18n({
-      loadLocale: async (tag) => (tag === 'fr' ? { play: 'Lire' } : undefined),
+      loadLocale: async (tag) => (tag === 'fr' ? { Play: 'Lire' } : undefined),
     });
     class PartialProvider extends ProviderMixin(ReactiveElement) {}
     class PartialText extends TextMixin(ReactiveElement) {}
@@ -378,7 +378,7 @@ describe('createI18n (HTML)', () => {
     const provider = new PartialProvider();
     provider.setAttribute('lang', 'fr');
     const text = new PartialText();
-    text.setAttribute('key', 'menuSettings');
+    text.setAttribute('key', 'Settings');
     provider.appendChild(text);
     document.body.appendChild(provider);
 
@@ -409,10 +409,10 @@ describe('createI18n (HTML)', () => {
     provider.setAttribute('lang', 'fr');
     await Promise.resolve();
 
-    resolveBrowser?.({ play: 'StaleBrowserPlay' });
+    resolveBrowser?.({ Play: 'StaleBrowserPlay' });
     await Promise.resolve();
     await Promise.resolve();
 
-    expect(registerI18nSpy).not.toHaveBeenCalledWith('xx', { play: 'StaleBrowserPlay' });
+    expect(registerI18nSpy).not.toHaveBeenCalledWith('xx', { Play: 'StaleBrowserPlay' });
   });
 });

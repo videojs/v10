@@ -1,4 +1,4 @@
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { afterEach, describe, expect, it } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
@@ -26,7 +26,7 @@ function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
 }
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   document.documentElement.removeAttribute('lang');
   document.body.innerHTML = '';
 });

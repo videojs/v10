@@ -13,7 +13,7 @@ import {
   selectQuality,
   selectTextTrack,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { i18nContext } from '../../i18n/context';
@@ -171,7 +171,7 @@ export class MenuItemElement extends MediaElement {
     this.#settingProvider.setValue({
       type: this.type,
       ...setting,
-      label: resolveTranslationPhrase(this.#i18n.value, setting.label, setting.labelParams),
+      label: resolveTranslation(this.#i18n.value, setting.label, setting.labelParams),
     });
   }
 

@@ -1,6 +1,6 @@
 import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { createHotkey, HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -73,7 +73,7 @@ class TestPlayerProviderElement extends MediaElement {
 defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   document.body.innerHTML = '';
   document.documentElement.removeAttribute('lang');
   vi.restoreAllMocks();
@@ -104,8 +104,8 @@ describe('MediaButtonElement', () => {
   });
 
   it('applies translated aria-label and updates on locale change', async () => {
-    registerI18n('es', { play: 'Reproducir' });
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('es', { Play: 'Reproducir' });
+    registerI18n('fr', { Play: 'Lire' });
 
     ensureDefined(PlayButtonElement);
     ensureDefined(MediaI18nProviderElement);
@@ -131,8 +131,8 @@ describe('MediaButtonElement', () => {
   });
 
   it('updates aria-label when html lang changes and provider has no explicit lang', async () => {
-    registerI18n('de', { play: 'Los' });
-    registerI18n('fr', { play: 'Lire' });
+    registerI18n('de', { Play: 'Los' });
+    registerI18n('fr', { Play: 'Lire' });
     document.documentElement.lang = 'de';
 
     ensureDefined(PlayButtonElement);

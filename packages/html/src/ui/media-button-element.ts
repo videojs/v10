@@ -4,9 +4,7 @@ import type {
   InferMediaState,
   MediaButtonComponent,
   StateAttrMap,
-  TranslationKeyOrString,
 } from '@videojs/core';
-import { resolveControlAttrs, resolveControlLabel } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -15,6 +13,7 @@ import {
   logMissingFeature,
   type UIEvent,
 } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
@@ -23,6 +22,18 @@ import { I18nController } from '../i18n/controller';
 import type { PlayerController } from '../player/player-controller';
 import { AriaKeyShortcutsController } from './hotkey/aria-key-shortcuts-controller';
 import { MediaElement } from './media-element';
+
+type LabelParams = Record<string, string | number>;
+type LabelParamsCore<State> = {
+  getLabelParams?: (state: State) => LabelParams | undefined;
+};
+
+function getLabelParams<Core extends MediaButtonComponent>(
+  core: Core,
+  state: InferComponentState<Core>
+): LabelParams | undefined {
+  return (core as LabelParamsCore<InferComponentState<Core>>).getLabelParams?.(state);
+}
 
 /** Abstract base for HTML custom elements that render a media-control button. */
 export abstract class MediaButtonElement<Core extends MediaButtonComponent> extends MediaElement {
@@ -96,7 +107,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   }
 
   /** Returns the button's current label derived from media state. */
-  getLabel(): TranslationKeyOrString | undefined {
+  getLabel(): string | undefined {
     return this.core.state.current.label || undefined;
   }
 
@@ -109,7 +120,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
     const media = this.mediaState.value;
     if (!media) return undefined;
     const state = this.core.getState();
-    return resolveControlLabel(this.#i18n.value, this.core, state);
+    return resolveTranslation(this.#i18n.value, this.core.getLabel(state), getLabelParams(this.core, state));
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -128,8 +139,12 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
 
     this.core.setMedia(media);
     const state = this.core.getState();
+    const attrs = (this.core.getAttrs?.(state) ?? {}) as Record<string, unknown>;
+    if (typeof attrs['aria-label'] === 'string') {
+      attrs['aria-label'] = resolveTranslation(this.#i18n.value, attrs['aria-label'], getLabelParams(this.core, state));
+    }
     applyElementProps(this, {
-      ...resolveControlAttrs(this.#i18n.value, this.core, state),
+      ...attrs,
       'aria-keyshortcuts': this.#hotkeyRegistry?.aria,
     });
     applyStateDataAttrs(this, state, this.stateAttrMap);

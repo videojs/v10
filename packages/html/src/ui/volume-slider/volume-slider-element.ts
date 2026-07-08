@@ -1,4 +1,4 @@
-import { resolveControlAttrs, VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
+import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -9,6 +9,7 @@ import {
   type SliderApi,
   selectVolume,
 } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
@@ -128,6 +129,7 @@ export class VolumeSliderElement extends MediaElement {
     const state = this.#core.getState();
 
     const cssVars = getSliderCSSVars(this.#slider.adjustForAlignment(state));
+    const thumbAttrs = this.#core.getAttrs(state);
 
     applyStyles(this, cssVars);
 
@@ -139,7 +141,15 @@ export class VolumeSliderElement extends MediaElement {
       state,
       stateAttrMap: VolumeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
-      thumbAttrs: resolveControlAttrs(this.#i18n.value, this.#core, state),
+      thumbAttrs: {
+        ...thumbAttrs,
+        'aria-label': resolveTranslation(this.#i18n.value, thumbAttrs['aria-label']),
+        'aria-valuetext': resolveTranslation(
+          this.#i18n.value,
+          thumbAttrs['aria-valuetext'],
+          this.#core.getValueTextParams(state)
+        ),
+      },
       thumbProps: this.#slider.thumbProps,
       formatValue: (value) => `${Math.round(value)}%`,
     });

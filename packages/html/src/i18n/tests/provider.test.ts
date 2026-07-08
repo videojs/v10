@@ -1,4 +1,4 @@
-import { type Locale, registerI18n, resetI18nRegistryForTesting, type Translator } from '@videojs/core/i18n';
+import { type Locale, registerI18n, resetI18nRegistry, type Translator } from '@videojs/core/i18n';
 import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -8,7 +8,7 @@ import { i18nContext, MediaTextElement } from '../index';
 
 const skinTemplate = document.createElement('template');
 skinTemplate.innerHTML =
-  '<button aria-labelledby="settings-label"><media-text id="settings-label" key="menuSettings"></media-text></button>';
+  '<button aria-labelledby="settings-label"><media-text id="settings-label" key="Settings"></media-text></button>';
 
 const missingKeyTemplate = document.createElement('template');
 missingKeyTemplate.innerHTML =
@@ -19,7 +19,7 @@ childTextTemplate.innerHTML =
   '<button aria-labelledby="fallback-label"><media-text id="fallback-label">Fallback label</media-text></button>';
 
 const firstUpdateTemplate = document.createElement('template');
-firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text key="menuSettings"></test-skin-i18n-first-text>';
+firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text key="Settings"></test-skin-i18n-first-text>';
 
 class TestSkinElement extends SkinElement {
   static override readonly template = skinTemplate;
@@ -50,7 +50,7 @@ class TestI18nProviderElement extends ReactiveElement {
   readonly provider = new ContextProvider(this, {
     context: i18nContext,
     initialValue: {
-      translator: ((key: string) => (key === 'menuSettings' ? 'Ancestor settings' : key)) as Translator,
+      translator: ((key: string) => (key === 'Settings' ? 'Ancestor settings' : key)) as Translator,
       locale: 'xx' as Locale,
     },
   });
@@ -87,11 +87,11 @@ if (!customElements.get(MediaTextElement.tagName)) {
 describe('provider', () => {
   afterEach(() => {
     document.body.innerHTML = '';
-    resetI18nRegistryForTesting();
+    resetI18nRegistry();
   });
 
   it('uses its own translator for shadow labels', async () => {
-    registerI18n('xx', { menuSettings: 'Skin settings' });
+    registerI18n('xx', { Settings: 'Skin settings' });
     const root = document.createElement('div');
     root.innerHTML = /*html*/ `
       <test-skin-i18n-provider>
@@ -122,8 +122,8 @@ describe('provider', () => {
   });
 
   it('updates shadow labels when lang changes', async () => {
-    registerI18n('xx', { menuSettings: 'Skin settings' });
-    registerI18n('yy', { menuSettings: 'Other settings' });
+    registerI18n('xx', { Settings: 'Skin settings' });
+    registerI18n('yy', { Settings: 'Other settings' });
     const skin = document.createElement('test-skin-i18n') as TestSkinElement;
     skin.lang = 'xx';
     document.body.append(skin);
@@ -140,7 +140,7 @@ describe('provider', () => {
   });
 
   it('publishes lang before child text updates', async () => {
-    registerI18n('xx', { menuSettings: 'Skin settings' });
+    registerI18n('xx', { Settings: 'Skin settings' });
     const skin = document.createElement('test-skin-i18n-first-update') as TestFirstUpdateElement;
     skin.lang = 'xx';
     document.body.append(skin);

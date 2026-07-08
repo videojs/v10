@@ -21,6 +21,12 @@ export interface MenuItemSettingState {
   availability: 'available' | 'unavailable';
 }
 
+function getAutoLabelState(label: string): Pick<MenuItemSettingState, 'label' | 'labelParams'> {
+  const match = /^Auto \((.+)\)$/.exec(label);
+  if (!match) return { label };
+  return { label: 'Auto ({label})', labelParams: { label: match[1]! } };
+}
+
 export function getMenuItemSettingState(
   type: MenuItemSettingType,
   cores: {
@@ -47,8 +53,7 @@ export function getMenuItemSettingState(
 
     if (state.value === QUALITY_AUTO_VALUE) {
       return {
-        label: state.autoLabelKey ?? state.autoLabel,
-        labelParams: state.autoLabelParams,
+        ...getAutoLabelState(state.autoLabel),
         availability: state.availability,
       };
     }
@@ -56,7 +61,7 @@ export function getMenuItemSettingState(
     const rendition = state.renditions.find((candidate) => candidate.value === state.value);
 
     return {
-      label: rendition?.labelKey ?? rendition?.label ?? 'menuAuto',
+      label: rendition?.label ?? 'Auto',
       availability: state.availability,
     };
   }
@@ -67,7 +72,7 @@ export function getMenuItemSettingState(
     const track = state.tracks.find((candidate) => candidate.value === state.value);
 
     return {
-      label: track?.labelKey ?? track?.label ?? '',
+      label: track?.label ?? '',
       availability: state.availability,
     };
   }
@@ -76,13 +81,13 @@ export function getMenuItemSettingState(
   const state = cores.captions.getState();
 
   if (state.value === CAPTIONS_OFF_VALUE) {
-    return { label: 'menuOff', availability: state.availability };
+    return { label: 'Off', availability: state.availability };
   }
 
   const track = state.tracks.find((candidate) => candidate.value === state.value);
 
   return {
-    label: track?.labelKey ?? track?.label ?? 'menuOff',
+    label: track?.label ?? 'Off',
     availability: state.availability,
   };
 }

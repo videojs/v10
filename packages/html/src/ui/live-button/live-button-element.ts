@@ -1,11 +1,4 @@
-import {
-  LiveButtonCore,
-  LiveButtonDataAttrs,
-  type LiveButtonMediaState,
-  resolveControlAttrs,
-  resolveControlLabel,
-  type TranslationKeyOrString,
-} from '@videojs/core';
+import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -15,6 +8,7 @@ import {
   selectLive,
   selectTime,
 } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import type { State } from '@videojs/store';
 
@@ -88,7 +82,7 @@ export class LiveButtonElement extends MediaElement {
   }
 
   /** Returns the button's current label derived from media state. */
-  getLabel(): TranslationKeyOrString | undefined {
+  getLabel(): string | undefined {
     return this.core.state.current.label || undefined;
   }
 
@@ -97,7 +91,7 @@ export class LiveButtonElement extends MediaElement {
     const media = this.#getMedia();
     if (!media) return undefined;
     const state = this.core.getState();
-    return resolveControlLabel(this.#i18n.value, this.core, state);
+    return resolveTranslation(this.#i18n.value, this.core.getLabel(state));
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -113,7 +107,11 @@ export class LiveButtonElement extends MediaElement {
 
     this.core.setMedia(media);
     const state = this.core.getState();
-    applyElementProps(this, resolveControlAttrs(this.#i18n.value, this.core, state));
+    const attrs = this.core.getAttrs(state);
+    applyElementProps(this, {
+      ...attrs,
+      'aria-label': resolveTranslation(this.#i18n.value, attrs['aria-label']),
+    });
     applyStateDataAttrs(this, state, LiveButtonDataAttrs);
   }
 

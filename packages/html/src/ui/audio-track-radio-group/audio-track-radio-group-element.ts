@@ -1,6 +1,6 @@
 import { AudioTrackRadioGroupCore, AudioTrackRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
-import { resolveTranslationPhrase, type Translator } from '@videojs/core/i18n/runtime';
+import { resolveTranslation, type Translator } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
@@ -61,7 +61,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.#applyAriaLabel(this.label || 'menuAudioTrack');
+      this.#applyAriaLabel(this.label || 'Audio');
       if (state.disabled) {
         this.setAttribute('aria-disabled', 'true');
       } else {
@@ -79,7 +79,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
     const template = this.#getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
-    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}:${track.labelKey ?? ''}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
     if (tracksKey !== this.#tracksKey || translator !== this.#tracksTranslator) {
       this.#tracksKey = tracksKey;
@@ -92,7 +92,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
 
       this.append(
         ...state.tracks.map((track) =>
-          this.#createItem(track.value, resolveTranslationPhrase(translator, track.labelKey ?? track.label), template)
+          this.#createItem(track.value, resolveTranslation(translator, track.label), template)
         )
       );
     }
@@ -155,7 +155,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
     const current = this.getAttribute('aria-label');
     if (current !== null && current !== this.#ariaLabel) return;
 
-    this.#ariaLabel = resolveTranslationPhrase(this.#i18n.value, label);
+    this.#ariaLabel = resolveTranslation(this.#i18n.value, label);
     this.setAttribute('aria-label', this.#ariaLabel);
   }
 

@@ -7,15 +7,13 @@ export type {
 } from '@videojs/core/i18n';
 export {
   createTranslator,
-  DEFAULT_LOCALE,
   getBrowserTranslations,
   getI18nTranslations,
-  hasRegisteredI18n,
+  hasRegisteredLocale,
   loadLocale,
-  localeLookupChain,
   onI18nRegistryChange,
   registerI18n,
   resolveBrowserTranslationTarget,
-  resolveTranslationPhrase,
+  resolveTranslation,
   shouldAttemptBrowserTranslation,
 } from '@videojs/core/i18n';

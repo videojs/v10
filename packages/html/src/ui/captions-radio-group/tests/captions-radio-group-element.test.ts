@@ -1,6 +1,6 @@
 import type { MediaTextTrackState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
-import { registerI18n, resetI18nRegistryForTesting } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -92,7 +92,7 @@ function setup(locale: string) {
 }
 
 afterEach(() => {
-  resetI18nRegistryForTesting();
+  resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
@@ -102,7 +102,7 @@ describe('CaptionsRadioGroupElement', () => {
 
     await options.updateComplete;
 
-    registerI18n('x-test-captions', { menuCaptions: 'Legendes', menuOff: 'Desactive' });
+    registerI18n('x-test-captions', { Captions: 'Legendes', Off: 'Desactive' });
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];

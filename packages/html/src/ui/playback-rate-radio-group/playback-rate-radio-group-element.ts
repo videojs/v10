@@ -1,6 +1,6 @@
 import { PlaybackRateRadioGroupCore, PlaybackRateRadioGroupDataAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
@@ -146,7 +146,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
     const current = this.getAttribute('aria-label');
     if (current !== null && current !== this.#ariaLabel) return;
 
-    this.#ariaLabel = resolveTranslationPhrase(this.#i18n.value, label, params);
+    this.#ariaLabel = resolveTranslation(this.#i18n.value, label, params);
     this.setAttribute('aria-label', this.#ariaLabel);
   }
 

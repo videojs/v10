@@ -6,7 +6,6 @@ import {
   getErrorDialogTitleLabel,
   type MediaError,
   resolveErrorDialogDescription,
-  type TranslationKeyOrString,
 } from '@videojs/core';
 import {
   type AlertDialogApi,
@@ -16,7 +15,7 @@ import {
   createTransition,
   selectError,
 } from '@videojs/core/dom';
-import { resolveTranslationPhrase } from '@videojs/core/i18n/runtime';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
@@ -46,7 +45,7 @@ export class ErrorDialogElement extends MediaElement {
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
   #lastError: MediaError | null = null;
-  #lastDescription: TranslationKeyOrString | null = null;
+  #lastDescription: string | null = null;
   #seenCopyParts = new WeakSet<HTMLElement>();
   #authoredCopyParts = new WeakSet<HTMLElement>();
 
@@ -133,7 +132,7 @@ export class ErrorDialogElement extends MediaElement {
     const t = this.#i18n.value;
     const title = this.querySelector('media-alert-dialog-title');
     if (title && !this.#hasAuthoredCopy(title)) {
-      title.textContent = resolveTranslationPhrase(t, getErrorDialogTitleLabel());
+      title.textContent = resolveTranslation(t, getErrorDialogTitleLabel());
     }
 
     const desc = this.querySelector('media-alert-dialog-description');
@@ -142,13 +141,13 @@ export class ErrorDialogElement extends MediaElement {
       if (description) {
         this.#lastDescription = description;
       }
-      const copy = description ?? this.#lastDescription ?? 'mediaErrorFallback';
-      desc.textContent = resolveTranslationPhrase(t, copy);
+      const copy = description ?? this.#lastDescription ?? 'An error occurred. Please try again.';
+      desc.textContent = resolveTranslation(t, copy);
     }
 
     const close = this.querySelector('media-alert-dialog-close');
     if (close && !this.#hasAuthoredCopy(close)) {
-      close.textContent = resolveTranslationPhrase(t, getErrorDialogDismissLabel());
+      close.textContent = resolveTranslation(t, getErrorDialogDismissLabel());
     }
   }
 

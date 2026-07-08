@@ -1,6 +1,5 @@
 import {
   createTranslator,
-  DEFAULT_LOCALE,
   getI18nTranslations,
   type Locale,
   onI18nRegistryChange,
@@ -9,6 +8,8 @@ import {
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { I18nContext } from './context';
+
+const DEFAULT_LOCALE = 'en';
 
 let fallbackTranslator: Translator | undefined;
 
