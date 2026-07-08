@@ -13,17 +13,19 @@ const DEFAULT_LOCALE = 'en';
 
 let fallbackTranslator: Translator | undefined;
 
+export type I18nControllerHost = ReactiveControllerHost & HTMLElement;
+
 export function getFallbackTranslator(): Translator {
   fallbackTranslator ??= createTranslator(getI18nTranslations(DEFAULT_LOCALE), DEFAULT_LOCALE);
   return fallbackTranslator;
 }
 
 export class I18nController implements ReactiveController {
-  readonly #host: ReactiveControllerHost & HTMLElement;
-  readonly #consumer: ContextConsumer<I18nContext, ReactiveControllerHost & HTMLElement>;
+  readonly #host: I18nControllerHost;
+  readonly #consumer: ContextConsumer<I18nContext, I18nControllerHost>;
   #unsubscribeRegistry: (() => void) | undefined;
 
-  constructor(host: ReactiveControllerHost & HTMLElement, context: I18nContext) {
+  constructor(host: I18nControllerHost, context: I18nContext) {
     this.#host = host;
     this.#consumer = new ContextConsumer(host, {
       context,
@@ -58,5 +60,6 @@ export class I18nController implements ReactiveController {
 }
 
 export namespace I18nController {
-  export type Constructor = new (host: ReactiveControllerHost & HTMLElement, context: I18nContext) => I18nController;
+  export type Constructor = typeof I18nController;
+  export type Host = I18nControllerHost;
 }

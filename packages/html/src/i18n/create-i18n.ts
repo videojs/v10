@@ -6,7 +6,7 @@ import type { LocaleLoader } from './types';
 
 export interface CreateI18nOptions {
   /** Override lazy loading of shipped locale packs (tests or custom loaders). */
-  loadLocale?: LocaleLoader;
+  loader?: LocaleLoader;
 }
 
 export interface CreateI18nResult {
@@ -18,10 +18,10 @@ export interface CreateI18nResult {
 
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   const ProviderMixin = createI18nProviderMixin({
-    i18nContext,
-    loadLocale: options?.loadLocale,
+    context: i18nContext,
+    loader: options?.loader,
   });
-  const TextMixin = createTextMixin({ i18nContext });
+  const TextMixin = createTextMixin({ context: i18nContext });
 
   return {
     context: i18nContext,

@@ -121,7 +121,7 @@ describe('createI18n (HTML)', () => {
 
   it('reloads builtin lazy overlays when ambient html lang changes', async () => {
     const { ProviderMixin, TextMixin } = createI18n({
-      loadLocale: async (tag) => {
+      loader: async (tag) => {
         if (tag === 'x-test-lazy-de') return { Play: 'BuiltinDe' };
         if (tag === 'x-test-lazy-fr') return { Play: 'BuiltinFr' };
         return undefined;
@@ -168,7 +168,7 @@ describe('createI18n (HTML)', () => {
 
   it('discards stale builtin load when provider lang is set right after insert', async () => {
     const { ProviderMixin, TextMixin } = createI18n({
-      loadLocale: async (tag) => {
+      loader: async (tag) => {
         if (tag === 'en') return { Play: 'BuiltinEn' };
         if (tag === 'de') return { Play: 'BuiltinDe' };
         return undefined;
@@ -283,7 +283,7 @@ describe('createI18n (HTML)', () => {
       I18nController: Ctor,
       ProviderMixin,
     } = createI18n({
-      loadLocale: async (tag) => (tag === 'x-stable' ? { Pause: 'LazyPause' } : undefined),
+      loader: async (tag) => (tag === 'x-stable' ? { Pause: 'LazyPause' } : undefined),
     });
     class StableProvider extends ProviderMixin(ReactiveElement) {}
     class Probe extends ReactiveElement {
@@ -368,7 +368,7 @@ describe('createI18n (HTML)', () => {
     } satisfies Partial<coreI18n.Translations>);
 
     const { ProviderMixin, TextMixin } = createI18n({
-      loadLocale: async (tag) => (tag === 'fr' ? { Play: 'Lire' } : undefined),
+      loader: async (tag) => (tag === 'fr' ? { Play: 'Lire' } : undefined),
     });
     class PartialProvider extends ProviderMixin(ReactiveElement) {}
     class PartialText extends TextMixin(ReactiveElement) {}

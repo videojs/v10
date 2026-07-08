@@ -1,5 +1,4 @@
 import { backgroundFeatures } from '@videojs/core/dom';
-import { I18nProviderMixin } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';
@@ -9,7 +8,7 @@ const { ProviderMixin: StoreProviderMixin } = createPlayer({
   features: backgroundFeatures,
 });
 
-export class BackgroundVideoPlayerElement extends I18nProviderMixin(StoreProviderMixin(MediaElement)) {
+export class BackgroundVideoPlayerElement extends StoreProviderMixin(MediaElement) {
   static readonly tagName = 'background-video-player';
 }
 

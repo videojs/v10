@@ -1,5 +1,4 @@
 import { liveAudioFeatures } from '@videojs/core/dom';
-import { I18nProviderMixin } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { createPlayer } from '../../player/create-player';
 import { MediaElement } from '../../ui/media-element';
@@ -9,7 +8,7 @@ const { ProviderMixin: StoreProviderMixin } = createPlayer({
   features: liveAudioFeatures,
 });
 
-export class LiveAudioPlayerElement extends I18nProviderMixin(StoreProviderMixin(MediaElement)) {
+export class LiveAudioPlayerElement extends StoreProviderMixin(MediaElement) {
   static readonly tagName = 'live-audio-player';
 }
 

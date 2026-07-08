@@ -8,7 +8,7 @@ import type { ReactiveElementMixinBase } from './types';
 export type I18nTextMixin = <Base extends ReactiveElementMixinBase>(Base: Base) => Constructor<ReactiveElement> & Base;
 
 export interface TextMixinConfig {
-  i18nContext: I18nContext;
+  context: I18nContext;
 }
 
 /** Reflected i18n keys are untyped strings; the runtime translator accepts any key. */
@@ -22,7 +22,7 @@ function hasAuthoredContent(host: HTMLElement): boolean {
   return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
 }
 
-export function createTextMixin({ i18nContext }: TextMixinConfig): I18nTextMixin {
+export function createTextMixin({ context }: TextMixinConfig): I18nTextMixin {
   return (Base) => {
     class MediaText extends Base {
       static properties = {
@@ -32,7 +32,7 @@ export function createTextMixin({ i18nContext }: TextMixinConfig): I18nTextMixin
 
       key = '';
 
-      readonly #i18n = new I18nController(this, i18nContext);
+      readonly #i18n = new I18nController(this, context);
       #text: string | undefined;
       #hasAuthoredContent = false;
 

@@ -1,6 +1,6 @@
 import {
   createTranslator,
-  loadLocale as defaultLoadLocale,
+  loadLocale as defaultLoader,
   findLocaleKeys,
   getBrowserTranslations,
   getI18nTranslations,
@@ -23,9 +23,9 @@ import type { LocaleLoader, ReactiveElementMixinBase } from './types';
 const DEFAULT_LOCALE = 'en';
 
 export interface I18nProviderConfig {
-  i18nContext: I18nContext;
+  context: I18nContext;
   /** Override lazy loading of shipped locale packs (tests or custom loaders). */
-  loadLocale?: LocaleLoader | undefined;
+  loader?: LocaleLoader | undefined;
 }
 
 export type I18nProviderMixin = <Base extends ReactiveElementMixinBase>(
@@ -33,8 +33,8 @@ export type I18nProviderMixin = <Base extends ReactiveElementMixinBase>(
 ) => Constructor<ReactiveElement> & Base;
 
 export function createI18nProviderMixin({
-  i18nContext,
-  loadLocale = defaultLoadLocale,
+  context,
+  loader = defaultLoader,
 }: I18nProviderConfig): I18nProviderMixin {
   return <Base extends ReactiveElementMixinBase>(Base: Base) => {
     class I18nProviderElement extends Base {
@@ -46,7 +46,7 @@ export function createI18nProviderMixin({
       lang = '';
 
       readonly #i18nProvider = new ContextProvider(this, {
-        context: i18nContext,
+        context,
         initialValue: {
           translator: getFallbackTranslator(),
           locale: DEFAULT_LOCALE,
@@ -120,7 +120,7 @@ export function createI18nProviderMixin({
         const seq = this.#lazySeq;
         this.#lazyLayer = {};
         void (async () => {
-          const { merged, loadedTags } = await mergeLocaleOverlays(localeSnapshot, loadLocale, findLocaleKeys);
+          const { merged, loadedTags } = await mergeLocaleOverlays(localeSnapshot, loader, findLocaleKeys);
           if (seq !== this.#lazySeq) return;
           if (shouldAttemptBrowserTranslation(localeSnapshot, loadedTags, merged)) {
             const browser = await getBrowserTranslations(localeSnapshot);

@@ -4,7 +4,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SkinElement } from '../../define/skin-element';
-import { i18nContext, MediaTextElement } from '../index';
+import { i18nContext, MediaI18nProviderElement, MediaTextElement } from '../index';
 
 const skinTemplate = document.createElement('template');
 skinTemplate.innerHTML =
@@ -80,6 +80,10 @@ if (!customElements.get('test-skin-i18n-provider')) {
   customElements.define('test-skin-i18n-provider', TestI18nProviderElement);
 }
 
+if (!customElements.get(MediaI18nProviderElement.tagName)) {
+  customElements.define(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
+}
+
 if (!customElements.get(MediaTextElement.tagName)) {
   customElements.define(MediaTextElement.tagName, MediaTextElement);
 }
@@ -90,7 +94,7 @@ describe('provider', () => {
     resetI18nRegistry();
   });
 
-  it('uses its own translator for shadow labels', async () => {
+  it('uses an ancestor translator for shadow labels', async () => {
     registerI18n('xx', { Settings: 'Skin settings' });
     const root = document.createElement('div');
     root.innerHTML = /*html*/ `
@@ -107,7 +111,20 @@ describe('provider', () => {
 
     const button = skin.shadowRoot!.querySelector('button')!;
     expect(button.getAttribute('aria-labelledby')).toBe('settings-label');
-    expect(text.textContent).toBe('Skin settings');
+    expect(text.textContent).toBe('Ancestor settings');
+  });
+
+  it('uses English fallback for shadow labels without a provider', async () => {
+    registerI18n('xx', { Settings: 'Skin settings' });
+    const skin = document.createElement('test-skin-i18n') as TestSkinElement;
+    skin.lang = 'xx';
+    document.body.append(skin);
+
+    await skin.updateComplete;
+    const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
+    await text.updateComplete;
+
+    expect(text.textContent).toBe('Settings');
   });
 
   it('falls back to the key when a shadow label is missing', async () => {
@@ -121,12 +138,14 @@ describe('provider', () => {
     expect(text.textContent).toBe('missingLabel');
   });
 
-  it('updates shadow labels when lang changes', async () => {
+  it('updates shadow labels when provider lang changes', async () => {
     registerI18n('xx', { Settings: 'Skin settings' });
     registerI18n('yy', { Settings: 'Other settings' });
+    const provider = new MediaI18nProviderElement();
     const skin = document.createElement('test-skin-i18n') as TestSkinElement;
-    skin.lang = 'xx';
-    document.body.append(skin);
+    provider.lang = 'xx';
+    provider.append(skin);
+    document.body.append(provider);
 
     await skin.updateComplete;
     const text = skin.shadowRoot!.querySelector(MediaTextElement.tagName) as MediaTextElement;
@@ -134,16 +153,18 @@ describe('provider', () => {
 
     expect(text.textContent).toBe('Skin settings');
 
-    skin.lang = 'yy';
+    provider.lang = 'yy';
 
     await vi.waitFor(() => expect(text.textContent).toBe('Other settings'));
   });
 
-  it('publishes lang before child text updates', async () => {
+  it('publishes provider lang before child text updates', async () => {
     registerI18n('xx', { Settings: 'Skin settings' });
+    const provider = new MediaI18nProviderElement();
     const skin = document.createElement('test-skin-i18n-first-update') as TestFirstUpdateElement;
-    skin.lang = 'xx';
-    document.body.append(skin);
+    provider.lang = 'xx';
+    provider.append(skin);
+    document.body.append(provider);
 
     await skin.updateComplete;
     const text = skin.shadowRoot!.querySelector('test-skin-i18n-first-text') as TestFirstTextElement;
