@@ -75,14 +75,14 @@ defineElement(CaptionsRadioGroupElement.tagName, CaptionsRadioGroupElement);
 defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 defineElement('test-captions-radio-player', TestPlayerProviderElement);
 
-function setup(locale: string) {
+function setup(locale: string, storeOptions?: Parameters<typeof createTextTrackStore>[0]) {
   const i18n = new MediaI18nProviderElement();
   const provider = document.createElement('test-captions-radio-player') as TestPlayerProviderElement;
   const menu = document.createElement(MenuElement.tagName) as MenuElement;
   const options = document.createElement(CaptionsRadioGroupElement.tagName) as CaptionsRadioGroupElement;
 
   i18n.setAttribute('lang', locale);
-  provider.setStore(createTextTrackStore());
+  provider.setStore(createTextTrackStore(storeOptions));
   menu.append(options);
   provider.append(menu);
   i18n.append(provider);
@@ -97,6 +97,18 @@ afterEach(() => {
 });
 
 describe('CaptionsRadioGroupElement', () => {
+  it('uses the stateful core label for aria-label', async () => {
+    const { options } = setup('en');
+
+    await options.updateComplete;
+    expect(options.getAttribute('aria-label')).toBe('Enable captions');
+
+    const enabled = setup('en', { subtitlesShowing: true }).options;
+
+    await enabled.updateComplete;
+    expect(enabled.getAttribute('aria-label')).toBe('Disable captions');
+  });
+
   it('refreshes translated items when registry strings load for the active locale', async () => {
     const { menu, options } = setup('x-test-captions');
 

@@ -16,7 +16,6 @@ export { DestroyMixin, ReactiveElement } from '@videojs/element';
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export type {
-  Contains,
   CreateI18nOptions,
   CreateI18nResult,
   I18nContextValue,

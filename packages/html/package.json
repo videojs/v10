@@ -120,6 +120,11 @@
       "development": "./cdn/i18n.dev.js",
       "default": "./cdn/i18n.js"
     },
+    "./cdn/i18n-registry": {
+      "types": "./dist/dev/i18n/index.d.ts",
+      "development": "./cdn/i18n.dev.js",
+      "default": "./cdn/i18n.js"
+    },
     "./cdn/locales/*": {
       "types": "./cdn/locales/*.dev.d.ts",
       "development": "./cdn/locales/*.dev.js",

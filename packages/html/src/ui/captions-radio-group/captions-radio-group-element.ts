@@ -54,12 +54,12 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     let state: CaptionsRadioGroupCore.State | null = null;
 
     if (media) {
-      this.#core.setProps({ disabled: this.disabled });
+      this.#core.setProps({ disabled: this.disabled, label: this.label });
       this.#core.setMedia(media);
       state = this.#core.getState();
 
       this.value = state.value;
-      this.applyAriaLabel(this.#i18n.value, this.label || 'Captions');
+      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state));
       this.#syncContent(state);
     }
 
