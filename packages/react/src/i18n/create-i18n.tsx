@@ -163,16 +163,16 @@ export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
         if (langRootRef) {
           const root = langRootElementRef.current ?? langRootRef.current;
           if (!root) return undefined;
-          return localeFromDomLang(nearestLang(root));
+          return localeFromDomLang<Locale>(nearestLang(root));
         }
         const root = typeof document !== 'undefined' ? document.documentElement : null;
-        return localeFromDomLang(nearestLang(root));
+        return localeFromDomLang<Locale>(nearestLang(root));
       },
       ambientLangServerSnapshot
     );
 
     const resolvedLocale = useMemo(
-      () => effectiveLocale(localeProp, ambientLang ?? parentLocale) as Locale,
+      () => effectiveLocale<Locale>(localeProp, ambientLang ?? parentLocale),
       [localeProp, ambientLang, parentLocale]
     );
 
