@@ -7,14 +7,14 @@ import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
+import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
-import { RadioGroupElement } from '../radio-group/radio-group-element';
 
-export class PlaybackRateRadioGroupElement extends RadioGroupElement {
+export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-playback-rate-radio-group';
 
   static override properties = {
-    ...RadioGroupElement.properties,
+    ...MenuRadioGroupElement.properties,
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<'value' | 'disabled'>;
 

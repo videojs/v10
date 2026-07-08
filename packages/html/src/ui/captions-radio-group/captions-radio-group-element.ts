@@ -8,14 +8,14 @@ import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
+import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
-import { RadioGroupElement } from '../radio-group/radio-group-element';
 
-export class CaptionsRadioGroupElement extends RadioGroupElement {
+export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-captions-radio-group';
 
   static override properties = {
-    ...RadioGroupElement.properties,
+    ...MenuRadioGroupElement.properties,
     disabled: { type: Boolean },
     label: { type: String },
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;

@@ -1,53 +1,27 @@
-import { resolveTranslation, type Translator } from '@videojs/core/i18n';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { ContextProvider } from '@videojs/element/context';
 
-import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
-import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+import { MediaElement } from '../media-element';
+import { radioGroupContext } from './context';
 
-export class RadioGroupElement extends MenuRadioGroupElement {
-  #ariaLabel: string | null = null;
+export class RadioGroupElement extends MediaElement {
+  static override properties = {
+    value: { type: String },
+  } satisfies PropertyDeclarationMap<'value'>;
 
-  protected getTemplate(): HTMLTemplateElement | null {
-    for (const child of this.children) {
-      if (child instanceof HTMLTemplateElement) return child;
-    }
+  value = '';
 
-    return null;
-  }
+  readonly #provider = new ContextProvider(this, { context: radioGroupContext });
 
-  protected createRadioItem(template: HTMLTemplateElement | null): MenuRadioItemElement {
-    if (!template) return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
+  protected override update(changed: PropertyValues): void {
+    super.update(changed);
 
-    const fragment = template.content.cloneNode(true) as DocumentFragment;
-    const root = fragment.firstElementChild;
-
-    if (!root || root.localName !== MenuRadioItemElement.tagName || root.nextElementSibling) {
-      return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-    }
-
-    return root as MenuRadioItemElement;
-  }
-
-  protected setItemLabel(item: MenuRadioItemElement, label: string): void {
-    const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
-
-    if (labelPart) {
-      labelPart.textContent = label;
-    } else {
-      item.textContent = label;
-    }
-  }
-
-  protected applyAriaLabel(
-    translator: Translator,
-    label: string,
-    params?: Record<string, string | number>
-  ): void {
-    if (this.hasAttribute('aria-labelledby')) return;
-
-    const current = this.getAttribute('aria-label');
-    if (current !== null && current !== this.#ariaLabel) return;
-
-    this.#ariaLabel = resolveTranslation(translator, label, params);
-    this.setAttribute('aria-label', this.#ariaLabel);
+    this.#provider.setValue({
+      value: this.value,
+      onValueChange: (next: string) => {
+        this.value = next;
+        this.dispatchEvent(new CustomEvent('value-change', { detail: { value: next }, bubbles: true }));
+      },
+    });
   }
 }
