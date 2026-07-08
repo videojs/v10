@@ -1,4 +1,4 @@
-import type { Contains } from '@videojs/utils/types';
+import type { Contains, EnsureRecord } from '@videojs/utils/types';
 import type { LOCALES } from './locales';
 
 /** BCP 47 language tag; built-ins are narrowed for autocomplete. */
@@ -74,22 +74,24 @@ type ParametricKey = {
   [K in keyof TranslationParams]: TranslationParams[K] extends never ? never : K;
 }[keyof TranslationParams];
 
-type EnsureParametricTranslations<Translations extends Record<ParametricKey, string>> = Translations;
-
 /** Placeholder shape for each phrase that accepts `t(phrase, params)`. */
-type ParametricTranslations = EnsureParametricTranslations<{
-  'Seek forward {seconds} seconds': Contains<'{seconds}'>;
-  'Seek backward {seconds} seconds': Contains<'{seconds}'>;
-  'Playback rate {rate}': Contains<'{rate}'>;
-  '{current} of {duration}': Contains<'{current}'> & Contains<'{duration}'>;
-  '{duration} remaining': Contains<'{duration}'>;
-  '{duration}. Show elapsed time.': Contains<'{duration}'>;
-  '{duration}. Show duration.': Contains<'{duration}'>;
-  '{duration}. Show remaining time.': Contains<'{duration}'>;
-  '{percent}, muted': Contains<'{percent}'>;
-  'Volume {value}': Contains<'{value}'>;
-  'Auto ({label})': Contains<'{label}'>;
-}>;
+type ParametricTranslations = EnsureRecord<
+  ParametricKey,
+  string,
+  {
+    'Seek forward {seconds} seconds': Contains<'{seconds}'>;
+    'Seek backward {seconds} seconds': Contains<'{seconds}'>;
+    'Playback rate {rate}': Contains<'{rate}'>;
+    '{current} of {duration}': Contains<'{current}'> & Contains<'{duration}'>;
+    '{duration} remaining': Contains<'{duration}'>;
+    '{duration}. Show elapsed time.': Contains<'{duration}'>;
+    '{duration}. Show duration.': Contains<'{duration}'>;
+    '{duration}. Show remaining time.': Contains<'{duration}'>;
+    '{percent}, muted': Contains<'{percent}'>;
+    'Volume {value}': Contains<'{value}'>;
+    'Auto ({label})': Contains<'{label}'>;
+  }
+>;
 
 /** Player copy keyed by the default English UI string; all entries are optional overlays. */
 export type Translations = {
