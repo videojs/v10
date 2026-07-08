@@ -20,4 +20,11 @@ describe('effectiveLocale', () => {
   it('respects custom fallback', () => {
     expect(effectiveLocale(undefined, undefined, 'xx')).toBe('xx');
   });
+
+  it('can resolve a caller locale type', () => {
+    type Locale = 'en' | 'fr';
+    const locale: Locale = effectiveLocale<Locale>(undefined, undefined);
+
+    expect(locale).toBe('en');
+  });
 });

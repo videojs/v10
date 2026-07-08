@@ -13,4 +13,11 @@ describe('resolveLocaleAttr', () => {
     expect(resolveLocaleAttr('  fr  ')).toBe('fr');
     expect(resolveLocaleAttr('de-DE')).toBe('de-DE');
   });
+
+  it('can return a caller locale type', () => {
+    type Locale = 'en' | 'fr';
+    const locale: Locale | undefined = resolveLocaleAttr<Locale>('fr');
+
+    expect(locale).toBe('fr');
+  });
 });
