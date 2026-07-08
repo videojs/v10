@@ -1,4 +1,5 @@
 import { ensureSandboxLocale } from '@app/shared/i18n/sandbox-locales';
+import { I18nProvider } from '@videojs/react/i18n';
 import { type ReactNode, useEffect } from 'react';
 
 import { useLocale } from './use-locale';
@@ -8,7 +9,7 @@ function syncHtmlLang(locale: string): void {
   document.documentElement.lang = locale;
 }
 
-/** Prefetches locale packs and syncs `<html lang>` for ambient i18n via preset `Container`. */
+/** Composes React i18n and syncs `<html lang>` for sandbox locale demos. */
 export function SandboxI18nProvider({ children }: { children: ReactNode }) {
   const locale = useLocale();
 
@@ -17,9 +18,9 @@ export function SandboxI18nProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     syncHtmlLang(locale);
     void ensureSandboxLocale(locale).catch(() => {
-      // Container's I18nProvider still lazy-loads registry packs when prefetch fails.
+      // I18nProvider still lazy-loads registry packs when prefetch fails.
     });
   }, [locale]);
 
-  return children;
+  return <I18nProvider locale={locale}>{children}</I18nProvider>;
 }

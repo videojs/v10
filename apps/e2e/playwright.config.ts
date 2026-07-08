@@ -70,6 +70,13 @@ export default defineConfig({
       reuseExistingServer: !CI,
       timeout: 120_000,
     },
+    {
+      command: 'node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
+      cwd: '../sandbox',
+      port: 5299,
+      reuseExistingServer: !CI,
+      timeout: 120_000,
+    },
 
     // --- Future: Next.js ---
     // {
