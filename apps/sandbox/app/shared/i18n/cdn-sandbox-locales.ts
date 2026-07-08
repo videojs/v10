@@ -35,8 +35,8 @@ export async function ensureCdnSandboxLocale(tag: SandboxLocaleTag): Promise<voi
   await load();
 
   if (import.meta.env.DEV) {
-    const registered = getI18nTranslations(tag).play;
-    const enPlay = getI18nTranslations('en').play;
+    const registered = getI18nTranslations(tag).Play;
+    const enPlay = getI18nTranslations('en').Play;
     if (registered === enPlay) {
       throw new Error(
         `[videojs/sandbox] Locale "${tag}" did not register on the CDN i18n registry (still "${enPlay}").`
