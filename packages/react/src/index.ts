@@ -11,7 +11,6 @@ export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
 // Media utilities
 export {
-  type Contains,
   type CreateI18nOptions,
   type CreateI18nResult,
   createI18n,

@@ -1,7 +1,6 @@
 'use client';
 
 export type {
-  Contains,
   Locale,
   TranslationParams,
   Translations,
