@@ -71,11 +71,11 @@ export default defineConfig({
       timeout: 120_000,
     },
     {
-      command: 'node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
+      command: 'pnpm --dir ../.. build:cdn && node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
       cwd: '../sandbox',
       port: 5299,
       reuseExistingServer: !CI,
-      timeout: 120_000,
+      timeout: 300_000,
     },
 
     // --- Future: Next.js ---
