@@ -1,9 +1,9 @@
 import type { Locale } from '@videojs/core/i18n';
-import { localeFromDomLang as domLangFromString, effectiveLocale, nearestLang } from '@videojs/utils/dom';
+import { effectiveLocale, nearestLang, resolveLocaleAttr } from '@videojs/utils/dom';
 
 /** DOM `lang` values are untyped strings; align with core {@link Locale} at the boundary. */
 export function localeFromDomLang(raw: string | undefined): Locale | undefined {
-  return domLangFromString<Locale>(raw);
+  return resolveLocaleAttr<Locale>(raw);
 }
 
 /** Delegates to {@link effectiveLocale}; result is typed as {@link Locale} for player UI. */
