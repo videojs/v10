@@ -25,12 +25,12 @@ const SNAPSHOT: MediaSnapshot = {
 describe('status', () => {
   it('derives playback status from the expected next state', () => {
     expect(deriveStatus({ action: 'togglePaused' }, SNAPSHOT)).toMatchObject({
-      status: 'Pause',
+      status: 'pause',
       label: 'Paused',
     });
 
     expect(deriveStatus({ action: 'togglePaused' }, { ...SNAPSHOT, paused: true })).toMatchObject({
-      status: 'Play',
+      status: 'play',
       label: 'Playing',
     });
   });

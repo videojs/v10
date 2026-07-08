@@ -21,8 +21,8 @@ export type IndicatorDirection = 'forward' | 'backward';
 export type IndicatorVolumeLevel = 'off' | 'low' | 'high';
 
 export type IndicatorStatus =
-  | 'Pause'
-  | 'Play'
+  | 'pause'
+  | 'play'
   | 'volume-off'
   | 'volume-low'
   | 'volume-high'
@@ -105,7 +105,7 @@ export function deriveStatus(
     case 'togglePaused': {
       const paused = snapshot.paused !== undefined ? !snapshot.paused : true;
       return {
-        status: paused ? 'Pause' : 'Play',
+        status: paused ? 'pause' : 'play',
         label: paused ? labels.paused : labels.playing,
         value: null,
         volumeLevel: null,
