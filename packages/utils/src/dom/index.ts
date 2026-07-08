@@ -15,7 +15,7 @@ export { listen } from './listen';
 export { effectiveLocale } from './locale/effective-locale';
 export { findNearestLang, findNearestLang as nearestLang } from './locale/find-nearest-lang';
 export { mergeLocaleOverlays } from './locale/merge-locale-overlays';
-export { resolveLocaleAttr } from './locale/resolve-locale-attr';
+export { resolveLangAttr } from './locale/resolve-lang-attr';
 export { subscribeAmbientLang } from './locale/subscribe-ambient-lang';
 export { isMacOS } from './platform';
 export { tryHidePopover, tryShowPopover } from './popover';
