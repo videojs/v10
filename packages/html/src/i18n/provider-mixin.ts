@@ -32,10 +32,7 @@ export type I18nProviderMixin = <Base extends ReactiveElementMixinBase>(
   Base: Base
 ) => Constructor<ReactiveElement> & Base;
 
-export function createI18nProviderMixin({
-  context,
-  loader = defaultLoader,
-}: I18nProviderConfig): I18nProviderMixin {
+export function createI18nProviderMixin({ context, loader = defaultLoader }: I18nProviderConfig): I18nProviderMixin {
   return <Base extends ReactiveElementMixinBase>(Base: Base) => {
     class I18nProviderElement extends Base {
       static properties = {

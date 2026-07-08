@@ -48,11 +48,7 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     }
   }
 
-  protected applyAriaLabel(
-    translator: Translator,
-    label: string,
-    params?: Record<string, string | number>
-  ): void {
+  protected applyAriaLabel(translator: Translator, label: string, params?: Record<string, string | number>): void {
     if (this.hasAttribute('aria-labelledby')) return;
 
     const current = this.getAttribute('aria-label');

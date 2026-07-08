@@ -34,6 +34,6 @@ export const menuItemSettingContext = createContext<MenuItemSettingContextValue 
 );
 
 export {
-  radioGroupContext as menuRadioGroupContext,
   type RadioGroupContextValue as MenuRadioGroupContextValue,
+  radioGroupContext as menuRadioGroupContext,
 } from '../radio-group/context';
