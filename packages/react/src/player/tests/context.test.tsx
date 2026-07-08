@@ -1,4 +1,4 @@
-import { cleanup, render, renderHook, screen, waitFor } from '@testing-library/react';
+import { cleanup, render, renderHook, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -301,10 +301,11 @@ describe('Container', () => {
     expect(loader).not.toHaveBeenCalled();
   });
 
-  it('uses the nearest createI18n provider for lang roots', async () => {
+  it('does not derive locale from container lang through an ancestor provider', async () => {
     const value = createContextValue();
+    const loader = vi.fn(async (tag: string) => (tag === 'x-container' ? { Play: 'Container play' } : undefined));
     const { I18nProvider, useTranslator } = createI18n({
-      loader: async (tag) => (tag === 'x-container' ? { Play: 'Container play' } : undefined),
+      loader,
     });
 
     function Label() {
@@ -324,8 +325,9 @@ describe('Container', () => {
       </I18nProvider>
     );
 
-    await waitFor(() => {
-      expect(screen.queryByText('Container play')).not.toBeNull();
-    });
+    expect(screen.queryByText('Play')).not.toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByText('Container play')).toBeNull();
+    expect(loader).not.toHaveBeenCalledWith('x-container');
   });
 });

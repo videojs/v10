@@ -3,7 +3,6 @@
 import type { HTMLAttributes, ReactNode, PointerEvent as ReactPointerEvent } from 'react';
 import { forwardRef, useEffect, useRef } from 'react';
 
-import { useOptionalI18nProvider } from '../i18n/create-i18n';
 import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach } from './context';
 
@@ -16,7 +15,6 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   ref
 ) {
   const setContainer = useContainerAttach();
-  const I18nProvider = useOptionalI18nProvider();
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
 
@@ -35,13 +33,11 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     }
   };
 
-  const content = (
+  return (
     <div ref={composedRef} tabIndex={tabIndex} {...props} onPointerUp={handlePointerUp}>
       {children}
     </div>
   );
-
-  return I18nProvider ? <I18nProvider langRootRef={internalRef}>{content}</I18nProvider> : content;
 });
 
 export namespace Container {
