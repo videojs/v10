@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'Dealbh beag anns a’ dealbh mhòr',
   'Exit picture in picture': 'Fàg dealbh beag',
   'You aborted the media playback': 'Sguir thu de chluich a’ mheadhain',
-  'A network error caused the media download to fail.': 'Cha deach leinn an còrr dhen mheadhan a luchdadh a-nuas ri linn mearachd lìonraidh.',
+  'A network error caused the media download to fail.':
+    'Cha deach leinn an còrr dhen mheadhan a luchdadh a-nuas ri linn mearachd lìonraidh.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Sguir sinn de chluich a’ mheadhain – dh’fhaoidte gu bheil e coirbte no gu bheil gleus aig a’ mheadhan nach cuir am brabhsair taic ris.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Cha b’ urrainn dhuinn am meadhan a luchdadh – dh’fhaoidte gun do dh’fhàillig leis an fhrithealaiche no an lìonra no nach cuir sinn taic ris an fhòrmat.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Tha am meadhan crioptaichte ’s chan eil iuchair dì-chrioptachaidh againn dha.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Tha am meadhan crioptaichte ’s chan eil iuchair dì-chrioptachaidh againn dha.',
   '': '',
   'Something went wrong.': 'Chaidh rudeigin ceàrr.',
   OK: 'Dùin',

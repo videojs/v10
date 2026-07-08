@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'Imagine în imagine',
   'Exit picture in picture': 'Închidere imagine în imagine',
   'You aborted the media playback': 'Ați abandonat redarea media',
-  'A network error caused the media download to fail.': 'O eroare de rețea a provocat eșecul descărcării conținutului media în timpul procesului.',
+  'A network error caused the media download to fail.':
+    'O eroare de rețea a provocat eșecul descărcării conținutului media în timpul procesului.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Redarea media a fost întreruptă din cauza conținutului corupt sau din cauza faptului că acest conținut media folosește funcții pe care browserul dvs. nu le acceptă.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Conținutul media nu a putut fi încărcat, fie pentru că serverul sau rețeaua a eșuat, fie pentru că formatul nu este acceptat.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Conținutul media este criptat și nu avem cheile pentru decriptare.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Conținutul media este criptat și nu avem cheile pentru decriptare.',
   '': '',
   'Something went wrong.': 'Ceva a mers greșit.',
   OK: 'Închidere',

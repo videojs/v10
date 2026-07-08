@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'ピクチャーインピクチャー表示',
   'Exit picture in picture': 'ピクチャーインピクチャー表示解除',
   'You aborted the media playback': '動画再生を中止しました',
-  'A network error caused the media download to fail.': 'ネットワーク エラーにより動画のダウンロードが途中で失敗しました',
+  'A network error caused the media download to fail.':
+    'ネットワーク エラーにより動画のダウンロードが途中で失敗しました',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     '破損の問題、またはお使いのブラウザがサポートしていない機能が動画に使用されていたため、動画の再生が中止されました',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'サーバーまたはネットワークのエラー、またはフォーマットがサポートされていないため、動画をロードできませんでした',
-  'The media is encrypted and there are no keys to decrypt it.': 'メディアは暗号化されており、解読するためのキーがありません。',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'メディアは暗号化されており、解読するためのキーがありません。',
   '': '',
   'Something went wrong.': '問題が発生しました。',
   OK: '閉じる',

@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'Slika v sliki',
   'Exit picture in picture': 'Izhod iz slike v sliki',
   'You aborted the media playback': 'Prekinili ste predvajanje.',
-  'A network error caused the media download to fail.': 'Prenos multimedijske datoteke ni uspel zaradi napake v omrežju.',
+  'A network error caused the media download to fail.':
+    'Prenos multimedijske datoteke ni uspel zaradi napake v omrežju.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Predvajanje datoteke je bilo prekinjeno zaradi napak v datoteki ali ker uporablja funkcije, ki jih brskalnik ne podpira.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Multimedijske datoteke ni bilo mogoče naložiti zaradi napake na strežniku oziroma omrežju ali ker ta oblika ni podprta.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Datoteka je šifrirana in predvajalnik nima ključev za njeno dešifriranje.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Datoteka je šifrirana in predvajalnik nima ključev za njeno dešifriranje.',
   '': '',
   'Something went wrong.': 'Nekaj je šlo narobe.',
   OK: 'Zapri',

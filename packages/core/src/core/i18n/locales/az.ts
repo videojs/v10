@@ -45,8 +45,10 @@ export default {
   'A network error caused the media download to fail.': 'Şəbəkə xətası səbəbindən medianın endirilməsi yarıda qaldı.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Media faylının korlanması səbəbilə və ya media faylın brauzerinizin dəstəkləmədiyi funksiyalardan istifadə etdiyinə görə medianın oxudulması dayandırılıb.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'Yükləmə xətası.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Media faylı şifrələnib və onun şifrəsini açmaq üçün açarlar yoxdur.',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'Yükləmə xətası.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Media faylı şifrələnib və onun şifrəsini açmaq üçün açarlar yoxdur.',
   '': '',
   'Something went wrong.': 'Bir şey yanlış getdi.',
   OK: 'Bağla',

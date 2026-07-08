@@ -47,7 +47,8 @@ export default {
     'मीडिया प्लेबैक निरस्त कर दिया गया, कारण: दूषण की समस्या या मीडिया ने उन सुविधाओं का उपयोग किया था जिनका आपके ब्राउज़र ने समर्थन नहीं किया।',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'मीडिया लोड नहीं किया जा सका, या तो सर्वर या नेटवर्क विफल होने के कारण या प्रारूप समर्थित नहीं होने के कारण।',
-  'The media is encrypted and there are no keys to decrypt it.': 'मीडिया एन्क्रिप्टेड है और हमारे पास इसे डिक्रिप्ट करने की चाबी नहीं है।',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'मीडिया एन्क्रिप्टेड है और हमारे पास इसे डिक्रिप्ट करने की चाबी नहीं है।',
   '': '',
   'Something went wrong.': 'कुछ गलत हुआ।',
   OK: 'बंद करें',

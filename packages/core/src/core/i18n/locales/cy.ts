@@ -47,7 +47,8 @@ export default {
     "Atalwyd y fideo oherwydd problem llygredd data neu oherwydd nid yw'ch porwr yn cefnogi nodweddion penodol o'r fideo.",
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     "Ni lwythodd y fideo, oherwydd methiant gweinydd neu rwydwaith, neu achos nid yw'r system yn cefnogi'r fformat.",
-  'The media is encrypted and there are no keys to decrypt it.': "Mae'r fideo wedi ei amgryptio ac nid oes allweddion gennym.",
+  'The media is encrypted and there are no keys to decrypt it.':
+    "Mae'r fideo wedi ei amgryptio ac nid oes allweddion gennym.",
   '': '',
   'Something went wrong.': "Aeth rhywbeth o'i le.",
   OK: 'Cau',

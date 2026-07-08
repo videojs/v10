@@ -47,7 +47,8 @@ export default {
     'Videoavspelinga blei broten på grunn av øydelagde data eller av di videoen ville gjera noe som nettlesaren din ikkje stodar.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Videoen kunne ikkje lastas ned, på grunn av ein nettverksfeil eller serverfeil, eller av di formatet ikkje er stoda.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Mediefila er kryptert og vi manglar nyklar for å dekryptere ho.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Mediefila er kryptert og vi manglar nyklar for å dekryptere ho.',
   '': '',
   'Something went wrong.': 'Noko gjekk gale.',
   OK: 'Lukk',

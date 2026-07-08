@@ -47,7 +47,8 @@ export default {
     'Interrompeuse a reprodución do medio por mor dun problema de estragamento dos datos ou porque o medio precisa funcións que o seu navegador non ofrece.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Non foi posíbel cargar o medio por mor dun fallo de rede ou do servidor ou porque o formato non é compatíbel.',
-  'The media is encrypted and there are no keys to decrypt it.': 'O medio está cifrado e non temos as chaves para descifralo.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'O medio está cifrado e non temos as chaves para descifralo.',
   '': '',
   'Something went wrong.': 'Algo saíu mal.',
   OK: 'Pechar',

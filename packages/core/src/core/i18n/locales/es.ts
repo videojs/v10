@@ -47,7 +47,8 @@ export default {
     'La reproducción de vídeo se ha interrumpido por un problema de corrupción de datos o porque el vídeo precisa funciones que su navegador no ofrece.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'No se ha podido cargar el vídeo debido a un fallo de red o del servidor o porque el formato es incompatible.',
-  'The media is encrypted and there are no keys to decrypt it.': 'El material audiovisual está cifrado y no tenemos las claves para descifrarlo.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'El material audiovisual está cifrado y no tenemos las claves para descifrarlo.',
   '': '',
   'Something went wrong.': 'Algo ha salido mal.',
   OK: 'Cerrar',

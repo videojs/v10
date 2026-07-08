@@ -43,10 +43,12 @@ export default {
   'Exit picture in picture': 'خروج از حالت تصویر در تصویر',
   'You aborted the media playback': 'شما پخش رسانه را قطع نمودید',
   'A network error caused the media download to fail.': 'وقوع مشکلی در شبکه باعث اختلال در دانلود رسانه شد.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'پخش رسانه به‌علت اشکال در آن یا عدم پشتیبانی مرورگر شما قطع شد.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'پخش رسانه به‌علت اشکال در آن یا عدم پشتیبانی مرورگر شما قطع شد.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'رسانه قابل بارگیری نیست. ممکن است مشکلی در شبکه یا سرور رخ داده باشد یا قالب رسانه در دستگاه شما پشتیبانی نشود.',
-  'The media is encrypted and there are no keys to decrypt it.': 'این رسانه رمزنگاری شده‌است و کلیدهای رمزگشایی آن موجود نیست.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'این رسانه رمزنگاری شده‌است و کلیدهای رمزگشایی آن موجود نیست.',
   '': '',
   'Something went wrong.': 'مشکلی پیش آمد.',
   OK: 'بستن',

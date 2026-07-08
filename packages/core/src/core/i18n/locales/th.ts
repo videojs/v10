@@ -43,8 +43,10 @@ export default {
   'Exit picture in picture': 'ออกจากภาพซ้อนภาพ',
   'You aborted the media playback': 'คุณยกเลิกการเล่นสื่อแล้ว',
   'A network error caused the media download to fail.': 'ข้อผิดพลาดของเครือข่ายทำให้การดาวน์โหลดสื่อไม่สำเร็จเป็นบางส่วน',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'การเล่นสื่อถูกยกเลิกเนื่องจากปัญหาเกี่ยวกับความเสียหาย หรือเนื่องจากสื่อใช้ฟีเจอร์ที่เบราว์เซอร์ของคุณไม่รองรับ',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'ไม่สามารถโหลดสื่อได้ โดยอาจเป็นเพราะเซิร์ฟเวอร์หรือเครือข่ายล้มเหลว หรือเพราะรูปแบบไม่ได้รับการรองรับ',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'การเล่นสื่อถูกยกเลิกเนื่องจากปัญหาเกี่ยวกับความเสียหาย หรือเนื่องจากสื่อใช้ฟีเจอร์ที่เบราว์เซอร์ของคุณไม่รองรับ',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'ไม่สามารถโหลดสื่อได้ โดยอาจเป็นเพราะเซิร์ฟเวอร์หรือเครือข่ายล้มเหลว หรือเพราะรูปแบบไม่ได้รับการรองรับ',
   'The media is encrypted and there are no keys to decrypt it.': 'สื่อถูกเข้ารหัสลับแล้ว และเราไม่มีคีย์ที่จะถอดรหัสลับดังกล่าว',
   '': '',
   'Something went wrong.': 'เกิดข้อผิดพลาด',

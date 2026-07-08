@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'Picture-in-picture',
   'Exit picture in picture': 'Esci dalla modalità Picture-in-picture',
   'You aborted the media playback': 'La riproduzione del contenuto multimediale è stata interrotta.',
-  'A network error caused the media download to fail.': 'Il download del contenuto multimediale è stato interrotto a causa di un problema rete.',
+  'A network error caused the media download to fail.':
+    'Il download del contenuto multimediale è stato interrotto a causa di un problema rete.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'La riproduzione del contenuto multimediale è stata interrotta a causa di un file danneggiato o per l’utilizzo di impostazioni non supportate dal browser.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Il contenuto multimediale non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Il contenuto multimediale è criptato e non disponiamo delle chiavi per decifrarlo.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Il contenuto multimediale è criptato e non disponiamo delle chiavi per decifrarlo.',
   '': '',
   'Something went wrong.': 'Qualcosa è andato storto.',
   OK: 'Chiudi',

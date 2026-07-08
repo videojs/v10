@@ -47,7 +47,8 @@ export default {
     'A reprodução foi interrompida devido à um problema de mídia corrompida ou porque a mídia utiliza funções que seu navegador não suporta.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'A mídia não pode ser carregada, por uma falha de rede ou servidor ou o formato não é suportado.',
-  'The media is encrypted and there are no keys to decrypt it.': 'A mídia está criptografada e não temos as chaves para descriptografar.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'A mídia está criptografada e não temos as chaves para descriptografar.',
   '': '',
   'Something went wrong.': 'Algo deu errado.',
   OK: 'Fechar',

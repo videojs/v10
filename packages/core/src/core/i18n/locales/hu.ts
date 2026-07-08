@@ -47,7 +47,8 @@ export default {
     'A lejátszás adatsérülés miatt leállt, vagy a videó egyes tulajdonságait a böngészője nem támogatja.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'A videó nem tölthető be hálózati vagy kiszolgálói hiba miatt, vagy a formátuma nem támogatott.',
-  'The media is encrypted and there are no keys to decrypt it.': 'A média titkosítva van és nincsenek kulcsok a visszafejtéshez.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'A média titkosítva van és nincsenek kulcsok a visszafejtéshez.',
   '': '',
   'Something went wrong.': 'Valami hiba történt.',
   OK: 'Bezárás',

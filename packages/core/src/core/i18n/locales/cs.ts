@@ -43,7 +43,8 @@ export default {
   'Exit picture in picture': 'Ukončit obraz v obraze',
   'You aborted the media playback': 'Přehrávání videa bylo přerušeno.',
   'A network error caused the media download to fail.': 'Video nemohlo být načteno kvůli chybě v síti.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'Váš prohlížeč nepodporuje tento formát videa.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'Váš prohlížeč nepodporuje tento formát videa.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Video nemohlo být načteno, buď kvůli chybě serveru, sítě nebo proto, že daný formát není podporován.',
   'The media is encrypted and there are no keys to decrypt it.': 'Chyba při dešifrování videa.',

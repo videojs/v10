@@ -43,8 +43,10 @@ export default {
   'Exit picture in picture': 'పిక్చర్ ఇన్ పిక్చర్ నుండి నిష్క్రమించండి',
   'You aborted the media playback': 'మీరు మీడియా ప్లేబ్యాక్‌ను రద్దు చేశారు',
   'A network error caused the media download to fail.': 'నెట్‌వర్క్ లోపం వలన మీడియా డౌన్‌లోడ్ విఫలమైంది.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'అవినీతి సమస్య కారణంగా లేదా మీ బ్రౌజర్ మద్దతు ఇవ్వని లక్షణాలను మీడియా ఉపయోగించినందున మీడియా ప్లేబ్యాక్ నిలిపివేయబడింది.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'సర్వర్ లేదా నెట్‌వర్క్ విఫలమైనందున లేదా ఫార్మాట్‌కు మద్దతు లేనందున మీడియాను లోడ్ చేయడం సాధ్యం కాలేదు.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'అవినీతి సమస్య కారణంగా లేదా మీ బ్రౌజర్ మద్దతు ఇవ్వని లక్షణాలను మీడియా ఉపయోగించినందున మీడియా ప్లేబ్యాక్ నిలిపివేయబడింది.',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'సర్వర్ లేదా నెట్‌వర్క్ విఫలమైనందున లేదా ఫార్మాట్‌కు మద్దతు లేనందున మీడియాను లోడ్ చేయడం సాధ్యం కాలేదు.',
   'The media is encrypted and there are no keys to decrypt it.': 'మీడియా గుప్తీకరించబడింది మరియు దానిని డీక్రిప్ట్ చేయడానికి మాకు కీలు లేవు.',
   '': '',
   'Something went wrong.': 'ఏదో తప్పు జరిగింది.',

@@ -14,8 +14,10 @@ export type MediaErrorTranslationKey = Extract<
 const MEDIA_ERROR_CODE_TO_KEY: Record<number, MediaErrorTranslationKey | undefined> = {
   [MediaError.MEDIA_ERR_ABORTED]: 'You aborted the media playback',
   [MediaError.MEDIA_ERR_NETWORK]: 'A network error caused the media download to fail.',
-  [MediaError.MEDIA_ERR_DECODE]: 'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.',
-  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: 'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
+  [MediaError.MEDIA_ERR_DECODE]:
+    'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.',
+  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]:
+    'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
   [MediaError.MEDIA_ERR_ENCRYPTED]: 'The media is encrypted and there are no keys to decrypt it.',
   [MediaError.MEDIA_ERR_CUSTOM]: '',
 };

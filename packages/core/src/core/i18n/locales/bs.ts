@@ -43,8 +43,10 @@ export default {
   'Exit picture in picture': 'Izlaz iz slike u slici',
   'You aborted the media playback': 'Isključili ste reprodukciju videa.',
   'A network error caused the media download to fail.': 'Video se prestao preuzimati zbog greške na mreži.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'Reprodukcija videa je zaustavljenja zbog greške u formatu ili zbog verzije vašeg pretraživača.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'Video se ne može reproducirati zbog servera, greške u mreži ili je format ne podržan.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'Reprodukcija videa je zaustavljenja zbog greške u formatu ili zbog verzije vašeg pretraživača.',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'Video se ne može reproducirati zbog servera, greške u mreži ili je format ne podržan.',
   'The media is encrypted and there are no keys to decrypt it.': 'Medij je šifriran i nema ključeva za dešifriranje.',
   '': '',
   'Something went wrong.': 'Nešto je pošlo po krivu.',

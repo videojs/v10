@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'Pilt pildis',
   'Exit picture in picture': 'Välju funktsioonist pilt pildis',
   'You aborted the media playback': 'Katkestasid taasesituse',
-  'A network error caused the media download to fail.': 'Võrguvea tõttu nurjus meediumifaili allalaadimine poole pealt.',
+  'A network error caused the media download to fail.':
+    'Võrguvea tõttu nurjus meediumifaili allalaadimine poole pealt.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Meediumifaili taasesitamine katkestati, kuna fail on rikutud või see kasutab funktsiooni, mida sinu brauser ei toeta.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Seda meediumifaili ei õnnestunud laadida, kuna serveris või võrgus esines tõrge või kuna vormingut ei toetata.',
-  'The media is encrypted and there are no keys to decrypt it.': 'See meediumifail on krüpteeritud ja meil pole dekrüpteerimiseks vajalikku võtit.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'See meediumifail on krüpteeritud ja meil pole dekrüpteerimiseks vajalikku võtit.',
   '': '',
   'Something went wrong.': 'Midagi läks valesti.',
   OK: 'Sule',

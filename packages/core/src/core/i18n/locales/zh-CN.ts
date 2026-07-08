@@ -43,8 +43,10 @@ export default {
   'Exit picture in picture': '退出画中画',
   'You aborted the media playback': '视频播放被终止',
   'A network error caused the media download to fail.': '网络错误导致视频下载中途失败。',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': '由于视频文件损坏或是该视频使用了你的浏览器不支持的功能，播放终止。',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': '视频因格式不支持或者服务器或网络的问题无法加载。',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    '由于视频文件损坏或是该视频使用了你的浏览器不支持的功能，播放终止。',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    '视频因格式不支持或者服务器或网络的问题无法加载。',
   'The media is encrypted and there are no keys to decrypt it.': '视频已加密，无法解密。',
   '': '',
   'Something went wrong.': '出现问题。',

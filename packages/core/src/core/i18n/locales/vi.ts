@@ -43,9 +43,12 @@ export default {
   'Exit picture in picture': 'Thoát màn hình trong màn hình',
   'You aborted the media playback': 'Bạn đã hủy việc phát lại media.',
   'A network error caused the media download to fail.': 'Một lỗi mạng dẫn đến việc tải media bị lỗi.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'Phát media đã bị hủy do một sai lỗi hoặc media sử dụng những tính năng trình duyệt không hỗ trợ.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'Video không tải được, mạng hay server có lỗi hoặc định dạng không được hỗ trợ.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Media đã được mã hóa và chúng tôi không có khóa để giải mã.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'Phát media đã bị hủy do một sai lỗi hoặc media sử dụng những tính năng trình duyệt không hỗ trợ.',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'Video không tải được, mạng hay server có lỗi hoặc định dạng không được hỗ trợ.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Media đã được mã hóa và chúng tôi không có khóa để giải mã.',
   '': '',
   'Something went wrong.': 'Đã xảy ra lỗi.',
   OK: 'Đóng',

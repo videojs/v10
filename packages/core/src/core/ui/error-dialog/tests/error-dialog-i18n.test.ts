@@ -9,7 +9,9 @@ import {
 
 describe('getMediaErrorTranslationKey', () => {
   it('maps standard MediaError codes to registry keys', () => {
-    expect(getMediaErrorTranslationKey(MediaError.MEDIA_ERR_NETWORK)).toBe('A network error caused the media download to fail.');
+    expect(getMediaErrorTranslationKey(MediaError.MEDIA_ERR_NETWORK)).toBe(
+      'A network error caused the media download to fail.'
+    );
     expect(getMediaErrorTranslationKey(MediaError.MEDIA_ERR_ABORTED)).toBe('You aborted the media playback');
   });
 });
@@ -44,7 +46,9 @@ describe('resolveErrorDialogDescription', () => {
 
   it('returns a registry key for browser-specific messages on standard codes', () => {
     const error = new MediaError('Failed to open media', MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
-    expect(resolveErrorDialogDescription(error, null)).toBe('An unsupported error occurred. The server or network failed, or your browser does not support this format.');
+    expect(resolveErrorDialogDescription(error, null)).toBe(
+      'An unsupported error occurred. The server or network failed, or your browser does not support this format.'
+    );
   });
 
   it('falls back to cached message then generic key', () => {

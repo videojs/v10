@@ -47,7 +47,8 @@ export default {
     'Videoafspilningen blev afbrudt på grund af ødelagte data eller fordi videoen benyttede faciliteter som din browser ikke understøtter.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Videoen kunne ikke indlæses, enten fordi serveren eller netværket fejlede, eller fordi formatet ikke er understøttet.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Mediet er krypteret, og der er ingen nøgler til at dekryptere det.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Mediet er krypteret, og der er ingen nøgler til at dekryptere det.',
   '': '',
   'Something went wrong.': 'Noget gik galt.',
   OK: 'OK',

@@ -47,7 +47,8 @@ export default {
     "La reproducció del contingut s'ha interromput a causa d'un problema de corrupció o perquè el contingut fa servir funcions que el teu navegador no suporta.",
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     "No s'ha pogut carregar el contingut, ja sigui perquè el servidor o la xarxa han fallat o perquè el format no està suportat.",
-  'The media is encrypted and there are no keys to decrypt it.': 'El contingut està xifrat i no disposem de les claus per desxifrar-lo.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'El contingut està xifrat i no disposem de les claus per desxifrar-lo.',
   '': '',
   'Something went wrong.': 'Alguna cosa ha anat malament.',
   OK: 'Tancar',

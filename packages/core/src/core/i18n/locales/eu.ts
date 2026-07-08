@@ -47,7 +47,8 @@ export default {
     'Bertan behera gelditu da fitxategia ondo ez dagoelako edo zure nabigatzailean erabili ezin diren ezaugarriak dituelako.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Media ezin izan da kargatu, zerbitzariak edo sareak huts egin duelako edo formatu horretako media erabili ezin delako.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Media zifratuta dago eta ez ditugu beharrezko gakoak.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Media zifratuta dago eta ez ditugu beharrezko gakoak.',
   '': '',
   'Something went wrong.': 'Zerbait gaizki joan da.',
   OK: 'Itxi',

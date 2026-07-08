@@ -47,7 +47,8 @@ export default {
     'Uppspelningen avbröts på grund av att videon är skadad, eller också för att videon använder funktioner som din webbläsare inte stöder.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Det gick inte att ladda videon, antingen på grund av ett server- eller nätverksfel, eller för att formatet inte stöds.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Mediat är krypterat och vi har inte nycklarna för att dekryptera det.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Mediat är krypterat och vi har inte nycklarna för att dekryptera det.',
   '': '',
   'Something went wrong.': 'Något gick fel.',
   OK: 'Stäng',

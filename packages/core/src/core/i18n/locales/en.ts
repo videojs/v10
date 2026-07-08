@@ -48,7 +48,8 @@ export default {
     'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
-  'The media is encrypted and there are no keys to decrypt it.': 'The media is encrypted and there are no keys to decrypt it.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'The media is encrypted and there are no keys to decrypt it.',
   '': '',
   'Something went wrong.': 'Something went wrong.',
   OK: 'OK',

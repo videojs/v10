@@ -374,9 +374,7 @@ function checkI18nLocales() {
 
   for (const file of coreFiles) {
     if (!expectedCore.has(file)) {
-      warnings.push(
-        `Unexpected locale file packages/core/src/core/i18n/locales/${file}.ts (not in locales.ts)`
-      );
+      warnings.push(`Unexpected locale file packages/core/src/core/i18n/locales/${file}.ts (not in locales.ts)`);
     }
   }
 

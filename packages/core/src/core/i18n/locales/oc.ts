@@ -47,7 +47,8 @@ export default {
     "La lectura del mèdia es copada a causa d'un problèma de corrupcion o perque lo mèdia utiliza de foncionalitats pas suportadas pel navigador.",
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Lo mèdia a pas pogut èsser cargat, siá perque lo servidor o lo ret a fracassat siá perque lo format es pas compatible.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Lo mèdia es chifrat e avèm pas las claus per lo deschifrar.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Lo mèdia es chifrat e avèm pas las claus per lo deschifrar.',
   '': '',
   'Something went wrong.': "Quaucarèn s'es mal passat.",
   OK: 'Tampar',

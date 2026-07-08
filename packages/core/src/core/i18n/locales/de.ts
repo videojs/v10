@@ -42,12 +42,14 @@ export default {
   'Picture in picture': 'Bild-in-Bild',
   'Exit picture in picture': 'Bild-in-Bild beenden',
   'You aborted the media playback': 'Sie haben die Videowiedergabe abgebrochen.',
-  'A network error caused the media download to fail.': 'Der Videodownload ist aufgrund eines Netzwerkfehlers fehlgeschlagen.',
+  'A network error caused the media download to fail.':
+    'Der Videodownload ist aufgrund eines Netzwerkfehlers fehlgeschlagen.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Die Videowiedergabe wurde entweder wegen eines Problems mit einem beschädigten Video oder wegen verwendeten Funktionen, die vom Browser nicht unterstützt werden, abgebrochen.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Das Video konnte nicht geladen werden, da entweder ein Server- oder Netzwerkfehler auftrat oder das Format nicht unterstützt wird.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Die Entschlüsselungsschlüssel für den verschlüsselten Medieninhalt sind nicht verfügbar.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Die Entschlüsselungsschlüssel für den verschlüsselten Medieninhalt sind nicht verfügbar.',
   '': '',
   'Something went wrong.': 'Etwas ist schiefgelaufen.',
   OK: 'Schließen',

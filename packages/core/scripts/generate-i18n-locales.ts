@@ -45,7 +45,7 @@ function generateLoadLocaleTs(): string {
     .map((tag) => `  ${propertyKey(tag.trim().replaceAll('_', '-').toLowerCase())}: () => import('./locales/${tag}'),`)
     .join('\n');
 
-  return `${GENERATED_HEADER}import { getCanonicalLocaleKey, hasRegisteredLocale, findLocaleKeys } from './registry';
+  return `${GENERATED_HEADER}import { findLocaleKeys, getCanonicalLocaleKey, hasRegisteredLocale } from './registry';
 import type { Translations } from './types';
 
 const loaders = {

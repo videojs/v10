@@ -43,10 +43,12 @@ export default {
   'Exit picture in picture': 'Iziet no attēls attēlā',
   'You aborted the media playback': 'Atskaņošana atcelta',
   'A network error caused the media download to fail.': 'Tīkla kļūdas dēļ, multivides lejupielāde neizdevās.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'Atskaņošana tika pārtraukta tīkla kļūmes dēļ vai pārlūkprogrammas iespēju trūkuma dēļ.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'Atskaņošana tika pārtraukta tīkla kļūmes dēļ vai pārlūkprogrammas iespēju trūkuma dēļ.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Neizdevās ielādēt multividi, iespējams severa, vai tīkla kļūmes dēļ, vai neatbalstīta formāta dēļ.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Multividi nevar atskaņot, jo tas ir kriptēts un nav pieejama dekriptēšanas atslēga.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Multividi nevar atskaņot, jo tas ir kriptēts un nav pieejama dekriptēšanas atslēga.',
   '': '',
   'Something went wrong.': 'Kaut kas nogāja greizi.',
   OK: 'Aizvērt',

@@ -47,7 +47,8 @@ export default {
     'मीडिया प्लेबॅक भ्रष्टाचाराच्या समस्येमुळे किंवा मीडियाने वापरलेल्या वैशिष्ट्यांमुळे तुमचा ब्राउझर सपोर्ट करत नसल्यामुळे रद्द करण्यात आला.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'मीडिया लोड करता आला नाही, एकतर सर्व्हर किंवा नेटवर्क अयशस्वी झाल्यामुळे किंवा फॉरमॅट समर्थित नसल्यामुळे.',
-  'The media is encrypted and there are no keys to decrypt it.': 'मीडिया एन्क्रिप्ट केलेला आहे आणि तो डिक्रिप्ट करण्यासाठी आमच्याकडे कळा नाहीत.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'मीडिया एन्क्रिप्ट केलेला आहे आणि तो डिक्रिप्ट करण्यासाठी आमच्याकडे कळा नाहीत.',
   '': '',
   'Something went wrong.': 'काहीतरी चुकले.',
   OK: 'बंद',

@@ -45,8 +45,10 @@ export default {
   'A network error caused the media download to fail.': 'একটি নেটওয়ার্ক ত্রুটির কারণে মিডিয়া ডাউনলোড আংশিকভাবে ব্যর্থ হয়েছে৷',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'মিডিয়া প্লেব্যাক একটি সমস্যার কারণে বা মিডিয়া ব্যবহার করা বৈশিষ্ট্যগুলি আপনার ব্রাউজার সমর্থন করে না বলে বাতিল করা হয়েছে৷',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'মিডিয়া লোড করা যায়নি, হয় সার্ভার বা নেটওয়ার্ক ব্যর্থ হওয়ার কারণে বা ফর্ম্যাটটি সমর্থিত নয়।',
-  'The media is encrypted and there are no keys to decrypt it.': 'মিডিয়া এনক্রিপ্ট করা হয়েছে এবং এটি ডিক্রিপ্ট করার সমাধান আমাদের কাছে নেই।',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'মিডিয়া লোড করা যায়নি, হয় সার্ভার বা নেটওয়ার্ক ব্যর্থ হওয়ার কারণে বা ফর্ম্যাটটি সমর্থিত নয়।',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'মিডিয়া এনক্রিপ্ট করা হয়েছে এবং এটি ডিক্রিপ্ট করার সমাধান আমাদের কাছে নেই।',
   '': '',
   'Something went wrong.': 'কিছু একটা ভুল হয়েছে।',
   OK: 'বন্ধ করুন',

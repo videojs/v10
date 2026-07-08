@@ -42,12 +42,14 @@ export default {
   'Picture in picture': '화면 속 화면',
   'Exit picture in picture': '화면 속 화면 종료',
   'You aborted the media playback': '비디오 재생을 취소했습니다.',
-  'A network error caused the media download to fail.': '네트워크 오류로 인하여 비디오 일부를 다운로드하지 못 했습니다.',
+  'A network error caused the media download to fail.':
+    '네트워크 오류로 인하여 비디오 일부를 다운로드하지 못 했습니다.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     '비디오 재생이 취소됐습니다. 비디오가 손상되었거나 비디오가 사용하는 기능을 브라우저에서 지원하지 않는 것 같습니다.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     '비디오를 로드할 수 없습니다. 서버 혹은 네트워크 오류 때문이거나 지원되지 않는 형식 때문일 수 있습니다.',
-  'The media is encrypted and there are no keys to decrypt it.': '미디어는 암호화되어 있으며 이를 해독할 키를 갖고 있지 않습니다.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    '미디어는 암호화되어 있으며 이를 해독할 키를 갖고 있지 않습니다.',
   '': '',
   'Something went wrong.': '문제가 발생했습니다.',
   OK: '닫기',

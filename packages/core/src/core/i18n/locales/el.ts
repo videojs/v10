@@ -42,7 +42,8 @@ export default {
   'Picture in picture': 'Εικόνα μέσα σε εικόνα',
   'Exit picture in picture': 'Έξοδος από εικόνα μέσα σε εικόνα',
   'You aborted the media playback': 'Ακυρώσατε την αναπαραγωγή',
-  'A network error caused the media download to fail.': 'Ένα σφάλμα δικτύου προκάλεσε την αποτυχία μεταφόρτωσης του αρχείου προς αναπαραγωγή.',
+  'A network error caused the media download to fail.':
+    'Ένα σφάλμα δικτύου προκάλεσε την αποτυχία μεταφόρτωσης του αρχείου προς αναπαραγωγή.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Η αναπαραγωγή ακυρώθηκε είτε λόγω κατεστραμμένου αρχείου, είτε γιατί το αρχείο απαιτεί λειτουργίες που δεν υποστηρίζονται από το πρόγραμμα περιήγησης που χρησιμοποιείτε.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':

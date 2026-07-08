@@ -47,7 +47,8 @@ export default {
     'Prehrávanie súboru bolo prerušené pre poškodené dáta, alebo súbor používa vlastnosti, ktoré váš prehliadač nepodporuje.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Súbor sa nepodarilo načítať pre chybu servera, sieťového pripojenia, alebo je formát súboru nepodporovaný.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Súbor je zašifrovaný a nie je k dispozícii kľúč na rozšifrovanie.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Súbor je zašifrovaný a nie je k dispozícii kľúč na rozšifrovanie.',
   '': '',
   'Something went wrong.': 'Niečo sa pokazilo.',
   OK: 'Zatvoriť',

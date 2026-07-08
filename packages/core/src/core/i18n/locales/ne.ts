@@ -43,9 +43,12 @@ export default {
   'Exit picture in picture': 'पिक्चर इन पिक्चरबाट बाहिर',
   'You aborted the media playback': 'तपाईंले मिडिया प्लेब्याक रद्द गर्नुभयो',
   'A network error caused the media download to fail.': 'नेटवर्क त्रुटिले मिडिया डाउनलोडलाई आधा मार्गमा असफल गर्यो।',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'मिडिया प्लेब्याक अवरुद्ध गरियो, कारण मिडिया दूषित भयो वा तपाईंको ब्राउजरले समर्थन नगरेको सुविधाहरू प्रयोग गर्यो।',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'मिडिया लोड गर्न सकिएन, नेटवर्क वा सर्भर विफल भयो वा त्यसको प्रारूप समर्थित छैन।',
-  'The media is encrypted and there are no keys to decrypt it.': 'मिडिया एन्क्रिप्ट गरिएको छ र हामीसँग डिक्रिप्ट गर्ने कुञ्जीहरू छैनन्।',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'मिडिया प्लेब्याक अवरुद्ध गरियो, कारण मिडिया दूषित भयो वा तपाईंको ब्राउजरले समर्थन नगरेको सुविधाहरू प्रयोग गर्यो।',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'मिडिया लोड गर्न सकिएन, नेटवर्क वा सर्भर विफल भयो वा त्यसको प्रारूप समर्थित छैन।',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'मिडिया एन्क्रिप्ट गरिएको छ र हामीसँग डिक्रिप्ट गर्ने कुञ्जीहरू छैनन्।',
   '': '',
   'Something went wrong.': 'केही गलत भयो।',
   OK: 'बन्द गर्नुहोस्',

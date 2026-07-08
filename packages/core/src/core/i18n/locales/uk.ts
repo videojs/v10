@@ -47,7 +47,8 @@ export default {
     "Відтворення відео було припинено через пошкодження або у зв'язку з тим, що відео використовує функції, які не підтримуються вашим браузером.",
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'Неможливо завантажити відео через мережевий чи серверний збій або формат не підтримується.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Відео в зашифрованому вигляді, і ми не маємо ключі для розшифровки.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Відео в зашифрованому вигляді, і ми не маємо ключі для розшифровки.',
   '': '',
   'Something went wrong.': 'Щось пішло не так.',
   OK: 'Закрити',

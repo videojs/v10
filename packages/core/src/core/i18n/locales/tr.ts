@@ -42,11 +42,14 @@ export default {
   'Picture in picture': 'Resim içinde resim',
   'Exit picture in picture': 'Resim içinde resimden çık',
   'You aborted the media playback': 'Medyayı oynatmayı iptal ettiniz',
-  'A network error caused the media download to fail.': 'Medya indirme işleminin kısmen başarısız olmasına neden olan bir ağ sorunu oluştu.',
+  'A network error caused the media download to fail.':
+    'Medya indirme işleminin kısmen başarısız olmasına neden olan bir ağ sorunu oluştu.',
   'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
     'Medya oynatma, bir bozulma sorunu nedeniyle veya medya, tarayıcınızın desteklemediği özellikleri kullandığı için durduruldu.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'Sunucu veya ağ hatasından ya da biçim desteklenmediğinden medya yüklenemedi.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Medya, şifrelenmiş bir kaynaktan geliyor ve oynatmak için gerekli anahtar bulunamadı.',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'Sunucu veya ağ hatasından ya da biçim desteklenmediğinden medya yüklenemedi.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'Medya, şifrelenmiş bir kaynaktan geliyor ve oynatmak için gerekli anahtar bulunamadı.',
   '': '',
   'Something went wrong.': 'Bir şeyler ters gitti.',
   OK: 'Kapat',

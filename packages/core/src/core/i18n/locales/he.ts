@@ -43,8 +43,10 @@ export default {
   'Exit picture in picture': 'יציאה מתמונה בתוך תמונה',
   'You aborted the media playback': 'ביטלת את השמעת המדיה',
   'A network error caused the media download to fail.': 'שגיאת רשת גרמה להורדת המדיה להיכשל באמצע.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': 'השמעת המדיה בוטלה בשל בעית השחטת מידע או מכיוון שהמדיה עשתה שימוש בתכונות שהדפדפן שלך לא תמך בהן.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': 'לא ניתן לטעון את המדיה, או מכיוון שהרשת או השרת כשלו או מכיוון שהפורמט אינו נתמך.',
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+    'השמעת המדיה בוטלה בשל בעית השחטת מידע או מכיוון שהמדיה עשתה שימוש בתכונות שהדפדפן שלך לא תמך בהן.',
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+    'לא ניתן לטעון את המדיה, או מכיוון שהרשת או השרת כשלו או מכיוון שהפורמט אינו נתמך.',
   'The media is encrypted and there are no keys to decrypt it.': 'המדיה מוצפנת ואין בידינו את המפתח כדי לפענח אותה.',
   '': '',
   'Something went wrong.': 'אירעה שגיאה.',

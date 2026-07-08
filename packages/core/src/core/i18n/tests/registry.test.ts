@@ -2,9 +2,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import en from '../locales/en';
 import {
+  findLocaleKeys,
   getI18nTranslations,
   hasRegisteredLocale,
-  findLocaleKeys,
   onI18nRegistryChange,
   registerI18n,
   resetI18nRegistry,

@@ -47,7 +47,8 @@ export default {
     'A reprodução foi interrompida por um problema com o vídeo ou porque o formato não é compatível com o seu navegador.',
   'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
     'O vídeo não pode ser carregado, ou porque houve um problema na rede ou no servidor, ou porque o formato do vídeo não é compatível.',
-  'The media is encrypted and there are no keys to decrypt it.': 'O vídeo está encriptado e não há uma chave para o desencriptar.',
+  'The media is encrypted and there are no keys to decrypt it.':
+    'O vídeo está encriptado e não há uma chave para o desencriptar.',
   '': '',
   'Something went wrong.': 'Algo correu mal.',
   OK: 'Fechar',
