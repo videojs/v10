@@ -158,8 +158,8 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('seek');
-      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(attrs['aria-label']).toBe('Seek');
+      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
       expect(core.getValueTextParams(state)).toEqual({
         current: formatTimeAsPhrase(90),
         duration: formatTimeAsPhrase(300),
@@ -184,7 +184,7 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
       expect(core.getValueTextParams(state)).toEqual({
         current: formatTimeAsPhrase(0),
         duration: formatTimeAsPhrase(0),
@@ -199,7 +199,7 @@ describe('TimeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-valuenow']).toBe(150);
-      expect(attrs['aria-valuetext']).toBe('timeSliderValueTextRange');
+      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
       expect(core.getValueTextParams(state)).toEqual({
         current: formatTimeAsPhrase(150),
         duration: formatTimeAsPhrase(300),

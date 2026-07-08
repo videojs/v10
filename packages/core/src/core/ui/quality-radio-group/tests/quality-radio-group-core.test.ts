@@ -23,7 +23,6 @@ function createState(overrides: Partial<QualityRadioGroupState> = {}): QualityRa
       { value: '1', label: '720p' },
     ],
     autoLabel: 'Auto',
-    autoLabelKey: 'menuAuto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'available',
@@ -108,8 +107,6 @@ describe('QualityRadioGroupCore', () => {
 
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
       expect(state.autoLabel).toBe('Auto (720p)');
-      expect(state.autoLabelKey).toBe('menuAutoWithLabel');
-      expect(state.autoLabelParams).toEqual({ label: '720p' });
     });
 
     it('marks availability unavailable with one rendition', () => {
@@ -124,7 +121,7 @@ describe('QualityRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns the default label', () => {
       const core = new QualityRadioGroupCore();
-      expect(core.getLabel(createState())).toBe('menuQuality');
+      expect(core.getLabel(createState())).toBe('Quality');
     });
 
     it('returns a custom string label', () => {

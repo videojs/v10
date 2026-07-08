@@ -1,10 +1,9 @@
 import { defaults } from '@videojs/utils/object';
-import { formatVolumePercent } from '@videojs/utils/time';
+import { formatPercent } from '@videojs/utils/percent';
 import type { NonNullableObject } from '@videojs/utils/types';
 import type { MediaVolumeState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
-import type { TranslationKeyOrString } from '../types';
 
 export interface VolumeSliderProps extends SliderProps {
   /** Step increment for wheel scrolling. */
@@ -75,16 +74,16 @@ export class VolumeSliderCore extends SliderCore {
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 
-  override getLabel(state: SliderState): TranslationKeyOrString {
-    return super.getLabel(state) || 'volume';
+  override getLabel(state: SliderState): string {
+    return super.getLabel(state) || 'Volume';
   }
 
-  getValueText(state: VolumeSliderState): TranslationKeyOrString {
-    return state.muted ? 'volumeSliderValueTextMuted' : this.getValueTextParams(state).percent;
+  getValueText(state: VolumeSliderState): string {
+    return state.muted ? '{percent}, muted' : this.getValueTextParams(state).percent;
   }
 
   getValueTextParams(state: VolumeSliderState): { percent: string } {
-    return { percent: formatVolumePercent(state.value / 100, this.#formatLocale) };
+    return { percent: formatPercent(state.value / 100, this.#formatLocale) };
   }
 
   override getAttrs(state: VolumeSliderState) {

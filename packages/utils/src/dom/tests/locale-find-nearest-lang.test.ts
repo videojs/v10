@@ -1,22 +1,22 @@
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { nearestLang } from '../nearest-lang';
+import { findNearestLang } from '../locale/find-nearest-lang';
 
-describe('nearestLang', () => {
+describe('findNearestLang', () => {
   afterEach(() => {
     document.body.innerHTML = '';
     document.documentElement.removeAttribute('lang');
   });
 
   it('returns undefined for null start', () => {
-    expect(nearestLang(null)).toBeUndefined();
+    expect(findNearestLang(null)).toBeUndefined();
   });
 
   it('reads lang on the start element', () => {
     const el = document.createElement('div');
     el.setAttribute('lang', 'fr');
     document.body.appendChild(el);
-    expect(nearestLang(el)).toBe('fr');
+    expect(findNearestLang(el)).toBe('fr');
   });
 
   it('walks ancestors and prefers closest lang', () => {
@@ -26,7 +26,7 @@ describe('nearestLang', () => {
     inner.setAttribute('lang', 'fr');
     outer.appendChild(inner);
     document.body.appendChild(outer);
-    expect(nearestLang(inner)).toBe('fr');
+    expect(findNearestLang(inner)).toBe('fr');
   });
 
   it('inherits from an ancestor when start has no lang', () => {
@@ -35,7 +35,7 @@ describe('nearestLang', () => {
     const inner = document.createElement('div');
     outer.appendChild(inner);
     document.body.appendChild(outer);
-    expect(nearestLang(inner)).toBe('de');
+    expect(findNearestLang(inner)).toBe('de');
   });
 
   it('ignores empty lang and continues walking', () => {
@@ -45,13 +45,13 @@ describe('nearestLang', () => {
     inner.setAttribute('lang', '  ');
     outer.appendChild(inner);
     document.body.appendChild(outer);
-    expect(nearestLang(inner)).toBe('de');
+    expect(findNearestLang(inner)).toBe('de');
   });
 
   it('reads lang IDL property on html when set via documentElement.lang', () => {
     document.documentElement.lang = 'fr';
     const inner = document.createElement('div');
     document.body.appendChild(inner);
-    expect(nearestLang(inner)).toBe('fr');
+    expect(findNearestLang(inner)).toBe('fr');
   });
 });

@@ -1,12 +1,11 @@
 import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { TranslationKeyOrString } from '../../i18n/types';
 import type { MediaTextTrack, MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsRadioGroupProps {
   /** Custom label for the menu trigger. */
@@ -20,7 +19,6 @@ export interface CaptionsRadioGroupProps {
 export interface CaptionsRadioGroupTrack {
   value: string;
   label: string;
-  labelKey?: TranslationKeyOrString | undefined;
 }
 
 export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
@@ -36,11 +34,6 @@ function formatTrackLabel(track: MediaTextTrack): string {
   if (track.label) return track.label;
   if (track.language) return track.language;
   return track.kind === 'captions' ? 'Captions' : 'Subtitles';
-}
-
-function getTrackLabelKey(track: MediaTextTrack): TranslationKeyOrString | undefined {
-  if (track.label || track.language) return undefined;
-  return track.kind === 'captions' ? 'menuCaptions' : 'menuSubtitles';
 }
 
 function sortCaptionTracks(a: MediaTextTrack, b: MediaTextTrack): number {
@@ -79,16 +72,10 @@ export class CaptionsRadioGroupCore {
   }
 
   getLabel(state: CaptionsRadioGroupState): string {
-    const { label } = this.#props;
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
-
-    return state.subtitlesShowing ? 'disableCaptions' : 'enableCaptions';
+    return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
   }
 
   getTrackLabel(track: MediaTextTrack): string {
@@ -110,15 +97,10 @@ export class CaptionsRadioGroupCore {
     const media = this.#media!;
     const captionTracks = getCaptionTracks(media.textTrackList);
     const showingIndex = captionTracks.findIndex((track) => track.mode === 'showing');
-    const tracks = captionTracks.map((track, index) => {
-      const labelKey = getTrackLabelKey(track);
-
-      return {
-        value: track.id || String(index),
-        label: this.getTrackLabel(track),
-        ...(labelKey && { labelKey }),
-      };
-    });
+    const tracks = captionTracks.map((track, index) => ({
+      value: track.id || String(index),
+      label: this.getTrackLabel(track),
+    }));
 
     const availability: CaptionsRadioGroupState['availability'] =
       captionTracks.length > 0 ? 'available' : 'unavailable';

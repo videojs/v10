@@ -1,12 +1,12 @@
 import { createState } from '@videojs/store';
 import { supportsWebKitAirPlay } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface AirPlayButtonProps {
   /** Custom label for the button. */
@@ -45,14 +45,8 @@ export class AirPlayButtonCore {
   }
 
   getLabel(state: AirPlayButtonState): string {
-    const { label } = this.#props;
-
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
     if (state.state === 'connected') return 'Stop AirPlay';
     if (state.state === 'connecting') return 'Connecting';

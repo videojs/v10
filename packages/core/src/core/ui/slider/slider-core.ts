@@ -1,13 +1,13 @@
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { TranslationKeyOrString } from '../types';
+
+import { resolveLabel } from '../utils/resolve-label';
 
 /** Configuration shared by all slider variants. */
 export interface SliderProps {
   /** Custom label for the slider. */
-  label?: TranslationKeyOrString | ((state: SliderState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: SliderState) => string) | undefined;
   /** Step increment for value changes (arrow keys). */
   step?: number | undefined;
   /** Large step increment (Page Up/Down keys). */
@@ -123,8 +123,8 @@ export class SliderCore {
     };
   }
 
-  getLabel(state: SliderState): TranslationKeyOrString {
-    return resolveOptionalControlLabel(this.#props.label, state) ?? '';
+  getLabel(state: SliderState): string {
+    return resolveLabel(this.#props.label, state) || '';
   }
 
   getAttrs(state: SliderState) {

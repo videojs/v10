@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { subscribeAmbientLang } from '../subscribe-ambient-lang';
+import { subscribeAmbientLang } from '../locale/subscribe-ambient-lang';
 
 describe('subscribeAmbientLang', () => {
   afterEach(() => {

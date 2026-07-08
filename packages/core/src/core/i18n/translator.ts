@@ -22,11 +22,8 @@ function interpolate(template: string, params?: Record<string, string | number>)
 export function createTranslator(translations: Translations, locale: Locale): Translator {
   void locale;
 
-  const translate = (key: keyof TranslationParams, params?: unknown): string => {
-    const raw = translations[key];
-    if (raw === undefined) {
-      return String(key);
-    }
+  const translate = (phrase: keyof TranslationParams, params?: unknown): string => {
+    const raw = translations[phrase] ?? String(phrase);
     return interpolate(raw, params as Record<string, string | number> | undefined);
   };
 

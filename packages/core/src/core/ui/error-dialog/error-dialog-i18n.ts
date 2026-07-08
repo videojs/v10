@@ -1,23 +1,23 @@
-import type { TranslationKeyOrString, TranslationParams } from '../../i18n/types';
+import type { TranslationParams } from '../../i18n/types';
 import { MediaError } from '../../media/media-error';
 
 export type MediaErrorTranslationKey = Extract<
   keyof TranslationParams,
-  | 'mediaErrorAborted'
-  | 'mediaErrorNetwork'
-  | 'mediaErrorDecode'
-  | 'mediaErrorSrcNotSupported'
-  | 'mediaErrorEncrypted'
-  | 'mediaErrorCustom'
+  | 'You aborted the media playback'
+  | 'A network error caused the media download to fail.'
+  | 'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.'
+  | 'An unsupported error occurred. The server or network failed, or your browser does not support this format.'
+  | 'The media is encrypted and there are no keys to decrypt it.'
+  | ''
 >;
 
 const MEDIA_ERROR_CODE_TO_KEY: Record<number, MediaErrorTranslationKey | undefined> = {
-  [MediaError.MEDIA_ERR_ABORTED]: 'mediaErrorAborted',
-  [MediaError.MEDIA_ERR_NETWORK]: 'mediaErrorNetwork',
-  [MediaError.MEDIA_ERR_DECODE]: 'mediaErrorDecode',
-  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: 'mediaErrorSrcNotSupported',
-  [MediaError.MEDIA_ERR_ENCRYPTED]: 'mediaErrorEncrypted',
-  [MediaError.MEDIA_ERR_CUSTOM]: 'mediaErrorCustom',
+  [MediaError.MEDIA_ERR_ABORTED]: 'You aborted the media playback',
+  [MediaError.MEDIA_ERR_NETWORK]: 'A network error caused the media download to fail.',
+  [MediaError.MEDIA_ERR_DECODE]: 'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.',
+  [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: 'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
+  [MediaError.MEDIA_ERR_ENCRYPTED]: 'The media is encrypted and there are no keys to decrypt it.',
+  [MediaError.MEDIA_ERR_CUSTOM]: '',
 };
 
 const STANDARD_CODE_UA_MESSAGES: Partial<Record<number, readonly string[]>> = {
@@ -25,35 +25,29 @@ const STANDARD_CODE_UA_MESSAGES: Partial<Record<number, readonly string[]>> = {
 };
 
 function isStandardMediaErrorCode(code: number): boolean {
-  return (
-    code === MediaError.MEDIA_ERR_ABORTED ||
-    code === MediaError.MEDIA_ERR_NETWORK ||
-    code === MediaError.MEDIA_ERR_DECODE ||
-    code === MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED ||
-    code === MediaError.MEDIA_ERR_ENCRYPTED
-  );
+  return code >= MediaError.MEDIA_ERR_ABORTED && code <= MediaError.MEDIA_ERR_ENCRYPTED;
 }
 
 export function getMediaErrorTranslationKey(code: number): MediaErrorTranslationKey | undefined {
   return MEDIA_ERROR_CODE_TO_KEY[code];
 }
 
-export function getErrorDialogTitleLabel(): TranslationKeyOrString {
-  return 'errorDialogTitle';
+export function getErrorDialogTitleLabel(): string {
+  return 'Something went wrong.';
 }
 
-export function getErrorDialogDismissLabel(): TranslationKeyOrString {
-  return 'errorDialogDismiss';
+export function getErrorDialogDismissLabel(): string {
+  return 'OK';
 }
 
 /**
- * Resolves dialog body copy: registry keys for known {@link MediaError} defaults, literal text for
+ * Resolves dialog body copy: default phrases for known {@link MediaError} defaults, literal text for
  * custom messages, otherwise the generic fallback key.
  */
 export function resolveErrorDialogDescription(
   error: (Pick<MediaError, 'code' | 'message'> & { context?: MediaError['context'] }) | null | undefined,
   cachedMessage?: string | null
-): TranslationKeyOrString {
+): string {
   if (error) {
     const key = getMediaErrorTranslationKey(error.code);
     const message = error.message?.trim();
@@ -74,5 +68,5 @@ export function resolveErrorDialogDescription(
   const cached = cachedMessage?.trim();
   if (cached) return cached;
 
-  return 'mediaErrorFallback';
+  return 'An error occurred. Please try again.';
 }

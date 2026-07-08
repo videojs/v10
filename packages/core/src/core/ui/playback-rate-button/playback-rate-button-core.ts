@@ -3,12 +3,12 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPlaybackRateState } from '../../media/state';
-import { createOptionalControlLabelCache } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: PlaybackRateButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
   /** When true, pointer activation opens a menu instead of cycling. React sets this automatically inside `Menu.Trigger`. */
@@ -33,7 +33,6 @@ export class PlaybackRateButtonCore {
 
   #props = { ...PlaybackRateButtonCore.defaultProps };
   #media: MediaPlaybackRateState | null = null;
-  readonly #customLabel = createOptionalControlLabelCache<PlaybackRateButtonState>();
 
   constructor(props?: PlaybackRateButtonProps) {
     if (props) this.setProps(props);
@@ -41,18 +40,17 @@ export class PlaybackRateButtonCore {
 
   setProps(props: PlaybackRateButtonProps): void {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
-    this.#customLabel.invalidate();
   }
 
-  getLabel(state: PlaybackRateButtonState): TranslationKeyOrString {
-    const custom = this.#customLabel.resolve(this.#props.label, state);
+  getLabel(state: PlaybackRateButtonState): string {
+    const custom = resolveLabel(this.#props.label, state);
     if (custom !== undefined) return custom;
 
-    return 'playbackRateAria';
+    return 'Playback rate {rate}';
   }
 
   getLabelParams(state: PlaybackRateButtonState): { rate: number } | undefined {
-    if (this.#customLabel.resolve(this.#props.label, state) !== undefined) return undefined;
+    if (resolveLabel(this.#props.label, state) !== undefined) return undefined;
     return { rate: state.rate };
   }
 

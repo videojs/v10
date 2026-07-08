@@ -96,8 +96,8 @@ describe('CaptionsRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns default labels based on showing state', () => {
       const core = new CaptionsRadioGroupCore();
-      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('enableCaptions');
-      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('disableCaptions');
+      expect(core.getLabel(createState({ subtitlesShowing: false }))).toBe('Enable captions');
+      expect(core.getLabel(createState({ subtitlesShowing: true }))).toBe('Disable captions');
     });
 
     it('returns custom string label', () => {
@@ -128,7 +128,7 @@ describe('CaptionsRadioGroupCore', () => {
       expect(core.getTrackLabel({ kind: 'captions', label: '', language: '', mode: 'disabled' })).toBe('Captions');
     });
 
-    it('adds default label keys for unlabeled tracks', () => {
+    it('adds default labels for unlabeled tracks', () => {
       const core = new CaptionsRadioGroupCore();
       const media = createMediaState({
         textTrackList: [
@@ -140,8 +140,8 @@ describe('CaptionsRadioGroupCore', () => {
       core.setMedia(media);
 
       expect(core.getState().tracks).toEqual([
-        { value: 'captions-en', label: 'Captions', labelKey: 'menuCaptions' },
-        { value: 'subtitles-en', label: 'Subtitles', labelKey: 'menuSubtitles' },
+        { value: 'captions-en', label: 'Captions' },
+        { value: 'subtitles-en', label: 'Subtitles' },
       ]);
     });
 

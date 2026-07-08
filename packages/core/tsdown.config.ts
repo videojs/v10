@@ -2,12 +2,24 @@ import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
 import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 import packageJson from './package.json' with { type: 'json' };
-import { SHIPPED_LOCALE_TAGS } from './src/core/i18n/built-in-locales.ts';
+import { LOCALES } from './src/core/i18n/locales.ts';
+
+function localeAliases(tags: readonly string[]): string[] {
+  const counts = new Map<string, number>();
+  for (const tag of tags) {
+    if (!tag.includes('-')) continue;
+    const lang = tag.split('-')[0];
+    counts.set(lang, (counts.get(lang) ?? 0) + 1);
+  }
+  return [...counts].filter(([, count]) => count > 1).map(([lang]) => lang);
+}
+
+const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const localeEntries = Object.fromEntries([
   ['i18n/locales/all', './src/core/i18n/locales/all.ts'],
   ['i18n/locales/en', './src/core/i18n/locales/en.ts'],
-  ...SHIPPED_LOCALE_TAGS.map((tag) => [`i18n/locales/${tag}`, `./src/core/i18n/locales/${tag}.ts`]),
+  ...localeTags.map((tag) => [`i18n/locales/${tag}`, `./src/core/i18n/locales/${tag}.ts`]),
 ]);
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
@@ -16,7 +28,6 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     index: './src/core/index.ts',
     'media/predicate': './src/core/media/predicate.ts',
     i18n: './src/core/i18n/index.ts',
-    'i18n/runtime': './src/core/i18n/runtime.ts',
     ...localeEntries,
     dom: './src/dom/index.ts',
     'dom/media/media-host/index': './src/dom/media/media-host.ts',

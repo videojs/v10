@@ -3,12 +3,12 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaPictureInPictureState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface PiPButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: PiPButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: PiPButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -41,11 +41,11 @@ export class PiPButtonCore {
     this.#props = defaults(props, PiPButtonCore.defaultProps);
   }
 
-  getLabel(state: PiPButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: PiPButtonState): string {
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    return state.pip ? 'exitPictureInPicture' : 'enterPictureInPicture';
+    return state.pip ? 'Exit picture-in-picture' : 'Enter picture-in-picture';
   }
 
   getAttrs(state: PiPButtonState) {

@@ -35,6 +35,10 @@
       "types": "./dist/predicate.d.ts",
       "default": "./dist/predicate.js"
     },
+    "./percent": {
+      "types": "./dist/percent.d.ts",
+      "default": "./dist/percent.js"
+    },
     "./string": {
       "types": "./dist/string.d.ts",
       "default": "./dist/string.js"

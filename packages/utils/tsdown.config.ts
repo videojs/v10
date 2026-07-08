@@ -10,6 +10,7 @@ export default defineConfig({
     function: './src/function/index.ts',
     number: './src/number/index.ts',
     object: './src/object/index.ts',
+    percent: './src/percent/index.ts',
     predicate: './src/predicate/index.ts',
     string: './src/string/index.ts',
     style: './src/style/index.ts',

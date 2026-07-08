@@ -4,12 +4,12 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTextTrackState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: CaptionsButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: CaptionsButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
   /** When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically inside `Menu.Trigger`. */
@@ -44,11 +44,11 @@ export class CaptionsButtonCore {
     this.#props = defaults(props, CaptionsButtonCore.defaultProps);
   }
 
-  getLabel(state: CaptionsButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: CaptionsButtonState): string {
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    return state.subtitlesShowing ? 'disableCaptions' : 'enableCaptions';
+    return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
   }
 
   getAttrs(state: CaptionsButtonState) {

@@ -1,11 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { TranslationKeyOrString } from '../../i18n/types';
 import type { MediaAudioTrack, MediaAudioTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface AudioTrackRadioGroupProps {
   /** Custom label for the options group. */
@@ -19,7 +18,6 @@ export interface AudioTrackRadioGroupProps {
 export interface AudioTrackRadioGroupTrack {
   value: string;
   label: string;
-  labelKey?: TranslationKeyOrString | undefined;
 }
 
 export interface AudioTrackRadioGroupState extends ButtonState {
@@ -34,11 +32,6 @@ function formatTrackLabel(track: MediaAudioTrack): string {
   if (track.language) return track.language;
   if (track.kind) return track.kind;
   return 'Audio';
-}
-
-function getTrackLabelKey(track: MediaAudioTrack): TranslationKeyOrString | undefined {
-  if (track.label || track.language || track.kind) return undefined;
-  return 'menuAudioTrack';
 }
 
 function getTrackValue(track: MediaAudioTrack, index: number): string {
@@ -72,16 +65,10 @@ export class AudioTrackRadioGroupCore {
   }
 
   getLabel(state: AudioTrackRadioGroupState): string {
-    const { label } = this.#props;
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
-
-    return 'menuAudioTrack';
+    return 'Audio';
   }
 
   getTrackLabel(track: MediaAudioTrack): string {
@@ -102,15 +89,10 @@ export class AudioTrackRadioGroupCore {
   getState(): AudioTrackRadioGroupState {
     const media = this.#media!;
     const enabledIndex = media.audioTrackList.findIndex((track) => track.enabled);
-    const tracks = media.audioTrackList.map((track, index) => {
-      const labelKey = getTrackLabelKey(track);
-
-      return {
-        value: getTrackValue(track, index),
-        label: this.getTrackLabel(track),
-        ...(labelKey && { labelKey }),
-      };
-    });
+    const tracks = media.audioTrackList.map((track, index) => ({
+      value: getTrackValue(track, index),
+      label: this.getTrackLabel(track),
+    }));
     const availability: AudioTrackRadioGroupState['availability'] = tracks.length > 1 ? 'available' : 'unavailable';
 
     this.state.patch({

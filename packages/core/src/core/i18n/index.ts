@@ -5,18 +5,18 @@ export {
   resolveBrowserTranslationTarget,
   shouldAttemptBrowserTranslation,
 } from './browser-translation';
-export { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS, SHIPPED_LOCALE_TAGS } from './built-in-locales';
 export { loadLocale } from './load-locale';
+export { LOCALES } from './locales';
 export { default as translations } from './locales/en';
 export {
-  canonicalLocaleRegistryKey,
+  findLocaleKeys,
+  getCanonicalLocaleKey,
   getI18nTranslations,
-  hasRegisteredI18n,
-  localeLookupChain,
+  hasRegisteredLocale,
   onI18nRegistryChange,
   registerI18n,
-  resetI18nRegistryForTesting,
+  resetI18nRegistry,
 } from './registry';
-export { resolveTranslationPhrase } from './resolve-translation-phrase';
+export { resolveTranslation } from './resolve-translation';
 export { createTranslator } from './translator';
 export type * from './types';

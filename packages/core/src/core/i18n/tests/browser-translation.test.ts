@@ -7,7 +7,7 @@ import {
   shouldAttemptBrowserTranslation,
 } from '../browser-translation';
 import en from '../locales/en';
-import { registerI18n, resetI18nRegistryForTesting } from '../registry';
+import { registerI18n, resetI18nRegistry } from '../registry';
 
 type MockAvailability = 'available' | 'downloadable' | 'unavailable';
 
@@ -48,7 +48,7 @@ describe('resolveBrowserTranslationTarget', () => {
 
 describe('shouldAttemptBrowserTranslation', () => {
   afterEach(() => {
-    resetI18nRegistryForTesting();
+    resetI18nRegistry();
   });
 
   it('skips English', () => {
@@ -62,11 +62,11 @@ describe('shouldAttemptBrowserTranslation', () => {
   });
 
   it('attempts when a loaded built-in pack is missing English keys', () => {
-    expect(shouldAttemptBrowserTranslation('es', ['es'], { play: 'Ir' })).toBe(true);
+    expect(shouldAttemptBrowserTranslation('es', ['es'], { Play: 'Ir' })).toBe(true);
   });
 
   it('skips when a loaded built-in pack covers English keys', () => {
-    expect(shouldAttemptBrowserTranslation('es', ['es'], { ...en, play: 'Ir' })).toBe(false);
+    expect(shouldAttemptBrowserTranslation('es', ['es'], { ...en, Play: 'Ir' })).toBe(false);
   });
 
   it('attempts when only English lazy tags loaded', () => {
@@ -74,7 +74,7 @@ describe('shouldAttemptBrowserTranslation', () => {
   });
 
   it('skips when a non-en tag in the chain is registered', () => {
-    registerI18n('es', { play: 'Ir' });
+    registerI18n('es', { Play: 'Ir' });
     expect(shouldAttemptBrowserTranslation('es-MX', [])).toBe(false);
   });
 
@@ -85,7 +85,7 @@ describe('shouldAttemptBrowserTranslation', () => {
 
 describe('getBrowserTranslations', () => {
   afterEach(() => {
-    resetI18nRegistryForTesting();
+    resetI18nRegistry();
     resetBrowserTranslationCacheForTesting();
     removeMockTranslator();
   });
@@ -107,8 +107,8 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
-    expect(result.play).toBe('Jouer');
-    expect(result.pause).toBe('translated:Pause');
+    expect(result.Play).toBe('Jouer');
+    expect(result.Pause).toBe('translated:Pause');
   });
 
   it('preserves {param} placeholders in translated strings', async () => {
@@ -117,7 +117,7 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
-    expect(result.seekForward).toBe('FR:Seek forward {seconds} seconds');
+    expect(result['Seek forward {seconds} seconds']).toBe('FR:Seek forward {seconds} seconds');
   });
 
   it('masks named placeholders as numeric slots for whole-string translation', async () => {
@@ -138,8 +138,8 @@ describe('getBrowserTranslations', () => {
     const result = await getBrowserTranslations('fr');
     expect(translatedInputs).toContain('Seek backward {0} seconds');
     expect(translatedInputs.some((text) => text.includes('{seconds}'))).toBe(false);
-    expect(result.seekBackward).toBe('Mencari mundur {seconds} detik');
-    expect(result.seekForward).toBe('Mencari maju {seconds} detik');
+    expect(result['Seek backward {seconds} seconds']).toBe('Mencari mundur {seconds} detik');
+    expect(result['Seek forward {seconds} seconds']).toBe('Mencari maju {seconds} detik');
   });
 
   it('restores slots when the translator adds spaces inside braces', async () => {
@@ -148,7 +148,7 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
-    expect(result.playbackRateAria).toBe('Kecepatan pemutaran {rate}');
+    expect(result['Playback rate {rate}']).toBe('Kecepatan pemutaran {rate}');
   });
 
   it('interpolates seek seconds after browser translation', async () => {
@@ -158,9 +158,9 @@ describe('getBrowserTranslations', () => {
 
     const { createTranslator } = await import('../translator');
     const result = await getBrowserTranslations('fr');
-    const t = createTranslator({ ...result, play: 'Play' } as import('../types').Translations, 'fr');
+    const t = createTranslator({ ...result, Play: 'Play' } as import('../types').Translations, 'fr');
 
-    expect(t('seekForward', { seconds: 10 })).toBe('Mencari maju 10 detik');
+    expect(t('Seek forward {seconds} seconds', { seconds: 10 })).toBe('Mencari maju 10 detik');
   });
 
   it('caches results per target language', async () => {
@@ -184,7 +184,7 @@ describe('getBrowserTranslations', () => {
       onModelDownload: { start: onStart, finish: onFinish },
     });
     expect(translator.create).toHaveBeenCalledTimes(1);
-    expect(result.play).toBe('Main');
+    expect(result.Play).toBe('Main');
     expect(onStart).toHaveBeenCalledWith('id');
     expect(onFinish).toHaveBeenCalledWith('id');
   });

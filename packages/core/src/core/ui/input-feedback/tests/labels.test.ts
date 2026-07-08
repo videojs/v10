@@ -4,21 +4,21 @@ import { createTranslator, type Translations } from '../../../i18n';
 import { createInputIndicatorLabels } from '../labels';
 
 describe('createInputIndicatorLabels', () => {
-  it('maps indicator translation keys to input feedback labels', () => {
+  it('maps indicator phrases to input feedback labels', () => {
     const labels = createInputIndicatorLabels(
       createTranslator(
         {
-          indicatorMuted: 'Muet',
-          indicatorVolume: 'Volume',
-          indicatorVolumeWithValue: 'Volume {value}',
-          indicatorCaptionsOn: 'Sous-titres activés',
-          indicatorCaptionsOff: 'Sous-titres désactivés',
-          indicatorPaused: 'En pause',
-          indicatorPlaying: 'Lecture en cours',
-          indicatorFullscreen: 'Plein écran',
-          indicatorExitFullscreen: 'Quitter le plein écran',
-          indicatorPictureInPicture: 'Image dans l’image',
-          indicatorExitPictureInPicture: 'Quitter l’image dans l’image',
+          Muted: 'Muet',
+          Volume: 'Volume',
+          'Volume {value}': 'Volume {value}',
+          'Captions on': 'Sous-titres activés',
+          'Captions off': 'Sous-titres désactivés',
+          Paused: 'En pause',
+          Playing: 'Lecture en cours',
+          Fullscreen: 'Plein écran',
+          'Exit fullscreen': 'Quitter le plein écran',
+          'Picture in picture': 'Image dans l’image',
+          'Exit picture in picture': 'Quitter l’image dans l’image',
         } satisfies Translations,
         'fr'
       )

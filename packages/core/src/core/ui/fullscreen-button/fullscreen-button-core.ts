@@ -3,12 +3,12 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaFullscreenState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface FullscreenButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: FullscreenButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: FullscreenButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -41,11 +41,11 @@ export class FullscreenButtonCore {
     this.#props = defaults(props, FullscreenButtonCore.defaultProps);
   }
 
-  getLabel(state: FullscreenButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: FullscreenButtonState): string {
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    return state.fullscreen ? 'exitFullscreen' : 'enterFullscreen';
+    return state.fullscreen ? 'Exit fullscreen' : 'Enter fullscreen';
   }
 
   getAttrs(state: FullscreenButtonState) {

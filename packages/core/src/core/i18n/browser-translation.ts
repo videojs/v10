@@ -1,5 +1,5 @@
 import en from './locales/en';
-import { getI18nTranslations, hasRegisteredI18n, localeLookupChain } from './registry';
+import { findLocaleKeys, getI18nTranslations, hasRegisteredLocale } from './registry';
 import type { Locale, Translations } from './types';
 
 type BrowserTranslatorAvailability = 'available' | 'downloadable' | 'downloading' | 'unavailable';
@@ -79,7 +79,7 @@ function getBrowserTranslator(): BrowserTranslatorConstructor | undefined {
 
 /** First non-English tag in the lookup chain used as the browser translation target. */
 export function resolveBrowserTranslationTarget(locale: string): string | undefined {
-  for (const tag of localeLookupChain(locale)) {
+  for (const tag of findLocaleKeys(locale)) {
     if (!isEnglishLocaleTag(tag)) return tag;
   }
   return undefined;
@@ -97,7 +97,7 @@ export function shouldAttemptBrowserTranslation(
     return translations !== undefined && hasMissingEnglishTranslations(translations);
   }
 
-  return !localeLookupChain(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredI18n(tag));
+  return !findLocaleKeys(locale).some((tag) => !isEnglishLocaleTag(tag) && hasRegisteredLocale(tag));
 }
 
 function hasMissingEnglishTranslations(translations: Partial<Translations>): boolean {

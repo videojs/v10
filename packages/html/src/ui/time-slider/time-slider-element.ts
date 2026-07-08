@@ -32,7 +32,7 @@ export class TimeSliderElement extends MediaElement {
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
     pauseOnDrag: { type: Boolean, attribute: 'pause-on-drag' },
-  } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max' | 'formatOptions'>>;
+  } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
   label = TimeSliderCore.defaultProps.label;
   changeThrottle = TimeSliderCore.defaultProps.changeThrottle;

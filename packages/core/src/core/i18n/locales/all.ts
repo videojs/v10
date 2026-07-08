@@ -53,7 +53,7 @@ import zh from './zh';
 import zh_CN from './zh-CN';
 import zh_TW from './zh-TW';
 
-/** Every built-in locale pack keyed by BCP 47 tag (includes `en` and shorthand aliases `pt` / `zh`). */
+/** Every built-in locale pack keyed by BCP 47 tag. */
 export const all = {
   en,
   ar,

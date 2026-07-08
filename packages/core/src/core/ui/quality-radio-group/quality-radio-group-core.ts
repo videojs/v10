@@ -1,11 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
-import type { TranslationKeyOrString } from '../../i18n/types';
 import type { MediaQualityState, MediaVideoRendition } from '../../media/state';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface QualityRadioGroupProps {
   /** Custom label for the options group. */
@@ -19,7 +18,6 @@ export interface QualityRadioGroupProps {
 export interface QualityRadioGroupRendition {
   value: string;
   label: string;
-  labelKey?: TranslationKeyOrString | undefined;
   tier?: string | undefined;
   badge?: string | undefined;
 }
@@ -27,8 +25,6 @@ export interface QualityRadioGroupRendition {
 export interface QualityRadioGroupState extends ButtonState {
   renditions: readonly QualityRadioGroupRendition[];
   autoLabel: string;
-  autoLabelKey?: TranslationKeyOrString | undefined;
-  autoLabelParams?: { label: string } | undefined;
   value: string;
   disabled: boolean;
   availability: 'available' | 'unavailable';
@@ -120,7 +116,6 @@ export class QualityRadioGroupCore {
   readonly state = createState<QualityRadioGroupState>({
     renditions: [],
     autoLabel: 'Auto',
-    autoLabelKey: 'menuAuto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'unavailable',
@@ -139,16 +134,10 @@ export class QualityRadioGroupCore {
   }
 
   getLabel(state: QualityRadioGroupState): string {
-    const { label } = this.#props;
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
-
-    return 'menuQuality';
+    return 'Quality';
   }
 
   getRenditionLabel(rendition: MediaVideoRendition): string {
@@ -201,9 +190,6 @@ export class QualityRadioGroupCore {
       return {
         value: this.getRenditionValue(rendition, index),
         label: this.getRenditionLabel(rendition),
-        ...(this.#props.formatRendition === QualityRadioGroupCore.defaultProps.formatRendition &&
-          !getRenditionSize(rendition) &&
-          !rendition.bitrate && { labelKey: 'menuQuality' }),
         ...(tier && { tier }),
         ...(badge && { badge }),
       };
@@ -220,8 +206,6 @@ export class QualityRadioGroupCore {
     this.state.patch({
       renditions: media.videoRenditionList.map(toRendition),
       autoLabel: selectedIndex === -1 && active ? `Auto (${active.label})` : 'Auto',
-      autoLabelKey: selectedIndex === -1 && active ? 'menuAutoWithLabel' : 'menuAuto',
-      autoLabelParams: selectedIndex === -1 && active ? { label: active.label } : undefined,
       value:
         selectedIndex === -1
           ? QUALITY_AUTO_VALUE

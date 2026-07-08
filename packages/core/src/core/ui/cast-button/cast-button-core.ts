@@ -4,12 +4,12 @@ import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { ButtonState, TranslationKeyOrString } from '../types';
+import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface CastButtonProps {
   /** Custom label for the button. */
-  label?: TranslationKeyOrString | ((state: CastButtonState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: CastButtonState) => string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -42,13 +42,13 @@ export class CastButtonCore {
     this.#props = defaults(props, CastButtonCore.defaultProps);
   }
 
-  getLabel(state: CastButtonState): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
-    if (custom !== undefined) return custom;
+  getLabel(state: CastButtonState): string {
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
-    if (state.castState === 'connected') return 'stopCasting';
-    if (state.castState === 'connecting') return 'connectingCast';
-    return 'startCasting';
+    if (state.castState === 'connected') return 'Stop casting';
+    if (state.castState === 'connecting') return 'Connecting';
+    return 'Start casting';
   }
 
   getAttrs(state: CastButtonState) {

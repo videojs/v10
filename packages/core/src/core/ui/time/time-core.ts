@@ -1,10 +1,9 @@
 import { defaults } from '@videojs/utils/object';
-import { formatTime, formatTimeAsPhrase, secondsToIsoDuration, type TimeFormatOptions } from '@videojs/utils/time';
+import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
-import { resolveOptionalControlLabel } from '../resolve-optional-control-label';
-import type { TranslationKeyOrString } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
@@ -15,11 +14,9 @@ export interface TimeProps {
   /** Symbol prepended to remaining time. */
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
-  label?: TranslationKeyOrString | ((state: TimeState) => TranslationKeyOrString) | undefined;
+  label?: string | ((state: TimeState) => string) | undefined;
   /** Whether the time display can be toggled. */
   toggle?: boolean | undefined;
-  /** Options for `formatTimeAsPhrase` when building spoken-duration copy (`phrase` state and screen readers), not digital clock text. */
-  formatOptions?: TimeFormatOptions | undefined;
 }
 
 export interface TimeState {
@@ -37,29 +34,30 @@ export interface TimeState {
   datetime: string;
 }
 
-const TOGGLE_LABEL_KEYS: Record<TimeType, 'timeToggleElapsed' | 'timeToggleDuration' | 'timeToggleRemaining'> = {
-  current: 'timeToggleElapsed',
-  duration: 'timeToggleDuration',
-  remaining: 'timeToggleRemaining',
+const TOGGLE_LABEL_KEYS: Record<
+  TimeType,
+  '{duration}. Show elapsed time.' | '{duration}. Show duration.' | '{duration}. Show remaining time.'
+> = {
+  current: '{duration}. Show elapsed time.',
+  duration: '{duration}. Show duration.',
+  remaining: '{duration}. Show remaining time.',
 };
 
-const DEFAULT_LABEL_KEYS: Record<TimeType, 'timeCurrent' | 'timeDuration' | 'timeRemaining'> = {
-  current: 'timeCurrent',
-  duration: 'timeDuration',
-  remaining: 'timeRemaining',
+const DEFAULT_LABEL_KEYS: Record<TimeType, 'Current time' | 'Duration' | 'Remaining'> = {
+  current: 'Current time',
+  duration: 'Duration',
+  remaining: 'Remaining',
 };
-
-type TimeCoreResolvedProps = NonNullableObject<Omit<TimeProps, 'formatOptions'>> & Pick<TimeProps, 'formatOptions'>;
 
 export class TimeCore {
-  static readonly defaultProps: NonNullableObject<Omit<TimeProps, 'formatOptions'>> = {
+  static readonly defaultProps: NonNullableObject<TimeProps> = {
     type: 'current',
     negativeSign: '-',
     label: '',
     toggle: false,
   };
 
-  #props: TimeCoreResolvedProps = { ...TimeCore.defaultProps };
+  #props: NonNullableObject<TimeProps> = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
 
   constructor(props?: TimeProps) {
@@ -67,7 +65,7 @@ export class TimeCore {
   }
 
   setProps(props: TimeProps): void {
-    this.#props = defaults(props, TimeCore.defaultProps) as TimeCoreResolvedProps;
+    this.#props = defaults(props, TimeCore.defaultProps);
   }
 
   setMedia(media: MediaTimeState): void {
@@ -96,15 +94,15 @@ export class TimeCore {
   }
 
   #getPhrase(): string {
-    const { type, formatOptions } = this.#props;
+    const { type } = this.#props;
     const seconds = this.#getSeconds();
 
     if (type === 'remaining') {
       // Use negative to trigger "remaining" suffix
-      return formatTimeAsPhrase(seconds < 0 ? seconds : -Math.abs(seconds), formatOptions);
+      return formatTimeAsPhrase(seconds < 0 ? seconds : -Math.abs(seconds));
     }
 
-    return formatTimeAsPhrase(seconds, formatOptions);
+    return formatTimeAsPhrase(seconds);
   }
 
   #getDatetime(): string {
@@ -120,8 +118,8 @@ export class TimeCore {
     return currentType === 'duration' ? 'remaining' : 'duration';
   }
 
-  getLabel(state: TimeState, type = this.#props.type): TranslationKeyOrString {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
+  getLabel(state: TimeState, type = this.#props.type): string {
+    const custom = resolveLabel(this.#props.label, state);
     if (custom !== undefined) return custom;
     if (!this.#props.toggle) {
       return DEFAULT_LABEL_KEYS[this.#props.type];
@@ -133,7 +131,7 @@ export class TimeCore {
   }
 
   getLabelParams(state: TimeState): { duration: string } | undefined {
-    const custom = resolveOptionalControlLabel(this.#props.label, state);
+    const custom = resolveLabel(this.#props.label, state);
     return custom === undefined && this.#props.toggle ? { duration: state.phrase } : undefined;
   }
 

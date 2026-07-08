@@ -1,10 +1,9 @@
 import { defaults } from '@videojs/utils/object';
-import { formatTimeAsPhrase, type TimeFormatOptions } from '@videojs/utils/time';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
-import type { TranslationKeyOrString } from '../types';
 
 export interface TimeSliderProps extends SliderProps {
   /** @internal Derived from `currentTime` — not user-settable. */
@@ -20,8 +19,6 @@ export interface TimeSliderProps extends SliderProps {
    * resuming on release if it was playing before.
    */
   pauseOnDrag?: boolean | undefined;
-  /** Options for `formatTimeAsPhrase` when building the slider thumb `aria-valuetext`. */
-  formatOptions?: TimeFormatOptions | undefined;
 }
 
 export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'currentTime' | 'duration' | 'seeking'> {
@@ -31,7 +28,7 @@ export interface TimeSliderState extends SliderState, Pick<MediaTimeState, 'curr
 
 /** Time-domain slider: maps media time/buffer state to slider state. */
 export class TimeSliderCore extends SliderCore {
-  static override readonly defaultProps: NonNullableObject<Omit<TimeSliderProps, 'formatOptions'>> = {
+  static override readonly defaultProps: NonNullableObject<TimeSliderProps> = {
     ...SliderCore.defaultProps,
     label: '',
     changeThrottle: 100,
@@ -78,27 +75,26 @@ export class TimeSliderCore extends SliderCore {
     };
   }
 
-  override getLabel(state: SliderState): TranslationKeyOrString {
-    return super.getLabel(state) || 'seek';
+  override getLabel(state: SliderState): string {
+    return super.getLabel(state) || 'Seek';
   }
 
   #announceValue(state: TimeSliderState): number {
     return state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
   }
 
-  getValueText(state: TimeSliderState): TranslationKeyOrString {
-    return Number.isFinite(state.duration) ? 'timeSliderValueTextRange' : this.getValueTextParams(state).current;
+  getValueText(state: TimeSliderState): string {
+    return Number.isFinite(state.duration) ? '{current} of {duration}' : this.getValueTextParams(state).current;
   }
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {
-    const formatOptions = this.#props.formatOptions;
-    const current = formatTimeAsPhrase(this.#announceValue(state), formatOptions);
+    const current = formatTimeAsPhrase(this.#announceValue(state));
     if (!Number.isFinite(state.duration)) {
       return { current };
     }
     return {
       current,
-      duration: formatTimeAsPhrase(state.duration, formatOptions),
+      duration: formatTimeAsPhrase(state.duration),
     };
   }
 

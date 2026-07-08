@@ -1,7 +1,7 @@
 import { isNumber } from '../predicate/predicate';
 
 export type TimeFormatOptions = {
-  /** BCP 47 tag(s) for {@link Intl.DurationFormat} (and percent formatting where applicable). */
+  /** BCP 47 tag(s) for {@link Intl.DurationFormat}. */
   locale?: string | string[];
   /** Called only when `seconds` is negative; formats the localized remaining-time phrase for the duration body. */
   formatRemaining?: (duration: string) => string;
@@ -18,7 +18,6 @@ type DurationFormatConstructor = new (
 
 const DurationFormat = (Intl as typeof Intl & { DurationFormat: DurationFormatConstructor }).DurationFormat;
 
-const percentFormatters = new Map<string, Intl.NumberFormat>();
 const durationFormatters = new Map<string, InstanceType<typeof DurationFormat>>();
 
 function localeCacheKey(locale?: string | string[]): string {
@@ -30,25 +29,6 @@ function isEnglishLocale(locale?: string | string[]): boolean {
   const tag = Array.isArray(locale) ? locale[0] : locale;
   if (!tag) return true;
   return tag === 'en' || tag.startsWith('en-');
-}
-
-function getPercentFormatter(locale?: string | string[]): Intl.NumberFormat | undefined {
-  const key = localeCacheKey(locale);
-  let formatter = percentFormatters.get(key);
-  if (!formatter) {
-    try {
-      formatter = new Intl.NumberFormat(locale, { style: 'percent', maximumFractionDigits: 0 });
-      percentFormatters.set(key, formatter);
-    } catch {
-      return undefined;
-    }
-  }
-  return formatter;
-}
-
-function formatVolumePercentFallback(fraction: number): string {
-  const percent = Math.round(Math.min(1, Math.max(0, fraction)) * 100);
-  return `${percent}%`;
 }
 
 function getDurationFormatter(
@@ -174,20 +154,4 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   }
 
   return body;
-}
-
-/** Format a volume fraction (0–1) with {@link Intl.NumberFormat} `style: "percent"`. */
-export function formatVolumePercent(fraction: number, locale?: string | string[]): string {
-  const value = !isNumber(fraction) || !Number.isFinite(fraction) ? 0 : Math.min(1, Math.max(0, fraction));
-
-  try {
-    const formatter = getPercentFormatter(locale) ?? getPercentFormatter(undefined);
-    if (formatter) {
-      return formatter.format(value);
-    }
-  } catch {
-    // fall through to simple percent string
-  }
-
-  return formatVolumePercentFallback(value);
 }

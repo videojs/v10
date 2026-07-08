@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { mergeLocaleOverlays } from '../merge-locale-overlays';
+import { mergeLocaleOverlays } from '../locale/merge-locale-overlays';
 
 describe('mergeLocaleOverlays', () => {
   it('merges layers least-specific to most-specific', async () => {

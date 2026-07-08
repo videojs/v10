@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { effectiveLocale } from '../effective-locale';
+import { effectiveLocale } from '../locale/effective-locale';
 
 describe('effectiveLocale', () => {
   it('prefers explicit locale over ambient', () => {

@@ -1,4 +1,4 @@
-import { isUndefined } from '../predicate';
+import { isUndefined } from '../../predicate';
 
 /** Resolves locale: explicit non-empty value → ambient `lang` → {@link fallback}. */
 export function effectiveLocale(

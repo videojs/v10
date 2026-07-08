@@ -1,101 +1,91 @@
-import type { BUILT_IN_LOCALES, LOCALE_ALIAS_TAGS } from './built-in-locales';
-
-/** Matches strings that include the literal substring `needle` (for example a `{param}` token). */
-export type Contains<Needle extends string> = `${string}${Needle}${string}`;
-
-export type BuiltInLocale = (typeof BUILT_IN_LOCALES)[number] | (typeof LOCALE_ALIAS_TAGS)[number];
+import type { Contains } from '@videojs/utils/types';
+import type { LOCALES } from './locales';
 
 /** BCP 47 language tag; built-ins are narrowed for autocomplete. */
-export type Locale = BuiltInLocale | (string & {});
+export type Locale = (typeof LOCALES)[number] | (string & {});
 
-/** Per-key argument contract: `never` means the translator only accepts the key. */
+/** Per-phrase argument contract: `never` means the translator only accepts the phrase. */
 export type TranslationParams = {
-  play: never;
-  pause: never;
-  replay: never;
-  mute: never;
-  unmute: never;
-  seekForward: { seconds: number | string };
-  seekBackward: { seconds: number | string };
-  enterFullscreen: never;
-  exitFullscreen: never;
-  enableCaptions: never;
-  disableCaptions: never;
-  enterPictureInPicture: never;
-  exitPictureInPicture: never;
-  playingLive: never;
-  seekToLiveEdge: never;
-  liveBadge: never;
-  startCasting: never;
-  stopCasting: never;
-  connectingCast: never;
-  seek: never;
-  volume: never;
-  timeCurrent: never;
-  timeDuration: never;
-  timeRemaining: never;
-  timeRemainingPhrase: { duration: string };
-  timeToggleElapsed: { duration: string };
-  timeToggleDuration: { duration: string };
-  timeToggleRemaining: { duration: string };
-  playbackRateAria: { rate: number | string };
-  timeSliderValueTextRange: { current: string; duration: string };
-  volumeSliderValueTextMuted: { percent: number | string };
-  indicatorMuted: never;
-  indicatorVolume: never;
-  indicatorVolumeWithValue: { value: string };
-  indicatorCaptionsOn: never;
-  indicatorCaptionsOff: never;
-  indicatorPaused: never;
-  indicatorPlaying: never;
-  indicatorFullscreen: never;
-  indicatorExitFullscreen: never;
-  indicatorPictureInPicture: never;
-  indicatorExitPictureInPicture: never;
-  mediaErrorAborted: never;
-  mediaErrorNetwork: never;
-  mediaErrorDecode: never;
-  mediaErrorSrcNotSupported: never;
-  mediaErrorEncrypted: never;
-  mediaErrorCustom: never;
-  errorDialogTitle: never;
-  errorDialogDismiss: never;
-  mediaErrorFallback: never;
-  menuSettings: never;
-  menuQuality: never;
-  menuAudioTrack: never;
-  menuSpeed: never;
-  menuCaptions: never;
-  menuPlaybackRate: never;
-  menuBack: never;
-  menuOff: never;
-  menuAuto: never;
-  menuAutoWithLabel: { label: string };
-  menuSubtitles: never;
+  Play: never;
+  Pause: never;
+  Replay: never;
+  Mute: never;
+  Unmute: never;
+  'Seek forward {seconds} seconds': { seconds: number | string };
+  'Seek backward {seconds} seconds': { seconds: number | string };
+  'Enter fullscreen': never;
+  'Exit fullscreen': never;
+  'Enable captions': never;
+  'Disable captions': never;
+  'Enter picture-in-picture': never;
+  'Exit picture-in-picture': never;
+  'Playing live': never;
+  'Seek to live edge': never;
+  Live: never;
+  'Start casting': never;
+  'Stop casting': never;
+  Connecting: never;
+  Seek: never;
+  Volume: never;
+  'Current time': never;
+  Duration: never;
+  Remaining: never;
+  '{duration} remaining': { duration: string };
+  '{duration}. Show elapsed time.': { duration: string };
+  '{duration}. Show duration.': { duration: string };
+  '{duration}. Show remaining time.': { duration: string };
+  'Playback rate {rate}': { rate: number | string };
+  '{current} of {duration}': { current: string; duration: string };
+  '{percent}, muted': { percent: number | string };
+  Muted: never;
+  'Volume {value}': { value: string };
+  'Captions on': never;
+  'Captions off': never;
+  Paused: never;
+  Playing: never;
+  Fullscreen: never;
+  'Picture in picture': never;
+  'Exit picture in picture': never;
+  'You aborted the media playback': never;
+  'A network error caused the media download to fail.': never;
+  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.': never;
+  'An unsupported error occurred. The server or network failed, or your browser does not support this format.': never;
+  'The media is encrypted and there are no keys to decrypt it.': never;
+  '': never;
+  'Something went wrong.': never;
+  OK: never;
+  'An error occurred. Please try again.': never;
+  Settings: never;
+  Quality: never;
+  Audio: never;
+  Speed: never;
+  Captions: never;
+  'Playback rate': never;
+  Back: never;
+  Off: never;
+  Auto: never;
+  'Auto ({label})': { label: string };
+  Subtitles: never;
 };
 
-/**
- * Either a known translation id from {@link TranslationParams}, or any other string the platform may
- * use as copy (custom overlay key, literal text, etc.).
- */
-export type TranslationKeyOrString = keyof TranslationParams | (string & {});
+export type TranslationKey = keyof TranslationParams;
 
-/** Placeholder shape for each key that accepts `t(key, params)`. Omitting a key here is a type error when defining strings. */
+/** Placeholder shape for each phrase that accepts `t(phrase, params)`. */
 type ParametricTranslations = {
-  seekForward: Contains<'{seconds}'>;
-  seekBackward: Contains<'{seconds}'>;
-  playbackRateAria: Contains<'{rate}'>;
-  timeSliderValueTextRange: Contains<'{current}'> & Contains<'{duration}'>;
-  timeRemainingPhrase: Contains<'{duration}'>;
-  timeToggleElapsed: Contains<'{duration}'>;
-  timeToggleDuration: Contains<'{duration}'>;
-  timeToggleRemaining: Contains<'{duration}'>;
-  volumeSliderValueTextMuted: Contains<'{percent}'>;
-  indicatorVolumeWithValue: Contains<'{value}'>;
-  menuAutoWithLabel: Contains<'{label}'>;
+  'Seek forward {seconds} seconds': Contains<'{seconds}'>;
+  'Seek backward {seconds} seconds': Contains<'{seconds}'>;
+  'Playback rate {rate}': Contains<'{rate}'>;
+  '{current} of {duration}': Contains<'{current}'> & Contains<'{duration}'>;
+  '{duration} remaining': Contains<'{duration}'>;
+  '{duration}. Show elapsed time.': Contains<'{duration}'>;
+  '{duration}. Show duration.': Contains<'{duration}'>;
+  '{duration}. Show remaining time.': Contains<'{duration}'>;
+  '{percent}, muted': Contains<'{percent}'>;
+  'Volume {value}': Contains<'{value}'>;
+  'Auto ({label})': Contains<'{label}'>;
 };
 
-/** Player copy keyed by camelCase tokens; all entries are optional overlay keys. */
+/** Player copy keyed by the default English UI string; all entries are optional overlays. */
 export type Translations = {
   [K in keyof TranslationParams]?: TranslationParams[K] extends never
     ? string
@@ -105,6 +95,6 @@ export type Translations = {
 };
 
 export type Translator = <K extends keyof TranslationParams>(
-  key: K,
+  phrase: K,
   ...args: TranslationParams[K] extends never ? [] : [params: TranslationParams[K]]
 ) => string;

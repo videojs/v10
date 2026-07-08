@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { formatTime, formatTimeAsPhrase, formatVolumePercent, secondsToIsoDuration } from '../format';
+import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '../format';
 
 describe('formatTime', () => {
   it('formats seconds only', () => {
@@ -97,27 +97,6 @@ describe('formatTimeAsPhrase', () => {
 
   it('throws when Intl.DurationFormat rejects the locale', () => {
     expect(() => formatTimeAsPhrase(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toThrow(RangeError);
-  });
-});
-
-describe('formatVolumePercent', () => {
-  it('uses Intl percent style', () => {
-    expect(formatVolumePercent(0.75)).toMatch(/75/);
-    expect(formatVolumePercent(0.75)).toMatch(/%/);
-  });
-
-  it('clamps to 0–100%', () => {
-    expect(formatVolumePercent(-1)).toBe(formatVolumePercent(0));
-    expect(formatVolumePercent(2)).toBe(formatVolumePercent(1));
-  });
-
-  it('handles invalid fraction', () => {
-    expect(formatVolumePercent(Number.NaN)).toMatch(/0/);
-    expect(formatVolumePercent(Number.NaN)).toMatch(/%/);
-  });
-
-  it('falls back when locale is invalid', () => {
-    expect(formatVolumePercent(0.75, 'not-a-invalid-bcp47-tag!!!')).toBe('75%');
   });
 });
 

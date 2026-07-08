@@ -78,17 +78,17 @@ describe('CastButtonCore', () => {
   describe('getLabel', () => {
     it('returns Start casting when disconnected', () => {
       const core = new CastButtonCore();
-      expect(core.getLabel(createState({ castState: 'disconnected' }))).toBe('startCasting');
+      expect(core.getLabel(createState({ castState: 'disconnected' }))).toBe('Start casting');
     });
 
     it('returns Stop casting when connected', () => {
       const core = new CastButtonCore();
-      expect(core.getLabel(createState({ castState: 'connected' }))).toBe('stopCasting');
+      expect(core.getLabel(createState({ castState: 'connected' }))).toBe('Stop casting');
     });
 
     it('returns Connecting when connecting', () => {
       const core = new CastButtonCore();
-      expect(core.getLabel(createState({ castState: 'connecting' }))).toBe('connectingCast');
+      expect(core.getLabel(createState({ castState: 'connecting' }))).toBe('Connecting');
     });
 
     it('returns custom string label', () => {
@@ -108,7 +108,7 @@ describe('CastButtonCore', () => {
     it('returns aria-label', () => {
       const core = new CastButtonCore();
       const attrs = core.getAttrs(createState());
-      expect(attrs['aria-label']).toBe('startCasting');
+      expect(attrs['aria-label']).toBe('Start casting');
     });
 
     it('sets aria-disabled when disabled', () => {

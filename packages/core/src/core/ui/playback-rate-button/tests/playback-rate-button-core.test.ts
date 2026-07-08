@@ -36,12 +36,12 @@ describe('PlaybackRateButtonCore', () => {
   describe('getLabel', () => {
     it('returns default label with rate', () => {
       const core = new PlaybackRateButtonCore();
-      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('playbackRateAria');
+      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate {rate}');
     });
 
     it('returns default label for rate 1', () => {
       const core = new PlaybackRateButtonCore();
-      expect(core.getLabel(createState({ rate: 1 }))).toBe('playbackRateAria');
+      expect(core.getLabel(createState({ rate: 1 }))).toBe('Playback rate {rate}');
     });
 
     it('returns custom string label', () => {
@@ -60,7 +60,7 @@ describe('PlaybackRateButtonCore', () => {
       const core = new PlaybackRateButtonCore({
         label: () => '',
       });
-      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('playbackRateAria');
+      expect(core.getLabel(createState({ rate: 1.5 }))).toBe('Playback rate {rate}');
     });
   });
 
@@ -80,7 +80,7 @@ describe('PlaybackRateButtonCore', () => {
     it('returns aria-label', () => {
       const core = new PlaybackRateButtonCore();
       const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toBe('playbackRateAria');
+      expect(attrs['aria-label']).toBe('Playback rate {rate}');
     });
 
     it('sets aria-disabled when disabled', () => {

@@ -1,8 +1,9 @@
 import { TimeCore, TimeDataAttrs, type TimeType } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectTime } from '@videojs/core/dom';
-import { createTranslator, resolveTranslationPhrase, translations } from '@videojs/core/i18n';
+import { createTranslator, resolveTranslation, translations } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { isInteractiveActivation } from '@videojs/utils/dom';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -18,7 +19,7 @@ export class TimeElement extends MediaElement {
     negativeSign: { type: String, attribute: 'negative-sign' },
     label: { type: String },
     toggle: { type: Boolean },
-  } satisfies PropertyDeclarationMap<keyof Omit<TimeCore.Props, 'formatOptions'>>;
+  } satisfies PropertyDeclarationMap<keyof TimeCore.Props>;
 
   type: TimeType = TimeCore.defaultProps.type;
   negativeSign = TimeCore.defaultProps.negativeSign;
@@ -85,9 +86,6 @@ export class TimeElement extends MediaElement {
       negativeSign: this.negativeSign,
       label: this.label,
       toggle: this.toggle,
-      formatOptions: {
-        formatRemaining: (duration) => resolveTranslationPhrase(translator, 'timeRemainingPhrase', { duration }),
-      },
     });
     this.#core.setMedia(media);
     const state = this.#core.getState();
@@ -99,9 +97,22 @@ export class TimeElement extends MediaElement {
     const attrs = this.#core.getAttrs(state, this.type);
     applyElementProps(this, {
       ...attrs,
-      'aria-label': resolveTranslationPhrase(translator, attrs['aria-label'], this.#core.getLabelParams(state)),
+      'aria-label': resolveTranslation(translator, attrs['aria-label'], this.#getLabelParams(state)),
     });
     applyStateDataAttrs(this, state, TimeDataAttrs);
+  }
+
+  #getLabelParams(state: TimeCore.State): { duration: string } | undefined {
+    const params = this.#core.getLabelParams(state);
+    if (!params || state.type !== 'remaining') {
+      return params;
+    }
+
+    return {
+      duration: resolveTranslation(translator, '{duration} remaining', {
+        duration: formatTimeAsPhrase(Math.abs(state.seconds)),
+      }),
+    };
   }
 
   #handleClick = (event: MouseEvent): void => {
