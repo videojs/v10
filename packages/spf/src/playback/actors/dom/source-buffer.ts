@@ -17,6 +17,13 @@ export type AppendSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> &
   trackId: Track['id'];
   /** Declared track bandwidth in bps (from playlist BANDWIDTH attribute). */
   trackBandwidth?: number;
+  /**
+   * Non-zero-PTS relocation (spike): when present, set as
+   * `SourceBuffer.timestampOffset` before this append so native PTS is relocated
+   * onto a 0-based presentation timeline. Constant per source; the loader
+   * includes it once (on the first media segment). Absent = no relocation.
+   */
+  timestampOffset?: number;
 };
 
 export type { AppendData };
@@ -151,6 +158,12 @@ function appendSegmentTask(
       });
     }
 
+    // Relocation (non-zero-PTS spike): set the offset before the coded frames
+    // are appended. The SerialRunner guarantees the buffer is idle here, so the
+    // assignment is safe; it's constant per source (loader sends it once).
+    if (meta.timestampOffset != null) {
+      sourceBuffer.timestampOffset = meta.timestampOffset;
+    }
     await appendSegment(sourceBuffer, message.data, taskSignal);
     // No abort check here: the physical SourceBuffer has been modified, so
     // the model must be updated to match regardless of signal state.

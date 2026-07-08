@@ -146,7 +146,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
     fetch: FetchBytes;
   } & SegmentLoaderActorConfig;
 }): Reactor<BufferActorsFsmState | 'destroying' | 'destroyed'> {
-  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer } = config;
+  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer, relocateTimestampOrigin } = config;
   const derivedStateSignal = computed<BufferActorsFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
     const selection: TrackSelectionState = {
@@ -172,7 +172,11 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           const track = getSelectedTrack(selection, type) as PartiallyResolvedTrack;
           const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
           const bufferActor = createSourceBufferActor(buffer);
-          const segmentLoader = createSegmentLoaderActor(bufferActor, fetch, { forwardBuffer, backBuffer });
+          const segmentLoader = createSegmentLoaderActor(bufferActor, fetch, {
+            forwardBuffer,
+            backBuffer,
+            relocateTimestampOrigin,
+          });
 
           // Synchronous slot writes — load-bearing for the Firefox
           // `mozHasAudio` invariant (see file-level JSDoc). Both per-type

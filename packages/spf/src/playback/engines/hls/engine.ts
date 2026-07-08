@@ -274,6 +274,16 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * key on something else (e.g. Mux's `cdn=` query param).
    */
   getCdnId?: GetCdnId;
+  /**
+   * Non-zero-PTS relocation (spike). When on, the engine reads each source's
+   * decode-time origin (`tfdt` baseMediaDecodeTime ÷ `mdhd` timescale, via
+   * `media/mp4`) and relocates the buffer onto a 0-based presentation timeline
+   * with `SourceBuffer.timestampOffset = −sharedOrigin`, so `currentTime` /
+   * `seekable` / `duration` stay 0-based with no adapter translation. **Off by
+   * default** — zero-PTS VOD needs none of this and pays nothing (Tier 0). See
+   * `internal/design/spf/presentation-timeline-model.md`.
+   */
+  relocateTimestampOrigin?: boolean;
 }
 
 // ============================================================================
@@ -342,6 +352,7 @@ export function createSimpleHlsEngine(
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
+    relocateTimestampOrigin: config.relocateTimestampOrigin ?? false,
   };
 
   const composition = createComposition(

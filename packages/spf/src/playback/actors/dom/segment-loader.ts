@@ -13,6 +13,7 @@ import {
   type ForwardBufferConfig,
   getSegmentsToLoad,
 } from '../../../media/buffer/forward-buffer';
+import { readFirstBaseMediaDecodeTime, readFirstMediaTimescale } from '../../../media/mp4/timestamp-origin';
 import {
   type AddressableObject,
   type AudioTrack,
@@ -20,7 +21,13 @@ import {
   type Segment,
   type VideoTrack,
 } from '../../../media/types';
-import type { AppendInitMessage, AppendSegmentMessage, RemoveMessage, SourceBufferActor } from './source-buffer';
+import type {
+  AppendData,
+  AppendInitMessage,
+  AppendSegmentMessage,
+  RemoveMessage,
+  SourceBufferActor,
+} from './source-buffer';
 
 // ============================================================================
 // BUFFER STATE TYPES
@@ -102,6 +109,14 @@ export interface SegmentLoaderActorContext {
   inFlightInitTrackId: string | null;
   /** Segment ID currently being fetched/appended, or null. */
   inFlightSegmentId: string | null;
+  /**
+   * Relocation offset in seconds (`−baseMediaDecodeTime / timescale`), or null
+   * until established / when relocation is off (spike). Exposed on the snapshot
+   * so the text path can consume the same offset to rebase cues — Mux cues carry
+   * no `X-TIMESTAMP-MAP`, so text can't self-derive the origin and reads the
+   * A/V-established one instead.
+   */
+  relocationOffset: number | null;
 }
 
 export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLoaderActorContext, SegmentLoaderMessage>;
@@ -114,6 +129,23 @@ export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLo
 export interface SegmentLoaderActorConfig {
   forwardBuffer?: Partial<ForwardBufferConfig>;
   backBuffer?: Partial<BackBufferConfig>;
+  /**
+   * Non-zero-PTS relocation (spike). When true, this loader reads its track's
+   * decode-time origin (`tfdt`/`mdhd`) from the init + first media segment and
+   * relocates the buffer to 0-based via `timestampOffset`. Per-track single-origin
+   * (Tier-1); off by default.
+   */
+  relocateTimestampOrigin?: boolean;
+}
+
+/** Per-track relocation working state (spike). Established once, on first media segment. */
+interface RelocationState {
+  readonly enabled: boolean;
+  /** `mdhd` timescale from the init segment. */
+  timescale?: number;
+  /** `−(baseMediaDecodeTime / timescale)` — the SourceBuffer timestampOffset. */
+  offset?: number;
+  established: boolean;
 }
 
 // ============================================================================
@@ -168,6 +200,28 @@ function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSigna
   });
 }
 
+/** Drain an async byte-iterable into one contiguous buffer (relocation spike). */
+async function collect(iterable: AsyncIterable<Uint8Array>): Promise<Uint8Array> {
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for await (const chunk of iterable) {
+    chunks.push(chunk);
+    total += chunk.length;
+  }
+  const out = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.length;
+  }
+  return out;
+}
+
+/** A collected buffer spans its backing ArrayBuffer exactly — hand it to MSE as one append. */
+function toArrayBuffer(bytes: Uint8Array): ArrayBuffer {
+  return bytes.buffer as ArrayBuffer;
+}
+
 // ============================================================================
 // LOAD TASK FACTORY
 // ============================================================================
@@ -177,6 +231,7 @@ interface LoadTaskOptions {
   setContext: (ctx: SegmentLoaderActorContext) => void;
   fetchBytes: FetchBytes;
   sourceBufferActor: SourceBufferActor;
+  relocation: RelocationState;
 }
 
 /**
@@ -187,7 +242,7 @@ interface LoadTaskOptions {
  */
 function makeLoadTask(
   op: LoadTask,
-  { getContext, setContext, fetchBytes, sourceBufferActor }: LoadTaskOptions
+  { getContext, setContext, fetchBytes, sourceBufferActor, relocation }: LoadTaskOptions
 ): Task<void> {
   return new Task(async (taskSignal) => {
     if (taskSignal.aborted) return;
@@ -203,7 +258,15 @@ function makeLoadTask(
       try {
         // Init segments are small and need the full body before appending.
         // minChunkSize: Infinity accumulates all chunks into one before yielding.
-        const data = await fetchBytes(op, { signal: taskSignal, minChunkSize: Infinity });
+        const body = await fetchBytes(op, { signal: taskSignal, minChunkSize: Infinity });
+        // Relocation (spike): read this track's mdhd timescale from the init —
+        // half of the decode-time origin (paired with the first segment's tfdt).
+        let data: AppendData = body;
+        if (relocation.enabled) {
+          const bytes = await collect(body);
+          relocation.timescale = readFirstMediaTimescale(bytes);
+          data = toArrayBuffer(bytes);
+        }
         if (!taskSignal.aborted) {
           sourceBufferActor.send({ type: 'append-init', data, meta: op.meta });
           await waitForIdle(sourceBufferActor.snapshot, taskSignal);
@@ -219,10 +282,32 @@ function makeLoadTask(
     // directly to the actor so chunks are appended as they arrive.
     setContext({ ...getContext(), inFlightSegmentId: op.meta.id });
     try {
-      const stream = await fetchBytes(op, { signal: taskSignal });
-      if (!taskSignal.aborted) {
-        sourceBufferActor.send({ type: 'append-segment', data: stream, meta: op.meta });
-        await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+      // Relocation (spike): on the FIRST media segment, fetch the whole body,
+      // read its tfdt baseMediaDecodeTime, pair with the init timescale to get
+      // this track's decode-time origin, and carry `timestampOffset = −origin`
+      // in the meta so the actor sets it before appending. Established once;
+      // subsequent segments stream as usual (the offset persists on the buffer).
+      if (relocation.enabled && !relocation.established) {
+        const bytes = await collect(await fetchBytes(op, { signal: taskSignal, minChunkSize: Infinity }));
+        const baseMediaDecodeTime = readFirstBaseMediaDecodeTime(bytes);
+        if (baseMediaDecodeTime !== undefined && relocation.timescale) {
+          relocation.offset = -(baseMediaDecodeTime / relocation.timescale);
+          // Publish on the actor snapshot so the text path can read the same
+          // offset for cue rebasing (see SegmentLoaderActorContext.relocationOffset).
+          setContext({ ...getContext(), relocationOffset: relocation.offset });
+        }
+        relocation.established = true;
+        if (!taskSignal.aborted) {
+          const meta = relocation.offset !== undefined ? { ...op.meta, timestampOffset: relocation.offset } : op.meta;
+          sourceBufferActor.send({ type: 'append-segment', data: toArrayBuffer(bytes), meta });
+          await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+        }
+      } else {
+        const stream = await fetchBytes(op, { signal: taskSignal });
+        if (!taskSignal.aborted) {
+          sourceBufferActor.send({ type: 'append-segment', data: stream, meta: op.meta });
+          await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+        }
       }
     } finally {
       setContext({ ...getContext(), inFlightSegmentId: null });
@@ -263,6 +348,8 @@ export function createSegmentLoaderActor(
 
   const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
   const backBufferConfig: BackBufferConfig = { ...DEFAULT_BACK_BUFFER_CONFIG, ...config.backBuffer };
+  // Per-track relocation state (spike), established once on the first media segment.
+  const relocation: RelocationState = { enabled: config.relocateTimestampOrigin ?? false, established: false };
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
     // Exclude partial segments — they are still being streamed and must not be
@@ -441,7 +528,7 @@ export function createSegmentLoaderActor(
   const scheduleAll = (tasks: LoadTask[], { getContext, setContext, runner }: Ctx): void => {
     tasks.forEach((op) => {
       runner
-        .schedule(makeLoadTask(op, { getContext, setContext, fetchBytes, sourceBufferActor }))
+        .schedule(makeLoadTask(op, { getContext, setContext, fetchBytes, sourceBufferActor, relocation }))
         .then(undefined, (e: unknown) => {
           if (e instanceof Error && e.name === 'AbortError') return;
           // On unexpected fetch/append errors, abort remaining tasks so a failed
@@ -455,7 +542,7 @@ export function createSegmentLoaderActor(
   return createMachineActor<UserState, SegmentLoaderActorContext, SegmentLoaderMessage, () => SerialRunner>({
     runner: () => new SerialRunner(),
     initial: 'idle',
-    context: { inFlightInitTrackId: null, inFlightSegmentId: null },
+    context: { inFlightInitTrackId: null, inFlightSegmentId: null, relocationOffset: null },
     states: {
       idle: {
         on: {
