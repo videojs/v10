@@ -8,14 +8,14 @@ import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
-import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+import { RadioGroupElement } from '../radio-group/radio-group-element';
 
-export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
+export class AudioTrackRadioGroupElement extends RadioGroupElement {
   static override readonly tagName = 'media-audio-track-radio-group';
 
   static override properties = {
-    ...MenuRadioGroupElement.properties,
+    ...RadioGroupElement.properties,
     disabled: { type: Boolean },
     label: { type: String },
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
@@ -30,7 +30,6 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
 
   #tracksKey = '';
   #tracksTranslator: Translator | null = null;
-  #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -61,7 +60,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.#applyAriaLabel(this.label || 'Audio');
+      this.applyAriaLabel(this.#i18n.value, this.label || 'Audio');
       if (state.disabled) {
         this.setAttribute('aria-disabled', 'true');
       } else {
@@ -76,7 +75,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #syncContent(state: AudioTrackRadioGroupCore.State): void {
-    const template = this.#getTemplate();
+    const template = this.getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
     const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
@@ -109,54 +108,13 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #createItem(value: string, label: string, template: HTMLTemplateElement | null): MenuRadioItemElement {
-    const item = this.#createItemFromTemplate(template);
+    const item = this.createRadioItem(template);
 
     item.value = value;
     item.setAttribute('data-track', value);
-    this.#setLabel(item, label);
+    this.setItemLabel(item, label);
 
     return item;
-  }
-
-  #createItemFromTemplate(template: HTMLTemplateElement | null): MenuRadioItemElement {
-    if (!template) return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-
-    const fragment = template.content.cloneNode(true) as DocumentFragment;
-    const root = fragment.firstElementChild;
-
-    if (!root || root.localName !== MenuRadioItemElement.tagName || root.nextElementSibling) {
-      return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-    }
-
-    return root as MenuRadioItemElement;
-  }
-
-  #setLabel(item: MenuRadioItemElement, label: string): void {
-    const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
-
-    if (labelPart) {
-      labelPart.textContent = label;
-    } else {
-      item.textContent = label;
-    }
-  }
-
-  #getTemplate(): HTMLTemplateElement | null {
-    for (const child of this.children) {
-      if (child instanceof HTMLTemplateElement) return child;
-    }
-
-    return null;
-  }
-
-  #applyAriaLabel(label: string): void {
-    if (this.hasAttribute('aria-labelledby')) return;
-
-    const current = this.getAttribute('aria-label');
-    if (current !== null && current !== this.#ariaLabel) return;
-
-    this.#ariaLabel = resolveTranslation(this.#i18n.value, label);
-    this.setAttribute('aria-label', this.#ariaLabel);
   }
 
   #handleValueChange = (event: Event): void => {

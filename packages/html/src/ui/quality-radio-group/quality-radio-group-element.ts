@@ -8,8 +8,8 @@ import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
-import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+import { RadioGroupElement } from '../radio-group/radio-group-element';
 
 function resolveAutoLabel(translator: Translator, label: string): string {
   const match = /^Auto \((.+)\)$/.exec(label);
@@ -19,11 +19,11 @@ function resolveAutoLabel(translator: Translator, label: string): string {
   return resolveTranslation(translator, label);
 }
 
-export class QualityRadioGroupElement extends MenuRadioGroupElement {
+export class QualityRadioGroupElement extends RadioGroupElement {
   static override readonly tagName = 'media-quality-radio-group';
 
   static override properties = {
-    ...MenuRadioGroupElement.properties,
+    ...RadioGroupElement.properties,
     disabled: { type: Boolean },
     label: { type: String },
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
@@ -38,7 +38,6 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
 
   #renditionsKey = '';
   #renditionsTranslator: Translator | null = null;
-  #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -69,7 +68,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.#applyAriaLabel(this.label || 'Quality');
+      this.applyAriaLabel(this.#i18n.value, this.label || 'Quality');
       this.#syncContent(state);
     }
 
@@ -79,7 +78,7 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #syncContent(state: QualityRadioGroupCore.State): void {
-    const template = this.#getTemplate();
+    const template = this.getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
     const renditionsKey = `${state.renditions
@@ -135,26 +134,13 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     badge: string | undefined,
     template: HTMLTemplateElement | null
   ): MenuRadioItemElement {
-    const item = this.#createItemFromTemplate(template);
+    const item = this.createRadioItem(template);
 
     item.value = value;
     item.setAttribute('data-rendition', value);
     this.#setContent(item, label, tier, badge);
 
     return item;
-  }
-
-  #createItemFromTemplate(template: HTMLTemplateElement | null): MenuRadioItemElement {
-    if (!template) return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-
-    const fragment = template.content.cloneNode(true) as DocumentFragment;
-    const root = fragment.firstElementChild;
-
-    if (!root || root.localName !== MenuRadioItemElement.tagName || root.nextElementSibling) {
-      return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-    }
-
-    return root as MenuRadioItemElement;
   }
 
   #setContent(item: MenuRadioItemElement, label: string, tier: string | undefined, badge: string | undefined): void {
@@ -179,24 +165,6 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
     if (!labelPart && !tierPart && !badgePart) {
       item.textContent = [label, tier, badge].filter(Boolean).join(' ');
     }
-  }
-
-  #getTemplate(): HTMLTemplateElement | null {
-    for (const child of this.children) {
-      if (child instanceof HTMLTemplateElement) return child;
-    }
-
-    return null;
-  }
-
-  #applyAriaLabel(label: string): void {
-    if (this.hasAttribute('aria-labelledby')) return;
-
-    const current = this.getAttribute('aria-label');
-    if (current !== null && current !== this.#ariaLabel) return;
-
-    this.#ariaLabel = resolveTranslation(this.#i18n.value, label);
-    this.setAttribute('aria-label', this.#ariaLabel);
   }
 
   #handleValueChange = (event: Event): void => {

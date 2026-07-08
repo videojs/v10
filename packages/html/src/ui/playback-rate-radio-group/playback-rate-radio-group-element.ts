@@ -1,6 +1,5 @@
 import { PlaybackRateRadioGroupCore, PlaybackRateRadioGroupDataAttrs } from '@videojs/core';
 import { applyElementProps, applyStateDataAttrs, logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
 import { i18nContext } from '../../i18n/context';
@@ -8,14 +7,14 @@ import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
-import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+import { RadioGroupElement } from '../radio-group/radio-group-element';
 
-export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
+export class PlaybackRateRadioGroupElement extends RadioGroupElement {
   static override readonly tagName = 'media-playback-rate-radio-group';
 
   static override properties = {
-    ...MenuRadioGroupElement.properties,
+    ...RadioGroupElement.properties,
     disabled: { type: Boolean },
   } satisfies PropertyDeclarationMap<'value' | 'disabled'>;
 
@@ -27,7 +26,6 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   readonly #mediaState = new PlayerController(this, playerContext, selectPlaybackRate);
 
   #ratesKey = '';
-  #ariaLabel: string | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -58,7 +56,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = this.#core.getRateValue(state.rate);
-      this.#applyAriaLabel(this.#core.getLabel(state), this.#core.getLabelParams(state));
+      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state), this.#core.getLabelParams(state));
       applyElementProps(this, {
         'aria-disabled': state.disabled ? 'true' : undefined,
       });
@@ -72,7 +70,7 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #syncContent(state: PlaybackRateRadioGroupCore.State): void {
-    const template = this.#getTemplate();
+    const template = this.getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const ratesKey = `${state.rates.join('|')}::${templateKey}`;
 
@@ -99,55 +97,14 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #createItem(rate: number, template: HTMLTemplateElement | null): MenuRadioItemElement {
-    const item = this.#createItemFromTemplate(template);
+    const item = this.createRadioItem(template);
     const value = this.#core.getRateValue(rate);
 
     item.value = value;
     item.setAttribute('data-rate', value);
-    this.#setLabel(item, this.#core.getRateLabel(rate));
+    this.setItemLabel(item, this.#core.getRateLabel(rate));
 
     return item;
-  }
-
-  #createItemFromTemplate(template: HTMLTemplateElement | null): MenuRadioItemElement {
-    if (!template) return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-
-    const fragment = template.content.cloneNode(true) as DocumentFragment;
-    const root = fragment.firstElementChild;
-
-    if (!root || root.localName !== MenuRadioItemElement.tagName || root.nextElementSibling) {
-      return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-    }
-
-    return root as MenuRadioItemElement;
-  }
-
-  #setLabel(item: MenuRadioItemElement, label: string): void {
-    const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
-
-    if (labelPart) {
-      labelPart.textContent = label;
-    } else {
-      item.textContent = label;
-    }
-  }
-
-  #getTemplate(): HTMLTemplateElement | null {
-    for (const child of this.children) {
-      if (child instanceof HTMLTemplateElement) return child;
-    }
-
-    return null;
-  }
-
-  #applyAriaLabel(label: string, params?: Record<string, string | number>): void {
-    if (this.hasAttribute('aria-labelledby')) return;
-
-    const current = this.getAttribute('aria-label');
-    if (current !== null && current !== this.#ariaLabel) return;
-
-    this.#ariaLabel = resolveTranslation(this.#i18n.value, label, params);
-    this.setAttribute('aria-label', this.#ariaLabel);
   }
 
   #handleValueChange = (event: Event): void => {
