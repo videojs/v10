@@ -9,7 +9,7 @@ import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation } from '../../../media/types';
+import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -21,11 +21,16 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
+import { relocationMessagePipelines } from '../../behaviors/dom/relocation-steps';
 import { setupAudioBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
+// Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
+// `audioMessagePipelines` finalConfig entry, the `mediaContainerData` state slot,
+// and the `deriveStartMediaTime` config field to drop relocation from audio-only.
+import { type DeriveStartMediaTime, establishStartMediaTime } from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
@@ -47,6 +52,9 @@ export interface SimpleHlsAudioOnlyEngineState {
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedAudioTrackId?: string;
+  // Non-zero-PTS relocation (spike): transient per-track container data owned by
+  // `establishStartMediaTime`. Remove with the composed reactor.
+  mediaContainerData?: Record<string, MediaContainerData>;
   /**
    * Consumer-driven constraint narrowing the audio candidate set. Sibling
    * of `userVideoTrackSelection` in the default engine. Partial-track
@@ -119,6 +127,8 @@ export interface SimpleHlsAudioOnlyEngineConfig
    * Defaults to the URL origin; override to key on e.g. Mux's `cdn=` param.
    */
   getCdnId?: GetCdnId;
+  /** Non-zero-PTS relocation (spike): the reduce seam (tier knob); defaults to per-track own. */
+  deriveStartMediaTime?: DeriveStartMediaTime;
 }
 
 // ============================================================================
@@ -171,6 +181,9 @@ export function createHlsAudioOnlyEngine(
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
+    // Non-zero-PTS relocation (spike): pair the audio loader with the relocation
+    // steps `establishStartMediaTime` derives from. Remove with the composed reactor.
+    audioMessagePipelines: relocationMessagePipelines,
   };
 
   return createComposition(
@@ -210,6 +223,13 @@ export function createHlsAudioOnlyEngine(
       // so the Firefox `mozHasAudio` registration ordering is moot here.
       setupMediaSource,
       updateMediaSourceDuration,
+
+      // Non-zero-PTS relocation (spike): establishes per-track startMediaTime;
+      // MUST precede setupAudioBufferActors. Remove this line + the import + the
+      // finalConfig/state entries to drop relocation. (Selection is optional in the
+      // reactor, so it works with only audio in scope.)
+      establishStartMediaTime,
+
       setupAudioBufferActors,
 
       // Playback tracking

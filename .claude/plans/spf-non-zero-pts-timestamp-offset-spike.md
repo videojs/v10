@@ -39,33 +39,28 @@ your detailed pass; **DEFERRED** = later/open.
 - spike relocation (boolean/inline approach, since reworked) — `6a20bade9`
 - VTT `X-TIMESTAMP-MAP` parse — `7b0d8bbdc`
 - messagePipelines step model (loader step pipelines) — `041cecca6`
+- relocation as `establishStartMediaTime` reactor (DOM-free) + `relocation-steps`
+  (config messagePipelines) + DOM split; deleted `relocation.ts`/`origin-discoverer.ts` — `05a0a6452`
+- audio-only relocation wiring (reactor + `audioMessagePipelines` baked into
+  `engine-audio-only`) — audio 0-based sandbox-verified
 
-### Uncommitted — KEEP (reactor + config-pipelines; typecheck/tests/lint/build green, A/V sandbox-verified 0-based)
-- `behaviors/dom/establish-start-media-time.ts` — **new**. Two pieces:
-  - **Steps** (`relocationMessagePipelines`): a plain config array. `discover`
-    (`readInitTimescale`/`readSegmentOrigin`) writes `state.mediaContainerData`;
-    `stampStartMediaTime` reads that track's origin back and sets `timestampOffset`.
-    Steps read composition `state` from their call-time `deps` — no closures, no
-    context. One map serves both track types (steps key by the segment's trackId).
-  - **Reactor** (`establishStartMediaTime`): 3 states — `inactive` (clears the slot
-    per source) / `monitoring` (derive effect = injected `deriveStartMediaTime` seam
-    → writes `Track.startMediaTime`, the consume) / `established` (derive disabled,
-    sticky). Owns `mediaContainerData` on `state`; selection **optional/defensive**.
-- `primitives/head-peek.ts` — **new** generic eager head-peek (replaces the old
-  self-discriminating `origin-discoverer`).
-- `media/types/index.ts` — `Track.startMediaTime` + `MediaContainerData`.
-- `actors/dom/segment-loader.ts` — `StepDeps` widened with the composition
-  `{ state, context, config }` (opaque conduit; loader never reads them).
-- `behaviors/dom/setup-buffer-actors.ts` — reads relocation pipelines from **config**
-  (`video/audioMessagePipelines`), threads composition deps into the loader. No context slots.
-- `engines/hls/engine.ts` — composes the reactor before `setup*BufferActors`;
-  bakes `video/audioMessagePipelines = relocationMessagePipelines` + `mediaContainerData`
-  slot + `deriveStartMediaTime` config. All comment-marked for easy removal.
-- `engines/hls/index.ts` — exports `DeriveStartMediaTime` + `derivePerTrackStartMediaTime`.
-- **Deleted:** `engines/hls/relocation.ts`, `primitives/origin-discoverer.ts`.
+### Architecture (as landed)
+- **Steps** (`behaviors/dom/relocation-steps.ts`, `relocationMessagePipelines`): a
+  plain config array. `discover` (`readInitTimescale`/`readSegmentOrigin`) writes
+  `state.mediaContainerData`; `stampStartMediaTime` reads that track's origin back
+  and sets `timestampOffset`. Steps read composition `state` from call-time `deps`
+  (no closures/context); one map serves both track types (key by segment trackId).
+- **Reactor** (`behaviors/establish-start-media-time.ts`, DOM-free): 3 states —
+  `inactive` (clears the slot per source) / `monitoring` (derive effect = injected
+  `deriveStartMediaTime` seam → writes `Track.startMediaTime`, the consume) /
+  `established` (derive disabled, sticky). Owns `mediaContainerData` on `state`;
+  selection **optional/defensive** (composes across video-only/audio-only/both).
+- `StepDeps` carries the composition `{state,context,config}` (opaque conduit).
+  Engines bake `*MessagePipelines = relocationMessagePipelines` + the reactor +
+  `mediaContainerData` slot + `deriveStartMediaTime` config, all comment-marked.
 
 ### REVIEW — your detailed pass
-- The reactor + steps end-to-end (KEEP surface above).
+- The reactor + steps end-to-end (architecture above).
 - **`StepDeps` typing:** steps get composition `{state,context,config}` typed loose
   (`AnySlotMap`); relocation asserts its slots via `containerSlot(deps)` (one cast,
   since it legitimately knows the composition provides them). OK, or want it tighter?
@@ -86,8 +81,10 @@ your detailed pass; **DEFERRED** = later/open.
   with comment markers; revisit a tree-shakeable opt-in + measure Tier-0 bundle.
 
 ### DEFERRED / open (see the doc's Open questions)
+- **Per-type keying + non-0th-segment origin (#3/#4)** — next up. `mediaContainerData`
+  keyed by track *type* (ABR rungs share); `startMediaTime = bmdt/ts − segment.startTime`
+  so non-zero starts (initial currentTime ≠ 0, live/DVR) relocate correctly.
 - Tier 2 shared-`min` (a `deriveStartMediaTime` swap) + barrier-liveness bound.
-- Audio-only composition wiring (reactor baked into the standard engine only).
 - Honest-`startMediaTime`-everywhere convergence + live-anchor dedup.
 - Suspected pre-existing: seek-into-evicted-back-buffer.
 
