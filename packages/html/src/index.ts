@@ -41,7 +41,7 @@ export {
   resolveProviderLocale,
 } from './i18n';
 export type { I18nContext as I18nLitContext } from './i18n/context';
-// i18n — `@videojs/html/i18n` registers `<media-i18n-provider>` / `<media-text>`.
+// i18n — `@videojs/html/i18n` registers `<media-i18n>` / `<media-text>`.
 export { i18nContext } from './i18n/context';
 // Media
 export { MediaContainerElement } from './media/container-element';

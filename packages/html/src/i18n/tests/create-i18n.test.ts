@@ -17,7 +17,7 @@ describe('createI18n (HTML)', () => {
     vi.restoreAllMocks();
   });
 
-  it('media-i18n-provider uses explicit lang for registry copy', async () => {
+  it('media-i18n uses explicit lang for registry copy', async () => {
     registerI18n('fr', { Play: 'Lire' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'fr');
