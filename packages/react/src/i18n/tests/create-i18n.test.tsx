@@ -846,8 +846,8 @@ describe('createI18n', () => {
     expect(registerI18nSpy).not.toHaveBeenCalledWith('xx', { Play: 'UnmountedBrowserPlay' });
   });
 
-  it('inherits ancestor locale when a nested provider only overrides translations', async () => {
-    registerI18n('de', { Play: 'Abspielen', Pause: 'Pause' });
+  it('inherits ancestor locale and translations when a nested provider only overrides translations', async () => {
+    registerI18n('de', { Play: 'Abspielen', Pause: 'Pause', Replay: 'Wiederholen' });
 
     const { I18nProvider, useTranslator, useLocale } = createI18n();
 
@@ -856,13 +856,13 @@ describe('createI18n', () => {
       const locale = useLocale();
       return (
         <span>
-          {locale}:{t('Play')}:{t('Pause')}
+          {locale}:{t('Play')}:{t('Pause')}:{t('Replay')}
         </span>
       );
     }
 
     render(
-      <I18nProvider locale="de">
+      <I18nProvider locale="de" translations={{ Pause: 'ParentPause', Replay: 'ParentReplay' }}>
         <I18nProvider translations={{ Play: 'Override' }}>
           <Probe />
         </I18nProvider>
@@ -870,7 +870,7 @@ describe('createI18n', () => {
     );
 
     await waitFor(() => {
-      expect(screen.queryByText('de:Override:Pause')).not.toBeNull();
+      expect(screen.queryByText('de:Override:ParentPause:ParentReplay')).not.toBeNull();
     });
   });
 

@@ -26,7 +26,10 @@ export function getProviderRootProps(
 
   const inheritedLocale = props.locale ?? (props.langRootRef === undefined ? parent?.locale : undefined);
   const parentLocale = props.langRootRef !== undefined ? parent?.locale : undefined;
-  const inheritedTranslations = props.translations ?? (langRootOnly ? parent?.translations : undefined);
+  const inheritedTranslations =
+    props.translations !== undefined && parent?.translations !== undefined
+      ? { ...parent.translations, ...props.translations }
+      : (props.translations ?? (langRootOnly ? parent?.translations : undefined));
   const onActiveLocaleChange = props.onActiveLocaleChange ?? parent?.onActiveLocaleChange;
 
   return {
