@@ -30,57 +30,66 @@ carry conflicting assumptions here.
 
 The design of record is `internal/design/spf/presentation-timeline-model.md`
 (reactor architecture). This tracks *implementation* state against it. Tags:
-**KEEP** = lasting, review it; **TRANSITIONAL** = in the current diff but slated
-for rebuild by the reactor work, so don't over-review; **TODO** = designed, not
-built; **REVIEW** = needs your detailed pass; **DEFERRED** = later/open.
+**KEEP** = lasting, review it; **TODO** = designed, not built; **REVIEW** = needs
+your detailed pass; **DEFERRED** = later/open.
 
 ### Landed (committed)
 - mp4 box parser + decode-time origin — `cf8aaca45`
-- presentation timeline coordinate model doc — `555f9fdac`
+- presentation timeline coordinate model doc (+ reactor rearchitecture) — `555f9fdac`, `ae1b0beee`
 - spike relocation (boolean/inline approach, since reworked) — `6a20bade9`
 - VTT `X-TIMESTAMP-MAP` parse — `7b0d8bbdc`
+- messagePipelines step model (loader step pipelines) — `041cecca6`
 
-### Uncommitted — KEEP (messagePipelines step model; typecheck/tests/lint/build green, sandbox-verified)
-- `actors/dom/segment-loader.ts` — `Frame`/`LoadStep`/`StepDeps`/`MessagePipelines`,
-  `fetchStep`/`dispatchStep` (deps as 3rd arg), `DEFAULT_MESSAGE_PIPELINES`,
-  `makeLoadTask` step-runner + inFlight try/finally wrapper.
-- `actors/dom/source-buffer.ts` — dropped `CreateAppendMeta`; idempotent
-  `timestampOffset` guard retained.
-- `behaviors/dom/setup-buffer-actors.ts`, `engines/hls/engine.ts`,
-  `engines/hls/index.ts` — `video/audioMessagePipelines` wiring.
-- `behaviors/dom/setup-text-track-actors.ts` + its test — relocation-awareness
-  removed (resolver injected).
-
-### Uncommitted — TRANSITIONAL (rebuilt by the reactor work; low review priority)
-- `engines/hls/relocation.ts` — current `createRelocation` config bundle + bare
-  per-track offset signals. → becomes the `establishStartMediaTime` reactor owning
-  `mediaContainerData` on `state`, publishing pipelines via context.
-- `primitives/origin-discoverer.ts` — self-discriminating single discoverer. →
-  splits into two steps (`mdhd` timescale / `tfdt` baseMediaDecodeTime) writing
-  `mediaContainerData[trackId]`.
-- config→context pipeline wiring (engine/setup) — moves to context-published under
-  wiring (A).
-
-### TODO — designed, not built (spec = the timeline doc)
-- `establishStartMediaTime` reactor (per-source lifecycle, per-type gating).
-- `mediaContainerData` slot on `state` (single dict signal, sync-RMW invariant).
-- `deriveStartMediaTime` pure seam (Tier-1 per-track default).
-- `Track.startMediaTime` consume + abortable `awaitDefined` apply holdback.
-- (A) context-published pipelines; `setup*BufferActors` read from context.
+### Uncommitted — KEEP (reactor + config-pipelines; typecheck/tests/lint/build green, A/V sandbox-verified 0-based)
+- `behaviors/dom/establish-start-media-time.ts` — **new**. Two pieces:
+  - **Steps** (`relocationMessagePipelines`): a plain config array. `discover`
+    (`readInitTimescale`/`readSegmentOrigin`) writes `state.mediaContainerData`;
+    `stampStartMediaTime` reads that track's origin back and sets `timestampOffset`.
+    Steps read composition `state` from their call-time `deps` — no closures, no
+    context. One map serves both track types (steps key by the segment's trackId).
+  - **Reactor** (`establishStartMediaTime`): 3 states — `inactive` (clears the slot
+    per source) / `monitoring` (derive effect = injected `deriveStartMediaTime` seam
+    → writes `Track.startMediaTime`, the consume) / `established` (derive disabled,
+    sticky). Owns `mediaContainerData` on `state`; selection **optional/defensive**.
+- `primitives/head-peek.ts` — **new** generic eager head-peek (replaces the old
+  self-discriminating `origin-discoverer`).
+- `media/types/index.ts` — `Track.startMediaTime` + `MediaContainerData`.
+- `actors/dom/segment-loader.ts` — `StepDeps` widened with the composition
+  `{ state, context, config }` (opaque conduit; loader never reads them).
+- `behaviors/dom/setup-buffer-actors.ts` — reads relocation pipelines from **config**
+  (`video/audioMessagePipelines`), threads composition deps into the loader. No context slots.
+- `engines/hls/engine.ts` — composes the reactor before `setup*BufferActors`;
+  bakes `video/audioMessagePipelines = relocationMessagePipelines` + `mediaContainerData`
+  slot + `deriveStartMediaTime` config. All comment-marked for easy removal.
+- `engines/hls/index.ts` — exports `DeriveStartMediaTime` + `derivePerTrackStartMediaTime`.
+- **Deleted:** `engines/hls/relocation.ts`, `primitives/origin-discoverer.ts`.
 
 ### REVIEW — your detailed pass
-- Segment-loader step model end-to-end (the KEEP surface above).
-- `Frame` typing calls: `data?: AsyncIterable<Uint8Array>` (kept narrow, *not*
-  `AppendData`), `meta?: AppendSegmentMessage['meta']`, the `data!` in `toMessage`.
-- Load-behavior coordinate assumptions (see "Load behavior + implicit assumptions"
-  below) — still open, applies to relocation.
-- Whether TRANSITIONAL files get fully rebuilt vs partially salvaged.
+- The reactor + steps end-to-end (KEEP surface above).
+- **`StepDeps` typing:** steps get composition `{state,context,config}` typed loose
+  (`AnySlotMap`); relocation asserts its slots via `containerSlot(deps)` (one cast,
+  since it legitimately knows the composition provides them). OK, or want it tighter?
+- **Liveness:** relocation applies only when a *complete* origin (`timescale` +
+  `baseMediaDecodeTime`) is discovered; else native (offset 0) — stops TS /
+  containerless / mock sources from hanging.
+- Load-behavior coordinate assumptions (see below) — still open.
+
+### TODO — outstanding for relocation
+- **Tier-agnostic apply** (deferred by staging): Tier-1 `stampStartMediaTime` reads
+  the *raw* discovered origin from `mediaContainerData`, not the reduced
+  `Track.startMediaTime`. Tier 2's shared-`min` is where stamp reads the reduced
+  model value — revisit the stamp/`established` interaction then.
+- **Text-cue relocation** — DROPPED with `relocation.ts`; captions on a non-zero-PTS
+  source aren't rebased. Reinstate a relocating `resolveTextTrackSegment` reading the
+  primary video track's `startMediaTime`.
+- **Composition opt-in / tree-shaking** — baked into the standard engine (per decision)
+  with comment markers; revisit a tree-shakeable opt-in + measure Tier-0 bundle.
 
 ### DEFERRED / open (see the doc's Open questions)
 - Tier 2 shared-`min` (a `deriveStartMediaTime` swap) + barrier-liveness bound.
-- Holding first segment across the wait; text-only sources.
+- Audio-only composition wiring (reactor baked into the standard engine only).
 - Honest-`startMediaTime`-everywhere convergence + live-anchor dedup.
-- Suspected pre-existing: text-cue alignment, seek-into-evicted-back-buffer.
+- Suspected pre-existing: seek-into-evicted-back-buffer.
 
 ## Problems the other branch surfaced — keep in view (likely changed, not gone)
 

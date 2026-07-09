@@ -23,6 +23,7 @@ import type {
   AudioTrack,
   CanPlayTrack,
   MaybeResolvedPresentation,
+  MediaContainerData,
   ResolvedTrack,
   TextTrack,
   VideoTrack,
@@ -30,7 +31,7 @@ import type {
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
-import type { MessagePipelines, SegmentLoaderActor } from '../../actors/dom/segment-loader';
+import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
@@ -42,6 +43,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { relocationMessagePipelines } from '../../behaviors/dom/relocation-steps';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
@@ -51,6 +53,10 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
+// Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
+// `video/audioMessagePipelines` finalConfig entries, the `mediaContainerData` state
+// slot, and the `deriveStartMediaTime` config field to drop relocation entirely.
+import { type DeriveStartMediaTime, establishStartMediaTime } from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
@@ -80,6 +86,9 @@ export interface SimpleHlsEngineState {
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
+  // Non-zero-PTS relocation (spike): transient per-track container data owned by
+  // `establishStartMediaTime`. Remove with the composed reactor.
+  mediaContainerData?: Record<string, MediaContainerData>;
   userVideoTrackSelection?: Partial<VideoTrack>;
   /**
    * Consumer-driven constraint narrowing the audio candidate set. Sibling
@@ -275,15 +284,14 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    */
   getCdnId?: GetCdnId;
   /**
-   * Non-zero-PTS relocation seams (Tier-1). Per-type segment-loader pipelines
-   * that weave discover + stamp steps between fetch and dispatch; generic and
-   * inert when absent (Tier 0 pays nothing and imports no relocation code).
-   * Rather than set these by hand, spread `createRelocation()` (`./relocation`)
-   * into config — it builds both pipelines and the cue resolver against shared
-   * offset signals. See `internal/design/spf/presentation-timeline-model.md`.
+   * Non-zero-PTS relocation (spike): the reduce seam consumed by the
+   * `establishStartMediaTime` reactor. Defaults to per-track own origin (Tier 1);
+   * a Tier-2 variant returns the shared `min` across selected A/V. Relocation is
+   * composed into the standard engine below — see the marked block — so this only
+   * needs setting to swap the tier policy. See
+   * `internal/design/spf/presentation-timeline-model.md`.
    */
-  videoMessagePipelines?: MessagePipelines;
-  audioMessagePipelines?: MessagePipelines;
+  deriveStartMediaTime?: DeriveStartMediaTime;
 }
 
 // ============================================================================
@@ -352,6 +360,11 @@ export function createSimpleHlsEngine(
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
+    // Non-zero-PTS relocation (spike): the discover/stamp steps `establishStartMediaTime`
+    // pairs with, given to both buffer loaders (the steps key by the segment's own track).
+    // Remove these two lines with the composed reactor to drop relocation.
+    videoMessagePipelines: relocationMessagePipelines,
+    audioMessagePipelines: relocationMessagePipelines,
   };
 
   const composition = createComposition(
@@ -405,6 +418,17 @@ export function createSimpleHlsEngine(
       // in setup-buffer-actors.ts.
       setupMediaSource,
       updateMediaSourceDuration,
+
+      // ── Non-zero-PTS relocation (spike) ──────────────────────────────────
+      // Establishes per-track `startMediaTime` and publishes the relocating
+      // segment-loader pipelines to context. MUST precede `setup*BufferActors`
+      // so the pipelines are published before the loaders read them. Remove this
+      // one line (+ the import, the `mediaContainerData`/`*MessagePipelines`
+      // slots, and the `deriveStartMediaTime` config) to drop relocation and
+      // test the Tier-0 baseline / bundle size.
+      establishStartMediaTime,
+      // ─────────────────────────────────────────────────────────────────────
+
       setupVideoBufferActors,
       setupAudioBufferActors,
 

@@ -3,6 +3,12 @@
 // from the manifest, rather than inferring it from the seekable window size.
 export type { MediaPlaylistMetadata } from '../../../media/types';
 export { getMediaPlaylistMetadata } from '../../../media/types';
+// Non-zero-PTS relocation (spike): the reduce-seam type + Tier-1 default, for a
+// consumer swapping the tier policy via `config.deriveStartMediaTime`.
+export {
+  type DeriveStartMediaTime,
+  derivePerTrackStartMediaTime,
+} from '../../behaviors/establish-start-media-time';
 export type { SimpleHlsMediaAPI, SimpleHlsMediaProps } from './adapter';
 export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
 export type { SimpleHlsAudioOnlyMediaAPI, SimpleHlsAudioOnlyMediaProps } from './adapter-audio-only';
@@ -25,5 +31,3 @@ export type {
   SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
 export { createHlsAudioOnlyEngine } from './engine-audio-only';
-export type { Relocation } from './relocation';
-export { createRelocation } from './relocation';

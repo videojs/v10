@@ -173,11 +173,14 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           const track = getSelectedTrack(selection, type) as PartiallyResolvedTrack;
           const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
           const bufferActor = createSourceBufferActor(buffer);
-          const segmentLoader = createSegmentLoaderActor(bufferActor, fetch, {
-            forwardBuffer,
-            backBuffer,
-            messagePipelines,
-          });
+          const segmentLoader = createSegmentLoaderActor(
+            bufferActor,
+            fetch,
+            { forwardBuffer, backBuffer, messagePipelines },
+            // Thread the composition deps opaquely to steps (relocation reads
+            // `state.mediaContainerData`); the loader/this behavior never read them.
+            { state, context, config }
+          );
 
           // Synchronous slot writes — load-bearing for the Firefox
           // `mozHasAudio` invariant (see file-level JSDoc). Both per-type
@@ -230,7 +233,7 @@ export const setupVideoBufferActors = defineBehavior({
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & {
       getCdnId?: GetCdnId;
-      /** Optional non-zero-PTS relocation pipelines (Tier-1); inert when absent. */
+      /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
       videoMessagePipelines?: MessagePipelines;
     };
   }) => {
@@ -257,8 +260,8 @@ export const setupVideoBufferActors = defineBehavior({
       context,
       config: {
         ...typeConfig,
-        fetch: failoverFetch(trackedFetch, state, typeConfig),
         messagePipelines: config.videoMessagePipelines,
+        fetch: failoverFetch(trackedFetch, state, typeConfig),
       },
     });
   },
@@ -294,7 +297,7 @@ export const setupAudioBufferActors = defineBehavior({
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
     config?: SegmentLoaderActorConfig & {
       getCdnId?: GetCdnId;
-      /** Optional non-zero-PTS relocation pipelines (Tier-1); inert when absent. */
+      /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
       audioMessagePipelines?: MessagePipelines;
     };
   }) => {
@@ -305,8 +308,8 @@ export const setupAudioBufferActors = defineBehavior({
       context,
       config: {
         ...typeConfig,
-        fetch: failoverFetch(fetchStream, state, typeConfig),
         messagePipelines: config.audioMessagePipelines,
+        fetch: failoverFetch(fetchStream, state, typeConfig),
       },
     });
   },

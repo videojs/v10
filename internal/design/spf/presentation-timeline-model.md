@@ -140,22 +140,23 @@ committed `cf8aaca45`): `readFirstMediaTimescale`/`readFirstBaseMediaDecodeTime`
 ## Architecture: discover → derive → apply, established by a reactor
 
 A per-source reactor, **`establishStartMediaTime`**, owns the coordinate
-establishment; the byte-level work rides **steps** woven into the segment loader's
-per-message pipelines. The loader ships a Tier-0 `fetch → dispatch` pipeline per
-message type and stays oblivious to relocation; the reactor builds the relocating
-pipelines (inserting its steps between `fetch` and `dispatch`) and publishes them
-via context for `setup*BufferActors` to consume. Enabling relocation = composing
-the reactor and injecting a `deriveStartMediaTime` seam; a Tier-0 composition
-composes neither and imports no relocation code.
+establishment; the byte-level work rides **steps** in a plain config
+`messagePipelines` array (`relocationMessagePipelines`) woven into the segment
+loader's pipelines. The loader ships a Tier-0 `fetch → dispatch` pipeline and stays
+oblivious to relocation; the steps read composition `state` from their call-time
+`deps` (no closures, no context), so the reactor and the pipeline steps are
+decoupled — **the reactor never touches pipelines**. Enabling relocation = composing
+the reactor + supplying the steps as config (+ optionally a `deriveStartMediaTime`
+seam); a Tier-0 composition does neither.
 
-**The `establishStartMediaTime` reactor** monitors source presence
-(`active` / `inactive`) and gates per-type on which type signals exist
-(video / audio / both), mirroring sibling reactors like `setupBufferActors`. On
-`active` entry (per source) it initializes the transient `mediaContainerData` slot
-to `{}`, builds the per-type discover pipelines (closing over the slot) and
-publishes them, and runs the **derive effect**. Exit clears the slot and retracts
-the pipelines. Per-source freshness and stale-write immunity are **structural** —
-fresh state on entry, teardown on exit — not a hand-rolled reset.
+**The `establishStartMediaTime` reactor** has three states, driven by a `monitor`:
+`inactive` (no resolved presentation — clears the transient `mediaContainerData`
+slot on entry, so each source starts fresh) → `monitoring` (runs the **derive
+effect**) → `established` (the selected A/V tracks carry `startMediaTime`; disables
+the derive — establish-once, sticky per source, like the live anchor). Selection
+signals are **optional/defensive**, so the one reactor composes across video-only /
+audio-only / both. Per-source freshness is structural (the `inactive` transition
+clears the slot), not a hand-rolled reset.
 
 - **Discover** (per-track step). A head-peek step reads the fetched byte stream —
   the init (`mdhd` timescale) and the first media segment (`tfdt`
@@ -179,16 +180,17 @@ fresh state on entry, teardown on exit — not a hand-rolled reset.
   writes each track its own (`baseMediaDecodeTime / timescale`); Tier 2 writes the
   `min` across the selected A/V origins onto every track. No Presentation-level
   field is needed — Tier 2 just denormalizes the min across the per-track slots.
-- **Apply** (per-track step + text). A stamp step reads the track's `startMediaTime`
-  and sets `timestampOffset = startTime − startMediaTime` on the append meta; the
-  SourceBufferActor applies it to `SourceBuffer.timestampOffset`. Text cues shift
-  by the same value in the cue resolver, reading the **primary video** track (the
-  single-anchor rule). Because `startMediaTime` is established asynchronously, the
-  stamp and text reads hold back via an **abortable `awaitDefined`** (an effect +
-  promise that resolves when the field is defined and rejects on the step's abort
-  signal) — a segment waits for the ground truth rather than stamping early, and
-  source-reset/preempt doesn't hang. **Apply is tier-agnostic**: it always reads
-  `Track.startMediaTime`, indifferent to how it was derived.
+- **Apply** (per-track step). A stamp step relocates via `timestampOffset =
+  startTime − startMediaTime`, which the SourceBufferActor applies to
+  `SourceBuffer.timestampOffset`. **Tier 1** reads the track's *own* discovered
+  origin straight from `mediaContainerData` — populated by the discover step
+  earlier in the same pipeline, so it's synchronous, independent of the
+  derive/model, and robust to `established` + late tracks. When no complete origin
+  is found (TS / containerless / 0-PTS) it leaves the append native (offset 0).
+  Reading the *reduced* `Track.startMediaTime` instead — tier-agnostic apply, needed
+  for Tier 2's shared `min` — is a deferred follow-up (it's where an abortable
+  `awaitDefined` holdback on the model value comes back). Text-cue relocation is
+  currently dropped; both are tracked in the spike plan's backlog.
 
 ### Consume: `startMediaTime` lives on the model
 

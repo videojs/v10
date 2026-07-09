@@ -1,4 +1,5 @@
 import { createMachineActor, type HandlerContext, type MessageActor } from '../../../core/actors/create-machine-actor';
+import type { AnySlotMap } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import { peek } from '../../../core/signals/primitives';
 import { SerialRunner, Task } from '../../../core/tasks/task';
@@ -131,15 +132,25 @@ export interface Frame {
  * One stage of a message pipeline. Mutates the {@link Frame} in place and may be
  * async; the runner checks `signal.aborted` before each step and passes the
  * actor's {@link StepDeps} on every call, so a stateless step (e.g.
- * {@link fetchStep}) is a plain value — only a *parameterized or stateful* step
- * (relocation's `tapOrigin`) needs to be a factory.
+ * {@link fetchStep}) is a plain value, and a step that needs composition signals
+ * (relocation's discover/stamp) reads them from `deps` at call time.
  */
 export type LoadStep = (frame: Frame, signal: AbortSignal, deps: StepDeps) => void | Promise<void>;
 
-/** Per-actor runtime dependencies, passed to each {@link LoadStep} on every call. */
+/** Per-actor + composition dependencies, passed to each {@link LoadStep} on every call. */
 export interface StepDeps {
   sourceBufferActor: SourceBufferActor;
   fetchBytes: FetchBytes;
+  /**
+   * The composition deps — full `state`/`context` signal maps + engine `config` —
+   * passed opaquely so a step that needs composition signals reads them at call
+   * time (e.g. relocation writing/reading `state.mediaContainerData`). Typed loose:
+   * the loader is a conduit and never reads them; a step asserts the slots it knows
+   * the composition provides. Base steps (`fetch`/`dispatch`) ignore them.
+   */
+  state: AnySlotMap;
+  context: AnySlotMap;
+  config: object;
 }
 
 /**
@@ -148,8 +159,8 @@ export interface StepDeps {
  * discoverer) get fresh state per source reset; deps arrive at step-call time,
  * not here. The default ({@link DEFAULT_MESSAGE_PIPELINES}) is `fetch → dispatch`;
  * a non-zero-PTS composition returns a map that inserts its own discover/stamp
- * steps between them (see `createRelocation`), so the loader stays oblivious to
- * relocation and the Tier 0 pipeline carries no relocation vocabulary at all.
+ * steps between them (see `establishStartMediaTime`), so the loader stays oblivious
+ * to relocation and the Tier 0 pipeline carries no relocation vocabulary at all.
  */
 export type MessagePipelines = () => Record<LoadTask['type'], LoadStep[]>;
 
@@ -321,18 +332,23 @@ function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }:
  * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments).
  *   Accepts an optional `minChunkSize` in options; init segments pass `Infinity`
  *   so the entire body accumulates as one chunk before appending.
+ * @param compositionDeps - The composition's `state`/`context`/`config`, threaded
+ *   opaquely into each step's {@link StepDeps} (the loader never reads them). Lets
+ *   injected steps (relocation) read composition signals at call time. Defaults to
+ *   empty for standalone / base-pipeline use.
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
   fetchBytes: FetchBytes,
-  config: SegmentLoaderActorConfig = {}
+  config: SegmentLoaderActorConfig = {},
+  compositionDeps: Pick<StepDeps, 'state' | 'context' | 'config'> = { state: {}, context: {}, config: {} }
 ): SegmentLoaderActor {
   type UserState = Exclude<SegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, SegmentLoaderActorContext, () => SerialRunner>;
 
   const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
   const backBufferConfig: BackBufferConfig = { ...DEFAULT_BACK_BUFFER_CONFIG, ...config.backBuffer };
-  const deps: StepDeps = { sourceBufferActor, fetchBytes };
+  const deps: StepDeps = { sourceBufferActor, fetchBytes, ...compositionDeps };
   // Built once per actor (fresh stateful steps per source); default is `fetch → dispatch`.
   const pipelines = (config.messagePipelines ?? DEFAULT_MESSAGE_PIPELINES)();
 

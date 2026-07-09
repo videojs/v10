@@ -152,7 +152,33 @@ export type Track = Ham &
      * tracks marks the same presentation instant.
      */
     startDate?: number;
+    /**
+     * Media-timeline (decode/encode) coordinate of the track's timeline origin
+     * (`startTime`) — the third base value of the coordinate triple, peer to
+     * `startTime` (presentation) and `startDate` (wall-clock). Derived from the
+     * container (`tfdt.baseMediaDecodeTime ÷ mdhd.timescale`); the relocation
+     * offset is `startTime − startMediaTime`, never stored.
+     *
+     * Optional: absent until established (0-PTS sources never set it — their
+     * origin is already 0). Established once per source by the
+     * `establishStartMediaTime` reactor. See
+     * `internal/design/spf/presentation-timeline-model.md`.
+     */
+    startMediaTime?: number;
   };
+
+/**
+ * Raw per-track values parsed from the media container, accumulated as they're
+ * discovered across appends (`mdhd` timescale from the init, `tfdt`
+ * baseMediaDecodeTime from the first media segment) — hence both optional. The
+ * transient input the `establishStartMediaTime` reactor reduces into
+ * `Track.startMediaTime`. Named for what it holds (container data), not the one
+ * thing currently derived from it, so other box values can join later.
+ */
+export interface MediaContainerData {
+  timescale?: number;
+  baseMediaDecodeTime?: number;
+}
 
 /**
  * Resolved video track with segments.
