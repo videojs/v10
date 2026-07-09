@@ -8,19 +8,17 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["html"]}>
 
-`<media-text>` renders the translated value for a registry phrase inside a <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink> (or any ancestor with the i18n provider mixin). Use it for standalone labels, tooltips, or demos — skin controls resolve phrases internally.
+`<media-text>` renders the translated value for its text content inside a <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink> (or any ancestor with the i18n provider mixin). Use it for standalone labels, tooltips, or demos — skin controls resolve phrases internally.
 
 ```html
 <media-i18n lang="ja">
-  <media-text key="Play"></media-text>
+  <media-text>Play</media-text>
 </media-i18n>
 ```
 
-## Attributes
+## Text content
 
-| Attribute | Description |
-| --- | --- |
-| `key` | English translation phrase (`Play`, `Pause`, `{duration} remaining`, …). |
+The initial text content is the English translation phrase (`Play`, `Pause`, `{duration} remaining`, …). If the phrase is not registered for the active locale, `<media-text>` keeps the original text.
 
 Parametric phrases are not yet supported on `<media-text>` — use `createTranslator` in script for interpolated strings.
 
