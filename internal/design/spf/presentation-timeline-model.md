@@ -91,9 +91,10 @@ vastly better than native-PTS's full-origin (60s) mismatch.
 
 ## One offset, applied polymorphically
 
-The relocation is a single presentation-level value that every track applies as
-`presentation = native + timestampOffset` — the application differs, the value
-does not:
+Whatever `startMediaTime` a track is given (own in Tier 1, shared `min` in
+Tier 2), the relocation applies the same way — `presentation = native +
+timestampOffset`, `timestampOffset = startTime − startMediaTime` — only the
+*application* differs:
 
 ```text
 buffer sample: presentation = sampleNativePTS + timestampOffset   # MSE sets sb.timestampOffset
@@ -107,8 +108,9 @@ as cue arithmetic. This is the live single-anchor rule
 in VOD form: **established from the A/V tracks, applied to all tracks including
 text.**
 
-**Shared-min across A/V.** The shared `startMediaTime` is `min` across the audio
-and video tracks' native origins. `min` (not video-primary, not per-track-own):
+**Shared-`min` across A/V (Tier 2).** When A/V is skewed, the shared
+`startMediaTime` is `min` across the audio and video tracks' native origins
+(Tier 1 gives each track its own). `min` (not video-primary, not per-track-own):
 - keeps every track's earliest **DTS ≥ 0** (relocating by anything larger drives
   the lower track negative → Chromium append failure);
 - **preserves real A/V skew** (Apple's 44ms audio-lead is retained; relocating
@@ -135,49 +137,95 @@ committed `cf8aaca45`): `readFirstMediaTimescale`/`readFirstBaseMediaDecodeTime`
 
 ---
 
-## Architecture: discover → reduce → apply → consume
+## Architecture: discover → derive → apply, established by a reactor
 
-The concern decomposes by **locality**, which is what lets the simple case stay
-untouched and the pieces share code:
+A per-source reactor, **`establishStartMediaTime`**, owns the coordinate
+establishment; the byte-level work rides **steps** woven into the segment loader's
+per-message pipelines. The loader ships a Tier-0 `fetch → dispatch` pipeline per
+message type and stays oblivious to relocation; the reactor builds the relocating
+pipelines (inserting its steps between `fetch` and `dispatch`) and publishes them
+via context for `setup*BufferActors` to consume. Enabling relocation = composing
+the reactor and injecting a `deriveStartMediaTime` seam; a Tier-0 composition
+composes neither and imports no relocation code.
 
-- **Discover** (per-track). An injected fetch-decorator/hook peeks the first
-  chunk of the init (`mdhd` timescale, `tkhd` track_id, `hdlr` handler) and the
-  first media segment (`tfdt` baseMediaDecodeTime), computing that track's
-  `startMediaTime`. It is a **two-source** read across two fetches at two times —
-  the init timescale must be retained (a transient signal) until the first media
-  segment arrives. Writes per-track **transient signals**, not the Presentation.
-- **Reduce** (cross-track). Establish the shared `startMediaTime` (`min`) **once**
-  per source (sticky), from the first A/V ground truth. Late tracks (ABR rung,
-  late audio/captions) record their own `startMediaTime` but apply the
-  *established* offset — no re-reduce. This is the live "establish-once,
-  apply-to-all" shape.
-- **Apply** (per-track). `SourceBuffer.timestampOffset` is set from **optional
-  per-op append metadata**; text cues are shifted by the same value. The *wait*
-  (for the offset to resolve) lives in the loader, kept **abortable** for
-  source-reset/preempt — so the SourceBufferActor stays apply-only.
-- **Consume**. The settled `startMediaTime` lands on the **CMAF-HAM model**
-  (`Track`); `timestampOffset` is a `computed` derived from `startTime −
-  startMediaTime`. The churn (partial per-track reads, waiting, reduce) lives in
-  transient signals and **never** read-modify-writes `state.presentation` — that
-  slot is already a lost-update hazard (see `live-presentation-modeling.md`
-  §"Model ↔ anchor ↔ resolve-track coupling", #1746).
+**The `establishStartMediaTime` reactor** monitors source presence
+(`active` / `inactive`) and gates per-type on which type signals exist
+(video / audio / both), mirroring sibling reactors like `setupBufferActors`. On
+`active` entry (per source) it initializes the transient `mediaContainerData` slot
+to `{}`, builds the per-type discover pipelines (closing over the slot) and
+publishes them, and runs the **derive effect**. Exit clears the slot and retracts
+the pipelines. Per-source freshness and stale-write immunity are **structural** —
+fresh state on entry, teardown on exit — not a hand-rolled reset.
+
+- **Discover** (per-track step). A head-peek step reads the fetched byte stream —
+  the init (`mdhd` timescale) and the first media segment (`tfdt`
+  baseMediaDecodeTime) — and writes the raw values into `mediaContainerData`, a
+  `Signal<Record<TrackId, { timescale?; baseMediaDecodeTime? }>>`. It's a
+  **two-source** read across two appends, but the slot *is* the shared state (init
+  writes `timescale`, the first segment writes `baseMediaDecodeTime`), so the two
+  steps are independent — no shared closure, no self-discrimination. Writes are
+  **synchronous** RMW of disjoint keys (the sync-merge invariant keeps this clear
+  of the #1746 hazard; an async RMW of the slot would reintroduce it). Runs on the
+  *fetched* stream, so transport stays pure `fetchBytes` — discovery is a content
+  concern. `mediaContainerData` is named for what it holds (raw parsed container
+  values) rather than the one thing derived from it, so other box data can land
+  there later without a rename.
+- **Derive** (reactor effect). Watches `mediaContainerData` (+ selection for
+  Tier 2) and, via the injected **`deriveStartMediaTime`** seam, writes the
+  settled per-track `startMediaTime` onto the `Track`s. The seam is **pure** —
+  `(mediaContainerData, ctx) => Record<TrackId, number | undefined>`, where
+  `undefined` means "not ready yet" (the *when*) and the number is the *how* — and
+  the effect is the sole writer of the field. It's the **only tier knob**: Tier 1
+  writes each track its own (`baseMediaDecodeTime / timescale`); Tier 2 writes the
+  `min` across the selected A/V origins onto every track. No Presentation-level
+  field is needed — Tier 2 just denormalizes the min across the per-track slots.
+- **Apply** (per-track step + text). A stamp step reads the track's `startMediaTime`
+  and sets `timestampOffset = startTime − startMediaTime` on the append meta; the
+  SourceBufferActor applies it to `SourceBuffer.timestampOffset`. Text cues shift
+  by the same value in the cue resolver, reading the **primary video** track (the
+  single-anchor rule). Because `startMediaTime` is established asynchronously, the
+  stamp and text reads hold back via an **abortable `awaitDefined`** (an effect +
+  promise that resolves when the field is defined and rejects on the step's abort
+  signal) — a segment waits for the ground truth rather than stamping early, and
+  source-reset/preempt doesn't hang. **Apply is tier-agnostic**: it always reads
+  `Track.startMediaTime`, indifferent to how it was derived.
+
+### Consume: `startMediaTime` lives on the model
+
+The settled `startMediaTime` lands per-track on the **CMAF-HAM `Track`**, a peer
+of `startTime` (presentation) and `startDate` (wall-clock). It's a coordinate base
+value that *defines the timeline relationships*, so it belongs on the model, not a
+parallel slot; `timestampOffset` stays derived (`startTime − startMediaTime`),
+never stored.
+
+The **churn** — partial per-track reads across appends — stays in the transient
+`mediaContainerData` slot and never touches `presentation`. Only the *settled*
+value reaches the model, written by the derive effect as **sole writer** of the
+field. That write does share `presentation`'s existing multi-writer situation
+(#1746, addressed at the presentation-ownership level); we accept that rather than
+distort the model to dodge it. This is also where relocation and the live anchor
+**converge** — both are "an establishment unit writing coordinate base values onto
+tracks" (the anchor writes `startTime`/`startDate`, relocation writes
+`startMediaTime`) — the flagged eventual dedup.
 
 ### Branch-free always-present actors
 
-Because the offset is **constant per source once established**, the pieces that
-are present in *every* composition carry no tier conditionals:
+The pieces present in *every* composition carry **no relocation vocabulary at
+all** — not even a no-op'd seam. Relocation lives entirely in the reactor and its
+injected steps; the Tier-0 pipeline is literally `[fetch, dispatch]`:
 
-- **SourceBufferActor**: `sb.timestampOffset = meta.timestampOffset ?? 0` before
-  the append — unconditional, batch-safe (per-op), a no-op in the simple case
-  (`?? 0` on an already-0 buffer). No parsing, no waiting, no `appliedFlag`.
-  (hls.js wraps this in a tolerance guard against redundant sets on some UAs — a
-  cheap safety we can adopt if needed.)
-- **SegmentLoaderActor**: always `await`s the offset signal before the first
-  append and always includes the (constant) offset in the append meta — instant
-  and `0`/absent in the simple case.
+- **SegmentLoaderActor**: owns only the invariant skeleton (`fetchStep`,
+  `dispatchStep`, in-flight bookkeeping, between-step abort checks) and a
+  `messagePipelines` factory that defaults to `fetch → dispatch`. It does not
+  fetch-whole, parse, wait, or know what a `timestampOffset` is.
+- **SourceBufferActor**: sets `sb.timestampOffset` only when the append meta
+  carries one, idempotent-guarded (`meta.timestampOffset != null &&
+  sb.timestampOffset !== meta.timestampOffset`) so re-stamping the constant offset
+  on later appends is a no-op. Absent = untouched. Apply-only.
 
-All tier variation collapses to **"is the discovery hook injected, and what is
-the reduce config."** Everything downstream is shared.
+All tier variation collapses to **the reactor and its injected steps + derive
+seam**; the loader and buffer actors are shared, and Tier 0 imports no relocation
+code.
 
 ---
 
@@ -202,16 +250,43 @@ derive the offset. Keeps the loader coordinate-consistent and the simple case
 untouched. The honest-`startTime`-everywhere convergence (which would also
 reconcile live's native `startTime`) is a separate, named future effort.
 
-### Shared-`min` origin
+### Relocation is a per-source reactor; `startMediaTime` on the model via a pure derive seam
 
-**Decision:** relocate all tracks by `min` of the per-track native origins.
+**Decision:** relocation is the `establishStartMediaTime` reactor (per-source
+lifecycle), not a config bundle of loose signals. Discovery and apply are loader
+pipeline steps; **derive** is the reactor's effect, driven by a **pure injected
+`deriveStartMediaTime` seam** that maps `mediaContainerData` → per-track
+`startMediaTime`. The churn lives in the transient `mediaContainerData` slot; the
+settled value lands on `Track` (the effect is its sole writer).
 
-**Alternatives:** *per-track-own* (flattens real A/V skew, lossy); *video-primary*
-(the field norm — VHS/hls.js — but they sidestep negative-DTS via transmux/offset
-math we don't have).
+**Alternatives:** *a behavior with a hand-rolled reset effect* (the reactor's
+entry/exit gives per-source reset + teardown for free, structurally); *the reduce
+as a `computed`* (can't write the model — and putting `startMediaTime` on the
+model is the point, per the consume decision); *keeping the transient state
+module-local rather than on `state`* (it's coordinate state the model consumes, so
+it belongs on `state`, defined through the reactor).
+
+**Rationale:** the reactor matches the per-source lifecycle relocation actually
+has (and that `setupBufferActors` already models), makes stale-write races
+structural rather than guarded, and isolates the one tier difference into a pure,
+testable seam.
+
+### Shared-`min` origin (the Tier-2 `deriveStartMediaTime`)
+
+**Decision:** the coordination axis is entirely the `deriveStartMediaTime` seam.
+Tier 1 writes each track its own origin; Tier 2 writes the `min` across the
+selected A/V origins onto **every** track. `startMediaTime` stays per-track on
+`Track` in both tiers — Tier 2 denormalizes the min across the per-track slots, so
+no Presentation-level field is required and **apply is unchanged** across tiers.
+
+**Alternatives:** *per-track-own for skewed A/V* (flattens real A/V skew, lossy);
+*video-primary* (the field norm — VHS/hls.js — but they sidestep negative-DTS via
+transmux/offset math we don't have); *a Presentation-level shared value* (not
+needed — the seam denormalizing onto tracks keeps the read path uniform).
 
 **Rationale:** `min` is the only choice that keeps every DTS ≥ 0 *and* preserves
-real inter-track skew for native-PTS relocation.
+real inter-track skew; expressing it as a swap of the derive seam means Tier 2 is
+one function change with no movement in discover, apply, or wiring.
 
 ### Offset derived, not stored; two parsers split for tree-shaking
 
@@ -221,32 +296,75 @@ optional-selector function) so a caption-free platform tree-shakes the
 track-selection machinery (~37% smaller, verified). Application rides optional
 per-op append metadata so the always-present actors stay branch-free.
 
+### Offset applied via append meta, not a dedicated message (revisitable)
+
+**Decision:** the offset is carried on each media segment's append meta
+(`meta.timestampOffset`) and applied by the SourceBufferActor's
+`appendSegmentTask` (idempotent-guarded). A relocating composition's `stampOffset`
+pipeline step writes it onto the meta before `dispatch` (absent in Tier 0, whose
+pipeline has no such step; the step may be async — see
+["One offset, applied polymorphically"](#one-offset-applied-polymorphically)).
+Setting the offset is **not** its own SourceBuffer message today.
+
+**Alternative:** a dedicated `set-timestamp-offset` SourceBuffer message the
+loader schedules as its own task — cleaner separation of buffer configuration
+from append payload, and the natural shape once each actor's *messages* are
+decoupled from the concrete *Tasks* they translate into (segment-loader
+`planTasks`/`makeLoadTask`/`scheduleAll`; SourceBufferActor `messageTaskFactories`).
+
+**Rationale:** the offset is constant per source, so meta-carried + idempotent
+apply costs nothing and needs no new protocol. And meta-per-segment *generalizes*:
+HLS discontinuities and DASH multi-period re-base `timestampOffset` per period, and
+carrying it on each append gets correct in-order application for free via the
+`SerialRunner` — a standalone message would have to be interleaved into the append
+stream to match. "Set once" is the special case we happen to be in.
+
+**Left open:** promoting offset-setting to its own message remains a valid future
+move; the mid-stream offset-*change* case (discontinuities / multi-period) is the
+likely forcing function, though even then meta-per-segment may still win. Nothing
+in the current seam precludes the switch — this is a deliberate "not yet," not a
+closed door.
+
 ---
 
 ## Open questions
 
-- **Generalize the live establishment behavior.** "Reduce" is establish-once +
-  sticky + apply-to-all-including-text — which is exactly
-  `anchor-presentation-timeline`. Is VOD relocation *literally* that behavior with
-  a different reducer and a `presentation`-edge added, or a sibling sharing a
-  primitive? This decides whether "reduce" is a `computed` or the stateful
-  establishment behavior, and is the current hinge. See
+- ~~**Generalize the live establishment behavior.**~~ *Resolved (mechanism).* VOD
+  relocation is a **sibling** of `anchor-presentation-timeline`, not literally it:
+  a per-source establishment unit (`establishStartMediaTime` reactor) writing a
+  coordinate base value onto tracks, with the tier logic in a pure derive seam
+  rather than a `computed`. The two share the "establish-once, apply-to-all"
+  *shape* (and both write per-track base values → the #1746 multi-writer surface).
+  Whether they should be **one unit** — the anchor writing `startDate`/`startTime`
+  and relocation writing `startMediaTime` folded into a single establisher — is
+  the remaining, larger dedup, still future. See
   [../../decisions/live-presentation-anchor.md](../../decisions/live-presentation-anchor.md).
-- **Barrier liveness.** In the `min` case, each track's first append waits on the
-  other's origin — audio erroring, disabled, or absent must not block forever
-  (timeout / audio-disabled short-circuit; both VHS and hls.js special-case this).
+- **Barrier liveness.** For Tier 2, `deriveStartMediaTime` returns `undefined`
+  until the selected A/V origins are all present, and the apply-side
+  `awaitDefined` holds each first append until then — so audio erroring, disabled,
+  or absent must not block forever. The holdback needs a bound (timeout /
+  audio-disabled short-circuit inside the seam's "when"); both VHS and hls.js
+  special-case this.
 - **Holding the first segment across the wait.** The first media segment is held
   (buffered) while the offset resolves, then appended; steady-state streaming is
   untouched. The first-chunk peek is validated to contain the `moof` with a
   ~60–600× margin (first chunk ≥128KB, `moof` ≈0.2–2KB), so no streaming
   box-peeker is needed — but the hold's interaction with preempt/replan needs
   care.
-- **`startMediaTime` storage granularity.** Store per-track on `Track` (the
-  self-describing triple, leaning yes) vs. only the presentation-level reduced
-  value. Operationally the apply needs only the reduced value.
+- ~~**`startMediaTime` storage granularity.**~~ *Resolved.* Per-track on `Track`
+  (the self-describing triple), in both tiers — Tier 2 denormalizes the shared
+  `min` across the per-track slots rather than introducing a presentation-level
+  field. Promotion to a `Presentation`-level base value is a possible future move
+  if a real de-dup need appears, but Tier 2 does not force it.
 - **Text-only sources.** No A/V `tfdt` to establish from — but the
   `X-TIMESTAMP-MAP` `MPEGTS` *is* a media-timeline reference, so text could
   self-establish. Deferrable special path.
+- ~~**Discovery doesn't belong in the fetch abstraction.**~~ *Resolved.* Discover
+  is now a head-peek discover step run on the *fetched* byte stream inside the
+  loader, not a fetch decorator — transport stays pure `fetchBytes`, and parsing
+  mp4 boxes / writing the raw values into `mediaContainerData` sits where it
+  belongs (a content concern). It keeps the per-track, byte-first, no-double-fetch
+  properties.
 - **Convergence to honest `startMediaTime` everywhere** (the "A" option above),
   which would let live and VOD share one `startTime` semantic. Its own effort.
 
@@ -257,7 +375,7 @@ per-op append metadata so the always-present actors stay branch-free.
 - [presentation-modeling.md](./presentation-modeling.md),
   [live-presentation-modeling.md](./live-presentation-modeling.md) — the data
   model this extends; #1746 (the concurrently-RMW'd `presentation` hazard) is why
-  the churn stays in transient signals.
+  the churn stays in the transient `mediaContainerData` slot.
 - [../../decisions/mse-timestamp-offset.md](../../decisions/mse-timestamp-offset.md)
   — the mechanism decision (native-PTS default; relocation for the 0-based cases).
 - [../../decisions/live-presentation-anchor.md](../../decisions/live-presentation-anchor.md),

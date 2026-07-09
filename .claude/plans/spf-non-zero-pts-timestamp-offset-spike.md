@@ -26,6 +26,62 @@ carry conflicting assumptions here.
   boundaries (after `abort()` + a keyframe), never per-segment — see
   `internal/decisions/mse-timestamp-offset.md` §3.
 
+## Status & backlog (living — keep current so commits never bury outstanding work)
+
+The design of record is `internal/design/spf/presentation-timeline-model.md`
+(reactor architecture). This tracks *implementation* state against it. Tags:
+**KEEP** = lasting, review it; **TRANSITIONAL** = in the current diff but slated
+for rebuild by the reactor work, so don't over-review; **TODO** = designed, not
+built; **REVIEW** = needs your detailed pass; **DEFERRED** = later/open.
+
+### Landed (committed)
+- mp4 box parser + decode-time origin — `cf8aaca45`
+- presentation timeline coordinate model doc — `555f9fdac`
+- spike relocation (boolean/inline approach, since reworked) — `6a20bade9`
+- VTT `X-TIMESTAMP-MAP` parse — `7b0d8bbdc`
+
+### Uncommitted — KEEP (messagePipelines step model; typecheck/tests/lint/build green, sandbox-verified)
+- `actors/dom/segment-loader.ts` — `Frame`/`LoadStep`/`StepDeps`/`MessagePipelines`,
+  `fetchStep`/`dispatchStep` (deps as 3rd arg), `DEFAULT_MESSAGE_PIPELINES`,
+  `makeLoadTask` step-runner + inFlight try/finally wrapper.
+- `actors/dom/source-buffer.ts` — dropped `CreateAppendMeta`; idempotent
+  `timestampOffset` guard retained.
+- `behaviors/dom/setup-buffer-actors.ts`, `engines/hls/engine.ts`,
+  `engines/hls/index.ts` — `video/audioMessagePipelines` wiring.
+- `behaviors/dom/setup-text-track-actors.ts` + its test — relocation-awareness
+  removed (resolver injected).
+
+### Uncommitted — TRANSITIONAL (rebuilt by the reactor work; low review priority)
+- `engines/hls/relocation.ts` — current `createRelocation` config bundle + bare
+  per-track offset signals. → becomes the `establishStartMediaTime` reactor owning
+  `mediaContainerData` on `state`, publishing pipelines via context.
+- `primitives/origin-discoverer.ts` — self-discriminating single discoverer. →
+  splits into two steps (`mdhd` timescale / `tfdt` baseMediaDecodeTime) writing
+  `mediaContainerData[trackId]`.
+- config→context pipeline wiring (engine/setup) — moves to context-published under
+  wiring (A).
+
+### TODO — designed, not built (spec = the timeline doc)
+- `establishStartMediaTime` reactor (per-source lifecycle, per-type gating).
+- `mediaContainerData` slot on `state` (single dict signal, sync-RMW invariant).
+- `deriveStartMediaTime` pure seam (Tier-1 per-track default).
+- `Track.startMediaTime` consume + abortable `awaitDefined` apply holdback.
+- (A) context-published pipelines; `setup*BufferActors` read from context.
+
+### REVIEW — your detailed pass
+- Segment-loader step model end-to-end (the KEEP surface above).
+- `Frame` typing calls: `data?: AsyncIterable<Uint8Array>` (kept narrow, *not*
+  `AppendData`), `meta?: AppendSegmentMessage['meta']`, the `data!` in `toMessage`.
+- Load-behavior coordinate assumptions (see "Load behavior + implicit assumptions"
+  below) — still open, applies to relocation.
+- Whether TRANSITIONAL files get fully rebuilt vs partially salvaged.
+
+### DEFERRED / open (see the doc's Open questions)
+- Tier 2 shared-`min` (a `deriveStartMediaTime` swap) + barrier-liveness bound.
+- Holding first segment across the wait; text-only sources.
+- Honest-`startMediaTime`-everywhere convergence + live-anchor dedup.
+- Suspected pre-existing: text-cue alignment, seek-into-evicted-back-buffer.
+
 ## Problems the other branch surfaced — keep in view (likely changed, not gone)
 
 1. **Initial-load stall** (anchor-shift / origin-seek / flush mis-coordination) —
@@ -54,11 +110,12 @@ as the spike progresses.
 
 ## TODO
 
-- [ ] Stand up a sandbox harness (the other branch's `apps/sandbox/src/spf-non-zero-pts/`
-      isn't here) to drive the real provider on the Mux instant clip + Apple bipbop.
-- [ ] Probe negative-DTS on Chromium with `timestampOffset = −origin`.
-- [ ] Wire text-cue rebase (X-TIMESTAMP-MAP delta) to match the AV offset.
-- [ ] Audit the load behavior's coordinate assumptions.
+Superseded by the "Status & backlog" section above. Of the original spike probes:
+- [x] Sandbox harness — `apps/sandbox/src/spf-non-zero-pts/` exists and drives the
+      real provider (Mux instant clip verified 0-based).
+- [x] Negative-DTS on Chromium — no append failure observed under relocation.
+- [x] Text-cue rebase (X-TIMESTAMP-MAP delta) wired to the AV offset.
+- [ ] Audit the load behavior's coordinate assumptions — still open (REVIEW backlog).
 
 ## Pointers
 
