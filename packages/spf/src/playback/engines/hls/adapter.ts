@@ -32,10 +32,8 @@ export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
  * Implements the src/play() contract per the WHATWG HTML spec so that SPF can
  * be used anywhere a media element API is expected.
  *
- * A new engine is created on every src assignment — this fully tears down all
- * state, SourceBuffers, and in-flight requests from the previous source before
- * the next one begins. The media element reference is preserved across src
- * changes and re-applied to the new engine automatically.
+ * A single engine instance is created at construction and recycled across src
+ * changes.
  *
  * @example
  * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -46,7 +44,7 @@ export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
  */
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsMediaImpl extends BaseClass {
-    #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
+    readonly #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
     #config: SimpleHlsEngineConfig;
     #signals!: SimpleHlsEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
@@ -106,15 +104,19 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       if (value) {
         this.#signals.state.preload.set(value);
       }
-      // value = '' clears #preload (so the next engine recreation won't re-apply
-      // an explicit value) but does not patch current state — the existing preload
-      // stays in effect until the next src change creates a fresh engine.
+      // value = '' resets the IDL mirror (so `get preload` reflects '') but does
+      // not patch state — the engine keeps its current preload until an explicit
+      // W3C value replaces it.
     }
 
     // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // Each assignment destroys the current engine and starts a fresh one, exactly
-    // as the browser's load algorithm resets all media element state on src change.
+    // Each assignment overwrites the engine's presentation state in place. The
+    // resolver FSM routes back through teardown → rebuild on the same engine,
+    // mirroring how the browser's load algorithm resets media state on src change
+    // — without recreating the engine or re-capturing its signals. Setting an
+    // empty src un-resolves the presentation, tearing the current source down to
+    // the engine's fresh-but-attached "no source" state.
     // -------------------------------------------------------------------------
 
     get src(): string {
@@ -122,27 +124,8 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
 
     set src(value: string) {
-      const prevMediaElement = this.#signals.context.mediaElement.get();
-
       this.#cancelPendingPlay();
-      this.#engine.destroy();
-      this.#engine = this.#createEngine();
-
-      // Apply explicit preload before setting context so it's already in
-      // state.preload when syncPreload's read effect runs on the attach —
-      // the read effect only overwrites when the element's `preload` is a
-      // W3C value (which a freshly-created <video> with no attribute is not).
-      if (this.#preload) {
-        this.#signals.state.preload.set(this.#preload);
-      }
-
-      if (prevMediaElement) {
-        this.#signals.context.mediaElement.set(prevMediaElement);
-      }
-
-      if (value) {
-        this.#signals.state.presentation.set({ url: value });
-      }
+      this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }
 
     // -------------------------------------------------------------------------

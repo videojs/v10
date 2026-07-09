@@ -112,26 +112,35 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.engine).toBe(engine);
     });
 
-    it('creates a new engine when src is set', () => {
+    it('reuses the same engine instance when src is set', () => {
       const media = new SimpleHlsMediaElement();
       const initial = media.engine;
       media.src = 'https://example.com/v1.m3u8';
-      expect(media.engine).not.toBe(initial);
+      expect(media.engine).toBe(initial);
     });
 
-    it('destroys the old engine when src changes', () => {
+    it('reuses the same engine instance when src changes', () => {
+      const media = new SimpleHlsMediaElement();
+      media.src = 'https://example.com/v1.m3u8';
+      const engine = media.engine;
+      media.src = 'https://example.com/v2.m3u8';
+      expect(media.engine).toBe(engine);
+    });
+
+    it('does not destroy the engine when src changes', () => {
       const media = new SimpleHlsMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       const spy = vi.spyOn(media.engine, 'destroy');
       media.src = 'https://example.com/v2.m3u8';
-      expect(spy).toHaveBeenCalledOnce();
+      expect(spy).not.toHaveBeenCalled();
     });
 
-    it('re-attaches the media element to the new engine when src changes', () => {
+    it('keeps the attached media element across src changes', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
+      media.src = 'https://example.com/v2.m3u8';
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
@@ -328,7 +337,7 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.engine.state.preload.get()).toBe('auto');
     });
 
-    it('survives src reassignment — explicit preload is preserved across engine recreation', () => {
+    it('survives src reassignment — explicit preload persists on the recycled engine', () => {
       const media = new SimpleHlsMediaElement();
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
@@ -336,16 +345,21 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.engine.state.preload.get()).toBe('none');
     });
 
-    it('explicit preload is re-applied before owners.patch on src change so syncPreload preserves it', () => {
+    it('keeps explicit preload in engine state across src changes', () => {
       const media = new SimpleHlsMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
-      // syncPreload fires when context.mediaElement is set on the new engine.
-      // The freshly-created <video> has no preload attribute (mediaElement.preload === '')
-      // so the read effect's "only overwrite for W3C values" rule leaves state alone.
+      // The engine is recycled, so state.preload is engine-wide preference that
+      // simply persists across the src change — no re-application needed.
       expect(media.engine.state.preload.get()).toBe('none');
+
+      // Changing preload, then changing src again, keeps the latest value on the
+      // same engine — not reset to a default by the source change.
+      media.preload = 'auto';
+      media.src = 'https://example.com/v2.m3u8';
+      expect(media.engine.state.preload.get()).toBe('auto');
     });
   });
 

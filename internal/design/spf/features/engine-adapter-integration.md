@@ -35,7 +35,7 @@ the mixin.
 | Writable signal refs via `onSignalsReady` | `shareSignals` captures `Signal<T>` / `ReadonlySignal<T>` refs into a consumer-supplied callback at setup time. Generic over composition shape (`makeShareSignals<S, C>()`) | Per-slot read/write intent is expressed at the use site (callers type captured refs as `Signal<T>` or `ReadonlySignal<T>`). Composed last in the engine so initial state writes are visible to the consumer |
 | Mixin adapter pattern | `SimpleHlsMediaMixin` is the canonical consumer: function-of-base-class structure (mix into any base), captures refs once in `onSignalsReady`, exposes a WHATWG HTMLMediaElement-shaped API mapping each setter/method to engine writes | Downstream use: `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}` in `packages/core/src/dom/media/simple-hls/` |
 | Media element binding | `attach(el)` writes `context.mediaElement`; `detach()` clears it. **Engine persists across attach/detach cycles** — only `src` reassignment or explicit `destroy()` tears it down | Re-attach to a different element is supported. The engine is the durable state holder; `mediaElement` is a context slot |
-| Source assignment via destroy + recreate | Adapter's `set src` destroys the current engine and creates a fresh one, re-applies any explicit preload, re-attaches `mediaElement` to the new engine, and writes the new `{ url }` | Bypasses the in-place source-replacement path. Rationale not documented in code — see Open questions and [source-replacement.md](./source-replacement.md) |
+| Source assignment via in-place recycling | Adapter's `set src` overwrites `state.presentation` on its single recycled engine (`{ url }`, or `undefined` for empty src). Media element + engine-wide preload persist; no engine recreation, no signal re-capture | Drives the engine's in-place source-replacement cascade — see [source-replacement.md](./source-replacement.md). (The adapter previously destroyed + recreated the engine per assignment.) |
 | Preload reflection | `set preload(value)` writes W3C values to `state.preload`; clearing (`preload = ''`) doesn't patch the current engine but is re-applied on the next src change. Pre-attach src + preload combinations are supported | Extended preload values flow through state but don't reach the DOM (per [`preload-modes`](./preload-modes.md)'s sticky-extended-values semantics) |
 | Programmatic `play()` with retry | `play()` writes `state.loadActivated = true` (co-writer with `trackLoadTriggers`'s DOM listener path) before invoking native play. **Defensive retry:** if native play rejects with "no supported sources" while src is pending, wait for `loadstart` (MSE attaches blob URL) and retry once | The retry handles MSE pipeline timing — adapter doesn't know exactly when MSE setup attaches the blob URL. Listener canceled on src change |
 
@@ -101,7 +101,7 @@ return createComposition(
 | `attach(el)` | `context.mediaElement.set(el)` |
 | `detach()` | `context.mediaElement.set(undefined)` |
 | `destroy()` | `engine.destroy()` |
-| `set src(value)` | `engine.destroy()` → new engine → `state.presentation.set({ url: value })` |
+| `set src(value)` | `state.presentation.set({ url: value })` on the recycled engine (`undefined` for empty src) |
 | `set preload(value)` | `state.preload.set(value)` (W3C values only; pre-empties stay engine-local) |
 | `play()` | `state.loadActivated.set(true)` → native `play()` with `loadstart` retry on "no supported sources" |
 
@@ -156,15 +156,15 @@ each `set src`).
 
 ## Open questions
 
-- **Destroy-recreate vs in-place source replacement.** The canonical
-  adapter destroys + recreates the engine on every `src` change, even
-  though the engine's behaviors support in-place
-  `state.presentation` overwrite (validated by
-  [`source-replacement`](./source-replacement.md)'s test). The
-  rationale isn't documented in the code or commit history. Possible
-  motivations: stricter isolation between sources; simpler reasoning
-  per-engine; guarding against latent cleanup-cascade bugs. Worth
-  resolving when the cost of either choice surfaces.
+- **Destroy-recreate vs in-place source replacement.** Resolved: the
+  canonical adapter now recycles a single engine and overwrites
+  `state.presentation` in place on every `src` change, driving the same
+  cascade validated by
+  [`source-replacement`](./source-replacement.md)'s test. This unifies
+  per-source teardown on one path and lets adapter-side projections
+  wire once at construction rather than re-wiring on every src change.
+  It also makes source-change behavior stable enough to build the
+  media-tracks mixin integration on top of.
 - **Callback timing semantics.** `shareSignals`'s JSDoc explicitly
   notes the callback fires while other behaviors are still in setup;
   reads inside the callback may yield only initial-seed values. The
