@@ -74,7 +74,7 @@ Import from `@videojs/html/i18n` or `@videojs/react/i18n` depending on your fram
 - `<video-player>`, `<audio-player>`, and skins include an i18n provider mixin.
 - Set `<html lang="es">` (or `lang` on an ancestor) and ship/register Spanish strings.
 
-Use <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> when you render **standalone** controls outside a player, or when one page hosts players in different languages.
+Use <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink> when you render **standalone** controls outside a player, or when one page hosts players in different languages.
 
 </FrameworkCase>
 
@@ -93,7 +93,7 @@ Wrap with an explicit <DocsLink slug="reference/i18n-provider">`I18nProvider`</D
 
 Providers resolve the active locale in order:
 
-1. **Explicit**: `lang` on <DocsLink slug="reference/media-i18n-provider">`<media-i18n-provider>`</DocsLink> or `locale` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>
+1. **Explicit**: `lang` on <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink> or `locale` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>
 2. **Ambient**: nearest ancestor `[lang]` (HTML) or `langRootRef` / `<html lang>` (React)
 3. **Fallback**: English defaults
 

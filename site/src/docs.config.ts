@@ -148,7 +148,7 @@ export const sidebar: Sidebar = [
     frameworks: ['html'],
     contents: [
       { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
-      { slug: 'reference/media-i18n-provider', sidebarLabel: 'media-i18n-provider' },
+      { slug: 'reference/media-i18n', sidebarLabel: 'media-i18n' },
       { slug: 'reference/media-text', sidebarLabel: 'media-text' },
       { slug: 'reference/player-controller' },
       {
