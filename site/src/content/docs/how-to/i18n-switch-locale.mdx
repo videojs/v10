@@ -22,7 +22,7 @@ document.documentElement.lang = 'fr';
 ```
 
 <Aside type="note">
-Ambient switching only applies when no provider sets an explicit locale. React `I18nProvider locale={…}`, HTML `<media-i18n-provider lang="…">`, and `element.lang` on a provider all override `<html lang>` until you remove or update that override.
+Ambient switching only applies when no provider sets an explicit locale. React `I18nProvider locale={…}`, HTML `<media-i18n lang="…">`, and `element.lang` on a provider all override `<html lang>` until you remove or update that override.
 </Aside>
 
 <FrameworkCase frameworks={["html"]}>
@@ -73,9 +73,9 @@ Changing `locale` triggers lazy `loadLocale` for built-in packs.
 <FrameworkCase frameworks={["html"]}>
 
 ```html
-<media-i18n-provider lang="es" id="provider">
+<media-i18n lang="es" id="provider">
   <video-player>...</video-player>
-</media-i18n-provider>
+</media-i18n>
 
 <script type="module">
   document.querySelector('#lang-picker').addEventListener('change', (e) => {
@@ -126,9 +126,9 @@ registerI18n('fr', fr);
 ```
 
 ```html
-<media-i18n-provider id="provider">
+<media-i18n id="provider">
   <video-player>...</video-player>
-</media-i18n-provider>
+</media-i18n>
 
 <script type="module">
   document.getElementById('provider').lang = 'fr';

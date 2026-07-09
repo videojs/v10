@@ -1,5 +1,5 @@
 ---
-title: media-i18n-provider
+title: media-i18n
 description: HTML custom element that resolves locale and supplies translations to descendants
 ---
 
@@ -8,7 +8,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["html"]}>
 
-`<media-i18n-provider>` applies the i18n provider mixin to a standalone subtree. Built-in `<video-player>` and skins already include this mixin — use the element when rendering **controls outside a player** or when sibling players need different locales.
+`<media-i18n>` applies the i18n provider mixin to a standalone subtree. Built-in `<video-player>` and skins already include this mixin — use the element when rendering **controls outside a player** or when sibling players need different locales.
 
 Register locale strings with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the provider or an ancestor. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for phrase keys and fallback behavior.
 
@@ -21,9 +21,9 @@ Register locale strings with <DocsLink slug="reference/register-i18n">`registerI
   registerI18n('es', es);
 </script>
 
-<media-i18n-provider lang="es">
+<media-i18n lang="es">
   <media-text key="Play"></media-text>
-</media-i18n-provider>
+</media-i18n>
 ```
 
 ## Attributes
