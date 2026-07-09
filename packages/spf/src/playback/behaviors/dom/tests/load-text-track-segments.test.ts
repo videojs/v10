@@ -10,7 +10,6 @@ import type {
   Segment,
   TextTrack,
 } from '../../../../media/types';
-import type { SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../../actors/text-tracks';
 import { loadTextTrackSegments } from '../load-segments';
@@ -45,9 +44,6 @@ vi.mock('../../../../media/dom/text/resolve-vtt-segment', () => ({
     }
     return Promise.resolve([new VTTCue(0, 5, `Subtitle from ${url}`)]);
   }),
-  resolveVttSegmentWithMetadata: vi.fn((url: string) =>
-    Promise.resolve({ cues: [new VTTCue(0, 5, `Subtitle from ${url}`)], metadata: {} })
-  ),
   destroyVttResolver: vi.fn(),
 }));
 
@@ -70,7 +66,6 @@ function makeContext(initial: ComposedContext = {}): ContextSignals<ComposedCont
       initial.textTracksActor as TextTracksActor<VTTCue & Cue> | undefined
     ) as ContextSignals<ComposedContext>['textTracksActor'],
     textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
-    videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
   };
 }
 

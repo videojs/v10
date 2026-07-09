@@ -72,6 +72,7 @@ import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../network/fetch';
 import {
   createSegmentLoaderActor,
+  type MessagePipelines,
   type SegmentLoaderActor,
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
@@ -146,7 +147,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
     fetch: FetchBytes;
   } & SegmentLoaderActorConfig;
 }): Reactor<BufferActorsFsmState | 'destroying' | 'destroyed'> {
-  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer, relocateTimestampOrigin } = config;
+  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer, messagePipelines } = config;
   const derivedStateSignal = computed<BufferActorsFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
     const selection: TrackSelectionState = {
@@ -175,7 +176,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           const segmentLoader = createSegmentLoaderActor(bufferActor, fetch, {
             forwardBuffer,
             backBuffer,
-            relocateTimestampOrigin,
+            messagePipelines,
           });
 
           // Synchronous slot writes — load-bearing for the Firefox
@@ -227,7 +228,11 @@ export const setupVideoBufferActors = defineBehavior({
       bandwidthState: Signal<BufferActorsState['bandwidthState']>;
     };
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
-    config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
+    config?: SegmentLoaderActorConfig & {
+      getCdnId?: GetCdnId;
+      /** Optional non-zero-PTS relocation pipelines (Tier-1); inert when absent. */
+      videoMessagePipelines?: MessagePipelines;
+    };
   }) => {
     // Bandwidth-sampling fetch. The factory accumulates EWMA state
     // internally; the callback bridges samples to engine state for ABR.
@@ -250,7 +255,11 @@ export const setupVideoBufferActors = defineBehavior({
     return setupBufferActors({
       state,
       context,
-      config: { ...typeConfig, fetch: failoverFetch(trackedFetch, state, typeConfig) },
+      config: {
+        ...typeConfig,
+        fetch: failoverFetch(trackedFetch, state, typeConfig),
+        messagePipelines: config.videoMessagePipelines,
+      },
     });
   },
 });
@@ -283,14 +292,22 @@ export const setupAudioBufferActors = defineBehavior({
   }: {
     state: BufferActorsStateMap<'selectedAudioTrackId'>;
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
-    config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
+    config?: SegmentLoaderActorConfig & {
+      getCdnId?: GetCdnId;
+      /** Optional non-zero-PTS relocation pipelines (Tier-1); inert when absent. */
+      audioMessagePipelines?: MessagePipelines;
+    };
   }) => {
     // Key order mirrors setupVideoBufferActors.
     const typeConfig = { ...AUDIO_TYPE_CONFIG, ...config };
     return setupBufferActors({
       state,
       context,
-      config: { ...typeConfig, fetch: failoverFetch(fetchStream, state, typeConfig) },
+      config: {
+        ...typeConfig,
+        fetch: failoverFetch(fetchStream, state, typeConfig),
+        messagePipelines: config.audioMessagePipelines,
+      },
     });
   },
 });

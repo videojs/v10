@@ -30,7 +30,7 @@ import type {
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
-import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
+import type { MessagePipelines, SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
@@ -275,15 +275,15 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    */
   getCdnId?: GetCdnId;
   /**
-   * Non-zero-PTS relocation (spike). When on, the engine reads each source's
-   * decode-time origin (`tfdt` baseMediaDecodeTime ÷ `mdhd` timescale, via
-   * `media/mp4`) and relocates the buffer onto a 0-based presentation timeline
-   * with `SourceBuffer.timestampOffset = −sharedOrigin`, so `currentTime` /
-   * `seekable` / `duration` stay 0-based with no adapter translation. **Off by
-   * default** — zero-PTS VOD needs none of this and pays nothing (Tier 0). See
-   * `internal/design/spf/presentation-timeline-model.md`.
+   * Non-zero-PTS relocation seams (Tier-1). Per-type segment-loader pipelines
+   * that weave discover + stamp steps between fetch and dispatch; generic and
+   * inert when absent (Tier 0 pays nothing and imports no relocation code).
+   * Rather than set these by hand, spread `createRelocation()` (`./relocation`)
+   * into config — it builds both pipelines and the cue resolver against shared
+   * offset signals. See `internal/design/spf/presentation-timeline-model.md`.
    */
-  relocateTimestampOrigin?: boolean;
+  videoMessagePipelines?: MessagePipelines;
+  audioMessagePipelines?: MessagePipelines;
 }
 
 // ============================================================================
@@ -352,7 +352,6 @@ export function createSimpleHlsEngine(
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
-    relocateTimestampOrigin: config.relocateTimestampOrigin ?? false,
   };
 
   const composition = createComposition(

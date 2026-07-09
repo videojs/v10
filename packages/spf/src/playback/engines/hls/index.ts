@@ -25,3 +25,5 @@ export type {
   SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
 export { createHlsAudioOnlyEngine } from './engine-audio-only';
+export type { Relocation } from './relocation';
+export { createRelocation } from './relocation';
