@@ -26,12 +26,12 @@ describe('createI18n (HTML)', () => {
     expect(provider.getAttribute('lang')).toBe('fr');
   });
 
-  it('media-text shows translation key inside provider', async () => {
+  it('media-text translates text content inside provider', async () => {
     registerI18n('de', { Play: 'Los' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await Promise.resolve();
@@ -39,7 +39,7 @@ describe('createI18n (HTML)', () => {
     expect(text.textContent).toBe('Los');
   });
 
-  it('media-text keeps child text without a key', async () => {
+  it('media-text keeps text content when no translation exists', async () => {
     const text = new MediaTextElement();
     text.textContent = 'Fallback label';
     document.body.appendChild(text);
@@ -47,41 +47,38 @@ describe('createI18n (HTML)', () => {
     expect(text.textContent).toBe('Fallback label');
   });
 
-  it('media-text keeps child text with a key', async () => {
+  it('media-text stores source text before translating', async () => {
     registerI18n('de', { Play: 'Los' });
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
-    text.textContent = 'Fallback label';
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await text.updateComplete;
-    expect(text.textContent).toBe('Fallback label');
+    expect(text.textContent).toBe('Los');
   });
 
-  it('media-text falls back to child text when key is missing', async () => {
+  it('media-text falls back to text content when phrase is missing', async () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
     text.textContent = 'Fallback label';
-    text.setAttribute('key', 'missingLabel');
     provider.appendChild(text);
     document.body.appendChild(provider);
     await text.updateComplete;
     expect(text.textContent).toBe('Fallback label');
   });
 
-  it('media-text falls back to child text without a provider', async () => {
+  it('media-text falls back to text content without a provider', async () => {
     const text = new MediaTextElement();
     text.textContent = 'Fallback label';
-    text.setAttribute('key', 'Play');
     document.body.appendChild(text);
     await text.updateComplete;
     expect(text.textContent).toBe('Fallback label');
   });
 
-  it('media-text is empty without a key or child text', async () => {
+  it('media-text is empty without text content', async () => {
     const text = new MediaTextElement();
     document.body.appendChild(text);
     await text.updateComplete;
@@ -93,7 +90,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'es';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await Promise.resolve();
@@ -107,7 +104,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'x-test-de';
     const provider = new MediaI18nProviderElement();
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await vi.waitFor(() => {
@@ -135,7 +132,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'x-test-lazy-de';
     const provider = new LazyAmbientProvider();
     const text = new LazyAmbientText();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await vi.waitFor(() => {
@@ -154,7 +151,7 @@ describe('createI18n (HTML)', () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'de');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     await vi.waitFor(() => {
@@ -182,7 +179,7 @@ describe('createI18n (HTML)', () => {
     document.documentElement.lang = 'en';
     const provider = new DriftProvider();
     const text = new DriftText();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
     provider.setAttribute('lang', 'de');
@@ -206,8 +203,8 @@ describe('createI18n (HTML)', () => {
     provider.setAttribute('lang', 'de');
     const textSame = new SharedTextA();
     const textOther = new SharedTextB();
-    textSame.setAttribute('key', 'Play');
-    textOther.setAttribute('key', 'Play');
+    textSame.textContent = 'Play';
+    textOther.textContent = 'Play';
     provider.appendChild(textSame);
     provider.appendChild(textOther);
     document.body.appendChild(provider);
@@ -318,7 +315,7 @@ describe('createI18n (HTML)', () => {
 
   it('media-text refreshes fallback English without a provider when the registry changes', async () => {
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     document.body.appendChild(text);
     await text.updateComplete;
     expect(text.textContent).toBe('Play');
@@ -336,7 +333,7 @@ describe('createI18n (HTML)', () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'xx');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
 
@@ -352,7 +349,7 @@ describe('createI18n (HTML)', () => {
     const provider = new MediaI18nProviderElement();
     provider.setAttribute('lang', 'fr');
     const text = new MediaTextElement();
-    text.setAttribute('key', 'Play');
+    text.textContent = 'Play';
     provider.appendChild(text);
     document.body.appendChild(provider);
 
@@ -378,7 +375,7 @@ describe('createI18n (HTML)', () => {
     const provider = new PartialProvider();
     provider.setAttribute('lang', 'fr');
     const text = new PartialText();
-    text.setAttribute('key', 'Settings');
+    text.textContent = 'Settings';
     provider.appendChild(text);
     document.body.appendChild(provider);
 

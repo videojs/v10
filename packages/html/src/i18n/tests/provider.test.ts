@@ -8,18 +8,18 @@ import { i18nContext, MediaI18nProviderElement, MediaTextElement } from '../inde
 
 const skinTemplate = document.createElement('template');
 skinTemplate.innerHTML =
-  '<button aria-labelledby="settings-label"><media-text id="settings-label" key="Settings"></media-text></button>';
+  '<button aria-labelledby="settings-label"><media-text id="settings-label">Settings</media-text></button>';
 
 const missingKeyTemplate = document.createElement('template');
 missingKeyTemplate.innerHTML =
-  '<button aria-labelledby="missing-label"><media-text id="missing-label" key="missingLabel"></media-text></button>';
+  '<button aria-labelledby="missing-label"><media-text id="missing-label">missingLabel</media-text></button>';
 
 const childTextTemplate = document.createElement('template');
 childTextTemplate.innerHTML =
   '<button aria-labelledby="fallback-label"><media-text id="fallback-label">Fallback label</media-text></button>';
 
 const firstUpdateTemplate = document.createElement('template');
-firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text key="Settings"></test-skin-i18n-first-text>';
+firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text>Settings</test-skin-i18n-first-text>';
 
 class TestSkinElement extends SkinElement {
   static override readonly template = skinTemplate;

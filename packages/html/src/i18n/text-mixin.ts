@@ -11,41 +11,27 @@ export interface TextMixinConfig {
   context: I18nContext;
 }
 
-/** Reflected i18n keys are untyped strings; the runtime translator accepts any key. */
-function translateReflectedKey(translator: Translator, key: string): string {
+/** Authored phrase text is untyped; the runtime translator accepts any key. */
+function translateText(translator: Translator, key: string): string {
   // Omit the required params
   const translateLoose = translator as (k: string) => string;
   return translateLoose(key);
 }
 
-function hasAuthoredContent(host: HTMLElement): boolean {
-  return Array.from(host.childNodes).some((node) => !!node.textContent?.trim());
-}
-
 export function createTextMixin({ context }: TextMixinConfig): I18nTextMixin {
   return (Base) => {
     class MediaText extends Base {
-      static properties = {
-        ...Base.properties,
-        key: { type: String, reflect: true },
-      };
-
-      key = '';
-
       readonly #i18n = new I18nController(this, context);
       #text: string | undefined;
-      #hasAuthoredContent = false;
 
       override connectedCallback(): void {
-        this.#hasAuthoredContent ||= hasAuthoredContent(this);
-        this.#text ??= this.textContent ?? '';
+        this.#text ??= this.textContent?.trim() ?? '';
         super.connectedCallback();
       }
 
       protected override updated(changed: PropertyValues): void {
         super.updated(changed);
-        if (this.#hasAuthoredContent) return;
-        this.textContent = this.key ? translateReflectedKey(this.#i18n.value, this.key) : (this.#text ?? '');
+        this.textContent = this.#text ? translateText(this.#i18n.value, this.#text) : '';
       }
     }
 

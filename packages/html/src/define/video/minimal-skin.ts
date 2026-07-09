@@ -118,14 +118,14 @@ function getTemplateHTML() {
 
             <button commandfor="settings-menu" aria-labelledby="settings-label" class="media-button media-button--subtle media-button--icon media-button--settings">
               ${renderIcon('gear', { class: 'media-icon media-icon--settings' })}
-              <media-text id="settings-label" key="Settings" class="media-sr-only"></media-text>
+              <media-text id="settings-label" class="media-sr-only">Settings</media-text>
             </button>
             <media-menu id="settings-menu" side="top" align="center" class="media-popover media-menu media-menu--settings">
               <media-menu-view class="media-menu__panel">
                 <div class="media-menu__group">
                   <media-menu-item commandfor="settings-quality-menu" type="quality" data-setting="quality" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('switches', { class: 'media-icon' })}
-                    <media-text key="Quality"></media-text>
+                    <media-text>Quality</media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -133,7 +133,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-audio-menu" type="audio-track" data-setting="audio-track" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('speech', { class: 'media-icon' })}
-                    <media-text key="Audio"></media-text>
+                    <media-text>Audio</media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -141,7 +141,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-speed-menu" type="playback-rate" data-setting="playback-rate" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('speed', { class: 'media-icon' })}
-                    <media-text key="Speed"></media-text>
+                    <media-text>Speed</media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -149,7 +149,7 @@ function getTemplateHTML() {
                   </media-menu-item>
                   <media-menu-item commandfor="settings-captions-menu" type="captions" data-setting="captions" class="media-menu__item media-menu__item--submenu">
                     ${renderIcon('captions-off', { class: 'media-icon' })}
-                    <media-text key="Captions"></media-text>
+                    <media-text>Captions</media-text>
                     <span class="media-menu__hint">
                       <media-menu-item-value class="media-menu__hint-label"></media-menu-item-value>
                       ${renderIcon('chevron', { class: 'media-icon media-menu__chevron' })}
@@ -161,7 +161,7 @@ function getTemplateHTML() {
               <media-menu id="settings-quality-menu" class="media-menu__panel">
                 <media-menu-back class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
-                  <media-text key="Quality"></media-text>
+                  <media-text>Quality</media-text>
                 </media-menu-back>
                 <div class="media-menu__separator"></div>
                 <media-quality-radio-group class="media-menu__group">
@@ -183,7 +183,7 @@ function getTemplateHTML() {
               <media-menu id="settings-audio-menu" class="media-menu__panel">
                 <media-menu-back class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
-                  <media-text key="Audio"></media-text>
+                  <media-text>Audio</media-text>
                 </media-menu-back>
                 <div class="media-menu__separator"></div>
                 <media-audio-track-radio-group class="media-menu__group">
@@ -201,7 +201,7 @@ function getTemplateHTML() {
               <media-menu id="settings-speed-menu" class="media-menu__panel">
                 <media-menu-back class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
-                  <media-text key="Speed"></media-text>
+                  <media-text>Speed</media-text>
                 </media-menu-back>
                 <div class="media-menu__separator"></div>
                 <media-playback-rate-radio-group class="media-menu__group">
@@ -219,7 +219,7 @@ function getTemplateHTML() {
               <media-menu id="settings-captions-menu" class="media-menu__panel">
                 <media-menu-back class="media-menu__back">
                   ${renderIcon('chevron', { class: 'media-icon media-menu__chevron media-icon--flipped' })}
-                  <media-text key="Captions"></media-text>
+                  <media-text>Captions</media-text>
                 </media-menu-back>
                 <div class="media-menu__separator"></div>
                 <media-captions-radio-group class="media-menu__group">
