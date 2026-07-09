@@ -34,9 +34,9 @@ type LitElementLike = HTMLElement & { requestUpdate?: () => void; updateComplete
 function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
   return html`
     <${playerTag}>
-      <media-i18n-provider>
+      <media-i18n>
         ${inner}
-      </media-i18n-provider>
+      </media-i18n>
     </${playerTag}>
   `;
 }
@@ -56,7 +56,7 @@ async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promis
 
   const deadline = performance.now() + timeoutMs;
   while (performance.now() < deadline) {
-    const provider = document.querySelector('media-i18n-provider') as LitElementLike | null;
+    const provider = document.querySelector('media-i18n') as LitElementLike | null;
     provider?.requestUpdate?.();
     if (provider?.updateComplete) await provider.updateComplete;
 
@@ -79,7 +79,7 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
   await ensureCdnSandboxLocale(tag);
   if (seq !== localeApplySeq) return;
 
-  const provider = document.querySelector('media-i18n-provider') as LitElementLike | null;
+  const provider = document.querySelector('media-i18n') as LitElementLike | null;
   if (!provider?.requestUpdate) return;
 
   provider.requestUpdate();
@@ -303,9 +303,9 @@ async function render() {
 
   await syncCdnI18nProvider(locale, localeApplySeq);
 
-  if (import.meta.env.DEV && !document.querySelector('media-i18n-provider')) {
+  if (import.meta.env.DEV && !document.querySelector('media-i18n')) {
     throw new Error(
-      '[videojs/sandbox] CDN preset requires <media-i18n-provider>. Run pnpm dev:sandbox (or pnpm exec tsx scripts/setup.ts).'
+      '[videojs/sandbox] CDN preset requires <media-i18n>. Run pnpm dev:sandbox (or pnpm exec tsx scripts/setup.ts).'
     );
   }
 }
@@ -348,7 +348,7 @@ onPreloadChange((preload) => {
 });
 
 onLocaleChange((next) => {
-  const provider = document.querySelector('media-i18n-provider');
+  const provider = document.querySelector('media-i18n');
   if (provider) {
     void applyLocale(next);
     return;
