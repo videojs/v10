@@ -1,7 +1,7 @@
 import en from './locales/en';
-import type { Translations } from './types';
+import type { Locale, Translations } from './types';
 
-const registry = new Map<string, Partial<Translations>>();
+const registry = new Map<Locale, Partial<Translations>>();
 const subscribers = new Set<() => void>();
 
 function notify(): void {
@@ -10,12 +10,12 @@ function notify(): void {
   }
 }
 
-function normalizeLocaleTag(tag: string): string {
+function normalizeLocaleTag(tag: Locale): Locale {
   return tag.trim().replaceAll('_', '-').toLowerCase();
 }
 
 /** Strip unicode locale extension sequences (`-u-…`) before any private-use `-x-` block. */
-function stripUnicodeExtensions(tag: string): string {
+function stripUnicodeExtensions(tag: Locale): Locale {
   const xIdx = tag.indexOf('-x-');
   const beforePrivateUse = xIdx === -1 ? tag : tag.slice(0, xIdx);
   const uIdx = beforePrivateUse.indexOf('-u-');
@@ -26,7 +26,7 @@ function stripUnicodeExtensions(tag: string): string {
 }
 
 /** Registry map key: normalized tag with unicode extensions removed (same base as {@link findLocaleKeys}). */
-export function getCanonicalLocaleKey(locale: string): string {
+export function getCanonicalLocaleKey(locale: Locale): Locale {
   return stripUnicodeExtensions(normalizeLocaleTag(locale));
 }
 
@@ -35,20 +35,20 @@ export function getCanonicalLocaleKey(locale: string): string {
  *
  * @example `es-419-u-nu-latn` → `['es-419', 'es', 'en']`
  */
-export function findLocaleKeys(locale: string): string[] {
+export function findLocaleKeys(locale: Locale): Locale[] {
   const base = getCanonicalLocaleKey(locale);
   if (!base) {
     return ['en'];
   }
 
   const segments = base.split('-').filter(Boolean);
-  const chain: string[] = [];
+  const chain: Locale[] = [];
 
   for (let len = segments.length; len >= 1; len--) {
     chain.push(segments.slice(0, len).join('-'));
   }
 
-  const out: string[] = [];
+  const out: Locale[] = [];
   const seen = new Set<string>();
   for (const tag of chain) {
     if (!seen.has(tag)) {
@@ -63,7 +63,7 @@ export function findLocaleKeys(locale: string): string[] {
   return out;
 }
 
-function mergeI18nTranslations(chain: string[]): Translations {
+function mergeI18nTranslations(chain: Locale[]): Translations {
   const merged: Partial<Translations> = {};
   for (let i = chain.length - 1; i >= 0; i--) {
     const tag = chain[i]!;
@@ -82,7 +82,7 @@ function mergeI18nTranslations(chain: string[]): Translations {
  * @param translations - Partial map of opaque keys to translated strings; merges with any existing layer for the tag.
  * @public
  */
-export function registerI18n(locale: string, translations: Partial<Translations>): void {
+export function registerI18n(locale: Locale, translations: Partial<Translations>): void {
   const tag = getCanonicalLocaleKey(locale);
   const existing = registry.get(tag) ?? {};
   registry.set(tag, { ...existing, ...translations });
@@ -95,7 +95,7 @@ export function registerI18n(locale: string, translations: Partial<Translations>
  * @param locale - BCP 47 tag to resolve (e.g. `es-MX`, `zh-Hant-HK`).
  * @public
  */
-export function getI18nTranslations(locale: string): Translations {
+export function getI18nTranslations(locale: Locale): Translations {
   return mergeI18nTranslations(findLocaleKeys(locale));
 }
 
@@ -118,7 +118,7 @@ export function onI18nRegistryChange(callback: () => void): () => void {
  * @param locale - BCP 47 tag to test.
  * @public
  */
-export function hasRegisteredLocale(locale: string): boolean {
+export function hasRegisteredLocale(locale: Locale): boolean {
   return registry.has(getCanonicalLocaleKey(locale));
 }
 
