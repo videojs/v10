@@ -6,7 +6,7 @@ import { resolveTranslation } from '@videojs/core/i18n';
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useEffect, useState } from 'react';
 
-import { useTranslator } from '../../i18n/context';
+import { useLocale, useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
@@ -44,6 +44,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const buffer = usePlayer(selectBuffer);
     const playback = usePlayer(selectPlayback);
     const translator = useTranslator();
+    const locale = useLocale();
 
     const [core] = useState(() => new TimeSliderCore());
     core.setProps({
@@ -56,6 +57,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       pauseOnDrag,
       changeThrottle,
     });
+    core.setFormatLocale(locale);
 
     // Keep a ref to the latest media state for callbacks that fire outside the render cycle.
     const mediaRef = useLatestRef(time && buffer ? { ...time, ...buffer } : null);
