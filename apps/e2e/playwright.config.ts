@@ -6,6 +6,7 @@ const VALUE_OPTIONS = new Set([
   '-c',
   '-g',
   '-j',
+  '-p',
   '-u',
   '--browser',
   '--config',
@@ -28,9 +29,9 @@ const VALUE_OPTIONS = new Set([
   '--workers',
 ]);
 
-const args = process.argv.slice(2);
+const args = process.argv.slice(2).filter((arg, index) => !(index === 0 && arg === 'test'));
 const selectedProjects = args.flatMap((arg, index) => {
-  if (arg === '--project') {
+  if (arg === '--project' || arg === '-p') {
     return args[index + 1] ? [args[index + 1]] : [];
   }
   return arg.startsWith('--project=') ? [arg.slice('--project='.length)] : [];
