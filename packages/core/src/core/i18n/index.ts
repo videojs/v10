@@ -6,7 +6,8 @@ export {
   shouldAttemptBrowserTranslation,
 } from './browser-translation';
 export { loadLocale } from './load-locale';
-export { LOCALES } from './locales';
+export type { LocaleAlias } from './locales';
+export { LOCALES, localeAliases } from './locales';
 export { default as translations } from './locales/en';
 export {
   findLocaleKeys,

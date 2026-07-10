@@ -1,5 +1,6 @@
 import '@app/styles.css';
 import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
+import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -36,28 +37,30 @@ function App() {
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
   return (
-    <Provider>
-      <VideoSkinComponent
-        poster={poster}
-        placeholder={placeholder}
-        skin={skin}
-        styling={styling}
-        live={live}
-        className="aspect-video max-w-4xl mx-auto"
-      >
-        <MuxVideo
-          src={SOURCES[source].url}
-          autoPlay={autoplay}
-          muted={muted}
-          loop={loop}
-          preload={preload}
-          playsInline
-          crossOrigin="anonymous"
+    <SandboxI18nProvider>
+      <Provider>
+        <VideoSkinComponent
+          poster={poster}
+          placeholder={placeholder}
+          skin={skin}
+          styling={styling}
+          live={live}
+          className="aspect-video max-w-4xl mx-auto"
         >
-          <Storyboard src={storyboard} />
-        </MuxVideo>
-      </VideoSkinComponent>
-    </Provider>
+          <MuxVideo
+            src={SOURCES[source].url}
+            autoPlay={autoplay}
+            muted={muted}
+            loop={loop}
+            preload={preload}
+            playsInline
+            crossOrigin="anonymous"
+          >
+            <Storyboard src={storyboard} />
+          </MuxVideo>
+        </VideoSkinComponent>
+      </Provider>
+    </SandboxI18nProvider>
   );
 }
 
