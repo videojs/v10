@@ -38,6 +38,7 @@
     "test:cli": "turbo run test --filter=@videojs/cli",
     "test:e2e": "pnpm --dir apps/e2e test:all",
     "test:e2e:vite": "pnpm --dir apps/e2e test:vite",
+    "test:e2e:sandbox": "pnpm --dir apps/e2e test:sandbox",
     "test:e2e:update": "pnpm --dir apps/e2e test:update",
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
     "format:astro": "prettier --write 'site/src/**/*.astro'",

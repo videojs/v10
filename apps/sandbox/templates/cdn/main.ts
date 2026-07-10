@@ -102,6 +102,8 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
 
 async function applyLocale(next: SandboxLocaleTag): Promise<void> {
   const seq = ++localeApplySeq;
+  await ensureCdnSandboxLocale(next);
+  if (seq !== localeApplySeq) return;
   locale = next;
   document.documentElement.lang = locale;
   await syncCdnI18nProvider(locale, seq);
@@ -354,7 +356,12 @@ onLocaleChange((next) => {
     return;
   }
 
-  locale = next;
-  document.documentElement.lang = locale;
-  void render();
+  const seq = ++localeApplySeq;
+  void (async () => {
+    await ensureCdnSandboxLocale(next);
+    if (seq !== localeApplySeq) return;
+    locale = next;
+    document.documentElement.lang = locale;
+    await render();
+  })();
 });

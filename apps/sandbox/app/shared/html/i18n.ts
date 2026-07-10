@@ -18,10 +18,10 @@ export async function prepareSandboxHtmlLocale(): Promise<void> {
 
 export async function applySandboxHtmlLocale(next: SandboxLocaleTag): Promise<void> {
   const seq = ++localeApplySeq;
+  await ensureSandboxLocale(next);
+  if (seq !== localeApplySeq) return;
   locale = next;
   document.documentElement.lang = locale;
-  await ensureSandboxLocale(locale);
-  if (seq !== localeApplySeq) return;
 }
 
 export function bindSandboxHtmlLocaleChange(rerender: () => void): void {
@@ -31,11 +31,11 @@ export function bindSandboxHtmlLocaleChange(rerender: () => void): void {
       return;
     }
     const seq = ++localeApplySeq;
-    locale = next;
-    document.documentElement.lang = locale;
     void (async () => {
-      await ensureSandboxLocale(locale);
+      await ensureSandboxLocale(next);
       if (seq !== localeApplySeq) return;
+      locale = next;
+      document.documentElement.lang = locale;
       rerender();
     })();
   });

@@ -36,11 +36,16 @@ const selectedProjects = args.flatMap((arg, index) => {
   return arg.startsWith('--project=') ? [arg.slice('--project='.length)] : [];
 });
 const testFilters = args.filter((arg, index) => !arg.startsWith('-') && !VALUE_OPTIONS.has(args[index - 1] ?? ''));
+const selectedViteProject = selectedProjects.some((name) => name.startsWith('vite-'));
 const selectedSandboxProject = selectedProjects.some((name) => name.startsWith('sandbox-'));
 const selectedSandboxSpec = testFilters.some((arg) => SANDBOX_SPEC.test(arg));
+const unfilteredRun = selectedProjects.length === 0 && testFilters.length === 0;
+const shouldStartViteServer =
+  selectedViteProject ||
+  unfilteredRun ||
+  (selectedProjects.length === 0 && testFilters.some((arg) => !SANDBOX_SPEC.test(arg)));
 const shouldStartSandboxServer =
-  !process.env.SANDBOX_URL &&
-  (selectedSandboxProject || selectedSandboxSpec || (selectedProjects.length === 0 && testFilters.length === 0));
+  !process.env.SANDBOX_URL && (selectedSandboxProject || selectedSandboxSpec || unfilteredRun);
 
 export default defineConfig({
   testDir: './tests',
@@ -112,13 +117,17 @@ export default defineConfig({
   ],
 
   webServer: [
-    {
-      command: 'npx vite --port 5180',
-      cwd: './apps/vite',
-      port: 5180,
-      reuseExistingServer: !CI,
-      timeout: 120_000,
-    },
+    ...(shouldStartViteServer
+      ? [
+          {
+            command: 'npx vite --port 5180',
+            cwd: './apps/vite',
+            port: 5180,
+            reuseExistingServer: !CI,
+            timeout: 120_000,
+          },
+        ]
+      : []),
     ...(shouldStartSandboxServer
       ? [
           {
