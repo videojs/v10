@@ -1,4 +1,4 @@
-import { readdirSync, unlinkSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readdirSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -96,6 +96,24 @@ function generatePlatformAllReExport(): string {
 `;
 }
 
+function generatePlatformRegisterTs(tag: string): string {
+  return `${GENERATED_HEADER}import { registerI18n } from '@videojs/core/i18n';
+import translations from '@videojs/core/i18n/locales/${tag}';
+
+registerI18n('${tag}', translations);
+`;
+}
+
+function generatePlatformRegisterAllTs(): string {
+  return `${GENERATED_HEADER}import { registerI18n } from '@videojs/core/i18n';
+import { all } from '@videojs/core/i18n/locales/all';
+
+for (const [tag, translations] of Object.entries(all)) {
+  registerI18n(tag, translations);
+}
+`;
+}
+
 function writeGenerated(path: string, content: string): void {
   writeFileSync(path, content.endsWith('\n') ? content : `${content}\n`);
 }
@@ -105,15 +123,29 @@ function syncPlatformLocaleDir(dir: string): void {
 
   for (const tag of PLATFORM_LOCALE_TAGS) {
     writeGenerated(resolve(dir, `${tag}.ts`), generatePlatformDefaultReExport(tag));
+    const registerDir = resolve(dir, tag);
+    mkdirSync(registerDir, { recursive: true });
+    writeGenerated(resolve(registerDir, 'register.ts'), generatePlatformRegisterTs(tag));
   }
 
   writeGenerated(resolve(dir, 'all.ts'), generatePlatformAllReExport());
+  const allRegisterDir = resolve(dir, 'all');
+  mkdirSync(allRegisterDir, { recursive: true });
+  writeGenerated(resolve(allRegisterDir, 'register.ts'), generatePlatformRegisterAllTs());
 
   for (const file of readdirSync(dir)) {
     if (!file.endsWith('.ts') || expected.has(file)) {
       continue;
     }
     unlinkSync(resolve(dir, file));
+  }
+
+  const expectedDirs = new Set([...PLATFORM_LOCALE_TAGS, 'all']);
+  for (const file of readdirSync(dir, { withFileTypes: true })) {
+    if (!file.isDirectory() || expectedDirs.has(file.name)) {
+      continue;
+    }
+    rmSync(resolve(dir, file.name), { recursive: true, force: true });
   }
 }
 

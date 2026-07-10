@@ -15,6 +15,7 @@
   "sideEffects": [
     "./dist/*/define/**/*.js",
     "./dist/*/i18n/index.js",
+    "./dist/*/i18n/locales/*/register.js",
     "./dist/*/icons/element/**/*.js",
     "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"

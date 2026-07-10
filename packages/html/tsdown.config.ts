@@ -48,8 +48,11 @@ const iconEntries = Object.fromEntries(
 
 const i18nLocaleEntries = Object.fromEntries([
   ['i18n/locales/all', 'src/i18n/locales/all.ts'],
+  ['i18n/locales/all/register', 'src/i18n/locales/all/register.ts'],
   ['i18n/locales/en', 'src/i18n/locales/en.ts'],
+  ['i18n/locales/en/register', 'src/i18n/locales/en/register.ts'],
   ...localeTags.map((tag) => [`i18n/locales/${tag}`, `src/i18n/locales/${tag}.ts`]),
+  ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
 ]);
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
@@ -69,6 +72,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     moduleSideEffects: [
       { test: /\/define\//, sideEffects: true },
       { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
+      { test: /\/i18n\/locales\/.+\/register/, sideEffects: true },
     ],
   },
   noExternal: [/^@videojs\/icons/, /^@videojs\/skins/],
