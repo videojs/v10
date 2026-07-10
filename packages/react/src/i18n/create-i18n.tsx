@@ -2,10 +2,10 @@
 
 import { createTranslator, loadLocale as defaultLoader, type Locale, type Translations } from '@videojs/core/i18n';
 import { effectiveLocale } from '@videojs/utils/dom';
-import { type Context, createContext, type ReactNode, type RefObject, useContext, useMemo } from 'react';
+import { type Context, type ReactNode, type RefObject, useContext, useMemo } from 'react';
 
-import { I18nContext, type I18nContextValue, useLocale, useTranslator } from './context';
-import { type AddLocaleRoot, getProviderRootProps, type I18nProviderRootProps } from './get-provider-root-props';
+import { I18nContext, type I18nContextValue, LocaleRootContext, useLocale, useTranslator } from './context';
+import { getProviderRootProps, type I18nProviderRootProps } from './get-provider-root-props';
 import { useAmbientLang } from './use-ambient-lang';
 import { useLangRootElement } from './use-lang-root-element';
 import { useLazyTranslations } from './use-lazy-translations';
@@ -66,7 +66,6 @@ export interface CreateI18nResult {
  */
 export function createI18n(options?: CreateI18nOptions): CreateI18nResult {
   const loader = options?.loader ?? defaultLoader;
-  const LocaleRootContext = createContext<AddLocaleRoot | undefined>(undefined);
 
   function I18nProviderRoot({
     locale: localeProp,

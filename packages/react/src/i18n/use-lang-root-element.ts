@@ -1,6 +1,6 @@
 import { type RefObject, useLayoutEffect, useReducer, useRef } from 'react';
 
-import type { AddLocaleRoot } from './get-provider-root-props';
+import type { AddLocaleRoot } from './context';
 
 export function useLangRootElement(
   langRootRef: RefObject<Element | null> | undefined,

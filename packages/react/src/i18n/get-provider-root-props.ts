@@ -1,7 +1,5 @@
-import type { I18nContextValue } from './context';
+import type { AddLocaleRoot, I18nContextValue } from './context';
 import type { I18nProviderProps } from './create-i18n';
-
-export type AddLocaleRoot = () => () => void;
 
 export interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: I18nContextValue['locale'];

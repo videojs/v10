@@ -4,7 +4,7 @@ import { registerI18n, resetI18nRegistry, type Translations } from '@videojs/cor
 import { createRef, type ReactElement } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { createI18n } from '../create-i18n';
+import { createI18n, I18nProvider as DefaultI18nProvider } from '../create-i18n';
 
 describe('createI18n', () => {
   afterEach(() => {
@@ -943,6 +943,43 @@ describe('createI18n', () => {
       expect(screen.queryByText('fr:Lire')).not.toBeNull();
       expect(onActiveLocaleChange).toHaveBeenCalledWith('fr');
     });
+    expect(onActiveLocaleChange).not.toHaveBeenCalledWith('de');
+  });
+
+  it('shares locale root registration across createI18n providers', async () => {
+    registerI18n('de', { Play: 'Abspielen' });
+    registerI18n('fr', { Play: 'Lire' });
+    document.documentElement.lang = 'de';
+
+    const onActiveLocaleChange = vi.fn();
+    const { I18nProvider, useLocale, useTranslator } = createI18n();
+    const rootRef = createRef<HTMLDivElement>();
+
+    function Probe(): ReactElement {
+      return (
+        <span>
+          {useLocale()}:{useTranslator()('Play')}
+        </span>
+      );
+    }
+
+    render(
+      <DefaultI18nProvider onActiveLocaleChange={onActiveLocaleChange}>
+        <section lang="fr">
+          <I18nProvider langRootRef={rootRef}>
+            <div ref={rootRef}>
+              <Probe />
+            </div>
+          </I18nProvider>
+        </section>
+      </DefaultI18nProvider>
+    );
+
+    await waitFor(() => {
+      expect(screen.queryByText('fr:Lire')).not.toBeNull();
+      expect(onActiveLocaleChange).toHaveBeenCalledWith('fr');
+    });
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(onActiveLocaleChange).not.toHaveBeenCalledWith('de');
   });
 

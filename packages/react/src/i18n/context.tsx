@@ -10,6 +10,8 @@ import {
 } from '@videojs/core/i18n';
 import { createContext, useContext, useEffect, useMemo, useReducer } from 'react';
 
+export type AddLocaleRoot = () => () => void;
+
 export interface I18nContextValue {
   translator: Translator;
   locale: Locale;
@@ -23,6 +25,8 @@ export interface I18nContextValue {
 
 /** React context carrying the active translator and locale. @public */
 export const I18nContext = createContext<I18nContextValue | null>(null);
+
+export const LocaleRootContext = createContext<AddLocaleRoot | undefined>(undefined);
 
 /**
  * Returns the translator for the nearest `I18nProvider`, or English defaults when none is mounted.
