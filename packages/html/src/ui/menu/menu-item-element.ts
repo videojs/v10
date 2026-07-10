@@ -13,9 +13,11 @@ import {
   selectQuality,
   selectTextTrack,
 } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
-
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -47,6 +49,7 @@ export class MenuItemElement extends MediaElement {
   readonly #qualityCore = new QualityRadioGroupCore();
   readonly #audioTrackCore = new AudioTrackRadioGroupCore();
   readonly #captionsCore = new CaptionsRadioGroupCore();
+  readonly #i18n = new I18nController(this, i18nContext);
   #playbackRateValue: PlayerController<AnyPlayerStore, PlaybackRateState> | null = null;
   #qualityValue: PlayerController<AnyPlayerStore, QualityState> | null = null;
   #audioTrackValue: PlayerController<AnyPlayerStore, AudioTrackState> | null = null;
@@ -165,7 +168,11 @@ export class MenuItemElement extends MediaElement {
 
     applyElementProps(this, { 'data-availability': setting.availability });
     this.#setSettingUnavailable(setting.availability !== 'available');
-    this.#settingProvider.setValue({ type: this.type, ...setting });
+    this.#settingProvider.setValue({
+      type: this.type,
+      ...setting,
+      label: resolveTranslation(this.#i18n.value, setting.label, setting.labelParams),
+    });
   }
 
   #isDisabled(): boolean {

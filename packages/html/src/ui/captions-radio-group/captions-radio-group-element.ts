@@ -1,7 +1,10 @@
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
+import { resolveTranslation, type Translator } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
@@ -21,9 +24,11 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   label = '';
 
   readonly #core = new CaptionsRadioGroupCore();
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectTextTrack);
 
   #tracksKey = '';
+  #tracksTranslator: Translator | null = null;
   #disconnect: AbortController | null = null;
 
   override connectedCallback(): void {
@@ -49,12 +54,12 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     let state: CaptionsRadioGroupCore.State | null = null;
 
     if (media) {
-      this.#core.setProps({ disabled: this.disabled });
+      this.#core.setProps({ disabled: this.disabled, label: this.label });
       this.#core.setMedia(media);
       state = this.#core.getState();
 
       this.value = state.value;
-      this.label = this.label || 'Captions';
+      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state));
       this.#syncContent(state);
     }
 
@@ -64,20 +69,26 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #syncContent(state: CaptionsRadioGroupCore.State): void {
-    const template = this.#getTemplate();
+    const template = this.getTemplate();
     const templateKey = template?.innerHTML ?? '';
-    const tracksKey = `${state.tracks.map((track) => track.value).join('|')}::${templateKey}`;
+    const translator = this.#i18n.value;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
-    if (tracksKey !== this.#tracksKey) {
+    if (tracksKey !== this.#tracksKey || translator !== this.#tracksTranslator) {
       this.#tracksKey = tracksKey;
+      this.#tracksTranslator = translator;
 
       for (const child of [...this.children]) {
         if (child instanceof HTMLTemplateElement) continue;
         child.remove();
       }
 
-      this.append(this.#createItem(CAPTIONS_OFF_VALUE, 'Off', template));
-      this.append(...state.tracks.map((track) => this.#createItem(track.value, track.label, template)));
+      this.append(this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslation(translator, 'Off'), template));
+      this.append(
+        ...state.tracks.map((track) =>
+          this.#createItem(track.value, resolveTranslation(translator, track.label), template)
+        )
+      );
     }
 
     for (const item of this.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)) {
@@ -92,44 +103,13 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   }
 
   #createItem(value: string, label: string, template: HTMLTemplateElement | null): MenuRadioItemElement {
-    const item = this.#createItemFromTemplate(template);
+    const item = this.createRadioItem(template);
 
     item.value = value;
     item.setAttribute('data-track', value);
-    this.#setLabel(item, label);
+    this.setItemLabel(item, label);
 
     return item;
-  }
-
-  #createItemFromTemplate(template: HTMLTemplateElement | null): MenuRadioItemElement {
-    if (!template) return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-
-    const fragment = template.content.cloneNode(true) as DocumentFragment;
-    const root = fragment.firstElementChild;
-
-    if (!root || root.localName !== MenuRadioItemElement.tagName || root.nextElementSibling) {
-      return document.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
-    }
-
-    return root as MenuRadioItemElement;
-  }
-
-  #setLabel(item: MenuRadioItemElement, label: string): void {
-    const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
-
-    if (labelPart) {
-      labelPart.textContent = label;
-    } else {
-      item.textContent = label;
-    }
-  }
-
-  #getTemplate(): HTMLTemplateElement | null {
-    for (const child of this.children) {
-      if (child instanceof HTMLTemplateElement) return child;
-    }
-
-    return null;
   }
 
   #handleValueChange = (event: Event): void => {

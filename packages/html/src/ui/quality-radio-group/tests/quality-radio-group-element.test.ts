@@ -1,9 +1,11 @@
 import type { MediaQualityState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { MenuElement } from '../../menu/menu-element';
@@ -93,6 +95,7 @@ defineElement(MenuRadioGroupElement.tagName, MenuRadioGroupElement);
 defineElement(MenuRadioItemElement.tagName, MenuRadioItemElement);
 defineElement(MenuItemIndicatorElement.tagName, MenuItemIndicatorElement);
 defineElement(QualityRadioGroupElement.tagName, QualityRadioGroupElement);
+defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 defineElement('test-quality-player', TestPlayerProviderElement);
 
 function setup({
@@ -100,17 +103,21 @@ function setup({
   activeVideoRendition,
   selectVideoRendition,
   template,
+  locale,
 }: {
   videoRenditionList?: MediaQualityState['videoRenditionList'] | undefined;
   activeVideoRendition?: MediaQualityState['activeVideoRendition'] | undefined;
   selectVideoRendition?: MediaQualityState['selectVideoRendition'] | undefined;
   template?: string | undefined;
+  locale?: string | undefined;
 } = {}) {
   const store = createQualityStore({ videoRenditionList, activeVideoRendition, selectVideoRendition });
+  const i18n = new MediaI18nProviderElement();
   const provider = document.createElement('test-quality-player') as TestPlayerProviderElement;
   const menu = createElement(MenuElement);
   const options = createElement(QualityRadioGroupElement);
 
+  if (locale) i18n.setAttribute('lang', locale);
   provider.setStore(store);
 
   if (template) {
@@ -121,7 +128,8 @@ function setup({
 
   menu.append(options);
   provider.append(menu);
-  document.body.append(provider);
+  i18n.append(provider);
+  document.body.append(i18n);
 
   return { menu, options };
 }
@@ -141,6 +149,7 @@ async function waitForMenu(menu: MenuElement, options?: QualityRadioGroupElement
 }
 
 afterEach(() => {
+  resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
@@ -186,6 +195,19 @@ describe('QualityRadioGroupElement', () => {
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
 
     expect(items[0]?.querySelector('[data-part~="label"]')?.textContent).toBe('Auto (720p)');
+  });
+
+  it('refreshes translated items when registry strings load for the active locale', async () => {
+    const { menu, options } = setup({ locale: 'x-test-quality' });
+
+    await waitForMenu(menu, options);
+
+    registerI18n('x-test-quality', { Auto: 'Automatique' });
+
+    await waitForAssertion(() => {
+      const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+      expect(items[0]?.textContent).toBe('Automatique');
+    });
   });
 
   it('renders bitrate badges from a template', async () => {

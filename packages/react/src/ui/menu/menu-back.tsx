@@ -1,8 +1,10 @@
 'use client';
 
 import type { MenuState } from '@videojs/core';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { forwardRef, useCallback } from 'react';
 
+import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSubMenuContext } from './context';
@@ -17,6 +19,7 @@ export const MenuBack = forwardRef<HTMLButtonElement, MenuBackProps>(function Me
   { render, className, style, label = 'Back', onClick, ...elementProps },
   forwardedRef
 ) {
+  const t = useTranslator();
   const subMenuCtx = useSubMenuContext();
   const parentMenu = subMenuCtx?.parentMenu ?? null;
 
@@ -37,7 +40,7 @@ export const MenuBack = forwardRef<HTMLButtonElement, MenuBackProps>(function Me
       props: [
         {
           type: 'button' as const,
-          'aria-label': label,
+          'aria-label': resolveTranslation(t, label),
           onClick: handleClick,
         },
         elementProps,

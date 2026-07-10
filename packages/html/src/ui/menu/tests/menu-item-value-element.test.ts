@@ -5,10 +5,12 @@ import type {
   MediaTextTrackState,
 } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { MenuItemElement } from '../menu-item-element';
@@ -135,31 +137,37 @@ class TestPlayerProviderElement extends MediaElement {
 
 defineElement(MenuItemElement.tagName, MenuItemElement);
 defineElement(MenuItemValueElement.tagName, MenuItemValueElement);
+defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 defineElement('test-menu-item-value-player', TestPlayerProviderElement);
 
 function setup(
   store: AnyPlayerStore,
-  type: MenuItemElement['type']
+  type: MenuItemElement['type'],
+  locale?: string | undefined
 ): {
   menuItem: MenuItemElement;
   value: MenuItemValueElement;
 } {
+  const i18n = new MediaI18nProviderElement();
   const provider = document.createElement('test-menu-item-value-player') as TestPlayerProviderElement;
   const menuItem = document.createElement(MenuItemElement.tagName) as MenuItemElement;
   const value = document.createElement(MenuItemValueElement.tagName) as MenuItemValueElement;
 
+  if (locale) i18n.setAttribute('lang', locale);
   provider.setStore(store);
   menuItem.type = type;
   menuItem.commandfor = 'settings-submenu';
   menuItem.append(value);
   provider.append(menuItem);
-  document.body.append(provider);
+  i18n.append(provider);
+  document.body.append(i18n);
 
   return { menuItem, value };
 }
 
 describe('MenuItemValueElement', () => {
   afterEach(() => {
+    resetI18nRegistry();
     document.body.innerHTML = '';
   });
 
@@ -216,16 +224,18 @@ describe('MenuItemValueElement', () => {
   });
 
   it('renders the active quality label when quality is automatic', async () => {
+    registerI18n('x-test-quality-hint', { 'Auto ({label})': 'Automatico ({label})' });
     const { value } = setup(
       createQualityStore({
         activeVideoRendition: { id: '1', height: 720, selected: false },
       }),
-      'quality'
+      'quality',
+      'x-test-quality-hint'
     );
 
     await value.updateComplete;
     await waitForAssertion(() => {
-      expect(value.textContent).toBe('Auto (720p)');
+      expect(value.textContent).toBe('Automatico (720p)');
     });
   });
 
@@ -263,21 +273,42 @@ describe('MenuItemValueElement', () => {
     });
   });
 
-  it('renders the active caption track label', async () => {
+  it('translates the fallback audio track label', async () => {
+    registerI18n('x-test-audio-hint', { Audio: 'Audio test' });
     const { value } = setup(
-      createTextTrackStore({
-        textTrackList: [
-          { kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
-          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+      createAudioTrackStore({
+        audioTrackList: [
+          { id: '0', kind: '', label: '', language: '', enabled: false },
+          { id: '1', kind: '', label: '', language: '', enabled: true },
         ],
-        subtitlesShowing: true,
       }),
-      'captions'
+      'audio-track',
+      'x-test-audio-hint'
     );
 
     await value.updateComplete;
     await waitForAssertion(() => {
-      expect(value.textContent).toBe('English');
+      expect(value.textContent).toBe('Audio test');
+    });
+  });
+
+  it('renders the active caption track label', async () => {
+    registerI18n('x-test-captions-hint', { Captions: 'Legendes' });
+    const { value } = setup(
+      createTextTrackStore({
+        textTrackList: [
+          { kind: 'captions', label: '', language: '', mode: 'showing' },
+          { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' },
+        ],
+        subtitlesShowing: true,
+      }),
+      'captions',
+      'x-test-captions-hint'
+    );
+
+    await value.updateComplete;
+    await waitForAssertion(() => {
+      expect(value.textContent).toBe('Legendes');
     });
   });
 

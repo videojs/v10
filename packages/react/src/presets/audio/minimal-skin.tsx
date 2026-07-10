@@ -1,5 +1,6 @@
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
+import { useTranslator } from '@/i18n/context';
 import {
   CheckIcon,
   PauseIcon,
@@ -11,7 +12,8 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
-import { Container, usePlayer } from '@/player/context';
+import { Container } from '@/player/container';
+import { usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
 import { Hotkey } from '@/ui/hotkey';
@@ -73,13 +75,19 @@ function VolumePopover(): ReactNode {
 }
 
 function PlaybackRateRadioGroup(): ReactNode {
+  const t = useTranslator();
   const state = usePlaybackRateOptions();
   if (!state) return null;
 
   const { options, setValue, value } = state;
 
   return (
-    <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Playback rate">
+    <Menu.RadioGroup
+      className="media-menu__group"
+      value={value}
+      onValueChange={setValue}
+      aria-label={t('Playback rate')}
+    >
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
@@ -115,11 +123,11 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
         <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog">
             <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
               <ErrorDialog.Description className="media-error__description" />
             </div>
             <div className="media-error__actions">
-              <ErrorDialog.Close className="media-button media-button--subtle">OK</ErrorDialog.Close>
+              <ErrorDialog.Close className="media-button media-button--subtle"></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>

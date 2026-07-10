@@ -1,6 +1,7 @@
 // Registers the audio player, container, and all audio UI custom elements
 // without creating a skin element. Use this entry when building an ejected
 // (light DOM) player layout.
+import { I18nProviderElement } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../../media/container-element';
 import { BufferingIndicatorElement } from '../../ui/buffering-indicator/buffering-indicator-element';
 import { GestureElement } from '../../ui/gesture/gesture-element';
@@ -12,6 +13,7 @@ import { PlaybackRateButtonElement } from '../../ui/playback-rate-button/playbac
 import { PlaybackRateRadioGroupElement } from '../../ui/playback-rate-radio-group/playback-rate-radio-group-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
+import { TextElement } from '../../ui/text/text-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
@@ -26,6 +28,7 @@ import { AudioPlayerElement } from './player';
 
 safeDefine(AudioPlayerElement);
 safeDefine(MediaContainerElement);
+safeDefine(I18nProviderElement);
 
 // Compound groups.
 defineErrorDialog();
@@ -44,6 +47,7 @@ safeDefine(PlaybackRateButtonElement);
 safeDefine(PlaybackRateRadioGroupElement);
 safeDefine(PopoverElement);
 safeDefine(SeekButtonElement);
+safeDefine(TextElement);
 safeDefine(TooltipLabelElement);
 safeDefine(TooltipShortcutElement);
 safeDefine(TooltipElement);

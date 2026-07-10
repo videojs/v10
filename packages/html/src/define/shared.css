@@ -6,6 +6,18 @@ media-tooltip-group {
   display: contents;
 }
 
+.media-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip: rect(0, 0, 0, 0);
+}
+
 :host {
   /* `display:grid` fixes a weird issue with Safari when setting aspect-ratio */
   display: grid;

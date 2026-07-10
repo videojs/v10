@@ -1,4 +1,7 @@
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { MediaI18nProviderElement } from '../../../i18n';
 import { AlertDialogCloseElement } from '../../alert-dialog/alert-dialog-close-element';
 import { AlertDialogDescriptionElement } from '../../alert-dialog/alert-dialog-description-element';
 import { AlertDialogTitleElement } from '../../alert-dialog/alert-dialog-title-element';
@@ -23,6 +26,8 @@ function ensureDefined(tagName: string, Base: CustomElementConstructor): void {
 }
 
 afterEach(() => {
+  resetI18nRegistry();
+  document.documentElement.removeAttribute('lang');
   document.body.innerHTML = '';
 });
 
@@ -60,6 +65,65 @@ describe('ErrorDialogElement', () => {
     await el.updateComplete;
 
     expect(el.isConnected).toBe(true);
+  });
+
+  it('shows translated dialog copy when es locale is registered', async () => {
+    registerI18n('es', {
+      'Something went wrong.': 'Algo salió mal.',
+      OK: 'Aceptar',
+      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
+    });
+    ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
+    ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
+    ensureDefined(AlertDialogDescriptionElement.tagName, AlertDialogDescriptionElement);
+    ensureDefined(AlertDialogCloseElement.tagName, AlertDialogCloseElement);
+
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+    const el = createElement(ErrorDialogElement);
+    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
+    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
+    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+
+    el.append(title, desc, close);
+    provider.appendChild(el);
+    document.body.append(provider);
+    await Promise.resolve();
+    await el.updateComplete;
+
+    expect(title.textContent).toBe('Algo salió mal.');
+    expect(desc.textContent).toBe('Ocurrió un error. Inténtalo de nuevo.');
+    expect(close.textContent).toBe('Aceptar');
+  });
+
+  it('preserves authored title copy', async () => {
+    registerI18n('es', {
+      'Something went wrong.': 'Algo salió mal.',
+      OK: 'Aceptar',
+      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
+    });
+    ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
+    ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
+    ensureDefined(AlertDialogDescriptionElement.tagName, AlertDialogDescriptionElement);
+    ensureDefined(AlertDialogCloseElement.tagName, AlertDialogCloseElement);
+
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+    const el = createElement(ErrorDialogElement);
+    const title = document.createElement(AlertDialogTitleElement.tagName) as AlertDialogTitleElement;
+    const desc = document.createElement(AlertDialogDescriptionElement.tagName) as AlertDialogDescriptionElement;
+    const close = document.createElement(AlertDialogCloseElement.tagName) as AlertDialogCloseElement;
+    title.textContent = 'Custom title';
+
+    el.append(title, desc, close);
+    provider.appendChild(el);
+    document.body.append(provider);
+    await Promise.resolve();
+    await el.updateComplete;
+
+    expect(title.textContent).toBe('Custom title');
+    expect(desc.textContent).toBe('Ocurrió un error. Inténtalo de nuevo.');
+    expect(close.textContent).toBe('Aceptar');
   });
 
   it('cleans up on disconnect', async () => {

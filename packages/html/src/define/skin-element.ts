@@ -34,7 +34,6 @@ export class SkinElement extends ReactiveElement {
       }
     }
   }
-
   static shadowRootOptions: ShadowRootInit = { mode: 'open' };
   static styles?: ShadowStyle;
   static template?: HTMLTemplateElement | null;

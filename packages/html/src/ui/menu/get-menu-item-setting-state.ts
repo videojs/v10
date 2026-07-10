@@ -17,7 +17,14 @@ import type { MenuItemSettingType } from './menu-item-type';
 
 export interface MenuItemSettingState {
   label: string;
+  labelParams?: Record<string, string | number> | undefined;
   availability: 'available' | 'unavailable';
+}
+
+function getAutoLabelState(label: string): Pick<MenuItemSettingState, 'label' | 'labelParams'> {
+  const match = /^Auto \((.+)\)$/.exec(label);
+  if (!match) return { label };
+  return { label: 'Auto ({label})', labelParams: { label: match[1]! } };
 }
 
 export function getMenuItemSettingState(
@@ -45,7 +52,10 @@ export function getMenuItemSettingState(
     const state = cores.quality.getState();
 
     if (state.value === QUALITY_AUTO_VALUE) {
-      return { label: state.autoLabel, availability: state.availability };
+      return {
+        ...getAutoLabelState(state.autoLabel),
+        availability: state.availability,
+      };
     }
 
     const rendition = state.renditions.find((candidate) => candidate.value === state.value);

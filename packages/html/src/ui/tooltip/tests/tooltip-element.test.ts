@@ -1,7 +1,15 @@
 import type { ButtonState } from '@videojs/core';
-import { HOTKEY_SHORTCUT_CHANGE_EVENT } from '@videojs/core/dom';
-import { createState } from '@videojs/store';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
+import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
+import { ContextProvider } from '@videojs/element/context';
+import { createState, createStore } from '@videojs/store';
 import { afterEach, describe, expect, it } from 'vitest';
+
+import { MediaI18nProviderElement } from '../../../i18n';
+import { playerContext } from '../../../player/context';
+import { MediaElement } from '../../media-element';
+import { PlayButtonElement } from '../../play-button/play-button-element';
 import { TooltipElement } from '../tooltip-element';
 import { TooltipLabelElement } from '../tooltip-label-element';
 import { TooltipShortcutElement } from '../tooltip-shortcut-element';
@@ -18,6 +26,29 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
+function createPlaybackStore(): AnyPlayerStore {
+  const store = createStore<PlayerTarget>()(playbackFeature) as unknown as AnyPlayerStore;
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'paused', { value: true, configurable: true });
+  Object.defineProperty(video, 'ended', { value: false, configurable: true });
+  Object.defineProperty(video, 'readyState', {
+    value: HTMLMediaElement.HAVE_ENOUGH_DATA,
+    configurable: true,
+  });
+  store.attach({ media: video, container: null });
+  return store;
+}
+
+function defineElement(tagName: string, Base: CustomElementConstructor): void {
+  if (!customElements.get(tagName)) {
+    customElements.define(tagName, Base);
+  }
+}
+
+function ensureDefined(ctor: CustomElementConstructor & { readonly tagName: string }): void {
+  defineElement(ctor.tagName, ctor);
+}
+
 class TestTriggerElement extends HTMLElement {
   $state = createState<ButtonState>({ label: 'Play' });
   shortcut: string | undefined = 'K';
@@ -31,16 +62,23 @@ class TestTriggerElement extends HTMLElement {
   }
 }
 
+class TestPlayerProviderElement extends MediaElement {
+  static readonly tagName = 'test-tooltip-player';
+
+  store = createPlaybackStore();
+
+  readonly #provider = new ContextProvider(this, { context: playerContext });
+
+  override connectedCallback(): void {
+    this.#provider.setValue(this.store);
+    super.connectedCallback();
+  }
+}
+
 function defineTestElements(): void {
-  if (!customElements.get('test-tooltip-trigger')) {
-    customElements.define('test-tooltip-trigger', TestTriggerElement);
-  }
-  if (!customElements.get(TooltipLabelElement.tagName)) {
-    customElements.define(TooltipLabelElement.tagName, TooltipLabelElement);
-  }
-  if (!customElements.get(TooltipShortcutElement.tagName)) {
-    customElements.define(TooltipShortcutElement.tagName, TooltipShortcutElement);
-  }
+  defineElement('test-tooltip-trigger', TestTriggerElement);
+  ensureDefined(TooltipLabelElement);
+  ensureDefined(TooltipShortcutElement);
 }
 
 function setup() {
@@ -56,7 +94,10 @@ function setup() {
   return { tooltip, trigger };
 }
 
+defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
+
 afterEach(() => {
+  resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
@@ -86,6 +127,19 @@ describe('TooltipElement', () => {
     const label = TooltipLabelElement.findIn(tooltip);
     expect(tooltip.textContent).toBe('Action: PlayK');
     expect(label?.textContent).toBe('Play');
+    expect(TooltipShortcutElement.findIn(tooltip)?.textContent).toBe('K');
+  });
+
+  it('preserves authored label content', async () => {
+    const { tooltip } = setup();
+    const labelEl = TooltipLabelElement.create();
+    const shortcutEl = TooltipShortcutElement.create();
+    labelEl.textContent = 'Custom label';
+    tooltip.replaceChildren(labelEl, shortcutEl);
+
+    await tooltip.updateComplete;
+
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Custom label');
     expect(TooltipShortcutElement.findIn(tooltip)?.textContent).toBe('K');
   });
 
@@ -120,5 +174,109 @@ describe('TooltipElement', () => {
     const shortcut = TooltipShortcutElement.findIn(tooltip);
     expect(shortcut?.textContent).toBe('');
     expect(shortcut?.hidden).toBe(true);
+  });
+
+  it('shows translated label from the trigger control', async () => {
+    registerI18n('es', { Play: 'Reproducir' });
+
+    ensureDefined(TestPlayerProviderElement);
+    ensureDefined(PlayButtonElement);
+    ensureDefined(TooltipElement);
+    ensureDefined(MediaI18nProviderElement);
+
+    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+
+    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    button.setAttribute('commandfor', 'tip');
+
+    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    tooltip.id = 'tip';
+    tooltip.setAttribute('open', '');
+
+    document.body.append(player);
+    player.append(provider);
+    provider.append(button, tooltip);
+
+    await button.updateComplete;
+    await tooltip.updateComplete;
+
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Reproducir');
+  });
+
+  it('updates tooltip text when provider locale changes', async () => {
+    registerI18n('es', { Play: 'Reproducir' });
+    registerI18n('fr', { Play: 'Lire' });
+
+    ensureDefined(TestPlayerProviderElement);
+    ensureDefined(PlayButtonElement);
+    ensureDefined(TooltipElement);
+    ensureDefined(MediaI18nProviderElement);
+
+    const player = document.createElement(TestPlayerProviderElement.tagName) as TestPlayerProviderElement;
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+
+    const button = document.createElement(PlayButtonElement.tagName) as PlayButtonElement;
+    button.setAttribute('commandfor', 'tip');
+
+    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    tooltip.id = 'tip';
+    tooltip.setAttribute('open', '');
+
+    document.body.append(player);
+    player.append(provider);
+    provider.append(button, tooltip);
+
+    await button.updateComplete;
+    await tooltip.updateComplete;
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Reproducir');
+
+    provider.setAttribute('lang', 'fr');
+    await provider.updateComplete;
+    await button.updateComplete;
+    await tooltip.updateComplete;
+
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Lire');
+  });
+
+  it('falls back to translating getLabel when getResolvedLabel is undefined', async () => {
+    registerI18n('es', { Play: 'Reproducir' });
+
+    class StubTrigger extends HTMLElement {
+      static readonly tagName = 'stub-tooltip-trigger';
+
+      readonly $state = { subscribe: () => () => {} };
+
+      getLabel(): string {
+        return 'Play';
+      }
+
+      getResolvedLabel(): undefined {
+        return undefined;
+      }
+    }
+
+    defineElement(StubTrigger.tagName, StubTrigger);
+    ensureDefined(TooltipElement);
+    ensureDefined(MediaI18nProviderElement);
+
+    const provider = new MediaI18nProviderElement();
+    provider.setAttribute('lang', 'es');
+
+    const trigger = document.createElement(StubTrigger.tagName) as StubTrigger;
+    trigger.setAttribute('commandfor', 'tip');
+
+    const tooltip = document.createElement(TooltipElement.tagName) as TooltipElement;
+    tooltip.id = 'tip';
+    tooltip.setAttribute('open', '');
+
+    document.body.append(provider);
+    provider.append(trigger, tooltip);
+
+    await tooltip.updateComplete;
+
+    expect(tooltip.textContent).toBe('Reproducir');
   });
 });

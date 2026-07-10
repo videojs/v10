@@ -2,8 +2,10 @@
 
 import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
 import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
 
+import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
@@ -54,6 +56,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
         : null;
 
     const tooltipCtx = useOptionalTooltipContext();
+    const translator = useTranslator();
     const [core] = useState(() => new LiveButtonCore());
     core.setProps({ label, disabled });
 
@@ -67,7 +70,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     if (media) core.setMedia(media);
     const state = media ? core.getState() : null;
-    const labelText = state ? core.getLabel(state) : undefined;
+    const labelText = state ? resolveTranslation(translator, core.getLabel(state)) : undefined;
 
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
@@ -81,6 +84,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
     }
 
     const attrs = core.getAttrs(state);
+    const labelAttr = attrs['aria-label'];
     const content = children ?? LiveButtonCore.defaultText;
 
     return renderElement(
@@ -90,7 +94,15 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
         state,
         stateAttrMap: LiveButtonDataAttrs,
         ref: [forwardedRef, buttonRef],
-        props: [attrs, { children: content, ...elementProps }, getButtonProps()],
+        props: [
+          attrs,
+          {
+            children: content,
+            ...elementProps,
+            'aria-label': labelAttr ? resolveTranslation(translator, labelAttr) : labelAttr,
+          },
+          getButtonProps(),
+        ],
       }
     );
   }

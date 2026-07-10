@@ -1,6 +1,7 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -27,7 +28,8 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
-import { Container, usePlayer } from '@/player/context';
+import { Container } from '@/player/container';
+import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
@@ -109,6 +111,7 @@ function MenuChevron({ flipped = false }: { flipped?: boolean }): ReactNode {
 }
 
 function SettingsMenu(): ReactNode {
+  const t = useTranslator();
   const playbackRate = usePlaybackRateOptions();
   const quality = useQualityOptions();
   const audioTrack = useAudioTrackOptions();
@@ -122,7 +125,7 @@ function SettingsMenu(): ReactNode {
 
   return (
     <Menu.Root side="top" align="center">
-      <Menu.Trigger aria-label="Settings" className="media-button--settings" render={<Button />}>
+      <Menu.Trigger aria-label={t('Settings')} className="media-button--settings" render={<Button />}>
         <GearIcon className="media-icon media-icon--settings" />
       </Menu.Trigger>
       <Menu.Content className="media-popover media-menu media-menu--settings">
@@ -136,7 +139,7 @@ function SettingsMenu(): ReactNode {
                   render={(props) => (
                     <div {...props}>
                       <QualityIcon className="media-icon" />
-                      <span>Quality</span>
+                      <span>{t('Quality')}</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />
                         <MenuChevron />
@@ -147,14 +150,14 @@ function SettingsMenu(): ReactNode {
                 <Menu.Content className="media-menu__panel">
                   <Menu.Back className="media-menu__back">
                     <MenuChevron flipped />
-                    Quality
+                    {t('Quality')}
                   </Menu.Back>
                   <Menu.Separator className="media-menu__separator" />
                   <Menu.RadioGroup
                     className="media-menu__group"
                     value={quality.value}
                     onValueChange={quality.setValue}
-                    aria-label="Quality"
+                    aria-label={t('Quality')}
                   >
                     {quality.options.map((option) => (
                       <Menu.RadioItem
@@ -190,7 +193,7 @@ function SettingsMenu(): ReactNode {
                   render={(props) => (
                     <div {...props}>
                       <SpeechIcon className="media-icon" />
-                      <span>Audio</span>
+                      <span>{t('Audio')}</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />
                         <MenuChevron />
@@ -201,14 +204,14 @@ function SettingsMenu(): ReactNode {
                 <Menu.Content className="media-menu__panel">
                   <Menu.Back className="media-menu__back">
                     <MenuChevron flipped />
-                    Audio
+                    {t('Audio')}
                   </Menu.Back>
                   <Menu.Separator className="media-menu__separator" />
                   <Menu.RadioGroup
                     className="media-menu__group"
                     value={audioTrack.value}
                     onValueChange={audioTrack.setValue}
-                    aria-label="Audio tracks"
+                    aria-label={t('Audio')}
                   >
                     {audioTrack.options.map((option) => (
                       <Menu.RadioItem
@@ -240,7 +243,7 @@ function SettingsMenu(): ReactNode {
                   render={(props) => (
                     <div {...props}>
                       <SpeedIcon className="media-icon" />
-                      <span>Speed</span>
+                      <span>{t('Speed')}</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />
                         <MenuChevron />
@@ -251,14 +254,14 @@ function SettingsMenu(): ReactNode {
                 <Menu.Content className="media-menu__panel">
                   <Menu.Back className="media-menu__back">
                     <MenuChevron flipped />
-                    Speed
+                    {t('Speed')}
                   </Menu.Back>
                   <Menu.Separator className="media-menu__separator" />
                   <Menu.RadioGroup
                     className="media-menu__group"
                     value={playbackRate.value}
                     onValueChange={playbackRate.setValue}
-                    aria-label="Playback rate"
+                    aria-label={t('Playback rate')}
                   >
                     {playbackRate.options.map((option) => (
                       <Menu.RadioItem
@@ -290,7 +293,7 @@ function SettingsMenu(): ReactNode {
                   render={(props) => (
                     <div {...props}>
                       <CaptionsOffIcon className="media-icon" />
-                      <span>Captions</span>
+                      <span>{t('Captions')}</span>
                       <span className="media-menu__hint">
                         <Menu.ItemValue className="media-menu__hint-label" />
                         <MenuChevron />
@@ -301,14 +304,14 @@ function SettingsMenu(): ReactNode {
                 <Menu.Content className="media-menu__panel">
                   <Menu.Back className="media-menu__back">
                     <MenuChevron flipped />
-                    Captions
+                    {t('Captions')}
                   </Menu.Back>
                   <Menu.Separator className="media-menu__separator" />
                   <Menu.RadioGroup
                     className="media-menu__group"
                     value={captions.value}
                     onValueChange={captions.setValue}
-                    aria-label="Captions"
+                    aria-label={t('Captions')}
                   >
                     {captions.options.map((option) => (
                       <Menu.RadioItem
@@ -369,11 +372,11 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
         <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog">
             <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
               <ErrorDialog.Description className="media-error__description" />
             </div>
             <div className="media-error__actions">
-              <ErrorDialog.Close className="media-button media-button--primary">OK</ErrorDialog.Close>
+              <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>

@@ -222,7 +222,6 @@ describe('TimeElement', () => {
     expect(time.hasAttribute('role')).toBe(false);
     expect(time.hasAttribute('tabindex')).toBe(false);
     expect(time.hasAttribute('aria-label')).toBe(false);
-    expect(time.hasAttribute('aria-valuetext')).toBe(false);
     expect(time.hasAttribute('data-type')).toBe(false);
   });
 

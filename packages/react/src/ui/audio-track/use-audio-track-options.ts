@@ -2,8 +2,10 @@
 
 import { AudioTrackRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import { useCallback, useState } from 'react';
 
+import { useTranslator } from '../../i18n/context';
 import { usePlayer } from '../../player/context';
 
 export interface AudioTrackOptionsProps extends AudioTrackRadioGroupCore.Props {}
@@ -26,6 +28,7 @@ export function useAudioTrackOptions(props?: AudioTrackOptionsProps): AudioTrack
   'use no memo';
 
   const media = usePlayer(selectAudioTrack);
+  const t = useTranslator();
   const [core] = useState(() => new AudioTrackRadioGroupCore());
 
   core.setProps(props ?? {});
@@ -45,7 +48,7 @@ export function useAudioTrackOptions(props?: AudioTrackOptionsProps): AudioTrack
     value: state.value,
     options: state.tracks.map((track) => ({
       value: track.value,
-      label: track.label,
+      label: resolveTranslation(t, track.label),
       disabled: state.disabled,
     })),
     disabled: state.disabled,

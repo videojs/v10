@@ -1,6 +1,8 @@
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Value } from '../time-value';
 
@@ -53,6 +55,37 @@ describe('Time.Value', () => {
     expect(time.textContent).toBe('1:30');
     expect(time.getAttribute('data-type')).toBe('current');
     expect(time.getAttribute('aria-label')).toBe('1 minute, 30 seconds. Show remaining time.');
+  });
+
+  it('formats toggle labels with the active locale', () => {
+    const { Wrapper } = createPlayerWrapper(timeState);
+
+    const { rerender } = render(
+      <Wrapper>
+        <I18nProvider
+          locale="fr"
+          translations={{ '{duration}. Show remaining time.': '{duration}. Afficher restant.' }}
+        >
+          <Value data-testid="time" toggle />
+        </I18nProvider>
+      </Wrapper>
+    );
+
+    const time = screen.getByTestId('time');
+    expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(90, { locale: 'fr' })}. Afficher restant.`);
+
+    rerender(
+      <Wrapper>
+        <I18nProvider
+          locale="fr"
+          translations={{ '{duration}. Show remaining time.': '{duration}. Afficher restant.' }}
+        >
+          <Value data-testid="time" toggle type="duration" />
+        </I18nProvider>
+      </Wrapper>
+    );
+
+    expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(300, { locale: 'fr' })}. Afficher restant.`);
   });
 
   it('toggles with Enter and Space', () => {

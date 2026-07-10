@@ -18,6 +18,7 @@ import {
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -38,7 +39,8 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons/minimal';
-import { Container, usePlayer } from '@/player/context';
+import { Container } from '@/player/container';
+import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
@@ -139,6 +141,7 @@ function VolumePopover(): ReactNode {
 }
 
 function CaptionsTrigger(): ReactNode {
+  const t = useTranslator();
   const captions = useCaptionsOptions();
   if (!captions) return null;
 
@@ -179,7 +182,7 @@ function CaptionsTrigger(): ReactNode {
           className={menu.group}
           value={captions.value}
           onValueChange={captions.setValue}
-          aria-label="Captions"
+          aria-label={t('Captions')}
         >
           {captions.options.map((option) => (
             <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
@@ -226,11 +229,11 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
         <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>
-              <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
               <ErrorDialog.Description className={error.description} />
             </div>
             <div className={error.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.primary)}>OK</ErrorDialog.Close>
+              <ErrorDialog.Close className={cn(button.base, button.primary)}></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>

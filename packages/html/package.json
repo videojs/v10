@@ -14,6 +14,8 @@
   "types": "dist/dev/index.d.ts",
   "sideEffects": [
     "./dist/*/define/**/*.js",
+    "./dist/*/i18n/index.js",
+    "./dist/*/i18n/locales/*/register.js",
     "./dist/*/icons/element/**/*.js",
     "./dist/*/icons/dist/element/**/*.js",
     "./cdn/**/*.js"
@@ -114,10 +116,35 @@
       "development": "./cdn/media/*.dev.js",
       "default": "./cdn/media/*.js"
     },
+    "./cdn/i18n": {
+      "types": "./dist/dev/i18n/index.d.ts",
+      "development": "./cdn/i18n.dev.js",
+      "default": "./cdn/i18n.js"
+    },
+    "./cdn/i18n-registry": {
+      "types": "./dist/dev/i18n/index.d.ts",
+      "development": "./cdn/i18n.dev.js",
+      "default": "./cdn/i18n.js"
+    },
+    "./cdn/locales/*": {
+      "types": "./cdn/locales/*.dev.d.ts",
+      "development": "./cdn/locales/*.dev.js",
+      "default": "./cdn/locales/*.js"
+    },
     "./cdn/*": {
       "types": "./cdn/*.dev.d.ts",
       "development": "./cdn/*.dev.js",
       "default": "./cdn/*.js"
+    },
+    "./i18n": {
+      "types": "./dist/dev/i18n/index.d.ts",
+      "development": "./dist/dev/i18n/index.js",
+      "default": "./dist/default/i18n/index.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     },
     "./*.css": "./dist/default/define/*.css",
     "./*": {
@@ -128,7 +155,7 @@
   },
   "scripts": {
     "build": "tsdown",
-    "build:cdn": "tsdown --config tsdown.cdn.config.ts",
+    "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",

@@ -15,6 +15,34 @@ export { DestroyMixin, ReactiveElement } from '@videojs/element';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
+export type {
+  CreateI18nOptions,
+  CreateI18nResult,
+  I18nContextValue,
+  Locale,
+  TranslationParams,
+  Translations,
+  Translator,
+} from './i18n';
+export {
+  createI18n,
+  createTranslator,
+  findLocaleKeys,
+  getI18nTranslations,
+  hasRegisteredLocale,
+  I18nController,
+  I18nProviderMixin,
+  I18nTextMixin,
+  MediaI18nProviderElement,
+  MediaTextElement,
+  onI18nRegistryChange,
+  registerI18n,
+  resolvePlayerLocale,
+  resolveProviderLocale,
+} from './i18n';
+export type { I18nContext as I18nLitContext } from './i18n/context';
+// i18n — `@videojs/html/i18n` registers `<media-i18n>` / `<media-text>`.
+export { i18nContext } from './i18n/context';
 // Media
 export { MediaContainerElement } from './media/container-element';
 // Player

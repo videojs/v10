@@ -1,7 +1,8 @@
+import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Preset, Skin, Styling } from '@app/types';
-import { forwardRef, useState } from 'react';
+import { forwardRef, useEffect, useRef, useState } from 'react';
 
 type PreviewProps = {
   pagePath: string;
@@ -13,13 +14,14 @@ type PreviewProps = {
   muted: boolean;
   loop: boolean;
   preload: PreloadValue;
+  locale: SandboxLocaleTag;
 };
 
 export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Preview(
-  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload },
+  { pagePath, preset, skin, styling, source, autoplay, muted, loop, preload, locale },
   ref
 ) {
-  const buildUrl = (base: string) => {
+  const buildUrl = (base: string, bustCache = false) => {
     const params = new URLSearchParams({
       preset,
       skin,
@@ -29,14 +31,26 @@ export const Preview = forwardRef<HTMLIFrameElement, PreviewProps>(function Prev
       muted: muted ? '1' : '0',
       loop: loop ? '1' : '0',
       preload,
+      locale,
     });
+    if (bustCache) params.set('_', String(Date.now()));
     return `${base}?${params}`;
   };
 
+  const reloadOnLocale = pagePath === '/cdn/';
+
   // Capture the initial query so the iframe doesn't reload when autoplay/muted
   // toggle — those changes are streamed in via postMessage.
-  const [iframeUrl] = useState(() => buildUrl(pagePath));
+  const [iframeUrl, setIframeUrl] = useState(() => buildUrl(pagePath));
   const openUrl = buildUrl(pagePath);
+  const previousLocaleRef = useRef(locale);
+
+  // biome-ignore lint/correctness/useExhaustiveDependencies: keep iframe `src` locale in sync; other toggles use postMessage.
+  useEffect(() => {
+    if (previousLocaleRef.current === locale) return;
+    previousLocaleRef.current = locale;
+    setIframeUrl(buildUrl(pagePath, reloadOnLocale));
+  }, [locale, pagePath, reloadOnLocale]);
 
   return (
     <main className="flex-1 min-h-0 relative bg-zinc-50 dark:bg-zinc-900">
