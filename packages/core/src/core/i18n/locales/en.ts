@@ -42,18 +42,18 @@ export default {
   'Exit fullscreen': 'Exit fullscreen',
   'Picture in picture': 'Picture in picture',
   'Exit picture in picture': 'Exit picture in picture',
-  'You aborted the media playback': 'You aborted the media playback',
-  'A network error caused the media download to fail.': 'A network error caused the media download to fail.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
-    'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
-    'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
-  'The media is encrypted and there are no keys to decrypt it.':
-    'The media is encrypted and there are no keys to decrypt it.',
+  'You stopped media playback before it finished.': 'You stopped media playback before it finished.',
+  'This media could not be loaded due to a network or server issue.': 'This media could not be loaded due to a network or server issue.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
+    'This media could not be played. It may be corrupted, or your browser may not support its format.',
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
+    'This media could not be loaded. It may be unavailable, or your browser may not support its format.',
+  'This media could not be played because it could not be decrypted.':
+    'This media could not be played because it could not be decrypted.',
   '': '',
   'Something went wrong.': 'Something went wrong.',
   OK: 'OK',
-  'An error occurred. Please try again.': 'An error occurred. Please try again.',
+  'An unexpected error occurred.': 'An unexpected error occurred.',
   Settings: 'Settings',
   Quality: 'Quality',
   Audio: 'Audio',
