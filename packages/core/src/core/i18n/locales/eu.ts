@@ -54,7 +54,7 @@ export default {
   OK: 'Itxi',
   Settings: 'Ezarpenak',
   Quality: 'Kalitatea',
-  Audio: 'Audio',
+  Audio: 'Audioa',
   Default: 'Lehenetsia',
   Speed: 'Abiadura',
   Captions: 'Azpitituluak',

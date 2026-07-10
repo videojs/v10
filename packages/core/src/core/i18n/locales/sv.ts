@@ -54,7 +54,7 @@ export default {
   OK: 'Stäng',
   Settings: 'Inställningar',
   Quality: 'Kvalitet',
-  Audio: 'Audio',
+  Audio: 'Ljud',
   Default: 'Standard',
   Speed: 'Hastighet',
   Captions: 'Textning',

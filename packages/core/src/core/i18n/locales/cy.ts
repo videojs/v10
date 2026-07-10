@@ -54,7 +54,7 @@ export default {
   OK: 'Cau',
   Settings: 'Gosodiadau',
   Quality: 'Ansawdd',
-  Audio: 'Audio',
+  Audio: 'Sain',
   Default: 'Rhagosodedig',
   Speed: 'Cyflymder',
   Captions: 'Capsiynau',

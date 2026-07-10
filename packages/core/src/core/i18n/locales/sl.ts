@@ -55,7 +55,7 @@ export default {
   OK: 'Zapri',
   Settings: 'Nastavitve',
   Quality: 'Kakovost',
-  Audio: 'Audio',
+  Audio: 'Zvok',
   Default: 'Privzeto',
   Speed: 'Hitrost',
   Captions: 'Podnapisi',

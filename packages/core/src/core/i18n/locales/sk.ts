@@ -54,7 +54,7 @@ export default {
   OK: 'Zatvoriť',
   Settings: 'Nastavenia',
   Quality: 'Kvalita',
-  Audio: 'Audio',
+  Audio: 'Zvuk',
   Default: 'Predvolené',
   Speed: 'Rýchlosť',
   Captions: 'Titulky',

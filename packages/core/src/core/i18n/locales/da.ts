@@ -54,7 +54,7 @@ export default {
   OK: 'OK',
   Settings: 'Indstillinger',
   Quality: 'Kvalitet',
-  Audio: 'Audio',
+  Audio: 'Lyd',
   Default: 'Standard',
   Speed: 'Hastighed',
   Captions: 'Undertekster',

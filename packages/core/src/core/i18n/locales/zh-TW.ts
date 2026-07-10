@@ -53,7 +53,7 @@ export default {
   OK: '關閉',
   Settings: '設定',
   Quality: '畫質',
-  Audio: 'Audio',
+  Audio: '音訊',
   Default: '預設',
   Speed: '速度',
   Captions: '字幕',

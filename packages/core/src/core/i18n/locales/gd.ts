@@ -55,7 +55,7 @@ export default {
   OK: 'Dùin',
   Settings: 'Roghainnean',
   Quality: 'Càileachd',
-  Audio: 'Audio',
+  Audio: 'Fuaim',
   Default: 'Bunaiteach',
   Speed: 'Astar',
   Captions: 'Caipseanan',

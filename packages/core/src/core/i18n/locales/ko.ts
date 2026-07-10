@@ -55,7 +55,7 @@ export default {
   OK: '닫기',
   Settings: '설정',
   Quality: '품질',
-  Audio: 'Audio',
+  Audio: '오디오',
   Default: '기본값',
   Speed: '속도',
   Captions: '캡션',

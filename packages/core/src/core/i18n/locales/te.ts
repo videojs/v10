@@ -53,7 +53,7 @@ export default {
   OK: 'మూసివేయండి',
   Settings: 'సెట్టింగ్‌లు',
   Quality: 'నాణ్యత',
-  Audio: 'Audio',
+  Audio: 'ఆడియో',
   Default: 'డిఫాల్ట్',
   Speed: 'వేగం',
   Captions: 'శీర్షికలు',

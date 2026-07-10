@@ -55,7 +55,7 @@ export default {
   OK: 'Κλείσιμο',
   Settings: 'Ρυθμίσεις',
   Quality: 'Ποιότητα',
-  Audio: 'Audio',
+  Audio: 'Ήχος',
   Default: 'Προεπιλογή',
   Speed: 'Ταχύτητα',
   Captions: 'Λεζάντες',

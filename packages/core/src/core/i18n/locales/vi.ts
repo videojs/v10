@@ -54,7 +54,7 @@ export default {
   OK: 'Đóng',
   Settings: 'Cài đặt',
   Quality: 'Chất lượng',
-  Audio: 'Audio',
+  Audio: 'Âm thanh',
   Default: 'Mặc định',
   Speed: 'Tốc độ',
   Captions: 'Phụ đề',

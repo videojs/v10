@@ -54,7 +54,7 @@ export default {
   OK: 'Закрыть',
   Settings: 'Настройки',
   Quality: 'Качество',
-  Audio: 'Audio',
+  Audio: 'Аудио',
   Default: 'По умолчанию',
   Speed: 'Скорость',
   Captions: 'Субтитры',

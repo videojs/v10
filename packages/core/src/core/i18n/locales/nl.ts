@@ -55,7 +55,7 @@ export default {
   OK: 'Sluiten',
   Settings: 'Instellingen',
   Quality: 'Kwaliteit',
-  Audio: 'Audio',
+  Audio: 'Geluid',
   Default: 'Standaard',
   Speed: 'Snelheid',
   Captions: 'Ondertiteling',

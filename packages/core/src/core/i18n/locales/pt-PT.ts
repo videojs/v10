@@ -54,7 +54,7 @@ export default {
   OK: 'Fechar',
   Settings: 'Definições',
   Quality: 'Qualidade',
-  Audio: 'Audio',
+  Audio: 'Áudio',
   Default: 'Predefinição',
   Speed: 'Velocidade',
   Captions: 'Legendas',

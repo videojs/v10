@@ -53,7 +53,7 @@ export default {
   OK: 'Zavřít',
   Settings: 'Nastavení',
   Quality: 'Kvalita',
-  Audio: 'Audio',
+  Audio: 'Zvuk',
   Default: 'Výchozí',
   Speed: 'Rychlost',
   Captions: 'Titulky',

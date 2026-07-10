@@ -54,7 +54,7 @@ export default {
   OK: 'बंद करें',
   Settings: 'सेटिंग्स',
   Quality: 'गुणवत्ता',
-  Audio: 'Audio',
+  Audio: 'ऑडियो',
   Default: 'डिफ़ॉल्ट',
   Speed: 'गति',
   Captions: 'कैप्शन',

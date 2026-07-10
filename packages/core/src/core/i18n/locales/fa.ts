@@ -54,7 +54,7 @@ export default {
   OK: 'بستن',
   Settings: 'تنظیمات',
   Quality: 'کیفیت',
-  Audio: 'Audio',
+  Audio: 'صدا',
   Default: 'پیش‌فرض',
   Speed: 'سرعت',
   Captions: 'زیرنویس‌ها',

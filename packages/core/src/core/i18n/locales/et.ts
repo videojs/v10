@@ -55,7 +55,7 @@ export default {
   OK: 'Sule',
   Settings: 'Seaded',
   Quality: 'Kvaliteet',
-  Audio: 'Audio',
+  Audio: 'Heli',
   Default: 'Vaikimisi',
   Speed: 'Kiirus',
   Captions: 'Subtiitrid',

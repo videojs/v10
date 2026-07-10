@@ -53,7 +53,7 @@ export default {
   OK: 'סְגוֹר',
   Settings: 'הגדרות',
   Quality: 'איכות',
-  Audio: 'Audio',
+  Audio: 'שמע',
   Default: 'ברירת מחדל',
   Speed: 'מהירות',
   Captions: 'כתוביות',

@@ -54,7 +54,7 @@ export default {
   OK: 'Bezárás',
   Settings: 'Beállítások',
   Quality: 'Minőség',
-  Audio: 'Audio',
+  Audio: 'Hang',
   Default: 'Alapértelmezett',
   Speed: 'Sebesség',
   Captions: 'Feliratok',

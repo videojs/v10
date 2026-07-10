@@ -53,7 +53,7 @@ export default {
   OK: 'OK',
   Settings: 'Asetukset',
   Quality: 'Laatu',
-  Audio: 'Audio',
+  Audio: 'Ääni',
   Default: 'Oletus',
   Speed: 'Nopeus',
   Captions: 'Tekstitykset',

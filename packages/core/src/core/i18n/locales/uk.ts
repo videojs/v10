@@ -54,7 +54,7 @@ export default {
   OK: 'Закрити',
   Settings: 'Налаштування',
   Quality: 'Якість',
-  Audio: 'Audio',
+  Audio: 'Аудіо',
   Default: 'За замовчуванням',
   Speed: 'Швидкість',
   Captions: 'Субтитри',

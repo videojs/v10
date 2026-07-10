@@ -54,7 +54,7 @@ export default {
   OK: 'Aizvērt',
   Settings: 'Iestatījumi',
   Quality: 'Kvalitāte',
-  Audio: 'Audio',
+  Audio: 'Skaņa',
   Default: 'Noklusējuma',
   Speed: 'Ātrums',
   Captions: 'Subtitri',

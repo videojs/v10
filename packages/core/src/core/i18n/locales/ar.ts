@@ -53,7 +53,7 @@ export default {
   OK: 'أغلق',
   Settings: 'الإعدادات',
   Quality: 'الجودة',
-  Audio: 'Audio',
+  Audio: 'الصوت',
   Default: 'افتراضي',
   Speed: 'السرعة',
   Captions: 'التسميات التوضيحية',

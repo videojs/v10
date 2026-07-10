@@ -54,7 +54,7 @@ export default {
   OK: 'Bağla',
   Settings: 'Parametrlər',
   Quality: 'Keyfiyyət',
-  Audio: 'Audio',
+  Audio: 'Səs',
   Default: 'Defolt',
   Speed: 'Sürət',
   Captions: 'Başlıqlar',

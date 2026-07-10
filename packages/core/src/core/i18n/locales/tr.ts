@@ -55,7 +55,7 @@ export default {
   OK: 'Kapat',
   Settings: 'Ayarlar',
   Quality: 'Kalite',
-  Audio: 'Audio',
+  Audio: 'Ses',
   Default: 'Varsayılan',
   Speed: 'Hız',
   Captions: 'Altyazılar',

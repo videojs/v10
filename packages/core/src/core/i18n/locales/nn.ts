@@ -54,7 +54,7 @@ export default {
   OK: 'Lukk',
   Settings: 'Innstillingar',
   Quality: 'Kvalitet',
-  Audio: 'Audio',
+  Audio: 'Lyd',
   Default: 'Standard',
   Speed: 'Fart',
   Captions: 'Teksting',

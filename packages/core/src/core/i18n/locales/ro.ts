@@ -55,7 +55,7 @@ export default {
   OK: 'Închidere',
   Settings: 'Setări',
   Quality: 'Calitate',
-  Audio: 'Audio',
+  Audio: 'Sunet',
   Default: 'Implicit',
   Speed: 'Viteză',
   Captions: 'Subtitrări',

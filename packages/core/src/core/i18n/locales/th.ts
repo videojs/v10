@@ -53,7 +53,7 @@ export default {
   OK: 'ปิด',
   Settings: 'การตั้งค่า',
   Quality: 'คุณภาพ',
-  Audio: 'Audio',
+  Audio: 'เสียง',
   Default: 'ค่าเริ่มต้น',
   Speed: 'ความเร็ว',
   Captions: 'คำบรรยาย',

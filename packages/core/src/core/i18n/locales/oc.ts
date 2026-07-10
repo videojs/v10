@@ -54,7 +54,7 @@ export default {
   OK: 'Tampar',
   Settings: 'Paramètres',
   Quality: 'Qualitat',
-  Audio: 'Audio',
+  Audio: 'Àudio',
   Default: 'Per defaut',
   Speed: 'Velocitat',
   Captions: 'Legendas',

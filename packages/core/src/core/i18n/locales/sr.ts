@@ -53,7 +53,7 @@ export default {
   OK: 'Zatvori',
   Settings: 'Podešavanja',
   Quality: 'Kvalitet',
-  Audio: 'Audio',
+  Audio: 'Zvuk',
   Default: 'Подразумевано',
   Speed: 'Brzina',
   Captions: 'Titlovi',

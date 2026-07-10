@@ -54,7 +54,7 @@ export default {
   OK: 'Tancar',
   Settings: 'Configuració',
   Quality: 'Qualitat',
-  Audio: 'Audio',
+  Audio: 'Àudio',
   Default: 'Predeterminat',
   Speed: 'Velocitat',
   Captions: 'Subtítols',

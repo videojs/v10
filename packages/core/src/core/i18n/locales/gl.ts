@@ -54,7 +54,7 @@ export default {
   OK: 'Pechar',
   Settings: 'Axustes',
   Quality: 'Calidade',
-  Audio: 'Audio',
+  Audio: 'Son',
   Default: 'Predeterminado',
   Speed: 'Velocidade',
   Captions: 'Subtítulos para xordos',

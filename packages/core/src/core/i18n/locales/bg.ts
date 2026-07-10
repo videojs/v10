@@ -53,7 +53,7 @@ export default {
   OK: 'OK',
   Settings: 'Настройки',
   Quality: 'Качество',
-  Audio: 'Audio',
+  Audio: 'Аудио',
   Default: 'По подразбиране',
   Speed: 'Скорост',
   Captions: 'Надписи',
