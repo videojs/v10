@@ -25,6 +25,15 @@ function stripUnicodeExtensions(tag: Locale): Locale {
   return tag.slice(0, uIdx) + (xIdx === -1 ? '' : tag.slice(xIdx));
 }
 
+function chineseFallback(segments: string[]): Locale | undefined {
+  if (segments[0] !== 'zh') {
+    return undefined;
+  }
+
+  const script = segments.find((segment) => segment === 'hant' || segment === 'hans');
+  return script === 'hant' ? 'zh-tw' : script === 'hans' ? 'zh-cn' : undefined;
+}
+
 /** Registry map key: normalized tag with unicode extensions removed (same base as {@link findLocaleKeys}). */
 export function getCanonicalLocaleKey(locale: Locale): Locale {
   return stripUnicodeExtensions(normalizeLocaleTag(locale));
@@ -46,6 +55,12 @@ export function findLocaleKeys(locale: Locale): Locale[] {
 
   for (let len = segments.length; len >= 1; len--) {
     chain.push(segments.slice(0, len).join('-'));
+  }
+
+  const zhFallback = chineseFallback(segments);
+  const zhIndex = chain.indexOf('zh');
+  if (zhFallback && zhIndex !== -1) {
+    chain.splice(zhIndex, 0, zhFallback);
   }
 
   const out: Locale[] = [];

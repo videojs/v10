@@ -48,16 +48,21 @@ describe('i18n registry', () => {
     expect(getI18nTranslations('en-x-u-k1').Play).toBe('Private U2');
   });
 
-  it('walks zh-Hant-HK → zh-Hant → zh → en', () => {
-    expect(findLocaleKeys('zh-Hant-HK')).toEqual(['zh-hant-hk', 'zh-hant', 'zh', 'en']);
+  it('walks zh-Hant-HK through zh-TW before zh', () => {
+    expect(findLocaleKeys('zh-Hant-HK')).toEqual(['zh-hant-hk', 'zh-hant', 'zh-tw', 'zh', 'en']);
     registerI18n('zh', { Play: 'ZH' });
+    registerI18n('zh-TW', { Play: 'TW' });
     registerI18n('zh-Hant', { Pause: 'Hant' });
     registerI18n('zh-Hant-HK', { Replay: 'HK' });
     const merged = getI18nTranslations('zh-Hant-HK');
     expect(merged.Replay).toBe('HK');
     expect(merged.Pause).toBe('Hant');
-    expect(merged.Play).toBe('ZH');
+    expect(merged.Play).toBe('TW');
     expect(merged.Mute).toBe(en.Mute);
+  });
+
+  it('walks zh-Hans-HK through zh-CN before zh', () => {
+    expect(findLocaleKeys('zh-Hans-HK')).toEqual(['zh-hans-hk', 'zh-hans', 'zh-cn', 'zh', 'en']);
   });
 
   it('truncates en-GB-scotland toward en-GB then en', () => {

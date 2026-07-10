@@ -36,6 +36,11 @@ describe('loadLocale', () => {
     expect(esMx?.Play).toBe('Reproducir');
   });
 
+  it('loads Traditional Chinese for zh-Hant regional tags', async () => {
+    const zhHantHk = await loadLocale('zh-Hant-HK');
+    expect(zhHantHk?.Pause).toBe('暫停');
+  });
+
   it('loads packs when unicode locale extensions are present', async () => {
     const zhCn = await loadLocale('zh-CN-u-nu-hans');
     expect(zhCn?.Play).toBeTruthy();
