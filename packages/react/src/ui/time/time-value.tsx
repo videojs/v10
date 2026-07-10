@@ -60,14 +60,16 @@ export const Value = forwardRef(function Value(
   const state = core.getState();
   const attrs = core.getAttrs(state, defaultType);
   const labelParams = core.getLabelParams(state);
-  const resolvedLabelParams =
-    labelParams && state.type === 'remaining'
-      ? {
-          duration: resolveTranslation(translator, '{duration} remaining', {
-            duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
-          }),
-        }
-      : labelParams;
+  const resolvedLabelParams = labelParams
+    ? {
+        duration:
+          state.type === 'remaining'
+            ? resolveTranslation(translator, '{duration} remaining', {
+                duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
+              })
+            : formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
+      }
+    : undefined;
 
   const content = state.negative ? (
     <>
