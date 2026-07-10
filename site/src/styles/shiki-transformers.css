@@ -3,6 +3,7 @@
   .astro-code {
     font-family: var(--font-mono), monospace;
     font-variant-ligatures: none;
+    color: var(--color-manila-light);
   }
 
   /* reinforcing shared.codeBlock */

@@ -4,15 +4,33 @@ description: Typed function that resolves English translation phrases to localiz
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-`Translator` is the callable returned by <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink> and <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink>. It turns current English phrases from core controls into localized copy and interpolates `{placeholder}` tokens when params are required.
+`Translator` is the callable returned by <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink>. It turns current English phrases from core controls into localized copy and interpolates `{placeholder}` tokens when params are required.
+
+<FrameworkCase frameworks={["react"]}>
+
+`useTranslator` also returns a `Translator` from the nearest `I18nProvider`.
+
+</FrameworkCase>
 
 ## Import
 
+<FrameworkCase frameworks={["html"]}>
+
 ```ts
 import type { Translator } from '@videojs/html/i18n';
-// or @videojs/react/i18n
 ```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import type { Translator } from '@videojs/react/i18n';
+```
+
+</FrameworkCase>
 
 ## Definition
 
@@ -30,13 +48,29 @@ Missing phrases in the active map resolve to the source English (`'Play'`) so pa
 
 ## Create manually
 
+<FrameworkCase frameworks={["html"]}>
+
 ```ts
 import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
-// or @videojs/react/i18n
 
 const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
-t('Pause'); // localized or English fallback
+t('Pause');
 ```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { createTranslator, getI18nTranslations } from '@videojs/react/i18n';
+
+const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
+t('Pause');
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
 
 ## React hook
 
@@ -49,6 +83,8 @@ function Label() {
 }
 ```
 
+</FrameworkCase>
+
 Control components resolve phrases from core `getLabel()` through their framework adapters. You rarely call `t()` directly unless building custom UI.
 
 ## Related
@@ -56,3 +92,4 @@ Control components resolve phrases from core `getLabel()` through their framewor
 - <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink>
 - <DocsLink slug="reference/use-translator">`useTranslator`</DocsLink>
 - <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>
+- <DocsLink slug="reference/translation-phrases">Translation phrases</DocsLink>

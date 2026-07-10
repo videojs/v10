@@ -7,11 +7,11 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js re-resolves translations when the active locale changes. How you trigger that depends on the platform.
+Video.js starts in English and re-resolves translations when you opt into another active locale. How you trigger that depends on the platform.
 
 ### Prerequisites
 
-- <DocsLink slug="how-to/i18n-register-locale">Locale packs registered or lazy-loadable</DocsLink>
+- A target locale from a shipped lazy-loaded pack, a registered custom pack, or a Chrome browser translation fallback
 
 ## Ambient `<html lang>`
 
@@ -22,22 +22,32 @@ document.documentElement.lang = 'fr';
 ```
 
 <Aside type="note">
-Ambient switching only applies when no provider sets an explicit locale. React `I18nProvider locale={…}`, HTML `<media-i18n lang="…">`, and `element.lang` on a provider all override `<html lang>` until you remove or update that override.
-</Aside>
-
 <FrameworkCase frameworks={["html"]}>
 
-Player elements and skins observe `lang` on `<html>` and ancestors. No remount required.
+Ambient switching only applies when `<media-i18n>` has no explicit `lang` attribute.
 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
-`Container`'s <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> reads `langRootRef` from the player shell. Updating `<html lang>` is enough when you are not forcing `locale` on an outer provider.
+Ambient switching only applies when `I18nProvider` has no explicit `locale` prop.
+
+</FrameworkCase>
+</Aside>
+
+<FrameworkCase frameworks={["html"]}>
+
+Mounted `<media-i18n>` providers observe `lang` on `<html>` and ancestors. No remount required.
 
 </FrameworkCase>
 
-## Explicit provider locale
+<FrameworkCase frameworks={["react"]}>
+
+An <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> without `locale` reads `<html lang>`. Updating it is enough when you are not forcing an explicit locale.
+
+</FrameworkCase>
+
+## Explicit provider language
 
 <FrameworkCase frameworks={["react"]}>
 
@@ -84,27 +94,23 @@ Changing `locale` triggers lazy `loadLocale` for built-in packs.
 </script>
 ```
 
-Or set `document.documentElement.lang` if the player inherits ambient language.
+Or set `document.documentElement.lang` when the mounted `<media-i18n>` inherits ambient language.
 
 </FrameworkCase>
 
 ## Avoid flash while switching
 
-Async lazy loads can briefly show English. Preload copy before the active locale changes with one of three common patterns:
+Async lazy loads and browser translation fallback can briefly show English. Preload copy before the active locale changes with one of three common patterns:
 
-### Pre-register at bootstrap (React and HTML)
+### Preload at bootstrap
 
-<DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> writes to a global registry that providers read synchronously. Register every locale you plan to switch between once at startup; `loadLocale` skips tags already in the registry.
+Side-effect locale modules register shipped packs before the provider renders. Preload every language in a fixed picker to avoid the async gap.
 
 <FrameworkCase frameworks={["react"]}>
 
 ```tsx
-import { registerI18n } from '@videojs/react/i18n';
-import es from '@videojs/react/i18n/locales/es';
-import fr from '@videojs/react/i18n/locales/fr';
-
-registerI18n('es', es);
-registerI18n('fr', fr);
+import '@videojs/react/i18n/locales/es/register';
+import '@videojs/react/i18n/locales/fr/register';
 
 // Switching locale is instant: no remount, no lazy-load gap
 <I18nProvider locale={userLocale}>
@@ -117,12 +123,8 @@ registerI18n('fr', fr);
 <FrameworkCase frameworks={["html"]}>
 
 ```ts
-import { registerI18n } from '@videojs/html/i18n';
-import es from '@videojs/html/i18n/locales/es';
-import fr from '@videojs/html/i18n/locales/fr';
-
-registerI18n('es', es);
-registerI18n('fr', fr);
+import '@videojs/html/i18n/locales/es/register';
+import '@videojs/html/i18n/locales/fr/register';
 ```
 
 ```html
@@ -137,7 +139,9 @@ registerI18n('fr', fr);
 
 </FrameworkCase>
 
-### Prefetch before switching (React)
+<FrameworkCase frameworks={["react"]}>
+
+### Prefetch before switching
 
 When you cannot register every locale up front, import and register immediately before updating `locale`:
 
@@ -174,7 +178,7 @@ async function switchTo(next: string) {
 
 | Approach | Scope | Best for |
 | --- | --- | --- |
-| `registerI18n` at bootstrap | Global, all providers | Language picker with a fixed set of locales |
+| Side-effect locale imports | Global, all providers | Language picker with a fixed set of shipped locales |
 | `registerI18n` before switch | Global, all providers | On-demand prefetch before changing `locale` |
 | `I18nProvider translations` | Single provider subtree | Scoped overrides, SSR first paint |
 
@@ -186,9 +190,13 @@ async function switchTo(next: string) {
 For server-rendered first paint, see <DocsLink slug="how-to/i18n-ssr">SSR and hydration</DocsLink>.
 </Aside>
 
-## CDN
+</FrameworkCase>
 
-Reload or navigate with an updated `locale` query parameter, or load a different locale module before playback. CDN shells typically full-reload on locale change because locale script tags are not hot-swappable.
+## Browser translation fallback
+
+If a switched locale has no registered or shipped pack, Video.js can use Chrome's [Browser Translation API](https://developer.mozilla.org/en-US/docs/Web/API/Translator) when the browser exposes `globalThis.Translator` and already has the target model installed. This is automatic after lazy loading is attempted.
+
+Do not rely on it for instant switching. Preload or register reviewed packs when the language picker should update without a flash of English.
 
 ## What's next?
 

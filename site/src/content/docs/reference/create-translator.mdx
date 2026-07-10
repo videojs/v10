@@ -5,16 +5,32 @@ description: Build a typed translator from a resolved translation map
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-`createTranslator` wraps a <DocsLink slug="reference/translations">`Translations`</DocsLink> map and returns a <DocsLink slug="reference/translator">`Translator`</DocsLink>. Providers call this internally after merging registry, lazy, and prop layers. Use it directly for custom UI outside built-in mixins.
+`createTranslator` wraps a <DocsLink slug="reference/translations">`Translations`</DocsLink> map and returns a <DocsLink slug="reference/translator">`Translator`</DocsLink>. Providers call this internally after merging registry, lazy-loaded built-in packs, browser-translated fallback copy, and provider layers. Use it directly for custom UI outside built-in controls.
+
+<FrameworkCase frameworks={["html"]}>
 
 ```ts
 import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
-// or @videojs/react/i18n
 
 const t = createTranslator(getI18nTranslations('fr'), 'fr');
 t('Play');
 t('Seek forward {seconds} seconds', { seconds: 5 });
 ```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { createTranslator, getI18nTranslations } from '@videojs/react/i18n';
+
+const t = createTranslator(getI18nTranslations('fr'), 'fr');
+t('Play');
+t('Seek forward {seconds} seconds', { seconds: 5 });
+```
+
+</FrameworkCase>
 
 <UtilReference util="createTranslator" />

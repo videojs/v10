@@ -1,0 +1,76 @@
+---
+title: Translation phrases
+description: English i18n phrase keys and the player UI that uses them
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js uses the English phrases below as translation keys. They are defined in `packages/core/src/core/i18n/locales/en.ts` and typed by <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>. Both HTML and React controls use the same keys.
+
+Use these keys with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> or React `I18nProvider` `translations` overrides.
+
+## Playback controls
+
+| Phrase | Used by |
+| --- | --- |
+| `Play`, `Pause`, `Replay` | Play button and its tooltip |
+| `Mute`, `Unmute` | Mute button and its tooltip |
+| `Seek forward {seconds} seconds`, `Seek backward {seconds} seconds` | Seek buttons and their tooltips |
+| `Enter fullscreen`, `Exit fullscreen` | Fullscreen button and input feedback |
+| `Enter picture-in-picture`, `Exit picture-in-picture` | Picture-in-picture button |
+| `Enable captions`, `Disable captions` | Captions button and captions selection control |
+| `Playing live`, `Seek to live edge`, `Live` | Live button |
+| `Start casting`, `Stop casting`, `Connecting` | Cast button; `Connecting` also appears on the AirPlay button |
+
+## Time and volume
+
+| Phrase | Used by |
+| --- | --- |
+| `Seek` | Time slider aria label |
+| `Volume` | Volume slider aria label and input feedback |
+| `Current time`, `Duration`, `Remaining` | Time display aria labels |
+| `{duration} remaining` | Remaining time display |
+| `{duration}. Show elapsed time.`, `{duration}. Show duration.`, `{duration}. Show remaining time.` | Toggleable time display aria labels |
+| `Playback rate {rate}` | Playback-rate button and radio group |
+| `{current} of {duration}` | Time slider value text |
+| `{percent}, muted` | Muted volume slider value text |
+| `Muted`, `Volume {value}` | Volume input feedback |
+
+## Playback feedback
+
+| Phrase | Used by |
+| --- | --- |
+| `Captions on`, `Captions off` | Input feedback after captions changes |
+| `Paused`, `Playing` | Input feedback after playback changes |
+| `Fullscreen`, `Exit fullscreen` | Input feedback after fullscreen changes |
+| `Picture in picture`, `Exit picture in picture` | Input feedback after picture-in-picture changes |
+
+## Errors
+
+| Phrase | Used by |
+| --- | --- |
+| `You stopped media playback before it finished.` | Media error dialog for `MEDIA_ERR_ABORTED` |
+| `This media could not be loaded due to a network or server issue.` | Media error dialog for `MEDIA_ERR_NETWORK` |
+| `This media could not be played. It may be corrupted, or your browser may not support its format.` | Media error dialog for `MEDIA_ERR_DECODE` |
+| `This media could not be loaded. It may be unavailable, or your browser may not support its format.` | Media error dialog for `MEDIA_ERR_SRC_NOT_SUPPORTED` |
+| `This media could not be played because it could not be decrypted.` | Media error dialog for `MEDIA_ERR_ENCRYPTED` |
+| `Something went wrong.`, `An unexpected error occurred.` | Generic media error dialog title and fallback description |
+| `OK` | Error dialog confirmation button |
+
+## Settings and track menus
+
+| Phrase | Used by |
+| --- | --- |
+| `Settings` | Video settings menu trigger |
+| `Quality`, `Auto`, `Auto ({label})` | Quality menu and automatic-quality option |
+| `Audio` | Audio-track menu and fallback track label |
+| `Default` | Reserved default-option label; no stock control currently emits it |
+| `Speed`, `Playback rate` | Playback-rate menu and radio group |
+| `Captions`, `Subtitles`, `Off` | Captions menu and track options |
+| `Back` | Nested settings-menu back button |
+
+## Related
+
+- <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>
+- <DocsLink slug="reference/translations">`Translations`</DocsLink>
+- <DocsLink slug="how-to/i18n-override-translations">Override translations</DocsLink>

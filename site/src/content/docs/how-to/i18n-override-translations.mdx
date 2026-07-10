@@ -8,25 +8,39 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 
 `registerI18n` **merges**. Each call adds or replaces phrases for that locale tag without wiping prior registrations. Use this to tweak shipped packs or A/B test copy.
 
-Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge order and phrase naming.
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge order and <DocsLink slug="reference/translation-phrases">Translation phrases</DocsLink> for the supported keys.
 
 ## Override after a built-in pack
 
+<FrameworkCase frameworks={["html"]}>
+
 ```ts
 import { registerI18n } from '@videojs/html/i18n';
-import es from '@videojs/html/i18n/locales/es';
+import '@videojs/html/i18n/locales/es/register';
 
-registerI18n('es', es);
 registerI18n('es', { Play: 'Comenzar' }); // only `Play` changes
 ```
 
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+import '@videojs/react/i18n/locales/es/register';
+
+registerI18n('es', { Play: 'Comenzar' }); // only `Play` changes
+```
+
+</FrameworkCase>
+
 Later registrations win for the same phrase. The rest of the `es` pack stays intact.
+
+<FrameworkCase frameworks={["react"]}>
 
 ## React provider overrides
 
 Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. This layer sits **above** registry and lazy packs:
-
-<FrameworkCase frameworks={["react"]}>
 
 ```tsx
 import { I18nProvider } from '@videojs/react/i18n';
@@ -53,6 +67,8 @@ Nested providers inherit the parent locale when you only pass `translations`:
 
 </FrameworkCase>
 
+<FrameworkCase frameworks={["html"]}>
+
 ## HTML reflected text
 
 Use <DocsLink slug="reference/media-text">`<media-text>`</DocsLink> for static copy outside buttons:
@@ -64,6 +80,8 @@ Use <DocsLink slug="reference/media-text">`<media-text>`</DocsLink> for static c
 ```
 
 Override the phrase in the registry or set `lang` on the provider to a locale where you patched `Play`.
+
+</FrameworkCase>
 
 ## Parametric phrases
 

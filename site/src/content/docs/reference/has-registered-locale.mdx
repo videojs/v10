@@ -5,8 +5,11 @@ description: Check whether an exact locale tag exists in the global i18n registr
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-`hasRegisteredLocale` returns whether a normalized locale tag has an explicit registry layer from `registerI18n`. It does **not** indicate whether a lazy built-in pack exists. Only registry entries count.
+`hasRegisteredLocale` returns whether a normalized locale tag has an explicit registry layer from <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>. It does **not** indicate whether a lazy built-in pack exists. Only registry entries count.
+
+<FrameworkCase frameworks={["html"]}>
 
 ```ts
 import { hasRegisteredLocale, registerI18n } from '@videojs/html/i18n';
@@ -15,5 +18,19 @@ hasRegisteredLocale('fr'); // false until registered
 registerI18n('fr', { Play: 'Lecture' });
 hasRegisteredLocale('fr'); // true
 ```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { hasRegisteredLocale, registerI18n } from '@videojs/react/i18n';
+
+hasRegisteredLocale('fr'); // false until registered
+registerI18n('fr', { Play: 'Lecture' });
+hasRegisteredLocale('fr'); // true
+```
+
+</FrameworkCase>
 
 <UtilReference util="hasRegisteredLocale" />

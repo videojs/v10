@@ -8,17 +8,14 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 <FrameworkCase frameworks={["html"]}>
 
-`<media-i18n>` applies the i18n provider mixin to a standalone subtree. Built-in `<video-player>` and skins already include this mixin — use the element when rendering **controls outside a player** or when sibling players need different locales.
+`<media-i18n>` applies the i18n provider mixin to a subtree. Wrap a player, standalone controls, or one of several players that need different locales with this element. Without it, HTML controls use English defaults.
 
-Register locale strings with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, then set `lang` on the provider or an ancestor. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for phrase keys and fallback behavior.
+Set `lang` on the provider or an ancestor. Built-in packs lazy-load automatically; register locale strings with <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> when you need custom copy or synchronous first paint. See <DocsLink slug="reference/translation-phrases">Translation phrases</DocsLink> for supported keys.
 
 ```html
 <script type="module">
   import '@videojs/html/i18n';
-  import { registerI18n } from '@videojs/html/i18n';
-  import es from '@videojs/html/i18n/locales/es';
-
-  registerI18n('es', es);
+  import '@videojs/html/i18n/locales/es/register';
 </script>
 
 <media-i18n lang="es">
