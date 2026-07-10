@@ -4,38 +4,55 @@ description: BCP 47 language tag type for i18n registry and provider APIs
 ---
 
 import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 
-`Locale` is the BCP 47 tag type used by <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>, providers, and <DocsLink slug="reference/translator">`Translator`</DocsLink>. Shipped packs autocomplete as <DocsLink slug="reference/built-in-locale">`BuiltInLocale`</DocsLink>; any other tag remains valid at runtime.
+`Locale` is the BCP 47 tag type used by <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> and provider APIs. Shipped tags autocomplete, and any other BCP 47 tag remains valid at runtime.
 
 ## Import
 
+<FrameworkCase frameworks={["html"]}>
+
 ```ts
 import type { Locale } from '@videojs/html/i18n';
-// or @videojs/react/i18n
 ```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import type { Locale } from '@videojs/react/i18n';
+```
+
+</FrameworkCase>
 
 ## Definition
 
 ```ts
-type Locale = BuiltInLocale | (string & {});
+type Locale = (typeof LOCALES)[number] | (string & {});
 ```
 
-The `(string & {})` pattern keeps custom tags (`'xx'`, `'en-US'`) type-safe without losing autocomplete for built-ins.
+The `(string & {})` pattern keeps custom tags (`'xx'`, `'en-US'`) type-safe without losing autocomplete for shipped tags.
+
+## Provider use
+
+<FrameworkCase frameworks={["html"]}>
+
+Set a `lang` attribute on <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink>; HTML providers do not have a `locale` attribute.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+Pass a `Locale` to the `locale` prop on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>, or omit the prop to inherit `lang`.
+
+</FrameworkCase>
 
 ## Resolution
 
-Providers and `getI18nTranslations` normalize tags and walk the parent chain (`es-MX` → `es` → `en`) via `findLocaleKeys`. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for explicit vs ambient resolution.
-
-## Examples
-
-```ts
-const es: Locale = 'es';
-const custom: Locale = 'en-US';
-const regional: Locale = 'pt-BR';
-```
+Providers and `getI18nTranslations` normalize tags and walk the parent chain (`es-MX` → `es` → `en`) via `findLocaleKeys`. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for explicit and ambient resolution.
 
 ## Related
 
-- <DocsLink slug="reference/built-in-locale">`BuiltInLocale`</DocsLink>
 - <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink>
 - <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>

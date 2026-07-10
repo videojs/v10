@@ -18,11 +18,6 @@ export const sidebar: Sidebar = [
     ],
   },
   {
-    sidebarLabel: 'Contributing',
-    devOnly: true,
-    contents: [{ slug: 'how-to/i18n-add-built-in-locale', sidebarLabel: 'Add a built-in locale' }],
-  },
-  {
     sidebarLabel: 'Getting started',
     // May change when we revisit this section's boundary with Concepts (#1105)
     llmsDescription: 'Installation, project setup, and introductory guides.',
@@ -198,11 +193,11 @@ export const sidebar: Sidebar = [
       { slug: 'reference/has-registered-locale', sidebarLabel: 'hasRegisteredLocale' },
       { slug: 'reference/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
       { slug: 'reference/create-translator', sidebarLabel: 'createTranslator' },
+      { slug: 'reference/translation-phrases', sidebarLabel: 'Translation phrases' },
       {
         sidebarLabel: 'Types',
         defaultOpen: false,
         contents: [
-          { slug: 'reference/built-in-locale', sidebarLabel: 'BuiltInLocale' },
           { slug: 'reference/locale', sidebarLabel: 'Locale' },
           { slug: 'reference/translation-params', sidebarLabel: 'TranslationParams' },
           { slug: 'reference/translations', sidebarLabel: 'Translations' },

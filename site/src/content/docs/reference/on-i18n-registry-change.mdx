@@ -4,9 +4,14 @@ description: Subscribe to global i18n registry mutations
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
 `onI18nRegistryChange` registers a callback that runs whenever any locale layer changes, for example after `registerI18n` or browser translation prefetch. Returns an unsubscribe function.
 
+<FrameworkCase frameworks={["react"]}>
+
 React `I18nProvider` uses this to invalidate translators when the registry updates.
+
+</FrameworkCase>
 
 <UtilReference util="onI18nRegistryChange" />

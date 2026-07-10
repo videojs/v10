@@ -1,21 +1,38 @@
 ---
 title: createI18n
-description: Factory that creates a React i18n provider with custom loading options
+description: Factory that creates framework i18n helpers with custom loading options
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
-import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["html"]}>
+
+`createI18n` returns a context-bound `ProviderMixin`, `TextMixin`, and `I18nController` for custom elements. Use it when you need a custom locale loader or custom i18n elements. Most apps use `<media-i18n>` and `<media-text>` from `@videojs/html/i18n`.
+
+```ts
+import { ReactiveElement } from '@videojs/element';
+import { createI18n } from '@videojs/html/i18n';
+
+const { ProviderMixin, TextMixin } = createI18n();
+
+class LocalizedRoot extends ProviderMixin(ReactiveElement) {}
+class LocalizedText extends TextMixin(ReactiveElement) {}
+```
+
+<UtilReference util="createI18n" />
+
+</FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 
-`createI18n` returns an `I18nProvider`, `useTranslator`, and `useLocale` wired to the shared React i18n context used by the stock skins and controls. Use it when you need options such as a custom locale loader. Most apps import the default exports from `@videojs/react/i18n` instead.
+`createI18n` returns an `I18nProvider`, `useTranslator`, and `useLocale` wired to the shared React i18n context used by the stock skins and controls. Use it when you need options such as a custom locale loader. Most apps use the default exports from `@videojs/react/i18n`.
 
 ```tsx
 import { createI18n } from '@videojs/react/i18n';
 
 const { I18nProvider, useTranslator } = createI18n({
-  loadLocale: async (tag) => {
+  loader: async (tag) => {
     const mod = await import(`@videojs/react/i18n/locales/${tag}`);
     return mod.default;
   },

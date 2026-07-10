@@ -6,7 +6,7 @@ import type { ShikiTransformer } from 'shiki';
  *
  * Shiki should only highlight the text; the code container's background and
  * scrolling are owned by `CodeFrame` and the `.astro-code` rules. Token colors
- * live on the inner spans, so removing the pre's style leaves them untouched.
+ * live on the inner spans, while `.astro-code` supplies the plaintext color.
  *
  * Astro adds its built-in `pre` transformer before user transformers, so this
  * one runs last and sees the fully-assembled style to remove.
