@@ -391,6 +391,32 @@ function checkI18nLocales() {
     );
   }
 
+  const loadLocalePath = join(PACKAGES_DIR, 'core/src/core/i18n/load-locale.ts');
+  if (!existsSync(loadLocalePath)) {
+    warnings.push('Missing generated locale loader packages/core/src/core/i18n/load-locale.ts');
+  } else {
+    const loadLocaleSource = readText(loadLocalePath);
+    if (!loadLocaleSource.startsWith(GENERATED_I18N_HEADER)) {
+      warnings.push(
+        'packages/core/src/core/i18n/load-locale.ts is not generated — run pnpm -F @videojs/core generate:locales'
+      );
+    } else {
+      const loaderTags = new Set(
+        [...loadLocaleSource.matchAll(/import\('\.\/locales\/([^']+)'\)/g)].map((match) => match[1])
+      );
+
+      for (const tag of localeFiles) {
+        if (!loaderTags.delete(tag)) {
+          warnings.push(`LOCALES tag "${tag}" has no lazy importer in packages/core/src/core/i18n/load-locale.ts`);
+        }
+      }
+
+      for (const tag of loaderTags) {
+        warnings.push(`Unexpected lazy importer packages/core/src/core/i18n/load-locale.ts for "${tag}"`);
+      }
+    }
+  }
+
   for (const pkg of ['html', 'react']) {
     const localesDir = join(PACKAGES_DIR, `${pkg}/src/i18n/locales`);
     const expectedPlatform = new Set(['all', 'en', ...localeFiles]);
