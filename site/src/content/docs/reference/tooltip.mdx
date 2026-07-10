@@ -39,7 +39,8 @@ import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts
       <Tooltip.Trigger>Hover me</Tooltip.Trigger>
       <Tooltip.Popup>
         <Tooltip.Arrow />
-        Label text
+        <Tooltip.Label>Label text</Tooltip.Label>
+        <Tooltip.Shortcut>K</Tooltip.Shortcut>
       </Tooltip.Popup>
     </Tooltip.Root>
   </Tooltip.Provider>
@@ -50,7 +51,10 @@ import groupingHtmlTs from "@/components/docs/demos/tooltip/html/css/Grouping.ts
   ```html
   <media-tooltip-group>
     <button commandfor="my-tooltip">Hover me</button>
-    <media-tooltip id="my-tooltip">Label text</media-tooltip>
+    <media-tooltip id="my-tooltip">
+      <media-tooltip-label>Label text</media-tooltip-label>
+      <media-tooltip-shortcut>K</media-tooltip-shortcut>
+    </media-tooltip>
   </media-tooltip-group>
   ```
 </FrameworkCase>
@@ -62,9 +66,10 @@ Displays a short label anchored to a trigger element. Opens after a configurable
 The `side` and `align` props control placement relative to the trigger. Positioning uses CSS Anchor Positioning where supported, with a JavaScript measurement fallback.
 
 <FrameworkCase frameworks={["react"]}>
-  The component is composed from four parts: `Root` manages state and context,
+  The component is composed from six parts: `Root` manages state and context,
   `Trigger` renders a button that activates the tooltip, `Popup` contains the label content,
-  and `Arrow` renders a decorative pointer. Wrap multiple tooltips in a `Tooltip.Provider`
+  `Label` renders the tooltip body, `Shortcut` renders an optional keyboard hint, and
+  `Arrow` renders a decorative pointer. Wrap multiple tooltips in a `Tooltip.Provider`
   to coordinate open/close timing across a group — once a tooltip becomes visible, adjacent
   tooltips open instantly within the `timeout` window, skipping the normal `delay`.
 </FrameworkCase>
@@ -216,4 +221,4 @@ The trigger receives `aria-describedby` pointing to the popup when open. The pop
   </StyleCase>
 </FrameworkCase>
 
-<ComponentReference component="Tooltip" partOrder={["provider", "root", "trigger", "popup", "arrow"]} />
+<ComponentReference component="Tooltip" partOrder={["provider", "root", "trigger", "popup", "label", "shortcut", "arrow"]} />
