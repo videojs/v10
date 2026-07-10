@@ -157,8 +157,11 @@ function establishStartMediaTimeSetup({
           const containerData = state.mediaContainerData.get();
           if (!containerData) return;
           const startMediaTimes = derive(containerData, selectionContext());
+          // `current` is always resolved here — the monitor gates `monitoring` on a
+          // resolved presentation and transitions before effects re-run — so we cast
+          // to `Presentation` rather than re-narrowing.
           update(state.presentation as Signal<MaybeResolvedPresentation>, (current) =>
-            isResolvedPresentation(current) ? stampTracks(current, startMediaTimes) : current
+            stampTracks(current as Presentation, startMediaTimes)
           );
         },
       },
