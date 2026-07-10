@@ -205,6 +205,19 @@ describe('TimeSliderCore', () => {
         duration: formatTimeAsPhrase(300),
       });
     });
+
+    it('formats value text params with the active locale', () => {
+      const core = new TimeSliderCore();
+      core.setFormatLocale('fr');
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
+
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatTimeAsPhrase(90, { locale: 'fr' }),
+        duration: formatTimeAsPhrase(300, { locale: 'fr' }),
+      });
+    });
   });
 
   describe('setProps', () => {

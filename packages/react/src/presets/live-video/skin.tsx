@@ -1,6 +1,7 @@
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
   AirPlayExitIcon,
@@ -21,7 +22,8 @@ import {
   VolumeLowIcon,
   VolumeOffIcon,
 } from '@/icons';
-import { Container, usePlayer } from '@/player/context';
+import { Container } from '@/player/container';
+import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
@@ -98,6 +100,7 @@ function VolumePopover(): ReactNode {
  * sit at opposite edges of the control bar.
  */
 function CaptionsTrigger(): ReactNode {
+  const t = useTranslator();
   const captions = useCaptionsOptions();
   if (!captions) return null;
 
@@ -136,7 +139,12 @@ function CaptionsTrigger(): ReactNode {
         }
       />
       <Menu.Content className="media-surface media-popover media-menu media-menu--captions">
-        <Menu.RadioGroup className="media-menu__group" value={value} onValueChange={setValue} aria-label="Captions">
+        <Menu.RadioGroup
+          className="media-menu__group"
+          value={value}
+          onValueChange={setValue}
+          aria-label={t('Captions')}
+        >
           {options.map((option) => (
             <Menu.RadioItem
               key={option.value}
@@ -187,11 +195,11 @@ export function LiveVideoSkin(props: LiveVideoSkinProps): ReactNode {
         <ErrorDialog.Popup className="media-error">
           <div className="media-error__dialog media-surface">
             <div className="media-error__content">
-              <ErrorDialog.Title className="media-error__title">Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className="media-error__title"></ErrorDialog.Title>
               <ErrorDialog.Description className="media-error__description" />
             </div>
             <div className="media-error__actions">
-              <ErrorDialog.Close className="media-button media-button--primary">OK</ErrorDialog.Close>
+              <ErrorDialog.Close className="media-button media-button--primary"></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>

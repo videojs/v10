@@ -134,6 +134,7 @@ export class TimeSliderElement extends MediaElement {
       thumbAlignment: this.thumbAlignment,
       pauseOnDrag: this.pauseOnDrag,
     });
+    this.#core.setFormatLocale(this.#i18n.locale);
   }
 
   protected override update(_changed: PropertyValues): void {

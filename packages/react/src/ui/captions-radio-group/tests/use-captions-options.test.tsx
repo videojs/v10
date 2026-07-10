@@ -2,15 +2,20 @@
 
 import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { I18nProvider } from '../../../i18n';
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
 import { useCaptionsOptions } from '../use-captions-options';
 
-afterEach(cleanup);
+afterEach(() => {
+  resetI18nRegistry();
+  cleanup();
+});
 
 function renderCaptionsMenu({
   textTrackList = [
@@ -19,10 +24,12 @@ function renderCaptionsMenu({
   ] as const,
   subtitlesShowing = true,
   selectSubtitlesTrack = vi.fn(),
+  locale,
 }: {
   textTrackList?: readonly { kind: string; label: string; language: string; mode: string }[];
   subtitlesShowing?: boolean;
   selectSubtitlesTrack?: (value: string) => void;
+  locale?: string | undefined;
 } = {}) {
   const { Wrapper } = createPlayerWrapper({
     textTrackList,
@@ -33,15 +40,15 @@ function renderCaptionsMenu({
     thumbnailTrackSrc: null,
     toggleSubtitles: vi.fn(),
   });
-
-  render(
+  const content = (
     <Menu.Root defaultOpen align="center">
       <Menu.Content data-testid="content">
         <CaptionsRadioGroup />
       </Menu.Content>
-    </Menu.Root>,
-    { wrapper: Wrapper }
+    </Menu.Root>
   );
+
+  render(locale ? <I18nProvider locale={locale}>{content}</I18nProvider> : content, { wrapper: Wrapper });
 
   return { selectSubtitlesTrack };
 }
@@ -121,6 +128,22 @@ describe('useCaptionsOptions', () => {
     fireEvent.click(screen.getByRole('menuitemradio', { name: 'English' }));
 
     expect(selectSubtitlesTrack).toHaveBeenCalledWith('0');
+  });
+
+  it('translates default track labels', () => {
+    registerI18n('xx', {
+      Captions: 'Captions translated',
+    });
+
+    renderCaptionsMenu({
+      textTrackList: [
+        { kind: 'captions', label: '', language: '', mode: 'disabled' },
+        { kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'showing' },
+      ],
+      locale: 'xx',
+    });
+
+    expect(screen.getByRole('menuitemradio', { name: 'Captions translated' })).toBeTruthy();
   });
 
   it('turns captions off', () => {

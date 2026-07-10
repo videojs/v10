@@ -9,10 +9,34 @@ export * from '@videojs/core/media/predicate';
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';
 export { useSelector, useStore } from '@videojs/store/react';
+// i18n
+export {
+  type CreateI18nOptions,
+  type CreateI18nResult,
+  createI18n,
+  createTranslator,
+  findLocaleKeys,
+  getI18nTranslations,
+  hasRegisteredLocale,
+  I18nContext,
+  type I18nContextValue,
+  I18nProvider,
+  type I18nProviderProps,
+  type Locale,
+  onI18nRegistryChange,
+  registerI18n,
+  type TranslationParams,
+  type Translations,
+  type Translator,
+  useLocale,
+  useTranslator,
+} from './i18n';
 // Media primitives
 export {
   Container,
   type ContainerProps,
+} from './player/container';
+export {
   type PlayerContextValue,
   useContainer,
   useContainerAttach,
@@ -109,7 +133,6 @@ export { VolumeSlider } from './ui/volume-slider';
 // Utilities
 export { mergeProps } from './utils/merge-props';
 export type { HTMLProps, RenderFunction, RenderProp, UIComponentProps } from './utils/types';
-// Media utilities
 export { useAttachMedia } from './utils/use-attach-media';
 export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
 export { useDestroy } from './utils/use-destroy';

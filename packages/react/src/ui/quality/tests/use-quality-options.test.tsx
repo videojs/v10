@@ -2,14 +2,19 @@
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import type { MediaVideoRendition } from '@videojs/core';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
 import { useQualityOptions } from '../use-quality-options';
 
-afterEach(cleanup);
+afterEach(() => {
+  resetI18nRegistry();
+  cleanup();
+});
 
 function renderQualityOptions({
   videoRenditionList = [
@@ -19,22 +24,24 @@ function renderQualityOptions({
   activeVideoRendition = null,
   selectVideoRendition = vi.fn(),
   formatRendition,
+  locale,
 }: {
   videoRenditionList?: MediaVideoRendition[];
   activeVideoRendition?: MediaVideoRendition | null | undefined;
   selectVideoRendition?: (value: string) => void;
   formatRendition?: ((rendition: MediaVideoRendition) => string) | undefined;
+  locale?: string | undefined;
 } = {}) {
   const { Wrapper } = createPlayerWrapper({ videoRenditionList, activeVideoRendition, selectVideoRendition });
-
-  render(
+  const content = (
     <Menu.Root defaultOpen align="center">
       <Menu.Content data-testid="content">
         <QualityRadioGroup formatRendition={formatRendition} />
       </Menu.Content>
-    </Menu.Root>,
-    { wrapper: Wrapper }
+    </Menu.Root>
   );
+
+  render(locale ? <I18nProvider locale={locale}>{content}</I18nProvider> : content, { wrapper: Wrapper });
 
   return { selectVideoRendition };
 }
@@ -86,6 +93,19 @@ describe('useQualityOptions', () => {
     });
 
     expect(screen.getByRole('menuitemradio', { name: 'Auto (720p)' }).getAttribute('aria-checked')).toBe('true');
+  });
+
+  it('translates default auto labels', () => {
+    registerI18n('xx', {
+      'Auto ({label})': 'Auto translated ({label})',
+    });
+
+    renderQualityOptions({
+      activeVideoRendition: { id: '1', height: 720, selected: false },
+      locale: 'xx',
+    });
+
+    expect(screen.getByRole('menuitemradio', { name: 'Auto translated (720p)' })).toBeTruthy();
   });
 
   it('uses a custom rendition formatter', () => {

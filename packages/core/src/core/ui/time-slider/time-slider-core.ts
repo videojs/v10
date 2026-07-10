@@ -37,6 +37,7 @@ export class TimeSliderCore extends SliderCore {
 
   #props: TimeSliderProps = { ...TimeSliderCore.defaultProps };
   #media: (MediaTimeState & MediaBufferState) | null = null;
+  #formatLocale: string | string[] | undefined;
   #wasPlayingBeforeDrag = false;
 
   constructor(props?: TimeSliderProps) {
@@ -51,6 +52,11 @@ export class TimeSliderCore extends SliderCore {
 
   setMedia(media: MediaTimeState & MediaBufferState): void {
     this.#media = media;
+  }
+
+  /** @internal Platform adapters set the active i18n locale for `aria-valuetext` time formatting. */
+  setFormatLocale(locale: string | string[] | undefined): void {
+    this.#formatLocale = locale;
   }
 
   getState(): TimeSliderState {
@@ -83,18 +89,24 @@ export class TimeSliderCore extends SliderCore {
     return state.dragging ? this.rawValueFromPercent(state.pointerPercent) : state.value;
   }
 
+  #formatTimeAsPhrase(seconds: number): string {
+    return this.#formatLocale === undefined
+      ? formatTimeAsPhrase(seconds)
+      : formatTimeAsPhrase(seconds, { locale: this.#formatLocale });
+  }
+
   getValueText(state: TimeSliderState): string {
     return Number.isFinite(state.duration) ? '{current} of {duration}' : this.getValueTextParams(state).current;
   }
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {
-    const current = formatTimeAsPhrase(this.#announceValue(state));
+    const current = this.#formatTimeAsPhrase(this.#announceValue(state));
     if (!Number.isFinite(state.duration)) {
       return { current };
     }
     return {
       current,
-      duration: formatTimeAsPhrase(state.duration),
+      duration: this.#formatTimeAsPhrase(state.duration),
     };
   }
 

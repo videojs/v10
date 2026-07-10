@@ -3,8 +3,12 @@ import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@a
 import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import { loadAudioStylesheets, loadVideoStylesheets } from '@app/shared/html/stylesheets';
+import { ensureCdnSandboxLocale } from '@app/shared/i18n/cdn-sandbox-locales';
+import type { SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import {
+  getInitialLocale,
   onAutoplayChange,
+  onLocaleChange,
   onLoopChange,
   onMutedChange,
   onPreloadChange,
@@ -13,6 +17,7 @@ import {
 } from '@app/shared/sandbox-listener';
 import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
+import { getI18nTranslations } from '@videojs/html/cdn/i18n';
 
 const html = String.raw;
 
@@ -21,6 +26,88 @@ const preset = (params.get('preset') ?? 'video') as Preset;
 
 const state = createHtmlSandboxState(preset === 'audio');
 const loadLatest = createLatestLoader();
+let locale = getInitialLocale();
+let localeApplySeq = 0;
+
+type LitElementLike = HTMLElement & { requestUpdate?: () => void; updateComplete?: Promise<unknown> };
+
+function wrapCdnPlayerI18n(playerTag: string, inner: string): string {
+  return html`
+    <${playerTag}>
+      <media-i18n>
+        ${inner}
+      </media-i18n>
+    </${playerTag}>
+  `;
+}
+
+async function waitForMediaMetadata(timeoutMs = 15_000): Promise<void> {
+  const deadline = performance.now() + timeoutMs;
+  while (performance.now() < deadline) {
+    const video = document.querySelector('video');
+    if (video && video.readyState >= HTMLMediaElement.HAVE_METADATA) return;
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+}
+
+/** Controls only get aria-label after the player store attaches media — poll like e2e. */
+async function waitForCdnPlayLabel(expected: string, timeoutMs = 15_000): Promise<string | undefined> {
+  await waitForMediaMetadata(timeoutMs);
+
+  const deadline = performance.now() + timeoutMs;
+  while (performance.now() < deadline) {
+    const provider = document.querySelector('media-i18n') as LitElementLike | null;
+    provider?.requestUpdate?.();
+    if (provider?.updateComplete) await provider.updateComplete;
+
+    for (const button of document.querySelectorAll('media-play-button')) {
+      const el = button as LitElementLike;
+      el.requestUpdate?.();
+      if (el.updateComplete) await el.updateComplete;
+    }
+
+    const playLabel = document.querySelector('media-play-button')?.getAttribute('aria-label');
+    if (playLabel === expected) return playLabel;
+
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+  }
+
+  return document.querySelector('media-play-button')?.getAttribute('aria-label') ?? undefined;
+}
+
+async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<void> {
+  await ensureCdnSandboxLocale(tag);
+  if (seq !== localeApplySeq) return;
+
+  const provider = document.querySelector('media-i18n') as LitElementLike | null;
+  if (!provider?.requestUpdate) return;
+
+  provider.requestUpdate();
+  await provider.updateComplete;
+  if (seq !== localeApplySeq) return;
+
+  if (!import.meta.env.DEV || tag === 'en') return;
+  if (!document.querySelector('media-play-button')) return;
+
+  const expected = getI18nTranslations(tag).Play;
+  const playLabel = await waitForCdnPlayLabel(expected);
+  if (seq !== localeApplySeq) return;
+
+  if (playLabel !== expected) {
+    throw new Error(
+      `[videojs/sandbox] CDN controls are "${playLabel ?? '(missing)'}" but registry has "${expected}" for "${tag}". If the registry check passes, wait for media metadata or restart with a clean Vite cache: \`rm -rf apps/sandbox/node_modules/.vite && pnpm dev:sandbox\`.`
+    );
+  }
+}
+
+async function applyLocale(next: SandboxLocaleTag): Promise<void> {
+  const seq = ++localeApplySeq;
+  await ensureCdnSandboxLocale(next);
+  if (seq !== localeApplySeq) return;
+  locale = next;
+  document.documentElement.lang = locale;
+  await syncCdnI18nProvider(locale, seq);
+}
 
 // ---------------------------------------------------------------------------
 // CDN module loading — mirrors the exact import graph of each CDN bundle.
@@ -143,10 +230,18 @@ function canPlayLive(preset: Preset): boolean {
 async function render() {
   const live = canPlayLive(preset) && isLiveSource(state.source);
 
-  await loadLatest(async () => {
+  const loaded = await loadLatest(async () => {
     await loadCdnPreset(preset, state.skin, live);
     await loadCdnMedia(preset);
+    return true;
   });
+
+  if (!loaded) {
+    return;
+  }
+
+  // Load the locale before rendering, but outside loadLatest so locale errors keep their specific message.
+  await ensureCdnSandboxLocale(locale);
 
   loadStylesheets(preset, state.skin);
 
@@ -168,42 +263,61 @@ async function render() {
   }
 
   if (preset === 'background-video') {
-    root.innerHTML = html`
-      <${playerTag}>
+    root.innerHTML = wrapCdnPlayerI18n(
+      playerTag,
+      html`
         <${skinTag}>
           <${mediaTag} ${sourceAttr}></${mediaTag}>
         </${skinTag}>
-      </${playerTag}>
-    `;
+      `
+    );
+    await syncCdnI18nProvider(locale, localeApplySeq);
     return;
   }
 
   if (isAudioPreset(preset)) {
     root.innerHTML = html`
       <div class="w-full max-w-xl mx-auto">
-        <${playerTag}>
-          <${skinTag}>
-            <${mediaTag} ${sourceAttr} ${mediaAttrs}></${mediaTag}>
-          </${skinTag}>
-        </${playerTag}>
+        ${wrapCdnPlayerI18n(
+          playerTag,
+          html`
+            <${skinTag}>
+              <${mediaTag} ${sourceAttr} ${mediaAttrs}></${mediaTag}>
+            </${skinTag}>
+          `
+        )}
       </div>
     `;
+    await syncCdnI18nProvider(locale, localeApplySeq);
     return;
   }
 
-  root.innerHTML = html`
-    <${playerTag}>
-      <${skinTag} class="aspect-video max-w-4xl mx-auto">
-        <${mediaTag} ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
-          ${renderStoryboard(storyboard)}
-        </${mediaTag}>
-        ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
-      </${skinTag}>
-    </${playerTag}>
+  const skin = html`
+    <${skinTag} class="aspect-video max-w-4xl mx-auto">
+      <${mediaTag} ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+        ${renderStoryboard(storyboard)}
+      </${mediaTag}>
+      ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
+    </${skinTag}>
   `;
+
+  root.innerHTML = wrapCdnPlayerI18n(playerTag, skin);
+
+  await syncCdnI18nProvider(locale, localeApplySeq);
+
+  if (import.meta.env.DEV && !document.querySelector('media-i18n')) {
+    throw new Error(
+      '[videojs/sandbox] CDN preset requires <media-i18n>. Run pnpm dev:sandbox (or pnpm exec tsx scripts/setup.ts).'
+    );
+  }
 }
 
-render();
+async function init(): Promise<void> {
+  document.documentElement.lang = locale;
+  await render();
+}
+
+void init();
 
 onSkinChange((skin) => {
   state.skin = skin;
@@ -233,4 +347,21 @@ onLoopChange((loop) => {
 onPreloadChange((preload) => {
   state.preload = preload;
   render();
+});
+
+onLocaleChange((next) => {
+  const provider = document.querySelector('media-i18n');
+  if (provider) {
+    void applyLocale(next);
+    return;
+  }
+
+  const seq = ++localeApplySeq;
+  void (async () => {
+    await ensureCdnSandboxLocale(next);
+    if (seq !== localeApplySeq) return;
+    locale = next;
+    document.documentElement.lang = locale;
+    await render();
+  })();
 });

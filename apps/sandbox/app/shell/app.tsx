@@ -1,4 +1,5 @@
 import { PLATFORMS, PRESETS, STYLINGS } from '@app/constants';
+import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { DEFAULT_PRELOAD, PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import {
@@ -35,6 +36,12 @@ function readParams() {
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
     preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
+    locale: (() => {
+      const value = params.get('locale');
+      return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
+        ? (value as SandboxLocaleTag)
+        : DEFAULT_SANDBOX_LOCALE;
+    })(),
   };
 }
 
@@ -49,6 +56,7 @@ export function App() {
   const [muted, setMuted] = useState(initial.muted);
   const [loop, setLoop] = useState(initial.loop);
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
+  const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const pagePath = getPagePath(platform, preset);
@@ -65,9 +73,10 @@ export function App() {
       muted: muted ? '1' : '0',
       loop: loop ? '1' : '0',
       preload,
+      locale,
     });
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload]);
+  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, locale]);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
@@ -93,26 +102,30 @@ export function App() {
     iframeRef.current?.contentWindow?.postMessage({ type: 'preload-change', preload }, '*');
   }, [preload]);
 
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'locale-change', locale }, '*');
+  }, [locale]);
+
   // Constrain source to MP4 when switching to audio
   useEffect(() => {
     if (preset === 'audio' && SOURCES[source].type !== 'mp4') {
       setSource(DEFAULT_AUDIO_SOURCE);
     }
-  }, [preset, source, setSource]);
+  }, [preset, source]);
 
   // Constrain source to DASH when switching to dash-video
   useEffect(() => {
     if (preset === 'dash-video' && SOURCES[source].type !== 'dash') {
       setSource(DEFAULT_DASH_SOURCE);
     }
-  }, [preset, source, setSource]);
+  }, [preset, source]);
 
   // Constrain source away from DASH for non-DASH presets
   useEffect(() => {
     if (preset !== 'dash-video' && SOURCES[source].type === 'dash') {
       setSource(DEFAULT_SOURCE);
     }
-  }, [preset, source, setSource]);
+  }, [preset, source]);
 
   // CDN, background video, and vimeo video do not have a Tailwind skin variant.
   useEffect(() => {
@@ -124,7 +137,7 @@ export function App() {
   const availableSources =
     preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : NON_DASH_SOURCE_IDS;
 
-  const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), [setSource]);
+  const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
   return (
     <div className="flex flex-col h-screen overflow-hidden">
@@ -147,6 +160,8 @@ export function App() {
         onLoopChange={setLoop}
         preload={preload}
         onPreloadChange={setPreload}
+        locale={locale}
+        onLocaleChange={setLocale}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHls={preset.startsWith('simple-hls-')}
@@ -170,6 +185,7 @@ export function App() {
         muted={muted}
         loop={loop}
         preload={preload}
+        locale={locale}
       />
     </div>
   );

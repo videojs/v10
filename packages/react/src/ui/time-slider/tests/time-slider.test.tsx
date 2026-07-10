@@ -1,7 +1,9 @@
 import { cleanup, render } from '@testing-library/react';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../../slider/slider-buffer';
 import { SliderFill } from '../../slider/slider-fill';
@@ -196,6 +198,24 @@ describe('TimeSlider compound', () => {
     const thumb = container.querySelector('[data-testid="thumb"]');
     expect(thumb?.getAttribute('role')).toBe('slider');
     expect(thumb?.getAttribute('aria-label')).toBe('Seek');
+  });
+
+  it('formats thumb valuetext with the active locale', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <I18nProvider locale="fr" translations={{ '{current} of {duration}': '{current} sur {duration}' }}>
+          <TimeSliderRoot>
+            <SliderThumb data-testid="thumb" />
+          </TimeSliderRoot>
+        </I18nProvider>
+      </Wrapper>
+    );
+
+    const thumb = container.querySelector('[data-testid="thumb"]');
+    expect(thumb?.getAttribute('aria-valuetext')).toBe(
+      `${formatTimeAsPhrase(30, { locale: 'fr' })} sur ${formatTimeAsPhrase(120, { locale: 'fr' })}`
+    );
   });
 
   it('SliderValue displays formatted time', () => {

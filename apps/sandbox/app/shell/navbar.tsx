@@ -1,4 +1,5 @@
 import type { SKINS } from '@app/constants';
+import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
 import type { SourceId } from '@app/shared/sources';
 import type { Platform, Preset, Skin, Styling } from '@app/types';
@@ -23,6 +24,8 @@ type NavbarProps = {
   onLoopChange: (value: boolean) => void;
   preload: PreloadValue;
   onPreloadChange: (value: PreloadValue) => void;
+  locale: SandboxLocaleTag;
+  onLocaleChange: (value: SandboxLocaleTag) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHls: boolean;
@@ -76,6 +79,8 @@ export function Navbar({
   onLoopChange,
   preload,
   onPreloadChange,
+  locale,
+  onLocaleChange,
   availableSources,
   isBackgroundVideo,
   isSimpleHls,
@@ -154,6 +159,8 @@ export function Navbar({
           onLoopChange={onLoopChange}
           preload={preload}
           onPreloadChange={onPreloadChange}
+          locale={locale}
+          onLocaleChange={onLocaleChange}
         />
         <a
           href="https://github.com/videojs/v10"
@@ -190,6 +197,8 @@ type SettingsMenuProps = {
   onLoopChange: (value: boolean) => void;
   preload: PreloadValue;
   onPreloadChange: (value: PreloadValue) => void;
+  locale: SandboxLocaleTag;
+  onLocaleChange: (value: SandboxLocaleTag) => void;
 };
 
 function SettingsMenu({
@@ -201,6 +210,8 @@ function SettingsMenu({
   onLoopChange,
   preload,
   onPreloadChange,
+  locale,
+  onLocaleChange,
 }: SettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -209,6 +220,7 @@ function SettingsMenu({
   const mutedId = useId();
   const loopId = useId();
   const preloadId = useId();
+  const localeId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -265,8 +277,15 @@ function SettingsMenu({
         <div
           id={menuId}
           role="menu"
-          className="absolute right-0 top-full mt-2 z-20 grid grid-cols-[1fr_auto] auto-rows-[1.75rem] items-center gap-x-6 gap-y-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shadow-md shadow-black/5"
+          className="absolute right-0 top-full mt-2 z-20 grid grid-cols-[1fr_auto] auto-rows-[1.75rem] items-center gap-x-6 gap-y-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 shadow-md shadow-black/5 max-h-[min(24rem,70vh)] overflow-y-auto"
         >
+          <SelectItem
+            id={localeId}
+            label="Language"
+            value={locale}
+            onChange={(value) => onLocaleChange(value as SandboxLocaleTag)}
+            optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
+          />
           <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
           <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
           <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />
@@ -312,10 +331,11 @@ type SelectItemProps = {
   label: string;
   value: string;
   onChange: (value: string) => void;
-  options: SelectOption[];
+  options?: SelectOption[];
+  optionGroups?: SelectOptionGroup[];
 };
 
-function SelectItem({ id, label, value, onChange, options }: SelectItemProps) {
+function SelectItem({ id, label, value, onChange, options, optionGroups }: SelectItemProps) {
   return (
     <>
       <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
@@ -328,11 +348,21 @@ function SelectItem({ id, label, value, onChange, options }: SelectItemProps) {
           onChange={(event) => onChange(event.target.value)}
           className="h-7 appearance-none rounded border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 pl-2 pr-7 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 transition-colors hover:bg-zinc-50 dark:hover:bg-zinc-900 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2 cursor-pointer"
         >
-          {options.map((opt) => (
-            <option key={opt.value} value={opt.value} disabled={opt.disabled}>
-              {opt.label}
-            </option>
-          ))}
+          {optionGroups
+            ? optionGroups.map((group) => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map((opt) => (
+                    <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                      {opt.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))
+            : options?.map((opt) => (
+                <option key={opt.value} value={opt.value} disabled={opt.disabled}>
+                  {opt.label}
+                </option>
+              ))}
         </select>
         <svg
           className="pointer-events-none absolute right-1.5 top-1/2 -translate-y-1/2 size-3 text-zinc-500 dark:text-zinc-400"
@@ -356,6 +386,11 @@ type SelectOption = {
   value: string;
   label: string;
   disabled?: boolean;
+};
+
+type SelectOptionGroup = {
+  label: string;
+  options: SelectOption[];
 };
 
 type SelectProps = {
