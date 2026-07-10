@@ -1,13 +1,18 @@
-import { act, render, renderHook } from '@testing-library/react';
+import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
 import type { PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { StrictMode, useState } from 'react';
-import { describe, expect, it, vi } from 'vitest';
-import { usePlayerContext } from '../context';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { I18nProvider, useLocale } from '../../i18n';
+import { useContainer, usePlayerContext } from '../context';
 import { createPlayer } from '../create-player';
 
 describe('createPlayer', () => {
+  afterEach(() => {
+    document.documentElement.removeAttribute('lang');
+  });
+
   // Create a mock slice that works with any target
   const mockSlice = defineSlice()({
     state: () => ({
@@ -187,6 +192,53 @@ describe('createPlayer', () => {
       );
 
       expect(container.querySelector('[data-testid="child"]')).toBeTruthy();
+    });
+
+    it('does not derive a locale without an I18nProvider', async () => {
+      document.documentElement.lang = 'de';
+      const { Provider, Container } = createPlayer({ features: [mockSlice] });
+
+      function Locale() {
+        const container = useContainer();
+        const locale = useLocale();
+        return <span>{container ? locale : 'pending'}</span>;
+      }
+
+      render(
+        <Provider>
+          <Container>
+            <Locale />
+          </Container>
+        </Provider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('en')).not.toBeNull();
+      });
+    });
+
+    it('inherits an explicit I18nProvider', async () => {
+      const { Provider, Container } = createPlayer({ features: [mockSlice] });
+
+      function Locale() {
+        const container = useContainer();
+        const locale = useLocale();
+        return <span>{container ? locale : 'pending'}</span>;
+      }
+
+      render(
+        <I18nProvider locale="de">
+          <Provider>
+            <Container>
+              <Locale />
+            </Container>
+          </Provider>
+        </I18nProvider>
+      );
+
+      await waitFor(() => {
+        expect(screen.queryByText('de')).not.toBeNull();
+      });
     });
 
     it('provides a stable context value across parent re-renders (fix for #1296)', () => {
