@@ -1,6 +1,46 @@
 import { defineConfig, devices } from '@playwright/test';
 
 const CI = !!process.env.CI;
+const SANDBOX_SPEC = /sandbox-.*i18n\.spec\.ts/;
+const VALUE_OPTIONS = new Set([
+  '-c',
+  '-g',
+  '-j',
+  '-u',
+  '--browser',
+  '--config',
+  '--global-timeout',
+  '--grep',
+  '--grep-invert',
+  '--max-failures',
+  '--output',
+  '--project',
+  '--repeat-each',
+  '--reporter',
+  '--retries',
+  '--shard',
+  '--test-list',
+  '--test-list-invert',
+  '--timeout',
+  '--trace',
+  '--tsconfig',
+  '--update-snapshots',
+  '--workers',
+]);
+
+const args = process.argv.slice(2);
+const selectedProjects = args.flatMap((arg, index) => {
+  if (arg === '--project') {
+    return args[index + 1] ? [args[index + 1]] : [];
+  }
+  return arg.startsWith('--project=') ? [arg.slice('--project='.length)] : [];
+});
+const testFilters = args.filter((arg, index) => !arg.startsWith('-') && !VALUE_OPTIONS.has(args[index - 1] ?? ''));
+const selectedSandboxProject = selectedProjects.some((name) => name.startsWith('sandbox-'));
+const selectedSandboxSpec = testFilters.some((arg) => SANDBOX_SPEC.test(arg));
+const shouldStartSandboxServer =
+  !process.env.SANDBOX_URL &&
+  (selectedSandboxProject || selectedSandboxSpec || (selectedProjects.length === 0 && testFilters.length === 0));
 
 export default defineConfig({
   testDir: './tests',
@@ -34,19 +74,28 @@ export default defineConfig({
     // --- Chromium ---
     {
       name: 'vite-chromium',
+      testIgnore: SANDBOX_SPEC,
       use: { ...devices['Desktop Chrome'], baseURL: 'http://localhost:5180' },
     },
 
     // --- WebKit ---
     {
       name: 'vite-webkit',
+      testIgnore: SANDBOX_SPEC,
       use: { ...devices['Desktop Safari'], baseURL: 'http://localhost:5180' },
     },
 
     // --- Firefox ---
     {
       name: 'vite-firefox',
+      testIgnore: SANDBOX_SPEC,
       use: { ...devices['Desktop Firefox'], baseURL: 'http://localhost:5180' },
+    },
+
+    {
+      name: 'sandbox-chromium',
+      testMatch: SANDBOX_SPEC,
+      use: { ...devices['Desktop Chrome'] },
     },
 
     // --- Future: Next.js ---
@@ -70,14 +119,18 @@ export default defineConfig({
       reuseExistingServer: !CI,
       timeout: 120_000,
     },
-    {
-      command:
-        'pnpm --dir ../.. build:cdn && node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
-      cwd: '../sandbox',
-      port: 5299,
-      reuseExistingServer: !CI,
-      timeout: 300_000,
-    },
+    ...(shouldStartSandboxServer
+      ? [
+          {
+            command:
+              'pnpm --dir ../.. build:cdn && node_modules/.bin/tsx scripts/setup.ts && node_modules/.bin/vite --host --port 5299',
+            cwd: '../sandbox',
+            port: 5299,
+            reuseExistingServer: !CI,
+            timeout: 300_000,
+          },
+        ]
+      : []),
 
     // --- Future: Next.js ---
     // {
