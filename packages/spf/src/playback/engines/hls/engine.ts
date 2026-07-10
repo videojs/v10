@@ -43,7 +43,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
-import { relocationMessagePipelines } from '../../behaviors/dom/relocation-steps';
+import { relocationPipelinesFor } from '../../behaviors/dom/relocation-steps';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
@@ -360,11 +360,10 @@ export function createSimpleHlsEngine(
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
-    // Non-zero-PTS relocation (spike): the discover/stamp steps `establishStartMediaTime`
-    // pairs with, given to both buffer loaders (the steps key by the segment's own track).
-    // Remove these two lines with the composed reactor to drop relocation.
-    videoMessagePipelines: relocationMessagePipelines,
-    audioMessagePipelines: relocationMessagePipelines,
+    // Non-zero-PTS relocation (spike): the per-type discover/stamp steps
+    // `establishStartMediaTime` pairs with. Remove these two lines with the reactor.
+    videoMessagePipelines: relocationPipelinesFor('video'),
+    audioMessagePipelines: relocationPipelinesFor('audio'),
   };
 
   const composition = createComposition(

@@ -21,7 +21,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
-import { relocationMessagePipelines } from '../../behaviors/dom/relocation-steps';
+import { relocationPipelinesFor } from '../../behaviors/dom/relocation-steps';
 import { setupAudioBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
@@ -181,9 +181,9 @@ export function createHlsAudioOnlyEngine(
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
-    // Non-zero-PTS relocation (spike): pair the audio loader with the relocation
-    // steps `establishStartMediaTime` derives from. Remove with the composed reactor.
-    audioMessagePipelines: relocationMessagePipelines,
+    // Non-zero-PTS relocation (spike): pair the audio loader with the per-type
+    // relocation steps `establishStartMediaTime` derives from. Remove with the reactor.
+    audioMessagePipelines: relocationPipelinesFor('audio'),
   };
 
   return createComposition(

@@ -7,7 +7,7 @@ export { getMediaPlaylistMetadata } from '../../../media/types';
 // consumer swapping the tier policy via `config.deriveStartMediaTime`.
 export {
   type DeriveStartMediaTime,
-  derivePerTrackStartMediaTime,
+  derivePerTypeStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
 export type { SimpleHlsMediaAPI, SimpleHlsMediaProps } from './adapter';
 export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';

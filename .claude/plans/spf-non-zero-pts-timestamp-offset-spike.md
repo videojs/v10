@@ -43,20 +43,24 @@ your detailed pass; **DEFERRED** = later/open.
   (config messagePipelines) + DOM split; deleted `relocation.ts`/`origin-discoverer.ts` — `05a0a6452`
 - audio-only relocation wiring (reactor + `audioMessagePipelines` baked into
   `engine-audio-only`) — audio 0-based sandbox-verified
+- per-type keying (#3) + non-0th-segment origin `bmdt/ts − segmentStartTime` (#4) +
+  `derivePerTypeStartMediaTime` unit test — unit + end-to-end (start-at-300) verified
 
 ### Architecture (as landed)
-- **Steps** (`behaviors/dom/relocation-steps.ts`, `relocationMessagePipelines`): a
-  plain config array. `discover` (`readInitTimescale`/`readSegmentOrigin`) writes
-  `state.mediaContainerData`; `stampStartMediaTime` reads that track's origin back
-  and sets `timestampOffset`. Steps read composition `state` from call-time `deps`
-  (no closures/context); one map serves both track types (key by segment trackId).
+- **Steps** (`behaviors/dom/relocation-steps.ts`, `relocationPipelinesFor(type)`): a
+  plain config array, one per track type. `discover` (`readInitTimescale`/
+  `readSegmentOrigin`) writes `state.mediaContainerData[type]` (`timescale`,
+  `baseMediaDecodeTime`, `segmentStartTime`); `stampStartMediaTime` reads that type's
+  origin (`bmdt/ts − segmentStartTime`) back and sets `timestampOffset`. Steps read
+  composition `state` from call-time `deps` (no closures/context). ABR rungs of a
+  type share the entry.
 - **Reactor** (`behaviors/establish-start-media-time.ts`, DOM-free): 3 states —
   `inactive` (clears the slot per source) / `monitoring` (derive effect = injected
   `deriveStartMediaTime` seam → writes `Track.startMediaTime`, the consume) /
   `established` (derive disabled, sticky). Owns `mediaContainerData` on `state`;
   selection **optional/defensive** (composes across video-only/audio-only/both).
 - `StepDeps` carries the composition `{state,context,config}` (opaque conduit).
-  Engines bake `*MessagePipelines = relocationMessagePipelines` + the reactor +
+  Engines bake `*MessagePipelines = relocationPipelinesFor(type)` + the reactor +
   `mediaContainerData` slot + `deriveStartMediaTime` config, all comment-marked.
 
 ### REVIEW — your detailed pass
@@ -81,9 +85,6 @@ your detailed pass; **DEFERRED** = later/open.
   with comment markers; revisit a tree-shakeable opt-in + measure Tier-0 bundle.
 
 ### DEFERRED / open (see the doc's Open questions)
-- **Per-type keying + non-0th-segment origin (#3/#4)** — next up. `mediaContainerData`
-  keyed by track *type* (ABR rungs share); `startMediaTime = bmdt/ts − segment.startTime`
-  so non-zero starts (initial currentTime ≠ 0, live/DVR) relocate correctly.
 - Tier 2 shared-`min` (a `deriveStartMediaTime` swap) + barrier-liveness bound.
 - Honest-`startMediaTime`-everywhere convergence + live-anchor dedup.
 - Suspected pre-existing: seek-into-evicted-back-buffer.

@@ -33,9 +33,11 @@ import { findTrackById } from '../../media/utils/tracks';
 export interface EstablishStartMediaTimeState {
   presentation?: MaybeResolvedPresentation;
   /**
-   * Transient per-track container data (keyed by track id), accumulated by the
-   * discover steps across appends. Reset per source. Never the model — the churn
-   * stays here; only the settled `startMediaTime` reaches `Track`.
+   * Transient origin-establishment data, keyed by **track type** (`'video'` /
+   * `'audio'`) — per spec one init+media pair per type suffices, and ABR rungs of
+   * a type share the origin. Filled by the discover steps across appends, reset
+   * per source. Never the model — the churn stays here; only the settled
+   * `startMediaTime` reaches `Track`.
    */
   mediaContainerData?: Record<string, MediaContainerData>;
   selectedVideoTrackId?: string;
@@ -48,27 +50,35 @@ export interface DeriveStartMediaTimeContext {
 }
 
 /**
- * Reduce the discovered container data into each track's `startMediaTime`.
- * `undefined` for a track means "not ready yet". Pure and injected — the single
- * point of tier variation: Tier 1 is per-track own; a Tier-2 variant returns the
- * shared `min` across the selected A/V origins for every track.
+ * Reduce the discovered container data (keyed by track type) into each type's
+ * `startMediaTime`. `undefined` means "not ready yet". Pure and injected — the
+ * single point of tier variation: Tier 1 is per-type own; a Tier-2 variant returns
+ * the shared `min` across the selected A/V origins for every type.
  */
 export type DeriveStartMediaTime = (
   containerData: Record<string, MediaContainerData>,
   ctx: DeriveStartMediaTimeContext
 ) => Record<string, number | undefined>;
 
-/** Tier 1 default — each track relocates by its own origin (`baseMediaDecodeTime ÷ timescale`). */
-export const derivePerTrackStartMediaTime: DeriveStartMediaTime = (containerData) => {
+/**
+ * Tier 1 default — each type relocates by its own origin:
+ * `startMediaTime = baseMediaDecodeTime/timescale − segmentStartTime` (the
+ * `segmentStartTime` term makes it the stream origin even when the first loaded
+ * segment isn't the 0th).
+ */
+export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData) => {
   const out: Record<string, number | undefined> = {};
-  for (const [id, { timescale, baseMediaDecodeTime }] of Object.entries(containerData)) {
-    out[id] = timescale != null && baseMediaDecodeTime != null ? baseMediaDecodeTime / timescale : undefined;
+  for (const [type, { timescale, baseMediaDecodeTime, segmentStartTime }] of Object.entries(containerData)) {
+    out[type] =
+      timescale != null && baseMediaDecodeTime != null && segmentStartTime != null
+        ? baseMediaDecodeTime / timescale - segmentStartTime
+        : undefined;
   }
   return out;
 };
 
 export interface EstablishStartMediaTimeConfig {
-  /** The reduce seam (tier knob). Defaults to {@link derivePerTrackStartMediaTime}. */
+  /** The reduce seam (tier knob). Defaults to {@link derivePerTypeStartMediaTime}. */
   deriveStartMediaTime?: DeriveStartMediaTime;
 }
 
@@ -84,7 +94,7 @@ function stampTracks(presentation: Presentation, startMediaTimes: Record<string,
     switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
       ...switchingSet,
       tracks: switchingSet.tracks.map((track) => {
-        const startMediaTime = startMediaTimes[track.id];
+        const startMediaTime = startMediaTimes[track.type];
         if (startMediaTime === undefined || track.startMediaTime === startMediaTime) return track;
         changed = true;
         return { ...track, startMediaTime };
@@ -112,7 +122,7 @@ function establishStartMediaTimeSetup({
   state,
   config = {},
 }: EstablishStartMediaTimeDeps): Reactor<EstablishFsmState | 'destroying' | 'destroyed'> {
-  const derive = config.deriveStartMediaTime ?? derivePerTrackStartMediaTime;
+  const derive = config.deriveStartMediaTime ?? derivePerTypeStartMediaTime;
 
   const selectionContext = (): DeriveStartMediaTimeContext => ({
     selectedVideoTrackId: state.selectedVideoTrackId?.get(),

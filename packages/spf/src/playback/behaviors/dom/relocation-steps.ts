@@ -34,62 +34,78 @@ function containerSlot(deps: StepDeps): ContainerSlot {
   return (deps.state as unknown as StateSignals<EstablishStartMediaTimeState>).mediaContainerData;
 }
 
-/** Synchronous RMW of the per-track entry — disjoint keys across producers, so no lost update. */
-function writeContainer(slot: ContainerSlot, trackId: string, patch: Partial<MediaContainerData>): void {
-  update(slot, (current) => ({ ...current, [trackId]: { ...current?.[trackId], ...patch } }));
+/** Synchronous RMW of the per-type entry — disjoint keys across producers, so no lost update. */
+function writeContainer(slot: ContainerSlot, trackType: string, patch: Partial<MediaContainerData>): void {
+  update(slot, (current) => ({ ...current, [trackType]: { ...current?.[trackType], ...patch } }));
 }
 
-/** Init pipeline step: head-peek the `mdhd` timescale into `state.mediaContainerData[trackId]`. */
-const readInitTimescale: LoadStep = async (frame, _signal, deps) => {
-  const { op } = frame;
-  if (op.type !== 'append-init' || !frame.data) return;
-  const slot = containerSlot(deps);
-  const { trackId } = op.meta;
-  if (peek(slot)?.[trackId]?.timescale !== undefined) return; // already have it
-  frame.data = await peekHead(frame.data, (bytes) => {
-    const timescale = readFirstMediaTimescale(bytes);
-    if (timescale === undefined) return false;
-    writeContainer(slot, trackId, { timescale });
-    return true;
-  });
-};
-
-/** Media-segment pipeline step: head-peek the `tfdt` baseMediaDecodeTime into `state.mediaContainerData[trackId]`. */
-const readSegmentOrigin: LoadStep = async (frame, _signal, deps) => {
-  const { op } = frame;
-  if (op.type !== 'append-segment' || !frame.data) return;
-  const slot = containerSlot(deps);
-  const { trackId } = op.meta;
-  if (peek(slot)?.[trackId]?.baseMediaDecodeTime !== undefined) return; // established
-  frame.data = await peekHead(frame.data, (bytes) => {
-    const baseMediaDecodeTime = readFirstBaseMediaDecodeTime(bytes);
-    if (baseMediaDecodeTime === undefined) return false;
-    writeContainer(slot, trackId, { baseMediaDecodeTime });
-    return true;
-  });
-};
-
 /**
- * Media-segment stamp step. Tier 1: relocate by the track's *own* discovered origin,
- * read straight from `mediaContainerData` (populated by `readSegmentOrigin` earlier
- * in this same pipeline, so it's available synchronously). If no complete origin was
- * found — TS / containerless / a 0-PTS source — leave the append native (offset 0).
+ * Relocation pipelines for one track type — a plain config `messagePipelines`.
+ * Keyed by **track type** (`'video'` / `'audio'`), so ABR rungs of a type share the
+ * origin (discover skips once the type's value is present). The steps read/write
+ * `state.mediaContainerData[trackType]` via their call-time `deps`.
  */
-const stampStartMediaTime: LoadStep = (frame, _signal, deps) => {
-  const { op } = frame;
-  if (op.type !== 'append-segment') return;
-  const data = peek(containerSlot(deps))?.[op.meta.trackId];
-  if (data?.timescale === undefined || data.baseMediaDecodeTime === undefined) return;
-  // startTime is 0-based, so the relocating offset is −startMediaTime.
-  frame.meta = { ...(frame.meta ?? op.meta), timestampOffset: -(data.baseMediaDecodeTime / data.timescale) };
-};
+export function relocationPipelinesFor(trackType: 'video' | 'audio'): MessagePipelines {
+  /** Init step: head-peek the `mdhd` timescale into `mediaContainerData[trackType]`. */
+  const readInitTimescale: LoadStep = async (frame, _signal, deps) => {
+    const { op } = frame;
+    if (op.type !== 'append-init' || !frame.data) return;
+    const slot = containerSlot(deps);
+    if (peek(slot)?.[trackType]?.timescale !== undefined) return; // already have it (any rung of this type)
+    frame.data = await peekHead(frame.data, (bytes) => {
+      const timescale = readFirstMediaTimescale(bytes);
+      if (timescale === undefined) return false;
+      writeContainer(slot, trackType, { timescale });
+      return true;
+    });
+  };
 
-/**
- * Relocation pipelines — a plain config `messagePipelines`. The same map serves
- * every track type: the steps key by the segment's own `op.meta.trackId`.
- */
-export const relocationMessagePipelines: MessagePipelines = () => ({
-  remove: [dispatchStep],
-  'append-init': [fetchStep, readInitTimescale, dispatchStep],
-  'append-segment': [fetchStep, readSegmentOrigin, stampStartMediaTime, dispatchStep],
-});
+  /**
+   * Media-segment step: head-peek the `tfdt` baseMediaDecodeTime, recording the
+   * segment's 0-based `startTime` with it — the origin is `bmdt/ts − segmentStartTime`,
+   * so the first *loaded* segment need not be the 0th.
+   */
+  const readSegmentOrigin: LoadStep = async (frame, _signal, deps) => {
+    const { op } = frame;
+    if (op.type !== 'append-segment' || !frame.data) return;
+    const slot = containerSlot(deps);
+    if (peek(slot)?.[trackType]?.baseMediaDecodeTime !== undefined) return; // established
+    const segmentStartTime = op.meta.startTime;
+    frame.data = await peekHead(frame.data, (bytes) => {
+      const baseMediaDecodeTime = readFirstBaseMediaDecodeTime(bytes);
+      if (baseMediaDecodeTime === undefined) return false;
+      writeContainer(slot, trackType, { baseMediaDecodeTime, segmentStartTime });
+      return true;
+    });
+  };
+
+  /**
+   * Stamp step. Tier 1: relocate by this type's *own* discovered origin, read
+   * straight from `mediaContainerData` (populated by `readSegmentOrigin` earlier in
+   * this pipeline, so it's synchronous). If no complete origin was found — TS /
+   * containerless / a 0-PTS source — leave the append native (offset 0).
+   */
+  const stampStartMediaTime: LoadStep = (frame, _signal, deps) => {
+    const { op } = frame;
+    if (op.type !== 'append-segment') return;
+    const data = peek(containerSlot(deps))?.[trackType];
+    if (
+      data?.timescale === undefined ||
+      data.baseMediaDecodeTime === undefined ||
+      data.segmentStartTime === undefined
+    ) {
+      return;
+    }
+    // startMediaTime = baseMediaDecodeTime/timescale − segmentStartTime; offset = −startMediaTime.
+    frame.meta = {
+      ...(frame.meta ?? op.meta),
+      timestampOffset: data.segmentStartTime - data.baseMediaDecodeTime / data.timescale,
+    };
+  };
+
+  return () => ({
+    remove: [dispatchStep],
+    'append-init': [fetchStep, readInitTimescale, dispatchStep],
+    'append-segment': [fetchStep, readSegmentOrigin, stampStartMediaTime, dispatchStep],
+  });
+}

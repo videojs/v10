@@ -168,16 +168,22 @@ export type Track = Ham &
   };
 
 /**
- * Raw per-track values parsed from the media container, accumulated as they're
- * discovered across appends (`mdhd` timescale from the init, `tfdt`
- * baseMediaDecodeTime from the first media segment) — hence both optional. The
- * transient input the `establishStartMediaTime` reactor reduces into
- * `Track.startMediaTime`. Named for what it holds (container data), not the one
- * thing currently derived from it, so other box values can join later.
+ * Per-track-type origin-establishment data, accumulated across appends (`mdhd`
+ * timescale from the init, `tfdt` baseMediaDecodeTime from the first media
+ * segment) — hence optional. The transient input the `establishStartMediaTime`
+ * reactor reduces into `Track.startMediaTime`.
+ *
+ * `segmentStartTime` is the 0-based presentation start of the segment
+ * `baseMediaDecodeTime` was read from — *not* a container value (it's the playlist
+ * position), but co-located because the origin is `baseMediaDecodeTime/timescale −
+ * segmentStartTime`: the first *loaded* segment isn't necessarily the 0th (a
+ * non-zero initial `currentTime`, or live/DVR), so the decode time alone isn't the
+ * stream origin.
  */
 export interface MediaContainerData {
   timescale?: number;
   baseMediaDecodeTime?: number;
+  segmentStartTime?: number;
 }
 
 /**

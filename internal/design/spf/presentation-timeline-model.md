@@ -158,34 +158,36 @@ signals are **optional/defensive**, so the one reactor composes across video-onl
 audio-only / both. Per-source freshness is structural (the `inactive` transition
 clears the slot), not a hand-rolled reset.
 
-- **Discover** (per-track step). A head-peek step reads the fetched byte stream —
-  the init (`mdhd` timescale) and the first media segment (`tfdt`
-  baseMediaDecodeTime) — and writes the raw values into `mediaContainerData`, a
-  `Signal<Record<TrackId, { timescale?; baseMediaDecodeTime? }>>`. It's a
-  **two-source** read across two appends, but the slot *is* the shared state (init
-  writes `timescale`, the first segment writes `baseMediaDecodeTime`), so the two
+- **Discover** (per-type steps). Head-peek steps read the init (`mdhd` timescale)
+  and the first media segment (`tfdt` baseMediaDecodeTime, plus that segment's
+  0-based `startTime`) and write them into `mediaContainerData`, a
+  `Signal<Record<TrackType, { timescale?; baseMediaDecodeTime?; segmentStartTime? }>>`
+  **keyed by track type** (`'video'`/`'audio'`) — one init+media pair per type
+  suffices, and ABR rungs of a type share the entry. It's a **two-source** read
+  across two appends, but the slot *is* the shared state (init writes `timescale`,
+  the first media segment writes `baseMediaDecodeTime`+`segmentStartTime`), so the
   steps are independent — no shared closure, no self-discrimination. Writes are
   **synchronous** RMW of disjoint keys (the sync-merge invariant keeps this clear
-  of the #1746 hazard; an async RMW of the slot would reintroduce it). Runs on the
-  *fetched* stream, so transport stays pure `fetchBytes` — discovery is a content
-  concern. `mediaContainerData` is named for what it holds (raw parsed container
-  values) rather than the one thing derived from it, so other box data can land
-  there later without a rename.
+  of the #1746 hazard). Runs on the *fetched* stream, so transport stays pure
+  `fetchBytes`. `segmentStartTime` is recorded because the origin is
+  `baseMediaDecodeTime/timescale − segmentStartTime` — the first *loaded* segment
+  isn't necessarily the 0th (non-zero initial `currentTime`, live/DVR).
 - **Derive** (reactor effect). Watches `mediaContainerData` (+ selection for
-  Tier 2) and, via the injected **`deriveStartMediaTime`** seam, writes the
-  settled per-track `startMediaTime` onto the `Track`s. The seam is **pure** —
-  `(mediaContainerData, ctx) => Record<TrackId, number | undefined>`, where
-  `undefined` means "not ready yet" (the *when*) and the number is the *how* — and
-  the effect is the sole writer of the field. It's the **only tier knob**: Tier 1
-  writes each track its own (`baseMediaDecodeTime / timescale`); Tier 2 writes the
-  `min` across the selected A/V origins onto every track. No Presentation-level
-  field is needed — Tier 2 just denormalizes the min across the per-track slots.
+  Tier 2) and, via the injected **`deriveStartMediaTime`** seam, writes the settled
+  per-type `startMediaTime` onto the `Track`s (each type's value stamped on every
+  track of that type). The seam is **pure** —
+  `(mediaContainerData, ctx) => Record<TrackType, number | undefined>` — `undefined`
+  means "not ready yet"; the effect is the sole writer of the field. It's the
+  **only tier knob**: Tier 1 gives each type its own
+  (`baseMediaDecodeTime/timescale − segmentStartTime`); Tier 2 writes the `min`
+  across the selected A/V origins to every type. No Presentation-level field is
+  needed — Tier 2 just denormalizes the min across the per-type entries.
 - **Apply** (per-track step). A stamp step relocates via `timestampOffset =
   startTime − startMediaTime`, which the SourceBufferActor applies to
-  `SourceBuffer.timestampOffset`. **Tier 1** reads the track's *own* discovered
-  origin straight from `mediaContainerData` — populated by the discover step
-  earlier in the same pipeline, so it's synchronous, independent of the
-  derive/model, and robust to `established` + late tracks. When no complete origin
+  `SourceBuffer.timestampOffset`. **Tier 1** reads the type's *own* discovered
+  origin (`bmdt/ts − segmentStartTime`) straight from `mediaContainerData` —
+  populated by the discover step earlier in the same pipeline, so it's synchronous,
+  independent of the derive/model, and robust to `established` + late tracks. When no complete origin
   is found (TS / containerless / 0-PTS) it leaves the append native (offset 0).
   Reading the *reduced* `Track.startMediaTime` instead — tier-agnostic apply, needed
   for Tier 2's shared `min` — is a deferred follow-up (it's where an abortable
