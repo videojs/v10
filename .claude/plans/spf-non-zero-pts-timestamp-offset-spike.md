@@ -45,6 +45,14 @@ your detailed pass; **DEFERRED** = later/open.
   `engine-audio-only`) — audio 0-based sandbox-verified
 - per-type keying (#3) + non-0th-segment origin `bmdt/ts − segmentStartTime` (#4) +
   `derivePerTypeStartMediaTime` unit test — unit + end-to-end (start-at-300) verified
+- text-cue relocation (#6) — `relocatingTextPipelines` (`resolveWithMetadata →
+  relocateCues → dispatchCues`) shifts cues by `mapCorrection − startMediaTime`, reading
+  the primary A/V origin (video ?? audio, awaited). Text loader rearchitected onto the
+  v/a composed-step model (`TextFrame`/`TextLoadStep`/`TextStepDeps`/`TextMessagePipelines`,
+  base `resolveCuesStep`/`dispatchCuesStep`); resolver reverted to a pure `(url) → cues`
+  host primitive; composition `state` threaded via `compositionDeps` into `TextStepDeps`;
+  engine bakes `textMessagePipelines` (mirrors `video`/`audioMessagePipelines`).
+  Sandbox-verified 0-based (active cue brackets 0-based playhead)
 
 ### Architecture (as landed)
 - **Steps** (`behaviors/dom/relocation-steps.ts`, `relocationPipelinesFor(type)`): a
@@ -78,9 +86,6 @@ your detailed pass; **DEFERRED** = later/open.
   the *raw* discovered origin from `mediaContainerData`, not the reduced
   `Track.startMediaTime`. Tier 2's shared-`min` is where stamp reads the reduced
   model value — revisit the stamp/`established` interaction then.
-- **Text-cue relocation** — DROPPED with `relocation.ts`; captions on a non-zero-PTS
-  source aren't rebased. Reinstate a relocating `resolveTextTrackSegment` reading the
-  primary video track's `startMediaTime`.
 - **Composition opt-in / tree-shaking** — baked into the standard engine (per decision)
   with comment markers; revisit a tree-shakeable opt-in + measure Tier-0 bundle.
 

@@ -12,11 +12,19 @@
  * carry the `SourceBuffer`-backed actor); the relocation logic itself is byte/signal
  * work. Tier 1: `stamp` computes the offset straight from the discovered origin, so
  * it's independent of the reactor's derive and works for late tracks.
+ *
+ * The text half (`relocatingTextPipelines`) is the same idea for the text-segment
+ * loader: a `resolveWithMetadata → relocateCues → dispatchCues` pipeline that shifts
+ * VTT cues onto the same 0-based timeline, reading the primary A/V track's
+ * `startMediaTime` (the reactor's consumed value) via `deps`.
  */
 import type { StateSignals } from '../../../core/composition/create-composition';
+import { effect } from '../../../core/signals/effect';
 import { peek, type Signal, update } from '../../../core/signals/primitives';
+import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../../media/dom/text/resolve-vtt-segment';
 import { readFirstBaseMediaDecodeTime, readFirstMediaTimescale } from '../../../media/mp4/timestamp-origin';
 import type { MediaContainerData } from '../../../media/types';
+import { findTrackById } from '../../../media/utils/tracks';
 import {
   dispatchStep,
   fetchStep,
@@ -24,6 +32,7 @@ import {
   type MessagePipelines,
   type StepDeps,
 } from '../../actors/dom/segment-loader';
+import { dispatchCuesStep, type TextLoadStep, type TextMessagePipelines } from '../../actors/text-track-segment-loader';
 import { peekHead } from '../../primitives/head-peek';
 import type { EstablishStartMediaTimeState } from '../establish-start-media-time';
 
@@ -109,3 +118,80 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio'): MessagePip
     'append-segment': [fetchStep, readSegmentOrigin, stampStartMediaTime, dispatchStep],
   });
 }
+
+// ============================================================================
+// TEXT (cue relocation)
+// ============================================================================
+
+/** Resolve once `read()` returns a number. No bound: for fMP4 the A/V origin always establishes (0-PTS → 0). */
+function awaitDefined(read: () => number | undefined): Promise<number> {
+  return new Promise((resolve) => {
+    let stop: (() => void) | undefined;
+    stop = effect(() => {
+      const value = read();
+      if (value !== undefined) {
+        stop?.();
+        resolve(value);
+      }
+    });
+  });
+}
+
+/**
+ * Resolve step for the relocation text pipeline. Reuses the injected host resolver
+ * (`deps.resolveSegment`) for cues and fetches the `X-TIMESTAMP-MAP` header in
+ * parallel, stashing it on `frame.metadata` for `relocateCuesStep`. Replaces the
+ * base `resolveCuesStep` (which fetches cues only) — text's native `<track>` parser
+ * discards the header, so the map needs its own raw-bytes fetch.
+ */
+const resolveWithMetadataStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
+  const [cues, metadata] = await Promise.all([
+    deps.resolveSegment(frame.op.segment.url),
+    resolveVttSegmentMetadata(frame.op.segment.url),
+  ]);
+  if (signal.aborted) return;
+  frame.cues = cues;
+  frame.metadata = metadata;
+};
+
+/**
+ * Relocate step — shifts each VTT cue onto the 0-based presentation timeline:
+ * `cueFinal = cueNative − startMediaTime`, where `startMediaTime` is the primary
+ * A/V track's origin (selected **video**, else **audio** — the single-anchor rule,
+ * and defensive like the reactor's optional selection) and `cueNative` folds in the
+ * `X-TIMESTAMP-MAP` correction (`mpegts/90000 − local`) for map-bearing VTT (Apple)
+ * or is the absolute cue time (no map, e.g. Mux). Text can resolve before A/V
+ * establishes, so the origin is awaited; fMP4 always establishes it (0-PTS → 0),
+ * and a text-only source (no A/V selected) simply gets offset 0.
+ */
+const relocateCuesStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
+  if (!frame.cues?.length) return;
+  const state = deps.state as unknown as StateSignals<EstablishStartMediaTimeState>;
+  const startMediaTime = await awaitDefined(() => {
+    const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
+    if (primaryId === undefined) return 0;
+    const presentation = state.presentation.get();
+    return presentation ? findTrackById(presentation, primaryId)?.startMediaTime : undefined;
+  });
+  if (signal.aborted) return;
+  const { timestampMap } = (frame.metadata as TextSegmentMetadata | undefined) ?? {};
+  const mapCorrection = timestampMap ? timestampMap.mpegts / 90000 - timestampMap.local : 0;
+  const delta = mapCorrection - startMediaTime;
+  if (delta !== 0) {
+    for (const cue of frame.cues) {
+      cue.startTime += delta;
+      cue.endTime += delta;
+    }
+  }
+};
+
+/**
+ * Relocation text pipeline — the text analog of `relocationPipelinesFor(type)`.
+ * `resolveWithMetadata` (cues + `X-TIMESTAMP-MAP`) → `relocateCues` (shift by the
+ * primary A/V origin) → `dispatchCues`.
+ */
+export const relocatingTextPipelines: TextMessagePipelines<VTTCue> = () => [
+  resolveWithMetadataStep,
+  relocateCuesStep,
+  dispatchCuesStep,
+];

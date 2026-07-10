@@ -43,7 +43,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
-import { relocationPipelinesFor } from '../../behaviors/dom/relocation-steps';
+import { relocatingTextPipelines, relocationPipelinesFor } from '../../behaviors/dom/relocation-steps';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
@@ -54,8 +54,9 @@ import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 // Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
-// `video/audioMessagePipelines` finalConfig entries, the `mediaContainerData` state
-// slot, and the `deriveStartMediaTime` config field to drop relocation entirely.
+// `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
+// state slot, and the `deriveStartMediaTime` config field to drop relocation entirely
+// (text then falls back to the plain `resolveVttSegment` resolver).
 import { type DeriveStartMediaTime, establishStartMediaTime } from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
@@ -355,6 +356,9 @@ export function createSimpleHlsEngine(
     // composes always.
     reschedule: config.reschedule ?? delayedReschedule(mediaPlaylistReloadDelay),
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
+    // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
+    // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
+    textMessagePipelines: relocatingTextPipelines,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
@@ -423,8 +427,8 @@ export function createSimpleHlsEngine(
       // segment-loader pipelines to context. MUST precede `setup*BufferActors`
       // so the pipelines are published before the loaders read them. Remove this
       // one line (+ the import, the `mediaContainerData`/`*MessagePipelines`
-      // slots, and the `deriveStartMediaTime` config) to drop relocation and
-      // test the Tier-0 baseline / bundle size.
+      // slots including `textMessagePipelines`, and the `deriveStartMediaTime`
+      // config) to drop relocation and test the Tier-0 baseline / bundle size.
       establishStartMediaTime,
       // ─────────────────────────────────────────────────────────────────────
 
