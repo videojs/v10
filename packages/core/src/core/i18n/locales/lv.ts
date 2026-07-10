@@ -55,6 +55,7 @@ export default {
   Settings: 'Iestatījumi',
   Quality: 'Kvalitāte',
   Audio: 'Audio',
+  Default: 'Noklusējuma',
   Speed: 'Ātrums',
   Captions: 'Subtitri',
   'Playback rate': 'Atskaņošanas ātrums',

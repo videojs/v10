@@ -202,6 +202,25 @@ describe('AudioTrackRadioGroupElement', () => {
     });
   });
 
+  it('renders translated Default track labels', async () => {
+    const { menu, options } = setup({
+      locale: 'x-test-audio',
+      audioTrackList: [
+        { id: '0', label: 'Default', language: '', enabled: true },
+        { id: '1', label: 'English', language: 'en', enabled: false },
+      ],
+    });
+
+    await waitForMenu(menu, options);
+
+    registerI18n('x-test-audio', { Default: 'Standard' });
+
+    await waitForAssertion(() => {
+      const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+      expect(items.map((item) => item.textContent)).toEqual(['Standard', 'English']);
+    });
+  });
+
   it('sets the selected audio track', async () => {
     const selectAudioTrack = vi.fn();
     const { menu, options } = setup({ selectAudioTrack });

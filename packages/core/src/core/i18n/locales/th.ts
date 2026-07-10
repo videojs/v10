@@ -54,6 +54,7 @@ export default {
   Settings: 'การตั้งค่า',
   Quality: 'คุณภาพ',
   Audio: 'Audio',
+  Default: 'ค่าเริ่มต้น',
   Speed: 'ความเร็ว',
   Captions: 'คำบรรยาย',
   'Playback rate': 'อัตราการเล่น',

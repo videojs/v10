@@ -55,6 +55,7 @@ export default {
   Settings: 'Beállítások',
   Quality: 'Minőség',
   Audio: 'Audio',
+  Default: 'Alapértelmezett',
   Speed: 'Sebesség',
   Captions: 'Feliratok',
   'Playback rate': 'Lejátszási sebesség',

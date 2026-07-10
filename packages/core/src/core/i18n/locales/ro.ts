@@ -56,6 +56,7 @@ export default {
   Settings: 'Setări',
   Quality: 'Calitate',
   Audio: 'Audio',
+  Default: 'Implicit',
   Speed: 'Viteză',
   Captions: 'Subtitrări',
   'Playback rate': 'Rată de redare',

@@ -56,6 +56,7 @@ export default {
   Settings: 'Roghainnean',
   Quality: 'Càileachd',
   Audio: 'Audio',
+  Default: 'Bunaiteach',
   Speed: 'Astar',
   Captions: 'Caipseanan',
   'Playback rate': 'Reat cluich',

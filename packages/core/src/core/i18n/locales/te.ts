@@ -54,6 +54,7 @@ export default {
   Settings: 'సెట్టింగ్‌లు',
   Quality: 'నాణ్యత',
   Audio: 'Audio',
+  Default: 'డిఫాల్ట్',
   Speed: 'వేగం',
   Captions: 'శీర్షికలు',
   'Playback rate': 'ప్లేబ్యాక్ రేట్',

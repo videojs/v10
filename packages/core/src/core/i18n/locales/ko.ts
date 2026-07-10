@@ -56,6 +56,7 @@ export default {
   Settings: '설정',
   Quality: '품질',
   Audio: 'Audio',
+  Default: '기본값',
   Speed: '속도',
   Captions: '캡션',
   'Playback rate': '재생 속도',

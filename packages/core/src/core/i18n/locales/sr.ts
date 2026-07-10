@@ -54,6 +54,7 @@ export default {
   Settings: 'Podešavanja',
   Quality: 'Kvalitet',
   Audio: 'Audio',
+  Default: 'Подразумевано',
   Speed: 'Brzina',
   Captions: 'Titlovi',
   'Playback rate': 'Stopa reprodukcije',

@@ -54,6 +54,7 @@ export default {
   Settings: 'Nastavení',
   Quality: 'Kvalita',
   Audio: 'Audio',
+  Default: 'Výchozí',
   Speed: 'Rychlost',
   Captions: 'Titulky',
   'Playback rate': 'Rychlost přehrávání',

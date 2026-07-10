@@ -56,6 +56,7 @@ export default {
   Settings: 'Seaded',
   Quality: 'Kvaliteet',
   Audio: 'Audio',
+  Default: 'Vaikimisi',
   Speed: 'Kiirus',
   Captions: 'Subtiitrid',
   'Playback rate': 'Taasesituse kiirus',

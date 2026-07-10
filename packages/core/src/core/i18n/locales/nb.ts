@@ -55,6 +55,7 @@ export default {
   Settings: 'Innstillinger',
   Quality: 'Kvalitet',
   Audio: 'Audio',
+  Default: 'Standard',
   Speed: 'Hastighet',
   Captions: 'Teksting',
   'Playback rate': 'Avspillingshastighet',

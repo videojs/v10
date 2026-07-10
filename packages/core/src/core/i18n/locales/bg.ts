@@ -54,6 +54,7 @@ export default {
   Settings: 'Настройки',
   Quality: 'Качество',
   Audio: 'Audio',
+  Default: 'По подразбиране',
   Speed: 'Скорост',
   Captions: 'Надписи',
   'Playback rate': 'Скорост на възпроизвеждане',

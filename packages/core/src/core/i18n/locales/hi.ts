@@ -55,6 +55,7 @@ export default {
   Settings: 'सेटिंग्स',
   Quality: 'गुणवत्ता',
   Audio: 'Audio',
+  Default: 'डिफ़ॉल्ट',
   Speed: 'गति',
   Captions: 'कैप्शन',
   'Playback rate': 'प्लेबैक दर',

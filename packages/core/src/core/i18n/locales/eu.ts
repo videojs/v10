@@ -55,6 +55,7 @@ export default {
   Settings: 'Ezarpenak',
   Quality: 'Kalitatea',
   Audio: 'Audio',
+  Default: 'Lehenetsia',
   Speed: 'Abiadura',
   Captions: 'Azpitituluak',
   'Playback rate': 'Erreprodukzio-abiadura',

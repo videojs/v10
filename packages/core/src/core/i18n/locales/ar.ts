@@ -54,6 +54,7 @@ export default {
   Settings: 'الإعدادات',
   Quality: 'الجودة',
   Audio: 'Audio',
+  Default: 'افتراضي',
   Speed: 'السرعة',
   Captions: 'التسميات التوضيحية',
   'Playback rate': 'سرعة التشغيل',

@@ -55,6 +55,7 @@ export default {
   Settings: 'Cài đặt',
   Quality: 'Chất lượng',
   Audio: 'Audio',
+  Default: 'Mặc định',
   Speed: 'Tốc độ',
   Captions: 'Phụ đề',
   'Playback rate': 'Tốc độ phát lại',

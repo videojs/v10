@@ -55,6 +55,7 @@ export default {
   Settings: 'Axustes',
   Quality: 'Calidade',
   Audio: 'Audio',
+  Default: 'Predeterminado',
   Speed: 'Velocidade',
   Captions: 'Subtítulos para xordos',
   'Playback rate': 'Velocidade de reprodución',

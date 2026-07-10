@@ -56,6 +56,7 @@ export default {
   Settings: 'Instellingen',
   Quality: 'Kwaliteit',
   Audio: 'Audio',
+  Default: 'Standaard',
   Speed: 'Snelheid',
   Captions: 'Ondertiteling',
   'Playback rate': 'Afspeelsnelheid',

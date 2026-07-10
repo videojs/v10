@@ -56,6 +56,7 @@ export default {
   Settings: 'Ayarlar',
   Quality: 'Kalite',
   Audio: 'Audio',
+  Default: 'Varsayılan',
   Speed: 'Hız',
   Captions: 'Altyazılar',
   'Playback rate': 'Oynatma hızı',

@@ -58,6 +58,7 @@ export type TranslationParams = {
   Settings: never;
   Quality: never;
   Audio: never;
+  Default: never;
   Speed: never;
   Captions: never;
   'Playback rate': never;

@@ -56,6 +56,7 @@ export default {
   Settings: 'Ρυθμίσεις',
   Quality: 'Ποιότητα',
   Audio: 'Audio',
+  Default: 'Προεπιλογή',
   Speed: 'Ταχύτητα',
   Captions: 'Λεζάντες',
   'Playback rate': 'Ρυθμός αναπαραγωγής',

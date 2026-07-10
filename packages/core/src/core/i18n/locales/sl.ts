@@ -56,6 +56,7 @@ export default {
   Settings: 'Nastavitve',
   Quality: 'Kakovost',
   Audio: 'Audio',
+  Default: 'Privzeto',
   Speed: 'Hitrost',
   Captions: 'Podnapisi',
   'Playback rate': 'Hitrost predvajanja',

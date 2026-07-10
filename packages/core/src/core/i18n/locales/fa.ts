@@ -55,6 +55,7 @@ export default {
   Settings: 'تنظیمات',
   Quality: 'کیفیت',
   Audio: 'Audio',
+  Default: 'پیش‌فرض',
   Speed: 'سرعت',
   Captions: 'زیرنویس‌ها',
   'Playback rate': 'سرعت پخش',

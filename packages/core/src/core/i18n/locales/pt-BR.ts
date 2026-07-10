@@ -55,6 +55,7 @@ export default {
   Settings: 'Configurações',
   Quality: 'Qualidade',
   Audio: 'Audio',
+  Default: 'Padrão',
   Speed: 'Velocidade',
   Captions: 'Legendas',
   'Playback rate': 'Velocidade de reprodução',

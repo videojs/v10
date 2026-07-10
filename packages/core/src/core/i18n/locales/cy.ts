@@ -55,6 +55,7 @@ export default {
   Settings: 'Gosodiadau',
   Quality: 'Ansawdd',
   Audio: 'Audio',
+  Default: 'Rhagosodedig',
   Speed: 'Cyflymder',
   Captions: 'Capsiynau',
   'Playback rate': 'Cyfradd chwarae',

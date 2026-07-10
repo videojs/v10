@@ -54,6 +54,7 @@ export default {
   Settings: '设置',
   Quality: '画质',
   Audio: 'Audio',
+  Default: '默认',
   Speed: '速度',
   Captions: '字幕',
   'Playback rate': '播放速度',

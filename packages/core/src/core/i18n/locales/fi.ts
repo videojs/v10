@@ -54,6 +54,7 @@ export default {
   Settings: 'Asetukset',
   Quality: 'Laatu',
   Audio: 'Audio',
+  Default: 'Oletus',
   Speed: 'Nopeus',
   Captions: 'Tekstitykset',
   'Playback rate': 'Toistonopeus',

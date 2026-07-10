@@ -55,6 +55,7 @@ export default {
   Settings: 'Parametrlər',
   Quality: 'Keyfiyyət',
   Audio: 'Audio',
+  Default: 'Defolt',
   Speed: 'Sürət',
   Captions: 'Başlıqlar',
   'Playback rate': 'Oynatma sürəti',
