@@ -12,7 +12,9 @@
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/*/i18n/locales/*/register.js"
+  ],
   "files": [
     "dist",
     "docs"
