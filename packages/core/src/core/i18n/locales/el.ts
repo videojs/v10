@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Έξοδος από πλήρη οθόνη',
   'Picture in picture': 'Εικόνα μέσα σε εικόνα',
   'Exit picture in picture': 'Έξοδος από εικόνα μέσα σε εικόνα',
-  'You aborted the media playback': 'Ακυρώσατε την αναπαραγωγή',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'Ακυρώσατε την αναπαραγωγή',
+  'This media could not be loaded due to a network or server issue.':
     'Ένα σφάλμα δικτύου προκάλεσε την αποτυχία μεταφόρτωσης του αρχείου προς αναπαραγωγή.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Η αναπαραγωγή ακυρώθηκε είτε λόγω κατεστραμμένου αρχείου, είτε γιατί το αρχείο απαιτεί λειτουργίες που δεν υποστηρίζονται από το πρόγραμμα περιήγησης που χρησιμοποιείτε.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Το αρχείο προς αναπαραγωγή δεν ήταν δυνατό να φορτωθεί είτε γιατί υπήρξε σφάλμα στον διακομιστή ή το δίκτυο, είτε γιατί ο τύπος του αρχείου δεν υποστηρίζεται.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Το αρχείο προς αναπαραγωγή είναι κρυπτογραφημένo και δεν υπάρχουν τα απαραίτητα κλειδιά αποκρυπτογράφησης.',
   '': '',
   'Something went wrong.': 'Κάτι πήγε στραβά.',
   OK: 'Κλείσιμο',
+  'An unexpected error occurred.': 'Παρουσιάστηκε σφάλμα. Δοκιμάστε ξανά.',
   Settings: 'Ρυθμίσεις',
   Quality: 'Ποιότητα',
   Audio: 'Ήχος',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Αυτόματα',
   'Auto ({label})': 'Αυτόματα ({label})',
   Subtitles: 'Υπότιτλοι',
-  'An error occurred. Please try again.': 'Παρουσιάστηκε σφάλμα. Δοκιμάστε ξανά.',
 } as const satisfies Partial<Translations>;

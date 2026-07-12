@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Surt de pantalla completa',
   'Picture in picture': 'Imatge en imatge',
   'Exit picture in picture': 'Surt de la imatge en imatge',
-  'You aborted the media playback': 'Has interromput la reproducció del contingut',
-  'A network error caused the media download to fail.': 'Un error de xarxa ha interromput la descàrrega del contingut.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Has interromput la reproducció del contingut',
+  'This media could not be loaded due to a network or server issue.':
+    'Un error de xarxa ha interromput la descàrrega del contingut.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     "La reproducció del contingut s'ha interromput a causa d'un problema de corrupció o perquè el contingut fa servir funcions que el teu navegador no suporta.",
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     "No s'ha pogut carregar el contingut, ja sigui perquè el servidor o la xarxa han fallat o perquè el format no està suportat.",
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'El contingut està xifrat i no disposem de les claus per desxifrar-lo.',
   '': '',
   'Something went wrong.': 'Alguna cosa ha anat malament.',
   OK: 'Tancar',
+  'An unexpected error occurred.': "S'ha produït un error. Torneu-ho a intentar.",
   Settings: 'Configuració',
   Quality: 'Qualitat',
   Audio: 'Àudio',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automàtic',
   'Auto ({label})': 'Automàtic ({label})',
   Subtitles: 'Subtítols',
-  'An error occurred. Please try again.': "S'ha produït un error. Torneu-ho a intentar.",
 } as const satisfies Partial<Translations>;

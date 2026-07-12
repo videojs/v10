@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'পূর্ণ স্ক্রীন থেকে বেরিয়ে আসুন',
   'Picture in picture': 'পিকচার ইন পিকচার',
   'Exit picture in picture': 'পিকচার ইন পিকচার থেকে বেরিয়ে আসুন',
-  'You aborted the media playback': 'আপনি মিডিয়া প্লেব্যাক বাতিল করেছেন',
-  'A network error caused the media download to fail.': 'একটি নেটওয়ার্ক ত্রুটির কারণে মিডিয়া ডাউনলোড আংশিকভাবে ব্যর্থ হয়েছে৷',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'আপনি মিডিয়া প্লেব্যাক বাতিল করেছেন',
+  'This media could not be loaded due to a network or server issue.':
+    'একটি নেটওয়ার্ক ত্রুটির কারণে মিডিয়া ডাউনলোড আংশিকভাবে ব্যর্থ হয়েছে৷',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'মিডিয়া প্লেব্যাক একটি সমস্যার কারণে বা মিডিয়া ব্যবহার করা বৈশিষ্ট্যগুলি আপনার ব্রাউজার সমর্থন করে না বলে বাতিল করা হয়েছে৷',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'মিডিয়া লোড করা যায়নি, হয় সার্ভার বা নেটওয়ার্ক ব্যর্থ হওয়ার কারণে বা ফর্ম্যাটটি সমর্থিত নয়।',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'মিডিয়া এনক্রিপ্ট করা হয়েছে এবং এটি ডিক্রিপ্ট করার সমাধান আমাদের কাছে নেই।',
   '': '',
   'Something went wrong.': 'কিছু একটা ভুল হয়েছে।',
   OK: 'বন্ধ করুন',
+  'An unexpected error occurred.': 'একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন।',
   Settings: 'সেটিংস',
   Quality: 'গুণমান',
   Audio: 'অডিও',
@@ -64,5 +66,4 @@ export default {
   Auto: 'স্বয়ংক্রিয়',
   'Auto ({label})': 'স্বয়ংক্রিয় ({label})',
   Subtitles: 'সাবটাইটেল',
-  'An error occurred. Please try again.': 'একটি ত্রুটি ঘটেছে। আবার চেষ্টা করুন।',
 } as const satisfies Partial<Translations>;

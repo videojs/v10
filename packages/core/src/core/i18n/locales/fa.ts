@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'خروج از تمام‌صفحه',
   'Picture in picture': 'تصویر در تصویر',
   'Exit picture in picture': 'خروج از حالت تصویر در تصویر',
-  'You aborted the media playback': 'شما پخش رسانه را قطع نمودید',
-  'A network error caused the media download to fail.': 'وقوع مشکلی در شبکه باعث اختلال در دانلود رسانه شد.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'شما پخش رسانه را قطع نمودید',
+  'This media could not be loaded due to a network or server issue.':
+    'وقوع مشکلی در شبکه باعث اختلال در دانلود رسانه شد.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'پخش رسانه به‌علت اشکال در آن یا عدم پشتیبانی مرورگر شما قطع شد.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'رسانه قابل بارگیری نیست. ممکن است مشکلی در شبکه یا سرور رخ داده باشد یا قالب رسانه در دستگاه شما پشتیبانی نشود.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'این رسانه رمزنگاری شده‌است و کلیدهای رمزگشایی آن موجود نیست.',
   '': '',
   'Something went wrong.': 'مشکلی پیش آمد.',
   OK: 'بستن',
+  'An unexpected error occurred.': 'خطایی رخ داد. لطفاً دوباره امتحان کنید.',
   Settings: 'تنظیمات',
   Quality: 'کیفیت',
   Audio: 'صدا',
@@ -64,5 +66,4 @@ export default {
   Auto: 'خودکار',
   'Auto ({label})': 'خودکار ({label})',
   Subtitles: 'زیرنویس‌ها',
-  'An error occurred. Please try again.': 'خطایی رخ داد. لطفاً دوباره امتحان کنید.',
 } as const satisfies Partial<Translations>;

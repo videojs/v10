@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Tam ekrandan çık',
   'Picture in picture': 'Resim içinde resim',
   'Exit picture in picture': 'Resim içinde resimden çık',
-  'You aborted the media playback': 'Medyayı oynatmayı iptal ettiniz',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'Medyayı oynatmayı iptal ettiniz',
+  'This media could not be loaded due to a network or server issue.':
     'Medya indirme işleminin kısmen başarısız olmasına neden olan bir ağ sorunu oluştu.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Medya oynatma, bir bozulma sorunu nedeniyle veya medya, tarayıcınızın desteklemediği özellikleri kullandığı için durduruldu.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Sunucu veya ağ hatasından ya da biçim desteklenmediğinden medya yüklenemedi.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Medya, şifrelenmiş bir kaynaktan geliyor ve oynatmak için gerekli anahtar bulunamadı.',
   '': '',
   'Something went wrong.': 'Bir şeyler ters gitti.',
   OK: 'Kapat',
+  'An unexpected error occurred.': 'Bir hata oluştu. Lütfen tekrar deneyin.',
   Settings: 'Ayarlar',
   Quality: 'Kalite',
   Audio: 'Ses',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Otomatik',
   'Auto ({label})': 'Otomatik ({label})',
   Subtitles: 'Altyazılar',
-  'An error occurred. Please try again.': 'Bir hata oluştu. Lütfen tekrar deneyin.',
 } as const satisfies Partial<Translations>;

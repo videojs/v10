@@ -16,13 +16,13 @@ describe('ErrorDialog', () => {
     registerI18n('es', {
       'Something went wrong.': 'Algo salió mal.',
       OK: 'Aceptar',
-      'A network error caused the media download to fail.': 'Error de red.',
-      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
+      'This media could not be loaded due to a network or server issue.': 'Error de red.',
+      'An unexpected error occurred.': 'Ocurrió un error inesperado.',
     });
 
     const error = {
       code: 2,
-      message: 'A network error caused the media download to fail.',
+      message: 'This media could not be loaded due to a network or server issue.',
     };
     const { Wrapper } = createPlayerWrapper({
       error,

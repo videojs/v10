@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Kilépés teljes képernyőből',
   'Picture in picture': 'Kép a képben',
   'Exit picture in picture': 'Kilépés kép a képben módból',
-  'You aborted the media playback': 'Leállította a lejátszást',
-  'A network error caused the media download to fail.': 'Hálózati hiba miatt a videó részlegesen töltődött le.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Leállította a lejátszást',
+  'This media could not be loaded due to a network or server issue.':
+    'Hálózati hiba miatt a videó részlegesen töltődött le.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'A lejátszás adatsérülés miatt leállt, vagy a videó egyes tulajdonságait a böngészője nem támogatja.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'A videó nem tölthető be hálózati vagy kiszolgálói hiba miatt, vagy a formátuma nem támogatott.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'A média titkosítva van és nincsenek kulcsok a visszafejtéshez.',
   '': '',
   'Something went wrong.': 'Valami hiba történt.',
   OK: 'Bezárás',
+  'An unexpected error occurred.': 'Hiba történt. Kérjük, próbálja újra.',
   Settings: 'Beállítások',
   Quality: 'Minőség',
   Audio: 'Hang',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automatikus',
   'Auto ({label})': 'Automatikus ({label})',
   Subtitles: 'Feliratok',
-  'An error occurred. Please try again.': 'Hiba történt. Kérjük, próbálja újra.',
 } as const satisfies Partial<Translations>;

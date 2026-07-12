@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Salir de pantalla completa',
   'Picture in picture': 'Imagen en imagen',
   'Exit picture in picture': 'Salir de imagen en imagen',
-  'You aborted the media playback': 'Ha interrumpido la reproducción del vídeo.',
-  'A network error caused the media download to fail.': 'Un error de red ha interrumpido la descarga del vídeo.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Ha interrumpido la reproducción del vídeo.',
+  'This media could not be loaded due to a network or server issue.':
+    'Un error de red ha interrumpido la descarga del vídeo.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'La reproducción de vídeo se ha interrumpido por un problema de corrupción de datos o porque el vídeo precisa funciones que su navegador no ofrece.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'No se ha podido cargar el vídeo debido a un fallo de red o del servidor o porque el formato es incompatible.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'El material audiovisual está cifrado y no tenemos las claves para descifrarlo.',
   '': '',
   'Something went wrong.': 'Algo ha salido mal.',
   OK: 'Cerrar',
+  'An unexpected error occurred.': 'Se ha producido un error. Inténtalo de nuevo.',
   Settings: 'Configuración',
   Quality: 'Calidad',
   Audio: 'Audio',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automático',
   'Auto ({label})': 'Automático ({label})',
   Subtitles: 'Subtítulos',
-  'An error occurred. Please try again.': 'Se ha producido un error. Inténtalo de nuevo.',
 } as const satisfies Partial<Translations>;

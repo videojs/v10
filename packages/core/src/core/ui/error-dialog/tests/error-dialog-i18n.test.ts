@@ -10,9 +10,11 @@ import {
 describe('getMediaErrorTranslationKey', () => {
   it('maps standard MediaError codes to registry keys', () => {
     expect(getMediaErrorTranslationKey(MediaError.MEDIA_ERR_NETWORK)).toBe(
-      'A network error caused the media download to fail.'
+      'This media could not be loaded due to a network or server issue.'
     );
-    expect(getMediaErrorTranslationKey(MediaError.MEDIA_ERR_ABORTED)).toBe('You aborted the media playback');
+    expect(getMediaErrorTranslationKey(MediaError.MEDIA_ERR_ABORTED)).toBe(
+      'You stopped media playback before it finished.'
+    );
   });
 });
 
@@ -31,7 +33,9 @@ describe('getErrorDialogDismissLabel', () => {
 describe('resolveErrorDialogDescription', () => {
   it('returns a registry key when the message matches the default for the code', () => {
     const error = new MediaError(undefined, MediaError.MEDIA_ERR_NETWORK);
-    expect(resolveErrorDialogDescription(error, null)).toBe('A network error caused the media download to fail.');
+    expect(resolveErrorDialogDescription(error, null)).toBe(
+      'This media could not be loaded due to a network or server issue.'
+    );
   });
 
   it('returns custom message text when context is provided', () => {
@@ -47,12 +51,12 @@ describe('resolveErrorDialogDescription', () => {
   it('returns a registry key for browser-specific messages on standard codes', () => {
     const error = new MediaError('Failed to open media', MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
     expect(resolveErrorDialogDescription(error, null)).toBe(
-      'An unsupported error occurred. The server or network failed, or your browser does not support this format.'
+      'This media could not be loaded. It may be unavailable, or your browser may not support its format.'
     );
   });
 
   it('falls back to cached message then generic key', () => {
     expect(resolveErrorDialogDescription(null, 'Cached')).toBe('Cached');
-    expect(resolveErrorDialogDescription(null, null)).toBe('An error occurred. Please try again.');
+    expect(resolveErrorDialogDescription(null, null)).toBe('An unexpected error occurred.');
   });
 });

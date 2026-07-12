@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Wyjdź z pełnego ekranu',
   'Picture in picture': 'Obraz w obrazie',
   'Exit picture in picture': 'Wyjdź z obrazu w obrazie',
-  'You aborted the media playback': 'Odtwarzanie zostało przerwane',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'Odtwarzanie zostało przerwane',
+  'This media could not be loaded due to a network or server issue.':
     'Błąd sieci spowodował częściowe niepowodzenie pobierania materiału wideo.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Odtwarzanie materiału wideo zostało przerwane z powodu uszkodzonego pliku wideo lub z powodu użycia funkcji multimediów nieobsługiwanych przez Twoją przeglądarkę.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Materiał wideo nie może zostać załadowany, ponieważ wystąpił problem z serwerem lub siecią albo format materiału wideo nie jest obsługiwany',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Materiał jest zaszyfrowany, a nie mamy kluczy do jego odszyfrowania.',
   '': '',
   'Something went wrong.': 'Coś poszło nie tak.',
   OK: 'Zamknij',
+  'An unexpected error occurred.': 'Wystąpił błąd. Spróbuj ponownie.',
   Settings: 'Ustawienia',
   Quality: 'Jakość',
   Audio: 'Dźwięk',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Auto',
   'Auto ({label})': 'Auto ({label})',
   Subtitles: 'Napisy',
-  'An error occurred. Please try again.': 'Wystąpił błąd. Spróbuj ponownie.',
 } as const satisfies Partial<Translations>;

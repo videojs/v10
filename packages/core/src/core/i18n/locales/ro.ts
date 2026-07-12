@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Ieșire ecran complet',
   'Picture in picture': 'Imagine în imagine',
   'Exit picture in picture': 'Închidere imagine în imagine',
-  'You aborted the media playback': 'Ați abandonat redarea media',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'Ați abandonat redarea media',
+  'This media could not be loaded due to a network or server issue.':
     'O eroare de rețea a provocat eșecul descărcării conținutului media în timpul procesului.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Redarea media a fost întreruptă din cauza conținutului corupt sau din cauza faptului că acest conținut media folosește funcții pe care browserul dvs. nu le acceptă.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Conținutul media nu a putut fi încărcat, fie pentru că serverul sau rețeaua a eșuat, fie pentru că formatul nu este acceptat.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Conținutul media este criptat și nu avem cheile pentru decriptare.',
   '': '',
   'Something went wrong.': 'Ceva a mers greșit.',
   OK: 'Închidere',
+  'An unexpected error occurred.': 'A apărut o eroare. Vă rugăm să încercați din nou.',
   Settings: 'Setări',
   Quality: 'Calitate',
   Audio: 'Sunet',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Automat',
   'Auto ({label})': 'Automat ({label})',
   Subtitles: 'Subtitrări',
-  'An error occurred. Please try again.': 'A apărut o eroare. Vă rugăm să încercați din nou.',
 } as const satisfies Partial<Translations>;

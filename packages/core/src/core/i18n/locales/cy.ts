@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Gadael sgrîn lawn',
   'Picture in picture': 'Llun mewn llun',
   'Exit picture in picture': 'Gadael llun mewn llun',
-  'You aborted the media playback': 'Atalwyd y fideo gennych',
-  'A network error caused the media download to fail.': 'Mae gwall rhwydwaith wedi achosi methiant lawrlwytho.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Atalwyd y fideo gennych',
+  'This media could not be loaded due to a network or server issue.':
+    'Mae gwall rhwydwaith wedi achosi methiant lawrlwytho.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     "Atalwyd y fideo oherwydd problem llygredd data neu oherwydd nid yw'ch porwr yn cefnogi nodweddion penodol o'r fideo.",
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     "Ni lwythodd y fideo, oherwydd methiant gweinydd neu rwydwaith, neu achos nid yw'r system yn cefnogi'r fformat.",
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     "Mae'r fideo wedi ei amgryptio ac nid oes allweddion gennym.",
   '': '',
   'Something went wrong.': "Aeth rhywbeth o'i le.",
   OK: 'Cau',
+  'An unexpected error occurred.': 'Digwyddodd gwall. Ceisiwch eto.',
   Settings: 'Gosodiadau',
   Quality: 'Ansawdd',
   Audio: 'Sain',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Awtomatig',
   'Auto ({label})': 'Awtomatig ({label})',
   Subtitles: 'Isdeitlau',
-  'An error occurred. Please try again.': 'Digwyddodd gwall. Ceisiwch eto.',
 } as const satisfies Partial<Translations>;

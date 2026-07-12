@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Zavrieť celú obrazovku',
   'Picture in picture': 'Obraz v obraze',
   'Exit picture in picture': 'Zavrieť obraz v obraze',
-  'You aborted the media playback': 'Prerušili ste prehrávanie',
-  'A network error caused the media download to fail.': 'Sťahovanie súboru bolo zrušené pre chybu na sieti.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Prerušili ste prehrávanie',
+  'This media could not be loaded due to a network or server issue.':
+    'Sťahovanie súboru bolo zrušené pre chybu na sieti.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Prehrávanie súboru bolo prerušené pre poškodené dáta, alebo súbor používa vlastnosti, ktoré váš prehliadač nepodporuje.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Súbor sa nepodarilo načítať pre chybu servera, sieťového pripojenia, alebo je formát súboru nepodporovaný.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Súbor je zašifrovaný a nie je k dispozícii kľúč na rozšifrovanie.',
   '': '',
   'Something went wrong.': 'Niečo sa pokazilo.',
   OK: 'Zatvoriť',
+  'An unexpected error occurred.': 'Vyskytla sa chyba. Skúste to znova.',
   Settings: 'Nastavenia',
   Quality: 'Kvalita',
   Audio: 'Zvuk',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automaticky',
   'Auto ({label})': 'Automaticky ({label})',
   Subtitles: 'Titulky',
-  'An error occurred. Please try again.': 'Vyskytla sa chyba. Skúste to znova.',
 } as const satisfies Partial<Translations>;

@@ -41,16 +41,19 @@ export default {
   'Exit fullscreen': 'Izlaz iz punog ekrana',
   'Picture in picture': 'Slika u slici',
   'Exit picture in picture': 'Izlaz iz slike u slici',
-  'You aborted the media playback': 'Isključili ste reprodukciju videa.',
-  'A network error caused the media download to fail.': 'Video se prestao preuzimati zbog greške na mreži.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Isključili ste reprodukciju videa.',
+  'This media could not be loaded due to a network or server issue.':
+    'Video se prestao preuzimati zbog greške na mreži.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Reprodukcija videa je zaustavljenja zbog greške u formatu ili zbog verzije vašeg pretraživača.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Video se ne može reproducirati zbog servera, greške u mreži ili je format ne podržan.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Medij je šifriran i nema ključeva za dešifriranje.',
+  'This media could not be played because it could not be decrypted.':
+    'Medij je šifriran i nema ključeva za dešifriranje.',
   '': '',
   'Something went wrong.': 'Nešto je pošlo po krivu.',
   OK: 'OK',
+  'An unexpected error occurred.': 'Došlo je do greške. Pokušajte ponovo.',
   Settings: 'Postavke',
   Quality: 'Kvalitet',
   Audio: 'Zvuk',
@@ -63,5 +66,4 @@ export default {
   Auto: 'Automatski',
   'Auto ({label})': 'Automatski ({label})',
   Subtitles: 'Titlovi',
-  'An error occurred. Please try again.': 'Došlo je do greške. Pokušajte ponovo.',
 } as const satisfies Partial<Translations>;

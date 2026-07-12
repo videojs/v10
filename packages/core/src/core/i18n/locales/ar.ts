@@ -41,16 +41,18 @@ export default {
   'Exit fullscreen': 'الخروج من ملء الشاشة',
   'Picture in picture': 'صورة داخل صورة',
   'Exit picture in picture': 'الخروج من صورة داخل صورة',
-  'You aborted the media playback': 'لقد ألغيت تشغيل الفيديو',
-  'A network error caused the media download to fail.': 'تسبب خطأ في الشبكة بفشل تحميل الفيديو بالكامل.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'لقد ألغيت تشغيل الفيديو',
+  'This media could not be loaded due to a network or server issue.': 'تسبب خطأ في الشبكة بفشل تحميل الفيديو بالكامل.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'تم إيقاف تشغيل الفيديو بسبب عدم صلاحية الفيديو أو لأن الفيديو المستخدم يستخدم ميزات غير مدعومة من متصفحك.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'لا يمكن تحميل الفيديو بسبب فشل في الخادم أو الشبكة ، أو بسبب عدم إمكانية قراءة تنسيق الفيديو.',
-  'The media is encrypted and there are no keys to decrypt it.': 'الوسائط مشفرة وليس لدينا الرموز اللازمة لفك شفرتها.',
+  'This media could not be played because it could not be decrypted.':
+    'الوسائط مشفرة وليس لدينا الرموز اللازمة لفك شفرتها.',
   '': '',
   'Something went wrong.': 'حدث خطأ ما.',
   OK: 'أغلق',
+  'An unexpected error occurred.': 'حدث خطأ. يُرجى المحاولة مرة أخرى.',
   Settings: 'الإعدادات',
   Quality: 'الجودة',
   Audio: 'الصوت',
@@ -63,5 +65,4 @@ export default {
   Auto: 'تلقائي',
   'Auto ({label})': 'تلقائي ({label})',
   Subtitles: 'الترجمة',
-  'An error occurred. Please try again.': 'حدث خطأ. يُرجى المحاولة مرة أخرى.',
 } as const satisfies Partial<Translations>;

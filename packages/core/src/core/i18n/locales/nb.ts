@@ -41,17 +41,18 @@ export default {
   'Exit fullscreen': 'Avslutt fullskjerm',
   'Picture in picture': 'Bilde i bilde',
   'Exit picture in picture': 'Avslutt bilde i bilde',
-  'You aborted the media playback': 'Du avbrøt avspillingen.',
-  'A network error caused the media download to fail.': 'En nettverksfeil avbrøt nedlasting av videoen.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Du avbrøt avspillingen.',
+  'This media could not be loaded due to a network or server issue.': 'En nettverksfeil avbrøt nedlasting av videoen.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Videoavspillingen ble avbrudt på grunn av ødelagte data eller fordi videoen ville gjøre noe som nettleseren din ikke har støtte for.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Videoen kunne ikke lastes ned, på grunn av nettverksfeil eller serverfeil, eller fordi formatet ikke er støttet.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Mediefilen er kryptert og vi mangler nøkler for å dekryptere den.',
   '': '',
   'Something went wrong.': 'Noe gikk galt.',
   OK: 'Lukk',
+  'An unexpected error occurred.': 'En feil oppstod. Vennligst prøv igjen.',
   Settings: 'Innstillinger',
   Quality: 'Kvalitet',
   Audio: 'Lyd',
@@ -64,5 +65,4 @@ export default {
   Auto: 'Auto',
   'Auto ({label})': 'Auto ({label})',
   Subtitles: 'Undertekster',
-  'An error occurred. Please try again.': 'En feil oppstod. Vennligst prøv igjen.',
 } as const satisfies Partial<Translations>;

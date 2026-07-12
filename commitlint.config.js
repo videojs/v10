@@ -23,6 +23,7 @@ export default {
         'element',
         'docs',
         'html',
+        'i18n',
         'icons',
         'packages',
         'plan',

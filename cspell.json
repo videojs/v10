@@ -1,6 +1,6 @@
 {
   "version": "0.2",
-  "ignorePaths": ["package.json", "tsconfig.json"],
+  "ignorePaths": ["package.json", "tsconfig.json", "packages/core/src/core/i18n/locales/!(all|en).ts"],
   "dictionaryDefinitions": [],
   "dictionaries": ["css", "html", "node", "typescript", "npm"],
   "words": [
@@ -19,9 +19,7 @@
     "shiki",
     "squircle",
     "videojs",
-    "vidstack",
-    "vitesse",
-    "wouter"
+    "vidstack"
   ],
   "ignoreWords": [],
   "import": []

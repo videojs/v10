@@ -41,16 +41,18 @@ export default {
   'Exit fullscreen': 'ออกจากเต็มหน้าจอ',
   'Picture in picture': 'ภาพซ้อนภาพ',
   'Exit picture in picture': 'ออกจากภาพซ้อนภาพ',
-  'You aborted the media playback': 'คุณยกเลิกการเล่นสื่อแล้ว',
-  'A network error caused the media download to fail.': 'ข้อผิดพลาดของเครือข่ายทำให้การดาวน์โหลดสื่อไม่สำเร็จเป็นบางส่วน',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'คุณยกเลิกการเล่นสื่อแล้ว',
+  'This media could not be loaded due to a network or server issue.':
+    'ข้อผิดพลาดของเครือข่ายทำให้การดาวน์โหลดสื่อไม่สำเร็จเป็นบางส่วน',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'การเล่นสื่อถูกยกเลิกเนื่องจากปัญหาเกี่ยวกับความเสียหาย หรือเนื่องจากสื่อใช้ฟีเจอร์ที่เบราว์เซอร์ของคุณไม่รองรับ',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'ไม่สามารถโหลดสื่อได้ โดยอาจเป็นเพราะเซิร์ฟเวอร์หรือเครือข่ายล้มเหลว หรือเพราะรูปแบบไม่ได้รับการรองรับ',
-  'The media is encrypted and there are no keys to decrypt it.': 'สื่อถูกเข้ารหัสลับแล้ว และเราไม่มีคีย์ที่จะถอดรหัสลับดังกล่าว',
+  'This media could not be played because it could not be decrypted.': 'สื่อถูกเข้ารหัสลับแล้ว และเราไม่มีคีย์ที่จะถอดรหัสลับดังกล่าว',
   '': '',
   'Something went wrong.': 'เกิดข้อผิดพลาด',
   OK: 'ปิด',
+  'An unexpected error occurred.': 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง',
   Settings: 'การตั้งค่า',
   Quality: 'คุณภาพ',
   Audio: 'เสียง',
@@ -63,5 +65,4 @@ export default {
   Auto: 'อัตโนมัติ',
   'Auto ({label})': 'อัตโนมัติ ({label})',
   Subtitles: 'คำบรรยาย',
-  'An error occurred. Please try again.': 'เกิดข้อผิดพลาด กรุณาลองอีกครั้ง',
 } as const satisfies Partial<Translations>;

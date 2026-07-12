@@ -41,17 +41,18 @@ export default {
   'Exit fullscreen': 'Thoát toàn màn hình',
   'Picture in picture': 'Màn hình trong màn hình',
   'Exit picture in picture': 'Thoát màn hình trong màn hình',
-  'You aborted the media playback': 'Bạn đã hủy việc phát lại media.',
-  'A network error caused the media download to fail.': 'Một lỗi mạng dẫn đến việc tải media bị lỗi.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Bạn đã hủy việc phát lại media.',
+  'This media could not be loaded due to a network or server issue.': 'Một lỗi mạng dẫn đến việc tải media bị lỗi.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Phát media đã bị hủy do một sai lỗi hoặc media sử dụng những tính năng trình duyệt không hỗ trợ.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Video không tải được, mạng hay server có lỗi hoặc định dạng không được hỗ trợ.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Media đã được mã hóa và chúng tôi không có khóa để giải mã.',
   '': '',
   'Something went wrong.': 'Đã xảy ra lỗi.',
   OK: 'Đóng',
+  'An unexpected error occurred.': 'Đã xảy ra lỗi. Vui lòng thử lại.',
   Settings: 'Cài đặt',
   Quality: 'Chất lượng',
   Audio: 'Âm thanh',
@@ -64,5 +65,4 @@ export default {
   Auto: 'Tự động',
   'Auto ({label})': 'Tự động ({label})',
   Subtitles: 'Phụ đề',
-  'An error occurred. Please try again.': 'Đã xảy ra lỗi. Vui lòng thử lại.',
 } as const satisfies Partial<Translations>;

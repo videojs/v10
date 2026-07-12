@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Vollbild beenden',
   'Picture in picture': 'Bild-in-Bild',
   'Exit picture in picture': 'Bild-in-Bild beenden',
-  'You aborted the media playback': 'Sie haben die Videowiedergabe abgebrochen.',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'Sie haben die Videowiedergabe abgebrochen.',
+  'This media could not be loaded due to a network or server issue.':
     'Der Videodownload ist aufgrund eines Netzwerkfehlers fehlgeschlagen.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Die Videowiedergabe wurde entweder wegen eines Problems mit einem beschädigten Video oder wegen verwendeten Funktionen, die vom Browser nicht unterstützt werden, abgebrochen.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Das Video konnte nicht geladen werden, da entweder ein Server- oder Netzwerkfehler auftrat oder das Format nicht unterstützt wird.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Die Entschlüsselungsschlüssel für den verschlüsselten Medieninhalt sind nicht verfügbar.',
   '': '',
   'Something went wrong.': 'Etwas ist schiefgelaufen.',
   OK: 'Schließen',
+  'An unexpected error occurred.': 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
   Settings: 'Einstellungen',
   Quality: 'Qualität',
   Audio: 'Ton',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Auto',
   'Auto ({label})': 'Auto ({label})',
   Subtitles: 'Untertitel',
-  'An error occurred. Please try again.': 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
 } as const satisfies Partial<Translations>;

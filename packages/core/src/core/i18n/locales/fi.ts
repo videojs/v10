@@ -41,16 +41,17 @@ export default {
   'Exit fullscreen': 'Poistu koko näytöltä',
   'Picture in picture': 'Kuva kuvassa',
   'Exit picture in picture': 'Poistu kuva kuvassa -tilasta',
-  'You aborted the media playback': 'Olet keskeyttänyt videotoiston',
-  'A network error caused the media download to fail.': 'Verkkovirhe keskeytti videon latauksen.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Olet keskeyttänyt videotoiston',
+  'This media could not be loaded due to a network or server issue.': 'Verkkovirhe keskeytti videon latauksen.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Videon toisto keskeytyi, koska videotiedosto on vioittunut tai käyttää toimintoja, joita selaimesi ei tue.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Videon lataus ei onnistunut joko palvelin- tai verkkovirheestä tai väärästä formaatista johtuen.',
-  'The media is encrypted and there are no keys to decrypt it.': 'Media on salattu eikä siihen ole purkuavaimia.',
+  'This media could not be played because it could not be decrypted.': 'Media on salattu eikä siihen ole purkuavaimia.',
   '': '',
   'Something went wrong.': 'Jotain meni pieleen.',
   OK: 'OK',
+  'An unexpected error occurred.': 'Tapahtui virhe. Yritä uudelleen.',
   Settings: 'Asetukset',
   Quality: 'Laatu',
   Audio: 'Ääni',
@@ -63,5 +64,4 @@ export default {
   Auto: 'Automaattinen',
   'Auto ({label})': 'Automaattinen ({label})',
   Subtitles: 'Tekstitykset',
-  'An error occurred. Please try again.': 'Tapahtui virhe. Yritä uudelleen.',
 } as const satisfies Partial<Translations>;

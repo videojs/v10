@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': "Sortir de l'ecran complèt",
   'Picture in picture': 'Vidèo incrustada',
   'Exit picture in picture': 'Sortir de la vidèo incrustada',
-  'You aborted the media playback': 'Avètz copat la lectura del mèdia.',
-  'A network error caused the media download to fail.': 'Una error de ret a provocat un fracàs del telecargament.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Avètz copat la lectura del mèdia.',
+  'This media could not be loaded due to a network or server issue.':
+    'Una error de ret a provocat un fracàs del telecargament.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     "La lectura del mèdia es copada a causa d'un problèma de corrupcion o perque lo mèdia utiliza de foncionalitats pas suportadas pel navigador.",
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Lo mèdia a pas pogut èsser cargat, siá perque lo servidor o lo ret a fracassat siá perque lo format es pas compatible.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Lo mèdia es chifrat e avèm pas las claus per lo deschifrar.',
   '': '',
   'Something went wrong.': "Quaucarèn s'es mal passat.",
   OK: 'Tampar',
+  'An unexpected error occurred.': "Una error s'es produsida. Provatz d'un autre còp.",
   Settings: 'Paramètres',
   Quality: 'Qualitat',
   Audio: 'Àudio',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automatic',
   'Auto ({label})': 'Automatic ({label})',
   Subtitles: 'Sostítols',
-  'An error occurred. Please try again.': "Una error s'es produsida. Provatz d'un autre còp.",
 } as const satisfies Partial<Translations>;

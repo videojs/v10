@@ -43,7 +43,8 @@ export default {
   'Picture in picture': 'Picture in picture',
   'Exit picture in picture': 'Exit picture in picture',
   'You stopped media playback before it finished.': 'You stopped media playback before it finished.',
-  'This media could not be loaded due to a network or server issue.': 'This media could not be loaded due to a network or server issue.',
+  'This media could not be loaded due to a network or server issue.':
+    'This media could not be loaded due to a network or server issue.',
   'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'This media could not be played. It may be corrupted, or your browser may not support its format.',
   'This media could not be loaded. It may be unavailable, or your browser may not support its format.':

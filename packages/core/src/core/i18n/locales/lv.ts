@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Iziet no pilnekrāna',
   'Picture in picture': 'Attēls attēlā',
   'Exit picture in picture': 'Iziet no attēls attēlā',
-  'You aborted the media playback': 'Atskaņošana atcelta',
-  'A network error caused the media download to fail.': 'Tīkla kļūdas dēļ, multivides lejupielāde neizdevās.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Atskaņošana atcelta',
+  'This media could not be loaded due to a network or server issue.':
+    'Tīkla kļūdas dēļ, multivides lejupielāde neizdevās.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Atskaņošana tika pārtraukta tīkla kļūmes dēļ vai pārlūkprogrammas iespēju trūkuma dēļ.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Neizdevās ielādēt multividi, iespējams severa, vai tīkla kļūmes dēļ, vai neatbalstīta formāta dēļ.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Multividi nevar atskaņot, jo tas ir kriptēts un nav pieejama dekriptēšanas atslēga.',
   '': '',
   'Something went wrong.': 'Kaut kas nogāja greizi.',
   OK: 'Aizvērt',
+  'An unexpected error occurred.': 'Radās kļūda. Lūdzu, mēģiniet vēlreiz.',
   Settings: 'Iestatījumi',
   Quality: 'Kvalitāte',
   Audio: 'Skaņa',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automātiski',
   'Auto ({label})': 'Automātiski ({label})',
   Subtitles: 'Subtitri',
-  'An error occurred. Please try again.': 'Radās kļūda. Lūdzu, mēģiniet vēlreiz.',
 } as const satisfies Partial<Translations>;

@@ -41,16 +41,18 @@ export default {
   'Exit fullscreen': 'יציאה ממסך מלא',
   'Picture in picture': 'תמונה בתוך תמונה',
   'Exit picture in picture': 'יציאה מתמונה בתוך תמונה',
-  'You aborted the media playback': 'ביטלת את השמעת המדיה',
-  'A network error caused the media download to fail.': 'שגיאת רשת גרמה להורדת המדיה להיכשל באמצע.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'ביטלת את השמעת המדיה',
+  'This media could not be loaded due to a network or server issue.': 'שגיאת רשת גרמה להורדת המדיה להיכשל באמצע.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'השמעת המדיה בוטלה בשל בעית השחטת מידע או מכיוון שהמדיה עשתה שימוש בתכונות שהדפדפן שלך לא תמך בהן.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'לא ניתן לטעון את המדיה, או מכיוון שהרשת או השרת כשלו או מכיוון שהפורמט אינו נתמך.',
-  'The media is encrypted and there are no keys to decrypt it.': 'המדיה מוצפנת ואין בידינו את המפתח כדי לפענח אותה.',
+  'This media could not be played because it could not be decrypted.':
+    'המדיה מוצפנת ואין בידינו את המפתח כדי לפענח אותה.',
   '': '',
   'Something went wrong.': 'אירעה שגיאה.',
   OK: 'סְגוֹר',
+  'An unexpected error occurred.': 'אירעה שגיאה. אנא נסה שוב.',
   Settings: 'הגדרות',
   Quality: 'איכות',
   Audio: 'שמע',
@@ -63,5 +65,4 @@ export default {
   Auto: 'אוטומטי',
   'Auto ({label})': 'אוטומטי ({label})',
   Subtitles: 'כתוביות',
-  'An error occurred. Please try again.': 'אירעה שגיאה. אנא נסה שוב.',
 } as const satisfies Partial<Translations>;

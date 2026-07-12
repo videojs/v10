@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Esci da schermo intero',
   'Picture in picture': 'Picture-in-picture',
   'Exit picture in picture': 'Esci dalla modalità Picture-in-picture',
-  'You aborted the media playback': 'La riproduzione del contenuto multimediale è stata interrotta.',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'La riproduzione del contenuto multimediale è stata interrotta.',
+  'This media could not be loaded due to a network or server issue.':
     'Il download del contenuto multimediale è stato interrotto a causa di un problema rete.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'La riproduzione del contenuto multimediale è stata interrotta a causa di un file danneggiato o per l’utilizzo di impostazioni non supportate dal browser.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Il contenuto multimediale non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Il contenuto multimediale è criptato e non disponiamo delle chiavi per decifrarlo.',
   '': '',
   'Something went wrong.': 'Qualcosa è andato storto.',
   OK: 'Chiudi',
+  'An unexpected error occurred.': 'Si è verificato un errore. Riprova.',
   Settings: 'Impostazioni',
   Quality: 'Qualità',
   Audio: 'Audio',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Auto',
   'Auto ({label})': 'Auto ({label})',
   Subtitles: 'Sottotitoli',
-  'An error occurred. Please try again.': 'Si è verificato un errore. Riprova.',
 } as const satisfies Partial<Translations>;

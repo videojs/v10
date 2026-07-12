@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'पूर्ण स्क्रीन से बाहर',
   'Picture in picture': 'पिक्चर में पिक्चर',
   'Exit picture in picture': 'पिक्चर में पिक्चर से बाहर',
-  'You aborted the media playback': 'आपने मीडिया प्लेबैक को रोक दिया',
-  'A network error caused the media download to fail.': 'एक नेटवर्क त्रुटि के कारण मीडिया डाउनलोड आंशिक रूप से विफल हो गया।',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'आपने मीडिया प्लेबैक को रोक दिया',
+  'This media could not be loaded due to a network or server issue.':
+    'एक नेटवर्क त्रुटि के कारण मीडिया डाउनलोड आंशिक रूप से विफल हो गया।',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'मीडिया प्लेबैक निरस्त कर दिया गया, कारण: दूषण की समस्या या मीडिया ने उन सुविधाओं का उपयोग किया था जिनका आपके ब्राउज़र ने समर्थन नहीं किया।',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'मीडिया लोड नहीं किया जा सका, या तो सर्वर या नेटवर्क विफल होने के कारण या प्रारूप समर्थित नहीं होने के कारण।',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'मीडिया एन्क्रिप्टेड है और हमारे पास इसे डिक्रिप्ट करने की चाबी नहीं है।',
   '': '',
   'Something went wrong.': 'कुछ गलत हुआ।',
   OK: 'बंद करें',
+  'An unexpected error occurred.': 'एक त्रुटि हुई। कृपया पुनः प्रयास करें।',
   Settings: 'सेटिंग्स',
   Quality: 'गुणवत्ता',
   Audio: 'ऑडियो',
@@ -64,5 +66,4 @@ export default {
   Auto: 'ऑटो',
   'Auto ({label})': 'ऑटो ({label})',
   Subtitles: 'उपशीर्षक',
-  'An error occurred. Please try again.': 'एक त्रुटि हुई। कृपया पुनः प्रयास करें।',
 } as const satisfies Partial<Translations>;

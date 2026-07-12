@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Вийти з повноекранного режиму',
   'Picture in picture': 'Зображення в зображенні',
   'Exit picture in picture': 'Вийти із режиму зображення в зображенні',
-  'You aborted the media playback': 'Ви припинили відтворення відео',
-  'A network error caused the media download to fail.': 'Помилка мережі викликала збій під час завантаження відео.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Ви припинили відтворення відео',
+  'This media could not be loaded due to a network or server issue.':
+    'Помилка мережі викликала збій під час завантаження відео.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     "Відтворення відео було припинено через пошкодження або у зв'язку з тим, що відео використовує функції, які не підтримуються вашим браузером.",
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Неможливо завантажити відео через мережевий чи серверний збій або формат не підтримується.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Відео в зашифрованому вигляді, і ми не маємо ключі для розшифровки.',
   '': '',
   'Something went wrong.': 'Щось пішло не так.',
   OK: 'Закрити',
+  'An unexpected error occurred.': 'Сталася помилка. Будь ласка, спробуйте ще раз.',
   Settings: 'Налаштування',
   Quality: 'Якість',
   Audio: 'Аудіо',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Авто',
   'Auto ({label})': 'Авто ({label})',
   Subtitles: 'Субтитри',
-  'An error occurred. Please try again.': 'Сталася помилка. Будь ласка, спробуйте ще раз.',
 } as const satisfies Partial<Translations>;

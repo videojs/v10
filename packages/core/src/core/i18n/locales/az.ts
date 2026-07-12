@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Tam ekrandan çıx',
   'Picture in picture': 'Şəkil içində şəkil',
   'Exit picture in picture': 'Şəkil içində şəkildən çıxın',
-  'You aborted the media playback': 'Siz medianın oxudulmasını dayandırdınız',
-  'A network error caused the media download to fail.': 'Şəbəkə xətası səbəbindən medianın endirilməsi yarıda qaldı.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Siz medianın oxudulmasını dayandırdınız',
+  'This media could not be loaded due to a network or server issue.':
+    'Şəbəkə xətası səbəbindən medianın endirilməsi yarıda qaldı.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Media faylının korlanması səbəbilə və ya media faylın brauzerinizin dəstəkləmədiyi funksiyalardan istifadə etdiyinə görə medianın oxudulması dayandırılıb.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Yükləmə xətası.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Media faylı şifrələnib və onun şifrəsini açmaq üçün açarlar yoxdur.',
   '': '',
   'Something went wrong.': 'Bir şey yanlış getdi.',
   OK: 'Bağla',
+  'An unexpected error occurred.': 'Xəta baş verdi. Yenidən cəhd edin.',
   Settings: 'Parametrlər',
   Quality: 'Keyfiyyət',
   Audio: 'Səs',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Avtomatik',
   'Auto ({label})': 'Avtomatik ({label})',
   Subtitles: 'Altyazılar',
-  'An error occurred. Please try again.': 'Xəta baş verdi. Yenidən cəhd edin.',
 } as const satisfies Partial<Translations>;

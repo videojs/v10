@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'पूर्ण स्क्रिनबाट बाहिर',
   'Picture in picture': 'पिक्चर इन पिक्चर',
   'Exit picture in picture': 'पिक्चर इन पिक्चरबाट बाहिर',
-  'You aborted the media playback': 'तपाईंले मिडिया प्लेब्याक रद्द गर्नुभयो',
-  'A network error caused the media download to fail.': 'नेटवर्क त्रुटिले मिडिया डाउनलोडलाई आधा मार्गमा असफल गर्यो।',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'तपाईंले मिडिया प्लेब्याक रद्द गर्नुभयो',
+  'This media could not be loaded due to a network or server issue.':
+    'नेटवर्क त्रुटिले मिडिया डाउनलोडलाई आधा मार्गमा असफल गर्यो।',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'मिडिया प्लेब्याक अवरुद्ध गरियो, कारण मिडिया दूषित भयो वा तपाईंको ब्राउजरले समर्थन नगरेको सुविधाहरू प्रयोग गर्यो।',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'मिडिया लोड गर्न सकिएन, नेटवर्क वा सर्भर विफल भयो वा त्यसको प्रारूप समर्थित छैन।',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'मिडिया एन्क्रिप्ट गरिएको छ र हामीसँग डिक्रिप्ट गर्ने कुञ्जीहरू छैनन्।',
   '': '',
   'Something went wrong.': 'केही गलत भयो।',
   OK: 'बन्द गर्नुहोस्',
+  'An unexpected error occurred.': 'एउटा त्रुटि भयो। कृपया पुन: प्रयास गर्नुहोस्।',
   Settings: 'सेटिङहरू',
   Quality: 'गुणस्तर',
   Audio: 'अडियो',
@@ -64,5 +66,4 @@ export default {
   Auto: 'स्वतः',
   'Auto ({label})': 'स्वतः ({label})',
   Subtitles: 'उपशीर्षक',
-  'An error occurred. Please try again.': 'एउटा त्रुटि भयो। कृपया पुन: प्रयास गर्नुहोस्।',
 } as const satisfies Partial<Translations>;

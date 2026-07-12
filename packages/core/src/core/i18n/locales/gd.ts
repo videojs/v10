@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Fàg làn-sgrìn',
   'Picture in picture': 'Dealbh beag anns a’ dealbh mhòr',
   'Exit picture in picture': 'Fàg dealbh beag',
-  'You aborted the media playback': 'Sguir thu de chluich a’ mheadhain',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'Sguir thu de chluich a’ mheadhain',
+  'This media could not be loaded due to a network or server issue.':
     'Cha deach leinn an còrr dhen mheadhan a luchdadh a-nuas ri linn mearachd lìonraidh.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Sguir sinn de chluich a’ mheadhain – dh’fhaoidte gu bheil e coirbte no gu bheil gleus aig a’ mheadhan nach cuir am brabhsair taic ris.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Cha b’ urrainn dhuinn am meadhan a luchdadh – dh’fhaoidte gun do dh’fhàillig leis an fhrithealaiche no an lìonra no nach cuir sinn taic ris an fhòrmat.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Tha am meadhan crioptaichte ’s chan eil iuchair dì-chrioptachaidh againn dha.',
   '': '',
   'Something went wrong.': 'Chaidh rudeigin ceàrr.',
   OK: 'Dùin',
+  'An unexpected error occurred.': 'Thachair mearachd. Feuch ris a-rithist.',
   Settings: 'Roghainnean',
   Quality: 'Càileachd',
   Audio: 'Fuaim',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Fèin-obrachail',
   'Auto ({label})': 'Fèin-obrachail ({label})',
   Subtitles: 'Fo-thiotalan',
-  'An error occurred. Please try again.': 'Thachair mearachd. Feuch ris a-rithist.',
 } as const satisfies Partial<Translations>;

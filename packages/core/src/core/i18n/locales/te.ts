@@ -41,16 +41,18 @@ export default {
   'Exit fullscreen': 'పూర్తి స్క్రీన్ నుండి నిష్క్రమించండి',
   'Picture in picture': 'పిక్చర్ ఇన్ పిక్చర్',
   'Exit picture in picture': 'పిక్చర్ ఇన్ పిక్చర్ నుండి నిష్క్రమించండి',
-  'You aborted the media playback': 'మీరు మీడియా ప్లేబ్యాక్‌ను రద్దు చేశారు',
-  'A network error caused the media download to fail.': 'నెట్‌వర్క్ లోపం వలన మీడియా డౌన్‌లోడ్ విఫలమైంది.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'మీరు మీడియా ప్లేబ్యాక్‌ను రద్దు చేశారు',
+  'This media could not be loaded due to a network or server issue.': 'నెట్‌వర్క్ లోపం వలన మీడియా డౌన్‌లోడ్ విఫలమైంది.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'అవినీతి సమస్య కారణంగా లేదా మీ బ్రౌజర్ మద్దతు ఇవ్వని లక్షణాలను మీడియా ఉపయోగించినందున మీడియా ప్లేబ్యాక్ నిలిపివేయబడింది.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'సర్వర్ లేదా నెట్‌వర్క్ విఫలమైనందున లేదా ఫార్మాట్‌కు మద్దతు లేనందున మీడియాను లోడ్ చేయడం సాధ్యం కాలేదు.',
-  'The media is encrypted and there are no keys to decrypt it.': 'మీడియా గుప్తీకరించబడింది మరియు దానిని డీక్రిప్ట్ చేయడానికి మాకు కీలు లేవు.',
+  'This media could not be played because it could not be decrypted.':
+    'మీడియా గుప్తీకరించబడింది మరియు దానిని డీక్రిప్ట్ చేయడానికి మాకు కీలు లేవు.',
   '': '',
   'Something went wrong.': 'ఏదో తప్పు జరిగింది.',
   OK: 'మూసివేయండి',
+  'An unexpected error occurred.': 'ఒక లోపం సంభవించింది. దయచేసి మళ్ళీ ప్రయత్నించండి.',
   Settings: 'సెట్టింగ్‌లు',
   Quality: 'నాణ్యత',
   Audio: 'ఆడియో',
@@ -63,5 +65,4 @@ export default {
   Auto: 'ఆటో',
   'Auto ({label})': 'ఆటో ({label})',
   Subtitles: 'ఉపశీర్షికలు',
-  'An error occurred. Please try again.': 'ఒక లోపం సంభవించింది. దయచేసి మళ్ళీ ప్రయత్నించండి.',
 } as const satisfies Partial<Translations>;

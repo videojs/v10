@@ -41,16 +41,17 @@ export default {
   'Exit fullscreen': '退出全螢幕',
   'Picture in picture': '子母畫面',
   'Exit picture in picture': '離開子母畫面',
-  'You aborted the media playback': '影片播放已終止',
-  'A network error caused the media download to fail.': '網路錯誤導致影片下載失敗。',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': '影片播放已終止',
+  'This media could not be loaded due to a network or server issue.': '網路錯誤導致影片下載失敗。',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     '由於影片檔案損毀或是該影片使用了您的瀏覽器不支援的功能，已終止播放媒體。',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     '因格式不支援、伺服器或網路的問題無法載入媒體。',
-  'The media is encrypted and there are no keys to decrypt it.': '媒體已加密，無法解密。',
+  'This media could not be played because it could not be decrypted.': '媒體已加密，無法解密。',
   '': '',
   'Something went wrong.': '發生問題。',
   OK: '關閉',
+  'An unexpected error occurred.': '發生錯誤，請重試。',
   Settings: '設定',
   Quality: '畫質',
   Audio: '音訊',
@@ -63,5 +64,4 @@ export default {
   Auto: '自動',
   'Auto ({label})': '自動（{label}）',
   Subtitles: '字幕',
-  'An error occurred. Please try again.': '發生錯誤，請重試。',
 } as const satisfies Partial<Translations>;

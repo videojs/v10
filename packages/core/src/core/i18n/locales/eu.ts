@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Irten pantaila osotik',
   'Picture in picture': 'Irudiz irudi',
   'Exit picture in picture': 'Irten irudiz irudiztik',
-  'You aborted the media playback': 'Bertan behera utzi duzu',
-  'A network error caused the media download to fail.': 'Sare errore batek deskargak huts egitea eragin du.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Bertan behera utzi duzu',
+  'This media could not be loaded due to a network or server issue.':
+    'Sare errore batek deskargak huts egitea eragin du.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Bertan behera gelditu da fitxategia ondo ez dagoelako edo zure nabigatzailean erabili ezin diren ezaugarriak dituelako.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'Media ezin izan da kargatu, zerbitzariak edo sareak huts egin duelako edo formatu horretako media erabili ezin delako.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'Media zifratuta dago eta ez ditugu beharrezko gakoak.',
   '': '',
   'Something went wrong.': 'Zerbait gaizki joan da.',
   OK: 'Itxi',
+  'An unexpected error occurred.': 'Errore bat gertatu da. Saiatu berriro.',
   Settings: 'Ezarpenak',
   Quality: 'Kalitatea',
   Audio: 'Audioa',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Automatikoa',
   'Auto ({label})': 'Automatikoa ({label})',
   Subtitles: 'Azpitituluak',
-  'An error occurred. Please try again.': 'Errore bat gertatu da. Saiatu berriro.',
 } as const satisfies Partial<Translations>;

@@ -41,17 +41,19 @@ export default {
   'Exit fullscreen': 'Sair da tela cheia',
   'Picture in picture': 'Picture-in-picture',
   'Exit picture in picture': 'Sair do picture-in-picture',
-  'You aborted the media playback': 'Você parou a execução do vídeo.',
-  'A network error caused the media download to fail.': 'Um erro na rede causou falha durante o download da mídia.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'You stopped media playback before it finished.': 'Você parou a execução do vídeo.',
+  'This media could not be loaded due to a network or server issue.':
+    'Um erro na rede causou falha durante o download da mídia.',
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'A reprodução foi interrompida devido à um problema de mídia corrompida ou porque a mídia utiliza funções que seu navegador não suporta.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'A mídia não pode ser carregada, por uma falha de rede ou servidor ou o formato não é suportado.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'A mídia está criptografada e não temos as chaves para descriptografar.',
   '': '',
   'Something went wrong.': 'Algo deu errado.',
   OK: 'Fechar',
+  'An unexpected error occurred.': 'Ocorreu um erro. Tente novamente.',
   Settings: 'Configurações',
   Quality: 'Qualidade',
   Audio: 'Áudio',
@@ -64,5 +66,4 @@ export default {
   Auto: 'Auto',
   'Auto ({label})': 'Auto ({label})',
   Subtitles: 'Legendas',
-  'An error occurred. Please try again.': 'Ocorreu um erro. Tente novamente.',
 } as const satisfies Partial<Translations>;

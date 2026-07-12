@@ -71,7 +71,7 @@ describe('ErrorDialogElement', () => {
     registerI18n('es', {
       'Something went wrong.': 'Algo salió mal.',
       OK: 'Aceptar',
-      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
+      'An unexpected error occurred.': 'Ocurrió un error inesperado.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
@@ -92,7 +92,7 @@ describe('ErrorDialogElement', () => {
     await el.updateComplete;
 
     expect(title.textContent).toBe('Algo salió mal.');
-    expect(desc.textContent).toBe('Ocurrió un error. Inténtalo de nuevo.');
+    expect(desc.textContent).toBe('Ocurrió un error inesperado.');
     expect(close.textContent).toBe('Aceptar');
   });
 
@@ -100,7 +100,7 @@ describe('ErrorDialogElement', () => {
     registerI18n('es', {
       'Something went wrong.': 'Algo salió mal.',
       OK: 'Aceptar',
-      'An error occurred. Please try again.': 'Ocurrió un error. Inténtalo de nuevo.',
+      'An unexpected error occurred.': 'Ocurrió un error inesperado.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
@@ -122,7 +122,7 @@ describe('ErrorDialogElement', () => {
     await el.updateComplete;
 
     expect(title.textContent).toBe('Custom title');
-    expect(desc.textContent).toBe('Ocurrió un error. Inténtalo de nuevo.');
+    expect(desc.textContent).toBe('Ocurrió un error inesperado.');
     expect(close.textContent).toBe('Aceptar');
   });
 

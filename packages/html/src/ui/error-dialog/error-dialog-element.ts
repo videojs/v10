@@ -141,7 +141,7 @@ export class ErrorDialogElement extends MediaElement {
       if (description) {
         this.#lastDescription = description;
       }
-      const copy = description ?? this.#lastDescription ?? 'An error occurred. Please try again.';
+      const copy = description ?? this.#lastDescription ?? 'An unexpected error occurred.';
       desc.textContent = resolveTranslation(t, copy);
     }
 

@@ -41,18 +41,19 @@ export default {
   'Exit fullscreen': 'Volledig scherm verlaten',
   'Picture in picture': 'Beeld-in-beeld',
   'Exit picture in picture': 'Beeld-in-beeld verlaten',
-  'You aborted the media playback': 'U heeft het afspelen van de media afgebroken',
-  'A network error caused the media download to fail.':
+  'You stopped media playback before it finished.': 'U heeft het afspelen van de media afgebroken',
+  'This media could not be loaded due to a network or server issue.':
     'Een netwerkfout heeft ervoor gezorgd dat het downloaden van de media is mislukt.',
-  'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.':
+  'This media could not be played. It may be corrupted, or your browser may not support its format.':
     'Het afspelen van de media werd afgebroken vanwege een corruptieprobleem of omdat de uw browser de gebruikte mediafuncties niet ondersteund.',
-  'An unsupported error occurred. The server or network failed, or your browser does not support this format.':
+  'This media could not be loaded. It may be unavailable, or your browser may not support its format.':
     'De media kon niet worden geladen, doordat de server of het netwerk faalde of doordat het formaat niet wordt ondersteund.',
-  'The media is encrypted and there are no keys to decrypt it.':
+  'This media could not be played because it could not be decrypted.':
     'De media is gecodeerd en we hebben niet de sleutels om het te decoderen.',
   '': '',
   'Something went wrong.': 'Er is iets misgegaan.',
   OK: 'Sluiten',
+  'An unexpected error occurred.': 'Er is een fout opgetreden. Probeer het opnieuw.',
   Settings: 'Instellingen',
   Quality: 'Kwaliteit',
   Audio: 'Geluid',
@@ -65,5 +66,4 @@ export default {
   Auto: 'Auto',
   'Auto ({label})': 'Auto ({label})',
   Subtitles: 'Ondertiteling',
-  'An error occurred. Please try again.': 'Er is een fout opgetreden. Probeer het opnieuw.',
 } as const satisfies Partial<Translations>;

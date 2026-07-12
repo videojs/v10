@@ -3,22 +3,22 @@ import { MediaError } from '../../media/media-error';
 
 export type MediaErrorTranslationKey = Extract<
   keyof TranslationParams,
-  | 'You aborted the media playback'
-  | 'A network error caused the media download to fail.'
-  | 'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.'
-  | 'An unsupported error occurred. The server or network failed, or your browser does not support this format.'
-  | 'The media is encrypted and there are no keys to decrypt it.'
+  | 'You stopped media playback before it finished.'
+  | 'This media could not be loaded due to a network or server issue.'
+  | 'This media could not be played. It may be corrupted, or your browser may not support its format.'
+  | 'This media could not be loaded. It may be unavailable, or your browser may not support its format.'
+  | 'This media could not be played because it could not be decrypted.'
   | ''
 >;
 
 const MEDIA_ERROR_CODE_TO_KEY: Record<number, MediaErrorTranslationKey | undefined> = {
-  [MediaError.MEDIA_ERR_ABORTED]: 'You aborted the media playback',
-  [MediaError.MEDIA_ERR_NETWORK]: 'A network error caused the media download to fail.',
+  [MediaError.MEDIA_ERR_ABORTED]: 'You stopped media playback before it finished.',
+  [MediaError.MEDIA_ERR_NETWORK]: 'This media could not be loaded due to a network or server issue.',
   [MediaError.MEDIA_ERR_DECODE]:
-    'A media error caused playback to be aborted. The media could be corrupt or your browser does not support this format.',
+    'This media could not be played. It may be corrupted, or your browser may not support its format.',
   [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]:
-    'An unsupported error occurred. The server or network failed, or your browser does not support this format.',
-  [MediaError.MEDIA_ERR_ENCRYPTED]: 'The media is encrypted and there are no keys to decrypt it.',
+    'This media could not be loaded. It may be unavailable, or your browser may not support its format.',
+  [MediaError.MEDIA_ERR_ENCRYPTED]: 'This media could not be played because it could not be decrypted.',
   [MediaError.MEDIA_ERR_CUSTOM]: '',
 };
 
@@ -70,5 +70,5 @@ export function resolveErrorDialogDescription(
   const cached = cachedMessage?.trim();
   if (cached) return cached;
 
-  return 'An error occurred. Please try again.';
+  return 'An unexpected error occurred.';
 }
