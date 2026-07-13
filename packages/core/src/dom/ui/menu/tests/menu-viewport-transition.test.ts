@@ -221,6 +221,29 @@ describe('menu-viewport-transition', () => {
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('160px');
   });
 
+  it('does not measure the root view for initially hidden child views', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuViews = Array.from({ length: 13 }, () => document.createElement('div'));
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    rootView.getBoundingClientRect = vi.fn(() => createRect(160, 100));
+    for (const menuView of menuViews) menuView.setAttribute('data-menu-view', '');
+    content.append(rootView, ...menuViews);
+
+    for (const menuView of menuViews) {
+      syncMenuViewTransition(content, menuView, {
+        phase: 'hidden',
+        direction: 'forward',
+        triggerId: null,
+      });
+    }
+
+    expect(rootView.getBoundingClientRect).not.toHaveBeenCalled();
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('');
+  });
+
   it('measures the root view height at the available menu width', () => {
     const content = addElement();
     const rootView = document.createElement('div');
@@ -242,6 +265,61 @@ describe('menu-viewport-transition', () => {
 
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
     expect(content.style.getPropertyValue('--media-menu-height')).toBe('128px');
+    expect(rootView.getBoundingClientRect).toHaveBeenCalledTimes(2);
+  });
+
+  it('avoids duplicate reads when measuring a natural menu view size', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    content.append(rootView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 80,
+      naturalWidth: 160,
+      naturalHeight: 80,
+    });
+
+    syncMenuViewRoot(content, false);
+
+    expect(rootView.getBoundingClientRect).toHaveBeenCalledTimes(1);
+  });
+
+  it('batches entering menu view measurements', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    menuView.setAttribute('data-menu-view', '');
+    content.style.setProperty('--media-popover-available-width', '180px');
+    content.append(rootView, menuView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(menuView, {
+      currentWidth: 160,
+      currentHeight: 100,
+      naturalWidth: 260,
+      naturalHeight: 100,
+      constrainedWidth: 180,
+      constrainedHeight: 148,
+    });
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'entering',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+
+    expect(rootView.getBoundingClientRect).toHaveBeenCalledTimes(1);
+    expect(menuView.getBoundingClientRect).toHaveBeenCalledTimes(2);
   });
 
   it('measures an entering submenu height at the available menu width', () => {
@@ -439,6 +517,48 @@ describe('menu-viewport-transition', () => {
     expect(content.style.getPropertyValue('--media-menu-height')).toBe('109px');
     expect(rootView.style.getPropertyValue('width')).toBe('');
     expect(rootView.style.getPropertyValue('height')).toBe('');
+    expect(menuView.getBoundingClientRect).toHaveBeenCalledTimes(1);
+    expect(rootView.getBoundingClientRect).toHaveBeenCalledTimes(3);
+  });
+
+  it('resyncs the root view when a visible child view becomes hidden', () => {
+    const content = addElement();
+    const rootView = document.createElement('div');
+    const menuView = document.createElement('div');
+
+    applyAttrs(rootView, getMenuRootViewAttrs());
+    menuView.setAttribute('data-menu-view', '');
+    content.append(rootView, menuView);
+
+    mockMenuViewSize(rootView, {
+      currentWidth: 220,
+      currentHeight: 170,
+      naturalWidth: 160,
+      naturalHeight: 100,
+    });
+    mockMenuViewSize(menuView, {
+      currentWidth: 220,
+      currentHeight: 170,
+      naturalWidth: 220,
+      naturalHeight: 170,
+    });
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'active',
+      direction: 'forward',
+      triggerId: 'trigger-1',
+    });
+    menuView.hidden = true;
+
+    syncMenuViewTransition(content, menuView, {
+      phase: 'hidden',
+      direction: 'back',
+      triggerId: 'trigger-1',
+    });
+
+    expect(rootView.getAttribute('data-menu-view-state')).toBe('active');
+    expect(content.style.getPropertyValue('--media-menu-width')).toBe('160px');
+    expect(content.style.getPropertyValue('--media-menu-height')).toBe('100px');
   });
 
   it('does not restore the root view when a hidden child sibling still has an active view', () => {
