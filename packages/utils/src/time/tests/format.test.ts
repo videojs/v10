@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '../format';
 
+const hasDurationFormat = typeof (Intl as { DurationFormat?: unknown }).DurationFormat === 'function';
+
 describe('formatTime', () => {
   it('formats seconds only', () => {
     expect(formatTime(0)).toBe('0:00');
@@ -82,7 +84,7 @@ describe('formatTimeAsPhrase', () => {
     expect(formatted).not.toMatch(/remaining$/i);
   });
 
-  it('uses Intl.DurationFormat', () => {
+  it.runIf(hasDurationFormat)('uses Intl.DurationFormat', () => {
     const en = formatTimeAsPhrase(125, { locale: 'en' });
     const de = formatTimeAsPhrase(125, { locale: 'de' });
     expect(en.length).toBeGreaterThan(0);
@@ -95,8 +97,14 @@ describe('formatTimeAsPhrase', () => {
     expect(formatTimeAsPhrase(Infinity)).toBe('');
   });
 
-  it('throws when Intl.DurationFormat rejects the locale', () => {
+  it.runIf(hasDurationFormat)('throws when Intl.DurationFormat rejects the locale', () => {
     expect(() => formatTimeAsPhrase(90, { locale: 'not-a-valid-bcp47-tag!!!' })).toThrow(RangeError);
+  });
+
+  it.skipIf(hasDurationFormat)('falls back to an English phrase without Intl.DurationFormat', () => {
+    expect(formatTimeAsPhrase(125)).toBe('2 minutes, 5 seconds');
+    expect(formatTimeAsPhrase(3661)).toBe('1 hour, 1 minute, 1 second');
+    expect(formatTimeAsPhrase(-30)).toMatch(/remaining$/i);
   });
 });
 
