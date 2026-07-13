@@ -21,6 +21,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
+import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { relocationPipelinesFor } from '../../behaviors/dom/relocation-steps';
 import { setupAudioBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
@@ -250,6 +251,9 @@ export function createHlsAudioOnlyEngine(
       // `mediaSource.sourceBuffers` aggregately — composes unchanged with
       // only audio in scope.
       endOfStream,
+      // Force native `ended` if Chrome freezes the playhead short of the buffered end
+      // after `endOfStream`. Inert for a clean-ending single-track source.
+      recoverEndStall,
 
       // Adapter signal callback.
       shareSignals,

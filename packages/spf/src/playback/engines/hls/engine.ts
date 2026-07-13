@@ -43,6 +43,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../behaviors/dom/relocation-steps';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -297,6 +298,13 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * `internal/design/spf/presentation-timeline-model.md`.
    */
   deriveStartMediaTime?: DeriveStartMediaTime;
+  /**
+   * Proximity window (seconds) for the `recoverEndStall` behavior — how close the
+   * playhead must be to the reachable buffered end for a `waiting` to be treated as the
+   * end-of-stream freeze and nudged to `ended`. Defaults to `0.2`. See
+   * `behaviors/dom/recover-end-stall`.
+   */
+  endStallNudgeWindow?: number;
 }
 
 // ============================================================================
@@ -473,6 +481,9 @@ export function createSimpleHlsEngine(
 
       // End of stream coordination
       endOfStream,
+      // Force native `ended` when Chrome freezes the playhead a few frames short of a
+      // skewed-A/V end after `endOfStream` (audio-clock stall). Inert otherwise.
+      recoverEndStall,
 
       // Text tracks
       syncTextTracks,
