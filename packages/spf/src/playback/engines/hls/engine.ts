@@ -57,7 +57,11 @@ import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasourc
 // `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
 // state slot, and the `deriveStartMediaTime` config field to drop relocation entirely
 // (text then falls back to the plain `resolveVttSegment` resolver).
-import { type DeriveStartMediaTime, establishStartMediaTime } from '../../behaviors/establish-start-media-time';
+import {
+  type DeriveStartMediaTime,
+  deriveSharedMinStartMediaTime,
+  establishStartMediaTime,
+} from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
@@ -343,8 +347,13 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+  // Non-zero-PTS relocation (spike): resolve the coordination seam once so the reactor
+  // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
+  // SAME derive. Default is shared-`min` across selected A/V (subsumes per-type).
+  const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
   const finalConfig = {
     ...config,
+    deriveStartMediaTime,
     resolveBufferedAnchor,
     // Format-neutral live-latency seam for `seekToLiveEdge` — the HLS resolver
     // (HOLD-BACK); a DASH engine would inject `suggestedPresentationDelay`.
@@ -364,10 +373,11 @@ export function createSimpleHlsEngine(
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
-    // Non-zero-PTS relocation (spike): the per-type discover/stamp steps
-    // `establishStartMediaTime` pairs with. Remove these two lines with the reactor.
-    videoMessagePipelines: relocationPipelinesFor('video'),
-    audioMessagePipelines: relocationPipelinesFor('audio'),
+    // Non-zero-PTS relocation (spike): the discover/stamp steps `establishStartMediaTime`
+    // pairs with. They apply the same `deriveStartMediaTime` seam as the reactor. Remove
+    // these two lines with the reactor.
+    videoMessagePipelines: relocationPipelinesFor('video', deriveStartMediaTime),
+    audioMessagePipelines: relocationPipelinesFor('audio', deriveStartMediaTime),
   };
 
   const composition = createComposition(

@@ -127,7 +127,7 @@ what its platform needs:
 |---|---|---|---|
 | **Relocation** | no `startMediaTime`, offset 0 | read + apply | is the source non-zero-PTS? |
 | **Parser** | presumptive (first box) | track-id-matched | container packaging (muxed `clcp`/extra track?) |
-| **Coordination** | single origin | `min`-reduce across A/V | is A/V actually skewed? |
+| **Coordination** | per-type own (opt-out) | `min`-reduce across A/V (default) | is A/V actually skewed? |
 
 They cross freely — muxed-captions-but-aligned (track-id + single), or
 separate-file-A/V-but-skewed (presumptive + `min`). The parser axis is already
@@ -172,27 +172,37 @@ clears the slot), not a hand-rolled reset.
   `fetchBytes`. `segmentStartTime` is recorded because the origin is
   `baseMediaDecodeTime/timescale − segmentStartTime` — the first *loaded* segment
   isn't necessarily the 0th (non-zero initial `currentTime`, live/DVR).
-- **Derive** (reactor effect). Watches `mediaContainerData` (+ selection for
-  Tier 2) and, via the injected **`deriveStartMediaTime`** seam, writes the settled
-  per-type `startMediaTime` onto the `Track`s (each type's value stamped on every
-  track of that type). The seam is **pure** —
+- **Derive** (reactor effect). Watches `mediaContainerData` (+ selection) and, via
+  the injected **`deriveStartMediaTime`** seam, writes the settled per-type
+  `startMediaTime` onto the `Track`s (each type's value stamped on every track of that
+  type). The seam is **pure** —
   `(mediaContainerData, ctx) => Record<TrackType, number | undefined>` — `undefined`
   means "not ready yet"; the effect is the sole writer of the field. It's the
-  **only tier knob**: Tier 1 gives each type its own
-  (`baseMediaDecodeTime/timescale − segmentStartTime`); Tier 2 writes the `min`
-  across the selected A/V origins to every type. No Presentation-level field is
-  needed — Tier 2 just denormalizes the min across the per-type entries.
+  **one coordination knob**, and the default `deriveSharedMinStartMediaTime` collapses
+  what were "Tier 1" and "Tier 2" into a single reduce: relocate every track by the
+  `min` across the *selected* A/V origins. This subsumes per-type — aligned A/V →
+  `min` equals each origin, skewed A/V → `min` keeps every DTS ≥ 0 *and* preserves the
+  real skew (per-type would flatten it), single-type → its own origin. It returns
+  `undefined` until every selected type is discovered (the shared-`min` barrier). The
+  same value goes to the model here and to the buffer via the tier-agnostic apply. No
+  Presentation-level field is needed — the min is denormalized across the per-type
+  entries. `derivePerTypeStartMediaTime` remains as the barrier-free opt-out for a
+  composition that knows its A/V is aligned.
 - **Apply** (per-track step). A stamp step relocates via `timestampOffset =
-  startTime − startMediaTime`, which the SourceBufferActor applies to
-  `SourceBuffer.timestampOffset`. **Tier 1** reads the type's *own* discovered
-  origin (`bmdt/ts − segmentStartTime`) straight from `mediaContainerData` —
-  populated by the discover step earlier in the same pipeline, so it's synchronous,
-  independent of the derive/model, and robust to `established` + late tracks. When no complete origin
-  is found (TS / containerless / 0-PTS) it leaves the append native (offset 0).
-  Reading the *reduced* `Track.startMediaTime` instead — tier-agnostic apply, needed
-  for Tier 2's shared `min` — is a deferred follow-up (it's where an abortable
-  `awaitDefined` holdback on the model value comes back). Text-cue relocation is
-  currently dropped; both are tracked in the spike plan's backlog.
+  −startMediaTime`, which the SourceBufferActor applies to
+  `SourceBuffer.timestampOffset`. The apply is **tier-agnostic**: it runs the *same*
+  `deriveStartMediaTime` seam the reactor uses, over the shared `mediaContainerData`
+  slot — so the buffer offset always equals the model's stamped `startMediaTime`, and
+  it's robust to `established` + late tracks (the slot persists and discover gates
+  per-type; the model value may not be re-stamped once the reactor goes sticky). It's
+  **async with an `awaitDefined` holdback**: per-type resolves at once (own origin
+  discovered earlier in the same pipeline); shared-`min` waits until every selected
+  A/V origin is in (the barrier), filled by the other type's discover step — no
+  deadlock, since discover precedes the awaiting stamp. A **liveness guard** short-
+  circuits first: if this type's own origin was never discovered (TS / containerless /
+  a mock/0-PTS-no-`tfdt` source) it leaves the append native and does not wait. A
+  derived `0` also leaves it native (setting `timestampOffset` at all can ripple).
+  Text-cue relocation reuses the model value the reactor stamped (see the text step).
 
 ### Consume: `startMediaTime` lives on the model
 

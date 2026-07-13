@@ -30,7 +30,11 @@ import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasourc
 // Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
 // `audioMessagePipelines` finalConfig entry, the `mediaContainerData` state slot,
 // and the `deriveStartMediaTime` config field to drop relocation from audio-only.
-import { type DeriveStartMediaTime, establishStartMediaTime } from '../../behaviors/establish-start-media-time';
+import {
+  type DeriveStartMediaTime,
+  deriveSharedMinStartMediaTime,
+  establishStartMediaTime,
+} from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
@@ -176,14 +180,17 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
 export function createHlsAudioOnlyEngine(
   config: SimpleHlsAudioOnlyEngineConfig = {}
 ): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+  const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
   const finalConfig = {
     ...config,
+    deriveStartMediaTime,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
-    // Non-zero-PTS relocation (spike): pair the audio loader with the per-type
-    // relocation steps `establishStartMediaTime` derives from. Remove with the reactor.
-    audioMessagePipelines: relocationPipelinesFor('audio'),
+    // Non-zero-PTS relocation (spike): pair the audio loader with the relocation steps
+    // `establishStartMediaTime` derives from; same `deriveStartMediaTime` seam. Remove
+    // with the reactor.
+    audioMessagePipelines: relocationPipelinesFor('audio', deriveStartMediaTime),
   };
 
   return createComposition(

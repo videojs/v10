@@ -51,9 +51,10 @@ export interface DeriveStartMediaTimeContext {
 
 /**
  * Reduce the discovered container data (keyed by track type) into each type's
- * `startMediaTime`. `undefined` means "not ready yet". Pure and injected — the
- * single point of tier variation: Tier 1 is per-type own; a Tier-2 variant returns
- * the shared `min` across the selected A/V origins for every type.
+ * `startMediaTime`. `undefined` means "not ready yet". Pure and injected — the single
+ * coordination seam. The default {@link deriveSharedMinStartMediaTime} relocates every
+ * track by one shared `min` origin (handles aligned + skewed A/V + single-type);
+ * {@link derivePerTypeStartMediaTime} is the barrier-free per-type alternative.
  */
 export type DeriveStartMediaTime = (
   containerData: Record<string, MediaContainerData>,
@@ -61,24 +62,63 @@ export type DeriveStartMediaTime = (
 ) => Record<string, number | undefined>;
 
 /**
- * Tier 1 default — each type relocates by its own origin:
- * `startMediaTime = baseMediaDecodeTime/timescale − segmentStartTime` (the
- * `segmentStartTime` term makes it the stream origin even when the first loaded
- * segment isn't the 0th).
+ * A single type's own media-timeline origin:
+ * `baseMediaDecodeTime/timescale − segmentStartTime` (the `segmentStartTime` term
+ * makes it the stream origin even when the first loaded segment isn't the 0th).
+ * `undefined` until timescale + baseMediaDecodeTime + segmentStartTime are all present.
+ */
+function ownOrigin(data: MediaContainerData | undefined): number | undefined {
+  const { timescale, baseMediaDecodeTime, segmentStartTime } = data ?? {};
+  return timescale != null && baseMediaDecodeTime != null && segmentStartTime != null
+    ? baseMediaDecodeTime / timescale - segmentStartTime
+    : undefined;
+}
+
+/**
+ * The **default** — relocate the whole presentation by one shared origin: the `min`
+ * across the *selected* A/V tracks' own origins, denormalized onto every type. This
+ * single reduce subsumes the "per-type" and "shared" tiers:
+ * - **aligned A/V** — `min` equals each origin (they're equal), so it matches per-type;
+ * - **skewed A/V** (e.g. Apple's 44ms audio-lead) — `min` keeps every track's earliest
+ *   DTS ≥ 0 (relocating by ≤ each own origin never drives one negative) *and* preserves
+ *   the real skew (per-type would flatten it, desyncing A/V);
+ * - **single type / muxed** — `min` of the one origin is that origin.
+ *
+ * Returns `undefined` for every type until all *selected* types have a complete origin
+ * (the shared-`min` barrier). Which types must contribute is read from `ctx` (the
+ * selected v/a ids); with no selection context it coordinates across whatever types
+ * have data.
+ */
+export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerData, ctx) => {
+  const contributingTypes: string[] = [];
+  if (ctx.selectedVideoTrackId != null) contributingTypes.push('video');
+  if (ctx.selectedAudioTrackId != null) contributingTypes.push('audio');
+  const types = contributingTypes.length > 0 ? contributingTypes : Object.keys(containerData);
+
+  const origins = types.map((type) => ownOrigin(containerData[type]));
+  // Barrier: not ready until every contributing type has a complete origin.
+  if (origins.length === 0 || origins.some((origin) => origin === undefined)) return {};
+
+  const shared = Math.min(...(origins as number[]));
+  const out: Record<string, number | undefined> = {};
+  for (const type of Object.keys(containerData)) out[type] = shared;
+  return out;
+};
+
+/**
+ * Coordination-axis *off* — each type relocates by its own origin, independently. Not
+ * the default: it flattens real A/V skew (see {@link deriveSharedMinStartMediaTime}).
+ * Kept as an opt-in for compositions that know their A/V is aligned and want to skip
+ * the shared-`min` barrier (each type stamps as soon as its own origin is discovered).
  */
 export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData) => {
   const out: Record<string, number | undefined> = {};
-  for (const [type, { timescale, baseMediaDecodeTime, segmentStartTime }] of Object.entries(containerData)) {
-    out[type] =
-      timescale != null && baseMediaDecodeTime != null && segmentStartTime != null
-        ? baseMediaDecodeTime / timescale - segmentStartTime
-        : undefined;
-  }
+  for (const [type, data] of Object.entries(containerData)) out[type] = ownOrigin(data);
   return out;
 };
 
 export interface EstablishStartMediaTimeConfig {
-  /** The reduce seam (tier knob). Defaults to {@link derivePerTypeStartMediaTime}. */
+  /** The reduce seam (coordination knob). Defaults to {@link deriveSharedMinStartMediaTime}. */
   deriveStartMediaTime?: DeriveStartMediaTime;
 }
 
@@ -122,7 +162,7 @@ function establishStartMediaTimeSetup({
   state,
   config = {},
 }: EstablishStartMediaTimeDeps): Reactor<EstablishFsmState | 'destroying' | 'destroyed'> {
-  const derive = config.deriveStartMediaTime ?? derivePerTypeStartMediaTime;
+  const derive = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
 
   const selectionContext = (): DeriveStartMediaTimeContext => ({
     selectedVideoTrackId: state.selectedVideoTrackId?.get(),

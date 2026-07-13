@@ -1,20 +1,94 @@
 import { describe, expect, it } from 'vitest';
-import { derivePerTypeStartMediaTime } from '../establish-start-media-time';
+import { derivePerTypeStartMediaTime, deriveSharedMinStartMediaTime } from '../establish-start-media-time';
 
-describe('derivePerTypeStartMediaTime', () => {
-  it('derives the origin as baseMediaDecodeTime/timescale − segmentStartTime (0th segment)', () => {
-    // Mux asset_start_time=60: origin ≈ 60s. First loaded segment is the 0th (startTime 0).
+describe('deriveSharedMinStartMediaTime', () => {
+  const sel = { selectedVideoTrackId: 'v', selectedAudioTrackId: 'a' };
+
+  it('relocates every type by the shared min across selected A/V origins', () => {
+    // Apple bipbop: video origin 10.000 (ts 6000, tfdt 60000), audio origin 9.956
+    // (ts 48000, tfdt 477888). Audio leads by 44ms → shared min = 9.956 for BOTH,
+    // so relocating preserves the skew (video lands at +0.044, audio at 0).
     expect(
-      derivePerTypeStartMediaTime(
-        { video: { timescale: 90000, baseMediaDecodeTime: 90000 * 60, segmentStartTime: 0 } },
+      deriveSharedMinStartMediaTime(
+        {
+          video: { timescale: 6000, baseMediaDecodeTime: 60000, segmentStartTime: 0 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 477888, segmentStartTime: 0 },
+        },
+        sel
+      )
+    ).toEqual({ video: 9.956, audio: 9.956 });
+  });
+
+  it('matches per-type when A/V is aligned (min equals each equal origin)', () => {
+    expect(
+      deriveSharedMinStartMediaTime(
+        {
+          video: { timescale: 90000, baseMediaDecodeTime: 90000 * 60, segmentStartTime: 0 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 48000 * 60, segmentStartTime: 0 },
+        },
+        sel
+      )
+    ).toEqual({ video: 60, audio: 60 });
+  });
+
+  it('barriers: returns nothing until every selected type has a complete origin', () => {
+    // Audio is selected but not yet discovered → hold back both (no partial relocation).
+    expect(
+      deriveSharedMinStartMediaTime(
+        { video: { timescale: 6000, baseMediaDecodeTime: 60000, segmentStartTime: 0 } },
+        sel
+      )
+    ).toEqual({});
+  });
+
+  it('subtracts a non-zero segmentStartTime so the origin is the stream origin, not the loaded segment', () => {
+    expect(
+      deriveSharedMinStartMediaTime(
+        {
+          video: { timescale: 90000, baseMediaDecodeTime: 90000 * 160, segmentStartTime: 100 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 48000 * 160, segmentStartTime: 100 },
+        },
+        sel
+      )
+    ).toEqual({ video: 60, audio: 60 });
+  });
+
+  it('degenerates to the single type when only one is selected', () => {
+    expect(
+      deriveSharedMinStartMediaTime(
+        { video: { timescale: 6000, baseMediaDecodeTime: 60000, segmentStartTime: 0 } },
+        { selectedVideoTrackId: 'v' }
+      )
+    ).toEqual({ video: 10 });
+  });
+
+  it('coordinates across whatever types have data when there is no selection context', () => {
+    expect(
+      deriveSharedMinStartMediaTime(
+        {
+          video: { timescale: 6000, baseMediaDecodeTime: 60000, segmentStartTime: 0 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 477888, segmentStartTime: 0 },
+        },
         {}
       )
-    ).toEqual({ video: 60 });
+    ).toEqual({ video: 9.956, audio: 9.956 });
+  });
+});
+
+describe('derivePerTypeStartMediaTime', () => {
+  it('resolves each track type by its own origin (bmdt/ts − segmentStartTime)', () => {
+    expect(
+      derivePerTypeStartMediaTime(
+        {
+          video: { timescale: 90000, baseMediaDecodeTime: 90000 * 60, segmentStartTime: 0 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 48000 * 59.956, segmentStartTime: 0 },
+        },
+        {}
+      )
+    ).toEqual({ video: 60, audio: 59.956 });
   });
 
   it('subtracts a non-zero segmentStartTime so it yields the stream origin, not the loaded segment', () => {
-    // Same source, but the first *loaded* segment starts at presentation 100 (native ≈160s) —
-    // e.g. a non-zero initial currentTime. The origin must still be 60, not 160.
     expect(
       derivePerTypeStartMediaTime(
         { video: { timescale: 90000, baseMediaDecodeTime: 90000 * 160, segmentStartTime: 100 } },
@@ -28,17 +102,5 @@ describe('derivePerTypeStartMediaTime', () => {
     expect(derivePerTypeStartMediaTime({ audio: { baseMediaDecodeTime: 100, segmentStartTime: 0 } }, {})).toEqual({
       audio: undefined,
     });
-  });
-
-  it('resolves each track type independently (preserving real A/V skew)', () => {
-    expect(
-      derivePerTypeStartMediaTime(
-        {
-          video: { timescale: 90000, baseMediaDecodeTime: 90000 * 60, segmentStartTime: 0 },
-          audio: { timescale: 48000, baseMediaDecodeTime: 48000 * 59.956, segmentStartTime: 0 },
-        },
-        {}
-      )
-    ).toEqual({ video: 60, audio: 59.956 });
   });
 });

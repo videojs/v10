@@ -39,13 +39,17 @@ import {
   textStepWiring,
 } from '../../actors/text-track-segment-loader';
 import { peekHead } from '../../primitives/head-peek';
-import type { EstablishStartMediaTimeState } from '../establish-start-media-time';
+import type { DeriveStartMediaTime, EstablishStartMediaTimeState } from '../establish-start-media-time';
 
 type ContainerSlot = Signal<Record<string, MediaContainerData> | undefined>;
 
 /** Assert the relocation state view from the opaque step deps — this module knows the slots the composition provides. */
+function relocationState(deps: StepDeps): StateSignals<EstablishStartMediaTimeState> {
+  return deps.state as unknown as StateSignals<EstablishStartMediaTimeState>;
+}
+
 function containerSlot(deps: StepDeps): ContainerSlot {
-  return (deps.state as unknown as StateSignals<EstablishStartMediaTimeState>).mediaContainerData;
+  return relocationState(deps).mediaContainerData;
 }
 
 /** Synchronous RMW of the per-type entry — disjoint keys across producers, so no lost update. */
@@ -54,12 +58,33 @@ function writeContainer(slot: ContainerSlot, trackType: string, patch: Partial<M
 }
 
 /**
+ * Resolve once `read()` returns a number. Shared by the A/V stamp (waits for the
+ * `derive`d origin — immediate for per-type, the shared-`min` barrier for coordinated)
+ * and the text step (waits for the primary A/V origin). No bound: for fMP4 the origin
+ * always establishes.
+ */
+function awaitDefined(read: () => number | undefined): Promise<number> {
+  return new Promise((resolve) => {
+    let stop: (() => void) | undefined;
+    stop = effect(() => {
+      const value = read();
+      if (value !== undefined) {
+        stop?.();
+        resolve(value);
+      }
+    });
+  });
+}
+
+/**
  * Relocation pipelines for one track type — a plain config `messagePipelines`.
  * Keyed by **track type** (`'video'` / `'audio'`), so ABR rungs of a type share the
  * origin (discover skips once the type's value is present). The steps read/write
- * `state.mediaContainerData[trackType]` via their call-time `deps`.
+ * `state.mediaContainerData[trackType]` via their call-time `deps`; the stamp applies
+ * the same `derive` seam the reactor uses (pass the composition's resolved
+ * `deriveStartMediaTime` so the buffer offset and the model's `startMediaTime` agree).
  */
-export function relocationPipelinesFor(trackType: 'video' | 'audio'): MessagePipelines {
+export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: DeriveStartMediaTime): MessagePipelines {
   /** Init step: head-peek the `mdhd` timescale into `mediaContainerData[trackType]`. */
   const readInitTimescale: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
@@ -94,27 +119,38 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio'): MessagePip
   };
 
   /**
-   * Stamp step. Tier 1: relocate by this type's *own* discovered origin, read
-   * straight from `mediaContainerData` (populated by `readSegmentOrigin` earlier in
-   * this pipeline, so it's synchronous). If no complete origin was found — TS /
-   * containerless / a 0-PTS source — leave the append native (offset 0).
+   * Stamp step — tier-agnostic apply. Relocate by the `derive`d `startMediaTime` for
+   * this type (`offset = −startMediaTime`). Applies the **same** `derive` the reactor
+   * uses, over the shared `mediaContainerData` slot — so the buffer offset matches the
+   * model's stamped `startMediaTime`, and it's robust to `established` + late tracks
+   * (the slot persists; the model value may not be re-stamped after the reactor goes
+   * sticky). Awaited: per-type resolves at once (own origin discovered earlier in this
+   * pipeline); shared-`min` waits until every selected A/V origin is in — the barrier,
+   * filled by the other type's discover step. A derived `0` (0-PTS / below threshold)
+   * leaves the append native — setting `timestampOffset` at all can ripple.
    */
-  const stampStartMediaTime: LoadStep = (frame, _signal, deps) => {
-    const { op } = frame;
-    if (op.type !== 'append-segment') return;
-    const data = peek(containerSlot(deps))?.[trackType];
-    if (
-      data?.timescale === undefined ||
-      data.baseMediaDecodeTime === undefined ||
-      data.segmentStartTime === undefined
-    ) {
+  const stampStartMediaTime: LoadStep = async (frame, signal, deps) => {
+    if (frame.op.type !== 'append-segment') return;
+    const state = relocationState(deps);
+    // Liveness guard: if THIS type's own origin wasn't discovered — `readSegmentOrigin`
+    // ran earlier in this pipeline and found no `tfdt` (mock / TS / containerless) — the
+    // source isn't relocatable, so leave the append native and DON'T wait. Only a
+    // discoverable type awaits the derived origin (which for shared-`min` legitimately
+    // blocks on the other selected type — the barrier).
+    const own = peek(state.mediaContainerData)?.[trackType];
+    if (own?.timescale === undefined || own.baseMediaDecodeTime === undefined || own.segmentStartTime === undefined) {
       return;
     }
-    // startMediaTime = baseMediaDecodeTime/timescale − segmentStartTime; offset = −startMediaTime.
-    frame.meta = {
-      ...(frame.meta ?? op.meta),
-      timestampOffset: data.segmentStartTime - data.baseMediaDecodeTime / data.timescale,
-    };
+    const startMediaTime = await awaitDefined(() => {
+      const containerData = state.mediaContainerData.get();
+      if (!containerData) return undefined;
+      return derive(containerData, {
+        selectedVideoTrackId: state.selectedVideoTrackId?.get(),
+        selectedAudioTrackId: state.selectedAudioTrackId?.get(),
+      })[trackType];
+    });
+    if (signal.aborted || startMediaTime === 0) return;
+    frame.meta = { ...(frame.meta ?? frame.op.meta), timestampOffset: -startMediaTime };
   };
 
   return () => ({
@@ -127,20 +163,6 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio'): MessagePip
 // ============================================================================
 // TEXT (cue relocation)
 // ============================================================================
-
-/** Resolve once `read()` returns a number. No bound: for fMP4 the A/V origin always establishes (0-PTS → 0). */
-function awaitDefined(read: () => number | undefined): Promise<number> {
-  return new Promise((resolve) => {
-    let stop: (() => void) | undefined;
-    stop = effect(() => {
-      const value = read();
-      if (value !== undefined) {
-        stop?.();
-        resolve(value);
-      }
-    });
-  });
-}
 
 /**
  * Resolve step for the relocation text pipeline. Reuses the injected host resolver
