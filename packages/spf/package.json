@@ -33,6 +33,11 @@
       "development": "./dist/dev/hls.js",
       "default": "./dist/default/hls.js"
     },
+    "./media-tracks": {
+      "types": "./dist/dev/media-tracks.d.ts",
+      "development": "./dist/dev/media-tracks.js",
+      "default": "./dist/default/media-tracks.js"
+    },
     "./background-video": {
       "types": "./dist/dev/background-video.d.ts",
       "development": "./dist/dev/background-video.js",
