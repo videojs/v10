@@ -1,7 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, extname, isAbsolute, join, resolve } from 'node:path';
 import { compile } from './compile';
-import type { CompilerAsset, CompilerConfig, CompilerDiagnostic, CompilerInput } from './config';
+import type { CompilerAsset, CompilerConfig, CompilerDiagnostic, CompilerInput, CompilerProjectConfig } from './config';
 
 export interface CompileProjectOptions {
   configDir?: string | undefined;
@@ -26,6 +26,27 @@ interface ProjectEntry {
 }
 
 export async function compileProject(
+  config: CompilerProjectConfig,
+  options: CompileProjectOptions = {}
+): Promise<CompileProjectResult> {
+  const files: ProjectOutputFile[] = [];
+  const diagnostics: CompilerDiagnostic[] = [];
+  const seenFiles = new Set<string>();
+
+  for (const entry of Array.isArray(config) ? config : [config]) {
+    const result = await compileProjectConfig(entry, options);
+    diagnostics.push(...result.diagnostics);
+    for (const file of result.files) {
+      if (seenFiles.has(file.fileName)) throw new Error(`Compiler project output collision: ${file.fileName}`);
+      seenFiles.add(file.fileName);
+      files.push(file);
+    }
+  }
+
+  return { files, diagnostics };
+}
+
+async function compileProjectConfig(
   config: CompilerConfig,
   options: CompileProjectOptions = {}
 ): Promise<CompileProjectResult> {

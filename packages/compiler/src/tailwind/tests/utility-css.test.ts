@@ -108,6 +108,18 @@ describe('analyzeUtility — variants', () => {
     expect(peer).toBeDefined();
     expect(peer!.selector).toContain('peer');
   });
+
+  it('captures child and descendant variants', () => {
+    const child = analyzeUtility('*:opacity-50', design);
+    const descendant = analyzeUtility('**:mix-blend-difference', design);
+
+    expect(child).not.toBeNull();
+    expect(child!.variants[0]).toMatchObject({ kind: 'descendant' });
+    expect(child!.variants[0]!.selector).toContain('&');
+    expect(descendant).not.toBeNull();
+    expect(descendant!.variants[0]).toMatchObject({ kind: 'descendant' });
+    expect(descendant!.variants[0]!.selector).toContain('&');
+  });
 });
 
 describe('analyzeUtility — branches', () => {

@@ -11,10 +11,10 @@ function rule(
   className: string,
   declarations: { property: string; value: string }[],
   variants: any[] = [],
-  group?: string
+  chunk?: string
 ): CompiledRule {
   const utility = { utility: 'mock', branches: [{ declarations, variants }], declarations, variants };
-  return group === undefined ? { className, utility } : { className, utility, group };
+  return chunk === undefined ? { className, utility } : { className, utility, chunk };
 }
 
 function branchedRule(
@@ -48,6 +48,17 @@ describe('emitCss — merged mode', () => {
     expect(out.kind === 'merged' && collapse(out.css)).toContain(collapse('.foo{display:flex;gap:1rem;}'));
   });
 
+  it('keeps the last declaration when merged rules set the same property', async () => {
+    const out = await emitCss({
+      rules: [
+        rule('foo', [{ property: 'display', value: 'flex' }]),
+        rule('foo', [{ property: 'display', value: 'grid' }]),
+      ],
+    });
+    expect(out.kind === 'merged' && collapse(out.css)).toContain(collapse('.foo{display:grid;}'));
+    expect(out.kind === 'merged' && out.css).not.toContain('display: flex');
+  });
+
   it('collapses selectors with identical declarations into a comma list', async () => {
     const out = await emitCss({
       rules: [
@@ -78,6 +89,27 @@ describe('emitCss — merged mode', () => {
       rules: [rule('foo', [{ property: 'opacity', value: '1' }], [variant])],
     });
     expect(out.kind === 'merged' && collapse(out.css)).toContain(collapse('.foo:hover{opacity:1;}'));
+  });
+
+  it('resolves nesting placeholders in selector variants', async () => {
+    const variant = {
+      kind: 'descendant' as const,
+      selector: ':is(& > *)',
+      selectorAst: [
+        [
+          {
+            type: 'pseudo-class',
+            kind: 'is',
+            selectors: [[{ type: 'nesting' }, { type: 'combinator', value: 'child' }, { type: 'universal' }]],
+          },
+        ],
+      ],
+      raw: ':is(& > *)',
+    };
+    const out = await emitCss({
+      rules: [rule('foo', [{ property: 'opacity', value: '1' }], [variant])],
+    });
+    expect(out.kind === 'merged' && collapse(out.css)).toContain(collapse(':is(.foo > *){opacity:1;}'));
   });
 
   it('composes nested at-rule + selector variants', async () => {
@@ -132,7 +164,7 @@ describe('emitCss — merged mode', () => {
 });
 
 describe('emitCss — split mode', () => {
-  it('groups rules by group', async () => {
+  it('splits rules by chunk', async () => {
     const out = await emitCss({
       mode: 'split',
       rules: [
@@ -142,12 +174,12 @@ describe('emitCss — split mode', () => {
     });
     expect(out.kind).toBe('split');
     if (out.kind !== 'split') return;
-    expect(out.groups.size).toBe(2);
-    expect(collapse(out.groups.get('one')!)).toContain(collapse('.a{color:red;}'));
-    expect(collapse(out.groups.get('two')!)).toContain(collapse('.b{color:blue;}'));
+    expect(out.chunks.size).toBe(2);
+    expect(collapse(out.chunks.get('one')!)).toContain(collapse('.a{color:red;}'));
+    expect(collapse(out.chunks.get('two')!)).toContain(collapse('.b{color:blue;}'));
   });
 
-  it('emits an index with @import lines for each group in stable order', async () => {
+  it('emits an index with @import lines for each chunk in stable order', async () => {
     const out = await emitCss({
       mode: 'split',
       rules: [
@@ -163,7 +195,7 @@ describe('emitCss — split mode', () => {
     expect(oneIdx).toBeLessThan(twoIdx);
   });
 
-  it('uses safe file stems for empty, reserved, and path-like groups', async () => {
+  it('uses safe file stems for empty, reserved, and path-like chunks', async () => {
     const out = await emitCss({
       mode: 'split',
       rules: [
@@ -174,20 +206,20 @@ describe('emitCss — split mode', () => {
       ],
     });
     if (out.kind !== 'split') throw new Error('expected split');
-    expect([...out.groups.keys()].sort()).toEqual(['_default', '_index', 'controls', 'controls-2']);
+    expect([...out.chunks.keys()].sort()).toEqual(['_default', '_index', 'controls', 'controls-2']);
     expect(out.index).not.toContain('./index.css');
     expect(out.index).not.toContain('..');
   });
 });
 
-describe('emitCss — baseCss prepend', () => {
+describe('emitCss — base prepend', () => {
   it('prepends a single base CSS file (read via Lightning)', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'emit-css-'));
     const basePath = join(dir, 'base.css');
     writeFileSync(basePath, '.base { color: green; }', 'utf8');
     const out = await emitCss({
       rules: [rule('foo', [{ property: 'display', value: 'flex' }])],
-      baseCss: [basePath],
+      base: [basePath],
     });
     expect(out.kind === 'merged' && out.css.indexOf('.base') < out.css.indexOf('.foo')).toBe(true);
   });
@@ -200,7 +232,7 @@ describe('emitCss — baseCss prepend', () => {
     writeFileSync(outer, '@import "./inner.css";\n.from-outer { color: red; }', 'utf8');
     const out = await emitCss({
       rules: [rule('foo', [{ property: 'display', value: 'flex' }])],
-      baseCss: [outer],
+      base: [outer],
     });
     if (out.kind !== 'merged') throw new Error('expected merged');
     expect(out.css).toContain('.from-inner');
@@ -208,7 +240,7 @@ describe('emitCss — baseCss prepend', () => {
     expect(out.css).not.toContain('@import');
   });
 
-  it('puts baseCss in index only (split mode), not duplicated across groups', async () => {
+  it('puts base in index only (split mode), not duplicated across chunks', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'emit-css-split-base-'));
     const basePath = join(dir, 'base.css');
     writeFileSync(basePath, '.base { color: green; }', 'utf8');
@@ -218,20 +250,21 @@ describe('emitCss — baseCss prepend', () => {
         rule('a', [{ property: 'color', value: 'red' }], [], 'one'),
         rule('b', [{ property: 'color', value: 'blue' }], [], 'two'),
       ],
-      baseCss: [basePath],
+      base: [basePath],
     });
     if (out.kind !== 'split') throw new Error('expected split');
     expect(out.index).toContain('.base');
-    expect(out.groups.get('one')!).not.toContain('.base');
-    expect(out.groups.get('two')!).not.toContain('.base');
+    expect(out.index.indexOf('@import "./one.css"')).toBeLessThan(out.index.indexOf('.base'));
+    expect(out.chunks.get('one')!).not.toContain('.base');
+    expect(out.chunks.get('two')!).not.toContain('.base');
   });
 
-  it('resolves relative baseCss paths against configDir', async () => {
+  it('resolves relative base paths against configDir', async () => {
     const dir = mkdtempSync(join(tmpdir(), 'emit-css-relpath-'));
     writeFileSync(join(dir, 'base.css'), '.base { color: green; }', 'utf8');
     const out = await emitCss({
       rules: [rule('foo', [{ property: 'display', value: 'flex' }])],
-      baseCss: ['./base.css'],
+      base: ['./base.css'],
       configDir: dir,
     });
     expect(out.kind === 'merged' && out.css).toContain('.base');

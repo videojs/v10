@@ -4,11 +4,11 @@ import {
   container,
   controls,
   error,
-  icon,
-  muteIcon,
-  playIcon,
-  popup,
+  icons,
+  popover,
   slider,
+  tooltip,
+  volumePopover,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
@@ -49,7 +49,7 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
   return (
     <div
       ref={ref}
-      className={cn(slider.fill.base, type === 'fill' ? slider.fill.fill : slider.fill.buffer, className)}
+      className={cn(slider.fillBase, type === 'fill' ? slider.fill : slider.buffer, className)}
       {...props}
     />
   );
@@ -62,7 +62,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   return (
     <div
       ref={ref}
-      className={cn(slider.thumb.base, persistent ? slider.thumb.persistent : slider.thumb.interactive, className)}
+      className={cn(slider.thumbBase, persistent ? slider.thumbPersistent : slider.thumb, className)}
       {...props}
     />
   );
@@ -72,10 +72,10 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={muteIcon.button} render={<Button />}>
-      <VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />
-      <VolumeLowIcon className={cn(icon, muteIcon.volumeLow)} />
-      <VolumeHighIcon className={cn(icon, muteIcon.volumeHigh)} />
+    <MuteButton className={icons.muteButtonState} render={<Button />}>
+      <VolumeOffIcon className={cn(icons.root, icons.volumeOffIcon)} />
+      <VolumeLowIcon className={cn(icons.root, icons.volumeLowIcon)} />
+      <VolumeHighIcon className={cn(icons.root, icons.volumeHighIcon)} />
     </MuteButton>
   );
 
@@ -84,7 +84,7 @@ function VolumePopover(): ReactNode {
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
-      <Popover.Popup className={cn(popup.popover, popup.volume)}>
+      <Popover.Popup className={cn(popover.root, volumePopover.root)}>
         <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
@@ -123,16 +123,16 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <PlayButton className={playIcon.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, playIcon.restart)} />
-                    <PlayIcon className={cn(icon, playIcon.play)} />
-                    <PauseIcon className={cn(icon, playIcon.pause)} />
+                  <PlayButton className={icons.playButtonState} render={<Button />}>
+                    <RestartIcon className={cn(icons.root, icons.restartIcon)} />
+                    <PlayIcon className={cn(icons.root, icons.playIcon)} />
+                    <PauseIcon className={cn(icons.root, icons.pauseIcon)} />
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 

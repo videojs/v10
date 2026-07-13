@@ -59,6 +59,7 @@ export interface AnalyzeStylesOptions {
 
 export function readStyleAttribute(element: JsxElementLike): StyleAttributeInfo | undefined {
   const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
+
   const classNameAttr = findClassNameAttribute(attrs);
   if (!classNameAttr) return undefined;
 

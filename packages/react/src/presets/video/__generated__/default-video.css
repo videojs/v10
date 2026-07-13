@@ -1,0 +1,171 @@
+@import "./base.css";
+@import "./button.css";
+@import "./controls.css";
+@import "./dialog.css";
+@import "./feedback.css";
+@import "./loading.css";
+@import "./popup.css";
+@import "./slider.css";
+@import "./time.css";
+
+@keyframes media-shake {
+  0%,
+  100% {
+    translate: 0;
+  }
+
+  20% {
+    translate: -6px;
+  }
+
+  40% {
+    translate: 4px;
+  }
+
+  60% {
+    translate: -2px;
+  }
+
+  80% {
+    translate: 1px;
+  }
+}
+
+@keyframes media-slide-in-forward {
+  from {
+    opacity: 0;
+    translate: -60%;
+  }
+}
+
+@keyframes media-slide-in-backward {
+  from {
+    opacity: 0;
+    translate: 60%;
+  }
+}
+
+@keyframes media-pop-in {
+  from {
+    opacity: 0;
+    scale: 0.8;
+  }
+}
+
+@property --media-progress-fill {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+
+:where(.media-root) {
+  --media-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
+  --media-current-shadow-color-subtle: oklch(from var(--media-current-shadow-color) l c h / calc(alpha * 0.4));
+  --media-icon-size: 18px;
+}
+
+:where(.media-root) {
+  --media-caption-track-delay: 25ms;
+  --media-caption-track-duration: var(--media-controls-transition-duration);
+  --media-caption-track-y: -0.5rem;
+  --media-controls-transition-duration: 0.1s;
+  --media-controls-transition-timing-function: ease-out;
+  --media-error-dialog-transition-delay: 0.1s;
+  --media-error-dialog-transition-duration: 0.35s;
+  --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
+  --media-popover-boundary-offset: 0.5rem;
+  --media-popover-side-offset: 0.5rem;
+  --media-popup-transition-duration: 0.1s;
+  --media-popup-transition-timing-function: ease-out;
+  --media-spring-timing-function: linear(
+    0,
+    0.034 1.5%,
+    0.763 9.7%,
+    1.066 13.9%,
+    1.198 19.9%,
+    1.184 21.8%,
+    0.963 37.5%,
+    0.997 50.9%,
+    1
+  );
+  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
+  --media-surface-background-color: oklch(100% 0 0 / 0.1);
+  --media-surface-inner-border-color: oklch(100% 0 0 / 0.05);
+  --media-surface-outer-border-color: oklch(0% 0 0 / 0.1);
+  --media-surface-shadow-color: oklch(0% 0 0 / 0.15);
+  --media-tooltip-boundary-offset: 0.5rem;
+  --media-tooltip-side-offset: 0.75rem;
+  --media-video-border-radius: var(--media-border-radius, 2rem);
+}
+
+:where(.media-root:has([data-controls][data-visible])) {
+  --media-caption-track-y: -5.5rem;
+}
+
+@container media-container (width >= 42rem) {
+  :where(.media-root > *) {
+    --media-caption-track-y: -3.5rem;
+  }
+}
+
+@media (pointer: coarse) {
+  :where(.media-root) {
+    --media-controls-transition-duration: 0.15s;
+  }
+}
+
+@media (pointer: fine) {
+  :where(.media-root) {
+    --media-controls-transition-duration: 0.3s;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :where(.media-root) {
+    --media-surface-background-color: oklch(0% 0 0);
+    --media-surface-inner-border-color: oklch(100% 0 0 / 0.25);
+    --media-surface-outer-border-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.media-root) {
+    --media-controls-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0s;
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-timing-function: ease-out;
+    --media-popup-transition-duration: 0s;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :where(.media-root) {
+    --media-surface-background-color: oklch(0% 0 0);
+    --media-surface-inner-border-color: oklch(100% 0 0 / 0.25);
+    --media-surface-outer-border-color: transparent;
+  }
+}
+
+:root {
+  --animate-media-pop-in: media-pop-in 250ms ease-out;
+  --animate-media-shake: media-shake 300ms ease-in-out;
+  --animate-media-slide-in-backward: media-slide-in-backward 300ms ease-in-out;
+  --animate-media-slide-in-forward: media-slide-in-forward 300ms ease-in-out;
+  --blur-lg: 16px;
+  --blur-sm: 8px;
+  --color-black: #000;
+  --color-white: #fff;
+  --default-transition-duration: 150ms;
+  --default-transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --leading-normal: 1.5;
+  --leading-tight: 1.25;
+  --radius-3xl: 1.5rem;
+  --radius-xl: 0.75rem;
+  --spacing: 0.25rem;
+  --text-base: 1rem;
+  --tracking-tighter: -0.05em;
+}

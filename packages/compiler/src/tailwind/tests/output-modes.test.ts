@@ -69,6 +69,8 @@ export function Fixture() {
 }
 `;
 
+const compact = (value: string): string => value.replace(/\s+/g, '');
+
 let workDir: string;
 let sourcePath: string;
 let cssPath: string;
@@ -109,6 +111,30 @@ describe('tailwind output modes', () => {
     `);
   });
 
+  it('inlines static token segments while preserving runtime class expressions', async () => {
+    const result = await compileSource(
+      `import { styles } from './tokens';
+
+export function Fixture({ className }: { className?: string }) {
+  return <Controls className={[styles.controls, className]} />;
+}
+`,
+      {
+        filename: sourcePath,
+        configDir: workDir,
+        config: { plugins: [tailwind({ mode: 'inline' })] },
+      }
+    );
+
+    expect(result.assets).toEqual([]);
+    expect(result.code).not.toContain('styles.');
+    expect(compact(result.code)).toContain(
+      compact(
+        '<Controls className={["flex flex-wrap [--media-popover-side-offset:0.5rem] pointer-fine:transition-[scale,filter,opacity] motion-reduce:[--media-controls-transition-duration:50ms] contrast-more:[--media-surface-background-color:oklch(0_0_0)] [@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)] @2xl/media-root:flex-nowrap", className]} />'
+      )
+    );
+  });
+
   it('extracts static utilities to scoped vanilla CSS assets', async () => {
     const result = await compileSource(SOURCE, {
       filename: sourcePath,
@@ -133,7 +159,7 @@ describe('tailwind output modes', () => {
       "export function Fixture() {
           return (<FixtureRoot className="fixture-root">
             <Controls className="controls">
-              <Button className="button group">
+              <Button className="button">
                 <Icon className="icon"/>
               </Button>
               <div className="thumbnail"/>
@@ -164,12 +190,12 @@ describe('tailwind output modes', () => {
         position: relative;
       }
 
-      .button::after {
+      .button:after {
         content: "";
         position: absolute;
       }
 
-      .button::before {
+      .button:before {
         content: 'x';
         position: absolute;
       }
@@ -215,11 +241,11 @@ describe('tailwind output modes', () => {
         opacity: 0%;
       }
 
-      .icon:is(:where(.group):not(*[data-paused]) *) {
+      .icon:is(:where(.button):not([data-paused]) *) {
         opacity: 0%;
       }
 
-      .icon:is(:where(.group)[data-paused] *) {
+      .icon:is(:where(.button)[data-paused] *) {
         display: block;
         opacity: 100%;
       }
@@ -229,7 +255,7 @@ describe('tailwind output modes', () => {
         position: absolute;
       }
 
-      .thumbnail:has(*:is([role=img]:not([data-hidden]))) {
+      .thumbnail:has([role="img"]:not([data-hidden])) {
         opacity: 100%;
       }
 

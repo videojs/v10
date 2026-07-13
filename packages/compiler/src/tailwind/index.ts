@@ -6,7 +6,6 @@ export type {
 } from './css/render';
 export { type DesignSystem, loadDesignSystem } from './design-system';
 export {
-  type ResolveGroup,
   type TailwindEmitOptions,
   type TailwindMode,
   type TailwindOptions,
@@ -14,6 +13,18 @@ export {
   type TailwindVarsOptions,
   tailwind,
 } from './plugin';
+export type {
+  ResolveClassList,
+  ResolveClassListContext,
+  ResolveElement,
+  ResolveElementContext,
+  ResolveElementResult,
+  ResolveRule,
+  ResolveRuleContext,
+  Selector,
+  SelectorComponent,
+  SelectorList,
+} from './selectors';
 export {
   analyzeUtility,
   type Declaration,

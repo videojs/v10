@@ -3,9 +3,10 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { popup as basePopup } from './components/popup';
+import { popover as basePopover, volumePopover as baseVolumePopover } from './components/popover';
 import { slider as baseSlider } from './components/slider';
 import { surface } from './components/surface';
+import { tooltip as baseTooltip, tooltipShortcut as baseTooltipShortcut } from './components/tooltip';
 
 /* ===========================================================================
    Container
@@ -64,9 +65,21 @@ export const slider = {
    ========================================================================== */
 
 export const popup = {
-  ...basePopup,
-  popover: cn(surface, basePopup.popover),
-  tooltip: cn(surface, basePopup.tooltip),
+  popover: cn(surface, basePopover),
+  tooltip: cn(surface, baseTooltip),
+};
+
+export const popover = {
+  root: popup.popover,
+};
+
+export const tooltip = {
+  root: popup.tooltip,
+  shortcut: baseTooltipShortcut,
+};
+
+export const volumePopover = {
+  root: baseVolumePopover,
 };
 
 /* ===========================================================================
@@ -114,6 +127,7 @@ export {
 export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
+export * as icons from './components/icon';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { menu } from './components/menu';
 export { playbackRate } from './components/playback-rate';

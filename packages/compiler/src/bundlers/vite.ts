@@ -31,9 +31,8 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
   const getConfig = async (): Promise<{ config: CompilerConfig; configDir: string }> => {
     if (options.config) return { config: options.config, configDir: root };
     loadedConfig ??= await loadConfig(root, options.configFile);
-    return loadedConfig
-      ? { config: loadedConfig.config, configDir: loadedConfig.configDir }
-      : { config: {}, configDir: root };
+    if (!loadedConfig) return { config: {}, configDir: root };
+    return { config: loadedConfig.config, configDir: loadedConfig.configDir };
   };
 
   return {

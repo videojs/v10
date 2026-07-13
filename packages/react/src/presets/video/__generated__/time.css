@@ -1,0 +1,37 @@
+.media-time-current {
+  display: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.media-time-duration {
+  font-variant-numeric: tabular-nums;
+}
+
+.media-time-group {
+  display: flex;
+  flex: 1;
+  flex-grow: 0;
+  flex-shrink: 0;
+  flex-basis: 100%;
+  gap: calc(var(--spacing) * 3);
+  align-items: center;
+  order: -1;
+  padding-inline: calc(var(--spacing) * 2.5);
+  container-name: media-time;
+  container-type: inline-size;
+}
+
+@container media-container (width >= 42rem) {
+  .media-time-group {
+    flex-grow: 1;
+    flex-shrink: 1;
+    flex-basis: calc(var(--spacing) * 0);
+    order: unset;
+  }
+}
+
+@container media-time (width >= 18rem) {
+  .media-time-current {
+    display: block;
+  }
+}

@@ -41,6 +41,8 @@ export interface Variant {
   kind: VariantKind;
   /** Selector segment this variant adds, if any. */
   selector?: string;
+  /** Lightning CSS selector AST for this variant, if any. */
+  selectorAst?: CssSelectorList;
   /** At-rule wrapper, if any. */
   atRule?: { name: string; params: string };
   /** Original raw form (for diagnostics + emit). */
@@ -100,6 +102,7 @@ export function analyzeUtility(utility: string, design: DesignSystem): UtilityCs
 
   const stylesheet = parseStyleSheet(css);
   if (!stylesheet) return null;
+
   const context = createAnalysisContext(css);
 
   const branches: UtilityCssBranch[] = [];
@@ -117,6 +120,7 @@ export function analyzeUtility(utility: string, design: DesignSystem): UtilityCs
 
 function parseStyleSheet(css: string): CssStyleSheet | null {
   let stylesheet: CssStyleSheet | undefined;
+
   try {
     transform({
       filename: 'tailwind-utility.css',
@@ -130,6 +134,7 @@ function parseStyleSheet(css: string): CssStyleSheet | null {
   } catch {
     return null;
   }
+
   return stylesheet ?? null;
 }
 
@@ -289,7 +294,7 @@ function selectorTailFromStyleRule(rule: CssStyleRule, context: AnalysisContext)
 
 function selectorVariantFromStyleRule(rule: CssStyleRule, context: AnalysisContext): Variant {
   const tail = selectorTailFromStyleRule(rule, context);
-  return classifySelector(rule.selectors, tail);
+  return classifySelector(rule.selectors, tail, rule.selectors);
 }
 
 function collectProperties(rules: readonly CssRule[], context: AnalysisContext): PropertyRule[] {
@@ -571,21 +576,26 @@ function readBalancedBlock(body: string, openIdx: number): BalancedBlock | null 
   return null;
 }
 
-function classifySelector(selectors: CssSelectorList, tail: string): Variant {
+function classifySelector(selectors: CssSelectorList, tail: string, selectorAst: CssSelectorList): Variant {
   const components = selectorTailComponents(selectors[0] ?? []);
 
-  if (selectorContainsClass(components, 'group')) return { kind: 'group', selector: tail, raw: tail };
-  if (selectorContainsClass(components, 'peer')) return { kind: 'peer', selector: tail, raw: tail };
-  if (components.some((component) => component.type === 'attribute')) {
-    return { kind: 'attribute', selector: tail, raw: tail };
+  if (selectorContainsClass(components, 'group')) return { kind: 'group', selector: tail, selectorAst, raw: tail };
+  if (selectorContainsClass(components, 'peer')) return { kind: 'peer', selector: tail, selectorAst, raw: tail };
+  if (selectorContainsComponent(components, (component) => component.type === 'attribute')) {
+    return { kind: 'attribute', selector: tail, selectorAst, raw: tail };
   }
-  if (components.some((component) => component.type === 'pseudo-class' || component.type === 'pseudo-element')) {
-    return { kind: 'pseudo', selector: tail, raw: tail };
+  if (selectorContainsComponent(components, (component) => component.type === 'combinator')) {
+    return { kind: 'descendant', selector: tail, selectorAst, raw: tail };
   }
-  if (components.some((component) => component.type === 'combinator')) {
-    return { kind: 'descendant', selector: tail, raw: tail };
+  if (
+    selectorContainsComponent(
+      components,
+      (component) => component.type === 'pseudo-class' || component.type === 'pseudo-element'
+    )
+  ) {
+    return { kind: 'pseudo', selector: tail, selectorAst, raw: tail };
   }
-  return { kind: 'parent', selector: tail, raw: tail };
+  return { kind: 'parent', selector: tail, selectorAst, raw: tail };
 }
 
 function selectorTailComponents(selector: CssSelector): CssSelector {
@@ -593,10 +603,20 @@ function selectorTailComponents(selector: CssSelector): CssSelector {
 }
 
 function selectorContainsClass(selector: CssSelector, className: string): boolean {
+  return selectorContainsComponent(
+    selector,
+    (component) => component.type === 'class' && classNameMatches(component.name, className)
+  );
+}
+
+function selectorContainsComponent(
+  selector: CssSelector,
+  predicate: (component: CssSelector[number]) => boolean
+): boolean {
   for (const component of selector) {
-    if (component.type === 'class' && classNameMatches(component.name, className)) return true;
+    if (predicate(component)) return true;
     for (const nested of selectorLists(component)) {
-      if (selectorContainsClass(nested, className)) return true;
+      if (selectorContainsComponent(nested, predicate)) return true;
     }
   }
   return false;

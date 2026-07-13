@@ -1,0 +1,81 @@
+:where(.media-root) {
+  --media-caption-track-delay: 25ms;
+  --media-caption-track-duration: var(--media-controls-transition-duration);
+  --media-caption-track-y: -0.5rem;
+  --media-controls-transition-duration: 100ms;
+  --media-controls-transition-timing-function: ease-out;
+  --media-error-dialog-transition-delay: 100ms;
+  --media-error-dialog-transition-duration: 350ms;
+  --media-error-dialog-transition-timing-function: var(--media-spring-timing-function);
+  --media-popover-boundary-offset: 0.5rem;
+  --media-popover-side-offset: 0.5rem;
+  --media-popup-transition-duration: 100ms;
+  --media-popup-transition-timing-function: ease-out;
+  --media-spring-timing-function: linear(
+    0,
+    0.034 1.5%,
+    0.763 9.7%,
+    1.066 13.9%,
+    1.198 19.9%,
+    1.184 21.8%,
+    0.963 37.5%,
+    0.997 50.9%,
+    1
+  );
+  --media-surface-backdrop-filter: blur(16px) saturate(1.5);
+  --media-surface-background-color: oklch(1 0 0 / 0.1);
+  --media-surface-inner-border-color: oklch(1 0 0 / 0.05);
+  --media-surface-outer-border-color: oklch(0 0 0 / 0.1);
+  --media-surface-shadow-color: oklch(0 0 0 / 0.15);
+  --media-tooltip-boundary-offset: 0.5rem;
+  --media-tooltip-side-offset: 0.75rem;
+  --media-video-border-radius: var(--media-border-radius, 2rem);
+}
+
+:where(.media-root:has([data-controls][data-visible])) {
+  --media-caption-track-y: -5.5rem;
+}
+
+@container media-container (width >= 42rem) {
+  :where(.media-root > *) {
+    --media-caption-track-y: -3.5rem;
+  }
+}
+
+@media (pointer: coarse) {
+  :where(.media-root) {
+    --media-controls-transition-duration: 150ms;
+  }
+}
+
+@media (pointer: fine) {
+  :where(.media-root) {
+    --media-controls-transition-duration: 300ms;
+  }
+}
+
+@media (prefers-contrast: more) {
+  :where(.media-root) {
+    --media-surface-background-color: oklch(0 0 0);
+    --media-surface-inner-border-color: oklch(1 0 0 / 0.25);
+    --media-surface-outer-border-color: transparent;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.media-root) {
+    --media-controls-transition-duration: 50ms;
+    --media-error-dialog-transition-delay: 0ms;
+    --media-error-dialog-transition-duration: 50ms;
+    --media-error-dialog-transition-timing-function: ease-out;
+    --media-popup-transition-duration: 0ms;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  :where(.media-root) {
+    --media-surface-background-color: oklch(0 0 0);
+    --media-surface-inner-border-color: oklch(1 0 0 / 0.25);
+    --media-surface-outer-border-color: transparent;
+  }
+}

@@ -13,9 +13,9 @@ export interface DerivedClassName {
 
 export type DefaultNameSource = 'component' | 'token' | 'literal';
 
-/** Context passed to `resolve.name`. */
+/** Context passed to a style name resolver. */
 export interface NameContext {
-  /** The default candidate source used when `resolve.name` is omitted. */
+  /** The default candidate source used when no name resolver is provided. */
   source: DefaultNameSource;
   /** The JSX tag (e.g. `'PlayButton'` or `'Tooltip.Trigger'`). */
   tag: string;
@@ -116,7 +116,7 @@ export function deriveClassName(opts: DeriveClassNameOptions): DerivedClassName 
       `Tag is bare HTML and the className doesn't reference a token path. ` +
       `Resolve by: (a) using a JSX component instead of <${tag}>, ` +
       `(b) extracting the classes into a single token reference, ` +
-      `or (c) customizing \`resolve.name\`.`,
+      `or (c) customizing the style name resolver.`,
     { ...diagnosticLocationFromNode(opts.element), diagnosticCode: 'style-class-name' }
   );
 }

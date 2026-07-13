@@ -23,10 +23,10 @@ export function cssAssets(
   const assets: CompilerAsset[] = [
     { type: 'css', fileName: indexFile, source: rendered.index, sourceFile: context.filename },
   ];
-  for (const [group, source] of rendered.groups) {
+  for (const [chunk, source] of rendered.chunks) {
     assets.push({
       type: 'css',
-      fileName: join(dir, `${group}.css`),
+      fileName: join(dir, `${chunk}.css`),
       source,
       sourceFile: context.filename,
     });

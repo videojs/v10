@@ -1,5 +1,14 @@
 import { isAbsolute, resolve } from 'node:path';
 import { bundleAsync } from 'lightningcss';
+import type { StyleSegment } from '../../styles';
+import {
+  composeSelectorLists,
+  type ResolveRule,
+  replaceSelectorClasses,
+  type SelectorList,
+  selectorListForClass,
+  serializeSelectorList,
+} from '../selectors';
 import type { Declaration, UtilityCss, UtilityCssBranch } from '../utility-css';
 
 /** A compiled rule: a class name + the utility's declarations and variants. */
@@ -8,12 +17,14 @@ export interface CompiledRule {
   className: string;
   /** Declarations + variants extracted from the utility. */
   utility: UtilityCss;
+  /** Source className segments that produced this rule. */
+  segments?: readonly StyleSegment[] | undefined;
   /**
-   * Optional logical grouping key. `mode: 'split'` writes rules with the same
-   * group to the same `<group>.css` file; merged mode preserves the metadata
+   * Optional logical chunk key. `mode: 'split'` writes rules with the same
+   * chunk to the same `<chunk>.css` file; merged mode preserves the metadata
    * but emits one stylesheet.
    */
-  group?: string;
+  chunk?: string;
 }
 
 /** Output of `renderCss`. Discriminated by `kind`. */
@@ -22,8 +33,8 @@ export type RenderedCss =
   | {
       kind: 'split';
       index: string;
-      /** CSS chunks keyed by safe file stem, not raw group name. */
-      groups: Map<string, string>;
+      /** CSS chunks keyed by safe file stem, not raw chunk name. */
+      chunks: Map<string, string>;
     };
 
 /**
@@ -47,18 +58,18 @@ export interface RenderCssOptions {
   /**
    * Layout mode:
    *   - `'merged'` (default): one CSS string with all rules.
-   *   - `'split'`: one string per group plus an `index` string with
-   *     `@import` lines for each group in stable order.
+   *   - `'split'`: one string per chunk plus an `index` string with
+   *     `@import` lines for each chunk in stable order.
    */
   mode?: 'merged' | 'split';
   /**
    * Optional list of CSS files to prepend to the output (verbatim, after
    * `@import` resolution via Lightning CSS). In `'split'` mode they go into
-   * `index` only, not duplicated across groups.
+   * `index` only, not duplicated across chunks.
    */
-  baseCss?: readonly string[];
+  base?: readonly string[];
   /**
-   * Directory relative `baseCss` paths resolve against. Defaults to `cwd`.
+   * Directory relative `base` paths resolve against. Defaults to `cwd`.
    */
   configDir?: string;
   /**
@@ -105,6 +116,10 @@ export interface RenderCssOptions {
    * Omit to leave them alone (current behavior). See `RegisteredPropertiesOptions`.
    */
   properties?: RegisteredPropertiesOptions;
+  /** Rule-level selector rewrite hook. */
+  resolveRule?: ResolveRule | undefined;
+  /** Tailwind `group` / `peer` scaffold classes to replace with semantic classes in selectors. */
+  scaffoldClassReplacements?: ReadonlyMap<string, string> | undefined;
 }
 
 /** A `@property` definition (sans name), as captured or overridden. */
@@ -156,7 +171,7 @@ interface RegisteredPropertyVariable {
  * into a single CSS rule. Selectors that produce identical declaration sets
  * collapse into a comma-separated selector list.
  *
- * `baseCss` files are read via `lightningcss.bundleAsync` so their `@import`
+ * `base` files are read via `lightningcss.bundleAsync` so their `@import`
  * chains flatten before prepending — the consumer's `tailwind.css` (or
  * any other base file) lands at the top of the output as a single block.
  */
@@ -176,56 +191,86 @@ export async function renderCss(opts: RenderCssOptions): Promise<RenderedCss> {
   const referenced = collectReferencedVarsFromRules(opts.rules);
   const propertyVariables = opts.properties ? normalizePropertyVariables(opts.properties.variables, inlineVars) : [];
   const propertyMatch = propertyVariables.length > 0 ? matchAny(propertyVariables) : undefined;
+
   const resolveDef = (name: string): PropertyDef | undefined => {
     const cap = captured.get(name);
     const variable = propertyVariables.find((v) => v.match(name));
     return variable?.resolve?.(name, cap) ?? cap;
   };
+
   const inlineMatch = propMode === 'inline' ? combineMatchers(inlineVars, propertyMatch) : inlineVars;
+
   const fallbacks =
     propMode === 'inline' && propertyMatch
       ? buildFallbackSetters(captured, referenced, propertyMatch, resolveDef)
       : undefined;
+
   const emitProperties = (css: string): string =>
     propMode === 'emit' && propertyMatch ? buildPropertyBlocks(css, propertyMatch, resolveDef) : '';
 
   if (mode === 'merged') {
-    const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
-    const body = composeRules(opts.rules, hoist, inlineMatch, fallbacks);
+    const base = await bundleBaseCss(opts.base ?? [], configDir);
+    const body = composeRules(
+      opts.rules,
+      hoist,
+      inlineMatch,
+      fallbacks,
+      opts.resolveRule,
+      opts.scaffoldClassReplacements
+    );
     const theme = buildThemeBlock(body, opts.resolveThemeVar, opts.themeSelector);
     const properties = emitProperties(body);
-    return { kind: 'merged', css: joinSections(base, properties, theme, body) };
+
+    return {
+      kind: 'merged',
+      css: joinSections(base, properties, theme, body),
+    };
   }
 
-  // Split mode: group rules by resolved group.
-  const byGroup = new Map<string, CompiledRule[]>();
+  // Split mode: split rules by resolved chunk.
+  const ruleChunks = new Map<string, CompiledRule[]>();
+
   for (const rule of opts.rules) {
-    const group = rule.group ?? '';
-    const arr = byGroup.get(group) ?? [];
+    const chunk = rule.chunk ?? '';
+    const arr = ruleChunks.get(chunk) ?? [];
     arr.push(rule);
-    byGroup.set(group, arr);
+    ruleChunks.set(chunk, arr);
   }
 
-  const groups = new Map<string, string>();
+  const chunks = new Map<string, string>();
   const importLines: string[] = [];
-  const groupFileNames = new Set<string>();
-  // Sort group names for deterministic output.
-  const sortedGroups = [...byGroup.keys()].sort();
-  for (const groupName of sortedGroups) {
-    const groupRules = byGroup.get(groupName)!;
-    const fileName = groupCssFileName(groupName, groupFileNames);
-    groups.set(fileName, composeRules(groupRules, undefined, inlineMatch, fallbacks));
+  const chunkFileNames = new Set<string>();
+
+  // Sort chunk names for deterministic output.
+  const sortedChunks = [...ruleChunks.keys()].sort();
+
+  for (const chunkName of sortedChunks) {
+    const chunkRules = ruleChunks.get(chunkName)!;
+    const fileName = chunkCssFileName(chunkName, chunkFileNames);
+
+    chunks.set(
+      fileName,
+      composeRules(chunkRules, undefined, inlineMatch, fallbacks, opts.resolveRule, opts.scaffoldClassReplacements)
+    );
+
     importLines.push(`@import "./${fileName}.css";`);
   }
 
-  const base = await bundleBaseCss(opts.baseCss ?? [], configDir);
-  // Theme variables and @property rules go in `index` (it loads first),
-  // resolved against every group.
-  const allGroupsCss = [...groups.values()].join('\n');
-  const theme = buildThemeBlock(allGroupsCss, opts.resolveThemeVar, opts.themeSelector);
-  const properties = emitProperties(allGroupsCss);
-  const index = joinSections(base, properties, theme, importLines.join('\n'));
-  return { kind: 'split', index, groups };
+  const base = await bundleBaseCss(opts.base ?? [], configDir);
+
+  // Theme variables and @property rules go in `index`, resolved against every
+  // chunk. Imports must stay first for the stylesheet to remain valid CSS.
+  const css = [...chunks.values()].join('\n');
+
+  const theme = buildThemeBlock(css, opts.resolveThemeVar, opts.themeSelector);
+  const properties = emitProperties(css);
+  const index = joinSections(importLines.join('\n'), base, properties, theme);
+
+  return {
+    kind: 'split',
+    index,
+    chunks,
+  };
 }
 
 /**
@@ -356,7 +401,7 @@ function buildPropertyBlocks(
   return blocks.join('\n\n');
 }
 
-/** Internal: read each `baseCss` file via Lightning CSS, return concatenated string. */
+/** Internal: read each `base` file via Lightning CSS, return concatenated string. */
 async function bundleBaseCss(paths: readonly string[], configDir: string): Promise<string> {
   if (paths.length === 0) return '';
   const decoder = new TextDecoder();
@@ -374,24 +419,29 @@ function joinSections(...sections: string[]): string {
   return sections.filter((s) => s.length > 0).join('\n\n');
 }
 
-function groupCssFileName(groupName: string, used: Set<string>): string {
-  const base = sanitizeGroupName(groupName);
+function chunkCssFileName(chunkName: string, used: Set<string>): string {
+  const base = sanitizeChunkName(chunkName);
+
   let fileName = base;
   let suffix = 2;
+
   while (used.has(fileName)) {
     fileName = `${base}-${suffix}`;
     suffix++;
   }
+
   used.add(fileName);
+
   return fileName;
 }
 
-function sanitizeGroupName(groupName: string): string {
-  const trimmed = groupName.trim();
+function sanitizeChunkName(chunkName: string): string {
+  const trimmed = chunkName.trim();
   if (!trimmed) return '_default';
 
   const safe = trimmed.replace(/[^A-Za-z0-9_-]+/g, '-').replace(/^-+|-+$/g, '');
-  const fileName = safe || '_group';
+  const fileName = safe || '_chunk';
+
   return fileName === 'index' ? '_index' : fileName;
 }
 
@@ -421,12 +471,14 @@ function composeRules(
   rules: readonly CompiledRule[],
   hoist: HoistOptions | undefined,
   inlineVars: VariableMatcher | undefined,
-  fallbackSetters?: Map<string, string>
+  fallbackSetters?: Map<string, string>,
+  resolveRule?: ResolveRule | undefined,
+  scaffoldClassReplacements?: ReadonlyMap<string, string> | undefined
 ): string {
   // Step 1: turn each CompiledRule branch into one EmitUnit.
   const units: EmitUnit[] = [];
   for (const rule of rules) {
-    units.push(...buildEmitUnits(rule));
+    units.push(...buildEmitUnits(rule, resolveRule, scaffoldClassReplacements));
   }
 
   // Step 2: merge units by (atRulePath, selector). Dedupe declarations by
@@ -447,10 +499,7 @@ function composeRules(
       merged.set(key, entry);
     }
     for (const d of u.declarations) {
-      const dk = `${d.property}:${d.value}`;
-      if (entry.declSet.has(dk)) continue;
-      entry.declSet.add(dk);
-      entry.declarations.push(d);
+      addDeclaration(entry, d);
     }
   }
 
@@ -819,28 +868,91 @@ function findTopLevelComma(s: string): number {
   return -1;
 }
 
-function buildEmitUnits(rule: CompiledRule): EmitUnit[] {
-  return rule.utility.branches.map((branch) => buildEmitUnit(rule.className, branch));
+function buildEmitUnits(
+  rule: CompiledRule,
+  resolveRule: ResolveRule | undefined,
+  scaffoldClassReplacements: ReadonlyMap<string, string> | undefined
+): EmitUnit[] {
+  return rule.utility.branches.map((branch) => buildEmitUnit(rule, branch, resolveRule, scaffoldClassReplacements));
 }
 
-function buildEmitUnit(className: string, branch: UtilityCssBranch): EmitUnit {
+function buildEmitUnit(
+  rule: CompiledRule,
+  branch: UtilityCssBranch,
+  resolveRule: ResolveRule | undefined,
+  scaffoldClassReplacements: ReadonlyMap<string, string> | undefined
+): EmitUnit {
   const atRulePath: string[] = [];
-  let selectorTail = '';
+  const baseSelectorAst = selectorListForClass(rule.className);
+  const baseSelector = serializeSelectorList(baseSelectorAst);
+
+  let selectorAst: SelectorList | undefined = baseSelectorAst;
+  let selector = baseSelector;
 
   for (const v of branch.variants) {
     if (v.atRule) {
       atRulePath.push(`@${v.atRule.name} ${v.atRule.params}`.trim());
+    } else if (selectorAst && v.selectorAst) {
+      selectorAst = composeSelectorLists(selectorAst, v.selectorAst);
+      selector = serializeSelectorList(selectorAst);
     } else if (v.selector) {
-      selectorTail += v.selector;
+      selector = composeSelector(selector, v.selector);
+      selectorAst = undefined;
+    }
+  }
+
+  if (selectorAst && scaffoldClassReplacements && scaffoldClassReplacements.size > 0) {
+    selectorAst = replaceSelectorClasses(selectorAst, scaffoldClassReplacements);
+    selector = serializeSelectorList(selectorAst);
+  }
+
+  if (selectorAst && resolveRule) {
+    const resolved = resolveRule({
+      selector: selectorAst,
+      baseSelector: baseSelectorAst,
+      className: rule.className,
+      utility: rule.utility.utility,
+      declarations: branch.declarations,
+      variants: branch.variants,
+      atRules: atRulePath,
+      segments: rule.segments ?? [],
+      ...(rule.chunk ? { chunk: rule.chunk } : {}),
+    });
+    if (resolved) {
+      selectorAst = resolved;
+      selector = serializeSelectorList(selectorAst);
     }
   }
 
   return {
     atRulePath,
-    selector: `.${className}${selectorTail}`,
-    isBaseSelector: selectorTail.length === 0,
+    selector,
+    isBaseSelector: selector === baseSelector,
     declarations: branch.declarations,
   };
+}
+
+function composeSelector(selector: string, variant: string): string {
+  return variant.includes('&') ? variant.replaceAll('&', selector) : `${selector}${variant}`;
+}
+
+function addDeclaration(entry: { declarations: Declaration[]; declSet: Set<string> }, declaration: Declaration): void {
+  const key = declarationKey(declaration);
+  if (entry.declSet.has(key)) return;
+
+  for (let i = entry.declarations.length - 1; i >= 0; i--) {
+    const existing = entry.declarations[i]!;
+    if (existing.property !== declaration.property) continue;
+    entry.declSet.delete(declarationKey(existing));
+    entry.declarations.splice(i, 1);
+  }
+
+  entry.declSet.add(key);
+  entry.declarations.push(declaration);
+}
+
+function declarationKey(declaration: Declaration): string {
+  return `${declaration.property}:${declaration.value}`;
 }
 
 function sortDeclarations(decls: readonly Declaration[]): readonly Declaration[] {

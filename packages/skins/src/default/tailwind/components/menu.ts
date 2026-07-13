@@ -1,6 +1,6 @@
 import { cn } from '@videojs/utils/style';
 
-import { popup } from './popup';
+import { popover } from './popover';
 
 const panelBase = cn(
   'absolute inset-0 overflow-auto overscroll-none p-1 outline-none translate-none',
@@ -42,9 +42,12 @@ const menuTokens = cn(
   'motion-reduce:[--menu-transition-duration:0ms]'
 );
 
+const offsets = '[--media-popover-side-offset:0.5rem] [--media-popover-boundary-offset:0.5rem]';
+
 const menuHostShell = cn(
-  popup.popover,
+  popover,
   menuTokens,
+  offsets,
   'max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--menu-max-height)),var(--menu-max-height))]',
   'box-border rounded-xl p-1 overscroll-none'
 );

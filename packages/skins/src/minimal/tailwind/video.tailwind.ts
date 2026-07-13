@@ -48,7 +48,7 @@ export const container = cn(
   'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
   '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
   'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-  '@2xl/media-root:*:[--media-popover-side-offset:0.5rem]',
+  '@2xl/media-container:*:[--media-popover-side-offset:0.5rem]',
   'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
   'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
   'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
@@ -57,7 +57,7 @@ export const container = cn(
   '[--media-caption-track-delay:25ms]',
   '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
   'has-[[data-controls][data-visible]]:[--media-caption-track-y:-5rem]',
-  '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3rem]',
+  '@2xl/media-container:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:-3rem]',
   // Native caption track container
   '[&_video::-webkit-media-text-track-container]:transition-[translate]',
   '[&_video::-webkit-media-text-track-container]:duration-(--media-caption-track-duration)',
@@ -94,16 +94,16 @@ export const controls = cn(
   'motion-safe:not-data-visible:translate-y-full',
   'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
-  '@2xl/media-root:flex-nowrap @2xl/media-root:bottom-2 @2xl/media-root:inset-x-2',
-  '@2xl/media-root:*:[--media-popover-side-offset:0rem]'
+  '@2xl/media-container:flex-nowrap @2xl/media-container:bottom-2 @2xl/media-container:inset-x-2',
+  '@2xl/media-container:*:[--media-popover-side-offset:0rem]'
 );
 
 /* ===========================================================================
    Button groups
    ========================================================================== */
 
-export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-root:flex-none');
-export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-root:flex-none');
+export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-container:flex-none');
+export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-container:flex-none');
 
 /* ===========================================================================
    Time
@@ -114,7 +114,7 @@ export const time = {
   controls: cn(
     baseTime.controls,
     'grow-0 shrink-0 basis-full order-[-1] px-2.5',
-    '@2xl/media-root:grow @2xl/media-root:shrink @2xl/media-root:basis-0 @2xl/media-root:order-[unset]'
+    '@2xl/media-container:grow @2xl/media-container:shrink @2xl/media-container:basis-0 @2xl/media-container:order-[unset]'
   ),
 };
 
@@ -139,7 +139,7 @@ export const thumbnail = {
     baseThumbnail.root,
     '[--media-slider-thumbnail-max-width:11rem] [--media-slider-thumbnail-padding:-0.5rem] [--media-slider-thumbnail-inset:calc(100cqi-100%)]',
     'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-full -translate-x-1/2',
-    '@2xl/media-root:[left:var(--media-slider-pointer)]',
+    '@2xl/media-container:[left:var(--media-slider-pointer)]',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
     'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
@@ -184,7 +184,7 @@ export const popup = {
 
 const menuOffsets = cn(
   '[--media-popover-side-offset:1.5rem] [--media-popover-boundary-offset:0.5rem]',
-  '@2xl/media-root:[--media-popover-side-offset:0.5rem]'
+  '@2xl/media-container:[--media-popover-side-offset:0.5rem]'
 );
 
 export const menu = {

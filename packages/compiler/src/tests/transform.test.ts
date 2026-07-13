@@ -180,4 +180,33 @@ describe('compileProject', () => {
     expect(result.files[0]!.source).toContain('// Generated');
     expect(result.files[0]!.source).toContain('data-root=""');
   });
+
+  it('compiles multiple project configs from one config array', async () => {
+    const inputFile = join(workDir, 'src', 'skin.tsx');
+    mkdirSync(join(workDir, 'src'), { recursive: true });
+    writeFileSync(inputFile, `export function App(){ return <Root/>; }\n`, 'utf8');
+
+    const result = await compileProject(
+      [
+        {
+          input: { skin: 'src/skin.tsx' },
+          output: { dir: 'dist/one', entryFileNames: '[name].tsx' },
+          plugins: [transform((code) => [code.jsx.element('Root').addProp('data-one', '')])],
+        },
+        {
+          input: { skin: 'src/skin.tsx' },
+          output: { dir: 'dist/two', entryFileNames: '[name].tsx' },
+          plugins: [transform((code) => [code.jsx.element('Root').addProp('data-two', '')])],
+        },
+      ],
+      { configDir: workDir }
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.files).toHaveLength(2);
+    expect(result.files[0]).toMatchObject({ type: 'chunk', fileName: join(workDir, 'dist', 'one', 'skin.tsx') });
+    expect(result.files[0]!.source).toContain('data-one=""');
+    expect(result.files[1]).toMatchObject({ type: 'chunk', fileName: join(workDir, 'dist', 'two', 'skin.tsx') });
+    expect(result.files[1]!.source).toContain('data-two=""');
+  });
 });

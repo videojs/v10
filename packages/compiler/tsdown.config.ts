@@ -15,4 +15,7 @@ export default defineConfig({
   hash: false,
   unbundle: true,
   dts: true,
+  deps: {
+    neverBundle: [/^node:/],
+  },
 });

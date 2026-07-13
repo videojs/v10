@@ -66,6 +66,8 @@ export interface CompilerConfig {
   target?: CompilerTarget | undefined;
 }
 
+export type CompilerProjectConfig = CompilerConfig | CompilerConfig[];
+
 export type CompilerInput = string | readonly string[] | Record<string, string>;
 
 export interface CompilerOutputOptions {
@@ -75,7 +77,7 @@ export interface CompilerOutputOptions {
   banner?: string | undefined;
 }
 
-export function defineConfig<const Config extends CompilerConfig>(config: Config): Config {
+export function defineConfig<const Config extends CompilerProjectConfig>(config: Config): Config {
   return config;
 }
 

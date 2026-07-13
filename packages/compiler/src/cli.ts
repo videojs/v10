@@ -3,14 +3,14 @@ import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 
 import { CompilerError, compile } from './compile';
-import type { CompilerDiagnostic } from './config';
+import type { CompilerDiagnostic, CompilerProjectConfig } from './config';
 import {
   type DiagnosticFormat,
   formatCompilerDiagnostic,
   formatCompilerDiagnosticJsonLine,
   formatDiagnosticSummaryJsonLine,
 } from './diagnostics';
-import { loadConfig } from './load-config';
+import { loadConfig, loadProjectConfig } from './load-config';
 import { compileProject } from './project';
 
 interface ParsedArgs {
@@ -75,10 +75,12 @@ async function runCompile(
   const file = positional[0];
   const cwd = process.cwd();
   const outputPath = outFile ? (isAbsolute(outFile) ? outFile : resolve(cwd, outFile)) : undefined;
-  const loaded = await loadConfig(cwd, configOverride);
 
   if (!file) {
-    if (!loaded?.config.input) throw new Error('Usage: vjs compile <file> or configure `input`.');
+    const loaded = await loadProjectConfig(cwd, configOverride);
+    if (!loaded || !hasProjectInput(loaded.config)) {
+      throw new Error('Usage: vjs compile <file> or configure `input`.');
+    }
     if (outputPath) throw new Error('`--out` is only supported when compiling a single file. Use `output` in config.');
 
     const result = await compileProject(loaded.config, { configDir: loaded.configDir, cwd });
@@ -94,6 +96,7 @@ async function runCompile(
 
   const inputPath = isAbsolute(file) ? file : resolve(cwd, file);
   const source = readFileSync(inputPath, 'utf8');
+  const loaded = await loadConfig(cwd, configOverride);
   const result = await compile(source, {
     filename: inputPath,
     config: loaded?.config,
@@ -118,6 +121,10 @@ async function runCompile(
     writeFileSync(assetPath, asset.source, 'utf8');
     process.stdout.write(`Wrote ${assetPath}\n`);
   }
+}
+
+function hasProjectInput(config: CompilerProjectConfig): boolean {
+  return Array.isArray(config) ? config.some((entry) => Boolean(entry.input)) : Boolean(config.input);
 }
 
 async function main(): Promise<void> {

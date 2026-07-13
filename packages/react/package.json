@@ -98,7 +98,7 @@
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
-    "compile:skins": "vjs compile --config skins.compiler.config.ts",
+    "compile:skins": "vjs compile --config skins.compiler.config.ts && biome check --write src/presets/video/__generated__/*.tsx",
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",

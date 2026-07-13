@@ -1,26 +1,22 @@
 import { renderIcon } from '@videojs/icons/render';
 import {
-  airplayIcon,
-  bufferingIndicator,
+  buffering,
   button,
-  buttonGroupEnd,
-  buttonGroupStart,
-  captionsIcon,
-  castIcon,
   container,
   controls,
+  controlsGroup,
   error,
-  fullscreenIcon,
-  icon,
-  inputFeedback,
+  icons,
+  indicator,
   menu,
-  muteIcon,
   overlay,
-  pipIcon,
-  playIcon,
-  popup,
+  popover,
   poster,
   slider,
+  statusIndicator,
+  tooltip,
+  volumeIndicator,
+  volumePopover,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -41,7 +37,7 @@ function getTemplateHTML() {
         <slot name="poster"></slot>
       </media-poster>
 
-      <media-buffering-indicator class="${bufferingIndicator.root}">
+      <media-buffering-indicator class="${buffering.root}">
         ${renderIcon('spinner')}
       </media-buffering-indicator>
 
@@ -59,15 +55,15 @@ function getTemplateHTML() {
 
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
-          <div class="${buttonGroupStart}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, playIcon.button)}">
-                ${renderIcon('restart', { class: cn(icon, playIcon.restart) })}
-                ${renderIcon('play', { class: cn(icon, playIcon.play) })}
-                ${renderIcon('pause', { class: cn(icon, playIcon.pause) })}
+          <div class="${controlsGroup.start}">
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.playButtonState)}">
+                ${renderIcon('restart', { class: cn(icons.root, icons.restartIcon) })}
+                ${renderIcon('play', { class: cn(icons.root, icons.playIcon) })}
+                ${renderIcon('pause', { class: cn(icons.root, icons.pauseIcon) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip id="play-tooltip" side="top" class="${tooltip.root}">
                 <media-tooltip-label></media-tooltip-label>
-                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+                <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
               </media-tooltip>
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
@@ -75,72 +71,72 @@ function getTemplateHTML() {
 
           <div class="grow" aria-hidden="true"></div>
 
-          <div class="${buttonGroupEnd}">
-            <media-mute-button commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, muteIcon.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, muteIcon.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, muteIcon.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, muteIcon.volumeHigh) })}
+          <div class="${controlsGroup.end}">
+            <media-mute-button commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, icons.muteButtonState)}">
+              ${renderIcon('volume-off', { class: cn(icons.root, icons.volumeOffIcon) })}
+              ${renderIcon('volume-low', { class: cn(icons.root, icons.volumeLowIcon) })}
+              ${renderIcon('volume-high', { class: cn(icons.root, icons.volumeHighIcon) })}
             </media-mute-button>
 
-            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popup.popover, popup.volume)}">
+            <media-popover id="live-video-volume-popover" open-on-hover delay="200" close-delay="100" side="top" class="${cn(popover.root, volumePopover.root)}">
               <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                  <media-slider-fill class="${cn(slider.fillBase, slider.fill)}"></media-slider-fill>
                 </media-slider-track>
-                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
+                <media-slider-thumb class="${cn(slider.thumbBase, slider.thumbPersistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
-              <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, captionsIcon.button)}">
-                ${renderIcon('captions-off', { class: cn(icon, captionsIcon.off) })}
-                ${renderIcon('captions-on', { class: cn(icon, captionsIcon.on) })}
+              <media-captions-button menu-for="captions-menu" commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.captionsButtonState)}">
+                ${renderIcon('captions-off', { class: cn(icons.root, icons.captionsOffIcon) })}
+                ${renderIcon('captions-on', { class: cn(icons.root, icons.captionsOnIcon) })}
               </media-captions-button>
-              <media-menu id="captions-menu" side="top" align="center" class="${cn(popup.popover, menu.root, 'media-menu--captions')}">
+              <media-menu id="captions-menu" side="top" align="center" class="${cn(popover.root, menu.root, 'media-menu--captions')}">
                 <media-captions-radio-group class="${menu.group}">
                   <template>
                     <media-menu-radio-item class="${menu.item}">
                       <span data-part="label"></span>
                       <media-menu-item-indicator force-mount class="${menu.indicator}">
-                        ${renderIcon('check', { class: icon })}
+                        ${renderIcon('check', { class: icons.root })}
                       </media-menu-item-indicator>
                     </media-menu-radio-item>
                   </template>
                 </media-captions-radio-group>
               </media-menu>
-              <media-tooltip id="captions-tooltip" side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip id="captions-tooltip" side="top" class="${tooltip.root}">
                 <media-tooltip-label></media-tooltip-label>
-                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+                <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, castIcon.button)}">
-                ${renderIcon('cast-enter', { class: cn(icon, castIcon.enter) })}
-                ${renderIcon('cast-exit', { class: cn(icon, castIcon.exit) })}
+              <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.castButtonState)}">
+                ${renderIcon('cast-enter', { class: cn(icons.root, icons.castEnterIcon) })}
+                ${renderIcon('cast-exit', { class: cn(icons.root, icons.castExitIcon) })}
               </media-cast-button>
-              <media-tooltip id="cast-tooltip" side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip id="cast-tooltip" side="top" class="${tooltip.root}">
                 <media-tooltip-label></media-tooltip-label>
-                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+                <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, airplayIcon.button)}">
-                ${renderIcon('airplay-enter', { class: cn(icon, airplayIcon.enter) })}
-                ${renderIcon('airplay-exit', { class: cn(icon, airplayIcon.exit) })}
+              <media-airplay-button commandfor="airplay-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.airplayButtonState)}">
+                ${renderIcon('airplay-enter', { class: cn(icons.root, icons.airplayEnterIcon) })}
+                ${renderIcon('airplay-exit', { class: cn(icons.root, icons.airplayExitIcon) })}
               </media-airplay-button>
-              <media-tooltip id="airplay-tooltip" side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip id="airplay-tooltip" side="top" class="${tooltip.root}">
                 <media-tooltip-label></media-tooltip-label>
-                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+                <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, pipIcon.button)}">
-                ${renderIcon('pip-enter', { class: cn(icon, pipIcon.off) })}
-                ${renderIcon('pip-exit', { class: cn(icon, pipIcon.on) })}
+              <media-pip-button commandfor="pip-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.pipButtonState)}">
+                ${renderIcon('pip-enter', { class: cn(icons.root, icons.pipEnterIcon) })}
+                ${renderIcon('pip-exit', { class: cn(icons.root, icons.pipExitIcon) })}
               </media-pip-button>
-              <media-tooltip id="pip-tooltip" side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip id="pip-tooltip" side="top" class="${tooltip.root}">
                 <media-tooltip-label></media-tooltip-label>
-                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+                <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
               </media-tooltip>
-              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, fullscreenIcon.button)}">
-                ${renderIcon('fullscreen-enter', { class: cn(icon, fullscreenIcon.enter) })}
-                ${renderIcon('fullscreen-exit', { class: cn(icon, fullscreenIcon.exit) })}
+              <media-fullscreen-button commandfor="fullscreen-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.fullscreenButtonState)}">
+                ${renderIcon('fullscreen-enter', { class: cn(icons.root, icons.fullscreenEnterIcon) })}
+                ${renderIcon('fullscreen-exit', { class: cn(icons.root, icons.fullscreenExitIcon) })}
               </media-fullscreen-button>
-              <media-tooltip id="fullscreen-tooltip" side="top" class="${cn(popup.tooltip)}">
+              <media-tooltip id="fullscreen-tooltip" side="top" class="${tooltip.root}">
                 <media-tooltip-label></media-tooltip-label>
-                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+                <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
               </media-tooltip>
           </div>
         </media-tooltip-group>
@@ -165,35 +161,27 @@ function getTemplateHTML() {
 
       <!-- Input Feedback -->
       <media-status-announcer></media-status-announcer>
-      <div class="${inputFeedback.root}">
-        <media-volume-indicator hidden class="${cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}">
-          <media-volume-indicator-fill class="${inputFeedback.island.content}">
-            ${renderIcon('volume-high', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh) })}
-            ${renderIcon('volume-low', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow) })}
-            ${renderIcon('volume-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff) })}
-            <media-volume-indicator-value class="${inputFeedback.island.value}"></media-volume-indicator-value>
-          </media-volume-indicator-fill>
-        </media-volume-indicator>
-        <media-status-indicator
-          hidden
-          actions="toggleSubtitles toggleFullscreen togglePictureInPicture"
-          class="${cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}"
-        >
-          <div class="${inputFeedback.island.content}">
-            ${renderIcon('captions-on', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn) })}
-            ${renderIcon('captions-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff) })}
-            ${renderIcon('fullscreen-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter) })}
-            ${renderIcon('fullscreen-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit) })}
-            ${renderIcon('pip-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter) })}
-            ${renderIcon('pip-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit) })}
-            <media-status-indicator-value class="${inputFeedback.island.value}"></media-status-indicator-value>
-          </div>
-        </media-status-indicator>
-        <media-status-indicator hidden actions="togglePaused" class="${inputFeedback.bubble.base}">
-          ${renderIcon('play', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay) })}
-          ${renderIcon('pause', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause) })}
-        </media-status-indicator>
-      </div>
+      <media-volume-indicator hidden class="${volumeIndicator.root}">
+        <media-volume-indicator-fill class="${indicator.content}">
+          ${renderIcon('volume-high', { class: cn(volumeIndicator.icon, volumeIndicator.highIcon) })}
+          ${renderIcon('volume-low', { class: cn(volumeIndicator.icon, volumeIndicator.lowIcon) })}
+          ${renderIcon('volume-off', { class: cn(volumeIndicator.icon, volumeIndicator.offIcon) })}
+          <media-volume-indicator-value class="${indicator.value}"></media-volume-indicator-value>
+        </media-volume-indicator-fill>
+      </media-volume-indicator>
+      <media-status-indicator hidden actions="toggleSubtitles toggleFullscreen togglePictureInPicture" class="${statusIndicator.top}">
+        ${renderIcon('captions-on', { class: cn(statusIndicator.topIcon, statusIndicator.captionsOnIcon) })}
+        ${renderIcon('captions-off', { class: cn(statusIndicator.topIcon, statusIndicator.captionsOffIcon) })}
+        ${renderIcon('fullscreen-enter', { class: cn(statusIndicator.topIcon, statusIndicator.fullscreenEnterIcon) })}
+        ${renderIcon('fullscreen-exit', { class: cn(statusIndicator.topIcon, statusIndicator.fullscreenExitIcon) })}
+        ${renderIcon('pip-enter', { class: cn(statusIndicator.topIcon, statusIndicator.pipEnterIcon) })}
+        ${renderIcon('pip-exit', { class: cn(statusIndicator.topIcon, statusIndicator.pipExitIcon) })}
+        <media-status-indicator-value class="${indicator.value}"></media-status-indicator-value>
+      </media-status-indicator>
+      <media-status-indicator hidden actions="togglePaused" class="${statusIndicator.center}">
+        ${renderIcon('play', { class: cn(statusIndicator.centerIcon, statusIndicator.playIcon) })}
+        ${renderIcon('pause', { class: cn(statusIndicator.centerIcon, statusIndicator.pauseIcon) })}
+      </media-status-indicator>
     </media-container>
   `;
 }

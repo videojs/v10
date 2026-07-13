@@ -13,7 +13,7 @@ const base = cn(
   // Ensure we animate from the correct origin based on the side the popover is on
   'data-[side=top]:origin-bottom data-[side=bottom]:origin-top data-[side=left]:origin-right data-[side=right]:origin-left',
   // Safe area between trigger and popup
-  'before:absolute before:pointer-events-[inherit]',
+  'before:absolute before:[pointer-events:inherit]',
   'data-[side=top]:before:left-0 data-[side=top]:before:right-0 data-[side=top]:before:top-full',
   'data-[side=bottom]:before:left-0 data-[side=bottom]:before:right-0 data-[side=bottom]:before:bottom-full',
   'data-[side=left]:before:top-0 data-[side=left]:before:bottom-0 data-[side=left]:before:left-full',

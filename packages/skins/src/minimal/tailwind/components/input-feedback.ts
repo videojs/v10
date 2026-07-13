@@ -12,7 +12,7 @@ export const inputFeedback = {
     'grid grid-cols-3 items-center justify-items-center overflow-hidden',
     'rounded-[inherit]',
     // Shift to full extent in larger containers
-    '@2xl/media-root:bottom-0',
+    '@2xl/media-container:bottom-0',
     // Color
     '[color:var(--media-color-primary,oklch(1_0_0))]'
   ),
@@ -112,7 +112,7 @@ export const inputFeedback = {
       'data-starting-style:ease-in',
       'data-ending-style:duration-200',
       'data-ending-style:ease-in',
-      '@2xl/media-root:p-8',
+      '@2xl/media-container:p-8',
       'not-data-direction:[transition-property:opacity,scale]',
       'not-data-direction:duration-600',
       'not-data-direction:[transition-timing-function:ease-out,linear(0,0.12_1.5%,1.35_9.7%,2.2_13.9%,3_19.9%,2.7_21.8%,0.62_37.5%,0.96_50.9%,1)]',

@@ -5,17 +5,15 @@ import {
   container,
   controls,
   error,
-  icon,
-  iconContainer,
-  iconFlipped,
+  icons,
   menu,
-  muteIcon,
   playbackRate,
-  playIcon,
-  popup,
+  popover,
   seek,
   slider,
   time,
+  tooltip,
+  volumePopover,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -49,36 +47,36 @@ function getTemplateHTML() {
       <div class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, playIcon.button)}">
-                ${renderIcon('restart', { class: cn(icon, playIcon.restart) })}
-                ${renderIcon('play', { class: cn(icon, playIcon.play) })}
-                ${renderIcon('pause', { class: cn(icon, playIcon.pause) })}
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, icons.playButtonState)}">
+                ${renderIcon('restart', { class: cn(icons.root, icons.restartIcon) })}
+                ${renderIcon('play', { class: cn(icons.root, icons.playIcon) })}
+                ${renderIcon('pause', { class: cn(icons.root, icons.pauseIcon) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${tooltip.root}">
               <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
             </media-tooltip>
 
             <media-seek-button commandfor="seek-backward-tooltip" seconds="${-SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
-              <span class="${iconContainer}">
-                ${renderIcon('seek', { class: cn(icon, iconFlipped) })}
+              <span class="${icons.container}">
+                ${renderIcon('seek', { class: cn(icons.root, icons.flipped) })}
                 <span class="${cn(seek.label, seek.labelBackward)}">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+            <media-tooltip id="seek-backward-tooltip" side="top" boundary="viewport" class="${tooltip.root}">
               <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
             </media-tooltip>
 
             <media-seek-button commandfor="seek-forward-tooltip" seconds="${SEEK_TIME}" class="${cn(button.base, button.subtle, button.icon)}">
-              <span class="${iconContainer}">
-                ${renderIcon('seek', { class: icon })}
+              <span class="${icons.container}">
+                ${renderIcon('seek', { class: icons.root })}
                 <span class="${cn(seek.label, seek.labelForward)}">${SEEK_TIME}</span>
               </span>
             </media-seek-button>
-            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+            <media-tooltip id="seek-forward-tooltip" side="top" boundary="viewport" class="${tooltip.root}">
               <media-tooltip-label></media-tooltip-label>
-              <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              <media-tooltip-shortcut class="${tooltip.shortcut}"></media-tooltip-shortcut>
             </media-tooltip>
           </div>
 
@@ -86,10 +84,10 @@ function getTemplateHTML() {
             <media-time type="current" class="${time.current}"></media-time>
             <media-time-slider class="${slider.root}">
               <media-slider-track class="${slider.track}">
-                <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
+                <media-slider-fill class="${cn(slider.fillBase, slider.fill)}"></media-slider-fill>
+                <media-slider-buffer class="${cn(slider.fillBase, slider.buffer)}"></media-slider-buffer>
               </media-slider-track>
-              <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
+              <media-slider-thumb class="${cn(slider.thumbBase, slider.thumb)}"></media-slider-thumb>
               <media-slider-preview class="${slider.preview}">
                 <media-slider-value type="pointer" class="${slider.value}"></media-slider-value>
               </media-slider-preview>
@@ -99,31 +97,31 @@ function getTemplateHTML() {
 
           <div class="${buttonGroup}">
             <media-playback-rate-button commandfor="playback-rate-menu" class="${cn(button.base, button.subtle, button.icon, playbackRate.button)}"></media-playback-rate-button>
-            <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popup.popover, menu.root)}">
+            <media-menu id="playback-rate-menu" side="top" align="center" boundary="viewport" class="${cn(popover.root, menu.root)}">
               <media-playback-rate-radio-group class="${menu.group}">
                 <template>
                   <media-menu-radio-item class="${menu.item}">
                     <span data-part="label"></span>
                     <media-menu-item-indicator force-mount class="${menu.indicator}">
-                      ${renderIcon('check', { class: icon })}
+                      ${renderIcon('check', { class: icons.root })}
                     </media-menu-item-indicator>
                   </media-menu-radio-item>
                 </template>
               </media-playback-rate-radio-group>
             </media-menu>
 
-            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, muteIcon.button)}">
-              ${renderIcon('volume-off', { class: cn(icon, muteIcon.volumeOff) })}
-              ${renderIcon('volume-low', { class: cn(icon, muteIcon.volumeLow) })}
-              ${renderIcon('volume-high', { class: cn(icon, muteIcon.volumeHigh) })}
+            <media-mute-button commandfor="audio-volume-popover" class="${cn(button.base, button.subtle, button.icon, icons.muteButtonState)}">
+              ${renderIcon('volume-off', { class: cn(icons.root, icons.volumeOffIcon) })}
+              ${renderIcon('volume-low', { class: cn(icons.root, icons.volumeLowIcon) })}
+              ${renderIcon('volume-high', { class: cn(icons.root, icons.volumeHighIcon) })}
             </media-mute-button>
 
-            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="${cn(popup.popover, popup.volume)}">
+            <media-popover id="audio-volume-popover" open-on-hover delay="200" close-delay="100" side="top" boundary="viewport" class="${cn(popover.root, volumePopover.root)}">
               <media-volume-slider class="${slider.root}" orientation="vertical" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                  <media-slider-fill class="${cn(slider.fillBase, slider.fill)}"></media-slider-fill>
                 </media-slider-track>
-                <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.persistent)}"></media-slider-thumb>
+                <media-slider-thumb class="${cn(slider.thumbBase, slider.thumbPersistent)}"></media-slider-thumb>
               </media-volume-slider>
             </media-popover>
           </div>

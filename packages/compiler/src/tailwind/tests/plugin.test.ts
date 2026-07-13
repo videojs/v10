@@ -149,24 +149,22 @@ describe('tailwindPlugin — mode: extract', () => {
     expect(code).not.toContain('"flex items-center"');
   });
 
-  it('preserves group marker classes', async () => {
+  it('removes inferred group marker classes', async () => {
     const source = `function App(){ return <PlayButton className="group"/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    // `group` produces no declarations but is required by descendant
-    // `group-*` variants, so it must survive on the element.
-    expect(code).toContain('"play-button group"');
+    expect(code).toContain('"play-button"');
   });
 
-  it('extracts className array utilities and preserves group marker classes', async () => {
+  it('extracts className array utilities and removes inferred group marker classes', async () => {
     const source = `function App(){ return <PlayButton className={['flex', 'group']}/>; }`;
     const { assets, code } = await compile(source, {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(code).toContain('"play-button group"');
+    expect(code).toContain('"play-button"');
     expect(collapse(assets[0]!.source)).toContain(collapse('.play-button{display:flex;}'));
   });
 
@@ -176,7 +174,78 @@ describe('tailwindPlugin — mode: extract', () => {
       target: 'jsx',
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
-    expect(code).toMatch(/className=\{\["play-button group",\s*extra\]\}/);
+    expect(code).toMatch(/className=\{\["play-button",\s*extra\]\}/);
+  });
+
+  it('resolves elements and rewrites inferred marker selectors', async () => {
+    const source = `function App(){ return <PlayButton className="group/button"><PlayIcon className="hidden group-data-paused/button:block"/></PlayButton>; }`;
+    const { assets, code } = await compile(source, {
+      target: 'jsx',
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          resolve: {
+            element({ tag }) {
+              if (tag === 'PlayButton') return { className: 'media-button', chunk: 'button' };
+              if (tag === 'PlayIcon') return { className: 'media-play-icon', chunk: 'button' };
+              return undefined;
+            },
+          },
+        }),
+      ],
+    });
+
+    expect(code).toContain('<PlayButton className="media-button">');
+    expect(code).toContain('<PlayIcon className="media-play-icon"/>');
+    expect(code).not.toContain('group/button');
+    expect(collapse(assets[0]!.source)).toContain(
+      collapse('.media-play-icon:is(:where(.media-button)[data-paused] *){display:block;}')
+    );
+  });
+
+  it('lets resolve.classList customize final static class lists', async () => {
+    const source = `function App(){ return <PlayButton className="flex legacy-marker"/>; }`;
+    const { code } = await compile(source, {
+      target: 'jsx',
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          resolve: {
+            classList({ classes }) {
+              return classes.filter((name) => name !== 'legacy-marker');
+            },
+          },
+        }),
+      ],
+    });
+
+    expect(code).toContain('<PlayButton className="play-button"/>');
+  });
+
+  it('uses selector resolution chunks for split CSS assets', async () => {
+    const source = `function App(){ return <PlayButton className="flex"/>; }`;
+    const { assets } = await compile(source, {
+      target: 'jsx',
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          emit: { mode: 'split' },
+          resolve: {
+            element() {
+              return { className: 'media-button', chunk: 'button' };
+            },
+          },
+        }),
+      ],
+    });
+
+    expect(assets.map((asset) => asset.fileName).sort()).toEqual(['button.css', 'input.css']);
+    expect(collapse(assets.find((asset) => asset.fileName === 'button.css')!.source)).toContain(
+      collapse('.media-button{display:flex;}')
+    );
   });
 
   it('throws on generated class style collisions', async () => {
@@ -187,6 +256,28 @@ describe('tailwindPlugin — mode: extract', () => {
         plugins: [tailwindPlugin({ design, mode: 'extract' })],
       })
     ).rejects.toThrow(/class name 'seek-icon' is derived from elements with different styles/);
+  });
+
+  it('allows selector-owned class merges', async () => {
+    const source = `function App(){ return <div><PlayButton className="flex"/><SeekButton className="flex relative"/></div>; }`;
+    const { assets, code } = await compile(source, {
+      target: 'jsx',
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          resolve: {
+            element() {
+              return 'media-button';
+            },
+          },
+        }),
+      ],
+    });
+
+    expect(code).toContain('<PlayButton className="media-button"/>');
+    expect(code).toContain('<SeekButton className="media-button"/>');
+    expect(collapse(assets[0]!.source)).toContain(collapse('.media-button{display:flex;position:relative;}'));
   });
 
   it('allows preserved marker classes next to matching generated styles', async () => {
@@ -333,7 +424,7 @@ function App({ type, className }){
           design,
           mode: 'extract',
           resolve: {
-            name: (ctx) => `app-${ctx.defaultName}`,
+            element: (ctx) => `app-${ctx.defaultName}`,
           },
         }),
       ],
@@ -341,7 +432,7 @@ function App({ type, className }){
     expect(code).toContain('"app-play-button"');
   });
 
-  it('lets resolve.name choose token names for component elements', async () => {
+  it('lets resolve.element choose token names for component elements', async () => {
     const source = `function App(){ return <PlayButton className={styles.button.icon}/>; }`;
     const { code } = await compile(source, {
       target: 'jsx',
@@ -350,7 +441,7 @@ function App({ type, className }){
           design,
           mode: 'extract',
           resolve: {
-            name: (ctx) => ctx.tokenName ?? ctx.defaultName,
+            element: (ctx) => ctx.tokenName ?? ctx.defaultName,
           },
         }),
       ],
@@ -358,7 +449,7 @@ function App({ type, className }){
     expect(code).toContain('"button-icon"');
   });
 
-  it('lets resolve.name choose component names over known token roots', async () => {
+  it('lets resolve.element choose component names over known token roots', async () => {
     writeFixture(
       'tokens.ts',
       `export const menu = { chevron: 'size-3' };
@@ -376,7 +467,7 @@ function App(){ return <ChevronIcon className={menu.chevron}/>; }`;
           design,
           mode: 'extract',
           resolve: {
-            name: (ctx) => ctx.componentName ?? ctx.defaultName,
+            element: (ctx) => ctx.componentName ?? ctx.defaultName,
           },
         }),
       ],
@@ -468,7 +559,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     expect(collapse(assets[0]!.source)).toContain(collapse('.button{display:flex;gap:calc(var(--spacing) * 2);}'));
   });
 
-  it('assigns rule groups with resolve.group', async () => {
+  it('assigns split chunks with resolve.element', async () => {
     const source = `function App(){ return <PlayButton className="flex"/>; }`;
     const { assets } = await compile(source, {
       target: 'jsx',
@@ -478,7 +569,9 @@ function App(){ return <Foo className={styles.button}/>; }`;
           mode: 'extract',
           emit: { mode: 'split' },
           resolve: {
-            group: ({ className }) => (className.startsWith('play-') ? 'controls' : undefined),
+            element({ defaultName }) {
+              return defaultName.startsWith('play-') ? { className: defaultName, chunk: 'controls' } : defaultName;
+            },
           },
         }),
       ],

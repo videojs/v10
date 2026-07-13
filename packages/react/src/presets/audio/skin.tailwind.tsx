@@ -4,17 +4,15 @@ import {
   container,
   controls,
   error,
-  icon,
-  iconContainer,
-  iconFlipped,
+  icons,
   menu,
-  muteIcon,
   playbackRate,
-  playIcon,
-  popup,
+  popover,
   seek,
   slider,
   time,
+  tooltip,
+  volumePopover,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
@@ -73,7 +71,7 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
   return (
     <div
       ref={ref}
-      className={cn(slider.fill.base, type === 'fill' ? slider.fill.fill : slider.fill.buffer, className)}
+      className={cn(slider.fillBase, type === 'fill' ? slider.fill : slider.buffer, className)}
       {...props}
     />
   );
@@ -90,7 +88,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   return (
     <div
       ref={ref}
-      className={cn(slider.thumb.base, persistent ? slider.thumb.persistent : slider.thumb.interactive, className)}
+      className={cn(slider.thumbBase, persistent ? slider.thumbPersistent : slider.thumb, className)}
       {...props}
     />
   );
@@ -100,10 +98,10 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={muteIcon.button} render={<Button />}>
-      <VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />
-      <VolumeLowIcon className={cn(icon, muteIcon.volumeLow)} />
-      <VolumeHighIcon className={cn(icon, muteIcon.volumeHigh)} />
+    <MuteButton className={icons.muteButtonState} render={<Button />}>
+      <VolumeOffIcon className={cn(icons.root, icons.volumeOffIcon)} />
+      <VolumeLowIcon className={cn(icons.root, icons.volumeLowIcon)} />
+      <VolumeHighIcon className={cn(icons.root, icons.volumeHighIcon)} />
     </MuteButton>
   );
 
@@ -112,7 +110,7 @@ function VolumePopover(): ReactNode {
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
-      <Popover.Popup className={cn(popup.popover, popup.volume)}>
+      <Popover.Popup className={cn(popover.root, volumePopover.root)}>
         <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
@@ -136,7 +134,7 @@ function PlaybackRateRadioGroup(): ReactNode {
         <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
           <span>{option.label}</span>
           <Menu.ItemIndicator checked={option.value === value} forceMount className={menu.indicator}>
-            <CheckIcon className={icon} />
+            <CheckIcon className={icons.root} />
           </Menu.ItemIndicator>
         </Menu.RadioItem>
       ))}
@@ -185,16 +183,16 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Tooltip.Root side="top" boundary="viewport">
               <Tooltip.Trigger
                 render={
-                  <PlayButton className={playIcon.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, playIcon.restart)} />
-                    <PlayIcon className={cn(icon, playIcon.play)} />
-                    <PauseIcon className={cn(icon, playIcon.pause)} />
+                  <PlayButton className={icons.playButtonState} render={<Button />}>
+                    <RestartIcon className={cn(icons.root, icons.restartIcon)} />
+                    <PlayIcon className={cn(icons.root, icons.playIcon)} />
+                    <PauseIcon className={cn(icons.root, icons.pauseIcon)} />
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 
@@ -202,16 +200,16 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={
                   <SeekButton seconds={-SEEK_TIME} render={<Button />}>
-                    <span className={iconContainer}>
-                      <SeekIcon className={cn(icon, iconFlipped)} />
+                    <span className={icons.container}>
+                      <SeekIcon className={cn(icons.root, icons.flipped)} />
                       <span className={cn(seek.label, seek.labelBackward)}>{SEEK_TIME}</span>
                     </span>
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 
@@ -219,16 +217,16 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
               <Tooltip.Trigger
                 render={
                   <SeekButton seconds={SEEK_TIME} render={<Button />}>
-                    <span className={iconContainer}>
-                      <SeekIcon className={icon} />
+                    <span className={icons.container}>
+                      <SeekIcon className={icons.root} />
                       <span className={cn(seek.label, seek.labelForward)}>{SEEK_TIME}</span>
                     </span>
                   </SeekButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
           </div>
@@ -251,7 +249,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
           <div className={buttonGroup}>
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
-              <Menu.Content className={cn(popup.popover, menu.root)}>
+              <Menu.Content className={cn(popover.root, menu.root)}>
                 <PlaybackRateRadioGroup />
               </Menu.Content>
             </Menu.Root>

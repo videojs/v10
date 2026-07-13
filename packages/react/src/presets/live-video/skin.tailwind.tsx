@@ -1,25 +1,21 @@
 import {
-  airplayIcon,
-  bufferingIndicator,
+  buffering,
   button,
-  buttonGroupEnd,
-  buttonGroupStart,
-  captionsIcon,
-  castIcon,
   container,
   controls,
+  controlsGroup,
   error,
-  fullscreenIcon,
-  icon,
-  inputFeedback,
+  icons,
+  indicator,
   menu,
-  muteIcon,
   overlay,
-  pipIcon,
-  playIcon,
-  popup,
+  popover,
   poster,
   slider,
+  statusIndicator,
+  tooltip,
+  volumeIndicator,
+  volumePopover,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
@@ -98,7 +94,7 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
   return (
     <div
       ref={ref}
-      className={cn(slider.fill.base, type === 'fill' ? slider.fill.fill : slider.fill.buffer, className)}
+      className={cn(slider.fillBase, type === 'fill' ? slider.fill : slider.buffer, className)}
       {...props}
     />
   );
@@ -111,7 +107,7 @@ const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persist
   return (
     <div
       ref={ref}
-      className={cn(slider.thumb.base, persistent ? slider.thumb.persistent : slider.thumb.interactive, className)}
+      className={cn(slider.thumbBase, persistent ? slider.thumbPersistent : slider.thumb, className)}
       {...props}
     />
   );
@@ -121,10 +117,10 @@ function VolumePopover(): ReactNode {
   const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
 
   const muteButton = (
-    <MuteButton className={muteIcon.button} render={<Button />}>
-      <VolumeOffIcon className={cn(icon, muteIcon.volumeOff)} />
-      <VolumeLowIcon className={cn(icon, muteIcon.volumeLow)} />
-      <VolumeHighIcon className={cn(icon, muteIcon.volumeHigh)} />
+    <MuteButton className={icons.muteButtonState} render={<Button />}>
+      <VolumeOffIcon className={cn(icons.root, icons.volumeOffIcon)} />
+      <VolumeLowIcon className={cn(icons.root, icons.volumeLowIcon)} />
+      <VolumeHighIcon className={cn(icons.root, icons.volumeHighIcon)} />
     </MuteButton>
   );
 
@@ -133,7 +129,7 @@ function VolumePopover(): ReactNode {
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
       <Popover.Trigger render={muteButton} />
-      <Popover.Popup className={cn(popup.popover, popup.volume)}>
+      <Popover.Popup className={cn(popover.root, volumePopover.root)}>
         <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
           <VolumeSlider.Track render={<SliderTrack />}>
             <VolumeSlider.Fill render={<SliderFill />} />
@@ -156,15 +152,15 @@ function CaptionsTrigger(): ReactNode {
       <Tooltip.Root side="top">
         <Tooltip.Trigger
           render={
-            <CaptionsButton className={captionsIcon.button} render={<Button />}>
-              <CaptionsOffIcon className={cn(icon, captionsIcon.off)} />
-              <CaptionsOnIcon className={cn(icon, captionsIcon.on)} />
+            <CaptionsButton className={icons.captionsButtonState} render={<Button />}>
+              <CaptionsOffIcon className={cn(icons.root, icons.captionsOffIcon)} />
+              <CaptionsOnIcon className={cn(icons.root, icons.captionsOnIcon)} />
             </CaptionsButton>
           }
         />
-        <Tooltip.Popup className={cn(popup.tooltip)}>
+        <Tooltip.Popup className={tooltip.root}>
           <Tooltip.Label />
-          <Tooltip.Shortcut className={popup.tooltipShortcut} />
+          <Tooltip.Shortcut className={tooltip.shortcut} />
         </Tooltip.Popup>
       </Tooltip.Root>
     );
@@ -175,13 +171,13 @@ function CaptionsTrigger(): ReactNode {
       <Menu.Trigger
         disabled={disabled}
         render={
-          <CaptionsButton className={captionsIcon.button} render={<Button />}>
-            <CaptionsOffIcon className={cn(icon, captionsIcon.off)} />
-            <CaptionsOnIcon className={cn(icon, captionsIcon.on)} />
+          <CaptionsButton className={icons.captionsButtonState} render={<Button />}>
+            <CaptionsOffIcon className={cn(icons.root, icons.captionsOffIcon)} />
+            <CaptionsOnIcon className={cn(icons.root, icons.captionsOnIcon)} />
           </CaptionsButton>
         }
       />
-      <Menu.Content className={cn(popup.popover, menu.root)}>
+      <Menu.Content className={cn(popover.root, menu.root)}>
         <Menu.RadioGroup
           className={menu.group}
           value={captions.value}
@@ -192,7 +188,7 @@ function CaptionsTrigger(): ReactNode {
             <Menu.RadioItem key={option.value} className={menu.item} value={option.value} disabled={option.disabled}>
               <span>{option.label}</span>
               <Menu.ItemIndicator checked={option.value === captions.value} forceMount className={menu.indicator}>
-                <CheckIcon className={icon} />
+                <CheckIcon className={icons.root} />
               </Menu.ItemIndicator>
             </Menu.RadioItem>
           ))}
@@ -217,8 +213,8 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
         />
       )}
 
-      <BufferingIndicator className={bufferingIndicator.root}>
-        <SpinnerIcon className={icon} />
+      <BufferingIndicator className={buffering.root}>
+        <SpinnerIcon className={icons.root} />
       </BufferingIndicator>
 
       <ErrorDialog.Root>
@@ -240,20 +236,20 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
         className={controls}
       >
         <Tooltip.Provider>
-          <div className={buttonGroupStart}>
+          <div className={controlsGroup.start}>
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PlayButton className={playIcon.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, playIcon.restart)} />
-                    <PlayIcon className={cn(icon, playIcon.play)} />
-                    <PauseIcon className={cn(icon, playIcon.pause)} />
+                  <PlayButton className={icons.playButtonState} render={<Button />}>
+                    <RestartIcon className={cn(icons.root, icons.restartIcon)} />
+                    <PlayIcon className={cn(icons.root, icons.playIcon)} />
+                    <PauseIcon className={cn(icons.root, icons.pauseIcon)} />
                   </PlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 
@@ -262,7 +258,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
 
           <div className="grow" aria-hidden="true" />
 
-          <div className={buttonGroupEnd}>
+          <div className={controlsGroup.end}>
             <VolumePopover />
 
             <CaptionsTrigger />
@@ -270,60 +266,60 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <CastButton className={castIcon.button} render={<Button />}>
-                    <CastEnterIcon className={cn(icon, castIcon.enter)} />
-                    <CastExitIcon className={cn(icon, castIcon.exit)} />
+                  <CastButton className={icons.castButtonState} render={<Button />}>
+                    <CastEnterIcon className={cn(icons.root, icons.castEnterIcon)} />
+                    <CastExitIcon className={cn(icons.root, icons.castExitIcon)} />
                   </CastButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <AirPlayButton className={airplayIcon.button} render={<Button />}>
-                    <AirPlayEnterIcon className={cn(icon, airplayIcon.enter)} />
-                    <AirPlayExitIcon className={cn(icon, airplayIcon.exit)} />
+                  <AirPlayButton className={icons.airplayButtonState} render={<Button />}>
+                    <AirPlayEnterIcon className={cn(icons.root, icons.airplayEnterIcon)} />
+                    <AirPlayExitIcon className={cn(icons.root, icons.airplayExitIcon)} />
                   </AirPlayButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <PiPButton className={pipIcon.button} render={<Button />}>
-                    <PipEnterIcon className={cn(icon, pipIcon.off)} />
-                    <PipExitIcon className={cn(icon, pipIcon.on)} />
+                  <PiPButton className={icons.pipButtonState} render={<Button />}>
+                    <PipEnterIcon className={cn(icons.root, icons.pipEnterIcon)} />
+                    <PipExitIcon className={cn(icons.root, icons.pipExitIcon)} />
                   </PiPButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
 
             <Tooltip.Root side="top">
               <Tooltip.Trigger
                 render={
-                  <FullscreenButton className={fullscreenIcon.button} render={<Button />}>
-                    <FullscreenEnterIcon className={cn(icon, fullscreenIcon.enter)} />
-                    <FullscreenExitIcon className={cn(icon, fullscreenIcon.exit)} />
+                  <FullscreenButton className={icons.fullscreenButtonState} render={<Button />}>
+                    <FullscreenEnterIcon className={cn(icons.root, icons.fullscreenEnterIcon)} />
+                    <FullscreenExitIcon className={cn(icons.root, icons.fullscreenExitIcon)} />
                   </FullscreenButton>
                 }
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}>
+              <Tooltip.Popup className={tooltip.root}>
                 <Tooltip.Label />
-                <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                <Tooltip.Shortcut className={tooltip.shortcut} />
               </Tooltip.Popup>
             </Tooltip.Root>
           </div>
@@ -349,38 +345,29 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
 
       {/* Input Feedback */}
       <StatusAnnouncer />
-      <div className={inputFeedback.root}>
-        <VolumeIndicator.Root
-          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
-        >
-          <VolumeIndicator.Fill className={inputFeedback.island.content}>
-            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
-            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
-            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
-            <VolumeIndicator.Value className={inputFeedback.island.value} />
-          </VolumeIndicator.Fill>
-        </VolumeIndicator.Root>
+      <VolumeIndicator.Root className={volumeIndicator.root}>
+        <VolumeIndicator.Fill className={indicator.content}>
+          <VolumeHighIcon className={cn(volumeIndicator.icon, volumeIndicator.highIcon)} />
+          <VolumeLowIcon className={cn(volumeIndicator.icon, volumeIndicator.lowIcon)} />
+          <VolumeOffIcon className={cn(volumeIndicator.icon, volumeIndicator.offIcon)} />
+          <VolumeIndicator.Value className={indicator.value} />
+        </VolumeIndicator.Fill>
+      </VolumeIndicator.Root>
 
-        <StatusIndicator.Root
-          actions={TOP_STATUS_ACTIONS}
-          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
-        >
-          <div className={inputFeedback.island.content}>
-            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
-            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
-            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
-            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
-            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
-            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
-            <StatusIndicator.Value className={inputFeedback.island.value} />
-          </div>
-        </StatusIndicator.Root>
+      <StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={statusIndicator.top}>
+        <CaptionsOnIcon className={cn(statusIndicator.topIcon, statusIndicator.captionsOnIcon)} />
+        <CaptionsOffIcon className={cn(statusIndicator.topIcon, statusIndicator.captionsOffIcon)} />
+        <FullscreenEnterIcon className={cn(statusIndicator.topIcon, statusIndicator.fullscreenEnterIcon)} />
+        <FullscreenExitIcon className={cn(statusIndicator.topIcon, statusIndicator.fullscreenExitIcon)} />
+        <PipEnterIcon className={cn(statusIndicator.topIcon, statusIndicator.pipEnterIcon)} />
+        <PipExitIcon className={cn(statusIndicator.topIcon, statusIndicator.pipExitIcon)} />
+        <StatusIndicator.Value className={indicator.value} />
+      </StatusIndicator.Root>
 
-        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
-          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
-          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
-        </StatusIndicator.Root>
-      </div>
+      <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={statusIndicator.center}>
+        <PlayIcon className={cn(statusIndicator.centerIcon, statusIndicator.playIcon)} />
+        <PauseIcon className={cn(statusIndicator.centerIcon, statusIndicator.pauseIcon)} />
+      </StatusIndicator.Root>
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />
@@ -399,38 +386,29 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
 
       {/* Input Feedback */}
       <StatusAnnouncer />
-      <div className={inputFeedback.root}>
-        <VolumeIndicator.Root
-          className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}
-        >
-          <VolumeIndicator.Fill className={inputFeedback.island.content}>
-            <VolumeHighIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh)} />
-            <VolumeLowIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow)} />
-            <VolumeOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff)} />
-            <VolumeIndicator.Value className={inputFeedback.island.value} />
-          </VolumeIndicator.Fill>
-        </VolumeIndicator.Root>
+      <VolumeIndicator.Root className={volumeIndicator.root}>
+        <VolumeIndicator.Fill className={indicator.content}>
+          <VolumeHighIcon className={cn(volumeIndicator.icon, volumeIndicator.highIcon)} />
+          <VolumeLowIcon className={cn(volumeIndicator.icon, volumeIndicator.lowIcon)} />
+          <VolumeOffIcon className={cn(volumeIndicator.icon, volumeIndicator.offIcon)} />
+          <VolumeIndicator.Value className={indicator.value} />
+        </VolumeIndicator.Fill>
+      </VolumeIndicator.Root>
 
-        <StatusIndicator.Root
-          actions={TOP_STATUS_ACTIONS}
-          className={cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}
-        >
-          <div className={inputFeedback.island.content}>
-            <CaptionsOnIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn)} />
-            <CaptionsOffIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff)} />
-            <FullscreenEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter)} />
-            <FullscreenExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit)} />
-            <PipEnterIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter)} />
-            <PipExitIcon className={cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit)} />
-            <StatusIndicator.Value className={inputFeedback.island.value} />
-          </div>
-        </StatusIndicator.Root>
+      <StatusIndicator.Root actions={TOP_STATUS_ACTIONS} className={statusIndicator.top}>
+        <CaptionsOnIcon className={cn(statusIndicator.topIcon, statusIndicator.captionsOnIcon)} />
+        <CaptionsOffIcon className={cn(statusIndicator.topIcon, statusIndicator.captionsOffIcon)} />
+        <FullscreenEnterIcon className={cn(statusIndicator.topIcon, statusIndicator.fullscreenEnterIcon)} />
+        <FullscreenExitIcon className={cn(statusIndicator.topIcon, statusIndicator.fullscreenExitIcon)} />
+        <PipEnterIcon className={cn(statusIndicator.topIcon, statusIndicator.pipEnterIcon)} />
+        <PipExitIcon className={cn(statusIndicator.topIcon, statusIndicator.pipExitIcon)} />
+        <StatusIndicator.Value className={indicator.value} />
+      </StatusIndicator.Root>
 
-        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={inputFeedback.bubble.base}>
-          <PlayIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay)} />
-          <PauseIcon className={cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause)} />
-        </StatusIndicator.Root>
-      </div>
+      <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className={statusIndicator.center}>
+        <PlayIcon className={cn(statusIndicator.centerIcon, statusIndicator.playIcon)} />
+        <PauseIcon className={cn(statusIndicator.centerIcon, statusIndicator.pauseIcon)} />
+      </StatusIndicator.Root>
     </Container>
   );
 }

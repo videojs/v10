@@ -9,6 +9,7 @@ export {
   type CompilerPipelineStep,
   type CompilerPlugin,
   type CompilerPluginEnforce,
+  type CompilerProjectConfig,
   type CompilerTarget,
   type CompilerTransform,
   defineConfig,
