@@ -89,22 +89,32 @@ export interface TextFrame<C extends Cue = Cue> {
 export type TextLoadStep<C extends Cue = Cue> = (
   frame: TextFrame<C>,
   signal: AbortSignal,
-  deps: TextStepDeps<C>
+  deps: TextStepDeps
 ) => void | Promise<void>;
 
-/** Per-actor + composition dependencies, passed to each {@link TextLoadStep} on every call — the text analog of `StepDeps`. */
-export interface TextStepDeps<C extends Cue = Cue> {
-  textTracksActor: TextTracksActor<C>;
-  resolveSegment: TextTrackSegmentResolver<C>;
-  /**
-   * The composition deps — full `state`/`context` signal maps + engine `config` —
-   * passed opaquely so a step that needs composition signals reads them at call
-   * time (e.g. relocation reading the primary A/V track's `startMediaTime`). Typed
-   * loose: the loader is a conduit and never reads them; base steps ignore them.
-   */
+/**
+ * The uniform passthrough handed to each {@link TextLoadStep} — the composition triple,
+ * the text analog of `StepDeps`. `state`/`context` are the composition signal maps;
+ * `config` is the threaded config with the loader's wiring folded in (see
+ * {@link textStepWiring} + `createTextTrackSegmentLoaderActor`). Typed loose: composition
+ * steps read `state`; base steps read the folded wiring off `config`.
+ */
+export interface TextStepDeps {
   state: AnySlotMap;
   context: AnySlotMap;
   config: object;
+}
+
+/**
+ * Base-step view of the loader's wiring, folded into `config` by
+ * `createTextTrackSegmentLoaderActor` so base steps read it from the uniform passthrough
+ * — present in both composition and standalone use. `config` is loose (`object`), so
+ * assert the shape here (mirrors the v/a loader's `stepWiring`).
+ */
+export function textStepWiring<C extends Cue>(
+  deps: TextStepDeps
+): { textTracksActor: TextTracksActor<C>; resolveSegment: TextTrackSegmentResolver<C> } {
+  return deps.config as { textTracksActor: TextTracksActor<C>; resolveSegment: TextTrackSegmentResolver<C> };
 }
 
 /**
@@ -145,17 +155,17 @@ interface TextLoadTask {
 // =============================================================================
 
 // Base steps are generic over the cue type `C` (generic arrow consts, not
-// `TextLoadStep<Cue>` values): `TextStepDeps` is contravariant in `C` via
-// `textTracksActor.send`, so a `Cue`-typed step wouldn't slot into a `VTTCue`
-// pipeline. A generic function assigns to any `TextLoadStep<C>` instantiation.
+// `TextLoadStep<Cue>` values): each touches `C` — `frame.cues: C[]` and the
+// `C`-typed `textStepWiring<C>` — so a `Cue`-typed const wouldn't slot into a
+// `VTTCue` pipeline. A generic function assigns to any `TextLoadStep<C>`.
 
 /** Resolve the op's cues (via the injected host primitive) into the frame. The text analog of `fetchStep`. */
 export const resolveCuesStep = async <C extends Cue>(
   frame: TextFrame<C>,
   signal: AbortSignal,
-  deps: TextStepDeps<C>
+  deps: TextStepDeps
 ): Promise<void> => {
-  const cues = await deps.resolveSegment(frame.op.segment.url);
+  const cues = await textStepWiring<C>(deps).resolveSegment(frame.op.segment.url);
   if (signal.aborted) return;
   frame.cues = cues;
 };
@@ -164,10 +174,10 @@ export const resolveCuesStep = async <C extends Cue>(
 export const dispatchCuesStep = <C extends Cue>(
   frame: TextFrame<C>,
   _signal: AbortSignal,
-  deps: TextStepDeps<C>
+  deps: TextStepDeps
 ): void => {
   const { op } = frame;
-  deps.textTracksActor.send({
+  textStepWiring<C>(deps).textTracksActor.send({
     type: 'add-cues',
     meta: {
       trackId: op.trackId,
@@ -216,13 +226,20 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
   // Composition deps threaded opaquely into each step's `TextStepDeps` (relocation
   // reads composition state). The loader never reads them. Defaults empty for
   // standalone / base-pipeline use.
-  compositionDeps: Pick<TextStepDeps<C>, 'state' | 'context' | 'config'> = { state: {}, context: {}, config: {} }
+  compositionDeps: TextStepDeps = { state: {}, context: {}, config: {} }
 ): TextTrackSegmentLoaderActor {
   type UserState = Exclude<TextTrackSegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, TextTrackSegmentLoaderActorContext, () => SerialRunner>;
 
   const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
-  const deps: TextStepDeps<C> = { textTracksActor, resolveSegment, ...compositionDeps };
+  // Fold the loader's wiring into the passthrough `config` (see `textStepWiring`) so
+  // base steps read it from the uniform `{state,context,config}` — present in both
+  // composition and standalone use.
+  const deps: TextStepDeps = {
+    state: compositionDeps.state,
+    context: compositionDeps.context,
+    config: { ...compositionDeps.config, textTracksActor, resolveSegment },
+  };
   // Built once per actor; default is `resolveCues → dispatchCues`.
   const pipeline = (config.messagePipelines ?? DEFAULT_TEXT_MESSAGE_PIPELINES)();
 

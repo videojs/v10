@@ -137,20 +137,30 @@ export interface Frame {
  */
 export type LoadStep = (frame: Frame, signal: AbortSignal, deps: StepDeps) => void | Promise<void>;
 
-/** Per-actor + composition dependencies, passed to each {@link LoadStep} on every call. */
+/**
+ * The uniform passthrough handed to every {@link LoadStep} on every call — the
+ * composition triple, nothing more. `state`/`context` are the full composition signal
+ * maps; `config` is the threaded config with the loader's own wiring folded in (see
+ * {@link stepWiring} + `createSegmentLoaderActor`). All three are typed loose: the
+ * loader is a conduit and never reads them; a step asserts the slots it knows are
+ * present (composition steps read `state`; base steps read the folded wiring off
+ * `config`).
+ */
 export interface StepDeps {
-  sourceBufferActor: SourceBufferActor;
-  fetchBytes: FetchBytes;
-  /**
-   * The composition deps — full `state`/`context` signal maps + engine `config` —
-   * passed opaquely so a step that needs composition signals reads them at call
-   * time (e.g. relocation writing/reading `state.mediaContainerData`). Typed loose:
-   * the loader is a conduit and never reads them; a step asserts the slots it knows
-   * the composition provides. Base steps (`fetch`/`dispatch`) ignore them.
-   */
   state: AnySlotMap;
   context: AnySlotMap;
   config: object;
+}
+
+/**
+ * Base-step view of the loader's own wiring. `createSegmentLoaderActor` folds its
+ * `sourceBufferActor` + `fetch` into the threaded `config` so base steps read them
+ * from the uniform passthrough — present whether the loader runs inside a composition
+ * or standalone. `config` is loose (`object`), so assert the shape here (one cast, like
+ * relocation's `containerSlot`).
+ */
+function stepWiring(deps: StepDeps): { sourceBufferActor: SourceBufferActor; fetch: FetchBytes } {
+  return deps.config as { sourceBufferActor: SourceBufferActor; fetch: FetchBytes };
 }
 
 /**
@@ -253,13 +263,15 @@ function toMessage({ op, data, meta }: Frame): IndividualSourceBufferMessage {
 export const fetchStep: LoadStep = async (frame, signal, deps) => {
   const { op } = frame;
   if (op.type === 'remove') return; // fetchStep only appears in append pipelines
-  frame.data = await deps.fetchBytes(op, op.type === 'append-init' ? { signal, minChunkSize: Infinity } : { signal });
+  const { fetch } = stepWiring(deps);
+  frame.data = await fetch(op, op.type === 'append-init' ? { signal, minChunkSize: Infinity } : { signal });
 };
 
 /** Dispatch the frame's message to the SourceBufferActor and await its return to idle. */
 export const dispatchStep: LoadStep = async (frame, signal, deps) => {
-  deps.sourceBufferActor.send(toMessage(frame));
-  await waitForIdle(deps.sourceBufferActor.snapshot, signal);
+  const { sourceBufferActor } = stepWiring(deps);
+  sourceBufferActor.send(toMessage(frame));
+  await waitForIdle(sourceBufferActor.snapshot, signal);
 };
 
 /** Tier 0 default: fetch (for ops that carry bytes) then dispatch. No relocation vocabulary. */
@@ -341,14 +353,21 @@ export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
   fetchBytes: FetchBytes,
   config: SegmentLoaderActorConfig = {},
-  compositionDeps: Pick<StepDeps, 'state' | 'context' | 'config'> = { state: {}, context: {}, config: {} }
+  compositionDeps: StepDeps = { state: {}, context: {}, config: {} }
 ): SegmentLoaderActor {
   type UserState = Exclude<SegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, SegmentLoaderActorContext, () => SerialRunner>;
 
   const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
   const backBufferConfig: BackBufferConfig = { ...DEFAULT_BACK_BUFFER_CONFIG, ...config.backBuffer };
-  const deps: StepDeps = { sourceBufferActor, fetchBytes, ...compositionDeps };
+  // Fold the loader's own wiring into the passthrough `config` (see `stepWiring`) so
+  // base steps read it from the uniform `{state,context,config}` — present in both
+  // composition and standalone use.
+  const deps: StepDeps = {
+    state: compositionDeps.state,
+    context: compositionDeps.context,
+    config: { ...compositionDeps.config, sourceBufferActor, fetch: fetchBytes },
+  };
   // Built once per actor (fresh stateful steps per source); default is `fetch → dispatch`.
   const pipelines = (config.messagePipelines ?? DEFAULT_MESSAGE_PIPELINES)();
 

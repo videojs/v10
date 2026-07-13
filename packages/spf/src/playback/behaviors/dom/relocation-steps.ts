@@ -32,7 +32,12 @@ import {
   type MessagePipelines,
   type StepDeps,
 } from '../../actors/dom/segment-loader';
-import { dispatchCuesStep, type TextLoadStep, type TextMessagePipelines } from '../../actors/text-track-segment-loader';
+import {
+  dispatchCuesStep,
+  type TextLoadStep,
+  type TextMessagePipelines,
+  textStepWiring,
+} from '../../actors/text-track-segment-loader';
 import { peekHead } from '../../primitives/head-peek';
 import type { EstablishStartMediaTimeState } from '../establish-start-media-time';
 
@@ -139,14 +144,15 @@ function awaitDefined(read: () => number | undefined): Promise<number> {
 
 /**
  * Resolve step for the relocation text pipeline. Reuses the injected host resolver
- * (`deps.resolveSegment`) for cues and fetches the `X-TIMESTAMP-MAP` header in
- * parallel, stashing it on `frame.metadata` for `relocateCuesStep`. Replaces the
+ * (the loader's folded `resolveSegment`, via `textStepWiring`) for cues and fetches
+ * the `X-TIMESTAMP-MAP` header in parallel, stashing it on `frame.metadata` for
+ * `relocateCuesStep`. Replaces the
  * base `resolveCuesStep` (which fetches cues only) — text's native `<track>` parser
  * discards the header, so the map needs its own raw-bytes fetch.
  */
 const resolveWithMetadataStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
   const [cues, metadata] = await Promise.all([
-    deps.resolveSegment(frame.op.segment.url),
+    textStepWiring<VTTCue>(deps).resolveSegment(frame.op.segment.url),
     resolveVttSegmentMetadata(frame.op.segment.url),
   ]);
   if (signal.aborted) return;
