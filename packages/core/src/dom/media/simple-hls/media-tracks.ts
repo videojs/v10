@@ -4,17 +4,32 @@ import {
   type AudioTrack,
   dedupedAudioTracks,
   dedupedVideoTracks,
+  findAudioTrackById,
+  findVideoTrackById,
   frameRateToNumber,
+  isSameAudioTrack,
+  isSameVideoTrack,
   toUserAudioTrackSelection,
   toUserVideoTrackSelection,
   type VideoTrack,
 } from '@videojs/spf/media-tracks';
 import type { Constructor } from '@videojs/utils/types';
 import type {
+  AudioTrackLike,
   MediaAudioTrackCapability,
   MediaVideoRenditionCapability,
   MediaVideoTrackCapability,
+  VideoRenditionLike,
 } from '../../../core/media/types';
+
+// Translate a DOM rendition/track into the SPF dedupe-key shape
+const toVideoKey = (rendition: VideoRenditionLike) => ({
+  width: rendition.width,
+  height: rendition.height,
+  bandwidth: rendition.bitrate!,
+});
+
+const toAudioKey = (track: AudioTrackLike) => ({ language: track.language, name: track.label });
 
 type SimpleHlsEngineHost = {
   readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
@@ -68,7 +83,7 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
         const videoTrack = this.addVideoTrack('main');
         videoTrack.selected = true;
 
-        const selectedId = untrack(() => state.selectedVideoTrackId.get());
+        const resolved = untrack(() => findVideoTrackById(state.presentation.get(), state.selectedVideoTrackId.get()));
         for (const rendition of renditions) {
           const domRendition = videoTrack.addRendition(
             '',
@@ -79,14 +94,14 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
             rendition.frameRate ? frameRateToNumber(rendition.frameRate) : undefined
           );
           domRendition.id = rendition.id;
-          domRendition.active = rendition.id === selectedId;
+          domRendition.active = isSameVideoTrack(toVideoKey(domRendition), resolved);
         }
       };
 
       const reflectSelectedVideo = () => {
-        const selectedId = state.selectedVideoTrackId.get();
+        const resolved = findVideoTrackById(state.presentation.get(), state.selectedVideoTrackId.get());
         for (const rendition of this.videoRenditions) {
-          rendition.active = rendition.id === selectedId;
+          rendition.active = isSameVideoTrack(toVideoKey(rendition), resolved);
         }
       };
 
@@ -98,18 +113,18 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
         this.#removeAudioTracks();
         if (!tracks.length) return;
 
-        const selectedId = untrack(() => state.selectedAudioTrackId.get());
+        const resolved = untrack(() => findAudioTrackById(state.presentation.get(), state.selectedAudioTrackId.get()));
         for (const track of tracks) {
           const domTrack = this.addAudioTrack(track.default ? 'main' : 'alternative', track.name, track.language ?? '');
           domTrack.id = track.id;
-          domTrack.enabled = track.id === selectedId;
+          domTrack.enabled = isSameAudioTrack(toAudioKey(domTrack), resolved);
         }
       };
 
       const reflectSelectedAudio = () => {
-        const selectedId = state.selectedAudioTrackId.get();
+        const resolved = findAudioTrackById(state.presentation.get(), state.selectedAudioTrackId.get());
         for (const track of this.audioTracks) {
-          track.enabled = track.id === selectedId;
+          track.enabled = isSameAudioTrack(toAudioKey(track), resolved);
         }
       };
 
@@ -144,8 +159,9 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
     };
 
     #selectAudio = () => {
-      const { selectedAudioTrackId, userAudioTrackSelection } = this.engine.state;
-      const current = [...this.audioTracks].find((track) => track.id === selectedAudioTrackId.get());
+      const { presentation, selectedAudioTrackId, userAudioTrackSelection } = this.engine.state;
+      const resolved = findAudioTrackById(presentation.get(), selectedAudioTrackId.get());
+      const current = [...this.audioTracks].find((track) => isSameAudioTrack(toAudioKey(track), resolved));
 
       // `enabled` is not exclusive like video `selected`, so prefer a newly
       // enabled track over the one that is already playing.

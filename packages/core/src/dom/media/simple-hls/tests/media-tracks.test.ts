@@ -142,6 +142,52 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     expect([...host.videoRenditions].map((r: any) => r.active)).toEqual([false, true]);
   });
 
+  it('reflects active by properties, so a non-primary CDN resolved id still lights up its rendition', async () => {
+    const engine = createEngine();
+    const host = new SimpleHlsMediaMediaTracks(engine) as any;
+
+    engine.state.presentation.set(
+      presentation([
+        vTrack({ id: 'a-1080', width: 1920, height: 1080, bandwidth: 5_000_000, url: 'https://a/v.m3u8' }),
+        vTrack({ id: 'b-1080', width: 1920, height: 1080, bandwidth: 5_000_000, url: 'https://b/v.m3u8' }),
+        vTrack({ id: 'a-720', width: 1280, height: 720, bandwidth: 3_000_000 }),
+      ])
+    );
+    await flush();
+
+    // The DOM rendition kept the first copy's id ('a-1080'); the engine resolved
+    // the second-CDN copy (as on failover). Property-based reflection still marks
+    // the collapsed rendition active.
+    engine.state.selectedVideoTrackId.set('b-1080');
+    await flush();
+
+    expect([...host.videoRenditions].map((r: any) => r.id)).toEqual(['a-1080', 'a-720']);
+    expect([...host.videoRenditions].map((r: any) => r.active)).toEqual([true, false]);
+  });
+
+  it('reflects audio enabled by properties across per-CDN copies', async () => {
+    const engine = createEngine();
+    const host = new SimpleHlsMediaMediaTracks(engine) as any;
+
+    engine.state.presentation.set(
+      presentation(
+        [],
+        [
+          aTrack({ id: 'en-a', language: 'en', name: 'English', url: 'https://a/a.m3u8' }),
+          aTrack({ id: 'en-b', language: 'en', name: 'English', url: 'https://b/a.m3u8' }),
+          aTrack({ id: 'es-a', language: 'es', name: 'Spanish' }),
+        ]
+      )
+    );
+    await flush();
+
+    engine.state.selectedAudioTrackId.set('en-b');
+    await flush();
+
+    expect([...host.audioTracks].map((t: any) => t.id)).toEqual(['en-a', 'es-a']);
+    expect([...host.audioTracks].map((t: any) => t.enabled)).toEqual([true, false]);
+  });
+
   it('pins a rendition selection as width/height/bandwidth criteria; Auto clears it', async () => {
     const engine = createEngine();
     const host = new SimpleHlsMediaMediaTracks(engine) as any;
