@@ -6,11 +6,15 @@
  * @packageDocumentation
  */
 
-export type { AudioTrack, VideoTrack } from './media-tracks';
+export type { AudioDedupeKey, AudioTrack, VideoDedupeKey, VideoTrack } from './media-tracks';
 export {
   dedupedAudioTracks,
   dedupedVideoTracks,
+  findAudioTrackById,
+  findVideoTrackById,
   frameRateToNumber,
+  isSameAudioTrack,
+  isSameVideoTrack,
   toUserAudioTrackSelection,
   toUserVideoTrackSelection,
 } from './media-tracks';

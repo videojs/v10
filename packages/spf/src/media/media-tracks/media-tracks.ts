@@ -19,19 +19,19 @@
  */
 
 import type { AudioTrack, FrameRate, MaybeResolvedPresentation, VideoTrack } from '../types';
-import { getTracksByType } from '../utils/tracks';
+import { findTrackById, getTracksByType } from '../utils/tracks';
 
 export type { VideoTrack, AudioTrack };
 
 /** Properties that identify a distinct video rendition (multi-CDN copies share them). */
-interface VideoDedupeKey {
+export interface VideoDedupeKey {
   width?: VideoTrack['width'];
   height?: VideoTrack['height'];
-  bandwidth: VideoTrack['bandwidth'];
+  bandwidth?: VideoTrack['bandwidth'];
 }
 
 /** Properties that identify a distinct audio track (multi-CDN copies share them). */
-interface AudioDedupeKey {
+export interface AudioDedupeKey {
   language?: AudioTrack['language'];
   name?: AudioTrack['name'];
 }
@@ -68,6 +68,32 @@ export function dedupedAudioTracks(presentation: MaybeResolvedPresentation | und
   });
 }
 
+/**
+ * Find a video track by id, searching the same candidate set the engine resolves
+ * against ({@link dedupedVideoTracks}'s pre-dedupe source). Returns `undefined`
+ * when absent. Maps the engine's resolved `selectedVideoTrackId` back to its
+ * properties for `active` reflection — the resolved id may be a per-CDN copy that
+ * isn't the representative {@link dedupedVideoTracks} kept.
+ */
+export function findVideoTrackById(
+  presentation: MaybeResolvedPresentation | undefined,
+  id: string | undefined
+): VideoTrack | undefined {
+  if (!presentation || !id) return undefined;
+  const track = findTrackById(presentation, id);
+  return track?.type === 'video' ? (track as VideoTrack) : undefined;
+}
+
+/** Audio counterpart of {@link findVideoTrackById}, for `enabled` reflection. */
+export function findAudioTrackById(
+  presentation: MaybeResolvedPresentation | undefined,
+  id: string | undefined
+): AudioTrack | undefined {
+  if (!presentation || !id) return undefined;
+  const track = findTrackById(presentation, id);
+  return track?.type === 'audio' ? (track as AudioTrack) : undefined;
+}
+
 /** Dedupe tracks by a key function, keeping the first occurrence of each key. */
 function dedupe<T, K>({ tracks, keyFn }: { tracks: readonly T[]; keyFn: (track: T) => K }): T[] {
   const deduped = new Map<K, T>();
@@ -93,6 +119,18 @@ export function toUserVideoTrackSelection<T extends VideoDedupeKey>(rendition?: 
  */
 export function toUserAudioTrackSelection<T extends AudioDedupeKey>(track?: T): Partial<AudioTrack> | undefined {
   return track ? { language: track.language, name: track.name } : undefined;
+}
+
+/**
+ * Whether two video tracks are the same by dedupe key
+ */
+export function isSameVideoTrack(a: VideoDedupeKey, b: VideoDedupeKey | undefined): boolean {
+  return !!b && videoRenditionKey(a) === videoRenditionKey(b);
+}
+
+/** Whether two audio tracks are the same by dedupe key */
+export function isSameAudioTrack(a: AudioDedupeKey, b: AudioDedupeKey | undefined): boolean {
+  return !!b && audioTrackKey(a) === audioTrackKey(b);
 }
 
 /** Collapse a rational frame rate (numerator/denominator) to frames per second. */

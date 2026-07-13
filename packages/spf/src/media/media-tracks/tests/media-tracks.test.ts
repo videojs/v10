@@ -4,6 +4,10 @@ import type { AudioTrack, MaybeResolvedPresentation, VideoTrack } from '../../ty
 import {
   dedupedAudioTracks,
   dedupedVideoTracks,
+  findAudioTrackById,
+  findVideoTrackById,
+  isSameAudioTrack,
+  isSameVideoTrack,
   toUserAudioTrackSelection,
   toUserVideoTrackSelection,
 } from '../media-tracks';
@@ -160,5 +164,75 @@ describe('toUserAudioTrackSelection', () => {
     expect(matchesPartialTrack(enA, criteria)).toBe(true);
     expect(matchesPartialTrack(enB, criteria)).toBe(true);
     expect(matchesPartialTrack(commentary, criteria)).toBe(false);
+  });
+});
+
+describe('findVideoTrackById', () => {
+  const pres = presentationWith([
+    video({ id: 'cdn-a-1080', width: 1920, height: 1080, url: 'https://a/v.m3u8' }),
+    video({ id: 'cdn-b-1080', width: 1920, height: 1080, url: 'https://b/v.m3u8' }),
+  ]);
+
+  it('finds a track by id, including a non-first per-CDN copy the dedup drops', () => {
+    // 'cdn-b-1080' is collapsed out of dedupedVideoTracks but still resolvable.
+    expect(findVideoTrackById(pres, 'cdn-b-1080')?.id).toBe('cdn-b-1080');
+  });
+
+  it('returns undefined for a missing id or absent presentation', () => {
+    expect(findVideoTrackById(pres, 'nope')).toBeUndefined();
+    expect(findVideoTrackById(undefined, 'cdn-a-1080')).toBeUndefined();
+    expect(findVideoTrackById(pres, undefined)).toBeUndefined();
+  });
+});
+
+describe('findAudioTrackById', () => {
+  const pres = presentationWith(
+    [],
+    [
+      audio({ id: 'en-a', language: 'en', name: 'English', url: 'https://a/a.m3u8' }),
+      audio({ id: 'en-b', language: 'en', name: 'English', url: 'https://b/a.m3u8' }),
+    ]
+  );
+
+  it('finds a track by id, including a non-first per-CDN copy', () => {
+    expect(findAudioTrackById(pres, 'en-b')?.id).toBe('en-b');
+  });
+
+  it('returns undefined for a missing id or absent presentation', () => {
+    expect(findAudioTrackById(pres, 'nope')).toBeUndefined();
+    expect(findAudioTrackById(undefined, 'en-a')).toBeUndefined();
+  });
+});
+
+describe('isSameVideoTrack', () => {
+  it('matches by width + height + bandwidth regardless of id/url', () => {
+    const a = { width: 1280, height: 720, bandwidth: 3_000_000 };
+    const b = video({ id: 'other-cdn', width: 1280, height: 720, bandwidth: 3_000_000 }) as VideoTrack;
+    expect(isSameVideoTrack(a, b)).toBe(true);
+  });
+
+  it('does not match a different quality, and is false when the track is undefined', () => {
+    const a = { width: 1280, height: 720, bandwidth: 3_000_000 };
+    expect(isSameVideoTrack(a, video({ width: 1920, height: 1080, bandwidth: 5_000_000 }) as VideoTrack)).toBe(false);
+    expect(isSameVideoTrack(a, undefined)).toBe(false);
+  });
+});
+
+describe('isSameAudioTrack', () => {
+  it('matches by language + name, treating empty and absent language alike', () => {
+    expect(
+      isSameAudioTrack({ language: 'en', name: 'English' }, audio({ language: 'en', name: 'English' }) as AudioTrack)
+    ).toBe(true);
+    // DOM coerces a missing language to '' — must still match the model's `undefined`.
+    expect(
+      isSameAudioTrack({ language: '', name: 'Audio' }, audio({ language: undefined, name: 'Audio' }) as AudioTrack)
+    ).toBe(true);
+  });
+
+  it('does not match a different role, and is false when the track is undefined', () => {
+    expect(
+      isSameAudioTrack({ language: 'en', name: 'English' }, audio({ language: 'en', name: 'Commentary' }) as AudioTrack)
+    ).toBe(false);
+    expect(isSameAudioTrack({ language: 'en', name: 'English' }, undefined)).toBe(false);
   });
 });
