@@ -36,9 +36,6 @@ export interface AudioDedupeKey {
   name?: AudioTrack['name'];
 }
 
-const videoRenditionKey = (track: VideoDedupeKey): string =>
-  `${track.width ?? ''}x${track.height ?? ''}@${track.bandwidth}`;
-
 /**
  * The distinct video tracks of a presentation, deduped by {@link VideoDedupeKey} (first occurrence wins).
  *
@@ -49,11 +46,9 @@ export function dedupedVideoTracks(presentation: MaybeResolvedPresentation | und
 
   return dedupe({
     tracks: getTracksByType(presentation, 'video') as readonly VideoTrack[],
-    keyFn: videoRenditionKey,
+    keyFn: toUserVideoTrackSelection,
   });
 }
-
-const audioTrackKey = (track: AudioDedupeKey): string => `${track.language ?? ''}-${track.name}`;
 
 /**
  * The distinct audio tracks of a presentation, deduped by `language` + `name`
@@ -64,7 +59,7 @@ export function dedupedAudioTracks(presentation: MaybeResolvedPresentation | und
 
   return dedupe({
     tracks: getTracksByType(presentation, 'audio') as readonly AudioTrack[],
-    keyFn: audioTrackKey,
+    keyFn: toUserAudioTrackSelection,
   });
 }
 
@@ -94,17 +89,38 @@ export function findAudioTrackById(
   return track?.type === 'audio' ? (track as AudioTrack) : undefined;
 }
 
-/** Dedupe tracks by a key function, keeping the first occurrence of each key. */
-function dedupe<T, K>({ tracks, keyFn }: { tracks: readonly T[]; keyFn: (track: T) => K }): T[] {
-  const deduped = new Map<K, T>();
-  tracks.forEach((track) => {
-    const key = keyFn(track);
-    if (!deduped.has(key)) {
-      deduped.set(key, track);
-    }
-  });
+/**
+ * Shallow-equal two key objects by their own properties. Both come from the same
+ * key builder, so they carry the same keys — a one-directional scan suffices.
+ */
+function sameKey<K extends object>(a: K, b: K): boolean {
+  for (const attr in a) {
+    if (a[attr] !== b[attr]) return false;
+  }
+  return true;
+}
 
-  return [...deduped.values()];
+/**
+ * Dedupe tracks by a key function, keeping the first occurrence of each key.
+ * Keys are compared field-by-field ({@link sameKey}).
+ */
+function dedupe<T, K extends object>({
+  tracks,
+  keyFn,
+}: {
+  tracks: readonly T[];
+  keyFn: (track: T) => K | undefined;
+}): T[] {
+  const seen: K[] = [];
+  const kept: T[] = [];
+  for (const track of tracks) {
+    const key = keyFn(track);
+    if (!key || seen.some((other) => sameKey(other, key))) continue;
+    seen.push(key);
+    kept.push(track);
+  }
+
+  return kept;
 }
 
 /**
@@ -121,16 +137,14 @@ export function toUserAudioTrackSelection<T extends AudioDedupeKey>(track?: T): 
   return track ? { language: track.language, name: track.name } : undefined;
 }
 
-/**
- * Whether two video tracks are the same by dedupe key
- */
+/** Whether two video tracks are the same by dedupe key */
 export function isSameVideoTrack(a: VideoDedupeKey, b: VideoDedupeKey | undefined): boolean {
-  return !!b && videoRenditionKey(a) === videoRenditionKey(b);
+  return !!b && a.width === b.width && a.height === b.height && a.bandwidth === b.bandwidth;
 }
 
 /** Whether two audio tracks are the same by dedupe key */
 export function isSameAudioTrack(a: AudioDedupeKey, b: AudioDedupeKey | undefined): boolean {
-  return !!b && audioTrackKey(a) === audioTrackKey(b);
+  return !!b && (a.language ?? '') === (b.language ?? '') && a.name === b.name;
 }
 
 /** Collapse a rational frame rate (numerator/denominator) to frames per second. */
