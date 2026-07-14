@@ -1,1 +1,1 @@
-export { createSelector } from '@videojs/store';
+export { createContext as createSelector } from 'react';

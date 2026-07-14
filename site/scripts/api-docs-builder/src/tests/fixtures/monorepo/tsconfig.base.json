@@ -4,10 +4,6 @@
     "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "bundler",
-    "baseUrl": ".",
-    "paths": {
-      "@videojs/store": ["packages/store/src/core/selector.ts"]
-    },
     "strict": true,
     "declaration": true,
     "skipLibCheck": true,
