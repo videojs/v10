@@ -37,21 +37,23 @@ export function replaceDemoPlaceholders(source: string): string {
   });
 }
 
+export function transformDemoPlaceholders(source: string, id: string): string | null {
+  const [filePath, query = ''] = id.split('?', 2);
+  const isRawHtml = filePath.endsWith('.html') && new URLSearchParams(query).has('raw');
+  const isReactDemo = filePath.endsWith('.tsx');
+
+  if (!filePath.includes(DEMOS_DIRECTORY) || (!isRawHtml && !isReactDemo)) {
+    return null;
+  }
+
+  return replaceDemoPlaceholders(source);
+}
+
 /** Resolve placeholders in HTML and React demos for the site build and dev server. */
 export function demoPlaceholderPlugin() {
   return {
     name: 'videojs:demo-placeholders',
     enforce: 'pre',
-    transform(source, id) {
-      const [filePath, query = ''] = id.split('?', 2);
-      const isRawHtml = filePath.endsWith('.html') && new URLSearchParams(query).has('raw');
-      const isReactDemo = filePath.endsWith('.tsx');
-
-      if (!filePath.includes(DEMOS_DIRECTORY) || (!isRawHtml && !isReactDemo)) {
-        return null;
-      }
-
-      return replaceDemoPlaceholders(source);
-    },
+    transform: transformDemoPlaceholders,
   } satisfies Plugin;
 }

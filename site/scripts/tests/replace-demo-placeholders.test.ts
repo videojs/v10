@@ -1,7 +1,12 @@
 import { globSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { DEMO_PLACEHOLDERS, demoPlaceholderPlugin, replaceDemoPlaceholders } from '../replace-demo-placeholders.ts';
+import {
+  DEMO_PLACEHOLDERS,
+  demoPlaceholderPlugin,
+  replaceDemoPlaceholders,
+  transformDemoPlaceholders,
+} from '../replace-demo-placeholders.ts';
 
 const DEMOS_DIRECTORY = resolve('src/components/docs/demos');
 
@@ -22,21 +27,26 @@ describe('replaceDemoPlaceholders', () => {
 });
 
 describe('demoPlaceholderPlugin', () => {
-  it('resolves placeholders in raw HTML demo imports', () => {
-    const plugin = demoPlaceholderPlugin();
+  it('registers the demo transform as a pre-transform', () => {
+    expect(demoPlaceholderPlugin()).toMatchObject({
+      enforce: 'pre',
+      transform: transformDemoPlaceholders,
+    });
+  });
+});
 
-    expect(plugin.transform('{{VJS10_DEMO_VIDEO_MP4}}', '/site/src/components/docs/demos/play-button.html?raw')).toBe(
-      DEMO_PLACEHOLDERS.VJS10_DEMO_VIDEO_MP4
-    );
+describe('transformDemoPlaceholders', () => {
+  it('resolves placeholders in raw HTML demo imports', () => {
+    expect(
+      transformDemoPlaceholders('{{VJS10_DEMO_VIDEO_MP4}}', '/site/src/components/docs/demos/play-button.html?raw')
+    ).toBe(DEMO_PLACEHOLDERS.VJS10_DEMO_VIDEO_MP4);
   });
 
   it.each([
     '/site/src/components/docs/demos/play-button/react/css/BasicUsage.tsx',
     '/site/src/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw',
   ])('resolves placeholders in React demo import %s', (id) => {
-    const plugin = demoPlaceholderPlugin();
-
-    expect(plugin.transform('{{VJS10_DEMO_VIDEO_MP4}}', id)).toBe(DEMO_PLACEHOLDERS.VJS10_DEMO_VIDEO_MP4);
+    expect(transformDemoPlaceholders('{{VJS10_DEMO_VIDEO_MP4}}', id)).toBe(DEMO_PLACEHOLDERS.VJS10_DEMO_VIDEO_MP4);
   });
 
   it.each([
@@ -45,9 +55,7 @@ describe('demoPlaceholderPlugin', () => {
     '/site/src/components/play-button.html?raw',
     '/site/src/components/play-button.tsx',
   ])('ignores unsupported demo import %s', (id) => {
-    const plugin = demoPlaceholderPlugin();
-
-    expect(plugin.transform('{{VJS10_DEMO_VIDEO_MP4}}', id)).toBeNull();
+    expect(transformDemoPlaceholders('{{VJS10_DEMO_VIDEO_MP4}}', id)).toBeNull();
   });
 });
 
