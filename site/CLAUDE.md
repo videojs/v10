@@ -252,6 +252,8 @@ import basicUsageCss from "@/components/docs/demos/play-button/react/css/BasicUs
 
 Four files per demo: `.html` (markup only), `.css` (styles), `.ts` (custom element registration), and `.astro` (wrapper that ties them together). The `.astro` wrapper is needed because only Astro `<script>` tags go through Vite's bundling pipeline — MDX `<script>` tags compile as JSX and aren't bundled.
 
+Media URLs in `.html` demo files use `{{VJS*}}` placeholders defined in `scripts/replace-demo-placeholders.ts`. The Vite plugin resolves them in both live demos and source tabs. Do not hardcode shared media URLs in HTML demos.
+
 **`.astro` wrapper** (renders HTML, bundles the `.ts` script — no CSS import):
 ```astro
 ---

@@ -25,6 +25,7 @@ import tsx from 'shiki/langs/tsx.mjs';
 import yaml from 'shiki/langs/yaml.mjs';
 import svgr from 'vite-plugin-svgr';
 import llmsMarkdown from './integrations/llms-markdown';
+import { demoPlaceholderPlugin } from './scripts/replace-demo-placeholders.ts';
 import { PRERELEASE_URL, PRODUCTION_URL } from './src/consts.ts';
 import { satteriCodeFrame } from './src/utils/satteriCodeFrame';
 import { satteriConditionalHeadings } from './src/utils/satteriConditionalHeadings';
@@ -169,7 +170,7 @@ export default defineConfig({
     // SVG → React component transform. We use SVGR instead of Astro's
     // experimental svg feature because: (1) React islands need React
     // components, and (2) SVGR runs SVGO for automatic SVG optimization.
-    plugins: [tailwindcss(), svgr()],
+    plugins: [demoPlaceholderPlugin(), tailwindcss(), svgr()],
     optimizeDeps: {
       // @resvg/resvg-js loads a native .node binding for the server-only OG
       // image route, so Vite's dev optimizer must leave it external.
