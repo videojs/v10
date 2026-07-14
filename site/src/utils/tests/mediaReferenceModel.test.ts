@@ -64,6 +64,21 @@ describe('createMediaReferenceModel', () => {
     expect(model.platforms.react.sections.map((section) => section.key)).toEqual(['props', 'ref', 'events']);
   });
 
+  it('keeps the React props section when only standard native props are accepted', () => {
+    const ref = makeRef();
+    ref.platforms.react.props = {};
+    const model = createMediaReferenceModel('HlsJsVideo', ref);
+    expect(model.platforms.react.sections.some((section) => section.key === 'props')).toBe(true);
+  });
+
+  it('omits the React props section when the component accepts no props', () => {
+    const ref = makeRef();
+    ref.platforms.react.acceptsNativeProps = false;
+    ref.platforms.react.props = {};
+    const model = createMediaReferenceModel('HlsJsVideo', ref);
+    expect(model.platforms.react.sections.some((section) => section.key === 'props')).toBe(false);
+  });
+
   it('drops an empty HTML section', () => {
     const ref = makeRef();
     ref.platforms.html.properties = { definitions: {}, native: [] };

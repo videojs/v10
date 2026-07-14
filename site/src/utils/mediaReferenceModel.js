@@ -43,7 +43,7 @@ const REACT_SUBSECTIONS = Object.freeze([
     key: 'props',
     title: 'Props',
     id: 'props',
-    isEmpty: (react) => Object.keys(react.props ?? {}).length === 0,
+    isEmpty: (react) => !react.acceptsNativeProps && Object.keys(react.props ?? {}).length === 0,
   },
   {
     key: 'ref',
