@@ -626,6 +626,13 @@ describe('Util pipeline (end-to-end)', () => {
       expect(findByName('createPlayer', 'html')).toBeDefined();
       expect(findByName('createSelector', null)).toBeDefined();
     });
+
+    it('leaves external re-exports with their canonical entry point', () => {
+      const matches = entries.filter((entry) => entry.data.name === 'createSelector');
+
+      expect(matches).toHaveLength(1);
+      expect(matches[0]).toMatchObject({ slug: 'create-selector', framework: null });
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────

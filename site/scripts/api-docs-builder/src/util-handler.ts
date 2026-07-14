@@ -209,6 +209,39 @@ function collectVisibleExportNames(indexPath: string, visited = new Set<string>(
   return names;
 }
 
+function collectDeclaredExportNames(modulePath: string): Set<string> {
+  const names = new Set<string>();
+  const sourceFile = ts.createSourceFile(
+    modulePath,
+    fs.readFileSync(modulePath, 'utf-8'),
+    ts.ScriptTarget.Latest,
+    true
+  );
+
+  ts.forEachChild(sourceFile, (node) => {
+    const modifiers = ts.canHaveModifiers(node) ? ts.getModifiers(node) : undefined;
+    const isExported = modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.ExportKeyword);
+    if (!isExported) return;
+
+    if (ts.isVariableStatement(node)) {
+      for (const declaration of node.declarationList.declarations) {
+        if (ts.isIdentifier(declaration.name)) names.add(declaration.name.text);
+      }
+    } else if (
+      (ts.isFunctionDeclaration(node) ||
+        ts.isClassDeclaration(node) ||
+        ts.isInterfaceDeclaration(node) ||
+        ts.isTypeAliasDeclaration(node) ||
+        ts.isEnumDeclaration(node)) &&
+      node.name
+    ) {
+      names.add(node.name.text);
+    }
+  });
+
+  return names;
+}
+
 // ─── Phase 2: Convention Matching ──────────────────────────────────
 
 function isUtilExport(exportNode: tae.ExportNode): boolean {
@@ -1024,6 +1057,8 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
     // utilities, contexts, and selectors (e.g., usePlayer, createPlayer, selectPlayback)
     for (const modulePath of modulesToScan) {
       if (!fs.existsSync(modulePath)) continue;
+      const declaredNames = collectDeclaredExportNames(modulePath);
+      if (declaredNames.size === 0) continue;
 
       let ast: tae.ModuleNode;
       try {
@@ -1036,6 +1071,10 @@ function discoverUtilExports(monorepoRoot: string, program: ts.Program): UtilEnt
       allExports.push(...ast.exports);
 
       for (const exportNode of ast.exports) {
+        // Re-exported APIs are owned by their declaring module. Local
+        // declarations are scanned post-order, while external package
+        // re-exports are documented by that package's canonical entry point.
+        if (!declaredNames.has(exportNode.name)) continue;
         // Whole modules are scanned, but only exports that are actually
         // visible from the entry point are public API.
         if (!visibleNames.has(exportNode.name)) continue;
