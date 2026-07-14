@@ -60,7 +60,7 @@ Use a different structure for a living reference or registry, but keep frontmatt
 ## Maintenance
 
 - Link current source and tests; do not copy APIs, schemas, or file inventories.
-- When implementation lands, update status and remove speculative mechanics.
+- When implementation lands, collapse the record to durable rationale, constraints, consequences, and source pointers; remove speculative mechanics and current-behavior inventories.
 - When a record becomes wrong, update it, mark it superseded with a successor, or delete it if no rationale remains.
 - Keep implemented records only when their constraints, alternatives, or tradeoffs still help future changes.
 
