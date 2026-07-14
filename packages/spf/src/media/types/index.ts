@@ -131,7 +131,39 @@ export type Track = Ham &
     bandwidth: number;
     initialization?: AddressableObject;
     segments: Segment[];
+    /**
+     * Media-timeline (decode/encode) coordinate of the track's timeline origin
+     * (`startTime`) — the media-time base value of the coordinate model, peer to
+     * `startTime` (presentation). Derived from the container
+     * (`tfdt.baseMediaDecodeTime ÷ mdhd.timescale`); the relocation offset is
+     * `startTime − startMediaTime`, never stored.
+     *
+     * Optional: absent until established (0-PTS sources never set it — their
+     * origin is already 0). Established once per source by the
+     * `establishStartMediaTime` reactor. See
+     * `internal/design/spf/presentation-timeline-model.md`.
+     */
+    startMediaTime?: number;
   };
+
+/**
+ * Per-track-type origin-establishment data, accumulated across appends (`mdhd`
+ * timescale from the init, `tfdt` baseMediaDecodeTime from the first media
+ * segment) — hence optional. The transient input the `establishStartMediaTime`
+ * reactor reduces into `Track.startMediaTime`.
+ *
+ * `segmentStartTime` is the 0-based presentation start of the segment
+ * `baseMediaDecodeTime` was read from — *not* a container value (it's the playlist
+ * position), but co-located because the origin is `baseMediaDecodeTime/timescale −
+ * segmentStartTime`: the first *loaded* segment isn't necessarily the 0th (a
+ * non-zero initial `currentTime`, or live/DVR), so the decode time alone isn't the
+ * stream origin.
+ */
+export interface MediaContainerData {
+  timescale?: number;
+  baseMediaDecodeTime?: number;
+  segmentStartTime?: number;
+}
 
 /**
  * Resolved video track with segments.

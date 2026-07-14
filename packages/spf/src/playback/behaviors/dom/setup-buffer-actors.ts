@@ -72,6 +72,7 @@ import type { BandwidthState } from '../../../network/bandwidth-estimator';
 import { createTrackedFetch, type FetchBytes, fetchStream } from '../../../network/fetch';
 import {
   createSegmentLoaderActor,
+  type MessagePipelines,
   type SegmentLoaderActor,
   type SegmentLoaderActorConfig,
 } from '../../actors/dom/segment-loader';
@@ -146,7 +147,7 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
     fetch: FetchBytes;
   } & SegmentLoaderActorConfig;
 }): Reactor<BufferActorsFsmState | 'destroying' | 'destroyed'> {
-  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer } = config;
+  const { type, selectedKey, actorKey, loaderKey, fetch, forwardBuffer, backBuffer, messagePipelines } = config;
   const derivedStateSignal = computed<BufferActorsFsmState>(() => {
     if (!context.mediaSource.get()) return 'preconditions-unmet';
     const selection: TrackSelectionState = {
@@ -172,7 +173,14 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           const track = getSelectedTrack(selection, type) as PartiallyResolvedTrack;
           const buffer = createSourceBuffer(mediaSource, buildMimeCodec(track));
           const bufferActor = createSourceBufferActor(buffer);
-          const segmentLoader = createSegmentLoaderActor(bufferActor, fetch, { forwardBuffer, backBuffer });
+          const segmentLoader = createSegmentLoaderActor(
+            bufferActor,
+            fetch,
+            { forwardBuffer, backBuffer, messagePipelines },
+            // Thread the composition deps opaquely to steps (relocation reads
+            // `state.mediaContainerData`); the loader/this behavior never read them.
+            { state, context, config }
+          );
 
           // Synchronous slot writes — load-bearing for the Firefox
           // `mozHasAudio` invariant (see file-level JSDoc). Both per-type
@@ -223,7 +231,11 @@ export const setupVideoBufferActors = defineBehavior({
       bandwidthState: Signal<BufferActorsState['bandwidthState']>;
     };
     context: BufferActorsContextMap<'videoBufferActor', 'videoSegmentLoaderActor'>;
-    config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
+    config?: SegmentLoaderActorConfig & {
+      getCdnId?: GetCdnId;
+      /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
+      videoMessagePipelines?: MessagePipelines;
+    };
   }) => {
     // Bandwidth-sampling fetch. The factory accumulates EWMA state
     // internally; the callback bridges samples to engine state for ABR.
@@ -246,7 +258,11 @@ export const setupVideoBufferActors = defineBehavior({
     return setupBufferActors({
       state,
       context,
-      config: { ...typeConfig, fetch: failoverFetch(trackedFetch, state, typeConfig) },
+      config: {
+        ...typeConfig,
+        messagePipelines: config.videoMessagePipelines,
+        fetch: failoverFetch(trackedFetch, state, typeConfig),
+      },
     });
   },
 });
@@ -279,14 +295,22 @@ export const setupAudioBufferActors = defineBehavior({
   }: {
     state: BufferActorsStateMap<'selectedAudioTrackId'>;
     context: BufferActorsContextMap<'audioBufferActor', 'audioSegmentLoaderActor'>;
-    config?: SegmentLoaderActorConfig & { getCdnId?: GetCdnId };
+    config?: SegmentLoaderActorConfig & {
+      getCdnId?: GetCdnId;
+      /** Optional non-zero-PTS relocation pipelines (Tier-1); the loader uses its Tier-0 default when absent. */
+      audioMessagePipelines?: MessagePipelines;
+    };
   }) => {
     // Key order mirrors setupVideoBufferActors.
     const typeConfig = { ...AUDIO_TYPE_CONFIG, ...config };
     return setupBufferActors({
       state,
       context,
-      config: { ...typeConfig, fetch: failoverFetch(fetchStream, state, typeConfig) },
+      config: {
+        ...typeConfig,
+        messagePipelines: config.audioMessagePipelines,
+        fetch: failoverFetch(fetchStream, state, typeConfig),
+      },
     });
   },
 });
