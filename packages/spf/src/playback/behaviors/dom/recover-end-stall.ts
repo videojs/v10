@@ -12,14 +12,15 @@
  * (measured ~0ms latency), so there's nothing to gain from polling — and polling would
  * add its interval + a stall threshold before reacting.
  *
- * **Proximity to the *intersection* buffered end** is the discriminator.
- * `mediaElement.buffered.end(last)` is already `min(videoEnd, audioEnd)` — the furthest
- * point playback can reach — and once `endOfStream` is signalled that's the true content
- * end. Requiring the playhead within `endStallNudgeWindow` of it distinguishes the real
- * end-of-stream freeze from a mid-stream buffer-hole stall (which sits far from the
- * buffered end), so we never skip content. The window must exceed the freeze gap; too
- * small would miss the stall (a permanent hang), so the default is generous relative to
- * the measured gap and is config-tunable for empirical tuning.
+ * **Proximity to the *reachable* buffered end** is the discriminator. That end is
+ * `getMinBufferedEnd(mediaSource.sourceBuffers)` — the `min` of the per-track (video/audio)
+ * SourceBuffer ends, i.e. the furthest point playback can reach — read from the SourceBuffers
+ * directly rather than the `mediaElement.buffered` aggregate. Once `endOfStream` is signalled
+ * that's the true content end. Requiring the playhead within `endStallNudgeWindow` of it
+ * distinguishes the real end-of-stream freeze from a mid-stream buffer-hole stall (which sits
+ * far from the buffered end), so we never skip content. The window must exceed the freeze gap;
+ * too small would miss the stall (a permanent hang), so the default is generous relative to the
+ * measured gap and is config-tunable for empirical tuning.
  *
  * Inert where it shouldn't act: live (the MediaSource never reaches `ended` while the
  * window grows; `duration` is `Infinity`) and streams that end cleanly (no `waiting`).
@@ -30,6 +31,7 @@ import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
 import type { ReadonlySignal } from '../../../core/signals/primitives';
+import { getMinBufferedEnd } from '../../../media/dom/mse/duration';
 
 export interface RecoverEndStallContext {
   mediaElement?: HTMLMediaElement | undefined;
@@ -92,16 +94,16 @@ function recoverEndStallSetup({
     if (!mediaElement) return;
 
     const onWaiting = () => {
-      const { buffered } = mediaElement;
+      const mediaSource = context.mediaSource.get();
       const forceEnded = shouldForceEnded(
         {
-          msEnded: context.mediaSource.get()?.readyState === 'ended',
+          msEnded: mediaSource?.readyState === 'ended',
           durationFinite: Number.isFinite(mediaElement.duration),
           paused: mediaElement.paused,
           seeking: mediaElement.seeking,
           ended: mediaElement.ended,
           currentTime: mediaElement.currentTime,
-          bufferedEnd: buffered.length > 0 ? buffered.end(buffered.length - 1) : undefined,
+          bufferedEnd: mediaSource ? getMinBufferedEnd(mediaSource.sourceBuffers) : undefined,
         },
         nudgeWindow
       );
