@@ -80,4 +80,3 @@ There was also concern that feature bundles could become another preset taxonomy
 - React factory and context: `packages/react/src/player/`
 - HTML factory, provider, container, and controller: `packages/html/src/player/`, `packages/html/src/store/`
 - Public contracts and examples: package exports, package READMEs, and generated site reference pages
-
