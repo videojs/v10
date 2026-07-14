@@ -80,7 +80,15 @@ The group is available when the configured media exposes at least one caption or
 
 ## Accessibility
 
-The group uses the menu radio group pattern. It receives an accessible label from the `label` prop or defaults to `Enable captions` / `Disable captions` based on the current state.
+The group uses the menu radio group pattern.
+
+<FrameworkCase frameworks={["react"]}>
+Give `Menu.RadioGroup` an accessible name with `aria-label` or a nested `Menu.GroupLabel`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element receives an accessible label from the `label` property or defaults to `Enable captions` / `Disable captions` based on the current state.
+</FrameworkCase>
 
 ## Examples
 
