@@ -75,6 +75,25 @@ function ownOrigin(data: MediaContainerData | undefined): number | undefined {
 }
 
 /**
+ * Origins below this magnitude (seconds) are treated as `0` — the derive returns `0`, so
+ * the presentation is left on its native (~0-based) timeline and no `timestampOffset` is
+ * set (the loader stamp no-ops on a derived `0`). Ordinary VOD carries a small nonzero
+ * encode origin (audio priming, first-frame CTS, edit lists); relocating by a sub-second
+ * amount is pointless, and setting `timestampOffset` at all can ripple edge segments.
+ * Relocation targets streams with an intentional large origin (instant clips, bipbop @10s).
+ *
+ * Absolute basis, not proportional: the DTS-below-zero / ripple risk scales with the
+ * origin's absolute size, not with the presentation's duration. Also snaps negatives to
+ * `0` — a negative origin would relocate *forward*, which is never the intent.
+ */
+export const NEAR_ZERO_ORIGIN_THRESHOLD = 1;
+
+/** Snap a below-threshold (incl. negative) origin to `0` so it isn't relocated. */
+function thresholdOrigin(origin: number): number {
+  return origin < NEAR_ZERO_ORIGIN_THRESHOLD ? 0 : origin;
+}
+
+/**
  * The **default** — relocate the whole presentation by one shared origin: the `min`
  * across the *selected* A/V tracks' own origins, denormalized onto every type. This
  * single reduce subsumes the "per-type" and "shared" tiers:
@@ -87,7 +106,8 @@ function ownOrigin(data: MediaContainerData | undefined): number | undefined {
  * Returns `undefined` for every type until all *selected* types have a complete origin
  * (the shared-`min` barrier). Which types must contribute is read from `ctx` (the
  * selected v/a ids); with no selection context it coordinates across whatever types
- * have data.
+ * have data. A shared origin below {@link NEAR_ZERO_ORIGIN_THRESHOLD} is returned as `0`
+ * (native — ordinary ~0-PTS VOD isn't relocated).
  */
 export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerData, ctx) => {
   const contributingTypes: string[] = [];
@@ -99,7 +119,7 @@ export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerDat
   // Barrier: not ready until every contributing type has a complete origin.
   if (origins.length === 0 || origins.some((origin) => origin === undefined)) return {};
 
-  const shared = Math.min(...(origins as number[]));
+  const shared = thresholdOrigin(Math.min(...(origins as number[])));
   const out: Record<string, number | undefined> = {};
   for (const type of Object.keys(containerData)) out[type] = shared;
   return out;
@@ -113,7 +133,10 @@ export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerDat
  */
 export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData) => {
   const out: Record<string, number | undefined> = {};
-  for (const [type, data] of Object.entries(containerData)) out[type] = ownOrigin(data);
+  for (const [type, data] of Object.entries(containerData)) {
+    const origin = ownOrigin(data);
+    out[type] = origin === undefined ? undefined : thresholdOrigin(origin);
+  }
   return out;
 };
 

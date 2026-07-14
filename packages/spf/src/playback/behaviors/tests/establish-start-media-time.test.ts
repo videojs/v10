@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { derivePerTypeStartMediaTime, deriveSharedMinStartMediaTime } from '../establish-start-media-time';
+import {
+  derivePerTypeStartMediaTime,
+  deriveSharedMinStartMediaTime,
+  NEAR_ZERO_ORIGIN_THRESHOLD,
+} from '../establish-start-media-time';
 
 describe('deriveSharedMinStartMediaTime', () => {
   const sel = { selectedVideoTrackId: 'v', selectedAudioTrackId: 'a' };
@@ -73,6 +77,43 @@ describe('deriveSharedMinStartMediaTime', () => {
       )
     ).toEqual({ video: 9.956, audio: 9.956 });
   });
+
+  it('leaves ordinary ~0-PTS VOD native: a shared origin below the threshold returns 0', () => {
+    // Both types carry a sub-second (0.5s) encode offset → not relocated.
+    expect(
+      deriveSharedMinStartMediaTime(
+        {
+          video: { timescale: 90000, baseMediaDecodeTime: 45000, segmentStartTime: 0 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 24000, segmentStartTime: 0 },
+        },
+        sel
+      )
+    ).toEqual({ video: 0, audio: 0 });
+  });
+
+  it('relocates at/above the threshold (the boundary is exclusive)', () => {
+    const atThreshold = {
+      video: { timescale: 90000, baseMediaDecodeTime: 90000 * NEAR_ZERO_ORIGIN_THRESHOLD, segmentStartTime: 0 },
+      audio: { timescale: 48000, baseMediaDecodeTime: 48000 * NEAR_ZERO_ORIGIN_THRESHOLD, segmentStartTime: 0 },
+    };
+    expect(deriveSharedMinStartMediaTime(atThreshold, sel)).toEqual({
+      video: NEAR_ZERO_ORIGIN_THRESHOLD,
+      audio: NEAR_ZERO_ORIGIN_THRESHOLD,
+    });
+  });
+
+  it('snaps a negative shared origin to 0 (never relocates forward)', () => {
+    // segmentStartTime > bmdt/ts → negative own origin.
+    expect(
+      deriveSharedMinStartMediaTime(
+        {
+          video: { timescale: 90000, baseMediaDecodeTime: 0, segmentStartTime: 5 },
+          audio: { timescale: 48000, baseMediaDecodeTime: 0, segmentStartTime: 5 },
+        },
+        sel
+      )
+    ).toEqual({ video: 0, audio: 0 });
+  });
 });
 
 describe('derivePerTypeStartMediaTime', () => {
@@ -102,5 +143,17 @@ describe('derivePerTypeStartMediaTime', () => {
     expect(derivePerTypeStartMediaTime({ audio: { baseMediaDecodeTime: 100, segmentStartTime: 0 } }, {})).toEqual({
       audio: undefined,
     });
+  });
+
+  it('snaps a below-threshold origin to 0 independently per type', () => {
+    expect(
+      derivePerTypeStartMediaTime(
+        {
+          video: { timescale: 90000, baseMediaDecodeTime: 45000, segmentStartTime: 0 }, // 0.5s → 0
+          audio: { timescale: 48000, baseMediaDecodeTime: 48000 * 60, segmentStartTime: 0 }, // 60s → 60
+        },
+        {}
+      )
+    ).toEqual({ video: 0, audio: 60 });
   });
 });
