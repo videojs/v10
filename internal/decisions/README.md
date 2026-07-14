@@ -1,4 +1,4 @@
-# Decisions
+# Internal decisions
 
 ADR-style records of single tactical decisions.
 
@@ -48,14 +48,25 @@ Why this came up. What problem triggered the decision. Link related decisions.
 Why this choice wins. Keep concise.
 ```
 
-## File Naming
+## Layout
+
+| Area | Decisions |
+| --- | --- |
+| `player/` | Provider, container, media discovery, and player composition |
+| `spf/` | Stream-processing ownership and coordination |
+| `store/` | State-management contracts |
+| `ui/` | Components, gestures, captions, and interaction |
+
+Put new records in the narrowest existing area. Add an area only when several related decisions belong together.
+
+## File naming
 
 Lowercase with hyphens, name after the subject of the decision:
 
 ```
-captions.md
-gestures-as-components.md
-provider-attach.md
+ui/captions.md
+ui/gestures-as-components.md
+player/provider-attach.md
 ```
 
 ## See Also

@@ -51,7 +51,7 @@ If a slot has more than one writer and **doesn't** fit one of these shapes, that
 
 **When the multi-writer is a behavior-decomposition smell** rather than a slot-decomposition smell: the writers share a decision-making domain (same inputs, same options) rather than reflecting genuinely different inputs. That's a signal of one purpose split across two behaviors, not one slot that needs splitting. See [`behaviors.md` → Decomposition check](behaviors.md#6-decomposition-check) for the diagnostic.
 
-A future lint rule may make shared writers more visible, but it must allow documented intent. See the [signal ownership decision](../../../decisions/spf-signal-ownership.md) for why composition does not enforce a writer-count invariant.
+A future lint rule may make shared writers more visible, but it must allow documented intent. See the [signal ownership decision](../../../decisions/spf/signal-ownership.md) for why composition does not enforce a writer-count invariant.
 
 ## Seeding 0-writer slots: `initialState` / `initialContext`
 
