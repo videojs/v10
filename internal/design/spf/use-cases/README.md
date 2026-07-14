@@ -147,6 +147,6 @@ Initially empty; populated as docs land. Candidates flagged in source material (
 - [`../features/clusters.md` § Feature classification axes](../features/clusters.md#feature-classification-axes) — the parent classification section. The Media-src-vs-Player axis here is the Case-1 (Media-src feature) vs Case-2 (Player feature / use-case composition) split implicit in Notion's "Composition cases per mode" framing.
 - [`../conventions/behaviors.md` § Inverse: behaviors that operate uniformly across tracks](../conventions/behaviors.md#inverse-behaviors-that-operate-uniformly-across-tracks) — the discipline that lets composition variants compose existing behaviors unchanged; the `updateMediaSourceDuration` worked example.
 - [`../evaluation-axes.md`](../evaluation-axes.md) — current axes for evaluating SPF code; will likely expand to formalize the Path-A-vs-Path-B judgment for use-case behavior customization.
-- [`document-spf-use-case`](../../../../skills/document-spf-use-case/SKILL.md) — maintains use-case composition records.
-- [`implement-spf-use-case`](../../../../skills/implement-spf-use-case/SKILL.md) — implements work from those records.
+- [`document-spf-use-case`](../../../../.agents/skills/document-spf-use-case/SKILL.md) — maintains use-case composition records.
+- [`implement-spf-use-case`](../../../../.agents/skills/implement-spf-use-case/SKILL.md) — implements work from those records.
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4) — source material; Composition cases per mode framing; Case-2 epics tracked here.

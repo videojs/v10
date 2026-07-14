@@ -305,7 +305,7 @@ A sketch is not a refactor commitment. If a side already conforms to current con
 
 ### Merging two behaviors â€” extra discipline
 
-> This section is the canonical reference for merge analysis. [`change-spf-behavior`](../../../../skills/change-spf-behavior/SKILL.md) applies it during a refactor.
+> This section is the canonical reference for merge analysis. [`change-spf-behavior`](../../../../.agents/skills/change-spf-behavior/SKILL.md) applies it during a refactor.
 
 When the decomposition check says merge, the refactor is **two separate analyses combined**, not one:
 
@@ -504,7 +504,7 @@ Why: each `listen` / `subscribe` call already returns its own removal function â
 
 ## Per-type specialization
 
-> This section codifies the *destination shape* for per-type behaviors. [`change-spf-behavior`](../../../../skills/change-spf-behavior/SKILL.md) applies it with an explicit axis and cross-boundary constraint audit.
+> This section codifies the *destination shape* for per-type behaviors. [`change-spf-behavior`](../../../../.agents/skills/change-spf-behavior/SKILL.md) applies it with an explicit axis and cross-boundary constraint audit.
 
 When a behavior's logic varies by media type (video / audio / text), prefer **separate exports per type** over a single behavior with a `config.type` discriminant.
 

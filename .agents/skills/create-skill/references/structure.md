@@ -1,9 +1,9 @@
 # Repository skill structure
 
-Checked-in skills are direct children of a flat, host-neutral catalog:
+Checked-in skills are direct children of the canonical agent catalog:
 
 ```text
-skills/
+.agents/skills/
 └── <globally-unique-action-name>/
     ├── SKILL.md
     ├── references/  # optional, conditional detail
@@ -11,7 +11,7 @@ skills/
     └── assets/      # optional, output inputs
 ```
 
-`pnpm link:aliases` exposes the whole catalog through generated `.agents/skills/`, `.claude/skills/`, and `.opencode/skills/` directory links. Do not create per-skill links or depend on recursive discovery inside a host's skills directory.
+`pnpm link:aliases` exposes the whole catalog through generated `.claude/skills/` and `.opencode/skills/` directory links. Do not create per-skill links or depend on recursive discovery inside a host's skills directory.
 
 ## Portable metadata
 

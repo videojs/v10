@@ -2,8 +2,7 @@
  * Exposes the checked-in, host-neutral skill catalog through client-specific
  * discovery paths:
  *
- *   skills/<skill-name>/SKILL.md  (source)
- *   .agents/skills                (generated junction)
+ *   .agents/skills/<skill-name>/SKILL.md  (source)
  *   .claude/skills                (generated junction)
  *   .claude/plans                 (generated junction)
  *   .opencode                     (generated junction)
@@ -16,7 +15,7 @@ import { dirname, join, resolve } from 'node:path';
 
 const root = resolve(import.meta.dirname, '../..');
 const agentsDir = join(root, '.agents');
-const skillsDir = join(root, 'skills');
+const skillsDir = join(agentsDir, 'skills');
 
 function linkState(path) {
   try {
@@ -52,7 +51,6 @@ function ensureAlias(relativePath, target) {
 
 mkdirSync(join(agentsDir, 'plans'), { recursive: true });
 
-ensureAlias('.agents/skills', skillsDir);
 ensureAlias('.claude/skills', skillsDir);
 ensureAlias('.claude/plans', join(agentsDir, 'plans'));
 ensureAlias('.opencode', agentsDir);

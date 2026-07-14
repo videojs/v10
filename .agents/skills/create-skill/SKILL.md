@@ -12,7 +12,7 @@ Create a skill only when a repeatable vertical workflow needs instructions beyon
 1. Collect concrete trigger and non-trigger examples.
 2. Check existing skills for overlap; extend or consolidate before adding another metadata entry.
 3. Choose one coherent job and a globally unique, verb-first kebab-case name.
-4. Create `skills/<name>/SKILL.md` with only portable frontmatter:
+4. Create `.agents/skills/<name>/SKILL.md` with only portable frontmatter:
 
    ```yaml
    ---
@@ -36,4 +36,4 @@ Create another skill only when it has an independent trigger and useful standalo
 
 Input: “Create a repeatable workflow for reviewing package export changes.”
 
-Output: One focused `skills/review-package-exports/` skill with a precise trigger, compact procedure, example result, and validation loop.
+Output: One focused `.agents/skills/review-package-exports/` skill with a precise trigger, compact procedure, example result, and validation loop.

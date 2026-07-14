@@ -57,7 +57,7 @@ git pull upstream main
 pnpm install
 ```
 
-This also exposes the checked-in top-level `skills/` catalog through generated `.agents/skills/`, `.claude/skills/`, and `.opencode/skills/` directory aliases. `AGENTS.md` is the canonical project guide; Claude's `CLAUDE.md` imports it.
+This also exposes the checked-in `.agents/skills/` catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. `AGENTS.md` is the canonical project guide; Claude's `CLAUDE.md` imports it.
 
 > [!NOTE]
 > **Windows users:** Directory aliases use junctions and work without Developer Mode. If alias creation fails, `pnpm install` logs a warning and continues; the checked-in domain folders remain available.
@@ -245,7 +245,7 @@ Video.js 10 includes portable tooling for AI-assisted development. Read [`AGENTS
 
 ### Skills
 
-Focused workflows live as direct children of top-level `skills/`; host-specific discovery paths are generated aliases. A few of the most-used skills:
+Focused workflows live as direct children of `.agents/skills/`; host-specific discovery paths are generated aliases. A few of the most-used skills:
 
 | Skill                    | Use When                                                |
 | ------------------------ | ------------------------------------------------------- |
@@ -270,7 +270,7 @@ Focused workflows live as direct children of top-level `skills/`; host-specific 
 When your changes introduce new patterns:
 
 - **Repo-wide recurring facts** → Update the nearest `AGENTS.md`
-- **Repeatable domain workflows** → Update the relevant skill under top-level `skills/`
+- **Repeatable domain workflows** → Update the relevant skill under `.agents/skills/`
 - **Mechanically enforceable rules** → Update code, tests, lint, hooks, or `check:workspace`
 
 ## Design Docs and RFCs
@@ -317,7 +317,7 @@ You want to do your work in a separate branch. In general, you want to make sure
 git checkout -b my-branch
 ```
 
-One helpful naming convention approximates [conventional commits](conventional-commit-style), e.g.:
+One helpful naming convention approximates [conventional commits][conventional-commit-style], e.g.:
 
 - `fix/some-issue`
 - `feat/my-media-store-feature`

@@ -66,7 +66,7 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 
 ## Skills and agent documentation
 
-Checked-in skills are direct children of top-level `skills/`. `pnpm install` exposes that catalog through generated `.agents/skills/`, `.claude/skills/`, and `.opencode/skills/` directory aliases. Load only the specialized workflow needed after inspecting relevant project sources.
+Checked-in skills are direct children of `.agents/skills/`. `pnpm install` exposes that canonical catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. Load only the specialized workflow needed after inspecting relevant project sources.
 
 - API: `design-api`, `review-api`
 - UI: `build-ui-component`, `review-ui-component`, `implement-accessible-ui`, `review-accessibility`

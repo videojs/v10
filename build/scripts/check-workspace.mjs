@@ -537,14 +537,14 @@ function checkAgentContext() {
       .filter((line) => line && !line.startsWith('#'))
   );
 
-  for (const rule of ['/.agents/skills', '/.claude/skills', '/.claude/plans', '/.opencode']) {
+  for (const rule of ['/.claude/skills', '/.claude/plans', '/.opencode']) {
     if (!gitignoreRules.has(rule)) {
       warnings.push(`.gitignore: missing generated agent path ${rule}`);
     }
   }
-  for (const rule of ['/skills', '/skills/', 'skills', 'skills/']) {
+  for (const rule of ['/.agents/skills', '/.agents/skills/', '.agents/skills', '.agents/skills/']) {
     if (gitignoreRules.has(rule)) {
-      warnings.push(`.gitignore: canonical top-level skills catalog must not be ignored by ${rule}`);
+      warnings.push(`.gitignore: canonical .agents/skills catalog must not be ignored by ${rule}`);
     }
   }
 
@@ -582,8 +582,8 @@ function checkAgentContext() {
   }
 
   const agentsDir = join(ROOT, '.agents');
-  const skillsDir = join(ROOT, 'skills');
-  for (const alias of [join(ROOT, '.agents/skills'), join(ROOT, '.claude/skills'), join(ROOT, '.opencode/skills')]) {
+  const skillsDir = join(agentsDir, 'skills');
+  for (const alias of [join(ROOT, '.claude/skills'), join(ROOT, '.opencode/skills')]) {
     if (!existsSync(alias)) {
       warnings.push(`${relativePath(alias)}: missing compatibility alias to skills`);
     } else if (realpathSync(alias) !== realpathSync(skillsDir)) {
@@ -603,12 +603,12 @@ function checkAgentContext() {
   const skillNames = new Set();
   for (const entry of readdirSync(skillsDir, { withFileTypes: true })) {
     if (!entry.isDirectory()) {
-      warnings.push(`skills/${entry.name}: only skill directories are allowed at the catalog root`);
+      warnings.push(`.agents/skills/${entry.name}: only skill directories are allowed at the catalog root`);
       continue;
     }
     const skillDir = join(skillsDir, entry.name);
     if (!existsSync(join(skillDir, 'SKILL.md'))) {
-      warnings.push(`skills/${entry.name}: missing SKILL.md`);
+      warnings.push(`.agents/skills/${entry.name}: missing SKILL.md`);
       continue;
     }
     skillNames.add(entry.name);
@@ -618,7 +618,7 @@ function checkAgentContext() {
   const canonicalSkillFiles = new Set(canonicalSkillDirs.map((dir) => join(dir, 'SKILL.md')));
   for (const path of listFiles(skillsDir, (path) => path.endsWith('/SKILL.md'))) {
     if (!canonicalSkillFiles.has(path)) {
-      warnings.push(`${relativePath(path)}: skills must be direct children of top-level skills/`);
+      warnings.push(`${relativePath(path)}: skills must be direct children of .agents/skills/`);
     }
   }
 
@@ -673,7 +673,7 @@ function checkAgentContext() {
 
   if (metadataBytes > SKILL_METADATA_MAX_BYTES) {
     warnings.push(
-      `skills metadata: ~${estimatedTokens(metadataBytes)} tokens (${metadataBytes} bytes) exceeds ` +
+      `.agents/skills metadata: ~${estimatedTokens(metadataBytes)} tokens (${metadataBytes} bytes) exceeds ` +
         `~${estimatedTokens(SKILL_METADATA_MAX_BYTES)} tokens`
     );
   }

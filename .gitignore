@@ -156,7 +156,6 @@ bun.lockb
 /.claude/worktrees/
 /.claude/skills
 /.claude/plans
-/.agents/skills
 /.opencode
 
 # Playwright

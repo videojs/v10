@@ -12,7 +12,7 @@ Keep agent guidance as a routing and correction layer over project sources, not 
 - Put durable, broadly applicable repository facts in the nearest `AGENTS.md`.
 - Keep each `CLAUDE.md` as `@AGENTS.md` unless Claude-only behavior is genuinely required.
 - Put an explicit, repeatable vertical workflow in a skill.
-- Keep checked-in skills as direct children of top-level `skills/`; treat `.agents/skills/`, `.claude/skills/`, and `.opencode/skills/` as generated directory aliases.
+- Keep checked-in skills as direct children of `.agents/skills/`; treat `.claude/skills/` and `.opencode/skills/` as generated directory aliases.
 - Put conditional detail in a directly linked skill reference.
 - Put rules that can be mechanically checked in code, tests, lint, hooks, or `build/scripts/check-workspace.mjs`.
 - Put architecture rationale in `internal/design/`, `internal/decisions/`, or `rfc/`.
