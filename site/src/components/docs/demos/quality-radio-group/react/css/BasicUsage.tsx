@@ -4,7 +4,7 @@ import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
 const Player = createPlayer({ features: videoFeatures });
-const src = 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8';
+const src = '{{VJS8_DEMO_VIDEO_HLS}}';
 
 function QualityMenu(): ReactNode {
   const quality = useQualityOptions();

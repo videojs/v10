@@ -7,13 +7,7 @@ export default function WithParts() {
   return (
     <Player.Provider>
       <Player.Container className="media-container">
-        <Video
-          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
-          autoPlay
-          muted
-          playsInline
-          loop
-        />
+        <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
         <MuteButton
           className="media-mute-button"
           render={(props, state) => <button {...props}>{state.muted ? 'Unmute' : 'Mute'}</button>}

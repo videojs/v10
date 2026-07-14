@@ -31,19 +31,33 @@ describe('demoPlaceholderPlugin', () => {
   });
 
   it.each([
+    '/site/src/components/docs/demos/play-button/react/css/BasicUsage.tsx',
+    '/site/src/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw',
+  ])('resolves placeholders in React demo import %s', (id) => {
+    const plugin = demoPlaceholderPlugin();
+
+    expect(plugin.transform('{{VJS10_DEMO_VIDEO_MP4}}', id)).toBe(DEMO_PLACEHOLDERS.VJS10_DEMO_VIDEO_MP4);
+  });
+
+  it.each([
     '/site/src/components/docs/demos/play-button.html?draw=true',
-    '/site/src/components/docs/demos/play-button.tsx?raw',
+    '/site/src/components/docs/demos/play-button.ts?raw',
     '/site/src/components/play-button.html?raw',
-  ])('ignores non-raw HTML demo import %s', (id) => {
+    '/site/src/components/play-button.tsx',
+  ])('ignores unsupported demo import %s', (id) => {
     const plugin = demoPlaceholderPlugin();
 
     expect(plugin.transform('{{VJS10_DEMO_VIDEO_MP4}}', id)).toBeNull();
   });
 });
 
-describe('HTML demo placeholders', () => {
+describe('demo placeholders', () => {
   it('does not hardcode shared demo media URLs', () => {
-    const hardcodedSources = globSync('**/*.html', { cwd: DEMOS_DIRECTORY }).filter((file) => {
+    const demoFiles = [
+      ...globSync('**/*.html', { cwd: DEMOS_DIRECTORY }),
+      ...globSync('**/*.tsx', { cwd: DEMOS_DIRECTORY }),
+    ];
+    const hardcodedSources = demoFiles.filter((file) => {
       const source = readFileSync(resolve(DEMOS_DIRECTORY, file), 'utf8');
       return /https:\/\/(?:(?:stream|image)\.mux\.com|dash\.akamaized\.net|vimeo\.com)\//.test(source);
     });

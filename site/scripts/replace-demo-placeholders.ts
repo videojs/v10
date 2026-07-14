@@ -4,6 +4,7 @@ import {
   VJS10_DEMO_BACKGROUND_VIDEO_MP4,
   VJS10_DEMO_DASH,
   VJS10_DEMO_POSTER,
+  VJS10_DEMO_STORYBOARD,
   VJS10_DEMO_VIDEO,
   VJS10_MULTI_AUDIO_DEMO_VIDEO,
 } from '../src/consts.ts';
@@ -15,6 +16,7 @@ export const DEMO_PLACEHOLDERS = {
   VJS10_DEMO_BACKGROUND_VIDEO_MP4: VJS10_DEMO_BACKGROUND_VIDEO_MP4,
   VJS10_DEMO_DASH: VJS10_DEMO_DASH,
   VJS10_DEMO_POSTER: VJS10_DEMO_POSTER,
+  VJS10_DEMO_STORYBOARD: VJS10_DEMO_STORYBOARD,
   VJS10_DEMO_VIDEO_HLS: VJS10_DEMO_VIDEO.hls,
   VJS10_DEMO_VIDEO_MP4: VJS10_DEMO_VIDEO.mp4,
   VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS: VJS10_MULTI_AUDIO_DEMO_VIDEO.hls,
@@ -22,7 +24,7 @@ export const DEMO_PLACEHOLDERS = {
 
 const PLACEHOLDER_PATTERN = /{{([A-Z0-9_]+)}}/g;
 
-/** Resolve the shared media source placeholders used in HTML demo snippets. */
+/** Resolve the shared media source placeholders used in demo snippets. */
 export function replaceDemoPlaceholders(source: string): string {
   return source.replace(PLACEHOLDER_PATTERN, (placeholder, name: string) => {
     const value = DEMO_PLACEHOLDERS[name as keyof typeof DEMO_PLACEHOLDERS];
@@ -35,19 +37,17 @@ export function replaceDemoPlaceholders(source: string): string {
   });
 }
 
-/** Resolve demo placeholders in raw HTML imports for the site build and dev server. */
+/** Resolve placeholders in HTML and React demos for the site build and dev server. */
 export function demoPlaceholderPlugin() {
   return {
     name: 'videojs:demo-placeholders',
     enforce: 'pre',
     transform(source, id) {
       const [filePath, query = ''] = id.split('?', 2);
+      const isRawHtml = filePath.endsWith('.html') && new URLSearchParams(query).has('raw');
+      const isReactDemo = filePath.endsWith('.tsx');
 
-      if (
-        !filePath.includes(DEMOS_DIRECTORY) ||
-        !filePath.endsWith('.html') ||
-        !new URLSearchParams(query).has('raw')
-      ) {
+      if (!filePath.includes(DEMOS_DIRECTORY) || (!isRawHtml && !isReactDemo)) {
         return null;
       }
 
