@@ -56,6 +56,32 @@ export function getMaxBufferedEnd(buffers: SourceBufferIterable): number {
 }
 
 /**
+ * Get the reachable buffered end across an iterable of SourceBuffers (typically
+ * `mediaSource.sourceBuffers`): the `min` of each buffer's last buffered-range end
+ * — the furthest point every track can play to (the intersection end). Returns
+ * `undefined` when the collection is empty or any buffer has no buffered ranges
+ * (no common reachable point).
+ *
+ * Counterpart to {@link getMaxBufferedEnd}: `max` bounds the overall presentation
+ * end (e.g. for setting `duration`), `min` bounds where playback can actually reach
+ * when tracks end at slightly different times (e.g. skewed A/V near end-of-stream).
+ */
+export function getMinBufferedEnd(buffers: SourceBufferIterable): number | undefined {
+  let minEnd: number | undefined;
+
+  for (const buffer of buffers) {
+    const { buffered } = buffer;
+    if (buffered.length === 0) return undefined;
+    const end = buffered.end(buffered.length - 1);
+    if (minEnd === undefined || end < minEnd) {
+      minEnd = end;
+    }
+  }
+
+  return minEnd;
+}
+
+/**
  * Check if the preconditions are met to *attempt* a `mediaSource.duration`
  * write: a `mediaSource` is in scope and the presentation has a valid
  * positive duration (or `Infinity` for live).
