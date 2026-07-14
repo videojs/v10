@@ -1,33 +1,35 @@
 # RFCs
 
-Proposals that need buy-in before proceeding.
+RFCs record proposals that require wider alignment: public APIs, product direction, user-facing developer experience, or significant and hard-to-reverse architecture.
 
-## What Belongs Here
+Use `internal/design/` for architecture or feature decisions owned within one area, and `internal/decisions/` for one tactical choice. Skip a record for routine implementation details.
 
-RFCs are for proposals that require alignment from others:
+## Lifecycle
 
-- Changes to public API surface
-- Product direction decisions
-- User-facing developer experience changes
-- Significant changes to core architecture
+| Status | Meaning |
+| --- | --- |
+| `draft` | Under discussion |
+| `accepted` | Approved for implementation |
+| `implemented` | Shipped; retained as historical rationale |
+| `superseded` | Replaced; links its successor |
 
-## When to Write an RFC
+During discussion, an RFC should explain:
 
-Write an RFC when:
+- the concrete problem and affected users;
+- realistic customer salience;
+- materially different options and their reversibility;
+- the recommendation and tradeoffs;
+- the final decision after review.
 
-- Changes public API surface
-- Affects product direction
-- Affects user-facing developer experience
-- Significant changes to core architecture
-- Needs buy-in from others
+Use one `rfc/<name>.md` file by default. Split a draft only when reviewers cannot navigate it effectively as one document.
 
-**Use a Design Doc instead** (`internal/design/`) for decisions you own — architectural choices in your area, internal patterns, component specs.
+## After implementation
 
-**Skip both for:** Bug fixes, small features, implementation details, documentation updates.
+Collapse an implemented RFC to one historical document. Preserve the problem, decisions, alternatives, feedback that changed the result, and lasting consequences. Remove API inventories, examples, file trees, implementation phases, and behavior now defined by code and tests.
 
-## File Format
+Point to current source, tests, package documentation, and any narrower decision records instead of copying them. Delete temporary implementation-plan links once their durable rationale has been extracted.
 
-RFCs use a YAML frontmatter header for status tracking:
+## Minimal shape
 
 ```markdown
 ---
@@ -36,128 +38,15 @@ status: draft
 
 # Title
 
-## Problem Statement
+## Problem
 
-What are we trying to solve?
-What user or system behavior is driving this question?
-What happens if we do nothing?
+## Customer salience
 
-## Customer Salience
-
-Before proposing solutions, assess how much this actually matters to customers.
-
-**Who is affected?**
-- Viewers of the player?
-- Player integrators?
-- Open source contributors?
-- Skin creators / player engineers?
-- New users?
-
-**How many customers are realistically impacted?**
-- Nearly everyone?
-- A meaningful minority?
-- A small edge case group?
-
-**How strongly would they feel about it?**
-- Would they notice?
-- Would it mildly annoy them?
-- Would it meaningfully degrade their experience?
-- Would it prevent them from using the product?
-
-Are we reacting to a hypothetical user or to current observable behavior?
-
-## Options Considered
-
-For each option:
-
-**Option N: Name**
-
-Describe the approach clearly and concretely.
-
-- What does this enable?
-- What does it constrain?
-- Does it meaningfully increase complexity?
-- Does it create tight coupling or future rigidity?
-- Is it reversible? If we are wrong, how painful is it to change course?
-
-Be honest about tradeoffs. Avoid overstating benefits or minimizing costs.
+## Options considered
 
 ## Recommendation
 
-Choose one option. Explain why it is the right tradeoff given:
-
-- The actual level of customer salience
-- Product direction
-- Technical consequences
-- Urgency
-
-If customer impact is low, explain why we should avoid over-optimizing. If it is high, explain why the investment is justified.
-
-## Final Decision
-
-*(Completed after review)*
-
-**Decision:**
-**Rationale:**
-**Date:**
+## Final decision
 ```
 
-When implemented, add implementation details:
-
-```markdown
----
-status: implemented
-implemented-in: v10.0.0-alpha.5
-implementation-plan: .agents/plans/example.md
----
-```
-
-## Status Lifecycle
-
-| Status        | Meaning                            |
-| ------------- | ---------------------------------- |
-| `draft`       | Under discussion, not yet accepted |
-| `accepted`    | Approved for implementation        |
-| `implemented` | Code shipped                       |
-| `superseded`  | Replaced by another RFC            |
-
-## Directory Structure
-
-```
-rfc/
-├── README.md           # This file
-├── feature-name.md     # Single-file RFC
-└── feature-name/       # Multi-file RFC
-    ├── index.md        # Overview and quick start
-    ├── decisions.md    # Design decisions and rationale
-    └── examples.md     # Usage examples
-```
-
-## Contributing an RFC
-
-### Branch and PR Workflow
-
-1. **Create branch**: `rfc/feature-name`
-2. **PR title while open**: `[RFC] Feature Name`
-3. **Squash commit when merged**: `docs(rfc): feature name`
-
-### Example
-
-```bash
-git checkout -b rfc/player-api
-# ... write RFC ...
-git push -u origin rfc/player-api
-gh pr create --title "[RFC] Player API"
-```
-
-When the RFC is accepted and merged, the squash commit becomes:
-
-```
-docs(rfc): player api
-```
-
-## See Also
-
-- [Design Docs](/internal/design/README.md) — Decisions you own
-- [Plans](/.agents/plans/README.md) — Temporary implementation notes
-- [AGENTS.md](/AGENTS.md#design-records) — Agent routing for design records
+Use `write-rfc` when drafting or revising an RFC. See [internal design records](../internal/design/README.md) and [AGENTS.md](../AGENTS.md#design-records) for routing.
