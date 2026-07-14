@@ -1,11 +1,11 @@
 ---
-status: draft
+status: active
 date: 2026-05-20
 ---
 
 # Feature Clusters & Cross-Cluster Patterns
 
-Heuristics for grouping SPF features by the areas of state and behavior they touch. Used by the `extend-feature` skill (and, later, the intake/scoping skill) to identify related features, point the skill at the right reference material, and surface cross-cutting impacts when a new feature lands.
+Heuristics for grouping SPF features by the areas of state and behavior they touch. `document-spf-feature` and `implement-spf-feature` use these clusters to identify related features and cross-cutting impacts.
 
 ## How the skill uses this doc
 
@@ -34,7 +34,7 @@ Both clusters and patterns are extract-from-real-work — no speculative additio
 
 Existing features cite their file: `subtitles`, `video-abr`, `multi-language-audio`. Notion-cluster cross-references (e.g., "Notion cluster C") point at the SPF Epics Working Doc taxonomy.
 
-Unscoped feature candidates that previously appeared inline as bracketed names (e.g. `[ll-hls-support]`) have been pulled out — they're tracked separately as an unscoped backlog rather than as sibling-feature placeholders in cluster Docs lists. Documenting any of them routes through `/spf-document-feature`, which applies the decomposition rubric at invocation time and decides whether the item becomes a new doc, a phase of an existing doc, or absorption into another doc.
+Unscoped feature candidates that previously appeared inline as bracketed names (e.g. `[ll-hls-support]`) are tracked separately rather than as sibling placeholders. `document-spf-feature` applies the decomposition rubric and decides whether an item becomes a record, a phase, or part of another feature.
 
 ---
 
@@ -310,7 +310,7 @@ Parallel behaviors for video / audio / text with a shared `setup*` helper or `ma
 
 **Where it shows up.** `resolveVideoTrack` / `resolveAudioTrack` / `resolveTextTrack` (shared `setupTrackResolution`). `loadVideoSegments` / `loadAudioSegments` / `loadTextTrackSegments`. `setupVideoBufferActors` / `setupAudioBufferActors`.
 
-**Skill action when this pattern is suspected.** When adding a new per-track-type capability, default to the per-type-split shape with a shared `setup*` helper unless a cross-type constraint forbids it. The split-vs-merge decision belongs in `/refactor-behavior` → `/split-behavior` if the feature surfaces during refactor work; for new features, follow precedent. See `conventions/behaviors.md` "Per-type specialization."
+**Skill action when this pattern is suspected.** When adding a new per-track-type capability, default to the per-type-split shape with a shared `setup*` helper unless a cross-type constraint forbids it. Use `change-spf-behavior` to audit the boundary during refactor work; for new features, follow precedent. See `conventions/behaviors.md` "Per-type specialization."
 
 ---
 
@@ -338,11 +338,11 @@ The end-to-end "filter, prioritize, select among track candidates" axis. The sel
 | **G — Selection resilience** | Alternate URI rotation *within* the selected track. Swaps URIs for the same selection without changing which track is selected; wraps fetch primitives consumed by track resolution and segment loading. | `multi-cdn-failover`, `content-steering`, `network-resilience` |
 | **H — Encrypted media (DRM)** | Key-system support *gates which tracks can be selected*. Similar to capability-probing but along a different axis (key system rather than codec). | `drm-support` |
 
-**Skill action when this pattern is suspected.** A feature in cluster C nearly always interacts with the four neighbor clusters above. When enumerating fold-in candidates in `/spf-implement-feature` Step 2c, walk all four explicitly — even when the feature doc's *Related features* list names only a subset. Candidates often land as "design-with-in-mind" rather than full fold-in (each cluster owns its own primitives), but surfacing them keeps the cluster-C feature's shape from painting into a corner.
+**Skill action when this pattern is suspected.** A feature in cluster C nearly always interacts with the four neighbor clusters above. During `implement-spf-feature` planning, walk all four explicitly even when the feature record names only a subset.
 
 Worked example: `multi-language-audio` should surface `capability-probing` (codec-filter the audio rendition list), `rendition-selection-caps` (audio caps as a future bias), `multi-cdn-failover` (alternate URI rotation per language playlist), and `drm-support` (per-language key-system filtering) as fold-in candidates — even when the feature doc's *Related features* lists only `capability-probing`. The likely outcomes are *design-with-in-mind* / *ignore for now* for most; the discipline is to *surface and assess* rather than silently omit.
 
-**The destination-architecture sibling shape.** Within cluster C itself, one sibling often carries the destination slot-owner shape that other siblings anchor on (e.g., `switchVideoQuality` for video selection; `switchAudioQuality` per `audio-abr` Phase 3 for audio selection). When implementing a feature that writes the same slot, anchor on the destination sibling's shape — not on whatever extends-the-current-code-shape happens to be available. The "implement the destination sibling first" ordering is a real fold-in outcome; see `/spf-implement-feature` Step 2's *Order-inversion not surfaced* discipline.
+**The destination-architecture sibling shape.** Within cluster C itself, one sibling often carries the destination slot-owner shape that other siblings anchor on (e.g. `switchVideoQuality` for video selection; `switchAudioQuality` per `audio-abr` Phase 3 for audio selection). When implementing a feature that writes the same slot, anchor on that sibling's shape. Implementing it first can be a valid `implement-spf-feature` outcome.
 
 ---
 

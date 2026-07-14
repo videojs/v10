@@ -1,5 +1,5 @@
 ---
-status: draft
+status: active
 date: 2026-05-21
 ---
 
@@ -15,11 +15,9 @@ Each use case doc captures the variant assembly. Notion originally framed these 
 
 The discriminating principle lives in [`../features/clusters.md` § Composition vs Policy vs Middle pattern](../features/clusters.md#composition-vs-policy-vs-middle-pattern), which already names composition as the third implementation shape and quotes the load-bearing line: *"Most 'feels like composition' items actually fit the middle pattern."* This directory holds the rare ones that genuinely qualify.
 
-## Primary readership
+## Readership
 
-> The primary reader is an LLM, with a human in the loop.
-
-These docs are written to be consumed by and updated by LLMs (via `/spf-document-use-case` today, and the upcoming `spf-implement-use-case` skill) while doing SPF use-case-composition development. Humans are a secondary audience — code review, design review, and onboarding still benefit, but the shape is optimized for grounding agent work:
+These records support implementation planning, code review, design review, and agent workflows. Their predictable shape keeps evidence and relationships reviewable:
 
 - Structured frontmatter and predictable section ordering
 - Explicit composition-mechanism breakdown (subtract / add / alternative-impl / alternative-default-config)
@@ -64,7 +62,7 @@ Failing any one routes elsewhere: cluster-E policy feature, a new phase row insi
 
 | Section | Purpose |
 |---|---|
-| **Frontmatter** (`status`, `date`, `definition`) | Same shape as feature docs. `definition` follows the coarse / technical / sketched heuristic from `/spf-document-feature`. |
+| **Frontmatter** (`status`, `date`, `definition`) | Same shape as feature docs. `definition` follows the coarse / technical / sketched heuristic used by `document-spf-use-case`. |
 | **Opening paragraph** | One-paragraph framing: what the use case is, who consumes it, how it relates to Case-1 features. |
 | **Status** | Implementation status; definition depth; source material (Notion epics, GitHub issues, prior-art repos). |
 | **Target delivery context** | Who consumes this; what scenario; what's the customer story; what product the variant supports. |
@@ -88,7 +86,7 @@ Use-case docs default to a three-phase complexity framing:
 | **2 — Features/functionality relevant to the use case** | Constituent features composed in beyond the baseline — capabilities the variant benefits from but doesn't strictly need for minimum viability. |
 | **3 — Optimizations of behaviors relevant to the use case** | Alternative implementations or default configurations of behaviors that improve the variant's quality of delivery (buffer tuning, decode optimization, thermal-aware caps, etc.). |
 
-Other framings are allowed when this doesn't fit (e.g., a use case with no meaningful optimization phase). The skill picks the framing per-use-case, the same way `/spf-document-feature` picks among content phases / scope slices / tier 1-2 for feature docs.
+Other framings are allowed when this doesn't fit. `document-spf-use-case` picks the framing from evidence rather than forcing the default.
 
 ## Implementation note: customizing behaviors for use cases
 
@@ -105,7 +103,7 @@ When the customization would significantly increase complexity or bake new assum
 
 Revisit Path-B duplications periodically to see whether a reunification path exists that doesn't reintroduce the original complexity. Both paths are valid at different times in a behavior's life — a Path-B duplication today may collapse back to a Path-A unification later when better abstractions emerge.
 
-This judgment will be formalized — likely as an expansion of [`../evaluation-axes.md`](../evaluation-axes.md) (which currently scores cleanup and feature work but doesn't yet name the duplicate-vs-unify axis explicitly) or a new conventions doc — and codified in `spf-implement-use-case` when that skill lands. Captured here so Phase 3 entries in use-case docs can flag candidates without losing the reasoning.
+This judgment may be formalized in [`../evaluation-axes.md`](../evaluation-axes.md) or a new conventions doc. It is captured here so Phase 3 entries can flag candidates without losing the reasoning.
 
 ## Cross-link discipline
 
@@ -118,7 +116,7 @@ The relationship between feature docs and use-case docs is **primarily compositi
 
 Two shapes that don't cleanly fit "use case composes feature":
 
-- **Use-case-specific behaviors that don't promote to features.** A variant-decision signal, a composition-wiring behavior, or a behavior that exists only to assemble the variant. These live in the use-case doc's **Composition specifics → Behaviors added** section — not in the feature registry. The rubric for "earns its place as a feature" is the same one `/spf-document-feature` applies: substantial independent implementation footprint, independent priority/timeline, or a primitive other engine consumers would draw on. Behaviors that fail all three stay in the use-case doc.
+- **Use-case-specific behaviors that don't promote to features.** A variant-decision signal, a composition-wiring behavior, or a behavior that exists only to assemble the variant. These live in the use-case doc's **Composition specifics → Behaviors added** section — not in the feature registry. A behavior earns a feature entry only with a substantial independent footprint, priority/timeline, or reusable primitive. Behaviors that fail all three stay in the use-case doc.
 - **Features built exclusively for one use case.** A feature doc may exist for a capability that is, today, composed only by one use case. That's fine — the feature doc captures the engine capability, the use-case doc captures the variant assembly. The cascade cross-link still applies; the feature's "Use cases that compose this feature" list just has one entry.
 
 ### Sibling cross-links
@@ -132,7 +130,7 @@ A use case may have:
 - Zero or more **sibling use cases** (sometimes — e.g., audio-only-mode-override / video-only-mode-override as inverse-axis siblings).
 - Zero or more **use-case-specific behaviors that don't promote to features** (sometimes — captured in Composition specifics, not the feature registry).
 
-`/spf-document-use-case`'s cascade step enforces the bidirectional cross-link for the constituent-features, Case-1/Case-2 sibling, and sibling-use-case shapes when applicable. Use-case-specific behaviors are documented in the use case's Composition specifics section, not the feature registry.
+`document-spf-use-case` maintains bidirectional cross-links for constituent features, Case-1/Case-2 siblings, and sibling use cases when applicable. Use-case-specific behaviors stay in the use case's Composition specifics section.
 
 ## Index
 
@@ -149,6 +147,6 @@ Initially empty; populated as docs land. Candidates flagged in source material (
 - [`../features/clusters.md` § Feature classification axes](../features/clusters.md#feature-classification-axes) — the parent classification section. The Media-src-vs-Player axis here is the Case-1 (Media-src feature) vs Case-2 (Player feature / use-case composition) split implicit in Notion's "Composition cases per mode" framing.
 - [`../conventions/behaviors.md` § Inverse: behaviors that operate uniformly across tracks](../conventions/behaviors.md#inverse-behaviors-that-operate-uniformly-across-tracks) — the discipline that lets composition variants compose existing behaviors unchanged; the `updateMediaSourceDuration` worked example.
 - [`../evaluation-axes.md`](../evaluation-axes.md) — current axes for evaluating SPF code; will likely expand to formalize the Path-A-vs-Path-B judgment for use-case behavior customization.
-- [`../../../../.claude/skills/spf-document-use-case/SKILL.md`](../../../../.claude/skills/spf-document-use-case/SKILL.md) — skill that produces and maintains docs in this directory.
-- [`../../../../.claude/skills/spf-document-feature/SKILL.md`](../../../../.claude/skills/spf-document-feature/SKILL.md) — parallel skill for feature docs; consult for the analogous discipline shape.
+- [`document-spf-use-case`](../../../../skills/document-spf-use-case/SKILL.md) — maintains use-case composition records.
+- [`implement-spf-use-case`](../../../../skills/implement-spf-use-case/SKILL.md) — implements work from those records.
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4) — source material; Composition cases per mode framing; Case-2 epics tracked here.

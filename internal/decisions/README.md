@@ -62,5 +62,5 @@ provider-attach.md
 
 - [Design Docs](/internal/design/README.md) — Architecture specs and feature designs
 - [RFCs](/rfc/README.md) — Proposals needing buy-in
-- [Plans](/.claude/plans/README.md) — Implementation notes
-- [CLAUDE.md](/CLAUDE.md#design-documents) — How these relate
+- [Plans](/.agents/plans/README.md) — Temporary implementation notes
+- [AGENTS.md](/AGENTS.md#design-records) — Agent routing for design records

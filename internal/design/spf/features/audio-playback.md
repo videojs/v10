@@ -103,7 +103,7 @@ loadAudioSegments,
 | Behavior | File | Responsibility |
 |---|---|---|
 | `selectAudioTrack` | `packages/spf/src/playback/behaviors/select-tracks.ts` | Default audio rendition selection on source load. Lifecycle-only; mutually exclusive with `switchAudioTrack` |
-| `switchAudioTrack` | `packages/spf/src/playback/behaviors/dom/switch-audio-track.ts` | Filter-reactive slot owner + mid-stream flush dispatcher. **Owned architecturally by [`multi-language-audio`](./multi-language-audio.md)** — composed in both `createSimpleHlsEngine` and `createHlsAudioOnlyEngine` today |
+| `switchAudioTrack` | `packages/spf/src/playback/behaviors/track-switching.ts` | Audio variant of the shared constraint/rule pipeline. **Owned architecturally by [`multi-language-audio`](./multi-language-audio.md)** — composed in both HLS engine variants today |
 | `resolveAudioTrack` | `packages/spf/src/playback/behaviors/resolve-track.ts` | Fetches the selected audio media playlist |
 | `setupAudioBufferActors` | `packages/spf/src/playback/behaviors/dom/setup-buffer-actors.ts` | Audio SourceBuffer + actor setup. **Owned architecturally by `mse-mms-pipeline`** |
 | `loadAudioSegments` | `packages/spf/src/playback/behaviors/dom/load-segments.ts` | Audio segment loading dispatcher. **Owned architecturally by `buffer-management`** |

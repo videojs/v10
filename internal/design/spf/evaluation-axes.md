@@ -1,5 +1,5 @@
 ---
-status: draft
+status: active
 date: 2026-05-07
 ---
 
@@ -21,7 +21,7 @@ This doc is the *axes*. Companion docs (`conventions/`) define **when to reach f
 
 Applies to `packages/spf/src/**`. The axes are framed broadly enough to apply to VJSv10 outside SPF (especially **E — Size**, which is cross-cutting), but examples and tensions in this doc are SPF-specific.
 
-The first concrete user is the cleanup pass tracked in `.claude/plans/spf/behaviors-and-media-cleanup.md`. Future feature work (DRM, audio-only, instant clips, multi-language audio, LL-HLS, codec capability checks, multi-CDN, …) should evaluate the same way.
+The axes originated in an SPF cleanup audit and now apply equally to cleanup and feature work.
 
 ## The five axes
 
@@ -155,10 +155,8 @@ Goal 2 is the meaningful exception: it's a category of work, not a cleanup princ
 
 ## Related docs
 
-- `internal/design/spf/conventions/` *(to be drafted)* — when to reach for which SPF primitive, paired patterns. Cross-references this doc for axes; cross-references `architecture.md` / `primitives.md` for implementation.
+- `internal/design/spf/conventions/` — when to reach for each SPF primitive and the paired patterns.
 - `internal/design/spf/architecture.md` — current implementation snapshot.
 - `internal/design/spf/primitives.md` — Tasks, Actors, Reactors, State.
 - `internal/design/spf/signals.md` — signals decision and tradeoffs.
 - `packages/spf/docs/hls-engine.md` — current HLS engine composition walkthrough.
-- `.claude/plans/spf/behaviors-and-media-cleanup.md` — the cleanup pass driving the first concrete use of these axes.
-- `.claude/plans/spf/behaviors-and-media-assessment.md` *(to be drafted)* — current-state mapping of in-scope code against these axes.

@@ -108,7 +108,7 @@ When implemented, add implementation details:
 ---
 status: implemented
 implemented-in: v10.0.0-alpha.5
-implementation-plan: .claude/plans/example.md
+implementation-plan: .agents/plans/example.md
 ---
 ```
 
@@ -159,5 +159,5 @@ docs(rfc): player api
 ## See Also
 
 - [Design Docs](/internal/design/README.md) — Decisions you own
-- [Plans](/.claude/plans/README.md) — Implementation details
-- [CLAUDE.md](/CLAUDE.md#design-documents) — How these relate
+- [Plans](/.agents/plans/README.md) — Temporary implementation notes
+- [AGENTS.md](/AGENTS.md#design-records) — Agent routing for design records
