@@ -1,17 +1,26 @@
 /**
- * Non-zero-PTS relocation loader steps — the DOM-scoped, byte-level half that pairs
- * with the `establishStartMediaTime` reactor (`../establish-start-media-time`). A
- * plain config `messagePipelines` array: `discover` (init `mdhd` timescale, media
- * `tfdt` baseMediaDecodeTime) writes `state.mediaContainerData`; `stamp` reads that
- * track's origin back and relocates via `timestampOffset = −startMediaTime`. Steps
- * read composition `state` from their call-time `deps` (no closures, no context);
- * the reactor reads the same slot to derive/consume. They coordinate only through
- * that slot — no import between the two.
+ * Non-zero-PTS relocation pipelines — the config-supplied, loader-facing half of the
+ * `establishStartMediaTime` behavior (`../establish-start-media-time`). The reactor
+ * there owns the lifecycle and the `derive` coordination seam; this file supplies the
+ * `messagePipelines` the segment loader runs to *fill and act on* that behavior's
+ * state. It's the relocation analog of `track-switching`'s config-supplied
+ * constraint/rule chain — same shape (pluggable strategy handed to the machinery via
+ * config, not applied inline), but supplied to the loader rather than applied by the
+ * behavior, so the two coordinate through the shared `mediaContainerData` /
+ * `startMediaTime` slots alone, never by import.
  *
- * DOM-scoped only because it references the loader's base steps + `StepDeps` (which
- * carry the `SourceBuffer`-backed actor); the relocation logic itself is byte/signal
- * work. Tier 1: `stamp` computes the offset straight from the discovered origin, so
- * it's independent of the reactor's derive and works for late tracks.
+ * It lives in `behaviors/dom` rather than beside the reactor because it's the DOM arm
+ * of that behavior: it references the loader's base steps + `StepDeps` (which carry the
+ * `SourceBuffer`-backed actor), reads container bytes, and shifts `VTTCue`s — none of
+ * which the DOM-free reactor may touch. The A/V pipeline is a plain `messagePipelines`
+ * array:
+ *   - `discover` — init `track_id` + `mdhd` timescale for the buffered media track,
+ *     then that same track's `tfdt` baseMediaDecodeTime, matched by `track_id` so a
+ *     muxed segment reads the media track's origin, not the first `traf` — writes
+ *     `state.mediaContainerData`.
+ *   - `stamp` — reads that track's derived origin back and relocates via
+ *     `timestampOffset = −startMediaTime`.
+ * Steps read composition `state` from their call-time `deps` (no closures, no context).
  *
  * The text half (`relocatingTextPipelines`) is the same idea for the text-segment
  * loader: a `resolveWithMetadata → relocateCues → dispatchCues` pipeline that shifts
@@ -22,16 +31,9 @@ import type { StateSignals } from '../../../core/composition/create-composition'
 import { effect } from '../../../core/signals/effect';
 import { peek, type Signal, update } from '../../../core/signals/primitives';
 import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../../media/dom/text/resolve-vtt-segment';
-import { readFirstBaseMediaDecodeTime, readFirstMediaTimescale } from '../../../media/mp4/timestamp-origin';
-import type { MediaContainerData } from '../../../media/types';
+import { findMediaTrack, type MediaHandlerType, readBaseMediaDecodeTime } from '../../../media/mp4/timestamp-origin';
+import type { MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
-import {
-  dispatchStep,
-  fetchStep,
-  type LoadStep,
-  type MessagePipelines,
-  type StepDeps,
-} from '../../actors/dom/segment-loader';
 import {
   dispatchCuesStep,
   type TextLoadStep,
@@ -39,13 +41,41 @@ import {
   textStepWiring,
 } from '../../actors/text-track-segment-loader';
 import { peekHead } from '../../primitives/head-peek';
-import type { DeriveStartMediaTime, EstablishStartMediaTimeState } from '../establish-start-media-time';
+import {
+  dispatchStep,
+  fetchStep,
+  type LoadStep,
+  type MessagePipelines,
+  type StepDeps,
+} from '../../primitives/segment-load-pipeline';
+
+// Declared locally so this module carries no `behaviors` import (first step toward
+// relocating it to `primitives/dom`). Structurally identical to the
+// `establishStartMediaTime` behavior's own `DeriveStartMediaTime` and state shape — the
+// engine feeds one resolved `derive` to both sides, so the duplication is type-only and
+// folds away once these land in a shared home.
+export interface DeriveStartMediaTimeContext {
+  selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
+}
+export type DeriveStartMediaTime = (
+  containerData: Record<string, MediaContainerData>,
+  ctx: DeriveStartMediaTimeContext
+) => Record<string, number | undefined>;
+
+/** The composition slots these steps read — the view asserted from the opaque `deps.state`. */
+interface RelocationSlots {
+  presentation?: MaybeResolvedPresentation;
+  mediaContainerData?: Record<string, MediaContainerData>;
+  selectedVideoTrackId?: string;
+  selectedAudioTrackId?: string;
+}
 
 type ContainerSlot = Signal<Record<string, MediaContainerData> | undefined>;
 
 /** Assert the relocation state view from the opaque step deps — this module knows the slots the composition provides. */
-function relocationState(deps: StepDeps): StateSignals<EstablishStartMediaTimeState> {
-  return deps.state as unknown as StateSignals<EstablishStartMediaTimeState>;
+function relocationState(deps: StepDeps): StateSignals<RelocationSlots> {
+  return deps.state as unknown as StateSignals<RelocationSlots>;
 }
 
 function containerSlot(deps: StepDeps): ContainerSlot {
@@ -85,33 +115,46 @@ function awaitDefined(read: () => number | undefined): Promise<number> {
  * `deriveStartMediaTime` so the buffer offset and the model's `startMediaTime` agree).
  */
 export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: DeriveStartMediaTime): MessagePipelines {
-  /** Init step: head-peek the `mdhd` timescale into `mediaContainerData[trackType]`. */
-  const readInitTimescale: LoadStep = async (frame, _signal, deps) => {
+  const handlerType: MediaHandlerType = trackType === 'video' ? 'vide' : 'soun';
+
+  /**
+   * Init step: head-peek the buffered media track's `track_id` + `mdhd` timescale into
+   * `mediaContainerData[trackType]`. Matching by handler (`vide`/`soun`) skips a muxed
+   * `clcp` caption track, and the `track_id` lets `readSegmentOrigin` read *this*
+   * track's `tfdt` rather than the first `traf` in the segment.
+   */
+  const readInitTrackInfo: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
     if (op.type !== 'append-init' || !frame.data) return;
     const slot = containerSlot(deps);
     if (peek(slot)?.[trackType]?.timescale !== undefined) return; // already have it (any rung of this type)
     frame.data = await peekHead(frame.data, (bytes) => {
-      const timescale = readFirstMediaTimescale(bytes);
-      if (timescale === undefined) return false;
-      writeContainer(slot, trackType, { timescale });
+      const track = findMediaTrack(bytes, handlerType);
+      if (track === undefined) return false;
+      writeContainer(slot, trackType, { trackId: track.trackId, timescale: track.timescale });
       return true;
     });
   };
 
   /**
-   * Media-segment step: head-peek the `tfdt` baseMediaDecodeTime, recording the
+   * Media-segment step: head-peek the `tfdt` baseMediaDecodeTime of the media track's
+   * `traf` (matched by the `track_id` discovered from the init), recording the
    * segment's 0-based `startTime` with it — the origin is `bmdt/ts − segmentStartTime`,
-   * so the first *loaded* segment need not be the 0th.
+   * so the first *loaded* segment need not be the 0th. Without a discovered `track_id`
+   * (non-fMP4 / mock init) there's no media track to relocate, so the step no-ops and
+   * the append stays native.
    */
   const readSegmentOrigin: LoadStep = async (frame, _signal, deps) => {
     const { op } = frame;
     if (op.type !== 'append-segment' || !frame.data) return;
     const slot = containerSlot(deps);
-    if (peek(slot)?.[trackType]?.baseMediaDecodeTime !== undefined) return; // established
+    const container = peek(slot)?.[trackType];
+    if (container?.baseMediaDecodeTime !== undefined) return; // established
+    const { trackId } = container ?? {};
+    if (trackId === undefined) return; // init didn't identify a media track — nothing to match
     const segmentStartTime = op.meta.startTime;
     frame.data = await peekHead(frame.data, (bytes) => {
-      const baseMediaDecodeTime = readFirstBaseMediaDecodeTime(bytes);
+      const baseMediaDecodeTime = readBaseMediaDecodeTime(bytes, trackId);
       if (baseMediaDecodeTime === undefined) return false;
       writeContainer(slot, trackType, { baseMediaDecodeTime, segmentStartTime });
       return true;
@@ -155,7 +198,7 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
 
   return () => ({
     remove: [dispatchStep],
-    'append-init': [fetchStep, readInitTimescale, dispatchStep],
+    'append-init': [fetchStep, readInitTrackInfo, dispatchStep],
     'append-segment': [fetchStep, readSegmentOrigin, stampStartMediaTime, dispatchStep],
   });
 }
@@ -194,7 +237,7 @@ const resolveWithMetadataStep: TextLoadStep<VTTCue> = async (frame, signal, deps
  */
 const relocateCuesStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
   if (!frame.cues?.length) return;
-  const state = deps.state as unknown as StateSignals<EstablishStartMediaTimeState>;
+  const state = deps.state as unknown as StateSignals<RelocationSlots>;
   const startMediaTime = await awaitDefined(() => {
     const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
     if (primaryId === undefined) return 0;

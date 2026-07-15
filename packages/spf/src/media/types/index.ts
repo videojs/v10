@@ -147,10 +147,15 @@ export type Track = Ham &
   };
 
 /**
- * Per-track-type origin-establishment data, accumulated across appends (`mdhd`
- * timescale from the init, `tfdt` baseMediaDecodeTime from the first media
- * segment) — hence optional. The transient input the `establishStartMediaTime`
- * reactor reduces into `Track.startMediaTime`.
+ * Per-track-type origin-establishment data, accumulated across appends (the media
+ * track's `track_id` + `mdhd` timescale from the init, `tfdt` baseMediaDecodeTime of
+ * that same track from the first media segment) — hence optional. The transient input
+ * the `establishStartMediaTime` reactor reduces into `Track.startMediaTime`.
+ *
+ * `trackId` is the ISO-BMFF `track_ID` of the buffered media track (`vide`/`soun`),
+ * read from the init's `tkhd`; it ties the timescale to the *same* track's
+ * `baseMediaDecodeTime` (matched via `tfhd.track_id`) so a muxed segment carrying a
+ * second track (e.g. `clcp` captions) reads the right `tfdt` rather than the first one.
  *
  * `segmentStartTime` is the 0-based presentation start of the segment
  * `baseMediaDecodeTime` was read from — *not* a container value (it's the playlist
@@ -160,10 +165,18 @@ export type Track = Ham &
  * stream origin.
  */
 export interface MediaContainerData {
+  trackId?: number;
   timescale?: number;
   baseMediaDecodeTime?: number;
   segmentStartTime?: number;
 }
+
+/**
+ * Raw media-segment bytes — a complete buffer or a byte stream. The transport-neutral
+ * payload the loader pipeline carries; `AppendData` (the MSE `SourceBuffer` append
+ * input in `media/dom/mse`) is an alias of this at the DOM boundary.
+ */
+export type SegmentData = ArrayBuffer | AsyncIterable<Uint8Array>;
 
 /**
  * Resolved video track with segments.

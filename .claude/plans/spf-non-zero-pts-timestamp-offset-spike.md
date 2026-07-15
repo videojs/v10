@@ -102,7 +102,7 @@ Detail for each item is in the sections below (TODO / REVIEW / DEFERRED).
   Chromium can't; relocation math still proven via buffered/cue values).
 
 ### Architecture (as landed)
-- **Steps** (`behaviors/dom/relocation-steps.ts`, `relocationPipelinesFor(type, derive)`):
+- **Steps** (`behaviors/dom/relocation-pipelines.ts`, `relocationPipelinesFor(type, derive)`):
   a plain config array, one per track type. `discover` (`readInitTimescale`/
   `readSegmentOrigin`) writes `state.mediaContainerData[type]` (`timescale`,
   `baseMediaDecodeTime`, `segmentStartTime`); `stampStartMediaTime` applies the SAME

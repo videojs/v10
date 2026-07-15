@@ -3,6 +3,12 @@ import { SerialRunner, Task } from '../../../core/tasks/task';
 import { type AppendData, appendSegment } from '../../../media/dom/mse/append-segment';
 import { flushBuffer } from '../../../media/dom/mse/buffer-flusher';
 import { SEGMENT_TIME_EPSILON, type Segment, type Track } from '../../../media/types';
+import type {
+  AppendInitMessage,
+  AppendSegmentMessage,
+  IndividualSourceBufferMessage,
+  RemoveMessage,
+} from '../../primitives/source-buffer-messages';
 
 // =============================================================================
 // Types
@@ -13,36 +19,8 @@ export interface BufferedRange {
   end: number;
 }
 
-export type AppendSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> & {
-  trackId: Track['id'];
-  /** Declared track bandwidth in bps (from playlist BANDWIDTH attribute). */
-  trackBandwidth?: number;
-  /**
-   * Non-zero-PTS relocation: when present, applied as `SourceBuffer.timestampOffset`
-   * before this append so native PTS is relocated onto a 0-based presentation
-   * timeline. A relocating composition stamps it (constant per source) onto each
-   * media segment's meta; the apply is idempotent-guarded. Absent = no relocation.
-   */
-  timestampOffset?: number;
-};
-
 export type { AppendData };
 
-export type AppendInitMessage = {
-  type: 'append-init';
-  data: AppendData;
-  /**
-   * `language` is captured alongside `trackId` so downstream loaders can
-   * compare the buffered track's language to the newly-selected track's
-   * language and decide whether ahead-buffer flush is warranted on track
-   * switch (see `segment-loader`'s `planTasks`). Undefined for video and
-   * for audio without explicit `LANGUAGE` attribute.
-   */
-  meta: { trackId: Track['id']; language?: string };
-};
-export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; meta: AppendSegmentMeta };
-export type RemoveMessage = { type: 'remove'; start: number; end: number };
-export type IndividualSourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 export type BatchMessage = { type: 'batch'; messages: IndividualSourceBufferMessage[] };
 export type CancelMessage = { type: 'cancel' };
 
