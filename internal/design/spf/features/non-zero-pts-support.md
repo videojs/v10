@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 date: 2026-05-20
 definition: technical
 ---
@@ -15,14 +15,17 @@ The cluster B foundation; consumed by every cluster A feature
 ([live-stream-support](./live-stream-support.md),
 [dvr-event-stream-support](./dvr-event-stream-support.md),
 [ll-hls-support](./ll-hls-support.md)) for correct `currentTime` /
-`seekable` semantics. **Implementation mechanism is an open
-architectural question** — two viable approaches with different
-trade-offs (see Open questions): apply the offset to the SourceBuffer
-via `timestampOffset` (browser handles the translation; A/V sync risk
-from per-buffer offset divergence) vs simulate the offset via adapter
-+ math in behaviors/compositions (buffer holds original PTS;
-translation happens at every consumer boundary; no A/V drift risk
-but bigger translation surface).
+`seekable` semantics. **Mechanism: resolved** — the `timestampOffset`
+relocation approach (offset applied per `SourceBuffer` so buffer, model,
+and `currentTime` all stay 0-based, adapter untouched) is implemented for
+VOD on `feat/spf-non-zero-pts-relocation`; the A/V-sync risk from
+per-buffer offset divergence is handled by relocating every track by one
+shared `min` origin, which preserves real skew. See
+[presentation-timeline-model.md](../presentation-timeline-model.md) for the
+coordinate model + architecture and
+[../../decisions/mse-timestamp-offset.md](../../decisions/mse-timestamp-offset.md)
+for the mechanism decision. (The alternative — simulated translation in the
+adapter — was the parked approach on `feat/spf-non-zero-pts`.)
 
 A **Media-src feature** in the framing from
 [clusters.md § Feature classification axes](./clusters.md#feature-classification-axes):
@@ -37,11 +40,14 @@ distinct motivations.
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. No
-  PTS-handling code in `packages/spf/src/` (no `timestampOffset`,
-  `initPTS`, or `EXT-X-DISCONTINUITY` references). Engine implicitly
-  assumes zero-based PTS — works for typical Mux Video VOD sources
-  (transcoded with PTS rebased to zero) but breaks for live + clips.
+- **Composition:** implemented for VOD in `createSimpleHlsEngine` (and
+  `createHlsAudioOnlyEngine`) on `feat/spf-non-zero-pts-relocation`. The
+  `establishStartMediaTime` reactor (`playback/behaviors/`) + the
+  `relocation-pipelines` primitive (`playback/primitives/`) discover each
+  track's decode-time origin (`tfdt`/`mdhd`, matched by `track_id`) and
+  relocate via `SourceBuffer.timestampOffset = −startMediaTime`. Live is
+  parked on `feat/spf-non-zero-pts`; mid-stream discontinuity remains the
+  sister `[discontinuity-handling]` feature's scope.
 - **Definition depth:** technical — scope and SPF touchpoints
   articulated against MSE `timestampOffset` semantics + HLS spec;
   implementation specifics open. Source material: [SPF Epics Working

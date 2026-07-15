@@ -1,5 +1,5 @@
 ---
-status: draft
+status: implemented
 date: 2026-07-07
 ---
 
@@ -10,8 +10,9 @@ timelines a streaming presentation lives on — **media**, **presentation**, and
 **wall-clock** — and the architecture for **non-zero-PTS `timestampOffset`
 relocation** built on it.
 
-This is a design-in-progress for the `timestampOffset`-relocation approach to
-non-zero-PTS (spike branch `spike/spf-non-zero-pts-timestamp-offset`). It is the
+This is the design for the `timestampOffset`-relocation approach to non-zero-PTS,
+implemented for **VOD** on branch `feat/spf-non-zero-pts-relocation` (live is parked on
+`feat/spf-non-zero-pts`). It is the
 "how it's modeled and where it lives" companion to the mechanism decision in
 [../../decisions/mse-timestamp-offset.md](../../decisions/mse-timestamp-offset.md)
 and the feature framing in
