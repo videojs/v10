@@ -46,12 +46,9 @@ function parseTimestampMapBody(body: string): TimestampMap | undefined {
   ) as TimestampMap;
 }
 
-function parseWebVttTimestamp(value: string): number | undefined {
-  const match = value.match(/^(?:(\d+):)?(\d{1,2}):(\d{2})\.(\d{1,3})$/);
-  if (!match) return undefined;
-  const hours = match[1] ? Number(match[1]) : 0;
-  const minutes = Number(match[2]);
-  const seconds = Number(match[3]);
-  const millis = Number((match[4] ?? '').padEnd(3, '0'));
-  return hours * 3600 + minutes * 60 + seconds + millis / 1000;
+function parseWebVttTimestamp(value: string): number {
+  // Computes the math cleanly whether hours are provided or omitted (right-aligned weights).
+  return value
+    .split(/[:.]/)
+    .reduce((acc, val, i, parts) => acc + +val * [3600, 60, 1, 0.001][i + 4 - parts.length]!, 0);
 }
