@@ -1,10 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { signal } from '../../../../core/signals/primitives';
-import { initSegment, mediaSegment, trak } from '../../../../media/mp4/tests/synthetic-boxes';
-import type { MediaContainerData } from '../../../../media/types';
-import type { Frame, StepDeps } from '../../../primitives/segment-load-pipeline';
-import { deriveSharedMinStartMediaTime } from '../../establish-start-media-time';
+import { signal } from '../../../core/signals/primitives';
+import { initSegment, mediaSegment, trak } from '../../../media/mp4/tests/synthetic-boxes';
+import type { MediaContainerData } from '../../../media/types';
 import { relocationPipelinesFor } from '../relocation-pipelines';
+import type { Frame, StepDeps } from '../segment-load-pipeline';
 
 // A caption-first muxing: the `clcp` traf precedes the media traf, so a
 // first-`traf` read would pair the media track's timescale with the caption
@@ -31,9 +30,10 @@ function makeDeps(): {
   return { deps: { state: { mediaContainerData: slot }, context: {}, config: {} }, slot };
 }
 
-/** The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. */
+/** The discover steps at their pipeline positions: `[fetch, discover, dispatch]`. The
+ * derive is irrelevant here (only the stamp step consumes it), so a no-op suffices. */
 function discoverSteps(trackType: 'video' | 'audio') {
-  const pipelines = relocationPipelinesFor(trackType, deriveSharedMinStartMediaTime)();
+  const pipelines = relocationPipelinesFor(trackType, () => ({}))();
   return { readInitTrackInfo: pipelines['append-init'][1]!, readSegmentOrigin: pipelines['append-segment'][1]! };
 }
 

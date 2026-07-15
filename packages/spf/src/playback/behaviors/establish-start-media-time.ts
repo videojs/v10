@@ -11,7 +11,7 @@
  * {@link DeriveStartMediaTime} seam over it in `monitoring`, and stamps the settled
  * `startMediaTime` onto the model — the coordinate *consume* — until `established`.
  * The byte-level discover/stamp steps that fill the slot are a separate,
- * DOM-scoped config `messagePipelines` array (`behaviors/dom/relocation-pipelines`);
+ * config `messagePipelines` array (`primitives/relocation-pipelines`);
  * the two coordinate only through the shared `state.mediaContainerData` slot, never
  * by import. See `internal/design/spf/presentation-timeline-model.md`.
  */

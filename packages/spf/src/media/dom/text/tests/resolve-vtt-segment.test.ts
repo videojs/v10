@@ -1,10 +1,6 @@
 import { beforeEach, describe, expect, it } from 'vitest';
-import {
-  destroyVttResolver,
-  resolveVttSegment,
-  resolveVttSegmentMetadata,
-  resolveVttSegmentWithMetadata,
-} from '../resolve-vtt-segment';
+import { resolveVttSegmentMetadata } from '../../../text/resolve-vtt-metadata';
+import { destroyVttResolver, resolveVttSegment, resolveVttSegmentWithMetadata } from '../resolve-vtt-segment';
 
 describe('resolveVttSegment', () => {
   beforeEach(() => {

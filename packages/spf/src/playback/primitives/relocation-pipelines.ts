@@ -1,57 +1,49 @@
 /**
  * Non-zero-PTS relocation pipelines — the config-supplied, loader-facing half of the
- * `establishStartMediaTime` behavior (`../establish-start-media-time`). The reactor
- * there owns the lifecycle and the `derive` coordination seam; this file supplies the
- * `messagePipelines` the segment loader runs to *fill and act on* that behavior's
- * state. It's the relocation analog of `track-switching`'s config-supplied
- * constraint/rule chain — same shape (pluggable strategy handed to the machinery via
- * config, not applied inline), but supplied to the loader rather than applied by the
- * behavior, so the two coordinate through the shared `mediaContainerData` /
- * `startMediaTime` slots alone, never by import.
+ * `establishStartMediaTime` behavior (`../behaviors/establish-start-media-time`). The
+ * reactor there owns the lifecycle and the `derive` coordination seam; this file supplies
+ * the `messagePipelines` the segment/text loaders run to *fill and act on* that behavior's
+ * state. It's the relocation analog of `track-switching`'s config-supplied constraint/rule
+ * chain — a pluggable strategy handed to the machinery via config, not applied inline —
+ * supplied to the loaders rather than applied by the behavior, so the two coordinate
+ * through the shared `mediaContainerData` / `startMediaTime` slots alone, never by import.
  *
- * It lives in `behaviors/dom` rather than beside the reactor because it's the DOM arm
- * of that behavior: it references the loader's base steps + `StepDeps` (which carry the
- * `SourceBuffer`-backed actor), reads container bytes, and shifts `VTTCue`s — none of
- * which the DOM-free reactor may touch. The A/V pipeline is a plain `messagePipelines`
- * array:
- *   - `discover` — init `track_id` + `mdhd` timescale for the buffered media track,
- *     then that same track's `tfdt` baseMediaDecodeTime, matched by `track_id` so a
- *     muxed segment reads the media track's origin, not the first `traf` — writes
+ * DOM-free: it composes the loader vocabularies (`segment-load-pipeline`,
+ * `text-segment-load-pipeline`) through their structural sink seams and shifts cues via
+ * the structural `Cue` type, so it names no `SourceBuffer`, `TextTracksActor`, or
+ * `VTTCue`. The A/V pipeline is a plain `messagePipelines` array:
+ *   - `discover` — init `track_id` + `mdhd` timescale for the buffered media track, then
+ *     that same track's `tfdt` baseMediaDecodeTime, matched by `track_id` so a muxed
+ *     segment reads the media track's origin, not the first `traf` — writes
  *     `state.mediaContainerData`.
  *   - `stamp` — reads that track's derived origin back and relocates via
  *     `timestampOffset = −startMediaTime`.
  * Steps read composition `state` from their call-time `deps` (no closures, no context).
  *
- * The text half (`relocatingTextPipelines`) is the same idea for the text-segment
- * loader: a `resolveWithMetadata → relocateCues → dispatchCues` pipeline that shifts
- * VTT cues onto the same 0-based timeline, reading the primary A/V track's
- * `startMediaTime` (the reactor's consumed value) via `deps`.
+ * The text half (`relocatingTextPipelines`) is the same idea for the text-segment loader:
+ * a `resolveWithMetadata → relocateCues → dispatchCues` pipeline that shifts cues onto the
+ * same 0-based timeline, reading the primary A/V track's `startMediaTime` (the reactor's
+ * consumed value) via `deps`.
  */
-import type { StateSignals } from '../../../core/composition/create-composition';
-import { effect } from '../../../core/signals/effect';
-import { peek, type Signal, update } from '../../../core/signals/primitives';
-import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../../media/dom/text/resolve-vtt-segment';
-import { findMediaTrack, type MediaHandlerType, readBaseMediaDecodeTime } from '../../../media/mp4/timestamp-origin';
-import type { MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
-import { findTrackById } from '../../../media/utils/tracks';
-import { peekHead } from '../../primitives/head-peek';
-import {
-  dispatchStep,
-  fetchStep,
-  type LoadStep,
-  type MessagePipelines,
-  type StepDeps,
-} from '../../primitives/segment-load-pipeline';
+import type { StateSignals } from '../../core/composition/create-composition';
+import { effect } from '../../core/signals/effect';
+import { peek, type Signal, update } from '../../core/signals/primitives';
+import { findMediaTrack, type MediaHandlerType, readBaseMediaDecodeTime } from '../../media/mp4/timestamp-origin';
+import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../media/text/resolve-vtt-metadata';
+import type { Cue, MaybeResolvedPresentation, MediaContainerData } from '../../media/types';
+import { findTrackById } from '../../media/utils/tracks';
+import { peekHead } from './head-peek';
+import { dispatchStep, fetchStep, type LoadStep, type MessagePipelines, type StepDeps } from './segment-load-pipeline';
 import {
   dispatchCuesStep,
+  type TextFrame,
   type TextLoadStep,
-  type TextMessagePipelines,
+  type TextStepDeps,
   textStepWiring,
-} from '../../primitives/text-segment-load-pipeline';
+} from './text-segment-load-pipeline';
 
-// Declared locally so this module carries no `behaviors` import (first step toward
-// relocating it to `primitives/dom`). Structurally identical to the
-// `establishStartMediaTime` behavior's own `DeriveStartMediaTime` and state shape — the
+// Declared locally so this module carries no `behaviors` import. Structurally identical to
+// the `establishStartMediaTime` behavior's own `DeriveStartMediaTime` and state shape — the
 // engine feeds one resolved `derive` to both sides, so the duplication is type-only and
 // folds away once these land in a shared home.
 export interface DeriveStartMediaTimeContext {
@@ -215,9 +207,13 @@ export function relocationPipelinesFor(trackType: 'video' | 'audio', derive: Der
  * base `resolveCuesStep` (which fetches cues only) — text's native `<track>` parser
  * discards the header, so the map needs its own raw-bytes fetch.
  */
-const resolveWithMetadataStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
+const resolveWithMetadataStep = async <C extends Cue>(
+  frame: TextFrame<C>,
+  signal: AbortSignal,
+  deps: TextStepDeps
+): Promise<void> => {
   const [cues, metadata] = await Promise.all([
-    textStepWiring<VTTCue>(deps).resolveSegment(frame.op.segment.url),
+    textStepWiring<C>(deps).resolveSegment(frame.op.segment.url),
     resolveVttSegmentMetadata(frame.op.segment.url),
   ]);
   if (signal.aborted) return;
@@ -226,7 +222,7 @@ const resolveWithMetadataStep: TextLoadStep<VTTCue> = async (frame, signal, deps
 };
 
 /**
- * Relocate step — shifts each VTT cue onto the 0-based presentation timeline:
+ * Relocate step — shifts each cue onto the 0-based presentation timeline:
  * `cueFinal = cueNative − startMediaTime`, where `startMediaTime` is the primary
  * A/V track's origin (selected **video**, else **audio** — the single-anchor rule,
  * and defensive like the reactor's optional selection) and `cueNative` folds in the
@@ -235,7 +231,11 @@ const resolveWithMetadataStep: TextLoadStep<VTTCue> = async (frame, signal, deps
  * establishes, so the origin is awaited; fMP4 always establishes it (0-PTS → 0),
  * and a text-only source (no A/V selected) simply gets offset 0.
  */
-const relocateCuesStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
+const relocateCuesStep = async <C extends Cue>(
+  frame: TextFrame<C>,
+  signal: AbortSignal,
+  deps: TextStepDeps
+): Promise<void> => {
   if (!frame.cues?.length) return;
   const state = deps.state as unknown as StateSignals<RelocationSlots>;
   const startMediaTime = await awaitDefined(() => {
@@ -261,7 +261,7 @@ const relocateCuesStep: TextLoadStep<VTTCue> = async (frame, signal, deps) => {
  * `resolveWithMetadata` (cues + `X-TIMESTAMP-MAP`) → `relocateCues` (shift by the
  * primary A/V origin) → `dispatchCues`.
  */
-export const relocatingTextPipelines: TextMessagePipelines<VTTCue> = () => [
+export const relocatingTextPipelines = <C extends Cue>(): TextLoadStep<C>[] => [
   resolveWithMetadataStep,
   relocateCuesStep,
   dispatchCuesStep,

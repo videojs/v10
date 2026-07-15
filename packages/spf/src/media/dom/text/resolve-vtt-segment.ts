@@ -5,7 +5,7 @@
  * the browser's optimized VTT parsing. Returns parsed VTTCue objects.
  */
 
-import { parseVttTimestampMap, type TimestampMap } from '../../text/parse-vtt-timestamp-map';
+import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../text/resolve-vtt-metadata';
 
 // Singleton dummy video (reused across all parsing)
 let dummyVideo: HTMLVideoElement | null = null;
@@ -68,14 +68,6 @@ export function destroyVttResolver(): void {
 }
 
 /**
- * Header-level metadata for a text segment, surfaced alongside its cues. Each
- * field is present only when the segment declared it.
- */
-export interface TextSegmentMetadata {
-  timestampMap?: TimestampMap;
-}
-
-/**
  * A resolved VTT segment paired with its header metadata — the shape used when a
  * caller needs the `X-TIMESTAMP-MAP` correlation (e.g. non-zero-PTS sources),
  * not just the cues.
@@ -83,19 +75,6 @@ export interface TextSegmentMetadata {
 export interface ResolvedVttSegment {
   cues: VTTCue[];
   metadata: TextSegmentMetadata;
-}
-
-/**
- * Fetch a VTT segment and scrape only its header metadata (no cue parsing).
- *
- * The native `<track>` parser used by {@link resolveVttSegment} discards
- * `X-TIMESTAMP-MAP`, so reading it requires the raw bytes. This is a separate,
- * caller-controlled fetch — the caller decides *when* metadata is needed (e.g.
- * once per source) rather than paying for it on every segment.
- */
-export async function resolveVttSegmentMetadata(url: string): Promise<TextSegmentMetadata> {
-  const text = await fetch(url).then((response) => response.text());
-  return { timestampMap: parseVttTimestampMap(text) };
 }
 
 /**
