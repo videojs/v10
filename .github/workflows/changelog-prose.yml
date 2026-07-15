@@ -75,7 +75,7 @@ jobs:
       - name: Guard — check raw changelog exists
         id: guard
         run: |
-          FILE="site/src/content/changelog/${{ steps.version.outputs.version }}.md"
+          FILE="site/src/content/changelog/${{ steps.version.outputs.version }}.mdx"
           if [ ! -f "$FILE" ]; then
             echo "::warning::Raw changelog file $FILE not found on main — skipping prose generation"
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -103,8 +103,8 @@ jobs:
 
             1. **Load context:**
                - Read `.claude/skills/docs/references/writing-style.md` for tone and style rules.
-               - Read the raw changelog at `site/src/content/changelog/${{ steps.version.outputs.version }}.md`.
-               - Read other existing `.md` files in `site/src/content/changelog/` (if any) to match their tone and format.
+               - Read the raw changelog at `site/src/content/changelog/${{ steps.version.outputs.version }}.mdx`.
+               - Read other existing `.mdx` files in `site/src/content/changelog/` (if any) to match their tone and format.
                - List the available docs pages so you can link them: `ls site/src/content/docs/concepts site/src/content/docs/how-to site/src/content/docs/reference`. A page's slug is its path under `site/src/content/docs/` without the extension (e.g. `reference/menu.mdx` → `reference/menu`).
 
             2. **Gather PR context:**
@@ -140,6 +140,7 @@ jobs:
                - Omit features reverted before this release. If a PR appears alongside a revert of it (the raw file's Revert section, or a revert commit in the range), it did not ship — leave it out entirely.
                - Summarize smaller fixes briefly, grouped. Skip internal-only changes (CI, tooling, changelog maintenance) — unless the release is entirely internal, in which case describe it honestly in a sentence or two rather than leaving the body empty.
                - If the raw file has a "New Contributors" section, remove it and end with one sentence thanking first-time contributors by name, linking their GitHub profiles.
+               - Keep the result valid MDX: put code-like text containing `<`, `>`, `{`, or `}` in backticks, and escape those characters in ordinary prose.
                - Follow `writing-style.md` strictly. Do not fabricate — stick to what the PRs actually say.
 
             4. **Write the `description` field:**
