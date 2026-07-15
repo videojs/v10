@@ -138,8 +138,8 @@ describe('getMaxBufferedEnd', () => {
 });
 
 describe('getMinBufferedEnd', () => {
-  it('returns undefined when the buffer list is empty', () => {
-    expect(getMinBufferedEnd([])).toBeUndefined();
+  it('returns 0 when the buffer list is empty', () => {
+    expect(getMinBufferedEnd([])).toBe(0);
   });
 
   it('returns the min last-range end across buffers (the reachable/intersection end)', () => {
@@ -154,7 +154,7 @@ describe('getMinBufferedEnd', () => {
     expect(getMinBufferedEnd([video, audio])).toBe(600.0);
   });
 
-  it('returns undefined when any buffer has no buffered ranges (no common reachable point)', () => {
+  it('skips buffers with no ranges (min across the buffers that have ranges)', () => {
     const empty = {
       buffered: { length: 0, start: () => 0, end: () => 0 } as TimeRanges,
     } as unknown as SourceBuffer;
@@ -162,7 +162,7 @@ describe('getMinBufferedEnd', () => {
       buffered: { length: 1, start: () => 0, end: () => 30 } as TimeRanges,
     } as unknown as SourceBuffer;
 
-    expect(getMinBufferedEnd([empty, buffered])).toBeUndefined();
+    expect(getMinBufferedEnd([empty, buffered])).toBe(30);
   });
 
   it('uses the last range end when a buffer has multiple (gapped) ranges', () => {

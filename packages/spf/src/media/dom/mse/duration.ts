@@ -34,25 +34,31 @@ export function canUpdateDuration(
   return !!(mediaSource && presentation && hasPresentationDuration(presentation));
 }
 
+export function getBufferedEnd(
+  buffers: SourceBufferIterable,
+  isEndMatch: (next: number, current: number) => boolean
+): number {
+  return (
+    ([...buffers].reduce((endMatch: number | undefined, buffer) => {
+      const { buffered } = buffer;
+      if (!buffered.length) return endMatch;
+      const end = buffered.end(buffered.length - 1);
+      if (!endMatch) return end;
+      return isEndMatch(end, endMatch) ? end : endMatch;
+    }, undefined) as number) ?? 0
+  );
+}
+
+const isGreaterThan = (x: number, y: number) => x > y;
+const isLessThan = (x: number, y: number) => x < y;
+
 /**
  * Get the maximum buffered end time across an iterable of SourceBuffers
  * (typically `mediaSource.sourceBuffers`). Returns `0` when the collection is
  * empty or no buffer has any buffered ranges.
  */
 export function getMaxBufferedEnd(buffers: SourceBufferIterable): number {
-  let maxEnd = 0;
-
-  for (const buffer of buffers) {
-    const { buffered } = buffer;
-    if (buffered.length > 0) {
-      const end = buffered.end(buffered.length - 1);
-      if (end > maxEnd) {
-        maxEnd = end;
-      }
-    }
-  }
-
-  return maxEnd;
+  return getBufferedEnd(buffers, isGreaterThan);
 }
 
 /**
@@ -67,18 +73,7 @@ export function getMaxBufferedEnd(buffers: SourceBufferIterable): number {
  * when tracks end at slightly different times (e.g. skewed A/V near end-of-stream).
  */
 export function getMinBufferedEnd(buffers: SourceBufferIterable): number | undefined {
-  let minEnd: number | undefined;
-
-  for (const buffer of buffers) {
-    const { buffered } = buffer;
-    if (buffered.length === 0) return undefined;
-    const end = buffered.end(buffered.length - 1);
-    if (minEnd === undefined || end < minEnd) {
-      minEnd = end;
-    }
-  }
-
-  return minEnd;
+  return getBufferedEnd(buffers, isLessThan);
 }
 
 /**
