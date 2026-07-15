@@ -30,7 +30,7 @@ import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
-import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
+import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
@@ -61,6 +61,7 @@ import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../be
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
 // HLS Engine State & Context

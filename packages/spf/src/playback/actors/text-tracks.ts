@@ -1,12 +1,10 @@
 import type { TransitionActor } from '../../core/actors/create-transition-actor';
 import type { Cue, Segment } from '../../media/types';
+import type { AddCuesMessage } from '../primitives/text-track-messages';
 
 // =============================================================================
 // Message / context shapes
 // =============================================================================
-
-/** Segment identity and timing — mirrors AppendSegmentMeta without trackId (keyed separately). */
-export type CueSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> & { trackId: string };
 
 /** Non-finite (extended) data managed by the actor — the XState "context". */
 export interface TextTracksActorContext {
@@ -14,12 +12,6 @@ export interface TextTracksActorContext {
   loaded: Record<string, Cue[]>;
   /** Segments whose cues have been fully added, keyed by track ID. Used for load planning. */
   segments: Record<string, Array<Pick<Segment, 'id' | 'startTime' | 'duration'>>>;
-}
-
-export interface AddCuesMessage<C extends Cue = Cue> {
-  type: 'add-cues';
-  meta: CueSegmentMeta;
-  cues: C[];
 }
 
 /**

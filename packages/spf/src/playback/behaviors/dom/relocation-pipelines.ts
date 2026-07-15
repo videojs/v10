@@ -34,12 +34,6 @@ import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../../me
 import { findMediaTrack, type MediaHandlerType, readBaseMediaDecodeTime } from '../../../media/mp4/timestamp-origin';
 import type { MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
-import {
-  dispatchCuesStep,
-  type TextLoadStep,
-  type TextMessagePipelines,
-  textStepWiring,
-} from '../../actors/text-track-segment-loader';
 import { peekHead } from '../../primitives/head-peek';
 import {
   dispatchStep,
@@ -48,6 +42,12 @@ import {
   type MessagePipelines,
   type StepDeps,
 } from '../../primitives/segment-load-pipeline';
+import {
+  dispatchCuesStep,
+  type TextLoadStep,
+  type TextMessagePipelines,
+  textStepWiring,
+} from '../../primitives/text-segment-load-pipeline';
 
 // Declared locally so this module carries no `behaviors` import (first step toward
 // relocating it to `primitives/dom`). Structurally identical to the

@@ -24,12 +24,11 @@ import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
 import { createTextTracksActor } from '../../actors/dom/text-tracks';
 import {
   createTextTrackSegmentLoaderActor,
-  type TextMessagePipelines,
   type TextTrackSegmentLoaderActor,
   type TextTrackSegmentLoaderActorConfig,
-  type TextTrackSegmentResolver,
 } from '../../actors/text-track-segment-loader';
 import type { TextTracksActor } from '../../actors/text-tracks';
+import type { TextMessagePipelines, TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 export interface TextTrackActorsContext {
   mediaElement?: HTMLMediaElement | undefined;
