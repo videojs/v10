@@ -5,7 +5,7 @@ For docs, blog, and more: [videojs.org](https://videojs.org).
 Mostly a standard [Astro](https://astro.build/) project.
 
 > [!NOTE]
-> This README serves as a high-level introduction to the site. For detailed technical documentation — architecture, conventions, patterns, quirks, features — see [CLAUDE.md](CLAUDE.md). It may be written for Claude, but it's useful for humans, too ;)
+> This README is the site overview. Agent-specific gotchas and source pointers live in [AGENTS.md](AGENTS.md).
 
 ## Project Structure
 
@@ -34,7 +34,7 @@ Mostly a standard [Astro](https://astro.build/) project.
 │  ├── docs.config.ts        # Docs sidebar structure
 │  └── test-setup.ts         # Vitest setup
 ├── astro.config.mjs
-├── CLAUDE.md                # Detailed technical docs for this site
+├── AGENTS.md                # Agent guidance and site-specific gotchas
 ├── package.json
 ├── README.md
 ├── TODO.md
@@ -81,14 +81,14 @@ On each release, the CD workflow force-pushes `main` to `site/v10`, keeping prod
 
 ## Environment Variables
 
-The installation page's video uploader uses OAuth + Mux. See [CLAUDE.md](CLAUDE.md) for the full list of environment variables. The site works without these — the uploader just won't be available.
+The installation page's video uploader uses OAuth + Mux. The environment schema in [`astro.config.mjs`](astro.config.mjs) is the current variable list. The site works without these variables; the uploader is simply unavailable.
 
 ## Technology Stack
 
 Here are some of the technologies you should get to know when you're building this site:
 
 - [**Astro**](https://astro.build) - Mostly-static site generation with [island architecture](https://docs.astro.build/en/concepts/islands/)
-- [**Tailwind v4**](https://tailwindcss.com) - CSS utility class generator. We use custom tokens — see [globals.css](styles/globals.css) before reaching for standard Tailwind classes. We also have a few patterns we try to stick to — see [CLAUDE.md](CLAUDE.md) for details.
+- [**Tailwind v4**](https://tailwindcss.com) - CSS utility class generator. Inspect [`src/styles/globals.css`](src/styles/globals.css) before reaching for standard Tailwind classes; agent-specific gotchas are indexed in [AGENTS.md](AGENTS.md).
 - [**clsx**](https://github.com/lukeed/clsx) - Class name concatenation (in React; Astro has `class:list`)
 - [**React**](https://react.dev) - Most of our client-side interactivity is built with React components. **React Compiler is enabled**.
 - [**Nanostores**](https://github.com/nanostores/nanostores) - Shared client-side state (React Context doesn't work across islands)
@@ -170,16 +170,15 @@ The JSON is regenerated automatically on `pnpm dev` and `pnpm build`, or manuall
 
 See [`scripts/api-docs-builder/README.md`](scripts/api-docs-builder/README.md) for full documentation.
 
-## MDX Plugins
+## Markdown plugins
 
-MDX content is transformed by custom remark/rehype plugins during build:
+Astro uses the Satteri Markdown processor with custom MDAST plugins configured in [`astro.config.mjs`](astro.config.mjs):
 
-- **remarkConditionalHeadings** — Tracks which headings are inside `<FrameworkCase>` / `<StyleCase>` so the table of contents only shows headings relevant to the active framework and style. Also injects API reference headings into the TOC.
-- **remarkReadingTime** — Calculates and injects reading time metadata
-- **rehypePrepareCodeBlocks** — Prepares code blocks for styled rendering in tabs
-- **shikiTransformMetadata** — Enables `title="..."` on code fences
+- [`satteriConditionalHeadings`](src/utils/satteriConditionalHeadings.ts) tracks conditional headings and generated API-reference headings.
+- [`satteriReadingTime`](src/utils/satteriReadingTime.ts) derives reading-time frontmatter.
+- [`satteriCodeFrame`](src/utils/satteriCodeFrame.ts) wraps standalone fenced code blocks in the site code-frame component.
 
-See [CLAUDE.md](CLAUDE.md) for details on each plugin.
+The plugin implementations and tests are the source of truth for their behavior.
 
 ## Custom Integrations
 
@@ -193,4 +192,4 @@ One custom Astro integration in `integrations/`:
 
 - **llms-markdown** — Generates LLM-optimized `.md` files and `llms.txt` index from `[data-llms-content]` elements
 
-See [CLAUDE.md](CLAUDE.md) for implementation details.
+Read [`integrations/llms-markdown.ts`](integrations/llms-markdown.ts) for implementation details.

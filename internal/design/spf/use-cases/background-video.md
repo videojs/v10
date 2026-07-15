@@ -107,9 +107,9 @@ use cases resolve via adapter choice.
 
 Phase 1 baseline:
 
-- **[`video-only-composition`](../features/video-only-composition.md)** — used at the *composition-mechanism* level; same audio-side subtraction pattern as the Case-1 feature, driven by adapter choice instead of source-shape detection. Plus further subtractions (text, ABR, preload).
+- **[`video-only-mode-override`](./video-only-mode-override.md)** — inverse delivery-mode sibling using the same audio-side subtraction, with background video adding further text, ABR, and preload changes.
 - **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** — variant adapter parallels `SimpleHlsMediaElement` via the same `SimpleHlsMediaMixin` / `shareSignals` pattern.
-- **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is. Firefox `mozHasAudio=false` verification under subtractive-audio composition is **joint Phase 1 scope** with `video-only-mode-override` and the Case-1 `video-only-composition` feature.
+- **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is. Firefox `mozHasAudio=false` verification under subtractive-audio composition is joint Phase 1 scope with `video-only-mode-override`.
 - **[`buffer-management`](../features/buffer-management.md)** — as-is in Phase 1; Phase 3 surfaces back-buffer tuning and loop-around forward-buffer fetching (the "loop-around buffer fetching" candidate in that feature's *What's not implemented* directly targets this use case).
 - **[`preload-modes`](../features/preload-modes.md)** — alternative initial state (`loadActivated: true`) plus subtraction of `syncPreload` + `trackLoadTriggers`. Semantic contract preserved; the variant just seeds the gate-passable state from composition time.
 
@@ -123,7 +123,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 
 ## Likely cross-cutting impact
 
-- **Shared engine factory.** Three use cases now want subtractive-audio composition (this, `video-only-mode-override`, Case-1 `video-only-composition`). Lean: shared factory at the subtractive-audio level, with this use case layering further subtractions (text, ABR, preload) and an initial-state override on top.
+- **Shared engine factory.** This use case and `video-only-mode-override` both want subtractive-audio composition. Share the factory at that level, then layer background-video text, ABR, preload, and initial-state differences.
 - **Firefox `mozHasAudio` verification.** Joint scope with the two sibling cases — same mixed-source-with-audio-subtracted permutation.
 - **Adapter proliferation.** N+1 adapter parallel to `SimpleHlsMediaElement`; three adapters share the `SimpleHlsMediaMixin` / `shareSignals` pattern — cost is configuration surface, not architecture.
 - **`loadActivated: true` initial-state pattern.** Pioneered here. If a second use case wants the same shape, consider a shared `withAutoLoad()`-style helper or document treatment in [`preload-modes`](../features/preload-modes.md).
@@ -131,7 +131,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 ## Open questions
 
 - **Phase 2/3 decorator pattern shape.** Decorator on the engine factory? Composable-feature abstraction? Engine-config flags re-including subtracted behaviors? Resolves when Phase 2/3 are scoped.
-- **Shared engine factory.** Joint with `video-only-mode-override` and Case-1 `video-only-composition`. Lean: shared, with this case composing further subtractions.
+- **Shared engine factory.** Joint with `video-only-mode-override`; this case composes further subtractions.
 - **Sampling-strip alt-impl Path A vs B.** Likely Path B per [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases).
 - **GPU/thermal-aware quality caps boundary.** Engine-variant (compose a thermal-aware behavior) or adapter (cap the picker candidate set). Likely engine-variant given the product context.
 

@@ -31,7 +31,7 @@ First, read and understand [Diátaxis](https://diataxis.fr/). We organize docume
 
 1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work — design decisions, trade-offs, and context. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content? Diátaxis calls this mode "explanation."
 2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. Address a real user goal, assume competence, and link to concept pages instead of explaining inline.
-3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using the `api-reference` skill and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
+3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using `write-api-reference` and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
 
 <Aside type="note">
 Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now. Learning-oriented content lives in the Getting started how-to guides instead.
@@ -577,7 +577,7 @@ Which renders as:
   </StyleCase>
 </FrameworkCase>
 
-See the "Interactive Demos" section of `site/CLAUDE.md` for how to author the demo files themselves (directory structure, CSS class naming, and the HTML `.astro` wrapper).
+Agent-assisted changes should follow the demo rules in `site/AGENTS.md`; all contributors should follow neighboring demos for the current file structure.
 
 ## Literally any other component
 

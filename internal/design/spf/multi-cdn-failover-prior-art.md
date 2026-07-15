@@ -1,5 +1,5 @@
 ---
-status: draft
+status: reference
 date: 2026-06-12
 ---
 

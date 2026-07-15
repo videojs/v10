@@ -1,4 +1,4 @@
-# Decisions
+# Internal decisions
 
 ADR-style records of single tactical decisions.
 
@@ -48,19 +48,30 @@ Why this came up. What problem triggered the decision. Link related decisions.
 Why this choice wins. Keep concise.
 ```
 
-## File Naming
+## Layout
+
+| Area | Decisions |
+| --- | --- |
+| `player/` | Provider, container, media discovery, and player composition |
+| `spf/` | Stream-processing ownership and coordination |
+| `store/` | State-management contracts |
+| `ui/` | Components, gestures, captions, and interaction |
+
+Put new records in the narrowest existing area. Add an area only when several related decisions belong together.
+
+## File naming
 
 Lowercase with hyphens, name after the subject of the decision:
 
 ```
-captions.md
-gestures-as-components.md
-provider-attach.md
+ui/captions.md
+ui/gestures-as-components.md
+player/provider-attach.md
 ```
 
 ## See Also
 
 - [Design Docs](/internal/design/README.md) — Architecture specs and feature designs
 - [RFCs](/rfc/README.md) — Proposals needing buy-in
-- [Plans](/.claude/plans/README.md) — Implementation notes
-- [CLAUDE.md](/CLAUDE.md#design-documents) — How these relate
+- [Plans](/.agents/plans/README.md) — Temporary implementation notes
+- [AGENTS.md](/AGENTS.md#design-records) — Agent routing for design records

@@ -78,7 +78,7 @@ Resolved during implementation:
 
 | Behavior / Actor | File | Responsibility |
 |---|---|---|
-| `switchAudioTrack` *(new behavior)* | `packages/spf/src/playback/behaviors/switch-audio-track.ts` | **Slot owner for `selectedAudioTrackId`**, filter-reactive (consumes `userAudioTrackSelection`). Single effect in `'presentation-resolved'` that mirrors `switchVideoQuality`'s pattern: filter narrow → single-candidate short-circuit → initial picker → `selectOptimal`. Uses helper `setupAudioTrackSwitching` whose abstraction shape parallels `setupQualitySwitching` (generic over selection key + user-selection key + track type + `getTracks` + `selectOptimal` + `picker`). Pure selection ownership; no flush concern. Path to `switchAudioQuality`: audio-abr Phase 3 swaps `selectAudioCurrent` (pin-to-current) for a bandwidth-driven `selectOptimal` |
+| `switchAudioTrack` | `packages/spf/src/playback/behaviors/track-switching.ts` | Owns `selectedAudioTrackId` and resolves `userAudioTrackSelection` through the shared constraint/rule pipeline. Uses the generic `setupTrackSwitching` helper alongside video and text variants. |
 | `segment-loader` actor `planTasks` *(extended)* | `packages/spf/src/playback/actors/dom/segment-loader.ts` | Already handled init / append / forward+back-flush task planning. **New Stage-1 predicate**: when `actorCtx.initTrackId !== track.id` AND `actorCtx.initTrackLanguage !== track.language`, emits a `{ type: 'remove', start: nextBoundary, end: Infinity }` task at the front of the task list (before `append-init` + `append-segment`). Generic enough to cover audio-language and text-language switches; video ABR doesn't trigger it (no language attribute). Includes `language` in the emitted `append-init` meta so downstream tracking can compare next switch |
 | `SourceBufferActor` *(extended)* | `packages/spf/src/playback/actors/dom/source-buffer.ts` | Context now tracks `initTrackLanguage?` alongside `initTrackId`. Captured from `AppendInitMessage.meta.language` on commit; read by `segment-loader`'s `planTasks` to detect cross-language switches |
 | `selectAudioTrack` *(unchanged purpose)* | `packages/spf/src/playback/behaviors/select-tracks.ts` | Lifecycle-only default selection on `presentation-resolved` entry; clears on src unload. Uses `pickAudioTrack` (3-tier) as default picker. Mutually exclusive with `switchAudioTrack` — engines compose one or the other |
@@ -98,7 +98,7 @@ Resolved during implementation:
 
 | Helper | File | Status |
 |---|---|---|
-| `setupAudioTrackSwitching` *(new)* | `packages/spf/src/playback/behaviors/switch-audio-track.ts` | Filter-reactive slot-management reactor. Mirrors `setupQualitySwitching`'s abstraction shape (generic over selection key + user-selection key + track type, with `getTracks` / `selectOptimal` / `picker` config). Today's audio-only consumer is `switchAudioTrack`; when audio-abr ships, `switchAudioQuality` either swaps its `selectOptimal` for a bandwidth-aware variant or the two helpers merge into a shared `setupQualitySwitching` |
+| `setupTrackSwitching` | `packages/spf/src/playback/behaviors/track-switching.ts` | Shared constraint/rule/terminal pipeline used by the video, audio, and text behavior variants. |
 | `pickAudioTrack` | `packages/spf/src/media/primitives/select-tracks.ts` | **Now wired** as the default picker in both `selectAudioTrack` and `switchAudioTrack` (was inert; required custom-picker override before this feature) |
 
 **Composition wiring:** Both engine factories swap `selectAudioTrack` for `switchAudioTrack` in their behavior list. Engine state types in both `engine.ts` and `engine-audio-only.ts` gain `userAudioTrackSelection`.
@@ -111,7 +111,7 @@ Resolved during implementation:
 - `falls back to DEFAULT=YES track when preferredAudioLanguage does not match` — Tier 1 second-tier fallback
 - `falls back to first track when no language preference and no DEFAULT track` — Tier 1 final fallback
 
-**Unit tests** (`packages/spf/src/playback/behaviors/tests/switch-audio-track.test.ts` — slot-owner variant; Tier 2):
+**Unit tests** (`packages/spf/src/playback/behaviors/tests/track-switching.test.ts` — audio variant; Tier 2):
 
 - *Selection lifecycle:*
   - `selects the first audio track when no preference or filter`
@@ -168,6 +168,6 @@ Resolved during implementation:
 - [conventions/signals.md](../conventions/signals.md) — multi-writer slot conventions
 - [conventions/behaviors.md](../conventions/behaviors.md) — per-type specialization
 - [packages/spf/src/playback/behaviors/select-tracks.ts](../../../../packages/spf/src/playback/behaviors/select-tracks.ts) — `selectAudioTrack` (lifecycle-only variant)
-- [packages/spf/src/playback/behaviors/switch-audio-track.ts](../../../../packages/spf/src/playback/behaviors/switch-audio-track.ts) — `switchAudioTrack` (slot owner with filter reactivity) + `setupAudioTrackSwitching` helper (mirrors `setupQualitySwitching`'s shape)
+- [packages/spf/src/playback/behaviors/track-switching.ts](../../../../packages/spf/src/playback/behaviors/track-switching.ts) — shared track-switching pipeline and audio, video, and text variants
 - [packages/spf/src/playback/actors/dom/segment-loader.ts](../../../../packages/spf/src/playback/actors/dom/segment-loader.ts) — `planTasks` cross-rendition flush predicate (Stage 1: language-change inline)
 - [packages/spf/src/playback/actors/dom/source-buffer.ts](../../../../packages/spf/src/playback/actors/dom/source-buffer.ts) — `initTrackLanguage` context field + `AppendInitMessage.meta.language`

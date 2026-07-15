@@ -1,5 +1,5 @@
 ---
-status: draft
+status: active
 date: 2026-05-07
 ---
 
@@ -52,4 +52,4 @@ Implementation / "how" companions to the docs above:
 - [`../actor-reactor-factories.md`](../actor-reactor-factories.md) — `createMachineActor` / `createMachineReactor` factory shapes.
 - [`../text-track-architecture.md`](../text-track-architecture.md) — reference Actor/Reactor implementation.
 - [`packages/spf/docs/hls-engine.md`](../../../../packages/spf/docs/hls-engine.md) — current HLS engine composition walkthrough.
-- [`packages/spf/src/CLAUDE.md`](../../../../packages/spf/src/CLAUDE.md) — source layout and dependency rules.
+- [`packages/spf/src/AGENTS.md`](../../../../packages/spf/src/AGENTS.md) — source layout and dependency rules.

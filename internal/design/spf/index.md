@@ -1,151 +1,60 @@
 ---
-status: draft
+status: active
 date: 2026-03-11
+last-reviewed: 2026-07-13
 ---
 
-# SPF — Streaming Playback Framework
+# SPF design index
 
-> **This is a living design document for a highly tentative codebase.** The current implementation captures useful early lessons but is expected to undergo significant architectural change in the near term. [architecture.md](architecture.md) and [decisions.md](decisions.md) document the current state; [primitives.md](primitives.md) is the forward-looking design.
->
-> **Structure note:** These docs don't follow the standard [design doc template](../README.md) (`Decision → Context → Alternatives → Rationale`). SPF's scope — a multi-layered streaming framework with several interacting primitives — warrants a different structure: an index with glossary, per-primitive deep dives, and explicit "Open questions" sections for areas still in flux.
+SPF is the framework-neutral streaming layer behind Video.js playback engines. Source and tests own current behavior; these records preserve architecture, selection rules, feature scope, and rationale.
 
-A lean, actor-based framework for HLS playback over MSE. Handles manifest parsing, quality selection, segment buffering, and end-of-stream coordination — without a monolithic player. Actors and Reactors are defined via declarative factory functions (`createMachineActor`, `createMachineReactor`) backed by TC39 Signals.
+## Start here
 
-## Contents
+- Current package behavior and public surface: `packages/spf/src/`, tests, exports, and `packages/spf/README.md`.
+- Contributor dependency rules: `packages/spf/src/AGENTS.md`.
+- Package-level explanations: `packages/spf/docs/`.
+- Architecture rationale and registries: this directory.
 
-| Document                                                   | Purpose                                                       |
-| ---------------------------------------------------------- | ------------------------------------------------------------- |
-| [index.md](index.md)                                       | Overview, problem, quick start, surface API                   |
-| [primitives.md](primitives.md)                             | Foundational building blocks (Tasks, Actors, Reactors, State) |
-| [signals.md](signals.md)                                   | Signals as the reactive primitive — decision, tradeoffs, friction |
-| [actor-reactor-factories.md](actor-reactor-factories.md)   | Decided design for `createMachineActor` / `createMachineReactor` factories  |
-| [text-track-architecture.md](text-track-architecture.md)   | Reference Actor/Reactor implementation + spike assessment     |
-| [architecture.md](architecture.md)                         | Current implementation: layers, components, data flow         |
-| [decisions.md](decisions.md)                               | Decided and open design decisions                             |
+Do not copy current types or composition code into internal records. Link the owning source instead.
 
-## Glossary
+## Architecture and rationale
 
-| Term | Definition |
-| ---- | ---------- |
-| **Actor** | Long-lived stateful worker that processes messages serially via a queue. Owns a context snapshot and a Runner. Key examples: `SourceBufferActor`, `SegmentLoaderActor`. |
-| **Reactor** | Thin subscriber that observes state changes and translates them into actor messages. Contains no business logic beyond "should I send a message, and what should it say?" |
-| **Task** | Ephemeral async work unit with status tracking (`pending`, `active`, `complete`, `error`) and abort support. |
-| **Runner** | Task scheduler that controls execution ordering. `SerialRunner` runs one task at a time; `ConcurrentRunner` runs tasks in parallel. |
-| **Snapshot** | Reactive read-only state of an Actor or Reactor, exposed for external consumption. |
-| **Signal** | Reactive primitive from the [TC39 Signals proposal](https://github.com/tc39/proposal-signals). The layer underneath Actors and Reactors — see [signals.md](signals.md). |
-| **MSE** | [Media Source Extensions](https://developer.mozilla.org/en-US/docs/Web/API/Media_Source_Extensions_API) — browser API for programmatically feeding media data to a `<video>` element. |
-| **ABR** | Adaptive Bitrate — automatic quality selection based on estimated bandwidth. |
-| **EWMA** | Exponentially Weighted Moving Average — the bandwidth estimation algorithm used for ABR decisions. |
+| Record | Purpose |
+| --- | --- |
+| [architecture.md](architecture.md) | Layers, components, and data flow |
+| [primitives.md](primitives.md) | Tasks, runners, actors, reactors, and signals |
+| [signals.md](signals.md) | Why signals are the reactive substrate and their tradeoffs |
+| [actor-reactor-factories.md](actor-reactor-factories.md) | Factory contracts and rationale |
+| [presentation-modeling.md](presentation-modeling.md) | Presentation and track modeling |
+| [text-track-architecture.md](text-track-architecture.md) | Text-track reference implementation and lessons |
+| [track-switching-model.md](track-switching-model.md) | Selection constraints, rules, and intent resolution |
+| [decisions.md](decisions.md) | SPF-specific decisions not yet extracted as standalone records |
 
-## Problem
+## Working rules
 
-MSE-based adaptive streaming requires coordinating several concerns that don't naturally belong together: fetching segments, feeding a SourceBuffer, switching quality mid-stream, tracking what's buffered, and signaling end-of-stream at the right moment. In traditional players these concerns collapse into one or two large stateful classes, creating tight coupling and making it difficult to reason about ordering, in-flight work, or test individual pieces.
+| Record | Purpose |
+| --- | --- |
+| [conventions/](conventions/README.md) | When to use behaviors, actors, reactors, signals, and configuration |
+| [evaluation-axes.md](evaluation-axes.md) | Review axes for SPF changes |
 
-HLS adds another dimension: multivariant playlists (choosing among renditions), media playlists (knowing which segments exist), and the need to react to bandwidth changes in real time. Audio and video have separate SourceBuffers and separate fetch lifecycles but must stay in sync.
+Conventions are living rules. Update them only after a pattern recurs; code and JSDoc continue to own mechanics.
 
-SPF addresses this by decomposing the problem into three layers — reactive state, actors, and reactors — each with a single job.
+## Registries
 
-## Solution Overview
+| Registry | Question |
+| --- | --- |
+| [features/](features/clusters.md) | What capabilities can the engine provide? |
+| [use-cases/](use-cases/README.md) | How is an engine variant composed for a delivery scenario? |
 
-SPF is structured around three layers:
+Feature and use-case status is evidence-based: `draft`, `partial`, or `implemented`. Registry entries are planning inputs, not specifications.
 
-1. **Reactive state** — a batched, selector-based store that drives everything. Features observe state slices and send messages to actors.
+## Research
 
-2. **Actors** — durable workers that own a queue and a context snapshot. Each actor serializes its own operations. The two key actors are `SourceBufferActor` (MSE operations) and `SegmentLoaderActor` (fetch + append planning).
+- [multi-cdn-failover-prior-art.md](multi-cdn-failover-prior-art.md) is a reference frame, not an implementation-status record.
 
-3. **Reactors** — thin subscribers that translate state changes into actor messages. They contain no logic beyond "should I send a message, and what should it say?"
+## Maintenance
 
-HLS parsing, ABR, and buffer math live in the `core/` layer, which is DOM-free and independently testable.
-
-```
-  state (reactive)
-      │  observes
-      ▼
-  reactors (thin)
-      │  send messages
-      ▼
-  actors (stateful workers)
-      │  execute tasks
-      ▼
-  MSE (SourceBuffer, MediaSource)
-```
-
-## Quick Start
-
-```ts
-import { createPlaybackEngine } from '@videojs/spf';
-
-const engine = createPlaybackEngine();
-
-// Attach the media element (triggers SourceBuffer setup, segment loading, etc.)
-engine.owners.patch({ mediaElement: videoElement });
-
-// Load an HLS stream
-engine.state.patch({ presentation: { url: 'https://example.com/stream.m3u8' } });
-
-// Play
-videoElement.play();
-
-// Tear down
-engine.destroy();
-```
-
-## Surface API
-
-### createPlaybackEngine
-
-```ts
-function createPlaybackEngine(options?: PlaybackEngineOptions): PlaybackEngine;
-```
-
-The single entry point. Returns a `PlaybackEngine` that owns the reactive state, owners ref, and all internal actors.
-
-### PlaybackEngine
-
-```ts
-interface PlaybackEngine {
-  state: State<PlaybackEngineState>;
-  owners: Owners<PlaybackEngineOwners>;
-  destroy(): void;
-}
-```
-
-- `state` — patch to configure: `presentation`, `preload`, `selectedVideoTrackId`, `abrDisabled`, etc.
-- `owners` — patch to inject platform dependencies: `mediaElement`, `mediaSource`, `videoBuffer`, `audioBuffer`.
-- `destroy()` — tears down all actors, aborts all in-flight work.
-
-### Key State Fields
-
-```ts
-interface PlaybackEngineState {
-  presentation?: Presentation;          // loaded multivariant playlist
-  preload?: 'none' | 'metadata' | 'auto';
-  selectedVideoTrackId?: string;
-  selectedAudioTrackId?: string;
-  selectedTextTrackId?: string;
-  abrDisabled?: boolean;                // suppress ABR for manual selection
-  bandwidthState?: BandwidthState;      // current bandwidth estimate
-  currentTime?: number;
-  playbackInitiated?: boolean;
-}
-```
-
-### Key Owner Fields
-
-```ts
-interface PlaybackEngineOwners {
-  mediaElement?: HTMLVideoElement;
-  mediaSource?: MediaSource;
-  videoBuffer?: SourceBuffer;
-  audioBuffer?: SourceBuffer;
-  videoBufferActor?: SourceBufferActor;
-  audioBufferActor?: SourceBufferActor;
-  textTracksActor?: TextTracksActor;
-  segmentLoaderActor?: TextTrackSegmentLoaderActor;
-}
-```
-
-## Related Docs
-
-- [architecture.md](architecture.md) — how the layers connect
-- [decisions.md](decisions.md) — why these choices
+- Update status and implementation links when code lands.
+- Remove file inventories, branch instructions, and line-number audits once work completes.
+- Preserve constraints, rejected alternatives, and cross-feature relationships.
+- Prefer a standalone record in `internal/decisions/` when one tactical choice can be understood independently.

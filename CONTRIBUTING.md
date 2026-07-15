@@ -57,10 +57,10 @@ git pull upstream main
 pnpm install
 ```
 
-This also creates symlink aliases (`.opencode`, `agents`, `AGENTS.md`) so that AI coding tools other than Claude Code can discover project instructions.
+This also exposes the checked-in `.agents/skills/` catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. `AGENTS.md` is the canonical project guide; Claude's `CLAUDE.md` imports it.
 
 > [!NOTE]
-> **Windows users:** Directory symlinks use junctions and work automatically. File symlinks (e.g., `AGENTS.md → CLAUDE.md`) require [Developer Mode](https://learn.microsoft.com/en-us/windows/apps/get-started/enable-your-device-for-development) enabled. If symlink creation fails, `pnpm install` will log a warning but continue normally — the canonical files (`.claude/`, `CLAUDE.md`) still work fine.
+> **Windows users:** Directory aliases use junctions and work without Developer Mode. If alias creation fails, `pnpm install` logs a warning and continues; the checked-in domain folders remain available.
 
 Then build all workspace packages:
 
@@ -230,7 +230,7 @@ pnpm up <package>@<version> -r
 
 ## Using AI
 
-Video.js 10 includes tooling for AI-assisted development with [Claude Code](https://docs.anthropic.com/en/docs/claude-code). Read [`CLAUDE.md`](./CLAUDE.md) for repo-wide conventions, package layout, and development workflow.
+Video.js 10 includes portable tooling for AI-assisted development. Read [`AGENTS.md`](./AGENTS.md) for repo-wide conventions and source routing; Claude Code imports it through [`CLAUDE.md`](./CLAUDE.md).
 
 ### Slash Commands
 
@@ -238,34 +238,40 @@ Video.js 10 includes tooling for AI-assisted development with [Claude Code](http
 | ---------------- | ------------------------------------------------- |
 | `/commit-pr`     | Commit changes and create/update a PR             |
 | `/review-branch` | Review changes in the current branch              |
-| `/gh-issue <n>`  | Analyze an issue and generate a plan              |
+| `/investigate-issue <n>` | Analyze an issue and generate a plan       |
 | `/create-issue`  | Create a GitHub issue following repo conventions  |
-| `/claude-update` | Update `CLAUDE.md` and skills for new patterns    |
+| `/maintain-agent-docs` | Update agent guidance and skills             |
 | `/create-skill`  | Scaffold a new skill                              |
 
 ### Skills
 
-Domain-specific knowledge lives in `.claude/skills/`. A few of the most-used skills:
+Focused workflows live as direct children of `.agents/skills/`; host-specific discovery paths are generated aliases. A few of the most-used skills:
 
-| Skill           | Use When                                                 |
-| --------------- | -------------------------------------------------------- |
-| `api`           | Designing APIs, reviewing architecture                   |
-| `component`     | Building HTML or React components                        |
-| `aria`          | Accessibility implementation and review                  |
-| `docs`          | Writing concept guides, how-tos, and READMEs             |
-| `api-reference` | Scaffolding component/util reference pages               |
-| `design`        | Writing internal Design Docs                             |
-| `rfc`           | Writing RFCs for proposals that need buy-in              |
-| `git`           | Commit messages, PR conventions                          |
-
-See [`.claude/skills/README.md`](./.claude/skills/README.md) for the full list and workflow mappings.
+| Skill                    | Use When                                                |
+| ------------------------ | ------------------------------------------------------- |
+| `design-api`             | Designing public APIs and TypeScript contracts          |
+| `review-api`             | Auditing API and architecture changes                   |
+| `build-ui-component`     | Building HTML or React components                       |
+| `review-ui-component`    | Reviewing component architecture                        |
+| `implement-accessible-ui`| Implementing accessible interaction                     |
+| `review-accessibility`   | Auditing accessibility                                  |
+| `write-docs`             | Writing guides, READMEs, and JSDoc                      |
+| `review-docs`            | Reviewing documentation                                 |
+| `write-api-reference`    | Building generated component or utility references      |
+| `create-spf-behavior`    | Creating one SPF behavior                               |
+| `change-spf-behavior`    | Updating, refactoring, splitting, or merging a behavior |
+| `document-spf-feature`   | Maintaining an SPF feature registry entry               |
+| `document-spf-use-case`  | Maintaining an SPF use-case composition                 |
+| `implement-spf-feature`  | Implementing an SPF feature                             |
+| `implement-spf-use-case` | Implementing an SPF use-case composition                |
 
 ### Maintaining AI Docs
 
 When your changes introduce new patterns:
 
-- **Code conventions** → Update `CLAUDE.md` Code Rules section
-- **Domain patterns** → Update relevant skill in `.claude/skills/`
+- **Repo-wide recurring facts** → Update the nearest `AGENTS.md`
+- **Repeatable domain workflows** → Update the relevant skill under `.agents/skills/`
+- **Mechanically enforceable rules** → Update code, tests, lint, hooks, or `check:workspace`
 
 ## Design Docs and RFCs
 
@@ -311,7 +317,7 @@ You want to do your work in a separate branch. In general, you want to make sure
 git checkout -b my-branch
 ```
 
-One helpful naming convention approximates [conventional commits](conventional-commit-style), e.g.:
+One helpful naming convention approximates [conventional commits][conventional-commit-style], e.g.:
 
 - `fix/some-issue`
 - `feat/my-media-store-feature`

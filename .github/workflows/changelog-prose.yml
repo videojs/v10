@@ -100,7 +100,7 @@ jobs:
             Steps:
 
             1. **Load context:**
-               - Read `.claude/skills/docs/references/writing-style.md` for tone and style rules.
+               - Read `.agents/skills/write-docs/references/writing-style.md` for tone and style rules.
                - Read the raw changelog at `site/src/content/changelog/${{ steps.version.outputs.version }}.md`.
                - Read other existing `.md` files in `site/src/content/changelog/` (if any) to match their tone and format.
 

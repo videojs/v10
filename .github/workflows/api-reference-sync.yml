@@ -221,7 +221,7 @@ jobs:
           - Triggering PR: $PR_URL
           - Generated JSON: \`site/src/content/generated-component-reference/$filename\`
 
-          > Use the \`/api-reference $SLUG\` skill to scaffold this page.
+          > Use the \`/write-api-reference $SLUG\` skill to scaffold this page.
           EOF
           )"
 
@@ -284,7 +284,7 @@ jobs:
           - Triggering PR: $PR_URL
           - Generated JSON: \`site/src/content/generated-util-reference/$filename\`
 
-          > Use the \`/api-reference $SLUG\` skill to scaffold this page.
+          > Use the \`/write-api-reference $SLUG\` skill to scaffold this page.
           EOF
           )"
 
