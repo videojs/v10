@@ -35,10 +35,12 @@ jobs:
           TAG_NAME: ${{ github.event.release.tag_name }}
           RELEASE_URL: ${{ github.event.release.html_url }}
         run: |
+          # --raw-field, not --field: tag names start with "@", which --field
+          # expands as a read-from-file reference and fails.
           gh workflow run changelog-prose.yml \
             --repo "$GITHUB_REPOSITORY" \
-            --field tag_name="$TAG_NAME" \
-            --field release_url="$RELEASE_URL"
+            --raw-field tag_name="$TAG_NAME" \
+            --raw-field release_url="$RELEASE_URL"
 
   prose:
     if: github.event_name == 'workflow_dispatch' && startsWith(inputs.tag_name, '@videojs/core@')
@@ -86,9 +88,9 @@ jobs:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           claude_args: |
-            --model sonnet
-            --max-turns 20
-            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Read" "Edit" "Write" "Glob" "Grep"
+            --model opus
+            --max-turns 50
+            --allowedTools "Bash(gh:*)" "Bash(git:*)" "Bash(jq:*)" "Bash(cat:*)" "Bash(ls:*)" "Bash(head:*)" "Bash(tail:*)" "Bash(grep:*)" "Bash(sed:*)" "Bash(wc:*)" "Read" "Edit" "Write" "Glob" "Grep"
           prompt: |
             You are the changelog prose writer for Video.js 10.
 
@@ -103,6 +105,7 @@ jobs:
                - Read `.claude/skills/docs/references/writing-style.md` for tone and style rules.
                - Read the raw changelog at `site/src/content/changelog/${{ steps.version.outputs.version }}.md`.
                - Read other existing `.md` files in `site/src/content/changelog/` (if any) to match their tone and format.
+               - List the available docs pages so you can link them: `ls site/src/content/docs/concepts site/src/content/docs/how-to site/src/content/docs/reference`. A page's slug is its path under `site/src/content/docs/` without the extension (e.g. `reference/menu.mdx` → `reference/menu`).
 
             2. **Gather PR context:**
                - Extract all PR numbers (e.g., `#906`) from the raw changelog body.
@@ -123,20 +126,21 @@ jobs:
                  ```
                - This gives you PR title, body, linked issues (with body), and parent epics in one API call.
                - Some PR numbers may resolve to null — skip those gracefully.
+               - Check the raw file's "Revert" section (and `git log` for the release range if needed) for features that landed and were reverted before this release. Track these so you can exclude them in step 3.
 
             3. **Rewrite the changelog body:**
-               - Replace the raw bullet list with narrative prose. Length scales with content: substantial releases get 100–300 words; small releases (a few bullets) get 1–3 honest sentences. Never pad to hit a word count.
-               - Write paragraphs only: no headings, bullet lists, or tables. Use backticks for identifiers (e.g., `deps.alwaysBundle`, `<media-gesture>`).
-               - Lead with the 1–3 most impactful changes, informed by epic/issue context. Vary the opening; do not default to "This release…".
-               - Group related PRs into cohesive stories rather than listing them individually (e.g., a feature landing across core, html, and react is one story with three links).
-               - Call out breaking changes explicitly with concrete migration guidance from the PR body (old name → new name, what to update). Do not bury them.
-               - Summarize smaller fixes briefly, grouped.
-               - Skip internal-only changes (CI, tooling, changelog maintenance) — unless the release is entirely internal, in which case describe it honestly in a sentence or two rather than leaving the body empty.
-               - Preserve PR links as inline markdown links in the prose (e.g., [#906](url)). Every change you mention keeps its PR link.
-               - Drop per-change author credits ("by @user") — the PR link carries attribution.
-               - If the raw file has a "New Contributors" section, remove it and end the prose with one sentence thanking first-time contributors by name, linking their GitHub profiles.
-               - Follow `writing-style.md` strictly.
-               - Do not fabricate — stick to what the PRs actually say.
+               - Tell a story, don't list PRs. Group related changes into cohesive narratives (a feature landing across core, html, and react is one story with three links), and lead with what player users actually touch. Framework-internal engine work (e.g. SPF) is secondary: keep it to one short section unless the release is primarily about it.
+               - Length scales with the release. Big releases earn room to breathe; small releases get a few honest sentences. Don't be prescriptive about word counts — never pad to hit a length, and never compress a substantial release into a dense wall of clauses.
+               - Structure for scanning. For substantial releases, use `##` section headings to group the story into a few themes, each with a short lede and one or two tight paragraphs. Keep headings short and in sentence case — they render uppercase. A short bulleted list is good for a scattershot or catch-all section (assorted polish, grouped fixes). Small releases can stay a sentence or two with no headings.
+               - Open with a hook. Lead with one sentence that frames the release's throughline, written like a person talking to a peer — not a restatement of the top bullets. Vary the opening; never default to "This release…".
+               - Put breaking changes in their own `## Breaking changes` section, one bullet per change, with concrete migration guidance from the PR body (old name → new name, what to update). Reference it from the body where the feature is introduced (an in-page link like `[Breaking changes](#breaking-changes)` is fine). Never bury a breaking change in prose.
+               - Link to docs, not just PRs. When a change has a matching docs page (listed in step 1), link it. Docs URLs are framework-scoped and have no framework-agnostic route, so link both frameworks as separate words: `… for [HTML](/docs/framework/html/{slug}/) and [React](/docs/framework/react/{slug}/)`, where `{slug}` is the page's path under `site/src/content/docs/` minus the extension (e.g. `concepts/cast`, `reference/menu`). Only link pages that exist — never invent one, since a feature can ship without a reference page.
+               - Use backticks for identifiers (e.g., `deps.alwaysBundle`, `<media-gesture>`).
+               - Preserve PR links as inline markdown links in the prose (e.g., [#906](url)). Every change you mention keeps its PR link. Drop per-change author credits ("by @user") — the PR link carries attribution.
+               - Omit features reverted before this release. If a PR appears alongside a revert of it (the raw file's Revert section, or a revert commit in the range), it did not ship — leave it out entirely.
+               - Summarize smaller fixes briefly, grouped. Skip internal-only changes (CI, tooling, changelog maintenance) — unless the release is entirely internal, in which case describe it honestly in a sentence or two rather than leaving the body empty.
+               - If the raw file has a "New Contributors" section, remove it and end with one sentence thanking first-time contributors by name, linking their GitHub profiles.
+               - Follow `writing-style.md` strictly. Do not fabricate — stick to what the PRs actually say.
 
             4. **Write the `description` field:**
                - One concise sentence starting with a verb, summarizing the release for SEO/RSS (e.g., "Adds a hotkey system, gestures, and the mux-audio element."). Keep it under 140 characters.
