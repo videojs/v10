@@ -14,10 +14,10 @@ Read adjacent behaviors, the composition site, state/context slots, and `interna
 
 If existing ownership must change, treat the work as a behavior refactor. If the requested capability spans multiple behaviors, keep this workflow scoped to the one atomic responsibility and surface the broader composition work separately.
 
-Run the affected playback-engine tests and `pnpm -F @videojs/spf check:boundaries`; build SPF when public types or exports change.
+Run the narrow affected SPF tests. Build SPF when public types or exports change, and measure size when a public entry point can grow.
 
 ## Example
 
 Input: “Extract manifest refresh scheduling into its own behavior.”
 
-Output: One independently testable responsibility with explicit inputs, writes, lifecycle, cleanup, composition, and boundary checks.
+Output: One independently testable responsibility with explicit inputs, writes, lifecycle, cleanup, composition, and proportional verification.

@@ -15,12 +15,12 @@ Treat code and tests as implementation truth. Read the behavior, composition sit
 
 For a split, name the ownership axis and cross-boundary invariants. For a merge, confirm the result owns one coherent purpose; extract a helper when only an algorithm is shared. Ask for direction when alternatives materially change ownership or public contracts.
 
-Run the affected tests, then as applicable:
+Run the narrow affected tests, then as applicable:
 
 ```bash
-pnpm -F @videojs/spf test --project playback-engine
-pnpm -F @videojs/spf check:boundaries
+pnpm -F @videojs/spf test
 pnpm -F @videojs/spf build
+pnpm -F @videojs/spf size
 ```
 
 ## Example

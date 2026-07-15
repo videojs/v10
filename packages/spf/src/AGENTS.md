@@ -1,34 +1,32 @@
-# `@videojs/spf` source guide
+# @videojs/spf source guide
 
-Treat source and tests as the current implementation truth. Use `internal/design/spf/` for rationale and conventions, then verify every claim against code.
+Treat source and colocated tests as implementation truth. Use internal/design/spf only for durable rationale and conventions.
 
-## Layout and dependencies
+## Layers
 
-- `core/`: runtime primitives and composition. It must not import `media/` or `dom/`.
-- `media/`: media and playback-engine implementations built on `core/`. It must not import `dom/`.
-- `dom/`: browser bindings built on `core/` and, when needed, `media/`.
-- `index.ts`, `dom.ts`, `playback-engine.ts`: public export boundaries. Do not expose internals accidentally.
+- core: framework-neutral composition, signals, tasks, actors, and reactors. It must not depend on media, network, or playback.
+- media: media models, algorithms, and format parsing; browser media helpers live under media/dom.
+- network: fetch and bandwidth primitives.
+- playback: playback actors, behaviors, and engines; browser-bound playback code lives in nested dom directories.
+- index.ts and dom.ts are the primary entry points. Package exports also expose HLS and background-video compositions.
 
-Place a new module at the lowest layer that satisfies its dependencies. Run `pnpm -F @videojs/spf check:boundaries` when moving code across layers.
+Place code in the lowest layer that satisfies its dependencies. Keep browser APIs out of core and review public entry-point changes deliberately.
 
-## Implementation rules
+## Working rules
 
-- Read `internal/design/spf/conventions/README.md` and only the convention files relevant to the change.
-- Follow nearby behavior, actor, reactor, signal, and cleanup shapes; do not reproduce their implementation rules here.
-- Keep DOM types and APIs out of `core/`.
-- Update the appropriate entry point when adding a public export.
-- Keep public API bundle impact deliberate; use `pnpm -F @videojs/spf size` when the change can affect it.
-- Prefer `const` and an expression over mutable `let` plus conditional reassignment when both remain readable.
+- Read only the relevant file under internal/design/spf/conventions.
+- Follow nearby ownership, lifecycle, cleanup, and test patterns.
+- Add public exports intentionally and check their bundle impact when relevant.
+- Prefer clear expressions over mutable intermediate state when both remain readable.
 
 ## Verification
 
-SPF has separate Vitest projects. Use the project that owns the code:
+Use the narrowest relevant test while iterating, then run as appropriate:
 
 ```bash
-pnpm -F @videojs/spf test --project unit
-pnpm -F @videojs/spf test --project playback-engine
+pnpm -F @videojs/spf test
 pnpm -F @videojs/spf build
-pnpm -F @videojs/spf check:boundaries
+pnpm -F @videojs/spf size
 ```
 
-Use the matching `create-spf-*`, `change-spf-*`, `document-spf-*`, or `implement-spf-*` skill only when the requested workflow requires it.
+Load one specialized SPF skill only when the requested workflow needs it.

@@ -700,6 +700,7 @@ function checkAgentContext() {
 // ── Check 10: Internal record consistency ──────────────────────────────────
 
 const DESIGN_STATUSES = new Set(['draft', 'decided', 'active', 'partial', 'implemented', 'superseded', 'reference']);
+const INTERNAL_RECORD_MAX_LINES = 160;
 
 function recordFrontmatter(path, warnings) {
   const relative = relativePath(path);
@@ -712,6 +713,34 @@ function recordFrontmatter(path, warnings) {
   return Object.fromEntries(
     [...match[1].matchAll(/^([A-Za-z][A-Za-z0-9-]*):\s*(.*?)\s*$/gm)].map((field) => [field[1], field[2]])
   );
+}
+
+function checkLocalMarkdownLinks(path, warnings) {
+  const source = readText(path);
+
+  for (const match of source.matchAll(/!?\[[^\]]*\]\(([^)]+)\)/g)) {
+    let target = match[1].trim();
+    if (target.startsWith('<') && target.endsWith('>')) target = target.slice(1, -1);
+    if (!target || target.startsWith('#') || /^[a-z][a-z0-9+.-]*:/i.test(target)) continue;
+
+    target = target
+      .split(/\s+["']/)[0]
+      .split('#')[0]
+      .split('?')[0];
+    if (!target) continue;
+
+    try {
+      target = decodeURIComponent(target);
+    } catch {
+      warnings.push(`${relativePath(path)}: invalid encoded Markdown link "${match[1]}"`);
+      continue;
+    }
+
+    const resolved = target.startsWith('/') ? join(ROOT, target.slice(1)) : resolve(dirname(path), target);
+    if (!existsSync(resolved)) {
+      warnings.push(`${relativePath(path)}: broken local Markdown link "${match[1]}"`);
+    }
+  }
 }
 
 function checkInternalRecords() {
@@ -727,6 +756,8 @@ function checkInternalRecords() {
 
   for (const path of listFiles(designDir, (path) => path.endsWith('.md'))) {
     if (path === designReadme) continue;
+    checkFileBudget(path, INTERNAL_RECORD_MAX_LINES, Number.POSITIVE_INFINITY, warnings);
+    checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
     if (!frontmatter) continue;
     if (!DESIGN_STATUSES.has(frontmatter.status)) {
@@ -738,7 +769,16 @@ function checkInternalRecords() {
   }
 
   const decisionsDir = join(ROOT, 'internal/decisions');
+  const decisionsReadme = join(decisionsDir, 'README.md');
+  for (const entry of readdirSync(decisionsDir, { withFileTypes: true })) {
+    if (entry.isFile() && entry.name.endsWith('.md') && join(decisionsDir, entry.name) !== decisionsReadme) {
+      warnings.push(`internal/decisions/${entry.name}: place decision records in an area directory`);
+    }
+  }
+
   for (const path of listFiles(decisionsDir, (path) => path.endsWith('.md') && !path.endsWith('/README.md'))) {
+    checkFileBudget(path, INTERNAL_RECORD_MAX_LINES, Number.POSITIVE_INFINITY, warnings);
+    checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
     if (!frontmatter) continue;
     if (frontmatter.status !== 'decided') {
@@ -747,6 +787,11 @@ function checkInternalRecords() {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(frontmatter.date ?? '')) {
       warnings.push(`${relativePath(path)}: date must use YYYY-MM-DD`);
     }
+  }
+
+  for (const path of listFiles(join(ROOT, 'rfc'), (path) => path.endsWith('.md'))) {
+    checkFileBudget(path, INTERNAL_RECORD_MAX_LINES, Number.POSITIVE_INFINITY, warnings);
+    checkLocalMarkdownLinks(path, warnings);
   }
 
   return { ok: warnings.length === 0, warnings };
