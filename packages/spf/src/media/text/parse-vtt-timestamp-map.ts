@@ -46,9 +46,10 @@ function parseTimestampMapBody(body: string): TimestampMap | undefined {
   ) as TimestampMap;
 }
 
+/** Seconds-per-unit for the `[HH:]MM:SS.mmm` parts, right-aligned so a missing HH just drops the leading weight. */
+const VTT_TIMESTAMP_WEIGHTS = [3600, 60, 1, 0.001];
+
 function parseWebVttTimestamp(value: string): number {
-  // Computes the math cleanly whether hours are provided or omitted (right-aligned weights).
-  return value
-    .split(/[:.]/)
-    .reduce((acc, val, i, parts) => acc + +val * [3600, 60, 1, 0.001][i + 4 - parts.length]!, 0);
+  const parts = value.split(/[:.]/);
+  return parts.reduce((acc, val, i) => acc + +val * (VTT_TIMESTAMP_WEIGHTS[i + 4 - parts.length] ?? 0), 0);
 }
