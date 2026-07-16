@@ -1,14 +1,15 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import { resolveText, type Text } from '../../i18n';
+import { pauseText, playText, replayText } from '../../i18n/text/buttons';
 import type { MediaPlaybackState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface PlayButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: PlayButtonState) => string) | undefined;
+  label?: Text | string | ((state: PlayButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -39,12 +40,12 @@ export class PlayButtonCore {
     this.#props = defaults(props, PlayButtonCore.defaultProps);
   }
 
-  getLabel(state: PlayButtonState): string {
+  getLabel(state: PlayButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    if (state.ended) return 'Replay';
-    return state.paused ? 'Play' : 'Pause';
+    if (state.ended) return replayText;
+    return state.paused ? playText : pauseText;
   }
 
   getAttrs(state: PlayButtonState) {
@@ -62,7 +63,7 @@ export class PlayButtonCore {
     const media = this.#media!;
 
     this.state.patch({ paused: media.paused, ended: media.ended, started: media.started });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

@@ -10,7 +10,7 @@ import {
   selectPlayback,
   selectTime,
 } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
@@ -37,7 +37,7 @@ export class TimeSliderElement extends MediaElement {
     pauseOnDrag: { type: Boolean, attribute: 'pause-on-drag' },
   } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
-  label = TimeSliderCore.defaultProps.label;
+  label: Text | string = '';
   changeThrottle = TimeSliderCore.defaultProps.changeThrottle;
   step = TimeSliderCore.defaultProps.step;
   largeStep = TimeSliderCore.defaultProps.largeStep;
@@ -165,10 +165,10 @@ export class TimeSliderElement extends MediaElement {
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: {
         ...thumbAttrs,
-        'aria-label': resolveTranslation(this.#i18n.value, thumbAttrs['aria-label']),
-        'aria-valuetext': resolveTranslation(
-          this.#i18n.value,
+        'aria-label': translateText(thumbAttrs['aria-label'], this.#i18n.value),
+        'aria-valuetext': translateText(
           thumbAttrs['aria-valuetext'],
+          this.#i18n.value,
           this.#core.getValueTextParams(state)
         ),
       },

@@ -89,7 +89,7 @@ async function syncCdnI18nProvider(tag: SandboxLocaleTag, seq: number): Promise<
   if (!import.meta.env.DEV || tag === 'en') return;
   if (!document.querySelector('media-play-button')) return;
 
-  const expected = getI18nTranslations(tag).Play;
+  const expected = getI18nTranslations(tag)['buttons.play'];
   const playLabel = await waitForCdnPlayLabel(expected);
   if (seq !== localeApplySeq) return;
 

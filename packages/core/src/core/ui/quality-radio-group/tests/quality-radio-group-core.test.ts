@@ -106,7 +106,8 @@ describe('QualityRadioGroupCore', () => {
       const state = core.getState();
 
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
-      expect(state.autoLabel).toBe('Auto (720p)');
+      expect(state.autoLabel).toMatchObject({ key: 'menu.autoWithLabel', text: 'Auto ({label})' });
+      expect(state.autoLabelParams).toEqual({ label: '720p' });
     });
 
     it('marks availability unavailable with one rendition', () => {
@@ -121,7 +122,7 @@ describe('QualityRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns the default label', () => {
       const core = new QualityRadioGroupCore();
-      expect(core.getLabel(createState())).toBe('Quality');
+      expect(core.getLabel(createState())).toMatchObject({ key: 'menu.quality', text: 'Quality' });
     });
 
     it('returns a custom string label', () => {

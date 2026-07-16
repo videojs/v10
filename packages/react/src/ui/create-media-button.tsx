@@ -2,9 +2,9 @@
 
 import type { InferComponentState, InferMediaState, MediaButtonComponent, StateAttrMap } from '@videojs/core';
 import { logMissingFeature } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { isText, translateText } from '@videojs/core/i18n';
 import type { Selector } from '@videojs/store';
-import { isString, isUndefined } from '@videojs/utils/predicate';
+import { isUndefined } from '@videojs/utils/predicate';
 import type { ForwardedRef, ForwardRefExoticComponent, RefAttributes } from 'react';
 import { forwardRef, useLayoutEffect, useState } from 'react';
 
@@ -101,7 +101,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
-    const label = state ? resolveTranslation(translator, core.getLabel(state), getLabelParams(core, state)) : undefined;
+    const label = state ? translateText(core.getLabel(state), translator, getLabelParams(core, state)) : undefined;
     const tooltipText = state ? (tooltipLabel?.(core, state) ?? label) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
@@ -120,8 +120,8 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     const ariaLabel = attrs['aria-label'];
     const resolvedAttrs = {
       ...attrs,
-      ...(isString(ariaLabel)
-        ? { 'aria-label': resolveTranslation(translator, ariaLabel, getLabelParams(core, state)) }
+      ...(isText(ariaLabel)
+        ? { 'aria-label': translateText(ariaLabel, translator, getLabelParams(core, state)) }
         : undefined),
       'aria-keyshortcuts': shortcut.aria,
     };

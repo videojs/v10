@@ -1,7 +1,7 @@
 import type { ButtonState } from '@videojs/core';
 import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom';
-import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
+import { registerI18n, resetI18nRegistry, resolveText, type Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createState, createStore } from '@videojs/store';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -54,7 +54,7 @@ class TestTriggerElement extends HTMLElement {
   shortcut: string | undefined = 'K';
 
   getLabel(): string | undefined {
-    return this.$state.current.label;
+    return this.$state.current.label ? resolveText(this.$state.current.label) : undefined;
   }
 
   getShortcut(): string | undefined {
@@ -177,7 +177,7 @@ describe('TooltipElement', () => {
   });
 
   it('shows translated label from the trigger control', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
 
     ensureDefined(TestPlayerProviderElement);
     ensureDefined(PlayButtonElement);
@@ -206,8 +206,8 @@ describe('TooltipElement', () => {
   });
 
   it('updates tooltip text when provider locale changes', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
 
     ensureDefined(TestPlayerProviderElement);
     ensureDefined(PlayButtonElement);
@@ -241,16 +241,16 @@ describe('TooltipElement', () => {
     expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Lire');
   });
 
-  it('falls back to translating getLabel when getResolvedLabel is undefined', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
+  it('falls back to translating Text from getLabel when getResolvedLabel is undefined', async () => {
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
 
     class StubTrigger extends HTMLElement {
       static readonly tagName = 'stub-tooltip-trigger';
 
       readonly $state = { subscribe: () => () => {} };
 
-      getLabel(): string {
-        return 'Play';
+      getLabel(): Text {
+        return { key: 'buttons.play', text: 'Play' };
       }
 
       getResolvedLabel(): undefined {

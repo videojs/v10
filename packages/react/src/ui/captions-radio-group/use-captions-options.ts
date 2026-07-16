@@ -2,7 +2,8 @@
 
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectTextTrack } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
+import { offText } from '@videojs/core/i18n/text/menu';
 import { useCallback, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -58,12 +59,12 @@ export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOption
     options: [
       {
         value: CAPTIONS_OFF_VALUE,
-        label: resolveTranslation(t, 'Off'),
+        label: translateText(offText, t),
         disabled: state.disabled,
       },
       ...state.tracks.map((track) => ({
         value: track.value,
-        label: resolveTranslation(t, track.label),
+        label: translateText(track.label, t),
         disabled: state.disabled,
       })),
     ],

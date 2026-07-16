@@ -78,17 +78,26 @@ describe('AirPlayButtonCore', () => {
   describe('getLabel', () => {
     it('returns Start AirPlay when disconnected', () => {
       const core = new AirPlayButtonCore();
-      expect(core.getLabel(createState({ state: 'disconnected' }))).toBe('Start AirPlay');
+      expect(core.getLabel(createState({ state: 'disconnected' }))).toMatchObject({
+        key: 'airplay.start',
+        text: 'Start AirPlay',
+      });
     });
 
     it('returns Stop AirPlay when connected', () => {
       const core = new AirPlayButtonCore();
-      expect(core.getLabel(createState({ state: 'connected' }))).toBe('Stop AirPlay');
+      expect(core.getLabel(createState({ state: 'connected' }))).toMatchObject({
+        key: 'airplay.stop',
+        text: 'Stop AirPlay',
+      });
     });
 
     it('returns Connecting when connecting', () => {
       const core = new AirPlayButtonCore();
-      expect(core.getLabel(createState({ state: 'connecting' }))).toBe('Connecting');
+      expect(core.getLabel(createState({ state: 'connecting' }))).toMatchObject({
+        key: 'cast.connecting',
+        text: 'Connecting',
+      });
     });
 
     it('returns custom string label', () => {
@@ -108,7 +117,7 @@ describe('AirPlayButtonCore', () => {
     it('returns aria-label', () => {
       const core = new AirPlayButtonCore();
       const attrs = core.getAttrs(createState());
-      expect(attrs['aria-label']).toBe('Start AirPlay');
+      expect(attrs['aria-label']).toMatchObject({ key: 'airplay.start', text: 'Start AirPlay' });
     });
 
     it('sets aria-disabled when disabled', () => {

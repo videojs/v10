@@ -59,7 +59,7 @@ describe('AudioTrackRadioGroupCore', () => {
       expect(core.getState().tracks).toEqual([
         { value: '0', label: 'en' },
         { value: '1', label: 'commentary' },
-        { value: '2', label: 'Audio' },
+        { value: '2', label: { key: 'menu.audio', text: 'Audio' } },
       ]);
     });
 
@@ -91,7 +91,7 @@ describe('AudioTrackRadioGroupCore', () => {
   describe('getLabel', () => {
     it('returns the default label', () => {
       const core = new AudioTrackRadioGroupCore();
-      expect(core.getLabel(createState())).toBe('Audio');
+      expect(core.getLabel(createState())).toMatchObject({ key: 'menu.audio', text: 'Audio' });
     });
 
     it('returns a custom string label', () => {

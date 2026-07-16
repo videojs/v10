@@ -8,6 +8,7 @@ import {
 } from '../browser-translation';
 import en from '../locales/en';
 import { registerI18n, resetI18nRegistry } from '../registry';
+import { flattenTranslations } from '../utils';
 
 type MockAvailability = 'available' | 'downloadable' | 'unavailable';
 
@@ -62,11 +63,13 @@ describe('shouldAttemptBrowserTranslation', () => {
   });
 
   it('attempts when a loaded built-in pack is missing English keys', () => {
-    expect(shouldAttemptBrowserTranslation('es', ['es'], { Play: 'Ir' })).toBe(true);
+    expect(shouldAttemptBrowserTranslation('es', ['es'], { 'buttons.play': 'Ir' })).toBe(true);
   });
 
   it('skips when a loaded built-in pack covers English keys', () => {
-    expect(shouldAttemptBrowserTranslation('es', ['es'], { ...en, Play: 'Ir' })).toBe(false);
+    expect(shouldAttemptBrowserTranslation('es', ['es'], { ...flattenTranslations(en), 'buttons.play': 'Ir' })).toBe(
+      false
+    );
   });
 
   it('attempts when only English lazy tags loaded', () => {
@@ -74,7 +77,7 @@ describe('shouldAttemptBrowserTranslation', () => {
   });
 
   it('skips when a non-en tag in the chain is registered', () => {
-    registerI18n('es', { Play: 'Ir' });
+    registerI18n('es', { 'buttons.play': 'Ir' });
     expect(shouldAttemptBrowserTranslation('es-MX', [])).toBe(false);
   });
 
@@ -107,8 +110,8 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
-    expect(result.Play).toBe('Jouer');
-    expect(result.Pause).toBe('translated:Pause');
+    expect(result['buttons.play']).toBe('Jouer');
+    expect(result['buttons.pause']).toBe('translated:Pause');
   });
 
   it('preserves {param} placeholders in translated strings', async () => {
@@ -117,7 +120,7 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
-    expect(result['Seek forward {seconds} seconds']).toBe('FR:Seek forward {seconds} seconds');
+    expect(result['seek.forward']).toBe('FR:Seek forward {seconds} seconds');
   });
 
   it('masks named placeholders as numeric slots for whole-string translation', async () => {
@@ -138,8 +141,8 @@ describe('getBrowserTranslations', () => {
     const result = await getBrowserTranslations('fr');
     expect(translatedInputs).toContain('Seek backward {0} seconds');
     expect(translatedInputs.some((text) => text.includes('{seconds}'))).toBe(false);
-    expect(result['Seek backward {seconds} seconds']).toBe('Mencari mundur {seconds} detik');
-    expect(result['Seek forward {seconds} seconds']).toBe('Mencari maju {seconds} detik');
+    expect(result['seek.backward']).toBe('Mencari mundur {seconds} detik');
+    expect(result['seek.forward']).toBe('Mencari maju {seconds} detik');
   });
 
   it('restores slots when the translator adds spaces inside braces', async () => {
@@ -148,7 +151,7 @@ describe('getBrowserTranslations', () => {
     });
 
     const result = await getBrowserTranslations('fr');
-    expect(result['Playback rate {rate}']).toBe('Kecepatan pemutaran {rate}');
+    expect(result['playback.rate']).toBe('Kecepatan pemutaran {rate}');
   });
 
   it('interpolates seek seconds after browser translation', async () => {
@@ -158,9 +161,9 @@ describe('getBrowserTranslations', () => {
 
     const { createTranslator } = await import('../translator');
     const result = await getBrowserTranslations('fr');
-    const t = createTranslator({ ...result, Play: 'Play' } as import('../types').Translations, 'fr');
+    const t = createTranslator(result, 'fr');
 
-    expect(t('Seek forward {seconds} seconds', { seconds: 10 })).toBe('Mencari maju 10 detik');
+    expect(t('seek.forward', { seconds: 10 })).toBe('Mencari maju 10 detik');
   });
 
   it('caches results per target language', async () => {
@@ -184,7 +187,7 @@ describe('getBrowserTranslations', () => {
       onModelDownload: { start: onStart, finish: onFinish },
     });
     expect(translator.create).toHaveBeenCalledTimes(1);
-    expect(result.Play).toBe('Main');
+    expect(result['buttons.play']).toBe('Main');
     expect(onStart).toHaveBeenCalledWith('id');
     expect(onFinish).toHaveBeenCalledWith('id');
   });

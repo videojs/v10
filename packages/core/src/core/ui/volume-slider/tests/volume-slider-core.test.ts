@@ -141,7 +141,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('Volume');
+      expect(attrs['aria-label']).toMatchObject({ key: 'volume.label', text: 'Volume' });
       expect(attrs['aria-valuetext']).toBe(formatPercent(0.75));
       expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.75) });
       expect(attrs.role).toBe('slider');
@@ -154,7 +154,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('{percent}, muted');
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'volume.mutedValue', text: '{percent}, muted' });
       expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.5) });
     });
 
@@ -186,7 +186,7 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('{percent}, muted');
+      expect(attrs['aria-valuetext']).toMatchObject({ key: 'volume.mutedValue', text: '{percent}, muted' });
       expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0) });
     });
   });

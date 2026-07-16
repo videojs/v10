@@ -2,8 +2,9 @@ import {
   AlertDialogDataAttrs,
   type AlertDialogInput,
   ErrorDialogCore,
-  getErrorDialogDismissLabel,
-  getErrorDialogTitleLabel,
+  getErrorDialogDismissText,
+  getErrorDialogTitleText,
+  getErrorDialogUnexpectedText,
   type MediaError,
   resolveErrorDialogDescription,
 } from '@videojs/core';
@@ -15,7 +16,7 @@ import {
   createTransition,
   selectError,
 } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
@@ -45,7 +46,7 @@ export class ErrorDialogElement extends MediaElement {
   #dialog: AlertDialogApi | null = null;
   #snapshot: SnapshotController<AlertDialogInput> | null = null;
   #lastError: MediaError | null = null;
-  #lastDescription: string | null = null;
+  #lastDescription: ReturnType<typeof resolveErrorDialogDescription> | null = null;
   #seenCopyParts = new WeakSet<HTMLElement>();
   #authoredCopyParts = new WeakSet<HTMLElement>();
 
@@ -132,7 +133,7 @@ export class ErrorDialogElement extends MediaElement {
     const t = this.#i18n.value;
     const title = this.querySelector<HTMLElement>('media-alert-dialog-title');
     if (title && !this.#hasAuthoredCopy(title)) {
-      title.textContent = resolveTranslation(t, getErrorDialogTitleLabel());
+      title.textContent = translateText(getErrorDialogTitleText(), t);
     }
 
     const desc = this.querySelector<HTMLElement>('media-alert-dialog-description');
@@ -141,13 +142,13 @@ export class ErrorDialogElement extends MediaElement {
       if (description) {
         this.#lastDescription = description;
       }
-      const copy = description ?? this.#lastDescription ?? 'An unexpected error occurred.';
-      desc.textContent = resolveTranslation(t, copy);
+      const copy = description ?? this.#lastDescription;
+      desc.textContent = copy ? translateText(copy, t) : translateText(getErrorDialogUnexpectedText(), t);
     }
 
     const close = this.querySelector<HTMLElement>('media-alert-dialog-close');
     if (close && !this.#hasAuthoredCopy(close)) {
-      close.textContent = resolveTranslation(t, getErrorDialogDismissLabel());
+      close.textContent = translateText(getErrorDialogDismissText(), t);
     }
   }
 

@@ -114,7 +114,7 @@ describe('CaptionsRadioGroupElement', () => {
 
     await options.updateComplete;
 
-    registerI18n('x-test-captions', { Captions: 'Legendes', Off: 'Desactive' });
+    registerI18n('x-test-captions', { 'menu.captions': 'Legendes', 'menu.off': 'Desactive' });
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];

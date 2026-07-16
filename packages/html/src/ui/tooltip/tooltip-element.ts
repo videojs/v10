@@ -23,7 +23,7 @@ import {
   type TooltipChangeDetails,
   type TooltipOpenChangeReason,
 } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 import type { State } from '@videojs/store';
@@ -40,7 +40,7 @@ import { TooltipLabelElement } from './tooltip-label-element';
 import { TooltipShortcutElement } from './tooltip-shortcut-element';
 
 type TriggerElement = HTMLElement & {
-  getLabel(): string | undefined;
+  getLabel(): Text | string | undefined;
   getResolvedLabel?(): string | undefined;
   getShortcut?: (() => string | undefined) | undefined;
   $state: State<ButtonState>;
@@ -258,7 +258,7 @@ export class TooltipElement extends MediaElement {
     const label = triggerEl.getLabel();
     let resolved = isFunction(triggerEl.getResolvedLabel) ? triggerEl.getResolvedLabel() : undefined;
     if (resolved === undefined && label) {
-      resolved = resolveTranslation(this.#i18n.value, label);
+      resolved = translateText(label, this.#i18n.value);
     }
     const shortcut = triggerEl.getShortcut?.();
 

@@ -1,4 +1,4 @@
-import { resolveTranslation, type Translator } from '@videojs/core/i18n';
+import { type Text, type Translator, translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
 
 import { RadioGroupElement } from '../radio-group/radio-group-element';
@@ -48,13 +48,17 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     }
   }
 
-  protected applyAriaLabel(translator: Translator, label: string, params?: Record<string, string | number>): void {
+  protected applyAriaLabel(
+    translator: Translator,
+    label: Text | string,
+    params?: Record<string, string | number>
+  ): void {
     if (this.hasAttribute('aria-labelledby')) return;
 
     const current = this.getAttribute('aria-label');
     if (current !== null && current !== this.#ariaLabel) return;
 
-    this.#ariaLabel = resolveTranslation(translator, label, params);
+    this.#ariaLabel = translateText(label, translator, params);
     this.setAttribute('aria-label', this.#ariaLabel);
   }
 }

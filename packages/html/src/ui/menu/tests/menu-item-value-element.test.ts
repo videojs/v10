@@ -224,7 +224,7 @@ describe('MenuItemValueElement', () => {
   });
 
   it('renders the active quality label when quality is automatic', async () => {
-    registerI18n('x-test-quality-hint', { 'Auto ({label})': 'Automatico ({label})' });
+    registerI18n('x-test-quality-hint', { 'menu.autoWithLabel': 'Automatico ({label})' });
     const { value } = setup(
       createQualityStore({
         activeVideoRendition: { id: '1', height: 720, selected: false },
@@ -274,7 +274,7 @@ describe('MenuItemValueElement', () => {
   });
 
   it('translates the fallback audio track label', async () => {
-    registerI18n('x-test-audio-hint', { Audio: 'Audio test' });
+    registerI18n('x-test-audio-hint', { 'menu.audio': 'Audio test' });
     const { value } = setup(
       createAudioTrackStore({
         audioTrackList: [
@@ -293,7 +293,7 @@ describe('MenuItemValueElement', () => {
   });
 
   it('renders the active caption track label', async () => {
-    registerI18n('x-test-captions-hint', { Captions: 'Legendes' });
+    registerI18n('x-test-captions-hint', { 'menu.captions': 'Legendes' });
     const { value } = setup(
       createTextTrackStore({
         textTrackList: [

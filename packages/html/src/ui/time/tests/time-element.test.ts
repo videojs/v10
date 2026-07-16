@@ -1,9 +1,12 @@
 import type { MediaTimeState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore } from '@videojs/store';
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { TimeElement } from '../time-element';
@@ -79,13 +82,21 @@ class TestPlayerProviderElement extends MediaElement {
 }
 
 defineElement('test-time-player', TestPlayerProviderElement);
+defineElement(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
 
-async function setup(props: Partial<TimeElement> = {}) {
+async function setup(props: Partial<TimeElement> = {}, locale?: string) {
   const provider = document.createElement('test-time-player') as TestPlayerProviderElement;
   const time = createElement(TimeElement);
 
   Object.assign(time, props);
-  document.body.append(provider);
+  if (locale) {
+    const i18n = new MediaI18nProviderElement();
+    i18n.setAttribute('lang', locale);
+    i18n.append(provider);
+    document.body.append(i18n);
+  } else {
+    document.body.append(provider);
+  }
   provider.append(time);
   await time.updateComplete;
   await waitForAssertion(() => expect(time.textContent).toBeTruthy());
@@ -94,6 +105,7 @@ async function setup(props: Partial<TimeElement> = {}) {
 }
 
 afterEach(() => {
+  resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
@@ -125,6 +137,19 @@ describe('TimeElement', () => {
     expect(time.textContent).toBe('1:30');
     expect(time.getAttribute('data-type')).toBe('current');
     expect(time.getAttribute('aria-label')).toBe('1 minute, 30 seconds. Show remaining time.');
+  });
+
+  it('formats toggle labels with the active locale', async () => {
+    registerI18n('fr', { 'time.showRemaining': '{duration}. Afficher restant.' });
+
+    const { time } = await setup({ toggle: true }, 'fr');
+
+    expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(90, { locale: 'fr' })}. Afficher restant.`);
+
+    time.type = 'duration';
+    await time.updateComplete;
+
+    expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(300, { locale: 'fr' })}. Afficher restant.`);
   });
 
   it('does not toggle before media state is available', async () => {

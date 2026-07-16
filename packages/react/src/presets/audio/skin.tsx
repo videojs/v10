@@ -1,3 +1,4 @@
+import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
@@ -86,7 +87,7 @@ function PlaybackRateRadioGroup(): ReactNode {
       className="media-menu__group"
       value={value}
       onValueChange={setValue}
-      aria-label={t('Playback rate')}
+      aria-label={t(playbackRateText)}
     >
       {options.map((option) => (
         <Menu.RadioItem key={option.value} className="media-menu__item" value={option.value} disabled={option.disabled}>

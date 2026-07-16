@@ -2,23 +2,25 @@ import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import { resolveText, type Text } from '../../i18n';
+import { disableText, enableText } from '../../i18n/text/captions';
+import { captionsText, subtitlesText } from '../../i18n/text/menu';
 import type { MediaTextTrack, MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsRadioGroupProps {
   /** Custom label for the menu trigger. */
-  label?: string | ((state: CaptionsRadioGroupState) => string) | undefined;
+  label?: Text | string | ((state: CaptionsRadioGroupState) => Text | string) | undefined;
   /** Custom formatter for visible track labels. */
-  formatTrack?: ((track: MediaTextTrack) => string) | undefined;
+  formatTrack?: ((track: MediaTextTrack) => Text | string) | undefined;
   /** Whether track selection is disabled. */
   disabled?: boolean | undefined;
 }
 
 export interface CaptionsRadioGroupTrack {
   value: string;
-  label: string;
+  label: Text | string;
 }
 
 export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subtitlesShowing'>, ButtonState {
@@ -30,10 +32,10 @@ export interface CaptionsRadioGroupState extends Pick<MediaTextTrackState, 'subt
 
 export const CAPTIONS_OFF_VALUE = 'off';
 
-function formatTrackLabel(track: MediaTextTrack): string {
+function formatTrackLabel(track: MediaTextTrack): Text | string {
   if (track.label) return track.label;
   if (track.language) return track.language;
-  return track.kind === 'captions' ? 'Captions' : 'Subtitles';
+  return track.kind === 'captions' ? captionsText : subtitlesText;
 }
 
 function sortCaptionTracks(a: MediaTextTrack, b: MediaTextTrack): number {
@@ -71,14 +73,14 @@ export class CaptionsRadioGroupCore {
     this.#props = defaults(props, CaptionsRadioGroupCore.defaultProps);
   }
 
-  getLabel(state: CaptionsRadioGroupState): string {
+  getLabel(state: CaptionsRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
+    return state.subtitlesShowing ? disableText : enableText;
   }
 
-  getTrackLabel(track: MediaTextTrack): string {
+  getTrackLabel(track: MediaTextTrack): Text | string {
     return this.#props.formatTrack(track);
   }
 
@@ -112,7 +114,7 @@ export class CaptionsRadioGroupCore {
       disabled: this.#props.disabled || captionTracks.length === 0,
       availability,
     });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

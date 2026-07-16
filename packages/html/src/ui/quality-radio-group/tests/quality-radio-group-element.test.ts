@@ -202,7 +202,7 @@ describe('QualityRadioGroupElement', () => {
 
     await waitForMenu(menu, options);
 
-    registerI18n('x-test-quality', { Auto: 'Automatique' });
+    registerI18n('x-test-quality', { 'menu.auto': 'Automatique' });
 
     await waitForAssertion(() => {
       const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];

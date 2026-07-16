@@ -2,7 +2,7 @@
 
 import type { AlertDialogCore } from '@videojs/core';
 import { resolveErrorDialogDescription } from '@videojs/core';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -18,7 +18,7 @@ export const ErrorDialogDescription = forwardRef<HTMLParagraphElement, ErrorDial
     const { state, stateAttrMap } = useAlertDialogContext();
     const { lastError } = useErrorDialogContext();
     const description = resolveErrorDialogDescription(lastError);
-    const content: ReactNode = children ?? resolveTranslation(t, description);
+    const content: ReactNode = children ?? translateText(description, t);
 
     return renderElement(
       'p',

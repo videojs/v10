@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { createTranslator, type Translations } from '../../../i18n';
+import { createTranslator, type FlatTranslations } from '../../../i18n';
 
 import { createInputIndicatorLabels } from '../labels';
 
@@ -8,18 +8,18 @@ describe('createInputIndicatorLabels', () => {
     const labels = createInputIndicatorLabels(
       createTranslator(
         {
-          Muted: 'Muet',
-          Volume: 'Volume',
-          'Volume {value}': 'Volume {value}',
-          'Captions on': 'Sous-titres activés',
-          'Captions off': 'Sous-titres désactivés',
-          Paused: 'En pause',
-          Playing: 'Lecture en cours',
-          Fullscreen: 'Plein écran',
-          'Exit fullscreen': 'Quitter le plein écran',
-          'Picture in picture': 'Image dans l’image',
-          'Exit picture in picture': 'Quitter l’image dans l’image',
-        } satisfies Translations,
+          'volume.muted': 'Muet',
+          'volume.label': 'Volume',
+          'volume.value': 'Volume {value}',
+          'status.captionsOn': 'Sous-titres activés',
+          'status.captionsOff': 'Sous-titres désactivés',
+          'status.paused': 'En pause',
+          'status.playing': 'Lecture en cours',
+          'status.fullscreen': 'Plein écran',
+          'fullscreen.exit': 'Quitter le plein écran',
+          'status.pip': 'Image dans l’image',
+          'status.exitPip': 'Quitter l’image dans l’image',
+        } satisfies FlatTranslations,
         'fr'
       )
     );

@@ -62,10 +62,7 @@ describe('Time.Value', () => {
 
     const { rerender } = render(
       <Wrapper>
-        <I18nProvider
-          locale="fr"
-          translations={{ '{duration}. Show remaining time.': '{duration}. Afficher restant.' }}
-        >
+        <I18nProvider locale="fr" translations={{ time: { showRemaining: '{duration}. Afficher restant.' } }}>
           <Value data-testid="time" toggle />
         </I18nProvider>
       </Wrapper>
@@ -76,10 +73,7 @@ describe('Time.Value', () => {
 
     rerender(
       <Wrapper>
-        <I18nProvider
-          locale="fr"
-          translations={{ '{duration}. Show remaining time.': '{duration}. Afficher restant.' }}
-        >
+        <I18nProvider locale="fr" translations={{ time: { showRemaining: '{duration}. Afficher restant.' } }}>
           <Value data-testid="time" toggle type="duration" />
         </I18nProvider>
       </Wrapper>

@@ -1,7 +1,9 @@
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import type { Text } from '../../i18n';
+import { seekText } from '../../i18n/text/slider';
+import { positionText } from '../../i18n/text/time';
 import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
@@ -81,8 +83,8 @@ export class TimeSliderCore extends SliderCore {
     };
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Seek';
+  override getLabel(state: SliderState): Text | string {
+    return super.getLabel(state) || seekText;
   }
 
   #announceValue(state: TimeSliderState): number {
@@ -95,8 +97,8 @@ export class TimeSliderCore extends SliderCore {
       : formatTimeAsPhrase(seconds, { locale: this.#formatLocale });
   }
 
-  getValueText(state: TimeSliderState): string {
-    return Number.isFinite(state.duration) ? '{current} of {duration}' : this.getValueTextParams(state).current;
+  getValueText(state: TimeSliderState): Text | string {
+    return Number.isFinite(state.duration) ? positionText : this.getValueTextParams(state).current;
   }
 
   getValueTextParams(state: TimeSliderState): { current: string; duration: string } | { current: string } {

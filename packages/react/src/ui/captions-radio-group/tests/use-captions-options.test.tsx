@@ -132,7 +132,7 @@ describe('useCaptionsOptions', () => {
 
   it('translates default track labels', () => {
     registerI18n('xx', {
-      Captions: 'Captions translated',
+      'menu.captions': 'Captions translated',
     });
 
     renderCaptionsMenu({

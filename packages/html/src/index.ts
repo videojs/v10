@@ -18,6 +18,7 @@ export { createSelector, shallowEqual } from '@videojs/store';
 export type {
   CreateI18nOptions,
   CreateI18nResult,
+  FlatTranslations,
   I18nContextValue,
   Locale,
   TranslationParams,

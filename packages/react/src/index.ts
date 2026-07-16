@@ -15,6 +15,7 @@ export {
   type CreateI18nResult,
   createI18n,
   createTranslator,
+  type FlatTranslations,
   findLocaleKeys,
   getI18nTranslations,
   hasRegisteredLocale,

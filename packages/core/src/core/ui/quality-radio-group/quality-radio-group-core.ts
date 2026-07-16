@@ -1,30 +1,32 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import { resolveText, type Text, type TextParams } from '../../i18n';
+import { autoText, autoWithLabelText, qualityText } from '../../i18n/text/menu';
 import type { MediaQualityState, MediaVideoRendition } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface QualityRadioGroupProps {
   /** Custom label for the options group. */
-  label?: string | ((state: QualityRadioGroupState) => string) | undefined;
+  label?: Text | string | ((state: QualityRadioGroupState) => Text | string) | undefined;
   /** Custom formatter for visible rendition labels. */
-  formatRendition?: ((rendition: MediaVideoRendition) => string) | undefined;
+  formatRendition?: ((rendition: MediaVideoRendition) => Text | string) | undefined;
   /** Whether quality selection is disabled. */
   disabled?: boolean | undefined;
 }
 
 export interface QualityRadioGroupRendition {
   value: string;
-  label: string;
+  label: Text | string;
   tier?: string | undefined;
   badge?: string | undefined;
 }
 
 export interface QualityRadioGroupState extends ButtonState {
   renditions: readonly QualityRadioGroupRendition[];
-  autoLabel: string;
+  autoLabel: Text | string;
+  autoLabelParams?: TextParams;
   value: string;
   disabled: boolean;
   availability: 'available' | 'unavailable';
@@ -64,11 +66,11 @@ function hasSameSize(rendition: MediaVideoRendition, renditions: readonly MediaV
   return Boolean(size && renditions.some((other) => other !== rendition && getRenditionSize(other) === size));
 }
 
-function formatRenditionLabel(rendition: MediaVideoRendition): string {
+function formatRenditionLabel(rendition: MediaVideoRendition): Text | string {
   const size = getRenditionSize(rendition);
   if (size) return `${size}p`;
   if (rendition.bitrate) return formatBitrate(rendition.bitrate);
-  return 'Quality';
+  return qualityText;
 }
 
 function formatRenditionBadge(
@@ -115,7 +117,7 @@ export class QualityRadioGroupCore {
 
   readonly state = createState<QualityRadioGroupState>({
     renditions: [],
-    autoLabel: 'Auto',
+    autoLabel: autoText,
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'unavailable',
@@ -133,14 +135,14 @@ export class QualityRadioGroupCore {
     this.#props = defaults(props, QualityRadioGroupCore.defaultProps);
   }
 
-  getLabel(state: QualityRadioGroupState): string {
+  getLabel(state: QualityRadioGroupState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return 'Quality';
+    return qualityText;
   }
 
-  getRenditionLabel(rendition: MediaVideoRendition): string {
+  getRenditionLabel(rendition: MediaVideoRendition): Text | string {
     if (this.#props.formatRendition !== QualityRadioGroupCore.defaultProps.formatRendition) {
       return this.#props.formatRendition(rendition);
     }
@@ -205,7 +207,8 @@ export class QualityRadioGroupCore {
 
     this.state.patch({
       renditions: media.videoRenditionList.map(toRendition),
-      autoLabel: selectedIndex === -1 && active ? `Auto (${active.label})` : 'Auto',
+      autoLabel: selectedIndex === -1 && active ? autoWithLabelText : autoText,
+      ...(selectedIndex === -1 && active && { autoLabelParams: { label: resolveText(active.label) } }),
       value:
         selectedIndex === -1
           ? QUALITY_AUTO_VALUE
@@ -213,7 +216,7 @@ export class QualityRadioGroupCore {
       disabled: this.#props.disabled || availability === 'unavailable',
       availability,
     });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

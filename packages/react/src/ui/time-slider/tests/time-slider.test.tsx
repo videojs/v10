@@ -204,7 +204,7 @@ describe('TimeSlider compound', () => {
     const { Wrapper } = createPlayerWrapper();
     const { container } = render(
       <Wrapper>
-        <I18nProvider locale="fr" translations={{ '{current} of {duration}': '{current} sur {duration}' }}>
+        <I18nProvider locale="fr" translations={{ time: { position: '{current} sur {duration}' } }}>
           <TimeSliderRoot>
             <SliderThumb data-testid="thumb" />
           </TimeSliderRoot>

@@ -13,8 +13,8 @@ afterEach(() => {
 
 describe('PlayButton', () => {
   it('applies translated aria-label and updates when locale changes', () => {
-    registerI18n('es', { Play: 'Reproducir' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
 
     const { Wrapper } = createPlayerWrapper({
       paused: true,
@@ -62,7 +62,7 @@ describe('PlayButton', () => {
 
     render(
       <Wrapper>
-        <CustomI18nProvider locale="en" translations={{ Play: 'Custom play' }}>
+        <CustomI18nProvider locale="en" translations={{ 'buttons.play': 'Custom play' }}>
           <PlayButton data-testid="play" />
         </CustomI18nProvider>
       </Wrapper>

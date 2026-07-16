@@ -48,12 +48,18 @@ describe('FullscreenButtonCore', () => {
   describe('getLabel', () => {
     it('returns Enter fullscreen when not fullscreen', () => {
       const core = new FullscreenButtonCore();
-      expect(core.getLabel(createState({ fullscreen: false }))).toBe('Enter fullscreen');
+      expect(core.getLabel(createState({ fullscreen: false }))).toMatchObject({
+        key: 'fullscreen.enter',
+        text: 'Enter fullscreen',
+      });
     });
 
     it('returns Exit fullscreen when fullscreen', () => {
       const core = new FullscreenButtonCore();
-      expect(core.getLabel(createState({ fullscreen: true }))).toBe('Exit fullscreen');
+      expect(core.getLabel(createState({ fullscreen: true }))).toMatchObject({
+        key: 'fullscreen.exit',
+        text: 'Exit fullscreen',
+      });
     });
 
     it('returns custom string label', () => {
@@ -73,7 +79,7 @@ describe('FullscreenButtonCore', () => {
     it('returns aria-label', () => {
       const core = new FullscreenButtonCore();
       const attrs = core.getAttrs(createState());
-      expect(attrs['aria-label']).toBe('Enter fullscreen');
+      expect(attrs['aria-label']).toMatchObject({ key: 'fullscreen.enter', text: 'Enter fullscreen' });
     });
 
     it('sets aria-disabled when disabled', () => {

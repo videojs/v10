@@ -1,6 +1,12 @@
 'use client';
 
-import { createTranslator, loadLocale as defaultLoader, type Locale, type Translations } from '@videojs/core/i18n';
+import {
+  createTranslator,
+  loadLocale as defaultLoader,
+  type FlatTranslations,
+  type Locale,
+  type Translations,
+} from '@videojs/core/i18n';
 import { effectiveLocale } from '@videojs/utils/dom';
 import { type Context, type ReactNode, type RefObject, useContext, useMemo } from 'react';
 
@@ -14,7 +20,7 @@ import { useMergedTranslations } from './use-merged-translations';
 
 export interface CreateI18nOptions {
   /** Override lazy loading of shipped locale packs (tests or custom loaders). */
-  loader?: (tag: string) => Promise<Partial<Translations> | undefined>;
+  loader?: (tag: string) => Promise<Partial<FlatTranslations> | undefined>;
 }
 
 export interface I18nProviderProps {
@@ -32,13 +38,12 @@ export interface I18nProviderProps {
   langRootRef?: RefObject<Element | null>;
   /**
    * Per-locale string overrides merged on top of the global registry and any lazy built-in
-   * packs for {@link locale}. Use the current English phrases returned by core controls, such as
-   * `Play`, `Pause`, and `Replay`. Applies to translated
+   * packs for {@link locale}. Applies to translated
    * `aria-label` values and tooltip copy for skin controls wired through `useTranslator`.
    *
    * @example
    * ```tsx
-   * <I18nProvider locale="ja" translations={{ Play: '再生', Pause: '一時停止' }}>
+   * <I18nProvider locale="ja" translations={{ buttons: { play: '再生', pause: '一時停止' } }}>
    *   <VideoSkin />
    * </I18nProvider>
    * ```

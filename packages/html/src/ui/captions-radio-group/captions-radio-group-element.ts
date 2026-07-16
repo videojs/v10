@@ -1,8 +1,9 @@
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
-import { resolveTranslation, type Translator } from '@videojs/core/i18n';
+import { type Text, type Translator, translateText } from '@videojs/core/i18n';
+import { offText } from '@videojs/core/i18n/text/menu';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
-
+import { cacheKey } from '../../i18n/cache-key';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -21,7 +22,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
 
   disabled = false;
-  label = '';
+  label: Text | string = '';
 
   readonly #core = new CaptionsRadioGroupCore();
   readonly #i18n = new I18nController(this, i18nContext);
@@ -72,7 +73,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
     const template = this.getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
-    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${cacheKey(track.label)}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
     if (tracksKey !== this.#tracksKey || translator !== this.#tracksTranslator) {
       this.#tracksKey = tracksKey;
@@ -83,11 +84,9 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
         child.remove();
       }
 
-      this.append(this.#createItem(CAPTIONS_OFF_VALUE, resolveTranslation(translator, 'Off'), template));
+      this.append(this.#createItem(CAPTIONS_OFF_VALUE, translateText(offText, translator), template));
       this.append(
-        ...state.tracks.map((track) =>
-          this.#createItem(track.value, resolveTranslation(translator, track.label), template)
-        )
+        ...state.tracks.map((track) => this.#createItem(track.value, translateText(track.label, translator), template))
       );
     }
 
