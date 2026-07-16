@@ -25,6 +25,9 @@ import {
   type Presentation,
 } from '../../media/types';
 import { findTrackById } from '../../media/utils/tracks';
+import type { DeriveStartMediaTime, DeriveStartMediaTimeContext } from '../primitives/derive-start-media-time';
+
+export type { DeriveStartMediaTime, DeriveStartMediaTimeContext };
 
 // ============================================================================
 // STATE / CONFIG
@@ -43,23 +46,6 @@ export interface EstablishStartMediaTimeState {
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
 }
-
-export interface DeriveStartMediaTimeContext {
-  selectedVideoTrackId?: string;
-  selectedAudioTrackId?: string;
-}
-
-/**
- * Reduce the discovered container data (keyed by track type) into each type's
- * `startMediaTime`. `undefined` means "not ready yet". Pure and injected — the single
- * coordination seam. The default {@link deriveSharedMinStartMediaTime} relocates every
- * track by one shared `min` origin (handles aligned + skewed A/V + single-type);
- * {@link derivePerTypeStartMediaTime} is the barrier-free per-type alternative.
- */
-export type DeriveStartMediaTime = (
-  containerData: Record<string, MediaContainerData>,
-  ctx: DeriveStartMediaTimeContext
-) => Record<string, number | undefined>;
 
 /**
  * A single type's own media-timeline origin:

@@ -32,6 +32,7 @@ import { findMediaTrack, type MediaHandlerType, readBaseMediaDecodeTime } from '
 import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../media/text/resolve-vtt-metadata';
 import type { Cue, MaybeResolvedPresentation, MediaContainerData } from '../../media/types';
 import { findTrackById } from '../../media/utils/tracks';
+import type { DeriveStartMediaTime } from './derive-start-media-time';
 import { peekHead } from './head-peek';
 import { dispatchStep, fetchStep, type LoadStep, type MessagePipelines, type StepDeps } from './segment-load-pipeline';
 import {
@@ -41,19 +42,6 @@ import {
   type TextStepDeps,
   textStepWiring,
 } from './text-segment-load-pipeline';
-
-// Declared locally so this module carries no `behaviors` import. Structurally identical to
-// the `establishStartMediaTime` behavior's own `DeriveStartMediaTime` and state shape — the
-// engine feeds one resolved `derive` to both sides, so the duplication is type-only and
-// folds away once these land in a shared home.
-export interface DeriveStartMediaTimeContext {
-  selectedVideoTrackId?: string;
-  selectedAudioTrackId?: string;
-}
-export type DeriveStartMediaTime = (
-  containerData: Record<string, MediaContainerData>,
-  ctx: DeriveStartMediaTimeContext
-) => Record<string, number | undefined>;
 
 /** The composition slots these steps read — the view asserted from the opaque `deps.state`. */
 interface RelocationSlots {
