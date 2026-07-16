@@ -69,7 +69,18 @@ export interface AttachMediaSourceResult {
 /**
  * Attach a MediaSource to an HTMLMediaElement.
  *
- * Uses srcObject for ManagedMediaSource (Safari), or createObjectURL for regular MediaSource.
+ * For ManagedMediaSource (Safari), the object URL is attached as a `<source>`
+ * child element rather than `srcObject`. This is the WebKit-recommended AirPlay
+ * pattern: `srcObject` makes the element commit to the MSE resource and ignore
+ * every `<source>` child, which leaves any sibling native-HLS `<source>`
+ * (appended by `setupAirPlay` for AirPlay handoff) inert — Safari has no
+ * AirPlay-capable resource to hand off and reverts to local playback. Attaching
+ * the MSE as the *first* `<source>` keeps local playback on MSE while letting
+ * the AirPlay `<source>` coexist as a second, native-playable alternative.
+ * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
+ *
+ * Regular MediaSource (Chromium/Firefox, no AirPlay) keeps using the `src`
+ * attribute.
  *
  * @param mediaSource - The MediaSource to attach
  * @param mediaElement - The media element to attach to
@@ -83,23 +94,33 @@ export interface AttachMediaSourceResult {
  * detach();
  */
 export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMediaElement): AttachMediaSourceResult {
-  // ManagedMediaSource requires srcObject instead of createObjectURL
   const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
 
   if (isManagedMediaSource) {
-    // ManagedMediaSource requires disableRemotePlayback — without it Safari
-    // will not fire sourceopen.
-    (mediaElement as HTMLMediaElement & { disableRemotePlayback: boolean }).disableRemotePlayback = true;
+    // MMS opens with either `disableRemotePlayback = true` or a source
+    // alternative present; `setupAirPlay` flips this back to `false` once open
+    // so the AirPlay picker is offered.
+    mediaElement.disableRemotePlayback = true;
 
-    // Use srcObject for ManagedMediaSource
-    (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = mediaSource;
+    const url = URL.createObjectURL(mediaSource);
+    const sourceEl = document.createElement('source');
+    sourceEl.type = 'video/mp4';
+    sourceEl.src = url;
+
+    // Drop any bare `src` and insert the MSE source as the FIRST child so local
+    // playback selects MSE, and a `setupAirPlay`-appended native-HLS `<source>`
+    // stays second (AirPlay fallback). `load()` re-runs resource selection.
+    mediaElement.removeAttribute('src');
+    mediaElement.prepend(sourceEl);
+    mediaElement.load();
 
     const detach = (): void => {
-      (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = null;
+      sourceEl.remove();
       mediaElement.load(); // Reset the element
+      URL.revokeObjectURL(url);
     };
 
-    return { url: '', detach };
+    return { url, detach };
   }
 
   // Use createObjectURL for regular MediaSource

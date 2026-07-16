@@ -73,6 +73,8 @@ export interface SegmentLoadingState {
   currentTime?: number;
   /** True once a preload-overriding event has fired for the current source. */
   loadActivated?: boolean;
+  /** Suspends all forward-buffer loading while `true` */
+  loadSuspended?: boolean;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
@@ -89,7 +91,7 @@ export interface SegmentLoadingContext {
 // REACTOR
 // ============================================================================
 
-type SegmentLoadingFsmState = 'preconditions-unmet' | 'dormant' | 'metadata-only' | 'full-range';
+type SegmentLoadingFsmState = 'preconditions-unmet' | 'dormant' | 'metadata-only' | 'full-range' | 'suspended';
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 type SegmentLoaderActorKey = 'videoSegmentLoaderActor' | 'audioSegmentLoaderActor' | 'textTrackSegmentLoaderActor';
@@ -99,18 +101,19 @@ type SegmentLoadingStateMap<K extends SelectedTrackKey> = {
   preload: ReadonlySignal<SegmentLoadingState['preload']>;
   currentTime: ReadonlySignal<SegmentLoadingState['currentTime']>;
   loadActivated: ReadonlySignal<SegmentLoadingState['loadActivated']>;
+  loadSuspended: ReadonlySignal<SegmentLoadingState['loadSuspended']>;
 } & { [P in K]: ReadonlySignal<SegmentLoadingState[P]> };
 
-/** Shared `'load'` message shape parameterized over the resolved track type. */
-interface LoadMessage<Track> {
-  type: 'load';
-  track: Track;
-  range?: { start: number; end: number };
-}
+/**
+ * Shared message shape parameterized over the resolved track type. `load`
+ * drives fetching; `stop` halts it (the SPF `stopLoad()` analogue, sent when
+ * loading is suspended).
+ */
+type LoaderMessage<Track> = { type: 'load'; track: Track; range?: { start: number; end: number } } | { type: 'stop' };
 
 /** Structural constraint for any segment-loader-style actor. */
 interface SegmentLoaderLike<Track> {
-  send: (message: LoadMessage<Track>) => void;
+  send: (message: LoaderMessage<Track>) => void;
 }
 
 /**
@@ -162,6 +165,7 @@ function setupSegmentLoading<
   });
 
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
+    if (state.loadSuspended.get()) return 'suspended';
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
     if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
     if (state.preload.get() === 'none') return 'dormant';
@@ -174,6 +178,16 @@ function setupSegmentLoading<
     states: {
       'preconditions-unmet': {},
       dormant: {},
+      suspended: {
+        // Fires once on entry. Tell the loader actor to halt: abort the
+        // in-flight fetch + queued batch (the `'dormant'` gate only prevents
+        // *new* dispatches; an actor mid-forward-buffer keeps fetching
+        // without this). `peek` — the loader is already gated by
+        // `derivedStateSignal`; entry is auto-untracked besides.
+        entry: () => {
+          peek(context[loaderKey])?.send({ type: 'stop' });
+        },
+      },
       'metadata-only': {
         // Fires once on entry. Matches HTMLMediaElement's preload='metadata'
         // semantics — load enough to surface metadata for the entry-time
@@ -229,7 +243,7 @@ const TEXT_SEGMENT_LOADING_CONFIG = {
 // ============================================================================
 
 export const loadVideoSegments = defineBehavior({
-  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedVideoTrackId'],
+  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'loadSuspended', 'selectedVideoTrackId'],
   contextKeys: ['videoSegmentLoaderActor'],
   setup: ({
     state,
@@ -250,7 +264,7 @@ export const loadVideoSegments = defineBehavior({
 });
 
 export const loadAudioSegments = defineBehavior({
-  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedAudioTrackId'],
+  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'loadSuspended', 'selectedAudioTrackId'],
   contextKeys: ['audioSegmentLoaderActor'],
   setup: ({
     state,
@@ -271,7 +285,7 @@ export const loadAudioSegments = defineBehavior({
 });
 
 export const loadTextTrackSegments = defineBehavior({
-  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedTextTrackId'],
+  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'loadSuspended', 'selectedTextTrackId'],
   contextKeys: ['textTrackSegmentLoaderActor'],
   setup: ({
     state,
