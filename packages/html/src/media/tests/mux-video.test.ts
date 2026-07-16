@@ -46,4 +46,34 @@ describe('MuxVideo', () => {
     expect(el.config.muxData?.envKey).toBe('test-key');
     expect(el.hasAttribute('config')).toBe(false);
   });
+
+  it('derives the host src from the playback-id attribute', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('playback-id', 'abc123');
+
+    expect(el.playbackId).toBe('abc123');
+    expect(el.host.src).toBe('https://stream.mux.com/abc123.m3u8');
+  });
+
+  it('derives the host src from the playbackId property', () => {
+    const el = createMuxVideo();
+
+    el.playbackId = 'abc123';
+
+    expect(el.getAttribute('playback-id')).toBe('abc123');
+    expect(el.host.src).toBe('https://stream.mux.com/abc123.m3u8');
+  });
+
+  it('applies the custom-domain and max-resolution modifiers', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('custom-domain', 'example.com');
+    el.setAttribute('max-resolution', '1080p');
+    el.setAttribute('playback-id', 'abc123');
+
+    const url = new URL(el.host.src);
+    expect(url.host).toBe('stream.example.com');
+    expect(url.searchParams.get('max_resolution')).toBe('1080p');
+  });
 });

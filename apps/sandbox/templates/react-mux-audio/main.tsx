@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { getPlaybackId } from '@app/shared/mux';
 import { AudioProvider } from '@app/shared/react/providers';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
@@ -26,13 +27,17 @@ function App() {
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
+  const playbackId = getPlaybackId(source);
+
+  // Prefer the Mux playback ID; fall back to a raw src for non-Mux sources.
+  const sourceProps = playbackId ? { playbackId } : { src: SOURCES[source].url };
 
   return (
     <SandboxI18nProvider>
       <AudioProvider>
         <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
           <MuxAudio
-            src={SOURCES[source].url}
+            {...sourceProps}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}
