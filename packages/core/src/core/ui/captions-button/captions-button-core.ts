@@ -2,14 +2,15 @@ import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import { resolveText, type Text } from '../../i18n';
+import { disableText, enableText } from '../../i18n/text/captions';
 import type { MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: CaptionsButtonState) => string) | undefined;
+  label?: Text | string | ((state: CaptionsButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
   /** When true with multiple tracks, pointer activation opens a menu instead of toggling. React sets this automatically inside `Menu.Trigger`. */
@@ -44,11 +45,11 @@ export class CaptionsButtonCore {
     this.#props = defaults(props, CaptionsButtonCore.defaultProps);
   }
 
-  getLabel(state: CaptionsButtonState): string {
+  getLabel(state: CaptionsButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return state.subtitlesShowing ? 'Disable captions' : 'Enable captions';
+    return state.subtitlesShowing ? disableText : enableText;
   }
 
   getAttrs(state: CaptionsButtonState) {
@@ -69,7 +70,7 @@ export class CaptionsButtonCore {
       : 'unavailable';
 
     this.state.patch({ subtitlesShowing: media.subtitlesShowing, availability });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

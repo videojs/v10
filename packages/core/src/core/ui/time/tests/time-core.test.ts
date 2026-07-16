@@ -1,11 +1,11 @@
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it } from 'vitest';
 
-import { createTranslator, resolveTranslation, translations } from '../../../i18n';
+import { createTranslator, flattenTranslations, translateText, translations } from '../../../i18n';
 import type { MediaTimeState } from '../../../media/state';
 import { TimeCore } from '../time-core';
 
-const t = createTranslator(translations, 'en');
+const t = createTranslator(flattenTranslations(translations), 'en');
 
 function createMediaState(overrides: Partial<MediaTimeState> = {}): MediaTimeState {
   return {
@@ -108,21 +108,21 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'current' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('Current time');
+      expect(core.getLabel(state)).toMatchObject({ key: 'time.current', text: 'Current time' });
     });
 
     it('returns default label for duration', () => {
       const core = new TimeCore({ type: 'duration' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('Duration');
+      expect(core.getLabel(state)).toMatchObject({ key: 'time.duration', text: 'Duration' });
     });
 
     it('returns default label for remaining', () => {
       const core = new TimeCore({ type: 'remaining' });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('Remaining');
+      expect(core.getLabel(state)).toMatchObject({ key: 'time.remaining', text: 'Remaining' });
     });
 
     it('returns custom string label', () => {
@@ -146,9 +146,12 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'current', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('{duration}. Show remaining time.');
+      expect(core.getLabel(state)).toMatchObject({
+        key: 'time.showRemaining',
+        text: '{duration}. Show remaining time.',
+      });
       expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds' });
-      expect(resolveTranslation(t, core.getLabel(state), core.getLabelParams(state))).toBe(
+      expect(translateText(core.getLabel(state), t, core.getLabelParams(state))).toBe(
         '1 minute, 30 seconds. Show remaining time.'
       );
     });
@@ -157,9 +160,9 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'remaining', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state)).toBe('{duration}. Show duration.');
+      expect(core.getLabel(state)).toMatchObject({ key: 'time.showDuration', text: '{duration}. Show duration.' });
       expect(core.getLabelParams(state)).toEqual({ duration: '3 minutes, 30 seconds remaining' });
-      expect(resolveTranslation(t, core.getLabel(state), core.getLabelParams(state))).toBe(
+      expect(translateText(core.getLabel(state), t, core.getLabelParams(state))).toBe(
         '3 minutes, 30 seconds remaining. Show duration.'
       );
     });
@@ -168,8 +171,11 @@ describe('TimeCore', () => {
       const core = new TimeCore({ type: 'remaining', toggle: true });
       core.setMedia(createMediaState());
       const state = core.getState();
-      expect(core.getLabel(state, 'current')).toBe('{duration}. Show elapsed time.');
-      expect(resolveTranslation(t, core.getLabel(state, 'current'), core.getLabelParams(state))).toBe(
+      expect(core.getLabel(state, 'current')).toMatchObject({
+        key: 'time.showElapsed',
+        text: '{duration}. Show elapsed time.',
+      });
+      expect(translateText(core.getLabel(state, 'current'), t, core.getLabelParams(state))).toBe(
         '3 minutes, 30 seconds remaining. Show elapsed time.'
       );
     });
@@ -182,7 +188,7 @@ describe('TimeCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('Current time');
+      expect(attrs['aria-label']).toMatchObject({ key: 'time.current', text: 'Current time' });
     });
 
     it('includes remaining suffix in label', () => {
@@ -191,7 +197,7 @@ describe('TimeCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-label']).toBe('Remaining');
+      expect(attrs['aria-label']).toMatchObject({ key: 'time.remaining', text: 'Remaining' });
     });
 
     it('returns button attributes when current time is toggleable', () => {
@@ -202,7 +208,10 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBe('button');
       expect(attrs.tabIndex).toBe(0);
-      expect(attrs['aria-label']).toBe('{duration}. Show remaining time.');
+      expect(attrs['aria-label']).toMatchObject({
+        key: 'time.showRemaining',
+        text: '{duration}. Show remaining time.',
+      });
       expect(core.getLabelParams(state)).toEqual({ duration: '1 minute, 30 seconds' });
     });
 
@@ -214,7 +223,10 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBe('button');
       expect(attrs.tabIndex).toBe(0);
-      expect(attrs['aria-label']).toBe('{duration}. Show elapsed time.');
+      expect(attrs['aria-label']).toMatchObject({
+        key: 'time.showElapsed',
+        text: '{duration}. Show elapsed time.',
+      });
       expect(core.getLabelParams(state)).toEqual({ duration: '3 minutes, 30 seconds remaining' });
     });
 
@@ -226,7 +238,10 @@ describe('TimeCore', () => {
 
       expect(attrs.role).toBe('button');
       expect(attrs.tabIndex).toBe(0);
-      expect(attrs['aria-label']).toBe('{duration}. Show remaining time.');
+      expect(attrs['aria-label']).toMatchObject({
+        key: 'time.showRemaining',
+        text: '{duration}. Show remaining time.',
+      });
     });
 
     it('does not return button attributes without toggle', () => {

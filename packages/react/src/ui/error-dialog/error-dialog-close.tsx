@@ -1,8 +1,8 @@
 'use client';
 
 import type { AlertDialogCore } from '@videojs/core';
-import { getErrorDialogDismissLabel } from '@videojs/core';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { getErrorDialogDismissText } from '@videojs/core';
+import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useCallback } from 'react';
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -23,7 +23,7 @@ export const ErrorDialogClose = forwardRef<HTMLButtonElement, ErrorDialogClosePr
     dialog.close();
   }, [dialog, disabled]);
 
-  const content: ReactNode = children ?? resolveTranslation(t, getErrorDialogDismissLabel());
+  const content: ReactNode = children ?? translateText(getErrorDialogDismissText(), t);
 
   return renderElement(
     'button',

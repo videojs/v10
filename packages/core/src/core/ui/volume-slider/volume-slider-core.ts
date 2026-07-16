@@ -1,6 +1,8 @@
 import { defaults } from '@videojs/utils/object';
 import { formatPercent } from '@videojs/utils/percent';
 import type { NonNullableObject } from '@videojs/utils/types';
+import type { Text } from '../../i18n';
+import { labelText, mutedValueText } from '../../i18n/text/volume';
 import type { MediaVolumeState } from '../../media/state';
 import type { MediaFeatureAvailability } from '../../media/types';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
@@ -74,12 +76,12 @@ export class VolumeSliderCore extends SliderCore {
     return range > 0 ? (props.wheelStep / range) * 100 : 0;
   }
 
-  override getLabel(state: SliderState): string {
-    return super.getLabel(state) || 'Volume';
+  override getLabel(state: SliderState): Text | string {
+    return super.getLabel(state) || labelText;
   }
 
-  getValueText(state: VolumeSliderState): string {
-    return state.muted ? '{percent}, muted' : this.getValueTextParams(state).percent;
+  getValueText(state: VolumeSliderState): Text | string {
+    return state.muted ? mutedValueText : this.getValueTextParams(state).percent;
   }
 
   getValueTextParams(state: VolumeSliderState): { percent: string } {

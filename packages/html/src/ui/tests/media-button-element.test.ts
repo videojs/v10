@@ -104,8 +104,8 @@ describe('MediaButtonElement', () => {
   });
 
   it('applies translated aria-label and updates on locale change', async () => {
-    registerI18n('es', { Play: 'Reproducir' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('es', { 'buttons.play': 'Reproducir' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
 
     ensureDefined(PlayButtonElement);
     ensureDefined(MediaI18nProviderElement);
@@ -131,8 +131,8 @@ describe('MediaButtonElement', () => {
   });
 
   it('updates aria-label when html lang changes and provider has no explicit lang', async () => {
-    registerI18n('de', { Play: 'Los' });
-    registerI18n('fr', { Play: 'Lire' });
+    registerI18n('de', { 'buttons.play': 'Los' });
+    registerI18n('fr', { 'buttons.play': 'Lire' });
     document.documentElement.lang = 'de';
 
     ensureDefined(PlayButtonElement);

@@ -1,18 +1,19 @@
-import type { TranslationKey, TranslationParams, Translator } from './types';
+import type { TranslationKey, TranslationParams } from './params';
+import type { TranslationOptions, Translator } from './translator';
 
-type ResolveTranslationArgs<Phrase extends string> = Phrase extends TranslationKey
-  ? TranslationParams[Phrase] extends never
-    ? []
-    : [params: TranslationParams[Phrase]]
-  : [params?: Record<string, string | number>];
+type ResolveTranslationArgs<Key extends string> = Key extends TranslationKey
+  ? TranslationParams[Key] extends never
+    ? [params?: TranslationOptions]
+    : [params: TranslationParams[Key] & TranslationOptions]
+  : [params?: Record<string, string | number> & TranslationOptions];
 
-/** Resolves a phrase with optional template params via a translator. */
-export function resolveTranslation<Phrase extends string>(
+/** Resolves a semantic key with optional template params via a translator. */
+export function resolveTranslation<Key extends string>(
   translator: Translator,
-  phrase: Phrase,
-  ...args: ResolveTranslationArgs<Phrase>
+  key: Key,
+  ...args: ResolveTranslationArgs<Key>
 ): string {
   const [params] = args;
   const translate = translator as (key: string, params?: unknown) => string;
-  return params !== undefined ? translate(phrase, params) : translate(phrase);
+  return params !== undefined ? translate(key, params) : translate(key);
 }

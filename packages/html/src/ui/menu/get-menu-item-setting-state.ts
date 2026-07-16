@@ -12,19 +12,15 @@ import {
   QUALITY_AUTO_VALUE,
   type QualityRadioGroupCore,
 } from '@videojs/core';
+import type { Text, TextParams } from '@videojs/core/i18n';
+import { autoText, offText } from '@videojs/core/i18n/text/menu';
 
 import type { MenuItemSettingType } from './menu-item-type';
 
 export interface MenuItemSettingState {
-  label: string;
-  labelParams?: Record<string, string | number> | undefined;
+  label: Text | string;
+  labelParams?: TextParams | undefined;
   availability: 'available' | 'unavailable';
-}
-
-function getAutoLabelState(label: string): Pick<MenuItemSettingState, 'label' | 'labelParams'> {
-  const match = /^Auto \((.+)\)$/.exec(label);
-  if (!match) return { label };
-  return { label: 'Auto ({label})', labelParams: { label: match[1]! } };
 }
 
 export function getMenuItemSettingState(
@@ -53,7 +49,8 @@ export function getMenuItemSettingState(
 
     if (state.value === QUALITY_AUTO_VALUE) {
       return {
-        ...getAutoLabelState(state.autoLabel),
+        label: state.autoLabel,
+        labelParams: state.autoLabelParams,
         availability: state.availability,
       };
     }
@@ -61,7 +58,7 @@ export function getMenuItemSettingState(
     const rendition = state.renditions.find((candidate) => candidate.value === state.value);
 
     return {
-      label: rendition?.label ?? 'Auto',
+      label: rendition?.label ?? autoText,
       availability: state.availability,
     };
   }
@@ -81,13 +78,13 @@ export function getMenuItemSettingState(
   const state = cores.captions.getState();
 
   if (state.value === CAPTIONS_OFF_VALUE) {
-    return { label: 'Off', availability: state.availability };
+    return { label: offText, availability: state.availability };
   }
 
   const track = state.tracks.find((candidate) => candidate.value === state.value);
 
   return {
-    label: track?.label ?? 'Off',
+    label: track?.label ?? offText,
     availability: state.availability,
   };
 }

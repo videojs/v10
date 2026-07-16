@@ -75,19 +75,24 @@ describe('SeekButtonCore', () => {
   describe('getLabel', () => {
     it('returns forward label for forward direction', () => {
       const core = new SeekButtonCore({ seconds: 30 });
-      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Seek forward {seconds} seconds');
+      expect(core.getLabel(createState({ direction: 'forward' }))).toMatchObject({
+        key: 'seek.forward',
+        text: 'Seek forward {seconds} seconds',
+      });
     });
 
     it('returns backward label for backward direction', () => {
       const core = new SeekButtonCore({ seconds: -10 });
-      expect(core.getLabel(createState({ direction: 'backward' }))).toBe('Seek backward {seconds} seconds');
+      expect(core.getLabel(createState({ direction: 'backward' }))).toMatchObject({
+        key: 'seek.backward',
+        text: 'Seek backward {seconds} seconds',
+      });
     });
 
     it('uses absolute value in backward label', () => {
       const core = new SeekButtonCore({ seconds: -30 });
       const label = core.getLabel(createState({ direction: 'backward' }));
-      expect(label).toBe('Seek backward {seconds} seconds');
-      expect(label).not.toContain('-');
+      expect(label).toMatchObject({ key: 'seek.backward', text: 'Seek backward {seconds} seconds' });
     });
 
     it('returns custom string label', () => {
@@ -105,7 +110,10 @@ describe('SeekButtonCore', () => {
 
     it('falls back to default when function returns empty', () => {
       const core = new SeekButtonCore({ seconds: 10, label: () => '' });
-      expect(core.getLabel(createState({ direction: 'forward' }))).toBe('Seek forward {seconds} seconds');
+      expect(core.getLabel(createState({ direction: 'forward' }))).toMatchObject({
+        key: 'seek.forward',
+        text: 'Seek forward {seconds} seconds',
+      });
     });
   });
 
@@ -141,7 +149,7 @@ describe('SeekButtonCore', () => {
     it('returns aria-label', () => {
       const core = new SeekButtonCore({ seconds: 30 });
       const attrs = core.getAttrs(createState({ direction: 'forward' }));
-      expect(attrs['aria-label']).toBe('Seek forward {seconds} seconds');
+      expect(attrs['aria-label']).toMatchObject({ key: 'seek.forward', text: 'Seek forward {seconds} seconds' });
     });
 
     it('sets aria-disabled when disabled', () => {

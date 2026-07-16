@@ -2,7 +2,7 @@
 
 import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { listen } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useRef, useState } from 'react';
 
@@ -121,10 +121,10 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
             const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
             return {
               ...attrs,
-              'aria-label': resolveTranslation(translator, attrs['aria-label']),
-              'aria-valuetext': resolveTranslation(
-                translator,
+              'aria-label': translateText(attrs['aria-label'], translator),
+              'aria-valuetext': translateText(
                 attrs['aria-valuetext'],
+                translator,
                 core.getValueTextParams(sliderState as VolumeSliderCore.State)
               ),
             };

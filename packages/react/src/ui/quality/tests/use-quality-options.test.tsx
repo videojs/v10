@@ -97,7 +97,7 @@ describe('useQualityOptions', () => {
 
   it('translates default auto labels', () => {
     registerI18n('xx', {
-      'Auto ({label})': 'Auto translated ({label})',
+      'menu.autoWithLabel': 'Auto translated ({label})',
     });
 
     renderQualityOptions({
