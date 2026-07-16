@@ -53,4 +53,28 @@ describe('MuxVideo', () => {
 
     src.mockRestore();
   });
+
+  it('adds a storyboard track inferred from the playbackId', () => {
+    const { container } = render(<MuxVideo playbackId="abc123" />);
+
+    const track = container.querySelector('track');
+    expect(track?.kind).toBe('metadata');
+    expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
+  });
+
+  it('does not add a storyboard track without a playbackId', () => {
+    const { container } = render(<MuxVideo src="https://example.com/video.m3u8" />);
+
+    expect(container.querySelector('track')).toBeNull();
+  });
+
+  it('does not add a storyboard track for live streams', () => {
+    const streamType = vi.spyOn(MuxMedia.prototype, 'streamType', 'get').mockReturnValue('live');
+
+    const { container } = render(<MuxVideo playbackId="abc123" />);
+
+    expect(container.querySelector('track')).toBeNull();
+
+    streamType.mockRestore();
+  });
 });

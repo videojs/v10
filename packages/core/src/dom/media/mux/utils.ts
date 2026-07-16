@@ -87,3 +87,71 @@ export function toPlaybackIdParts(playbackId: string): [string, string?] {
   if (queryIndex < 0) return [playbackId];
   return [playbackId.slice(0, queryIndex), playbackId.slice(queryIndex)];
 }
+
+export interface MuxImageURLProps {
+  token?: string | undefined;
+  customDomain?: string | undefined;
+}
+
+export interface MuxStoryboardURLProps extends MuxImageURLProps {
+  programStartTime?: number | undefined;
+  programEndTime?: number | undefined;
+}
+
+/** Build the storyboard (thumbnail sprite) VTT URL for a playback ID. */
+export function getStoryboardURLFromPlaybackId(
+  playbackId?: string,
+  { token, customDomain: domain = MUX_VIDEO_DOMAIN, programStartTime, programEndTime }: MuxStoryboardURLProps = {}
+): string | undefined {
+  if (!playbackId) return undefined;
+
+  const { aud } = parseJwt(token) ?? {};
+  if (token && aud !== 's') return undefined;
+
+  return `https://image.${domain}/${playbackId}/storyboard.vtt${toQuery({
+    token,
+    format: 'webp',
+    program_start_time: programStartTime,
+    program_end_time: programEndTime,
+  })}`;
+}
+
+/** Serialize an object to a query string (`?a=1&b=2`), skipping nullish values. */
+export function toQuery(params: Record<string, unknown>): string {
+  const query = toParams(params).toString();
+  return query ? `?${query}` : '';
+}
+
+/** Build `URLSearchParams` from an object, skipping nullish values. */
+export function toParams(params: Record<string, unknown>): URLSearchParams {
+  const search = new URLSearchParams();
+  for (const [key, value] of Object.entries(params)) {
+    if (!isNil(value)) search.set(key, String(value));
+  }
+  return search;
+}
+
+export type MuxJWT = {
+  sub: string;
+  aud: 'v' | 't' | 'g' | 's' | 'd';
+  exp: number;
+};
+
+/** Decode the payload of a Mux JWT, returning `undefined` for invalid tokens. */
+export function parseJwt(token: string | undefined): Partial<MuxJWT> | undefined {
+  const base64Url = (token ?? '').split('.')[1];
+  if (!base64Url) return undefined;
+
+  try {
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const json = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
+        .join('')
+    );
+    return JSON.parse(json);
+  } catch {
+    return undefined;
+  }
+}

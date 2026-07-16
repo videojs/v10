@@ -76,4 +76,54 @@ describe('MuxVideo', () => {
     expect(url.host).toBe('stream.example.com');
     expect(url.searchParams.get('max_resolution')).toBe('1080p');
   });
+
+  it('adds a storyboard track inferred from the playback-id', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('playback-id', 'abc123');
+
+    const track = el.shadowRoot!.querySelector('track');
+    expect(track?.kind).toBe('metadata');
+    expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
+  });
+
+  it('uses the custom domain for the storyboard track', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('custom-domain', 'example.com');
+    el.setAttribute('playback-id', 'abc123');
+
+    expect(el.shadowRoot!.querySelector('track')?.getAttribute('src')).toBe(
+      'https://image.example.com/abc123/storyboard.vtt?format=webp'
+    );
+  });
+
+  it('removes the storyboard track when the playback-id is cleared', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('playback-id', 'abc123');
+    expect(el.shadowRoot!.querySelector('track')).not.toBeNull();
+
+    el.removeAttribute('playback-id');
+    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+  });
+
+  it('does not add a storyboard track for live streams', () => {
+    const el = createMuxVideo();
+
+    el.host.streamType = 'live';
+    el.setAttribute('playback-id', 'abc123');
+
+    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+  });
+
+  it('removes the storyboard track when the stream becomes live', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('playback-id', 'abc123');
+    expect(el.shadowRoot!.querySelector('track')).not.toBeNull();
+
+    el.host.streamType = 'live';
+    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+  });
 });

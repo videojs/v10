@@ -1,5 +1,18 @@
 import { describe, expect, it, vi } from 'vitest';
-import { toMuxVideoURL, toPlaybackIdParts } from '../utils';
+import {
+  getStoryboardURLFromPlaybackId,
+  parseJwt,
+  toMuxVideoURL,
+  toParams,
+  toPlaybackIdParts,
+  toQuery,
+} from '../utils';
+
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature.
+function fakeJwt(payload: Record<string, unknown>): string {
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_');
+  return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
+}
 
 describe('toMuxVideoURL', () => {
   it('returns undefined without a playbackId', () => {
@@ -51,5 +64,55 @@ describe('toPlaybackIdParts', () => {
 
   it('returns only the id when there are no params', () => {
     expect(toPlaybackIdParts('abc123')).toEqual(['abc123']);
+  });
+});
+
+describe('getStoryboardURLFromPlaybackId', () => {
+  it('builds a storyboard URL', () => {
+    expect(getStoryboardURLFromPlaybackId('abc123')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
+  });
+
+  it('uses the custom domain', () => {
+    expect(getStoryboardURLFromPlaybackId('abc123', { customDomain: 'example.com' })).toBe(
+      'https://image.example.com/abc123/storyboard.vtt?format=webp'
+    );
+  });
+
+  it('returns undefined without a playbackId', () => {
+    expect(getStoryboardURLFromPlaybackId()).toBeUndefined();
+    expect(getStoryboardURLFromPlaybackId('')).toBeUndefined();
+  });
+
+  it('returns undefined for a token with the wrong audience', () => {
+    expect(getStoryboardURLFromPlaybackId('abc123', { token: fakeJwt({ aud: 't' }) })).toBeUndefined();
+  });
+});
+
+describe('toParams', () => {
+  it('skips nullish values', () => {
+    const params = toParams({ a: 1, b: undefined, c: null, d: 'x' });
+    expect(params.toString()).toBe('a=1&d=x');
+  });
+});
+
+describe('toQuery', () => {
+  it('prefixes with ? when non-empty', () => {
+    expect(toQuery({ a: 1 })).toBe('?a=1');
+  });
+
+  it('returns an empty string when there are no params', () => {
+    expect(toQuery({ a: undefined })).toBe('');
+  });
+});
+
+describe('parseJwt', () => {
+  it('decodes a token payload', () => {
+    expect(parseJwt(fakeJwt({ aud: 'v', sub: 'abc' }))).toMatchObject({ aud: 'v', sub: 'abc' });
+  });
+
+  it('returns undefined for invalid tokens', () => {
+    expect(parseJwt(undefined)).toBeUndefined();
+    expect(parseJwt('')).toBeUndefined();
+    expect(parseJwt('not-a-jwt')).toBeUndefined();
   });
 });

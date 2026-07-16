@@ -4,7 +4,6 @@ import '@videojs/html/video/player';
 import '@videojs/html/media/mux-video';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
-import { renderStoryboard } from '@app/shared/html/storyboard';
 import { getPlaybackId } from '@app/shared/mux';
 import {
   onAutoplayChange,
@@ -14,7 +13,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPlaceholderSrc, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -28,7 +27,6 @@ async function render() {
   const tag = await loadLatest(() => loadVideoSkinTag(state.skin, state.styling, { live }));
   if (!tag) return;
 
-  const storyboard = getStoryboardSrc(state.source);
   const poster = getPosterSrc(state.source);
   const placeholder = getPlaceholderSrc(state.source);
   const mediaAttrs = renderMediaAttrs(state);
@@ -41,9 +39,7 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
-        <mux-video ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
-          ${renderStoryboard(storyboard)}
-        </mux-video>
+        <mux-video ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>
