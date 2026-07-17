@@ -43,6 +43,14 @@ export const SOURCES = {
     type: 'hls',
     subType: 'mp4',
   },
+  'hls-instant-clip': {
+    // Clipped 60s→600s of the multi-audio asset, so A/V encode at native PTS ≈ 60s.
+    // Exercises non-zero-PTS timestampOffset relocation: currentTime stays 0-based.
+    label: 'HLS - Instant Clip (non-zero PTS)',
+    url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8?asset_start_time=60&asset_end_time=600',
+    type: 'hls',
+    subType: 'mp4',
+  },
   'hls-live': {
     label: 'HLS - Live Stream Big Buck Bunny',
     url: 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8',
