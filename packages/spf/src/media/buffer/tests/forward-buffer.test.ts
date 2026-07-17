@@ -318,4 +318,26 @@ describe('getSegmentsToLoad', () => {
       expect(toLoad[0]?.id).toBe('seg-18');
     });
   });
+
+  describe('exact-end boundary (#1828)', () => {
+    it('loads the final segment when currentTime is exactly the total duration', () => {
+      // Regression for #1828: seeking to currentTime === duration must still
+      // select the last segment. A strict `endTime > currentTime` overlap test
+      // drops the final segment (whose endTime === duration), so it never loads
+      // and endOfStream() never fires → the seek stalls forever.
+      const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)] as const;
+      // Playhead dragged to the exact end (duration = 18), nothing buffered there.
+      const toLoad = getSegmentsToLoad(segments, [], 18);
+      expect(toLoad.map((s) => s.id)).toEqual(['seg-12']);
+    });
+
+    it('does not re-select a finished segment at a mid-stream boundary', () => {
+      // Guard: the fix is scoped to the final segment. At an interior boundary
+      // (currentTime === a non-last segment's endTime) the just-finished segment
+      // must NOT be reloaded — only the segments the playhead is entering.
+      const segments = [createSegment(0, 6), createSegment(6, 6), createSegment(12, 6)] as const;
+      const toLoad = getSegmentsToLoad(segments, [], 6);
+      expect(toLoad.map((s) => s.id)).toEqual(['seg-6', 'seg-12']);
+    });
+  });
 });
