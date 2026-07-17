@@ -6,6 +6,7 @@ import '@app/styles.css';
 //   src=<url>            Stream URL (overrides TEST_STREAM default)
 //   muted=true           Start muted
 //   autoplay=true        Start with autoplay enabled
+//   loop=true            Loop playback
 //   preload=auto|metadata|none  Initial preload mode
 //   avcOnly=true         Filter out HEVC renditions (avoids changeType; see the toggle)
 
@@ -30,6 +31,7 @@ const setSrcBtn = document.getElementById('set-src') as HTMLButtonElement;
 const avcOnlyToggle = document.getElementById('avc-only-toggle') as HTMLInputElement;
 const mutedToggle = document.getElementById('muted-toggle') as HTMLInputElement;
 const autoplayToggle = document.getElementById('autoplay-toggle') as HTMLInputElement;
+const loopToggle = document.getElementById('loop-toggle') as HTMLInputElement;
 const preloadSelect = document.getElementById('preload-select') as HTMLSelectElement;
 const shareLink = document.getElementById('share-link') as HTMLAnchorElement;
 
@@ -79,6 +81,7 @@ const params = new URLSearchParams(window.location.search);
 const INITIAL_SRC = params.get('src') ?? DEFAULT_STREAM;
 const INITIAL_MUTED = params.get('muted') === 'true';
 const INITIAL_AUTOPLAY = params.get('autoplay') === 'true';
+const INITIAL_LOOP = params.get('loop') === 'true';
 const INITIAL_PRELOAD = (params.get('preload') as 'auto' | 'metadata' | 'none') ?? 'none';
 const INITIAL_AVC_ONLY = params.get('avcOnly') === 'true';
 
@@ -96,6 +99,7 @@ srcInput.value = INITIAL_SRC;
 srcPreset.value = PRESETS.some((preset) => preset.url === INITIAL_SRC) ? INITIAL_SRC : '';
 mutedToggle.checked = INITIAL_MUTED;
 autoplayToggle.checked = INITIAL_AUTOPLAY;
+loopToggle.checked = INITIAL_LOOP;
 preloadSelect.value = INITIAL_PRELOAD;
 avcOnlyToggle.checked = INITIAL_AVC_ONLY;
 updateShareUrl();
@@ -148,6 +152,7 @@ function updateShareUrl() {
   if (src && src !== DEFAULT_STREAM) p.set('src', src);
   if (mutedToggle.checked) p.set('muted', 'true');
   if (autoplayToggle.checked) p.set('autoplay', 'true');
+  if (loopToggle.checked) p.set('loop', 'true');
   if (preloadSelect.value !== 'none') p.set('preload', preloadSelect.value);
   if (avcOnlyToggle.checked) p.set('avcOnly', 'true');
   const url = `${window.location.origin}${window.location.pathname}${p.size > 0 ? `?${p}` : ''}`;
@@ -818,6 +823,7 @@ function startEngine(src: string) {
 try {
   video.muted = INITIAL_MUTED;
   video.autoplay = INITIAL_AUTOPLAY;
+  video.loop = INITIAL_LOOP;
   startEngine(INITIAL_SRC);
 } catch (error) {
   log(`✗ Error creating engine: ${(error as Error).message}`, 'error');
@@ -876,6 +882,12 @@ mutedToggle.addEventListener('change', () => {
 autoplayToggle.addEventListener('change', () => {
   video.autoplay = autoplayToggle.checked;
   log(`Autoplay: ${autoplayToggle.checked}`);
+  updateShareUrl();
+});
+
+loopToggle.addEventListener('change', () => {
+  video.loop = loopToggle.checked;
+  log(`Loop: ${loopToggle.checked}`);
   updateShareUrl();
 });
 
