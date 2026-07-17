@@ -9,6 +9,7 @@ import '@app/styles.css';
 //   preload=auto|metadata|none  Initial preload mode
 //   avcOnly=true         Filter out HEVC renditions (avoids changeType; see the toggle)
 
+import { SOURCE_IDS, SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
 import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
 import { createSimpleHlsEngine } from '@videojs/spf/hls';
@@ -38,22 +39,35 @@ const DEFAULT_STREAM = 'https://stream.mux.com/JX01bG8eB4uaoV3OpDuK602rBfvdSgrMO
 // Preset sources. The non-zero-PTS examples exercise `timestampOffset` relocation
 // (A/V encodes at native PTS ≠ 0, but currentTime/seekable stay 0-based). Apple's
 // example muxes HEVC + AVC renditions, so it needs AVC-only (see `avcOnly`).
-const PRESETS: { label: string; url: string; avcOnly?: boolean }[] = [
-  { label: 'Mux default (Mad Max trailer)', url: DEFAULT_STREAM },
-  {
-    label: 'Mux instant clip (~60s PTS origin)',
-    url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8?asset_start_time=60&asset_end_time=600',
-  },
+// `unsupported`, when set, is the reason SPF can't play the source; such presets
+// are shown disabled (see the picker population) rather than hidden.
+type Preset = { label: string; url: string; avcOnly?: boolean; unsupported?: string };
+
+// Harness-specific sources not in the shared registry. The Apple bipbop example
+// muxes HEVC + AVC, so it needs AVC-only — engine-limitation metadata that
+// doesn't belong in shared SOURCES (no other template needs it).
+const HARNESS_PRESETS: Preset[] = [
   {
     label: 'Apple bipbop HEVC (44ms A/V skew + VTT X-TIMESTAMP-MAP · needs AVC-only)',
     url: 'https://devstreaming-cdn.apple.com/videos/streaming/examples/bipbop_adv_example_hevc/master.m3u8',
     avcOnly: true,
   },
-  {
-    label: 'Mux full asset (0-based baseline)',
-    url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
-  },
 ];
+
+// Dropdown = every HLS source from the shared registry (DASH/raw-mp4 filtered out
+// since the raw SPF HLS engine can't play them) plus the harness-specific extras.
+// SPF only demuxes fmp4/CMAF segments, not MPEG-TS, so TS sources are kept visible
+// but flagged unsupported (disabled in the picker) rather than silently dropped.
+// Unsupported presets sort to the end (stable sort preserves registry order otherwise).
+const PRESETS: Preset[] = [
+  ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls').map((id) => {
+    const source = SOURCES[id];
+    const preset: Preset = { label: source.label, url: source.url };
+    if ('subType' in source && source.subType === 'ts') preset.unsupported = 'TS — unsupported';
+    return preset;
+  }),
+  ...HARNESS_PRESETS,
+].sort((a, b) => Number(!!a.unsupported) - Number(!!b.unsupported));
 
 // Apple's bipbop example muxes HEVC (`hvc1`/`hev1`) + AVC renditions of the same content;
 // cross-codec ABR would need `SourceBuffer.changeType()` (not yet implemented), so filtering
@@ -70,7 +84,12 @@ const INITIAL_AVC_ONLY = params.get('avcOnly') === 'true';
 
 // Populate the preset picker; selecting one loads it (and enables AVC-only if the
 // preset needs it). Reflects the current src when it matches a preset.
-for (const preset of PRESETS) srcPreset.add(new Option(preset.label, preset.url));
+for (const preset of PRESETS) {
+  const label = preset.unsupported ? `${preset.label} (${preset.unsupported})` : preset.label;
+  const option = new Option(label, preset.url);
+  option.disabled = !!preset.unsupported;
+  srcPreset.add(option);
+}
 
 // Apply initial query-param values to UI
 srcInput.value = INITIAL_SRC;
