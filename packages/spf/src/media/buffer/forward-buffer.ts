@@ -129,10 +129,17 @@ export function getSegmentsToLoad(
   // Find segments to load:
   // - Overlaps buffer window [currentTime, targetTime)
   // - Not already buffered at that time position
-  const toLoad = segments.filter((seg) => {
+  const toLoad = segments.filter((seg, i) => {
     // Segment must overlap the buffer window
     const segmentEnd = seg.startTime + seg.duration;
-    const isInRange = seg.startTime < targetTime && segmentEnd > currentTime;
+    // Strict `>` for the overlap so a segment the playhead has just finished
+    // (endTime === currentTime at an interior boundary) isn't reloaded. The
+    // final segment is the exception: at currentTime === total duration its
+    // endTime equals currentTime, so `>` would drop it and it would never load
+    // → endOfStream() never fires and a seek-to-end stalls (#1828). Include the
+    // last segment when the playhead is at/within it.
+    const isLast = i === segments.length - 1;
+    const isInRange = seg.startTime < targetTime && (segmentEnd > currentTime || (isLast && segmentEnd >= currentTime));
 
     // Must not have a segment buffered at this time position
     const isNotBuffered = !bufferedStartTimes.has(seg.startTime);
