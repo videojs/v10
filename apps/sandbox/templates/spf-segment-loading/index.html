@@ -207,6 +207,9 @@
     <p>Testing segment loading pipeline with real Mux HLS stream</p>
 
     <div id="src-controls">
+      <select id="src-preset" title="Load a preset source">
+        <option value="">— preset sources —</option>
+      </select>
       <input type="text" id="src-input" placeholder="Stream URL…" />
       <button type="button" id="set-src">Set Src</button>
     </div>
@@ -221,6 +224,11 @@
           <option value="metadata">metadata</option>
           <option value="auto">auto</option>
         </select>
+      </label>
+      <label
+        title="Filter out HEVC renditions so ABR stays within one codec family, avoiding SourceBuffer.changeType() (not yet implemented). Needed for mixed-codec sources like the Apple bipbop example."
+      >
+        <input type="checkbox" id="avc-only-toggle" /> AVC-only (avoid changeType)
       </label>
     </div>
 
