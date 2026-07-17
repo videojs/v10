@@ -12,10 +12,11 @@ Single-pass checklist for comparing a CSS-to-Tailwind change with its source.
 - [ ] Colors, spacing, radii, fonts, shadows, and z-index prefer **`@theme`** / default v4 scales or semantic utilities over raw arbitrary values where a close match exists
 - [ ] Repeated `*- [var(...)]` patterns are flagged for **`@theme`** entries and generated utilities (`theme(...)`) instead of one-off brackets
 
-## Arbitrary values
+## Non-token values
 
-- [ ] No arbitrary spacing/radius/type for values that fit the v4 scale or an existing **`@theme`** key (`mt-[16px]` → scale / theme token)
-- [ ] Remaining arbitrary values are justified (one-off, pixel-perfect requirement, no utility/property gap) and noted in report; repeated patterns flagged for **`@utility`**
+- [ ] Site code does not introduce arbitrary-value classes; one-offs use inline styles
+- [ ] A non-token value that needs a variant uses an inline CSS custom-property bridge
+- [ ] Repeated values are flagged for **`@theme`** or **`@utility`**
 
 ## Variants and selectors
 

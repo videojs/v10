@@ -9,7 +9,7 @@ description: Migrate site styles to Tailwind v4. Use for CSS, modules, SCSS, sty
 2. Inspect `site/src/styles/globals.css` and nearby components for existing tokens, utilities, and variants.
 3. Preserve cascade, specificity, responsive states, interaction states, and runtime-driven selectors; do not translate declarations in isolation.
 4. Load `references/migration.md` for the migration mapping and site-specific Tailwind conventions.
-5. Prefer theme-backed tokens and semantic utilities. Use arbitrary values only for intentional one-offs with no suitable shared token.
+5. Prefer theme-backed tokens and semantic utilities. For site code, use inline styles for non-token one-offs and CSS custom-property bridges when variants are required; do not introduce arbitrary-value classes.
 6. Compare rendered behavior across affected states and breakpoints.
 
 Keep the change scoped to migration; report unrelated styling problems separately.

@@ -8,8 +8,8 @@ description: Review Video.js documentation without editing it. Use for accuracy,
 Treat implementation, types, tests, schemas, and generated output as factual sources.
 
 1. Identify the audience, intended outcome, artifact type, and owning source files.
-2. Verify claims and examples against current code before reviewing style.
-3. Use `references/checklist.md` selectively for voice, structure, code, site pages, or READMEs.
+2. For site guides and concepts, read `site/src/content/docs/how-to/write-guides.mdx`. For generated reference pages, read `site/src/content/docs/reference/write-references.mdx`. Use neighboring docs for other artifact types.
+3. Verify claims and examples against current code before reviewing voice, structure, examples, MDX conventions, and reader outcomes against the owning guide.
 4. Render affected MDX and run examples where practical.
 
 Report broken or misleading content first. For each finding, give the location, reader impact, evidence, and concise fix. Keep stylistic preferences separate from correctness issues.

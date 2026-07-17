@@ -12,7 +12,7 @@ Read the original CSS, affected markup, `site/src/styles/globals.css`, and nearb
 3. Inspect the rendered result across affected states and breakpoints.
 4. Separate behavior or parity regressions from maintainability suggestions.
 
-For each finding, cite the source rule and target class, explain the user-visible impact, and suggest the smallest correction. Do not require a theme token for an intentional one-off value.
+For each finding, cite the source rule and target class, explain the user-visible impact, and suggest the smallest correction. For site code, require inline styles for non-token one-offs and custom-property bridges when a variant is needed.
 
 ## Example
 

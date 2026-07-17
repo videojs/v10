@@ -32,18 +32,17 @@ pnpm -F site astro check
 
 - Inspect `src/styles/globals.css` before choosing Tailwind classes. Prefer existing theme tokens and semantic utilities.
 - Use the custom `intent:` variant for pointer/focus intent where existing site code does; do not replace it mechanically with `hover:`.
-- Use arbitrary values only when no shared token fits and the exception is intentional.
+- Prefer a token-based utility when one fits. For a non-token one-off, use an inline style instead of an arbitrary-value class such as `min-h-[120px]`.
+- When a non-token value needs a responsive, dark-mode, or other Tailwind variant, bridge it through an inline CSS custom property, for example `style="--md-min-h: 120px"` with `class="md:min-h-(--md-min-h)"`.
 - Use `clsx` in React and `class:list` in Astro for conditional classes.
 - React islands are independent roots. Use Nanostores for cross-island state instead of React context.
 - React Compiler is enabled; do not add memoization without a measured or documented need.
 
 ## Content
 
-- Docs and blog content use `.mdx`. Changelog entries under `src/content/changelog/` are generated `.md` files and are the exception.
+- Read `src/content/docs/how-to/write-guides.mdx` before adding or reviewing site prose. It owns document types, frontmatter, sidebar registration, framework/style variants, voice, and MDX conventions.
+- Changelog source format and generation are owned by `src/content.config.ts` and the root changelog workflows; follow those sources rather than duplicating their extension rules here.
 - Blog filenames are `YYYY-MM-DD-slug.mdx`; `src/utils/globWithParser.ts` removes the date from the route slug.
-- Use `FrameworkCase` and `StyleCase` for conditional guide content and keep `src/docs.config.ts` in sync.
-- Use `<Aside>` for callouts. Do not add an H1 to content pages whose title comes from frontmatter.
-- Add new guides to `src/docs.config.ts` and verify every supported framework/style route.
 - Use `write-docs` or `review-docs` for prose workflows and `write-api-reference` for generated reference pages.
 
 ## Demos

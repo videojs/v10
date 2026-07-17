@@ -10,14 +10,14 @@ description: Draft or create a videojs/v10 GitHub issue. Use when asked to file 
 1. Gather the observed behavior, expected behavior, motivation, affected surface, reproduction or acceptance criteria, and relevant links.
 2. Search open and closed issues for duplicates or useful prior art.
 3. Inspect the relevant code or docs when needed to make the issue actionable; do not invent a root cause.
-4. Check current repository labels and recent issue titles instead of relying on a copied label list.
+4. Do not add labels or a type prefix. The triage bot owns both so auto-triage has one source of truth.
 5. Draft:
-   - A concise, sentence-case title with the repository's current type prefix if one is consistently used.
+   - A concise Title Case title without a type prefix.
    - Context and user impact.
    - Reproduction for bugs, or scope/acceptance criteria for features.
    - Relevant implementation notes only when verified.
 6. Show the final draft and obtain confirmation before creating the external issue unless the user explicitly authorized immediate creation.
-7. Create it with `gh issue create` or the available GitHub connector and return the URL.
+7. Create it without labels using `gh issue create` or the available GitHub connector and return the URL.
 
 Keep the issue focused on the problem and acceptance boundary. Do not prescribe an unverified implementation.
 
