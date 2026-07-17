@@ -56,7 +56,7 @@ Every doc page is available as markdown, so you can provide your model with focu
 How you use these resources depends on your tool:
 
 - **Any AI chat**: copy markdown from a doc page and paste it into the conversation.
-- **Claude Code**: put the doc index in your project's `AGENTS.md`, then import it from `CLAUDE.md` so other agents and Claude share one source of truth.
+- **Claude Code**: reference doc URLs in your project's [`CLAUDE.md`](https://docs.anthropic.com/en/docs/claude-code/overview) so the agent knows where to find Video.js docs when it needs them.
 - **Cursor**: add the `llms.txt` URL via the [`@Docs`](https://docs.cursor.com/context/@-symbols/@-docs) feature for indexed search across the documentation.
 - **Other coding agents**: reference doc URLs or `llms.txt` in your project's [`AGENTS.md`](https://agents.md) or equivalent context file.
 
