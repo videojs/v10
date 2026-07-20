@@ -163,6 +163,9 @@ describe('parseYouTubeSource', () => {
     expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=171s')?.startTime).toBe(171);
     expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=2m51s')?.startTime).toBe(171);
     expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=2m')?.startTime).toBe(120);
+    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=1h30m15s')?.startTime).toBe(5415);
+    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=1h')?.startTime).toBe(3600);
+    expect(parseYouTubeSource('https://youtu.be/aqz-KE-bpKQ?t=1h5s')?.startTime).toBe(3605);
   });
 
   it('detects the nocookie host', () => {
