@@ -432,6 +432,19 @@ describe('YouTubeMedia', () => {
     expect(media.engine).toBe(null);
   });
 
+  it('unblocks pending play() when detached before load completes', async () => {
+    const media = new YouTubeMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    // Await load without the player ever becoming ready.
+    const pending = media.play();
+    media.detach();
+
+    await expect(pending).resolves.toBeUndefined();
+    expect(media.engine).toBe(null);
+  });
+
   it('does not create a player when detached before the API resolves', async () => {
     const media = new YouTubeMedia();
     const iframe = createIframe();

@@ -115,6 +115,8 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#player?.destroy().catch(() => {});
     this.#player = null;
     this.#target = null;
+    // Unblock callers awaiting load; they re-check `#player` (now null) and no-op.
+    this.#loadComplete.resolve();
     this.#resetState();
   }
 
