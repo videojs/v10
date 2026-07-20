@@ -1,0 +1,90 @@
+---
+title: Translations
+description: Partial map of English translation phrases to localized strings
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+`Translations` is the shape for locale packs passed to <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> and <DocsLink slug="reference/create-translator">`createTranslator`</DocsLink>. Every entry is optional. Missing keys fall back through the BCP 47 chain, lazy-loaded built-in packs, supported browser translation fallback, and English.
+
+<FrameworkCase frameworks={["react"]}>
+
+`Translations` is also the type for the `translations` prop on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>.
+
+</FrameworkCase>
+
+See <DocsLink slug="reference/translation-phrases">Translation phrases</DocsLink> for every supported key.
+
+## Import
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import type { Translations } from '@videojs/html/i18n';
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import type { Translations } from '@videojs/react/i18n';
+```
+
+</FrameworkCase>
+
+## Definition
+
+```ts
+type Translations = {
+  [K in keyof TranslationParams]?: TranslationParams[K] extends never
+    ? string
+    : /* parametric keys must include required {placeholder} tokens */
+      string;
+};
+```
+
+Parametric values must include the same `{placeholder}` substrings as English (`{seconds}`, `{duration}`, and so on). TypeScript enforces this when you use `satisfies Partial<Translations>`.
+
+## Examples
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n, type Translations } from '@videojs/html/i18n';
+
+const es = {
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+  'Seek forward {seconds} seconds': 'Adelantar {seconds} segundos',
+} satisfies Partial<Translations>;
+
+registerI18n('es', es);
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { I18nProvider, type Translations } from '@videojs/react/i18n';
+
+const translations = {
+  Play: 'Abspielen',
+} satisfies Partial<Translations>;
+
+<I18nProvider locale="de" translations={translations}>
+  <Player />
+</I18nProvider>;
+```
+
+</FrameworkCase>
+
+Only supplied keys override lower layers. See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge priority.
+
+## Related
+
+- <DocsLink slug="reference/translation-params">`TranslationParams`</DocsLink>
+- <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink>
+- <DocsLink slug="how-to/i18n-override-translations">Override translation keys</DocsLink>

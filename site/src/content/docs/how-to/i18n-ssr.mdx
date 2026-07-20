@@ -1,0 +1,142 @@
+---
+title: SSR and locale
+description: Render translated player UI on the server without a flash of English
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js is English by default. Server-rendered pages that opt into another language should mount the relevant provider, output the correct `lang`, and supply translations on the first client render. Lazy `loadLocale` and browser translation fallback run after hydration, so controls briefly show English without preloaded copy.
+
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for provider resolution and merge order.
+
+## Set `<html lang>`
+
+Render the document language on the server:
+
+```html
+<html lang="es">
+```
+
+<FrameworkCase frameworks={["react"]}>
+
+React providers use a server snapshot of `undefined` for ambient lang, then read `<html lang>` on hydration. Passing the `locale` prop explicitly avoids any mismatch.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+## Preload translations
+
+Import the locale pack on the server (or in a server component) and pass it to <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>:
+
+```tsx
+import { I18nProvider } from '@videojs/react/i18n';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+export async function Player({ locale }: { locale: string }) {
+  const { default: translations } = await import(`@videojs/react/i18n/locales/${locale}`);
+
+  return (
+    <Provider>
+      <I18nProvider locale={locale} translations={translations}>
+        <VideoSkin>
+          <Video src="..." playsInline />
+        </VideoSkin>
+      </I18nProvider>
+    </Provider>
+  );
+}
+```
+
+`translations` on the first render skips the async lazy layer and Chrome-only browser translation fallback. Labels match on server and client.
+
+</FrameworkCase>
+
+## Register on the server
+
+For a shipped pack, import its side-effect module in server bootstrap code before rendering players:
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import '@videojs/html/i18n/locales/es/register';
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import '@videojs/react/i18n/locales/es/register';
+```
+
+</FrameworkCase>
+
+For a custom pack, call <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> instead:
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+import es from './locales/es';
+
+registerI18n('es', es);
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+import es from './locales/es';
+
+registerI18n('es', es);
+```
+
+</FrameworkCase>
+
+The registry is module singleton state. Registration in server entry points carries into the client bundle when shared.
+
+<FrameworkCase frameworks={["react"]}>
+
+## next-intl and app routers
+
+```tsx
+import { getLocale } from 'next-intl/server';
+
+const locale = await getLocale();
+const { default: translations } = await import(`@videojs/react/i18n/locales/${locale}`);
+
+<I18nProvider locale={locale} translations={translations}>
+  ...
+</I18nProvider>
+```
+
+Match your app's locale negotiation. Video.js does not replace framework i18n; it consumes the tag you pass.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+## HTML custom elements
+
+SSR HTML players should emit `lang` and wrap the player with <DocsLink slug="reference/media-i18n">`<media-i18n>`</DocsLink>. Register packs in the entry module loaded before custom elements upgrade:
+
+```ts
+import '@videojs/html/video';
+import '@videojs/html/i18n/locales/es/register';
+```
+
+<Aside type="caution">
+Do not rely on browser-only translation APIs during SSR. Ship packs or register strings explicitly.
+</Aside>
+
+</FrameworkCase>
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale at runtime</DocsLink>
+- <DocsLink slug="how-to/i18n-register-locale">Register a custom locale</DocsLink>

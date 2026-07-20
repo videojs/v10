@@ -42,6 +42,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/ui-components' },
       { slug: 'concepts/accessibility' },
       { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
+      { slug: 'concepts/i18n', sidebarLabel: 'Internationalization' },
     ],
   },
   {
@@ -52,6 +53,15 @@ export const sidebar: Sidebar = [
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
+      {
+        sidebarLabel: 'Internationalization',
+        contents: [
+          { slug: 'how-to/i18n-register-locale', sidebarLabel: 'Register a locale' },
+          { slug: 'how-to/i18n-override-translations', sidebarLabel: 'Override translations' },
+          { slug: 'how-to/i18n-switch-locale', sidebarLabel: 'Switch locale' },
+          { slug: 'how-to/i18n-ssr', sidebarLabel: 'SSR with locale' },
+        ],
+      },
     ],
   },
   {
@@ -60,6 +70,7 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/player-provider' },
       { slug: 'reference/player-container' },
+      { slug: 'reference/i18n-provider' },
       // sorted alphabetically
       { slug: 'reference/airplay-button' },
       { slug: 'reference/audio-track-radio-group' },
@@ -107,6 +118,9 @@ export const sidebar: Sidebar = [
     frameworks: ['react'],
     contents: [
       { slug: 'reference/create-player' },
+      { slug: 'reference/create-i18n' },
+      { slug: 'reference/use-translator' },
+      { slug: 'reference/use-locale' },
       { slug: 'reference/use-player' },
       { slug: 'reference/use-media' },
       { slug: 'reference/use-store' },
@@ -135,6 +149,8 @@ export const sidebar: Sidebar = [
     frameworks: ['html'],
     contents: [
       { slug: 'reference/html-create-player', sidebarLabel: 'createPlayer' },
+      { slug: 'reference/media-i18n', sidebarLabel: 'media-i18n' },
+      { slug: 'reference/media-text', sidebarLabel: 'media-text' },
       { slug: 'reference/player-controller' },
       {
         sidebarLabel: 'Advanced',
@@ -172,6 +188,28 @@ export const sidebar: Sidebar = [
       { slug: 'reference/feature-text-tracks' },
       { slug: 'reference/feature-time' },
       { slug: 'reference/feature-volume' },
+    ],
+  },
+  {
+    sidebarLabel: 'Internationalization',
+    llmsDescription: 'API reference for locale registration, translation helpers, and i18n types.',
+    contents: [
+      { slug: 'reference/register-i18n', sidebarLabel: 'registerI18n' },
+      { slug: 'reference/get-i18n-translations', sidebarLabel: 'getI18nTranslations' },
+      { slug: 'reference/has-registered-locale', sidebarLabel: 'hasRegisteredLocale' },
+      { slug: 'reference/on-i18n-registry-change', sidebarLabel: 'onI18nRegistryChange' },
+      { slug: 'reference/create-translator', sidebarLabel: 'createTranslator' },
+      { slug: 'reference/translation-phrases', sidebarLabel: 'Translation phrases' },
+      {
+        sidebarLabel: 'Types',
+        defaultOpen: false,
+        contents: [
+          { slug: 'reference/locale', sidebarLabel: 'Locale' },
+          { slug: 'reference/translation-params', sidebarLabel: 'TranslationParams' },
+          { slug: 'reference/translations', sidebarLabel: 'Translations' },
+          { slug: 'reference/translator', sidebarLabel: 'Translator' },
+        ],
+      },
     ],
   },
 ];

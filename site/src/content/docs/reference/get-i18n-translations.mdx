@@ -1,0 +1,36 @@
+---
+title: getI18nTranslations
+description: Read the merged translation map for a locale using BCP 47 parent-chain fallback
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+`getI18nTranslations` walks the BCP 47 lookup chain (`es-MX` → `es` → `en`) and merges registry layers into one map. Providers combine this map with lazy-loaded built-in packs and provider overrides. Call it directly when building custom UI outside built-in controls.
+
+See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge order and fallback rules.
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
+
+const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
+t('Play');
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { createTranslator, getI18nTranslations } from '@videojs/react/i18n';
+
+const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
+t('Play');
+```
+
+</FrameworkCase>
+
+<UtilReference util="getI18nTranslations" />

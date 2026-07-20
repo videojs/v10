@@ -1,0 +1,27 @@
+---
+title: useTranslator
+description: React hook that returns the typed translator for the nearest I18nProvider
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+<FrameworkCase frameworks={["react"]}>
+
+`useTranslator` returns the translator from the nearest <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Control components pass current English phrases from core `getLabel()` — for example `t('Play')` and `t('Seek forward {seconds} seconds', { seconds: 10 })`.
+
+When no provider is mounted, the hook falls back to English registry strings so standalone demos do not throw.
+
+```tsx
+import { useTranslator } from '@videojs/react/i18n';
+
+function PlayLabel() {
+  const t = useTranslator();
+  return <span>{t('Play')}</span>;
+}
+```
+
+<UtilReference util="useTranslator" />
+
+</FrameworkCase>

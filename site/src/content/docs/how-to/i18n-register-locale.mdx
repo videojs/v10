@@ -1,0 +1,187 @@
+---
+title: Register a custom locale
+description: Register translation packs for HTML, React, and CDN players
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import Aside from '@/components/Aside.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js is English by default. Built-in packs lazy-load automatically for app bundles; use <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> when you have custom strings, need synchronous first paint, or load locales from the CDN.
+
+<FrameworkCase frameworks={["html"]}>
+
+To opt into another language, mount `<media-i18n>` and set its `lang` attribute or an ancestor `lang` attribute.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+To opt into another language, mount `I18nProvider`. Pass its `locale` prop to force a tag, or omit it to inherit `lang`.
+
+</FrameworkCase>
+
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to phrase keys and the registry.
+
+### Prerequisites
+
+- A locale tag ([BCP 47](https://www.rfc-editor.org/rfc/rfc5646), e.g. `es`, `pt-BR`)
+- A partial translation map keyed by current English phrases (`Play`, `Pause`, …)
+
+## Use a shipped pack synchronously
+
+Built-in packs include side-effect modules that register a language before the player renders:
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts title="main.ts"
+import '@videojs/html/video';
+import '@videojs/html/i18n/locales/es/register';
+```
+
+```html title="index.html"
+<html lang="es">
+  <media-i18n>
+    <video-player>
+      <video-skin>
+        <video src="..." playsinline></video>
+      </video-skin>
+    </video-player>
+  </media-i18n>
+</html>
+```
+
+Without the side-effect import, `<media-i18n>` lazy-loads `es` when it resolves `lang="es"`. The import makes the first paint synchronous.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx title="app.tsx"
+import { I18nProvider } from '@videojs/react/i18n';
+import '@videojs/react/i18n/locales/es/register';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+export function App() {
+  return (
+    <Provider>
+      <I18nProvider locale="es">
+        <VideoSkin>
+          <Video src="..." playsInline />
+        </VideoSkin>
+      </I18nProvider>
+    </Provider>
+  );
+}
+```
+
+Wrap the player subtree with <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink>. Omit `locale` to inherit `<html lang="es">`.
+
+</FrameworkCase>
+
+## Register your own pack
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts title="my-es.ts"
+import type { Translations } from '@videojs/html/i18n';
+
+const es = {
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+  Mute: 'Silenciar',
+  Unmute: 'Activar sonido',
+} satisfies Partial<Translations>;
+
+export default es;
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts title="my-es.ts"
+import type { Translations } from '@videojs/react/i18n';
+
+const es = {
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+  Mute: 'Silenciar',
+  Unmute: 'Activar sonido',
+} satisfies Partial<Translations>;
+
+export default es;
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+import es from './my-es';
+
+registerI18n('es', es);
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+import es from './my-es';
+
+registerI18n('es', es);
+```
+
+</FrameworkCase>
+
+All keys are optional. Missing keys follow the <DocsLink slug="concepts/i18n">locale fallback chain</DocsLink> through a built-in pack, browser-translated copy in supported Chrome builds, or English.
+
+<FrameworkCase frameworks={["html"]}>
+
+## CDN
+
+Load the player and a locale chunk. CDN locale modules call <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> on import:
+
+```html
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
+<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/locales/es.js"></script>
+
+<html lang="es">
+  <media-i18n>
+    <video-player>
+      <video-skin>
+        <video src="..." playsinline></video>
+      </video-skin>
+    </video-player>
+  </media-i18n>
+</html>
+```
+
+<Aside type="note">
+CDN locale files import `registerI18n` from the shared `cdn/i18n.js` bundle so every chunk shares one registry instance.
+</Aside>
+
+## Custom CDN locale
+
+```js title="my-locale.js"
+import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
+
+registerI18n('es', {
+  Play: 'Reproducir',
+  Pause: 'Pausa',
+});
+```
+
+Load your module after the player script and before playback starts.
+
+</FrameworkCase>
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-override-translations">Override individual keys</DocsLink>
+- <DocsLink slug="reference/translations">`Translations`</DocsLink> type
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale at runtime</DocsLink>
+- <DocsLink slug="reference/register-i18n">`registerI18n` reference</DocsLink>

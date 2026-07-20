@@ -1,0 +1,76 @@
+---
+title: TranslationParams
+description: Typed contract for translation phrases and their placeholder arguments
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+`TranslationParams` maps every current English translation phrase to its argument shape. Phrases with `never` accept only `t('Phrase')`. Phrases with an object accept `t('Phrase {value}', { ... })` with typed placeholder names.
+
+See <DocsLink slug="reference/translation-phrases">Translation phrases</DocsLink> for the complete key catalog and where each phrase appears.
+
+## Import
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import type { TranslationParams } from '@videojs/html/i18n';
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import type { TranslationParams } from '@videojs/react/i18n';
+```
+
+</FrameworkCase>
+
+## Definition
+
+```ts
+type TranslationParams = {
+  Play: never;
+  Pause: never;
+  'Seek forward {seconds} seconds': { seconds: number | string };
+  '{duration} remaining': { duration: string };
+  // ...
+};
+```
+
+English defaults and the full phrase list live in `packages/core/src/core/i18n/locales/en.ts`. The authoritative TypeScript map is `packages/core/src/core/i18n/types.ts`.
+
+## Parametric phrases
+
+| Phrase | Placeholders |
+| --- | --- |
+| `Seek forward {seconds} seconds` | `{seconds}` |
+| `Seek backward {seconds} seconds` | `{seconds}` |
+| `Playback rate {rate}` | `{rate}` |
+| `{current} of {duration}` | `{current}`, `{duration}` |
+| `{duration} remaining` | `{duration}` |
+| `{percent}, muted` | `{percent}` |
+| `Volume {value}` | `{value}` |
+| `Auto ({label})` | `{label}` |
+
+All other phrases are plain strings with no parameters.
+
+## Usage
+
+```ts
+const t: Translator = createTranslator(translations, 'es');
+
+t('Play');
+t('Seek forward {seconds} seconds', { seconds: 10 });
+t('{duration} remaining', { duration: '1 minute' });
+```
+
+TypeScript rejects missing placeholders when defining <DocsLink slug="reference/translations">`Translations`</DocsLink> overlays.
+
+## Related
+
+- <DocsLink slug="reference/translations">`Translations`</DocsLink>
+- <DocsLink slug="reference/translator">`Translator`</DocsLink>
+- <DocsLink slug="reference/translation-phrases">Translation phrases</DocsLink>
