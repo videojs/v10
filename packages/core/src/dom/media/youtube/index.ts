@@ -682,10 +682,13 @@ export function parseYouTubeSource(src: string): YouTubeSource | null {
   const noCookie = src.includes('-nocookie');
   const videoMatch = VIDEO_MATCH_SRC.exec(src);
   const listMatch = PLAYLIST_MATCH_SRC.exec(src);
-  if (!videoMatch && !listMatch) return null;
+  // Playlist embed URLs use the `videoseries` placeholder in the video id slot.
+  const videoId = videoMatch?.[1] ?? null;
+  const id = videoId === 'videoseries' ? null : videoId;
+  if (!id && !listMatch) return null;
   return {
-    id: videoMatch?.[1] ?? null,
-    kind: videoMatch ? 'video' : 'playlist',
+    id,
+    kind: id ? 'video' : 'playlist',
     listId: listMatch?.[1] ?? null,
     startTime: parseStartTime(src),
     noCookie,

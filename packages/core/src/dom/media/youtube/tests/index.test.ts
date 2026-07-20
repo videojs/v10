@@ -151,6 +151,20 @@ describe('parseYouTubeSource', () => {
     });
   });
 
+  it('detects playlists in videoseries embed URLs', () => {
+    expect(parseYouTubeSource('https://www.youtube.com/embed/videoseries?list=PLv3TTBr1W_9tppikBxAE')).toEqual({
+      id: null,
+      kind: 'playlist',
+      listId: 'PLv3TTBr1W_9tppikBxAE',
+      startTime: null,
+      noCookie: false,
+    });
+  });
+
+  it('returns null for a videoseries embed URL without a list param', () => {
+    expect(parseYouTubeSource('https://www.youtube.com/embed/videoseries')).toBe(null);
+  });
+
   it('keeps the video id when a watch URL also has a list param', () => {
     const parsed = parseYouTubeSource('https://www.youtube.com/watch?v=aqz-KE-bpKQ&list=PLv3TTBr1W_9tppikBxAE');
     expect(parsed?.kind).toBe('video');
@@ -220,6 +234,14 @@ describe('buildYouTubeIframeSrc', () => {
     expect(src).toContain('https://www.youtube.com/embed?');
     expect(src).toContain('listType=playlist');
     expect(src).toContain('list=PLv3TTBr1W_9tppikBxAE');
+  });
+
+  it('builds playlist embed URL from a videoseries embed source', () => {
+    const src = buildYouTubeIframeSrc('https://www.youtube.com/embed/videoseries?list=PLv3TTBr1W_9tppikBxAE');
+    expect(src).toContain('https://www.youtube.com/embed?');
+    expect(src).toContain('listType=playlist');
+    expect(src).toContain('list=PLv3TTBr1W_9tppikBxAE');
+    expect(src).not.toContain('videoseries');
   });
 
   it('returns empty string for invalid src', () => {
