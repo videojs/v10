@@ -6,9 +6,15 @@ export const iconState = {
   play: {
     button: 'group',
     restart: 'hidden opacity-0 group-data-ended:block group-data-ended:opacity-100',
-    play: 'hidden opacity-0 group-not-data-ended:group-data-paused:block group-not-data-ended:group-data-paused:opacity-100',
+    play: [
+      'hidden opacity-0',
+      'group-not-data-ended:group-data-paused:block',
+      'group-not-data-ended:group-data-paused:opacity-100',
+      'group-not-data-ended:group-not-data-started:block',
+      'group-not-data-ended:group-not-data-started:opacity-100',
+    ].join(' '),
     pause:
-      'hidden opacity-0 group-not-data-paused:group-not-data-ended:block group-not-data-paused:group-not-data-ended:opacity-100',
+      'hidden opacity-0 group-data-started:group-not-data-paused:group-not-data-ended:block group-data-started:group-not-data-paused:group-not-data-ended:opacity-100',
   },
   mute: {
     button: 'group',
@@ -38,5 +44,19 @@ export const iconState = {
     enter:
       'hidden opacity-0 group-not-data-[cast-state=connected]:block group-not-data-[cast-state=connected]:opacity-100',
     exit: 'hidden opacity-0 group-data-[cast-state=connected]:block group-data-[cast-state=connected]:opacity-100',
+  },
+  airplay: {
+    // `group` enables the icon-state variants below. The two CSS-variable
+    // overrides mirror the spinner pattern: the airplay-exit SVG stays in
+    // the DOM while inactive, so we short-circuit its keyframes by setting
+    // the animation variables to `none` whenever airplay isn't connected.
+    button: [
+      'group',
+      'not-data-[airplay-state=connected]:[--media-icon--airplay__fill-animation:none]',
+      'not-data-[airplay-state=connected]:[--media-icon--airplay__triangle-animation:none]',
+    ].join(' '),
+    enter:
+      'hidden opacity-0 group-not-data-[airplay-state=connected]:block group-not-data-[airplay-state=connected]:opacity-100',
+    exit: 'hidden opacity-0 group-data-[airplay-state=connected]:block group-data-[airplay-state=connected]:opacity-100',
   },
 };

@@ -2,7 +2,7 @@ import { Thumbnail } from '@videojs/react';
 
 const THUMBNAILS = [
   {
-    url: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.jpg',
+    url: '{{VJS10_DEMO_STORYBOARD}}',
     startTime: 0,
     endTime: 10,
     width: 284,
@@ -10,7 +10,7 @@ const THUMBNAILS = [
     coords: { x: 0, y: 0 },
   },
   {
-    url: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.jpg',
+    url: '{{VJS10_DEMO_STORYBOARD}}',
     startTime: 10,
     endTime: 20,
     width: 284,
@@ -18,7 +18,7 @@ const THUMBNAILS = [
     coords: { x: 284, y: 0 },
   },
   {
-    url: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/storyboard.jpg',
+    url: '{{VJS10_DEMO_STORYBOARD}}',
     startTime: 20,
     width: 284,
     height: 160,

@@ -1,5 +1,5 @@
+import { isEventWithinElement } from '@videojs/core/dom';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
-import { supportsAnchorPositioning } from '@videojs/utils/dom';
 
 export type PositionControllerHost = ReactiveControllerHost & HTMLElement;
 
@@ -8,7 +8,8 @@ export type PositionControllerHost = ReactiveControllerHost & HTMLElement;
  * popup elements (tooltips, popovers). Tracks scroll, resize, and
  * ResizeObserver events to keep the popup aligned with its trigger.
  *
- * When native CSS Anchor Positioning is supported, `sync()` is a no-op.
+ * Native CSS Anchor Positioning still uses this controller for dynamic
+ * sizing variables such as available width/height.
  */
 export class PositionController implements ReactiveController {
   readonly #host: PositionControllerHost;
@@ -17,6 +18,7 @@ export class PositionController implements ReactiveController {
   #frame = 0;
   #resizeObserver: ResizeObserver | null = null;
   #trigger: HTMLElement | null = null;
+  #boundary: Element | null = null;
 
   constructor(host: PositionControllerHost) {
     this.#host = host;
@@ -31,17 +33,19 @@ export class PositionController implements ReactiveController {
   }
 
   /** Start or update position tracking for the given trigger. */
-  sync(trigger: HTMLElement | null): void {
-    if (supportsAnchorPositioning()) return;
+  sync(trigger: HTMLElement | null, boundary: Element | null = null): void {
     if (!trigger) return;
-    if (this.#abort && this.#trigger === trigger) return;
+    if (this.#abort && this.#trigger === trigger && this.#boundary === boundary) return;
 
     this.cleanup();
     this.#abort = new AbortController();
     this.#trigger = trigger;
+    this.#boundary = boundary;
     const { signal } = this.#abort;
 
-    const reposition = () => {
+    const reposition = (event?: Event) => {
+      if (event && isEventWithinElement(event, this.#host)) return;
+
       cancelAnimationFrame(this.#frame);
       this.#frame = requestAnimationFrame(() => {
         if (signal.aborted) return;
@@ -58,6 +62,7 @@ export class PositionController implements ReactiveController {
       });
       this.#resizeObserver.observe(trigger);
       this.#resizeObserver.observe(this.#host);
+      if (boundary) this.#resizeObserver.observe(boundary);
     }
 
     reposition();
@@ -68,8 +73,10 @@ export class PositionController implements ReactiveController {
     this.#abort?.abort();
     this.#abort = null;
     this.#trigger = null;
+    this.#boundary = null;
     cancelAnimationFrame(this.#frame);
     this.#frame = 0;
+    // Disconnect unobserves trigger, host, and boundary together.
     this.#resizeObserver?.disconnect();
     this.#resizeObserver = null;
   }

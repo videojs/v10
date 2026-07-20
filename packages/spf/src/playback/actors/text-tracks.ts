@@ -22,7 +22,19 @@ export interface AddCuesMessage<C extends Cue = Cue> {
   cues: C[];
 }
 
-export type TextTracksActorMessage<C extends Cue = Cue> = AddCuesMessage<C>;
+/**
+ * Wipe the actor's `loaded` + `segments` context. Sent on source reset
+ * (typically by `syncTextTracks` on state exit) so a subsequent
+ * presentation starts with a fresh cue+segment cache. Without this, a
+ * new presentation reusing trackIds from the prior source would have
+ * `getSegmentsToLoad` treat its segments as already-buffered and skip
+ * loading them.
+ */
+export interface ClearMessage {
+  type: 'clear';
+}
+
+export type TextTracksActorMessage<C extends Cue = Cue> = AddCuesMessage<C> | ClearMessage;
 
 /**
  * Host-agnostic text-track actor type.

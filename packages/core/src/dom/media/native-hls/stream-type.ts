@@ -2,12 +2,16 @@ import type { Constructor } from '@videojs/utils/types';
 import { type MediaStreamType, MediaStreamTypes } from '../../../core/media/types';
 import type { NativeMediaHost } from './errors';
 
+/**
+ * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
+ */
 export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMediaHost>>(BaseClass: Base) {
   class NativeHlsMediaStreamType extends (BaseClass as Constructor<NativeMediaHost>) {
     #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
     #isUserStreamType = false;
     #disconnect: AbortController | null = null;
 
+    /** Current stream type (`'on-demand'` / `'live'` / `'unknown'`). */
     get streamType(): MediaStreamType {
       return this.#streamType;
     }
@@ -23,9 +27,9 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
       this.#update(value);
     }
 
-    attach(target: EventTarget): void {
-      super.attach?.(target);
-      this.#init(target as HTMLMediaElement);
+    attach(target: HTMLVideoElement): void {
+      super.attach(target);
+      this.#init(target);
     }
 
     detach(): void {
@@ -58,7 +62,7 @@ export function NativeHlsMediaStreamTypeMixin<Base extends Constructor<NativeMed
       detect();
     }
 
-    #detect(target: HTMLMediaElement | null = this.target as HTMLMediaElement | null): MediaStreamType {
+    #detect(target: HTMLMediaElement | null = this.target as HTMLVideoElement | null): MediaStreamType {
       if (!target) return MediaStreamTypes.UNKNOWN;
       const { duration } = target;
       if (duration === Infinity) return MediaStreamTypes.LIVE;

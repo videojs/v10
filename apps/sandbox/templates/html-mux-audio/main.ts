@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/audio/player';
 import '@videojs/html/media/mux-audio';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
@@ -19,20 +20,22 @@ const state = createHtmlSandboxState();
 const loadLatest = createLatestLoader();
 
 async function render() {
+  await prepareSandboxHtmlLocale();
+
   const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
   if (!tag) return;
 
   const mediaAttrs = renderMediaAttrs(state);
 
-  document.getElementById('root')!.innerHTML = html`
+  document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <mux-audio src="${SOURCES[state.source].url}" debug ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
         </${tag}>
       </audio-player>
     </div>
-  `;
+  `);
 }
 
 render();
@@ -66,3 +69,5 @@ onPreloadChange((preload) => {
   state.preload = preload;
   render();
 });
+
+bindSandboxHtmlLocaleChange(render);

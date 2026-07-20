@@ -11,7 +11,7 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../../media/types';
-import { selectAudioTrack, selectTextTrack, selectVideoTrack } from '../select-tracks';
+import { selectAudioTrack, selectVideoTrack } from '../select-tracks';
 
 function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
@@ -80,75 +80,105 @@ function createPresentation(config: {
   };
 }
 
+// `selectVideoTrack` is the simple (non-ABR) video selector — ABR-driven
+// selection is exercised in `quality-switching.test.ts`.
+
 describe('selectVideoTrack', () => {
-  it('selects video track when presentation loaded', async () => {
+  it('selects first video track when presentation loaded', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
         type: 'video',
-        id: 'video-360p',
-        url: 'http://example.com/360p.m3u8',
-        bandwidth: 500_000,
+        id: 'video-low',
+        url: 'http://example.com/video-low.m3u8',
+        bandwidth: 600_000,
         mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
+        codecs: ['avc1.4d401f'],
+      },
+      {
+        type: 'video',
+        id: 'video-high',
+        url: 'http://example.com/video-high.m3u8',
+        bandwidth: 2_400_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
       },
     ];
 
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectVideoTrack.setup({ state });
-
-    // Wait for selection
-    await new Promise((resolve) => setTimeout(resolve, 50));
-
-    expect(state.selectedVideoTrackId.get()).toBe('video-360p');
-
-    cleanup();
-  });
-
-  it('does not select when video track already selected', async () => {
-    const presentation = createPresentation({ video: [] });
-    const state = makeState({ presentation, selectedVideoTrackId: 'existing-video' });
-
-    const cleanup = selectVideoTrack.setup({ state });
+    const reactor = selectVideoTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.selectedVideoTrackId.get()).toBe('existing-video');
+    expect(state.selectedVideoTrackId.get()).toBe('video-low');
 
-    cleanup();
+    reactor.destroy();
   });
 
-  it.skip('uses bandwidth configuration for initial selection', async () => {
+  it('clears selectedVideoTrackId on src unload', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
         type: 'video',
-        id: 'video-360p',
-        url: 'http://example.com/360p.m3u8',
-        bandwidth: 500_000,
+        id: 'video-only',
+        url: 'http://example.com/video-only.m3u8',
+        bandwidth: 1_000_000,
         mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
-      },
-      {
-        type: 'video',
-        id: 'video-720p',
-        url: 'http://example.com/720p.m3u8',
-        bandwidth: 2_000_000,
-        mimeType: 'video/mp4',
-        codecs: ['avc1.42E01E'],
+        codecs: ['avc1.4d401f'],
       },
     ];
 
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectVideoTrack.setup({ state });
+    const reactor = selectVideoTrack.setup({ state });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(state.selectedVideoTrackId.get()).toBe('video-only');
+
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedVideoTrackId.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it('honors a caller-supplied picker', async () => {
+    const videoTracks: PartiallyResolvedVideoTrack[] = [
+      {
+        type: 'video',
+        id: 'video-low',
+        url: 'http://example.com/video-low.m3u8',
+        bandwidth: 600_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+      {
+        type: 'video',
+        id: 'video-high',
+        url: 'http://example.com/video-high.m3u8',
+        bandwidth: 2_400_000,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.4d401f'],
+      },
+    ];
+
+    const presentation = createPresentation({ video: videoTracks });
+    const state = makeState({ presentation });
+
+    // Custom picker bypasses the default first-track rule and pins to a
+    // specific id; the behavior should honor it.
+    const reactor = selectVideoTrack.setup({
+      state,
+      config: { picker: () => 'video-high' },
+    });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.selectedVideoTrackId.get()).toBe('video-720p');
+    expect(state.selectedVideoTrackId.get()).toBe('video-high');
 
-    cleanup();
+    reactor.destroy();
   });
 });
 
@@ -172,29 +202,29 @@ describe('selectAudioTrack', () => {
     const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectAudioTrack.setup({ state });
+    const reactor = selectAudioTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
-    cleanup();
+    reactor.destroy();
   });
 
   it('does not select when audio track already selected', async () => {
     const presentation = createPresentation({ audio: [] });
     const state = makeState({ presentation, selectedAudioTrackId: 'existing-audio' });
 
-    const cleanup = selectAudioTrack.setup({ state });
+    const reactor = selectAudioTrack.setup({ state });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedAudioTrackId.get()).toBe('existing-audio');
 
-    cleanup();
+    reactor.destroy();
   });
 
-  it.skip('uses preferred language configuration', async () => {
+  it('picks track matching preferredAudioLanguage when supplied', async () => {
     const audioTracks: PartiallyResolvedAudioTrack[] = [
       {
         type: 'audio',
@@ -227,40 +257,99 @@ describe('selectAudioTrack', () => {
     const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectAudioTrack.setup({ state });
+    const reactor = selectAudioTrack.setup({ state, config: { preferredAudioLanguage: 'es' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.selectedAudioTrackId.get()).toBe('audio-es');
 
-    cleanup();
+    reactor.destroy();
   });
-});
 
-describe('selectTextTrack', () => {
-  it('does not auto-select text track', async () => {
-    const textTracks = [
+  it('falls back to DEFAULT=YES track when preferredAudioLanguage does not match', async () => {
+    const audioTracks: PartiallyResolvedAudioTrack[] = [
       {
-        type: 'text' as const,
-        id: 'text-en',
-        url: 'http://example.com/text-en.m3u8',
-        bandwidth: 256,
-        mimeType: 'application/mp4',
-        groupId: 'text',
-        label: 'English',
-        kind: 'subtitles' as const,
+        type: 'audio',
+        id: 'audio-en',
+        url: 'http://example.com/audio-en.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'English',
+        language: 'en',
+        sampleRate: 48000,
+        channels: 2,
+      },
+      {
+        type: 'audio',
+        id: 'audio-fr',
+        url: 'http://example.com/audio-fr.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'French',
+        language: 'fr',
+        default: true,
+        sampleRate: 48000,
+        channels: 2,
       },
     ];
 
-    const presentation = createPresentation({ text: textTracks });
+    const presentation = createPresentation({ audio: audioTracks });
     const state = makeState({ presentation });
 
-    const cleanup = selectTextTrack.setup({ state, config: {} });
+    // Preferred language 'xx' has no match; picker falls back to the default
+    // track ('audio-fr') rather than the first track ('audio-en').
+    const reactor = selectAudioTrack.setup({ state, config: { preferredAudioLanguage: 'xx' } });
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.selectedTextTrackId.get()).toBeUndefined();
+    expect(state.selectedAudioTrackId.get()).toBe('audio-fr');
 
-    cleanup();
+    reactor.destroy();
+  });
+
+  it('falls back to first track when no language preference and no DEFAULT track', async () => {
+    const audioTracks: PartiallyResolvedAudioTrack[] = [
+      {
+        type: 'audio',
+        id: 'audio-en',
+        url: 'http://example.com/audio-en.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'English',
+        language: 'en',
+        sampleRate: 48000,
+        channels: 2,
+      },
+      {
+        type: 'audio',
+        id: 'audio-es',
+        url: 'http://example.com/audio-es.m3u8',
+        bandwidth: 128_000,
+        mimeType: 'audio/mp4',
+        codecs: ['mp4a.40.2'],
+        groupId: 'audio',
+        name: 'Spanish',
+        language: 'es',
+        sampleRate: 48000,
+        channels: 2,
+      },
+    ];
+
+    const presentation = createPresentation({ audio: audioTracks });
+    const state = makeState({ presentation });
+
+    const reactor = selectAudioTrack.setup({ state });
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.selectedAudioTrackId.get()).toBe('audio-en');
+
+    reactor.destroy();
   });
 });

@@ -1,0 +1,10 @@
+---
+description: "Fixes the React media proxy so event listeners attach to the media element instead of the delegate."
+date: 2026-04-01
+version: "10.0.0-beta.13"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.12...@videojs/core@10.0.0-beta.13"
+---
+
+A fast follow-up to beta.12: with delegates now extending `EventTarget`, React players attached media event listeners to the delegate instance instead of the media element. The media proxy now forwards `addEventListener`, `removeEventListener`, and `dispatchEvent` to the attached target directly, and the native HLS delegate re-applies its stored `preload` and `src` on attach ([#1169](https://github.com/videojs/v10/pull/1169)). HTML players were never affected.

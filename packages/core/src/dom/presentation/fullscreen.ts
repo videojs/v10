@@ -1,6 +1,6 @@
+import type { WebKitDocument, WebKitFullscreenElement, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { MediaFullscreenCapability } from '../../core/media/types';
-import type { WebKitDocument, WebKitFullscreenElement, WebKitVideoElement } from './types';
 
 export function isFullscreenEnabled() {
   const doc = document as WebKitDocument;

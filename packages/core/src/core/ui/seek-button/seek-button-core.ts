@@ -1,10 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface SeekButtonProps {
   /** Seconds to seek. Positive = forward, negative = backward. Default `30`. */
@@ -49,17 +49,15 @@ export class SeekButtonCore {
   }
 
   getLabel(state: SeekButtonState): string {
-    const { label } = this.#props;
+    const custom = resolveLabel(this.#props.label, state);
+    if (custom !== undefined) return custom;
 
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
+    return state.direction === 'backward' ? 'Seek backward {seconds} seconds' : 'Seek forward {seconds} seconds';
+  }
 
-    const abs = Math.abs(this.#props.seconds);
-    return state.direction === 'backward' ? `Seek backward ${abs} seconds` : `Seek forward ${abs} seconds`;
+  getLabelParams(state: SeekButtonState): { seconds: number } | undefined {
+    if (resolveLabel(this.#props.label, state) !== undefined) return undefined;
+    return { seconds: Math.abs(this.#props.seconds) };
   }
 
   getAttrs(state: SeekButtonState) {

@@ -6,7 +6,7 @@ export const overlay = cn(
   'pointer-events-none rounded-[inherit]',
   // Default: hidden
   'opacity-0',
-  'bg-linear-to-t from-black/50 via-black/30 to-transparent',
+  'bg-linear-to-t from-black/50 via-black/30 via-25% to-transparent',
   'backdrop-blur-none backdrop-saturate-100',
   // Transitions
   'transition-[opacity,backdrop-filter]',
@@ -14,6 +14,10 @@ export const overlay = cn(
   'ease-out',
   // Shown when controls visible
   'peer-data-visible/controls:opacity-100',
+  // Shown when buffering visible
+  'peer-data-visible/buffering:bg-black/35',
+  'peer-data-visible/buffering:opacity-100',
+  'peer-data-visible/buffering:backdrop-blur-sm',
   // Shown when error visible (+ blur)
   // Light DOM: peer/error is a direct sibling (React)
   'peer-data-open/error:opacity-100',

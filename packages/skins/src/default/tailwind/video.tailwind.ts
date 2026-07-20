@@ -4,11 +4,12 @@ import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { inputFeedback as baseInputFeedback } from './components/input-feedback';
+import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
-import { preview as basePreview } from './components/preview';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 import { surface } from './components/surface';
+import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
 /* ==========================================================================
@@ -18,7 +19,7 @@ import { time as baseTime } from './components/time';
 export const root = (isShadowDOM: boolean) =>
   cn(
     baseRoot,
-    'bg-black',
+    'bg-black overflow-clip',
     // Inner border ring
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     'after:inset-0 after:ring-1 after:ring-inset after:ring-black/10 dark:after:ring-white/15',
@@ -47,7 +48,9 @@ export const root = (isShadowDOM: boolean) =>
     'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
     'motion-reduce:[--media-error-dialog-transition-timing-function:ease-out]',
     '[--media-tooltip-side-offset:0.75rem]',
+    '[--media-tooltip-boundary-offset:0.5rem]',
     '[--media-popover-side-offset:0.5rem]',
+    '[--media-popover-boundary-offset:0.5rem]',
     'motion-reduce:[--media-popup-transition-duration:0ms]',
     '[@media(prefers-reduced-transparency:reduce)]:[--media-surface-background-color:oklch(0_0_0)]',
     'contrast-more:[--media-surface-background-color:oklch(0_0_0)]',
@@ -75,6 +78,19 @@ export const root = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:scale-98',
           '[&_video::-webkit-media-text-track-container]:z-1',
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
+        ]
+      : [],
+    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
+    !isShadowDOM
+      ? [
+          'before:absolute before:inset-0 before:pointer-events-none',
+          'before:[background-image:var(--media-poster-placeholder,none)]',
+          'before:bg-no-repeat',
+          'before:[background-position:var(--media-object-position,center)]',
+          'before:[background-size:var(--media-object-fit,contain)]',
+          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
+          'before:transition-opacity before:duration-250',
+          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
         ]
       : [],
     // Fullscreen
@@ -131,23 +147,30 @@ export const time = {
 };
 
 /* ==========================================================================
-   Preview (with video surface)
+   Thumbnail (with video surface)
    ========================================================================== */
 
-export const preview = {
-  ...basePreview,
+export const thumbnail = {
+  ...baseThumbnail,
   root: cn(
-    '[--media-preview-max-width:11rem] [--media-preview-padding:-1.125rem] [--media-preview-inset:calc((100cqi-100%)/2)]',
-    'absolute [left:clamp(calc(var(--media-preview-max-width)/2+var(--media-preview-padding)-var(--media-preview-inset)),var(--media-slider-pointer),calc(100%-var(--media-preview-max-width)/2-var(--media-preview-padding)+var(--media-preview-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
+    baseThumbnail.root,
+    surface,
+    '[--media-slider-thumbnail-max-width:11rem]',
+    '[--media-slider-thumbnail-max-height:8rem]',
+    '[--media-slider-thumbnail-padding:-1.125rem]',
+    '[--media-slider-thumbnail-inset:calc((100cqi-100%)/2)]',
+    'absolute [left:clamp(calc(var(--media-slider-thumbnail-max-width)/2+var(--media-slider-thumbnail-padding)-var(--media-slider-thumbnail-inset)),var(--media-slider-pointer),calc(100%-var(--media-slider-thumbnail-max-width)/2-var(--media-slider-thumbnail-padding)+var(--media-slider-thumbnail-inset)))] bottom-[calc(100%+1.2rem)] -translate-x-1/2',
     'opacity-0 scale-80 blur-sm origin-bottom',
     'transition-[scale,opacity,filter] duration-150',
-    'group-data-pointing/slider:opacity-100 group-data-pointing/slider:scale-100 group-data-pointing/slider:blur-none',
-    'has-[[role=img][data-hidden]]:opacity-0 has-[[role=img][data-hidden]]:scale-80 has-[[role=img][data-hidden]]:blur-sm',
-    'has-[[role=img][data-loading]]:max-h-24',
-    surface,
-    basePreview.root
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
+    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
   ),
-  thumbnail: cn(basePreview.thumbnail, 'max-w-(--media-preview-max-width)'),
+  image: cn(
+    baseThumbnail.image,
+    'max-w-(--media-slider-thumbnail-max-width)',
+    'max-h-(--media-slider-thumbnail-max-height)'
+  ),
 };
 
 /* ==========================================================================
@@ -170,13 +193,22 @@ export const popup = {
 };
 
 /* ==========================================================================
-   Buffering (with video surface)
+   Menu
    ========================================================================== */
 
-export const bufferingIndicator = {
-  ...baseBufferingIndicator,
-  container: cn(baseBufferingIndicator.container, surface),
+const menuOffsets = '[--media-popover-side-offset:0.5rem] [--media-popover-boundary-offset:0.5rem]';
+
+export const menu = {
+  ...baseMenu,
+  root: cn(baseMenu.root, menuOffsets),
+  settings: cn(baseMenu.settings, menuOffsets),
 };
+
+/* ==========================================================================
+   Buffering
+   ========================================================================== */
+
+export const bufferingIndicator = baseBufferingIndicator;
 
 /* ==========================================================================
    Error (with video surface)
@@ -206,6 +238,7 @@ export const inputFeedback = {
    ========================================================================== */
 
 export { iconState } from '../../shared/tailwind/icon-state';
+export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';

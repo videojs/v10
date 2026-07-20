@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PartiallyResolvedVideoTrack } from '../../types';
-import { DEFAULT_QUALITY_CONFIG, selectQuality } from '../quality-selection';
+import { DEFAULT_QUALITY_CONFIG, resolutionArea, selectLowestQuality, selectQuality } from '../quality-selection';
 
 // Helper to create test tracks
 const createTrack = (id: string, bandwidth: number, width = 1920, height = 1080): PartiallyResolvedVideoTrack => ({
@@ -25,7 +25,7 @@ describe('selectQuality', () => {
       ];
 
       // With 2.5 Mbps, should select 720p (2 Mbps)
-      const selected = selectQuality(tracks, 2_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
 
       expect(selected?.id).toBe('720p');
     });
@@ -38,7 +38,7 @@ describe('selectQuality', () => {
       ];
 
       // With 200 Kbps, should select 360p
-      const selected = selectQuality(tracks, 200_000);
+      const selected = selectQuality(tracks, { bandwidth: 200_000 });
 
       expect(selected?.id).toBe('360p');
     });
@@ -52,7 +52,7 @@ describe('selectQuality', () => {
       ];
 
       // With 10 Mbps, should select 1080p
-      const selected = selectQuality(tracks, 10_000_000);
+      const selected = selectQuality(tracks, { bandwidth: 10_000_000 });
 
       expect(selected?.id).toBe('1080p');
     });
@@ -64,11 +64,11 @@ describe('selectQuality', () => {
 
       // To select 1080p (4 Mbps), need 4M / 0.85 ≈ 4.7 Mbps
       // With 4.6 Mbps, should select 720p (15% safety margin)
-      const selected1 = selectQuality(tracks, 4_600_000);
+      const selected1 = selectQuality(tracks, { bandwidth: 4_600_000 });
       expect(selected1?.id).toBe('720p');
 
       // With 4.8 Mbps, should select 1080p
-      const selected2 = selectQuality(tracks, 4_800_000);
+      const selected2 = selectQuality(tracks, { bandwidth: 4_800_000 });
       expect(selected2?.id).toBe('1080p');
     });
 
@@ -76,7 +76,7 @@ describe('selectQuality', () => {
       const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000), createTrack('1080p', 4_000_000)];
 
       // Exactly 2M / 0.85 ≈ 2.35 Mbps required for 720p
-      const selected = selectQuality(tracks, 2_350_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_350_000 });
       expect(selected?.id).toBe('720p');
     });
 
@@ -89,14 +89,14 @@ describe('selectQuality', () => {
       };
 
       // With 0.9 margin, need 4M / 0.9 ≈ 4.4 Mbps
-      const selected = selectQuality(tracks, 4_500_000, config);
+      const selected = selectQuality(tracks, { bandwidth: 4_500_000, ...config });
       expect(selected?.id).toBe('1080p');
     });
   });
 
   describe('edge cases', () => {
     it('should return undefined for empty track list', () => {
-      const selected = selectQuality([], 5_000_000);
+      const selected = selectQuality([], { bandwidth: 5_000_000 });
       expect(selected).toBeUndefined();
     });
 
@@ -104,7 +104,7 @@ describe('selectQuality', () => {
       const tracks: PartiallyResolvedVideoTrack[] = [createTrack('720p', 2_000_000)];
 
       // Should select the only available track
-      const selected = selectQuality(tracks, 1_000_000);
+      const selected = selectQuality(tracks, { bandwidth: 1_000_000 });
       expect(selected?.id).toBe('720p');
     });
 
@@ -115,7 +115,7 @@ describe('selectQuality', () => {
       ];
 
       // Should prefer higher resolution at same bandwidth
-      const selected = selectQuality(tracks, 2_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
       expect(selected?.id).toBe('720p-high');
     });
 
@@ -123,7 +123,7 @@ describe('selectQuality', () => {
       const tracks: PartiallyResolvedVideoTrack[] = [createTrack('360p', 500_000), createTrack('720p', 2_000_000)];
 
       // Should select lowest quality
-      const selected = selectQuality(tracks, 0);
+      const selected = selectQuality(tracks, { bandwidth: 0 });
       expect(selected?.id).toBe('360p');
     });
 
@@ -151,7 +151,7 @@ describe('selectQuality', () => {
       const tracks = [track1, track2];
 
       // Should handle missing width/height gracefully
-      const selected = selectQuality(tracks, 1_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 1_500_000 });
       expect(selected).toBeDefined();
     });
   });
@@ -166,7 +166,7 @@ describe('selectQuality', () => {
       ];
 
       // With 2.5 Mbps, should still select 720p despite unsorted list
-      const selected = selectQuality(tracks, 2_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
       expect(selected?.id).toBe('720p');
     });
 
@@ -178,7 +178,7 @@ describe('selectQuality', () => {
         createTrack('360p', 500_000),
       ];
 
-      const selected = selectQuality(tracks, 1_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 1_500_000 });
       expect(selected?.id).toBe('480p');
     });
   });
@@ -194,19 +194,19 @@ describe('selectQuality', () => {
 
     it('should handle startup with low initial estimate', () => {
       // Startup: conservative 1 Mbps estimate
-      const selected = selectQuality(abrLadder, 1_000_000);
+      const selected = selectQuality(abrLadder, { bandwidth: 1_000_000 });
       expect(selected?.id).toBe('360p'); // Stay conservative
     });
 
     it('should handle steady state with good bandwidth', () => {
       // Good Wi-Fi: 5 Mbps
-      const selected = selectQuality(abrLadder, 5_000_000);
+      const selected = selectQuality(abrLadder, { bandwidth: 5_000_000 });
       expect(selected?.id).toBe('720p'); // Upgrade threshold keeps it from 1080p
     });
 
     it('should handle bandwidth drop gracefully', () => {
       // Bandwidth drops to 1.5 Mbps
-      const selected = selectQuality(abrLadder, 1_500_000);
+      const selected = selectQuality(abrLadder, { bandwidth: 1_500_000 });
       expect(selected?.id).toBe('480p');
     });
 
@@ -218,7 +218,7 @@ describe('selectQuality', () => {
         6_000_000, // 1080p
       ];
 
-      const selections = estimates.map((bw) => selectQuality(abrLadder, bw));
+      const selections = estimates.map((bw) => selectQuality(abrLadder, { bandwidth: bw }));
 
       expect(selections[0]?.id).toBe('360p');
       expect(selections[1]?.id).toBe('480p');
@@ -234,7 +234,7 @@ describe('selectQuality', () => {
         createTrack('1080p-low', 2_000_000, 1920, 1080),
       ];
 
-      const selected = selectQuality(tracks, 2_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
       expect(selected?.id).toBe('1080p-low');
     });
 
@@ -244,7 +244,7 @@ describe('selectQuality', () => {
         createTrack('tall', 2_000_000, 1280, 1440), // 1,843,200 pixels
       ];
 
-      const selected = selectQuality(tracks, 2_500_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_500_000 });
       expect(selected?.id).toBe('tall'); // More total pixels
     });
   });
@@ -256,11 +256,11 @@ describe('selectQuality', () => {
       // To select 1080p: need 4M / 0.85 ≈ 4.7 Mbps (15% headroom)
 
       // At 4.5 Mbps: below safety threshold for 1080p, select 720p
-      const selected1 = selectQuality(tracks, 4_500_000);
+      const selected1 = selectQuality(tracks, { bandwidth: 4_500_000 });
       expect(selected1?.id).toBe('720p');
 
       // At 4.8 Mbps: above safety threshold for 1080p, select 1080p
-      const selected2 = selectQuality(tracks, 4_800_000);
+      const selected2 = selectQuality(tracks, { bandwidth: 4_800_000 });
       expect(selected2?.id).toBe('1080p');
     });
 
@@ -272,8 +272,51 @@ describe('selectQuality', () => {
       ];
 
       // With 2.4 Mbps: can fit 720p (needs 2M/0.85 = 2.35M)
-      const selected = selectQuality(tracks, 2_400_000);
+      const selected = selectQuality(tracks, { bandwidth: 2_400_000 });
       expect(selected?.id).toBe('720p');
     });
+  });
+});
+
+describe('selectLowestQuality', () => {
+  it('returns the lowest-bandwidth track', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [
+      createTrack('720p', 2_000_000),
+      createTrack('360p', 500_000),
+      createTrack('1080p', 4_000_000),
+    ];
+
+    expect(selectLowestQuality(tracks)?.id).toBe('360p');
+  });
+
+  it('returns undefined for an empty candidate set', () => {
+    expect(selectLowestQuality([])).toBeUndefined();
+  });
+
+  it('returns the sole track when only one candidate is given', () => {
+    const tracks: PartiallyResolvedVideoTrack[] = [createTrack('480p', 1_000_000)];
+
+    expect(selectLowestQuality(tracks)?.id).toBe('480p');
+  });
+
+  it('accepts any shape with a numeric `bandwidth` field', () => {
+    const tracks = [
+      { id: 'high', bandwidth: 2_000_000 },
+      { id: 'low', bandwidth: 500_000 },
+    ];
+
+    expect(selectLowestQuality(tracks)?.id).toBe('low');
+  });
+});
+
+describe('resolutionArea', () => {
+  it('returns the pixel count (width × height)', () => {
+    expect(resolutionArea({ width: 1920, height: 1080 })).toBe(2_073_600);
+  });
+
+  it('treats a missing dimension as 0', () => {
+    expect(resolutionArea({ width: 1920 })).toBe(0);
+    expect(resolutionArea({ height: 1080 })).toBe(0);
+    expect(resolutionArea({})).toBe(0);
   });
 });

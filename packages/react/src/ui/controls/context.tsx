@@ -17,3 +17,7 @@ export function useControlsContext(): ControlsContextValue {
   if (!ctx) throw new Error('Controls compound components must be used within a Controls.Root');
   return ctx;
 }
+
+export function useOptionalControlsContext(): ControlsContextValue | null {
+  return useContext(ControlsContext);
+}

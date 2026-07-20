@@ -2,6 +2,24 @@ minimumReleaseAge: 1440
 shellEmulator: true
 trustPolicy: no-downgrade
 
+# Also install musl Linux binaries alongside the current platform's. The site's
+# OG image route depends on the native @resvg/resvg-js binding, and the
+# @astrojs/netlify (v8) adapter bundles the serverless function by tracing the
+# server entry with @vercel/nft, then calling fs.realpath on every traced file.
+# nft can't tell glibc from musl statically, so it traces BOTH Linux resvg
+# binaries — but pnpm only installs the glibc variant on Netlify, so realpath
+# on the missing musl binary throws ENOENT and the build fails. Installing the
+# musl variant too gives nft a real file to resolve. ("current" keeps the host
+# default; on non-Linux hosts the os filter excludes Linux packages entirely.)
+supportedArchitectures:
+  os:
+    - current
+  cpu:
+    - current
+  libc:
+    - current
+    - musl
+
 packages:
   - 'packages/*'
   - 'apps/*'

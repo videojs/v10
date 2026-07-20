@@ -1,7 +1,7 @@
 {
   "name": "@videojs/react",
   "type": "module",
-  "version": "10.0.0-beta.23",
+  "version": "10.0.0-beta.25",
   "description": "React library for building media players",
   "license": "Apache-2.0",
   "repository": {
@@ -12,9 +12,12 @@
   "main": "dist/default/index.js",
   "module": "dist/default/index.js",
   "types": "dist/dev/index.d.ts",
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/*/i18n/locales/*/register.js"
+  ],
   "files": [
-    "dist"
+    "dist",
+    "docs"
   ],
   "exports": {
     ".": {
@@ -92,6 +95,16 @@
       "types": "./dist/dev/presets/live-audio/*.d.ts",
       "development": "./dist/dev/presets/live-audio/*.js",
       "default": "./dist/default/presets/live-audio/*.js"
+    },
+    "./i18n": {
+      "types": "./dist/dev/i18n/index.d.ts",
+      "development": "./dist/dev/i18n/index.js",
+      "default": "./dist/default/i18n/index.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     }
   },
   "scripts": {
@@ -100,7 +113,8 @@
     "dev": "pnpm build:watch",
     "test": "vitest run",
     "test:watch": "vitest",
-    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+    "clean": "rimraf --glob dist docs types '*.tsbuildinfo'",
+    "prepack": "node --import tsx ../../site/scripts/copy-package-docs.ts react"
   },
   "peerDependencies": {
     "react": "^18.0.0 || ^19.0.0",

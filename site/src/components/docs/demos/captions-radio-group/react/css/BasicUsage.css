@@ -1,0 +1,75 @@
+.media-container {
+  position: relative;
+}
+
+.media-container video {
+  width: 100%;
+}
+
+.menu-bar {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+}
+
+.settings-trigger {
+  padding: 6px 16px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.menu {
+  --media-menu-side-offset: 8px;
+  box-sizing: border-box;
+  display: grid;
+  gap: 2px;
+  min-width: 180px;
+  max-width: var(--media-menu-available-width, var(--media-popover-available-width, none));
+  max-height: var(--media-menu-available-height, var(--media-popover-available-height, none));
+  padding: 6px;
+  margin: 0;
+  overflow: auto;
+  overscroll-behavior: none;
+  font-size: 14px;
+  color: white;
+  background: rgba(0, 0, 0, 0.88);
+  border: 0;
+  border-radius: 8px;
+  backdrop-filter: blur(10px);
+}
+
+.menu-group {
+  display: grid;
+  gap: 2px;
+}
+
+.menu-item {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 32px;
+  padding: 0 10px;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: none;
+  border: 0;
+  border-radius: 6px;
+}
+
+.menu-item[data-highlighted] {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.menu-indicator {
+  opacity: 0;
+}
+
+[role="menuitemradio"][aria-checked="true"] .menu-indicator {
+  opacity: 1;
+}

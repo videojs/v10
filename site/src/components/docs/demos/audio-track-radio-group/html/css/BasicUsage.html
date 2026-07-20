@@ -1,0 +1,26 @@
+<video-player class="video-player">
+    <media-container>
+        <hlsjs-video
+            class="video-media"
+            src="{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}"
+            autoplay
+            crossorigin="anonymous"
+            muted
+            playsinline
+            loop
+        ></hlsjs-video>
+        <div class="menu-bar">
+            <button type="button" commandfor="audio-menu" class="settings-trigger">Audio</button>
+            <media-menu id="audio-menu" side="top" align="end" class="menu">
+                <media-audio-track-radio-group class="menu-group" label="Audio tracks">
+                    <template>
+                        <media-menu-radio-item class="menu-item">
+                            <span data-part="label"></span>
+                            <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                        </media-menu-radio-item>
+                    </template>
+                </media-audio-track-radio-group>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>

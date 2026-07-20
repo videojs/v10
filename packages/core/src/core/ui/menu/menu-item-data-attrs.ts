@@ -1,4 +1,8 @@
-/** Data attributes set on all navigable menu item elements. */
+/**
+ * Data attributes set on all navigable menu item elements.
+ *
+ * @parts item, radio-item, checkbox-item, trigger
+ */
 export const MenuItemDataAttrs = {
   /**
    * Present on all navigable item types: Item, RadioItem, CheckboxItem, and

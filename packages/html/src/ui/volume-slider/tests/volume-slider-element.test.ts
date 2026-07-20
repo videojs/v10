@@ -26,7 +26,7 @@ describe('VolumeSliderElement', () => {
 
   it('initializes with default property values', () => {
     const slider = createElement(VolumeSliderElement);
-    expect(slider.label).toBe('Volume');
+    expect(slider.label).toBe('');
     expect(slider.step).toBe(1);
     expect(slider.largeStep).toBe(10);
     expect(slider.orientation).toBe('horizontal');

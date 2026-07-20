@@ -4,14 +4,23 @@
   "tasks": {
     "api-docs": {
       "dependsOn": ["^build"],
-      "outputs": ["src/content/generated-component-reference/**", "src/content/generated-util-reference/**"]
+      "outputs": [
+        "src/content/generated-component-reference/**",
+        "src/content/generated-util-reference/**",
+        "src/content/generated-feature-reference/**",
+        "src/content/generated-preset-reference/**"
+      ]
     },
     "ejected-skins": {
       "dependsOn": ["^build"],
       "outputs": ["src/content/ejected-skins.json"]
     },
+    "cdn-manifest": {
+      "dependsOn": ["^build:cdn"],
+      "outputs": ["src/content/cdn-media.json"]
+    },
     "build": {
-      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins"],
+      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins", "cdn-manifest"],
       "env": [
         "OAUTH_CLIENT_ID",
         "OAUTH_CLIENT_SECRET",
@@ -23,7 +32,7 @@
       ]
     },
     "dev": {
-      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins"],
+      "dependsOn": ["$TURBO_EXTENDS$", "api-docs", "ejected-skins", "cdn-manifest"],
       "env": [
         "OAUTH_CLIENT_ID",
         "OAUTH_CLIENT_SECRET",

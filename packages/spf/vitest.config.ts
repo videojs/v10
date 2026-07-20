@@ -42,7 +42,11 @@ export default defineConfig({
         extends: true,
         test: {
           name: 'behaviors',
-          include: ['src/playback/behaviors/**/*.test.ts', 'src/playback/actors/**/*.test.ts'],
+          include: [
+            'src/playback/behaviors/**/*.test.ts',
+            'src/playback/actors/**/*.test.ts',
+            'src/playback/primitives/**/*.test.ts',
+          ],
           exclude: ['src/playback/behaviors/dom/**', 'src/playback/actors/dom/**'],
         },
       },

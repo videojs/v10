@@ -1,4 +1,4 @@
-import { PopoverCore, PopoverDataAttrs, type PopoverInput, type PopoverProps } from '@videojs/core';
+import { POPUP_HOST_ATTR, PopoverCore, PopoverDataAttrs, type PopoverInput, type PopoverProps } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -7,17 +7,21 @@ import {
   getAnchorNameStyle,
   getAnchorPositionStyle,
   getPopupPositionRect,
+  getPositioningBoundaryRect,
   type PopoverApi,
   type PopoverChangeDetails,
+  type PopoverOpenChangeReason,
+  type PositioningBoundary,
   resolveOffsets,
+  resolvePositioningBoundary,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
-
+import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
-
 export class PopoverElement extends MediaElement {
   static readonly tagName = 'media-popover';
 
@@ -32,7 +36,8 @@ export class PopoverElement extends MediaElement {
     openOnHover: { type: Boolean, attribute: 'open-on-hover' },
     delay: { type: Number },
     closeDelay: { type: Number, attribute: 'close-delay' },
-  } satisfies PropertyDeclarationMap<keyof PopoverCore.Props>;
+    boundary: { type: String },
+  } satisfies PropertyDeclarationMap<keyof PopoverCore.Props | 'boundary'>;
 
   open = PopoverCore.defaultProps.open;
   defaultOpen = PopoverCore.defaultProps.defaultOpen;
@@ -44,8 +49,10 @@ export class PopoverElement extends MediaElement {
   openOnHover = PopoverCore.defaultProps.openOnHover;
   delay = PopoverCore.defaultProps.delay;
   closeDelay = PopoverCore.defaultProps.closeDelay;
+  boundary: PositioningBoundary = 'container';
 
   readonly #core = new PopoverCore();
+  readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   readonly #position = new PositionController(this);
   #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
@@ -58,6 +65,8 @@ export class PopoverElement extends MediaElement {
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
+
+    this.setAttribute(POPUP_HOST_ATTR, '');
 
     this.#disconnect = new AbortController();
 
@@ -72,6 +81,7 @@ export class PopoverElement extends MediaElement {
       openOnHover: () => this.openOnHover,
       delay: () => this.delay,
       closeDelay: () => this.closeDelay,
+      group: () => this.#containerCtx.value?.popupGroup,
     });
 
     // Register self as the popup element — the element IS the popup.
@@ -110,6 +120,10 @@ export class PopoverElement extends MediaElement {
     this.#cleanupTrigger();
     this.#popover?.destroy();
     super.destroyCallback();
+  }
+
+  close(reason: PopoverOpenChangeReason = 'imperative-action'): void {
+    this.#popover?.close(reason);
   }
 
   protected override willUpdate(changed: PropertyValues): void {
@@ -168,20 +182,20 @@ export class PopoverElement extends MediaElement {
 
     // Apply positioning styles to self.
     const posOpts = { side: state.side, align: state.align };
+    const boundaryElement = this.#getBoundaryElement();
+    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+    const boundaryRect = getPositioningBoundaryRect(boundaryElement);
+    const offsets = resolveOffsets(this);
 
     if (supportsAnchorPositioning()) {
-      // Native CSS Anchor Positioning — no JS rect measurements needed.
-      applyStyles(this, getAnchorPositionStyle(this.id, posOpts));
+      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, undefined, boundaryRect, offsets));
     } else {
       // JS fallback: measure rects and resolve CSS var offsets.
-      const triggerRect = this.#currentTrigger?.getBoundingClientRect();
       const selfRect = getPopupPositionRect(this);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
-      const offsets = resolveOffsets(this);
       applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
     }
 
-    this.#position.sync(this.#currentTrigger);
+    this.#position.sync(this.#currentTrigger, boundaryElement);
   }
 
   // --- Trigger management ---
@@ -214,5 +228,12 @@ export class PopoverElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #getBoundaryElement(): Element | null {
+    return resolvePositioningBoundary(this.boundary, {
+      container: this.#containerCtx.value?.container ?? null,
+      root: this.getRootNode() as Document | ShadowRoot,
+    });
   }
 }

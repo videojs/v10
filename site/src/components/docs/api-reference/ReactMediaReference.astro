@@ -1,0 +1,94 @@
+---
+import A from '@/components/typography/A.astro';
+import H3 from '@/components/typography/H3Markdown.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import type { ReactMediaReference } from '@/types/media-reference';
+import MediaHostPropsTable from './MediaHostPropsTable.astro';
+
+interface Section {
+  key: string;
+  title: string;
+  id: string;
+}
+
+interface Props {
+  media: string;
+  data: ReactMediaReference;
+  sections: Section[];
+}
+
+const { media, data, sections } = Astro.props;
+const propsSection = sections.find((section) => section.key === 'props');
+const refSection = sections.find((section) => section.key === 'ref');
+const eventsSection = sections.find((section) => section.key === 'events');
+const hasVideoJsProps = Object.keys(data.props).length > 0;
+
+const targetTag = `<${data.target}>`;
+const nativeInterface =
+  data.target === 'video' ? 'HTMLVideoElement' : data.target === 'audio' ? 'HTMLAudioElement' : 'HTMLIFrameElement';
+const mdnApiUrl = `https://developer.mozilla.org/en-US/docs/Web/API/${nativeInterface}`;
+---
+
+{
+  propsSection && (
+    <>
+      <H3 id={propsSection.id}>{propsSection.title}</H3>
+      {data.acceptsNativeProps && hasVideoJsProps && (
+        <P>
+          Accepts the standard React props for a native{" "}
+          <MarkdownCode>{targetTag}</MarkdownCode>
+          {", plus these Video.js-specific props:"}
+        </P>
+      )}
+      {data.acceptsNativeProps && !hasVideoJsProps && (
+        <P>
+          Accepts the standard React props for a native{" "}
+          <MarkdownCode>{targetTag}</MarkdownCode>
+          {"."}
+        </P>
+      )}
+      {!data.acceptsNativeProps && hasVideoJsProps && (
+        <P>Accepts these Video.js-specific props:</P>
+      )}
+      {hasVideoJsProps && (
+        <MediaHostPropsTable
+          hostProperties={data.props}
+          componentName={media}
+          nameLabel="Prop"
+        />
+      )}
+    </>
+  )
+}
+
+{
+  refSection && (
+    <>
+      <H3 id={refSection.id}>{refSection.title}</H3>
+      <P>
+        Forwards its ref to the rendered{" "}
+        <MarkdownCode>{targetTag}</MarkdownCode>. The ref is an{" "}
+        <A href={mdnApiUrl}>{nativeInterface}</A>
+        {data.target === "iframe"
+          ? ". Control playback with the component props and player APIs rather than the iframe ref."
+          : " and exposes its complete native property and method API."}
+      </P>
+    </>
+  )
+}
+
+{
+  eventsSection && (
+    <>
+      <H3 id={eventsSection.id}>{eventsSection.title}</H3>
+      <P>
+        Handle standard media events with React event props such as{" "}
+        <MarkdownCode>onPlay</MarkdownCode> and{" "}
+        <MarkdownCode>onTimeUpdate</MarkdownCode>. For native events without a
+        React prop, attach a listener through the ref with{" "}
+        <MarkdownCode>addEventListener</MarkdownCode>.
+      </P>
+    </>
+  )
+}

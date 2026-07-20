@@ -29,10 +29,17 @@ export interface InputIndicatorCoreApi<IndicatorState extends IndicatorLifecycle
   processEvent(event: InputActionEvent, snapshot: MediaSnapshot): boolean;
 }
 
+export interface InputIndicatorOptions {
+  replayOnUpdate?: boolean | undefined;
+}
+
 export abstract class InputIndicatorElement<IndicatorState extends IndicatorLifecycleState> extends MediaElement {
   protected abstract get core(): InputIndicatorCoreApi<IndicatorState>;
   protected abstract get transition(): TransitionApi;
   protected abstract get liveIndicator(): LiveIndicator<IndicatorState>;
+  protected get options(): InputIndicatorOptions {
+    return {};
+  }
 
   protected abstract syncCoreProps(): void;
 
@@ -119,7 +126,12 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
       this.#snapshot = currentState;
       if (this.#lastGeneration !== currentState.generation) {
         this.#lastGeneration = currentState.generation;
-        void this.transition.open();
+        const transitionState = this.transition.state.current;
+        if (!transitionState.active || this.options.replayOnUpdate !== false) {
+          void this.transition.open(this.liveIndicator.element);
+        } else if (transitionState.status === 'ending') {
+          this.transition.cancel();
+        }
       }
       return;
     }

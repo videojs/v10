@@ -1,10 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaBufferState, MediaLiveState, MediaTimeState } from '../../media/state';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export interface LiveButtonProps {
   /** Custom label for the button. */
@@ -83,14 +83,8 @@ export class LiveButtonCore {
   }
 
   getLabel(state: LiveButtonState): string {
-    const { label } = this.#props;
-
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
     if (state.liveEdge) return 'Playing live';
     return 'Seek to live edge';

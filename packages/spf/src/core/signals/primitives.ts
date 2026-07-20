@@ -3,6 +3,24 @@ import { Signal as SignalNS } from 'signal-polyfill';
 /** Read a signal value without tracking it as a dependency. */
 export const untrack: <T>(fn: () => T) => T = SignalNS.subtle.untrack;
 
+/**
+ * Read a signal's current value without tracking it as a dependency. Sugar
+ * for `untrack(() => signal.get())` to reduce boilerplate at single-read
+ * sites. Structurally typed to accept any signal-like (Signal, Computed,
+ * ReadonlySignal).
+ *
+ * Accepts an optional `transform` to project the value in the same call;
+ * the default is the identity function so the single-arg form returns `T`
+ * unchanged.
+ *
+ * @example
+ * const value = peek(someSignal);
+ * const id = peek(presentationSignal, (p) => p?.id);
+ */
+export function peek<T, R = T>(source: { get(): T }, transform: (value: T) => R = (v: T) => v as unknown as R): R {
+  return untrack(() => transform(source.get()));
+}
+
 /** A writable reactive value (read + write). */
 export type Signal<T> = SignalNS.State<T>;
 
@@ -27,17 +45,46 @@ export function computed<T>(fn: () => T, options?: SignalOptions<T>): Computed<T
 }
 
 /**
- * Update a writable signal. Accepts either a partial object to merge into the
- * current state, or an updater function that receives the current state and
- * returns the next state.
+ * Update a writable signal. Two forms:
+ *
+ * - **Updater function** `(current) => next`. Works for any signal type,
+ *   including `Signal<T | undefined>` — handle undefined in the updater.
+ * - **Partial object** to merge into the current state. Requires
+ *   `T extends object`.
  *
  * @example
  * update(state, { playbackRate: 2 });
  * update(state, (s) => ({ ...s, count: s.count + 1 }));
+ * update(maybeUndefinedSignal, (current) => current ?? defaultValue);
  */
-export function update<T extends object>(signal: Signal<T>, updater: Partial<T> | ((current: T) => T)): void {
+export function update<T>(signal: Signal<T>, updater: (current: T) => T): void;
+export function update<T extends object>(signal: Signal<T>, updater: Partial<T>): void;
+export function update<T>(signal: Signal<T>, updater: ((current: T) => T) | object): void {
   const current = untrack(() => signal.get());
-  signal.set(typeof updater === 'function' ? updater(current) : { ...current, ...updater });
+  if (typeof updater === 'function') {
+    signal.set((updater as (current: T) => T)(current));
+  } else {
+    // Partial<T> form — `T extends object` enforced by the public overload.
+    signal.set({ ...(current as object), ...updater } as T);
+  }
+}
+
+/**
+ * Equality comparator for objects with an optional `id` field. Designed for
+ * use as a `computed` `equals` option when reacting to identity changes
+ * (Ham-shaped objects, JSON-API-shaped resources) while filtering internal
+ * updates that preserve the id.
+ *
+ * Handles undefined inputs symmetrically: both undefined → equal; one
+ * undefined → different.
+ *
+ * @example
+ * const presentationById = computed(() => state.presentation.get(), {
+ *   equals: equalsById,
+ * });
+ */
+export function equalsById<T extends { id?: string }>(a: T | undefined, b: T | undefined): boolean {
+  return a?.id === b?.id;
 }
 
 /**

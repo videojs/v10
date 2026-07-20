@@ -65,17 +65,17 @@ describe('PlayButtonCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns Play when paused', () => {
+    it('returns play when paused', () => {
       const core = new PlayButtonCore();
       expect(core.getLabel(createState({ paused: true }))).toBe('Play');
     });
 
-    it('returns Pause when playing', () => {
+    it('returns pause when playing', () => {
       const core = new PlayButtonCore();
       expect(core.getLabel(createState({ paused: false }))).toBe('Pause');
     });
 
-    it('returns Replay when ended', () => {
+    it('returns replay when ended', () => {
       const core = new PlayButtonCore();
       expect(core.getLabel(createState({ ended: true }))).toBe('Replay');
     });

@@ -8,6 +8,7 @@ import type {
   TrackType,
   VideoTrack,
 } from '../types';
+import { isResolvedTrack } from '../types';
 
 /**
  * State shape for track selection.
@@ -27,15 +28,6 @@ export const SelectedTrackIdKeyByType = {
   video: 'selectedVideoTrackId',
   audio: 'selectedAudioTrackId',
   text: 'selectedTextTrackId',
-} as const;
-
-/**
- * Map track type to buffer owner property key.
- * Used for SourceBuffer references in owners.
- */
-export const BufferKeyByType = {
-  video: 'videoBuffer',
-  audio: 'audioBuffer',
 } as const;
 
 /**
@@ -69,4 +61,22 @@ export function getSelectedTrack<T extends TrackType>(
   return presentation.selectionSets
     .find(({ type: selectionSetType }) => selectionSetType === type)
     ?.switchingSets[0]?.tracks.find(({ id }) => id === trackId) as any;
+}
+
+/**
+ * Returns the duration of the first resolved selected track, preferring
+ * video over audio. A track is "resolved" once its media playlist has been
+ * parsed (per {@link isResolvedTrack}). Returns `undefined` if neither
+ * selected track is resolved.
+ */
+export function getResolvedSelectedTrackDuration(state: TrackSelectionState): number | undefined {
+  if (state.selectedVideoTrackId) {
+    const video = getSelectedTrack(state, 'video');
+    if (video && isResolvedTrack(video)) return video.duration;
+  }
+  if (state.selectedAudioTrackId) {
+    const audio = getSelectedTrack(state, 'audio');
+    if (audio && isResolvedTrack(audio)) return audio.duration;
+  }
+  return undefined;
 }

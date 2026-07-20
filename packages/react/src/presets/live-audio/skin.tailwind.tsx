@@ -5,19 +5,24 @@ import {
   error,
   icon,
   iconState,
+  playButton,
   popup,
   root,
   slider,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
-import { PauseIcon, PlayIcon, RestartIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
-import { Container, usePlayer } from '@/player/context';
+import { PauseIcon, PlayIcon, RestartIcon, SpinnerIcon, VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
+import { Container } from '@/player/container';
+import { usePlayer } from '@/player/context';
+import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
 import { LiveButton } from '@/ui/live-button';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeSlider } from '@/ui/volume-slider';
 import type { LiveAudioSkinProps } from './skin';
@@ -79,7 +84,7 @@ function VolumePopover(): ReactNode {
   if (volumeUnsupported) return muteButton;
 
   return (
-    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top" boundary="viewport">
       <Popover.Trigger render={muteButton} />
       <Popover.Popup className={cn(popup.popover, popup.volume)}>
         <VolumeSlider.Root orientation="vertical" thumbAlignment="edge" render={<SliderRoot />}>
@@ -104,11 +109,11 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
         <ErrorDialog.Popup className={error.root}>
           <div className={error.dialog}>
             <div className={error.content}>
-              <ErrorDialog.Title className={error.title}>Something went wrong.</ErrorDialog.Title>
+              <ErrorDialog.Title className={error.title}></ErrorDialog.Title>
               <ErrorDialog.Description className={error.description} />
             </div>
             <div className={error.actions}>
-              <ErrorDialog.Close className={cn(button.base, button.subtle)}>OK</ErrorDialog.Close>
+              <ErrorDialog.Close className={cn(button.base, button.subtle)}></ErrorDialog.Close>
             </div>
           </div>
         </ErrorDialog.Popup>
@@ -117,18 +122,30 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       <div className={controls}>
         <Tooltip.Provider>
           <div className={buttonGroup}>
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className={iconState.play.button} render={<Button />}>
-                    <RestartIcon className={cn(icon, iconState.play.restart)} />
-                    <PlayIcon className={cn(icon, iconState.play.play)} />
-                    <PauseIcon className={cn(icon, iconState.play.pause)} />
-                  </PlayButton>
-                }
+            <span className={playButton.wrapper}>
+              <BufferingIndicator
+                render={(props) => (
+                  <div {...props} className={cn(playButton.bufferingRoot, props.className)}>
+                    <SpinnerIcon className={icon} />
+                  </div>
+                )}
               />
-              <Tooltip.Popup className={cn(popup.tooltip)}></Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top" boundary="viewport">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className={cn(iconState.play.button, playButton.control)} render={<Button />}>
+                      <RestartIcon className={cn(icon, iconState.play.restart)} />
+                      <PlayIcon className={cn(icon, iconState.play.play)} />
+                      <PauseIcon className={cn(icon, iconState.play.pause)} />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className={cn(popup.tooltip)}>
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className={popup.tooltipShortcut} />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </span>
 
             <LiveButton className={cn(button.base, button.subtle, button.live)} />
           </div>
@@ -140,6 +157,16 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer />
     </Container>
   );
 }

@@ -5,13 +5,14 @@ import { ChevronDown } from 'lucide-react';
 
 interface Props {
   page: Page;
+  label?: string;
 }
 
-const { page } = Astro.props;
+const { page, label = 'Blog pagination' } = Astro.props;
 ---
 
 <nav
-  aria-label="Blog pagination"
+  aria-label={label}
   class="mx-auto mt-10 flex w-full max-w-3xl items-center justify-end gap-4"
 >
   <span>

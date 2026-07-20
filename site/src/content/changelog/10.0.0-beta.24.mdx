@@ -1,0 +1,18 @@
+---
+description: "Adds a menu system with keyboard navigation, a playback rate menu, a live button, gesture and hotkey indicators, and bundled docs."
+date: 2026-05-19
+version: "10.0.0-beta.24"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24"
+---
+
+Menus headline beta.24. A shared menu core with full DOM keyboard support ([#1503](https://github.com/videojs/v10/pull/1503)) handles open and close, roving focus, arrow-key and typeahead navigation, and nested submenus with view transitions, shipping as matching React components and HTML custom elements. The first consumer is the new playback rate menu ([#1527](https://github.com/videojs/v10/pull/1527)), which replaces the playback rate button in the shipped skins and improves shared popover behavior along the way: only one top-level popup opens at a time, positioning respects a configurable boundary, and menus close when the controls hide.
+
+Live streams get a dedicated live button ([#1473](https://github.com/videojs/v10/pull/1473)) that signals whether playback is at the live edge and seeks to it when activated; `data-live` and `data-edge` attributes drive skin styling, and the live presets render it next to the play button. Gestures and hotkeys gain visible feedback ([#1388](https://github.com/videojs/v10/pull/1388)): new status, volume, and seek indicators observe input activity and render transient overlays, with a screen-reader announcer alongside.
+
+The `@videojs/html` and `@videojs/react` tarballs now bundle the framework-specific markdown docs ([#1560](https://github.com/videojs/v10/pull/1560)), so AI coding agents reading `node_modules` find real documentation instead of a stub README; a companion fix improves discovery of `llms.txt` and the eject workflow ([#1564](https://github.com/videojs/v10/pull/1564)). The site adds a "Why Video.js?" concept page ([#1526](https://github.com/videojs/v10/pull/1526)). SPF gains a stage-by-stage walkthrough of the HLS engine composition, with cleanups that reorganize the package and move the engine export from `@videojs/spf/playback-engine` to `@videojs/spf/hls` ([#1512](https://github.com/videojs/v10/pull/1512), [#1537](https://github.com/videojs/v10/pull/1537)).
+
+A long fix tail rounds out the release: the cast button no longer causes an SSR hydration mismatch ([#1518](https://github.com/videojs/v10/pull/1518)), spinner animations stop running while hidden ([#1476](https://github.com/videojs/v10/pull/1476)), Safari button alignment holds up when zoomed ([#1495](https://github.com/videojs/v10/pull/1495)), the minimal Tailwind skin sizes its root correctly ([#1540](https://github.com/videojs/v10/pull/1540)), background-video hosts get minimum dimensions ([#1523](https://github.com/videojs/v10/pull/1523)), ejected skins use icon exports ([#1489](https://github.com/videojs/v10/pull/1489)) and include `'use client'` in Next.js output ([#1488](https://github.com/videojs/v10/pull/1488)), and the `isRenderProp` type guard drops `any` for `unknown` ([#1500](https://github.com/videojs/v10/pull/1500)). Docs pick up small corrections across the installation, features, and presets guides ([#1530](https://github.com/videojs/v10/pull/1530), [#1529](https://github.com/videojs/v10/pull/1529), [#1513](https://github.com/videojs/v10/pull/1513), [#1522](https://github.com/videojs/v10/pull/1522), [#1511](https://github.com/videojs/v10/pull/1511)).
+
+Thanks to [@R-Delfino95](https://github.com/R-Delfino95) and [@spuppo-mux](https://github.com/spuppo-mux) for their first contributions to Video.js.

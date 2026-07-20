@@ -1,0 +1,14 @@
+/* ==========================================================================
+   Badge
+   ========================================================================== */
+
+.media-minimal-skin .media-badge {
+  padding: 0.25rem 0.375rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  line-height: 1;
+  color: oklch(from currentColor l c h / 0.85);
+  white-space: nowrap;
+  background-color: oklch(from currentColor l c h / 0.1);
+  border-radius: 0.25rem;
+}

@@ -56,8 +56,9 @@ time — neither reactor has any global state.
 
 ### `syncTextTracks`
 
-Manages `<track>` element lifecycle and bridges DOM `TextTrackList` changes back
-to `selectedTextTrackId` in state.
+Manages `<track>` element lifecycle, mirrors the resolved `selectedTextTrackId`
+into DOM modes one way, and bridges DOM `TextTrackList` changes into the
+`userTextTrackSelection` intent slot (see Key Pattern 6).
 
 ```
 'preconditions-unmet' ──── mediaElement + tracks available ────→ 'set-up'
@@ -69,9 +70,11 @@ any state ──── destroy() ────→ 'destroying' ────→ 'd
 
 **`'set-up'` owns two independent effects:**
 - Effect 1 — creates `<track>` elements on entry; exit cleanup removes them and
-  clears `selectedTextTrackId`
+  sends `'clear'` to the `TextTracksActor`. (It no longer clears
+  `selectedTextTrackId` — that slot is owned and cleared by `switchTextTrack`.)
 - Effect 2 — syncs `mode` on entry (reactive: re-runs when `selectedTextTrackId`
-  changes) + attaches `'change'` listener to bridge DOM back to state
+  changes) one way + attaches `'change'` listener to bridge DOM actions into the
+  `userTextTrackSelection` intent slot (see Key Pattern 6)
 
 **`'preconditions-unmet'`** has no effects — the `monitor` handles the
 exit transition.
@@ -276,36 +279,41 @@ run.
 
 ---
 
-### 6. Bidirectional sync — the `change` event bridge
+### 6. DOM → intent bridge + one-way mode mirror
 
-`syncTextTracks` bridges DOM → state by listening to `TextTrackList`'s `'change'`
-event. The browser fires this event when track modes change, including when SPF
-itself sets modes via `syncModes()`.
+> **Updated (text-track-switching refactor).** `syncTextTracks` is no longer
+> bidirectional on the resolved id. It mirrors the resolved `selectedTextTrackId`
+> into DOM modes **one way**, and bridges DOM `change` events to the
+> `userTextTrackSelection` *intent* slot, which `switchTextTrack` resolves back
+> into `selectedTextTrackId`. So DOM action and the resolver never contend for
+> one slot.
 
-A `setTimeout(..., 0)` guard distinguishes SPF-initiated mode changes from
-user/browser-initiated ones. During the settling window (immediately after initial
-mode sync), `'change'` events re-apply the intended modes rather than writing back
-to state. After the window closes, a `'change'` event is treated as external
-selection and updates `selectedTextTrackId`:
+`syncTextTracks` listens to `TextTrackList`'s `'change'`. Two guards reject
+non-user changes:
+
+1. **Settling window** (`setTimeout(..., 0)`) — swallows Chromium's init-time
+   auto-selection before the resolved selection has settled, re-applying our
+   modes instead of writing intent.
+2. **Echo guard** — `selectedTextTrackId` is exactly the id this behavior last
+   drove into the DOM (initial sync, mirror effect, or a resolver-driven
+   correction), so a `change` still showing it is our own echo and is ignored.
+   This also covers the case where the resolver *overrides* the user (e.g. the
+   picked track's CDN failed → resolved id stays put → mirror disables the track):
+   the resulting `change` matches the resolved id, so it isn't written back as a
+   spurious `'off'`.
+
+A genuine user pick (showing id differs from the resolved id) is written as
+intent — a language-based partial (sticky across sources) or `'off'`:
 
 ```typescript
-let syncTimeout: ReturnType<typeof setTimeout> | undefined = setTimeout(() => {
-  syncTimeout = undefined;
-}, 0);
-
 const onChange = () => {
-  if (syncTimeout) {
-    // Inside settling window: browser auto-selection overriding modes.
-    // Re-apply without touching state.
-    syncModes(mediaElement.textTracks, untrack(() => selectedTextTrackIdSignal.get()));
+  if (inSettlingWindow) {
+    syncTextTrackModes(mediaElement.textTracks, state.selectedTextTrackId.get());
     return;
   }
-  // Outside settling window: treat as user selection, write back to state.
-  const showingTrack = Array.from(mediaElement.textTracks)
-    .find(t => t.mode === 'showing' && (t.kind === 'subtitles' || t.kind === 'captions'));
-  const newId = showingTrack?.id;
-  if (newId === untrack(() => selectedTextTrackIdSignal.get())) return;
-  update(state, { selectedTextTrackId: newId });
+  const showingId = getShowingSubtitlesTrackFromMedia(mediaElement)?.id || undefined;
+  if (showingId === state.selectedTextTrackId.get()) return; // echo
+  state.userTextTrackSelection.set(deriveTextTrackIntent(showingId, modelTextTracks));
 };
 ```
 
@@ -395,8 +403,14 @@ The `setTimeout(..., 0)` window in `syncTextTracks` is a Chromium workaround for
 browser auto-selection behavior. It is a best-effort heuristic, not a robust solution.
 The `'change'` event is dispatched as a task (async, after the current script), so the
 guard fires before the event under normal conditions — but this is not formally guaranteed.
-Alternative approaches (e.g., tracking which modes SPF set, comparing before/after) were
-not explored during the spike.
+
+The text-track-switching refactor added the complementary approach the spike left
+unexplored: an echo guard that compares the showing id against `selectedTextTrackId`
+(the id SPF last drove into the DOM). That covers steady-state echoes and
+resolver-driven corrections without timing. The settling window is still needed
+for the *initial* Chromium auto-pick (before any resolved selection exists), so the
+two coexist — the window narrowed to just the init race, the echo guard handling
+the rest.
 
 ---
 

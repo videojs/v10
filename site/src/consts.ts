@@ -2,6 +2,9 @@
 // (e.g. deploy preview URLs), this is stable for canonical URLs and other
 // references that must always point to production.
 export const PRODUCTION_URL = new URL('https://videojs.org');
+// Pre-release docs host (branch deploy of `main`). Keep references centralized
+// here so the hostname can move without touching components.
+export const PRERELEASE_URL = new URL('https://main.videojs.org');
 export const SITE_TITLE = 'Video.js';
 export const SEO_SUFFIX = 'Open Source Video Player';
 export const SITE_DESCRIPTION = `The open-source video player for React and HTML. Lightweight, accessible components built for performance and streaming.`;
@@ -13,13 +16,17 @@ export const THEME_KEY = 'vjs-site-theme';
 export const BANNER_DISMISS_KEY = 'vjs-legacy-banner-dismissed';
 export const BLOG_PAGE_SIZE = 10;
 
-/**
- * Video source for demos and examples throughout the site,
- * wherever JS is used. HTML examples use a separate hardcoded source.
- */
-interface VideoSource {
+export function isPrereleaseSite(siteUrl: URL | undefined): boolean {
+  return siteUrl?.origin === PRERELEASE_URL.origin;
+}
+
+/** A streaming video source used by demos and examples throughout the site. */
+interface StreamingVideoSource {
   id: string;
   hls: string;
+}
+
+interface VideoSource extends StreamingVideoSource {
   mp4: string;
   poster: string;
 }
@@ -37,3 +44,19 @@ export const VJS10_DEMO_VIDEO: VideoSource = {
   mp4: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4',
   poster: 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp',
 };
+
+export const VJS10_MULTI_AUDIO_DEMO_VIDEO: StreamingVideoSource = {
+  id: 's41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ',
+  hls: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
+};
+
+export const VJS10_DEMO_BACKGROUND_VIDEO_MP4 =
+  'https://stream.mux.com/601n4w1fq88NJiVpzvrQQeQfNnnjjfKMIN7dCGAEarTs/highest.mp4';
+export const VJS10_DEMO_POSTER = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/thumbnail.jpg`;
+export const VJS10_DEMO_STORYBOARD = `https://image.mux.com/${VJS10_DEMO_VIDEO.id}/storyboard.jpg`;
+
+// Standalone third-party samples for source types that aren't the shared Mux
+// asset above: Mux doesn't serve DASH, and Vimeo is a hosting service. The DASH
+// value matches the sample used by the site's DASH reference demo.
+export const VJS10_DEMO_DASH = 'https://dash.akamaized.net/akamai/streamroot/050714/Spring_4Ktest.mpd';
+export const VJS10_DEMO_VIMEO = 'https://vimeo.com/648359100';

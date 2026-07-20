@@ -1,0 +1,27 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import FormattedDate from '@/components/FormattedDate.astro';
+
+interface Props {
+  entry: CollectionEntry<'changelog'>;
+}
+
+const { entry } = Astro.props;
+---
+
+<article>
+  <a href={`/changelog/${entry.id}`} class="group grid max-w-3xl">
+    <FormattedDate
+      date={entry.data.date}
+      class="mb-1 font-display text-h4 font-bold text-orange"
+    />
+    <div class="mb-3">
+      <h2
+        class="mb-3 font-display text-h25 leading-tight uppercase underline group-intent:decoration-gold"
+      >
+        v{entry.data.version}
+      </h2>
+      {entry.data.description && <p>{entry.data.description}</p>}
+    </div>
+  </a>
+</article>

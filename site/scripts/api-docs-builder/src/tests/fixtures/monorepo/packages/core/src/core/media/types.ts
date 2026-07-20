@@ -6,6 +6,15 @@
  * AudioEvents extends a subset (no text track events).
  */
 
+// Mirrors the real MediaStreamTypes const object. Exercises default-value
+// resolution of property-access expressions (e.g. MediaStreamTypes.UNKNOWN)
+// through an import to a `... as const` object literal.
+export const MediaStreamTypes = {
+  ON_DEMAND: 'on-demand',
+  LIVE: 'live',
+  UNKNOWN: 'unknown',
+} as const;
+
 export interface EventLike<Detail = void> {
   readonly type: string;
   readonly timeStamp: number;
@@ -62,6 +71,13 @@ export interface TextTrackListEvents {
   trackmodechange: EventLike;
 }
 
+// Video.js-specific event promoted into the typed contract — mirrors the real
+// MediaStreamTypeEvents. The host that fires it also carries an `@fires` tag, so
+// it appears in BOTH the native list and the described element-specific list.
+export interface MediaStreamTypeEvents {
+  streamtypechange: EventLike;
+}
+
 export interface VideoEvents
   extends MediaPlaybackEvents,
     MediaPauseEvents,
@@ -71,7 +87,8 @@ export interface VideoEvents
     MediaPlaybackRateEvents,
     MediaBufferEvents,
     MediaErrorEvents,
-    TextTrackListEvents {}
+    TextTrackListEvents,
+    MediaStreamTypeEvents {}
 
 export interface AudioEvents
   extends MediaPlaybackEvents,

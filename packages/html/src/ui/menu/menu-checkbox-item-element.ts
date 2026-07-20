@@ -1,4 +1,4 @@
-import { applyElementProps, applyStateDataAttrs } from '@videojs/core/dom';
+import { applyElementProps } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -60,7 +60,7 @@ export class MenuCheckboxItemElement extends MediaElement {
           },
           onPointerenter: () => {
             const currentCtx = this.#ctx.value;
-            if (!this.disabled) currentCtx?.menu.highlight(this);
+            if (!this.disabled) currentCtx?.menu.highlight(this, { focus: false });
           },
         },
         { signal: this.#disconnect.signal }
@@ -72,7 +72,5 @@ export class MenuCheckboxItemElement extends MediaElement {
       'aria-checked': String(this.checked),
       'aria-disabled': this.disabled ? 'true' : undefined,
     });
-
-    applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }
 }

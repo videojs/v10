@@ -1,0 +1,10 @@
+---
+description: "Fixes the CLI bin path so npm exposes the executable after install."
+date: 2026-04-14
+version: "10.0.0-beta.19"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.18...@videojs/core@10.0.0-beta.19"
+---
+
+Beta.19 fixes the Video.js CLI executable: the package's `bin` entry now points at the `.mjs` file tsdown outputs, so npm exposes the `videojs` command after install and `npx @videojs/cli docs` works ([#1337](https://github.com/videojs/v10/pull/1337)).

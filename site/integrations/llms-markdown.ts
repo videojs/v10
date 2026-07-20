@@ -7,7 +7,7 @@ import TurndownService from 'turndown';
 
 import { sidebar } from '../src/docs.config';
 import type { Sidebar, SupportedFramework } from '../src/types/docs';
-import { isSection, isValidFramework } from '../src/types/docs';
+import { isLink, isSection, isValidFramework } from '../src/types/docs';
 
 interface PageEntry {
   pathname: string;
@@ -284,7 +284,7 @@ function renderSidebarToMarkdown(
         content += `${item.llmsDescription}\n\n`;
       }
       content += renderSidebarToMarkdown(item.contents, pageBySlug, siteUrl, depth + 1);
-    } else {
+    } else if (!isLink(item)) {
       const page = pageBySlug.get(item.slug);
       if (!page) continue;
       content += page.description

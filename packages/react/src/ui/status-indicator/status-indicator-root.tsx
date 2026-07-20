@@ -1,9 +1,10 @@
 'use client';
 
-import { StatusIndicatorCore, StatusIndicatorDataAttrs } from '@videojs/core';
+import { createInputIndicatorLabels, StatusIndicatorCore, StatusIndicatorDataAttrs } from '@videojs/core';
 import type { ForwardedRef } from 'react';
 import { forwardRef } from 'react';
 
+import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useInputIndicatorRoot } from '../input-indicators/use-input-indicator-root';
@@ -11,17 +12,18 @@ import { StatusIndicatorProvider } from './context';
 
 export interface StatusIndicatorRootProps
   extends UIComponentProps<'div', StatusIndicatorCore.State>,
-    StatusIndicatorCore.Props {}
+    Omit<StatusIndicatorCore.Props, 'labels'> {}
 
 export const StatusIndicatorRoot = forwardRef(function StatusIndicatorRoot(
   componentProps: StatusIndicatorRootProps,
   forwardedRef: ForwardedRef<HTMLDivElement>
 ) {
-  const { render, className, style, actions, closeDelay, labels, ...elementProps } = componentProps;
+  const { render, className, style, actions, closeDelay, ...elementProps } = componentProps;
+  const translator = useTranslator();
   const { elementRef, present, state } = useInputIndicatorRoot(() => new StatusIndicatorCore(), {
     actions,
     closeDelay,
-    labels,
+    labels: createInputIndicatorLabels(translator),
   });
 
   if (!present) return null;

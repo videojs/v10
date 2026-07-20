@@ -1,8 +1,10 @@
 'use client';
 
 import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
-import type { MenuApi } from '@videojs/core/dom';
+import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
+
+import type { MenuItemSettingType } from './menu-item-type';
 
 export interface MenuContextValue {
   core: MenuCore;
@@ -11,6 +13,8 @@ export interface MenuContextValue {
   stateAttrMap: StateAttrMap<MenuState>;
   contentId: string;
   anchorName: string;
+  boundary: PositioningBoundary;
+  container: MediaContainer | null;
   /** ID of the currently visible submenu, or null when at root view. */
   activeSubMenuId: string | null;
   /** Triggerer ID of the active submenu entry (for focus restoration on pop). */
@@ -59,6 +63,22 @@ export function useSubMenuContext(): SubMenuContextValue | null {
 }
 
 // ---------------------------------------------------------------------------
+// Group context — shared by group-like parts and MenuGroupLabel
+// ---------------------------------------------------------------------------
+
+export interface MenuGroupContextValue {
+  registerLabel: (id: string) => () => void;
+}
+
+const MenuGroupContext = createContext<MenuGroupContextValue | null>(null);
+
+export const MenuGroupContextProvider = MenuGroupContext.Provider;
+
+export function useMenuGroupContext(): MenuGroupContextValue | null {
+  return useContext(MenuGroupContext);
+}
+
+// ---------------------------------------------------------------------------
 // Radio group context — shared between MenuRadioGroup and MenuRadioItem
 // ---------------------------------------------------------------------------
 
@@ -75,4 +95,41 @@ export function useMenuRadioGroupContext(): MenuRadioGroupContextValue {
   const ctx = useContext(MenuRadioGroupContext);
   if (!ctx) throw new Error('Menu.RadioItem must be used within a Menu.RadioGroup');
   return ctx;
+}
+
+// ---------------------------------------------------------------------------
+// Root trigger render context — provided by Menu.Trigger for render children.
+// ---------------------------------------------------------------------------
+
+const MenuTriggerChildContext = createContext(false);
+
+export const MenuTriggerChildContextProvider = MenuTriggerChildContext.Provider;
+
+export function useOptionalMenuTriggerChildContext(): boolean {
+  return useContext(MenuTriggerChildContext);
+}
+
+// ---------------------------------------------------------------------------
+// Menu item setting context — provided by Menu.Item or Menu.Trigger when `type`
+// is set; consumed by Menu.ItemValue.
+// ---------------------------------------------------------------------------
+
+export interface MenuItemSettingContextValue {
+  type: MenuItemSettingType;
+  label: string;
+  availability: 'available' | 'unavailable';
+}
+
+const MenuItemSettingContext = createContext<MenuItemSettingContextValue | null>(null);
+
+export const MenuItemSettingContextProvider = MenuItemSettingContext.Provider;
+
+export function useMenuItemSettingContext(): MenuItemSettingContextValue {
+  const ctx = useContext(MenuItemSettingContext);
+  if (!ctx) throw new Error('Menu.ItemValue must be used within a Menu.Item or Menu.Trigger with `type` set');
+  return ctx;
+}
+
+export function useOptionalMenuItemSettingContext(): MenuItemSettingContextValue | null {
+  return useContext(MenuItemSettingContext);
 }

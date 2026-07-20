@@ -81,17 +81,18 @@ function getCommonTemplateHTML(tag: string) {
 
 const excludedProperties = ['attach', 'detach', 'destroy'];
 
-interface MediaHost extends EventTarget {
-  readonly target: EventTarget | null;
+export interface MediaHost extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
   destroy(): void;
-  /** Index signature for dynamic property forwarding. */
+  /** Index signature for dynamic property forwarding (includes the host's protected `target`). */
   [key: string]: any;
 }
 
-type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<HTMLElement & InstanceType<T>> & {
-  properties: Record<string, { type: any; attribute?: string }>;
+type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
+  HTMLElement & InstanceType<T> & { readonly host: InstanceType<T> }
+> & {
+  properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
   shadowRootOptions: ShadowRootInit;
   readonly observedAttributes: string[];
@@ -101,6 +102,10 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
   tag: string,
   MediaHost: T
 ): CustomMediaConstructor<T> {
+  // Embed hosts (iframe) drive an external player rather than a native media
+  // element, so attribute changes are not mirrored onto the iframe target and
+  // there is no `<track>` / `<source>` syncing.
+  const syncTargetAttributes = tag !== 'iframe';
   const mediaHostAttrToProp = new Map<string, string>();
   let isDefined = false;
 
@@ -119,9 +124,10 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       loading: { type: String },
       loop: { type: Boolean },
       playsInline: { type: Boolean },
-      poster: { type: String },
-      preload: { type: String },
-      src: { type: String },
+      poster: { type: String, empty: '' },
+      preload: { type: String, empty: null },
+      src: { type: String, empty: '' },
+      streamType: { type: String, attribute: 'stream-type', empty: 'unknown' },
     };
 
     static get observedAttributes() {
@@ -137,9 +143,19 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (isDefined) return;
       isDefined = true;
 
+      const properties = ctor.properties as Record<string, { type: any; attribute?: string; empty?: unknown }>;
+
       for (let proto = MediaHost.prototype; proto && proto !== Object.prototype; proto = Object.getPrototypeOf(proto)) {
         for (const prop of Object.getOwnPropertyNames(proto)) {
           if (prop in CustomMedia.prototype || excludedProperties.includes(prop)) continue;
+          // Defer to the explicit `ctor.properties` loop when its attribute
+          // mapping diverges from `kebabCase(prop)`. Covers multi-word camelCase
+          // props (`playsInline` → `'playsinline'`) and explicit overrides
+          // (`defaultMuted` → `attribute: 'muted'`). Single-word props in
+          // `properties` (like `loop`, `preload`) keep their legacy proto-walk
+          // path so the mediaHost still receives the setter call.
+          const propConfig = properties[prop];
+          if (propConfig && (propConfig.attribute ?? prop.toLowerCase()) !== kebabCase(prop)) continue;
 
           const descriptor = Object.getOwnPropertyDescriptor(proto, prop);
           if (!descriptor) continue;
@@ -182,7 +198,6 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         }
       }
 
-      const properties = ctor.properties as Record<string, { type: any; attribute?: string }>;
       for (const [prop, { type, attribute }] of Object.entries(properties)) {
         if (prop in CustomMedia.prototype) continue;
 
@@ -218,10 +233,9 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
 
         const allowedKeys = getAttrsFromProps(ctor.properties);
         const disallowedKeys = [...mediaHostAttrToProp.keys()];
-        const attrs: Record<string, string> = omit(
-          pick(namedNodeMapToObject(this.attributes), allowedKeys),
-          disallowedKeys
-        );
+        const pickedAttrs = pick(namedNodeMapToObject(this.attributes), allowedKeys);
+        // Embed templates (iframe) need host-bound attrs (e.g. `src`) to build the initial URL.
+        const attrs: Record<string, string> = syncTargetAttributes ? omit(pickedAttrs, disallowedKeys) : pickedAttrs;
         if (tag && !attrs.part) attrs.part = tag;
         this.shadowRoot!.innerHTML = ctor.getTemplateHTML(attrs);
       }
@@ -245,7 +259,11 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       this.#mediaHost.attach(target);
     }
 
-    get target(): HTMLVideoElement | HTMLAudioElement | null {
+    get host(): MediaHost {
+      return this.#mediaHost;
+    }
+
+    get target(): HTMLElement | null {
       return (
         this.querySelector(':scope > [slot=media]') ??
         this.querySelector(tag) ??
@@ -254,10 +272,21 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       );
     }
 
-    disconnectedCallback(): void {
-      if (!this.hasAttribute('keep-alive')) {
-        this.#mediaHost.destroy();
+    connectedCallback() {
+      if (tag !== 'iframe') return;
+      // Add data attribute for styling and avoiding cross-origin issues. e.g. backdrop-filter
+      if (!this.hasAttribute('data-cross-origin-frame')) {
+        this.setAttribute('data-cross-origin-frame', '');
       }
+    }
+
+    disconnectedCallback() {
+      if (this.hasAttribute('keep-alive')) return;
+      // Defer so a synchronous reparent (remove + insert) doesn't tear down
+      // the host and its registered components.
+      queueMicrotask(() => {
+        if (!this.isConnected) this.#mediaHost.destroy();
+      });
     }
 
     addEventListener(
@@ -291,8 +320,14 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
       if (prop) {
         if (oldValue !== newValue) {
           const valueType = typeof this.#mediaHost[prop];
+          const propConfig = (this.constructor as CustomMediaConstructor<T>).properties[prop];
+          const emptyValue = propConfig && 'empty' in propConfig ? propConfig.empty : '';
           this.#mediaHost[prop] =
-            valueType === 'boolean' ? newValue !== null : valueType === 'number' ? Number(newValue) : (newValue ?? '');
+            valueType === 'boolean'
+              ? newValue !== null
+              : valueType === 'number'
+                ? Number(newValue)
+                : (newValue ?? emptyValue);
         }
         return;
       }
@@ -304,6 +339,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         return;
       }
 
+      if (!syncTargetAttributes) return;
+
       if (newValue === null) {
         this.target?.removeAttribute(attrName);
       } else if (this.target?.getAttribute(attrName) !== newValue) {
@@ -312,6 +349,8 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
     }
 
     #syncMediaChildren(): void {
+      if (tag === 'iframe') return;
+
       const defaultSlot = this.shadowRoot?.querySelector('slot:not([name])') as HTMLSlotElement;
       const mediaChildren = new Set(
         defaultSlot

@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/audio/player';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadAudioSkinTag } from '@app/shared/html/skins';
@@ -18,12 +19,14 @@ const state = createHtmlSandboxState(true);
 const loadLatest = createLatestLoader();
 
 async function render() {
+  await prepareSandboxHtmlLocale();
+
   const tag = await loadLatest(() => loadAudioSkinTag(state.skin, state.styling));
   if (!tag) return;
 
   const mediaAttrs = renderMediaAttrs(state);
 
-  document.getElementById('root')!.innerHTML = html`
+  document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
@@ -31,7 +34,7 @@ async function render() {
         </${tag}>
       </audio-player>
     </div>
-  `;
+  `);
 }
 
 render();
@@ -65,3 +68,5 @@ onPreloadChange((preload) => {
   state.preload = preload;
   render();
 });
+
+bindSandboxHtmlLocaleChange(render);

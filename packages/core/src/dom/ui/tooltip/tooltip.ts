@@ -4,13 +4,14 @@ import {
   createPopover,
   type PopoverApi,
   type PopoverChangeDetails,
+  type PopoverOpenChangeReason,
   type PopoverOptions,
   type PopoverPopupProps,
   type PopoverTriggerProps,
 } from '../popover/popover';
 import type { TransitionApi } from '../transition';
 
-export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur';
+export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
 
 export interface TooltipChangeDetails {
   reason: TooltipOpenChangeReason;
@@ -38,15 +39,16 @@ export interface TooltipApi extends Omit<PopoverApi, 'triggerProps' | 'popupProp
   triggerProps: TooltipTriggerProps;
   popupProps: TooltipPopupProps;
   open: () => void;
-  close: () => void;
+  close: (reason?: TooltipOpenChangeReason) => void;
 }
 
 /** Map popover reasons to tooltip reasons, filtering out click/outside-click. */
-const REASON_MAP: Partial<Record<string, TooltipOpenChangeReason>> = {
+const REASON_MAP: Partial<Record<PopoverOpenChangeReason, TooltipOpenChangeReason>> = {
   hover: 'hover',
   focus: 'focus',
   escape: 'escape',
   blur: 'blur',
+  'imperative-action': 'imperative-action',
 };
 
 export function createTooltip(options: TooltipOptions): TooltipApi {
@@ -127,6 +129,6 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
       return popover.triggerElement;
     },
     open: () => popover.open('hover'),
-    close: () => popover.close('hover'),
+    close: (reason: TooltipOpenChangeReason = 'hover') => popover.close(reason),
   };
 }

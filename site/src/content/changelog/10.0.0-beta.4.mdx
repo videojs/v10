@@ -1,0 +1,16 @@
+---
+description: "Streams HLS segment fetches through ReadableStream bodies and fixes mobile controls, skin styling, and site issues."
+date: 2026-03-12
+version: "10.0.0-beta.4"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.3...@videojs/core@10.0.0-beta.4"
+---
+
+The headline change in beta.4 lands in the SPF playback engine: segment fetches now stream through `fetch`'s `ReadableStream` body ([#890](https://github.com/videojs/v10/pull/890)), so video data downloads and appends in overlapping chunks instead of waiting for each full segment. Bandwidth estimation samples throughput per chunk as data arrives, and source buffer setup now waits for all selected tracks before creating any `SourceBuffer`, which fixes a Firefox bug where appending video before the audio buffer exists permanently disables audio detection. A follow-up propagates `byteRange` when building segment load tasks ([#904](https://github.com/videojs/v10/pull/904)).
+
+In the player, custom media elements that aren't `HTMLMediaElement` instances now attach to the store and upgrade correctly ([#889](https://github.com/videojs/v10/pull/889)), and two issues that broke showing and hiding controls on mobile are fixed ([#896](https://github.com/videojs/v10/pull/896)).
+
+A batch of skin and tooltip fixes rounds out the player work: standardized `backdrop-filter` and minimal skin root sizing ([#895](https://github.com/videojs/v10/pull/895)), a missing tooltip provider and group ([#902](https://github.com/videojs/v10/pull/902)), no delay when switching between grouped tooltips ([#903](https://github.com/videojs/v10/pull/903)), and fullscreen video clipping and border-radius handling ([#905](https://github.com/videojs/v10/pull/905)).
+
+The videojs.org site also gets attention: hero video layout workarounds ([#884](https://github.com/videojs/v10/pull/884)), trailing-slash redirects via an edge function ([#885](https://github.com/videojs/v10/pull/885)), dev-only posts filtered from the RSS feed ([#888](https://github.com/videojs/v10/pull/888)), cookieless PostHog analytics replacing GA4 ([#894](https://github.com/videojs/v10/pull/894)), and `playsinline` added to the home and installation snippets ([#897](https://github.com/videojs/v10/pull/897)).

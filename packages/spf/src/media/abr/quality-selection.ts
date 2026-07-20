@@ -10,7 +10,7 @@
  * - At same bandwidth, prefer higher resolution
  */
 
-import type { PartiallyResolvedVideoTrack } from '../types';
+import type { PartiallyResolvedVideoTrack, VideoTrack } from '../types';
 
 /**
  * Quality selection configuration.
@@ -22,6 +22,13 @@ export interface QualityConfig {
    * Default 0.85 means track must use ≤85% of available bandwidth (15% headroom).
    */
   safetyMargin: number;
+  /**
+   * Upgrade hysteresis ratio (>= 1). When `currentTrack` is supplied, an
+   * upgrade is applied only if `optimal.bandwidth >= currentTrack.bandwidth * upgradeMargin`.
+   * Downgrades are always applied. Default 1.15 means optimal must clear
+   * the current bandwidth by at least 15% to trigger an upgrade.
+   */
+  upgradeMargin: number;
 }
 
 /**
@@ -30,50 +37,75 @@ export interface QualityConfig {
  */
 export const DEFAULT_QUALITY_CONFIG: QualityConfig = {
   safetyMargin: 0.85,
+  upgradeMargin: 1.15,
 };
 
 /**
- * Select the best video track based on current bandwidth estimate.
+ * Selection context for `selectQuality`. The `bandwidth` field carries the
+ * current network estimate; `safetyMargin` / `upgradeMargin` override the
+ * defaults; `currentTrack` enables upgrade-vs-downgrade hysteresis.
  *
- * Selects the highest quality track where bandwidth is sufficient with safety margin:
- * - currentBandwidth >= track.bandwidth / safetyMargin
- * - Default safetyMargin 0.85 means track uses ≤85% of bandwidth (15% headroom)
- * - At same bandwidth, prefers higher resolution
+ * Shape matches the unified `selectOptimal` contract of
+ * `setupTrackSwitching` (`playback/behaviors/track-switching.ts`) so the
+ * function can be passed directly as a variant's `selectOptimal`.
+ */
+export interface SelectQualityCtx<T extends { bandwidth: number } = PartiallyResolvedVideoTrack | VideoTrack>
+  extends Partial<QualityConfig> {
+  bandwidth: number;
+  /**
+   * Track currently selected. When supplied, `selectQuality` returns
+   * `currentTrack` (no change) for upgrades that don't clear the
+   * `upgradeMargin`. When omitted, no hysteresis is applied — the
+   * computed optimal is returned regardless.
+   */
+  currentTrack?: T;
+}
+
+/**
+ * Select the track to apply now, given a context that carries current
+ * bandwidth, an optional `currentTrack`, and tuning overrides. Returns:
  *
- * @param tracks - Available video tracks (can be unsorted)
- * @param currentBandwidth - Current bandwidth estimate in bits per second
- * @param config - Optional quality selection configuration
- * @returns Selected track, or undefined if no tracks available
+ * - The bandwidth-fitting optimal when no `currentTrack` is supplied.
+ * - The optimal when it's a downgrade vs. `currentTrack` (downgrades
+ *   apply immediately — no hysteresis).
+ * - The optimal when it clears `currentTrack.bandwidth * upgradeMargin`
+ *   (upgrade clears hysteresis).
+ * - `currentTrack` itself when an upgrade doesn't clear the margin
+ *   (stay put — caller checks identity to no-op).
+ *
+ * "Optimal" is the highest-bandwidth track where the available bandwidth
+ * meets the safety requirement (`bandwidth >= track.bandwidth / safetyMargin`).
+ * Falls back to the lowest-bandwidth track when nothing fits the safety
+ * margin (preserves a definitive pick under under-bandwidth conditions).
  *
  * @example
- * const tracks = [
- *   { id: '360p', bandwidth: 500_000, ... },
- *   { id: '720p', bandwidth: 2_000_000, ... },
- *   { id: '1080p', bandwidth: 4_000_000, ... },
- * ];
- *
- * // With 2.5 Mbps, selects 720p (1080p needs 4M/0.85 = 4.7 Mbps)
- * const selected = selectQuality(tracks, 2_500_000);
+ * const tracks = [low, mid, high];
+ * selectQuality(tracks, { bandwidth: 5_000_000, currentTrack: low });
+ * // Returns `high` if 5 Mbps clears safety AND high.bandwidth >= low.bandwidth * upgradeMargin.
+ * // Returns `low` (no-op signal) otherwise.
  */
 export function selectQuality(
-  tracks: PartiallyResolvedVideoTrack[],
-  currentBandwidth: number,
-  config: QualityConfig = DEFAULT_QUALITY_CONFIG
-): PartiallyResolvedVideoTrack | undefined {
+  tracks: readonly (PartiallyResolvedVideoTrack | VideoTrack)[],
+  ctx: SelectQualityCtx
+): PartiallyResolvedVideoTrack | VideoTrack | undefined {
   if (tracks.length === 0) {
     return undefined;
   }
+
+  const safetyMargin = ctx.safetyMargin ?? DEFAULT_QUALITY_CONFIG.safetyMargin;
+  const upgradeMargin = ctx.upgradeMargin ?? DEFAULT_QUALITY_CONFIG.upgradeMargin;
+  const { bandwidth: currentBandwidth, currentTrack } = ctx;
 
   // Sort tracks by bandwidth (lowest first)
   const sortedTracks = tracks.slice().sort((a, b) => a.bandwidth - b.bandwidth);
 
   // Start with no selection
-  let chosen: PartiallyResolvedVideoTrack | undefined;
+  let chosen: PartiallyResolvedVideoTrack | VideoTrack | undefined;
 
   for (const track of sortedTracks) {
     // Check if we have enough bandwidth for this track with safety margin
     // Required bandwidth = track.bandwidth / safetyMargin
-    const requiredBandwidth = track.bandwidth / config.safetyMargin;
+    const requiredBandwidth = track.bandwidth / safetyMargin;
 
     if (currentBandwidth >= requiredBandwidth) {
       // We can support this track - prefer it if better than current choice
@@ -88,7 +120,46 @@ export function selectQuality(
   }
 
   // If no track fits with safety margin, fall back to lowest quality
-  return chosen ?? sortedTracks[0];
+  const optimal = chosen ?? sortedTracks[0];
+  if (!optimal) return undefined;
+
+  // Apply upgrade hysteresis. No currentTrack → no hysteresis, return
+  // optimal. Downgrade (optimal.bandwidth < current) → always apply.
+  // Upgrade → only when `optimal.bandwidth >= current * upgradeMargin`,
+  // else stay put (return currentTrack so caller's id-compare no-ops).
+  if (!currentTrack) return optimal;
+  if (optimal.bandwidth < currentTrack.bandwidth) return optimal;
+  if (optimal.bandwidth >= currentTrack.bandwidth * upgradeMargin) return optimal;
+  return currentTrack;
+}
+
+/**
+ * Select the lowest-bandwidth track from the candidate set.
+ *
+ * Used as a safety-net fallback by callers that need a definitive pick when
+ * a primary selection algorithm declines to choose. Pairs naturally with
+ * `selectQuality` — when ABR has no good answer (e.g., all candidates
+ * exceed available bandwidth and the algorithm doesn't fall back
+ * internally), the lowest bitrate is the safest default.
+ *
+ * @param tracks - Candidate tracks (can be unsorted)
+ * @returns The lowest-bandwidth track, or `undefined` if `tracks` is empty
+ *
+ * @example
+ * const fallback = selectLowestQuality(tracks);
+ */
+export function selectLowestQuality<T extends { bandwidth: number }>(tracks: readonly T[]): T | undefined {
+  if (tracks.length === 0) return undefined;
+  return tracks.reduce((min, t) => (t.bandwidth < min.bandwidth ? t : min));
+}
+
+/**
+ * Resolution as a total pixel count (`width × height`), the basis for
+ * comparing two tracks at the same bitrate. Missing dimensions count as 0, so
+ * tracks without resolution metadata (e.g. audio) area-compare equal.
+ */
+export function resolutionArea(track: { width?: number; height?: number }): number {
+  return (track.width ?? 0) * (track.height ?? 0);
 }
 
 /**
@@ -99,8 +170,9 @@ export function selectQuality(
  * @param trackB - Second track to compare
  * @returns True if trackA has more pixels than trackB
  */
-function hasHigherResolution(trackA: PartiallyResolvedVideoTrack, trackB: PartiallyResolvedVideoTrack): boolean {
-  const pixelsA = (trackA.width ?? 0) * (trackA.height ?? 0);
-  const pixelsB = (trackB.width ?? 0) * (trackB.height ?? 0);
-  return pixelsA > pixelsB;
+function hasHigherResolution(
+  trackA: PartiallyResolvedVideoTrack | VideoTrack,
+  trackB: PartiallyResolvedVideoTrack | VideoTrack
+): boolean {
+  return resolutionArea(trackA) > resolutionArea(trackB);
 }

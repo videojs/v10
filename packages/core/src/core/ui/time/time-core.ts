@@ -1,9 +1,9 @@
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaTimeState } from '../../media/state';
+import { resolveLabel } from '../utils/resolve-label';
 
 /** Time display type. */
 export type TimeType = 'current' | 'duration' | 'remaining';
@@ -15,6 +15,8 @@ export interface TimeProps {
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
   label?: string | ((state: TimeState) => string) | undefined;
+  /** Whether the time display can be toggled. */
+  toggle?: boolean | undefined;
 }
 
 export interface TimeState {
@@ -32,7 +34,16 @@ export interface TimeState {
   datetime: string;
 }
 
-const DEFAULT_LABELS: Record<TimeType, string> = {
+const TOGGLE_LABEL_KEYS: Record<
+  TimeType,
+  '{duration}. Show elapsed time.' | '{duration}. Show duration.' | '{duration}. Show remaining time.'
+> = {
+  current: '{duration}. Show elapsed time.',
+  duration: '{duration}. Show duration.',
+  remaining: '{duration}. Show remaining time.',
+};
+
+const DEFAULT_LABEL_KEYS: Record<TimeType, 'Current time' | 'Duration' | 'Remaining'> = {
   current: 'Current time',
   duration: 'Duration',
   remaining: 'Remaining',
@@ -43,9 +54,10 @@ export class TimeCore {
     type: 'current',
     negativeSign: '-',
     label: '',
+    toggle: false,
   };
 
-  #props = { ...TimeCore.defaultProps };
+  #props: NonNullableObject<TimeProps> = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
 
   constructor(props?: TimeProps) {
@@ -98,23 +110,36 @@ export class TimeCore {
     return secondsToIsoDuration(Math.abs(seconds));
   }
 
-  getLabel(state: TimeState): string {
-    const { label } = this.#props;
-
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
+  #getToggleType(type: TimeType, currentType: TimeType): TimeType {
+    if (type === 'current') {
+      return currentType === 'remaining' ? 'current' : 'remaining';
     }
 
-    return DEFAULT_LABELS[this.#props.type];
+    return currentType === 'duration' ? 'remaining' : 'duration';
   }
 
-  getAttrs(state: TimeState) {
+  getLabel(state: TimeState, type = this.#props.type): string {
+    const custom = resolveLabel(this.#props.label, state);
+    if (custom !== undefined) return custom;
+    if (!this.#props.toggle) {
+      return DEFAULT_LABEL_KEYS[this.#props.type];
+    }
+
+    const toggleType = this.#getToggleType(type, state.type);
+
+    return TOGGLE_LABEL_KEYS[toggleType];
+  }
+
+  getLabelParams(state: TimeState): { duration: string } | undefined {
+    const custom = resolveLabel(this.#props.label, state);
+    return custom === undefined && this.#props.toggle ? { duration: state.phrase } : undefined;
+  }
+
+  getAttrs(state: TimeState, type = this.#props.type) {
     return {
-      'aria-label': this.getLabel(state),
-      'aria-valuetext': state.phrase,
+      'aria-label': this.getLabel(state, type),
+      role: this.#props.toggle ? 'button' : undefined,
+      tabIndex: this.#props.toggle ? 0 : undefined,
     };
   }
 

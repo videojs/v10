@@ -6,7 +6,7 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
-  background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3), oklch(0 0 0 / 0));
+  background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.3) 25%, oklch(0 0 0 / 0));
   border-radius: inherit;
   opacity: 0;
   backdrop-filter: blur(0) saturate(1);
@@ -23,6 +23,12 @@
 .media-default-skin .media-controls[data-visible] ~ .media-overlay,
 .media-default-skin .media-error[data-open] ~ .media-overlay {
   opacity: 1;
+}
+
+.media-default-skin .media-buffering-indicator[data-visible] ~ .media-overlay {
+  background: oklch(0 0 0 / 0.35);
+  opacity: 1;
+  backdrop-filter: blur(8px);
 }
 
 .media-default-skin .media-error[data-open] ~ .media-overlay {

@@ -22,18 +22,18 @@ export { resolveUrl } from './media/hls/resolve-url';
 // ABR (P6, P7)
 // =============================================================================
 
+export type { QualityConfig } from './media/abr/quality-selection';
+export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
 export type {
   BandwidthConfig,
   BandwidthState,
-} from './media/abr/bandwidth-estimator';
+} from './network/bandwidth-estimator';
 export {
   DEFAULT_BANDWIDTH_CONFIG,
   getBandwidthEstimate,
   hasGoodEstimate,
   sampleBandwidth,
-} from './media/abr/bandwidth-estimator';
-export type { QualityConfig } from './media/abr/quality-selection';
-export { DEFAULT_QUALITY_CONFIG, selectQuality } from './media/abr/quality-selection';
+} from './network/bandwidth-estimator';
 
 // =============================================================================
 // Buffer Management (P8, P9)
@@ -89,17 +89,26 @@ export { fetchResolvable, getResponseText } from './network/fetch';
 // Features (F1)
 // =============================================================================
 
-export type { PresentationState } from './playback/behaviors/resolve-presentation';
-export { canResolve, resolvePresentation, shouldResolve } from './playback/behaviors/resolve-presentation';
-export type { PlatformContext } from './playback/behaviors/sync-preload-attribute';
-export { syncPreloadAttribute } from './playback/behaviors/sync-preload-attribute';
+export type {
+  ParsePresentation,
+  PresentationState,
+  ResolvePresentationConfig,
+} from './playback/behaviors/resolve-presentation';
+export { resolvePresentation } from './playback/behaviors/resolve-presentation';
+export { syncPreload } from './playback/behaviors/sync-preload';
 
 // =============================================================================
-// Features (F9 - Quality Switching)
+// Features — Track Switching (video ABR + audio language selection)
 // =============================================================================
 
 export type {
-  QualitySwitchingConfig,
-  QualitySwitchingState,
-} from './playback/behaviors/quality-switching';
-export { DEFAULT_SWITCHING_CONFIG, switchQuality } from './playback/behaviors/quality-switching';
+  SwitchTextTrackConfig,
+  SwitchVideoTrackConfig,
+  TrackSwitchingState,
+} from './playback/behaviors/track-switching';
+export {
+  DEFAULT_INITIAL_BANDWIDTH,
+  switchAudioTrack,
+  switchTextTrack,
+  switchVideoTrack,
+} from './playback/behaviors/track-switching';

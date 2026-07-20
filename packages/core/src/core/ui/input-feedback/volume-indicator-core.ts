@@ -7,12 +7,15 @@ import {
   deriveVolumeStatus,
   type IndicatorVolumeLevel,
   type InputActionEvent,
+  type InputIndicatorLabels,
   isVolumeIndicatorAction,
   type MediaSnapshot,
   predictVolumeActionOutcome,
 } from './status';
 
-export interface VolumeIndicatorProps extends IndicatorCoreProps {}
+export interface VolumeIndicatorProps extends IndicatorCoreProps {
+  labels?: Partial<InputIndicatorLabels> | undefined;
+}
 
 export interface VolumeIndicatorState extends IndicatorLifecycleState {
   level: IndicatorVolumeLevel | null;
@@ -66,7 +69,12 @@ export class VolumeIndicatorCore {
 
     const current = this.state.current;
     const prediction = predictVolumeActionOutcome(event, snapshot);
-    const details = deriveVolumeStatus(event, snapshot, DEFAULT_INPUT_INDICATOR_LABELS, prediction);
+    const details = deriveVolumeStatus(
+      event,
+      snapshot,
+      { ...DEFAULT_INPUT_INDICATOR_LABELS, ...this.#props.labels },
+      prediction
+    );
     const boundary = getVolumeBoundary(event, prediction.snapshotVolume, prediction.nextVolume);
     const repeatedBoundary = boundary !== null && current[boundary] === true;
 

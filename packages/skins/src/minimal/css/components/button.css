@@ -84,6 +84,10 @@
     scale: 0.9;
   }
 
+  & .media-icon__container {
+    display: grid;
+  }
+
   & .media-icon {
     grid-area: 1 / 1;
     transition-behavior: allow-discrete;
@@ -101,8 +105,9 @@
     right: -1px;
     bottom: -3px;
     font-size: 10px; /* Hard coded due to size limitations. */
-    font-weight: 480;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
+    letter-spacing: -0.05em;
   }
 
   &:has(.media-icon--flipped) .media-icon__label {
@@ -114,12 +119,37 @@
 /* Playback rate button */
 .media-minimal-skin .media-button--playback-rate {
   padding: 0;
+  font-variant-numeric: tabular-nums;
 
   &::after {
     width: 4ch;
-    font-variant-numeric: tabular-nums;
     content: attr(data-rate) "\00D7";
   }
+
+  &[data-inline-rate-label]::after {
+    content: none;
+  }
+}
+
+/* Settings button */
+.media-minimal-skin .media-button--settings {
+  display: none;
+
+  & .media-icon--settings {
+    transition: transform 150ms ease-in-out;
+
+    @media (prefers-reduced-motion: reduce) {
+      transition-duration: 0ms;
+    }
+  }
+
+  &[aria-expanded="true"] .media-icon--settings {
+    transform: rotate(90deg);
+  }
+}
+
+.media-minimal-skin .media-button-group:has([data-availability="available"]) .media-button--settings {
+  display: grid;
 }
 
 /* Live button — wide pill button with a status dot (gray → red at the live

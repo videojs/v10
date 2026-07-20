@@ -1,5 +1,6 @@
 import { createSelector } from '@videojs/store';
 
+import { audioTrackFeature } from './features/audio-track';
 import { bufferFeature } from './features/buffer';
 import { controlsFeature } from './features/controls';
 import { errorFeature } from './features/error';
@@ -8,6 +9,7 @@ import { liveFeature } from './features/live';
 import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
 import { playbackRateFeature } from './features/playback-rate';
+import { qualityFeature } from './features/quality';
 import { remotePlaybackFeature } from './features/remote-playback';
 import { sourceFeature } from './features/source';
 import { streamTypeFeature } from './features/stream-type';
@@ -15,6 +17,8 @@ import { textTrackFeature } from './features/text-track';
 import { timeFeature } from './features/time';
 import { volumeFeature } from './features/volume';
 
+/** Select the audio track state (audioTrackList, selectAudioTrack). */
+export const selectAudioTrack = createSelector(audioTrackFeature);
 /** Select the buffer state (buffered ranges, percent buffered). */
 export const selectBuffer = createSelector(bufferFeature);
 /** Select the controls state (controls visible, user-active). */
@@ -31,6 +35,8 @@ export const selectPiP = createSelector(pipFeature);
 export const selectPlayback = createSelector(playbackFeature);
 /** Select the playback rate state (playbackRate, playbackRates, setPlaybackRate). */
 export const selectPlaybackRate = createSelector(playbackRateFeature);
+/** Select the quality state (videoRenditionList, activeVideoRendition, selectVideoRendition). */
+export const selectQuality = createSelector(qualityFeature);
 /** Select the remote playback state (remote playback connection state, availability). */
 export const selectRemotePlayback = createSelector(remotePlaybackFeature);
 /** Select the source state (src, type). */

@@ -1,6 +1,7 @@
+import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it, vi } from 'vitest';
 
-import type { MediaBufferState, MediaTimeState } from '../../../media/state';
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../../media/state';
 import type { SliderInput } from '../../slider/slider-core';
 import { TimeSliderCore } from '../time-slider-core';
 
@@ -33,7 +34,7 @@ describe('TimeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(TimeSliderCore.defaultProps).toEqual({
-        label: 'Seek',
+        label: '',
         step: 1,
         largeStep: 10,
         orientation: 'horizontal',
@@ -43,6 +44,7 @@ describe('TimeSliderCore', () => {
         min: 0,
         max: 100,
         changeThrottle: 100,
+        pauseOnDrag: false,
       });
     });
   });
@@ -157,7 +159,11 @@ describe('TimeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Seek');
-      expect(attrs['aria-valuetext']).toBe('1 minute, 30 seconds of 5 minutes');
+      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatTimeAsPhrase(90),
+        duration: formatTimeAsPhrase(300),
+      });
       expect(attrs.role).toBe('slider');
     });
 
@@ -178,7 +184,11 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('0 seconds of 0 seconds');
+      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatTimeAsPhrase(0),
+        duration: formatTimeAsPhrase(0),
+      });
     });
 
     it('announces drag position in valuetext during drag', () => {
@@ -188,9 +198,25 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      // pointerPercent is 50 → 150s → "2 minutes, 30 seconds of 5 minutes"
       expect(attrs['aria-valuenow']).toBe(150);
-      expect(attrs['aria-valuetext']).toBe('2 minutes, 30 seconds of 5 minutes');
+      expect(attrs['aria-valuetext']).toBe('{current} of {duration}');
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatTimeAsPhrase(150),
+        duration: formatTimeAsPhrase(300),
+      });
+    });
+
+    it('formats value text params with the active locale', () => {
+      const core = new TimeSliderCore();
+      core.setFormatLocale('fr');
+      core.setInput(createInput());
+      core.setMedia(createMediaState({ currentTime: 90, duration: 300 }));
+      const state = core.getState();
+
+      expect(core.getValueTextParams(state)).toEqual({
+        current: formatTimeAsPhrase(90, { locale: 'fr' }),
+        duration: formatTimeAsPhrase(300, { locale: 'fr' }),
+      });
     });
   });
 
@@ -240,6 +266,78 @@ describe('TimeSliderCore', () => {
       const state = core.getState();
 
       expect(state.orientation).toBe('vertical');
+    });
+  });
+
+  describe('startDrag/endDrag', () => {
+    function createPlaybackState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
+      return {
+        paused: false,
+        ended: false,
+        started: true,
+        waiting: false,
+        play: vi.fn(async () => {}),
+        pause: vi.fn(),
+        togglePaused: vi.fn(() => false),
+        ...overrides,
+      };
+    }
+
+    it('does nothing when pauseOnDrag is false (default)', () => {
+      const core = new TimeSliderCore();
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      expect(playback.pause).not.toHaveBeenCalled();
+
+      core.endDrag(playback);
+      expect(playback.play).not.toHaveBeenCalled();
+    });
+
+    it('pauses on startDrag and resumes on endDrag when playing', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      expect(playback.pause).toHaveBeenCalledTimes(1);
+
+      core.endDrag(playback);
+      expect(playback.play).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not resume on endDrag when playback was already paused', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState({ paused: true });
+
+      core.startDrag(playback);
+      expect(playback.pause).not.toHaveBeenCalled();
+
+      core.endDrag(playback);
+      expect(playback.play).not.toHaveBeenCalled();
+    });
+
+    it('resumes on endDrag even if pauseOnDrag is turned off mid-drag', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      expect(playback.pause).toHaveBeenCalledTimes(1);
+
+      core.setProps({ pauseOnDrag: false });
+
+      core.endDrag(playback);
+      expect(playback.play).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not resume on a second endDrag', () => {
+      const core = new TimeSliderCore({ pauseOnDrag: true });
+      const playback = createPlaybackState();
+
+      core.startDrag(playback);
+      core.endDrag(playback);
+      core.endDrag(playback);
+
+      expect(playback.play).toHaveBeenCalledTimes(1);
     });
   });
 });

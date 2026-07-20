@@ -1,0 +1,10 @@
+---
+description: "Adds generated feature and preset reference tables to the docs site and fixes the CLI's npm repository URL."
+date: 2026-04-14
+version: "10.0.0-beta.21"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.20...@videojs/core@10.0.0-beta.21"
+---
+
+The docs site now generates feature and preset reference tables straight from the source code: each feature page renders its state and actions from generated API data, and preset pages get framework-aware tables that cross-link to the features they include ([#1258](https://github.com/videojs/v10/pull/1258)). A small CLI fix rides along: `@videojs/cli` normalizes its repository URL to npm's convention, silencing a warning on every publish ([#1340](https://github.com/videojs/v10/pull/1340)).

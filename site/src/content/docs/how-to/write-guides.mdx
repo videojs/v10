@@ -10,22 +10,52 @@ import ServerCode from '@/components/Code/ServerCode.astro';
 import { TabsRoot, TabsList, TabsPanel, Tab } from '@/components/Tabs.tsx';
 import DocsLink from '@/components/docs/DocsLink.astro';
 import Aside from '@/components/Aside.astro';
+import Demo from '@/components/docs/demos/Demo.astro';
+import BasicUsageDemoReact from '@/components/docs/demos/play-button/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/play-button/react/css/BasicUsage.css?raw';
+import BasicUsageDemoHtml from '@/components/docs/demos/play-button/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/play-button/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/play-button/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/play-button/html/css/BasicUsage.ts?raw';
 
 What is a guide? In this context, it's a document in the docs that's not an API reference. For API references, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink>.
 
 <Aside type="tip">
-Oh hey by the way. A lot of this knowledge is encoded in the `docs-guide` Claude skill. You should still read it, but, now your LLM can help you along the way, too.
+Oh hey by the way. A lot of this knowledge is encoded in the `docs` Claude skill. You should still read it, but, now your LLM can help you along the way, too.
 </Aside>
 
 ## 1. Understand our documentation structure
 
 First, read and understand [Diátaxis](https://diataxis.fr/). We organize documentation into three modes:
 
-1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content?
-2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. 
+1. **Concept pages** (`src/content/docs/concepts/`): Explain how and why things work — design decisions, trade-offs, and context. General understanding, spanning multiple APIs, can be applied to multiple outcomes. As we write guides, what are things we need people to understand in multiple places and don’t want to duplicate the content? Diátaxis calls this mode "explanation."
+2. **How-to guides** (`src/content/docs/how-to/`): Spans multiple concepts in order to achieve a specific outcome with step-by-step instructions. Address a real user goal, assume competence, and link to concept pages instead of explaining inline.
 3. **Reference pages** (`src/content/docs/reference/`): Component API documentation. These are scaffolded using the `api-reference` skill and the api-docs-builder. Again, see <DocsLink slug="reference/write-references">Write reference pages</DocsLink> for details.
 
-When in doubt, you probably want a concept page.
+<Aside type="note">
+Diátaxis has a fourth mode — learning-oriented **tutorials**. We don't have a tutorials section yet — something we've intentionally chosen to omit, for now. Learning-oriented content lives in the Getting started how-to guides instead.
+</Aside>
+
+To pick a mode, use the Diátaxis [compass](https://diataxis.fr/compass/). Ask two questions: does the content inform **action** (practical steps) or **cognition** (understanding)? And does it serve the reader's **study** (acquiring skills) or their **work** (applying them)?
+
+| | Informs action | Informs cognition |
+|---|---|---|
+| **Serves work** | How-to guide | Reference page |
+| **Serves study** | How-to guide (Getting started) | Concept page |
+
+**When in doubt, write a concept page.** Most new documentation should be concept pages. Use this table to decide between the two:
+
+| Concept page | How-to guide |
+|---|---|
+| **Preferred** — default choice | Use sparingly |
+| Reference while working | Learning from scratch |
+| One concept per page | Multi-step narrative |
+| Scannable, minimal prose | Explains "why" at each step |
+| No prerequisites | Has prerequisites |
+| Jump in anywhere | Sequential |
+
+Whichever mode you choose, **don't mix modes on one page**. Step-by-step instructions creeping into a concept page belong in a how-to guide; background explanation swelling a how-to step belongs in a concept page — link to it instead. Each mode serves a different reader need, and blending them dilutes both.
 
 ## 2. Create a guide in the correct content folder
 
@@ -54,21 +84,23 @@ Next, open `src/docs.config.ts` and add your guide to the appropriate section of
 
 ```ts
 {
-  slug: 'how-to/write-guides',
-  title: 'Writing guides'
+  slug: 'how-to/write-guides'
 }
 ```
 
-If you want the guide to only apply to specific frameworks or styles, you can specify those as well:
+The sidebar label defaults to the guide's `title` frontmatter; override it with `sidebarLabel`. If you want the guide to only apply to specific frameworks, you can specify that as well:
 
 ```ts
 {
   slug: 'how-to/write-guides',
-  title: 'Writing guides',
-  frameworks: ['react'], // Only for React
-  styles: ['css'] // Only for CSS
+  sidebarLabel: 'Writing guides',
+  frameworks: ['react'] // Only for React
 }
 ```
+
+<Aside type="note">
+There is no `styles` restriction on sidebar items. Style is a client-side preference — every guide renders for all styles. To show style-specific content, use `<StyleCase>` within the guide, as shown below.
+</Aside>
 
 ## 4. Follow our writing style
 
@@ -87,7 +119,7 @@ Keep documentation clear, human, and useful. Here are the key rules:
 ## 5. Understand MDX and our components
 
 ### `<FrameworkCase>` and `<StyleCase>`
-First, understand that the guide you write will be rendered for every framework / style combination (e.g., HTML + CSS, React + CSS) unless you restrict it in the sidebar config as shown above.
+First, understand that the guide you write will be rendered for every framework / style combination (e.g., HTML + CSS, React + CSS) unless you restrict it to specific frameworks in the sidebar config as shown above.
 
 Use the `<FrameworkCase>` and `<StyleCase>` components to conditionally show content to just one framework or style:
 
@@ -228,6 +260,24 @@ we can use 3 backticks ``` in new line and write snippet and close with 3 backti
     <p>Test</p>
   </body>
 </html>
+```
+
+#### Code frames and titles
+
+Every standalone code block is automatically wrapped in a `<CodeFrame>` — the tabbed header and copy button you see on the examples above. You don't write it yourself; the `satteriCodeFrame` MDX plugin injects it. Code blocks inside an authored `<TabsPanel>` are left alone, since the tab group is already their frame.
+
+The frame's tab shows the language by default. To show a filename instead, add `title="..."` to the fence meta:
+
+````markdown
+```ts title="App.ts"
+console.log('Hello, Video.js!');
+```
+````
+
+Which renders as:
+
+```ts title="App.ts"
+console.log('Hello, Video.js!');
 ```
 
 ### Code annotations
@@ -443,7 +493,7 @@ You would just get
 To work around this, use `<ServerCode />` instead of triple backticks.
 
 <Aside type="caution">
-Unlike regular markdown code blocks, `<ServerCode>` does **not** automatically get wrapped in a frame. You should use `TabsRoot` with a single `TabPanel` to make it look pretty
+Unlike regular markdown code blocks, which are automatically wrapped in a `<CodeFrame>` as described above, `<ServerCode>` renders a bare `<pre>` with **no** frame. You should use `TabsRoot` with a single `TabsPanel` to make it look pretty.
 </Aside>
 
 ```mdx
@@ -475,6 +525,59 @@ function Component() {
 }`} lang="tsx" />
   </TabsPanel>
 </TabsRoot>
+
+### `<Demo>`, for a live preview with tabbed source code
+
+Use `<Demo>` to show a live, interactive example alongside the code that produces it. This is the standard pattern on reference pages (e.g., <DocsLink slug="reference/play-button">PlayButton</DocsLink>).
+
+Pass the source files via the `files` prop — each entry has a `title`, `code` (a `?raw` import), and `lang` — and place the rendered demo in the default slot. Any `css` file in `files` is automatically scoped to the demo, so the demo's styles won't leak into the page.
+
+Demos are framework-specific, so wrap each variant in `<FrameworkCase>` (and `<StyleCase>`, if applicable):
+
+```mdx
+import Demo from '@/components/docs/demos/Demo.astro';
+import BasicUsageDemoReact from '@/components/docs/demos/play-button/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/play-button/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/play-button/react/css/BasicUsage.css?raw';
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+```
+
+Which renders as:
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+See the "Interactive Demos" section of `site/CLAUDE.md` for how to author the demo files themselves (directory structure, CSS class naming, and the HTML `.astro` wrapper).
 
 ## Literally any other component
 

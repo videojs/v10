@@ -1,4 +1,6 @@
-import type { MediaFeatureAvailability, MediaStreamType } from './types';
+import type { MediaFeatureAvailability, MediaStreamType, TextTrackKind } from './types';
+
+export type { TextTrackKind };
 
 export interface MediaPlaybackState {
   /**
@@ -228,6 +230,40 @@ export interface MediaPlaybackRateState {
   setPlaybackRate(rate: number): void;
 }
 
+export interface MediaVideoRendition {
+  id?: string;
+  width?: number;
+  height?: number;
+  bitrate?: number;
+  frameRate?: number;
+  codec?: string;
+  selected: boolean;
+}
+
+export interface MediaQualityState {
+  /** Video renditions available for manual quality selection. */
+  videoRenditionList: MediaVideoRendition[];
+  /** Video rendition currently playing, including when automatic ABR is selected. */
+  activeVideoRendition: MediaVideoRendition | null;
+  /** Select a video rendition by menu value, or automatic ABR with `"auto"`. */
+  selectVideoRendition(value: string): void;
+}
+
+export interface MediaAudioTrack {
+  id?: string;
+  kind?: string;
+  label: string;
+  language: string;
+  enabled: boolean;
+}
+
+export interface MediaAudioTrackState {
+  /** Audio tracks available for manual track selection. */
+  audioTrackList: MediaAudioTrack[];
+  /** Select an audio track by menu value. */
+  selectAudioTrack(value: string): void;
+}
+
 /**
  * A text cue.
  *
@@ -238,13 +274,6 @@ export interface MediaTextCue {
   endTime: number;
   text: string;
 }
-
-/**
- * The kind of text track.
- *
- * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack/kind
- */
-export type TextTrackKind = 'subtitles' | 'captions' | 'descriptions' | 'chapters' | 'metadata';
 
 /**
  * The mode of a text track.
@@ -259,6 +288,7 @@ export type TextTrackMode = 'showing' | 'disabled' | 'hidden';
  * @see https://developer.mozilla.org/en-US/docs/Web/API/TextTrack
  */
 export interface MediaTextTrack<Kind extends string = TextTrackKind> {
+  id?: string;
   kind: Kind;
   label: string;
   language: string;
@@ -278,6 +308,8 @@ export interface MediaTextTrackState {
   subtitlesShowing: boolean;
   /** Toggle captions/subtitles visibility. Returns the new enabled value. */
   toggleSubtitles(forceShow?: boolean): boolean;
+  /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
+  selectSubtitlesTrack(value: string): void;
 }
 
 export interface MediaError {

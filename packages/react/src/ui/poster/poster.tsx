@@ -2,8 +2,8 @@
 
 import { PosterCore, PosterDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectPlayback } from '@videojs/core/dom';
-import type { ForwardedRef } from 'react';
-import { forwardRef, useState } from 'react';
+import type { ForwardedRef, SyntheticEvent } from 'react';
+import { forwardRef, useCallback, useEffect, useRef, useState } from 'react';
 
 import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
@@ -35,6 +35,26 @@ export const Poster = forwardRef(function Poster(
 
   const [core] = useState(() => new PosterCore());
 
+  // Track when the current src has finished loading so the CSS blur-up
+  // sequence can show the placeholder first, then crossfade to the full image.
+  const src = (elementProps as { src?: string }).src;
+  const [loadedSrc, setLoadedSrc] = useState<string | undefined>(undefined);
+  const loaded = loadedSrc === src;
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  // A cached image may already be complete when the element mounts, in which
+  // case onLoad never fires. Check synchronously after mount and on src change.
+  useEffect(() => {
+    const img = imgRef.current;
+    if (img?.complete && img.naturalWidth > 0 && img.getAttribute('src') === src) {
+      setLoadedSrc(src);
+    }
+  }, [src]);
+
+  const handleLoad = useCallback((event: SyntheticEvent<HTMLImageElement>) => {
+    setLoadedSrc(event.currentTarget.getAttribute('src') ?? undefined);
+  }, []);
+
   if (!playback) {
     if (__DEV__) logMissingFeature('Poster', 'playback');
     return null;
@@ -48,8 +68,8 @@ export const Poster = forwardRef(function Poster(
     {
       state: core.getState(),
       stateAttrMap: PosterDataAttrs,
-      ref: [forwardedRef],
-      props: [elementProps],
+      ref: [forwardedRef, imgRef],
+      props: [elementProps, { 'data-loaded': loaded ? '' : undefined, onLoad: handleLoad }],
     }
   );
 });

@@ -1,16 +1,20 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
-import type { AudioTrack, MaybeResolvedPresentation, Presentation, VideoTrack } from '../../../media/types';
+import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
 import {
   calculatePresentationDuration,
-  canCalculateDuration,
-  getDurationFromResolvedTracks,
+  type PresentationDurationResolver,
   type PresentationDurationState,
-  shouldCalculateDuration,
 } from '../calculate-presentation-duration';
 
 function makeState(initial: PresentationDurationState = {}): StateSignals<PresentationDurationState> {
+  // Tests stand up signals for all three state slots — though
+  // calculatePresentationDuration only declares `presentation` in its
+  // stateKeys (the other two are read defensively as optional fields
+  // contributed by other behaviors at composition time). The tests
+  // exercise the defensive read path by providing the optional signals
+  // directly.
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
@@ -18,45 +22,19 @@ function makeState(initial: PresentationDurationState = {}): StateSignals<Presen
   };
 }
 
-// Helper to create a minimal presentation with proper structure for getSelectedTrack
-function createPresentation(config: { video?: VideoTrack[]; audio?: AudioTrack[]; duration?: number }): Presentation {
-  const selectionSets = [];
-
-  if (config.video && config.video.length > 0) {
-    selectionSets.push({
-      id: 'video-set',
-      type: 'video' as const,
-      switchingSets: [
-        {
-          id: 'video-switching',
-          type: 'video' as const,
-          tracks: config.video,
-        },
-      ],
-    });
-  }
-
-  if (config.audio && config.audio.length > 0) {
-    selectionSets.push({
-      id: 'audio-set',
-      type: 'audio' as const,
-      switchingSets: [
-        {
-          id: 'audio-switching',
-          type: 'audio' as const,
-          tracks: config.audio,
-        },
-      ],
-    });
-  }
-
-  return {
-    id: 'pres-1',
-    url: 'http://example.com/playlist.m3u8',
-    selectionSets,
-    startTime: 0,
-    ...(config.duration !== undefined && { duration: config.duration }),
-  } as Presentation;
+function setupDuration(
+  state: StateSignals<PresentationDurationState>,
+  resolveDuration: PresentationDurationResolver
+): () => void {
+  // calculatePresentationDuration uses a manual Behavior<> literal, so the
+  // public setup signature requires `context` even though the behavior
+  // doesn't consume it. Cleanup widens to BehaviorCleanup; cast for
+  // callable ergonomics.
+  return calculatePresentationDuration.setup({
+    state,
+    context: {},
+    config: { resolveDuration },
+  }) as () => void;
 }
 
 const mockPresentation = (overrides: Partial<Presentation> = {}): Presentation =>
@@ -68,213 +46,14 @@ const mockPresentation = (overrides: Partial<Presentation> = {}): Presentation =
     ...overrides,
   }) as Presentation;
 
-describe('canCalculateDuration', () => {
-  it('returns true when presentation and video track exist', () => {
-    const state: PresentationDurationState = {
-      presentation: mockPresentation(),
-      selectedVideoTrackId: 'video-1',
-    };
-    expect(canCalculateDuration(state)).toBe(true);
-  });
-
-  it('returns true when presentation and audio track exist', () => {
-    const state: PresentationDurationState = {
-      presentation: mockPresentation(),
-      selectedAudioTrackId: 'audio-1',
-    };
-    expect(canCalculateDuration(state)).toBe(true);
-  });
-
-  it('returns false when presentation is missing', () => {
-    const state: PresentationDurationState = {
-      selectedVideoTrackId: 'video-1',
-    };
-    expect(canCalculateDuration(state)).toBe(false);
-  });
-
-  it('returns false when no tracks are selected', () => {
-    const state: PresentationDurationState = {
-      presentation: mockPresentation(),
-    };
-    expect(canCalculateDuration(state)).toBe(false);
-  });
-});
-
-describe('shouldCalculateDuration', () => {
-  it('returns false when duration already set', () => {
-    const state: PresentationDurationState = {
-      presentation: mockPresentation({ duration: 60 }),
-      selectedVideoTrackId: 'video-1',
-    };
-    expect(shouldCalculateDuration(state)).toBe(false);
-  });
-
-  it('returns false when track not resolved', () => {
-    const state: PresentationDurationState = {
-      presentation: {
-        url: 'http://example.com/playlist.m3u8',
-        selectionSets: [
-          {
-            type: 'video',
-            switchingSets: [{ tracks: [{ id: 'video-1', type: 'video' }] }],
-          },
-        ],
-      } as any,
-      selectedVideoTrackId: 'video-1',
-    };
-    expect(shouldCalculateDuration(state)).toBe(false);
-  });
-
-  it('returns true when video track is resolved', () => {
-    const state: PresentationDurationState = {
-      presentation: createPresentation({
-        video: [
-          {
-            id: 'video-1',
-            type: 'video',
-            url: 'http://example.com/video.m3u8',
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            bandwidth: 1000000,
-            duration: 60,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as VideoTrack,
-        ],
-      }),
-      selectedVideoTrackId: 'video-1',
-    };
-    expect(shouldCalculateDuration(state)).toBe(true);
-  });
-});
-
-describe('getDurationFromResolvedTracks', () => {
-  it('returns video track duration when available', () => {
-    const state: PresentationDurationState = {
-      presentation: createPresentation({
-        video: [
-          {
-            id: 'video-1',
-            type: 'video',
-            url: 'http://example.com/video.m3u8',
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            bandwidth: 1000000,
-            duration: 120.5,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as VideoTrack,
-        ],
-      }),
-      selectedVideoTrackId: 'video-1',
-    };
-    expect(getDurationFromResolvedTracks(state)).toBe(120.5);
-  });
-
-  it('returns audio track duration when video not available', () => {
-    const state: PresentationDurationState = {
-      presentation: createPresentation({
-        audio: [
-          {
-            id: 'audio-1',
-            type: 'audio',
-            url: 'http://example.com/audio.m3u8',
-            mimeType: 'audio/mp4',
-            codecs: ['mp4a.40.2'],
-            bandwidth: 128000,
-            groupId: 'audio-group',
-            name: 'English',
-            sampleRate: 48000,
-            channels: 2,
-            duration: 90.25,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as AudioTrack,
-        ],
-      }),
-      selectedAudioTrackId: 'audio-1',
-    };
-    expect(getDurationFromResolvedTracks(state)).toBe(90.25);
-  });
-
-  it('prefers video track over audio track', () => {
-    const state: PresentationDurationState = {
-      presentation: createPresentation({
-        video: [
-          {
-            id: 'video-1',
-            type: 'video',
-            url: 'http://example.com/video.m3u8',
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            bandwidth: 1000000,
-            duration: 120.5,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as VideoTrack,
-        ],
-        audio: [
-          {
-            id: 'audio-1',
-            type: 'audio',
-            url: 'http://example.com/audio.m3u8',
-            mimeType: 'audio/mp4',
-            codecs: ['mp4a.40.2'],
-            bandwidth: 128000,
-            groupId: 'audio-group',
-            name: 'English',
-            sampleRate: 48000,
-            channels: 2,
-            duration: 90.25,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as AudioTrack,
-        ],
-      }),
-      selectedVideoTrackId: 'video-1',
-      selectedAudioTrackId: 'audio-1',
-    };
-    expect(getDurationFromResolvedTracks(state)).toBe(120.5);
-  });
-
-  it('returns undefined when no tracks resolved', () => {
-    const state: PresentationDurationState = {
-      presentation: mockPresentation(),
-    };
-    expect(getDurationFromResolvedTracks(state)).toBeUndefined();
-  });
-});
-
 describe('calculatePresentationDuration', () => {
-  it('sets presentation.duration from resolved video track', async () => {
+  it('writes the duration the resolver returns', async () => {
     const state = makeState();
+    const resolveDuration: PresentationDurationResolver = () => 120.5;
 
-    const cleanup = calculatePresentationDuration.setup({ state });
+    const cleanup = setupDuration(state, resolveDuration);
 
-    state.presentation.set(
-      createPresentation({
-        video: [
-          {
-            id: 'video-1',
-            type: 'video',
-            url: 'http://example.com/video.m3u8',
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            bandwidth: 1000000,
-            duration: 120.5,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as VideoTrack,
-        ],
-      })
-    );
-    state.selectedVideoTrackId.set('video-1');
+    state.presentation.set(mockPresentation());
 
     await vi.waitFor(() => {
       expect(state.presentation.get()?.duration).toBe(120.5);
@@ -283,101 +62,101 @@ describe('calculatePresentationDuration', () => {
     cleanup();
   });
 
-  it('sets presentation.duration from resolved audio track', async () => {
+  it('writes Infinity for a live resolver (MSE spec)', async () => {
     const state = makeState();
+    const resolveDuration: PresentationDurationResolver = () => Number.POSITIVE_INFINITY;
 
-    const cleanup = calculatePresentationDuration.setup({ state });
+    const cleanup = setupDuration(state, resolveDuration);
 
-    state.presentation.set(
-      createPresentation({
-        audio: [
-          {
-            id: 'audio-1',
-            type: 'audio',
-            url: 'http://example.com/audio.m3u8',
-            mimeType: 'audio/mp4',
-            codecs: ['mp4a.40.2'],
-            bandwidth: 128000,
-            groupId: 'audio-group',
-            name: 'English',
-            sampleRate: 48000,
-            channels: 2,
-            duration: 90.75,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as AudioTrack,
-        ],
-      })
-    );
+    state.presentation.set(mockPresentation());
+
+    await vi.waitFor(() => {
+      expect(state.presentation.get()?.duration).toBe(Number.POSITIVE_INFINITY);
+    });
+
+    cleanup();
+  });
+
+  it('passes the snapshotted state to the resolver', async () => {
+    const state = makeState();
+    const resolveDuration = vi.fn<PresentationDurationResolver>(() => 60);
+
+    const cleanup = setupDuration(state, resolveDuration);
+
+    state.presentation.set(mockPresentation());
+    state.selectedVideoTrackId.set('video-1');
     state.selectedAudioTrackId.set('audio-1');
 
     await vi.waitFor(() => {
-      expect(state.presentation.get()?.duration).toBe(90.75);
+      expect(state.presentation.get()?.duration).toBe(60);
     });
+
+    const lastCall = resolveDuration.mock.calls.at(-1)?.[0];
+    expect(lastCall).toMatchObject({
+      selectedVideoTrackId: 'video-1',
+      selectedAudioTrackId: 'audio-1',
+    });
+    expect(lastCall?.presentation?.id).toBe('pres-1');
 
     cleanup();
   });
 
-  it('does not recalculate when duration already set', async () => {
-    const state = makeState({
-      presentation: createPresentation({
-        duration: 60,
-        video: [
-          {
-            id: 'video-1',
-            type: 'video',
-            url: 'http://example.com/video.m3u8',
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            bandwidth: 1000000,
-            duration: 120.5,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as VideoTrack,
-        ],
-      }),
-      selectedVideoTrackId: 'video-1',
-    });
+  it('does not write when the resolver returns undefined', async () => {
+    const state = makeState();
+    const resolveDuration: PresentationDurationResolver = () => undefined;
 
-    const cleanup = calculatePresentationDuration.setup({ state });
+    const cleanup = setupDuration(state, resolveDuration);
+
+    state.presentation.set(mockPresentation());
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
-    expect(state.presentation.get()?.duration).toBe(60);
+    expect(state.presentation.get()?.duration).toBeUndefined();
 
     cleanup();
   });
 
-  it('does not set invalid durations', async () => {
+  it('does not write when the resolver returns NaN', async () => {
     const state = makeState();
+    const resolveDuration: PresentationDurationResolver = () => Number.NaN;
 
-    const cleanup = calculatePresentationDuration.setup({ state });
+    const cleanup = setupDuration(state, resolveDuration);
 
-    state.presentation.set(
-      createPresentation({
-        video: [
-          {
-            id: 'video-1',
-            type: 'video',
-            url: 'http://example.com/video.m3u8',
-            mimeType: 'video/mp4',
-            codecs: ['avc1.42E01E'],
-            bandwidth: 1000000,
-            duration: Infinity,
-            startTime: 0,
-            segments: [{ id: 'seg-1', url: 'http://example.com/seg1.m4s', duration: 10, startTime: 0 }],
-            initialization: { id: 'init', url: 'http://example.com/init.mp4' },
-          } as VideoTrack,
-        ],
-      })
-    );
+    state.presentation.set(mockPresentation());
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.presentation.get()?.duration).toBeUndefined();
+
+    cleanup();
+  });
+
+  it('does not write when the resolver returns 0 or negative', async () => {
+    const state = makeState();
+    const resolveDuration = vi.fn<PresentationDurationResolver>().mockReturnValueOnce(0).mockReturnValueOnce(-5);
+
+    const cleanup = setupDuration(state, resolveDuration);
+
+    state.presentation.set(mockPresentation());
     state.selectedVideoTrackId.set('video-1');
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     expect(state.presentation.get()?.duration).toBeUndefined();
+
+    cleanup();
+  });
+
+  it('does not call the resolver when duration is already set', async () => {
+    const state = makeState({ presentation: mockPresentation({ duration: 60 }) });
+    const resolveDuration = vi.fn<PresentationDurationResolver>(() => 120);
+
+    const cleanup = setupDuration(state, resolveDuration);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+
+    expect(state.presentation.get()?.duration).toBe(60);
+    expect(resolveDuration).not.toHaveBeenCalled();
 
     cleanup();
   });

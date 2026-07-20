@@ -4,7 +4,7 @@
  *
  * Aliases created:
  *   .opencode  → .claude       (directory)
- *   agents     → .claude       (directory)
+ *   .agents    → .claude       (directory)
  *   AGENTS.md  → CLAUDE.md     (file)
  *
  * Cross-platform notes:
@@ -21,7 +21,7 @@ const root = resolve(import.meta.dirname, '../..');
 
 const aliases = [
   { target: '.claude', path: '.opencode', type: 'junction' },
-  { target: '.claude', path: 'agents', type: 'junction' },
+  { target: '.claude', path: '.agents', type: 'junction' },
   { target: 'CLAUDE.md', path: 'AGENTS.md', type: 'file' },
 ];
 

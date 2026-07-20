@@ -1,0 +1,186 @@
+---
+import A from '@/components/typography/A.astro';
+import H3 from '@/components/typography/H3Markdown.astro';
+import MarkdownCode from '@/components/typography/MarkdownCode.astro';
+import P from '@/components/typography/P.astro';
+import Table from '@/components/typography/Table.astro';
+import Tbody from '@/components/typography/Tbody.astro';
+import Td from '@/components/typography/Td.astro';
+import Th from '@/components/typography/Th.astro';
+import Thead from '@/components/typography/Thead.astro';
+import Tr from '@/components/typography/Tr.astro';
+import type { HtmlMediaReference } from '@/types/media-reference';
+import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
+import CodeChip from './CodeChip.astro';
+import MediaHostPropsTable from './MediaHostPropsTable.astro';
+
+interface Section {
+  key: string;
+  title: string;
+  id: string;
+}
+
+interface Props {
+  media: string;
+  mediaType: 'video' | 'audio';
+  data: HtmlMediaReference;
+  sections: Section[];
+}
+
+const { media, mediaType, data, sections } = Astro.props;
+const attributesSection = sections.find((section) => section.key === 'attributes');
+const propertiesSection = sections.find((section) => section.key === 'properties');
+const methodsSection = sections.find((section) => section.key === 'methods');
+const eventsSection = sections.find((section) => section.key === 'events');
+const cssSection = sections.find((section) => section.key === 'cssCustomProperties');
+
+const targetTag = `<${data.target}>`;
+const mdnElementUrl = `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/${mediaType}`;
+const nativeInterface = data.target === 'audio' ? 'HTMLAudioElement' : 'HTMLVideoElement';
+const mdnApiUrl = `https://developer.mozilla.org/en-US/docs/Web/API/${nativeInterface}`;
+const standardAttributes = [...data.attributes.standard].sort();
+const nativeProperties = [...data.properties.native].sort();
+const methods = [...data.methods].sort();
+const standardEvents = [...data.events.standard].sort();
+---
+
+{
+  attributesSection && (
+    <>
+      <H3 id={attributesSection.id}>{attributesSection.title}</H3>
+      {standardAttributes.length > 0 && (
+        <P>
+          Forwards these standard media attributes to the internal{" "}
+          <MarkdownCode>{targetTag}</MarkdownCode>. See the{" "}
+          <A href={mdnElementUrl}>MDN media element reference</A>:{" "}
+          <span class="code-list">
+            {standardAttributes.map((attribute) => (
+              <CodeChip value={attribute} />
+            ))}
+          </span>
+        </P>
+      )}
+      {Object.keys(data.attributes.custom).length > 0 && (
+        <>
+          <P>
+            {data.target === "iframe"
+              ? "These attributes configure the embedded media adapter:"
+              : "These Video.js-specific attributes configure media behavior:"}
+          </P>
+          <MediaHostPropsTable
+            hostProperties={data.attributes.custom}
+            componentName={`${media}-attribute`}
+            nameLabel="Attribute"
+          />
+        </>
+      )}
+    </>
+  )
+}
+
+{
+  propertiesSection && (
+    <>
+      <H3 id={propertiesSection.id}>{propertiesSection.title}</H3>
+      {Object.keys(data.properties.definitions).length > 0 && (
+        <MediaHostPropsTable
+          hostProperties={data.properties.definitions}
+          componentName={media}
+        />
+      )}
+      {nativeProperties.length > 0 && (
+        <P>
+          Also exposes these properties from the native media API. See{" "}
+          <A href={mdnApiUrl}>{nativeInterface}</A> for details:{" "}
+          <span class="code-list">
+            {nativeProperties.map((property) => (
+              <CodeChip value={property} />
+            ))}
+          </span>
+        </P>
+      )}
+    </>
+  )
+}
+
+{
+  methodsSection && (
+    <>
+      <H3 id={methodsSection.id}>{methodsSection.title}</H3>
+      <P>
+        <span>Supports these media methods</span>
+        {data.target === "iframe" ? (
+          ": "
+        ) : (
+          <>
+            . See <A href={mdnApiUrl}>{nativeInterface}</A> for details:{" "}
+          </>
+        )}
+        <span class="code-list">
+          {methods.map((method) => (
+            <CodeChip value={method} />
+          ))}
+        </span>
+      </P>
+    </>
+  )
+}
+
+{
+  eventsSection && (
+    <>
+      <H3 id={eventsSection.id}>{eventsSection.title}</H3>
+      {standardEvents.length > 0 && (
+        <P>
+          {data.target === "iframe"
+            ? "Implements these standard media events through the embedded player: "
+            : "Re-dispatches these standard media events from the internal media element: "}
+          <span class="code-list">
+            {standardEvents.map((event) => (
+              <CodeChip value={event} />
+            ))}
+          </span>
+        </P>
+      )}
+      {data.events.custom.length > 0 ? (
+        <>
+          <P>Also emits these Video.js-specific events:</P>
+          <Table maxWidth={false} outerClass="my-6">
+            <Thead>
+              <Tr>
+                <Th>Event</Th>
+                <Th>Description</Th>
+              </Tr>
+            </Thead>
+            <Tbody>
+              {data.events.custom.map((event) => (
+                <Tr>
+                  <Td class="align-top">
+                    <MarkdownCode>{event.name}</MarkdownCode>
+                  </Td>
+                  <Td class="align-top">{event.description ?? ""}</Td>
+                </Tr>
+              ))}
+            </Tbody>
+          </Table>
+        </>
+      ) : (
+        <P>
+          This element emits no events beyond the standard media events above.
+        </P>
+      )}
+    </>
+  )
+}
+
+{
+  cssSection && (
+    <>
+      <H3 id={cssSection.id}>{cssSection.title}</H3>
+      <ApiCSSVarsTable
+        cssCustomProperties={data.cssCustomProperties}
+        componentName={media}
+      />
+    </>
+  )
+}

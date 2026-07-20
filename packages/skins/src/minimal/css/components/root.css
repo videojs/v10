@@ -6,6 +6,7 @@
   --media-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
   --media-current-shadow-color-subtle: oklch(from var(--media-current-shadow-color) l c h / calc(alpha * 0.4));
   --media-icon-size: 18px;
+  --media-color-scrollbar-thumb: oklch(from currentColor l c h / 0.3);
   position: relative;
   display: block;
   width: 100%;
@@ -17,12 +18,15 @@
     ui-sans-serif,
     system-ui,
     sans-serif;
+  font-size: 0.8125rem; /* 13px at 100% font size */
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
   line-height: 1.5;
   letter-spacing: normal;
   outline: 2px solid transparent;
   outline-offset: -4px;
+  scrollbar-color: var(--media-color-scrollbar-thumb) transparent;
+  scrollbar-width: thin;
   border-radius: var(--media-border-radius, 0.75rem);
   isolation: isolate;
   transition-timing-function: ease-out;
@@ -34,11 +38,13 @@
     outline-offset: 2px;
   }
 
-  & > * {
-    font-size: 0.75rem; /* 12px at 100% font size */
+  &::-webkit-scrollbar-thumb {
+    background: var(--media-color-scrollbar-thumb);
+    border-radius: 9999px;
+  }
 
-    @container media-root (width > 48rem) {
-      font-size: 0.875rem; /* 14px at 100% font size */
-    }
+  @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
+    --media-color-scrollbar-thumb: oklch(from currentColor l c h / 0.8);
+    scrollbar-width: auto;
   }
 }

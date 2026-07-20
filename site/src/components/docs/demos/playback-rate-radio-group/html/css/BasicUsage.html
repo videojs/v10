@@ -1,0 +1,24 @@
+<video-player class="video-player">
+    <media-container>
+        <video
+            src="{{VJS10_DEMO_VIDEO_MP4}}"
+            autoplay
+            muted
+            playsinline
+            loop
+        ></video>
+        <div class="menu-bar">
+            <button type="button" commandfor="speed-menu" class="settings-trigger">Speed</button>
+            <media-menu id="speed-menu" side="top" align="end" class="menu">
+                <media-playback-rate-radio-group class="menu-group" aria-label="Speed">
+                    <template>
+                        <media-menu-radio-item class="menu-item">
+                            <span data-part="label"></span>
+                            <media-menu-item-indicator force-mount class="menu-indicator">✓</media-menu-item-indicator>
+                        </media-menu-radio-item>
+                    </template>
+                </media-playback-rate-radio-group>
+            </media-menu>
+        </div>
+    </media-container>
+</video-player>

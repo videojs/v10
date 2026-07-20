@@ -3,7 +3,8 @@
 /* -------------------------------------------------------------------------- */
 
 video-player,
-live-video-player {
+live-video-player,
+media-i18n {
   display: contents;
 }
 

@@ -1,0 +1,35 @@
+---
+title: usePlaybackRateOptions
+description: Hook to build playback rate menu options from the player playback rate state
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`usePlaybackRateOptions` returns the current playback rate, the available options, and `setRate` / `setValue` callbacks for wiring rate selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-playback-rate">playback rate feature</DocsLink> is not configured.
+
+```tsx title="SpeedMenu.tsx"
+import { Menu, usePlaybackRateOptions } from "@videojs/react";
+
+function SpeedMenu() {
+  const playbackRate = usePlaybackRateOptions();
+  if (playbackRate?.state.availability !== "available") return null;
+
+  return (
+    <Menu.RadioGroup value={playbackRate.value} onValueChange={playbackRate.setValue} aria-label="Speed">
+      {playbackRate.options.map((option) => (
+        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+          <Menu.ItemIndicator checked={option.value === playbackRate.value} />
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  );
+}
+```
+
+Options come from the player's configured playback rates. Labels default to the rate followed by a multiplication sign (e.g. `1.5×`); pass `formatRate` to customize them. `setValue` accepts an option's string value, while `setRate` accepts a number directly.
+
+See <DocsLink slug="reference/playback-rate-radio-group">PlaybackRateRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
+
+<UtilReference util="usePlaybackRateOptions" />
