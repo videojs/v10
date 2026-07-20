@@ -1,91 +1,27 @@
 ---
 title: Security
-description: How to configure Content Security Policy, CORS, and Subresource Integrity for your video player
+description: How to configure Content Security Policy for your video player
 ---
 
-import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+If your application uses a Content Security Policy (CSP), you may need to allow additional sources for player features to work correctly.
 
-You make a few security choices when you ship a video player. This page covers three:
+## Common requirements
 
-- **Content Security Policy** tells the browser which URLs the player is allowed to fetch.
-- **The `crossorigin` attribute** controls how the browser fetches videos, captions, and posters from other domains.
-- **Subresource Integrity** lets the browser verify that a script you loaded from a CDN hasn't been tampered with.
+- `media-src` must allow your media URLs.
+- `img-src` must allow any poster or thumbnail image URLs.
+- `connect-src` must allow HLS manifests, playlists, captions, and segment requests when using HLS playback.
+- `media-src blob:` is required when using the HLS player variants, which use MSE-backed playback.
+- `worker-src blob:` is required when using the `hls.js` player variants.
+- `style-src 'unsafe-inline'` is currently required for some player UI and HTML player styling behavior.
 
-## Content Security Policy
-
-A Content Security Policy (CSP) is a list of rules your site sends to the browser saying which URLs are allowed to load scripts, media, images, and so on. This limits the damage a malicious script could do if one got onto your page.
-
-You have one if your server returns a [`Content-Security-Policy`](https://developer.mozilla.org/docs/Web/HTTP/CSP) HTTP response header, or your HTML has a `<meta http-equiv="Content-Security-Policy">` tag. If you haven't set one up, skip this section. CSP is a good idea for production sites; MDN's [CSP guide](https://developer.mozilla.org/docs/Web/HTTP/Headers/Content-Security-Policy) walks through getting started.
-
-When you do have a CSP, allow the sources the player loads:
-
-| Directive | What to allow |
-| --- | --- |
-| `media-src` | Origins for media files and caption files loaded via `<track>` elements. Add `blob:` for HLS playback |
-| `img-src` | Origins for posters and thumbnail tracks |
-| `connect-src` | Origins for HLS manifests, playlists, segments, and captions when using HLS playback |
-| `worker-src` | `blob:` if you load `hls.js` variants |
-| `style-src` | `'unsafe-inline'`, currently required for player UI styles |
-
-A reasonable starting point:
+## Example
 
 ```http
 Content-Security-Policy:
   script-src 'self';
   style-src 'self' 'unsafe-inline';
-  img-src 'self' https: data:;
+  img-src 'self' https: data: blob:;
   media-src 'self' https: blob:;
   connect-src 'self' https:;
   worker-src 'self' blob:;
 ```
-
-Replace the origins to match where your media, posters, and captions are hosted.
-
-## `crossorigin` attribute
-
-When the player loads a video, caption file, or poster from another domain, the browser needs to know whether to send cookies and whether your page is allowed to read the response. The [`crossorigin`](https://developer.mozilla.org/docs/Web/HTML/Reference/Attributes/crossorigin) attribute tells the browser how to handle these requests.
-
-Skip this section if your media, captions, and posters are served from the same domain as your site.
-
-When they live on a different domain, set `crossorigin` on the media element:
-
-<FrameworkCase frameworks={["html"]}>
-
-```html
-<video src="https://media.example.com/video.mp4" crossorigin="anonymous" playsinline></video>
-```
-
-</FrameworkCase>
-
-<FrameworkCase frameworks={["react"]}>
-
-```tsx
-<Video src="https://media.example.com/video.mp4" crossOrigin="anonymous" playsInline />
-```
-
-</FrameworkCase>
-
-`anonymous` covers most cases: the browser sends the request without cookies, which is what HLS manifests, WebVTT captions, and CDN scripts all expect. Use `use-credentials` only when the cross-origin request must include cookies or auth headers, for example with cookie-signed segment URLs.
-
-<FrameworkCase frameworks={["html"]}>
-
-## Subresource Integrity
-
-Subresource Integrity (SRI) lets you attach a hash to a `<script>` tag. The browser refuses to run the script if the downloaded file's hash doesn't match, which protects you when a CDN you don't control serves a tampered file.
-
-Skip this section if you install the player with a package manager like npm or pnpm. They verify packages already.
-
-When you install from a CDN, add an `integrity` hash to your script tag:
-
-```html
-<script
-  type="module"
-  src="https://cdn.jsdelivr.net/npm/@videojs/html@<version>/cdn/video.js"
-  integrity="sha384-..."
-  crossorigin="anonymous"
-></script>
-```
-
-The hash pins to a specific file, so it changes on every release. Pin to an exact version in the URL and copy the hash from your CDN's [integrity tool](https://www.srihash.org), or regenerate the hash as part of your release process. SRI also requires `crossorigin="anonymous"` on the script tag.
-
-</FrameworkCase>
