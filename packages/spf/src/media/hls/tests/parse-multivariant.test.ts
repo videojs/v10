@@ -31,7 +31,9 @@ video-1080p.m3u8`;
 
     const result = parseMultivariantPlaylist(text, { url: baseUrl });
 
-    // Should have video selection set
+    // These STREAM-INFs list an audio codec (mp4a) with no AUDIO group, so the
+    // audio is muxed into each rendition — both codecs are retained on the track
+    // (the SourceBuffer mimetype must cover the muxed media).
     const videoSet = result.selectionSets.find((s) => s.type === 'video');
     expect(videoSet).toBeDefined();
     expect(videoSet?.switchingSets).toHaveLength(1);
@@ -45,7 +47,7 @@ video-1080p.m3u8`;
       bandwidth: 800000,
       width: 640,
       height: 360,
-      codecs: ['avc1.4d401e'],
+      codecs: ['avc1.4d401e', 'mp4a.40.2'],
     });
     expect(typeof videoTracks?.[0]?.id).toBe('string');
 
@@ -55,7 +57,7 @@ video-1080p.m3u8`;
       bandwidth: 1400000,
       width: 1280,
       height: 720,
-      codecs: ['avc1.4d401f'],
+      codecs: ['avc1.4d401f', 'mp4a.40.2'],
       mimeType: 'video/mp4',
     });
     expect(typeof videoTracks?.[1]?.id).toBe('string');
@@ -68,13 +70,30 @@ video-1080p.m3u8`;
       bandwidth: 2800000,
       width: 1920,
       height: 1080,
-      codecs: ['avc1.640028'],
+      codecs: ['avc1.640028', 'mp4a.40.2'],
       mimeType: 'video/mp4',
     });
     expect(typeof track1080p.id).toBe('string');
     // Optional fields not present
     expect(track1080p.frameRate).toBeUndefined();
     expect(track1080p.audioGroupIds).toBeUndefined();
+  });
+
+  it('keeps an audioless video rendition video-only (no audio codec in CODECS, no AUDIO group)', () => {
+    // The inverse of the muxed case: no audio codec listed and no AUDIO group
+    // means the rendition is genuinely video-only — the muxed-codec retention
+    // must key on an audio codec actually being present, not fabricate one from
+    // the mere absence of an AUDIO group.
+    const text = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-STREAM-INF:BANDWIDTH=900000,RESOLUTION=1280x720,CODECS="avc1.640020"
+video-720p.m3u8`;
+
+    const result = parseMultivariantPlaylist(text, { url: baseUrl });
+    const videoTracks = result.selectionSets.find((s) => s.type === 'video')?.switchingSets[0]?.tracks;
+
+    expect(videoTracks).toHaveLength(1);
+    expect(videoTracks?.[0]?.codecs).toEqual(['avc1.640020']);
   });
 
   it('de-duplicates the EXT-X-STREAM-INF cross-product: one track per video URI, accumulating audio groups', () => {
