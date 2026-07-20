@@ -1,4 +1,4 @@
-import { MenuCore, MenuDataAttrs, type MenuInput } from '@videojs/core';
+import { MenuCore, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR, PopoverCSSVars } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -10,13 +10,18 @@ import {
   getMenuViewportAttrs,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getPositioningBoundaryRect,
   getRootPositionOptions,
   isMenuNavigationKey,
   type MenuApi,
   type MenuChangeDetails,
+  type MenuOpenChangeReason,
   type MenuViewTransitionState,
   type NavigationState,
+  observeMenuViewContent,
+  type PositioningBoundary,
   resolveOffsets,
+  resolvePositioningBoundary,
   syncMenuViewRoot,
   syncMenuViewTransition,
   type UIFocusEvent,
@@ -26,13 +31,13 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
-
+import { containerContext } from '../../player/context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
 
 export class MenuElement extends MediaElement {
-  static readonly tagName = 'media-menu';
+  static readonly tagName: string = 'media-menu';
 
   static override properties = {
     open: { type: Boolean },
@@ -41,8 +46,9 @@ export class MenuElement extends MediaElement {
     align: { type: String },
     closeOnEscape: { type: Boolean, attribute: 'close-on-escape' },
     closeOnOutsideClick: { type: Boolean, attribute: 'close-on-outside-click' },
+    boundary: { type: String },
   } satisfies PropertyDeclarationMap<
-    'open' | 'defaultOpen' | 'side' | 'align' | 'closeOnEscape' | 'closeOnOutsideClick'
+    'open' | 'defaultOpen' | 'side' | 'align' | 'closeOnEscape' | 'closeOnOutsideClick' | 'boundary'
   >;
 
   open = MenuCore.defaultProps.open;
@@ -51,10 +57,12 @@ export class MenuElement extends MediaElement {
   align = MenuCore.defaultProps.align;
   closeOnEscape = MenuCore.defaultProps.closeOnEscape;
   closeOnOutsideClick = MenuCore.defaultProps.closeOnOutsideClick;
+  boundary: PositioningBoundary = 'container';
 
   readonly #core = new MenuCore();
   readonly #provider = new ContextProvider(this, { context: menuContext });
   readonly #position = new PositionController(this);
+  readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   readonly #menuViewTransition = createMenuViewTransition({
@@ -78,11 +86,14 @@ export class MenuElement extends MediaElement {
 
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
+  #cleanupContentObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
+
+    this.setAttribute(POPUP_HOST_ATTR, '');
 
     this.#disconnect = new AbortController();
 
@@ -94,6 +105,7 @@ export class MenuElement extends MediaElement {
       },
       closeOnEscape: () => this.closeOnEscape,
       closeOnOutsideClick: () => this.closeOnOutsideClick,
+      group: () => (this.#parentCtx.value ? undefined : this.#containerCtx.value?.popupGroup),
     });
 
     // The element itself is the content (popup) for root menus.
@@ -135,6 +147,8 @@ export class MenuElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
+    this.#cleanupContentObserver?.();
+    this.#cleanupContentObserver = null;
     this.#cleanupTrigger();
     this.#menu?.destroy();
     this.#menu = null;
@@ -143,13 +157,25 @@ export class MenuElement extends MediaElement {
     this.#menuViewTransition.destroy();
   }
 
+  close(reason: MenuOpenChangeReason = 'imperative-action'): void {
+    this.#menu?.close(reason);
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
 
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
 
-    this.#core.setProps({ ...this, isSubmenu });
+    this.#core.setProps({
+      open: this.open,
+      defaultOpen: this.defaultOpen,
+      side: this.side,
+      align: this.align,
+      closeOnEscape: this.closeOnEscape,
+      closeOnOutsideClick: this.closeOnOutsideClick,
+      isSubmenu,
+    });
 
     if (this.#menu && changed.has('open') && !isSubmenu) {
       const { active: interactionOpen } = this.#menu.input.current;
@@ -217,26 +243,50 @@ export class MenuElement extends MediaElement {
     }
 
     if (!state.open) {
+      this.#cleanupContentObserver?.();
+      this.#cleanupContentObserver = null;
       this.#position.cleanup();
       return;
     }
+
+    this.#cleanupContentObserver ??= observeMenuViewContent(this, () => {
+      this.requestUpdate();
+    });
 
     syncMenuViewRoot(this, this.#navState.stack.length > 0);
 
     const positionOptions = getRootPositionOptions(state.side, state.align);
     if (!positionOptions) return;
 
-    if (supportsAnchorPositioning()) {
-      applyStyles(this, getAnchorPositionStyle(this.id, positionOptions));
-    } else {
-      const triggerRect = this.#currentTrigger?.getBoundingClientRect();
-      const selfRect = getPopupPositionRect(this);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
-      const offsets = resolveOffsets(this);
-      applyStyles(this, getAnchorPositionStyle(this.id, positionOptions, triggerRect, selfRect, boundaryRect, offsets));
+    const boundaryElement = this.#getBoundaryElement();
+    const triggerRect = this.#currentTrigger?.getBoundingClientRect();
+    const boundaryRect = getPositioningBoundaryRect(boundaryElement);
+    const offsets = resolveOffsets(this);
+    const anchorSupported = supportsAnchorPositioning();
+    const getNextStyle = () =>
+      getAnchorPositionStyle(
+        this.id,
+        positionOptions,
+        triggerRect,
+        anchorSupported ? undefined : getPopupPositionRect(this),
+        boundaryRect,
+        offsets
+      );
+    let nextStyle = getNextStyle();
+
+    if (anchorSupported) {
+      applyStyles(this, nextStyle);
     }
 
-    this.#position.sync(this.#currentTrigger);
+    const availableWidth = nextStyle[PopoverCSSVars.availableWidth];
+    syncMenuViewRoot(this, this.#navState.stack.length > 0, availableWidth ? { availableWidth } : undefined);
+
+    if (!anchorSupported) {
+      nextStyle = getNextStyle();
+      applyStyles(this, nextStyle);
+    }
+
+    this.#position.sync(this.#currentTrigger, boundaryElement);
   }
 
   #updateAsSubmenu(parentCtx: MenuContextValue): void {
@@ -255,6 +305,9 @@ export class MenuElement extends MediaElement {
     // Apply base submenu attributes regardless of phase.
     const transitionState = this.#menuViewTransition.input.current;
 
+    this.removeAttribute(MenuDataAttrs.side);
+    this.removeAttribute(MenuDataAttrs.align);
+
     applyElementProps(this, {
       ...getMenuViewTransitionAttrs(transitionState),
       role: 'menu',
@@ -265,23 +318,32 @@ export class MenuElement extends MediaElement {
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
+    const isNavigationKey = isMenuNavigationKey(event);
+    const defaultPreventedBeforeMenu = event.defaultPrevented;
+
     this.#menu?.contentProps.onKeyDown(event);
 
     const parentCtx = this.#parentCtx.value ?? null;
 
-    if (!parentCtx) return;
+    if (!parentCtx) {
+      if (event.key === 'Escape') return;
+      if (isNavigationKey) {
+        event.stopPropagation();
+      }
+      return;
+    }
 
     const stack = parentCtx.menu.navigationInput.current.stack;
     const topEntry = stack[stack.length - 1];
     const ownsActiveSubmenu = topEntry?.menuId === this.id;
     const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
-    if (isBackNavigationKey && ownsActiveSubmenu && !event.defaultPrevented) {
+    if (isBackNavigationKey && ownsActiveSubmenu && !defaultPreventedBeforeMenu) {
       event.preventDefault();
       parentCtx.menu.pop();
     }
 
-    if (isMenuNavigationKey(event) && (!isBackNavigationKey || ownsActiveSubmenu)) {
+    if (isNavigationKey && (!isBackNavigationKey || ownsActiveSubmenu)) {
       event.stopPropagation();
     }
   };
@@ -317,5 +379,12 @@ export class MenuElement extends MediaElement {
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
+  }
+
+  #getBoundaryElement(): Element | null {
+    return resolvePositioningBoundary(this.boundary, {
+      container: this.#containerCtx.value?.container ?? null,
+      root: this.getRootNode() as Document | ShadowRoot,
+    });
   }
 }

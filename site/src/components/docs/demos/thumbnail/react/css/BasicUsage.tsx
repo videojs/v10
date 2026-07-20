@@ -9,7 +9,7 @@ export default function TextTrackUsage() {
       <Player.Container className="demo">
         <Video
           className="media"
-          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+          src="{{VJS10_DEMO_VIDEO_MP4}}"
           preload="auto"
           muted
           playsInline

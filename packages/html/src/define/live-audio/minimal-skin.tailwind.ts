@@ -6,6 +6,7 @@ import {
   error,
   icon,
   iconState,
+  playButton,
   popup,
   root,
   slider,
@@ -28,11 +29,11 @@ function getTemplateHTML() {
       <media-error-dialog class="${error.root}">
         <div class="${error.dialog}">
           <div class="${error.content}">
-            <media-alert-dialog-title class="${error.title}">Something went wrong.</media-alert-dialog-title>
+            <media-alert-dialog-title class="${error.title}"></media-alert-dialog-title>
             <media-alert-dialog-description class="${error.description}"></media-alert-dialog-description>
           </div>
           <div class="${error.actions}">
-            <media-alert-dialog-close class="${cn(button.base, button.subtle)}">OK</media-alert-dialog-close>
+            <media-alert-dialog-close class="${cn(button.base, button.subtle)}"></media-alert-dialog-close>
           </div>
         </div>
       </media-error-dialog>
@@ -40,12 +41,20 @@ function getTemplateHTML() {
       <div class="${controls}">
         <media-tooltip-group>
           <div class="${buttonGroup}">
-              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
+            <span class="${playButton.wrapper}">
+              <media-buffering-indicator class="${playButton.bufferingRoot}">
+                ${renderIcon('spinner', { class: icon })}
+              </media-buffering-indicator>
+              <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button, playButton.control)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
                 ${renderIcon('pause', { class: cn(icon, iconState.play.pause) })}
               </media-play-button>
-              <media-tooltip id="play-tooltip" side="top" class="${cn(popup.tooltip)}"></media-tooltip>
+              <media-tooltip id="play-tooltip" side="top" boundary="viewport" class="${cn(popup.tooltip)}">
+                <media-tooltip-label></media-tooltip-label>
+                <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
+              </media-tooltip>
+            </span>
 
               <media-live-button class="${cn(button.base, button.subtle, button.live)}"></media-live-button>
           </div>
@@ -59,7 +68,7 @@ function getTemplateHTML() {
               ${renderIcon('volume-high', { class: cn(icon, iconState.mute.volumeHigh) })}
             </media-mute-button>
 
-            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" class="${cn(popup.volume)}">
+            <media-popover id="live-audio-volume-popover" open-on-hover delay="200" close-delay="100" side="left" boundary="viewport" class="${cn(popup.volume)}">
               <media-volume-slider class="${slider.root}" orientation="horizontal" thumb-alignment="edge">
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>

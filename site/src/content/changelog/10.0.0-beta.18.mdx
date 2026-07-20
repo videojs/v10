@@ -1,0 +1,16 @@
+---
+description: "Replaces DelegateMixin and ProxyMixin with MediaHost base classes, and adds the @videojs/cli docs command and versioned docs."
+date: 2026-04-14
+version: "10.0.0-beta.18"
+prerelease: true
+breaking: true
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.17...@videojs/core@10.0.0-beta.18"
+---
+
+The media element architecture gets a breaking overhaul in beta.18. `DelegateMixin` and `ProxyMixin` are gone, replaced by composable MediaHost base classes: `HTMLMediaElementHost`, `HTMLVideoElementHost`, and `HTMLAudioElementHost` ([#1292](https://github.com/videojs/v10/pull/1292)). If you built a custom media engine on the old mixins, extend one of the host classes instead and register it with `CustomMediaElement('video', YourMedia)`; the custom element discovers host properties at define time, wires up attribute observation automatically, and engines chain lifecycle through `super.attach()` and `super.detach()`. The `DelegateMixin` re-export is removed from `@videojs/html` and `@videojs/react`. Mux media elements lose the `playbackId` and `customDomain` props in the same change: pass a full `src` URL instead. A follow-up moves each host's observed attributes into its subclasses ([#1326](https://github.com/videojs/v10/pull/1326)).
+
+Two documentation features ship alongside. The new `@videojs/cli` package puts Video.js docs in your terminal: `npx @videojs/cli docs how-to/installation --framework react --media hls` prints an installation guide with generated code, formatted for handing straight to an LLM or coding agent ([#1214](https://github.com/videojs/v10/pull/1214)). And videojs.org now runs on versioned docs infrastructure: the production site tracks the latest release, while pre-release docs deploy from `main` to their own site ([#1314](https://github.com/videojs/v10/pull/1314)).
+
+Gesture handling picks up three fixes: taps ignore non-primary pointer buttons ([#1329](https://github.com/videojs/v10/pull/1329)), gestures ignore interactive child elements ([#1327](https://github.com/videojs/v10/pull/1327)), and the double-tap window drops from 300ms to 200ms ([#1328](https://github.com/videojs/v10/pull/1328)).
+
+A batch of site fixes rounds out the release: a `FrameworkCase` conditional-rendering change is reverted ([#1317](https://github.com/videojs/v10/pull/1317)), images no longer overflow narrow viewports ([#1302](https://github.com/videojs/v10/pull/1302)), several accessibility rough edges are smoothed out ([#1330](https://github.com/videojs/v10/pull/1330)), text links get a gold underline on hover ([#1149](https://github.com/videojs/v10/pull/1149)), and the accessibility guide opens with a clearer intro ([#1318](https://github.com/videojs/v10/pull/1318), [#1331](https://github.com/videojs/v10/pull/1331)).

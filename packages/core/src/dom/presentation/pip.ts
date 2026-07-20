@@ -1,6 +1,6 @@
+import type { WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import type { MediaPictureInPictureCapability } from '../../core/media/types';
-import type { WebKitVideoElement } from './types';
 
 export function isPictureInPictureEnabled() {
   if (document.pictureInPictureEnabled) {

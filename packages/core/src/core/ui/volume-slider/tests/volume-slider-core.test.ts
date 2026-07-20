@@ -1,3 +1,4 @@
+import { formatPercent } from '@videojs/utils/percent';
 import { describe, expect, it, vi } from 'vitest';
 
 import type { MediaVolumeState } from '../../../media/state';
@@ -30,7 +31,7 @@ describe('VolumeSliderCore', () => {
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(VolumeSliderCore.defaultProps).toEqual({
-        label: 'Volume',
+        label: '',
         step: 1,
         largeStep: 10,
         wheelStep: 5,
@@ -141,7 +142,8 @@ describe('VolumeSliderCore', () => {
       const attrs = core.getAttrs(state);
 
       expect(attrs['aria-label']).toBe('Volume');
-      expect(attrs['aria-valuetext']).toBe('75 percent');
+      expect(attrs['aria-valuetext']).toBe(formatPercent(0.75));
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.75) });
       expect(attrs.role).toBe('slider');
     });
 
@@ -152,7 +154,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('50 percent, muted');
+      expect(attrs['aria-valuetext']).toBe('{percent}, muted');
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.5) });
     });
 
     it('rounds value in valuetext', () => {
@@ -162,7 +165,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('33 percent');
+      expect(attrs['aria-valuetext']).toBe(formatPercent(0.333));
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0.333) });
     });
 
     it('uses custom label', () => {
@@ -182,7 +186,8 @@ describe('VolumeSliderCore', () => {
       const state = core.getState();
       const attrs = core.getAttrs(state);
 
-      expect(attrs['aria-valuetext']).toBe('0 percent, muted');
+      expect(attrs['aria-valuetext']).toBe('{percent}, muted');
+      expect(core.getValueTextParams(state)).toEqual({ percent: formatPercent(0) });
     });
   });
 

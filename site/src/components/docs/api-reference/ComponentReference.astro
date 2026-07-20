@@ -1,6 +1,5 @@
 ---
 import { getEntry } from 'astro:content';
-import { kebabCase } from 'es-toolkit/string';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
@@ -9,6 +8,7 @@ import MarkdownCode from '@/components/typography/MarkdownCode.astro';
 import P from '@/components/typography/P.astro';
 import type { ComponentReference } from '@/types/component-reference';
 import { isValidFramework } from '@/types/docs';
+import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
 import { createComponentReferenceModel } from '@/utils/componentReferenceModel';
 import FrameworkCase from '../FrameworkCase.astro';
 import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
@@ -28,7 +28,7 @@ if (!framework || !isValidFramework(framework)) {
   throw new Error(`Invalid or missing framework param.`);
 }
 
-const entry = await getEntry('componentReference', kebabCase(component));
+const entry = await getEntry('componentReference', resolveReferenceSlug(component));
 const apiRef: ComponentReference | null = entry?.data ?? null;
 if (!apiRef) return;
 

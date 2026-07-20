@@ -14,6 +14,7 @@ type NavLink = {
 };
 const navLinks: NavLink[] = [
   { href: '/blog', label: 'Blog' },
+  { href: '/changelog', label: 'Changelog' },
   { href: '/privacy', label: 'Privacy' },
   { href: 'https://legacy.videojs.org', label: 'V8', external: true },
 ];
@@ -58,13 +59,35 @@ const { class: className } = Astro.props;
             </a>
           ))
         }
+        {/* Wide viewports: icons wrap in the same flow as the text links */}
+        <span class="hidden md:flex">
+          <a
+            href={DISCORD_INVITE_URL}
+            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            aria-label="Discord"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Discord width="1.5em" height="1.5em" />
+          </a>
+          <a
+            href={GITHUB_REPO_URL}
+            class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+            aria-label="GitHub"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <GitHub width="1.5em" height="1.5em" />
+          </a>
+        </span>
       </div>
       <div
         class="flex flex-1 justify-start gap-4 pt-5 pb-8 md:justify-center md:gap-0 md:py-0 md:pb-0"
       >
+        {/* Narrow viewports: icons keep their own row below the link block */}
         <a
           href={DISCORD_INVITE_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
           aria-label="Discord"
           target="_blank"
           rel="noopener noreferrer"
@@ -73,7 +96,7 @@ const { class: className } = Astro.props;
         </a>
         <a
           href={GITHUB_REPO_URL}
-          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:px-5 intent:bg-manila-dark dark:intent:bg-warm-gray"
+          class="flex items-center rounded-xs px-2 py-2 font-display font-bold uppercase md:hidden intent:bg-manila-dark dark:intent:bg-warm-gray"
           aria-label="GitHub"
           target="_blank"
           rel="noopener noreferrer"

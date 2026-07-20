@@ -6,12 +6,12 @@ import { defineConfig } from 'tsdown';
 import { copyCssPlugin } from '../../build/plugins/copy-css-plugin.ts';
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
-
-type BuildMode = 'dev' | 'default';
-
-const buildModes: BuildMode[] = ['dev', 'default'];
+import { isDevBuildMode, type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
+import { LOCALES, localeAliases } from '../core/src/core/i18n/locales.ts';
 
 const skinsDir = resolve(dirname(fileURLToPath(import.meta.url)), '../skins/src');
+
+const localeTags = [...LOCALES, ...localeAliases(LOCALES)];
 
 const defineEntries = Object.fromEntries(
   globSync('src/define/**/*.ts')
@@ -36,19 +36,25 @@ const iconEntries = Object.fromEntries(
   })
 );
 
-const createConfig = (mode: BuildMode): UserConfig => ({
+const i18nLocaleEntries = Object.fromEntries([
+  ['i18n/locales/all', 'src/i18n/locales/all.ts'],
+  ['i18n/locales/all/register', 'src/i18n/locales/all/register.ts'],
+  ['i18n/locales/en', 'src/i18n/locales/en.ts'],
+  ['i18n/locales/en/register', 'src/i18n/locales/en/register.ts'],
+  ...localeTags.map((tag) => [`i18n/locales/${tag}`, `src/i18n/locales/${tag}.ts`]),
+  ...localeTags.map((tag) => [`i18n/locales/${tag}/register`, `src/i18n/locales/${tag}/register.ts`]),
+]);
+
+const createConfig = (mode: PackageBuildMode): UserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
   entry: {
     index: 'src/index.ts',
+    'i18n/index': 'src/i18n/index.ts',
+    ...i18nLocaleEntries,
     ...iconEntries,
     ...defineEntries,
     ...presetEntries,
   },
-  platform: 'browser',
-  format: 'es',
-  sourcemap: true,
-  clean: true,
-  hash: false,
-  unbundle: true,
   treeshake: {
     // The sideEffects field in package.json uses dist paths, but the build
     // runs against source. Ensure define/* modules (which register custom
@@ -56,22 +62,18 @@ const createConfig = (mode: BuildMode): UserConfig => ({
     moduleSideEffects: [
       { test: /\/define\//, sideEffects: true },
       { test: /\/icons\/(?:dist\/)?element\//, sideEffects: true },
+      { test: /\/i18n\/locales\/.+\/register/, sideEffects: true },
     ],
   },
   noExternal: [/^@videojs\/icons/, /^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  outDir: `dist/${mode}`,
-  define: {
-    __DEV__: mode === 'dev' ? 'true' : 'false',
-  },
-  dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json' } : false,
   plugins: [
     copyCssPlugin({ skinsDir, outDir: `dist/${mode}` }),
-    inlineCssPlugin({ skinsDir, minify: mode !== 'dev' }),
-    inlineTemplatePlugin({ minify: mode !== 'dev' }),
+    inlineCssPlugin({ skinsDir, minify: !isDevBuildMode(mode) }),
+    inlineTemplatePlugin({ minify: !isDevBuildMode(mode) }),
   ],
 });
 
-export default defineConfig(buildModes.map((mode) => createConfig(mode)));
+export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));

@@ -80,12 +80,12 @@ describe('MuteButtonCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns Mute when unmuted', () => {
+    it('returns mute when unmuted', () => {
       const core = new MuteButtonCore();
       expect(core.getLabel(createState({ muted: false }))).toBe('Mute');
     });
 
-    it('returns Unmute when muted', () => {
+    it('returns unmute when muted', () => {
       const core = new MuteButtonCore();
       expect(core.getLabel(createState({ muted: true }))).toBe('Unmute');
     });

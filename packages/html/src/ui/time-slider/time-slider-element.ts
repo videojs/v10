@@ -7,13 +7,17 @@ import {
   logMissingFeature,
   type SliderApi,
   selectBuffer,
+  selectPlayback,
   selectTime,
 } from '@videojs/core/dom';
+import { resolveTranslation } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { formatTime } from '@videojs/utils/time';
 
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
@@ -30,6 +34,7 @@ export class TimeSliderElement extends MediaElement {
     orientation: { type: String },
     disabled: { type: Boolean },
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
+    pauseOnDrag: { type: Boolean, attribute: 'pause-on-drag' },
   } satisfies PropertyDeclarationMap<Exclude<keyof TimeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
   label = TimeSliderCore.defaultProps.label;
@@ -39,11 +44,14 @@ export class TimeSliderElement extends MediaElement {
   orientation = TimeSliderCore.defaultProps.orientation;
   disabled = TimeSliderCore.defaultProps.disabled;
   thumbAlignment = TimeSliderCore.defaultProps.thumbAlignment;
+  pauseOnDrag = TimeSliderCore.defaultProps.pauseOnDrag;
 
   readonly #core = new TimeSliderCore();
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
+  readonly #playbackState = new PlayerController(this, playerContext, selectPlayback);
+  readonly #i18n = new I18nController(this, i18nContext);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
@@ -74,9 +82,11 @@ export class TimeSliderElement extends MediaElement {
       },
       changeThrottle: this.changeThrottle,
       onDragStart: () => {
+        this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -93,19 +103,38 @@ export class TimeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    this.#resumeIfDragPaused();
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#resumeIfDragPaused();
     this.#slider?.destroy();
     super.destroyCallback();
   }
 
+  // createSlider's destroy() does not fire onDragEnd, so a teardown mid-drag
+  // would leave playback paused. Called from both disconnect and destroy paths
+  // before super so the PlayerController is still attached.
+  #resumeIfDragPaused(): void {
+    this.#core.endDrag(this.#playbackState.value);
+  }
+
   protected override willUpdate(_changed: PropertyValues): void {
     super.willUpdate(_changed);
-    this.#core.setProps(this);
+    this.#core.setProps({
+      label: this.label,
+      changeThrottle: this.changeThrottle,
+      step: this.step,
+      largeStep: this.largeStep,
+      orientation: this.orientation,
+      disabled: this.disabled,
+      thumbAlignment: this.thumbAlignment,
+      pauseOnDrag: this.pauseOnDrag,
+    });
+    this.#core.setFormatLocale(this.#i18n.locale);
   }
 
   protected override update(_changed: PropertyValues): void {
@@ -122,6 +151,7 @@ export class TimeSliderElement extends MediaElement {
     const state = this.#core.getState();
 
     const cssVars = getTimeSliderCSSVars(this.#slider.adjustForAlignment(state));
+    const thumbAttrs = this.#core.getAttrs(state);
 
     applyStyles(this, cssVars);
 
@@ -133,7 +163,15 @@ export class TimeSliderElement extends MediaElement {
       state,
       stateAttrMap: TimeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
-      thumbAttrs: this.#core.getAttrs(state),
+      thumbAttrs: {
+        ...thumbAttrs,
+        'aria-label': resolveTranslation(this.#i18n.value, thumbAttrs['aria-label']),
+        'aria-valuetext': resolveTranslation(
+          this.#i18n.value,
+          thumbAttrs['aria-valuetext'],
+          this.#core.getValueTextParams(state)
+        ),
+      },
       thumbProps: this.#slider.thumbProps,
       formatValue: (value) => formatTime(value, state.duration),
     });

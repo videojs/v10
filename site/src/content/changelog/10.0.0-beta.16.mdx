@@ -1,0 +1,16 @@
+---
+description: "Adds a hotkey system across core, HTML, and React, a core gesture system, sub-1x playback rates, and the mux-audio element."
+date: 2026-04-10
+version: "10.0.0-beta.16"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.15...@videojs/core@10.0.0-beta.16"
+---
+
+Beta.16 ships the hotkey system. Core gains a hotkey coordinator with key pattern parsing, modifier support, conflict resolution by specificity, input safety in editable fields, and `aria-keyshortcuts` formatting ([#1238](https://github.com/videojs/v10/pull/1238)). The HTML package adds a declarative `<media-hotkey>` element and surfaces shortcuts on control buttons ([#1239](https://github.com/videojs/v10/pull/1239)), React gets the matching component ([#1241](https://github.com/videojs/v10/pull/1241)), and the preset audio and video skins now bind shortcuts out of the box: Space or `k` toggles play, `m` mutes, arrows seek and adjust volume, and `f`, `c`, and `i` handle fullscreen, subtitles, and picture-in-picture ([#1264](https://github.com/videojs/v10/pull/1264)). Follow-up fixes cover undefined options ([#1242](https://github.com/videojs/v10/pull/1242)), registry setup ([#1240](https://github.com/videojs/v10/pull/1240)), a redundant Shift modifier on the rate keys ([#1290](https://github.com/videojs/v10/pull/1290)), and Alt handling for non-letter characters ([#1304](https://github.com/videojs/v10/pull/1304)).
+
+The second headline lands in core: a gesture system with tap and double-tap recognition, pointer-type filtering, and left/center/right region targeting ([#1287](https://github.com/videojs/v10/pull/1287)). The `<media-gesture>` element and React bindings follow in beta.17.
+
+Beyond the headliners, the new `mux-audio` element and `MuxAudio` React component bring Mux-hosted HLS playback to audio-only players ([#1259](https://github.com/videojs/v10/pull/1259)), the default playback rates now include sub-1x speeds of 0.2, 0.5, and 0.7 ([#1231](https://github.com/videojs/v10/pull/1231), [#1236](https://github.com/videojs/v10/pull/1236)), the controls feature adds a `toggleControls` method ([#1280](https://github.com/videojs/v10/pull/1280)), and SPF gains architecture reactors ([#1218](https://github.com/videojs/v10/pull/1218)). The docs site now generates API reference pages for media elements ([#1256](https://github.com/videojs/v10/pull/1256)).
+
+A batch of fixes rounds out the release: a Safari text-track bug that blocked playback ([#1226](https://github.com/videojs/v10/pull/1226)), smoother time slider seeking that starts dragging on pointer down and commits on release ([#1291](https://github.com/videojs/v10/pull/1291)), a React peer dependency narrowed to v18+ ([#1289](https://github.com/videojs/v10/pull/1289)), newly exported `SliderPreviewElement` and `ContextPartElement` ([#1283](https://github.com/videojs/v10/pull/1283)), and destroy guards in `connectedCallback` ([#1284](https://github.com/videojs/v10/pull/1284)).

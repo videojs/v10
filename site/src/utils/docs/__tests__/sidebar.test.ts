@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { Guide, Section, Sidebar } from '../../../types/docs';
+import type { Guide, Section, Sidebar, SidebarLink } from '../../../types/docs';
 import {
   filterSidebar,
   findFirstGuide,
@@ -416,6 +416,49 @@ describe('sidebar utilities', () => {
         expect(result, `findFirstGuide should return a guide for ${framework}`).toBeTruthy();
         expect(typeof result).toBe('string');
       }
+    });
+  });
+
+  describe('SidebarLink handling', () => {
+    const mockLink: SidebarLink = {
+      href: '/changelog',
+      sidebarLabel: 'Changelog',
+    };
+
+    it('should pass links through filterSidebar', () => {
+      const sidebar: Sidebar = [{ sidebarLabel: 'Section', contents: [mockGuide1, mockLink] }];
+      const result = filterSidebar('html', sidebar);
+
+      expect((result[0] as Section).contents).toContainEqual(mockLink);
+    });
+
+    it('should filter out devOnly links in production', () => {
+      const devLink: SidebarLink = { ...mockLink, devOnly: true };
+      const sidebar: Sidebar = [{ sidebarLabel: 'Section', contents: [mockGuide1, devLink] }];
+      const result = filterSidebar('html', sidebar, false);
+
+      expect((result[0] as Section).contents).toEqual([mockGuide1]);
+    });
+
+    it('should skip links in findFirstGuide', () => {
+      const sidebar: Sidebar = [mockLink, mockGuide3];
+      const result = findFirstGuide('html', sidebar);
+
+      expect(result).toBe('guide-3');
+    });
+
+    it('should exclude links from getAllGuideSlugs', () => {
+      const sidebar: Sidebar = [{ sidebarLabel: 'Section', contents: [mockGuide1, mockLink] }, mockGuide3];
+      const result = getAllGuideSlugs(sidebar);
+
+      expect(result).toEqual(['guide-1', 'guide-3']);
+    });
+
+    it('should ignore links in findGuideBySlug', () => {
+      const sidebar: Sidebar = [mockLink, mockGuide3];
+      const result = findGuideBySlug('guide-3', sidebar);
+
+      expect(result).toEqual(mockGuide3);
     });
   });
 

@@ -262,8 +262,8 @@ export interface CompositionOptions<S extends object, C extends object, Cfg exte
  *
  * @example
  * ```ts
- * const composition = createComposition([resolvePresentation, selectVideoTrack], {
- *   config: { initialBandwidth: 2_000_000 },
+ * const composition = createComposition([resolvePresentation, switchVideoTrack], {
+ *   config: { parsePresentation: parseMultivariantPlaylist, initialBandwidth: 2_000_000 },
  *   initialState: { bandwidthState: { fastEstimate: 0, ... } },
  * });
  * ```
@@ -394,7 +394,7 @@ type ExhaustiveKeys<Keys extends readonly PropertyKey[], Slot extends object, Na
  *
  * @example
  * ```ts
- * export const syncPreloadAttribute = defineBehavior({
+ * export const syncPreload = defineBehavior({
  *   stateKeys: ['preload'],
  *   contextKeys: ['mediaElement'],
  *   setup: ({ state, context }: {

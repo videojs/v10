@@ -1,0 +1,18 @@
+---
+description: "Adds volume slider scroll support, UI-only CDN bundles for ejected players, and native HLS error handling."
+date: 2026-04-03
+version: "10.0.0-beta.14"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.13...@videojs/core@10.0.0-beta.14"
+---
+
+Beta.14 lets you scroll to adjust volume: hover the volume slider and use the mouse wheel, with the step size configurable through a new `wheelStep` prop in both the HTML and React players ([#1175](https://github.com/videojs/v10/pull/1175)). The behavior is documented in the VolumeSlider reference ([#1195](https://github.com/videojs/v10/pull/1195)).
+
+Native HLS playback gets proper error handling: the player intercepts native `<video>` error events and re-dispatches them enriched with a `MediaError`, so errors from native HLS surface with the same shape as the rest of the pipeline ([#1190](https://github.com/videojs/v10/pull/1190)). The `native-hls-video` element also ships in the CDN build ([#1208](https://github.com/videojs/v10/pull/1208)).
+
+Ejected (light DOM) player layouts get UI-only CDN presets, such as `cdn/video-ui.js` and `cdn/audio-ui.js`, that register the player, container, and all UI custom elements without creating a skin element ([#1206](https://github.com/videojs/v10/pull/1206)). Related eject fixes land alongside: ejected React skins use valid import specifiers ([#1192](https://github.com/videojs/v10/pull/1192)), and ejected skin CSS includes the base and shared styles ([#1196](https://github.com/videojs/v10/pull/1196)).
+
+Tooltips are visual-only from this release: they render with `role="presentation"` and no ARIA link to their trigger, while media buttons always self-label with `aria-label`. This removes the double screen-reader readout, and buttons auto-forward their current label ("Play", "Pause") to the tooltip, so skins no longer need manual label components ([#1174](https://github.com/videojs/v10/pull/1174)).
+
+A few smaller fixes round out the release: thumbnails work again in React when using HLS media ([#1210](https://github.com/videojs/v10/pull/1210)), `TimeElement` creates its children in `connectedCallback` instead of the constructor ([#1209](https://github.com/videojs/v10/pull/1209)), `SkinMixin` is renamed to `SkinElement` ([#1159](https://github.com/videojs/v10/pull/1159)), and the docs site's LLM markdown output gains absolute URLs, footer links, and sidebar-organized indexes ([#1200](https://github.com/videojs/v10/pull/1200), [#1201](https://github.com/videojs/v10/pull/1201), [#1203](https://github.com/videojs/v10/pull/1203)).

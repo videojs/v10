@@ -1,5 +1,6 @@
 ---
 import { getEntry } from 'astro:content';
+import type { BundledLanguage } from 'shiki';
 import ServerCode from '@/components/Code/ServerCode.astro';
 import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 
@@ -11,24 +12,50 @@ const { id } = Astro.props;
 const entry = await getEntry('ejectedSkins', id);
 if (!entry) return;
 const skin = entry.data;
+
+const EXT_TO_LANG: Record<string, BundledLanguage> = {
+  ts: 'ts',
+  tsx: 'tsx',
+  js: 'js',
+  jsx: 'jsx',
+};
+
+function langFromFilename(filename: string): BundledLanguage {
+  const ext = filename.split('.').pop() ?? '';
+  return EXT_TO_LANG[ext] ?? 'tsx';
+}
+
+// Order React files so the component file is first (initial tab), then config files.
+const reactFiles = skin.tsx
+  ? Object.entries(skin.tsx).sort(([a], [b]) => {
+      const aIsComponent = a.endsWith('.tsx') || a.endsWith('.jsx');
+      const bIsComponent = b.endsWith('.tsx') || b.endsWith('.jsx');
+      if (aIsComponent === bIsComponent) return a.localeCompare(b);
+      return aIsComponent ? -1 : 1;
+    })
+  : [];
 ---
 
 {
   skin.platform === "react" ? (
     <TabsRoot client:idle>
       <TabsList client:idle label={`${skin.name} implementation`}>
-        <Tab client:idle value="tsx" initial>
-          Skin.tsx
-        </Tab>
+        {reactFiles.map(([filename], index) => (
+          <Tab client:idle value={filename} initial={index === 0}>
+            {filename}
+          </Tab>
+        ))}
         {skin.css && (
           <Tab client:idle value="css">
             skin.css
           </Tab>
         )}
       </TabsList>
-      <TabsPanel client:idle value="tsx" initial>
-        <ServerCode code={skin.tsx!} lang="tsx" />
-      </TabsPanel>
+      {reactFiles.map(([filename, code], index) => (
+        <TabsPanel client:idle value={filename} initial={index === 0}>
+          <ServerCode code={code} lang={langFromFilename(filename)} />
+        </TabsPanel>
+      ))}
       {skin.css && (
         <TabsPanel client:idle value="css">
           <ServerCode code={skin.css} lang="css" />

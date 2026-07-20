@@ -1,10 +1,10 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 
 import type { MediaVolumeState } from '../../media/state';
 import type { ButtonState } from '../types';
+import { resolveLabel } from '../utils/resolve-label';
 
 export type VolumeLevel = 'off' | 'low' | 'medium' | 'high';
 
@@ -50,14 +50,8 @@ export class MuteButtonCore {
   }
 
   getLabel(state: MuteButtonState): string {
-    const { label } = this.#props;
-
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
+    const label = resolveLabel(this.#props.label, state);
+    if (label) return label;
 
     return state.muted ? 'Unmute' : 'Mute';
   }

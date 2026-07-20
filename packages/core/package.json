@@ -1,7 +1,7 @@
 {
   "name": "@videojs/core",
   "type": "module",
-  "version": "10.0.0-beta.23",
+  "version": "10.0.0-beta.25",
   "description": "Core components and utilities for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -15,7 +15,10 @@
     "player",
     "videojs"
   ],
-  "sideEffects": false,
+  "sideEffects": [
+    "./dist/*/i18n.js",
+    "**/i18n/registry.js"
+  ],
   "exports": {
     ".": {
       "types": "./dist/dev/index.d.ts",
@@ -31,6 +34,21 @@
       "types": "./dist/dev/dom/media/*/index.d.ts",
       "development": "./dist/dev/dom/media/*/index.js",
       "default": "./dist/default/dom/media/*/index.js"
+    },
+    "./media/predicate": {
+      "types": "./dist/dev/media/predicate.d.ts",
+      "development": "./dist/dev/media/predicate.js",
+      "default": "./dist/default/media/predicate.js"
+    },
+    "./i18n": {
+      "types": "./dist/dev/i18n.d.ts",
+      "development": "./dist/dev/i18n.js",
+      "default": "./dist/default/i18n.js"
+    },
+    "./i18n/locales/*": {
+      "types": "./dist/dev/i18n/locales/*.d.ts",
+      "development": "./dist/dev/i18n/locales/*.js",
+      "default": "./dist/default/i18n/locales/*.js"
     }
   },
   "main": "dist/default/index.js",
@@ -40,6 +58,8 @@
     "dist"
   ],
   "scripts": {
+    "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
+    "prebuild": "pnpm run generate:locales",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
@@ -51,7 +71,8 @@
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
-    "dashjs": "^5.0.0",
+    "@vimeo/player": "^2.30.3",
+    "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
     "mux-embed": "^5.17.10"
   },

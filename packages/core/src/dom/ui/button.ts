@@ -1,7 +1,7 @@
-import type { UIKeyboardEvent } from './event';
+import type { UIEvent, UIKeyboardEvent } from './event';
 
 export interface ButtonOptions {
-  onActivate: () => void;
+  onActivate: (event: UIEvent) => void;
   isDisabled: () => boolean;
 }
 
@@ -27,7 +27,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
         event.preventDefault();
         return;
       }
-      onActivate();
+      onActivate(event);
     },
 
     onPointerDown(event) {
@@ -48,7 +48,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
 
       if (event.key === 'Enter') {
         event.preventDefault();
-        onActivate();
+        onActivate(event);
       } else if (event.key === ' ') {
         event.preventDefault();
       }
@@ -59,7 +59,7 @@ export function createButton(options: ButtonOptions): ButtonProps {
       if (isDisabled()) return;
 
       if (event.key === ' ') {
-        onActivate();
+        onActivate(event);
       }
     },
   };

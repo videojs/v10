@@ -1,55 +1,57 @@
+/**
+ * Mirror `mediaElement.playbackRate` into reactive state. On each `ratechange`
+ * event, write the new value to `state.playbackRate`. Also syncs immediately
+ * when a media element becomes available so consumers don't wait for the first
+ * event.
+ *
+ * When no media element is attached, writes `config.defaultPlaybackRate`
+ * (default-default `1`, matching the HTMLMediaElement spec) so consumers
+ * always see the rate a freshly attached element would have. Read-only mirror;
+ * does not push `state.playbackRate` back to the element.
+ */
 import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import type { ReadonlySignal, Signal } from '../../../core/signals/primitives';
 
-/**
- * State shape for playback rate tracking.
- */
 export interface PlaybackRateState {
   playbackRate?: number;
 }
 
-/**
- * Context shape for playback rate tracking.
- */
 export interface PlaybackRateContext {
   mediaElement?: HTMLMediaElement | undefined;
 }
 
-/**
- * Track playback rate from the media element.
- *
- * Mirrors `mediaElement.playbackRate` into reactive state on each `ratechange`
- * event. Also syncs immediately when a media element becomes available.
- *
- * @example
- * const cleanup = trackPlaybackRate.setup({ state, context });
- */
+export interface TrackPlaybackRateConfig {
+  /**
+   * Value written to `state.playbackRate` when no media element is attached.
+   * Defaults to `1` — the HTMLMediaElement spec default.
+   */
+  defaultPlaybackRate?: number;
+}
+
 function trackPlaybackRateSetup({
   state,
   context,
+  config,
 }: {
   state: { playbackRate: Signal<PlaybackRateState['playbackRate']> };
   context: { mediaElement: ReadonlySignal<PlaybackRateContext['mediaElement']> };
+  config?: TrackPlaybackRateConfig;
 }): () => void {
-  const mediaElementSignal = computed(() => context.mediaElement.get());
-  const canTrackPlaybackRate = computed(() => !!mediaElementSignal.get());
+  const defaultPlaybackRate = config?.defaultPlaybackRate ?? 1;
 
-  const cleanupEffect = effect(() => {
-    if (!canTrackPlaybackRate.get()) return;
-    const mediaElement = mediaElementSignal.get() as HTMLMediaElement;
+  return effect(() => {
+    const mediaElement = context.mediaElement.get();
+    if (!mediaElement) {
+      state.playbackRate.set(defaultPlaybackRate);
+      return;
+    }
 
-    state.playbackRate.set(mediaElement.playbackRate);
-
-    return listen(mediaElement, 'ratechange', () => {
-      state.playbackRate.set(mediaElement.playbackRate);
-    });
+    const sync = () => state.playbackRate.set(mediaElement.playbackRate);
+    sync();
+    return listen(mediaElement, 'ratechange', sync);
   });
-
-  return () => {
-    cleanupEffect();
-  };
 }
 
 export const trackPlaybackRate = defineBehavior({

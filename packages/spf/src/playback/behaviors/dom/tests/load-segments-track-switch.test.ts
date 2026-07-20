@@ -1,9 +1,11 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
-import type { BandwidthState } from '../../../../media/abr/bandwidth-estimator';
 import type { MaybeResolvedPresentation, Presentation, VideoSelectionSet } from '../../../../media/types';
+import { fetchStream } from '../../../../network/fetch';
+import { createSegmentLoaderActor, type SegmentLoaderActor } from '../../../actors/dom/segment-loader';
 import { createSourceBufferActor, type SourceBufferActor } from '../../../actors/dom/source-buffer';
+import type { TextTrackSegmentLoaderActor } from '../../../actors/text-track-segment-loader';
 import type { SegmentLoadingContext, SegmentLoadingState } from '../load-segments';
 import { loadVideoSegments } from '../load-segments';
 
@@ -27,21 +29,32 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<string | undefined>(initial.preload),
-    bandwidthState: signal<BandwidthState | undefined>(initial.bandwidthState),
     currentTime: signal<number | undefined>(initial.currentTime),
-    playbackInitiated: signal<boolean | undefined>(initial.playbackInitiated),
+    loadActivated: signal<boolean | undefined>(initial.loadActivated),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
   };
 }
 
-function makeContext(initial: SegmentLoadingContext = {}): ContextSignals<SegmentLoadingContext> {
+function makeContext(
+  initial: {
+    videoBufferActor?: SourceBufferActor;
+    audioBufferActor?: SourceBufferActor;
+    videoSegmentLoaderActor?: SegmentLoaderActor;
+    audioSegmentLoaderActor?: SegmentLoaderActor;
+    textTrackSegmentLoaderActor?: TextTrackSegmentLoaderActor;
+  } = {}
+): ContextSignals<SegmentLoadingContext> & {
+  videoBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+  audioBufferActor: ReturnType<typeof signal<SourceBufferActor | undefined>>;
+} {
   return {
-    videoBuffer: signal<SourceBuffer | undefined>(initial.videoBuffer),
-    audioBuffer: signal<SourceBuffer | undefined>(initial.audioBuffer),
     videoBufferActor: signal<SourceBufferActor | undefined>(initial.videoBufferActor),
     audioBufferActor: signal<SourceBufferActor | undefined>(initial.audioBufferActor),
+    videoSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.videoSegmentLoaderActor),
+    audioSegmentLoaderActor: signal<SegmentLoaderActor | undefined>(initial.audioSegmentLoaderActor),
+    textTrackSegmentLoaderActor: signal<TextTrackSegmentLoaderActor | undefined>(initial.textTrackSegmentLoaderActor),
   };
 }
 
@@ -147,18 +160,19 @@ describe('loadSegments — track switch', () => {
         { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
       ],
     });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true,
+      loadActivated: true,
       currentTime: 5,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
 
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const reactor = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -168,7 +182,7 @@ describe('loadSegments — track switch', () => {
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
-    const ctx = context.videoBufferActor.get()?.snapshot.get().context;
+    const ctx = videoBufferActor.snapshot.get().context;
     expect(ctx?.initTrackId).toBe('track-b');
 
     const hasOldSegments = ctx?.segments.some((s) => ['a1', 'a2'].includes(s.id));
@@ -177,7 +191,8 @@ describe('loadSegments — track switch', () => {
     const hasNewSegments = ctx?.segments.some((s) => ['b1', 'b2'].includes(s.id));
     expect(hasNewSegments).toBeTruthy();
 
-    cleanup();
+    reactor.destroy();
+    videoLoader.destroy();
   });
 
   it('preempts in-flight fetch when track switches; loads new track init', async () => {
@@ -189,17 +204,18 @@ describe('loadSegments — track switch', () => {
     const presentation = makePresentation(trackA, trackB);
     const videoBuffer = makeMockSourceBuffer();
     const videoBufferActor = createSourceBufferActor(videoBuffer);
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true,
+      loadActivated: true,
       currentTime: 0,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
 
     await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/track-a-init.mp4'));
 
@@ -213,11 +229,12 @@ describe('loadSegments — track switch', () => {
 
     resolve('https://example.com/track-b-init.mp4');
 
-    await vi.waitFor(() => expect(context.videoBufferActor.get()?.snapshot.get().context.initTrackId).toBe('track-b'), {
+    await vi.waitFor(() => expect(videoBufferActor.snapshot.get().context.initTrackId).toBe('track-b'), {
       timeout: 3000,
     });
 
-    cleanup();
+    reactor.destroy();
+    videoLoader.destroy();
   });
 
   it('loads segments at currentTime position when track switches mid-playback', async () => {
@@ -234,17 +251,18 @@ describe('loadSegments — track switch', () => {
         { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
       ],
     });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
       selectedVideoTrackId: 'track-a',
       preload: 'auto',
-      playbackInitiated: true,
+      loadActivated: true,
       currentTime: 25,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
 
@@ -268,7 +286,8 @@ describe('loadSegments — track switch', () => {
     expect(fetchedUrls).not.toContain('https://example.com/b1.m4s');
     expect(fetchedUrls).not.toContain('https://example.com/b2.m4s');
 
-    cleanup();
+    reactor.destroy();
+    videoLoader.destroy();
   });
 
   it('does NOT flush on first init load (no prior track)', async () => {
@@ -280,6 +299,7 @@ describe('loadSegments — track switch', () => {
     const videoBuffer = makeMockSourceBuffer();
 
     const videoBufferActor = createSourceBufferActor(videoBuffer);
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
 
     const state = makeState({
       presentation,
@@ -288,13 +308,14 @@ describe('loadSegments — track switch', () => {
       currentTime: 0,
     });
 
-    const context = makeContext({ videoBuffer, videoBufferActor });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
 
-    const cleanup = loadVideoSegments.setup({ state, context });
+    const reactor = loadVideoSegments.setup({ state, context });
     await new Promise((r) => setTimeout(r, 50));
 
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
-    cleanup();
+    reactor.destroy();
+    videoLoader.destroy();
   });
 });

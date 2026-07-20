@@ -114,6 +114,16 @@ describe('MenuCore', () => {
       expect(attrs['aria-expanded']).toBe('true');
     });
 
+    it('returns aria-expanded false when closing', () => {
+      const core = new MenuCore();
+      core.setInput(createInput({ active: true, status: 'ending' }));
+      const state = core.getState();
+      const attrs = core.getTriggerAttrs(state);
+
+      expect(state.open).toBe(true);
+      expect(attrs['aria-expanded']).toBe('false');
+    });
+
     it('sets aria-controls when contentId is provided', () => {
       const core = new MenuCore();
       core.setInput(createInput());

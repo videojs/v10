@@ -5,6 +5,7 @@ import type {
   LiveVideoFeatures,
   VideoFeatures,
 } from '../../media/types';
+import { audioTrackFeature } from './audio-track';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';
 import { errorFeature } from './error';
@@ -13,6 +14,7 @@ import { liveFeature } from './live';
 import { pipFeature } from './pip';
 import { playbackFeature } from './playback';
 import { playbackRateFeature } from './playback-rate';
+import { qualityFeature } from './quality';
 import { remotePlaybackFeature } from './remote-playback';
 import { sourceFeature } from './source';
 import { textTrackFeature } from './text-track';
@@ -22,6 +24,8 @@ import { volumeFeature } from './volume';
 export const videoFeatures: VideoFeatures = [
   playbackFeature,
   playbackRateFeature,
+  qualityFeature,
+  audioTrackFeature,
   volumeFeature,
   timeFeature,
   sourceFeature,

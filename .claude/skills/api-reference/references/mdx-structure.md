@@ -72,6 +72,8 @@ import basicUsageHtmlTs from "@/components/docs/demos/{component}/html/css/Basic
 
 ## Anatomy Section
 
+Anatomy shows part nesting with self-closing placeholders, following the Base UI anatomy convention. No hooks, state, handlers, or option mapping — working code belongs in Examples. This holds even when a component has no React component form (e.g. the radio groups, whose React API is a hook feeding `Menu.RadioGroup`): show the part skeleton and let the Behavior prose link to the hook for wiring.
+
 ```mdx
 ## Anatomy
 

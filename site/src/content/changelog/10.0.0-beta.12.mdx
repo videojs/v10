@@ -1,0 +1,16 @@
+---
+description: "Adds the Mux video component, native HLS playback, HLS preload and error handling, and a new error dialog component."
+date: 2026-04-01
+version: "10.0.0-beta.12"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.11...@videojs/core@10.0.0-beta.12"
+---
+
+Beta.12 brings Mux playback to Video.js. The new Mux video component builds on the HLS delegate, generates stream URLs from a `playbackId` (custom playback domains included), and initializes Mux Data monitoring automatically ([#1036](https://github.com/videojs/v10/pull/1036)); a follow-up corrects Mux Data initialization ([#1162](https://github.com/videojs/v10/pull/1162)).
+
+The HLS media stack matures alongside it. A new native HLS delegate drives playback through the browser's built-in support, and HLS media now picks between the Hls.js and native paths based on browser support, source type, and your `preferPlayback` setting ([#1154](https://github.com/videojs/v10/pull/1154), [#1150](https://github.com/videojs/v10/pull/1150)). HLS media also honors `preload`: hls.js no longer loads segments eagerly, `metadata` fetches a minimal buffer, and `none` defers loading until playback starts ([#1125](https://github.com/videojs/v10/pull/1125)). Fatal Hls.js errors now convert to a standard `MediaError` with consistent messages and surface as `error` events ([#1164](https://github.com/videojs/v10/pull/1164)).
+
+When playback fails, the new error dialog shows it. The `media-error-dialog` element in HTML and the compound `ErrorDialog` component in React (`Root`, `Popup`, `Title`, `Description`, `Close`) open automatically from the player's error state, stay hidden otherwise, and ship in every skin ([#1077](https://github.com/videojs/v10/pull/1077)).
+
+On the site, ejected skins now output self-contained, copy-pasteable code with real media elements, a player wrapper, and usage examples ([#1108](https://github.com/videojs/v10/pull/1108), [#1127](https://github.com/videojs/v10/pull/1127)), and hidden skin tabs hydrate correctly ([#1137](https://github.com/videojs/v10/pull/1137)). Under the hood, SPF reactors migrated from `WritableState` to TC39 Signals ([#1112](https://github.com/videojs/v10/pull/1112)). A batch of fixes rounds out the release: an `AbortSignal.any` polyfill for Chromium 115 and earlier ([#1142](https://github.com/videojs/v10/pull/1142)), responsive skin improvements ([#1129](https://github.com/videojs/v10/pull/1129)), HTML SSR safety ([#1155](https://github.com/videojs/v10/pull/1155)), and assorted site polish ([#1144](https://github.com/videojs/v10/pull/1144), [#1146](https://github.com/videojs/v10/pull/1146), [#1147](https://github.com/videojs/v10/pull/1147), [#1148](https://github.com/videojs/v10/pull/1148), [#1151](https://github.com/videojs/v10/pull/1151)).

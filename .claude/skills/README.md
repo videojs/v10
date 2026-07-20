@@ -10,14 +10,16 @@ Specialized knowledge for AI agents working on Video.js 10.
 | Building HTML components   | `component` + `aria`               |
 | Building React components  | `component` + `aria`               |
 | Writing documentation      | `docs`                             |
-| Writing component reference| `api-reference`                     |
-| Writing Design Docs / RFCs | `design` or `rfc`                        |
-| Reviewing API/architecture | `api` → `review/workflow.md`             |
+| Writing component reference| `api-reference`                    |
+| Writing Design Docs / RFCs | `design` or `rfc`                  |
+| Reviewing API/architecture | `api` → `review/workflow.md`       |
 | Reviewing documentation    | `docs` → `review/workflow.md`      |
 | Reviewing components       | `component` → `review/workflow.md` |
 | Reviewing accessibility    | `aria` → `review/workflow.md`      |
 | Accessibility audit        | `aria`                             |
 | Committing / creating PRs  | `git` or `/commit-pr`              |
+| CSS → Tailwind migration   | `css-to-tailwind`                  |
+| Reviewing Tailwind migration | `css-to-tailwind` → `review/workflow.md` |
 | Reviewing branch changes   | `/review-branch`                   |
 | Analyzing GitHub issues    | `/gh-issue`                        |
 | Creating GitHub issues     | `/create-issue`                    |
@@ -33,6 +35,7 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [claude-update](claude-update/SKILL.md) | Update CLAUDE.md and skills when introducing new patterns              | No          |
 | [commit-pr](commit-pr/SKILL.md)         | Commit changes and create/update PRs with conventions                  | No          |
 | [component](component/SKILL.md)         | Build headless UI components — compound patterns, state, styling       | Yes         |
+| [css-to-tailwind](css-to-tailwind/SKILL.md) | Migrate CSS/SCSS/styled-components to Tailwind v4 — `@theme`, tokens, parity, reporting | Yes   |
 | [create-issue](create-issue/SKILL.md)   | Create GitHub issues with consistent formatting and conventions       | No          |
 | [create-skill](create-skill/SKILL.md)   | Create new skills with proper structure and conventions                | No          |
 | [design](design/SKILL.md)               | Write Design Docs — decisions you own, component specs, feature designs| No          |
@@ -40,8 +43,17 @@ Specialized knowledge for AI agents working on Video.js 10.
 | [docs](docs/SKILL.md)                   | Write Video.js 10 documentation (concepts, how-to, READMEs)    | Yes         |
 | [gh-issue](gh-issue/SKILL.md)           | Analyze GitHub issues and create implementation plans                  | No          |
 | [git](git/SKILL.md)                     | Git workflow — commit messages, PRs, branch naming, scope inference    | No          |
+| [merge-behaviors](merge-behaviors/SKILL.md) | Merge two SPF behaviors with cleaned-shape-first discipline        | No          |
+| [refactor-behavior](refactor-behavior/SKILL.md) | Refactor an SPF behavior using purpose-first discipline       | No          |
 | [review-branch](review-branch/SKILL.md) | Review branch changes and suggest improvements                         | No          |
 | [rfc](rfc/SKILL.md)                     | Write RFCs — proposals needing buy-in (public API, product, DX)        | No          |
+| [spf-create-behavior](spf-create-behavior/SKILL.md) | Create a new SPF behavior with conventions-aligned shape (stub; grows with use) | No |
+| [spf-document-feature](spf-document-feature/SKILL.md) | Produce/update SPF feature registry docs (triangulation, cluster heuristics, cross-cutting checks, cascade) | No |
+| [spf-document-use-case](spf-document-use-case/SKILL.md) | Produce/update SPF use-case-composition registry docs (four-mechanism taxonomy, constituent-feature cascade) | No |
+| [spf-implement-feature](spf-implement-feature/SKILL.md) | Implement an SPF feature from its registry doc (disambiguation, phase scoping, chunk decomposition, downstream-skill routing, doc-as-starting-point) | No |
+| [spf-implement-use-case](spf-implement-use-case/SKILL.md) | Implement an SPF use-case composition from its registry doc (disambiguation/routing, constituent-feature readiness, variant assembly, doc-as-starting-point) | No |
+| [spf-update-behavior](spf-update-behavior/SKILL.md) | Update an existing SPF behavior whose purpose is changing (stub; distinct from /refactor-behavior which preserves purpose) | No |
+| [split-behavior](split-behavior/SKILL.md) | Split one SPF behavior into N with axis-declared, constraints-audited discipline | No |
 
 ## Review Workflows
 
@@ -60,9 +72,10 @@ skill/
 | Skill               | Review Focus                                      |
 | ------------------- | ------------------------------------------------- |
 | `api/review/`       | API design, architecture, DX, type safety         |
-| `docs/review/`       | Documentation quality — tone, structure, examples |
+| `docs/review/`      | Documentation quality — tone, structure, examples |
 | `component/review/` | Component architecture, state, props, styling     |
 | `aria/review/`      | Accessibility — ARIA, keyboard, focus, WCAG       |
+| `css-to-tailwind/review/` | Tailwind migration — utilities, arbitrary values, theme gaps |
 
 ## Skill Structure
 
@@ -101,7 +114,7 @@ skill-name/
 
 When code changes introduce new patterns that a skill should cover:
 
-1. Identify affected skill (component, aria, api, docs)
+1. Identify affected skill (component, aria, api, docs, css-to-tailwind)
 2. Update the relevant reference file or add a new one
 3. If pattern is cross-cutting, update CLAUDE.md Code Rules instead
 
@@ -111,5 +124,6 @@ When code changes introduce new patterns that a skill should cover:
 - New accessibility patterns (ARIA, keyboard, focus)
 - New API design decisions (extensibility, type safety)
 - New DX considerations (inference, defaults, naming)
+- New Tailwind or skin parity patterns (`packages/skins`)
 
 For detailed guidance and consistency checklists, run `/claude-update`.

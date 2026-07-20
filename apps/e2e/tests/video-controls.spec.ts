@@ -4,6 +4,7 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry[]) {
+  const rateMenu = !path.includes('/cdn-video') && !path.includes('/ejected');
   test.describe(`Video Controls — ${name}`, () => {
     test.skip(({ browserName }) => {
       return skipBrowsers?.includes(browserName as 'chromium' | 'webkit' | 'firefox') ?? false;
@@ -26,7 +27,7 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
       await expect(player.muteButton).toHaveAttribute(DATA_ATTRS.volumeLevel);
       await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability);
       await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
-      await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.availability);
+      await expect(player.settingsButton).toBeAttached();
       await expect(player.duration).not.toHaveText('');
       await player.showControls();
       await expect(player.controls).toBeAttached();
@@ -49,7 +50,7 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
     // --- Seek ---
 
     test('seek forward advances playback', async () => {
-      test.skip(media === 'simple-hls-video' || media === 'native-hls-video', 'seek before playback not yet supported');
+      test.skip(media === 'native-hls-video', 'seek before playback not yet supported');
 
       await player.seekForward.click();
       await expect(player.playButton).toHaveAttribute(DATA_ATTRS.started, '');
@@ -91,15 +92,12 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
 
     // --- Playback Rate ---
 
-    test('playback rate button cycles rates', async () => {
-      const rateBtn = player.playbackRateButton;
-      const initialRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
+    (rateMenu ? test : test.skip)('playback rate menu changes selected rate', async () => {
+      const initialRate = await player.getPlaybackRate();
 
-      await rateBtn.click();
-      await player.page.waitForTimeout(200);
+      await player.selectAlternativePlaybackRate();
 
-      const newRate = await rateBtn.getAttribute(DATA_ATTRS.rate);
-      expect(newRate).not.toBe(initialRate);
+      await expect.poll(async () => player.getPlaybackRate()).not.toBe(initialRate);
     });
 
     // --- Poster ---

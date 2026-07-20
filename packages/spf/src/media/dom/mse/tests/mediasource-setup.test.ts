@@ -6,6 +6,7 @@ import {
   isCodecSupported,
   supportsManagedMediaSource,
   supportsMediaSource,
+  waitForMediaSourceOpen,
 } from '../mediasource-setup';
 
 describe('supportsMediaSource', () => {
@@ -90,5 +91,50 @@ describe('isCodecSupported', () => {
   it('should return false for unsupported codecs', () => {
     // Test with unlikely/unsupported codec
     expect(isCodecSupported('video/invalid; codecs="fake"')).toBe(false);
+  });
+});
+
+describe('waitForMediaSourceOpen', () => {
+  it('resolves immediately when readyState is already open', async () => {
+    const mediaSource = createMediaSource();
+    const mediaElement = document.createElement('video');
+    attachMediaSource(mediaSource, mediaElement);
+    await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
+
+    expect(mediaSource.readyState).toBe('open');
+    const controller = new AbortController();
+    await waitForMediaSourceOpen(mediaSource, controller.signal);
+  });
+
+  it('resolves once readyState transitions out of closed via sourceopen', async () => {
+    const mediaSource = createMediaSource();
+    expect(mediaSource.readyState).toBe('closed');
+
+    const controller = new AbortController();
+    const ready = waitForMediaSourceOpen(mediaSource, controller.signal);
+
+    const mediaElement = document.createElement('video');
+    attachMediaSource(mediaSource, mediaElement);
+
+    await ready;
+    expect(mediaSource.readyState).toBe('open');
+  });
+
+  it('resolves on abort even if readyState never transitions', async () => {
+    const mediaSource = createMediaSource();
+    const controller = new AbortController();
+
+    const ready = waitForMediaSourceOpen(mediaSource, controller.signal);
+    controller.abort();
+
+    await ready;
+  });
+
+  it('returns an already-resolved promise when signal is pre-aborted', async () => {
+    const mediaSource = createMediaSource();
+    const controller = new AbortController();
+    controller.abort();
+
+    await waitForMediaSourceOpen(mediaSource, controller.signal);
   });
 });

@@ -49,6 +49,7 @@ describe('status', () => {
 
   it('derives captions, fullscreen, and picture-in-picture statuses', () => {
     expect(deriveStatus({ action: 'toggleSubtitles' }, SNAPSHOT)?.status).toBe('captions-on');
+    expect(deriveStatus({ action: 'toggleSubtitles' }, { ...SNAPSHOT, subtitlesAvailable: false })).toBeNull();
     expect(deriveStatus({ action: 'toggleFullscreen' }, SNAPSHOT)?.status).toBe('fullscreen');
     expect(deriveStatus({ action: 'toggleFullscreen' }, { ...SNAPSHOT, fullscreen: true })?.status).toBe(
       'exit-fullscreen'

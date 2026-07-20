@@ -1,10 +1,7 @@
 import { globSync } from 'node:fs';
 import type { UserConfig } from 'tsdown';
 import { defineConfig } from 'tsdown';
-
-type BuildMode = 'dev' | 'default';
-
-const buildModes: BuildMode[] = ['dev', 'default'];
+import { type PackageBuildMode, packageBuildConfig, packageBuildModes } from '../../build/tsdown.ts';
 
 const entries = Object.fromEntries(
   globSync('src/**/*.tailwind.ts').map((file) => {
@@ -13,19 +10,9 @@ const entries = Object.fromEntries(
   })
 );
 
-const createConfig = (mode: BuildMode): UserConfig => ({
+const createConfig = (mode: PackageBuildMode): UserConfig => ({
+  ...packageBuildConfig(mode, 'browser'),
   entry: entries,
-  platform: 'browser',
-  format: 'es',
-  sourcemap: true,
-  clean: true,
-  hash: false,
-  unbundle: true,
-  outDir: `dist/${mode}`,
-  define: {
-    __DEV__: mode === 'dev' ? 'true' : 'false',
-  },
-  dts: mode === 'dev' ? { tsgo: true, tsconfig: 'tsconfig.dts.json' } : false,
   copy: [
     {
       from: 'src/**/*.css',
@@ -46,4 +33,4 @@ const createConfig = (mode: BuildMode): UserConfig => ({
   ],
 });
 
-export default defineConfig(buildModes.map((mode) => createConfig(mode)));
+export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));

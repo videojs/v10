@@ -7,10 +7,12 @@ interface EjectDemoProps {
   defaultHtmlCode: React.ReactNode;
   defaultHtmlCss: React.ReactNode;
   defaultReactCode: React.ReactNode;
+  defaultReactPlayer: React.ReactNode;
   defaultReactCss: React.ReactNode;
   minimalHtmlCode: React.ReactNode;
   minimalHtmlCss: React.ReactNode;
   minimalReactCode: React.ReactNode;
+  minimalReactPlayer: React.ReactNode;
   minimalReactCss: React.ReactNode;
 }
 
@@ -28,6 +30,7 @@ export default function EjectDemo(props: EjectDemoProps) {
     : isDefault
       ? props.defaultReactCode
       : props.minimalReactCode;
+  const playerSlot = isHtml ? null : isDefault ? props.defaultReactPlayer : props.minimalReactPlayer;
   const cssSlot = isHtml
     ? isDefault
       ? props.defaultHtmlCss
@@ -44,6 +47,11 @@ export default function EjectDemo(props: EjectDemoProps) {
         <Tab variant="expanded" value="code" initial>
           {codeLabel}
         </Tab>
+        {playerSlot && (
+          <Tab variant="expanded" value="player">
+            JS
+          </Tab>
+        )}
         <Tab variant="expanded" value="css">
           CSS
         </Tab>
@@ -51,6 +59,11 @@ export default function EjectDemo(props: EjectDemoProps) {
       <TabsPanel variant="expanded" value="code" initial className="bg-faded-black dark:bg-soot m-2.5 mt-0">
         {codeSlot}
       </TabsPanel>
+      {playerSlot && (
+        <TabsPanel variant="expanded" value="player" className="bg-faded-black dark:bg-soot m-2.5 mt-0">
+          {playerSlot}
+        </TabsPanel>
+      )}
       <TabsPanel variant="expanded" value="css" className="bg-faded-black dark:bg-soot m-2.5 mt-0">
         {cssSlot}
       </TabsPanel>

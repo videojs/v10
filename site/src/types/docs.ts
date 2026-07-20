@@ -52,20 +52,35 @@ export interface Guide {
   devOnly?: boolean; // only visible in development mode
 }
 
+// Plain link to a page outside the docs (e.g. /changelog) — rendered with an
+// outbound arrow, excluded from guide navigation (prev/next, slugs, llms index)
+export interface SidebarLink {
+  href: string;
+  sidebarLabel: string;
+  frameworks?: SupportedFramework[];
+  devOnly?: boolean; // only visible in development mode
+}
+
 export interface Section {
   sidebarLabel: string;
   llmsDescription?: string;
   frameworks?: SupportedFramework[];
   devOnly?: boolean; // only visible in development mode
   defaultOpen?: boolean;
-  contents: Array<Guide | Section>;
+  contents: Array<Guide | Section | SidebarLink>;
 }
 
-export type Sidebar = Array<Guide | Section>;
+export type SidebarItem = Guide | Section | SidebarLink;
+
+export type Sidebar = Array<SidebarItem>;
 
 /**
- * Type guard to check if an item is a Section (vs a Guide)
+ * Type guard to check if an item is a Section (vs a Guide or SidebarLink)
  */
-export function isSection(item: Guide | Section): item is Section {
+export function isSection(item: SidebarItem): item is Section {
   return 'contents' in item;
+}
+
+export function isLink(item: SidebarItem): item is SidebarLink {
+  return 'href' in item;
 }

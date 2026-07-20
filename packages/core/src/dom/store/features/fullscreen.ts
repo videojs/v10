@@ -1,10 +1,9 @@
-import { listen } from '@videojs/utils/dom';
+import { listen, type WebKitVideoElement } from '@videojs/utils/dom';
 
 import type { MediaFullscreenState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreen, isFullscreenEnabled, requestFullscreen } from '../../presentation/fullscreen';
 import { exitPictureInPicture, isPictureInPicture } from '../../presentation/pip';
-import type { WebKitVideoElement } from '../../presentation/types';
 
 export const fullscreenFeature = definePlayerFeature({
   name: 'fullscreen',

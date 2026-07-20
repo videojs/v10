@@ -5,6 +5,7 @@
 .media-default-skin .media-icon__container {
   position: relative;
 }
+
 .media-default-skin .media-icon {
   flex-shrink: 0;
   width: var(--media-icon-size);

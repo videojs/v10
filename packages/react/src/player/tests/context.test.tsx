@@ -1,20 +1,27 @@
-import { render, renderHook } from '@testing-library/react';
+import { cleanup, render, renderHook, screen } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { createI18n } from '../../i18n/create-i18n';
 import { createMockStore } from '../../testing/mocks';
+import { Container } from '../container';
 import {
-  Container,
   PlayerContextProvider,
   type PlayerContextValue,
   useContainer,
   useContainerAttach,
   useMedia,
   useMediaAttach,
+  useOptionalContainer,
   useOptionalPlayer,
   usePlayer,
   usePlayerContext,
 } from '../context';
+
+afterEach(() => {
+  cleanup();
+  document.documentElement.removeAttribute('lang');
+});
 
 function createWrapper(value: PlayerContextValue) {
   return function Wrapper({ children }: { children: ReactNode }) {
@@ -113,6 +120,24 @@ describe('useContainerAttach', () => {
     });
 
     expect(result.current).toBe(setContainer);
+  });
+});
+
+describe('useOptionalContainer', () => {
+  it('returns null outside Provider', () => {
+    const { result } = renderHook(() => useOptionalContainer());
+    expect(result.current).toBeNull();
+  });
+
+  it('returns container inside Provider', () => {
+    const container = document.createElement('div');
+    const value = createContextValue({ container });
+
+    const { result } = renderHook(() => useOptionalContainer(), {
+      wrapper: createWrapper(value),
+    });
+
+    expect(result.current).toBe(container);
   });
 });
 
@@ -249,5 +274,60 @@ describe('Container', () => {
     );
 
     expect(store.attach).not.toHaveBeenCalled();
+  });
+
+  it('does not create an i18n provider by default', async () => {
+    const value = createContextValue();
+    const loader = vi.fn(async (tag: string) => (tag === 'x-container' ? { Play: 'Container play' } : undefined));
+    const { useTranslator } = createI18n({ loader });
+
+    function Label() {
+      const t = useTranslator();
+      return <span>{t('Play')}</span>;
+    }
+
+    render(
+      <div lang="x-container">
+        <PlayerContextProvider value={value}>
+          <Container>
+            <Label />
+          </Container>
+        </PlayerContextProvider>
+      </div>
+    );
+
+    expect(screen.queryByText('Play')).not.toBeNull();
+    await Promise.resolve();
+    expect(loader).not.toHaveBeenCalled();
+  });
+
+  it('does not derive locale from container lang through an ancestor provider', async () => {
+    const value = createContextValue();
+    const loader = vi.fn(async (tag: string) => (tag === 'x-container' ? { Play: 'Container play' } : undefined));
+    const { I18nProvider, useTranslator } = createI18n({
+      loader,
+    });
+
+    function Label() {
+      const t = useTranslator();
+      return <span>{t('Play')}</span>;
+    }
+
+    render(
+      <I18nProvider>
+        <div lang="x-container">
+          <PlayerContextProvider value={value}>
+            <Container>
+              <Label />
+            </Container>
+          </PlayerContextProvider>
+        </div>
+      </I18nProvider>
+    );
+
+    expect(screen.queryByText('Play')).not.toBeNull();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(screen.queryByText('Container play')).toBeNull();
+    expect(loader).not.toHaveBeenCalledWith('x-container');
   });
 });

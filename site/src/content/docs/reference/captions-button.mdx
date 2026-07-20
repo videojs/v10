@@ -41,6 +41,8 @@ Toggles captions and subtitles on and off. The button checks the media's text tr
 
 When no caption or subtitle tracks are present, `data-availability="unavailable"` is set. Use this to hide the button when there are no tracks to toggle.
 
+When `menuTrigger` is enabled and multiple caption or subtitle tracks are available, activation opens the linked captions menu instead of toggling captions directly. React enables `menuTrigger` automatically when a `CaptionsButton` is rendered inside `Menu.Trigger`.
+
 ## Styling
 
 Style the button based on active state:
@@ -61,6 +63,8 @@ media-captions-button[data-availability="unavailable"] {
 ## Accessibility
 
 Renders a `<button>` with an automatic `aria-label`: "Disable captions" when active, "Enable captions" when inactive. Override with the `label` prop. Keyboard activation: <kbd>Enter</kbd> / <kbd>Space</kbd>.
+
+In menu-trigger mode, the button behaves as a menu trigger and reflects menu state through the trigger attributes.
 
 ## Examples
 

@@ -1,0 +1,14 @@
+---
+description: "Migrates site search from Pagefind to Algolia DocSearch and adds new docs on accessibility, browser support, skin styling, and AI."
+date: 2026-03-20
+version: "10.0.0-beta.8"
+prerelease: true
+breaking: false
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.7...@videojs/core@10.0.0-beta.8"
+---
+
+Search on videojs.org moves from Pagefind to Algolia DocSearch v4 ([#941](https://github.com/videojs/v10/pull/941)). Instead of a static index built at deploy time, search now queries Algolia directly across two indexes: docs results ranked by relevance and filtered to the framework you are browsing, and blog results ranked by recency.
+
+The docs also gain four new pages: an accessibility concepts page ([#1007](https://github.com/videojs/v10/pull/1007)), a "Build with AI" guide ([#1005](https://github.com/videojs/v10/pull/1005)), a guide to skin styling ([#958](https://github.com/videojs/v10/pull/958)), and a browser support concepts page ([#1035](https://github.com/videojs/v10/pull/1035)).
+
+On the player side, the template minifier no longer strips default `<slot>` tags from HTML skins ([#1045](https://github.com/videojs/v10/pull/1045)), and the redundant CDN CSS files are gone ([#1071](https://github.com/videojs/v10/pull/1071)). HTML skin elements deliver their styles inside the JS bundle through shadow DOM `adoptedStyleSheets`, so the separate stylesheets were a no-op; if you load Video.js from a CDN, you can drop the `<link>` tags. A few small site fixes round out the release: vjs10-site.netlify.app now redirects to videojs.org ([#1038](https://github.com/videojs/v10/pull/1038)), and two docs pages recover their missing `DocsLinkCard` imports ([#1050](https://github.com/videojs/v10/pull/1050), [#1051](https://github.com/videojs/v10/pull/1051)).

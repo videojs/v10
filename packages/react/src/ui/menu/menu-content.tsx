@@ -1,6 +1,6 @@
 'use client';
 
-import type { MenuState } from '@videojs/core';
+import { type MenuState, PopoverCSSVars } from '@videojs/core';
 import {
   createMenuViewTransition,
   getAnchorPositionStyle,
@@ -8,9 +8,13 @@ import {
   getMenuViewportElement,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getPositioningBoundaryRect,
   getRootPositionOptions,
+  isEventWithinElement,
   isMenuNavigationKey,
+  observeMenuViewContent,
   resolveOffsets,
+  resolvePositioningBoundary,
   syncMenuViewRoot,
   syncMenuViewTransition,
   type UIFocusEvent,
@@ -30,6 +34,7 @@ import { useMenuContext, useSubMenuContext } from './context';
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
 const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
+const menuPreventedNativeEvents = new WeakSet<Event>();
 
 function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboardEvent {
   return {
@@ -59,12 +64,53 @@ function toUIFocusEvent(event: React.FocusEvent<HTMLDivElement>): UIFocusEvent {
   };
 }
 
+function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLDivElement>): void {
+  const keyboardEvent = toUIKeyboardEvent(event);
+
+  if (event.key !== 'Escape' && isMenuNavigationKey(keyboardEvent) && !event.defaultPrevented) {
+    event.preventDefault();
+    menuPreventedNativeEvents.add(event.nativeEvent);
+  }
+}
+
+function wasDefaultPreventedByMenu(event: React.KeyboardEvent<HTMLDivElement>): boolean {
+  return menuPreventedNativeEvents.has(event.nativeEvent);
+}
+
+function callKeyDownHandler(
+  handler: React.KeyboardEventHandler<HTMLDivElement> | undefined,
+  event: React.KeyboardEvent<HTMLDivElement>
+): boolean {
+  const defaultPreventedBeforeHandler = event.defaultPrevented && !wasDefaultPreventedByMenu(event);
+
+  if (!handler) return defaultPreventedBeforeHandler;
+
+  let defaultPreventedByHandler = false;
+  const preventDefault = event.preventDefault;
+
+  // Capture-phase menu handling may have already prevented default; track
+  // whether the consumer also calls preventDefault while their handler runs.
+  event.preventDefault = () => {
+    defaultPreventedByHandler = true;
+    preventDefault.call(event);
+  };
+
+  try {
+    handler(event);
+  } finally {
+    event.preventDefault = preventDefault;
+  }
+
+  return defaultPreventedBeforeHandler || defaultPreventedByHandler;
+}
+
 /** Container for menu items. Positioned relative to the trigger at root level; renders in-place as a submenu panel when nested. */
 export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function MenuContent(
   { render, className, style, onKeyDown, onBlur, ...elementProps },
   forwardedRef
 ) {
-  const { core, menu, state, stateAttrMap, anchorName, contentId, activeSubMenuId } = useMenuContext();
+  const { core, menu, state, stateAttrMap, anchorName, contentId, boundary, container, activeSubMenuId } =
+    useMenuContext();
   const subMenuCtx = useSubMenuContext();
   const isSubmenu = state.isSubmenu;
 
@@ -89,6 +135,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const menuViewTransitionState = useSnapshot(menuViewTransition.input);
   const menuViewElementRef = useRef<HTMLDivElement | null>(null);
   const parentContentElementRef = useRef<HTMLElement | null>(null);
+  const activeSubMenuIdRef = useRef(activeSubMenuId);
+
+  activeSubMenuIdRef.current = activeSubMenuId;
 
   useLayoutEffect(() => {
     return () => menuViewTransition.destroy();
@@ -115,9 +164,12 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   const handleSubMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
-      (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
-
+      const defaultPreventedByUser = callKeyDownHandler(
+        onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined,
+        event
+      );
       const keyboardEvent = toUIKeyboardEvent(event);
+      const isNavigationKey = isMenuNavigationKey(keyboardEvent);
       menu.contentProps.onKeyDown(keyboardEvent);
       const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
@@ -127,12 +179,12 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
         parentMenu.menu.navigationInput.current.stack[parentMenu.menu.navigationInput.current.stack.length - 1]
           ?.menuId === subMenuId;
 
-      if (isBackNavigationKey && ownsActiveSubmenu && !event.defaultPrevented) {
+      if (isBackNavigationKey && ownsActiveSubmenu && !defaultPreventedByUser) {
         event.preventDefault();
         parentMenu.pop();
       }
 
-      if (isMenuNavigationKey(keyboardEvent) && (!isBackNavigationKey || ownsActiveSubmenu)) {
+      if (isNavigationKey && (!isBackNavigationKey || ownsActiveSubmenu)) {
         event.stopPropagation();
       }
     },
@@ -142,7 +194,12 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const handleRootMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
-      menu.contentProps.onKeyDown(toUIKeyboardEvent(event));
+      const keyboardEvent = toUIKeyboardEvent(event);
+      menu.contentProps.onKeyDown(keyboardEvent);
+      if (event.key === 'Escape') return;
+      if (isMenuNavigationKey(keyboardEvent)) {
+        event.stopPropagation();
+      }
     },
     [onKeyDown, menu]
   );
@@ -187,6 +244,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     if (!state.open) return;
 
     syncMenuViewRoot(internalRef.current, activeSubMenuId !== null);
+
+    const contentElement = internalRef.current;
+    if (!contentElement) return;
+
+    return observeMenuViewContent(contentElement, () => {
+      syncMenuViewRoot(contentElement, activeSubMenuId !== null);
+    });
   }, [isSubmenu, state.open, activeSubMenuId]);
 
   useLayoutEffect(() => {
@@ -199,10 +263,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   useLayoutEffect(() => {
     if (isSubmenu) return;
-    if (supportsAnchorPositioning()) return;
-    if (!positionOptions) return;
     if (!state.open) {
       setManualStyle(null);
+      return;
+    }
+
+    if (!positionOptions) {
+      syncMenuViewRoot(internalRef.current, activeSubMenuIdRef.current !== null);
       return;
     }
 
@@ -214,29 +281,60 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       if (!triggerElement || !contentElement) return;
 
       const triggerRect = triggerElement.getBoundingClientRect();
-      const contentRect = getPopupPositionRect(contentElement);
-      const boundaryRect = document.documentElement.getBoundingClientRect();
+      const root = contentElement.getRootNode() as Document | ShadowRoot;
+      const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
+      const anchorSupported = supportsAnchorPositioning();
+      const contentRect = anchorSupported ? undefined : getPopupPositionRect(contentElement);
+      const boundaryRect = getPositioningBoundaryRect(boundaryElement);
       const offsets = resolveOffsets(contentElement);
 
-      setManualStyle(
-        getAnchorPositionStyle(
+      let nextStyle = getAnchorPositionStyle(
+        anchorName,
+        rootPositionOptions,
+        triggerRect,
+        contentRect,
+        boundaryRect,
+        offsets
+      );
+
+      const availableWidth = nextStyle[PopoverCSSVars.availableWidth];
+      syncMenuViewRoot(
+        contentElement,
+        activeSubMenuIdRef.current !== null,
+        availableWidth ? { availableWidth } : undefined
+      );
+
+      if (!anchorSupported) {
+        nextStyle = getAnchorPositionStyle(
           anchorName,
           rootPositionOptions,
           triggerRect,
-          contentRect,
+          getPopupPositionRect(contentElement),
           boundaryRect,
           offsets
-        ) as CSSProperties
-      );
+        );
+      }
+
+      const { positionAnchor: _, ...rootStyle } = nextStyle;
+
+      setManualStyle(rootStyle as CSSProperties);
     }
 
     measure();
 
     const triggerElement = menu.triggerElement;
     const contentElement = internalRef.current;
+    const boundaryElement = contentElement
+      ? resolvePositioningBoundary(boundary, {
+          container,
+          root: contentElement.getRootNode() as Document | ShadowRoot,
+        })
+      : null;
 
     let animationFrameId = 0;
-    function reposition(): void {
+    function reposition(event?: Event): void {
+      if (event && isEventWithinElement(event, internalRef.current)) return;
+
       cancelAnimationFrame(animationFrameId);
       animationFrameId = requestAnimationFrame(measure);
     }
@@ -247,6 +345,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
     if (triggerElement && resizeObserver) resizeObserver.observe(triggerElement);
     if (contentElement && resizeObserver) resizeObserver.observe(contentElement);
+    if (boundaryElement && resizeObserver) resizeObserver.observe(boundaryElement);
 
     window.addEventListener('scroll', reposition, { capture: true, passive: true });
     window.addEventListener('resize', reposition);
@@ -257,7 +356,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };
-  }, [isSubmenu, state.open, anchorName, positionOptions, menu]);
+  }, [isSubmenu, state.open, anchorName, positionOptions, menu, boundary, container]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -269,7 +368,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       { render, className, style },
       {
         state,
-        stateAttrMap,
         ref: menuViewComposedRef,
         props: [
           {
@@ -277,6 +375,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
             role: 'menu' as const,
             tabIndex: -1,
             'data-submenu': '',
+            onKeyDownCapture: preventMenuKeyDefault,
             onKeyDown: handleSubMenuKeyDown,
             onBlur,
           },
@@ -294,7 +393,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   if (!state.open) return null;
 
-  const positioningStyle = anchorStyle ?? manualStyle ?? POPOVER_RESET;
+  const positioningStyle = manualStyle ?? anchorStyle ?? POPOVER_RESET;
 
   return renderElement(
     'div',
@@ -310,7 +409,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
           ...core.getContentAttrs(state),
           ...getMenuViewportAttrs(),
         },
-        { onKeyDown: handleRootMenuKeyDown, onBlur: handleRootMenuBlur },
+        { onKeyDownCapture: preventMenuKeyDefault, onKeyDown: handleRootMenuKeyDown, onBlur: handleRootMenuBlur },
         elementProps,
       ],
     }

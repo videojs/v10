@@ -1,0 +1,35 @@
+---
+title: useAudioTrackOptions
+description: Hook to build audio track menu options from the player audio track state
+---
+
+import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+
+`useAudioTrackOptions` returns the currently enabled audio track, the available options, and a `setValue` callback for wiring track selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> is not configured.
+
+```tsx title="AudioMenu.tsx"
+import { Menu, useAudioTrackOptions } from "@videojs/react";
+
+function AudioMenu() {
+  const audioTrack = useAudioTrackOptions();
+  if (audioTrack?.state.availability !== "available") return null;
+
+  return (
+    <Menu.RadioGroup value={audioTrack.value} onValueChange={audioTrack.setValue} aria-label="Audio">
+      {audioTrack.options.map((option) => (
+        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+          {option.label}
+          <Menu.ItemIndicator checked={option.value === audioTrack.value} />
+        </Menu.RadioItem>
+      ))}
+    </Menu.RadioGroup>
+  );
+}
+```
+
+Option labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels.
+
+See <DocsLink slug="reference/audio-track-radio-group">AudioTrackRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
+
+<UtilReference util="useAudioTrackOptions" />

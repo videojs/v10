@@ -1,0 +1,122 @@
+---
+title: CaptionsRadioGroup
+frameworkTitle:
+  html: media-captions-radio-group
+description: A menu radio group for selecting caption and subtitle tracks
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/captions-radio-group/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/captions-radio-group/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/captions-radio-group/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/captions-radio-group/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/captions-radio-group/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/captions-radio-group/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/captions-radio-group/html/css/BasicUsage.ts?raw";
+
+Creates radio items from the player text track state and selects the showing caption or subtitle track.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Menu.RadioGroup>
+    <Menu.GroupLabel />
+    <Menu.RadioItem>
+      <Menu.ItemIndicator />
+    </Menu.RadioItem>
+  </Menu.RadioGroup>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-captions-radio-group>
+    <template>
+      <media-menu-radio-item>
+        <span data-part="label"></span>
+        <media-menu-item-indicator></media-menu-item-indicator>
+      </media-menu-radio-item>
+    </template>
+  </media-captions-radio-group>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The group is available when the configured media exposes at least one caption or subtitle track. The first generated option is `Off`; selecting it hides captions. Track labels use the track label, then language, then kind. Pass `formatTrack` to customize the visible labels.
+
+<FrameworkCase frameworks={["react"]}>
+<DocsLink slug="reference/use-captions-options">`useCaptionsOptions`</DocsLink> returns `null` when the <DocsLink slug="reference/feature-text-tracks">text tracks feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-captions-radio-group>` generates `<media-menu-radio-item>` children, including the `Off` item. Add an optional `<template>` with a single `<media-menu-radio-item>` to customize each generated item.
+</FrameworkCase>
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-active` | Present / absent | Present when captions are enabled. |
+| `data-disabled` | Present / absent | Present when track selection is disabled. |
+| `data-availability` | `"available"` / `"unavailable"` | Whether caption or subtitle tracks are available. |
+
+<FrameworkCase frameworks={["html"]}>
+  ```css
+  media-captions-radio-group[data-availability="unavailable"] {
+    display: none;
+  }
+  ```
+</FrameworkCase>
+
+## Accessibility
+
+The group uses the menu radio group pattern.
+
+<FrameworkCase frameworks={["react"]}>
+Give `Menu.RadioGroup` an accessible name with `aria-label` or a nested `Menu.GroupLabel`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element receives an accessible label from the `label` property or defaults to `Enable captions` / `Disable captions` based on the current state.
+</FrameworkCase>
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <ComponentReference component="CaptionsRadioGroup" />
+</FrameworkCase>

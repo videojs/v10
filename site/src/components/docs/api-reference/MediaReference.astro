@@ -1,0 +1,45 @@
+---
+import { getEntry } from 'astro:content';
+import ContentWidth from '@/components/frames/ContentWidth.astro';
+import H2 from '@/components/typography/H2Markdown.astro';
+import type { MediaReference } from '@/types/media-reference';
+import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
+import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
+import HtmlMediaReference from './HtmlMediaReference.astro';
+import ReactMediaReference from './ReactMediaReference.astro';
+
+interface Props {
+  media: string;
+}
+
+const { media } = Astro.props;
+const framework = Astro.params.framework === 'react' ? 'react' : 'html';
+const entry = await getEntry('mediaReference', resolveReferenceSlug(media));
+const ref: MediaReference | null = entry?.data ?? null;
+if (!ref) return;
+
+const model = createMediaReferenceModel(media, ref);
+if (!model) return;
+const platform = model.platforms[framework];
+if (!platform) return;
+---
+
+<ContentWidth>
+  <H2 id={model.heading.id}>{model.heading.text}</H2>
+  {
+    framework === "html" ? (
+      <HtmlMediaReference
+        media={media}
+        mediaType={ref.mediaType}
+        data={platform.data}
+        sections={platform.sections}
+      />
+    ) : (
+      <ReactMediaReference
+        media={media}
+        data={platform.data}
+        sections={platform.sections}
+      />
+    )
+  }
+</ContentWidth>

@@ -1,71 +1,136 @@
-import { describe, expect, it } from 'vitest';
-import { MuxVideoMedia } from '../../mux';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { addComponent } from '../../media-host';
+import { HTMLVideoElementHost } from '../../video-host';
+import { GoogleCast } from '../index';
 
-describe('GoogleCastMixin', () => {
-  describe('castReceiver', () => {
-    it('stores a non-empty string value', () => {
-      const media = new MuxVideoMedia();
-      media.castReceiver = 'ABC123';
-      expect(media.castReceiver).toBe('ABC123');
+const mocks = vi.hoisted(() => {
+  class FakeRemote extends EventTarget {
+    state: 'disconnected' | 'connecting' | 'connected' = 'disconnected';
+  }
+
+  class FakeProvider {
+    static instances: FakeProvider[] = [];
+
+    remote = new FakeRemote();
+    currentTime = 42;
+    muted = false;
+    load = vi.fn();
+    attach = vi.fn();
+    detach = vi.fn();
+    destroy = vi.fn();
+
+    constructor(public config: unknown) {
+      FakeProvider.instances.push(this);
+    }
+  }
+
+  return { FakeProvider };
+});
+
+vi.mock('../google-cast-provider', () => ({
+  GoogleCastProvider: mocks.FakeProvider,
+}));
+
+function setup() {
+  const host = new HTMLVideoElementHost();
+  const video = document.createElement('video');
+  host.attach(video);
+
+  const googleCast = new GoogleCast();
+  addComponent(host, googleCast);
+
+  const provider = mocks.FakeProvider.instances.at(-1)!;
+  return { host, video, googleCast, provider };
+}
+
+function connect(provider: InstanceType<typeof mocks.FakeProvider>) {
+  provider.remote.state = 'connected';
+  provider.remote.dispatchEvent(new Event('connect'));
+}
+
+function disconnect(provider: InstanceType<typeof mocks.FakeProvider>) {
+  provider.remote.state = 'disconnected';
+  provider.remote.dispatchEvent(new Event('disconnect'));
+}
+
+beforeEach(() => {
+  // `requiresCastFramework()` requires a Chromium-like environment.
+  vi.stubGlobal('chrome', {});
+  mocks.FakeProvider.instances.length = 0;
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe('GoogleCast', () => {
+  describe('override swap on connect/disconnect', () => {
+    it('routes host reads to the target while disconnected', () => {
+      const { host, googleCast, provider } = setup();
+
+      expect(googleCast.targetOverride).not.toBe(provider);
+      expect(host.currentTime).toBe(0);
     });
 
-    it('coerces empty string to undefined', () => {
-      const media = new MuxVideoMedia();
-      media.castReceiver = 'ABC123';
-      media.castReceiver = '';
-      expect(media.castReceiver).toBeUndefined();
+    it('swaps the target override to the provider on connect', () => {
+      const { host, googleCast, provider } = setup();
+
+      connect(provider);
+
+      expect(googleCast.targetOverride).toBe(provider);
+      expect(host.currentTime).toBe(42);
     });
 
-    it('stores undefined when set to undefined', () => {
-      const media = new MuxVideoMedia();
-      media.castReceiver = 'ABC123';
-      media.castReceiver = undefined;
-      expect(media.castReceiver).toBeUndefined();
+    it('restores the remote-only override on disconnect', () => {
+      const { host, googleCast, provider } = setup();
+
+      connect(provider);
+      disconnect(provider);
+
+      expect(googleCast.targetOverride).not.toBe(provider);
+      expect(host.currentTime).toBe(0);
+      // The override still exposes `remote` through the provider accessor.
+      expect(host.remote).toBe(provider.remote);
     });
 
-    it('updates the castOptions receiverApplicationId when set', () => {
-      const media = new MuxVideoMedia();
-      media.castReceiver = 'ABC123';
-      expect(media.castOptions.receiverApplicationId).toBe('ABC123');
+    it('routes property writes to the provider while connected', () => {
+      const { host, video, provider } = setup();
+
+      connect(provider);
+      host.muted = true;
+
+      expect(provider.muted).toBe(true);
+      expect(video.muted).toBe(false);
     });
 
-    it('keeps the previous receiverApplicationId when cleared', () => {
-      const media = new MuxVideoMedia();
-      media.castReceiver = 'ABC123';
-      media.castReceiver = '';
-      expect(media.castOptions.receiverApplicationId).toBe('ABC123');
+    it('routes property writes to the target after disconnect', () => {
+      const { host, video, provider } = setup();
+
+      connect(provider);
+      disconnect(provider);
+      host.muted = true;
+
+      expect(provider.muted).toBe(false);
+      expect(video.muted).toBe(true);
     });
   });
 
-  describe('castContentType', () => {
-    it('stores a non-empty string value', () => {
-      const media = new MuxVideoMedia();
-      media.castContentType = 'application/x-mpegURL';
-      expect(media.castContentType).toBe('application/x-mpegURL');
+  describe('cast prop changes', () => {
+    it('reloads the media when a cast prop changes while connected', () => {
+      const { googleCast, provider } = setup();
+
+      connect(provider);
+      googleCast.src = 'https://example.com/stream.m3u8';
+
+      expect(provider.load).toHaveBeenCalledTimes(1);
     });
 
-    it('coerces empty string to undefined', () => {
-      const media = new MuxVideoMedia();
-      media.castContentType = 'application/x-mpegURL';
-      media.castContentType = '';
-      expect(media.castContentType).toBeUndefined();
-    });
+    it('does not reload the media while disconnected', () => {
+      const { googleCast, provider } = setup();
 
-    it('stores undefined when set to undefined', () => {
-      const media = new MuxVideoMedia();
-      media.castContentType = 'application/x-mpegURL';
-      media.castContentType = undefined;
-      expect(media.castContentType).toBeUndefined();
-    });
-  });
+      googleCast.src = 'https://example.com/stream.m3u8';
 
-  describe('castSrc', () => {
-    it('coerces empty string to undefined so getter fallback applies', () => {
-      const media = new MuxVideoMedia();
-      media.castSrc = 'https://example.com/cast.m3u8';
-      media.castSrc = '';
-      media.src = 'https://example.com/video.m3u8';
-      expect(media.castSrc).toBe('https://example.com/video.m3u8');
+      expect(provider.load).not.toHaveBeenCalled();
     });
   });
 });

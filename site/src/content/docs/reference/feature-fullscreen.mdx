@@ -27,11 +27,11 @@ import { selectFullscreen, usePlayer } from '@videojs/react';
 
 function FullscreenButton() {
   const fs = usePlayer(selectFullscreen);
-  if (!fs || fs.availability !== 'available') return null;
+  if (!fs || fs.fullscreenAvailability !== 'available') return null;
 
   return (
-    <button onClick={fs.toggle}>
-      {fs.active ? 'Exit fullscreen' : 'Fullscreen'}
+    <button onClick={fs.toggleFullscreen}>
+      {fs.fullscreen ? 'Exit fullscreen' : 'Fullscreen'}
     </button>
   );
 }
@@ -50,3 +50,18 @@ class FullscreenButton extends MediaElement {
 }
 ```
 </FrameworkCase>
+
+### Screen orientation
+
+Add <DocsLink slug="reference/feature-orientation-lock">`features.orientationLock`</DocsLink> to lock screen orientation while fullscreen is active. Unsupported browsers and rejected lock requests are ignored, so iOS Safari continues to use its normal fullscreen behavior.
+
+By default, the feature locks to `landscape`. Pass a Screen Orientation API type to customize it:
+
+```ts
+import { createPlayer, features } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({
+  features: [...videoFeatures, features.orientationLock({ type: 'portrait' })],
+});
+```

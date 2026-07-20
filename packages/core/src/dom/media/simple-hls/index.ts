@@ -1,4 +1,6 @@
 import { SimpleHlsMediaMixin } from '@videojs/spf/hls';
 import { HTMLVideoElementHost } from '../video-host';
 
-export class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
+const SimpleHlsMediaBase = SimpleHlsMediaMixin(HTMLVideoElementHost);
+
+export class SimpleHlsMedia extends SimpleHlsMediaBase {}

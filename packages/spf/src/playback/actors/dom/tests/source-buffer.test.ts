@@ -265,6 +265,37 @@ describe('createSourceBufferActor', () => {
     actor.destroy();
   });
 
+  it('captures initTrackLanguage from append-init meta for downstream cross-rendition flush detection', async () => {
+    // Multi-language-audio Tier 2 prerequisite: the segment-loader's
+    // planTasks compares `actorCtx.initTrackLanguage` against the
+    // newly-selected track's language to decide whether to flush the
+    // ahead-buffer on track switch. The actor captures language alongside
+    // trackId from the append-init meta.
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'audio-en', language: 'en' } });
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
+
+    expect(actor.snapshot.get().context.initTrackId).toBe('audio-en');
+    expect(actor.snapshot.get().context.initTrackLanguage).toBe('en');
+
+    actor.destroy();
+  });
+
+  it('leaves initTrackLanguage undefined when append-init meta omits language (video)', async () => {
+    const sourceBuffer = makeSourceBuffer();
+    const actor = createSourceBufferActor(sourceBuffer);
+
+    actor.send({ type: 'append-init', data: new ArrayBuffer(4), meta: { trackId: 'video-1' } });
+    await vi.waitFor(() => expect(actor.snapshot.get().value).toBe('idle'));
+
+    expect(actor.snapshot.get().context.initTrackId).toBe('video-1');
+    expect(actor.snapshot.get().context.initTrackLanguage).toBeUndefined();
+
+    actor.destroy();
+  });
+
   // ---------------------------------------------------------------------------
   // append-segment
   // ---------------------------------------------------------------------------

@@ -1,4 +1,5 @@
 import {
+  createInputIndicatorLabels,
   getStatusIndicatorDisplayValue,
   type InputAction,
   StatusIndicatorCore,
@@ -7,6 +8,8 @@ import {
 import { createTransition } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
 
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
 import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
@@ -21,6 +24,7 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
   actions: string | undefined;
   closeDelay: number | undefined;
 
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #core = new StatusIndicatorCore();
   readonly #transition = createTransition();
   readonly #liveIndicator = new LiveIndicator({
@@ -42,7 +46,11 @@ export class StatusIndicatorElement extends InputIndicatorElement<StatusIndicato
   }
 
   protected override syncCoreProps(): void {
-    this.#core.setProps({ actions: parseActions(this.actions), closeDelay: this.closeDelay });
+    this.#core.setProps({
+      actions: parseActions(this.actions),
+      closeDelay: this.closeDelay,
+      labels: createInputIndicatorLabels(this.#i18n.value),
+    });
   }
 }
 

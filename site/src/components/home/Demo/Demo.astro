@@ -78,8 +78,13 @@ const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react')
       <ServerCode slot="defaultHtmlCss" code={defaultVideo.css!} lang="css" />
       <ServerCode
         slot="defaultReactCode"
-        code={defaultVideoReact.tsx!}
+        code={defaultVideoReact.tsx!["VideoPlayer.tsx"]!}
         lang="tsx"
+      />
+      <ServerCode
+        slot="defaultReactPlayer"
+        code={defaultVideoReact.tsx!["player.ts"]!}
+        lang="ts"
       />
       <ServerCode
         slot="defaultReactCss"
@@ -94,8 +99,13 @@ const minimalVideoReact = (await getEntry('ejectedSkins', 'minimal-video-react')
       <ServerCode slot="minimalHtmlCss" code={minimalVideo.css!} lang="css" />
       <ServerCode
         slot="minimalReactCode"
-        code={minimalVideoReact.tsx!}
+        code={minimalVideoReact.tsx!["VideoPlayer.tsx"]!}
         lang="tsx"
+      />
+      <ServerCode
+        slot="minimalReactPlayer"
+        code={minimalVideoReact.tsx!["player.ts"]!}
+        lang="ts"
       />
       <ServerCode
         slot="minimalReactCss"

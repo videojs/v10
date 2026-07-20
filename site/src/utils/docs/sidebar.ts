@@ -1,5 +1,5 @@
-import type { Guide, Section, Sidebar, SupportedFramework } from '@/types/docs';
-import { FRAMEWORK_STYLES, isSection } from '@/types/docs';
+import type { Guide, Sidebar, SidebarItem, SupportedFramework } from '@/types/docs';
+import { FRAMEWORK_STYLES, isLink, isSection } from '@/types/docs';
 
 import { sidebar } from '../../docs.config';
 
@@ -13,7 +13,7 @@ import { sidebar } from '../../docs.config';
  * @returns true if the item should be visible
  */
 export function isItemVisible(
-  item: Guide | Section,
+  item: SidebarItem,
   framework: SupportedFramework,
   isDev: boolean = import.meta.env.DEV
 ): boolean {
@@ -94,7 +94,7 @@ export function findFirstGuide(
       } catch {
         // Continue searching other sections
       }
-    } else {
+    } else if (!isLink(item)) {
       // It's a Guide, return its slug
       return item.slug;
     }
@@ -119,7 +119,7 @@ export function getAllGuideSlugs(sidebarToExtract: Sidebar = sidebar): string[] 
     if (isSection(item)) {
       // Recursively get slugs from section contents
       slugs.push(...getAllGuideSlugs(item.contents));
-    } else {
+    } else if (!isLink(item)) {
       // It's a Guide, add its slug
       slugs.push(item.slug);
     }
@@ -141,7 +141,7 @@ export function findGuideBySlug(slug: string, sidebarToSearch: Sidebar = sidebar
       // Recursively search section contents
       const guide = findGuideBySlug(slug, item.contents);
       if (guide) return guide;
-    } else if (item.slug === slug) {
+    } else if (!isLink(item) && item.slug === slug) {
       // Found the guide
       return item;
     }
@@ -166,7 +166,7 @@ export function getSectionsForGuide(slug: string, sidebarToSearch: Sidebar = sid
         // Recursively search section contents with updated path
         const result = findInSidebar(item.contents, [...path, item.sidebarLabel]);
         if (result !== null) return result;
-      } else if (item.slug === slug) {
+      } else if (!isLink(item) && item.slug === slug) {
         // Found the guide, return the accumulated path
         return path;
       }
@@ -191,7 +191,7 @@ export function getValidFrameworksForGuide(guide: Guide, sidebarToSearch: Sideba
         const sectionFrameworks = item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
         const result = findWithRestrictions(item.contents, sectionFrameworks);
         if (result) return result;
-      } else if (item.slug === guide.slug) {
+      } else if (!isLink(item) && item.slug === guide.slug) {
         return item.frameworks ? inherited.filter((f) => item.frameworks!.includes(f)) : inherited;
       }
     }

@@ -1,7 +1,8 @@
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
-import { isFunction } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
+
+import { resolveLabel } from '../utils/resolve-label';
 
 /** Configuration shared by all slider variants. */
 export interface SliderProps {
@@ -123,16 +124,7 @@ export class SliderCore {
   }
 
   getLabel(state: SliderState): string {
-    const { label } = this.#props;
-
-    if (isFunction(label)) {
-      const customLabel = label(state);
-      if (customLabel) return customLabel;
-    } else if (label) {
-      return label;
-    }
-
-    return '';
+    return resolveLabel(this.#props.label, state) || '';
   }
 
   getAttrs(state: SliderState) {

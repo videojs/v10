@@ -1,8 +1,8 @@
 import { createStore } from '@videojs/store';
+import type { WebKitVideoElement } from '@videojs/utils/dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../media/types';
 import { HTMLVideoElementHost } from '../../../media/video-host';
-import type { WebKitVideoElement } from '../../../presentation/types';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { pipFeature } from '../pip';
 

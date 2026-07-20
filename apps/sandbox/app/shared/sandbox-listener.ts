@@ -1,4 +1,5 @@
 import { SKINS } from '@app/constants';
+import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Skin } from '@app/types';
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
 
@@ -35,6 +36,12 @@ let currentAutoplay = readBoolean('autoplay');
 let currentMuted = readBoolean('muted');
 let currentLoop = readBoolean('loop');
 let currentPreload = readPreload();
+let currentLocale = readLocale();
+
+function readLocale(): SandboxLocaleTag {
+  const value = params.get('locale');
+  return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag) ? (value as SandboxLocaleTag) : DEFAULT_SANDBOX_LOCALE;
+}
 
 export function getInitialSkin(): Skin {
   return currentSkin;
@@ -147,6 +154,25 @@ export function onPreloadChange(callback: (preload: PreloadValue) => void): () =
 
     currentPreload = event.data.preload;
     callback(currentPreload);
+  };
+
+  window.addEventListener('message', handler);
+
+  return () => {
+    window.removeEventListener('message', handler);
+  };
+}
+
+export function getInitialLocale(): SandboxLocaleTag {
+  return currentLocale;
+}
+
+export function onLocaleChange(callback: (locale: SandboxLocaleTag) => void): () => void {
+  const handler = (event: MessageEvent) => {
+    if (event.data?.type !== 'locale-change' || !SANDBOX_LOCALE_TAGS.includes(event.data.locale)) return;
+
+    currentLocale = event.data.locale;
+    callback(currentLocale);
   };
 
   window.addEventListener('message', handler);

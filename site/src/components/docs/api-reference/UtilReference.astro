@@ -1,6 +1,5 @@
 ---
 import { getEntry } from 'astro:content';
-import { kebabCase } from 'es-toolkit/string';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
 import H3 from '@/components/typography/H3Markdown.astro';
@@ -8,6 +7,7 @@ import H4 from '@/components/typography/H4Markdown.astro';
 import P from '@/components/typography/P.astro';
 import type { UtilReference } from '@/types/util-reference';
 import { createUtilReferenceModel } from '@/utils/utilReferenceModel';
+import { utilReferenceSlug } from '@/utils/utilReferenceSlug';
 import InlineMarkdown from './InlineMarkdown.astro';
 import UtilParamsTable from './UtilParamsTable.astro';
 import UtilReturnTable from './UtilReturnTable.astro';
@@ -19,7 +19,7 @@ interface Props {
 
 const { util, slug } = Astro.props;
 
-const entry = await getEntry('utilReference', slug ?? kebabCase(util));
+const entry = await getEntry('utilReference', slug ?? utilReferenceSlug(util));
 const ref: UtilReference | null = entry?.data ?? null;
 if (!ref) return;
 

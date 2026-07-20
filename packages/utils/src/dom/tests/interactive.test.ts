@@ -1,9 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
-import { isEditableTarget, isInteractiveActivation } from '../interactive';
+import { isEditableTarget, isInteractiveActivation, isInteractiveTarget } from '../interactive';
 
 function keydown(target: EventTarget, options?: KeyboardEventInit): KeyboardEvent {
   const event = new KeyboardEvent('keydown', { key: 'k', bubbles: true, ...options });
+  target.dispatchEvent(event);
+  return event;
+}
+
+function pointerup(target: EventTarget): Event {
+  const event = new Event('pointerup', { bubbles: true });
   target.dispatchEvent(event);
   return event;
 }
@@ -164,6 +170,53 @@ describe('isInteractiveActivation', () => {
 
     const event = keydown(div, { key: ' ' });
     expect(isInteractiveActivation(event)).toBe(true);
+
+    div.remove();
+  });
+});
+
+describe('isInteractiveTarget', () => {
+  it('returns true for menu item radio targets', () => {
+    const item = document.createElement('div');
+    item.setAttribute('role', 'menuitemradio');
+    document.body.appendChild(item);
+
+    const event = pointerup(item);
+    expect(isInteractiveTarget(event)).toBe(true);
+
+    item.remove();
+  });
+
+  it('returns true for nested targets inside menu items', () => {
+    const item = document.createElement('div');
+    const label = document.createElement('span');
+    item.setAttribute('role', 'menuitemradio');
+    item.appendChild(label);
+    document.body.appendChild(item);
+
+    const event = pointerup(label);
+    expect(isInteractiveTarget(event)).toBe(true);
+
+    item.remove();
+  });
+
+  it('returns true for menu surfaces', () => {
+    const menu = document.createElement('div');
+    menu.setAttribute('role', 'menu');
+    document.body.appendChild(menu);
+
+    const event = pointerup(menu);
+    expect(isInteractiveTarget(event)).toBe(true);
+
+    menu.remove();
+  });
+
+  it('returns false for plain div targets', () => {
+    const div = document.createElement('div');
+    document.body.appendChild(div);
+
+    const event = pointerup(div);
+    expect(isInteractiveTarget(event)).toBe(false);
 
     div.remove();
   });

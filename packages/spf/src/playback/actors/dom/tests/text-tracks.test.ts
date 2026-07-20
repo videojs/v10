@@ -173,6 +173,48 @@ describe('TextTracksActor', () => {
     expect(actor.snapshot.get().context.segments).toEqual({});
   });
 
+  it("'clear' message wipes loaded + segments context", () => {
+    const video = makeMediaElement(['track-en']);
+    const actor = createTextTracksActor(video);
+    const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+    textTrack.mode = 'hidden';
+
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0'), cues: [new VTTCue(0, 2, 'Hello')] });
+    expect(actor.snapshot.get().context.loaded['track-en']).toHaveLength(1);
+    expect(actor.snapshot.get().context.segments['track-en']).toHaveLength(1);
+
+    actor.send({ type: 'clear' });
+
+    expect(actor.snapshot.get().context.loaded).toEqual({});
+    expect(actor.snapshot.get().context.segments).toEqual({});
+  });
+
+  it("after 'clear', a reused trackId can re-load segments (regression: stale cache across source resets)", () => {
+    // The actor's lifecycle is bound to mediaElement, so its cache
+    // survives source resets. Without a clear on source reset,
+    // `getSegmentsToLoad` (which reads the actor's `segments` snapshot)
+    // would treat the new source's segments as already-buffered and
+    // skip loading them.
+    const video = makeMediaElement(['track-en']);
+    const actor = createTextTracksActor(video);
+    const textTrack = Array.from(video.textTracks).find((t) => t.id === 'track-en')!;
+    textTrack.mode = 'hidden';
+
+    // Source A: track-en has seg-0 + seg-1.
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'A0')] });
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-1', 10, 10), cues: [new VTTCue(10, 12, 'A1')] });
+    expect(actor.snapshot.get().context.segments['track-en']).toHaveLength(2);
+
+    // Source unload — `syncTextTracks` clears the actor's cache.
+    actor.send({ type: 'clear' });
+
+    // Source B: same trackId, fresh segment with same id as one in A.
+    // The cache should accept it as new (no dedup against A's segment).
+    actor.send({ type: 'add-cues', meta: meta('track-en', 'seg-0', 0, 10), cues: [new VTTCue(0, 2, 'B0')] });
+    expect(actor.snapshot.get().context.segments['track-en']).toEqual([{ id: 'seg-0', startTime: 0, duration: 10 }]);
+    expect(actor.snapshot.get().context.loaded['track-en']?.[0]?.text).toBe('B0');
+  });
+
   it('snapshot is reactive — updates are tracked via signal', () => {
     const video = makeMediaElement(['track-en']);
     const actor = createTextTracksActor(video);

@@ -14,7 +14,7 @@ const OUT_DIR = resolve(import.meta.dirname, '../apps/vite/src/_generated');
 interface EjectedSkinEntry {
   id: string;
   platform: string;
-  tsx?: string;
+  tsx?: Record<string, string>;
   css?: string;
 }
 
@@ -22,13 +22,19 @@ const skins: EjectedSkinEntry[] = JSON.parse(readFileSync(EJECTED_SKINS_JSON, 'u
 
 const reactVideo = skins.find((s) => s.id === 'default-video-react');
 
-if (!reactVideo?.tsx) {
+const componentSource = reactVideo?.tsx?.['VideoPlayer.tsx'];
+const playerSource = reactVideo?.tsx?.['player.ts'];
+
+if (!componentSource || !playerSource) {
   throw new Error('Ejected skin "default-video-react" not found. Run `pnpm -F site ejected-skins` first.');
 }
 
 mkdirSync(OUT_DIR, { recursive: true });
 
-writeFileSync(resolve(OUT_DIR, 'ejected-react-video-skin.tsx'), reactVideo.tsx);
+// Component file is renamed to match the import path used in generate-pages.ts;
+// `player.ts` keeps its name so the relative `./player` import resolves.
+writeFileSync(resolve(OUT_DIR, 'ejected-react-video-skin.tsx'), componentSource);
+writeFileSync(resolve(OUT_DIR, 'player.ts'), playerSource);
 
 if (reactVideo.css) {
   writeFileSync(resolve(OUT_DIR, 'player.css'), reactVideo.css);

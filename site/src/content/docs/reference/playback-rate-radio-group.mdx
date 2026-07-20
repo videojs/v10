@@ -1,0 +1,122 @@
+---
+title: PlaybackRateRadioGroup
+frameworkTitle:
+  html: media-playback-rate-radio-group
+description: A menu radio group for selecting playback speed
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/playback-rate-radio-group/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/playback-rate-radio-group/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/playback-rate-radio-group/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/playback-rate-radio-group/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/playback-rate-radio-group/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/playback-rate-radio-group/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/playback-rate-radio-group/html/css/BasicUsage.ts?raw";
+
+Creates radio items from the player playback rate state and selects the playback speed.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Menu.RadioGroup>
+    <Menu.GroupLabel />
+    <Menu.RadioItem>
+      <Menu.ItemIndicator />
+    </Menu.RadioItem>
+  </Menu.RadioGroup>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-playback-rate-radio-group>
+    <template>
+      <media-menu-radio-item>
+        <span data-part="label"></span>
+        <media-menu-item-indicator></media-menu-item-indicator>
+      </media-menu-radio-item>
+    </template>
+  </media-playback-rate-radio-group>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The group is available when the configured media exposes playback rates. Option labels default to the rate followed by a multiplication sign (e.g. `1.5×`); pass `formatRate` to customize them.
+
+<FrameworkCase frameworks={["react"]}>
+<DocsLink slug="reference/use-playback-rate-options">`usePlaybackRateOptions`</DocsLink> returns `null` when the <DocsLink slug="reference/feature-playback-rate">playback rate feature</DocsLink> is not configured. Use the returned options with <DocsLink slug="reference/menu">`Menu.RadioGroup`</DocsLink>.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`<media-playback-rate-radio-group>` generates `<media-menu-radio-item>` children. Add an optional `<template>` with a single `<media-menu-radio-item>` to customize each generated item.
+</FrameworkCase>
+
+## Styling
+
+| Attribute | Values | Description |
+| --- | --- | --- |
+| `data-rate` | `number` | Current playback rate. |
+| `data-disabled` | Present / absent | Present when playback rate selection is disabled. |
+| `data-availability` | `"available"` / `"unavailable"` | Whether playback rates are available. |
+
+<FrameworkCase frameworks={["html"]}>
+  ```css
+  media-playback-rate-radio-group[data-availability="unavailable"] {
+    display: none;
+  }
+  ```
+</FrameworkCase>
+
+## Accessibility
+
+The group uses the menu radio group pattern.
+
+<FrameworkCase frameworks={["react"]}>
+Give `Menu.RadioGroup` an accessible name with `aria-label` or a nested `Menu.GroupLabel`.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+The element defaults to `Playback rate {rate}` (e.g. `Playback rate 1.5`). Override its accessible name with `aria-label` or `aria-labelledby`.
+</FrameworkCase>
+
+## Examples
+
+### Basic usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <ComponentReference component="PlaybackRateRadioGroup" />
+</FrameworkCase>

@@ -46,9 +46,9 @@ This skill adds writing guidance on top of those. When in doubt, the source file
 
 ## Documentation types
 
-### Site documentation (Diataxis)
+### Site documentation (Diátaxis)
 
-The site follows the [Diataxis](https://diataxis.fr/) framework:
+The site follows the [Diátaxis](https://diataxis.fr/) framework:
 
 | Mode | Directory | Purpose |
 |------|-----------|---------|
@@ -58,14 +58,7 @@ The site follows the [Diataxis](https://diataxis.fr/) framework:
 
 **When in doubt, write a concept page.** Most new documentation should be concept pages.
 
-| Concept page | How-to guide |
-|---|---|
-| **Preferred** — default choice | Use sparingly |
-| Reference while working | Learning from scratch |
-| One concept per page | Multi-step narrative |
-| Scannable, minimal prose | Explains "why" at each step |
-| No prerequisites | Has prerequisites |
-| Jump in anywhere | Sequential |
+The canonical guidance — full mode definitions and the concept vs how-to decision table — lives in `site/src/content/docs/how-to/write-guides.mdx`. Read it before choosing a mode.
 
 ### Package documentation
 

@@ -84,19 +84,19 @@ Most player libraries ship every feature in one bundle, so you carry code you do
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { createPlayer, playback, time } from '@videojs/react';
+import { createPlayer, playbackFeature, timeFeature } from '@videojs/react';
 
 const Player = createPlayer({
-  features: [playback, time], // [!code focus]
+  features: [playbackFeature, timeFeature], // [!code focus]
 });
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
 ```ts
-import { createPlayer, playback, time } from '@videojs/html';
+import { createPlayer, playbackFeature, timeFeature } from '@videojs/html';
 
 const { ProviderMixin, PlayerController, context } = createPlayer({
-  features: [playback, time], // [!code focus]
+  features: [playbackFeature, timeFeature], // [!code focus]
 });
 ```
 </FrameworkCase>

@@ -9,6 +9,13 @@ export const poster = (isShadowDOM: boolean) =>
     // In the shadow DOM, the class applies to the parent so we have to set styles on the slotted img.
     isShadowDOM
       ? [
+          // Placeholder (blur-up) — rides on media-poster opacity/transition
+          'before:absolute before:inset-0 before:pointer-events-none',
+          'before:[background-image:var(--media-poster-placeholder,none)]',
+          'before:bg-no-repeat',
+          'before:[background-position:var(--media-object-position,center)]',
+          'before:[background-size:var(--media-object-fit,contain)]',
+          'before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
           '[&_::slotted(img)]:absolute',
           '[&_::slotted(img)]:inset-0',
           '[&_::slotted(img)]:w-full',
@@ -17,5 +24,9 @@ export const poster = (isShadowDOM: boolean) =>
           '[&_::slotted(img)]:[object-position:var(--media-object-position,center)]',
           '[&_::slotted(img)]:rounded-(--media-video-border-radius)',
         ]
-      : 'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]'
+      : [
+          'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]',
+          // Hide until the image has loaded so the placeholder shows first
+          '[&[data-visible]:not([data-loaded])]:opacity-0',
+        ]
   );

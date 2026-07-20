@@ -83,7 +83,7 @@ export class MenuCore {
   getTriggerAttrs(state: MenuState, contentId?: string) {
     return {
       'aria-haspopup': 'menu' as const,
-      'aria-expanded': state.open ? 'true' : 'false',
+      'aria-expanded': state.open && state.status !== 'ending' ? 'true' : 'false',
       'aria-controls': contentId,
     };
   }

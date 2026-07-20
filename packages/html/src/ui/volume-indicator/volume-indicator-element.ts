@@ -1,4 +1,5 @@
 import {
+  createInputIndicatorLabels,
   getVolumeIndicatorDisplayValue,
   VolumeIndicatorCore,
   VolumeIndicatorCSSVars,
@@ -7,7 +8,9 @@ import {
 import { createTransition } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
 
-import { InputIndicatorElement } from '../input-indicators/input-indicator-element';
+import { i18nContext } from '../../i18n/context';
+import { I18nController } from '../../i18n/controller';
+import { InputIndicatorElement, type InputIndicatorOptions } from '../input-indicators/input-indicator-element';
 import { LiveIndicator } from '../input-indicators/live-indicator';
 
 export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicatorCore.State> {
@@ -19,6 +22,7 @@ export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicato
 
   closeDelay: number | undefined;
 
+  readonly #i18n = new I18nController(this, i18nContext);
   readonly #core = new VolumeIndicatorCore();
   readonly #transition = createTransition();
   readonly #liveIndicator = new LiveIndicator({
@@ -26,6 +30,7 @@ export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicato
     dataAttrs: VolumeIndicatorDataAttrs,
     render: renderVolumeIndicator,
   });
+  readonly #options = { replayOnUpdate: false } satisfies InputIndicatorOptions;
 
   protected get core() {
     return this.#core;
@@ -39,8 +44,15 @@ export class VolumeIndicatorElement extends InputIndicatorElement<VolumeIndicato
     return this.#liveIndicator;
   }
 
+  protected override get options() {
+    return this.#options;
+  }
+
   protected override syncCoreProps(): void {
-    this.#core.setProps({ closeDelay: this.closeDelay });
+    this.#core.setProps({
+      closeDelay: this.closeDelay,
+      labels: createInputIndicatorLabels(this.#i18n.value),
+    });
   }
 }
 

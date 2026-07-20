@@ -1,0 +1,57 @@
+.video-player {
+  position: relative;
+  display: block;
+}
+
+.video-player video {
+  width: 100%;
+}
+
+.media-airplay-button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-airplay-button .connected,
+.media-airplay-button .not-connected,
+.media-airplay-button .no-devices,
+.media-airplay-button .unsupported {
+  display: none;
+}
+
+/* Connected: AirPlay active */
+.media-airplay-button[data-airplay-state="connected"] .connected {
+  display: inline;
+}
+
+/* Available, not connected: ready to AirPlay */
+.media-airplay-button:not([data-airplay-state="connected"])[data-availability="available"] .not-connected {
+  display: inline;
+}
+
+/* Platform supports AirPlay but no receivers are visible. */
+.media-airplay-button[data-availability="unavailable"] .no-devices {
+  display: inline;
+}
+
+/* AirPlay not supported on this platform. */
+.media-airplay-button[data-availability="unsupported"] .unsupported {
+  display: inline;
+}
+
+/* Inactive states: the toggle is a no-op unless availability is "available". */
+.media-airplay-button[data-availability="unavailable"],
+.media-airplay-button[data-availability="unsupported"] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
+}

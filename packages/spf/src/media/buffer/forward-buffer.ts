@@ -89,6 +89,25 @@ export function calculateForwardFlushPoint(
   return Math.min(...beyond.map((seg) => seg.startTime));
 }
 
+/**
+ * Find the start time of the segment containing `currentTime` (or the last
+ * segment if `currentTime` is past the end). Returns `undefined` when
+ * `currentTime` is undefined or when no segment matches.
+ *
+ * Used to detect "meaningful currentTime change" — two times that map to the
+ * same segment start aren't a load-trigger; crossing a segment boundary is.
+ */
+export function segmentStartForTime(
+  currentTime: number | undefined,
+  segments: readonly Pick<Segment, 'startTime' | 'duration'>[] | undefined
+): number | undefined {
+  if (currentTime == null) return undefined;
+  return segments?.find(
+    ({ startTime, duration }, i, all) =>
+      currentTime >= startTime && (currentTime < startTime + duration || i === all.length - 1)
+  )?.startTime;
+}
+
 export function getSegmentsToLoad(
   segments: readonly Segment[],
   bufferedSegments: readonly Pick<Segment, 'startTime' | 'duration'>[],
