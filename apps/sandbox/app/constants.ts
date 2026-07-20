@@ -13,4 +13,5 @@ export const PRESETS = [
   'audio',
   'background-video',
   'vimeo-video',
+  'youtube-video',
 ] as const;
