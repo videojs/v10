@@ -370,6 +370,30 @@ describe('YouTubeMedia', () => {
     media.detach();
   });
 
+  it('defers the load when src changes before the player is ready', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = await waitForEngine(media);
+
+    // Player exists but `onReady` hasn't fired; cueing now would fail.
+    media.src = 'https://youtu.be/dQw4w9WgXcQ?t=10';
+    await Promise.resolve();
+    expect(player.cueVideoById).not.toHaveBeenCalled();
+
+    // The deferred load replays once the player is ready.
+    player.ready();
+    await Promise.resolve();
+    expect(player.cueVideoById).toHaveBeenCalledWith({ videoId: 'dQw4w9WgXcQ', startSeconds: 10 });
+
+    const loadCompleteSpy = vi.fn();
+    media.addEventListener('loadcomplete', loadCompleteSpy);
+    player.emit('onStateChange', STATE.CUED);
+    expect(loadCompleteSpy).toHaveBeenCalledTimes(1);
+    media.detach();
+  });
+
   it('loads (instead of cueing) the new video when autoplay is set', async () => {
     const media = new YouTubeMedia();
     media.autoplay = true;
