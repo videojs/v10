@@ -178,6 +178,8 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     }
     this.#player = null;
     this.#target = null;
+    // Unblock callers awaiting load; they re-check `#player` (now null) and no-op.
+    this.#loadComplete.resolve();
     this.#resetState();
   }
 
