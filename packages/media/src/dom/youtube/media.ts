@@ -762,13 +762,18 @@ async function loadYouTubeApi(): Promise<YouTubeApi> {
 
 /**
  * Parse the `t` parameter from a YouTube URL and convert it to seconds.
- * Supports formats like: `t=171`, `t=171s`, `t=2m51s`, `t=2m`.
+ * Supports formats like: `t=171`, `t=171s`, `t=2m51s`, `t=2m`, `t=1h30m15s`.
  */
 function parseStartTime(url: string): number | null {
-  const tValue = /[?&]t=([\dms]+)/i.exec(url)?.[1]?.toLowerCase();
+  const tValue = /[?&]t=([\dhms]+)/i.exec(url)?.[1]?.toLowerCase();
   if (!tValue) return null;
   let totalSeconds = 0;
   let hasValue = false;
+  const hours = /(\d+)h/.exec(tValue)?.[1];
+  if (hours) {
+    totalSeconds += Number.parseInt(hours, 10) * 3600;
+    hasValue = true;
+  }
   const minutes = /(\d+)m/.exec(tValue)?.[1];
   if (minutes) {
     totalSeconds += Number.parseInt(minutes, 10) * 60;
