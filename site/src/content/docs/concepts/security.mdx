@@ -3,9 +3,9 @@ title: Security
 description: How to configure Content Security Policy for your video player
 ---
 
-If your application uses a Content Security Policy (CSP), you may need to allow additional sources for player features to work correctly.
+Content Security Policy (CSP) limits which resources a page can load. Video.js uses the URLs you configure for media, posters, thumbnails, and captions. Some HLS renderers also create blob URLs or web workers, so your policy must allow those resources too.
 
-## Common requirements
+## Allow player resources
 
 - `media-src` must allow your media URLs.
 - `img-src` must allow any poster or thumbnail image URLs.
@@ -25,3 +25,7 @@ Content-Security-Policy:
   connect-src 'self' https:;
   worker-src 'self' blob:;
 ```
+
+This policy assumes you bundle Video.js with your application or serve it from your own origin. If you load the player from a CDN, add that CDN's origin to `script-src`.
+
+Replace broad sources such as `https:` with the exact origins your player uses. Remove sources your deployment does not need, and keep `blob:` only where your selected HLS renderer requires it.
