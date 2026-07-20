@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { MediaError } from '../../../../core/media/media-error';
 import {
   buildYouTubeIframeSrc,
   parseYouTubeSource,
@@ -384,6 +385,27 @@ describe('YouTubeMedia', () => {
     media.detach();
   });
 
+  it('errors and unblocks pending play() when src is unrecognized', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = await waitForEngine(media);
+    player.ready();
+
+    const errorSpy = vi.fn();
+    media.addEventListener('error', errorSpy);
+
+    media.src = 'https://example.com/not-a-youtube-url';
+    await Promise.resolve();
+
+    expect(errorSpy).toHaveBeenCalledTimes(1);
+    expect(media.error).toBeInstanceOf(MediaError);
+    expect(media.error?.code).toBe(MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
+    await expect(media.play()).resolves.toBeUndefined();
+    media.detach();
+  });
+
   it('surfaces player errors', async () => {
     const media = new YouTubeMedia();
     const iframe = createIframe();
@@ -395,7 +417,12 @@ describe('YouTubeMedia', () => {
     player.events?.onError?.({ data: 150 });
 
     expect(errorSpy).toHaveBeenCalledTimes(1);
-    expect(media.error).toMatchObject({ code: 150 });
+    expect(media.error).toBeInstanceOf(MediaError);
+    expect(media.error).toMatchObject({
+      code: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED,
+      fatal: true,
+      data: { youtubeErrorCode: 150 },
+    });
     media.detach();
   });
 

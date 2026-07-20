@@ -8,7 +8,8 @@
 import { loadScript } from '@videojs/utils/dom';
 import { isNumber, isUndefined } from '@videojs/utils/predicate';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../../core/media/constants';
-import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../../core/media/types';
+import { MediaError } from '../../../core/media/media-error';
+import type { MediaPreloadType, TextTrackListLike, Video } from '../../../core/media/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 /**
@@ -135,7 +136,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   #playbackRate = 1;
   #progress = 0;
   #readyState = READY_STATE_HAVE_NOTHING;
-  #error: ErrorLike | null = null;
+  #error: MediaError | null = null;
   #isFullscreen = false;
   #pollInterval: ReturnType<typeof setInterval> | null = null;
   #textTracksHost: HTMLVideoElement | null = null;
@@ -213,7 +214,13 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseYouTubeSource(this.#src);
-    if (!parsed) return;
+    if (!parsed) {
+      this.#error = new MediaError(`Unrecognized YouTube source: ${this.#src}`, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
+      this.dispatchEvent(new Event('error'));
+      // Unblock callers awaiting load so play()/fullscreen don't hang.
+      this.#loadComplete.resolve();
+      return;
+    }
     if (parsed.kind === 'playlist' && parsed.listId) {
       const options = { list: parsed.listId, listType: 'playlist' };
       if (this.#autoplay) this.#player.loadPlaylist(options);
@@ -388,7 +395,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     try {
       api = await loadYouTubeApi();
     } catch {
-      this.#error = { code: 2, message: 'Failed to load the YouTube iframe API' };
+      this.#error = new MediaError('Failed to load the YouTube iframe API', MediaError.MEDIA_ERR_NETWORK);
       this.dispatchEvent(new Event('error'));
       // Unblock callers awaiting load so play()/fullscreen don't hang.
       this.#loadComplete.resolve();
@@ -469,10 +476,13 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   }
 
   #onError(code: number) {
-    this.#error = {
-      code,
-      message: `YouTube iframe player error #${code}; visit https://developers.google.com/youtube/iframe_api_reference#onError for the full error message.`,
-    };
+    const error = new MediaError(
+      `YouTube iframe player error #${code}; visit https://developers.google.com/youtube/iframe_api_reference#onError for the full error message.`,
+      youtubeErrorCodeToMediaErrorCode[code] ?? MediaError.MEDIA_ERR_CUSTOM,
+      true
+    );
+    error.data = { youtubeErrorCode: code };
+    this.#error = error;
     this.dispatchEvent(new Event('error'));
     // Unblock callers awaiting load so play()/fullscreen don't hang.
     this.#loadComplete.resolve();
@@ -694,6 +704,15 @@ const EMBED_BASE_NOCOOKIE = 'https://www.youtube-nocookie.com/embed';
 const VIDEO_MATCH_SRC =
   /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=|shorts\/|live\/))((?:\w|-){11})/;
 const PLAYLIST_MATCH_SRC = /(?:youtu\.be\/|youtube(?:-nocookie)?\.com\/.*?[?&]list=)([\w-]+)/;
+
+// https://developers.google.com/youtube/iframe_api_reference#onError
+const youtubeErrorCodeToMediaErrorCode: Record<number, number> = {
+  2: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // invalid parameter (e.g. malformed video id)
+  5: MediaError.MEDIA_ERR_DECODE, // HTML5 player error
+  100: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // video not found, removed, or private
+  101: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // embedding not allowed
+  150: MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED, // embedding not allowed (alias of 101)
+};
 
 // https://developers.google.com/youtube/iframe_api_reference#onStateChange
 const STATE_UNSTARTED = -1;
