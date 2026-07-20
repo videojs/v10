@@ -30,6 +30,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/media/simple-hls-audio-only/index': './src/dom/media/simple-hls-audio-only/index.ts',
     'dom/media/simple-hls/index': './src/dom/media/simple-hls/index.ts',
     'dom/media/vimeo/index': './src/dom/media/vimeo/index.ts',
+    'dom/media/youtube/index': './src/dom/media/youtube/index.ts',
     // Components
     'dom/media/mux/index': './src/dom/media/mux/index.ts',
     'dom/media/google-cast/index': './src/dom/media/google-cast/index.ts',

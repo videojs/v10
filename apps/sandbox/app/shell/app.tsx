@@ -20,6 +20,7 @@ function getPagePath(platform: Platform, preset: Preset): string {
   if (platform === 'cdn') return '/cdn/';
   if (preset === 'background-video') return `/${platform}-background-video/`;
   if (preset === 'vimeo-video') return `/${platform}-vimeo-video/`;
+  if (preset === 'youtube-video') return `/${platform}-youtube-video/`;
   return `/${platform}-${preset}/`;
 }
 
@@ -127,9 +128,12 @@ export function App() {
     }
   }, [preset, source]);
 
-  // CDN, background video, and vimeo video do not have a Tailwind skin variant.
+  // CDN, background video, and embed (Vimeo/YouTube) videos do not have a Tailwind skin variant.
   useEffect(() => {
-    if ((platform === 'cdn' || preset === 'background-video' || preset === 'vimeo-video') && styling === 'tailwind') {
+    if (
+      (platform === 'cdn' || preset === 'background-video' || preset === 'vimeo-video' || preset === 'youtube-video') &&
+      styling === 'tailwind'
+    ) {
       setStyling('css');
     }
   }, [platform, preset, styling]);
@@ -168,6 +172,7 @@ export function App() {
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
         isVimeoVideo={preset === 'vimeo-video'}
+        isYouTubeVideo={preset === 'youtube-video'}
         platforms={PLATFORMS}
         stylings={STYLINGS}
         presets={PRESETS}

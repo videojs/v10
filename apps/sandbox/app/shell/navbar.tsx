@@ -32,6 +32,7 @@ type NavbarProps = {
   isMuxVideo: boolean;
   isMuxAudio: boolean;
   isVimeoVideo: boolean;
+  isYouTubeVideo: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -58,6 +59,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   audio: 'Audio',
   'background-video': 'Background Video',
   'vimeo-video': 'Vimeo Video',
+  'youtube-video': 'YouTube Video',
 };
 
 export function Navbar({
@@ -87,6 +89,7 @@ export function Navbar({
   isMuxVideo,
   isMuxAudio,
   isVimeoVideo,
+  isYouTubeVideo,
   platforms,
   stylings,
   presets,
@@ -115,7 +118,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isVimeoVideo || platform === 'cdn'),
+            disabled: s === 'tailwind' && (isBackgroundVideo || isVimeoVideo || isYouTubeVideo || platform === 'cdn'),
           }))}
         />
 
@@ -145,7 +148,7 @@ export function Navbar({
               return true;
             })
             .map((id) => ({ value: id, label: sources[id].label }))}
-          disabled={isBackgroundVideo || isVimeoVideo}
+          disabled={isBackgroundVideo || isVimeoVideo || isYouTubeVideo}
         />
       </div>
 
