@@ -110,6 +110,10 @@ const YouTubeMediaBase = MediaPlayedRangesMixin(EventTarget);
 export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: YouTubePlayerApi | null = null;
+  /** The iframe API rejects `cueVideoById`/`loadVideoById` before `onReady`. */
+  #playerReady = false;
+  /** A load was requested before the player was ready; replay it on `onReady`. */
+  #pendingLoad = false;
   #loadComplete = createPublicPromise<void>();
   /** Guards async player creation across attach/detach cycles. */
   #attachId = 0;
@@ -178,6 +182,8 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       // The iframe API throws if the iframe was already removed.
     }
     this.#player = null;
+    this.#playerReady = false;
+    this.#pendingLoad = false;
     this.#target = null;
     // Unblock callers awaiting load; they re-check `#player` (now null) and no-op.
     this.#loadComplete.resolve();
@@ -206,9 +212,14 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     return this.#readyState;
   }
 
-  /** Reload the current source via the iframe API; no-op until the player is ready. */
+  /** Reload the current source via the iframe API; deferred until the player is ready. */
   async load() {
-    if (!this.#player || !this.#src) return;
+    if (!this.#src) return;
+    if (!this.#player || !this.#playerReady) {
+      // `cueVideoById`/`loadVideoById` fail before `onReady`; replay the load then.
+      this.#pendingLoad = !!this.#target;
+      return;
+    }
     this.#resetState();
     this.#loadComplete = createPublicPromise<void>();
     this.dispatchEvent(new Event('emptied'));
@@ -404,7 +415,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     if (attachId !== this.#attachId || this.#target !== target) return;
     const player = new api.Player(target, {
       events: {
-        onReady: () => this.#onLoaded(),
+        onReady: () => this.#onPlayerReady(),
         onError: (event) => this.#onError(event.data),
       },
     });
@@ -455,6 +466,18 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     this.#volume = 1;
     this.#error = null;
     this.#isFullscreen = false;
+  }
+
+  #onPlayerReady() {
+    this.#playerReady = true;
+    if (this.#pendingLoad) {
+      // The iframe was built from a stale src; skip its metadata and reload.
+      // The post-cue state change completes the load (see `#bindPlayerEvents`).
+      this.#pendingLoad = false;
+      void this.load();
+      return;
+    }
+    this.#onLoaded();
   }
 
   #onLoaded() {
