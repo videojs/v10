@@ -42,6 +42,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/ui-components' },
       { slug: 'concepts/accessibility' },
       { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
+      { slug: 'concepts/security' },
     ],
   },
   {
