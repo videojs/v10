@@ -1,5 +1,5 @@
 ---
-title: Autoplay videos
+title: Autoplay
 description: Autoplay a video with Video.js, detect when the browser blocks it, and recover gracefully.
 ---
 
@@ -17,6 +17,17 @@ There are a few things you can do to improve your chances of autoplay working:
 - In desktop Chrome, the user's [Media Engagement Index](https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#mei) threshold has been crossed. Chrome keeps track of how often a user consumes media on a site and if a user has played a lot of media on this site then Chrome will probably allow autoplay.
 - In mobile Chrome, the user has added the site to their home screen
 - In mobile Safari, the device is not in power-saving mode
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video autoplay muted playsInline>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+```html
+<video autoplay muted playsInline>
+```
+</FrameworkCase>
 
 ## Detect and recover from blocked autoplay
 

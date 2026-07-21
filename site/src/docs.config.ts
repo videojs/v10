@@ -49,7 +49,7 @@ export const sidebar: Sidebar = [
     llmsDescription:
       'Task-oriented guides with step-by-step instructions to achieve a specific outcome by applying one or more concepts. Each guide may assume you already understand the relevant concepts.',
     contents: [
-      { slug: 'how-to/autoplay', sidebarLabel: 'Autoplay' },
+      { slug: 'how-to/autoplay' },
       { slug: 'how-to/customize-skins' },
       { slug: 'how-to/build-your-own-component' },
       { slug: 'how-to/self-host-the-player', frameworks: ['html'] },
