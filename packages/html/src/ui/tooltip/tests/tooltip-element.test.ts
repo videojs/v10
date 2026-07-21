@@ -4,7 +4,7 @@ import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createState, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';
@@ -97,11 +97,30 @@ function setup() {
 defineElement(TestPlayerProviderElement.tagName, TestPlayerProviderElement);
 
 afterEach(() => {
+  vi.restoreAllMocks();
   resetI18nRegistry();
   document.body.innerHTML = '';
 });
 
 describe('TooltipElement', () => {
+  it('exposes the positioned side on the popup', async () => {
+    const { tooltip, trigger } = setup();
+
+    tooltip.open = true;
+    tooltip.side = 'top';
+    tooltip.boundary = 'viewport';
+
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 10, 40, 20));
+    vi.spyOn(tooltip, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 60));
+    vi.spyOn(document.documentElement, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 200));
+    Object.defineProperty(tooltip, 'offsetWidth', { configurable: true, value: 100 });
+    Object.defineProperty(tooltip, 'offsetHeight', { configurable: true, value: 60 });
+
+    await tooltip.updateComplete;
+
+    expect(tooltip.getAttribute('data-side')).toBe('bottom');
+  });
+
   it('creates default label and shortcut elements for empty tooltips', async () => {
     const { tooltip } = setup();
 

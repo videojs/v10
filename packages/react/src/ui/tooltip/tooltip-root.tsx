@@ -16,6 +16,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
+import { usePositionedState } from '../hooks/use-positioned-state';
 import { type TooltipContent, TooltipContextProvider } from './context';
 import { useTooltipGroup } from './group-context';
 
@@ -115,7 +116,7 @@ export function TooltipRoot({
 
   const input = useSnapshot(tooltip.input);
   core.setInput(input);
-  const state = core.getState();
+  const { state, preferredSide, setPositionedSide } = usePositionedState(core.getState());
 
   return (
     <TooltipContextProvider
@@ -123,6 +124,8 @@ export function TooltipRoot({
         core,
         tooltip,
         state,
+        preferredSide,
+        setPositionedSide,
         stateAttrMap: TooltipDataAttrs,
         anchorName,
         popupId,

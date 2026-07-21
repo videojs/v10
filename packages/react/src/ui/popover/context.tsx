@@ -8,6 +8,8 @@ export interface PopoverContextValue {
   core: PopoverCore;
   popover: PopoverApi;
   state: PopoverCore.State;
+  preferredSide: PopoverCore.State['side'];
+  setPositionedSide: (side: PopoverCore.State['side']) => void;
   stateAttrMap: StateAttrMap<PopoverCore.State>;
   anchorName: string;
   popupId: string;

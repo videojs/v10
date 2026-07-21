@@ -10,6 +10,7 @@ import {
   getMenuViewportAttrs,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getPositionedSide,
   getPositioningBoundaryRect,
   getRootPositionOptions,
   isMenuNavigationKey,
@@ -263,16 +264,25 @@ export class MenuElement extends MediaElement {
     const boundaryRect = getPositioningBoundaryRect(boundaryElement);
     const offsets = resolveOffsets(this);
     const anchorSupported = supportsAnchorPositioning();
-    const getNextStyle = () =>
-      getAnchorPositionStyle(
+    if (!triggerRect) return;
+
+    const getNextPosition = () => {
+      const popupRect = getPopupPositionRect(this, positionOptions.side);
+      const side = getPositionedSide(triggerRect, popupRect, boundaryRect, positionOptions, offsets);
+      const style = getAnchorPositionStyle(
         this.id,
-        positionOptions,
+        { ...positionOptions, side },
         triggerRect,
-        anchorSupported ? undefined : getPopupPositionRect(this),
+        anchorSupported ? undefined : popupRect,
         boundaryRect,
         offsets
       );
-    let nextStyle = getNextStyle();
+
+      return { side, style };
+    };
+    let nextPosition = getNextPosition();
+    let nextStyle = nextPosition.style;
+    this.setAttribute(MenuDataAttrs.side, nextPosition.side);
 
     if (anchorSupported) {
       applyStyles(this, nextStyle);
@@ -282,7 +292,9 @@ export class MenuElement extends MediaElement {
     syncMenuViewRoot(this, this.#navState.stack.length > 0, availableWidth ? { availableWidth } : undefined);
 
     if (!anchorSupported) {
-      nextStyle = getNextStyle();
+      nextPosition = getNextPosition();
+      nextStyle = nextPosition.style;
+      this.setAttribute(MenuDataAttrs.side, nextPosition.side);
       applyStyles(this, nextStyle);
     }
 

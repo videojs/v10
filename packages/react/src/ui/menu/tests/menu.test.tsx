@@ -19,7 +19,14 @@ import { MenuSeparator } from '../menu-separator';
 import { MenuTrigger } from '../menu-trigger';
 import { MenuView } from '../menu-view';
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.restoreAllMocks();
+});
+
+function makeDOMRect(x: number, y: number, width: number, height: number): DOMRect {
+  return new DOMRect(x, y, width, height);
+}
 
 function SubmenuFixture() {
   return (
@@ -374,6 +381,40 @@ function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
 }
 
 describe('MenuContent', () => {
+  it('exposes the positioned side on root content', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      if (this.dataset.testid === 'trigger') return makeDOMRect(100, 10, 40, 20);
+      if (this.dataset.testid === 'content') return makeDOMRect(0, 0, 100, 60);
+      return makeDOMRect(0, 0, 300, 200);
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.dataset.testid === 'content' ? 100 : 0;
+    });
+    vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockImplementation(function (this: HTMLElement) {
+      return this.dataset.testid === 'content' ? 60 : 0;
+    });
+
+    render(
+      <MenuRoot defaultOpen side="top" boundary="viewport">
+        <MenuTrigger
+          render={(props, state) => <button {...props} data-render-side={state.side} data-testid="trigger" />}
+        >
+          Settings
+        </MenuTrigger>
+        <MenuContent data-testid="content">
+          <MenuView>
+            <MenuItem>Auto</MenuItem>
+          </MenuView>
+        </MenuContent>
+      </MenuRoot>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByTestId('content').getAttribute('data-side')).toBe('bottom');
+      expect(screen.getByTestId('trigger').getAttribute('data-render-side')).toBe('bottom');
+    });
+  });
+
   it('scopes menu state data attributes to content elements', async () => {
     render(
       <MenuRoot defaultOpen side="top" align="end">

@@ -10,6 +10,8 @@ export interface MenuContextValue {
   core: MenuCore;
   menu: MenuApi;
   state: MenuState;
+  preferredSide: MenuState['side'];
+  setPositionedSide: (side: MenuState['side']) => void;
   stateAttrMap: StateAttrMap<MenuState>;
   contentId: string;
   anchorName: string;

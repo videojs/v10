@@ -7,6 +7,7 @@ import {
   getAnchorNameStyle,
   getAnchorPositionStyle,
   getPopupPositionRect,
+  getPositionedSide,
   getPositioningBoundaryRect,
   type PopoverApi,
   type PopoverChangeDetails,
@@ -181,18 +182,24 @@ export class PopoverElement extends MediaElement {
     }
 
     // Apply positioning styles to self.
-    const posOpts = { side: state.side, align: state.align };
+    const preferredOpts = { side: state.side, align: state.align };
     const boundaryElement = this.#getBoundaryElement();
     const triggerRect = this.#currentTrigger?.getBoundingClientRect();
     const boundaryRect = getPositioningBoundaryRect(boundaryElement);
     const offsets = resolveOffsets(this);
+    const popupRect = getPopupPositionRect(this, preferredOpts.side);
+
+    if (!triggerRect) return;
+
+    const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredOpts, offsets);
+    const posOpts = { ...preferredOpts, side };
+    this.setAttribute(PopoverDataAttrs.side, side);
 
     if (supportsAnchorPositioning()) {
       applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, undefined, boundaryRect, offsets));
     } else {
       // JS fallback: measure rects and resolve CSS var offsets.
-      const selfRect = getPopupPositionRect(this);
-      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets));
+      applyStyles(this, getAnchorPositionStyle(this.id, posOpts, triggerRect, popupRect, boundaryRect, offsets));
     }
 
     this.#position.sync(this.#currentTrigger, boundaryElement);
