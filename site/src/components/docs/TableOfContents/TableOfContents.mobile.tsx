@@ -75,10 +75,15 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
         ref={triggerRef}
         aria-label="On this page"
         className={clsx(
-          'fixed right-0 z-20 flex min-h-6 w-6 cursor-pointer items-center justify-end text-manila-75 intent:text-manila-dark dark:text-warm-gray dark:intent:text-manila-dark',
+          'fixed right-0 z-20 flex min-h-6 w-6 items-center justify-end intent:text-manila-dark dark:intent:text-manila-dark',
+          open ? 'text-manila-dark dark:text-manila-dark' : 'text-manila-75 dark:text-warm-gray',
           className
         )}
-        style={{ top: viewportLayout.railTop ?? 'calc(50dvh + 1.625rem)', transform: 'translateY(-50%)' }}
+        style={{
+          top: viewportLayout.railTop ?? 'calc(50dvh + 1.625rem)',
+          transform: 'translateY(-50%)',
+          cursor: 'pointer',
+        }}
       >
         <span aria-hidden="true" className="flex flex-col items-end pr-1" style={{ gap: railGeometry.gap }}>
           {headings.map((heading) => {
@@ -100,7 +105,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
         <Popover.Positioner
           side="left"
           align="center"
-          sideOffset={8}
+          sideOffset={-4}
           collisionPadding={16}
           positionMethod="fixed"
           className="z-20"
