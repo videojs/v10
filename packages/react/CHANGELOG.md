@@ -1,5 +1,30 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.25...@videojs/react@10.0.0-beta.26) (2026-07-22)
+
+
+### Features
+
+* **packages:** i18n ([#1708](https://github.com/videojs/v10/issues/1708)) ([028dadb](https://github.com/videojs/v10/commit/028dadb385eb4f879f80932a4002676dc11d5300))
+
+
+### Bug Fixes
+
+* **i18n:** error text updates ([#1822](https://github.com/videojs/v10/issues/1822)) ([82b9e43](https://github.com/videojs/v10/commit/82b9e43bb5fee613031f653b575df015d6187d6f))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/core bumped to 10.0.0-beta.26
+    * @videojs/spf bumped to 10.0.0-beta.26
+    * @videojs/store bumped to 10.0.0-beta.26
+    * @videojs/utils bumped to 10.0.0-beta.26
+  * devDependencies
+    * @videojs/icons bumped to 10.0.0-beta.26
+    * @videojs/skins bumped to 10.0.0-beta.26
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/react@10.0.0-beta.24...@videojs/react@10.0.0-beta.25) (2026-07-07)
 
 

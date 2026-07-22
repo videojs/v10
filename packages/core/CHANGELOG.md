@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.25...@videojs/core@10.0.0-beta.26) (2026-07-22)
+
+
+### Features
+
+* **packages:** i18n ([#1708](https://github.com/videojs/v10/issues/1708)) ([028dadb](https://github.com/videojs/v10/commit/028dadb385eb4f879f80932a4002676dc11d5300))
+
+
+### Bug Fixes
+
+* **core:** add missing i18n translations ([#1817](https://github.com/videojs/v10/issues/1817)) ([c1348ea](https://github.com/videojs/v10/commit/c1348eaac894680313f8df6cf513eb0a938b84c8))
+* **i18n:** error text updates ([#1822](https://github.com/videojs/v10/issues/1822)) ([82b9e43](https://github.com/videojs/v10/commit/82b9e43bb5fee613031f653b575df015d6187d6f))
+* **site:** surface native media properties on element reference pages ([#1722](https://github.com/videojs/v10/issues/1722)) ([0dd84b8](https://github.com/videojs/v10/commit/0dd84b819ea18932e5acca1da484b9586f812834))
+
+
+### Performance Improvements
+
+* **core:** batch menu viewport measurements ([#1823](https://github.com/videojs/v10/issues/1823)) ([72e175e](https://github.com/videojs/v10/commit/72e175e1bd1886124fc907be79a23b405ee6ab1a))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/spf bumped to 10.0.0-beta.26
+    * @videojs/store bumped to 10.0.0-beta.26
+    * @videojs/utils bumped to 10.0.0-beta.26
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.24...@videojs/core@10.0.0-beta.25) (2026-07-07)
 
 
