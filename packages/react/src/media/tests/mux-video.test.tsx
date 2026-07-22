@@ -1,5 +1,5 @@
 import { render } from '@testing-library/react';
-import { MuxData } from '@videojs/core/dom/media/mux';
+import { MuxData, MuxMedia } from '@videojs/core/dom/media/mux';
 import { describe, expect, it, vi } from 'vitest';
 import { MuxVideo } from '../mux-video';
 
@@ -30,5 +30,51 @@ describe('MuxVideo', () => {
     expect(reinit.mock.calls.every(([value]) => value === 'test-key')).toBe(true);
 
     reinit.mockRestore();
+  });
+
+  it('derives the media src from the playbackId prop', () => {
+    const src = vi.spyOn(MuxMedia.prototype, 'src', 'set');
+
+    render(<MuxVideo playbackId="abc123" />);
+
+    expect(src).toHaveBeenCalledWith('https://stream.mux.com/abc123.m3u8');
+
+    src.mockRestore();
+  });
+
+  it('applies the customDomain and maxResolution modifiers to src', () => {
+    const src = vi.spyOn(MuxMedia.prototype, 'src', 'set');
+
+    render(<MuxVideo playbackId="abc123" customDomain="example.com" maxResolution="1080p" />);
+
+    const url = new URL(src.mock.calls[src.mock.calls.length - 1]![0]);
+    expect(url.host).toBe('stream.example.com');
+    expect(url.searchParams.get('max_resolution')).toBe('1080p');
+
+    src.mockRestore();
+  });
+
+  it('adds a storyboard track inferred from the playbackId', () => {
+    const { container } = render(<MuxVideo playbackId="abc123" />);
+
+    const track = container.querySelector('track');
+    expect(track?.kind).toBe('metadata');
+    expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
+  });
+
+  it('does not add a storyboard track without a playbackId', () => {
+    const { container } = render(<MuxVideo src="https://example.com/video.m3u8" />);
+
+    expect(container.querySelector('track')).toBeNull();
+  });
+
+  it('does not add a storyboard track for live streams', () => {
+    const streamType = vi.spyOn(MuxMedia.prototype, 'streamType', 'get').mockReturnValue('live');
+
+    const { container } = render(<MuxVideo playbackId="abc123" />);
+
+    expect(container.querySelector('track')).toBeNull();
+
+    streamType.mockRestore();
   });
 });
