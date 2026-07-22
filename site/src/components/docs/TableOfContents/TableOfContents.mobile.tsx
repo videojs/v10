@@ -4,7 +4,6 @@ import clsx from 'clsx';
 import { useEffect, useRef, useState } from 'react';
 import { TableOfContentsDesktop } from './TableOfContents.desktop';
 import { calculateRailGeometry } from './utils';
-import './TableOfContents.mobile.css';
 
 interface TableOfContentsMobileProps {
   headings: MarkdownHeading[];
@@ -118,7 +117,11 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
               popupRef.current
             }
             className={clsx(
-              'docs-toc-popover overflow-y-auto rounded-xs border border-manila-dark bg-manila-light pl-6 text-p3 shadow-xl dark:border-soot dark:bg-soot'
+              'origin-right overflow-y-auto rounded-xs border border-manila-dark bg-manila-light pl-6 text-p3 shadow-xl transition duration-150 ease-out',
+              'starting-style:translate-x-1 starting-style:scale-98 starting-style:opacity-0',
+              'ending-style:translate-x-1 ending-style:scale-98 ending-style:opacity-0 ending-style:duration-100 ending-style:ease-in',
+              'motion-reduce:transition-none motion-reduce:starting-style:translate-x-0 motion-reduce:starting-style:scale-100 motion-reduce:ending-style:translate-x-0 motion-reduce:ending-style:scale-100',
+              'dark:border-soot dark:bg-soot'
             )}
             style={{
               width: 'min(20rem, calc(100vw - 3rem))',
