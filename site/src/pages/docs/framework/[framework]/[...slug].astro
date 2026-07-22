@@ -101,14 +101,12 @@ const jsonLdSchema = createTechArticleSchema({
       "grid grid-cols-1 xl:grid-cols-(--xl-grid-cols)",
       "[grid-template-areas:var(--grid-template-areas)] xl:[grid-template-areas:var(--xl-grid-template-areas)]",
       "grid-rows-(--grid-rows) xl:grid-rows-1",
-      "[--scroll-mt:var(--mobile-toc-h)] xl:[--scroll-mt:0px]",
     ]}
     style="
       --xl-grid-cols: minmax(0, 1fr) calc(var(--spacing) * 59);
       --grid-template-areas: 'selectors' 'toc' 'article';
       --grid-rows: min-content min-content minmax(0, 1fr);
       --xl-grid-template-areas: 'article toc';
-      --mobile-toc-h: calc(var(--spacing) * 15);
     "
   >
     <div class="md:hidden" style="grid-area: selectors;">

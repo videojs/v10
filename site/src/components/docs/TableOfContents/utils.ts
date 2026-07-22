@@ -5,6 +5,38 @@ import type { RefObject } from 'react';
 import { useEffect, useState } from 'react';
 import { API_REFERENCE_SUBSECTION_TITLES } from '@/utils/componentReferenceModel';
 
+export interface RailGeometry {
+  stripeHeight: number;
+  gap: number;
+}
+
+/**
+ * Keep the full heading map visible by reducing gaps first, then stripe height.
+ */
+export function calculateRailGeometry(headingCount: number, availableHeight: number): RailGeometry {
+  const stripeHeight = 2;
+  const gap = 4;
+
+  if (headingCount <= 1) {
+    return { stripeHeight, gap };
+  }
+
+  const desiredHeight = headingCount * stripeHeight + (headingCount - 1) * gap;
+  if (desiredHeight <= availableHeight) {
+    return { stripeHeight, gap };
+  }
+
+  const compressedGap = (availableHeight - headingCount * stripeHeight) / (headingCount - 1);
+  if (compressedGap >= 0) {
+    return { stripeHeight, gap: compressedGap };
+  }
+
+  return {
+    stripeHeight: Math.max(0, availableHeight / headingCount),
+    gap: 0,
+  };
+}
+
 /**
  * Find the first scrollable ancestor of an element
  */
