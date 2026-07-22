@@ -1,8 +1,8 @@
 import { AudioTrackRadioGroupCore, AudioTrackRadioGroupDataAttrs } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
-import { resolveTranslation, type Translator } from '@videojs/core/i18n';
+import { type Text, type Translator, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
-
+import { cacheKey } from '../../i18n/cache-key';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -21,7 +21,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
   } satisfies PropertyDeclarationMap<'value' | 'label' | 'disabled'>;
 
   disabled = false;
-  label = '';
+  label: Text | string = '';
   formatTrack = AudioTrackRadioGroupCore.defaultProps.formatTrack;
 
   readonly #core = new AudioTrackRadioGroupCore();
@@ -55,12 +55,12 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
     let state: AudioTrackRadioGroupCore.State | null = null;
 
     if (media) {
-      this.#core.setProps({ formatTrack: this.formatTrack, disabled: this.disabled });
+      this.#core.setProps({ formatTrack: this.formatTrack, disabled: this.disabled, label: this.label });
       this.#core.setMedia(media);
       state = this.#core.getState();
 
       this.value = state.value;
-      this.applyAriaLabel(this.#i18n.value, this.label || 'Audio');
+      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state));
       if (state.disabled) {
         this.setAttribute('aria-disabled', 'true');
       } else {
@@ -78,7 +78,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
     const template = this.getTemplate();
     const templateKey = template?.innerHTML ?? '';
     const translator = this.#i18n.value;
-    const tracksKey = `${state.tracks.map((track) => `${track.value}:${track.label}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
+    const tracksKey = `${state.tracks.map((track) => `${track.value}:${cacheKey(track.label)}`).join('|')}::${this.#i18n.locale}::${templateKey}`;
 
     if (tracksKey !== this.#tracksKey || translator !== this.#tracksTranslator) {
       this.#tracksKey = tracksKey;
@@ -90,9 +90,7 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
       }
 
       this.append(
-        ...state.tracks.map((track) =>
-          this.#createItem(track.value, resolveTranslation(translator, track.label), template)
-        )
+        ...state.tracks.map((track) => this.#createItem(track.value, translateText(track.label, translator), template))
       );
     }
 

@@ -2,7 +2,7 @@
 
 import { QUALITY_AUTO_VALUE, QualityRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectQuality } from '@videojs/core/dom';
-import { resolveTranslation, type Translator } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { useCallback, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -24,16 +24,6 @@ export interface QualityOptionsResult {
   options: QualityOption[];
   disabled: boolean;
   setValue: (value: string) => void;
-}
-
-const AUTO_LABEL_RE = /^Auto \((.+)\)$/;
-
-function resolveAutoLabel(t: Translator, label: string): string {
-  const match = AUTO_LABEL_RE.exec(label);
-  if (match) {
-    return resolveTranslation(t, 'Auto ({label})', { label: match[1]! });
-  }
-  return resolveTranslation(t, label);
 }
 
 /**
@@ -68,12 +58,12 @@ export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsRe
     options: [
       {
         value: QUALITY_AUTO_VALUE,
-        label: resolveAutoLabel(t, state.autoLabel),
+        label: translateText(state.autoLabel, t, state.autoLabelParams),
         disabled: state.disabled,
       },
       ...state.renditions.map((rendition) => ({
         value: rendition.value,
-        label: resolveTranslation(t, rendition.label),
+        label: translateText(rendition.label, t),
         ...(rendition.tier && { tier: rendition.tier }),
         ...(rendition.badge && { badge: rendition.badge }),
         disabled: state.disabled,

@@ -1,4 +1,4 @@
-import { type Locale, registerI18n, resetI18nRegistry, type Translator } from '@videojs/core/i18n';
+import { type Locale, registerI18n, resetI18nRegistry, type Text, type Translator } from '@videojs/core/i18n';
 import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -8,7 +8,7 @@ import { i18nContext, MediaI18nProviderElement, MediaTextElement } from '../inde
 
 const skinTemplate = document.createElement('template');
 skinTemplate.innerHTML =
-  '<button aria-labelledby="settings-label"><media-text id="settings-label">Settings</media-text></button>';
+  '<button aria-labelledby="settings-label"><media-text id="settings-label" token="menu.settings">Settings</media-text></button>';
 
 const missingKeyTemplate = document.createElement('template');
 missingKeyTemplate.innerHTML =
@@ -19,7 +19,7 @@ childTextTemplate.innerHTML =
   '<button aria-labelledby="fallback-label"><media-text id="fallback-label">Fallback label</media-text></button>';
 
 const firstUpdateTemplate = document.createElement('template');
-firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text>Settings</test-skin-i18n-first-text>';
+firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text token="menu.settings">Settings</test-skin-i18n-first-text>';
 
 class TestSkinElement extends SkinElement {
   static override readonly template = skinTemplate;
@@ -50,7 +50,10 @@ class TestI18nProviderElement extends ReactiveElement {
   readonly provider = new ContextProvider(this, {
     context: i18nContext,
     initialValue: {
-      translator: ((key: string) => (key === 'Settings' ? 'Ancestor settings' : key)) as Translator,
+      translator: ((value: string | Text) => {
+        const key = typeof value === 'string' ? value : value.key;
+        return key === 'menu.settings' ? 'Ancestor settings' : typeof value === 'string' ? value : value.text;
+      }) as Translator,
       locale: 'xx' as Locale,
     },
   });
@@ -95,7 +98,7 @@ describe('provider', () => {
   });
 
   it('uses an ancestor translator for shadow labels', async () => {
-    registerI18n('xx', { Settings: 'Skin settings' });
+    registerI18n('xx', { 'menu.settings': 'Skin settings' });
     const root = document.createElement('div');
     root.innerHTML = /*html*/ `
       <test-skin-i18n-provider>
@@ -115,7 +118,7 @@ describe('provider', () => {
   });
 
   it('uses English fallback for shadow labels without a provider', async () => {
-    registerI18n('xx', { Settings: 'Skin settings' });
+    registerI18n('xx', { 'menu.settings': 'Skin settings' });
     const skin = document.createElement('test-skin-i18n') as TestSkinElement;
     skin.lang = 'xx';
     document.body.append(skin);
@@ -127,7 +130,7 @@ describe('provider', () => {
     expect(text.textContent).toBe('Settings');
   });
 
-  it('falls back to the key when a shadow label is missing', async () => {
+  it('keeps the child text when a shadow label has no token', async () => {
     const skin = document.createElement('test-skin-i18n-missing-key') as TestMissingKeyElement;
     document.body.append(skin);
 
@@ -139,8 +142,8 @@ describe('provider', () => {
   });
 
   it('updates shadow labels when provider lang changes', async () => {
-    registerI18n('xx', { Settings: 'Skin settings' });
-    registerI18n('yy', { Settings: 'Other settings' });
+    registerI18n('xx', { 'menu.settings': 'Skin settings' });
+    registerI18n('yy', { 'menu.settings': 'Other settings' });
     const provider = new MediaI18nProviderElement();
     const skin = document.createElement('test-skin-i18n') as TestSkinElement;
     provider.lang = 'xx';
@@ -159,7 +162,7 @@ describe('provider', () => {
   });
 
   it('publishes provider lang before child text updates', async () => {
-    registerI18n('xx', { Settings: 'Skin settings' });
+    registerI18n('xx', { 'menu.settings': 'Skin settings' });
     const provider = new MediaI18nProviderElement();
     const skin = document.createElement('test-skin-i18n-first-update') as TestFirstUpdateElement;
     provider.lang = 'xx';

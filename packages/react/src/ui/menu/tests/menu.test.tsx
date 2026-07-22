@@ -1,4 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import type { Text } from '@videojs/core/i18n';
 import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -372,6 +373,21 @@ function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
     </MenuRoot>
   );
 }
+
+describe('MenuBack', () => {
+  it('resolves menu back text and preserves literal labels', () => {
+    const customText = { key: 'custom.back', text: 'Go back' } as const satisfies Text;
+    const { rerender } = render(<MenuBack />);
+
+    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
+
+    rerender(<MenuBack label={customText} />);
+    expect(screen.getByRole('button', { name: 'Go back' })).toBeTruthy();
+
+    rerender(<MenuBack label="menu.back" />);
+    expect(screen.getByRole('button', { name: 'menu.back' })).toBeTruthy();
+  });
+});
 
 describe('MenuContent', () => {
   it('scopes menu state data attributes to content elements', async () => {

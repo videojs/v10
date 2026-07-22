@@ -1,7 +1,8 @@
 'use client';
 
 import { CAPTIONS_OFF_VALUE } from '@videojs/core';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
+import { autoText, offText } from '@videojs/core/i18n/text/menu';
 import type { ReactNode } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -39,8 +40,8 @@ function CaptionsMenuItemSettingProvider({ children }: { children: ReactNode }):
   const { state, options, value } = captions;
   const label =
     value === CAPTIONS_OFF_VALUE
-      ? resolveTranslation(t, 'Off')
-      : (options.find((option) => option.value === value)?.label ?? resolveTranslation(t, 'Off'));
+      ? translateText(offText, t)
+      : (options.find((option) => option.value === value)?.label ?? translateText(offText, t));
 
   return (
     <MenuItemSettingContextProvider value={{ type: 'captions', label, availability: state.availability }}>
@@ -55,7 +56,7 @@ function QualityMenuItemSettingProvider({ children }: { children: ReactNode }): 
   if (!quality) return children;
 
   const { state, options, value } = quality;
-  const label = options.find((option) => option.value === value)?.label ?? resolveTranslation(t, 'Auto');
+  const label = options.find((option) => option.value === value)?.label ?? translateText(autoText, t);
 
   return (
     <MenuItemSettingContextProvider value={{ type: 'quality', label, availability: state.availability }}>

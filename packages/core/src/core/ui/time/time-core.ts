@@ -1,7 +1,15 @@
 import { defaults } from '@videojs/utils/object';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import type { Text } from '../../i18n';
+import {
+  currentText,
+  durationText,
+  remainingText,
+  showDurationText,
+  showElapsedText,
+  showRemainingText,
+} from '../../i18n/text/time';
 import type { MediaTimeState } from '../../media/state';
 import { resolveLabel } from '../utils/resolve-label';
 
@@ -14,7 +22,7 @@ export interface TimeProps {
   /** Symbol prepended to remaining time. */
   negativeSign?: string | undefined;
   /** Custom label for accessibility. */
-  label?: string | ((state: TimeState) => string) | undefined;
+  label?: Text | string | ((state: TimeState) => Text | string) | undefined;
   /** Whether the time display can be toggled. */
   toggle?: boolean | undefined;
 }
@@ -34,19 +42,16 @@ export interface TimeState {
   datetime: string;
 }
 
-const TOGGLE_LABEL_KEYS: Record<
-  TimeType,
-  '{duration}. Show elapsed time.' | '{duration}. Show duration.' | '{duration}. Show remaining time.'
-> = {
-  current: '{duration}. Show elapsed time.',
-  duration: '{duration}. Show duration.',
-  remaining: '{duration}. Show remaining time.',
+const TOGGLE_LABELS: Record<TimeType, Text> = {
+  current: showElapsedText,
+  duration: showDurationText,
+  remaining: showRemainingText,
 };
 
-const DEFAULT_LABEL_KEYS: Record<TimeType, 'Current time' | 'Duration' | 'Remaining'> = {
-  current: 'Current time',
-  duration: 'Duration',
-  remaining: 'Remaining',
+const DEFAULT_LABELS: Record<TimeType, Text> = {
+  current: currentText,
+  duration: durationText,
+  remaining: remainingText,
 };
 
 export class TimeCore {
@@ -118,16 +123,16 @@ export class TimeCore {
     return currentType === 'duration' ? 'remaining' : 'duration';
   }
 
-  getLabel(state: TimeState, type = this.#props.type): string {
+  getLabel(state: TimeState, type = this.#props.type): Text | string {
     const custom = resolveLabel(this.#props.label, state);
     if (custom !== undefined) return custom;
     if (!this.#props.toggle) {
-      return DEFAULT_LABEL_KEYS[this.#props.type];
+      return DEFAULT_LABELS[this.#props.type];
     }
 
     const toggleType = this.#getToggleType(type, state.type);
 
-    return TOGGLE_LABEL_KEYS[toggleType];
+    return TOGGLE_LABELS[toggleType];
   }
 
   getLabelParams(state: TimeState): { duration: string } | undefined {

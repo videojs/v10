@@ -1,14 +1,15 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import { resolveText, type Text } from '../../i18n';
+import { playingText, seekToEdgeText } from '../../i18n/text/live';
 import type { MediaBufferState, MediaLiveState, MediaTimeState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface LiveButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: LiveButtonState) => string) | undefined;
+  label?: Text | string | ((state: LiveButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
 }
@@ -82,12 +83,12 @@ export class LiveButtonCore {
     this.#props = defaults(props, LiveButtonCore.defaultProps);
   }
 
-  getLabel(state: LiveButtonState): string {
+  getLabel(state: LiveButtonState): Text | string {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    if (state.liveEdge) return 'Playing live';
-    return 'Seek to live edge';
+    if (state.liveEdge) return playingText;
+    return seekToEdgeText;
   }
 
   getAttrs(state: LiveButtonState) {
@@ -108,7 +109,7 @@ export class LiveButtonCore {
     const liveEdge = live && this.#isAtLiveEdge(media);
 
     this.state.patch({ live, liveEdge });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

@@ -1,6 +1,34 @@
 import type { AddLocaleRoot, I18nContextValue } from './context';
 import type { I18nProviderProps } from './create-i18n';
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+function mergeTranslations(
+  parent: I18nProviderProps['translations'],
+  child: I18nProviderProps['translations']
+): I18nProviderProps['translations'] {
+  return {
+    ...parent,
+    ...child,
+    ...(parent && child
+      ? Object.fromEntries(
+          Object.keys(parent)
+            .filter((key) => isRecord(parent[key]) && isRecord(child[key]))
+            .map((key) => {
+              const parentValue = parent[key];
+              const childValue = child[key];
+              return [
+                key,
+                isRecord(parentValue) && isRecord(childValue) ? { ...parentValue, ...childValue } : childValue,
+              ];
+            })
+        )
+      : {}),
+  } as I18nProviderProps['translations'];
+}
+
 export interface I18nProviderRootProps extends I18nProviderProps {
   parentLocale?: I18nContextValue['locale'];
   localeFromProp?: boolean;
@@ -26,7 +54,7 @@ export function getProviderRootProps(
   const parentLocale = props.langRootRef !== undefined ? parent?.locale : undefined;
   const inheritedTranslations =
     props.translations !== undefined && parent?.translations !== undefined
-      ? { ...parent.translations, ...props.translations }
+      ? mergeTranslations(parent.translations, props.translations)
       : (props.translations ?? (langRootOnly ? parent?.translations : undefined));
   const onActiveLocaleChange = props.onActiveLocaleChange ?? parent?.onActiveLocaleChange;
 

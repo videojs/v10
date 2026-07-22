@@ -1,4 +1,4 @@
-import type { Translations } from '@videojs/core/i18n';
+import type { FlatTranslations } from '@videojs/core/i18n';
 import type { ReactiveElement } from '@videojs/element';
 import type { Constructor } from '@videojs/utils/types';
 
@@ -11,4 +11,4 @@ export type ReactiveElementMixinBase = Constructor<ReactiveElement> & Pick<typeo
 /**
  * Function to load partial or full translations for a given locale.
  */
-export type LocaleLoader = (tag: string) => Promise<Partial<Translations> | undefined>;
+export type LocaleLoader = (tag: string) => Promise<Partial<FlatTranslations> | undefined>;

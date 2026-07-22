@@ -2,7 +2,8 @@
 
 import { TimeCore, TimeDataAttrs } from '@videojs/core';
 import { logMissingFeature, selectTime } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
+import { remainingSuffixText } from '@videojs/core/i18n/text/time';
 import { isInteractiveActivation } from '@videojs/utils/dom';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { ForwardedRef, KeyboardEvent, MouseEvent } from 'react';
@@ -64,7 +65,7 @@ export const Value = forwardRef(function Value(
     ? {
         duration:
           state.type === 'remaining'
-            ? resolveTranslation(translator, '{duration} remaining', {
+            ? translateText(remainingSuffixText, translator, {
                 duration: formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
               })
             : formatTimeAsPhrase(Math.abs(state.seconds), { locale }),
@@ -114,7 +115,7 @@ export const Value = forwardRef(function Value(
           dateTime: state.datetime,
           children: content,
           ...attrs,
-          'aria-label': resolveTranslation(translator, attrs['aria-label'], resolvedLabelParams),
+          'aria-label': translateText(attrs['aria-label'], translator, resolvedLabelParams),
           ...(toggle ? { onClick: handleClick, onKeyDown: handleKeyDown } : undefined),
         },
         elementProps,

@@ -1,7 +1,7 @@
-import en from './locales/en';
-import type { Locale, Translations } from './types';
+import type { FlatTranslations, Locale, Translations } from './params';
+import { flattenTranslations } from './utils';
 
-const registry = new Map<Locale, Partial<Translations>>();
+const registry = new Map<Locale, Partial<FlatTranslations>>();
 const subscribers = new Set<() => void>();
 
 function notify(): void {
@@ -78,8 +78,8 @@ export function findLocaleKeys(locale: Locale): Locale[] {
   return out;
 }
 
-function mergeI18nTranslations(chain: Locale[]): Translations {
-  const merged: Partial<Translations> = {};
+function mergeI18nTranslations(chain: Locale[]): FlatTranslations {
+  const merged: Partial<FlatTranslations> = {};
   for (let i = chain.length - 1; i >= 0; i--) {
     const tag = chain[i]!;
     const layer = registry.get(tag);
@@ -87,30 +87,30 @@ function mergeI18nTranslations(chain: Locale[]): Translations {
       Object.assign(merged, layer);
     }
   }
-  return merged as Translations;
+  return merged as FlatTranslations;
 }
 
 /**
  * Register or merge translation strings for a BCP 47 locale tag.
  *
  * @param locale - BCP 47 tag (normalized to lowercase; unicode extensions stripped for the registry key).
- * @param translations - Partial map of opaque keys to translated strings; merges with any existing layer for the tag.
+ * @param translations - Partial nested locale values; merges with any existing layer for the tag.
  * @public
  */
 export function registerI18n(locale: Locale, translations: Partial<Translations>): void {
   const tag = getCanonicalLocaleKey(locale);
   const existing = registry.get(tag) ?? {};
-  registry.set(tag, { ...existing, ...translations });
+  registry.set(tag, { ...existing, ...flattenTranslations(translations) });
   notify();
 }
 
 /**
- * Return the merged translation map for a locale, walking the BCP 47 lookup chain to English defaults.
+ * Return the merged registered translation map for a locale. Built-in English defaults are supplied by text descriptors.
  *
  * @param locale - BCP 47 tag to resolve (e.g. `es-MX`, `zh-Hant-HK`).
  * @public
  */
-export function getI18nTranslations(locale: Locale): Translations {
+export function getI18nTranslations(locale: Locale): FlatTranslations {
   return mergeI18nTranslations(findLocaleKeys(locale));
 }
 
@@ -137,11 +137,8 @@ export function hasRegisteredLocale(locale: Locale): boolean {
   return registry.has(getCanonicalLocaleKey(locale));
 }
 
-/** Restores the registry to built-in English only (test isolation). */
+/** Clears registered locale overlays (test isolation). */
 export function resetI18nRegistry(): void {
   registry.clear();
   subscribers.clear();
-  registry.set('en', { ...en });
 }
-
-registry.set('en', { ...en });

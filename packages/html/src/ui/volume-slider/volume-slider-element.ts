@@ -9,7 +9,7 @@ import {
   type SliderApi,
   selectVolume,
 } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
@@ -34,7 +34,7 @@ export class VolumeSliderElement extends MediaElement {
     thumbAlignment: { type: String, attribute: 'thumb-alignment' },
   } satisfies PropertyDeclarationMap<Exclude<keyof VolumeSliderCore.Props, 'value' | 'min' | 'max'>>;
 
-  label = VolumeSliderCore.defaultProps.label;
+  label: Text | string = '';
   step = VolumeSliderCore.defaultProps.step;
   largeStep = VolumeSliderCore.defaultProps.largeStep;
   wheelStep = VolumeSliderCore.defaultProps.wheelStep;
@@ -143,10 +143,10 @@ export class VolumeSliderElement extends MediaElement {
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
       thumbAttrs: {
         ...thumbAttrs,
-        'aria-label': resolveTranslation(this.#i18n.value, thumbAttrs['aria-label']),
-        'aria-valuetext': resolveTranslation(
-          this.#i18n.value,
+        'aria-label': translateText(thumbAttrs['aria-label'], this.#i18n.value),
+        'aria-valuetext': translateText(
           thumbAttrs['aria-valuetext'],
+          this.#i18n.value,
           this.#core.getValueTextParams(state)
         ),
       },

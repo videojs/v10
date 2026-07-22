@@ -1,13 +1,14 @@
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
+import type { Text } from '../../i18n';
 
 import { resolveLabel } from '../utils/resolve-label';
 
 /** Configuration shared by all slider variants. */
 export interface SliderProps {
   /** Custom label for the slider. */
-  label?: string | ((state: SliderState) => string) | undefined;
+  label?: Text | string | ((state: SliderState) => Text | string) | undefined;
   /** Step increment for value changes (arrow keys). */
   step?: number | undefined;
   /** Large step increment (Page Up/Down keys). */
@@ -123,7 +124,7 @@ export class SliderCore {
     };
   }
 
-  getLabel(state: SliderState): string {
+  getLabel(state: SliderState): Text | string {
     return resolveLabel(this.#props.label, state) || '';
   }
 

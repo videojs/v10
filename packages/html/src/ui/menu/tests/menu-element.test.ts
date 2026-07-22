@@ -1,5 +1,6 @@
 import type { MediaControlsState } from '@videojs/core';
 import type { AnyPlayerStore } from '@videojs/core/dom';
+import type { Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -196,6 +197,15 @@ describe('MenuElement', () => {
     expect(child.hasAttribute('data-align')).toBe(false);
     expectNoMenuStateAttrs(back);
     expectNoMenuStateAttrs(childItem);
+    expect(back.getAttribute('aria-label')).toBe('Back');
+
+    back.label = { key: 'custom.back', text: 'Go back' } as const satisfies Text;
+    await back.updateComplete;
+    expect(back.getAttribute('aria-label')).toBe('Go back');
+
+    back.label = 'menu.back';
+    await back.updateComplete;
+    expect(back.getAttribute('aria-label')).toBe('menu.back');
   });
 
   it('marks root and nested menu views with generic view attributes', async () => {

@@ -54,7 +54,6 @@ interface HtmlSkinDef {
   template: string;
   css?: string;
   iconSet: 'default' | 'minimal';
-  tailwindModule?: string;
 }
 
 interface ReactSkinDef {
@@ -567,7 +566,6 @@ const SKINS: SkinDef[] = [
     style: 'tailwind',
     template: 'packages/html/src/define/video/skin.tailwind.ts',
     iconSet: 'default',
-    tailwindModule: '@videojs/skins/default/tailwind/video.tailwind',
   },
   {
     id: 'default-audio-tailwind',
@@ -576,7 +574,6 @@ const SKINS: SkinDef[] = [
     style: 'tailwind',
     template: 'packages/html/src/define/audio/skin.tailwind.ts',
     iconSet: 'default',
-    tailwindModule: '@videojs/skins/default/tailwind/audio.tailwind',
   },
   {
     id: 'minimal-video-tailwind',
@@ -585,7 +582,6 @@ const SKINS: SkinDef[] = [
     style: 'tailwind',
     template: 'packages/html/src/define/video/minimal-skin.tailwind.ts',
     iconSet: 'minimal',
-    tailwindModule: '@videojs/skins/minimal/tailwind/video.tailwind',
   },
   {
     id: 'minimal-audio-tailwind',
@@ -594,7 +590,6 @@ const SKINS: SkinDef[] = [
     style: 'tailwind',
     template: 'packages/html/src/define/audio/minimal-skin.tailwind.ts',
     iconSet: 'minimal',
-    tailwindModule: '@videojs/skins/minimal/tailwind/audio.tailwind',
   },
 
   // React CSS
@@ -712,11 +707,7 @@ function extractTemplateLiteral(source: string): string {
   return match[1];
 }
 
-/**
- * Collect all import names that the template uses from the tailwind module.
- * Parses lines like: `import { foo, bar } from '@videojs/skins/...'`
- * and also picks up re-imports from other modules used in the template.
- */
+/** Collect named package imports used by an HTML skin template. */
 function parseImportedNames(source: string): Map<string, string> {
   const imports = new Map<string, string>();
   const importRegex = /import\s+\{([^}]+)\}\s+from\s+['"]([^'"]+)['"]/g;
@@ -737,21 +728,41 @@ function parseImportedNames(source: string): Map<string, string> {
   return imports;
 }
 
-async function loadCn(): Promise<(...args: unknown[]) => string> {
-  const mod = await import(pkgDistUrl('@videojs/utils/style'));
-  return mod.cn;
-}
+async function loadImportedNames(
+  source: string,
+  template: string,
+  templatePath: string,
+  context: Record<string, unknown>
+): Promise<void> {
+  const modules = new Map<string, Record<string, unknown>>();
 
-async function loadTailwindTokens(specifier: string): Promise<Record<string, unknown>> {
-  return await import(pkgDistUrl(specifier));
+  for (const [name, specifier] of parseImportedNames(source)) {
+    if (!new RegExp(`\\b${name}\\b`).test(template)) {
+      continue;
+    }
+
+    let imported = modules.get(specifier);
+    if (!imported) {
+      const url = specifier.startsWith('@videojs/')
+        ? pkgDistUrl(specifier)
+        : pathToFileURL(resolve(ROOT, dirname(templatePath), specifier)).href;
+      const loaded = (await import(url)) as Record<string, unknown>;
+      modules.set(specifier, loaded);
+      imported = loaded;
+    }
+
+    if (name in imported) {
+      context[name] = imported[name];
+    }
+  }
 }
 
 /**
  * Evaluate the HTML template by replacing `${...}` expressions with
  * their computed values.
  *
- * Uses `new Function()` to evaluate the template literal in a context
- * that provides renderIcon, cn, SEEK_TIME, and all tailwind tokens.
+ * Uses `new Function()` to evaluate the template literal in a context that
+ * provides the template's named package imports and skin-specific values.
  */
 function evaluateTemplate(templateBody: string, context: Record<string, unknown>): string {
   const keys = Object.keys(context);
@@ -821,38 +832,13 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   validatePackageImports(source, skin.template);
   const templateBody = extractTemplateLiteral(source);
 
-  const cn = await loadCn();
-
   // Build context object with all the variables the template needs
   const context: Record<string, unknown> = {
-    renderIcon: createRenderMediaIcon(skin.iconSet),
-    cn,
     SEEK_TIME: 10,
   };
 
-  if (skin.style === 'tailwind') {
-    // Load the primary tailwind module
-    if (skin.tailwindModule) {
-      const tokens = await loadTailwindTokens(skin.tailwindModule);
-      Object.assign(context, tokens);
-    }
-
-    // Check if the source imports from additional tailwind modules
-    const imports = parseImportedNames(source);
-    const loadedModules = new Set<string>();
-    if (skin.tailwindModule) loadedModules.add(skin.tailwindModule);
-
-    for (const [name, mod] of imports) {
-      if (mod.includes('/tailwind/') && !loadedModules.has(mod)) {
-        loadedModules.add(mod);
-        const extraTokens = await loadTailwindTokens(mod);
-        // Only add names that aren't already in context
-        if (!(name in context) && name in extraTokens) {
-          context[name] = extraTokens[name];
-        }
-      }
-    }
-  }
+  await loadImportedNames(source, templateBody, skin.template, context);
+  context.renderIcon = createRenderMediaIcon(skin.iconSet);
 
   let html = evaluateTemplate(templateBody, context);
   html = replaceSlots(html, getSkinMediaType(skin));

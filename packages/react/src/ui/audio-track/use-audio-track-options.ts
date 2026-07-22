@@ -2,7 +2,7 @@
 
 import { AudioTrackRadioGroupCore } from '@videojs/core';
 import { logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { useCallback, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -54,7 +54,7 @@ export function useAudioTrackOptions(props?: AudioTrackOptionsProps): AudioTrack
     value: state.value,
     options: state.tracks.map((track) => ({
       value: track.value,
-      label: resolveTranslation(t, track.label),
+      label: translateText(track.label, t),
       disabled: state.disabled,
     })),
     disabled: state.disabled,

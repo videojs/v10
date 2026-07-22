@@ -1,14 +1,15 @@
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
+import { resolveText, type Text } from '../../i18n';
+import { rateText } from '../../i18n/text/playback';
 import type { MediaPlaybackRateState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface PlaybackRateButtonProps {
   /** Custom label for the button. */
-  label?: string | ((state: PlaybackRateButtonState) => string) | undefined;
+  label?: Text | string | ((state: PlaybackRateButtonState) => Text | string) | undefined;
   /** Whether the button is disabled. */
   disabled?: boolean | undefined;
   /** When true, pointer activation opens a menu instead of cycling. React sets this automatically inside `Menu.Trigger`. */
@@ -42,11 +43,11 @@ export class PlaybackRateButtonCore {
     this.#props = defaults(props, PlaybackRateButtonCore.defaultProps);
   }
 
-  getLabel(state: PlaybackRateButtonState): string {
+  getLabel(state: PlaybackRateButtonState): Text | string {
     const custom = resolveLabel(this.#props.label, state);
     if (custom !== undefined) return custom;
 
-    return 'Playback rate {rate}';
+    return rateText;
   }
 
   getLabelParams(state: PlaybackRateButtonState): { rate: number } | undefined {
@@ -68,7 +69,7 @@ export class PlaybackRateButtonCore {
   getState(): PlaybackRateButtonState {
     const media = this.#media!;
     this.state.patch({ rate: media.playbackRate });
-    this.state.patch({ label: this.getLabel(this.state.current) });
+    this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
     return this.state.current;
   }

@@ -1,3 +1,4 @@
+import { captionsText } from '@videojs/core/i18n/text/menu';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
@@ -142,7 +143,7 @@ function CaptionsTrigger(): ReactNode {
           className="media-menu__group"
           value={captions.value}
           onValueChange={captions.setValue}
-          aria-label={t('Captions')}
+          aria-label={t(captionsText)}
         >
           {captions.options.map((option) => (
             <Menu.RadioItem

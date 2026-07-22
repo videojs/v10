@@ -2,7 +2,7 @@
 
 import { LiveButtonCore, LiveButtonDataAttrs, type LiveButtonMediaState } from '@videojs/core';
 import { logMissingFeature, selectBuffer, selectLive, selectTime } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { forwardRef, type ReactNode, useLayoutEffect, useState } from 'react';
 
 import { useTranslator } from '../../i18n/context';
@@ -70,7 +70,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
 
     if (media) core.setMedia(media);
     const state = media ? core.getState() : null;
-    const labelText = state ? resolveTranslation(translator, core.getLabel(state)) : undefined;
+    const labelText = state ? translateText(core.getLabel(state), translator) : undefined;
 
     useLayoutEffect(() => {
       if (!tooltipCtx) return;
@@ -99,7 +99,7 @@ export const LiveButton = forwardRef<HTMLButtonElement, LiveButtonProps>(
           {
             children: content,
             ...elementProps,
-            'aria-label': labelAttr ? resolveTranslation(translator, labelAttr) : labelAttr,
+            'aria-label': labelAttr ? translateText(labelAttr, translator) : labelAttr,
           },
           getButtonProps(),
         ],

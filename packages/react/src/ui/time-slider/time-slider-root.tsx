@@ -2,7 +2,7 @@
 
 import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
-import { resolveTranslation } from '@videojs/core/i18n';
+import { translateText } from '@videojs/core/i18n';
 import { formatTime } from '@videojs/utils/time';
 import { forwardRef, useEffect, useState } from 'react';
 
@@ -129,10 +129,10 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
             const attrs = core.getAttrs(sliderState as TimeSliderCore.State);
             return {
               ...attrs,
-              'aria-label': resolveTranslation(translator, attrs['aria-label']),
-              'aria-valuetext': resolveTranslation(
-                translator,
+              'aria-label': translateText(attrs['aria-label'], translator),
+              'aria-valuetext': translateText(
                 attrs['aria-valuetext'],
+                translator,
                 core.getValueTextParams(sliderState as TimeSliderCore.State)
               ),
             };

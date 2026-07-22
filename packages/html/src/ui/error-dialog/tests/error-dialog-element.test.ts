@@ -69,9 +69,9 @@ describe('ErrorDialogElement', () => {
 
   it('shows translated dialog copy when es locale is registered', async () => {
     registerI18n('es', {
-      'Something went wrong.': 'Algo salió mal.',
-      OK: 'Aceptar',
-      'An unexpected error occurred.': 'Ocurrió un error inesperado.',
+      'errors.title': 'Algo salió mal.',
+      'common.ok': 'Aceptar',
+      'errors.unexpected': 'Ocurrió un error inesperado.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);
@@ -98,9 +98,9 @@ describe('ErrorDialogElement', () => {
 
   it('preserves authored title copy', async () => {
     registerI18n('es', {
-      'Something went wrong.': 'Algo salió mal.',
-      OK: 'Aceptar',
-      'An unexpected error occurred.': 'Ocurrió un error inesperado.',
+      'errors.title': 'Algo salió mal.',
+      'common.ok': 'Aceptar',
+      'errors.unexpected': 'Ocurrió un error inesperado.',
     });
     ensureDefined(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
     ensureDefined(AlertDialogTitleElement.tagName, AlertDialogTitleElement);

@@ -49,6 +49,11 @@
       "types": "./dist/dev/i18n/locales/*.d.ts",
       "development": "./dist/dev/i18n/locales/*.js",
       "default": "./dist/default/i18n/locales/*.js"
+    },
+    "./i18n/text/*": {
+      "types": "./dist/dev/i18n/text/*.d.ts",
+      "development": "./dist/dev/i18n/text/*.js",
+      "default": "./dist/default/i18n/text/*.js"
     }
   },
   "main": "dist/default/index.js",
@@ -59,7 +64,8 @@
   ],
   "scripts": {
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
-    "prebuild": "pnpm run generate:locales",
+    "generate:i18n-types": "node --import tsx ./scripts/generate-i18n-types.ts",
+    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
