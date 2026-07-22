@@ -74,7 +74,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
         ref={triggerRef}
         aria-label="On this page"
         className={clsx(
-          'fixed right-0 z-20 flex min-h-6 w-6 items-center justify-end intent:text-manila-dark dark:intent:text-manila-dark',
+          'fixed left-0 z-20 flex min-h-6 w-6 items-center justify-start intent:text-manila-dark md:left-70 dark:intent:text-manila-dark lg:left-75',
           open ? 'text-manila-dark dark:text-manila-dark' : 'text-manila-75 dark:text-warm-gray',
           className
         )}
@@ -84,7 +84,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
           cursor: 'pointer',
         }}
       >
-        <span aria-hidden="true" className="flex flex-col items-end pr-1" style={{ gap: railGeometry.gap }}>
+        <span aria-hidden="true" className="flex flex-col items-start pl-1" style={{ gap: railGeometry.gap }}>
           {headings.map((heading) => {
             const isActive = activeId === heading.slug;
             const width = heading.depth === 2 ? 12 : heading.depth === 3 ? 8 : 4;
@@ -102,7 +102,7 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
 
       <Popover.Portal>
         <Popover.Positioner
-          side="left"
+          side="right"
           align="center"
           sideOffset={-4}
           collisionPadding={16}
@@ -117,9 +117,9 @@ export function TableOfContentsMobile({ headings, activeId, onNavigate, classNam
               popupRef.current
             }
             className={clsx(
-              'origin-right overflow-y-auto rounded-xs border border-manila-dark bg-manila-light pl-6 text-p3 shadow-xl transition duration-150 ease-out',
-              'starting-style:translate-x-1 starting-style:scale-98 starting-style:opacity-0',
-              'ending-style:translate-x-1 ending-style:scale-98 ending-style:opacity-0 ending-style:duration-100 ending-style:ease-in',
+              'origin-left overflow-y-auto rounded-xs border border-manila-dark bg-manila-light pl-6 text-p3 shadow-xl transition duration-150 ease-out',
+              'starting-style:-translate-x-1 starting-style:scale-98 starting-style:opacity-0',
+              'ending-style:-translate-x-1 ending-style:scale-98 ending-style:opacity-0 ending-style:duration-100 ending-style:ease-in',
               'motion-reduce:transition-none motion-reduce:starting-style:translate-x-0 motion-reduce:starting-style:scale-100 motion-reduce:ending-style:translate-x-0 motion-reduce:ending-style:scale-100',
               'dark:border-soot dark:bg-soot'
             )}
