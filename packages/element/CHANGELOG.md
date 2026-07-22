@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.25...@videojs/element@10.0.0-beta.26) (2026-07-22)
+
+
+### Miscellaneous Chores
+
+* **@videojs/element:** Synchronize videojs versions
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/element@10.0.0-beta.24...@videojs/element@10.0.0-beta.25) (2026-07-07)
 
 

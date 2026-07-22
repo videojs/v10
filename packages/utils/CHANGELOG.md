@@ -1,5 +1,12 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.25...@videojs/utils@10.0.0-beta.26) (2026-07-22)
+
+
+### Features
+
+* **packages:** i18n ([#1708](https://github.com/videojs/v10/issues/1708)) ([028dadb](https://github.com/videojs/v10/commit/028dadb385eb4f879f80932a4002676dc11d5300))
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.24...@videojs/utils@10.0.0-beta.25) (2026-07-07)
 
 
