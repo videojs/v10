@@ -23,6 +23,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/media/media-host/index': './src/dom/media/media-host.ts',
     'dom/media/custom-media-element/index': './src/dom/media/custom-media-element/index.ts',
     'dom/media/media-played-ranges/index': './src/dom/media/media-played-ranges/index.ts',
+    'dom/media/cue-points/index': './src/dom/media/cue-points/index.ts',
     // Media
     'dom/media/dash/index': './src/dom/media/dash/index.ts',
     'dom/media/hls-js/index': './src/dom/media/hls-js/index.ts',

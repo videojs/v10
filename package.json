@@ -29,6 +29,7 @@
     "dev": "turbo run dev",
     "dev:packages": "turbo run dev --filter='./packages/*'",
     "dev:sandbox": "turbo run dev --filter=@videojs/sandbox...",
+    "dev:api-demo": "turbo run dev --filter=@videojs/api-demo...",
     "lint": "biome check .",
     "lint:fix": "biome check . --write",
     "lint:fix:file": "biome check --write",

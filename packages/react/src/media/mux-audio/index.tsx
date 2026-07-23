@@ -1,5 +1,6 @@
 'use client';
 
+import { CuePoints } from '@videojs/core/dom/media/cue-points';
 import { GoogleCast } from '@videojs/core/dom/media/google-cast';
 import type { HlsMediaProps } from '@videojs/core/dom/media/hls-js';
 import { HlsJsMedia, hlsMediaDefaultProps } from '@videojs/core/dom/media/hls-js';
@@ -20,6 +21,7 @@ export interface MuxAudioProps
 
 export const MuxAudio = forwardRef<HTMLAudioElement, MuxAudioProps>(function MuxAudio({ children, ...props }, ref) {
   const media = useMediaInstance(HlsJsMedia, (media) => {
+    addComponent(media, new CuePoints());
     addComponent(media, new MuxData({ playerSoftwareName: 'mux-audio' }));
     addComponent(media, new GoogleCast());
   });
