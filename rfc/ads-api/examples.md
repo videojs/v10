@@ -26,7 +26,7 @@ if (linearTrack == null) {
   throw new Error('linear ad track not available');
 }
 
-linearTrack.addEventListener('change', () => {
+linearTrack.addEventListener('cuechange', () => {
   const cue = linearTrack.activeCues[0];
   if (cue) {
     contentControls.hidden = true;
@@ -38,7 +38,7 @@ linearTrack.addEventListener('change', () => {
 });
 
 // Track which ad is currently playing within the pod:
-linearTrack.addEventListener('change', () => {
+linearTrack.addEventListener('cuechange', () => {
   const cue = linearTrack.activeCues[0];
   cue?.addEventListener('adchange', () => {
     const currentCue = linearTrack.activeCues[0];
@@ -66,7 +66,7 @@ if (pauseTrack == null) {
   throw new Error('pause ad track not available');
 }
 
-pauseTrack.addEventListener('change', () => {
+pauseTrack.addEventListener('cuechange', () => {
   const cue = pauseTrack.activeCues[0];
   if (cue == null) {
     pauseAdLayer.clear();
@@ -105,7 +105,7 @@ if (menuTrack == null) {
   throw new Error('menu ad track not available');
 }
 
-menuTrack.addEventListener('change', () => {
+menuTrack.addEventListener('cuechange', () => {
   headlineSlot.clear();
   tileGrid.clear();
 
@@ -141,7 +141,7 @@ if (sqTrack == null) {
   throw new Error('squeezeback ad track not available');
 }
 
-sqTrack.addEventListener('change', () => {
+sqTrack.addEventListener('cuechange', () => {
   const cue = sqTrack.activeCues[0];
 
   if (cue == null) {
@@ -183,7 +183,7 @@ if (overlayTrack == null) {
   throw new Error('overlay ad track not available');
 }
 
-overlayTrack.addEventListener('change', () => {
+overlayTrack.addEventListener('cuechange', () => {
   overlayLayer.clear();
 
   // Multiple overlay cues can theoretically be active at once.
@@ -224,7 +224,7 @@ if (inSceneTrack == null) {
   throw new Error('in-scene ad track not available');
 }
 
-inSceneTrack.addEventListener('change', () => {
+inSceneTrack.addEventListener('cuechange', () => {
   for (let i = 0; i < inSceneTrack.activeCues.length; i += 1) {
     const cue = inSceneTrack.activeCues[i];
     const ad = cue.activeAd;
@@ -260,7 +260,7 @@ if (saverTrack == null) {
   throw new Error('screensaver ad track not available');
 }
 
-saverTrack.addEventListener('change', () => {
+saverTrack.addEventListener('cuechange', () => {
   const cue = saverTrack.activeCues[0];
   const activeAd = cue?.activeAd;
   if (activeAd != null) {

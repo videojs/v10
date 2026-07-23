@@ -214,7 +214,7 @@ Each `AdTrack` represents a format-based lane for ad experiences. The player cre
 | ----------- | ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | id          | string (readonly)      | Unique identifier for this track (typically matches the format name).                                                                                                                                                           |
 | format      | AdFormat (readonly)    | Which IAB ad format this track manages (`'linear'`, `'overlay'`, `'pause'`, etc.). Immutable after creation.                                                                                                                                |
-| servingMode | AdServingMode          | How ads on this track are delivered. See [AdServingMode](#adservingmode). Set by the adapter when the track is initialized; may be updated if the session changes delivery model.                                               |
+| servingMode | AdServingMode (readonly) | How ads on this track are delivered. See [AdServingMode](#adservingmode). Set by the adapter when the track is initialized.                                                                                                       |
 | label       | string (readonly)      | Human-readable label (e.g., 'Linear Ads', 'Overlay Ads'). Parallels `TextTrack.label`.                                                                                                                                          |
 | cues        | AdCueList (readonly)   | All `AdCue` instances known to this track (scheduled, active, completed). Parallels `TextTrack.cues`.                                                                                                                           |
 | activeCues  | AdCueList (readonly)   | `AdCue` instances currently in `'active'` or `'activating'` state. Parallels `TextTrack.activeCues`. Updated automatically as cue states change.                                                                                        |
@@ -234,7 +234,9 @@ Fired on an `AdTrack` when its cue list changes.
 | --------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
 | addcue    | An `AdCue` was added to this track's cues list.                                                                                             |
 | removecue | An `AdCue` was removed from this track.                                                                                                     |
-| change    | The activeCues list changed (a cue activated or deactivated). Primary event for players to react to state transitions within a format lane. |
+| cuechange | The activeCues list changed (a cue activated or deactivated). Parallels `TextTrack.cuechange`. Primary event for players to react to state transitions within a format lane. |
+
+The `cuechange` event matches `TextTrack.cuechange` semantics, but `addcue` and `removecue` are deliberate deviations from the `TextTrack` model. Ad cues are dynamically scheduled post-load: SGAI signals, refresh cycles, and programmatic insertion can add or remove cues at any time, whereas WebVTT cues are typically static after load. Consumers need observability into schedule changes (e.g., rendering ad markers on a scrubber) that `cuechange` alone cannot provide, since it fires only for activation transitions.
 
 `AdTrack` does not expose `addCue`/`removeCue` methods or a `getScheduledBreaks()` method. Cue management is the responsibility of the ad adapter, not the player consumer. The player reads from `cues`/`activeCues` and listens for events. This keeps the public API surface read-only and event-driven, reducing opportunities for misuse.
 
@@ -242,13 +244,13 @@ Fired on an `AdTrack` when its cue list changes.
 interface AdTrack extends EventTarget {
   readonly id: string;
   readonly format: AdFormat;
-  servingMode: AdServingMode;
+  readonly servingMode: AdServingMode;
   readonly label: string;
   readonly cues: AdCueList;
   readonly activeCues: AdCueList;
 
   // Inherited from EventTarget:
-  //   addEventListener('addcue' | 'removecue' | 'change', listener): void;
+  //   addEventListener('addcue' | 'removecue' | 'cuechange', listener): void;
   //   removeEventListener(...): void;
 }
 ```
