@@ -13,6 +13,8 @@ export interface TooltipContextValue {
   core: TooltipCore;
   tooltip: TooltipApi;
   state: TooltipCore.State;
+  preferredSide: TooltipCore.State['side'];
+  setPositionedSide: (side: TooltipCore.State['side']) => void;
   stateAttrMap: StateAttrMap<TooltipCore.State>;
   anchorName: string;
   popupId: string;

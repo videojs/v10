@@ -107,10 +107,40 @@ function expectNoMenuStateAttrs(element: HTMLElement): void {
 }
 
 afterEach(() => {
+  vi.restoreAllMocks();
   document.body.innerHTML = '';
 });
 
 describe('MenuElement', () => {
+  it('exposes the positioned side on root content', async () => {
+    const trigger = document.createElement('button');
+    const root = createElement(MenuElement);
+    const view = createElement(MenuViewElement);
+    const item = createElement(MenuItemElement);
+
+    root.id = 'menu';
+    root.open = true;
+    root.side = 'top';
+    root.boundary = 'viewport';
+    trigger.setAttribute('commandfor', root.id);
+    item.textContent = 'Auto';
+    view.append(item);
+    root.append(view);
+
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 10, 40, 20));
+    vi.spyOn(root, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 100, 60));
+    vi.spyOn(document.documentElement, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 300, 200));
+    Object.defineProperty(root, 'offsetWidth', { configurable: true, value: 100 });
+    Object.defineProperty(root, 'offsetHeight', { configurable: true, value: 5 });
+    Object.defineProperty(root, 'scrollHeight', { configurable: true, value: 60 });
+    root.style.setProperty('--media-popover-available-height', '5px');
+
+    document.body.append(trigger, root);
+    await root.updateComplete;
+
+    expect(root.getAttribute('data-side')).toBe('bottom');
+  });
+
   it('scopes menu state data attributes to menu elements', async () => {
     const root = createElement(MenuElement);
     const label = createElement(MenuGroupLabelElement);

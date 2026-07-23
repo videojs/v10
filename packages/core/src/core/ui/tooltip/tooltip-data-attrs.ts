@@ -5,7 +5,7 @@ import type { TooltipState } from './tooltip-core';
 export const TooltipDataAttrs = {
   /** Present when the tooltip is open. */
   open: 'data-open',
-  /** Indicates which side the tooltip is positioned relative to the trigger. */
+  /** Indicates the rendered side of the tooltip after collision handling. */
   side: 'data-side',
   /** Indicates how the tooltip is aligned relative to the specified side. */
   align: 'data-align',

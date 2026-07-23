@@ -4,6 +4,7 @@ import type { PopoverState } from '@videojs/core';
 import {
   getAnchorPositionStyle,
   getPopupPositionRect,
+  getPositionedSide,
   getPositioningBoundaryRect,
   isEventWithinElement,
   resolveOffsets,
@@ -27,7 +28,18 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { core, popover, state, stateAttrMap, anchorName, popupId, boundary, container } = usePopoverContext();
+  const {
+    core,
+    popover,
+    state,
+    preferredSide,
+    setPositionedSide,
+    stateAttrMap,
+    anchorName,
+    popupId,
+    boundary,
+    container,
+  } = usePopoverContext();
   const internalRef = useRef<HTMLDivElement>(null);
 
   const popupRef = useCallback(
@@ -44,7 +56,7 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
 
   // --- Positioning ---
 
-  const posOpts = useMemo(() => ({ side: state.side, align: state.align }), [state.side, state.align]);
+  const posOpts = useMemo(() => ({ side: preferredSide, align: state.align }), [preferredSide, state.align]);
 
   // CSS Anchor Positioning — computed from state, no measurement needed.
   // `position-anchor` is set imperatively in the ref callback above
@@ -55,12 +67,12 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
     return rest as CSSProperties;
   }, [anchorName, posOpts]);
 
-  // Manual fallback — measure rects after layout, before paint.
-  const [manualStyle, setManualStyle] = useState<CSSProperties | null>(null);
+  // Measure rects after layout, before paint.
+  const [position, setPosition] = useState<CSSProperties | null>(null);
 
   useLayoutEffect(() => {
     if (!state.open) {
-      setManualStyle(null);
+      setPosition(null);
       return;
     }
 
@@ -72,20 +84,22 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
       const triggerRect = triggerEl.getBoundingClientRect();
       const root = popupEl.getRootNode() as Document | ShadowRoot;
       const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
-      const popupRect = supportsAnchorPositioning() ? undefined : getPopupPositionRect(popupEl);
+      const popupRect = getPopupPositionRect(popupEl, posOpts.side);
       const boundaryRect = getPositioningBoundaryRect(boundaryElement);
       const offsets = resolveOffsets(popupEl);
+      const side = getPositionedSide(triggerRect, popupRect, boundaryRect, posOpts, offsets);
 
       const { positionAnchor: _, ...nextStyle } = getAnchorPositionStyle(
         anchorName,
-        posOpts,
+        { ...posOpts, side },
         triggerRect,
-        popupRect,
+        supportsAnchorPositioning() ? undefined : popupRect,
         boundaryRect,
         offsets
       );
 
-      setManualStyle(nextStyle as CSSProperties);
+      setPosition(nextStyle as CSSProperties);
+      setPositionedSide(side);
     }
 
     measure();
@@ -137,11 +151,10 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };
-  }, [state.open, anchorName, posOpts, popover, boundary, container]);
+  }, [state.open, anchorName, posOpts, popover, boundary, container, setPositionedSide]);
 
-  // Anchor path uses computed styles; manual path uses measured styles;
-  // fallback resets UA [popover] defaults until positioning is computed.
-  const positioningStyle = manualStyle ?? anchorStyle ?? POPOVER_RESET;
+  // Use measured styles once available; reset UA [popover] defaults until then.
+  const positioningStyle = position ?? anchorStyle ?? POPOVER_RESET;
 
   // --- Visibility ---
 

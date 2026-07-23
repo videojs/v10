@@ -10,6 +10,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
+import { usePositionedState } from '../hooks/use-positioned-state';
 import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
 export interface MenuRootProps extends MenuCore.Props {
@@ -98,11 +99,12 @@ export function MenuRoot({
   useDestroy(menu);
 
   const input = useSnapshot(menu.input);
-  const state = useMemo(() => {
+  const preferredState = useMemo(() => {
     core.setProps({ side, align, closeOnEscape, closeOnOutsideClick, isSubmenu });
     core.setInput(input);
     return core.getState();
   }, [core, input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
+  const { state, preferredSide, setPositionedSide } = usePositionedState(preferredState);
 
   // Subscribe to navigation state — used by Content/Trigger when this is a root menu.
   const navigationInput = useSnapshot(menu.navigationInput);
@@ -116,6 +118,8 @@ export function MenuRoot({
       core,
       menu,
       state,
+      preferredSide,
+      setPositionedSide,
       stateAttrMap: MenuDataAttrs,
       contentId,
       anchorName,
@@ -131,6 +135,8 @@ export function MenuRoot({
       core,
       menu,
       state,
+      preferredSide,
+      setPositionedSide,
       contentId,
       anchorName,
       boundary,

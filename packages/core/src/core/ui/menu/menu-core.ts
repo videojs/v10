@@ -7,7 +7,7 @@ import { getTransitionFlags } from '../transition';
 export type { PopoverAlign, PopoverSide };
 
 export interface MenuProps {
-  /** Which side of the trigger the menu appears on. Root menus only. */
+  /** Preferred side of the trigger for the menu. Root menus only. */
   side?: PopoverSide | undefined;
   /** Alignment along the trigger's edge. Root menus only. */
   align?: PopoverAlign | undefined;
@@ -29,6 +29,7 @@ export interface MenuInput extends TransitionState {}
 export interface MenuState extends TransitionFlags {
   open: boolean;
   status: TransitionStatus;
+  /** Preferred side of the trigger for the menu. Root menus only. */
   side: PopoverSide | undefined;
   align: PopoverAlign | undefined;
   /** Whether this menu is nested inside another menu's content. */

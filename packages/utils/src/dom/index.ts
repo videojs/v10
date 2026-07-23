@@ -18,7 +18,14 @@ export { mergeLocaleOverlays } from './locale/merge-locale-overlays';
 export { resolveLangAttr } from './locale/resolve-lang-attr';
 export { subscribeAmbientLang } from './locale/subscribe-ambient-lang';
 export { isMacOS } from './platform';
-export { tryHidePopover, tryShowPopover } from './popover';
+export {
+  getPositionedSide,
+  type PositionSide,
+  type PositionSideOffsets,
+  type PositionSideOptions,
+  tryHidePopover,
+  tryShowPopover,
+} from './popover';
 export { isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { loadScript } from './script';

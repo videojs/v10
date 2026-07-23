@@ -14,6 +14,7 @@ import {
   getAnchorNameStyle,
   getAnchorPositionStyle,
   getPopupPositionRect,
+  getPositionedSide,
   getPositioningBoundaryRect,
   HOTKEY_SHORTCUT_CHANGE_EVENT,
   type PositioningBoundary,
@@ -205,11 +206,18 @@ export class TooltipElement extends MediaElement {
     }
 
     // Apply positioning styles to self.
-    const posOpts = { side: state.side, align: state.align };
+    const preferredOpts = { side: state.side, align: state.align };
     const boundaryElement = this.#getBoundaryElement();
     const triggerRect = this.#currentTrigger?.getBoundingClientRect();
     const boundaryRect = getPositioningBoundaryRect(boundaryElement);
     const offsets = resolveOffsets(this, TooltipCSSVars);
+    const popupRect = getPopupPositionRect(this, preferredOpts.side);
+
+    if (!triggerRect) return;
+
+    const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredOpts, offsets);
+    const posOpts = { ...preferredOpts, side };
+    this.setAttribute(TooltipDataAttrs.side, side);
 
     if (supportsAnchorPositioning()) {
       applyStyles(
@@ -218,10 +226,9 @@ export class TooltipElement extends MediaElement {
       );
     } else {
       // JS fallback: measure rects and resolve CSS var offsets.
-      const selfRect = getPopupPositionRect(this);
       applyStyles(
         this,
-        getAnchorPositionStyle(this.id, posOpts, triggerRect, selfRect, boundaryRect, offsets, TooltipCSSVars)
+        getAnchorPositionStyle(this.id, posOpts, triggerRect, popupRect, boundaryRect, offsets, TooltipCSSVars)
       );
     }
 

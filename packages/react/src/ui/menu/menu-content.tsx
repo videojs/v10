@@ -8,6 +8,7 @@ import {
   getMenuViewportElement,
   getMenuViewTransitionAttrs,
   getPopupPositionRect,
+  getPositionedSide,
   getPositioningBoundaryRect,
   getRootPositionOptions,
   isEventWithinElement,
@@ -109,8 +110,19 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   { render, className, style, onKeyDown, onBlur, ...elementProps },
   forwardedRef
 ) {
-  const { core, menu, state, stateAttrMap, anchorName, contentId, boundary, container, activeSubMenuId } =
-    useMenuContext();
+  const {
+    core,
+    menu,
+    state,
+    preferredSide,
+    setPositionedSide,
+    stateAttrMap,
+    anchorName,
+    contentId,
+    boundary,
+    container,
+    activeSubMenuId,
+  } = useMenuContext();
   const subMenuCtx = useSubMenuContext();
   const isSubmenu = state.isSubmenu;
 
@@ -229,7 +241,10 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const rootComposedRef = useComposedRefs(forwardedRef, contentRef, internalRef);
   const menuViewComposedRef = useComposedRefs(forwardedRef, setMenuViewElement);
 
-  const positionOptions = useMemo(() => getRootPositionOptions(state.side, state.align), [state.side, state.align]);
+  const positionOptions = useMemo(
+    () => getRootPositionOptions(preferredSide, state.align),
+    [preferredSide, state.align]
+  );
 
   const anchorStyle = useMemo(() => {
     if (isSubmenu || !positionOptions || !supportsAnchorPositioning()) return null;
@@ -237,7 +252,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     return rest as CSSProperties;
   }, [isSubmenu, anchorName, positionOptions]);
 
-  const [manualStyle, setManualStyle] = useState<CSSProperties | null>(null);
+  const [position, setPosition] = useState<CSSProperties | null>(null);
 
   useLayoutEffect(() => {
     if (isSubmenu) return;
@@ -264,7 +279,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   useLayoutEffect(() => {
     if (isSubmenu) return;
     if (!state.open) {
-      setManualStyle(null);
+      setPosition(null);
       return;
     }
 
@@ -284,15 +299,16 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       const root = contentElement.getRootNode() as Document | ShadowRoot;
       const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
       const anchorSupported = supportsAnchorPositioning();
-      const contentRect = anchorSupported ? undefined : getPopupPositionRect(contentElement);
+      let contentRect = getPopupPositionRect(contentElement, rootPositionOptions.side);
       const boundaryRect = getPositioningBoundaryRect(boundaryElement);
       const offsets = resolveOffsets(contentElement);
+      let side = getPositionedSide(triggerRect, contentRect, boundaryRect, rootPositionOptions, offsets);
 
       let nextStyle = getAnchorPositionStyle(
         anchorName,
-        rootPositionOptions,
+        { ...rootPositionOptions, side },
         triggerRect,
-        contentRect,
+        anchorSupported ? undefined : contentRect,
         boundaryRect,
         offsets
       );
@@ -305,11 +321,13 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       );
 
       if (!anchorSupported) {
+        contentRect = getPopupPositionRect(contentElement, rootPositionOptions.side);
+        side = getPositionedSide(triggerRect, contentRect, boundaryRect, rootPositionOptions, offsets);
         nextStyle = getAnchorPositionStyle(
           anchorName,
-          rootPositionOptions,
+          { ...rootPositionOptions, side },
           triggerRect,
-          getPopupPositionRect(contentElement),
+          contentRect,
           boundaryRect,
           offsets
         );
@@ -317,7 +335,8 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
       const { positionAnchor: _, ...rootStyle } = nextStyle;
 
-      setManualStyle(rootStyle as CSSProperties);
+      setPosition(rootStyle as CSSProperties);
+      setPositionedSide(side);
     }
 
     measure();
@@ -356,7 +375,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
       window.removeEventListener('scroll', reposition, true);
       window.removeEventListener('resize', reposition);
     };
-  }, [isSubmenu, state.open, anchorName, positionOptions, menu, boundary, container]);
+  }, [isSubmenu, state.open, anchorName, positionOptions, menu, boundary, container, setPositionedSide]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -393,7 +412,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
   if (!state.open) return null;
 
-  const positioningStyle = manualStyle ?? anchorStyle ?? POPOVER_RESET;
+  const positioningStyle = position ?? anchorStyle ?? POPOVER_RESET;
 
   return renderElement(
     'div',
