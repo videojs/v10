@@ -1,10 +1,11 @@
 import { existsSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { pathToFileURL } from 'node:url';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import { defineConfig, normalizePath, type Plugin } from 'vite';
+
+import { mirrorTemplatesToSrc } from './scripts/shared';
 
 const htmlCdnDir = resolve(__dirname, '../../packages/html/cdn');
 const htmlCdnI18nRegistry = normalizePath(resolve(htmlCdnDir, 'i18n.dev.js'));
@@ -108,7 +109,6 @@ function sandboxTemplateSyncPlugin(): Plugin {
   return {
     name: 'sandbox-template-sync',
     async buildStart() {
-      const { mirrorTemplatesToSrc } = await import(pathToFileURL(resolve(__dirname, 'scripts/shared.ts')).href);
       await mirrorTemplatesToSrc();
     },
   };
