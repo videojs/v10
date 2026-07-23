@@ -342,6 +342,19 @@ describe('VimeoMedia', () => {
     expect(played.end(0)).toBe(3);
   });
 
+  it('unblocks pending play() when detached before load completes', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    // Await load without the player ever emitting `loaded`.
+    const pending = media.play();
+    media.detach();
+
+    await expect(pending).resolves.toBeUndefined();
+    expect(media.engine).toBe(null);
+  });
+
   it('destroys the player on detach', () => {
     const media = new VimeoMedia();
     const iframe = createIframe();
