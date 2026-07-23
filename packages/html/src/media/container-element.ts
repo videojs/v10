@@ -1,4 +1,5 @@
-import { listen } from '@videojs/utils/dom';
+import { applyContainerAttrs } from '@videojs/core/dom';
+import { containsComposed, getDeepActiveElement, listen } from '@videojs/utils/dom';
 
 import { containerContext, playerContext } from '../player/context';
 import { createContainerMixin } from '../store/container-mixin';
@@ -14,10 +15,7 @@ export class MediaContainerElement extends ContainerMixin(MediaElement) {
   override connectedCallback(): void {
     super.connectedCallback();
 
-    // Make focusable so keyboard events reach hotkey listeners.
-    if (!this.hasAttribute('tabindex')) {
-      this.setAttribute('tabindex', '0');
-    }
+    applyContainerAttrs(this);
 
     this.#disconnect = new AbortController();
     listen(this, 'pointerup', this.#onPointerUp, { signal: this.#disconnect.signal });
@@ -30,9 +28,11 @@ export class MediaContainerElement extends ContainerMixin(MediaElement) {
   }
 
   #onPointerUp = (): void => {
+    const active = getDeepActiveElement(this.ownerDocument);
+
     // If nothing inside the container has focus, grab it so keyboard
     // events reach the hotkey coordinator's listener.
-    if (!this.contains(document.activeElement) || document.activeElement === document.body) {
+    if (!active || active === this.ownerDocument.body || !containsComposed(this, active)) {
       this.focus({ preventScroll: true });
     }
   };

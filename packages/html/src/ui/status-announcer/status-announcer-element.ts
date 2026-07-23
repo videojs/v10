@@ -1,12 +1,11 @@
 import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
-import { getMediaSnapshot, subscribeToInputActions } from '@videojs/core/dom';
+import { applyVisuallyHiddenStyle, getMediaSnapshot, isSliderFocused } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext, playerContext } from '../../player/context';
-import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 
 export class StatusAnnouncerElement extends MediaElement {
@@ -20,21 +19,23 @@ export class StatusAnnouncerElement extends MediaElement {
 
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #core = new StatusAnnouncerCore();
-  readonly #player = new PlayerController(this, playerContext);
-  readonly #container = new ContextConsumer(this, {
-    context: containerContext,
+  readonly #player = new ContextConsumer(this, {
+    context: playerContext,
     callback: () => this.#reconnect(),
     subscribe: true,
   });
+  readonly #container = new ContextConsumer(this, { context: containerContext, subscribe: true });
 
   #disconnect: AbortController | null = null;
-  #inputActionUnsubscribe: (() => void) | null = null;
+  #storeUnsubscribe: (() => void) | null = null;
+  #liveText: HTMLElement | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
 
     this.setAttribute('role', 'status');
+    this.#ensureLiveText();
 
     this.#disconnect = new AbortController();
     this.#core.state.subscribe(() => this.requestUpdate(), { signal: this.#disconnect.signal });
@@ -43,14 +44,14 @@ export class StatusAnnouncerElement extends MediaElement {
 
   override disconnectedCallback(): void {
     super.disconnectedCallback();
-    this.#inputActionUnsubscribe?.();
-    this.#inputActionUnsubscribe = null;
+    this.#storeUnsubscribe?.();
+    this.#storeUnsubscribe = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
-    this.#inputActionUnsubscribe?.();
+    this.#storeUnsubscribe?.();
     this.#core.destroy();
     super.destroyCallback();
   }
@@ -60,6 +61,14 @@ export class StatusAnnouncerElement extends MediaElement {
     this.#core.setProps({
       closeDelay: this.closeDelay,
       labels: createInputIndicatorLabels(this.#i18n.value),
+      shouldAnnounceSeek: () => {
+        const container = this.#container.value?.container;
+        return !container || !isSliderFocused(container);
+      },
+      shouldAnnounceVolume: () => {
+        const container = this.#container.value?.container;
+        return !container || !isSliderFocused(container);
+      },
     });
   }
 
@@ -67,22 +76,31 @@ export class StatusAnnouncerElement extends MediaElement {
     super.update(changed);
 
     const label = this.#core.state.current.label;
-    if (label) {
-      this.setAttribute('aria-label', label);
-    } else {
-      this.removeAttribute('aria-label');
-    }
+    this.#ensureLiveText().textContent = label ?? '';
   }
 
   #reconnect(): void {
-    this.#inputActionUnsubscribe?.();
-    this.#inputActionUnsubscribe = null;
+    this.#storeUnsubscribe?.();
+    this.#storeUnsubscribe = null;
+    this.#core.resetSnapshot();
 
-    const container = this.#container.value?.container;
-    if (!container) return;
+    const store = this.#player.value;
+    if (!store) return;
 
-    this.#inputActionUnsubscribe = subscribeToInputActions(container, (event) => {
-      this.#core.processEvent(event, getMediaSnapshot(this.#player.value));
-    });
+    this.#core.processSnapshot(getMediaSnapshot(store));
+    this.#storeUnsubscribe = store.subscribe(() => this.#core.processSnapshot(getMediaSnapshot(store)));
+  }
+
+  #ensureLiveText(): HTMLElement {
+    if (this.#liveText?.isConnected) return this.#liveText;
+
+    const existing = this.querySelector<HTMLElement>('[data-status-announcer-content]');
+    this.#liveText = existing ?? document.createElement('span');
+    this.#liveText.setAttribute('data-status-announcer-content', '');
+    applyVisuallyHiddenStyle(this.#liveText);
+
+    if (!existing) this.append(this.#liveText);
+
+    return this.#liveText;
   }
 }
