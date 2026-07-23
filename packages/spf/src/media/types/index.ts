@@ -4,7 +4,7 @@
  * Based on CMAF-HAM (Common Media Application Format - Hypothetical Application Model)
  * Protocol-agnostic representation of streaming media content.
  *
- * @see https://github.com/AcademySoftwareFoundation/common-media-library
+ * @see https://github.com/streaming-video-technology-alliance/common-media-library
  */
 
 // =============================================================================
