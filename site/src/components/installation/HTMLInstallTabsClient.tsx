@@ -6,6 +6,7 @@ import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs';
 import { shared } from '@/components/typography/styles';
 import { installMethod, renderer } from '@/stores/installation';
 import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
+import { buildOptions } from '@/utils/installation/install-method-options';
 import type { InstallMethod } from '@/utils/installation/types';
 import HTMLCdnCodeBlock from './HTMLCdnCodeBlock';
 
@@ -14,11 +15,22 @@ interface HTMLInstallTabsProps {
   cdnMedia: string[];
 }
 
+// npm installs with `install`; every other package manager uses `add`.
+const PACKAGE_MANAGER_COMMAND: Record<Exclude<InstallMethod, 'cdn'>, string> = {
+  npm: 'npm install @videojs/html',
+  pnpm: 'pnpm add @videojs/html',
+  yarn: 'yarn add @videojs/html',
+  bun: 'bun add @videojs/html',
+};
+
 export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
   const ref = useRef<HTMLDivElement>(null);
   const $renderer = useStore(renderer);
 
   const supportsCdn = rendererSupportsCdn($renderer, cdnMedia);
+  // Shared builder keeps the method set, labels, and ordering aligned with the
+  // CLI prompt; the first option (cdn when available, else npm) is the default.
+  const options = buildOptions({ includeCdn: supportsCdn });
 
   // Mirror the active install-method tab into the store so the usage code block
   // can react (e.g. CDN omits the JS imports). Observing from the stable
@@ -56,35 +68,21 @@ export default function HTMLInstallTabs({ cdnMedia }: HTMLInstallTabsProps) {
           at once and desync installMethod from the visible tab. */}
       <TabsRoot key={supportsCdn ? 'with-cdn' : 'without-cdn'}>
         <TabsList label="Installation">
-          {supportsCdn && (
-            <Tab value="cdn" initial>
-              cdn
+          {options.map((option, index) => (
+            <Tab key={option.value} value={option.value!} initial={index === 0}>
+              {option.label}
             </Tab>
-          )}
-          <Tab value="npm" initial={!supportsCdn}>
-            npm
-          </Tab>
-          <Tab value="pnpm">pnpm</Tab>
-          <Tab value="yarn">yarn</Tab>
-          <Tab value="bun">bun</Tab>
+          ))}
         </TabsList>
-        {supportsCdn && (
-          <TabsPanel value="cdn" initial>
-            <HTMLCdnCodeBlock cdnMedia={cdnMedia} />
+        {options.map((option, index) => (
+          <TabsPanel key={option.value} value={option.value!} initial={index === 0}>
+            {option.value === 'cdn' ? (
+              <HTMLCdnCodeBlock cdnMedia={cdnMedia} />
+            ) : (
+              <ClientCode code={PACKAGE_MANAGER_COMMAND[option.value as Exclude<InstallMethod, 'cdn'>]} lang="bash" />
+            )}
           </TabsPanel>
-        )}
-        <TabsPanel value="npm" initial={!supportsCdn}>
-          <ClientCode code="npm install @videojs/html" lang="bash" />
-        </TabsPanel>
-        <TabsPanel value="pnpm">
-          <ClientCode code="pnpm add @videojs/html" lang="bash" />
-        </TabsPanel>
-        <TabsPanel value="yarn">
-          <ClientCode code="yarn add @videojs/html" lang="bash" />
-        </TabsPanel>
-        <TabsPanel value="bun">
-          <ClientCode code="bun add @videojs/html" lang="bash" />
-        </TabsPanel>
+        ))}
       </TabsRoot>
       {!supportsCdn && (
         <p className={clsx(shared.p, shared.prose)}>
