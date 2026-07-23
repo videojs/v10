@@ -1,0 +1,75 @@
+---
+title: Autoplay
+description: Autoplay a video with Video.js, detect when the browser blocks it, and recover gracefully.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import Aside from '@/components/Aside.astro';
+
+Autoplaying a video isn't guaranteed. This guide will walk you through what you can do to improve your chances that a video will autoplay, as well as ways to recover gracefully from a failure.
+
+## Increase your chance of autoplay working
+
+There are a few things you can do to improve your chances of autoplay working:
+- Your video is muted with the `muted` attribute
+- The user has interacted with the page with a click or a tap
+- In desktop Chrome, the user's [Media Engagement Index](https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#mei) threshold has been crossed. Chrome keeps track of how often a user consumes media on a site and if a user has played a lot of media on this site then Chrome will probably allow autoplay.
+- In mobile Chrome, the user has added the site to their home screen
+- In mobile Safari, the device is not in power-saving mode
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video autoplay muted playsInline>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["react"]}>
+```html
+<video autoplay muted playsInline>
+```
+</FrameworkCase>
+
+## Detect and recover from blocked autoplay
+
+The `autoplay` attribute is fire-and-forget: the browser plays your video or quietly does nothing. To know which happened so you can retry muted, to log the outcome, or to show a "click to play" overlay, call `play()` yourself. It returns a promise that resolves on success and rejects when the browser blocks playback.
+
+<FrameworkCase frameworks={["react"]}>
+```jsx
+const play = usePlayer(s => s.play);
+
+useEffect(() => {
+  play().then(() => {
+    // autoplay was successful!
+  }).catch((error) => {
+    // do something if you want to handle or track this error
+  });
+}, [play])
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```js
+const player = document.querySelector('video-player');
+player.store.state.play().then(() => {
+  // autoplay was successful!
+}).catch((error) => {
+  // do something if you want to handle or track this error
+});
+```
+</FrameworkCase>
+
+Drop the `autoplay` attribute from your media when you do this. Combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
+
+<Aside type="note">
+A rejected `play()` promise is a [`DOMException`](https://developer.mozilla.org/en-US/docs/Web/API/DOMException) whose `name` tells you the cause. Two are standardized: `NotAllowedError`, the autoplay policy blocking playback, and `NotSupportedError`, when the source isn't a supported media format. Some browsers also reject with `AbortError` when an unrelated call interrupts playback. Most handling can treat every rejection the same; to log only true autoplay failures, branch on `error.name === 'NotAllowedError'`.
+</Aside>
+
+## Handle the blocked state
+
+When muted autoplay fails too, playback won't start without the viewer. Treat that as expected, not as an error:
+
+- **Keep the poster visible.** The player isn't loading, it's waiting. Don't show a buffering spinner.
+- **Expose a clear play affordance.** A play button over the poster is the conventional pattern. The player's own controls already do this, so make sure they render in the blocked state.
+- **Don't log a blocked autoplay as a fatal error.** It's the browser doing its job. If your analytics counts every `play()` rejection as a playback failure, your error rates will spike on first visits where the policy hasn't been earned yet. Distinguish a `NotAllowedError` on the initial attempt from real playback errors.
+
+Wire your fallback UI to the status the handler exposes, and show the overlay only once it reaches `'blocked'`.

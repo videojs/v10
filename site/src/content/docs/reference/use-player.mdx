@@ -17,6 +17,13 @@ import selectorReactCss from "@/components/docs/demos/use-player/react/css/Selec
 
 `Player.usePlayer` (from <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>) gives you access to the player store from any component within a `Player.Provider`. It's typed to the features you passed to `createPlayer`, and has two overloads — without arguments for direct store access, or with a selector for reactive state subscriptions.
 
+```tsx
+const Player = createPlayer({ ... })
+
+const store = Player.usePlayer() // direct store access
+const paused = Player.usePlayer(s => s.paused) // reactive state subscription
+```
+
 `usePlayer` is also available as a standalone import (`import { usePlayer } from '@videojs/react'`), but the standalone version returns an untyped `UnknownStore`. Pass a premade selector to recover typing:
 
 ```tsx
