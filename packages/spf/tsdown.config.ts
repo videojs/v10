@@ -8,6 +8,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     index: 'src/index.ts',
     dom: 'src/dom.ts',
     hls: 'src/playback/engines/hls/index.ts',
+    'media-tracks': 'src/media/media-tracks/index.ts',
     'background-video': 'src/playback/engines/background-video/index.ts',
   },
 });
