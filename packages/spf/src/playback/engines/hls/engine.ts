@@ -113,6 +113,15 @@ export interface SimpleHlsEngineState {
    * back.
    */
   loadSuspended?: boolean;
+  /**
+   * Author intent for the AirPlay/remote-playback picker, written by the media
+   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
+   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying
+   * `<video>.disableRemotePlayback`, which stays programmatically managed
+   * (ManagedMediaSource / AirPlay).
+   */
+  disableRemotePlayback?: boolean;
 }
 
 /**
@@ -267,6 +276,7 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
   'userVideoTrackSelection',
   'userAudioTrackSelection',
   'userTextTrackSelection',
+  'disableRemotePlayback',
 ]);
 
 /**

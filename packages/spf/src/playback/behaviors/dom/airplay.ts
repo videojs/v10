@@ -29,13 +29,12 @@
  *   publishes `context.mediaSource` exactly once the MS is open, and we flip
  *   `disableRemotePlayback = false` gated on that.
  *   The gate re-fires per source (the slot clears + republishes on reset).
- * - **Author opt-out wins.** TODO: To be replaced by an explicit state signal
- *   A `disableRemotePlayback === true` read at attach
- *   is the author's explicit choice to disable remote playback, so we set
- *   nothing up. The read is unambiguous because the entry runs on the
- *   synchronous `mediaElement`-attach transition and `setupAirPlay` is composed
- *   *before* `setupMediaSource`, so this read precedes MMS's programmatic
- *   `true` even when the presentation is already resolved at attach.
+ * - **Author opt-out wins.** `state.disableRemotePlayback` (written only by the
+ *   media adapter's IDL property, never by MMS/programmatic code) is the
+ *   author's intent. A `true` read at entry is unambiguously the author's choice
+ *   to disable remote playback, so we set nothing up. Because the intent lives
+ *   on its own signal rather than the shared DOM property, this no longer
+ *   depends on reading before MMS's programmatic write — folds in #1800.
  */
 
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
@@ -60,6 +59,7 @@ function setupAirPlaySetup({
   state: {
     presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
     loadSuspended: Signal<boolean | undefined>;
+    disableRemotePlayback: ReadonlySignal<boolean | undefined>;
   };
   context: {
     mediaElement: ReadonlySignal<HTMLMediaElement | undefined>;
@@ -78,20 +78,25 @@ function setupAirPlaySetup({
         entry: () => {
           const mediaElement = context.mediaElement.get() as WebKitVideoElement;
 
-          // Author opt-out: a pre-set `true` is the author's explicit
-          // choice to disable remote playback — set nothing up. Safe as
-          // author-intent: this runs before any programmatic MMS write
-          // (`setupAirPlay` is composed before `setupMediaSource`).
-          // TODO: use state signal
-          if (mediaElement.disableRemotePlayback) return;
+          // Author opt-out: `state.disableRemotePlayback` is the author's
+          // intent, written only by the media adapter's IDL property — never by
+          // MMS/programmatic code. So a `true` here is unambiguously the author's
+          // choice to disable remote playback: set nothing up, leaving the
+          // element's remote playback disabled.
+          if (state.disableRemotePlayback.get()) return;
 
           const sourceEl = document.createElement('source');
           sourceEl.type = 'application/x-mpegURL';
           mediaElement.append(sourceEl);
 
-          // Suspend engine loading while the wireless target is active so we
-          // don't double-fetch alongside the receiver; resume when it turns
-          // off.
+          // Reflect the wireless target on `state.loadSuspended`: suspend engine
+          // loading while active so we don't double-fetch alongside the receiver,
+          // resume when it turns off.
+          //
+          // NOTE: on disengage Safari has already closed our MMS and doesn't
+          // re-select the MSE `<source>`, so local MSE playback can't actually
+          // resume — see the AirPlay feature doc's known-limitation on
+          // MMS/AirPlay return.
           const sync = () => {
             const isWireless = !!mediaElement.webkitCurrentPlaybackTargetIsWireless;
             state.loadSuspended.set(isWireless);
@@ -130,7 +135,7 @@ function setupAirPlaySetup({
 }
 
 export const setupAirPlay = defineBehavior({
-  stateKeys: ['presentation', 'loadSuspended'],
+  stateKeys: ['presentation', 'loadSuspended', 'disableRemotePlayback'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupAirPlaySetup,
 });
