@@ -68,6 +68,12 @@ export function getSelectedTrack<T extends TrackType>(
  * video over audio. A track is "resolved" once its media playlist has been
  * parsed (per {@link isResolvedTrack}). Returns `undefined` if neither
  * selected track is resolved.
+ *
+ * Handles VoD and live uniformly: `parseMediaPlaylist` sets `Track.duration`
+ * to the finite EXTINF sum for a complete playlist and to `Infinity` while it
+ * can still grow (live), so this returns the right MSE duration for both
+ * without re-deriving completeness here. `Track.duration` is the single source
+ * of truth.
  */
 export function getResolvedSelectedTrackDuration(state: TrackSelectionState): number | undefined {
   if (state.selectedVideoTrackId) {

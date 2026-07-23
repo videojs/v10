@@ -94,6 +94,15 @@ Things this feature probably forces decisions on, not just additions:
   is the canonical example of a behavior that stays composition-
   variant-agnostic; the LL-HLS reload-loop is its inverse — a
   variant-specific behavior that exists *only* in the LL-HLS engine.
+- **Reload change-detection vs. partial segments** — the regular-live
+  cadence (`mediaPlaylistReloadDelay`) classifies a reload "changed vs.
+  unchanged" — full target vs. ½× per §6.3.4 — from the **full-segment**
+  window signature (`mediaSequence` + segment count), so a parts-only LL-HLS
+  update reads as *unchanged* and would poll at ½ target. The LL-HLS reload-
+  loop must either fold part progression into change-detection (interval-
+  polling variant) or replace interval pacing with response-driven blocking
+  reload, which sidesteps the question. (Regular-live cadence is verified
+  §6.3.4-correct in `reload-cadence.test.ts`; this is the LL-HLS-only gap.)
 - **Variant-decision point — open** — where does the engine commit to
   the LL-HLS variant: adapter-level upfront (consumer opts in), or
   after-first-playlist-parse from `EXT-X-SERVER-CONTROL` flags? The

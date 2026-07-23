@@ -1,10 +1,10 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
-import { ConcurrentRunner, Task } from '../../core/tasks/task';
+import { RecurringRunner, type Reschedule, runOnce, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
-import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
+import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
@@ -18,7 +18,7 @@ import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primi
 // `({ state, config }) => cleanup`. Each `resolveXTrack` export below calls it
 // from inside its own `defineBehavior` setup, supplying its per-type config
 // inline. The orchestration — gate on a selection, short-circuit when the
-// track is already resolved or missing, schedule the fetch+parse, and patch
+// track is already complete or missing, schedule the fetch+parse, and patch
 // the resolved track back into `state.presentation` — is shared.
 // ============================================================================
 
@@ -48,6 +48,8 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
   /** Fetch a track's media-playlist text — already failover-decorated by the behavior. */
   fetchResolvableText?: FetchText;
+  /** Live re-run policy for the `RecurringRunner`; absent → resolve once (VoD). */
+  reschedule?: Reschedule<ResolvedTrack>;
 }
 
 /**
@@ -57,19 +59,21 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
 interface ResolveTrackConfig {
   /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
   getCdnId?: GetCdnId;
+  /** Live media-playlist re-run policy; absent → resolve once. */
+  reschedule?: Reschedule<ResolvedTrack>;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
+  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText, reschedule },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
 }) {
-  // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
-  // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
-  // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
-  const runner = new ConcurrentRunner();
+  // Recurrence lives in the runner: with a `reschedule` (live) it re-runs the
+  // task until the policy stops; `runOnce` (VoD) runs it exactly once. Single-
+  // slot — a selection change re-schedules (abort-and-replace).
+  const runner = new RecurringRunner<ResolvedTrack>(reschedule ?? runOnce);
 
   // Reactor states model the FSM the previous effect-based body was
   // hand-rolling. 'presentation-resolved' is entered when the
@@ -77,9 +81,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
   // it (presentation cleared or reset to an unresolved value) aborts all
   // in-flight tasks via the entry-cleanup. Most URL changes go through
   // 'presentation-unresolved' naturally (set undefined → set new partial
-  // → re-parse), so the common case is covered by state-exit alone; the
-  // task body's commit-time id check covers the pathological
-  // resolved→resolved-without-unresolved transition.
+  // → re-parse), so the common case is covered by state-exit alone.
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get())
       ? ('presentation-resolved' as const)
@@ -104,33 +106,53 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // The reactor's state transitions handle relevant presentation
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
-            // internal updates (segments added by sibling tasks) don't
-            // re-fire the effect.
+            // internal updates (the post-resolve write, the runner's own
+            // reload cycles) don't re-fire the effect.
             const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
-            if (!track || isResolvedTrack(track)) return;
+            // Skip a complete or missing track; a resolved-but-incomplete (live)
+            // window still reloads — its window may have slid past the playhead.
+            if (!track || (isResolvedTrack(track) && Number.isFinite(track.duration))) return;
 
-            runner.schedule(
-              // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
-              // likely eventually passed down via config or a new "definitions" argument (CJP).
+            // Abort (selection/source change) settles quietly; a genuine resolve
+            // failure rejects — swallowed for now (TODO: surface to state).
+            const scheduled = runner.schedule(
+              // Re-runs (clones) on each reload, so the body re-reads the live
+              // snapshot (via `trackId`) rather than capturing the gate-time
+              // `track` — a reload carries the prior window's timeline forward.
               new Task(
                 async (signal) => {
+                  const snapshot = peek(state.presentation);
+                  const track = snapshot ? findTrackToResolve(snapshot, trackId) : undefined;
+                  if (!track) throw new Error('resolve-track: selected track not found');
+
                   // `fetchResolvableText` is the behavior's failover-decorated
                   // fetch: it trips the CDN on a failed fetch (network error or
                   // non-OK status). A parse failure is a content issue, not a
-                  // CDN-availability one, so it doesn't trip.
+                  // CDN-availability one, so it doesn't trip. The gate-time `track`
+                  // supplies only the playlist URL (stable across the fetch).
                   const text = await fetchResolvableText(track, { signal });
-                  const mediaTrack = parseMediaPlaylist(text, track);
 
-                  // Updater handles undefined inputs by returning current
-                  // unchanged; isResolvedPresentation narrows for the patch.
-                  // State-exit on resolving→unresolved fires runner.abortAll
-                  // before any URL change settles, and per the Fetch spec the
-                  // signal abort cancels in-flight body reads — so by the
-                  // time we reach this point the presentation we resolved
+                  // Re-read `previous` *after* the fetch: a concurrent write during
+                  // the await — notably anchor-presentation-timeline shifting this track onto
+                  // the shared presentation anchor — must be carried forward, not clobbered.
+                  // Parsing against the pre-fetch snapshot would strand the track
+                  // off the anchor for good (anchoring is pin-once). Correctness
+                  // rests on a run-to-completion invariant: NOTHING may yield
+                  // (await) between this re-read and the write below, so no writer
+                  // can interleave. `parseMediaPlaylist` is synchronous — keep it
+                  // that way, or move the read into the updater.
+                  const live = peek(state.presentation);
+                  const previous = live ? findTrackToResolve(live, trackId) : undefined;
+                  if (!previous) throw new Error('resolve-track: selected track not found');
+                  const mediaTrack = parseMediaPlaylist(text, previous);
+
+                  // State-exit on resolving→unresolved fires runner.abortAll before
+                  // any URL change settles, and per the Fetch spec the signal abort
+                  // cancels in-flight body reads — so the presentation we resolve
                   // against is the live one.
                   update(state.presentation, (current) => {
                     if (!isResolvedPresentation(current)) return current;
@@ -143,14 +165,18 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     // audio↔video (mixed-container sources exist, e.g. muxed-TS
                     // video + raw-.aac audio), which also keeps per-type
                     // resolutions' writes disjoint (no race).
-                    return NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
+                    const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
+                    // Stream nature (category [2a]) — stable once parsed.
+                    return { ...relabeled, streamType: deriveStreamType(getMediaPlaylistMetadata(mediaTrack)) };
                   });
+                  return mediaTrack;
                 },
                 { id: track.id }
               )
             );
+            scheduled.catch(() => {});
           },
         ],
       },

@@ -196,7 +196,14 @@ Things this feature probably forces decisions on, not just additions:
   lifecycle.
 - **[live-stream-support](./live-stream-support.md)** — primary
   consumer in the sense that live triggers stall detection more
-  often. Reload-loop interruption is one stall cause.
+  often. Reload-loop interruption is one stall cause. Division of
+  labor with that feature's live-window playhead guard: this feature
+  owns in-window stalls (nudge → flush → reset, the playhead is still
+  inside the sliding window); the guard owns the window-*exit*
+  reposition (the playhead fell behind the window start → seek to the
+  live edge). A Scenario-B poor-network stall may surface here first,
+  then escalate to the guard's reposition once the window slides past
+  the frozen playhead.
 - **`[multi-signal-abr]`** — page visibility signal should suppress
   stall detection during hidden state.
 - **`[discontinuity-handling]`** *(deferred candidate)* —

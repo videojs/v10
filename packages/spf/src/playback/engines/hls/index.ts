@@ -1,3 +1,8 @@
+// HLS media-playlist metadata, including `playlistType` ('VOD' | 'EVENT'). Lets
+// consumers distinguish an EVENT / DVR source from sliding-window live directly
+// from the manifest, rather than inferring it from the seekable window size.
+export type { MediaPlaylistMetadata } from '../../../media/types';
+export { getMediaPlaylistMetadata } from '../../../media/types';
 export type { SimpleHlsMediaAPI, SimpleHlsMediaProps } from './adapter';
 export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
 export type { SimpleHlsAudioOnlyMediaAPI, SimpleHlsAudioOnlyMediaProps } from './adapter-audio-only';

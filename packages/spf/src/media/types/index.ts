@@ -16,6 +16,13 @@
  */
 export interface Ham {
   id: string;
+  /**
+   * Format-/protocol-specific values that aren't part of the generic CMAF-HAM
+   * model — kept in an open bag so the model stays format-neutral (mirrors how
+   * CMAF-HAM itself stashes protocol extras rather than growing the model).
+   * Typed reads go through dedicated accessors (e.g. `getMediaPlaylistMetadata`).
+   */
+  metadata?: Record<string, unknown>;
 }
 
 /**
@@ -131,6 +138,20 @@ export type Track = Ham &
     bandwidth: number;
     initialization?: AddressableObject;
     segments: Segment[];
+    /**
+     * Wall-clock time (epoch seconds) corresponding to the track's timeline
+     * origin (`startTime`) — i.e. `startDate − startTime`, the single
+     * rolling anchor that maps this track's media timeline to wall clock.
+     * Optional: absent when no segment carries `startDate`.
+     *
+     * Provisional from the manifest, where the origin is the first fetched
+     * segment; later refined from the buffer (`buffered`/`tfdt`) to pin the
+     * origin to encoded-media zero. Comparable across tracks: the difference in
+     * `startDate` between demuxed audio and video is their relative skew — the
+     * offset a cross-track aligner removes — and equal `startDate` across
+     * tracks marks the same presentation instant.
+     */
+    startDate?: number;
   };
 
 /**
@@ -316,8 +337,17 @@ export type SelectionSet = VideoSelectionSet | AudioSelectionSet | TextSelection
 /**
  * Media segment with timing information.
  * Follows CMAF-HAM composition pattern.
+ *
+ * `startDate` is the absolute wall-clock time of the segment's first
+ * sample, in **epoch seconds** (unit-consistent with `startTime`/`duration`),
+ * derived from `#EXT-X-PROGRAM-DATE-TIME` (explicit or interpolated forward via
+ * `EXTINF`). Unlike the per-track-relative `startTime`, it is comparable across
+ * tracks, so it is the cross-track sync anchor for demuxed audio/video and the
+ * exact recovery value on a full live-window turnover. Optional: absent when the
+ * source carries no PDT (allowed by RFC 8216, required by Apple's HLS authoring
+ * spec — so present on conformant content).
  */
-export type Segment = Ham & AddressableObject & TimeSpan;
+export type Segment = Ham & AddressableObject & TimeSpan & { startDate?: number };
 
 /**
  * Floating-point tolerance for matching segments by `startTime`. Two
@@ -328,6 +358,40 @@ export type Segment = Ham & AddressableObject & TimeSpan;
  * playlists / quality levels.
  */
 export const SEGMENT_TIME_EPSILON = 0.0001;
+
+// =============================================================================
+// Media Playlist Metadata
+// =============================================================================
+
+/**
+ * Playlist-level metadata surfaced from a parsed media playlist. HLS delivery
+ * specifics — not part of the generic CMAF-HAM model — so they live under
+ * `Ham.metadata` (read via `getMediaPlaylistMetadata`) rather than as
+ * first-class `Track` fields:
+ *
+ * - `targetDuration` (`#EXT-X-TARGETDURATION`) — reload-cadence basis.
+ * - `mediaSequence` (`#EXT-X-MEDIA-SEQUENCE`, default 0) — sequence number of
+ *   `segments[0]`; the join key for merging successive reload snapshots.
+ * - `playlistType` (`#EXT-X-PLAYLIST-TYPE`) — `VOD` / `EVENT` / undefined.
+ * - `endList` (`#EXT-X-ENDLIST`) — playlist is complete; stop reloading.
+ *
+ * See [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md)
+ * for how these map onto the protocol-neutral category model.
+ */
+export interface MediaPlaylistMetadata {
+  targetDuration: number;
+  mediaSequence: number;
+  playlistType?: 'VOD' | 'EVENT';
+  endList: boolean;
+}
+
+/** Key under `Ham.metadata` where {@link MediaPlaylistMetadata} is stored. */
+export const MEDIA_PLAYLIST_METADATA_KEY = 'mediaPlaylist';
+
+/** Typed read of the media-playlist metadata stashed in `ham.metadata`. */
+export function getMediaPlaylistMetadata(ham: Ham): MediaPlaylistMetadata | undefined {
+  return ham.metadata?.[MEDIA_PLAYLIST_METADATA_KEY] as MediaPlaylistMetadata | undefined;
+}
 
 // =============================================================================
 // Media Playlist Info
@@ -348,6 +412,27 @@ export interface MediaPlaylistInfo {
 }
 
 // =============================================================================
+// Stream Type
+// =============================================================================
+
+/**
+ * The source's semantic nature — live vs on-demand. A model concept
+ * (consumer-facing), distinct from completeness / duration: a live stream that
+ * has *ended* is still `'live'`. See
+ * [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md).
+ */
+export type StreamType = 'live' | 'on-demand';
+
+/**
+ * Derive {@link StreamType} from a media playlist's metadata. Per the model,
+ * only `#EXT-X-PLAYLIST-TYPE:VOD` marks on-demand; everything else (EVENT, or
+ * the tag absent) is live — completeness (`endList`) never factors in.
+ */
+export function deriveStreamType(metadata: MediaPlaylistMetadata | undefined): StreamType {
+  return metadata?.playlistType === 'VOD' ? 'on-demand' : 'live';
+}
+
+// =============================================================================
 // Presentation
 // =============================================================================
 
@@ -362,6 +447,12 @@ export type Presentation = Ham &
   AddressableObject &
   Partial<TimeSpan> & {
     selectionSets: SelectionSet[];
+    /**
+     * Live vs on-demand — the source's semantic nature. Populated once a media
+     * playlist is parsed (derived from `#EXT-X-PLAYLIST-TYPE` via
+     * `deriveStreamType`); orthogonal to duration / completeness.
+     */
+    streamType?: StreamType;
   };
 
 /**

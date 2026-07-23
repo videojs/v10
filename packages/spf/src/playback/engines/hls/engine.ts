@@ -5,6 +5,8 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
+import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
@@ -16,7 +18,15 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
+import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
+import type {
+  AudioTrack,
+  CanPlayTrack,
+  MaybeResolvedPresentation,
+  ResolvedTrack,
+  TextTrack,
+  VideoTrack,
+} from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
@@ -24,6 +34,7 @@ import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
 import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
+import { makeAnchorPresentationTimeline } from '../../behaviors/anchor-presentation-timeline';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
@@ -31,9 +42,11 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-range';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
@@ -43,6 +56,7 @@ import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../be
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import { resolveBufferedAnchor } from './resolve-buffered-anchor';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -103,6 +117,12 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * The shared presentation timeline anchor (wall clock at media-time 0), published by
+   * `anchorPresentationTimeline` once the buffer pin lands. `seekToLiveEdge` gates its
+   * live-edge seek on it. Absent for VoD / until the first segment buffers.
+   */
+  presentationAnchor?: number;
 }
 
 /**
@@ -163,14 +183,30 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    */
   resolveTextTrackSegment?: TextTrackSegmentResolver<VTTCue>;
   /**
-   * Resolver for `presentation.duration`. Defaults to picking the first
-   * resolved selected track's duration (video preferred, audio fallback) —
-   * appropriate for VoD and audio-only. Live engines should supply a
-   * resolver that returns `Number.POSITIVE_INFINITY` once the presentation
-   * is established as live; downstream `updateMediaSourceDuration` propagates
-   * that value to `mediaSource.duration` per the MSE spec.
+   * Resolver for `presentation.duration`. Defaults to
+   * `getResolvedSelectedTrackDuration` (the first resolved selected track's
+   * `duration`), which handles both VoD and live: the parser sets
+   * `Track.duration` to a finite EXTINF sum for a complete playlist and to
+   * `Number.POSITIVE_INFINITY` while it can still grow (live). Downstream
+   * `updateMediaSourceDuration` propagates the value to `mediaSource.duration`
+   * per the MSE spec. Override to force a value.
    */
   resolveDuration?: PresentationDurationResolver;
+  /**
+   * Sequence number assumed to be the stream origin (time 0) for the live
+   * timeline anchor (`anchorPresentationTimeline`). Default 0. Only meaningful for live
+   * sources; ignored for VoD (the anchor is a no-op without `#EXT-X-PROGRAM-DATE-TIME`).
+   */
+  presumedStartSequence?: number;
+  /**
+   * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`:
+   * returns a promise that resolves when the playlist should reload, or `null` to
+   * stop. Defaults to `mediaPlaylistReloadDelay` (target-duration cadence, half on
+   * an unchanged window, stop on `#EXT-X-ENDLIST`) composed with a cancellable
+   * `sleep`. Inert for VoD (a complete playlist stops it after the first resolve).
+   * Override to tune live reload timing.
+   */
+  reschedule?: Reschedule<ResolvedTrack>;
   /**
    * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
    * multivariant-playlist parser; supply your own for alternate format
@@ -290,7 +326,16 @@ export function createSimpleHlsEngine(
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
   const finalConfig = {
     ...config,
+    resolveBufferedAnchor,
+    // Format-neutral live-latency seam for `seekToLiveEdge` — the HLS resolver
+    // (HOLD-BACK); a DASH engine would inject `suggestedPresentationDelay`.
+    resolveLiveLatency,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    // The resolve* loaders' RecurringRunner re-runs on this `reschedule`: the pure
+    // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.
+    // Inert for VoD (the cadence returns null once a playlist is complete), so it
+    // composes always.
+    reschedule: config.reschedule ?? delayedReschedule(mediaPlaylistReloadDelay),
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
@@ -299,7 +344,7 @@ export function createSimpleHlsEngine(
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
   };
 
-  return createComposition(
+  const composition = createComposition(
     [
       syncPreload,
       trackLoadTriggers,
@@ -328,12 +373,19 @@ export function createSimpleHlsEngine(
 
       // Resolve selected tracks (fetch media playlists). Composed before the
       // switch* slot owners; selection is reactive, so a resolve* re-fires once
-      // its switch* sets the id (same convergence for all three types).
+      // its switch* sets the id (same convergence for all three types). Also the
+      // live loader: its `RecurringRunner` re-resolves on the playlist's
+      // target-duration cadence (`reschedule` in config) until `#EXT-X-ENDLIST`.
+      // Inert for VoD (a complete playlist stops the policy after one resolve).
       resolveVideoTrack,
       resolveAudioTrack,
       resolveTextTrack,
 
-      // Presentation duration
+      // Re-base selected live tracks' timelines onto the shared presentation
+      // anchor (estimate, then buffer ground truth). No-op for VoD (no PDT).
+      makeAnchorPresentationTimeline<SimpleHlsEngineContext>(),
+
+      // Presentation duration (finite for complete playlists, Infinity for live)
       calculatePresentationDuration,
 
       // MSE setup. Video cluster is registered first so that, when both
@@ -363,6 +415,14 @@ export function createSimpleHlsEngine(
       // Segment loading
       loadVideoSegments,
       loadAudioSegments,
+
+      // Live: declare the seekable window, then seek the playhead to the live
+      // edge + keep it in-window. No-op for complete playlists (VoD / ended).
+      // Order matters: the seekable range must be declared (syncLiveSeekableRange)
+      // before seekToLiveEdge moves the playhead into it (a seek outside
+      // `seekable` is clamped).
+      syncLiveSeekableRange,
+      seekToLiveEdge,
 
       // End of stream coordination
       endOfStream,
@@ -394,4 +454,6 @@ export function createSimpleHlsEngine(
       },
     }
   );
+
+  return composition;
 }

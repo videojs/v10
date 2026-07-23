@@ -222,7 +222,13 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       track.height = stream.resolution.height;
     }
     if (codecs?.video) {
-      track.codecs = [codecs.video];
+      // When the STREAM-INF lists an audio codec but declares no AUDIO group,
+      // the audio is muxed into this rendition's segments — keep both codecs so
+      // the SourceBuffer mimetype matches the muxed media (otherwise the muxed
+      // audio fails to append: "audio object type does not match the mimetype").
+      // With an AUDIO group the audio is a separate rendition, so only the video
+      // codec belongs here.
+      track.codecs = codecs.audio && !stream.audioGroupId ? [codecs.video, codecs.audio] : [codecs.video];
     }
     if (stream.frameRate) {
       track.frameRate = stream.frameRate;

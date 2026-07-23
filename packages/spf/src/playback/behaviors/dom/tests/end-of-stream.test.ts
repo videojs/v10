@@ -110,7 +110,9 @@ function makeSegments(count: number): Segment[] {
   }));
 }
 
-function makeResolvedVideoTrack(segmentCount: number, id = 'video-1'): VideoTrack {
+// `complete` toggles the parser's completeness signal: a complete playlist has
+// a finite Track.duration (EXTINF sum), an incomplete (live) one is Infinity.
+function makeResolvedVideoTrack(segmentCount: number, id = 'video-1', complete = true): VideoTrack {
   return {
     id,
     type: 'video' as const,
@@ -120,7 +122,7 @@ function makeResolvedVideoTrack(segmentCount: number, id = 'video-1'): VideoTrac
     initialization: { id: 'init', url: 'https://example.com/init.mp4' },
     segments: makeSegments(segmentCount),
     startTime: 0,
-    duration: segmentCount * 2.5,
+    duration: complete ? segmentCount * 2.5 : Number.POSITIVE_INFINITY,
     codecs: 'avc1.64001f',
   } as unknown as VideoTrack;
 }
@@ -309,6 +311,48 @@ describe('endOfStream', () => {
     await cleanup();
   });
 
+  it('does not call endOfStream() for a live (incomplete) playlist even with the last segment appended', async () => {
+    // Live: no #EXT-X-ENDLIST. The "last segment" is only the rolling edge, so
+    // appending it must NOT end the stream — doing so would pin a finite
+    // (live-edge) duration and reopen/re-fire on every reload.
+    const track = makeResolvedVideoTrack(2, 'video-1', false);
+    const mockMs = makeMediaSource();
+    const actor = makeActorWithSegments(['seg-0', 'seg-1']);
+
+    const { cleanup } = setupEndOfStream(
+      { presentation: makePresentation(track) },
+      { mediaSource: mockMs, videoBufferActor: actor }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 30));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+    await cleanup();
+  });
+
+  it('calls endOfStream() once a live playlist appends #EXT-X-ENDLIST (graceful end)', async () => {
+    // A live stream that ends appends #EXT-X-ENDLIST; the guard then opens and
+    // end-of-stream fires normally.
+    const liveTrack = makeResolvedVideoTrack(2, 'video-1', false);
+    const mockMs = makeMediaSource();
+    const actor = makeActorWithSegments(['seg-0', 'seg-1']);
+
+    const { state, cleanup } = setupEndOfStream(
+      { presentation: makePresentation(liveTrack) },
+      { mediaSource: mockMs, videoBufferActor: actor }
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(mockMs.endOfStream).not.toHaveBeenCalled();
+
+    // Stream ends: a reload patches in the same window now marked complete.
+    state.presentation.set(makePresentation(makeResolvedVideoTrack(2, 'video-1', true)));
+
+    await vi.waitFor(() => {
+      expect(mockMs.endOfStream).toHaveBeenCalledTimes(1);
+    });
+    await cleanup();
+  });
+
   it('calls endOfStream() only once while MediaSource stays ended', async () => {
     const track = makeResolvedVideoTrack(4);
     const mockMs = makeMediaSource();
@@ -409,6 +453,7 @@ describe('endOfStream', () => {
       url: 'https://example.com/audio.m3u8',
       mimeType: 'audio/mp4',
       segments: makeSegments(4).map((s) => ({ ...s, id: `audio-${s.id}` })),
+      duration: 10,
     } as unknown as VideoTrack;
     const presentation = {
       id: 'pres-1',

@@ -168,11 +168,26 @@
 
       #resolution-list { display: flex; flex-wrap: wrap; gap: 8px; }
       .resolution-item {
-        padding: 4px 10px; 
+        padding: 4px 10px;
         font-family: monospace; font-size: 11px;border: 1px solid #ccc; border-radius: 4px;
       }
       .resolution-item.resolved   { color: green; border-color: green; }
       .resolution-item.unresolved { color: #888; border-color: #aaa; }
+
+      /* ── Live / DVR ── */
+      #live-controls { margin-bottom: 10px; }
+      #live-controls button:disabled { color: #aaa; cursor: not-allowed; background: #f7f7f7; border-color: #ccc; }
+      #live-panel {
+        padding: 12px 15px; margin: 16px 0; font-size: 12px;
+        background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+      }
+      #live-panel h2 { margin-top: 0; font-size: 14px; }
+      #live-info { display: grid; grid-template-columns: max-content 1fr; gap: 2px 16px; }
+      #live-info .k { color: #777; }
+      #live-info .v { color: #0070f3; }
+      #live-info .edge { font-weight: bold; color: #16a34a; }
+      #live-info .warn { font-weight: bold; color: #d97706; }
+      #live-info .muted { color: #888; }
 
       /* ── Logs ── */
       #logs-section { margin: 16px 0; }
@@ -236,10 +251,23 @@
       <button type="button" id="clearLogs">Clear Logs</button>
     </div>
 
+    <!-- Live/DVR seek controls — disabled on non-live sources (see renderLivePanel). -->
+    <div id="live-controls">
+      <button type="button" id="seek-live">⏭ Seek to live</button>
+      <button type="button" id="seek-back-10">⏪ −10s</button>
+      <button type="button" id="seek-back-30">⏪ −30s</button>
+      <button type="button" id="seek-window-start">⏮ Window start</button>
+    </div>
+
     <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
     <video id="video" controls preload="none"></video>
     <div id="now-playing-quality"></div>
     <div id="throughput-display"></div>
+
+    <div id="live-panel">
+      <h2>Live / DVR</h2>
+      <div id="live-info">Waiting for presentation…</div>
+    </div>
 
     <div id="rendition-picker">
       <h2>Video Renditions</h2>

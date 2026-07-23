@@ -1,12 +1,18 @@
-import type {
-  AudioTrack,
-  PartiallyResolvedAudioTrack,
-  PartiallyResolvedTextTrack,
-  PartiallyResolvedTrack,
-  PartiallyResolvedVideoTrack,
-  Segment,
-  TextTrack,
-  VideoTrack,
+import { isUndefined } from '@videojs/utils/predicate';
+import {
+  type AudioTrack,
+  getMediaPlaylistMetadata,
+  isResolvedTrack,
+  MEDIA_PLAYLIST_METADATA_KEY,
+  type MediaPlaylistMetadata,
+  type PartiallyResolvedAudioTrack,
+  type PartiallyResolvedTextTrack,
+  type PartiallyResolvedTrack,
+  type PartiallyResolvedVideoTrack,
+  type ResolvedTrack,
+  type Segment,
+  type TextTrack,
+  type VideoTrack,
 } from '../types';
 import { matchTag, parseByteRange, parseExtInfDuration } from './parse-attributes';
 import { resolveUrl } from './resolve-url';
@@ -56,23 +62,123 @@ type ResolveTrack<T> = T extends PartiallyResolvedVideoTrack
       : never;
 
 /**
- * Parse HLS media playlist and resolve track with segments.
+ * Position a freshly-parsed window (whose segment `startTime`s are snapshot-
+ * local, i.e. from 0) onto the timeline established by the previous resolved
+ * snapshot. Carries the timeline forward using the media-sequence overlap and
+ * the previous window's *actual* segment durations — see
+ * [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md).
  *
- * Takes an unresolved track (from multivariant playlist) and media playlist text,
- * returns a HAM-compliant resolved track with segments.
+ * - **Overlap** (`0 <= offset < previous.segments.length`): the new window's
+ *   first segment is the same segment as `previous.segments[offset]`; anchor to
+ *   its start (URLs checked — a mismatch warns).
+ * - **Sequence went backwards** (non-conformant): reset to the local base.
+ * - **Full turnover** (no overlap): estimate forward from the previous window's
+ *   end across the unseen gap. This is the *only* place EXT-X-TARGETDURATION is
+ *   used for timing — an upper-bound estimate, since the actual rolled-off
+ *   durations are gone (exact recovery is the deferred PDT decision).
+ *
+ * Returns the rebased segments and the track's resulting `startTime`.
+ */
+function placeOnPreviousTimeline(
+  previous: ResolvedTrack,
+  segments: Segment[],
+  mediaSequence: number,
+  targetDuration: number
+): { segments: Segment[]; startTime: number } {
+  const prevSegments = previous.segments;
+  const localBase = segments[0]?.startTime ?? 0;
+
+  if (prevSegments.length === 0 || segments.length === 0) {
+    return { segments, startTime: localBase };
+  }
+
+  const prevMediaSequence = getMediaPlaylistMetadata(previous)?.mediaSequence ?? 0;
+  const offset = mediaSequence - prevMediaSequence;
+
+  let anchor: number;
+  if (offset >= 0 && offset < prevSegments.length) {
+    const overlap = prevSegments[offset]!;
+    if (overlap.url !== segments[0]!.url) {
+      console.warn(
+        `[parseMediaPlaylist] media-sequence aligns previous[${offset}] with the new window's first segment, ` +
+          `but URLs differ (${overlap.url} vs ${segments[0]!.url}); sequence numbers may be unreliable.`
+      );
+    }
+    anchor = overlap.startTime;
+  } else if (offset < 0) {
+    console.warn(`[parseMediaPlaylist] media-sequence went backwards (offset ${offset}); resetting timeline.`);
+    anchor = localBase;
+  } else {
+    const last = prevSegments[prevSegments.length - 1]!;
+    const newFirst = segments[0]!;
+    if (last.startDate !== undefined && newFirst.startDate !== undefined) {
+      // PDT bridges the gap exactly — the spec-consistent cross-reload reference,
+      // immune to the target-duration over-estimate when actual segment durations
+      // differ from the declared ceiling. (`startDate` is intrinsic PDT, unaffected
+      // by the new window's local positioning.)
+      anchor = last.startTime + (newFirst.startDate - last.startDate);
+    } else {
+      anchor = last.startTime + last.duration + (offset - prevSegments.length) * targetDuration;
+      console.warn(
+        `[parseMediaPlaylist] full window turnover (offset ${offset} >= ${prevSegments.length}); ` +
+          'no PDT to bridge — estimating from previous end.'
+      );
+    }
+  }
+
+  const shift = anchor - localBase;
+  const placed =
+    shift === 0 ? segments : segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
+  return { segments: placed, startTime: anchor };
+}
+
+/**
+ * Place a first-resolved window on a *pre-applied* anchor — the track's
+ * `startDate` (wall clock at media-time 0) set on the unresolved shell before any
+ * segments exist. Each PDT-bearing segment lands at `segment.startDate − anchor`,
+ * so the window resolves already on the shared presentation timeline rather than
+ * a local-from-zero one (the `startDate` recomputed afterwards then reads back as
+ * the anchor). Falls back to the local base when no segment carries PDT — there's
+ * nothing to anchor against.
+ */
+function placeOnAnchor(segments: Segment[], anchor: number): { segments: Segment[]; startTime: number } {
+  const localBase = segments[0]?.startTime ?? 0;
+  const anchorSegment = segments.find((segment) => !isUndefined(segment.startDate));
+  if (!anchorSegment || isUndefined(anchorSegment.startDate)) {
+    return { segments, startTime: localBase };
+  }
+
+  const shift = anchorSegment.startDate - anchor - anchorSegment.startTime;
+  if (shift === 0) {
+    return { segments, startTime: localBase };
+  }
+
+  const placed = segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
+  return { segments: placed, startTime: localBase + shift };
+}
+
+/**
+ * Parse an HLS media playlist into a resolved track with segments.
+ *
+ * `previous` is what was known about this track before this parse: the
+ * partially-resolved track from the multivariant playlist on the first resolve,
+ * or the previously-resolved snapshot on a live reload. Its metadata is carried
+ * onto the result either way; when it's already resolved (has segments), its
+ * timeline is carried forward so the new window lands on a stable, advancing
+ * timeline (see {@link placeOnPreviousTimeline}).
  *
  * @param text - Media playlist text content
- * @param unresolved - Unresolved track from parseMultivariantPlaylist
+ * @param previous - Prior track state (unresolved shell, or previous resolved snapshot)
  * @returns Resolved track with segments (type inferred from input)
  */
 export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   text: string,
-  unresolved: T | ResolveTrack<T>
+  previous: T | ResolveTrack<T>
 ): ResolveTrack<T> {
   const lines = text.split(/\r?\n/);
 
   // Segments and resources resolve relative to media playlist URL (per HLS spec)
-  const baseUrl = unresolved.url;
+  const baseUrl = previous.url;
 
   // Parse playlist
   const segments: Segment[] = [];
@@ -84,6 +190,17 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   let currentTime = 0;
   let segmentIndex = 0;
   let previousByteRangeEnd: number | undefined;
+  // Absolute wall-clock of the next segment's first sample, in epoch seconds.
+  // Seeded by an explicit `#EXT-X-PROGRAM-DATE-TIME` (which re-anchors, e.g.
+  // across a discontinuity) and advanced by each segment's duration so segments
+  // without their own tag are interpolated forward (per RFC 8216).
+  let currentStartDate: number | undefined;
+
+  // Playlist-level metadata (surfaced for live reload pacing / merge / termination).
+  let targetDuration = 0;
+  let mediaSequence = 0;
+  let playlistType: 'VOD' | 'EVENT' | undefined;
+  let endList = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -92,11 +209,31 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
       continue;
     }
 
+    if (trimmed.startsWith('#EXT-X-TARGETDURATION:')) {
+      targetDuration = Number.parseInt(trimmed.slice('#EXT-X-TARGETDURATION:'.length), 10) || 0;
+      continue;
+    }
+
+    if (trimmed.startsWith('#EXT-X-MEDIA-SEQUENCE:')) {
+      mediaSequence = Number.parseInt(trimmed.slice('#EXT-X-MEDIA-SEQUENCE:'.length), 10) || 0;
+      continue;
+    }
+
+    if (trimmed.startsWith('#EXT-X-PROGRAM-DATE-TIME:')) {
+      const parsed = Date.parse(trimmed.slice('#EXT-X-PROGRAM-DATE-TIME:'.length).trim());
+      currentStartDate = Number.isNaN(parsed) ? currentStartDate : parsed / 1000;
+      continue;
+    }
+
+    if (trimmed.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
+      const value = trimmed.slice('#EXT-X-PLAYLIST-TYPE:'.length).trim();
+      playlistType = value === 'VOD' || value === 'EVENT' ? value : undefined;
+      continue;
+    }
+
     if (
       trimmed === '#EXTM3U' ||
       trimmed.startsWith('#EXT-X-VERSION:') ||
-      trimmed.startsWith('#EXT-X-TARGETDURATION:') ||
-      trimmed.startsWith('#EXT-X-PLAYLIST-TYPE:') ||
       trimmed.startsWith('#EXT-X-INDEPENDENT-SEGMENTS')
     ) {
       continue;
@@ -129,17 +266,25 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     }
 
     if (trimmed === '#EXT-X-ENDLIST') {
+      endList = true;
       continue;
     }
 
     // Segment URI
     if (!trimmed.startsWith('#') && currentDuration > 0) {
       const segment: Segment = {
-        id: `segment-${segmentIndex}`,
+        id: `segment-${mediaSequence + segmentIndex}`,
         url: resolveUrl(trimmed, baseUrl),
         duration: currentDuration,
         startTime: currentTime,
       };
+
+      if (!isUndefined(currentStartDate)) {
+        segment.startDate = currentStartDate;
+        // Interpolate forward: the next segment without an explicit tag inherits
+        // this anchor plus this segment's duration.
+        currentStartDate += currentDuration;
+      }
 
       if (currentByteRange) {
         segment.byteRange = currentByteRange;
@@ -159,9 +304,37 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
 
   const totalDuration = currentTime;
 
+  // `duration` is the track's duration: Infinity while the playlist can still
+  // grow (unended live), finite once complete (VOD / ENDLIST). It uses the
+  // actual EXTINF sum, never the target duration.
+  const complete = endList || playlistType === 'VOD';
+  const trackDuration = complete ? totalDuration : Number.POSITIVE_INFINITY;
+
+  // Position this window on the timeline. A live reload (previous is the prior
+  // resolved snapshot) carries the timeline forward from the overlap. First
+  // resolve places relative to a pre-applied anchor (`startDate` set on the
+  // shell) when present — so a track resolves already on the shared presentation
+  // timeline — else anchors at the local base 0.
+  const presetAnchor = previous.startDate;
+  const placed = isResolvedTrack(previous)
+    ? placeOnPreviousTimeline(previous, segments, mediaSequence, targetDuration)
+    : isUndefined(presetAnchor)
+      ? { segments, startTime: 0 }
+      : placeOnAnchor(segments, presetAnchor);
+
+  // Wall-clock anchor: `startDate − startTime` for the first PDT-bearing
+  // segment (constant along a linear timeline). Maps this track's origin to
+  // wall clock; recomputed each parse, so it stays stable as the window slides
+  // and is comparable across tracks for A/V alignment.
+  const anchorSegment = placed.segments.find((segment) => !isUndefined(segment.startDate));
+  const startDate =
+    anchorSegment && !isUndefined(anchorSegment.startDate)
+      ? anchorSegment.startDate - anchorSegment.startTime
+      : undefined;
+
   // Build initialization (VTT may not have init segment)
   const initialization =
-    unresolved.type === 'text' && !initSegmentUrl
+    previous.type === 'text' && !initSegmentUrl
       ? undefined
       : initSegmentUrl
         ? { url: initSegmentUrl, ...(initSegmentByteRange ? { byteRange: initSegmentByteRange } : {}) }
@@ -173,17 +346,27 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   // trips on fMP4, which mandates the map). Relabel from the fMP4 default
   // `video/mp4` / `audio/mp4` to the container MIME so capability probing prunes
   // it (these containers are currently treated as unplayable; see `canPlayTrack`).
-  const detectedContainer = initSegmentUrl ? undefined : containerMimeFromSegment(segments[0]?.url);
-  const mimeType = unresolved.type !== 'text' && detectedContainer ? detectedContainer : unresolved.mimeType;
+  const detectedContainer = initSegmentUrl ? undefined : containerMimeFromSegment(placed.segments[0]?.url);
+  const mimeType = previous.type !== 'text' && detectedContainer ? detectedContainer : previous.mimeType;
 
-  // Generic resolution: All type-specific fields already on unresolved track from P1
-  // Just add parsed properties (startTime, duration, segments, initialization)
+  // Generic resolution: type-specific fields already on `previous`; add the
+  // parsed properties (startTime, duration, segments, initialization, metadata).
   return {
-    ...unresolved,
+    ...previous,
     mimeType,
-    startTime: 0,
-    duration: totalDuration,
-    segments,
+    startTime: placed.startTime,
+    startDate,
+    duration: trackDuration,
+    segments: placed.segments,
     initialization,
+    metadata: {
+      ...previous.metadata,
+      [MEDIA_PLAYLIST_METADATA_KEY]: {
+        targetDuration,
+        mediaSequence,
+        playlistType,
+        endList,
+      } satisfies MediaPlaylistMetadata,
+    },
   } as unknown as ResolveTrack<T>;
 }
