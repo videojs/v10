@@ -172,6 +172,52 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
+  it('tears down when the author opts out after attach', async () => {
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
+    await flush();
+    // Set up: fallback source present, picker enabled, suspended (wireless).
+    expect(fallbackSourceOf(video)).not.toBeNull();
+    expect(video.disableRemotePlayback).toBe(false);
+    expect(state.loadSuspended.get()).toBe(true);
+
+    // Framework binds the opt-out after attach() — the machine must react.
+    state.disableRemotePlayback.set(true);
+    await flush();
+
+    expect(fallbackSourceOf(video)).toBeNull();
+    // Picker enablement is undone, not merely left in place.
+    expect(video.disableRemotePlayback).toBe(true);
+    expect(state.loadSuspended.get()).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('runs setup when an initial opt-out is cleared after attach', async () => {
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    // Author opted out at attach → nothing is set up.
+    const video = makeWebKitVideo({ disableRemotePlayback: true });
+    state.disableRemotePlayback.set(true);
+    context.mediaElement.set(video);
+    await flush();
+    expect(fallbackSourceOf(video)).toBeNull();
+
+    // Clearing the opt-out after attach must run setup.
+    state.disableRemotePlayback.set(false);
+    await flush();
+    expect(fallbackSourceOf(video)).not.toBeNull();
+
+    reactor.destroy();
+  });
+
   // Note: This just tests loadSuspended but the way Safari handles MMS, SPF wont load once we turn wireless off.
   it('suspends loading while the wireless target is active and resumes when it turns off', async () => {
     stubWebKit(true);
@@ -224,6 +270,8 @@ describe('setupAirPlay', () => {
     await flush();
 
     expect(fallbackSourceOf(video)).toBeNull();
+    // Cleanup hands the element back to its MMS-default remote-playback state.
+    expect(video.disableRemotePlayback).toBe(true);
     // Detaching mid-wireless must not strand loading suspended.
     expect(state.loadSuspended.get()).toBe(false);
 

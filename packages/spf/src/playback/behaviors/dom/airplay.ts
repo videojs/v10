@@ -13,10 +13,11 @@
  * gated on a WebKit-AirPlay-capable media element being in scope. The entry
  * appends the fallback `<source>`, wires the wireless-target listener, keeps
  * the source URL current from `state.presentation`, and enables the AirPlay
- * picker once the MediaSource is open; state-exit cleanup (detach, source
- * reset, behavior destroy) removes the source, drops the listener, and releases
- * any active suspend. No-op on non-WebKit platforms (Chromium, Firefox) —
- * `deriveState` never leaves `'preconditions-unmet'`.
+ * picker once the MediaSource is open; state-exit cleanup (author opt-out,
+ * detach, source reset, behavior destroy) removes the source, drops the
+ * listener, restores the element's `disableRemotePlayback` default, and
+ * releases any active suspend. No-op on non-WebKit platforms (Chromium,
+ * Firefox) — `deriveState` never leaves `'preconditions-unmet'`.
  *
  * MMS and AirPlay want *opposite* values of `disableRemotePlayback` on the same
  * element, so it is **sequenced**:
@@ -30,9 +31,9 @@
  *   MS is open. Re-fires per source (the slot clears + republishes on reset).
  * - **Author opt-out wins.** `state.disableRemotePlayback` is the author's
  *   intent, written only by the media adapter's IDL property; MMS/programmatic
- *   code touch the element's own `disableRemotePlayback` instead. So a `true`
- *   there, read at entry, is unambiguously the author's choice to disable remote
- *   playback, and the behavior sets nothing up.
+ *   code touch the element's own `disableRemotePlayback` instead. A `true`
+ *   there is unambiguously the author's choice to disable remote playback, so
+ *   it holds the machine in `'preconditions-unmet'` and nothing is set up.
  */
 
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
@@ -45,8 +46,12 @@ import type { MaybeResolvedPresentation } from '../../../media/types';
 
 type AirPlayFsmState = 'preconditions-unmet' | 'airplay-capable';
 
-function deriveState(mediaElement: HTMLMediaElement | undefined): AirPlayFsmState {
+function deriveState(
+  mediaElement: HTMLMediaElement | undefined,
+  authorDisabledRemotePlayback: boolean | undefined
+): AirPlayFsmState {
   if (!mediaElement || !isWebKitAirPlayCapable(mediaElement)) return 'preconditions-unmet';
+  if (authorDisabledRemotePlayback) return 'preconditions-unmet';
   return 'airplay-capable';
 }
 
@@ -64,7 +69,7 @@ function setupAirPlaySetup({
     mediaSource: ReadonlySignal<MediaSource | undefined>;
   };
 }): Reactor<AirPlayFsmState | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() => deriveState(context.mediaElement.get()));
+  const derivedStateSignal = computed(() => deriveState(context.mediaElement.get(), state.disableRemotePlayback.get()));
 
   return createMachineReactor<AirPlayFsmState>({
     initial: 'preconditions-unmet',
@@ -75,13 +80,6 @@ function setupAirPlaySetup({
       'airplay-capable': {
         entry: () => {
           const mediaElement = context.mediaElement.get() as WebKitVideoElement;
-
-          // Author opt-out: `state.disableRemotePlayback` is the author's
-          // intent, written only by the media adapter's IDL property — never by
-          // MMS/programmatic code. So a `true` here is unambiguously the author's
-          // choice to disable remote playback: set nothing up, leaving the
-          // element's remote playback disabled.
-          if (state.disableRemotePlayback.get()) return;
 
           const sourceEl = document.createElement('source');
           sourceEl.type = 'application/x-mpegURL';
@@ -122,6 +120,9 @@ function setupAirPlaySetup({
             disposeEnablePicker();
             controller.abort();
             sourceEl.remove();
+            // Undo the picker enable: hand the element back to its MMS-default
+            // `disableRemotePlayback = true`.
+            mediaElement.disableRemotePlayback = true;
             // Don't strand loading suspended if we detach mid-wireless.
             state.loadSuspended.set(false);
           };
