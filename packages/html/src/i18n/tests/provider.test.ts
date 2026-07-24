@@ -19,7 +19,6 @@ childTextTemplate.innerHTML =
   '<button aria-labelledby="fallback-label"><media-text id="fallback-label">Fallback label</media-text></button>';
 
 const firstUpdateTemplate = document.createElement('template');
-firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text>Settings</test-skin-i18n-first-text>';
 
 class TestSkinElement extends SkinElement {
   static override readonly template = skinTemplate;
@@ -68,12 +67,14 @@ if (!customElements.get('test-skin-i18n-child-text')) {
   customElements.define('test-skin-i18n-child-text', TestChildTextElement);
 }
 
-if (!customElements.get('test-skin-i18n-first-update')) {
-  customElements.define('test-skin-i18n-first-update', TestFirstUpdateElement);
-}
-
 if (!customElements.get('test-skin-i18n-first-text')) {
   customElements.define('test-skin-i18n-first-text', TestFirstTextElement);
+}
+
+firstUpdateTemplate.innerHTML = '<test-skin-i18n-first-text>Settings</test-skin-i18n-first-text>';
+
+if (!customElements.get('test-skin-i18n-first-update')) {
+  customElements.define('test-skin-i18n-first-update', TestFirstUpdateElement);
 }
 
 if (!customElements.get('test-skin-i18n-provider')) {

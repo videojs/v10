@@ -12,6 +12,7 @@ import {
   sandboxLocaleLabel,
 } from './locale-meta';
 
+export type { SandboxLocaleTag };
 export {
   DEFAULT_SANDBOX_LOCALE,
   isSandboxBrowserLocale,
@@ -20,7 +21,6 @@ export {
   SANDBOX_LOCALE_TAGS,
   sandboxLocaleLabel,
 };
-export type { SandboxLocaleTag };
 
 const prefetchBrowserSandboxLocale = createBrowserSandboxPrefetch(registerI18n);
 

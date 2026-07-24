@@ -35,7 +35,7 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "tsdown": "^0.21.9"
+    "tsdown": "^0.22.14"
   },
   "keywords": [
     "media",

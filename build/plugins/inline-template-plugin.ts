@@ -1,4 +1,5 @@
 import { transform } from 'lightningcss';
+import MagicString from 'magic-string';
 import type { BuildPlugin } from './types.ts';
 
 const HTML_MARKER = '/*html*/';
@@ -24,13 +25,22 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
   return {
     name: 'inline-template',
 
-    transform(code) {
+    transform(code, id) {
       if (!minify) return null;
       if (!code.includes(HTML_MARKER) && !code.includes(CSS_MARKER)) return null;
 
       const result = processTemplates(code);
 
-      return result === code ? null : { code: result };
+      if (!result) return null;
+
+      return {
+        code: result.toString(),
+        map: result.generateMap({
+          hires: 'boundary',
+          includeContent: true,
+          source: id,
+        }),
+      };
     },
   };
 }
@@ -43,8 +53,9 @@ export function inlineTemplatePlugin(options: TemplatePluginOptions = {}): Build
  * Walk `code` looking for known markers followed by a backtick template
  * literal. For each match, minify the static parts and reassemble.
  */
-function processTemplates(code: string): string {
-  let out = '';
+function processTemplates(code: string): MagicString | null {
+  const output = new MagicString(code);
+  let changed = false;
   let pos = 0;
 
   while (pos < code.length) {
@@ -56,7 +67,6 @@ function processTemplates(code: string): string {
     let marker: string;
 
     if (htmlIdx === -1 && cssIdx === -1) {
-      out += code.slice(pos);
       break;
     } else if (cssIdx === -1 || (htmlIdx !== -1 && htmlIdx < cssIdx)) {
       idx = htmlIdx;
@@ -66,16 +76,11 @@ function processTemplates(code: string): string {
       marker = CSS_MARKER;
     }
 
-    // Copy everything before the marker.
-    out += code.slice(pos, idx);
-
     // Skip marker + optional whitespace to find the opening backtick.
     let i = idx + marker.length;
     while (i < code.length && isWhitespace(code[i]!)) i++;
 
     if (i >= code.length || code[i] !== '`') {
-      // Not a tagged template literal — copy the marker verbatim.
-      out += code.slice(idx, i);
       pos = i;
       continue;
     }
@@ -84,19 +89,24 @@ function processTemplates(code: string): string {
 
     const minified = marker === HTML_MARKER ? minifyHtmlQuasis(quasis) : minifyCssQuasis(quasis);
 
-    // Reassemble — keep the marker for IDE syntax-highlighting.
-    out += `${marker} \``;
+    let replacement = `${marker} \``;
     for (let q = 0; q < minified.length; q++) {
-      out += minified[q];
+      replacement += minified[q];
       if (q < expressions.length) {
-        out += `\${${expressions[q]}}`;
+        replacement += `\${${expressions[q]}}`;
       }
     }
-    out += '`';
+    replacement += '`';
+
+    if (replacement !== code.slice(idx, end)) {
+      output.overwrite(idx, end, replacement);
+      changed = true;
+    }
+
     pos = end;
   }
 
-  return out;
+  return changed ? output : null;
 }
 
 // ---------------------------------------------------------------------------

@@ -236,7 +236,7 @@ export function toVideoId(props: MuxVideoIdProps): string | undefined {
 }
 
 export function toPlaybackIdFromSrc(src: string): string | undefined {
-  if (!src || !src.startsWith('https://stream.')) return undefined;
+  if (!src?.startsWith('https://stream.')) return undefined;
   const [playbackId] = new URL(src).pathname.slice(1).split(/\.m3u8|\//);
   return playbackId || undefined;
 }

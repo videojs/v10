@@ -82,7 +82,7 @@ export function findResolvedTextTrack(
   const track = findTrack(presentation, 'text', trackId);
   // `findTrack` returns the wide union; narrow via discriminant before
   // applying `isResolvedTrack`'s text-specific overload.
-  if (!track || track.type !== 'text' || !isResolvedTrack(track)) return undefined;
+  if (track?.type !== 'text' || !isResolvedTrack(track)) return undefined;
   return track;
 }
 
@@ -92,7 +92,7 @@ export function findResolvedVideoTrack(
 ): VideoTrack | undefined {
   if (!presentation || !trackId) return undefined;
   const track = findTrack(presentation, 'video', trackId);
-  if (!track || track.type !== 'video' || !isResolvedTrack(track)) return undefined;
+  if (track?.type !== 'video' || !isResolvedTrack(track)) return undefined;
   return track;
 }
 
@@ -102,7 +102,7 @@ export function findResolvedAudioTrack(
 ): AudioTrack | undefined {
   if (!presentation || !trackId) return undefined;
   const track = findTrack(presentation, 'audio', trackId);
-  if (!track || track.type !== 'audio' || !isResolvedTrack(track)) return undefined;
+  if (track?.type !== 'audio' || !isResolvedTrack(track)) return undefined;
   return track;
 }
 

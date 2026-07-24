@@ -22,7 +22,7 @@ export async function promptFramework(): Promise<Framework> {
     ],
   });
   if (p.isCancel(value)) process.exit(0);
-  p.note('💡 Tip: run `npx @videojs/cli config set framework ' + value + '` to save this preference');
+  p.note(`💡 Tip: run \`npx @videojs/cli config set framework ${value}\` to save this preference`);
   return value;
 }
 

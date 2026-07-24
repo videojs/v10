@@ -120,6 +120,17 @@
   gap: var(--spacing);
 }
 
+.DocSearch-Button-Key,
+.DocSearch-Escape-Key {
+  font-family: var(--font-mono);
+  font-size: var(--text-code);
+  font-weight: var(--text-code--font-weight);
+  font-variant-ligatures: none;
+  line-height: var(--text-code--line-height);
+  letter-spacing: var(--text-code--letter-spacing);
+  text-underline-offset: 0.125em;
+}
+
 .DocSearch-Button .DocSearch-Button-Key {
   width: auto;
   height: auto;
@@ -133,6 +144,7 @@
   letter-spacing: var(--text-h4--letter-spacing);
   background: none;
   border: none;
+  /* biome-ignore lint/complexity/noImportantStyles: Override DocSearch's inline theme precedence. */
   box-shadow: none !important;
 }
 
@@ -210,17 +222,6 @@
 .DocSearch-Input {
   font-weight: var(--text-p1--font-weight);
   letter-spacing: var(--tracking-tight);
-}
-
-.DocSearch-Button-Key,
-.DocSearch-Escape-Key {
-  font-family: var(--font-mono);
-  font-size: var(--text-code);
-  font-weight: var(--text-code--font-weight);
-  font-variant-ligatures: none;
-  line-height: var(--text-code--line-height);
-  letter-spacing: var(--text-code--letter-spacing);
-  text-underline-offset: 0.125em;
 }
 
 .DocSearch-Hit-source {

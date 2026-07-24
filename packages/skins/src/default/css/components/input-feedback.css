@@ -208,7 +208,7 @@
   }
 
   @media (prefers-reduced-motion: no-preference) {
-    .media-icon--seek {
+    &[data-direction] .media-icon--seek {
       transition-timing-function: ease-in-out;
       transition-duration: 200ms;
       transition-property: translate, opacity;

@@ -27,5 +27,5 @@ export function useDoubleTapGesture(
     if (!container || disabled) return;
 
     return createDoubleTapGesture(container, (event) => onActivateRef.current(event), { pointer, region });
-  }, [container, disabled, pointer, region, onActivateRef]);
+  }, [container, disabled, pointer, region]);
 }

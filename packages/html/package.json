@@ -170,12 +170,12 @@
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@testing-library/dom": "^10.4.0",
+    "@testing-library/dom": "^10.4.1",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
-    "happy-dom": "^18.0.1",
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "happy-dom": "^20.11.1",
+    "tsdown": "^0.22.14",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"

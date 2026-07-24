@@ -1,3 +1,4 @@
+import MagicString from 'magic-string';
 import type { BuildPlugin } from './types.ts';
 
 /** Rolldown external id for the shared CDN i18n registry module. */
@@ -37,11 +38,26 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
         ? `../${options.prod ? 'i18n.js' : devFile}`
         : `./${options.prod ? 'i18n.js' : devFile}`;
       const target = options.prod ? url : rel;
+      const output = new MagicString(code);
+
+      for (const quote of ['"', "'"]) {
+        const source = `${quote}${CDN_I18N_REGISTRY}${quote}`;
+        const replacement = `${quote}${target}${quote}`;
+        let index = code.indexOf(source);
+
+        while (index !== -1) {
+          output.overwrite(index, index + source.length, replacement);
+          index = code.indexOf(source, index + source.length);
+        }
+      }
 
       return {
-        code: code
-          .replaceAll(`"${CDN_I18N_REGISTRY}"`, `"${target}"`)
-          .replaceAll(`'${CDN_I18N_REGISTRY}'`, `'${target}'`),
+        code: output.toString(),
+        map: output.generateMap({
+          hires: 'boundary',
+          includeContent: true,
+          source: chunk.fileName,
+        }),
       };
     },
   };

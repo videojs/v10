@@ -76,8 +76,8 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "devDependencies": {
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "tsdown": "^0.22.14",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"

@@ -39,9 +39,9 @@
     "@lit/context": "^1.1.0"
   },
   "devDependencies": {
-    "happy-dom": "^18.0.1",
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "happy-dom": "^20.11.1",
+    "tsdown": "^0.22.14",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"

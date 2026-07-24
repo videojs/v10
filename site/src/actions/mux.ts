@@ -141,6 +141,10 @@ export const mux = {
           },
         });
 
+        if (!upload.url || !upload.id) {
+          throw new Error('Mux did not return an upload URL and ID');
+        }
+
         return {
           uploadUrl: upload.url,
           uploadId: upload.id,

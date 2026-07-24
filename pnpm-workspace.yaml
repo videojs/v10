@@ -1,6 +1,19 @@
 minimumReleaseAge: 1440
 shellEmulator: true
 trustPolicy: no-downgrade
+trustPolicyExclude:
+  - '@netlify/edge-bundler@14.10.3'
+  - '@netlify/serverless-functions-api@2.16.0'
+  - '@netlify/zip-it-and-ship-it@14.7.1'
+  - 'chokidar@4.0.3'
+  - 'semver@6.3.1'
+  - 'undici-types@6.21.0'
+
+peerDependencyRules:
+  allowedVersions:
+    '@svta/cml-cta': 1.0.1
+    '@svta/cml-structured-field-values': 1.0.1
+    '@svta/cml-utils': 1.0.1
 
 # Also install musl Linux binaries alongside the current platform's. The site's
 # OG image route depends on the native @resvg/resvg-js binding, and the
@@ -24,3 +37,10 @@ packages:
   - 'packages/*'
   - 'apps/*'
   - site
+
+allowBuilds:
+  '@parcel/watcher@2.5.6': true
+  '@sentry/cli@2.58.5': true
+  'esbuild@0.28.0 || 0.28.1': true
+  'sharp@0.34.5': true
+  'simple-git-hooks@2.13.1': true
