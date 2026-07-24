@@ -1,5 +1,4 @@
 import { createMachineActor, type HandlerContext, type MessageActor } from '../../../core/actors/create-machine-actor';
-import { effect } from '../../../core/signals/effect';
 import { peek } from '../../../core/signals/primitives';
 import { SerialRunner, Task } from '../../../core/tasks/task';
 import {
@@ -12,15 +11,20 @@ import {
   DEFAULT_FORWARD_BUFFER_CONFIG,
   type ForwardBufferConfig,
   getSegmentsToLoad,
+  isTimeRangeCovered,
+  mergeTimeRanges,
 } from '../../../media/buffer/forward-buffer';
+import { type AudioTrack, SEGMENT_TIME_EPSILON, type Segment, type VideoTrack } from '../../../media/types';
 import {
-  type AddressableObject,
-  type AudioTrack,
-  SEGMENT_TIME_EPSILON,
-  type Segment,
-  type VideoTrack,
-} from '../../../media/types';
-import type { AppendInitMessage, AppendSegmentMessage, RemoveMessage, SourceBufferActor } from './source-buffer';
+  DEFAULT_MESSAGE_PIPELINES,
+  type FetchBytes,
+  type Frame,
+  type LoadStep,
+  type LoadTask,
+  type MessagePipelines,
+  type StepDeps,
+} from '../../primitives/segment-load-pipeline';
+import type { SourceBufferActor } from './source-buffer';
 
 // ============================================================================
 // BUFFER STATE TYPES
@@ -69,27 +73,6 @@ export type SegmentLoaderMessage = {
 };
 
 // ============================================================================
-// LOAD TASK
-// ============================================================================
-
-/**
- * A LoadTask is the intent to perform one unit of SegmentLoader work.
- * Unlike SourceBufferMessage, fetch-based tasks carry a URL rather than
- * pre-fetched data — the runner fetches and appends them in sequence.
- *
- * Derived from SourceBufferMessage types by removing `data` and adding
- * a fetch URL via AddressableObject.
- *
- * @todo Rename — "LoadTask" risks confusion with the `Task` class used for
- * SourceBufferActor scheduling. These are closer to operation descriptors or
- * messages than tasks in that sense.
- */
-export type LoadTask =
-  | (Omit<AppendInitMessage, 'data'> & AddressableObject)
-  | (Omit<AppendSegmentMessage, 'data'> & AddressableObject)
-  | RemoveMessage;
-
-// ============================================================================
 // ACTOR INTERFACE
 // ============================================================================
 
@@ -114,58 +97,8 @@ export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLo
 export interface SegmentLoaderActorConfig {
   forwardBuffer?: Partial<ForwardBufferConfig>;
   backBuffer?: Partial<BackBufferConfig>;
-}
-
-// ============================================================================
-// HELPERS
-// ============================================================================
-
-type FetchBytes = (
-  addressable: AddressableObject,
-  options?: RequestInit & { minChunkSize?: number }
-) => Promise<AsyncIterable<Uint8Array>>;
-
-/**
- * Resolves when the SourceBufferActor snapshot reaches 'idle'.
- * Rejects if the signal is aborted or the actor is destroyed.
- *
- * Used to sequence SourceBufferActor operations without awaiting send()
- * directly — send() is fire-and-forget; callers observe completion via
- * state transition.
- */
-function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSignal): Promise<void> {
-  return new Promise((resolve, reject) => {
-    if (snapshot.get().value === 'idle') {
-      resolve();
-      return;
-    }
-    if (snapshot.get().value === 'destroyed') {
-      reject(new DOMException('Aborted', 'AbortError'));
-      return;
-    }
-    if (signal.aborted) {
-      reject(signal.reason);
-      return;
-    }
-
-    let stop: (() => void) | undefined;
-
-    const cleanup = (fn: () => void) => {
-      stop?.();
-      signal.removeEventListener('abort', onAbort);
-      fn();
-    };
-
-    const onAbort = () => cleanup(() => reject(signal.reason));
-
-    stop = effect(() => {
-      const value = snapshot.get().value;
-      if (value === 'idle') cleanup(resolve);
-      else if (value === 'destroyed') cleanup(() => reject(new DOMException('Aborted', 'AbortError')));
-    });
-
-    signal.addEventListener('abort', onAbort, { once: true });
-  });
+  /** Per-message-type step pipelines. Defaults to {@link DEFAULT_MESSAGE_PIPELINES} (`fetch → dispatch`). */
+  messagePipelines?: MessagePipelines;
 }
 
 // ============================================================================
@@ -175,57 +108,36 @@ function waitForIdle(snapshot: SourceBufferActor['snapshot'], signal: AbortSigna
 interface LoadTaskOptions {
   getContext: () => SegmentLoaderActorContext;
   setContext: (ctx: SegmentLoaderActorContext) => void;
-  fetchBytes: FetchBytes;
-  sourceBufferActor: SourceBufferActor;
+  pipelines: Record<LoadTask['type'], LoadStep[]>;
+  deps: StepDeps;
 }
 
 /**
- * Wraps a LoadTask descriptor into a Task that fetches (if needed) and
- * forwards to SourceBufferActor. Updates in-flight context around async
- * operations so the loading handler can make accurate continue/preempt
- * decisions at any point.
+ * Wraps a LoadTask descriptor into a Task that runs the op's message pipeline
+ * (fetch/discover/stamp/dispatch, per the composition's `messagePipelines`).
+ * Updates in-flight context around the async region so the loading handler can
+ * make accurate continue/preempt decisions at any point, and checks the abort
+ * signal before each step.
  */
-function makeLoadTask(
-  op: LoadTask,
-  { getContext, setContext, fetchBytes, sourceBufferActor }: LoadTaskOptions
-): Task<void> {
+function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }: LoadTaskOptions): Task<void> {
   return new Task(async (taskSignal) => {
     if (taskSignal.aborted) return;
 
-    if (op.type === 'remove') {
-      sourceBufferActor.send(op);
-      await waitForIdle(sourceBufferActor.snapshot, taskSignal);
-      return;
-    }
+    const frame: Frame = op.type === 'append-segment' ? { op, meta: op.meta } : { op };
 
-    if (op.type === 'append-init') {
-      setContext({ ...getContext(), inFlightInitTrackId: op.meta.trackId });
-      try {
-        // Init segments are small and need the full body before appending.
-        // minChunkSize: Infinity accumulates all chunks into one before yielding.
-        const data = await fetchBytes(op, { signal: taskSignal, minChunkSize: Infinity });
-        if (!taskSignal.aborted) {
-          sourceBufferActor.send({ type: 'append-init', data, meta: op.meta });
-          await waitForIdle(sourceBufferActor.snapshot, taskSignal);
-        }
-      } finally {
-        setContext({ ...getContext(), inFlightInitTrackId: null });
-      }
-      return;
-    }
-
-    // append-segment: await headers eagerly (starts the HTTP connection and
-    // records the fetch in observers like tests), then pass the body stream
-    // directly to the actor so chunks are appended as they arrive.
-    setContext({ ...getContext(), inFlightSegmentId: op.meta.id });
+    // In-flight bookkeeping brackets the async region; the `finally` resets it
+    // even if a step aborts or throws mid-pipeline. Only append ops track it.
     try {
-      const stream = await fetchBytes(op, { signal: taskSignal });
-      if (!taskSignal.aborted) {
-        sourceBufferActor.send({ type: 'append-segment', data: stream, meta: op.meta });
-        await waitForIdle(sourceBufferActor.snapshot, taskSignal);
+      if (op.type === 'append-init') setContext({ ...getContext(), inFlightInitTrackId: op.meta.trackId });
+      else if (op.type === 'append-segment') setContext({ ...getContext(), inFlightSegmentId: op.meta.id });
+
+      for (const step of pipelines[op.type]) {
+        if (taskSignal.aborted) return;
+        await step(frame, taskSignal, deps);
       }
     } finally {
-      setContext({ ...getContext(), inFlightSegmentId: null });
+      if (op.type === 'append-init') setContext({ ...getContext(), inFlightInitTrackId: null });
+      else if (op.type === 'append-segment') setContext({ ...getContext(), inFlightSegmentId: null });
     }
   });
 }
@@ -252,21 +164,46 @@ function makeLoadTask(
  * @param fetchBytes - Tracked fetch closure (owns throughput sampling for segments).
  *   Accepts an optional `minChunkSize` in options; init segments pass `Infinity`
  *   so the entire body accumulates as one chunk before appending.
+ * @param compositionDeps - The composition's `state`/`context`/`config`, threaded
+ *   opaquely into each step's {@link StepDeps} (the loader never reads them). Lets
+ *   injected steps (relocation) read composition signals at call time. Defaults to
+ *   empty for standalone / base-pipeline use.
  */
 export function createSegmentLoaderActor(
   sourceBufferActor: SourceBufferActor,
   fetchBytes: FetchBytes,
-  config: SegmentLoaderActorConfig = {}
+  config: SegmentLoaderActorConfig = {},
+  compositionDeps: StepDeps = { state: {}, context: {}, config: {} }
 ): SegmentLoaderActor {
   type UserState = Exclude<SegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, SegmentLoaderActorContext, () => SerialRunner>;
 
   const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
   const backBufferConfig: BackBufferConfig = { ...DEFAULT_BACK_BUFFER_CONFIG, ...config.backBuffer };
+  // Fold the loader's own wiring into the passthrough `config` (see `stepWiring`) so
+  // base steps read it from the uniform `{state,context,config}` — present in both
+  // composition and standalone use.
+  const deps: StepDeps = {
+    state: compositionDeps.state,
+    context: compositionDeps.context,
+    config: { ...compositionDeps.config, sourceBufferActor, fetch: fetchBytes },
+  };
+  // Built once per actor (fresh stateful steps per source); default is `fetch → dispatch`.
+  const pipelines = (config.messagePipelines ?? DEFAULT_MESSAGE_PIPELINES)();
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
-    // Exclude partial segments — they are still being streamed and must not be
-    // treated as fully buffered for load planning or buffer window calculations.
+    // A candidate segment counts as "already buffered" only when its whole time
+    // span is covered by appended content — a TIME question, not a positional-id
+    // one. Renditions are numbered independently per playlist (`segment-N`), so
+    // matching by id assumes every rung shares the same segment grid. That fails
+    // for renditions whose boundaries don't align (e.g. a 30fps rung cuts its
+    // first GOP at 7.13s, a 60fps rung at 7.98s): the switched-to rung's segment
+    // reuses a buffered id but spans a *later*-ending range, so an id match would
+    // skip it and leave its uncovered tail as a gap. Covering by time refetches
+    // exactly that straddling segment (MSE overwrites the overlap on append).
+    //
+    // Exclude partial segments — they are still streaming and must not count as
+    // fully buffered for load planning or buffer window calculations.
     //
     // `peek` defensively: `load` handlers run synchronously inside `send()`,
     // which is called from inside the dispatcher reactor's `effects:` body.
@@ -274,12 +211,9 @@ export function createSegmentLoaderActor(
     // snapshot into the dispatcher's dep set, causing the dispatcher to re-
     // fire on every SourceBufferActor state change. Mirrors the fix applied
     // to the text-track loader in `b3f44efe`.
-    const bufferedIds = new Set(
-      peek(sourceBufferActor.snapshot)
-        .context.segments.filter((s) => !s.partial)
-        .map((s) => s.id)
-    );
-    return allSegments.filter((s) => bufferedIds.has(s.id));
+    const appended = peek(sourceBufferActor.snapshot).context.segments.filter((s) => !s.partial);
+    const merged = mergeTimeRanges(appended.map((s) => ({ start: s.startTime, end: s.startTime + s.duration })));
+    return allSegments.filter((s) => isTimeRangeCovered(s.startTime, s.startTime + s.duration, merged));
   };
 
   /**
@@ -440,15 +374,13 @@ export function createSegmentLoaderActor(
 
   const scheduleAll = (tasks: LoadTask[], { getContext, setContext, runner }: Ctx): void => {
     tasks.forEach((op) => {
-      runner
-        .schedule(makeLoadTask(op, { getContext, setContext, fetchBytes, sourceBufferActor }))
-        .then(undefined, (e: unknown) => {
-          if (e instanceof Error && e.name === 'AbortError') return;
-          // On unexpected fetch/append errors, abort remaining tasks so a failed
-          // init doesn't cause segment fetches to proceed with no init segment.
-          console.error('Unexpected error in segment loader:', e);
-          runner.abortPending();
-        });
+      runner.schedule(makeLoadTask(op, { getContext, setContext, pipelines, deps })).then(undefined, (e: unknown) => {
+        if (e instanceof Error && e.name === 'AbortError') return;
+        // On unexpected fetch/append errors, abort remaining tasks so a failed
+        // init doesn't cause segment fetches to proceed with no init segment.
+        console.error('Unexpected error in segment loader:', e);
+        runner.abortPending();
+      });
     });
   };
 

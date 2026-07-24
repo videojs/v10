@@ -3,6 +3,12 @@ import { SerialRunner, Task } from '../../../core/tasks/task';
 import { type AppendData, appendSegment } from '../../../media/dom/mse/append-segment';
 import { flushBuffer } from '../../../media/dom/mse/buffer-flusher';
 import { SEGMENT_TIME_EPSILON, type Segment, type Track } from '../../../media/types';
+import type {
+  AppendInitMessage,
+  AppendSegmentMessage,
+  IndividualSourceBufferMessage,
+  RemoveMessage,
+} from '../../primitives/source-buffer-messages';
 
 // =============================================================================
 // Types
@@ -13,29 +19,8 @@ export interface BufferedRange {
   end: number;
 }
 
-export type AppendSegmentMeta = Pick<Segment, 'id' | 'startTime' | 'duration'> & {
-  trackId: Track['id'];
-  /** Declared track bandwidth in bps (from playlist BANDWIDTH attribute). */
-  trackBandwidth?: number;
-};
-
 export type { AppendData };
 
-export type AppendInitMessage = {
-  type: 'append-init';
-  data: AppendData;
-  /**
-   * `language` is captured alongside `trackId` so downstream loaders can
-   * compare the buffered track's language to the newly-selected track's
-   * language and decide whether ahead-buffer flush is warranted on track
-   * switch (see `segment-loader`'s `planTasks`). Undefined for video and
-   * for audio without explicit `LANGUAGE` attribute.
-   */
-  meta: { trackId: Track['id']; language?: string };
-};
-export type AppendSegmentMessage = { type: 'append-segment'; data: AppendData; meta: AppendSegmentMeta };
-export type RemoveMessage = { type: 'remove'; start: number; end: number };
-export type IndividualSourceBufferMessage = AppendInitMessage | AppendSegmentMessage | RemoveMessage;
 export type BatchMessage = { type: 'batch'; messages: IndividualSourceBufferMessage[] };
 export type CancelMessage = { type: 'cancel' };
 
@@ -127,6 +112,12 @@ function appendSegmentTask(
     // across playlists. `SEGMENT_TIME_EPSILON` guards against floating-point
     // drift in parsed timestamps (shared with the segment-loader quality
     // filter — single source of truth).
+    //
+    // Misaligned renditions (e.g. 30fps vs 60fps rungs) break the same-slot
+    // assumption: the switched-to segment's differing startTime is kept as a
+    // separate overlapping entry rather than truncating the older one to the
+    // portion MSE didn't overwrite. Cosmetic today (see #1865 for the
+    // most-recent-append-wins model); coverage/flush stay correct.
     const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= SEGMENT_TIME_EPSILON);
 
     // For streaming data: emit partial state before the first chunk so
@@ -151,6 +142,12 @@ function appendSegmentTask(
       });
     }
 
+    // Relocation: set the offset before the coded frames are appended. The
+    // SerialRunner guarantees the buffer is idle here, so the assignment is safe.
+    // Guarded so re-stamping the (constant) offset on later appends is a no-op.
+    if (meta.timestampOffset != null && sourceBuffer.timestampOffset !== meta.timestampOffset) {
+      sourceBuffer.timestampOffset = meta.timestampOffset;
+    }
     await appendSegment(sourceBuffer, message.data, taskSignal);
     // No abort check here: the physical SourceBuffer has been modified, so
     // the model must be updated to match regardless of signal state.

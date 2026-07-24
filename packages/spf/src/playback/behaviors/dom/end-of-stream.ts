@@ -58,11 +58,12 @@
  *
  * # currentTime gate
  *
- * `currentTime` must have reached at least one active track's last
- * segment startTime. Prevents `'eos-ready'` entry when a back-buffer
- * `remove()` / `appendBuffer()` briefly re-opens the MediaSource while
- * the user is mid-stream. HLS rendition time-alignment means any active
- * track works as the reference.
+ * `currentTime` must have reached (within {@link LAST_SEGMENT_REACHED_SLACK})
+ * at least one active track's last segment startTime. Prevents `'eos-ready'`
+ * entry when a back-buffer `remove()` / `appendBuffer()` briefly re-opens the
+ * MediaSource while the user is mid-stream. HLS rendition time-alignment means
+ * any active track works as the reference. The slack absorbs the near-end
+ * playhead freeze (see the constant) so a tiny final segment doesn't deadlock.
  *
  * # MS readyState — local subscription
  *
@@ -116,6 +117,18 @@ export interface EndOfStreamContext {
 
 type EndOfStreamFsmState = 'preconditions-unmet' | 'eos-ready';
 
+/**
+ * Slack (seconds) on the "playhead has reached the last segment" gate. A tiny final
+ * segment (e.g. Apple's ~44ms last segment) starts right at the buffered end, and the
+ * browser freezes the playhead ~50–70ms short of that end (its render horizon), so a
+ * strict `currentTime >= lastSegStart` would never open — deadlocking `endOfStream`
+ * (the MediaSource stays `'open'`, so the browser keeps the playhead frozen waiting for
+ * data/EOS that never comes). This slack lets a playhead stalled just short of the final
+ * segment still finalize. Firing slightly early is harmless: the last segment is already
+ * appended (the gate above), so no more data is expected.
+ */
+const LAST_SEGMENT_REACHED_SLACK = 0.5;
+
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
   mediaSource: MediaSource | undefined,
@@ -152,7 +165,8 @@ function deriveState(
     }
   }
 
-  if (lastSegStart !== undefined && (currentTime ?? 0) < lastSegStart) {
+  // Slack absorbs the near-end playhead freeze so a tiny final segment doesn't deadlock.
+  if (lastSegStart !== undefined && (currentTime ?? 0) < lastSegStart - LAST_SEGMENT_REACHED_SLACK) {
     return 'preconditions-unmet';
   }
 

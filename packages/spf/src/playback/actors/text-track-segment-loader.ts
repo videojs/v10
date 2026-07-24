@@ -6,7 +6,15 @@ import {
   type ForwardBufferConfig,
   getSegmentsToLoad,
 } from '../../media/buffer/forward-buffer';
-import type { Cue, Segment, TextTrack } from '../../media/types';
+import type { Cue, TextTrack } from '../../media/types';
+import {
+  DEFAULT_TEXT_MESSAGE_PIPELINES,
+  type TextFrame,
+  type TextLoadTask,
+  type TextMessagePipelines,
+  type TextStepDeps,
+  type TextTrackSegmentResolver,
+} from '../primitives/text-segment-load-pipeline';
 import type { TextTracksActor } from './text-tracks';
 
 // =============================================================================
@@ -52,35 +60,21 @@ export type TextTrackSegmentLoaderActor = MessageActor<
 >;
 
 /**
- * Resolves a text-track segment URL into the array of cues it contains.
- *
- * "Resolve" because the fn covers both network fetch and parse into the
- * domain model. Host-agnostic — the concrete resolver (e.g. the
- * browser's native VTT resolver) is supplied at engine-assembly time,
- * so this actor stays DOM-free.
- */
-export type TextTrackSegmentResolver<C extends Cue = Cue> = (url: string) => Promise<C[]>;
-
-/**
  * Configuration for `createTextTrackSegmentLoaderActor`. Spread over
  * `DEFAULT_FORWARD_BUFFER_CONFIG` to override individual forward-window
  * fields (e.g. `bufferDuration`). Text tracks don't have a back-buffer
  * concern — cues evict by their playhead-relative window at runtime —
  * so no `backBuffer` config field.
  */
-export interface TextTrackSegmentLoaderActorConfig {
+export interface TextTrackSegmentLoaderActorConfig<C extends Cue = Cue> {
   forwardBuffer?: Partial<ForwardBufferConfig>;
+  /** Ordered step pipeline. Defaults to {@link DEFAULT_TEXT_MESSAGE_PIPELINES} (`resolveCues → dispatchCues`). */
+  messagePipelines?: TextMessagePipelines<C>;
 }
 
 // =============================================================================
 // Implementation
 // =============================================================================
-
-/** Internal load-task descriptor — one segment fetch + dispatch unit. */
-interface TextLoadTask {
-  segment: Segment;
-  trackId: string;
-}
 
 /**
  * Loads text-track segments for a track and delegates cue management
@@ -112,12 +106,26 @@ interface TextLoadTask {
 export function createTextTrackSegmentLoaderActor<C extends Cue>(
   textTracksActor: TextTracksActor<C>,
   resolveSegment: TextTrackSegmentResolver<C>,
-  config: TextTrackSegmentLoaderActorConfig = {}
+  config: TextTrackSegmentLoaderActorConfig<C> = {},
+  // Composition deps threaded opaquely into each step's `TextStepDeps` (relocation
+  // reads composition state). The loader never reads them. Defaults empty for
+  // standalone / base-pipeline use.
+  compositionDeps: TextStepDeps = { state: {}, context: {}, config: {} }
 ): TextTrackSegmentLoaderActor {
   type UserState = Exclude<TextTrackSegmentLoaderActorState, 'destroyed'>;
   type Ctx = HandlerContext<UserState, TextTrackSegmentLoaderActorContext, () => SerialRunner>;
 
   const forwardBufferConfig: ForwardBufferConfig = { ...DEFAULT_FORWARD_BUFFER_CONFIG, ...config.forwardBuffer };
+  // Fold the loader's wiring into the passthrough `config` (see `textStepWiring`) so
+  // base steps read it from the uniform `{state,context,config}` — present in both
+  // composition and standalone use.
+  const deps: TextStepDeps = {
+    state: compositionDeps.state,
+    context: compositionDeps.context,
+    config: { ...compositionDeps.config, textTracksActor, resolveSegment },
+  };
+  // Built once per actor; default is `resolveCues → dispatchCues`.
+  const pipeline = (config.messagePipelines ?? DEFAULT_TEXT_MESSAGE_PIPELINES)();
 
   /**
    * Translate a load message into an ordered TextLoadTask list based on
@@ -148,27 +156,26 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
   };
 
   /**
-   * Wraps a TextLoadTask into a Task that fetches + dispatches `add-cues`.
-   * Updates `inFlightSegmentId` around the fetch so the load handler can
-   * make accurate continue/preempt decisions.
+   * Wraps a TextLoadTask into a Task that runs the op's step pipeline
+   * (resolve/relocate/dispatch, per the composition's `messagePipelines`).
+   * Updates `inFlightSegmentId` around the async region so the load handler can
+   * make accurate continue/preempt decisions, and checks the abort signal before
+   * each step.
+   *
+   * Text degrades gracefully: a step throwing (e.g. a failed segment fetch) is
+   * logged and swallowed so the runner continues to the next segment — unlike the
+   * v/a loader, where a failed init must abort the remaining tasks.
    */
   const makeLoadTask = (op: TextLoadTask, { getContext, setContext }: Ctx): Task<void> => {
     return new Task(async (signal) => {
       if (signal.aborted) return;
+      const frame: TextFrame<C> = { op };
       setContext({ ...getContext(), inFlightTrackId: op.trackId, inFlightSegmentId: op.segment.id });
       try {
-        const cues = await resolveSegment(op.segment.url);
-        if (signal.aborted) return;
-        textTracksActor.send({
-          type: 'add-cues',
-          meta: {
-            trackId: op.trackId,
-            id: op.segment.id,
-            startTime: op.segment.startTime,
-            duration: op.segment.duration,
-          },
-          cues,
-        });
+        for (const step of pipeline) {
+          if (signal.aborted) return;
+          await step(frame, signal, deps);
+        }
       } catch (error) {
         // Graceful degradation: log and continue to the next segment.
         console.error('Failed to load text-track segment:', error);

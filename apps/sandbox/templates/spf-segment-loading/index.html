@@ -3,6 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
     <title>Sandbox — SPF Segment Loading POC</title>
     <style>
       body {
@@ -25,13 +26,26 @@
       /* ── Src controls ── */
       #src-controls {
         display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: stretch;
+        max-width: 620px;
+        margin-bottom: 10px;
+      }
+      #src-preset {
+        padding: 6px 10px;
+        font-family: monospace;
+        font-size: 12px;
+        border: 1px solid #999;
+        border-radius: 4px;
+      }
+      #src-input-row {
+        display: flex;
         gap: 8px;
         align-items: center;
-        margin-bottom: 10px;
       }
       #src-input {
         flex: 1;
-        max-width: 540px;
         padding: 6px 10px;
         font-family: monospace;
         font-size: 12px;
@@ -207,13 +221,19 @@
     <p>Testing segment loading pipeline with real Mux HLS stream</p>
 
     <div id="src-controls">
-      <input type="text" id="src-input" placeholder="Stream URL…" />
-      <button type="button" id="set-src">Set Src</button>
+      <select id="src-preset" title="Load a preset source">
+        <option value="">— preset sources —</option>
+      </select>
+      <div id="src-input-row">
+        <input type="text" id="src-input" placeholder="Stream URL…" />
+        <button type="button" id="set-src">Set Src</button>
+      </div>
     </div>
 
     <div id="playback-config">
       <label><input type="checkbox" id="muted-toggle" /> Muted</label>
       <label><input type="checkbox" id="autoplay-toggle" /> Autoplay</label>
+      <label><input type="checkbox" id="loop-toggle" /> Loop</label>
       <label>
         Preload:
         <select id="preload-select">
@@ -221,6 +241,11 @@
           <option value="metadata">metadata</option>
           <option value="auto">auto</option>
         </select>
+      </label>
+      <label
+        title="Filter out HEVC renditions so ABR stays within one codec family, avoiding SourceBuffer.changeType() (not yet implemented). Needed for mixed-codec sources like the Apple bipbop example."
+      >
+        <input type="checkbox" id="avc-only-toggle" /> AVC-only (avoid changeType)
       </label>
     </div>
 

@@ -6,8 +6,10 @@
  * process each append before the next one arrives.
  */
 
-/** Data accepted by appendSegment — a full buffer or an async chunk stream. */
-export type AppendData = ArrayBuffer | AsyncIterable<Uint8Array>;
+import type { SegmentData } from '../../types';
+
+/** Data accepted by appendSegment — the MSE-boundary alias of {@link SegmentData}. */
+export type AppendData = SegmentData;
 
 /**
  * Append media data to a SourceBuffer.
