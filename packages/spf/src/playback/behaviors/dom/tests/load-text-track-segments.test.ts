@@ -24,6 +24,7 @@ interface TextTrackSegmentLoadingState {
   currentTime?: number;
   preload?: string;
   loadActivated?: boolean;
+  loadSuspended?: boolean;
 }
 
 interface TextTrackSegmentLoadingContext {
@@ -54,6 +55,7 @@ function makeState(initial: TextTrackSegmentLoadingState = {}): StateSignals<Tex
     currentTime: signal<number | undefined>(initial.currentTime),
     preload: signal<string | undefined>(initial.preload),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
+    loadSuspended: signal<boolean | undefined>(initial.loadSuspended),
   };
 }
 

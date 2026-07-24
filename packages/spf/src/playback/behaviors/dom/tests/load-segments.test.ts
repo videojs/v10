@@ -24,6 +24,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     preload: signal<string | undefined>(initial.preload),
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
+    loadSuspended: signal<boolean | undefined>(initial.loadSuspended),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -325,6 +326,125 @@ describe('loadSegments orchestration (F5)', () => {
     });
 
     cleanup();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// loadSuspended — hard suspend gate (AirPlay wireless / stopLoad analogue)
+// ---------------------------------------------------------------------------
+
+describe('loadSegments orchestration (loadSuspended)', () => {
+  function makePresentation(segments: Segment[]) {
+    return {
+      id: 'p1',
+      url: 'http://example.com/playlist.m3u8',
+      startTime: 0,
+      duration: segments.reduce((acc, s) => acc + s.duration, 0),
+      selectionSets: [
+        {
+          id: 'ss1',
+          type: 'video' as const,
+          switchingSets: [{ id: 'sw1', type: 'video' as const, tracks: [makeResolvedVideoTrack(segments)] }],
+        },
+      ],
+    };
+  }
+
+  it('does not load segments while suspended, even with preload="auto"', async () => {
+    const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        loadSuspended: true,
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: makePresentation(segments),
+      },
+      actor,
+      'video'
+    );
+
+    // Give the (suspended) loader ample time to prove it stays dormant.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetchedUrls).not.toContain('http://example.com/init.mp4');
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+
+    cleanup();
+  });
+
+  it('resumes loading when suspend is released', async () => {
+    const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10)];
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100)));
+    });
+
+    const { actor } = makeSourceBufferWithActor();
+    const { state, cleanup } = setupLoadSegments(
+      {
+        preload: 'auto',
+        loadSuspended: true,
+        selectedVideoTrackId: 'track-1',
+        currentTime: 0,
+        presentation: makePresentation(segments),
+      },
+      actor,
+      'video'
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
+
+    state.loadSuspended.set(false);
+
+    await vi.waitFor(() => {
+      expect(fetchedUrls).toContain('http://example.com/init.mp4');
+      expect(fetchedUrls).toContain('http://example.com/s1.m4s');
+    });
+
+    cleanup();
+  });
+
+  it('sends a stop message to the loader on suspend and re-dispatches on resume', async () => {
+    // Fake loader captures the messages the dispatcher sends — proving the
+    // `'suspended'` state actively halts the actor (not just parks the
+    // dispatcher). The actor-level tests cover what `stop` does to in-flight
+    // work; this pins the FSM → actor wiring.
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    // preload:'auto' → 'full-range' → an initial load dispatch.
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+    send.mockClear();
+
+    state.loadSuspended.set(true);
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'stop' }));
+    send.mockClear();
+
+    state.loadSuspended.set(false);
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+    reactor.destroy();
   });
 });
 
