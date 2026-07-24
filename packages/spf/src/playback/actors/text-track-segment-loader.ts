@@ -38,7 +38,8 @@ export type TextTrackSegmentLoaderLoadMessage = {
 };
 
 /**
- * `stop` - aborts the in-flight fetch + queued batch and returns to `idle`
+ * `stop` - aborts the pending queue and returns to `idle`. The in-flight
+ * fetch is left to complete.
  */
 export type TextTrackSegmentLoaderStopMessage = { type: 'stop' };
 

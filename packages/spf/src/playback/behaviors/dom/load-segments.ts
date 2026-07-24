@@ -179,10 +179,10 @@ function setupSegmentLoading<
       'preconditions-unmet': {},
       dormant: {},
       suspended: {
-        // Fires once on entry. Tell the loader actor to halt: abort the
-        // in-flight fetch + queued batch (the `'dormant'` gate only prevents
-        // *new* dispatches; an actor mid-forward-buffer keeps fetching
-        // without this). `peek` — the loader is already gated by
+        // Fires once on entry. Tell the loader actor to halt: drop the
+        // pending queue so an actor mid-forward-buffer stops scheduling new
+        // fetches (the `'dormant'` gate only prevents *new* dispatches). The
+        // in-flight fetch is left to complete. `peek` — the loader is already gated by
         // `derivedStateSignal`; entry is auto-untracked besides.
         entry: () => {
           peek(context[loaderKey])?.send({ type: 'stop' });

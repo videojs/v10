@@ -308,9 +308,10 @@ describe('TextTrackSegmentLoaderActor', () => {
     textTracksActor.destroy();
   });
 
-  it('stops the in-flight fetch + queued batch and returns to idle on stop', async () => {
+  it('drops the queued batch and returns to idle on stop', async () => {
     let fetches = 0;
-    // Each segment resolve hangs so the first stays in-flight until aborted.
+    // Each segment resolve hangs so the first stays in-flight; `stop` drops
+    // the queue behind it and leaves the in-flight fetch to complete.
     const resolveVttSegment = vi.fn((_url: string) => {
       fetches++;
       return new Promise<VTTCue[]>(() => {});

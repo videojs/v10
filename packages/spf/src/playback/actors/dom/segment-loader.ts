@@ -78,9 +78,9 @@ type SegmentLoaderLoadMessage = {
 /**
  * `stop` message sent to a SegmentLoaderActor.
  *
- * - halts loading: aborts the in-flight fetch and the whole queued
- *   forward-buffer batch, discards any half-appended segment, and returns
- *   the actor to `idle`.
+ * - halts loading: aborts the pending queue and returns the actor to
+ *   `idle`. The in-flight fetch is left to complete and the SourceBuffer
+ *   is deliberately not touched.
  */
 type SegmentLoaderStopMessage = { type: 'stop' };
 
