@@ -26,7 +26,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   alias: {
     '@': new URL('./src', import.meta.url).pathname,
   },
-  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}` })],
+  plugins: [copyCssPlugin({ skinsDir, outDir: `dist/${mode}`, rebuild: false })],
 });
 
 export default defineConfig(packageBuildModes.map((mode) => createConfig(mode)));
