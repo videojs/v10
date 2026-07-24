@@ -5,15 +5,15 @@
 .media-minimal-skin {
   --media-caption-track-duration: var(--media-controls-transition-duration);
   --media-caption-track-delay: 25ms;
-  --media-caption-track-y: -0.5rem;
+  --media-caption-track-y: calc(var(--spacing) * -2);
 
   &:has(.media-controls[data-visible]) {
-    --media-caption-track-y: -5rem;
+    --media-caption-track-y: calc(var(--spacing) * -20);
   }
 
   @container media-root (width > 42rem) {
     &:has(.media-controls[data-visible]) > * {
-      --media-caption-track-y: -3rem;
+      --media-caption-track-y: calc(var(--spacing) * -12);
     }
   }
 }

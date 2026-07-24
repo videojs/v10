@@ -113,7 +113,7 @@ test.describe('Visual — HTML Portrait Layout', () => {
       const thumbnail = document.querySelector('video-skin')!.shadowRoot!.querySelector('media-slider-thumbnail')!;
       const style = getComputedStyle(thumbnail);
       const probe = document.createElement('div');
-      probe.style.height = style.getPropertyValue('--media-slider-thumbnail-max-height');
+      probe.style.height = style.getPropertyValue('--max-height');
       document.body.append(probe);
 
       const configuredMaxHeight = parseFloat(getComputedStyle(probe).height);

@@ -19,17 +19,13 @@ export const root = cn(
   '[--media-error-dialog-transition-delay:100ms]',
   '[--media-popup-transition-duration:100ms]',
   '[--media-popup-transition-timing-function:ease-out]',
-  '[--media-tooltip-background-color:oklch(1_0_0)]',
-  '[--media-tooltip-border-color:oklch(0_0_0/0.1)]',
-  '[--media-tooltip-backdrop-filter:blur(16px)_saturate(1.5)]',
+  '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
+  '[--media-popover-background-color:oklch(1_0_0)]',
+  '[--media-popover-border-color:oklch(0_0_0/0.1)]',
+  '[--media-tooltip-backdrop-filter:var(--media-popover-backdrop-filter)]',
+  '[--media-tooltip-background-color:var(--media-popover-background-color)]',
+  '[--media-tooltip-border-color:var(--media-popover-border-color)]',
   '[--media-tooltip-text-color:currentColor]',
-  '[--media-tooltip-side-offset:0.75rem]',
-  '[--media-tooltip-boundary-offset:0.75rem]',
-  '[--media-popover-background-color:var(--media-tooltip-background-color)]',
-  '[--media-popover-border-color:var(--media-tooltip-border-color)]',
-  '[--media-popover-backdrop-filter:var(--media-tooltip-backdrop-filter)]',
-  '[--media-popover-side-offset:var(--media-tooltip-side-offset)]',
-  '[--media-popover-boundary-offset:var(--media-tooltip-boundary-offset)]',
   'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
   'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
   'motion-reduce:[--media-popup-transition-duration:0ms]',
@@ -49,14 +45,17 @@ export const root = cn(
 export const controls = cn(
   baseControls,
   // Layout
-  'p-1.5 gap-2',
-  'rounded-(--media-border-radius,1rem)',
+  'p-1 gap-2',
+  'rounded-(--media-border-radius,0.875rem)',
+  '[--base-side-offset:2] [--base-boundary-offset:2]',
   'peer-data-open/error:**:invisible',
   // Appearance
   'text-(--media-controls-text-color)',
   // Border
   'ring-1 ring-(color:--media-controls-border-color)'
 );
+
+export const spacer = 'grow';
 
 export const playButton = {
   wrapper: 'group/play inline-flex relative',
@@ -78,7 +77,7 @@ export const popup = {
   ...basePopup,
   volume: cn(
     basePopup.popover,
-    'p-0 pl-16',
+    'p-0 pr-2 pl-16 [--media-popover-side-offset:0rem]',
     'bg-transparent bg-gradient-to-l from-(--media-controls-background-color) from-80% to-transparent'
   ),
 };

@@ -8,8 +8,9 @@
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
+  height: calc(var(--spacing) * 9.5);
   min-height: 0;
-  padding: 0.5rem 1rem;
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 4);
   text-align: center;
   touch-action: manipulation;
   cursor: pointer;
@@ -17,7 +18,7 @@
   outline: 2px solid transparent;
   outline-offset: -2px;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: calc(var(--spacing) * 2);
   transition-timing-function: ease-out;
   transition-duration: 150ms;
   transition-property: background-color, outline-offset, scale;
@@ -47,7 +48,7 @@
 
 @supports (corner-shape: squircle) {
   .media-minimal-skin .media-button {
-    border-radius: 1rem;
+    border-radius: calc(var(--spacing) * 4);
     corner-shape: squircle;
   }
 }
@@ -76,7 +77,6 @@
 /* Icon button variant */
 .media-minimal-skin .media-button--icon {
   display: grid;
-  width: 2.375rem;
   aspect-ratio: 1;
   padding: 0;
 
@@ -104,7 +104,7 @@
     position: absolute;
     right: -1px;
     bottom: -3px;
-    font-size: 10px; /* Hard coded due to size limitations. */
+    font-size: 0.715em; /* 10px */
     font-weight: 500;
     font-variant-numeric: tabular-nums;
     letter-spacing: -0.05em;
@@ -133,8 +133,6 @@
 
 /* Settings button */
 .media-minimal-skin .media-button--settings {
-  display: none;
-
   & .media-icon--settings {
     transition: transform 150ms ease-in-out;
 
@@ -148,21 +146,17 @@
   }
 }
 
-.media-minimal-skin .media-button-group:has([data-availability="available"]) .media-button--settings {
-  display: grid;
-}
-
 /* Live button — wide pill button with a status dot (gray → red at the live
    edge) rendered via ::before, and "LIVE" text rendered as the button's own
    text content. */
 .media-minimal-skin .media-button--live {
   display: inline-flex;
-  gap: 0.4rem;
+  gap: calc(var(--spacing) * 1.5);
   align-items: center;
   width: auto;
   aspect-ratio: auto;
-  padding: 0.5rem 0.75rem;
-  font-size: 0.75rem;
+  padding: calc(var(--spacing) * 2) calc(var(--spacing) * 3);
+  font-size: var(--font-size-small);
   font-weight: 600;
   line-height: 1;
   text-transform: uppercase;
@@ -171,8 +165,8 @@
   &::before {
     display: inline-block;
     flex-shrink: 0;
-    width: 0.5rem;
-    height: 0.5rem;
+    width: calc(var(--spacing) * 2);
+    height: calc(var(--spacing) * 2);
     content: "";
     background-color: oklch(from currentColor l c h / 0.4);
     border-radius: 50%;

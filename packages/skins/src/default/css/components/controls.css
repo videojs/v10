@@ -3,11 +3,16 @@
    ========================================================================== */
 
 .media-default-skin .media-controls {
+  --media-popover-side-offset: calc(var(--spacing) * (var(--base-side-offset, 2) + 1));
+  --media-tooltip-side-offset: var(--media-popover-side-offset);
+  --media-popover-boundary-offset: calc(var(--spacing) * var(--base-boundary-offset, 2));
+  --media-tooltip-boundary-offset: var(--media-popover-boundary-offset);
+
   display: flex;
-  column-gap: 0.075rem;
+  column-gap: calc(0.0625 * var(--base-size));
   align-items: center;
-  padding: 0.375rem;
+  padding: calc(var(--spacing) * 1);
   container: media-controls / inline-size;
   text-shadow: 0 1px 0 var(--media-current-shadow-color);
-  border-radius: 1.5rem;
+  border-radius: calc(Infinity * 1px);
 }

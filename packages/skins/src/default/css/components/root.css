@@ -3,10 +3,24 @@
    ========================================================================== */
 
 .media-default-skin {
+  /* Colors */
   --media-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
   --media-current-shadow-color-subtle: oklch(from var(--media-current-shadow-color) l c h / calc(alpha * 0.4));
-  --media-icon-size: 18px;
-  --media-color-scrollbar-thumb: oklch(from currentColor l c h / 0.3);
+  --scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
+
+  /* Scaling (used in video fullscreen) */
+  --scale: 1;
+  /* What value and unit to use - 1rem assumes the document font size remains at the default 16px */
+  --base-size: 1rem;
+  --size: calc(var(--base-size) * var(--scale));
+  /* Create a Tailwind-like spacing unit */
+  --spacing: calc(var(--size) / 4);
+  --font-size-medium: calc(0.9375 * var(--size)); /* 15px */
+  --font-size-base: calc(0.8125 * var(--size)); /* 13px */
+  --font-size-small: calc(0.6875 * var(--size)); /* 11px */
+  --font-size-tiny: calc(0.5625 * var(--size)); /* 9px */
+  --media-icon-size: calc(1.125 * var(--size)); /* 18px */
+
   position: relative;
   display: block;
   width: 100%;
@@ -18,16 +32,16 @@
     ui-sans-serif,
     system-ui,
     sans-serif;
-  font-size: 0.8125rem; /* 13px at 100% font size */
+  font-size: var(--font-size-base);
   -webkit-font-smoothing: auto;
   -moz-osx-font-smoothing: auto;
   line-height: 1.5;
   letter-spacing: normal;
   outline: 2px solid transparent;
   outline-offset: -4px;
-  scrollbar-color: var(--media-color-scrollbar-thumb) transparent;
+  scrollbar-color: var(--scrollbar-thumb-color) transparent;
   scrollbar-width: thin;
-  border-radius: var(--media-border-radius, 2rem);
+  border-radius: var(--media-border-radius, 1.75rem);
   isolation: isolate;
   transition-timing-function: ease-out;
   transition-duration: 100ms;
@@ -39,12 +53,12 @@
   }
 
   &::-webkit-scrollbar-thumb {
-    background: var(--media-color-scrollbar-thumb);
+    background: var(--scrollbar-thumb-color);
     border-radius: 9999px;
   }
 
   @media (prefers-reduced-transparency: reduce) or (prefers-contrast: more) {
-    --media-color-scrollbar-thumb: oklch(from currentColor l c h / 0.8);
+    --scrollbar-thumb-color: oklch(from currentColor l c h / 0.8);
     scrollbar-width: auto;
   }
 }

@@ -25,14 +25,12 @@
   --media-surface-shadow-color: oklch(0 0 0 / 0.15);
   --media-surface-backdrop-filter: blur(16px) saturate(1.5);
   --media-text-color: var(--media-color-primary, oklch(0 0 0));
+
   --media-error-dialog-transition-duration: 250ms;
   --media-error-dialog-transition-delay: 100ms;
+
   --media-popup-transition-duration: 100ms;
   --media-popup-transition-timing-function: ease-out;
-  --media-tooltip-side-offset: 0.75rem;
-  --media-tooltip-boundary-offset: 0.75rem;
-  --media-popover-side-offset: 0.75rem;
-  --media-popover-boundary-offset: 0.75rem;
 
   @media (prefers-reduced-motion: reduce) {
     --media-error-dialog-transition-duration: 50ms;
@@ -66,9 +64,9 @@
   inset: 0;
   z-index: 20;
   display: flex;
-  gap: 0.75rem;
+  gap: calc(var(--spacing) * 3);
   align-items: center;
-  padding-inline: 1.25rem 0.125rem;
+  padding-inline: calc(var(--spacing) * 5) calc(var(--spacing) * 0.5);
   color: var(--media-text-color);
   background-color: var(--media-surface-background-color);
   border-radius: calc(infinity * 1px);
@@ -91,7 +89,7 @@
 .media-default-skin--audio .media-error__content {
   display: flex;
   flex: 1;
-  gap: 0.5rem;
+  gap: calc(var(--spacing) * 2);
   align-items: center;
 }
 
@@ -100,7 +98,14 @@
   ========================================================================== */
 
 .media-default-skin--audio .media-controls {
+  --base-boundary-offset: 2;
   color: var(--media-text-color);
+
+  & .media-button--seek {
+    @container media-root (width < 32rem) {
+      display: none;
+    }
+  }
 }
 
 /* ==========================================================================

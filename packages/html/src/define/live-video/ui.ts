@@ -19,8 +19,6 @@ import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { TextElement } from '../../ui/text/text-element';
-import { TooltipElement } from '../../ui/tooltip/tooltip-element';
-import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -29,6 +27,7 @@ import {
   defineMenu,
   defineSliders,
   defineTime,
+  defineTooltips,
 } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
@@ -64,5 +63,4 @@ safeDefine(PlayButtonElement);
 safeDefine(PopoverElement);
 safeDefine(PosterElement);
 safeDefine(TextElement);
-safeDefine(TooltipElement);
-safeDefine(TooltipGroupElement);
+defineTooltips();

@@ -341,6 +341,81 @@ function SettingsMenu(): ReactNode {
   );
 }
 
+function CastControl() {
+  return (
+    <Tooltip.Root side="top">
+      <Tooltip.Trigger
+        render={
+          <CastButton className="media-button--cast" render={<Button />}>
+            <CastEnterIcon className="media-icon media-icon--cast-enter" />
+            <CastExitIcon className="media-icon media-icon--cast-exit" />
+          </CastButton>
+        }
+      />
+      <Tooltip.Popup className="media-surface media-tooltip">
+        <Tooltip.Label />
+        <Tooltip.Shortcut className="media-tooltip__kbd" />
+      </Tooltip.Popup>
+    </Tooltip.Root>
+  );
+}
+
+function AirPlayControl() {
+  return (
+    <Tooltip.Root side="top">
+      <Tooltip.Trigger
+        render={
+          <AirPlayButton className="media-button--airplay" render={<Button />}>
+            <AirPlayEnterIcon className="media-icon media-icon--airplay-enter" />
+            <AirPlayExitIcon className="media-icon media-icon--airplay-exit" />
+          </AirPlayButton>
+        }
+      />
+      <Tooltip.Popup className="media-surface media-tooltip">
+        <Tooltip.Label />
+        <Tooltip.Shortcut className="media-tooltip__kbd" />
+      </Tooltip.Popup>
+    </Tooltip.Root>
+  );
+}
+
+function PiPControl() {
+  return (
+    <Tooltip.Root side="top">
+      <Tooltip.Trigger
+        render={
+          <PiPButton className="media-button--pip" render={<Button />}>
+            <PipEnterIcon className="media-icon media-icon--pip-enter" />
+            <PipExitIcon className="media-icon media-icon--pip-exit" />
+          </PiPButton>
+        }
+      />
+      <Tooltip.Popup className="media-surface media-tooltip">
+        <Tooltip.Label />
+        <Tooltip.Shortcut className="media-tooltip__kbd" />
+      </Tooltip.Popup>
+    </Tooltip.Root>
+  );
+}
+function FullscreenControl() {
+  return (
+    <Tooltip.Root side="top">
+      <Tooltip.Trigger
+        render={
+          <FullscreenButton className="media-button--fullscreen" render={<Button />}>
+            <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
+            <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
+          </FullscreenButton>
+        }
+      />
+      <Tooltip.Popup className="media-surface media-tooltip">
+        <Tooltip.Label />
+        <Tooltip.Shortcut className="media-tooltip__kbd" />
+      </Tooltip.Popup>
+    </Tooltip.Root>
+  );
+}
+
 export function VideoSkin(props: VideoSkinProps): ReactNode {
   const { children, className, poster, placeholder, style, ...rest } = props;
 
@@ -382,145 +457,95 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
         </ErrorDialog.Popup>
       </ErrorDialog.Root>
 
-      <Controls.Root className="media-surface media-controls">
+      <Controls.Root className="media-surface media-controls media-controls--root">
         <Tooltip.Provider>
-          <div className="media-button-group">
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <PlayButton className="media-button--play" render={<Button />}>
-                    <RestartIcon className="media-icon media-icon--restart" />
-                    <PlayIcon className="media-icon media-icon--play" />
-                    <PauseIcon className="media-icon media-icon--pause" />
-                  </PlayButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+          <div className="media-surface media-controls media-controls--primary">
+            <div className="media-button-group">
+              <Tooltip.Root side="top">
+                <Tooltip.Trigger
+                  render={
+                    <PlayButton className="media-button--play" render={<Button />}>
+                      <RestartIcon className="media-icon media-icon--restart" />
+                      <PlayIcon className="media-icon media-icon--play" />
+                      <PauseIcon className="media-icon media-icon--pause" />
+                    </PlayButton>
+                  }
+                />
+                <Tooltip.Popup className="media-surface media-tooltip">
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className="media-tooltip__kbd" />
+                </Tooltip.Popup>
+              </Tooltip.Root>
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
-                    <span className="media-icon__container">
-                      <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
-                      <span className="media-icon__label">{SEEK_TIME}</span>
-                    </span>
-                  </SeekButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top">
+                <Tooltip.Trigger
+                  render={
+                    <SeekButton seconds={-SEEK_TIME} className="media-button--seek" render={<Button />}>
+                      <span className="media-icon__container">
+                        <SeekIcon className="media-icon media-icon--seek media-icon--flipped" />
+                        <span className="media-icon__label">{SEEK_TIME}</span>
+                      </span>
+                    </SeekButton>
+                  }
+                />
+                <Tooltip.Popup className="media-surface media-tooltip">
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className="media-tooltip__kbd" />
+                </Tooltip.Popup>
+              </Tooltip.Root>
 
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
-                    <span className="media-icon__container">
-                      <SeekIcon className="media-icon media-icon--seek" />
-                      <span className="media-icon__label">{SEEK_TIME}</span>
-                    </span>
-                  </SeekButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+              <Tooltip.Root side="top">
+                <Tooltip.Trigger
+                  render={
+                    <SeekButton seconds={SEEK_TIME} className="media-button--seek" render={<Button />}>
+                      <span className="media-icon__container">
+                        <SeekIcon className="media-icon media-icon--seek" />
+                        <span className="media-icon__label">{SEEK_TIME}</span>
+                      </span>
+                    </SeekButton>
+                  }
+                />
+                <Tooltip.Popup className="media-surface media-tooltip">
+                  <Tooltip.Label />
+                  <Tooltip.Shortcut className="media-tooltip__kbd" />
+                </Tooltip.Popup>
+              </Tooltip.Root>
+            </div>
+
+            <div className="media-time-controls">
+              <Time.Value type="current" className="media-time" />
+              <TimeSlider.Root className="media-slider">
+                <TimeSlider.Track className="media-slider__track">
+                  <TimeSlider.Fill className="media-slider__fill" />
+                  <TimeSlider.Buffer className="media-slider__buffer" />
+                </TimeSlider.Track>
+                <TimeSlider.Thumb className="media-slider__thumb" />
+
+                <div className="media-surface media-thumbnail media-slider__thumbnail">
+                  <Slider.Thumbnail className="media-thumbnail__image" />
+                  <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
+                  <SpinnerIcon className="media-thumbnail__spinner media-icon" />
+                </div>
+                <TimeSlider.Preview className="media-slider__preview">
+                  <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
+                </TimeSlider.Preview>
+              </TimeSlider.Root>
+              <Time.Value toggle type="remaining" className="media-time" />
+            </div>
+
+            <div className="media-button-group">
+              <VolumePopover />
+              <SettingsMenu />
+            </div>
           </div>
 
-          <div className="media-time-controls">
-            <Time.Value type="current" className="media-time" />
-            <TimeSlider.Root className="media-slider">
-              <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
-                <TimeSlider.Buffer className="media-slider__buffer" />
-              </TimeSlider.Track>
-              <TimeSlider.Thumb className="media-slider__thumb" />
-
-              <div className="media-surface media-thumbnail media-slider__thumbnail">
-                <Slider.Thumbnail className="media-thumbnail__image" />
-                <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
-                <SpinnerIcon className="media-thumbnail__spinner media-icon" />
-              </div>
-              <TimeSlider.Preview className="media-slider__preview">
-                <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
-              </TimeSlider.Preview>
-            </TimeSlider.Root>
-            <Time.Value toggle type="remaining" className="media-time" />
-          </div>
-
-          <div className="media-button-group">
-            <VolumePopover />
-
-            <SettingsMenu />
-
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <CastButton className="media-button--cast" render={<Button />}>
-                    <CastEnterIcon className="media-icon media-icon--cast-enter" />
-                    <CastExitIcon className="media-icon media-icon--cast-exit" />
-                  </CastButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
-
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <AirPlayButton className="media-button--airplay" render={<Button />}>
-                    <AirPlayEnterIcon className="media-icon media-icon--airplay-enter" />
-                    <AirPlayExitIcon className="media-icon media-icon--airplay-exit" />
-                  </AirPlayButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
-
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <PiPButton className="media-button--pip" render={<Button />}>
-                    <PipEnterIcon className="media-icon media-icon--pip-enter" />
-                    <PipExitIcon className="media-icon media-icon--pip-exit" />
-                  </PiPButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
-
-            <Tooltip.Root side="top">
-              <Tooltip.Trigger
-                render={
-                  <FullscreenButton className="media-button--fullscreen" render={<Button />}>
-                    <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
-                    <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
-                  </FullscreenButton>
-                }
-              />
-              <Tooltip.Popup className="media-surface media-tooltip">
-                <Tooltip.Label />
-                <Tooltip.Shortcut className="media-tooltip__kbd" />
-              </Tooltip.Popup>
-            </Tooltip.Root>
+          <div className="media-surface media-controls media-controls--secondary">
+            <div className="media-button-group">
+              <CastControl />
+              <AirPlayControl />
+              <PiPControl />
+              <FullscreenControl />
+            </div>
           </div>
         </Tooltip.Provider>
       </Controls.Root>

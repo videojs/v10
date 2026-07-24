@@ -12,7 +12,7 @@
 
 .media-minimal-skin .media-popover,
 .media-minimal-skin .media-tooltip {
-  --popup-translate-distance: 0.5rem;
+  --popup-translate-distance: calc(var(--spacing) * 2);
   margin: 0;
   overflow: visible;
   color: inherit;
@@ -22,13 +22,13 @@
   &[data-starting-style],
   &[data-ending-style] {
     opacity: 0;
-    filter: blur(4px);
     /* We have to use transform here for translate as the translate property is used for positioning by core. */
     transform: translate(var(--popup-translate-x-distance, 0), var(--popup-translate-y-distance, 0));
     scale: 0.95;
   }
 
   &[data-ending-style] {
+    filter: blur(4px);
     transform: none;
     /* Speed up the exit transition. */
     transition-duration: max(0ms, calc(var(--media-popup-transition-duration) - 50ms));
@@ -95,12 +95,12 @@
 }
 
 .media-minimal-skin .media-tooltip {
-  padding: 0.25rem 0.5rem;
-  font-size: 0.75rem; /* 12px at 100% font size */
+  padding: calc(var(--spacing) * 1) calc(var(--spacing) * 2);
+  font-size: var(--font-size-base);
   color: var(--media-tooltip-text-color);
   white-space: nowrap;
   background-color: var(--media-tooltip-background-color);
-  border-radius: 0.5rem;
+  border-radius: calc(var(--spacing) * 2);
   box-shadow:
     0 0 0 1px var(--media-tooltip-border-color),
     0 4px 6px -1px oklch(0 0 0 / 0.2),
@@ -110,7 +110,7 @@
   /* `display: flex` must not apply while closed — it overrides UA `[popover]` hiding. */
   &[data-open] {
     display: flex;
-    column-gap: 0.25rem;
+    column-gap: calc(var(--spacing) * 1);
     align-items: center;
   }
 
@@ -126,14 +126,14 @@
   & .media-tooltip__kbd {
     min-width: 1.5em;
     padding: 0.1em;
-    margin-right: -0.25rem;
+    margin-right: calc(var(--spacing) * -1);
     font-family: inherit;
-    font-size: 90%;
+    font-size: var(--font-size-small);
     font-weight: 600;
     line-height: 1.25;
     text-align: center;
     background-color: oklch(from currentColor l c h / 0.15);
-    border-radius: 0.25rem;
+    border-radius: calc(var(--spacing) * 1);
   }
 }
 

@@ -12,10 +12,8 @@ import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
 import { PopoverElement } from '../../ui/popover/popover-element';
 import { TextElement } from '../../ui/text/text-element';
-import { TooltipElement } from '../../ui/tooltip/tooltip-element';
-import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { safeDefine } from '../safe-define';
-import { defineErrorDialog, defineTime, defineTimeSlider, defineVolumeSlider } from '../ui/compounds';
+import { defineErrorDialog, defineTime, defineTimeSlider, defineTooltips, defineVolumeSlider } from '../ui/compounds';
 
 // Value import — player.ts body runs before this module's body.
 import { LiveAudioPlayerElement } from './player';
@@ -41,5 +39,4 @@ safeDefine(MuteButtonElement);
 safeDefine(PlayButtonElement);
 safeDefine(PopoverElement);
 safeDefine(TextElement);
-safeDefine(TooltipElement);
-safeDefine(TooltipGroupElement);
+defineTooltips();

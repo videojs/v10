@@ -216,14 +216,14 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
           </div>
 
           <div className="media-button-group">
+            <VolumePopover />
+
             <Menu.Root side="top" align="center" boundary="viewport">
               <PlaybackRateTrigger />
               <Menu.Content className="media-popover media-menu media-menu--playback-rate">
                 <PlaybackRateRadioGroup />
               </Menu.Content>
             </Menu.Root>
-
-            <VolumePopover />
           </div>
         </Tooltip.Provider>
       </div>

@@ -8,10 +8,8 @@ import { cn } from '@videojs/utils/style';
 export const inputFeedback = {
   root: cn(
     // Layout
-    'absolute inset-x-0 top-0 bottom-14 pointer-events-none',
+    'absolute inset-0 pointer-events-none',
     'grid grid-cols-3 items-center justify-items-center',
-    // Shift to full extent in larger containers
-    '@2xl/media-root:bottom-0',
     // Color
     '[color:var(--media-color-primary,oklch(1_0_0))]'
   ),
@@ -52,7 +50,7 @@ export const inputFeedback = {
     ),
     // Volume island sizing + progress-fill gradient on the content child
     volume: cn(
-      'w-[min(80%,12rem)]',
+      'w-[min(80%,--spacing(48))]',
       '*:[--media-progress-fill:var(--media-volume-fill)]',
       '*:rounded-[inherit]',
       '*:[background-image:linear-gradient(to_right,currentColor_0%,currentColor_var(--media-progress-fill),transparent_var(--media-progress-fill),transparent_100%)]',
