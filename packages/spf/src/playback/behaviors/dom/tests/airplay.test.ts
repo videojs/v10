@@ -82,7 +82,7 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
-  it('appends the fallback HLS source on attach', async () => {
+  it('appends the fallback HLS source once the MediaSource is open', async () => {
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
     const reactor = setupAirPlay.setup({ state, context });
@@ -91,9 +91,43 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     await flush();
 
+    // No MediaSource yet → no fallback source (it must not exist without an
+    // MSE to sit behind, or `load()` would select it for local native HLS).
+    expect(fallbackSourceOf(video)).toBeNull();
+
+    context.mediaSource.set(fakeMediaSource);
+    await flush();
+
     const source = fallbackSourceOf(video);
     expect(source).not.toBeNull();
     expect(source?.src).toBe('https://example.com/a.m3u8');
+
+    reactor.destroy();
+  });
+
+  it('removes the fallback source when the MediaSource detaches, re-appends on the next open', async () => {
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo();
+    context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
+    await flush();
+    expect(fallbackSourceOf(video)).not.toBeNull();
+
+    // A src change tears down the MSE (setupMediaSource clears the slot). The
+    // fallback must go with it — a leftover would be the sole source when
+    // detach's `load()` runs, starting local native HLS.
+    context.mediaSource.set(undefined);
+    await flush();
+    expect(fallbackSourceOf(video)).toBeNull();
+
+    // The next source opens → fallback re-appears, now carrying the new URL.
+    state.presentation.set({ url: 'https://example.com/b.m3u8' });
+    context.mediaSource.set({} as MediaSource);
+    await flush();
+    expect(fallbackSourceOf(video)?.src).toBe('https://example.com/b.m3u8');
 
     reactor.destroy();
   });
@@ -130,11 +164,12 @@ describe('setupAirPlay', () => {
 
     const video = makeWebKitVideo();
     context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
     await flush();
     expect(fallbackSourceOf(video)?.src).toBe('https://example.com/a.m3u8');
 
-    // A source change must update the fallback so a later AirPlay engage casts
-    // the current stream, not the attach-time one.
+    // A presentation update (same MediaSource) must refresh the fallback so a
+    // later AirPlay engage casts the current stream, not the attach-time one.
     state.presentation.set({ url: 'https://example.com/b.m3u8' });
     await flush();
     expect(fallbackSourceOf(video)?.src).toBe('https://example.com/b.m3u8');
@@ -207,10 +242,11 @@ describe('setupAirPlay', () => {
     const video = makeWebKitVideo({ disableRemotePlayback: true });
     state.disableRemotePlayback.set(true);
     context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
     await flush();
     expect(fallbackSourceOf(video)).toBeNull();
 
-    // Clearing the opt-out after attach must run setup.
+    // Clearing the opt-out after attach must run setup (MediaSource is open).
     state.disableRemotePlayback.set(false);
     await flush();
     expect(fallbackSourceOf(video)).not.toBeNull();
@@ -262,6 +298,7 @@ describe('setupAirPlay', () => {
 
     const video = makeWebKitVideo({ wireless: true });
     context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
     await flush();
     expect(fallbackSourceOf(video)).not.toBeNull();
     expect(state.loadSuspended.get()).toBe(true);
@@ -290,6 +327,7 @@ describe('setupAirPlay', () => {
 
     const video = makeWebKitVideo();
     context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
     await flush();
     expect(fallbackSourceOf(video)).not.toBeNull();
 

@@ -11,13 +11,15 @@
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
  * gated on a WebKit-AirPlay-capable media element being in scope. The entry
- * appends the fallback `<source>`, wires the wireless-target listener, keeps
- * the source URL current from `state.presentation`, and enables the AirPlay
- * picker once the MediaSource is open; state-exit cleanup (author opt-out,
- * detach, source reset, behavior destroy) removes the source, drops the
- * listener, restores the element's `disableRemotePlayback` default, and
- * releases any active suspend. No-op on non-WebKit platforms (Chromium,
- * Firefox) — `deriveState` never leaves `'preconditions-unmet'`.
+ * wires the wireless-target listener, then — gated on `context.mediaSource` —
+ * appends the fallback `<source>` (kept current from `state.presentation`) and
+ * enables the AirPlay picker once the MediaSource is open, removing the source
+ * the moment the MediaSource detaches so it never survives an MSE teardown.
+ * State-exit cleanup (author opt-out, detach, source reset, behavior destroy)
+ * removes the source, drops the listener, restores the element's
+ * `disableRemotePlayback` default, and releases any active suspend. No-op on
+ * non-WebKit platforms (Chromium, Firefox) — `deriveState` never leaves
+ * `'preconditions-unmet'`.
  *
  * MMS and AirPlay want *opposite* values of `disableRemotePlayback` on the same
  * element, so it is **sequenced**:
@@ -81,10 +83,6 @@ function setupAirPlaySetup({
         entry: () => {
           const mediaElement = context.mediaElement.get() as WebKitVideoElement;
 
-          const sourceEl = document.createElement('source');
-          sourceEl.type = 'application/x-mpegURL';
-          mediaElement.append(sourceEl);
-
           // Reflect the wireless target on `state.loadSuspended`: suspend engine
           // loading while active so we don't double-fetch alongside the receiver,
           // resume when it turns off.
@@ -101,25 +99,43 @@ function setupAirPlaySetup({
             signal: controller.signal,
           });
 
-          // Keep the fallback source URL in sync with the presentation.
           const sourceUrl = computed(() => state.presentation.get()?.url ?? '');
-          const disposeSrc = effect(() => {
-            sourceEl.src = sourceUrl.get();
-          });
 
-          // Enable the AirPlay picker only once the (Managed)MediaSource is open
-          const disposeEnablePicker = effect(() => {
-            if (context.mediaSource.get()) mediaElement.disableRemotePlayback = false;
+          // This effect combines:
+          // - adding a native HLS fallback source when the
+          // mediaSource is attached/destroying it when its detached.
+          // - keeping this sourceEl's src in sync with the current presentation.
+          // The created source is also cleaned on state exit.
+          // The dependence on context.mediaSource helps us append the source after the
+          // MMS has been attached and opened (therefore we can flip disableRemotePlayback).
+          // Being in this state also implies that the author has not disabled remote playback
+          let sourceEl: HTMLSourceElement | null = null;
+          const disposeSource = effect(() => {
+            const hasMediaSource = !!context.mediaSource.get();
+            const url = sourceUrl.get();
+
+            if (!hasMediaSource) {
+              sourceEl?.remove();
+              sourceEl = null;
+            } else {
+              if (!sourceEl || sourceEl.parentNode !== mediaElement) {
+                sourceEl = document.createElement('source');
+                sourceEl.type = 'application/x-mpegURL';
+                mediaElement.append(sourceEl);
+                mediaElement.disableRemotePlayback = false;
+              }
+              sourceEl.src = url;
+            }
           });
 
           // AirPlay may already be active at (re)attach.
           sync();
 
           return () => {
-            disposeSrc();
-            disposeEnablePicker();
+            disposeSource();
             controller.abort();
-            sourceEl.remove();
+            sourceEl?.remove();
+            sourceEl = null;
             // Undo the picker enable: hand the element back to its MMS-default
             // `disableRemotePlayback = true`.
             mediaElement.disableRemotePlayback = true;
