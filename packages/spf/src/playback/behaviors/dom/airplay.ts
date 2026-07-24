@@ -42,7 +42,7 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { effect } from '../../../core/signals/effect';
-import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 
 type AirPlayFsmState = 'preconditions-unmet' | 'airplay-capable';
@@ -106,10 +106,10 @@ function setupAirPlaySetup({
             signal: controller.signal,
           });
 
-          // Keep the fallback source URL current from the presentation.
+          // Keep the fallback source URL in sync with the presentation.
+          const sourceUrl = computed(() => state.presentation.get()?.url ?? '');
           const disposeSrc = effect(() => {
-            const url = peek(state.presentation)?.url ?? '';
-            sourceEl.src = url;
+            sourceEl.src = sourceUrl.get();
           });
 
           // Enable the AirPlay picker only once the (Managed)MediaSource is open

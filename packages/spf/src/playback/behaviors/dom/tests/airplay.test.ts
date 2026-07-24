@@ -41,13 +41,10 @@ function makeSignals(presentation?: MaybeResolvedPresentation) {
     state: {
       presentation: signal<MaybeResolvedPresentation | undefined>(presentation),
       loadSuspended: signal<boolean | undefined>(undefined),
-      // Author intent, written by the adapter's `disableRemotePlayback` property.
       disableRemotePlayback: signal<boolean | undefined>(undefined),
     },
     context: {
       mediaElement: signal<HTMLMediaElement | undefined>(undefined),
-      // `setupMediaSource` publishes this only once the MediaSource is open;
-      // the AirPlay behavior enables the picker gated on it.
       mediaSource: signal<MediaSource | undefined>(undefined),
     },
   };
@@ -59,7 +56,7 @@ const fakeMediaSource = {} as MediaSource;
 /** Drain microtasks (reactor transition + entry effects) plus any nested effects. */
 const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-function sourceOf(video: HTMLMediaElement): HTMLSourceElement | null {
+function fallbackSourceOf(video: HTMLMediaElement): HTMLSourceElement | null {
   return video.querySelector('source[type="application/x-mpegURL"]');
 }
 
@@ -75,7 +72,7 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     await flush();
 
-    expect(sourceOf(video)).toBeNull();
+    expect(fallbackSourceOf(video)).toBeNull();
 
     // A wireless event must not touch load state on an unsupported platform.
     setWireless(video, true);
@@ -94,7 +91,7 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     await flush();
 
-    const source = sourceOf(video);
+    const source = fallbackSourceOf(video);
     expect(source).not.toBeNull();
     expect(source?.src).toBe('https://example.com/a.m3u8');
 
@@ -126,7 +123,7 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
-  it('sets the fallback source URL from the presentation at attach', async () => {
+  it('keeps the fallback source URL in sync with the presentation', async () => {
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
     const reactor = setupAirPlay.setup({ state, context });
@@ -134,14 +131,18 @@ describe('setupAirPlay', () => {
     const video = makeWebKitVideo();
     context.mediaElement.set(video);
     await flush();
-    expect(sourceOf(video)?.src).toBe('https://example.com/a.m3u8');
+    expect(fallbackSourceOf(video)?.src).toBe('https://example.com/a.m3u8');
 
-    // The source URL is read with `peek`, so it is set once at attach and does
-    // not live-track later presentation changes (a deliberate choice to avoid
-    // re-setting `src` on a mid-cast AirPlay session).
+    // A source change must update the fallback so a later AirPlay engage casts
+    // the current stream, not the attach-time one.
     state.presentation.set({ url: 'https://example.com/b.m3u8' });
     await flush();
-    expect(sourceOf(video)?.src).toBe('https://example.com/a.m3u8');
+    expect(fallbackSourceOf(video)?.src).toBe('https://example.com/b.m3u8');
+
+    // Cleared presentation empties the fallback src.
+    state.presentation.set(undefined);
+    await flush();
+    expect(fallbackSourceOf(video)?.getAttribute('src')).toBe('');
 
     reactor.destroy();
   });
@@ -158,7 +159,7 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     await flush();
 
-    expect(sourceOf(video)).toBeNull();
+    expect(fallbackSourceOf(video)).toBeNull();
     // No wireless listener wired → no suspend even though the target is wireless.
     expect(state.loadSuspended.get()).toBeUndefined();
 
@@ -171,6 +172,7 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
+  // Note: This just tests loadSuspended but the way Safari handles MMS, SPF wont load once we turn wireless off.
   it('suspends loading while the wireless target is active and resumes when it turns off', async () => {
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
@@ -215,13 +217,13 @@ describe('setupAirPlay', () => {
     const video = makeWebKitVideo({ wireless: true });
     context.mediaElement.set(video);
     await flush();
-    expect(sourceOf(video)).not.toBeNull();
+    expect(fallbackSourceOf(video)).not.toBeNull();
     expect(state.loadSuspended.get()).toBe(true);
 
     context.mediaElement.set(undefined);
     await flush();
 
-    expect(sourceOf(video)).toBeNull();
+    expect(fallbackSourceOf(video)).toBeNull();
     // Detaching mid-wireless must not strand loading suspended.
     expect(state.loadSuspended.get()).toBe(false);
 
@@ -241,11 +243,11 @@ describe('setupAirPlay', () => {
     const video = makeWebKitVideo();
     context.mediaElement.set(video);
     await flush();
-    expect(sourceOf(video)).not.toBeNull();
+    expect(fallbackSourceOf(video)).not.toBeNull();
 
     reactor.destroy();
     await flush();
 
-    expect(sourceOf(video)).toBeNull();
+    expect(fallbackSourceOf(video)).toBeNull();
   });
 });
