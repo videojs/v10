@@ -11,6 +11,8 @@ import {
   DEFAULT_FORWARD_BUFFER_CONFIG,
   type ForwardBufferConfig,
   getSegmentsToLoad,
+  isTimeRangeCovered,
+  mergeTimeRanges,
 } from '../../../media/buffer/forward-buffer';
 import { type AudioTrack, SEGMENT_TIME_EPSILON, type Segment, type VideoTrack } from '../../../media/types';
 import {
@@ -190,8 +192,18 @@ export function createSegmentLoaderActor(
   const pipelines = (config.messagePipelines ?? DEFAULT_MESSAGE_PIPELINES)();
 
   const getBufferedSegments = (allSegments: readonly Segment[]): Segment[] => {
-    // Exclude partial segments — they are still being streamed and must not be
-    // treated as fully buffered for load planning or buffer window calculations.
+    // A candidate segment counts as "already buffered" only when its whole time
+    // span is covered by appended content — a TIME question, not a positional-id
+    // one. Renditions are numbered independently per playlist (`segment-N`), so
+    // matching by id assumes every rung shares the same segment grid. That fails
+    // for renditions whose boundaries don't align (e.g. a 30fps rung cuts its
+    // first GOP at 7.13s, a 60fps rung at 7.98s): the switched-to rung's segment
+    // reuses a buffered id but spans a *later*-ending range, so an id match would
+    // skip it and leave its uncovered tail as a gap. Covering by time refetches
+    // exactly that straddling segment (MSE overwrites the overlap on append).
+    //
+    // Exclude partial segments — they are still streaming and must not count as
+    // fully buffered for load planning or buffer window calculations.
     //
     // `peek` defensively: `load` handlers run synchronously inside `send()`,
     // which is called from inside the dispatcher reactor's `effects:` body.
@@ -199,12 +211,9 @@ export function createSegmentLoaderActor(
     // snapshot into the dispatcher's dep set, causing the dispatcher to re-
     // fire on every SourceBufferActor state change. Mirrors the fix applied
     // to the text-track loader in `b3f44efe`.
-    const bufferedIds = new Set(
-      peek(sourceBufferActor.snapshot)
-        .context.segments.filter((s) => !s.partial)
-        .map((s) => s.id)
-    );
-    return allSegments.filter((s) => bufferedIds.has(s.id));
+    const appended = peek(sourceBufferActor.snapshot).context.segments.filter((s) => !s.partial);
+    const merged = mergeTimeRanges(appended.map((s) => ({ start: s.startTime, end: s.startTime + s.duration })));
+    return allSegments.filter((s) => isTimeRangeCovered(s.startTime, s.startTime + s.duration, merged));
   };
 
   /**

@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { Segment } from '../../types';
-import { calculateForwardFlushPoint, DEFAULT_FORWARD_BUFFER_CONFIG, getSegmentsToLoad } from '../forward-buffer';
+import {
+  calculateForwardFlushPoint,
+  DEFAULT_FORWARD_BUFFER_CONFIG,
+  getSegmentsToLoad,
+  isTimeRangeCovered,
+  mergeTimeRanges,
+} from '../forward-buffer';
 
 // Helper to create test segments
 const createSegment = (startTime: number, duration: number): Segment => ({
@@ -8,6 +14,83 @@ const createSegment = (startTime: number, duration: number): Segment => ({
   url: `https://example.com/seg-${startTime}.m4s`,
   startTime,
   duration,
+});
+
+describe('mergeTimeRanges', () => {
+  it('merges contiguous ranges into one', () => {
+    expect(
+      mergeTimeRanges([
+        { start: 0, end: 7.13333 },
+        { start: 7.13333, end: 15.13333 },
+      ])
+    ).toEqual([{ start: 0, end: 15.13333 }]);
+  });
+
+  it('merges overlapping ranges, taking the max end', () => {
+    // A misaligned switch leaves overlapping model entries (low 7.13..15.13, high 7.98..15.98).
+    expect(
+      mergeTimeRanges([
+        { start: 0, end: 7.13333 },
+        { start: 7.13333, end: 15.13333 },
+        { start: 7.98333, end: 15.98333 },
+      ])
+    ).toEqual([{ start: 0, end: 15.98333 }]);
+  });
+
+  it('keeps genuinely disjoint ranges separate (post-seek gap)', () => {
+    expect(
+      mergeTimeRanges([
+        { start: 0, end: 10 },
+        { start: 30, end: 40 },
+      ])
+    ).toEqual([
+      { start: 0, end: 10 },
+      { start: 30, end: 40 },
+    ]);
+  });
+
+  it('drops empty/inverted ranges and sorts', () => {
+    expect(
+      mergeTimeRanges([
+        { start: 20, end: 30 },
+        { start: 5, end: 5 },
+        { start: 0, end: 10 },
+      ])
+    ).toEqual([
+      { start: 0, end: 10 },
+      { start: 20, end: 30 },
+    ]);
+  });
+});
+
+describe('isTimeRangeCovered', () => {
+  const merged = [{ start: 0, end: 15.13333 }];
+
+  it('true when fully contained', () => {
+    expect(isTimeRangeCovered(0, 7.98333, merged)).toBe(true);
+  });
+
+  it('false when the tail extends past coverage (straddling segment)', () => {
+    // high segment-1 (7.98333..15.98333) against a buffer ending at 15.13333.
+    expect(isTimeRangeCovered(7.98333, 15.98333, merged)).toBe(false);
+  });
+
+  it('false when starting past coverage', () => {
+    expect(isTimeRangeCovered(15.98333, 23.98333, merged)).toBe(false);
+  });
+
+  it('tolerates sub-epsilon overhang at the edges', () => {
+    expect(isTimeRangeCovered(-0.00005, 15.13338, merged)).toBe(true);
+  });
+
+  it('requires a single range to contain it (not spanning a gap)', () => {
+    expect(
+      isTimeRangeCovered(5, 35, [
+        { start: 0, end: 10 },
+        { start: 30, end: 40 },
+      ])
+    ).toBe(false);
+  });
 });
 
 describe('calculateForwardFlushPoint', () => {

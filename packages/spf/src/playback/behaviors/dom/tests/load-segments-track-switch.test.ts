@@ -143,12 +143,16 @@ describe('loadSegments — track switch', () => {
     vi.clearAllMocks();
   });
 
-  it('does not flush SourceBuffer on track switch; new content overwrites old via deduplication', async () => {
+  it('does not flush or refetch already-buffered aligned positions on ABR switch', async () => {
     const { flushBuffer } = await import('../../../../media/dom/mse/buffer-flusher');
     const flushSpy = vi.mocked(flushBuffer);
 
-    const trackA = makeResolvedVideoTrack('track-a', [seg('a1', 0), seg('a2', 10)]);
-    const trackB = makeResolvedVideoTrack('track-b', [seg('b1', 0), seg('b2', 10)]);
+    // Real renditions number segments positionally per playlist (`segment-N`), so
+    // an ABR pair shares ids on an aligned grid. Switching quality when the forward
+    // buffer is already full at those positions should NOT re-download them (the
+    // content is identical; only the encode quality differs) — and must never flush.
+    const trackA = makeResolvedVideoTrack('track-a', [seg('segment-0', 0), seg('segment-1', 10)]);
+    const trackB = makeResolvedVideoTrack('track-b', [seg('segment-0', 0), seg('segment-1', 10)]);
     const presentation = makePresentation(trackA, trackB);
 
     const videoBuffer = makeMockSourceBuffer();
@@ -156,11 +160,18 @@ describe('loadSegments — track switch', () => {
     const videoBufferActor = createSourceBufferActor(videoBuffer, {
       initTrackId: 'track-a',
       segments: [
-        { id: 'a1', startTime: 0, duration: 10, trackId: 'track-a' },
-        { id: 'a2', startTime: 10, duration: 10, trackId: 'track-a' },
+        { id: 'segment-0', startTime: 0, duration: 10, trackId: 'track-a' },
+        { id: 'segment-1', startTime: 10, duration: 10, trackId: 'track-a' },
       ],
     });
     const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
+    });
 
     const state = makeState({
       presentation,
@@ -175,21 +186,85 @@ describe('loadSegments — track switch', () => {
     const reactor = loadVideoSegments.setup({ state, context });
 
     await new Promise((r) => setTimeout(r, 20));
+    fetchedUrls.length = 0;
 
     state.selectedVideoTrackId.set('track-b');
 
     await new Promise((r) => setTimeout(r, 50));
 
+    // Never a full flush on an ABR switch.
     expect(flushSpy).not.toHaveBeenCalledWith(videoBuffer, 0, Infinity);
 
     const ctx = videoBufferActor.snapshot.get().context;
+    // Init switches to the new rendition...
     expect(ctx?.initTrackId).toBe('track-b');
+    expect(fetchedUrls).toContain('https://example.com/track-b-init.mp4');
+    // ...but the already-buffered, time-aligned positions are retained, not refetched.
+    expect(fetchedUrls.some((u) => u.endsWith('.m4s'))).toBe(false);
+    expect(ctx?.segments.map((s) => s.startTime).sort((a, b) => a - b)).toEqual([0, 10]);
 
-    const hasOldSegments = ctx?.segments.some((s) => ['a1', 'a2'].includes(s.id));
-    expect(hasOldSegments).toBeFalsy();
+    reactor.destroy();
+    videoLoader.destroy();
+  });
 
-    const hasNewSegments = ctx?.segments.some((s) => ['b1', 'b2'].includes(s.id));
-    expect(hasNewSegments).toBeTruthy();
+  it('loads the bridging segment when switching to a misaligned rendition (no gap)', async () => {
+    // Cross-rendition grid misalignment: a 30fps rung cuts its first GOP at 7.13333s,
+    // a 60fps rung at 7.98333s, so their `segment-1`s span different time ranges while
+    // sharing the positional id. Buffer holds LOW's segment-0/1 (covers 0..15.13333);
+    // switching to HIGH must fetch HIGH's segment-1 (7.98333..15.98333) to cover the
+    // 15.13333..15.98333 tail — matching by id alone would skip it and leave a gap.
+    const posSeg = (trackId: string, index: number, startTime: number, duration: number) => ({
+      id: `segment-${index}`,
+      url: `https://example.com/${trackId}/segment-${index}.m4s`,
+      startTime,
+      duration,
+    });
+    const low = {
+      ...makeResolvedVideoTrack('low', []),
+      segments: [posSeg('low', 0, 0, 7.13333), posSeg('low', 1, 7.13333, 8)],
+    };
+    const high = {
+      ...makeResolvedVideoTrack('high', []),
+      segments: [posSeg('high', 0, 0, 7.98333), posSeg('high', 1, 7.98333, 8), posSeg('high', 2, 15.98333, 8)],
+    };
+    const presentation = makePresentation(low, high);
+
+    const videoBuffer = makeMockSourceBuffer();
+    const videoBufferActor = createSourceBufferActor(videoBuffer, {
+      initTrackId: 'low',
+      segments: [
+        { id: 'segment-0', startTime: 0, duration: 7.13333, trackId: 'low' },
+        { id: 'segment-1', startTime: 7.13333, duration: 8, trackId: 'low' },
+      ],
+    });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
+    });
+
+    const state = makeState({
+      presentation,
+      selectedVideoTrackId: 'low',
+      preload: 'auto',
+      loadActivated: true,
+      currentTime: 5,
+    });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    await new Promise((r) => setTimeout(r, 20));
+    fetchedUrls.length = 0;
+
+    state.selectedVideoTrackId.set('high');
+
+    await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/high/segment-1.m4s'), { timeout: 3000 });
+    // The tail segment loads too; the fully-covered leading segment-0 is not refetched.
+    expect(fetchedUrls).toContain('https://example.com/high/segment-2.m4s');
+    expect(fetchedUrls).not.toContain('https://example.com/high/segment-0.m4s');
 
     reactor.destroy();
     videoLoader.destroy();

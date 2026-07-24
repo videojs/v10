@@ -112,6 +112,12 @@ function appendSegmentTask(
     // across playlists. `SEGMENT_TIME_EPSILON` guards against floating-point
     // drift in parsed timestamps (shared with the segment-loader quality
     // filter — single source of truth).
+    //
+    // Misaligned renditions (e.g. 30fps vs 60fps rungs) break the same-slot
+    // assumption: the switched-to segment's differing startTime is kept as a
+    // separate overlapping entry rather than truncating the older one to the
+    // portion MSE didn't overwrite. Cosmetic today (see #1865 for the
+    // most-recent-append-wins model); coverage/flush stay correct.
     const filtered = ctx.segments.filter((s) => Math.abs(s.startTime - meta.startTime) >= SEGMENT_TIME_EPSILON);
 
     // For streaming data: emit partial state before the first chunk so
