@@ -17,24 +17,22 @@
  * reset, behavior destroy) removes the source, drops the listener, and releases
  * any active suspend. No-op on non-WebKit platforms (Chromium, Firefox) —
  * `deriveState` never leaves `'preconditions-unmet'`.
- * *
+ *
  * MMS and AirPlay want *opposite* values of `disableRemotePlayback` on the same
- * element, so they must be **sequenced**:
+ * element, so it is **sequenced**:
  *
  * - **MMS needs `true` to open.** `setupMediaSource` sets
  *   `disableRemotePlayback = true` when it attaches a ManagedMediaSource —
  *   Safari won't fire `sourceopen` (and MSE playback never starts) otherwise.
  * - **AirPlay needs `false` to offer the picker.** Flipping to `false` *before*
- *   the source opens would prevent `sourceopen`. So we wait: `setupMediaSource`
- *   publishes `context.mediaSource` exactly once the MS is open, and we flip
- *   `disableRemotePlayback = false` gated on that.
- *   The gate re-fires per source (the slot clears + republishes on reset).
- * - **Author opt-out wins.** `state.disableRemotePlayback` (written only by the
- *   media adapter's IDL property, never by MMS/programmatic code) is the
- *   author's intent. A `true` read at entry is unambiguously the author's choice
- *   to disable remote playback, so we set nothing up. Because the intent lives
- *   on its own signal rather than the shared DOM property, this no longer
- *   depends on reading before MMS's programmatic write — folds in #1800.
+ *   the source opens would prevent `sourceopen`, so the flip is gated on
+ *   `context.mediaSource` — which `setupMediaSource` publishes exactly once the
+ *   MS is open. Re-fires per source (the slot clears + republishes on reset).
+ * - **Author opt-out wins.** `state.disableRemotePlayback` is the author's
+ *   intent, written only by the media adapter's IDL property; MMS/programmatic
+ *   code touch the element's own `disableRemotePlayback` instead. So a `true`
+ *   there, read at entry, is unambiguously the author's choice to disable remote
+ *   playback, and the behavior sets nothing up.
  */
 
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
@@ -95,8 +93,7 @@ function setupAirPlaySetup({
           //
           // NOTE: on disengage Safari has already closed our MMS and doesn't
           // re-select the MSE `<source>`, so local MSE playback can't actually
-          // resume — see the AirPlay feature doc's known-limitation on
-          // MMS/AirPlay return.
+          // resume until the source is reloaded.
           const sync = () => {
             const isWireless = !!mediaElement.webkitCurrentPlaybackTargetIsWireless;
             state.loadSuspended.set(isWireless);
