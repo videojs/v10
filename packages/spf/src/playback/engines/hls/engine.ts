@@ -29,6 +29,7 @@ import {
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
+import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -103,6 +104,24 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * Suspend all segment loading. Owned by `setupAirPlay`, which sets it while the
+   * AirPlay wireless target is active so the engine doesn't double-fetch alongside
+   * the receiver.
+   * Read by the `loadXSegments` behaviors, which enter a `'suspended'` state
+   * (aborting all pending loading) while it's `true` and auto-resume when it flips
+   * back.
+   */
+  loadSuspended?: boolean;
+  /**
+   * Author intent for the AirPlay/remote-playback picker, written by the media
+   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
+   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying
+   * `<video>.disableRemotePlayback`, which stays programmatically managed
+   * (ManagedMediaSource / AirPlay).
+   */
+  disableRemotePlayback?: boolean;
 }
 
 /**
@@ -257,6 +276,7 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
   'userVideoTrackSelection',
   'userAudioTrackSelection',
   'userTextTrackSelection',
+  'disableRemotePlayback',
 ]);
 
 /**
@@ -345,6 +365,9 @@ export function createSimpleHlsEngine(
       updateMediaSourceDuration,
       setupVideoBufferActors,
       setupAudioBufferActors,
+
+      // AirPlay/MSE bridge (WebKit only; no-op elsewhere).
+      setupAirPlay,
 
       // Playback tracking
       trackCurrentTime,

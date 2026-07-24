@@ -307,4 +307,36 @@ describe('TextTrackSegmentLoaderActor', () => {
 
     textTracksActor.destroy();
   });
+
+  it('drops the queued batch and returns to idle on stop', async () => {
+    let fetches = 0;
+    // Each segment resolve hangs so the first stays in-flight; `stop` drops
+    // the queue behind it and leaves the in-flight fetch to complete.
+    const resolveVttSegment = vi.fn((_url: string) => {
+      fetches++;
+      return new Promise<VTTCue[]>(() => {});
+    });
+    const video = makeMediaElement(['track-en']);
+    const textTracksActor = createTextTracksActor(video);
+    const actor = createTextTrackSegmentLoaderActor(textTracksActor, resolveVttSegment);
+    const track = makeResolvedTextTrack('track-en', [
+      'https://example.com/seg-0.vtt',
+      'https://example.com/seg-1.vtt',
+      'https://example.com/seg-2.vtt',
+    ]);
+
+    actor.send({ type: 'load', track, range: { start: 0, end: Infinity } });
+    await vi.waitFor(() => expect(fetches).toBe(1));
+    expect(actor.snapshot.get().value).toBe('loading');
+
+    actor.send({ type: 'stop' });
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    // Queued segments never fetch; the actor is back to idle.
+    expect(fetches).toBe(1);
+    expect(actor.snapshot.get().value).toBe('idle');
+
+    actor.destroy();
+    textTracksActor.destroy();
+  });
 });

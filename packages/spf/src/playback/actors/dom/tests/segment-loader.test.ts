@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
-import type { AudioTrack } from '../../../../media/types';
+import type { AddressableObject, AudioTrack } from '../../../../media/types';
 import { createSegmentLoaderActor } from '../segment-loader';
 import type {
   SourceBufferActor,
@@ -232,6 +232,54 @@ describe('createSegmentLoaderActor — planTasks cross-rendition switch', () => 
 
     expect(initMsg.meta.trackId).toBe('audio-es');
     expect(initMsg.meta.language).toBe('es');
+
+    loader.destroy();
+  });
+});
+
+describe('createSegmentLoaderActor — stop message', () => {
+  it('drops the queued batch and returns to idle', async () => {
+    const bufferActor = createMockBufferActor();
+
+    let segmentFetches = 0;
+    // Init resolves immediately; segment fetches hang so the first stays
+    // in-flight (the serial runner never reaches the queued ones).
+    const hangingFetch = vi.fn(async (addressable: AddressableObject): Promise<AsyncIterable<Uint8Array>> => {
+      if (addressable.url.includes('init')) return (async function* () {})();
+      segmentFetches++;
+      return new Promise<AsyncIterable<Uint8Array>>(() => {});
+    });
+
+    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, hangingFetch);
+
+    const track = makeAudioTrack('audio-en', { language: 'en' });
+    loader.send({ type: 'load', track, range: { start: 0, end: 20 } });
+
+    // Init appended, first segment in-flight, the rest queued behind it.
+    await vi.waitFor(() => expect(segmentFetches).toBe(1));
+    expect(loader.snapshot.get().value).toBe('loading');
+
+    loader.send({ type: 'stop' });
+
+    await new Promise((resolve) => setTimeout(resolve, 30));
+
+    // `stop` aborts the pending queue and returns to idle. (The in-flight
+    // fetch is left to complete — the SPF `stopLoad()` deliberately doesn't
+    // poke the SourceBuffer / MediaSource, which can disrupt an in-flight
+    // AirPlay handoff.)
+    expect(segmentFetches).toBe(1);
+    expect(loader.snapshot.get().value).toBe('idle');
+
+    loader.destroy();
+  });
+
+  it('is a no-op when idle', () => {
+    const bufferActor = createMockBufferActor();
+    const loader = createSegmentLoaderActor(bufferActor as unknown as SourceBufferActor, mockFetchBytes);
+
+    expect(() => loader.send({ type: 'stop' })).not.toThrow();
+    expect(loader.snapshot.get().value).toBe('idle');
+    expect(bufferActor.send).not.toHaveBeenCalled();
 
     loader.destroy();
   });

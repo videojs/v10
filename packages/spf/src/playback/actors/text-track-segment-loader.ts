@@ -14,17 +14,34 @@ import type { TextTracksActor } from './text-tracks';
 // =============================================================================
 
 /**
- * Mirrors the v/a `SegmentLoaderMessage` shape. `range` carries the
- * forward-window anchor (`range.start` is treated as the load anchor;
- * the actor computes its own forward window internally via
- * `getSegmentsToLoad`). When `range` is omitted (metadata mode), this
- * actor is a no-op — text tracks have no init-segment concept.
+ * Mirrors the v/a `SegmentLoaderMessage` shape.
+ * Message sent to a TextTrackSegmentLoaderActor.
+ *
+ * @see {@link TextTrackSegmentLoaderLoadMessage}
+ * @see {@link TextTrackSegmentLoaderStopMessage}
+ * */
+export type TextTrackSegmentLoaderMessage = TextTrackSegmentLoaderLoadMessage | TextTrackSegmentLoaderStopMessage;
+
+/**
+ * Mirrors the v/a `SegmentLoaderMessage` shape.
+ *
+ * `load`
+ * — `range` carries the forward-window anchor (`range.start` is
+ *   treated as the load anchor; the actor computes its own forward window
+ *   internally via `getSegmentsToLoad`). When `range` is omitted (metadata
+ *   mode), this actor is a no-op — text tracks have no init-segment concept.
  */
-export type TextTrackSegmentLoaderMessage = {
+export type TextTrackSegmentLoaderLoadMessage = {
   type: 'load';
   track: TextTrack;
   range?: { start: number; end: number };
 };
+
+/**
+ * `stop` - aborts the pending queue and returns to `idle`. The in-flight
+ * fetch is left to complete.
+ */
+export type TextTrackSegmentLoaderStopMessage = { type: 'stop' };
 
 /** Finite states of the actor. */
 export type TextTrackSegmentLoaderActorState = 'idle' | 'loading' | 'destroyed';
@@ -128,7 +145,7 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
    * no init-segment concept, so there's nothing to load until a range
    * arrives via `'full-range'` dispatch.
    */
-  const planTasks = (message: TextTrackSegmentLoaderMessage): TextLoadTask[] => {
+  const planTasks = (message: TextTrackSegmentLoaderLoadMessage): TextLoadTask[] => {
     const { track, range } = message;
     if (!range) return [];
     const trackId = track.id;
@@ -234,6 +251,10 @@ export function createTextTrackSegmentLoaderActor<C extends Cue>(
               runner.abortAll();
               scheduleAll(tasks, ctx);
             }
+          },
+          stop: (_message, ctx) => {
+            ctx.runner.abortPending();
+            ctx.transition('idle');
           },
         },
       },
