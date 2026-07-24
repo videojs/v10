@@ -183,14 +183,28 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           context[actorKey].set(bufferActor);
           context[loaderKey].set(segmentLoader);
 
-          // State-exit cleanup — fires when `mediaSource` detaches, the
-          // selection unsets, or the behavior is destroyed. Destroy the
-          // loader before its upstream buffer-actor so any in-flight
-          // `appendBuffer` is aborted before the buffer-actor's own
+          // Destroy the loader before its upstream buffer-actor so any
+          // in-flight `appendBuffer` is aborted before the buffer-actor's own
           // teardown.
-          return () => {
+          const teardownActors = () => {
             segmentLoader.destroy();
             bufferActor.destroy();
+          };
+
+          // Close the actors when the user agent closes the MediaSource out from under
+          // us — notably on an AirPlay handoff (see `setupAirPlay`).
+          //
+          // Without this the loader would keep trying to append to a dead buffer,
+          // throwing InvalidStateErrors. Aborting the runners settles those tasks as
+          // AbortError (ignored).
+          const disconnect = new AbortController();
+          mediaSource.addEventListener('sourceclose', teardownActors, { signal: disconnect.signal });
+
+          // State-exit cleanup — fires when `mediaSource` detaches, the
+          // selection unsets, or the behavior is destroyed.
+          return () => {
+            disconnect.abort();
+            teardownActors();
             context[loaderKey].set(undefined);
             context[actorKey].set(undefined);
           };
