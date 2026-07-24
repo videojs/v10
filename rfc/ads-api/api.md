@@ -18,6 +18,7 @@ The detailed surface for the [Video Ad API RFC](index.md). For motivation see [i
   - [Ad](#ad)
   - [AdCueList](#adcuelist)
   - [AdList](#adlist)
+  - [CompanionAd](#companionad)
   - [AdCreative](#adcreative)
   - [AdViewport](#adviewport)
   - [AdInteractivity](#adinteractivity)
@@ -191,6 +192,8 @@ The top-level entry point, modeled after `TextTrackList`. This is the object a p
 | removetrack | An `AdTrack` has been removed.                                                                                |
 | change      | The active state of one or more tracks, cues, or ads has changed. Catch-all for UI updates.                   |
 
+All event-firing interfaces in this hierarchy extend `EventTarget`, so the standard `addEventListener` options (`once`, `signal`) are available at every level. Consumers should scope per-cue and per-ad listeners with an `AbortSignal` tied to the cue lifecycle so listeners are removed when a cue deactivates; [examples.md](examples.md) demonstrates the pattern for each format.
+
 ```typescript
 interface AdTrackList extends EventTarget {
   readonly length: number;
@@ -338,7 +341,7 @@ The `Ad` interface represents a single ad experience within a cue. It carries al
 | skippable       | boolean                             | Whether the viewer can skip this ad.                                                                                                                       |
 | skipOffset      | number \| null                      | Seconds from ad start before skip becomes available. Null if not skippable.                                                                                |
 | audioPolicy     | 'required' \| 'optional' \| 'none'  | Whether this ad expects audio playback.                                                                                                                    |
-| companionAds    | CompanionAd[]                       | Associated companion creatives, if any.                                                                                                                    |
+| companionAds    | CompanionAd[]                       | Associated companion creatives, if any (see [CompanionAd](#companionad)).                                                                                  |
 | interactivity   | AdInteractivity \| null             | SIMID/QR code metadata, if the ad supports interaction (see [AdInteractivity](#adinteractivity)).                                                          |
 | position        | number                              | Position of this ad within the cue (0-indexed). For linear pods: the ad's position in the break.                                                           |
 | metadata        | Record\<string, unknown\>           | Adapter-specific metadata (e.g., VAST wrapper IDs, creative IDs, ad server name).                                                                          |
@@ -443,8 +446,15 @@ interface AdList {
 }
 ```
 
+### CompanionAd
+
+Metadata for a companion creative associated with an `Ad` (VAST `<CompanionAds>`). This interface is deliberately minimal: the RFC pins only the identity contract, and the full companion surface (sizing, resource types, required-display semantics, tracking) is tracked as an open question in [decisions.md § Companion ad surface](decisions.md#companion-ad-surface).
+
+| Property | Type   | Description                           |
+| -------- | ------ | ------------------------------------- |
+| id       | string | Unique identifier for this companion. |
+
 ```typescript
-/** Companion creative metadata (VAST companion); extend per product needs. */
 interface CompanionAd {
   id: string;
 }

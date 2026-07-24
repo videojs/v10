@@ -73,11 +73,29 @@ The intermediate grouping layer between `AdTrack` and `Ad` needs a name that wor
 
 The recommendation is `AdCue` with properties `cues` and `activeCues` on `AdTrack`. This maximizes TextTrack API familiarity while being semantically appropriate across all ad formats.
 
+## Serving-Mode Placement
+
+`AdServingMode` lives on `AdTrack`, not on a session-level object, because linear and non-linear tracks can use different delivery mechanisms within the same playback session: a `'linear'` track may be `'ssai'` while a `'pause'` track is `'client-side'`.
+
+An earlier revision also exposed a `linearServingMode` convenience getter on `AdTrackList` that returned the serving mode of the `'linear'` track (or null when no linear track was registered). It was replaced by the list-level `servingMode` default in [api.md](api.md#adtracklist), which individual tracks may override, for three reasons:
+
+- `linearServingMode` privileged one format at the list level while every other format required a track lookup. The asymmetry had no basis beyond linear being the most common format.
+- A list-level default matches how adapters initialize in practice: one dominant delivery mechanism for the session, with per-track exceptions.
+- `AdTrack.servingMode` remains authoritative in every case. Consumers that need a specific track's mode read it directly; the list-level value is only a default.
+
 ## Open Design Questions
 
 ### Attachment point
 
 Should `AdTrackList` be a property on `HTMLVideoElement` (e.g., `videoElement.adTracks`) or a standalone manager class that receives a video element reference? The former is more ergonomic but requires monkey-patching or wrapping the element. The latter is more portable.
+
+For Video.js 10 specifically, the question extends to where the ad surface lives in the package architecture:
+
+- **A `core` feature.** Ad state flows through the store like every other feature, and `html`/`react` render from state. Most consistent with the rest of V10, but the `AdTrackList → AdTrack → AdCue → Ad` object hierarchy (per-object `EventTarget` semantics, live collections) does not map 1:1 onto store snapshots and would need a state projection.
+- **A media-element extension in `core/dom` or `html`.** Matches how `textTracks` works and how the examples in this RFC are written, but bypasses the store, leaving `react` and the planned `react-native` player without a shared surface.
+- **A standalone adapter contract.** The API ships as type definitions only; adapters implement them and each platform integrates however fits. Most portable, least integrated.
+
+This RFC intentionally specifies the API shape, not its placement. Placement needs team input on how far ad state should integrate with the store.
 
 ### Menu ads without a video element
 
@@ -110,6 +128,10 @@ The IAB recommends Open Measurement for viewability. Should the API include hook
 ### SqueezebackMetadata and Ad-level viewports
 
 Both `SqueezebackMetadata.contentViewport` (on the cue) and `Ad.contentViewport` (on each Ad) express the same concept for the common single-layout squeezeback case. Should `SqueezebackMetadata.contentViewport` be deprecated in favor of reading `Ad.contentViewport` directly, or retained as a convenience for cue-level reads?
+
+### Companion ad surface
+
+`CompanionAd` is currently an identity-only stub (`{ id: string }`). VAST companions carry sizing, resource types (static image, iframe, HTML), required-display semantics, and their own tracking events. How much of that belongs in this API versus adapter-specific `metadata`? The answer likely depends on whether the player is expected to render companions itself or hand them to the host application.
 
 ### Numerically indexable lists
 
