@@ -9,3 +9,7 @@ export function camelCase(str: string): string {
 export function kebabCase(str: string): string {
   return str.replace(/[A-Z]/g, (m) => `-${m.toLowerCase()}`);
 }
+
+export function snakeCase(str: string): string {
+  return str.replace(/[A-Z]/g, (m) => `_${m.toLowerCase()}`);
+}

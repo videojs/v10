@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react';
+import { HlsJsMedia } from '@videojs/core/dom/media/hls-js';
 import { MuxData, MuxMedia } from '@videojs/core/dom/media/mux';
 import { describe, expect, it, vi } from 'vitest';
 import { MuxVideo } from '../mux-video';
@@ -32,20 +33,22 @@ describe('MuxVideo', () => {
     reinit.mockRestore();
   });
 
-  it('derives the media src from the playbackId prop', () => {
-    const src = vi.spyOn(MuxMedia.prototype, 'src', 'set');
+  it('derives the media src from the source prop', () => {
+    const src = vi.spyOn(HlsJsMedia.prototype, 'src', 'set');
 
-    render(<MuxVideo playbackId="abc123" />);
+    render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 
     expect(src).toHaveBeenCalledWith('https://stream.mux.com/abc123.m3u8');
 
     src.mockRestore();
   });
 
-  it('applies the customDomain and maxResolution modifiers to src', () => {
-    const src = vi.spyOn(MuxMedia.prototype, 'src', 'set');
+  it('applies the customDomain and playback params to src', () => {
+    const src = vi.spyOn(HlsJsMedia.prototype, 'src', 'set');
 
-    render(<MuxVideo playbackId="abc123" customDomain="example.com" maxResolution="1080p" />);
+    render(
+      <MuxVideo source={{ playbackId: 'abc123', customDomain: 'example.com', playback: { maxResolution: '1080p' } }} />
+    );
 
     const url = new URL(src.mock.calls[src.mock.calls.length - 1]![0]);
     expect(url.host).toBe('stream.example.com');
@@ -54,15 +57,35 @@ describe('MuxVideo', () => {
     src.mockRestore();
   });
 
-  it('adds a storyboard track inferred from the playbackId', () => {
-    const { container } = render(<MuxVideo playbackId="abc123" />);
+  it('omits playback params from src when a playback token is set', () => {
+    const src = vi.spyOn(HlsJsMedia.prototype, 'src', 'set');
+
+    render(<MuxVideo source={{ playbackId: 'abc123', playback: { token: 'jwt', assetStartTime: 3 } }} />);
+
+    const url = new URL(src.mock.calls[src.mock.calls.length - 1]![0]);
+    expect(url.searchParams.get('token')).toBe('jwt');
+    expect(url.searchParams.has('asset_start_time')).toBe(false);
+
+    src.mockRestore();
+  });
+
+  it('adds a storyboard track inferred from the source prop', () => {
+    const { container } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 
     const track = container.querySelector('track');
     expect(track?.kind).toBe('metadata');
     expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
   });
 
-  it('does not add a storyboard track without a playbackId', () => {
+  it('adds a storyboard track inferred from a Mux stream src', () => {
+    const { container } = render(<MuxVideo src="https://stream.mux.com/abc123.m3u8" />);
+
+    expect(container.querySelector('track')?.getAttribute('src')).toBe(
+      'https://image.mux.com/abc123/storyboard.vtt?format=webp'
+    );
+  });
+
+  it('does not add a storyboard track for a non-Mux src', () => {
     const { container } = render(<MuxVideo src="https://example.com/video.m3u8" />);
 
     expect(container.querySelector('track')).toBeNull();
@@ -71,10 +94,16 @@ describe('MuxVideo', () => {
   it('does not add a storyboard track for live streams', () => {
     const streamType = vi.spyOn(MuxMedia.prototype, 'streamType', 'get').mockReturnValue('live');
 
-    const { container } = render(<MuxVideo playbackId="abc123" />);
+    const { container } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 
     expect(container.querySelector('track')).toBeNull();
 
     streamType.mockRestore();
+  });
+
+  it('does not sync the source thumbnail to the media poster', () => {
+    const { container } = render(<MuxVideo source={{ playbackId: 'abc123', thumbnail: { time: 5 } }} />);
+
+    expect(container.querySelector('video')?.getAttribute('poster')).toBeNull();
   });
 });

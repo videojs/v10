@@ -2,7 +2,7 @@ import { CustomMediaElement } from '@videojs/core/dom/media/custom-media-element
 import { GoogleCast } from '@videojs/core/dom/media/google-cast';
 import { StreamTypes } from '@videojs/core/dom/media/hls-js';
 import { addComponent } from '@videojs/core/dom/media/media-host';
-import { getStoryboardURLFromPlaybackId, MuxData, MuxMedia } from '@videojs/core/dom/media/mux';
+import { MuxData, MuxMedia } from '@videojs/core/dom/media/mux';
 import type { Constructor } from '@videojs/utils/types';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
@@ -18,16 +18,8 @@ const MuxVideoBase = MediaAttachMixin(CustomMediaElement('video', MuxMedia));
 export class MuxVideo extends (MuxVideoBase as typeof MuxVideoBase & Constructor<MuxVideoLifecycle>) {
   static properties = {
     ...MuxVideoBase.properties,
-    playbackId: { type: String, attribute: 'playback-id', empty: '' },
-    customDomain: { type: String, attribute: 'custom-domain', empty: '' },
-    maxResolution: { type: String, attribute: 'max-resolution', empty: undefined },
-    minResolution: { type: String, attribute: 'min-resolution', empty: undefined },
-    renditionOrder: { type: String, attribute: 'rendition-order', empty: undefined },
-    programStartTime: { type: Number, attribute: 'program-start-time', empty: undefined },
-    programEndTime: { type: Number, attribute: 'program-end-time', empty: undefined },
-    assetStartTime: { type: Number, attribute: 'asset-start-time', empty: undefined },
-    assetEndTime: { type: Number, attribute: 'asset-end-time', empty: undefined },
-    playbackToken: { type: String, attribute: 'playback-token', empty: undefined },
+    thumbnail: { type: String, empty: '' },
+    storyboard: { type: String, empty: '' },
   };
 
   #storyboardTrack: HTMLTrackElement | null = null;
@@ -36,30 +28,28 @@ export class MuxVideo extends (MuxVideoBase as typeof MuxVideoBase & Constructor
     super();
     addComponent(this.host, new MuxData({ playerSoftwareName: 'mux-video' }));
     addComponent(this.host, new GoogleCast());
-    // Slotted media swaps the render target; re-add the track when it does.
+    // Slotted media swaps the render target; re-sync when it does.
     this.shadowRoot?.addEventListener('slotchange', () => this.#syncStoryboard());
     // Storyboards aren't generated for live streams; re-evaluate when the type is detected.
     this.host.addEventListener('streamtypechange', () => this.#syncStoryboard());
+    // Covers both the `src` attribute and the `source` property (JS-only).
+    this.host.addEventListener('sourcechange', () => this.#syncStoryboard());
   }
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
     super.attributeChangedCallback?.(name, oldValue, newValue);
-    if (name === 'playback-id' || name === 'custom-domain') this.#syncStoryboard();
+    if (name === 'storyboard') this.#syncStoryboard();
   }
 
-  // Derives the storyboard (thumbnail) track from the playback ID and keeps it
-  // attached to the active media element.
+  // Keeps the storyboard (thumbnail sprite) track attached to the active media
+  // element. The URL comes from the `storyboard` attribute or is derived from
+  // the current `source`.
   #syncStoryboard(): void {
     const target = this.target;
     if (!target) return;
 
     // Live streams have no storyboard; skip until the type is known to be otherwise.
-    const src =
-      this.host.streamType === StreamTypes.LIVE
-        ? undefined
-        : getStoryboardURLFromPlaybackId(this.getAttribute('playback-id') ?? undefined, {
-            customDomain: this.getAttribute('custom-domain') ?? undefined,
-          });
+    const src = this.host.streamType === StreamTypes.LIVE ? undefined : this.host.storyboard || undefined;
 
     if (!src) {
       this.#storyboardTrack?.remove();

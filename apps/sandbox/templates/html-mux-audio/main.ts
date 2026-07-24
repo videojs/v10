@@ -4,7 +4,6 @@ import '@videojs/html/audio/player';
 import '@videojs/html/media/mux-audio';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadAudioSkinTag } from '@app/shared/html/skins';
-import { getPlaybackId } from '@app/shared/mux';
 import {
   onAutoplayChange,
   onLoopChange,
@@ -28,9 +27,8 @@ async function render() {
 
   const mediaAttrs = renderMediaAttrs(state);
 
-  // Prefer the Mux playback ID; fall back to a raw src for non-Mux sources.
-  const playbackId = getPlaybackId(state.source);
-  const sourceAttr = playbackId ? `playback-id="${playbackId}"` : `src="${SOURCES[state.source].url}"`;
+  // Mux stream URLs are parsed into a source (playback ID) by the element.
+  const sourceAttr = `src="${SOURCES[state.source].url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">

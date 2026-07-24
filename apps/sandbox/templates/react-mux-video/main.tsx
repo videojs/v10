@@ -35,8 +35,8 @@ function App() {
   const playbackId = getPlaybackId(source);
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
-  // Prefer the Mux playback ID; fall back to a raw src for non-Mux sources.
-  const sourceProps = playbackId ? { playbackId } : { src: SOURCES[source].url };
+  // Prefer a structured Mux source; fall back to a raw src for non-Mux sources.
+  const sourceProps = playbackId ? { source: { playbackId } } : { src: SOURCES[source].url };
 
   return (
     <SandboxI18nProvider>

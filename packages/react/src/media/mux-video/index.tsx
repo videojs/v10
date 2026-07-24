@@ -5,7 +5,7 @@ import type { HlsMediaProps } from '@videojs/core/dom/media/hls-js';
 import { hlsMediaDefaultProps, StreamTypes } from '@videojs/core/dom/media/hls-js';
 import { addComponent } from '@videojs/core/dom/media/media-host';
 import type { MuxMediaProps } from '@videojs/core/dom/media/mux';
-import { getStoryboardURLFromPlaybackId, MuxData, MuxMedia, muxMediaDefaultProps } from '@videojs/core/dom/media/mux';
+import { MuxData, MuxMedia, muxMediaDefaultProps } from '@videojs/core/dom/media/mux';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef, useEffect, useState } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
@@ -40,11 +40,9 @@ export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function Mux
     return () => media.removeEventListener('streamtypechange', sync);
   }, [media]);
 
-  // Infer the storyboard (thumbnail) track from the playback ID, except for live.
-  const storyboardSrc =
-    streamType === StreamTypes.LIVE
-      ? undefined
-      : getStoryboardURLFromPlaybackId(props.playbackId, { customDomain: props.customDomain });
+  // The media derives the storyboard URL from `src`/`source` (props were
+  // synced above), except for live streams which have no storyboard.
+  const storyboardSrc = streamType === StreamTypes.LIVE ? undefined : media.storyboard || undefined;
 
   return (
     <video ref={composedRef} {...htmlProps}>
