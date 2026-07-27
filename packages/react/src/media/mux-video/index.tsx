@@ -43,9 +43,7 @@ export namespace MuxVideo {
   export type Props = MuxVideoProps;
 }
 
-// Renders the storyboard (thumbnail) track derived from the media `source`.
-// Kept as its own component so runtime media changes (stream type detection,
-// source swaps) re-render the track instead of the whole media component.
+// Renders the storyboard track in its own component so media changes don't re-render the whole media component.
 function MuxStoryboard({ media }: { media: MuxMedia }) {
   const subscribe = useCallback(
     (onChange: () => void) => {
