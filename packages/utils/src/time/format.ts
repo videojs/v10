@@ -16,9 +16,48 @@ type DurationFormatConstructor = new (
   options?: { style?: TimeFormatOptions['style']; hoursDisplay?: 'auto' | 'always' }
 ) => { format: (duration: DurationRecord) => string };
 
-const DurationFormat = (Intl as typeof Intl & { DurationFormat: DurationFormatConstructor }).DurationFormat;
+const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
 
-const durationFormatters = new Map<string, InstanceType<typeof DurationFormat>>();
+type DurationFormatter = { format: (duration: DurationRecord) => string };
+
+const durationFormatters = new Map<string, DurationFormatter>();
+
+/**
+ * `Intl.DurationFormat` is unavailable on Node < 23 (SSR/prerender) and pre-2024 evergreen
+ * browsers, so degrade gracefully per the documented browser-support fallback policy.
+ * Digital output stays exact; localized phrase styles fall back to English.
+ */
+function createFallbackFormatter(
+  style: NonNullable<TimeFormatOptions['style']>,
+  hoursDisplay?: 'auto' | 'always'
+): DurationFormatter {
+  if (style === 'digital') {
+    const pad = (value: number): string => String(value).padStart(2, '0');
+    return {
+      format: (duration) => {
+        const body = `${pad(duration.minutes ?? 0)}:${pad(duration.seconds ?? 0)}`;
+        const showHours = hoursDisplay === 'always' || duration.hours !== undefined;
+        return showHours ? `${duration.hours ?? 0}:${body}` : body;
+      },
+    };
+  }
+
+  const units: Array<[keyof DurationRecord, string]> = [
+    ['hours', 'hour'],
+    ['minutes', 'minute'],
+    ['seconds', 'second'],
+  ];
+  return {
+    format: (duration) =>
+      units
+        .filter(([unit]) => duration[unit] !== undefined)
+        .map(([unit, label]) => {
+          const value = duration[unit] ?? 0;
+          return `${value} ${label}${value === 1 ? '' : 's'}`;
+        })
+        .join(', '),
+  };
+}
 
 function localeCacheKey(locale?: string | string[]): string {
   if (locale === undefined) return '';
@@ -35,12 +74,16 @@ function getDurationFormatter(
   locale?: string | string[],
   style: NonNullable<TimeFormatOptions['style']> = 'long',
   hoursDisplay?: 'auto' | 'always'
-): InstanceType<typeof DurationFormat> {
+): DurationFormatter {
   const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}`;
   let formatter = durationFormatters.get(key);
   if (!formatter) {
-    const options = hoursDisplay === undefined ? { style } : { style, hoursDisplay };
-    formatter = new DurationFormat(locale, options);
+    if (DurationFormat) {
+      const options = hoursDisplay === undefined ? { style } : { style, hoursDisplay };
+      formatter = new DurationFormat(locale, options);
+    } else {
+      formatter = createFallbackFormatter(style, hoursDisplay);
+    }
     durationFormatters.set(key, formatter);
   }
   return formatter;

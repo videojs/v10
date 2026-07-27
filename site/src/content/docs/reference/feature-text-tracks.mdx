@@ -14,19 +14,19 @@ Manages subtitles, captions, chapters, and thumbnail tracks.
 ### Selector
 
 <FrameworkCase frameworks={["react"]}>
-Pass `selectTextTracks` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+Pass `selectTextTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Pass `selectTextTracks` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
+Pass `selectTextTrack` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="CaptionsButton.tsx"
-import { selectTextTracks, usePlayer } from '@videojs/react';
+import { selectTextTrack, usePlayer } from '@videojs/react';
 
 function CaptionsButton() {
-  const tracks = usePlayer(selectTextTracks);
+  const tracks = usePlayer(selectTextTrack);
   if (!tracks) return null;
 
   return (
@@ -40,13 +40,13 @@ function CaptionsButton() {
 
 <FrameworkCase frameworks={["html"]}>
 ```ts title="captions-button.ts"
-import { createPlayer, MediaElement, selectTextTracks } from '@videojs/html';
+import { createPlayer, MediaElement, selectTextTrack } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
 const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
 class CaptionsButton extends MediaElement {
-  readonly #textTracks = new PlayerController(this, context, selectTextTracks);
+  readonly #textTracks = new PlayerController(this, context, selectTextTrack);
 }
 ```
 </FrameworkCase>

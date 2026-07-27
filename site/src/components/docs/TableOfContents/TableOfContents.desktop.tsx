@@ -21,7 +21,7 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
   };
 
   return (
-    <nav ref={navRef} className={clsx('', className)}>
+    <nav ref={navRef} aria-label="On this page" className={clsx('', className)}>
       <div className="py-8 pr-6">
         <h2 className="text-p3 mb-3 font-bold">On this page</h2>
         <ul className="space-y-3">
@@ -32,6 +32,7 @@ export function TableOfContentsDesktop({ headings, activeId, onNavigate, classNa
                 onClick={(e) => handleClick(e, heading.slug)}
                 className={clsx('text-p3 block', activeId === heading.slug && 'font-bold')}
                 style={{ paddingLeft: `calc(${heading.depth - 2} * var(--spacing) * 4)` }}
+                aria-current={activeId === heading.slug ? 'location' : undefined}
               >
                 {heading.text}
               </a>

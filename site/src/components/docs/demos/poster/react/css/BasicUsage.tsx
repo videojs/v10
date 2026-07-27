@@ -7,12 +7,9 @@ export default function BasicUsage() {
   return (
     <Player.Provider>
       <Player.Container className="media-container">
-        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" playsInline />
+        <Video src="{{VJS10_DEMO_VIDEO_MP4}}" playsInline />
 
-        <Poster
-          className="media-poster"
-          src="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.jpg"
-        />
+        <Poster className="media-poster" src="{{VJS10_DEMO_POSTER}}" />
 
         <PlayButton
           className="media-play-button"

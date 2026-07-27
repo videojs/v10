@@ -182,34 +182,11 @@ Add it to your components folder in a new file.
 
 </div>
 
-## CSP
-
-If your application uses a Content Security Policy, you may need to allow additional sources for player features to work correctly.
-
-### Common requirements
-
-- `media-src` must allow your media URLs.
-- `img-src` must allow any poster or thumbnail image URLs.
-- `connect-src` must allow HLS manifests, playlists, captions, and segment requests when using HLS playback.
-- `media-src blob:` is required when using the HLS player variants, which use MSE-backed playback.
-- `worker-src blob:` is required when using the `hls.js` player variants.
-- `style-src 'unsafe-inline'` is currently required for some player UI and HTML player styling behavior.
-
-### Example
-
-```http
-Content-Security-Policy:
-  script-src 'self';
-  style-src 'self' 'unsafe-inline';
-  img-src 'self' https: data: blob:;
-  media-src 'self' https: blob:;
-  connect-src 'self' https:;
-  worker-src 'self' blob:;
-```
-
 ## See also
 
 <DocsLinkCard slug="concepts/skins" anchor="styling" description="Some skins expose CSS custom properties">Skins</DocsLinkCard>
+
+<DocsLinkCard slug="concepts/security" description="Configure Content Security Policy for your player">Security</DocsLinkCard>
 
 <FrameworkCase frameworks={["html"]}>
 <DocsLinkCard slug="how-to/self-host-the-player" description="Serve the player from your own origin for offline or restricted-network deployments">Self-host the player</DocsLinkCard>

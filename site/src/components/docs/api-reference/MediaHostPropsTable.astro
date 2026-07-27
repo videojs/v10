@@ -19,9 +19,10 @@ import DetailRow from './DetailRow.astro';
 interface Props {
   hostProperties: Record<string, HostPropertyDef>;
   componentName: string;
+  nameLabel?: string;
 }
 
-const { hostProperties, componentName } = Astro.props;
+const { hostProperties, componentName, nameLabel = 'Property' } = Astro.props;
 
 const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompare(b));
 ---
@@ -29,7 +30,7 @@ const entries = Object.entries(hostProperties).sort(([a], [b]) => a.localeCompar
 <Table maxWidth={false} outerClass="my-6">
   <Thead>
     <Tr>
-      <Th>Property</Th>
+      <Th>{nameLabel}</Th>
       <Th>Type</Th>
       <Th>Default</Th>
       <Th>Details</Th>

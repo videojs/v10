@@ -81,6 +81,7 @@ export function CustomMediaElement(tag: string, Host: any) {
       poster: { type: String },
       preload: { type: String },
       src: { type: String },
+      streamType: { type: String, attribute: 'stream-type' },
     };
   }
 

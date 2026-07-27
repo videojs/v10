@@ -1,0 +1,58 @@
+---
+description: "Adds a quality menu, settings menu, AirPlay and Vimeo support, Google Cast on by default, and SPF multi-CDN failover."
+date: 2026-07-07
+version: "10.0.0-beta.25"
+prerelease: true
+breaking: true
+compareUrl: "https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.24...@videojs/core@10.0.0-beta.25"
+---
+
+Beta.24 gave us the menu machinery. Beta.25 fills it with things worth opening, and pushes the player out to the rest of the room: remote playback now spans both AirPlay and Chromecast, and Vimeo joins the list of sources you can hand it.
+
+## Menus grow up
+
+The headline is a quality menu ([#1694](https://github.com/videojs/v10/pull/1694)). Getting there took real plumbing: core now tracks media tracks and renditions ([#1664](https://github.com/videojs/v10/pull/1664)) and models quality selection on top of them ([#1693](https://github.com/videojs/v10/pull/1693)). The skins surface all of that as a menu whose Auto option tells you the rendition actually playing, not just the word "Auto" ([#1698](https://github.com/videojs/v10/pull/1698)).
+
+Quality isn't the only new menu. A settings menu gathers playback options in one place ([#1615](https://github.com/videojs/v10/pull/1615)), and audio tracks get a menu of their own ([#1714](https://github.com/videojs/v10/pull/1714)). The menu system itself grew up alongside them, with clearer group labels, handling for items that come and go at runtime, and a pass of style polish ([#1643](https://github.com/videojs/v10/pull/1643), [#1739](https://github.com/videojs/v10/pull/1739), [#1725](https://github.com/videojs/v10/pull/1725)).
+
+See the menu reference for [HTML](/docs/framework/html/reference/menu/) and [React](/docs/framework/react/reference/menu/), or the quality feature for [HTML](/docs/framework/html/reference/feature-quality/) and [React](/docs/framework/react/reference/feature-quality/).
+
+## AirPlay and Chromecast
+
+Remote playback grew in both directions. There's now an AirPlay button in the html and react packages ([#1531](https://github.com/videojs/v10/pull/1531), [#1614](https://github.com/videojs/v10/pull/1614)), and MSE-backed streams can hand off to AirPlay too ([#1692](https://github.com/videojs/v10/pull/1692)). On the Chromecast side, HLS and DASH media now ship with Google Cast on by default ([#1661](https://github.com/videojs/v10/pull/1661)), so the cast button works with no extra setup. That last one changes how you configure media; see [Breaking changes](#breaking-changes) below.
+
+Read the AirPlay button reference for [HTML](/docs/framework/html/reference/airplay-button/) and [React](/docs/framework/react/reference/airplay-button/), and the Google Cast guide for [HTML](/docs/framework/html/concepts/cast/) and [React](/docs/framework/react/concepts/cast/).
+
+## Vimeo joins the lineup
+
+You can now point the player at a Vimeo video. Beta.25 adds a Vimeo media host with matching html and react components ([#1667](https://github.com/videojs/v10/pull/1667)). Vimeo also shows up as a source option in the installation flow, both on the site and in the CLI, alongside DASH and Mux ([#1732](https://github.com/videojs/v10/pull/1732)), backed by a manifest that tracks which media each CDN actually has ([#1737](https://github.com/videojs/v10/pull/1737)).
+
+Pick a source and try it from the installation guide for [HTML](/docs/framework/html/how-to/installation/) and [React](/docs/framework/react/how-to/installation/).
+
+## Polish
+
+A lot of small things got better:
+
+- Scrubber previews show a timestamp as you drag ([#1652](https://github.com/videojs/v10/pull/1652)).
+- The time display toggles between elapsed and remaining on click ([#1669](https://github.com/videojs/v10/pull/1669)).
+- The time slider can pause on drag and resume on release ([#1596](https://github.com/videojs/v10/pull/1596)).
+- Fullscreen can lock orientation on mobile ([#1656](https://github.com/videojs/v10/pull/1656)).
+- Popovers stay inside a positioning boundary instead of spilling offscreen ([#1627](https://github.com/videojs/v10/pull/1627)).
+- Tooltips pair a label with its keyboard shortcut ([#1494](https://github.com/videojs/v10/pull/1494)).
+- Posters support a blur-up placeholder ([#1632](https://github.com/videojs/v10/pull/1632)).
+
+On the fix side, `serializeAttributes` now escapes HTML special characters, closing an XSS hole ([#1670](https://github.com/videojs/v10/pull/1670)); mobile controls no longer flash on the first tap after auto-hiding ([#1556](https://github.com/videojs/v10/pull/1556)); React recovers cleanly when a store is destroyed under `<Activity>` ([#1587](https://github.com/videojs/v10/pull/1587)) and memoizes the provider context value ([#1787](https://github.com/videojs/v10/pull/1787)); and dash.js is up to 5.2.0 ([#1724](https://github.com/videojs/v10/pull/1724)).
+
+## Under the hood: SPF
+
+The stream processing framework behind our in-house engine had a busy release too: multi-CDN support with automatic failover ([#1668](https://github.com/videojs/v10/pull/1668), [#1671](https://github.com/videojs/v10/pull/1671)), capability probing ([#1676](https://github.com/videojs/v10/pull/1676)), text track and multi-track audio switching ([#1687](https://github.com/videojs/v10/pull/1687), [#1605](https://github.com/videojs/v10/pull/1605)), an audio-only engine composition ([#1584](https://github.com/videojs/v10/pull/1584)), and the first phase of background video with a `maxResolution` cap ([#1602](https://github.com/videojs/v10/pull/1602), [#1654](https://github.com/videojs/v10/pull/1654)).
+
+## Breaking changes
+
+Three changes need attention when you upgrade:
+
+- **Google Cast is on by default** ([#1661](https://github.com/videojs/v10/pull/1661)). HLS and DASH media now compose features like Cast and Mux Data as media components, configured through namespaced options such as `media.config.googleCast.receiver` and `media.config.hlsJs.capLevelToPlayerSize`. These replace the `cast-src`, `prefer-playback`, and `debug` element attributes.
+- **The hls.js stack is renamed to make its engine explicit** ([#1753](https://github.com/videojs/v10/pull/1753)). Update `<hls-video>` to `<hlsjs-video>`, `HlsVideo` to `HlsJsVideo`, and any `…/media/hls-video` import subpaths to `…/media/hlsjs-video`.
+- **Media capability predicates moved to core** ([#1705](https://github.com/videojs/v10/pull/1705)). `isMediaPauseCapable` and friends now live in `@videojs/core` instead of `@videojs/core/dom`.
+
+Thanks to [@Jerricho93](https://github.com/Jerricho93) for their first contribution to Video.js.

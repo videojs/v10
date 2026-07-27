@@ -24,7 +24,14 @@ import * as path from 'node:path';
 import * as ts from 'typescript';
 import * as tae from 'typescript-api-extractor';
 import { extractCSSVars } from './css-vars-handler.js';
-import type { HostPropertyDef, MediaElementReference, MediaElementResult, MediaEventDef } from './pipeline.js';
+import type {
+  HostPropertyDef,
+  MediaElementReference,
+  MediaElementResult,
+  MediaEventDef,
+  MediaTargetTag,
+  ReactMediaReference,
+} from './pipeline.js';
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -46,6 +53,12 @@ interface MediaElementSource {
   hostFilePath: string;
   hostClassName: string;
   mediaType: 'video' | 'audio';
+  targetTag: MediaTargetTag;
+}
+
+interface StaticMediaProperty {
+  property: string;
+  attribute: string;
 }
 
 // ─── Module Resolution ───────────────────────────────────────────────
@@ -206,6 +219,7 @@ function parseDefineFile(
     hostFilePath,
     hostClassName: hostInfo.hostClassName,
     mediaType: hostInfo.mediaType,
+    targetTag: hostInfo.targetTag,
   };
 }
 
@@ -220,9 +234,10 @@ function stripElementSuffix(name: string): string {
 function parseCustomMediaElementCall(
   sourceFile: ts.SourceFile,
   className: string
-): { hostClassName: string; mediaType: 'video' | 'audio' } | null {
+): { hostClassName: string; mediaType: 'video' | 'audio'; targetTag: MediaTargetTag } | null {
   let hostClassName: string | undefined;
   let mediaType: 'video' | 'audio' | undefined;
+  let targetTag: MediaTargetTag | undefined;
 
   ts.forEachChild(sourceFile, (node) => {
     if (!ts.isClassDeclaration(node)) return;
@@ -236,6 +251,15 @@ function parseCustomMediaElementCall(
     findCustomMediaElement(extendsExpr);
   });
 
+  // Media implementations may put template behavior on a local base class
+  // and export a thin mixed-in subclass (VimeoVideo is the real-world case).
+  // Each media module owns a single CustomMediaElement composition, so use
+  // that composition when it is not directly present in the exported class's
+  // extends expression.
+  if (!hostClassName || !mediaType || !targetTag) {
+    findCustomMediaElement(sourceFile);
+  }
+
   function findCustomMediaElement(node: ts.Node): void {
     if (
       ts.isCallExpression(node) &&
@@ -243,10 +267,11 @@ function parseCustomMediaElementCall(
       node.expression.text === 'CustomMediaElement'
     ) {
       if (node.arguments.length >= 2) {
-        // First arg: media type string literal ('video' or 'audio')
+        // First arg: rendered target tag (`video`, `audio`, or `iframe`).
         const tagArg = node.arguments[0]!;
-        if (ts.isStringLiteral(tagArg)) {
-          mediaType = tagArg.text === 'audio' ? 'audio' : 'video';
+        if (ts.isStringLiteral(tagArg) && ['video', 'audio', 'iframe'].includes(tagArg.text)) {
+          targetTag = tagArg.text as MediaTargetTag;
+          mediaType = targetTag === 'audio' ? 'audio' : 'video';
         }
         // Second arg: host class identifier
         const hostArg = node.arguments[1]!;
@@ -259,8 +284,8 @@ function parseCustomMediaElementCall(
     ts.forEachChild(node, findCustomMediaElement);
   }
 
-  if (!hostClassName || !mediaType) return null;
-  return { hostClassName, mediaType };
+  if (!hostClassName || !mediaType || !targetTag) return null;
+  return { hostClassName, mediaType, targetTag };
 }
 
 // ─── Host Property Extraction ───────────────────────────────────────
@@ -931,14 +956,14 @@ function serializeDefaultValue(
 // ─── Shared Data Extraction ──────────────────────────────────────────
 
 /**
- * Extract native attribute names from the `static properties` object inside
- * the CustomMediaElement factory. Each key maps to an attribute name via
- * `props[key].attribute ?? key.toLowerCase()`.
+ * Extract property-to-attribute mappings from the `static properties` object
+ * inside the CustomMediaElement factory. The property name is needed to
+ * classify standard attributes separately from Video.js-specific ones.
  */
-function extractStaticProperties(filePath: string): string[] {
+function extractStaticProperties(filePath: string): StaticMediaProperty[] {
   const content = fs.readFileSync(filePath, 'utf-8');
   const sourceFile = ts.createSourceFile(filePath, content, ts.ScriptTarget.Latest, true);
-  const attributes: string[] = [];
+  const properties: StaticMediaProperty[] = [];
 
   function visit(node: ts.Node): void {
     // Look for: static properties = { ... }
@@ -971,7 +996,7 @@ function extractStaticProperties(filePath: string): string[] {
           }
         }
 
-        attributes.push(attrName);
+        properties.push({ property: propName, attribute: attrName });
       }
       return;
     }
@@ -979,7 +1004,146 @@ function extractStaticProperties(filePath: string): string[] {
   }
 
   visit(sourceFile);
-  return attributes;
+  return properties;
+}
+
+// ─── React Surface Extraction ──────────────────────────────────────
+
+/**
+ * Extract the public React surface from the matching media component.
+ *
+ * Convention:
+ *   - `forwardRef<HTML*Element, *Props>` declares the public ref target.
+ *   - extending `VideoHTMLAttributes` / `AudioHTMLAttributes` opts into the
+ *     native React DOM props.
+ *   - the defaults object passed to `useSyncProps` is the runtime source of
+ *     truth for Video.js-specific props.
+ */
+function extractReactReference(
+  monorepoRoot: string,
+  source: MediaElementSource,
+  compilerOptions: ts.CompilerOptions,
+  propertyDefinitions: Record<string, HostPropertyDef>
+): ReactMediaReference | undefined {
+  const mediaDirectory = path.basename(path.dirname(source.mediaFilePath));
+  const reactFilePath = path.join(monorepoRoot, 'packages/react/src/media', mediaDirectory, 'index.tsx');
+  if (!fs.existsSync(reactFilePath)) return undefined;
+
+  const content = fs.readFileSync(reactFilePath, 'utf-8');
+  const sourceFile = ts.createSourceFile(reactFilePath, content, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  const propsInterfaceName = `${source.className}Props`;
+  let target: MediaTargetTag | undefined;
+  let acceptsNativeProps = false;
+  let defaultsName: string | undefined;
+
+  function visit(node: ts.Node): void {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === propsInterfaceName) {
+      acceptsNativeProps =
+        node.heritageClauses?.some((clause) =>
+          clause.types.some((type) => /(?:Video|Audio)HTMLAttributes/.test(type.getText(sourceFile)))
+        ) ?? false;
+    }
+
+    if (
+      ts.isVariableDeclaration(node) &&
+      ts.isIdentifier(node.name) &&
+      node.name.text === source.className &&
+      node.initializer &&
+      ts.isCallExpression(node.initializer) &&
+      ts.isIdentifier(node.initializer.expression) &&
+      node.initializer.expression.text === 'forwardRef'
+    ) {
+      const refType = node.initializer.typeArguments?.[0]?.getText(sourceFile);
+      if (refType === 'HTMLVideoElement') target = 'video';
+      if (refType === 'HTMLAudioElement') target = 'audio';
+      if (refType === 'HTMLIFrameElement') target = 'iframe';
+    }
+
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'useSyncProps' &&
+      node.arguments.length >= 3
+    ) {
+      const defaultsArg = node.arguments[2]!;
+      if (ts.isIdentifier(defaultsArg)) defaultsName = defaultsArg.text;
+    }
+
+    ts.forEachChild(node, visit);
+  }
+
+  visit(sourceFile);
+  if (!target) return undefined;
+
+  const props: Record<string, HostPropertyDef> = {};
+  if (defaultsName) {
+    const resolved = resolveConstObjectLiteral(defaultsName, sourceFile, reactFilePath, compilerOptions);
+    if (resolved) {
+      const defaultValues = resolveObjectLiteralEntries(
+        resolved.objectLiteral,
+        resolved.sourceFile,
+        resolved.filePath,
+        compilerOptions,
+        new Set()
+      );
+      const names = resolveObjectLiteralPropertyNames(
+        resolved.objectLiteral,
+        resolved.sourceFile,
+        resolved.filePath,
+        compilerOptions,
+        new Set()
+      );
+
+      for (const name of [...names].sort()) {
+        const definition = propertyDefinitions[name];
+        const prop: HostPropertyDef = definition
+          ? { ...definition, readonly: false }
+          : { type: 'unknown', readonly: false };
+        const defaultValue = defaultValues.get(name);
+        if (defaultValue !== undefined) prop.default = defaultValue;
+        props[name] = prop;
+      }
+    }
+  }
+
+  return { target, acceptsNativeProps, props };
+}
+
+/** Collect object-literal keys, including keys whose defaults are not serializable. */
+function resolveObjectLiteralPropertyNames(
+  objectLiteral: ts.ObjectLiteralExpression,
+  sourceFile: ts.SourceFile,
+  filePath: string,
+  compilerOptions: ts.CompilerOptions,
+  visited: Set<string>
+): Set<string> {
+  const names = new Set<string>();
+
+  for (const prop of objectLiteral.properties) {
+    if (ts.isPropertyAssignment(prop) && ts.isIdentifier(prop.name)) {
+      names.add(prop.name.text);
+      continue;
+    }
+
+    if (ts.isSpreadAssignment(prop) && ts.isIdentifier(prop.expression)) {
+      const resolved = resolveConstObjectLiteral(prop.expression.text, sourceFile, filePath, compilerOptions);
+      if (!resolved) continue;
+      const visitKey = `${resolved.filePath}::${prop.expression.text}`;
+      if (visited.has(visitKey)) continue;
+      visited.add(visitKey);
+      for (const name of resolveObjectLiteralPropertyNames(
+        resolved.objectLiteral,
+        resolved.sourceFile,
+        resolved.filePath,
+        compilerOptions,
+        visited
+      )) {
+        names.add(name);
+      }
+    }
+  }
+
+  return names;
 }
 
 // ─── Method Extraction ───────────────────────────────────────────────
@@ -1238,6 +1402,52 @@ function parseFiresTagComment(tag: ts.JSDocTag): { name: string; description: st
 function scanForDispatchEvents(sourceFile: ts.SourceFile, events: Set<string>): void {
   function visit(node: ts.Node): void {
     if (
+      ts.isForOfStatement(node) &&
+      ts.isVariableDeclarationList(node.initializer) &&
+      ts.isArrayLiteralExpression(node.expression)
+    ) {
+      const declaration = node.initializer.declarations[0];
+      const loopName = declaration && ts.isIdentifier(declaration.name) ? declaration.name.text : undefined;
+      let dispatchesLoopValue = false;
+
+      if (loopName) {
+        function findLoopDispatch(child: ts.Node): void {
+          if (
+            ts.isNewExpression(child) &&
+            ts.isIdentifier(child.expression) &&
+            child.expression.text === 'Event' &&
+            child.arguments?.[0] &&
+            ts.isIdentifier(child.arguments[0]) &&
+            child.arguments[0].text === loopName
+          ) {
+            dispatchesLoopValue = true;
+          }
+          ts.forEachChild(child, findLoopDispatch);
+        }
+        findLoopDispatch(node.statement);
+      }
+
+      if (dispatchesLoopValue) {
+        for (const element of node.expression.elements) {
+          if (ts.isStringLiteral(element)) events.add(element.text);
+        }
+      }
+    }
+
+    // Adapter implementations commonly use a local `emit` helper to bridge
+    // events from a third-party player (for example Vimeo). Literal calls are
+    // still an unambiguous declaration of the events the adapter implements.
+    if (
+      ts.isCallExpression(node) &&
+      ts.isIdentifier(node.expression) &&
+      node.expression.text === 'emit' &&
+      node.arguments[0] &&
+      ts.isStringLiteral(node.arguments[0])
+    ) {
+      events.add(node.arguments[0].text);
+    }
+
+    if (
       ts.isCallExpression(node) &&
       ts.isPropertyAccessExpression(node.expression) &&
       node.expression.name.text === 'dispatchEvent' &&
@@ -1294,7 +1504,7 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   if (!fs.existsSync(customMediaPath)) return [];
 
   // Read shared data
-  const allAttributes = extractStaticProperties(customMediaPath);
+  const staticProperties = extractStaticProperties(customMediaPath);
 
   // Extract events from capability contract types
   const mediaTypesPath = path.join(monorepoRoot, 'packages/core/src/core/media/types.ts');
@@ -1334,7 +1544,13 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     lib: dedupeStrings([...(compilerOptions.lib ?? []), 'lib.dom.d.ts']),
   };
   const program = ts.createProgram(
-    dedupeStrings([customMediaPath, ...sources.map((s) => s.hostFilePath)]),
+    dedupeStrings([
+      customMediaPath,
+      mediaHostPath,
+      videoHostPath,
+      audioHostPath,
+      ...sources.map((s) => s.hostFilePath),
+    ]),
     programOptions
   );
   const checker = program.getTypeChecker();
@@ -1346,6 +1562,36 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const nativeNames = customMediaSourceFile
     ? collectNativeMemberNames(program, customMediaSourceFile)
     : new Set<string>();
+
+  const baseHostProperties = extractHostProperties(mediaHostPath, 'HTMLMediaElementHost', compilerOptions, nativeNames);
+  const videoHostProperties = extractHostProperties(
+    videoHostPath,
+    'HTMLVideoElementHost',
+    compilerOptions,
+    nativeNames
+  );
+  const audioHostProperties = extractHostProperties(
+    audioHostPath,
+    'HTMLAudioElementHost',
+    compilerOptions,
+    nativeNames
+  );
+
+  function fillInferredTypes(properties: Record<string, HostPropertyDef>, filePath: string, className: string): void {
+    const inferredTypes = resolveInferredTypes(filePath, className, program, checker);
+    for (const [name, def] of Object.entries(properties)) {
+      if (def.type === 'unknown' && inferredTypes.has(name)) {
+        def.type = inferredTypes.get(name)!;
+      }
+    }
+  }
+
+  fillInferredTypes(baseHostProperties, mediaHostPath, 'HTMLMediaElementHost');
+  fillInferredTypes(videoHostProperties, videoHostPath, 'HTMLVideoElementHost');
+  fillInferredTypes(audioHostProperties, audioHostPath, 'HTMLAudioElementHost');
+
+  const videoBaseSurface = { ...baseHostProperties, ...videoHostProperties };
+  const audioBaseSurface = { ...baseHostProperties, ...audioHostProperties };
 
   const videoCSSVars: Record<string, { description: string }> = {};
   if (videoCSSVarsRaw) {
@@ -1371,25 +1617,39 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
       nativeNames
     );
 
-    // The AST walk only reads explicit return-type annotations; getters without
-    // one fall back to the literal string 'unknown'. Fill those gaps from the
-    // type checker, which infers the real type across the mixin chain. Authored
-    // annotations are left untouched.
-    const inferredTypes = resolveInferredTypes(source.hostFilePath, source.hostClassName, program, checker);
-    for (const [name, def] of Object.entries(hostProperties)) {
-      if (def.type === 'unknown' && inferredTypes.has(name)) {
-        def.type = inferredTypes.get(name)!;
+    fillInferredTypes(hostProperties, source.hostFilePath, source.hostClassName);
+
+    const baseSurface =
+      source.targetTag === 'video' ? videoBaseSurface : source.targetTag === 'audio' ? audioBaseSurface : {};
+    const publicProperties = { ...baseSurface, ...hostProperties };
+    const propertyDefinitions: Record<string, HostPropertyDef> = {};
+    for (const [name, definition] of Object.entries(baseSurface)) {
+      if (!definition.overridesNative) propertyDefinitions[name] = definition;
+    }
+    Object.assign(propertyDefinitions, hostProperties);
+
+    const standardAttributes: string[] = [];
+    const customAttributes: Record<string, HostPropertyDef> = {};
+    for (const { property, attribute } of staticProperties) {
+      const definition = publicProperties[property];
+
+      if (source.targetTag === 'iframe') {
+        // Embed attributes only have media semantics when the synthetic host
+        // implements the corresponding property. Unmatched shared attributes
+        // are inert because iframe targets do not receive attribute forwarding.
+        if (definition) customAttributes[attribute] = { ...definition, readonly: false };
+        continue;
+      }
+
+      if (definition && !definition.overridesNative) {
+        customAttributes[attribute] = { ...definition, readonly: false };
+      } else {
+        standardAttributes.push(attribute);
       }
     }
 
-    // Native attributes are the COMPLETE markup-settable set from `static
-    // properties`. Host-owned names (src/preload/stream-type) intentionally
-    // overlap with hostProperties — this mirrors MDN's content-attribute vs
-    // IDL-property model: the same name is both a settable attribute and a
-    // richer JS property.
-    const nativeAttributes = [...allAttributes];
-
-    const cssCustomProperties = source.mediaType === 'video' ? videoCSSVars : audioCSSVars;
+    const cssCustomProperties =
+      source.targetTag === 'video' ? videoCSSVars : source.targetTag === 'audio' ? audioCSSVars : {};
 
     // Walk the host's mixin/parent chain collecting `@fires` descriptions. An
     // event is documented as element-specific iff it carries a `@fires` tag —
@@ -1397,8 +1657,24 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     // DOM events are never tagged, and a tagged event stays documented even when
     // it also lives in the typed media events contract (e.g. streamtypechange).
     const fires = new Map<string, string>();
-    extractDispatchedEvents(source.hostFilePath, source.hostClassName, compilerOptions, new Set(), new Set(), fires);
-    const elementSpecific: MediaEventDef[] = [...fires.keys()].sort().map((name) => {
+    const dispatchedEvents = new Set<string>();
+    extractDispatchedEvents(
+      source.hostFilePath,
+      source.hostClassName,
+      compilerOptions,
+      new Set(),
+      dispatchedEvents,
+      fires
+    );
+    const contractEvents = source.mediaType === 'video' ? videoEvents : audioEvents;
+    const contractEventNames = new Set(contractEvents);
+    const customEventNamesForElement = new Set(fires.keys());
+    if (source.targetTag === 'iframe') {
+      for (const name of dispatchedEvents) {
+        if (!contractEventNames.has(name)) customEventNamesForElement.add(name);
+      }
+    }
+    const customEvents: MediaEventDef[] = [...customEventNamesForElement].sort().map((name) => {
       const def: MediaEventDef = { name };
       const description = fires.get(name);
       if (description) def.description = description;
@@ -1411,22 +1687,52 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
     // capability interfaces — these are never native, even on elements that
     // don't fire them (e.g. dash-video has no streamType, so streamtypechange
     // appears nowhere).
-    const elementSpecificNames = new Set(elementSpecific.map((e) => e.name));
-    const native = (source.mediaType === 'video' ? videoEvents : audioEvents).filter(
-      (n) => !elementSpecificNames.has(n) && !customEventNames.has(n)
+    const customEventSet = new Set(customEvents.map((event) => event.name));
+    const standardEvents = contractEvents.filter(
+      (name) =>
+        !customEventSet.has(name) &&
+        !customEventNames.has(name) &&
+        (source.targetTag !== 'iframe' || dispatchedEvents.has(name))
     );
 
-    const methods = source.mediaType === 'video' ? videoMethods : audioMethods;
+    const baseMethodNames =
+      source.targetTag === 'video' ? videoMethods : source.targetTag === 'audio' ? audioMethods : [];
+    const methods = mergeMethodNames(
+      baseMethodNames,
+      extractPublicMethodNames(source.hostFilePath, source.hostClassName)
+    );
+
+    const nativeProperties = Object.entries(baseSurface)
+      .filter(([name, definition]) => definition.overridesNative && !(name in hostProperties))
+      .map(([name]) => name)
+      .sort();
+
+    const react = extractReactReference(monorepoRoot, source, compilerOptions, publicProperties);
 
     const reference: MediaElementReference = {
       name: source.className,
       tagName: source.tagName,
       mediaType: source.mediaType,
-      hostProperties,
-      nativeAttributes,
-      events: { native, elementSpecific },
-      methods,
-      cssCustomProperties,
+      platforms: {
+        html: {
+          target: source.targetTag,
+          attributes: {
+            standard: standardAttributes.sort(),
+            custom: customAttributes,
+          },
+          properties: {
+            definitions: propertyDefinitions,
+            native: nativeProperties,
+          },
+          events: {
+            standard: standardEvents,
+            custom: customEvents,
+          },
+          methods,
+          cssCustomProperties,
+        },
+        ...(react ? { react } : {}),
+      },
     };
 
     results.push({ name: source.className, reference });

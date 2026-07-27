@@ -98,9 +98,22 @@ React and HTML demos for the same variant should use matching BEM structures.
 
 ### Video and poster sources
 
-Demos default to these URLs:
+Demo media sources live in `site/src/consts.ts`. HTML and React demo files use placeholders from `site/scripts/replace-demo-placeholders.ts`; the site resolves them for both the live demo and its source tab, so displayed source remains copy-paste ready.
 
-These demo assets are hosted by [Mux](https://www.mux.com?utm_source=videojs&utm_campaign=vjs10):
+Use the matching placeholder instead of hardcoding a media URL in a demo:
+
+| Purpose | Demo placeholder |
+| --- | --- |
+| Default MP4 | `{{VJS10_DEMO_VIDEO_MP4}}` |
+| Default HLS | `{{VJS10_DEMO_VIDEO_HLS}}` |
+| Default poster | `{{VJS10_DEMO_POSTER}}` |
+| Default storyboard | `{{VJS10_DEMO_STORYBOARD}}` |
+| Background video | `{{VJS10_DEMO_BACKGROUND_VIDEO_MP4}}` |
+| DASH | `{{VJS10_DEMO_DASH}}` |
+| Quality renditions | `{{VJS8_DEMO_VIDEO_HLS}}` |
+| Multi-language audio and renditions | `{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}` |
+
+The default demo assets are hosted by [Mux](https://www.mux.com?utm_source=videojs&utm_campaign=vjs10):
 
 ```
 Video: https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4

@@ -112,7 +112,11 @@ function setupLoadTextTrackCues(initialState: TextTrackSegmentLoadingState, init
   // targeting dormant / activation behavior override this explicitly.
   const state = makeState({ preload: 'auto', ...initialState });
   const context = makeContext(initialContext);
-  const setupCleanup = setupTextTrackActors.setup({ context, config: { resolveTextTrackSegment: resolveVttSegment } });
+  const setupCleanup = setupTextTrackActors.setup({
+    state,
+    context,
+    config: { resolveTextTrackSegment: resolveVttSegment },
+  }) as () => void;
   const reactor = loadTextTrackSegments.setup({ state, context });
   const cleanup = () => {
     reactor.destroy();

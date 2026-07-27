@@ -1,18 +1,18 @@
 ---
 title: usePlayerContext
-description: Hook to access the full player context including store, media element, and media setter
+description: Hook to access the full player context value
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 
-`usePlayerContext` returns the full `PlayerContextValue` object, which includes the store, the current media element, and the media setter.
+`usePlayerContext` returns the full `PlayerContextValue` object for lower-level integrations that need direct access to player context fields.
 
 ```tsx title="DebugPanel.tsx"
 import { usePlayerContext } from "@videojs/react";
 
 function DebugPanel() {
-  const { store, media, setMedia } = usePlayerContext();
+  const { store, media, container, popupGroup } = usePlayerContext();
 
   return (
     <pre>
@@ -20,6 +20,8 @@ function DebugPanel() {
         {
           hasStore: !!store,
           hasMedia: !!media,
+          hasContainer: !!container,
+          hasPopupGroup: !!popupGroup,
           tagName: media?.tagName,
         },
         null,

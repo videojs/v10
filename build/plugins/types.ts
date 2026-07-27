@@ -14,4 +14,5 @@ export interface BuildPlugin {
   load?: (this: void, id: string) => { code: string; moduleSideEffects: boolean } | null;
   buildStart?: (this: { addWatchFile: (file: string) => void }) => void;
   writeBundle?: (this: void) => void;
+  closeWatcher?: (this: void) => void;
 }

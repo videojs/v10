@@ -65,6 +65,10 @@ jobs:
             BODY=$(tail -n +"$((LINE_NUM + 1))" CHANGELOG.md)
           fi
 
+          # Commit titles are untrusted MDX input. Escape JSX/expression
+          # delimiters outside inline code spans while preserving their output.
+          BODY=$(printf '%s\n' "$BODY" | perl -pe 's{(`[^`]*`)(*SKIP)(*F)|([<>{}])}{\\$2}g')
+
           # Determine prerelease and breaking
           PRERELEASE=false
           if echo "$VERSION" | grep -q '-'; then
@@ -80,7 +84,7 @@ jobs:
           COMPARE_URL=$(grep -Fm1 "[@videojs/core@${VERSION}]: " CHANGELOG.md | sed 's/.*]: //' || true)
 
           # Write the site changelog file
-          OUTFILE="site/src/content/changelog/${VERSION}.md"
+          OUTFILE="site/src/content/changelog/${VERSION}.mdx"
           mkdir -p "$(dirname "$OUTFILE")"
           cat > "$OUTFILE" <<EOF
           ---

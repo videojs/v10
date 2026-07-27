@@ -6,7 +6,12 @@
     "exactOptionalPropertyTypes": false,
     "declarationDir": "../../../types/playback/actors"
   },
-  "references": [{ "path": "../../../../utils" }, { "path": "../../core" }, { "path": "../../media" }],
+  "references": [
+    { "path": "../../../../utils" },
+    { "path": "../../core" },
+    { "path": "../../media" },
+    { "path": "../primitives" }
+  ],
   "include": ["./*.ts", "./tests/**/*.ts"],
   "exclude": ["./dom/**"]
 }

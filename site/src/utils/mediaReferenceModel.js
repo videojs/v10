@@ -1,48 +1,67 @@
 /**
- * Centralized media element API subsection definitions.
- *
- * Mirrors componentReferenceModel.js for media elements. Produces heading/id
- * data consumed by both MediaReference.astro and satteriConditionalHeadings.
+ * Centralized media API subsection definitions shared by the renderer and the
+ * generated table of contents.
  */
 
-const MEDIA_REFERENCE_SUBSECTIONS = Object.freeze([
+const HTML_SUBSECTIONS = Object.freeze([
   {
-    key: 'hostProperties',
-    title: 'Host Properties',
-    id: 'host-properties',
-    isEmpty: (ref) => Object.keys(ref.hostProperties ?? {}).length === 0,
-  },
-  {
-    key: 'nativeAttributes',
+    key: 'attributes',
     title: 'Attributes',
     id: 'attributes',
-    isEmpty: (ref) => (ref.nativeAttributes ?? []).length === 0,
+    isEmpty: (html) =>
+      (html.attributes?.standard ?? []).length === 0 && Object.keys(html.attributes?.custom ?? {}).length === 0,
   },
   {
-    key: 'events',
-    title: 'Events',
-    id: 'events',
-    isEmpty: (ref) => (ref.events?.native ?? []).length === 0 && (ref.events?.elementSpecific ?? []).length === 0,
+    key: 'properties',
+    title: 'Properties',
+    id: 'properties',
+    isEmpty: (html) =>
+      Object.keys(html.properties?.definitions ?? {}).length === 0 && (html.properties?.native ?? []).length === 0,
   },
   {
     key: 'methods',
     title: 'Methods',
     id: 'methods',
-    isEmpty: (ref) => (ref.methods ?? []).length === 0,
+    isEmpty: (html) => (html.methods ?? []).length === 0,
+  },
+  {
+    key: 'events',
+    title: 'Events',
+    id: 'events',
+    isEmpty: (html) => (html.events?.standard ?? []).length === 0 && (html.events?.custom ?? []).length === 0,
   },
   {
     key: 'cssCustomProperties',
-    title: 'CSS Custom Properties',
+    title: 'CSS custom properties',
     id: 'css-custom-properties',
-    isEmpty: (ref) => Object.keys(ref.cssCustomProperties ?? {}).length === 0,
+    isEmpty: (html) => Object.keys(html.cssCustomProperties ?? {}).length === 0,
   },
 ]);
 
-export function createMediaReferenceModel(mediaName, ref) {
-  if (!ref) return null;
+const REACT_SUBSECTIONS = Object.freeze([
+  {
+    key: 'props',
+    title: 'Props',
+    id: 'props',
+    isEmpty: (react) => !react.acceptsNativeProps && Object.keys(react.props ?? {}).length === 0,
+  },
+  {
+    key: 'ref',
+    title: 'Ref',
+    id: 'ref',
+    isEmpty: () => false,
+  },
+  {
+    key: 'events',
+    title: 'Events',
+    id: 'events',
+    isEmpty: (react) => !react.acceptsNativeProps,
+  },
+]);
 
-  const sections = MEDIA_REFERENCE_SUBSECTIONS.flatMap((definition) => {
-    if (definition.isEmpty(ref)) return [];
+function createSections(definitions, source) {
+  return definitions.flatMap((definition) => {
+    if (definition.isEmpty(source)) return [];
     return [
       {
         key: definition.key,
@@ -52,6 +71,10 @@ export function createMediaReferenceModel(mediaName, ref) {
       },
     ];
   });
+}
+
+export function createMediaReferenceModel(mediaName, ref) {
+  if (!ref) return null;
 
   return {
     mediaName,
@@ -60,7 +83,20 @@ export function createMediaReferenceModel(mediaName, ref) {
       depth: 2,
       text: 'API Reference',
     },
-    sections,
+    platforms: {
+      html: {
+        sections: createSections(HTML_SUBSECTIONS, ref.platforms.html),
+        data: ref.platforms.html,
+      },
+      ...(ref.platforms.react
+        ? {
+            react: {
+              sections: createSections(REACT_SUBSECTIONS, ref.platforms.react),
+              data: ref.platforms.react,
+            },
+          }
+        : {}),
+    },
     data: ref,
   };
 }
@@ -76,12 +112,17 @@ export function buildMediaReferenceTocHeadings(model) {
     },
   ];
 
-  for (const section of model.sections) {
-    headings.push({
-      depth: section.depth,
-      text: section.title,
-      slug: section.id,
-    });
+  for (const framework of ['html', 'react']) {
+    const platform = model.platforms[framework];
+    if (!platform) continue;
+    for (const section of platform.sections) {
+      headings.push({
+        depth: section.depth,
+        text: section.title,
+        slug: section.id,
+        frameworks: [framework],
+      });
+    }
   }
 
   return headings;

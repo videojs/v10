@@ -16,14 +16,21 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, TextTrack, VideoTrack } from '../../../media/types';
+import type {
+  AudioTrack,
+  CanPlayTrack,
+  MaybeResolvedPresentation,
+  MediaContainerData,
+  TextTrack,
+  VideoTrack,
+} from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { BandwidthConfig, BandwidthState } from '../../../network/bandwidth-estimator';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
 import type { SourceBufferActor } from '../../actors/dom/source-buffer';
 import type { TextTracksActor } from '../../actors/dom/text-tracks';
-import type { TextTrackSegmentLoaderActor, TextTrackSegmentResolver } from '../../actors/text-track-segment-loader';
+import type { TextTrackSegmentLoaderActor } from '../../actors/text-track-segment-loader';
 import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
@@ -31,6 +38,7 @@ import {
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
@@ -38,11 +46,22 @@ import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
+// Non-zero-PTS relocation (spike): remove this import, the composed reactor, the
+// `video/audio/textMessagePipelines` finalConfig entries, the `mediaContainerData`
+// state slot, and the `deriveStartMediaTime` config field to drop relocation entirely
+// (text then falls back to the plain `resolveVttSegment` resolver).
+import {
+  type DeriveStartMediaTime,
+  deriveSharedMinStartMediaTime,
+  establishStartMediaTime,
+} from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
 import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behaviors/setup-failover-monitor';
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
+import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
+import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
 // HLS Engine State & Context
@@ -66,6 +85,9 @@ export interface SimpleHlsEngineState {
   selectedAudioTrackId?: string;
   selectedTextTrackId?: string;
   bandwidthState?: BandwidthState;
+  // Non-zero-PTS relocation (spike): transient per-track container data owned by
+  // `establishStartMediaTime`. Remove with the composed reactor.
+  mediaContainerData?: Record<string, MediaContainerData>;
   userVideoTrackSelection?: Partial<VideoTrack>;
   /**
    * Consumer-driven constraint narrowing the audio candidate set. Sibling
@@ -238,6 +260,22 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * key on something else (e.g. Mux's `cdn=` query param).
    */
   getCdnId?: GetCdnId;
+  /**
+   * Non-zero-PTS relocation (spike): the reduce seam consumed by the
+   * `establishStartMediaTime` reactor. Defaults to per-track own origin (Tier 1);
+   * a Tier-2 variant returns the shared `min` across selected A/V. Relocation is
+   * composed into the standard engine below — see the marked block — so this only
+   * needs setting to swap the tier policy. See
+   * `internal/design/spf/presentation-timeline-model.md`.
+   */
+  deriveStartMediaTime?: DeriveStartMediaTime;
+  /**
+   * Proximity window (seconds) for the `recoverEndStall` behavior — how close the
+   * playhead must be to the reachable buffered end for a `waiting` to be treated as the
+   * end-of-stream freeze and nudged to `ended`. Defaults to `0.2`. See
+   * `behaviors/dom/recover-end-stall`.
+   */
+  endStallNudgeWindow?: number;
 }
 
 // ============================================================================
@@ -288,15 +326,28 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
 export function createSimpleHlsEngine(
   config: SimpleHlsEngineConfig = {}
 ): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+  // Non-zero-PTS relocation (spike): resolve the coordination seam once so the reactor
+  // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
+  // SAME derive. Default is shared-`min` across selected A/V (subsumes per-type).
+  const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
   const finalConfig = {
     ...config,
+    deriveStartMediaTime,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
+    // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
+    // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
+    textMessagePipelines: relocatingTextPipelines,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     addSubtitlesTracksToMedia: config.addSubtitlesTracksToMedia ?? addSubtitlesTracksToMedia,
     getShowingSubtitlesTrackFromMedia: config.getShowingSubtitlesTrackFromMedia ?? getShowingSubtitlesTrackFromMedia,
     removeAllSubtitlesTracksFromMedia: config.removeAllSubtitlesTracksFromMedia ?? removeAllSubtitlesTracksFromMedia,
+    // Non-zero-PTS relocation (spike): the discover/stamp steps `establishStartMediaTime`
+    // pairs with. They apply the same `deriveStartMediaTime` seam as the reactor. Remove
+    // these two lines with the reactor.
+    videoMessagePipelines: relocationPipelinesFor('video', deriveStartMediaTime),
+    audioMessagePipelines: relocationPipelinesFor('audio', deriveStartMediaTime),
   };
 
   return createComposition(
@@ -343,6 +394,17 @@ export function createSimpleHlsEngine(
       // in setup-buffer-actors.ts.
       setupMediaSource,
       updateMediaSourceDuration,
+
+      // ── Non-zero-PTS relocation (spike) ──────────────────────────────────
+      // Establishes per-track `startMediaTime` and publishes the relocating
+      // segment-loader pipelines to context. MUST precede `setup*BufferActors`
+      // so the pipelines are published before the loaders read them. Remove this
+      // one line (+ the import, the `mediaContainerData`/`*MessagePipelines`
+      // slots including `textMessagePipelines`, and the `deriveStartMediaTime`
+      // config) to drop relocation and test the Tier-0 baseline / bundle size.
+      establishStartMediaTime,
+      // ─────────────────────────────────────────────────────────────────────
+
       setupVideoBufferActors,
       setupAudioBufferActors,
 
@@ -366,6 +428,9 @@ export function createSimpleHlsEngine(
 
       // End of stream coordination
       endOfStream,
+      // Force native `ended` when Chrome freezes the playhead a few frames short of a
+      // skewed-A/V end after `endOfStream` (audio-clock stall). Inert otherwise.
+      recoverEndStall,
 
       // Text tracks
       syncTextTracks,

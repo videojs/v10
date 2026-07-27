@@ -1,7 +1,13 @@
 import { DocSearch } from '@docsearch/react';
 import { useStore } from '@nanostores/react';
 import { GITHUB_REPO_URL } from '@/consts';
-import { DOCSEARCH_API_KEY, DOCSEARCH_APP_ID, DOCSEARCH_BLOG_INDEX, DOCSEARCH_DOCS_INDEX } from '@/search.config';
+import {
+  DOCSEARCH_API_KEY,
+  DOCSEARCH_APP_ID,
+  DOCSEARCH_BLOG_INDEX,
+  DOCSEARCH_CHANGELOG_INDEX,
+  DOCSEARCH_DOCS_INDEX,
+} from '@/search.config';
 import { currentFramework } from '@/stores/preferences';
 
 interface SearchProps {
@@ -25,6 +31,9 @@ export default function Search({ className }: SearchProps) {
           },
           {
             name: DOCSEARCH_BLOG_INDEX,
+          },
+          {
+            name: DOCSEARCH_CHANGELOG_INDEX,
           },
         ]}
         getMissingResultsUrl={({ query }) =>

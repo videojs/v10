@@ -5,7 +5,46 @@
  * V1 uses simple fixed-duration strategy (buffer N seconds ahead).
  */
 
-import type { Segment } from '../types';
+import { SEGMENT_TIME_EPSILON, type Segment } from '../types';
+
+/** A half-open `[start, end)` interval on the presentation timeline. */
+export interface TimeRange {
+  start: number;
+  end: number;
+}
+
+/**
+ * Merge intervals into sorted, disjoint ranges; touching or overlapping ranges
+ * (gap ≤ `epsilon`) are joined. Empty/inverted ranges are dropped.
+ */
+export function mergeTimeRanges(ranges: readonly TimeRange[], epsilon = SEGMENT_TIME_EPSILON): TimeRange[] {
+  const sorted = ranges.filter((r) => r.end > r.start).sort((a, b) => a.start - b.start);
+  const merged: TimeRange[] = [];
+  for (const r of sorted) {
+    const last = merged[merged.length - 1];
+    if (last && r.start <= last.end + epsilon) {
+      last.end = Math.max(last.end, r.end);
+    } else {
+      merged.push({ start: r.start, end: r.end });
+    }
+  }
+  return merged;
+}
+
+/**
+ * Whether `[start, end)` is fully covered by the union of `merged` ranges,
+ * tolerating `epsilon` of overhang at each edge. `merged` must be disjoint and
+ * sorted (as returned by `mergeTimeRanges`), so full coverage means a single
+ * merged range contains the interval.
+ */
+export function isTimeRangeCovered(
+  start: number,
+  end: number,
+  merged: readonly TimeRange[],
+  epsilon = SEGMENT_TIME_EPSILON
+): boolean {
+  return merged.some((r) => r.start <= start + epsilon && r.end >= end - epsilon);
+}
 
 /**
  * Forward buffer configuration.

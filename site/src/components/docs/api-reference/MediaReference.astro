@@ -1,23 +1,12 @@
 ---
 import { getEntry } from 'astro:content';
 import ContentWidth from '@/components/frames/ContentWidth.astro';
-import A from '@/components/typography/A.astro';
 import H2 from '@/components/typography/H2Markdown.astro';
-import H3 from '@/components/typography/H3Markdown.astro';
-import MarkdownCode from '@/components/typography/MarkdownCode.astro';
-import P from '@/components/typography/P.astro';
-import Table from '@/components/typography/Table.astro';
-import Tbody from '@/components/typography/Tbody.astro';
-import Td from '@/components/typography/Td.astro';
-import Th from '@/components/typography/Th.astro';
-import Thead from '@/components/typography/Thead.astro';
-import Tr from '@/components/typography/Tr.astro';
 import type { MediaReference } from '@/types/media-reference';
 import { resolveReferenceSlug } from '@/utils/api-reference-overrides';
 import { createMediaReferenceModel } from '@/utils/mediaReferenceModel';
-import ApiCSSVarsTable from './ApiCSSVarsTable.astro';
-import CodeChip from './CodeChip.astro';
-import MediaHostPropsTable from './MediaHostPropsTable.astro';
+import HtmlMediaReference from './HtmlMediaReference.astro';
+import ReactMediaReference from './ReactMediaReference.astro';
 
 interface Props {
   media: string;
@@ -25,239 +14,32 @@ interface Props {
 
 const { media } = Astro.props;
 const framework = Astro.params.framework === 'react' ? 'react' : 'html';
-
 const entry = await getEntry('mediaReference', resolveReferenceSlug(media));
 const ref: MediaReference | null = entry?.data ?? null;
 if (!ref) return;
 
 const model = createMediaReferenceModel(media, ref);
 if (!model) return;
-
-const hostPropsSection = model.sections.find((s: { key: string }) => s.key === 'hostProperties');
-const nativeAttrsSection = model.sections.find((s: { key: string }) => s.key === 'nativeAttributes');
-const eventsSection = model.sections.find((s: { key: string }) => s.key === 'events');
-const methodsSection = model.sections.find((s: { key: string }) => s.key === 'methods');
-const cssVarsSection = model.sections.find((s: { key: string }) => s.key === 'cssCustomProperties');
-const mediaTag = `<${ref.mediaType}>`;
-
-const mdnElementUrl = `https://developer.mozilla.org/en-US/docs/Web/HTML/Element/${ref.mediaType}`;
-const mdnEventsUrl = 'https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement#events';
-const mdnMethodsUrl = 'https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement';
-
-// React prop spellings for the native attributes that differ from their HTML
-// attribute names.
-const REACT_PROP_NAMES: Record<string, string> = {
-  autoplay: 'autoPlay',
-  playsinline: 'playsInline',
-  crossorigin: 'crossOrigin',
-};
-
-const sortedNativeAttributes = [...(ref.nativeAttributes ?? [])].sort();
-const attributeNames =
-  framework === 'react' ? sortedNativeAttributes.map((attr) => REACT_PROP_NAMES[attr] ?? attr) : sortedNativeAttributes;
-
-const sortedNativeEvents = [...(ref.events.native ?? [])].sort();
-const sortedMethods = [...(ref.methods ?? [])].sort();
-
-// React exposes synthetic event props for the standard media events only.
-// Track-list and Picture-in-Picture events have no prop and must be handled
-// with a ref + addEventListener. Source: @types/react DOMAttributes.
-const REACT_MEDIA_EVENTS = new Set([
-  'abort',
-  'canplay',
-  'canplaythrough',
-  'durationchange',
-  'emptied',
-  'ended',
-  'error',
-  'loadeddata',
-  'loadedmetadata',
-  'loadstart',
-  'pause',
-  'play',
-  'playing',
-  'progress',
-  'ratechange',
-  'resize',
-  'seeked',
-  'seeking',
-  'stalled',
-  'suspend',
-  'timeupdate',
-  'volumechange',
-  'waiting',
-]);
-const reactMappedEvents = sortedNativeEvents.filter((event) => REACT_MEDIA_EVENTS.has(event));
-const reactRefOnlyEvents = sortedNativeEvents.filter((event) => !REACT_MEDIA_EVENTS.has(event));
-
-const elementSpecificEvents = ref.events.elementSpecific;
+const platform = model.platforms[framework];
+if (!platform) return;
 ---
 
 <ContentWidth>
   <H2 id={model.heading.id}>{model.heading.text}</H2>
-
   {
-    hostPropsSection && (
-      <>
-        <H3 id={hostPropsSection.id}>{hostPropsSection.title}</H3>
-        <MediaHostPropsTable
-          hostProperties={ref.hostProperties}
-          componentName={media}
-        />
-      </>
-    )
-  }
-
-  {
-    nativeAttrsSection && framework === "html" && (
-      <>
-        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
-        <P>
-          Forwards these media attributes to the internal{" "}
-          <MarkdownCode>{mediaTag}</MarkdownCode> element. The standard ones
-          behave as described in the{" "}
-          <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
-          <span class="code-list">
-            {attributeNames.map((attr) => (
-              <CodeChip value={attr} />
-            ))}
-          </span>
-        </P>
-      </>
-    )
-  }
-
-  {
-    nativeAttrsSection && framework === "react" && (
-      <>
-        <H3 id={nativeAttrsSection.id}>{nativeAttrsSection.title}</H3>
-        <P>
-          Renders a native <MarkdownCode>{mediaTag}</MarkdownCode> element and
-          accepts these media attributes as React props. The standard ones
-          behave as described in the{" "}
-          <A href={mdnElementUrl}>MDN media attributes reference</A>:{" "}
-          <span class="code-list">
-            {attributeNames.map((attr) => (
-              <CodeChip value={attr} />
-            ))}
-          </span>
-        </P>
-      </>
-    )
-  }
-
-  {
-    eventsSection && (
-      <>
-        <H3 id={eventsSection.id}>{eventsSection.title}</H3>
-        {framework === "html" ? (
-          <P>
-            Re-dispatches these media events from the internal{" "}
-            <MarkdownCode>{mediaTag}</MarkdownCode> element, so you can listen
-            for them directly. See <A href={mdnEventsUrl}>media events</A>:{" "}
-            <span class="code-list">
-              {sortedNativeEvents.map((event) => (
-                <CodeChip value={event} />
-              ))}
-            </span>
-          </P>
-        ) : (
-          <>
-            <P>
-              Handle these media events with React event props (e.g.{" "}
-              <MarkdownCode>onPlay</MarkdownCode>,{" "}
-              <MarkdownCode>onTimeUpdate</MarkdownCode>). See{" "}
-              <A href={mdnEventsUrl}>media events</A>:{" "}
-              <span class="code-list">
-                {reactMappedEvents.map((event) => (
-                  <CodeChip value={event} />
-                ))}
-              </span>
-            </P>
-            {reactRefOnlyEvents.length > 0 && (
-              <P>
-                These media events have no React prop — attach a listener
-                through a <MarkdownCode>ref</MarkdownCode> with{" "}
-                <MarkdownCode>addEventListener</MarkdownCode>:{" "}
-                <span class="code-list">
-                  {reactRefOnlyEvents.map((event) => (
-                    <CodeChip value={event} />
-                  ))}
-                </span>
-              </P>
-            )}
-          </>
-        )}
-        {elementSpecificEvents.length === 0 ? (
-          <P>
-            This element dispatches no events beyond the media events above.
-          </P>
-        ) : (
-          <>
-            <P>Beyond the media events above, this element emits:</P>
-            <Table maxWidth={false} outerClass="my-6">
-              <Thead>
-                <Tr>
-                  <Th>Event</Th>
-                  <Th>Description</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                {elementSpecificEvents.map((event) => (
-                  <Tr>
-                    <Td class="align-top">
-                      <MarkdownCode>{event.name}</MarkdownCode>
-                    </Td>
-                    <Td class="align-top">{event.description ?? ""}</Td>
-                  </Tr>
-                ))}
-              </Tbody>
-            </Table>
-            {framework === "react" && (
-              <P>
-                These events have no built-in React prop. Attach a listener to
-                the element through a <MarkdownCode>ref</MarkdownCode> with{" "}
-                <MarkdownCode>addEventListener</MarkdownCode>.
-              </P>
-            )}
-          </>
-        )}
-      </>
-    )
-  }
-
-  {
-    methodsSection && (
-      <>
-        <H3 id={methodsSection.id}>{methodsSection.title}</H3>
-        <P>
-          Supports these methods from the native media API. See{" "}
-          <A href={mdnMethodsUrl}>HTMLMediaElement</A> for the core methods:{" "}
-          <span class="code-list">
-            {sortedMethods.map((method) => (
-              <CodeChip value={method} />
-            ))}
-          </span>
-        </P>
-        {framework === "react" && (
-          <P>
-            In React, call these through a <MarkdownCode>ref</MarkdownCode> to
-            the element.
-          </P>
-        )}
-      </>
-    )
-  }
-
-  {
-    cssVarsSection && (
-      <>
-        <H3 id={cssVarsSection.id}>{cssVarsSection.title}</H3>
-        <ApiCSSVarsTable
-          cssCustomProperties={ref.cssCustomProperties}
-          componentName={media}
-        />
-      </>
+    framework === "html" ? (
+      <HtmlMediaReference
+        media={media}
+        mediaType={ref.mediaType}
+        data={platform.data}
+        sections={platform.sections}
+      />
+    ) : (
+      <ReactMediaReference
+        media={media}
+        data={platform.data}
+        sections={platform.sections}
+      />
     )
   }
 </ContentWidth>

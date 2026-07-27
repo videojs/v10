@@ -7,12 +7,7 @@ export default function BasicUsage() {
   return (
     <Player.Provider>
       <Player.Container className="media-container">
-        <Video
-          src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
-          autoPlay
-          muted
-          playsInline
-        />
+        <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline />
         <PlayButton
           className="media-play-button"
           render={(props, state) => (

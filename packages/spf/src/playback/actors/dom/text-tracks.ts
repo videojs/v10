@@ -1,13 +1,7 @@
 import { createTransitionActor } from '../../../core/actors/create-transition-actor';
 import type { Cue } from '../../../media/types';
-import type {
-  AddCuesMessage,
-  ClearMessage,
-  CueSegmentMeta,
-  TextTracksActor,
-  TextTracksActorContext,
-  TextTracksActorMessage,
-} from '../text-tracks';
+import type { AddCuesMessage, CueSegmentMeta } from '../../primitives/text-track-messages';
+import type { ClearMessage, TextTracksActor, TextTracksActorContext, TextTracksActorMessage } from '../text-tracks';
 
 // Re-export the host-agnostic types so existing dom-side consumers can keep
 // importing from this module.

@@ -47,6 +47,7 @@ pnpm -F site astro check
 
 ## Demos
 
+- Use `{{VJS*}}` placeholders from `scripts/replace-demo-placeholders.ts` for shared media URLs in HTML and React demos.
 - Keep demo-specific CSS scoped under a unique root class.
 - Prefix demo classes with framework, component, and variant.
 - Reflect meaningful HTML demo state to `data-*` attributes and style those attributes.

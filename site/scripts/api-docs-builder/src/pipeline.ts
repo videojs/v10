@@ -668,18 +668,40 @@ export interface MediaEventDef {
   description?: string;
 }
 
+export type MediaTargetTag = 'video' | 'audio' | 'iframe';
+
+export interface HtmlMediaReference {
+  target: MediaTargetTag;
+  attributes: {
+    standard: string[];
+    custom: Record<string, HostPropertyDef>;
+  };
+  properties: {
+    definitions: Record<string, HostPropertyDef>;
+    native: string[];
+  };
+  events: {
+    standard: string[];
+    custom: MediaEventDef[];
+  };
+  methods: string[];
+  cssCustomProperties: Record<string, { description: string }>;
+}
+
+export interface ReactMediaReference {
+  target: MediaTargetTag;
+  acceptsNativeProps: boolean;
+  props: Record<string, HostPropertyDef>;
+}
+
 export interface MediaElementReference {
   name: string;
   tagName: string;
   mediaType: 'video' | 'audio';
-  hostProperties: Record<string, HostPropertyDef>;
-  nativeAttributes: string[];
-  events: {
-    native: string[];
-    elementSpecific: MediaEventDef[];
+  platforms: {
+    html: HtmlMediaReference;
+    react?: ReactMediaReference;
   };
-  methods: string[];
-  cssCustomProperties: Record<string, { description: string }>;
 }
 
 export interface MediaElementResult {

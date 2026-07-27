@@ -12,7 +12,8 @@
     { "path": "../../../network" },
     { "path": "../../../media" },
     { "path": "../../../media/dom" },
-    { "path": "../" }
+    { "path": "../" },
+    { "path": "../../primitives" }
   ],
   "include": ["./**/*.ts"]
 }
