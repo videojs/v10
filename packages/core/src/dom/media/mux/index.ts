@@ -1,5 +1,11 @@
 import { HlsJsMedia } from '../hls-js';
-import { type MuxSource, parseMuxVideoURL, toMuxStoryboardURL, toMuxThumbnailURL, toMuxVideoURL } from './utils';
+import {
+  createMuxStoryboardURL,
+  createMuxThumbnailURL,
+  createMuxVideoURL,
+  type MuxSource,
+  parseMuxVideoURL,
+} from './utils';
 
 export { MuxData, type MuxDataProps } from './mux-data';
 export * from './utils';
@@ -57,14 +63,14 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   set source(value: MuxSource | null) {
     if (this.#source === value) return;
     this.#source = value;
-    const src = toMuxVideoURL(value) ?? '';
+    const src = createMuxVideoURL(value) ?? '';
     if (super.src !== src) super.src = src;
     this.dispatchEvent(new Event('sourcechange'));
   }
 
   /** Thumbnail image URL. Falls back to one derived from `source`. */
   get thumbnail(): string {
-    return this.#thumbnail || (toMuxThumbnailURL(this.#source) ?? '');
+    return this.#thumbnail || (createMuxThumbnailURL(this.#source) ?? '');
   }
 
   set thumbnail(value: string) {
@@ -73,7 +79,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
   /** Storyboard (thumbnail sprite) VTT URL. Falls back to one derived from `source`. */
   get storyboard(): string {
-    return this.#storyboard || (toMuxStoryboardURL(this.#source) ?? '');
+    return this.#storyboard || (createMuxStoryboardURL(this.#source) ?? '');
   }
 
   set storyboard(value: string) {

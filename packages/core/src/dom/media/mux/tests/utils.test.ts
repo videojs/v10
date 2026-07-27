@@ -1,5 +1,11 @@
 import { describe, expect, it, vi } from 'vitest';
-import { parseJwt, parseMuxVideoURL, toMuxQuery, toMuxStoryboardURL, toMuxThumbnailURL, toMuxVideoURL } from '../utils';
+import {
+  createMuxQuery,
+  createMuxStoryboardURL,
+  createMuxThumbnailURL,
+  createMuxVideoURL,
+  parseMuxVideoURL,
+} from '../utils';
 
 // Header `{"alg":"HS256"}`, body sets `aud`, empty signature.
 function fakeJwt(payload: Record<string, unknown>): string {
@@ -7,26 +13,26 @@ function fakeJwt(payload: Record<string, unknown>): string {
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
-describe('toMuxVideoURL', () => {
+describe('createMuxVideoURL', () => {
   it('returns undefined without a playbackId', () => {
-    expect(toMuxVideoURL()).toBeUndefined();
-    expect(toMuxVideoURL(null)).toBeUndefined();
-    expect(toMuxVideoURL({ playbackId: '' })).toBeUndefined();
+    expect(createMuxVideoURL()).toBeUndefined();
+    expect(createMuxVideoURL(null)).toBeUndefined();
+    expect(createMuxVideoURL({ playbackId: '' })).toBeUndefined();
   });
 
   it('builds a stream URL from a playbackId', () => {
-    expect(toMuxVideoURL({ playbackId: 'abc123' })).toBe('https://stream.mux.com/abc123.m3u8');
+    expect(createMuxVideoURL({ playbackId: 'abc123' })).toBe('https://stream.mux.com/abc123.m3u8');
   });
 
   it('uses the custom domain', () => {
-    expect(toMuxVideoURL({ playbackId: 'abc123', customDomain: 'example.com' })).toBe(
+    expect(createMuxVideoURL({ playbackId: 'abc123', customDomain: 'example.com' })).toBe(
       'https://stream.example.com/abc123.m3u8'
     );
   });
 
   it('appends playback params as snake_case query params', () => {
     const url = new URL(
-      toMuxVideoURL({
+      createMuxVideoURL({
         playbackId: 'abc123',
         playback: { maxResolution: '1080p', renditionOrder: 'desc', extraParam: 'x', skip: undefined },
       })!
@@ -39,7 +45,7 @@ describe('toMuxVideoURL', () => {
 
   it('appends manifest modifiers as snake_case query params', () => {
     const url = new URL(
-      toMuxVideoURL({
+      createMuxVideoURL({
         playbackId: 'abc123',
         playback: {
           redundantStreams: true,
@@ -64,14 +70,16 @@ describe('toMuxVideoURL', () => {
   });
 
   it('drops all params except the token for signed playback', () => {
-    const url = new URL(toMuxVideoURL({ playbackId: 'abc123', playback: { token: 'jwt', maxResolution: '1080p' } })!);
+    const url = new URL(
+      createMuxVideoURL({ playbackId: 'abc123', playback: { token: 'jwt', maxResolution: '1080p' } })!
+    );
     expect(url.searchParams.get('token')).toBe('jwt');
     expect(url.searchParams.has('max_resolution')).toBe(false);
   });
 
   it('warns when minResolution exceeds maxResolution', () => {
     const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    toMuxVideoURL({ playbackId: 'abc123', playback: { minResolution: '1080p', maxResolution: '720p' } });
+    createMuxVideoURL({ playbackId: 'abc123', playback: { minResolution: '1080p', maxResolution: '720p' } });
     expect(spy).toHaveBeenCalled();
     spy.mockRestore();
   });
@@ -103,47 +111,47 @@ describe('parseMuxVideoURL', () => {
     expect(parseMuxVideoURL('https://stream.mux.com/abc123/highest.mp4')).toBeUndefined();
   });
 
-  it('round-trips through toMuxVideoURL', () => {
+  it('round-trips through createMuxVideoURL', () => {
     const src = 'https://stream.example.com/abc123.m3u8?asset_start_time=3&max_resolution=1080p';
-    expect(toMuxVideoURL(parseMuxVideoURL(src))).toBe(src);
+    expect(createMuxVideoURL(parseMuxVideoURL(src))).toBe(src);
   });
 });
 
-describe('toMuxQuery', () => {
+describe('createMuxQuery', () => {
   it('maps camelCase keys to snake_case and skips nullish values', () => {
-    expect(toMuxQuery({ assetStartTime: 1, b: undefined, c: null, d: 'x' })).toBe('?asset_start_time=1&d=x');
+    expect(createMuxQuery({ assetStartTime: 1, b: undefined, c: null, d: 'x' })).toBe('?asset_start_time=1&d=x');
   });
 
   it('returns an empty string when there are no params', () => {
-    expect(toMuxQuery({ a: undefined })).toBe('');
-    expect(toMuxQuery()).toBe('');
+    expect(createMuxQuery({ a: undefined })).toBe('');
+    expect(createMuxQuery()).toBe('');
   });
 
   it('keeps only the token when one is set', () => {
-    expect(toMuxQuery({ token: 'jwt', assetStartTime: 1 })).toBe('?token=jwt');
+    expect(createMuxQuery({ token: 'jwt', assetStartTime: 1 })).toBe('?token=jwt');
   });
 });
 
-describe('toMuxThumbnailURL', () => {
+describe('createMuxThumbnailURL', () => {
   it('builds a thumbnail URL with params', () => {
-    expect(toMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { time: 5, ext: 'jpg' } })).toBe(
+    expect(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { time: 5, ext: 'jpg' } })).toBe(
       'https://image.mux.com/abc123/thumbnail.jpg?time=5'
     );
   });
 
   it('defaults the extension to webp', () => {
-    expect(toMuxThumbnailURL({ playbackId: 'abc123' })).toBe('https://image.mux.com/abc123/thumbnail.webp');
+    expect(createMuxThumbnailURL({ playbackId: 'abc123' })).toBe('https://image.mux.com/abc123/thumbnail.webp');
   });
 
   it('uses the first entry of a thumbnail array', () => {
-    expect(toMuxThumbnailURL({ playbackId: 'abc123', thumbnail: [{ ext: 'webp' }, { ext: 'jpg' }] })).toBe(
+    expect(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: [{ ext: 'webp' }, { ext: 'jpg' }] })).toBe(
       'https://image.mux.com/abc123/thumbnail.webp'
     );
   });
 
   it('appends transformation modifiers as snake_case query params', () => {
     const url = new URL(
-      toMuxThumbnailURL({
+      createMuxThumbnailURL({
         playbackId: 'abc123',
         thumbnail: {
           time: 5,
@@ -170,76 +178,68 @@ describe('toMuxThumbnailURL', () => {
   });
 
   it('uses explicit params over the source thumbnail', () => {
-    expect(toMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { ext: 'webp' } }, { ext: 'jpg', time: 2 })).toBe(
+    expect(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { ext: 'webp' } }, { ext: 'jpg', time: 2 })).toBe(
       'https://image.mux.com/abc123/thumbnail.jpg?time=2'
     );
   });
 
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 't' });
-    const url = new URL(toMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { token, time: 5 } })!);
+    const url = new URL(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { token, time: 5 } })!);
     expect(url.pathname).toBe('/abc123/thumbnail.webp');
     expect(url.searchParams.get('token')).toBe(token);
     expect(url.searchParams.has('time')).toBe(false);
   });
 
   it('returns undefined for a token with the wrong audience', () => {
-    expect(toMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { token: fakeJwt({ aud: 's' }) } })).toBeUndefined();
+    expect(
+      createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { token: fakeJwt({ aud: 's' }) } })
+    ).toBeUndefined();
   });
 
   it('returns undefined for signed playback without a thumbnail token', () => {
-    expect(toMuxThumbnailURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
+    expect(createMuxThumbnailURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
   });
 
   it('returns undefined without a playbackId', () => {
-    expect(toMuxThumbnailURL()).toBeUndefined();
-    expect(toMuxThumbnailURL({ playbackId: '' })).toBeUndefined();
+    expect(createMuxThumbnailURL()).toBeUndefined();
+    expect(createMuxThumbnailURL({ playbackId: '' })).toBeUndefined();
   });
 });
 
-describe('toMuxStoryboardURL', () => {
+describe('createMuxStoryboardURL', () => {
   it('builds a storyboard URL', () => {
-    expect(toMuxStoryboardURL({ playbackId: 'abc123' })).toBe(
+    expect(createMuxStoryboardURL({ playbackId: 'abc123' })).toBe(
       'https://image.mux.com/abc123/storyboard.vtt?format=webp'
     );
   });
 
   it('uses the custom domain', () => {
-    expect(toMuxStoryboardURL({ playbackId: 'abc123', customDomain: 'example.com' })).toBe(
+    expect(createMuxStoryboardURL({ playbackId: 'abc123', customDomain: 'example.com' })).toBe(
       'https://image.example.com/abc123/storyboard.vtt?format=webp'
     );
   });
 
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 's' });
-    const url = new URL(toMuxStoryboardURL({ playbackId: 'abc123', storyboard: { token } })!);
+    const url = new URL(createMuxStoryboardURL({ playbackId: 'abc123', storyboard: { token } })!);
     expect(url.pathname).toBe('/abc123/storyboard.vtt');
     expect(url.searchParams.get('token')).toBe(token);
     expect(url.searchParams.has('format')).toBe(false);
   });
 
   it('returns undefined without a playbackId', () => {
-    expect(toMuxStoryboardURL()).toBeUndefined();
-    expect(toMuxStoryboardURL({ playbackId: '' })).toBeUndefined();
+    expect(createMuxStoryboardURL()).toBeUndefined();
+    expect(createMuxStoryboardURL({ playbackId: '' })).toBeUndefined();
   });
 
   it('returns undefined for a token with the wrong audience', () => {
-    expect(toMuxStoryboardURL({ playbackId: 'abc123', storyboard: { token: fakeJwt({ aud: 't' }) } })).toBeUndefined();
+    expect(
+      createMuxStoryboardURL({ playbackId: 'abc123', storyboard: { token: fakeJwt({ aud: 't' }) } })
+    ).toBeUndefined();
   });
 
   it('returns undefined for signed playback without a storyboard token', () => {
-    expect(toMuxStoryboardURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
-  });
-});
-
-describe('parseJwt', () => {
-  it('decodes a token payload', () => {
-    expect(parseJwt(fakeJwt({ aud: 'v', sub: 'abc' }))).toMatchObject({ aud: 'v', sub: 'abc' });
-  });
-
-  it('returns undefined for invalid tokens', () => {
-    expect(parseJwt(undefined)).toBeUndefined();
-    expect(parseJwt('')).toBeUndefined();
-    expect(parseJwt('not-a-jwt')).toBeUndefined();
+    expect(createMuxStoryboardURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
   });
 });

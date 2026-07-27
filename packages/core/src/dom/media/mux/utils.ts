@@ -1,3 +1,4 @@
+import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
 
@@ -88,7 +89,7 @@ export interface MuxSource {
  * `snake_case` and skipping nullish values. A `token` replaces every other
  * param — signed URLs bake all modifiers into the token itself.
  */
-export function toMuxQuery(params: Record<string, unknown> = {}): string {
+export function createMuxQuery(params: Record<string, unknown> = {}): string {
   const { token, ...rest } = params;
   if (token) return `?${new URLSearchParams({ token: String(token) })}`;
 
@@ -102,7 +103,7 @@ export function toMuxQuery(params: Record<string, unknown> = {}): string {
 }
 
 /** Build the Mux HLS stream URL for a source. */
-export function toMuxVideoURL(source?: MuxSource | null): string | undefined {
+export function createMuxVideoURL(source?: MuxSource | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, playback } = source;
 
@@ -114,7 +115,7 @@ export function toMuxVideoURL(source?: MuxSource | null): string | undefined {
     }
   }
 
-  return `https://stream.${customDomain}/${playbackId}.m3u8${toMuxQuery(playback)}`;
+  return `https://stream.${customDomain}/${playbackId}.m3u8${createMuxQuery(playback)}`;
 }
 
 /**
@@ -152,31 +153,31 @@ export function parseMuxVideoURL(src: string): MuxSource | undefined {
  * Build the thumbnail image URL for a source. Uses the first entry when
  * `source.thumbnail` is an array, unless explicit `params` are given.
  */
-export function toMuxThumbnailURL(source?: MuxSource | null, params?: MuxThumbnailParams): string | undefined {
+export function createMuxThumbnailURL(source?: MuxSource | null, params?: MuxThumbnailParams): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, thumbnail, playback } = source;
   const { ext = 'webp', token, ...query } = params ?? (Array.isArray(thumbnail) ? thumbnail[0] : thumbnail) ?? {};
 
   // Thumbnail tokens must carry the image (`t`) audience.
-  if (token && parseJwt(token)?.aud !== 't') return undefined;
+  if (token && parseJwt<MuxJWT>(token)?.aud !== 't') return undefined;
   // Signed playback requires a matching thumbnail token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 
-  return `https://image.${customDomain}/${playbackId}/thumbnail.${ext}${toMuxQuery({ token, ...query })}`;
+  return `https://image.${customDomain}/${playbackId}/thumbnail.${ext}${createMuxQuery({ token, ...query })}`;
 }
 
 /** Build the storyboard (thumbnail sprite) VTT URL for a source. */
-export function toMuxStoryboardURL(source?: MuxSource | null): string | undefined {
+export function createMuxStoryboardURL(source?: MuxSource | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, storyboard, playback } = source;
   const { token, ...query } = storyboard ?? {};
 
   // Storyboard tokens must carry the storyboard (`s`) audience.
-  if (token && parseJwt(token)?.aud !== 's') return undefined;
+  if (token && parseJwt<MuxJWT>(token)?.aud !== 's') return undefined;
   // Signed playback requires a matching storyboard token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 
-  return `https://image.${customDomain}/${playbackId}/storyboard.vtt${toMuxQuery({ token, format: 'webp', ...query })}`;
+  return `https://image.${customDomain}/${playbackId}/storyboard.vtt${createMuxQuery({ token, format: 'webp', ...query })}`;
 }
 
 export type MuxJWT = {
@@ -184,22 +185,3 @@ export type MuxJWT = {
   aud: 'v' | 't' | 'g' | 's' | 'd';
   exp: number;
 };
-
-/** Decode the payload of a Mux JWT, returning `undefined` for invalid tokens. */
-export function parseJwt(token: string | undefined): Partial<MuxJWT> | undefined {
-  const base64Url = (token ?? '').split('.')[1];
-  if (!base64Url) return undefined;
-
-  try {
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const json = decodeURIComponent(
-      atob(base64)
-        .split('')
-        .map((char) => `%${`00${char.charCodeAt(0).toString(16)}`.slice(-2)}`)
-        .join('')
-    );
-    return JSON.parse(json);
-  } catch {
-    return undefined;
-  }
-}

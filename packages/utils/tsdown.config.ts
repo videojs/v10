@@ -8,6 +8,7 @@ export default defineConfig({
     dom: './src/dom/index.ts',
     events: './src/events/index.ts',
     function: './src/function/index.ts',
+    jwt: './src/jwt/index.ts',
     number: './src/number/index.ts',
     object: './src/object/index.ts',
     percent: './src/percent/index.ts',

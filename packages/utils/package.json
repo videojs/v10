@@ -27,6 +27,10 @@
       "types": "./dist/function.d.ts",
       "default": "./dist/function.js"
     },
+    "./jwt": {
+      "types": "./dist/jwt.d.ts",
+      "default": "./dist/jwt.js"
+    },
     "./object": {
       "types": "./dist/object.d.ts",
       "default": "./dist/object.js"
