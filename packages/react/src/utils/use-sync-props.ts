@@ -14,16 +14,19 @@ export function useSyncProps<Props extends object, Rest extends Record<string, u
     if (target[key as keyof Props] !== value) target[key as keyof Props] = value as Props[keyof Props];
   };
 
-  // Reset props the consumer stopped passing back to their defaults before
-  // applying the current ones (mirrors react-dom removing absent attributes).
+  // Reset props the consumer stopped passing (or passed as `undefined`) back to
+  // their defaults before applying the current ones, so a reset can never wipe a
+  // value another prop derives in the same render (e.g. `source` deriving `src`).
+  // Mirrors react-dom removing absent attributes.
   for (const key of prevSyncedRef.current ?? []) {
-    if (!(key in props)) sync(key, (defaults as Record<string, unknown>)[key]);
+    if (isUndefined((props as Record<string, unknown>)[key])) sync(key, (defaults as Record<string, unknown>)[key]);
   }
 
   for (const key in props) {
     if (key in defaults) {
+      if (isUndefined(props[key])) continue;
       synced.add(key);
-      sync(key, isUndefined(props[key]) ? (defaults as Record<string, unknown>)[key] : props[key]);
+      sync(key, props[key]);
     } else {
       rest[key] = props[key];
     }
