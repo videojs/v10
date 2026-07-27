@@ -120,6 +120,12 @@ function formatBandwidth(bps: number): string {
   return `${Math.round(bps / 1000)} Kbps`;
 }
 
+function formatFrameRate(frameRate: { frameRateNumerator: number; frameRateDenominator?: number }): string {
+  const fps = frameRate.frameRateNumerator / (frameRate.frameRateDenominator ?? 1);
+  // Trim to two decimals then drop trailing zeros so 30 shows as "30" and 29.97 stays "29.97".
+  return `${Number.parseFloat(fps.toFixed(2))} fps`;
+}
+
 function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
@@ -264,10 +270,11 @@ function getVideoSelectionGroups(tracks: ReturnType<typeof getVideoTracks>): Vid
       const width = 'width' in track ? track.width : undefined;
       const height = 'height' in track ? track.height : undefined;
       const res = width && height ? `${width}×${height} @ ` : '';
+      const fps = 'frameRate' in track && track.frameRate ? ` · ${formatFrameRate(track.frameRate)}` : '';
       const filter: VideoSelectionGroup['filter'] = { bandwidth: track.bandwidth };
       if (width) filter.width = width;
       if (height) filter.height = height;
-      group = { key, label: `${res}${formatBandwidth(track.bandwidth)}`, filter, members: [] };
+      group = { key, label: `${res}${formatBandwidth(track.bandwidth)}${fps}`, filter, members: [] };
       groups.set(key, group);
     }
     // Member ids (one per CDN for redundant streams) are surfaced in the
