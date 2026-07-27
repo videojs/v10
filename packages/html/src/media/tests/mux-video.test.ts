@@ -135,6 +135,53 @@ describe('MuxVideo', () => {
     expect(el.shadowRoot!.querySelector('track')).toBeNull();
   });
 
+  it('tracks the storyboard track through a clone/replace (hls.js clearing cues)', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+
+    // `HlsJsMediaMetadataTracksMixin` clones and replaces track nodes to reset cues.
+    const target = el.target!;
+    const track = target.querySelector('track')!;
+    target.replaceChild(track.cloneNode(), track);
+
+    el.setAttribute('src', 'https://stream.mux.com/xyz789.m3u8');
+    const tracks = el.shadowRoot!.querySelectorAll('track');
+    expect(tracks.length).toBe(1);
+    expect(tracks[0]?.getAttribute('src')).toBe('https://image.mux.com/xyz789/storyboard.vtt?format=webp');
+
+    el.host.streamType = 'live';
+    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+  });
+
+  it('reflects the derived src to the src attribute when source is set', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123' };
+
+    expect(el.getAttribute('src')).toBe('https://stream.mux.com/abc123.m3u8');
+  });
+
+  it('updates a stale src attribute when source replaces it', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.source = { playbackId: 'xyz789' };
+
+    expect(el.getAttribute('src')).toBe('https://stream.mux.com/xyz789.m3u8');
+    expect(el.host.src).toBe('https://stream.mux.com/xyz789.m3u8');
+  });
+
+  it('removes the src attribute when the source is cleared', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123' };
+    el.source = null;
+
+    expect(el.hasAttribute('src')).toBe(false);
+    expect(el.host.src).toBe('');
+  });
+
   it('exposes the effective thumbnail URL without touching the media poster', () => {
     const el = createMuxVideo();
 
