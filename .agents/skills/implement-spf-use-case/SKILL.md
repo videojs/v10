@@ -5,6 +5,8 @@ description: Implement an SPF use-case composition. Use when a delivery scenario
 
 # Implement an SPF use case
 
+Read `references/workflow.md` completely before acting; it contains the detailed composition, prerequisite, implementation, testing, and cascade workflow.
+
 Treat the use-case entry as planning input. Read it, its constituent features, current compositions/adapters, tests, and applicable conventions.
 
 1. Verify each required feature is implemented for the requested scope; expose missing prerequisites instead of hiding them in wiring.

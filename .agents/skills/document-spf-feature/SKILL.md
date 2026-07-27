@@ -5,6 +5,8 @@ description: Document an SPF feature under internal/design/spf/features. Use for
 
 # Document an SPF feature
 
+Read `references/workflow.md` completely before acting; it contains the detailed registry, decomposition, evidence, cascade, and validation workflow.
+
 Registry entries guide planning but do not override code. Read `internal/design/spf/features/clusters.md`, a strong neighboring entry, relevant implementation/tests, and linked records.
 
 1. Classify the engine capability and distinguish it from delivery use cases or implementation conventions.

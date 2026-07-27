@@ -5,6 +5,8 @@ description: Implement an SPF feature from its registry entry. Use when an engin
 
 # Implement an SPF feature
 
+Read `references/workflow.md` completely before acting; it contains the detailed disambiguation, planning, implementation, testing, and registry-update workflow.
+
 Treat the feature entry as planning input. Reconcile it with code, tests, conventions, and requested scope before editing.
 
 1. Read the entry, related features, implementation, tests, and applicable SPF conventions.

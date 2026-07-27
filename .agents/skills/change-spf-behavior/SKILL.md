@@ -7,6 +7,13 @@ description: Change SPF playback-engine behaviors. Use when updating, refactorin
 
 Treat code and tests as implementation truth. Read the behavior, composition site, state/context slots, helpers, and tests, then load only the relevant file from `internal/design/spf/conventions/`.
 
+Before acting, read the one detailed workflow that matches the requested change:
+
+- Purpose expands or changes: `references/update.md`
+- Purpose stays fixed while implementation improves: `references/refactor.md`
+- One responsibility splits by type or concern: `references/split.md`
+- Two responsibilities may become one: `references/merge.md`
+
 1. State the current purpose, intended delta, and observable business rules.
 2. Map inputs, writes, lifecycle gates, cleanup, ordering, and source-reset rules.
 3. Choose the smallest destination shape that preserves those constraints.

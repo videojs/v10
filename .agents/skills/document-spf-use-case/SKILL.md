@@ -5,6 +5,8 @@ description: Document an SPF use-case composition. Use for delivery scenarios, v
 
 # Document an SPF use case
 
+Read `references/workflow.md` completely before acting; it contains the detailed composition, evidence, cascade, and validation workflow.
+
 Read `internal/design/spf/use-cases/README.md`, its decomposition rubric, related feature entries, a strong neighboring use case, and current implementation/tests.
 
 1. Describe the delivery scenario and the feature additions, removals, swaps, or tuning that compose it.

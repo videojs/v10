@@ -5,6 +5,8 @@ description: Create or extract one SPF playback-engine behavior. Use for a new a
 
 # Create an SPF behavior
 
+Read `references/workflow.md` completely before acting; it contains the detailed SPF creation workflow and failure checks.
+
 Read adjacent behaviors, the composition site, state/context slots, and `internal/design/spf/conventions/README.md`. Load only the applicable signal, actor, reactor, configuration, or behavior convention.
 
 1. Define one-sentence purpose, inputs, writes, lifecycle, cleanup, ordering, and source-reset rules.

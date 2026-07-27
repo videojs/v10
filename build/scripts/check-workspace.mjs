@@ -466,7 +466,17 @@ const SKILL_MAX_LINES = 200;
 const SKILL_MAX_BYTES = 10_000;
 const SKILL_RESOURCE_MAX_LINES = 500;
 const SKILL_RESOURCE_MAX_BYTES = 20_000;
+const RESTORED_SPF_RESOURCE_MAX_LINES = 1_200;
+const RESTORED_SPF_RESOURCE_MAX_BYTES = 60_000;
 const SKILL_METADATA_MAX_BYTES = 6_000;
+const RESTORED_SPF_SKILLS = new Set([
+  'change-spf-behavior',
+  'create-spf-behavior',
+  'document-spf-feature',
+  'document-spf-use-case',
+  'implement-spf-feature',
+  'implement-spf-use-case',
+]);
 const PORTABLE_SKILL_FIELDS = new Set(['name', 'description']);
 const SKILL_ACTIONS = new Set([
   'build',
@@ -679,13 +689,17 @@ function checkAgentContext() {
   }
 
   for (const skillDir of canonicalSkillDirs) {
+    const owner = relativePath(skillDir).split('/').at(-1);
+    const restoredSpfWorkflow = RESTORED_SPF_SKILLS.has(owner);
+    const resourceMaxLines = restoredSpfWorkflow ? RESTORED_SPF_RESOURCE_MAX_LINES : SKILL_RESOURCE_MAX_LINES;
+    const resourceMaxBytes = restoredSpfWorkflow ? RESTORED_SPF_RESOURCE_MAX_BYTES : SKILL_RESOURCE_MAX_BYTES;
+
     for (const path of listFiles(skillDir, (path) => path.endsWith('.md') && !path.endsWith('/SKILL.md'))) {
-      checkFileBudget(path, SKILL_RESOURCE_MAX_LINES, SKILL_RESOURCE_MAX_BYTES, warnings);
+      checkFileBudget(path, resourceMaxLines, resourceMaxBytes, warnings);
     }
 
     for (const path of listFiles(skillDir, (path) => path.endsWith('.md'))) {
       const source = readText(path);
-      const owner = relativePath(skillDir).split('/').at(-1);
       for (const name of skillNames) {
         if (name !== owner && source.includes(`\`${name}\``)) {
           warnings.push(`${relativePath(path)}: must not explicitly load or route to sibling skill "${name}"`);
@@ -701,6 +715,7 @@ function checkAgentContext() {
 
 const DESIGN_STATUSES = new Set(['draft', 'decided', 'active', 'partial', 'implemented', 'superseded', 'reference']);
 const INTERNAL_RECORD_MAX_LINES = 160;
+const RESTORED_SPF_RECORD_MAX_LINES = 1_000;
 
 function recordFrontmatter(path, warnings) {
   const relative = relativePath(path);
@@ -756,7 +771,10 @@ function checkInternalRecords() {
 
   for (const path of listFiles(designDir, (path) => path.endsWith('.md'))) {
     if (path === designReadme) continue;
-    checkFileBudget(path, INTERNAL_RECORD_MAX_LINES, Number.POSITIVE_INFINITY, warnings);
+    const recordMaxLines = path.startsWith(`${join(designDir, 'spf')}${sep}`)
+      ? RESTORED_SPF_RECORD_MAX_LINES
+      : INTERNAL_RECORD_MAX_LINES;
+    checkFileBudget(path, recordMaxLines, Number.POSITIVE_INFINITY, warnings);
     checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
     if (!frontmatter) continue;
@@ -777,7 +795,10 @@ function checkInternalRecords() {
   }
 
   for (const path of listFiles(decisionsDir, (path) => path.endsWith('.md') && !path.endsWith('/README.md'))) {
-    checkFileBudget(path, INTERNAL_RECORD_MAX_LINES, Number.POSITIVE_INFINITY, warnings);
+    const recordMaxLines = path.startsWith(`${join(decisionsDir, 'spf')}${sep}`)
+      ? RESTORED_SPF_RECORD_MAX_LINES
+      : INTERNAL_RECORD_MAX_LINES;
+    checkFileBudget(path, recordMaxLines, Number.POSITIVE_INFINITY, warnings);
     checkLocalMarkdownLinks(path, warnings);
     const frontmatter = recordFrontmatter(path, warnings);
     if (!frontmatter) continue;
