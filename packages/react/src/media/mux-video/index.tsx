@@ -47,11 +47,25 @@ export namespace MuxVideo {
 function MuxStoryboard({ media }: { media: MuxMedia }) {
   const subscribe = useCallback(
     (onChange: () => void) => {
-      media.addEventListener('streamtypechange', onChange);
-      media.addEventListener('sourcechange', onChange);
+      // `useSyncProps` writes `src` / `source` during render and those setters
+      // dispatch `sourcechange` synchronously. Defer (and coalesce) notifications
+      // so we never schedule an update while another component is rendering.
+      let cancelled = false;
+      let scheduled = false;
+      const notify = () => {
+        if (scheduled) return;
+        scheduled = true;
+        queueMicrotask(() => {
+          scheduled = false;
+          if (!cancelled) onChange();
+        });
+      };
+      media.addEventListener('streamtypechange', notify);
+      media.addEventListener('sourcechange', notify);
       return () => {
-        media.removeEventListener('streamtypechange', onChange);
-        media.removeEventListener('sourcechange', onChange);
+        cancelled = true;
+        media.removeEventListener('streamtypechange', notify);
+        media.removeEventListener('sourcechange', notify);
       };
     },
     [media]

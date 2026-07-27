@@ -91,6 +91,35 @@ describe('MuxVideo', () => {
     expect(container.querySelector('track')).toBeNull();
   });
 
+  it('updates the storyboard track when the source changes without render-phase warnings', () => {
+    const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    const { container, rerender } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
+    rerender(<MuxVideo source={{ playbackId: 'xyz789' }} />);
+
+    expect(container.querySelector('track')?.getAttribute('src')).toBe(
+      'https://image.mux.com/xyz789/storyboard.vtt?format=webp'
+    );
+    // Guards against "Cannot update a component while rendering a different component".
+    expect(consoleError).not.toHaveBeenCalled();
+
+    consoleError.mockRestore();
+  });
+
+  it('clears a storyboard override when the prop is removed', () => {
+    const { container, rerender } = render(
+      <MuxVideo source={{ playbackId: 'abc123' }} storyboard="https://image.mux.com/other/storyboard.vtt" />
+    );
+
+    expect(container.querySelector('track')?.getAttribute('src')).toBe('https://image.mux.com/other/storyboard.vtt');
+
+    rerender(<MuxVideo source={{ playbackId: 'abc123' }} />);
+
+    expect(container.querySelector('track')?.getAttribute('src')).toBe(
+      'https://image.mux.com/abc123/storyboard.vtt?format=webp'
+    );
+  });
+
   it('does not add a storyboard track for live streams', () => {
     const streamType = vi.spyOn(MuxMedia.prototype, 'streamType', 'get').mockReturnValue('live');
 
