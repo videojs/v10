@@ -174,6 +174,31 @@ describe('MuxMedia', () => {
     expect(onSourceChange).not.toHaveBeenCalled();
   });
 
+  it('does not fire sourcechange for a structurally equal source', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', playback: { maxResolution: '1080p' } };
+
+    const onSourceChange = vi.fn();
+    media.addEventListener('sourcechange', onSourceChange);
+    media.source = { playbackId: 'abc123', playback: { maxResolution: '1080p' } };
+
+    expect(onSourceChange).not.toHaveBeenCalled();
+
+    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
+
+    expect(onSourceChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('parses typed playback params from a Mux stream src', () => {
+    const media = new MuxMedia();
+    media.src = 'https://stream.mux.com/abc123.m3u8?asset_start_time=3&redundant_streams=true';
+
+    expect(media.source).toEqual({
+      playbackId: 'abc123',
+      playback: { assetStartTime: 3, redundantStreams: true },
+    });
+  });
+
   it('fires sourcechange when a Mux stream src is parsed', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn();

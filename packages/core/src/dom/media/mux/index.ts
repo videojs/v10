@@ -3,6 +3,7 @@ import {
   createMuxStoryboardURL,
   createMuxThumbnailURL,
   createMuxVideoURL,
+  isSameMuxSource,
   type MuxSource,
   parseMuxVideoURL,
 } from './utils';
@@ -44,7 +45,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   set src(value: string) {
     if (super.src === value) return;
     const source = parseMuxVideoURL(value) ?? null;
-    const changed = this.#source !== source;
+    const changed = !isSameMuxSource(this.#source, source);
     this.#source = source;
     super.src = value;
     if (changed) this.dispatchEvent(new Event('sourcechange'));
@@ -61,7 +62,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   }
 
   set source(value: MuxSource | null) {
-    if (this.#source === value) return;
+    if (isSameMuxSource(this.#source, value)) return;
     this.#source = value;
     const src = createMuxVideoURL(value) ?? '';
     if (super.src !== src) super.src = src;

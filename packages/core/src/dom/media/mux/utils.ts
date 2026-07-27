@@ -1,4 +1,5 @@
 import { parseJwt } from '@videojs/utils/jwt';
+import { deepEqual } from '@videojs/utils/object';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
 
@@ -142,11 +143,19 @@ export function parseMuxVideoURL(src: string): MuxSource | undefined {
 
   const playback: MuxPlaybackParams = {};
   for (const [key, value] of url.searchParams) {
-    playback[camelCase(key)] = parseMuxParamValue(value);
+    playback[camelCase(key)] = key === 'token' ? value : parseMuxParamValue(value);
   }
   if (Object.keys(playback).length > 0) source.playback = playback;
 
   return source;
+}
+
+/**
+ * Structural equality for Mux sources. Compares nested playback / thumbnail /
+ * storyboard / drm params, treating keys explicitly set to `undefined` as absent.
+ */
+export function isSameMuxSource(a?: MuxSource | null, b?: MuxSource | null): boolean {
+  return deepEqual(a ?? null, b ?? null);
 }
 
 /**
