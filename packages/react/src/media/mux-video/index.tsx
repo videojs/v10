@@ -7,7 +7,7 @@ import { addComponent } from '@videojs/core/dom/media/media-host';
 import type { MuxMediaProps } from '@videojs/core/dom/media/mux';
 import { MuxData, MuxMedia, muxMediaDefaultProps } from '@videojs/core/dom/media/mux';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
-import { forwardRef, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useSyncExternalStore } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
@@ -31,22 +31,9 @@ export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function Mux
   const composedRef = useComposedRefs(attachRef, ref);
   const htmlProps = useSyncProps(media, props, muxVideoDefaultProps);
 
-  // Stream type is detected at runtime; track it so live streams skip storyboards.
-  const [streamType, setStreamType] = useState(() => media.streamType);
-  useEffect(() => {
-    const sync = () => setStreamType(media.streamType);
-    sync();
-    media.addEventListener('streamtypechange', sync);
-    return () => media.removeEventListener('streamtypechange', sync);
-  }, [media]);
-
-  // The media derives the storyboard URL from `src`/`source` (props were
-  // synced above), except for live streams which have no storyboard.
-  const storyboardSrc = streamType === StreamTypes.LIVE ? undefined : media.storyboard || undefined;
-
   return (
     <video ref={composedRef} {...htmlProps}>
-      {storyboardSrc && <track kind="metadata" label="thumbnails" src={storyboardSrc} default />}
+      <MuxStoryboard media={media} />
       {children}
     </video>
   );
@@ -54,4 +41,28 @@ export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function Mux
 
 export namespace MuxVideo {
   export type Props = MuxVideoProps;
+}
+
+// Renders the storyboard (thumbnail) track derived from the media `source`.
+// Kept as its own component so runtime media changes (stream type detection,
+// source swaps) re-render the track instead of the whole media component.
+function MuxStoryboard({ media }: { media: MuxMedia }) {
+  const subscribe = useCallback(
+    (onChange: () => void) => {
+      media.addEventListener('streamtypechange', onChange);
+      media.addEventListener('sourcechange', onChange);
+      return () => {
+        media.removeEventListener('streamtypechange', onChange);
+        media.removeEventListener('sourcechange', onChange);
+      };
+    },
+    [media]
+  );
+
+  // The stream type is detected at runtime and live streams have no storyboard.
+  const getSnapshot = () => (media.streamType === StreamTypes.LIVE ? '' : media.storyboard);
+  const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  if (!src) return null;
+  return <track kind="metadata" label="thumbnails" src={src} default />;
 }
