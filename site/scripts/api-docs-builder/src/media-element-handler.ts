@@ -232,8 +232,13 @@ function parseCustomMediaElementCall(
     const extendsClause = node.heritageClauses.find((h) => h.token === ts.SyntaxKind.ExtendsKeyword);
     if (!extendsClause || extendsClause.types.length === 0) return;
 
-    const extendsExpr = extendsClause.types[0]!.expression;
-    findCustomMediaElement(extendsExpr);
+    const extendsExpr = unwrapExpression(extendsClause.types[0]!.expression);
+    // Handle hoisted bases: `const Base = Mixin(CustomMediaElement(...)); class X extends (Base as ...)`
+    findCustomMediaElement(
+      ts.isIdentifier(extendsExpr)
+        ? (resolveLocalInitializer(sourceFile, extendsExpr.text) ?? extendsExpr)
+        : extendsExpr
+    );
   });
 
   function findCustomMediaElement(node: ts.Node): void {
@@ -353,6 +358,19 @@ function unwrapExpression(expr: ts.Expression): ts.Expression {
     expr = expr.expression;
   }
   return expr;
+}
+
+/** Resolve a same-file `const <name> = <initializer>` declaration to its initializer. */
+function resolveLocalInitializer(sourceFile: ts.SourceFile, name: string): ts.Expression | undefined {
+  for (const statement of sourceFile.statements) {
+    if (!ts.isVariableStatement(statement)) continue;
+    for (const declaration of statement.declarationList.declarations) {
+      if (ts.isIdentifier(declaration.name) && declaration.name.text === name && declaration.initializer) {
+        return unwrapExpression(declaration.initializer);
+      }
+    }
+  }
+  return undefined;
 }
 
 /**

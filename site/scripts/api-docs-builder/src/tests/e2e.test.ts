@@ -74,6 +74,9 @@
  *                   (ExtendingHost extends ComplexHost). Builder must
  *                   walk the extends chain to include inherited properties.
  *                   Child overrides (debug) replace parent definitions.
+ *                   Also exercises a hoisted-const base with an `as` cast
+ *                   (`extends (Base as typeof Base)`) — the builder must
+ *                   unwrap the cast and resolve the local const initializer.
  *   container.ts  — Exclusion case. Not a media element — re-exports an
  *                   existing class instead of declaring one inline.
  *   background-video.ts — Exclusion case. Uses MediaAttachMixin(HTMLElement)

@@ -1,7 +1,8 @@
 /**
  * Mock extending media element — mirrors MuxVideo.
  *
- * Exercises: media element with a host that inherits from another host.
+ * Exercises: media element with a host that inherits from another host,
+ * plus a hoisted-const base with an `as` cast in the extends clause.
  */
 import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
 import { ExtendingHost } from '../../../../core/src/dom/media/extending';
@@ -10,4 +11,6 @@ function MediaAttachMixin(base: any) {
   return base;
 }
 
-export class ExtendingVideo extends MediaAttachMixin(CustomMediaElement('video', ExtendingHost)) {}
+const ExtendingVideoBase = MediaAttachMixin(CustomMediaElement('video', ExtendingHost));
+
+export class ExtendingVideo extends (ExtendingVideoBase as typeof ExtendingVideoBase) {}
