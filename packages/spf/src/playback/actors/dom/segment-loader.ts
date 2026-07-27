@@ -83,8 +83,15 @@ export type SegmentLoaderActorState = 'idle' | 'loading' | 'destroyed';
 export interface SegmentLoaderActorContext {
   /** Track ID of the init segment currently being fetched/appended, or null. */
   inFlightInitTrackId: string | null;
-  /** Segment ID currently being fetched/appended, or null. */
-  inFlightSegmentId: string | null;
+  /**
+   * Identity of the segment currently being fetched/appended, or null. Tracks
+   * the `trackId` alongside the positional `id` because renditions number
+   * segments independently (`segment-N`): an in-flight LOW `segment-0` must not
+   * be mistaken for a needed HIGH `segment-0` on a switch (see the loading
+   * handler's continue/preempt decision). Mirrors the text-track loader, which
+   * already matches its in-flight segment on `(inFlightTrackId, inFlightSegmentId)`.
+   */
+  inFlightSegment: { id: string; trackId: string } | null;
 }
 
 export type SegmentLoaderActor = MessageActor<SegmentLoaderActorState, SegmentLoaderActorContext, SegmentLoaderMessage>;
@@ -129,7 +136,8 @@ function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }:
     // even if a step aborts or throws mid-pipeline. Only append ops track it.
     try {
       if (op.type === 'append-init') setContext({ ...getContext(), inFlightInitTrackId: op.meta.trackId });
-      else if (op.type === 'append-segment') setContext({ ...getContext(), inFlightSegmentId: op.meta.id });
+      else if (op.type === 'append-segment')
+        setContext({ ...getContext(), inFlightSegment: { id: op.meta.id, trackId: op.meta.trackId } });
 
       for (const step of pipelines[op.type]) {
         if (taskSignal.aborted) return;
@@ -137,7 +145,7 @@ function makeLoadTask(op: LoadTask, { getContext, setContext, pipelines, deps }:
       }
     } finally {
       if (op.type === 'append-init') setContext({ ...getContext(), inFlightInitTrackId: null });
-      else if (op.type === 'append-segment') setContext({ ...getContext(), inFlightSegmentId: null });
+      else if (op.type === 'append-segment') setContext({ ...getContext(), inFlightSegment: null });
     }
   });
 }
@@ -387,7 +395,7 @@ export function createSegmentLoaderActor(
   return createMachineActor<UserState, SegmentLoaderActorContext, SegmentLoaderMessage, () => SerialRunner>({
     runner: () => new SerialRunner(),
     initial: 'idle',
-    context: { inFlightInitTrackId: null, inFlightSegmentId: null },
+    context: { inFlightInitTrackId: null, inFlightSegment: null },
     states: {
       idle: {
         on: {
@@ -406,10 +414,23 @@ export function createSegmentLoaderActor(
             const { context, runner } = ctx;
             const allTasks = planTasks(msg);
 
-            // Determine whether the in-flight operation is still needed.
+            // Determine whether the in-flight operation is still needed. The
+            // segment match requires BOTH the positional id AND the trackId:
+            // renditions number segments independently, so an in-flight LOW
+            // `segment-0` (spanning [0, 7.13]) must NOT be treated as covering a
+            // switched-to HIGH `segment-0` (spanning [0, 7.98]). Matching by id
+            // alone kept the LOW fetch, skipped HIGH's leading segment, and left
+            // its tail as a gap — intermittently, only when the switch beat the
+            // in-flight append. A track switch now always preempts (correct: the
+            // new rendition's same-slot segment must be (re)fetched).
+            const inFlight = context.inFlightSegment;
+            const segmentInFlightStillNeeded = (t: LoadTask): boolean =>
+              t.type === 'append-segment' &&
+              inFlight !== null &&
+              t.meta.id === inFlight.id &&
+              t.meta.trackId === inFlight.trackId;
             const inFlightStillNeeded =
-              (context.inFlightSegmentId !== null &&
-                allTasks.some((t) => t.type === 'append-segment' && t.meta.id === context.inFlightSegmentId)) ||
+              (inFlight !== null && allTasks.some(segmentInFlightStillNeeded)) ||
               (context.inFlightInitTrackId !== null &&
                 allTasks.some((t) => t.type === 'append-init' && t.meta.trackId === context.inFlightInitTrackId));
 
@@ -420,7 +441,7 @@ export function createSegmentLoaderActor(
               scheduleAll(
                 allTasks.filter(
                   (t) =>
-                    !(t.type === 'append-segment' && t.meta.id === context.inFlightSegmentId) &&
+                    !segmentInFlightStillNeeded(t) &&
                     !(t.type === 'append-init' && t.meta.trackId === context.inFlightInitTrackId)
                 ),
                 ctx
@@ -434,7 +455,7 @@ export function createSegmentLoaderActor(
               // signal is not aborted (abortAll was called on the runner, but the init
               // task already completed or will complete via its own signal path).
               const cancelSourceBuffer =
-                context.inFlightSegmentId !== null ||
+                context.inFlightSegment !== null ||
                 (context.inFlightInitTrackId !== null &&
                   allTasks.some((t) => t.type === 'append-init' && t.meta.trackId !== context.inFlightInitTrackId));
               if (cancelSourceBuffer) {

@@ -270,6 +270,139 @@ describe('loadSegments — track switch', () => {
     videoLoader.destroy();
   });
 
+  it('loads the leading bridge segment on a shallow-buffer misaligned switch (no gap)', async () => {
+    // Regression for a Firefox stall: ABR upshifts to a misaligned rung while
+    // only the LOW rung's segment-0 ([0, 7.13333]) is buffered. HIGH's
+    // segment-0 spans [0, 7.98333]; its [7.13333, 7.98333] tail is the gap.
+    // Because it reuses the positional id `segment-0`, an id match would treat
+    // it as already buffered and skip it, leaving the tail as a SourceBuffer
+    // gap that Firefox won't jump. Time-coverage must see it uncovered and
+    // fetch the leading segment — distinct from the deep-buffer case above,
+    // where segment-0 is legitimately covered and correctly NOT refetched.
+    const posSeg = (trackId: string, index: number, startTime: number, duration: number) => ({
+      id: `segment-${index}`,
+      url: `https://example.com/${trackId}/segment-${index}.m4s`,
+      startTime,
+      duration,
+    });
+    // LOW has only segment-0 so the warmup can't deepen the buffer past it —
+    // the switch fires while ONLY [0, 7.13333] is buffered (the observed
+    // Firefox state: LOW segment-0, no LOW segment-1).
+    const low = {
+      ...makeResolvedVideoTrack('low', []),
+      segments: [posSeg('low', 0, 0, 7.13333)],
+    };
+    const high = {
+      ...makeResolvedVideoTrack('high', []),
+      segments: [posSeg('high', 0, 0, 7.98333), posSeg('high', 1, 7.98333, 8), posSeg('high', 2, 15.98333, 8)],
+    };
+    const presentation = makePresentation(low, high);
+
+    const videoBuffer = makeMockSourceBuffer();
+    const videoBufferActor = createSourceBufferActor(videoBuffer, {
+      initTrackId: 'low',
+      // Shallow: only the first LOW segment is buffered when the switch fires.
+      segments: [{ id: 'segment-0', startTime: 0, duration: 7.13333, trackId: 'low' }],
+    });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
+
+    const fetchedUrls: string[] = [];
+    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
+      fetchedUrls.push(url);
+      return Promise.resolve(new Response(new ArrayBuffer(100), { status: 200 }));
+    });
+
+    const state = makeState({
+      presentation,
+      selectedVideoTrackId: 'low',
+      preload: 'auto',
+      loadActivated: true,
+      currentTime: 5,
+    });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    await new Promise((r) => setTimeout(r, 20));
+    fetchedUrls.length = 0;
+
+    state.selectedVideoTrackId.set('high');
+
+    // The leading bridge segment MUST load — its [7.13333, 7.98333] tail is the gap.
+    await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/high/segment-0.m4s'), { timeout: 3000 });
+
+    reactor.destroy();
+    videoLoader.destroy();
+  });
+
+  it('loads HIGH bridge when the switch preempts an in-flight same-id LOW segment (misaligned)', async () => {
+    // Root cause of the intermittent Firefox stall. Renditions share positional
+    // ids (`segment-0`). If ABR switches LOW->HIGH while LOW's segment-0 is still
+    // IN-FLIGHT (not yet appended), `inFlightStillNeeded` matches HIGH's needed
+    // segment-0 against the in-flight LOW segment-0 BY ID, keeps the LOW fetch,
+    // and skips scheduling HIGH's segment-0. LOW seg-0 ([0, 7.13333]) then
+    // appends and HIGH seg-1+ ([7.98333, ...]) append, leaving the
+    // [7.13333, 7.98333] gap. Intermittent because it only triggers when the
+    // switch beats LOW segment-0's append.
+    const posSeg = (trackId: string, index: number, startTime: number, duration: number) => ({
+      id: `segment-${index}`,
+      url: `https://example.com/${trackId}/segment-${index}.m4s`,
+      startTime,
+      duration,
+    });
+    const low = {
+      ...makeResolvedVideoTrack('low', []),
+      bandwidth: 582820,
+      segments: [posSeg('low', 0, 0, 7.13333), posSeg('low', 1, 7.13333, 8)],
+    };
+    const high = {
+      ...makeResolvedVideoTrack('high', []),
+      bandwidth: 9873268,
+      segments: [posSeg('high', 0, 0, 7.98333), posSeg('high', 1, 7.98333, 8), posSeg('high', 2, 15.98333, 8)],
+    };
+    const presentation = makePresentation(low, high);
+
+    const videoBuffer = makeMockSourceBuffer();
+    // initTrackId 'low' committed, nothing appended yet — LOW segment-0 will be
+    // the first in-flight fetch.
+    const videoBufferActor = createSourceBufferActor(videoBuffer, { initTrackId: 'low', segments: [] });
+    const videoLoader = createSegmentLoaderActor(videoBufferActor, fetchStream);
+
+    const { fetch, fetchedUrls, resolveAll } = makeControllableFetch();
+    globalThis.fetch = fetch;
+
+    const state = makeState({
+      presentation,
+      selectedVideoTrackId: 'low',
+      preload: 'auto',
+      loadActivated: true,
+      currentTime: 0,
+    });
+    const context = makeContext({ videoBufferActor, videoSegmentLoaderActor: videoLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    // LOW segment-0 goes in-flight (fetch hangs, unresolved).
+    await vi.waitFor(() => expect(fetchedUrls).toContain('https://example.com/low/segment-0.m4s'), { timeout: 3000 });
+
+    // Switch while LOW segment-0 is still in-flight (not appended).
+    state.selectedVideoTrackId.set('high');
+    await new Promise((r) => setTimeout(r, 30));
+
+    // Drain: resolve in-flight + newly-scheduled fetches until settled.
+    for (let i = 0; i < 5; i++) {
+      resolveAll();
+      await new Promise((r) => setTimeout(r, 20));
+    }
+
+    // The HIGH bridge segment-0 MUST be fetched — its [7.13333, 7.98333] tail
+    // is the gap. On the buggy code it is skipped (id collision with the
+    // in-flight LOW segment-0).
+    expect(fetchedUrls).toContain('https://example.com/high/segment-0.m4s');
+
+    reactor.destroy();
+    videoLoader.destroy();
+  });
+
   it('preempts in-flight fetch when track switches; loads new track init', async () => {
     const { fetch: controllableFetch, fetchedUrls, resolve } = makeControllableFetch();
     globalThis.fetch = controllableFetch;
