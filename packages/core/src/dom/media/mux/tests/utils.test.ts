@@ -271,6 +271,12 @@ describe('createMuxStoryboardURL', () => {
     );
   });
 
+  it('overrides the default format', () => {
+    expect(createMuxStoryboardURL({ playbackId: 'abc123', storyboard: { format: 'jpg' } })).toBe(
+      'https://image.mux.com/abc123/storyboard.vtt?format=jpg'
+    );
+  });
+
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 's' });
     const url = new URL(createMuxStoryboardURL({ playbackId: 'abc123', storyboard: { token } })!);

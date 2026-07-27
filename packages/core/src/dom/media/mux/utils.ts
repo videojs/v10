@@ -69,6 +69,8 @@ export interface MuxThumbnailParams {
 
 export interface MuxStoryboardParams {
   token?: string | undefined;
+  /** Image format of the storyboard tiles referenced by the VTT. Defaults to `webp`. */
+  format?: MuxThumbnailExt | undefined;
   [param: string]: string | number | undefined;
 }
 
