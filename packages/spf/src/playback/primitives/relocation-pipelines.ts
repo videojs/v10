@@ -31,7 +31,7 @@ import { peek, type Signal, update } from '../../core/signals/primitives';
 import { findMediaTrack, type MediaHandlerType, readBaseMediaDecodeTime } from '../../media/mp4/timestamp-origin';
 import { resolveVttSegmentMetadata, type TextSegmentMetadata } from '../../media/text/resolve-vtt-metadata';
 import type { Cue, MaybeResolvedPresentation, MediaContainerData } from '../../media/types';
-import { findTrackById } from '../../media/utils/tracks';
+import { findTrackById, getTracksByType } from '../../media/utils/tracks';
 import type { DeriveStartMediaTime } from './derive-start-media-time';
 import { peekHead } from './head-peek';
 import { dispatchStep, fetchStep, type LoadStep, type MessagePipelines, type StepDeps } from './segment-load-pipeline';
@@ -227,10 +227,21 @@ const relocateCuesStep = async <C extends Cue>(
   if (!frame.cues?.length) return;
   const state = deps.state as unknown as StateSignals<RelocationSlots>;
   const startMediaTime = await awaitDefined(() => {
-    const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
-    if (primaryId === undefined) return 0;
     const presentation = state.presentation.get();
-    return presentation ? findTrackById(presentation, primaryId)?.startMediaTime : undefined;
+    if (!presentation) return undefined;
+    const primaryId = state.selectedVideoTrackId.get() ?? state.selectedAudioTrackId.get();
+    if (primaryId !== undefined) {
+      // A/V selected: use its origin once stamped (undefined until then → keep waiting).
+      return findTrackById(presentation, primaryId)?.startMediaTime;
+    }
+    // No A/V selected. Distinguish "not selected YET" from "text-only source". If the
+    // presentation has A/V tracks, one WILL be selected and stamped — wait for it, or the
+    // cues get shifted by the full `mapCorrection` (e.g. +10s on Apple X-TIMESTAMP-MAP
+    // sources) when text relocation wins the race against A/V selection. Only a genuinely
+    // text-only source (no A/V origin ever coming) legitimately relocates by offset 0.
+    const hasAv =
+      getTracksByType(presentation, 'video').length > 0 || getTracksByType(presentation, 'audio').length > 0;
+    return hasAv ? undefined : 0;
   });
   if (signal.aborted) return;
   const { timestampMap } = (frame.metadata as TextSegmentMetadata | undefined) ?? {};
