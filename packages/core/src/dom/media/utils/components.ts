@@ -31,7 +31,6 @@ export function addComponent<T extends Component>(host: Host, component: T) {
 
   component.setMedia?.(host);
 
-  // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.
   if (host.target) component.attach?.(host.target);
 
   return () => {
@@ -56,6 +55,5 @@ export function getOwner<T extends TargetLike>(host: Host<T>, prop: keyof T): Pa
     const override = component.targetOverride as Partial<T> | null | undefined;
     if (override?.[prop] !== undefined) return override;
   }
-  // @ts-expect-error `target` is protected, but these helpers are the host's own machinery.
   return host.target;
 }

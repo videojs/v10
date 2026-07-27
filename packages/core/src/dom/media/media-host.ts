@@ -51,7 +51,7 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
   #config: MediaConfig = {};
 
-  protected get target() {
+  get target() {
     return this.#target;
   }
 

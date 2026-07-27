@@ -85,12 +85,18 @@ export interface MediaHost extends EventTarget {
   attach(target: EventTarget | null): void;
   detach(): void;
   destroy(): void;
-  /** Index signature for dynamic property forwarding (includes the host's protected `target`). */
+  /** Index signature for dynamic property forwarding. */
   [key: string]: any;
 }
 
 type CustomMediaConstructor<T extends Constructor<MediaHost>> = Constructor<
-  HTMLElement & InstanceType<T> & { readonly host: InstanceType<T> }
+  HTMLElement &
+    InstanceType<T> & {
+      readonly host: InstanceType<T>;
+      /** The active media render target — slotted media or the shadow media element. */
+      readonly target: HTMLElement | null;
+      attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void;
+    }
 > & {
   properties: Record<string, { type: any; attribute?: string; empty?: unknown }>;
   getTemplateHTML: (attrs: Record<string, string>) => string;
