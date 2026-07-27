@@ -31,13 +31,11 @@ async function render() {
   const mediaAttrs = renderMediaAttrs(state);
   const playerTag = live ? 'live-video-player' : 'video-player';
 
-  // Mux stream URLs are parsed into a source (playback ID) by the element.
-  const sourceAttr = `src="${SOURCES[state.source].url}"`;
-
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
-        <mux-video ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
+        <!-- The storyboard track is derived automatically from the Mux src. -->
+        <mux-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>

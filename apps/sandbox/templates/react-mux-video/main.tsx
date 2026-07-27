@@ -1,5 +1,4 @@
 import '@app/styles.css';
-import { getPlaybackId } from '@app/shared/mux';
 import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
@@ -32,11 +31,7 @@ function App() {
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
-  const playbackId = getPlaybackId(source);
   const Provider = live ? LiveVideoProvider : VideoProvider;
-
-  // Prefer a structured Mux source; fall back to a raw src for non-Mux sources.
-  const sourceProps = playbackId ? { source: { playbackId } } : { src: SOURCES[source].url };
 
   return (
     <SandboxI18nProvider>
@@ -49,8 +44,9 @@ function App() {
           live={live}
           className="aspect-video max-w-4xl mx-auto"
         >
+          {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
-            {...sourceProps}
+            src={SOURCES[source].url}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

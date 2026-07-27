@@ -27,14 +27,11 @@ async function render() {
 
   const mediaAttrs = renderMediaAttrs(state);
 
-  // Mux stream URLs are parsed into a source (playback ID) by the element.
-  const sourceAttr = `src="${SOURCES[state.source].url}"`;
-
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <mux-audio ${sourceAttr} ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
         </${tag}>
       </audio-player>
     </div>
