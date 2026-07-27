@@ -1,9 +1,9 @@
+import type { MediaPlaybackState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
 import { pauseText, playText, replayText } from '../../i18n/text/buttons';
-import type { MediaPlaybackState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 

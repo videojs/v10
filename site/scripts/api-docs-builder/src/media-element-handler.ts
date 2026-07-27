@@ -8,9 +8,9 @@
  *   - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
  *   - Media element classes: packages/html/src/media/{name}/index.ts
  *     composed as MediaAttachMixin(CustomMediaElement('video'|'audio', Host))
- *   - Host classes: packages/core/src/dom/media/{name}/index.ts extending
+ *   - Host classes: packages/media/src/dom/{name}/index.ts extending
  *     HTMLVideoElementHost or HTMLAudioElementHost with getter/setter pairs
- *   - Shared data: packages/core/src/dom/media/custom-media-element/index.ts
+ *   - Shared data: packages/media/src/dom/custom-media-element/index.ts
  *     exports CustomMediaElement factory (with static properties), VideoCSSVars,
  *     AudioCSSVars
  *
@@ -66,7 +66,7 @@ interface StaticMediaProperty {
 /**
  * Resolve an import specifier to an absolute file path using TypeScript's
  * module resolution. Handles both relative paths and workspace package
- * imports (e.g., @videojs/core/dom/media/hls) via the project's tsconfig.
+ * imports (e.g., @videojs/media/dom/hls) via the project's tsconfig.
  *
  * Workspace imports go through `package.json#exports` and resolve to the
  * built `dist/dev/*.d.ts` files, where the TypeScript compiler has collapsed
@@ -1518,14 +1518,14 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   const sources = discoverMediaElements(monorepoRoot, compilerOptions);
   if (sources.length === 0) return [];
 
-  const customMediaPath = path.join(monorepoRoot, 'packages/core/src/dom/media/custom-media-element/index.ts');
+  const customMediaPath = path.join(monorepoRoot, 'packages/media/src/dom/custom-media-element/index.ts');
   if (!fs.existsSync(customMediaPath)) return [];
 
   // Read shared data
   const staticProperties = extractStaticProperties(customMediaPath);
 
   // Extract events from capability contract types
-  const mediaTypesPath = path.join(monorepoRoot, 'packages/core/src/core/media/types.ts');
+  const mediaTypesPath = path.join(monorepoRoot, 'packages/media/src/core/types.ts');
   const videoEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'VideoEvents') : [];
   const audioEvents = fs.existsSync(mediaTypesPath) ? extractEventsFromTypes(mediaTypesPath, 'AudioEvents') : [];
 
@@ -1546,9 +1546,9 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
   // from the shared base host classes — extracted ONCE per media type (mirroring
   // how events come from VideoEvents/AudioEvents), not per element. Video adds
   // the video-host methods; audio adds the audio-host methods.
-  const mediaHostPath = path.join(monorepoRoot, 'packages/core/src/dom/media/media-host.ts');
-  const videoHostPath = path.join(monorepoRoot, 'packages/core/src/dom/media/video-host.ts');
-  const audioHostPath = path.join(monorepoRoot, 'packages/core/src/dom/media/audio-host.ts');
+  const mediaHostPath = path.join(monorepoRoot, 'packages/media/src/dom/media-host.ts');
+  const videoHostPath = path.join(monorepoRoot, 'packages/media/src/dom/video-host.ts');
+  const audioHostPath = path.join(monorepoRoot, 'packages/media/src/dom/audio-host.ts');
   const baseMethods = extractPublicMethodNames(mediaHostPath, 'HTMLMediaElementHost');
   const videoMethods = mergeMethodNames(baseMethods, extractPublicMethodNames(videoHostPath, 'HTMLVideoElementHost'));
   const audioMethods = mergeMethodNames(baseMethods, extractPublicMethodNames(audioHostPath, 'HTMLAudioElementHost'));

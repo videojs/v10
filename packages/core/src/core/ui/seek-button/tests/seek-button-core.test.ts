@@ -1,6 +1,5 @@
+import type { MediaTimeState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaTimeState } from '../../../media/state';
 import type { SeekButtonState } from '../seek-button-core';
 import { SeekButtonCore } from '../seek-button-core';
 

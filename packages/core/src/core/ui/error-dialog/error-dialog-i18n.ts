@@ -1,3 +1,4 @@
+import { MediaError } from '@videojs/media/error';
 import type { TranslationParams } from '../../i18n/params';
 import type { Text } from '../../i18n/text';
 import { emptyText, okText } from '../../i18n/text/common';
@@ -10,7 +11,6 @@ import {
   titleText,
   unexpectedText,
 } from '../../i18n/text/errors';
-import { MediaError } from '../../media/media-error';
 
 export type MediaErrorTranslationKey = Extract<
   keyof TranslationParams,

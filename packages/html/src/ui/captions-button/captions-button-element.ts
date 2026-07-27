@@ -1,6 +1,7 @@
-import { CaptionsButtonCore, CaptionsButtonDataAttrs, type MediaTextTrackState } from '@videojs/core';
+import { CaptionsButtonCore, CaptionsButtonDataAttrs } from '@videojs/core';
 import { applyElementProps, selectTextTrack, type UIEvent } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { MediaTextTrackState } from '@videojs/media';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 
 import { playerContext } from '../../player/context';

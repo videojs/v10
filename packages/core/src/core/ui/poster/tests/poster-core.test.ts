@@ -1,6 +1,5 @@
+import type { MediaPlaybackState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaPlaybackState } from '../../../media/state';
 import { PosterCore } from '../poster-core';
 
 function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {

@@ -1,4 +1,4 @@
-import { parseMuxVideoURL } from '@videojs/core/dom/media/mux';
+import { parseMuxVideoURL } from '@videojs/media/dom/mux';
 import { SOURCES, type SourceId } from './sources';
 
 export function getMuxAssetId(source: SourceId): string | undefined {

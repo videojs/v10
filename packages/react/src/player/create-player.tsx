@@ -1,5 +1,6 @@
 'use client';
 
+import { createPopupGroup } from '@videojs/core/dom';
 import type {
   AnyPlayerFeature,
   AnyPlayerStore,
@@ -10,8 +11,7 @@ import type {
   PlayerTarget,
   VideoFeatures,
   VideoPlayerStore,
-} from '@videojs/core/dom';
-import { createPopupGroup } from '@videojs/core/dom';
+} from '@videojs/media/dom';
 import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';

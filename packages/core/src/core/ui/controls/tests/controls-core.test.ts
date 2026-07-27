@@ -1,6 +1,5 @@
+import type { MediaControlsState } from '@videojs/media';
 import { describe, expect, it } from 'vitest';
-
-import type { MediaControlsState } from '../../../media/state';
 import { ControlsCore } from '../controls-core';
 
 describe('ControlsCore', () => {

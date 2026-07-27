@@ -1,5 +1,5 @@
+import { MediaError } from '@videojs/media/error';
 import { describe, expect, it } from 'vitest';
-import { MediaError } from '../../../media/media-error';
 import {
   getErrorDialogDismissText,
   getErrorDialogTitleText,

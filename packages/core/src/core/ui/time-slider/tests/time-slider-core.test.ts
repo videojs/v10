@@ -1,7 +1,6 @@
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '@videojs/media';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../../media/state';
 import type { SliderInput } from '../../slider/slider-core';
 import { TimeSliderCore } from '../time-slider-core';
 

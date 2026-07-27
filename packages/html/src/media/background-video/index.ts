@@ -1,4 +1,4 @@
-import type { Media } from '@videojs/core/dom';
+import type { Media } from '@videojs/media/dom';
 import { namedNodeMapToObject, serializeAttributes } from '@videojs/utils/dom';
 import { pick } from '@videojs/utils/object';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';

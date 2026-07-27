@@ -13,7 +13,7 @@
  *   - Feature exports: const matching *Feature (singular, not *Features)
  *   - State type: explicit return type annotation on the state() arrow function
  *   - Silent features: state() returns an empty object
- *   - State interfaces: exported from packages/core/src/core/media/state.ts
+ *   - State interfaces: exported from packages/media/src/core/state.ts
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
@@ -190,7 +190,7 @@ function extractInterfaceMembers(
 
 export function generateFeatureReferences(monorepoRoot: string): FeatureResult[] {
   const featuresDir = path.join(monorepoRoot, 'packages/core/src/dom/store/features');
-  const stateFilePath = path.join(monorepoRoot, 'packages/core/src/core/media/state.ts');
+  const stateFilePath = path.join(monorepoRoot, 'packages/media/src/core/state.ts');
 
   if (!fs.existsSync(featuresDir) || !fs.existsSync(stateFilePath)) return [];
 

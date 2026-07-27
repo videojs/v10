@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
-import { HlsJsMedia } from '@videojs/core/dom/media/hls-js';
-import { MuxData, MuxMedia } from '@videojs/core/dom/media/mux';
+import { HlsJsMedia } from '@videojs/media/dom/hls-js';
+import { MuxData, MuxMedia } from '@videojs/media/dom/mux';
 import { describe, expect, it, vi } from 'vitest';
 import { MuxVideo } from '../mux-video';
 

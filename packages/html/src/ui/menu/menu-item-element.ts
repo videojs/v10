@@ -4,7 +4,6 @@ import {
   PlaybackRateRadioGroupCore,
   QualityRadioGroupCore,
 } from '@videojs/core';
-import type { AnyPlayerStore } from '@videojs/core/dom';
 import {
   applyElementProps,
   completeMenuItemSelection,
@@ -16,6 +15,7 @@ import {
 import { translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
+import type { AnyPlayerStore } from '@videojs/media/dom';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';

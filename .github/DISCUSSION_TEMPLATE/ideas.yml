@@ -29,6 +29,7 @@ body:
         - Core (@videojs/core)
         - Icons (@videojs/icons)
         - HTML (@videojs/html)
+        - Media (@videojs/media)
         - React (@videojs/react)
         - Utils (@videojs/utils)
         - Other (describe)

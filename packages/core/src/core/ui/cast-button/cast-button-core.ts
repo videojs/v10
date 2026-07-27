@@ -1,10 +1,9 @@
+import type { MediaFeatureAvailability, MediaRemotePlaybackState, RemotePlaybackConnectionState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
 import { connectingText, startText, stopText } from '../../i18n/text/cast';
-import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '../../media/state';
-import type { MediaFeatureAvailability } from '../../media/types';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 

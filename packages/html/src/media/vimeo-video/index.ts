@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '@videojs/core/dom/media/custom-media-element';
-import { buildVimeoIframeSrc, VimeoMedia } from '@videojs/core/dom/media/vimeo';
+import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
+import { buildVimeoIframeSrc, VimeoMedia } from '@videojs/media/dom/vimeo';
 import { escapeHtml } from '@videojs/utils/string';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 

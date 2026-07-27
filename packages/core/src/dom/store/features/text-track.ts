@@ -1,7 +1,6 @@
+import type { MediaTextCue, MediaTextTrack, MediaTextTrackState, TextTrackLike } from '@videojs/media';
+import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media/predicate';
 import { findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
-import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '../../../core/media/predicate';
-import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '../../../core/media/state';
-import type { TextTrackLike } from '../../../core/media/types';
 import { definePlayerFeature } from '../../feature';
 
 function getTrackId(track: TextTrackLike, index: number): string {

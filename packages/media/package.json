@@ -1,0 +1,79 @@
+{
+  "name": "@videojs/media",
+  "type": "module",
+  "version": "10.0.0-beta.25",
+  "description": "Media contracts, hosts, and playback engines for Video.js",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/videojs/v10",
+    "directory": "packages/media"
+  },
+  "keywords": [
+    "media",
+    "player",
+    "streaming",
+    "videojs"
+  ],
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/dev/index.d.ts",
+      "development": "./dist/dev/index.js",
+      "default": "./dist/default/index.js"
+    },
+    "./predicate": {
+      "types": "./dist/dev/predicate.d.ts",
+      "development": "./dist/dev/predicate.js",
+      "default": "./dist/default/predicate.js"
+    },
+    "./error": {
+      "types": "./dist/dev/error.d.ts",
+      "development": "./dist/dev/error.js",
+      "default": "./dist/default/error.js"
+    },
+    "./dom": {
+      "types": "./dist/dev/dom.d.ts",
+      "development": "./dist/dev/dom.js",
+      "default": "./dist/default/dom.js"
+    },
+    "./dom/*": {
+      "types": "./dist/dev/dom/*/index.d.ts",
+      "development": "./dist/dev/dom/*/index.js",
+      "default": "./dist/default/dom/*/index.js"
+    }
+  },
+  "main": "dist/default/index.js",
+  "module": "dist/default/index.js",
+  "types": "dist/dev/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsdown",
+    "build:watch": "tsdown --watch ./src --no-clean",
+    "dev": "pnpm run build:watch",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo'"
+  },
+  "dependencies": {
+    "@videojs/spf": "workspace:*",
+    "@videojs/store": "workspace:*",
+    "@videojs/utils": "workspace:*",
+    "@vimeo/player": "^2.30.3",
+    "dashjs": "^5.2.0",
+    "hls.js": "^1.6.7",
+    "mux-embed": "^5.17.10"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.1.40",
+    "@types/chromecast-caf-sender": "^1.0.11",
+    "jsdom": "^26.1.0",
+    "tsdown": "^0.21.9",
+    "vitest": "^4.1.0"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

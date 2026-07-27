@@ -1,8 +1,7 @@
+import type { MediaPlaybackState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
-
-import type { MediaPlaybackState } from '../../media/state';
 
 export interface BufferingIndicatorProps {
   /** Delay in milliseconds before the indicator becomes visible. */

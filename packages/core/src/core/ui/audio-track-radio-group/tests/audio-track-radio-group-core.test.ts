@@ -1,6 +1,5 @@
+import type { MediaAudioTrackState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaAudioTrackState } from '../../../media/state';
 import type { AudioTrackRadioGroupState } from '../audio-track-radio-group-core';
 import { AudioTrackRadioGroupCore } from '../audio-track-radio-group-core';
 

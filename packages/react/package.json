@@ -122,6 +122,7 @@
   },
   "dependencies": {
     "@videojs/core": "workspace:*",
+    "@videojs/media": "workspace:*",
     "@videojs/spf": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"

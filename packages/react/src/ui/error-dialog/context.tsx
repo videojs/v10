@@ -1,6 +1,6 @@
 'use client';
 
-import type { MediaError } from '@videojs/core';
+import type { MediaError } from '@videojs/media';
 import { createContext, useContext } from 'react';
 
 export interface ErrorDialogContextValue {

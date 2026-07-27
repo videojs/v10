@@ -20,6 +20,7 @@ When prose conflicts with executable sources, follow the executable source and u
 - `packages/element`: custom-element base.
 - `packages/store`: framework-neutral state plus `/html` and `/react` bindings.
 - `packages/spf`: stream-processing primitives, DOM bindings, and playback engine.
+- `packages/media`: media contracts and state; browser hosts and playback engines live under `/dom`.
 - `packages/core`: runtime-neutral player logic; DOM bindings live under `/dom`.
 - `packages/html`, `packages/react`: platform players.
 - `packages/icons`, `packages/skins`: private shared assets and styling.

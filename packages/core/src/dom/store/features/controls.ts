@@ -1,7 +1,7 @@
+import type { MediaControlsState } from '@videojs/media';
+import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '@videojs/media/predicate';
 import { listen } from '@videojs/utils/dom';
 import { isNull } from '@videojs/utils/predicate';
-import { isMediaPauseCapable, isMediaRemotePlaybackCapable } from '../../../core/media/predicate';
-import type { MediaControlsState } from '../../../core/media/state';
 import { definePlayerFeature } from '../../feature';
 import { findGestureCoordinator } from '../../gesture/coordinator';
 import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../presentation/remote-playback';

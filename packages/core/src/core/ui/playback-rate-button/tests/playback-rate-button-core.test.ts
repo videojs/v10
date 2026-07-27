@@ -1,6 +1,5 @@
+import type { MediaPlaybackRateState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaPlaybackRateState } from '../../../media/state';
 import type { PlaybackRateButtonState } from '../playback-rate-button-core';
 import { PlaybackRateButtonCore } from '../playback-rate-button-core';
 

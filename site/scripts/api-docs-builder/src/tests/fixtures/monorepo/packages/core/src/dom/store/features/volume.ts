@@ -4,7 +4,7 @@
  * Exercises: numeric state property, type alias (MediaFeatureAvailability),
  * methods with parameters and return values, boolean state property.
  */
-import type { MediaVolumeState } from '../../../core/media/state';
+import type { MediaVolumeState } from '../../../../../media/src/core/state';
 import { definePlayerFeature } from '../../feature';
 
 export const volumeFeature = definePlayerFeature({

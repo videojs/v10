@@ -3,8 +3,8 @@
  *
  * Exercises: standard composition where the host is a mixin chain.
  */
-import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
-import { MixinHost } from '../../../../core/src/dom/media/mixin';
+import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
+import { MixinHost } from '../../../../media/src/dom/mixin';
 
 // Stub — the builder parses the AST, it doesn't run the code.
 function MediaAttachMixin(base: any) {

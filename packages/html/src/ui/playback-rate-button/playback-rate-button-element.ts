@@ -1,6 +1,7 @@
-import { type MediaPlaybackRateState, PlaybackRateButtonCore, PlaybackRateButtonDataAttrs } from '@videojs/core';
+import { PlaybackRateButtonCore, PlaybackRateButtonDataAttrs } from '@videojs/core';
 import { applyElementProps, selectPlaybackRate, type UIEvent } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
+import type { MediaPlaybackRateState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

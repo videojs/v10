@@ -1,4 +1,4 @@
-import { embedMediaDefaultProps } from '../../../../core/src/dom/media/embed';
+import { embedMediaDefaultProps } from '../../../../media/src/dom/embed';
 
 interface EmbedVideoProps extends Partial<typeof embedMediaDefaultProps> {}
 

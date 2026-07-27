@@ -5,7 +5,6 @@ import {
   getErrorDialogDismissText,
   getErrorDialogTitleText,
   getErrorDialogUnexpectedText,
-  type MediaError,
   resolveErrorDialogDescription,
 } from '@videojs/core';
 import {
@@ -19,6 +18,7 @@ import {
 import { translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaError } from '@videojs/media';
 import { SnapshotController } from '@videojs/store/html';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';

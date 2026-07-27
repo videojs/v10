@@ -1,9 +1,9 @@
 'use client';
 
-import type { DashMediaProps } from '@videojs/core/dom/media/dash';
-import { DashMedia, dashMediaDefaultProps } from '@videojs/core/dom/media/dash';
-import { GoogleCast } from '@videojs/core/dom/media/google-cast';
-import { addComponent } from '@videojs/core/dom/media/media-host';
+import type { DashMediaProps } from '@videojs/media/dom/dash';
+import { DashMedia, dashMediaDefaultProps } from '@videojs/media/dom/dash';
+import { GoogleCast } from '@videojs/media/dom/google-cast';
+import { addComponent } from '@videojs/media/dom/media-host';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';

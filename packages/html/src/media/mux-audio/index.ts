@@ -1,7 +1,7 @@
-import { CustomMediaElement } from '@videojs/core/dom/media/custom-media-element';
-import { GoogleCast } from '@videojs/core/dom/media/google-cast';
-import { addComponent } from '@videojs/core/dom/media/media-host';
-import { MuxData, MuxMedia } from '@videojs/core/dom/media/mux';
+import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
+import { GoogleCast } from '@videojs/media/dom/google-cast';
+import { addComponent } from '@videojs/media/dom/media-host';
+import { MuxData, MuxMedia } from '@videojs/media/dom/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 const MuxAudioBase = MediaAttachMixin(CustomMediaElement('audio', MuxMedia));

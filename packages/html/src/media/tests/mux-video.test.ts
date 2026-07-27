@@ -1,5 +1,5 @@
-import { getComponents } from '@videojs/core/dom/media/media-host';
-import { MuxData } from '@videojs/core/dom/media/mux';
+import { getComponents } from '@videojs/media/dom/media-host';
+import { MuxData } from '@videojs/media/dom/mux';
 import { afterEach, describe, expect, it } from 'vitest';
 import { MuxVideo } from '../mux-video';
 

@@ -1,9 +1,9 @@
 'use client';
 
-import { GoogleCast } from '@videojs/core/dom/media/google-cast';
-import type { HlsMediaProps } from '@videojs/core/dom/media/hls-js';
-import { HlsJsMedia, hlsMediaDefaultProps } from '@videojs/core/dom/media/hls-js';
-import { addComponent } from '@videojs/core/dom/media/media-host';
+import { GoogleCast } from '@videojs/media/dom/google-cast';
+import type { HlsMediaProps } from '@videojs/media/dom/hls-js';
+import { HlsJsMedia, hlsMediaDefaultProps } from '@videojs/media/dom/hls-js';
+import { addComponent } from '@videojs/media/dom/media-host';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';

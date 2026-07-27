@@ -1,6 +1,6 @@
 'use client';
 
-import { SimpleHlsAudioOnlyMedia } from '@videojs/core/dom/media/simple-hls-audio-only';
+import { SimpleHlsAudioOnlyMedia } from '@videojs/media/dom/simple-hls-audio-only';
 import type { SimpleHlsAudioOnlyMediaProps } from '@videojs/spf/hls';
 import { simpleHlsAudioOnlyMediaDefaultProps } from '@videojs/spf/hls';
 import type { AudioHTMLAttributes, ReactNode } from 'react';

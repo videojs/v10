@@ -4,8 +4,8 @@
  * Exercises: audio media type ('audio' tag argument) with a cross-package
  * mixin host.
  */
-import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
-import { SpfAudioHost } from '../../../../core/src/dom/media/spf-audio';
+import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
+import { SpfAudioHost } from '../../../../media/src/dom/spf-audio';
 
 // Stub — the builder parses the AST, it doesn't run the code.
 function MediaAttachMixin(base: any) {

@@ -1,5 +1,5 @@
-import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/core/dom';
 import { audioFeatures, backgroundFeatures, definePlayerFeature, features, videoFeatures } from '@videojs/core/dom';
+import type { AudioPlayerStore, PlayerStore, PlayerTarget, VideoPlayerStore } from '@videojs/media/dom';
 import type { Slice } from '@videojs/store';
 import { assertType, describe, it } from 'vitest';
 

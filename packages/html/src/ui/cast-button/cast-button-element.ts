@@ -1,5 +1,6 @@
-import { CastButtonCore, CastButtonDataAttrs, type MediaRemotePlaybackState } from '@videojs/core';
+import { CastButtonCore, CastButtonDataAttrs } from '@videojs/core';
 import { selectRemotePlayback } from '@videojs/core/dom';
+import type { MediaRemotePlaybackState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

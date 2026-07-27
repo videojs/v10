@@ -1,6 +1,5 @@
+import type { MediaRemotePlaybackState } from '@videojs/media';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-
-import type { MediaRemotePlaybackState } from '../../../media/state';
 import type { CastButtonState } from '../cast-button-core';
 import { CastButtonCore } from '../cast-button-core';
 

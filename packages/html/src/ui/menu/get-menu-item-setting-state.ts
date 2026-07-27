@@ -1,9 +1,3 @@
-import type {
-  MediaAudioTrackState,
-  MediaPlaybackRateState,
-  MediaQualityState,
-  MediaTextTrackState,
-} from '@videojs/core';
 import {
   type AudioTrackRadioGroupCore,
   CAPTIONS_OFF_VALUE,
@@ -14,6 +8,12 @@ import {
 } from '@videojs/core';
 import type { Text, TextParams } from '@videojs/core/i18n';
 import { autoText, offText } from '@videojs/core/i18n/text/menu';
+import type {
+  MediaAudioTrackState,
+  MediaPlaybackRateState,
+  MediaQualityState,
+  MediaTextTrackState,
+} from '@videojs/media';
 
 import type { MenuItemSettingType } from './menu-item-type';
 

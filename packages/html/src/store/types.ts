@@ -1,4 +1,4 @@
-import type { PlayerStore } from '@videojs/core/dom';
+import type { PlayerStore } from '@videojs/media/dom';
 import type { Constructor } from '@videojs/utils/types';
 import type { MediaElement } from '@/ui/media-element';
 

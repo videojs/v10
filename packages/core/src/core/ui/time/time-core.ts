@@ -1,3 +1,4 @@
+import type { MediaTimeState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import { formatTime, formatTimeAsPhrase, secondsToIsoDuration } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -10,7 +11,6 @@ import {
   showElapsedText,
   showRemainingText,
 } from '../../i18n/text/time';
-import type { MediaTimeState } from '../../media/state';
 import { resolveLabel } from '../utils/resolve-label';
 
 /** Time display type. */

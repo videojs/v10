@@ -5,8 +5,8 @@
  * The builder follows this import chain to discover the host class
  * and resolve its properties.
  */
-import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
-import { SimpleHost } from '../../../../core/src/dom/media/simple';
+import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
+import { SimpleHost } from '../../../../media/src/dom/simple';
 
 // Stub — the builder parses the AST, it doesn't run the code.
 function MediaAttachMixin(base: any) {

@@ -1,5 +1,5 @@
-import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
-import { EmbedHost } from '../../../../core/src/dom/media/embed';
+import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
+import { EmbedHost } from '../../../../media/src/dom/embed';
 
 function MediaAttachMixin(base: any) {
   return base;

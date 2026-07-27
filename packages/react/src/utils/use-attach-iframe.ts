@@ -1,6 +1,6 @@
 'use client';
 
-import type { MediaEngineHost } from '@videojs/core';
+import type { MediaEngineHost } from '@videojs/media';
 import type { RefCallback } from 'react';
 import { useCallback } from 'react';
 

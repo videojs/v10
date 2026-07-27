@@ -1,6 +1,5 @@
+import type { MediaTextTrackState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaTextTrackState } from '../../../media/state';
 import { CAPTIONS_OFF_VALUE, CaptionsRadioGroupCore, type CaptionsRadioGroupState } from '../captions-radio-group-core';
 
 function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTextTrackState {

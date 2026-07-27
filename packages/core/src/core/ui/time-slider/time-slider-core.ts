@@ -1,10 +1,10 @@
+import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '@videojs/media';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
 import type { Text } from '../../i18n';
 import { seekText } from '../../i18n/text/slider';
 import { positionText } from '../../i18n/text/time';
-import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '../../media/state';
 import { SliderCore, type SliderProps, type SliderState } from '../slider/slider-core';
 
 export interface TimeSliderProps extends SliderProps {

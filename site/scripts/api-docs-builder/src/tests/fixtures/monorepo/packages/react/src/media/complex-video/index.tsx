@@ -5,7 +5,7 @@
  * native React video props, a forwarded native-element ref, and a defaults
  * object passed to useSyncProps for Video.js-specific props.
  */
-import { complexMediaDefaultProps } from '../../../../core/src/dom/media/complex';
+import { complexMediaDefaultProps } from '../../../../media/src/dom/complex';
 
 interface VideoHTMLAttributes<Element> {
   element?: Element;

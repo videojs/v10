@@ -13,6 +13,9 @@
     { "path": "packages/store/src/html" },
     { "path": "packages/store/src/react" },
 
+    { "path": "packages/media" },
+    { "path": "packages/media/src/dom" },
+
     { "path": "packages/core" },
     { "path": "packages/core/src/dom" },
 

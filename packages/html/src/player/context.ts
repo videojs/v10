@@ -1,6 +1,7 @@
-import type { AnyPlayerStore, Media, MediaContainer, PlayerStore, PopupGroup } from '@videojs/core/dom';
+import type { PopupGroup } from '@videojs/core/dom';
 import type { ReactiveControllerHost } from '@videojs/element';
 import { type Context, type ContextConsumer, createContext } from '@videojs/element/context';
+import type { AnyPlayerStore, Media, MediaContainer, PlayerStore } from '@videojs/media/dom';
 
 // ----------------------------------------
 // Player Context

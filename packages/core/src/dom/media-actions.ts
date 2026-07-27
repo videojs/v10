@@ -1,6 +1,5 @@
+import type { AnyPlayerStore } from '@videojs/media/dom';
 import { isUndefined } from '@videojs/utils/predicate';
-
-import type { AnyPlayerStore } from './media/types';
 import { selectPlaybackRate, selectTime, selectVolume } from './store/selectors';
 
 export type MediaInputActionName = 'seekStep' | 'volumeStep' | 'speedUp' | 'speedDown';

@@ -1,7 +1,7 @@
-import type { MediaControlsState } from '@videojs/core';
-import type { AnyPlayerStore } from '@videojs/core/dom';
 import type { Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaControlsState } from '@videojs/media';
+import type { AnyPlayerStore } from '@videojs/media/dom';
 import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

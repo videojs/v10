@@ -1,6 +1,6 @@
-import type { PlayerStore } from '@videojs/core/dom';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
+import type { PlayerStore } from '@videojs/media/dom';
 import type { InferStoreState, Selector } from '@videojs/store';
 import { StoreController } from '@videojs/store/html';
 

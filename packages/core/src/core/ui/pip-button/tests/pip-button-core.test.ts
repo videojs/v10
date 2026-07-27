@@ -1,6 +1,5 @@
+import type { MediaPictureInPictureState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaPictureInPictureState } from '../../../media/state';
 import type { PiPButtonState } from '../pip-button-core';
 import { PiPButtonCore } from '../pip-button-core';
 

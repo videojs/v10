@@ -1,10 +1,10 @@
+import type { MediaTextTrackState } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
 import { disableText, enableText } from '../../i18n/text/captions';
-import type { MediaTextTrackState } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 

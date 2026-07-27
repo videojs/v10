@@ -1,7 +1,8 @@
 'use client';
 
-import type { Media } from '@videojs/core';
-import type { MediaContainer, PopupGroup } from '@videojs/core/dom';
+import type { PopupGroup } from '@videojs/core/dom';
+import type { Media } from '@videojs/media';
+import type { MediaContainer } from '@videojs/media/dom';
 import type { UnknownState, UnknownStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { Dispatch, ReactNode, SetStateAction } from 'react';

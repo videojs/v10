@@ -1,9 +1,9 @@
+import type { MediaQualityState, MediaVideoRendition } from '@videojs/media';
 import { createState } from '@videojs/store';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text, type TextParams } from '../../i18n';
 import { autoText, autoWithLabelText, qualityText } from '../../i18n/text/menu';
-import type { MediaQualityState, MediaVideoRendition } from '../../media/state';
 import type { ButtonState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 

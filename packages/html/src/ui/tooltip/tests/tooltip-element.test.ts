@@ -1,8 +1,8 @@
 import type { ButtonState } from '@videojs/core';
-import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
 import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry, resolveText, type Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
+import type { AnyPlayerStore, PlayerTarget } from '@videojs/media/dom';
 import { createState, createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

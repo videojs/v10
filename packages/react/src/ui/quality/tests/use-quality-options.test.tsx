@@ -1,8 +1,8 @@
 'use client';
 
 import { cleanup, fireEvent, render, screen } from '@testing-library/react';
-import type { MediaVideoRendition } from '@videojs/core';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
+import type { MediaVideoRendition } from '@videojs/media';
 import type { ReactNode } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

@@ -87,6 +87,7 @@ jobs:
         package:
           - '@videojs/cli'
           - '@videojs/core'
+          - '@videojs/media'
           - '@videojs/store'
           - '@videojs/utils'
           - '@videojs/element'

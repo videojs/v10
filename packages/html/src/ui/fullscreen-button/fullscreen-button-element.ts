@@ -1,5 +1,6 @@
-import { FullscreenButtonCore, FullscreenButtonDataAttrs, type MediaFullscreenState } from '@videojs/core';
+import { FullscreenButtonCore, FullscreenButtonDataAttrs } from '@videojs/core';
 import { selectFullscreen } from '@videojs/core/dom';
+import type { MediaFullscreenState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

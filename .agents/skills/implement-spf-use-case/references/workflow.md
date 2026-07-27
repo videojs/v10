@@ -366,13 +366,13 @@ After Step 1's report:
   effectively unconsumable through the existing player surface. Ask
   the user (multi-select `AskUserQuestion`) which downstream layers
   to bundle into this pass:
-  - **Core media wrapper** — `packages/core/src/dom/media/<key>/`
+  - **Media wrapper** — `packages/media/src/dom/<key>/`
     (~5 LOC; applies the SPF mixin to `HTMLVideoElementHost`). The
     minimum bridge between the SPF adapter and the player packages.
     Worked example: `simple-hls/index.ts` →
     `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}`.
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
-    (~5 LOC; wraps the core media in `CustomMediaElement` +
+    (~5 LOC; wraps the media host in `CustomMediaElement` +
     `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
     + `packages/html/src/cdn/media/<key>-video.ts` for the CDN entry.
     Worked example: `simple-hls-video/index.ts` →
@@ -438,7 +438,7 @@ typical for use-case implementations:
 
 **Implementation-scope-extension layers (opt-in per Step 2):**
 
-- **Core media wrapper** — `packages/core/src/dom/media/<key>/index.ts`
+- **Media wrapper** — `packages/media/src/dom/<key>/index.ts`
   applying the SPF mixin to `HTMLVideoElementHost` (or audio host for
   audio-only variants). Inline implementation; ~5 LOC.
 - **HTML custom element + define entry + CDN entry** —
@@ -592,7 +592,7 @@ docs (cascade):
     always present.
   - *Adapter* table (Export / File / Purpose) — always present.
   - *Composed behaviors* paragraph — always present.
-  - *Core media wrapper* table — if the core wrapper layer
+  - *Media wrapper* table — if the media wrapper layer
     landed (`packages/core/...`).
   - *HTML custom element* table — if the HTML element layer
     landed (`packages/html/...`).

@@ -1,9 +1,9 @@
 'use client';
 
-import { GoogleCast } from '@videojs/core/dom/media/google-cast';
-import { addComponent } from '@videojs/core/dom/media/media-host';
-import type { NativeHlsMediaProps } from '@videojs/core/dom/media/native-hls';
-import { NativeHlsMedia, nativeHlsMediaDefaultProps } from '@videojs/core/dom/media/native-hls';
+import { GoogleCast } from '@videojs/media/dom/google-cast';
+import { addComponent } from '@videojs/media/dom/media-host';
+import type { NativeHlsMediaProps } from '@videojs/media/dom/native-hls';
+import { NativeHlsMedia, nativeHlsMediaDefaultProps } from '@videojs/media/dom/native-hls';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';

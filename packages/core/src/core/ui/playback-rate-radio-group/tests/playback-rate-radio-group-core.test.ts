@@ -1,6 +1,5 @@
+import type { MediaPlaybackRateState } from '@videojs/media';
 import { describe, expect, it, vi } from 'vitest';
-
-import type { MediaPlaybackRateState } from '../../../media/state';
 import type { PlaybackRateRadioGroupState } from '../playback-rate-radio-group-core';
 import { PlaybackRateRadioGroupCore } from '../playback-rate-radio-group-core';
 

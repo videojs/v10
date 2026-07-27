@@ -25,6 +25,7 @@ export default {
         'html',
         'i18n',
         'icons',
+        'media',
         'packages',
         'plan',
         'react-native',

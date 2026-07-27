@@ -5,8 +5,8 @@
  * and a complex host that has JSDoc descriptions on its getter/setters.
  */
 
-import { ComplexHost } from '../../../../core/src/dom/media/complex';
-import { CustomMediaElement } from '../../../../core/src/dom/media/custom-media-element';
+import { ComplexHost } from '../../../../media/src/dom/complex';
+import { CustomMediaElement } from '../../../../media/src/dom/custom-media-element';
 
 // Stub — the builder parses the AST, it doesn't run the code.
 function MediaAttachMixin(base: any) {

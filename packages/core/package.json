@@ -11,7 +11,6 @@
   },
   "keywords": [
     "core",
-    "media",
     "player",
     "videojs"
   ],
@@ -29,16 +28,6 @@
       "types": "./dist/dev/dom.d.ts",
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
-    },
-    "./dom/media/*": {
-      "types": "./dist/dev/dom/media/*/index.d.ts",
-      "development": "./dist/dev/dom/media/*/index.js",
-      "default": "./dist/default/dom/media/*/index.js"
-    },
-    "./media/predicate": {
-      "types": "./dist/dev/media/predicate.d.ts",
-      "development": "./dist/dev/media/predicate.js",
-      "default": "./dist/default/media/predicate.js"
     },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",
@@ -74,17 +63,11 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/spf": "workspace:*",
+    "@videojs/media": "workspace:*",
     "@videojs/store": "workspace:*",
-    "@videojs/utils": "workspace:*",
-    "@vimeo/player": "^2.30.3",
-    "dashjs": "^5.2.0",
-    "hls.js": "^1.6.7",
-    "mux-embed": "^5.17.10"
+    "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "@types/chrome": "^0.1.40",
-    "@types/chromecast-caf-sender": "^1.0.11",
     "jsdom": "^26.1.0",
     "tsdown": "^0.22.14",
     "vitest": "^4.1.10"

@@ -1,6 +1,7 @@
-import { type MediaTimeState, SeekButtonCore, SeekButtonDataAttrs } from '@videojs/core';
+import { SeekButtonCore, SeekButtonDataAttrs } from '@videojs/core';
 import { selectTime } from '@videojs/core/dom';
 import type { PropertyDeclarationMap } from '@videojs/element';
+import type { MediaTimeState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

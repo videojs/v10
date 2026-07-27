@@ -33,7 +33,7 @@ the mixin.
 | Phase | What | Notes |
 |---|---|---|
 | Writable signal refs via `onSignalsReady` | `shareSignals` captures `Signal<T>` / `ReadonlySignal<T>` refs into a consumer-supplied callback at setup time. Generic over composition shape (`makeShareSignals<S, C>()`) | Per-slot read/write intent is expressed at the use site (callers type captured refs as `Signal<T>` or `ReadonlySignal<T>`). Composed last in the engine so initial state writes are visible to the consumer |
-| Mixin adapter pattern | `SimpleHlsMediaMixin` is the canonical consumer: function-of-base-class structure (mix into any base), captures refs once in `onSignalsReady`, exposes a WHATWG HTMLMediaElement-shaped API mapping each setter/method to engine writes | Downstream use: `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}` in `packages/core/src/dom/media/simple-hls/` |
+| Mixin adapter pattern | `SimpleHlsMediaMixin` is the canonical consumer: function-of-base-class structure (mix into any base), captures refs once in `onSignalsReady`, exposes a WHATWG HTMLMediaElement-shaped API mapping each setter/method to engine writes | Downstream use: `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}` in `packages/media/src/dom/simple-hls/` |
 | Media element binding | `attach(el)` writes `context.mediaElement`; `detach()` clears it. **Engine persists across attach/detach cycles** — only `src` reassignment or explicit `destroy()` tears it down | Re-attach to a different element is supported. The engine is the durable state holder; `mediaElement` is a context slot |
 | Source assignment via in-place recycling | Adapter's `set src` overwrites `state.presentation` on its single recycled engine (`{ url }`, or `undefined` for empty src). Media element + engine-wide preload persist; no engine recreation, no signal re-capture | Drives the engine's in-place source-replacement cascade — see [source-replacement.md](./source-replacement.md). (The adapter previously destroyed + recreated the engine per assignment.) |
 | Preload reflection | `set preload(value)` writes W3C values to `state.preload`; clearing (`preload = ''`) doesn't patch the current engine but is re-applied on the next src change. Pre-attach src + preload combinations are supported | Extended preload values flow through state but don't reach the DOM (per [`preload-modes`](./preload-modes.md)'s sticky-extended-values semantics) |
@@ -105,7 +105,7 @@ return createComposition(
 | `set preload(value)` | `state.preload.set(value)` (W3C values only; pre-empties stay engine-local) |
 | `play()` | `state.loadActivated.set(true)` → native `play()` with `loadstart` retry on "no supported sources" |
 
-**Downstream consumer:** `packages/core/src/dom/media/simple-hls/index.ts`:
+**Downstream consumer:** `packages/media/src/dom/simple-hls/index.ts`:
 
 ```ts
 export class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -148,7 +148,7 @@ each `set src`).
   - `packages/spf/src/core/composition/tests/share-signals.test.ts`
     — the behavior itself
 - **Downstream usage:**
-  - `packages/core/src/dom/media/simple-hls/index.ts` —
+  - `packages/media/src/dom/simple-hls/index.ts` —
     `SimpleHlsMedia` consumer
 - **Walkthrough:**
   - `packages/spf/docs/hls-engine.md` Stage 10 — high-level coverage
@@ -220,5 +220,5 @@ each `set src`).
 - [conventions/signals.md](../conventions/signals.md) — per-slot
   `Signal<T>` / `ReadonlySignal<T>` intent (relevant for how consumers
   type captured refs at the use site)
-- `packages/core/src/dom/media/simple-hls/index.ts` — canonical
+- `packages/media/src/dom/simple-hls/index.ts` — canonical
   downstream consumer

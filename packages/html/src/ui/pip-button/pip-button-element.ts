@@ -1,5 +1,6 @@
-import { type MediaPictureInPictureState, PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
+import { PiPButtonCore, PiPButtonDataAttrs } from '@videojs/core';
 import { selectPiP } from '@videojs/core/dom';
+import type { MediaPictureInPictureState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';

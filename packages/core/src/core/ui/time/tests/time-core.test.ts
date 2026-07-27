@@ -1,8 +1,8 @@
+import type { MediaTimeState } from '@videojs/media';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import { describe, expect, it } from 'vitest';
 
 import { createTranslator, flattenTranslations, translateText, translations } from '../../../i18n';
-import type { MediaTimeState } from '../../../media/state';
 import { TimeCore } from '../time-core';
 
 const t = createTranslator(flattenTranslations(translations), 'en');

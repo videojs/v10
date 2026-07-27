@@ -69,7 +69,7 @@
  *                  media element export, tailwind skin exclusion.
  *     audio/     — Exercises: single skin, different media element.
  *
- * Media elements (packages/html/src/define/media/ + packages/core/src/dom/media/):
+ * Media elements (packages/html/src/define/media/ + packages/media/src/dom/):
  *   simple-video  — Simple media element. Exercises: discovery via static
  *                   tagName in define/media/*.ts, minimal host (src rw,
  *                   engine readonly), shared attributes/events/CSS vars
@@ -1600,7 +1600,7 @@ describe('Media element pipeline (end-to-end)', () => {
   // ─────────────────────────────────────────────────────────────────
   //
   // Events are derived from the capability contract types in
-  // packages/core/src/core/media/types.ts, not hardcoded.
+  // packages/media/src/core/types.ts, not hardcoded.
   // VideoEvents includes TextTrackListEvents; AudioEvents does not.
 
   describe('Event extraction from capability contracts', () => {

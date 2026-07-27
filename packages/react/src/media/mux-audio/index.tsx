@@ -1,11 +1,11 @@
 'use client';
 
-import { GoogleCast } from '@videojs/core/dom/media/google-cast';
-import type { HlsMediaProps } from '@videojs/core/dom/media/hls-js';
-import { hlsMediaDefaultProps } from '@videojs/core/dom/media/hls-js';
-import { addComponent } from '@videojs/core/dom/media/media-host';
-import type { MuxMediaProps } from '@videojs/core/dom/media/mux';
-import { MuxData, MuxMedia, muxMediaDefaultProps } from '@videojs/core/dom/media/mux';
+import { GoogleCast } from '@videojs/media/dom/google-cast';
+import type { HlsMediaProps } from '@videojs/media/dom/hls-js';
+import { hlsMediaDefaultProps } from '@videojs/media/dom/hls-js';
+import { addComponent } from '@videojs/media/dom/media-host';
+import type { MuxMediaProps } from '@videojs/media/dom/mux';
+import { MuxData, MuxMedia, muxMediaDefaultProps } from '@videojs/media/dom/mux';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
