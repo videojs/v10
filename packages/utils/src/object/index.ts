@@ -1,3 +1,4 @@
+export { deepEqual } from './deep-equal';
 export { defaults } from './defaults';
 export { omit } from './omit';
 export { pick } from './pick';
