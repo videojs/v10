@@ -400,6 +400,3 @@ closed door.
   feature framing.
 - `packages/spf/src/media/mp4/` — the committed box parser (presumptive +
   track-selected).
-- `.claude/plans/spf-non-zero-pts-timestamp-offset-spike.md` — the spike's
-  running notes; OSS prior-art survey (buffer-whole is universal;
-  establish-then-gate cross-track) captured in agent memory.
