@@ -18,8 +18,6 @@ export class MuxVideo extends MuxVideoBase {
     super();
     addComponent(this.host, new MuxData({ playerSoftwareName: 'mux-video' }));
     addComponent(this.host, new GoogleCast());
-    // Slotted media swaps the render target; re-sync when it does.
-    this.shadowRoot?.addEventListener('slotchange', () => this.#syncStoryboard());
     // Storyboards aren't generated for live streams; re-evaluate when the type is detected.
     this.host.addEventListener('streamtypechange', () => this.#syncStoryboard());
     // Covers both the `src` attribute and the `source` property (JS-only).
@@ -29,15 +27,13 @@ export class MuxVideo extends MuxVideoBase {
     });
   }
 
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null): void {
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     super.attributeChangedCallback(name, oldValue, newValue);
     if (name === 'storyboard') this.#syncStoryboard();
   }
 
-  // Mirrors the host `src` back to the element's `src` attribute when the
-  // JS-only `source` property derives a new URL, so `getAttribute('src')`
-  // always matches the active playback URL.
-  #reflectSrc(): void {
+  // Mirrors the host `src` to the `src` attribute so it matches the active playback URL.
+  #reflectSrc() {
     const src = this.host.src;
     if (src) {
       if (this.getAttribute('src') !== src) this.setAttribute('src', src);
@@ -46,35 +42,17 @@ export class MuxVideo extends MuxVideoBase {
     }
   }
 
-  // The storyboard <track> node can be cloned and replaced out from under us
-  // (e.g. hls.js clearing cues in `HlsJsMediaMetadataTracksMixin`), so query
-  // for it instead of holding a reference that can go stale.
-  #storyboardTracks(): HTMLTrackElement[] {
-    return [
-      ...(this.shadowRoot?.querySelectorAll<HTMLTrackElement>('track[data-storyboard]') ?? []),
-      ...this.querySelectorAll<HTMLTrackElement>('track[data-storyboard]'),
-    ];
-  }
-
-  // Keeps the storyboard (thumbnail sprite) track attached to the active media
-  // element. The URL comes from the `storyboard` attribute or is derived from
-  // the current `source`.
-  #syncStoryboard(): void {
-    const target = this.target;
-    if (!target) return;
-
+  // Keeps a storyboard track child in sync, from the `storyboard` attribute or derived from `source`.
+  #syncStoryboard() {
     // Live streams have no storyboard; skip until the type is known to be otherwise.
     const src = this.host.streamType === StreamTypes.LIVE ? undefined : this.host.storyboard || undefined;
 
-    const tracks = this.#storyboardTracks();
-    let track = src ? (tracks.find((el) => el.parentNode === target) ?? null) : null;
+    let track = this.querySelector<HTMLTrackElement>('track[data-storyboard]');
 
-    // Remove stale tracks: previous render targets, cleared sources, live streams.
-    for (const el of tracks) {
-      if (el !== track) el.remove();
+    if (!src) {
+      track?.remove();
+      return;
     }
-
-    if (!src) return;
 
     if (!track) {
       track = document.createElement('track');
@@ -85,11 +63,6 @@ export class MuxVideo extends MuxVideoBase {
     }
 
     if (track.getAttribute('src') !== src) track.setAttribute('src', src);
-    if (track.parentNode !== target) {
-      target.append(track);
-      // Browsers ignore `default` for scripted tracks; enable it explicitly.
-      const textTrack = track.track;
-      if (textTrack && textTrack.mode === 'disabled') textTrack.mode = 'hidden';
-    }
+    if (track.parentNode !== this) this.append(track);
   }
 }

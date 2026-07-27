@@ -11,12 +11,11 @@ export class MuxAudio extends MuxAudioBase {
     super();
     addComponent(this.host, new MuxData({ playerSoftwareName: 'mux-audio' }));
     addComponent(this.host, new GoogleCast());
-    // Mirror the host `src` back to the `src` attribute when the JS-only
-    // `source` property derives a new URL.
     this.host.addEventListener('sourcechange', () => this.#reflectSrc());
   }
 
-  #reflectSrc(): void {
+  // Mirrors the host `src` to the `src` attribute so it matches the active playback URL.
+  #reflectSrc() {
     const src = this.host.src;
     if (src) {
       if (this.getAttribute('src') !== src) this.setAttribute('src', src);

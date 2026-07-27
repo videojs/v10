@@ -80,7 +80,7 @@ describe('MuxVideo', () => {
 
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
 
-    const track = el.shadowRoot!.querySelector('track');
+    const track = el.querySelector('track');
     expect(track?.kind).toBe('metadata');
     expect(track?.getAttribute('src')).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
   });
@@ -90,7 +90,7 @@ describe('MuxVideo', () => {
 
     el.source = { playbackId: 'abc123', customDomain: 'example.com' };
 
-    expect(el.shadowRoot!.querySelector('track')?.getAttribute('src')).toBe(
+    expect(el.querySelector('track')?.getAttribute('src')).toBe(
       'https://image.example.com/abc123/storyboard.vtt?format=webp'
     );
   });
@@ -101,19 +101,17 @@ describe('MuxVideo', () => {
     el.setAttribute('storyboard', 'https://image.mux.com/other/storyboard.vtt?token=jwt');
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
 
-    expect(el.shadowRoot!.querySelector('track')?.getAttribute('src')).toBe(
-      'https://image.mux.com/other/storyboard.vtt?token=jwt'
-    );
+    expect(el.querySelector('track')?.getAttribute('src')).toBe('https://image.mux.com/other/storyboard.vtt?token=jwt');
   });
 
   it('removes the storyboard track when the src is cleared', () => {
     const el = createMuxVideo();
 
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
-    expect(el.shadowRoot!.querySelector('track')).not.toBeNull();
+    expect(el.querySelector('track')).not.toBeNull();
 
     el.removeAttribute('src');
-    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+    expect(el.querySelector('track')).toBeNull();
   });
 
   it('does not add a storyboard track for live streams', () => {
@@ -122,36 +120,28 @@ describe('MuxVideo', () => {
     el.host.streamType = 'live';
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
 
-    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+    expect(el.querySelector('track')).toBeNull();
   });
 
   it('removes the storyboard track when the stream becomes live', () => {
     const el = createMuxVideo();
 
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
-    expect(el.shadowRoot!.querySelector('track')).not.toBeNull();
+    expect(el.querySelector('track')).not.toBeNull();
 
     el.host.streamType = 'live';
-    expect(el.shadowRoot!.querySelector('track')).toBeNull();
+    expect(el.querySelector('track')).toBeNull();
   });
 
-  it('tracks the storyboard track through a clone/replace (hls.js clearing cues)', () => {
+  it('keeps a single storyboard track across source changes', () => {
     const el = createMuxVideo();
 
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
-
-    // `HlsJsMediaMetadataTracksMixin` clones and replaces track nodes to reset cues.
-    const target = el.target!;
-    const track = target.querySelector('track')!;
-    target.replaceChild(track.cloneNode(), track);
-
     el.setAttribute('src', 'https://stream.mux.com/xyz789.m3u8');
-    const tracks = el.shadowRoot!.querySelectorAll('track');
+
+    const tracks = el.querySelectorAll('track');
     expect(tracks.length).toBe(1);
     expect(tracks[0]?.getAttribute('src')).toBe('https://image.mux.com/xyz789/storyboard.vtt?format=webp');
-
-    el.host.streamType = 'live';
-    expect(el.shadowRoot!.querySelector('track')).toBeNull();
   });
 
   it('reflects the derived src to the src attribute when source is set', () => {
