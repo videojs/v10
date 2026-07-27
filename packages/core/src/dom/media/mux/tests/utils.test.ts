@@ -104,6 +104,24 @@ describe('parseMuxVideoURL', () => {
     });
   });
 
+  it('coerces numeric and boolean params to their declared types', () => {
+    expect(
+      parseMuxVideoURL('https://stream.mux.com/abc123.m3u8?asset_start_time=3&redundant_streams=false&exclude_pdt=true')
+    ).toEqual({
+      playbackId: 'abc123',
+      playback: { assetStartTime: 3, redundantStreams: false, excludePdt: true },
+    });
+  });
+
+  it('keeps non-numeric strings as strings', () => {
+    expect(
+      parseMuxVideoURL('https://stream.mux.com/abc123.m3u8?max_resolution=1080p&default_subtitles_lang=en')
+    ).toEqual({
+      playbackId: 'abc123',
+      playback: { maxResolution: '1080p', defaultSubtitlesLang: 'en' },
+    });
+  });
+
   it('returns undefined for non-Mux URLs', () => {
     expect(parseMuxVideoURL('')).toBeUndefined();
     expect(parseMuxVideoURL('not a url')).toBeUndefined();

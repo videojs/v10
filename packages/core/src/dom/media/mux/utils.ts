@@ -142,11 +142,23 @@ export function parseMuxVideoURL(src: string): MuxSource | undefined {
 
   const playback: MuxPlaybackParams = {};
   for (const [key, value] of url.searchParams) {
-    playback[camelCase(key)] = value;
+    playback[camelCase(key)] = parseMuxParamValue(value);
   }
   if (Object.keys(playback).length > 0) source.playback = playback;
 
   return source;
+}
+
+/**
+ * Coerce a query param string back to the boolean/number types declared on
+ * `MuxPlaybackParams`. Numbers only convert when the string round-trips exactly
+ * (so `1080p`, `007`, and JWTs stay strings).
+ */
+function parseMuxParamValue(value: string): string | number | boolean {
+  if (value === 'true') return true;
+  if (value === 'false') return false;
+  if (value !== '' && String(Number(value)) === value) return Number(value);
+  return value;
 }
 
 /**
