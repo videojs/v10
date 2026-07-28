@@ -4,7 +4,7 @@ import type {
   LiveAudioFeatures,
   LiveVideoFeatures,
   VideoFeatures,
-} from '@videojs/media/dom';
+} from '../../player';
 import { audioTrackFeature } from './audio-track';
 import { bufferFeature } from './buffer';
 import { controlsFeature } from './controls';

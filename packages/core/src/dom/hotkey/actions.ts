@@ -1,6 +1,6 @@
-import type { AnyPlayerStore } from '@videojs/media/dom';
 import { isUndefined } from '@videojs/utils/predicate';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
+import type { AnyPlayerStore } from '../player';
 import {
   selectFullscreen,
   selectPiP,

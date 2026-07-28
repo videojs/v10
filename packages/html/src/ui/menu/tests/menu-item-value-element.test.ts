@@ -1,3 +1,4 @@
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import { registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type {
@@ -6,7 +7,6 @@ import type {
   MediaQualityState,
   MediaTextTrackState,
 } from '@videojs/media';
-import type { AnyPlayerStore } from '@videojs/media/dom';
 import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 

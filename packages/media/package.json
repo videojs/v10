@@ -49,7 +49,6 @@
   },
   "dependencies": {
     "@videojs/spf": "workspace:*",
-    "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*",
     "@vimeo/player": "^2.30.3",
     "dashjs": "^5.2.0",

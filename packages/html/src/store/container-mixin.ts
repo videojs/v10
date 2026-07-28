@@ -1,5 +1,5 @@
+import type { MediaContainer, PlayerStore } from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
-import type { MediaContainer, PlayerStore } from '@videojs/media/dom';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, PlayerContext } from '../player/context';
 import type { PlayerConsumer, PlayerConsumerConstructor } from './types';

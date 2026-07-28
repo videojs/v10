@@ -335,9 +335,6 @@ importers:
       '@videojs/spf':
         specifier: workspace:*
         version: link:../spf
-      '@videojs/store':
-        specifier: workspace:*
-        version: link:../store
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils

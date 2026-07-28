@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import type { PlayerStore } from '@videojs/media/dom';
+import type { PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import type { ReactNode } from 'react';
 import { StrictMode, useState } from 'react';

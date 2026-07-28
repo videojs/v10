@@ -1,5 +1,6 @@
 'use client';
 
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import {
   createDoubleTapGesture,
   createTapGesture,
@@ -8,7 +9,6 @@ import {
   type GestureRegion,
   resolveGestureAction,
 } from '@videojs/core/dom';
-import type { AnyPlayerStore } from '@videojs/media/dom';
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 

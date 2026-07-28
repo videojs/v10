@@ -1,6 +1,6 @@
-import type { AnyPlayerStore } from '@videojs/media/dom';
 import { isFunction } from '@videojs/utils/predicate';
 import { MEDIA_INPUT_ACTION_OVERRIDES } from '../media-actions';
+import type { AnyPlayerStore } from '../player';
 
 export type GestureActionName =
   | 'togglePaused'

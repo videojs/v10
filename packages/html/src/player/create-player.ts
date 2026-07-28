@@ -6,7 +6,7 @@ import type {
   PlayerTarget,
   VideoFeatures,
   VideoPlayerStore,
-} from '@videojs/media/dom';
+} from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
 import { type ContainerMixin, createContainerMixin } from '../store/container-mixin';

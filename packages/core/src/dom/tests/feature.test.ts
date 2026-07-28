@@ -1,7 +1,7 @@
-import type { PlayerTarget } from '@videojs/media/dom';
 import { createSelector, type StateContext } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 import { definePlayerFeature } from '../feature';
+import type { PlayerTarget } from '../player';
 
 const stateContext = {
   target: () => {

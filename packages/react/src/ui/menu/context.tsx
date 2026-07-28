@@ -1,8 +1,7 @@
 'use client';
 
 import type { MenuCore, MenuState, StateAttrMap } from '@videojs/core';
-import type { MenuApi, PositioningBoundary } from '@videojs/core/dom';
-import type { MediaContainer } from '@videojs/media/dom';
+import type { MediaContainer, MenuApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
 import type { MenuItemSettingType } from './menu-item-type';

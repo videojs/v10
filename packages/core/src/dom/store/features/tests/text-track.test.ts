@@ -1,6 +1,6 @@
-import type { PlayerTarget } from '@videojs/media/dom';
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
+import type { PlayerTarget } from '../../../player';
 import { textTrackFeature } from '../text-track';
 
 /**

@@ -1,17 +1,17 @@
 'use client';
 
-import { createPopupGroup } from '@videojs/core/dom';
-import type {
-  AnyPlayerFeature,
-  AnyPlayerStore,
-  AudioFeatures,
-  AudioPlayerStore,
-  Media,
-  PlayerStore,
-  PlayerTarget,
-  VideoFeatures,
-  VideoPlayerStore,
-} from '@videojs/media/dom';
+import {
+  type AnyPlayerFeature,
+  type AnyPlayerStore,
+  type AudioFeatures,
+  type AudioPlayerStore,
+  createPopupGroup,
+  type PlayerStore,
+  type PlayerTarget,
+  type VideoFeatures,
+  type VideoPlayerStore,
+} from '@videojs/core/dom';
+import type { Media } from '@videojs/media/dom';
 import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';

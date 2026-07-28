@@ -1,6 +1,6 @@
-import type { PlayerFeature, PlayerTarget } from '@videojs/media/dom';
 import { type AttachContext, defineSlice, type SliceConfig, type StateContext } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
+import type { PlayerFeature, PlayerTarget } from './player';
 
 export interface ConfigurablePlayerFeature<Config, State> extends PlayerFeature<State> {
   (config?: Config): PlayerFeature<State>;

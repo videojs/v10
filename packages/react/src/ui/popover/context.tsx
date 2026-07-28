@@ -1,8 +1,7 @@
 'use client';
 
 import type { PopoverCore, StateAttrMap } from '@videojs/core';
-import type { PopoverApi, PositioningBoundary } from '@videojs/core/dom';
-import type { MediaContainer } from '@videojs/media/dom';
+import type { MediaContainer, PopoverApi, PositioningBoundary } from '@videojs/core/dom';
 import { createContext, useContext } from 'react';
 
 export interface PopoverContextValue {
