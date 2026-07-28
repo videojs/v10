@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { HlsJsMedia } from '../../hls-js';
-import { addComponent } from '../../media-host';
+import { addMediaComponent } from '../../media-host';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -95,7 +95,7 @@ describe('MuxData', () => {
   it('exposes mux config under host.config.muxData with inferred types', () => {
     const media = new HlsJsMedia();
     const muxData = new MuxData();
-    addComponent(media, muxData);
+    addMediaComponent(media, muxData);
 
     // Type-level: `config.muxData` infers `Partial<MuxDataProps>` via the
     // component's `configKey` augmentation, so the assignment/read are checked.

@@ -3,7 +3,7 @@
 import { GoogleCast } from '@videojs/media/dom/google-cast';
 import type { HlsMediaProps } from '@videojs/media/dom/hls-js';
 import { HlsJsMedia, hlsMediaDefaultProps } from '@videojs/media/dom/hls-js';
-import { addComponent } from '@videojs/media/dom/media-host';
+import { addMediaComponent } from '@videojs/media/dom/media-host';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
@@ -22,7 +22,7 @@ export const HlsJsVideo = forwardRef<HTMLVideoElement, HlsJsVideoProps>(function
   ref
 ) {
   const media = useMediaInstance(HlsJsMedia, (media) => {
-    addComponent(media, new GoogleCast());
+    addMediaComponent(media, new GoogleCast());
   });
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);

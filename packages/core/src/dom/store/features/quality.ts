@@ -4,7 +4,7 @@ import type {
   VideoRenditionLike,
   VideoRenditionListLike,
 } from '@videojs/media';
-import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '@videojs/media/predicate';
+import { isMediaVideoDimensionsCapable, isMediaVideoRenditionCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 

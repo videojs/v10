@@ -1,5 +1,5 @@
 import type { MediaErrorState } from '@videojs/media';
-import { isMediaErrorCapable } from '@videojs/media/predicate';
+import { isMediaErrorCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 

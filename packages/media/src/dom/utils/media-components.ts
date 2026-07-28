@@ -1,25 +1,25 @@
 import type {
-  Component,
-  ComponentConstructor,
-  Components,
   HTMLMediaElementHost,
+  MediaComponent,
+  MediaComponentConstructor,
+  MediaComponents,
   HTMLMediaTargetLike as TargetLike,
 } from '../media-host';
 
-export type Host<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
+export type MediaHost<T extends TargetLike = any> = HTMLMediaElementHost<T, any>;
 
-const componentRegistry = new WeakMap<Host, Components>();
+const componentRegistry = new WeakMap<MediaHost, MediaComponents>();
 
-export function getComponents(host: Host) {
+export function getMediaComponents(host: MediaHost) {
   let map = componentRegistry.get(host);
-  if (!map) componentRegistry.set(host, (map = new Map() as Components));
+  if (!map) componentRegistry.set(host, (map = new Map() as MediaComponents));
   return map;
 }
 
-export function addComponent<T extends Component>(host: Host, component: T) {
-  const components = getComponents(host);
+export function addMediaComponent<T extends MediaComponent>(host: MediaHost, component: T) {
+  const components = getMediaComponents(host);
   // Get the component's constructor to use as the key for the component in the registry.
-  const ctor = component.constructor as ComponentConstructor<T>;
+  const ctor = component.constructor as MediaComponentConstructor<T>;
 
   // Adopt any config set under this namespace before the component registered.
   const { configKey } = ctor;
@@ -41,18 +41,18 @@ export function addComponent<T extends Component>(host: Host, component: T) {
   };
 }
 
-export function getProp<T extends TargetLike, K extends keyof T>(host: Host<T>, prop: K): T[K] | undefined {
-  return getOwner(host, prop)?.[prop];
+export function getMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K): T[K] | undefined {
+  return getMediaOwner(host, prop)?.[prop];
 }
 
-export function setProp<T extends TargetLike, K extends keyof T>(host: Host<T>, prop: K, value: T[K]): void {
-  const own = getOwner(host, prop);
+export function setMediaProp<T extends TargetLike, K extends keyof T>(host: MediaHost<T>, prop: K, value: T[K]): void {
+  const own = getMediaOwner(host, prop);
   if (own) (own as Record<K, T[K]>)[prop] = value;
 }
 
 /** Find the object that owns a media property: the first component `override` exposing it, otherwise the attached target. */
-export function getOwner<T extends TargetLike>(host: Host<T>, prop: keyof T): Partial<T> | null {
-  for (const component of getComponents(host).values()) {
+export function getMediaOwner<T extends TargetLike>(host: MediaHost<T>, prop: keyof T): Partial<T> | null {
+  for (const component of getMediaComponents(host).values()) {
     const override = component.targetOverride as Partial<T> | null | undefined;
     if (override?.[prop] !== undefined) return override;
   }

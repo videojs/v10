@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addComponent, type HTMLMediaTargetLike } from '../../media-host';
+import { addMediaComponent, type HTMLMediaTargetLike } from '../../media-host';
 import { HTMLVideoElementHost } from '../../video-host';
 import { GoogleCastProvider } from '../google-cast-provider';
 import { GoogleCast } from '../index';
@@ -105,7 +105,7 @@ describe('GoogleCast', () => {
     const { target } = createTarget();
     host.attach(target as Parameters<HTMLVideoElementHost['attach']>[0]);
 
-    addComponent(host, new GoogleCast());
+    addMediaComponent(host, new GoogleCast());
     expect(ensureCastFramework).not.toHaveBeenCalled();
 
     // The component's override must expose `remote` as an accessor so host
@@ -119,7 +119,7 @@ describe('GoogleCast', () => {
     vi.stubGlobal('chrome', {});
 
     const host = new HTMLVideoElementHost();
-    addComponent(host, new GoogleCast());
+    addMediaComponent(host, new GoogleCast());
 
     void host.remote;
 

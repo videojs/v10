@@ -1,6 +1,6 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { GoogleCast } from '@videojs/media/dom/google-cast';
-import { addComponent } from '@videojs/media/dom/media-host';
+import { addMediaComponent } from '@videojs/media/dom/media-host';
 import { MuxData, MuxMedia } from '@videojs/media/dom/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
@@ -9,8 +9,8 @@ const MuxAudioBase = MediaAttachMixin(CustomMediaElement('audio', MuxMedia));
 export class MuxAudio extends MuxAudioBase {
   constructor() {
     super();
-    addComponent(this.host, new MuxData({ playerSoftwareName: 'mux-audio' }));
-    addComponent(this.host, new GoogleCast());
+    addMediaComponent(this.host, new MuxData({ playerSoftwareName: 'mux-audio' }));
+    addMediaComponent(this.host, new GoogleCast());
     this.host.addEventListener('sourcechange', () => this.#reflectSrc());
   }
 

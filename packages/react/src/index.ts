@@ -3,10 +3,28 @@
 export type { IndicatorStatus, InputAction, InputIndicatorLabels } from '@videojs/core';
 // Core
 export * from '@videojs/core/dom';
+// Media predicates
+export {
+  hasMetadata,
+  isMediaAudioTrackCapable,
+  isMediaBufferCapable,
+  isMediaErrorCapable,
+  isMediaLiveCapable,
+  isMediaPauseCapable,
+  isMediaPlaybackRateCapable,
+  isMediaRemotePlaybackCapable,
+  isMediaSeekCapable,
+  isMediaSourceCapable,
+  isMediaStreamTypeCapable,
+  isMediaTextTrackCapable,
+  isMediaVideoDimensionsCapable,
+  isMediaVideoRenditionCapable,
+  isMediaVolumeCapable,
+  isQuerySelectorAllCapable,
+  type NodeListLike,
+} from '@videojs/media';
 // Media
 export * from '@videojs/media/dom';
-// Media predicates
-export * from '@videojs/media/predicate';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';

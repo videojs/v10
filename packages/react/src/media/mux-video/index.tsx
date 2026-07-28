@@ -3,7 +3,7 @@
 import { GoogleCast } from '@videojs/media/dom/google-cast';
 import type { HlsMediaProps } from '@videojs/media/dom/hls-js';
 import { hlsMediaDefaultProps, StreamTypes } from '@videojs/media/dom/hls-js';
-import { addComponent } from '@videojs/media/dom/media-host';
+import { addMediaComponent } from '@videojs/media/dom/media-host';
 import type { MuxMediaProps } from '@videojs/media/dom/mux';
 import { MuxData, MuxMedia, muxMediaDefaultProps } from '@videojs/media/dom/mux';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
@@ -24,8 +24,8 @@ const muxVideoDefaultProps: HlsMediaProps & MuxMediaProps = { ...hlsMediaDefault
 
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
   const media = useMediaInstance(MuxMedia, (media) => {
-    addComponent(media, new MuxData({ playerSoftwareName: 'mux-video' }));
-    addComponent(media, new GoogleCast());
+    addMediaComponent(media, new MuxData({ playerSoftwareName: 'mux-video' }));
+    addMediaComponent(media, new GoogleCast());
   });
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);

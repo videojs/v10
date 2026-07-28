@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MediaError } from '../../../core/media-error';
 import type { RemotePlaybackLike } from '../../../core/types';
-import { addComponent, type Component } from '../../media-host';
+import { addMediaComponent, type MediaComponent } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
 import { ContentTypes, Hls, HlsJsMedia } from '../index';
 
@@ -203,12 +203,12 @@ describe('HlsJsMedia', () => {
       const media = new HlsJsMedia();
       media.attach(video);
 
-      const component: Component = {
+      const component: MediaComponent = {
         get targetOverride() {
           return { remote: { state: 'connected' } as RemotePlaybackLike, load };
         },
       };
-      addComponent(media, component);
+      addMediaComponent(media, component);
 
       return { media };
     }

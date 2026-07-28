@@ -1,5 +1,5 @@
 import type { MediaPlaybackState } from '@videojs/media';
-import { isMediaPauseCapable, isMediaSeekCapable, isMediaSourceCapable } from '@videojs/media/predicate';
+import { isMediaPauseCapable, isMediaSeekCapable, isMediaSourceCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 

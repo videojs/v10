@@ -6,7 +6,7 @@
  * video-only native-property extraction (videoWidth) and a non-native helper
  * (isFullscreen) that must be filtered out of nativeProperties.
  */
-import { HTMLMediaElementHost } from './media-host';
+import { HTMLMediaElementHost } from '../media-host';
 
 export class HTMLVideoElementHost extends HTMLMediaElementHost {
   requestFullscreen(): Promise<void> {

@@ -105,7 +105,7 @@ return createComposition(
 | `set preload(value)` | `state.preload.set(value)` (W3C values only; pre-empties stay engine-local) |
 | `play()` | `state.loadActivated.set(true)` → native `play()` with `loadstart` retry on "no supported sources" |
 
-**Downstream consumer:** `packages/media/src/dom/simple-hls/index.ts`:
+**Downstream consumer:** `packages/media/src/dom/simple-hls/media.ts`:
 
 ```ts
 export class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -148,7 +148,7 @@ each `set src`).
   - `packages/spf/src/core/composition/tests/share-signals.test.ts`
     — the behavior itself
 - **Downstream usage:**
-  - `packages/media/src/dom/simple-hls/index.ts` —
+  - `packages/media/src/dom/simple-hls/media.ts` —
     `SimpleHlsMedia` consumer
 - **Walkthrough:**
   - `packages/spf/docs/hls-engine.md` Stage 10 — high-level coverage
@@ -220,5 +220,5 @@ each `set src`).
 - [conventions/signals.md](../conventions/signals.md) — per-slot
   `Signal<T>` / `ReadonlySignal<T>` intent (relevant for how consumers
   type captured refs at the use site)
-- `packages/media/src/dom/simple-hls/index.ts` — canonical
+- `packages/media/src/dom/simple-hls/media.ts` — canonical
   downstream consumer

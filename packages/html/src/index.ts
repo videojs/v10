@@ -10,10 +10,28 @@ export type {
 } from '@videojs/element';
 // Element — reactive primitives for users extending MediaElement
 export { DestroyMixin, ReactiveElement } from '@videojs/element';
+// Media predicates
+export {
+  hasMetadata,
+  isMediaAudioTrackCapable,
+  isMediaBufferCapable,
+  isMediaErrorCapable,
+  isMediaLiveCapable,
+  isMediaPauseCapable,
+  isMediaPlaybackRateCapable,
+  isMediaRemotePlaybackCapable,
+  isMediaSeekCapable,
+  isMediaSourceCapable,
+  isMediaStreamTypeCapable,
+  isMediaTextTrackCapable,
+  isMediaVideoDimensionsCapable,
+  isMediaVideoRenditionCapable,
+  isMediaVolumeCapable,
+  isQuerySelectorAllCapable,
+  type NodeListLike,
+} from '@videojs/media';
 // Media
 export * from '@videojs/media/dom';
-// Media predicates
-export * from '@videojs/media/predicate';
 // Store
 export type { Comparator, Selector } from '@videojs/store';
 export { createSelector, shallowEqual } from '@videojs/store';

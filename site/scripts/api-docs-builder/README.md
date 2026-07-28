@@ -9,7 +9,7 @@ Generates API reference JSON from TypeScript sources for Video.js 10 components 
 ## Architecture
 
 ```
-TypeScript Sources (core/html/react/store packages)
+TypeScript Sources (core/html/media/react/store packages)
          ↓
    api-docs-builder (typescript-api-extractor)
          ↓
@@ -59,8 +59,11 @@ site/scripts/api-docs-builder/
     ├── core-handler.ts        # Extracts Props/State from core packages
     ├── data-attrs-handler.ts  # Extracts data attributes
     ├── css-vars-handler.ts    # Extracts CSS custom properties
+    ├── feature-handler.ts     # Extracts player feature state and actions
     ├── html-handler.ts        # Extracts Lit element info
+    ├── media-element-handler.ts # Extracts media element APIs
     ├── parts-handler.ts       # Parses index.parts.ts for multi-part components
+    ├── preset-handler.ts      # Extracts preset composition
     ├── util-handler.ts        # Extracts util params/return from store/react packages
     └── tests/
         ├── e2e.test.ts        # ★ E2E spec — the living specification
@@ -69,6 +72,9 @@ site/scripts/api-docs-builder/
 
 site/src/
 ├── content/generated-component-reference/  # Generated component JSON (gitignored)
+├── content/generated-feature-reference/    # Generated player feature JSON (gitignored)
+├── content/generated-media-reference/      # Generated media element JSON (gitignored)
+├── content/generated-preset-reference/     # Generated preset JSON (gitignored)
 ├── content/generated-util-reference/       # Generated util JSON (gitignored)
 └── components/docs/api-reference/
     ├── ComponentReference.astro  # Renders full component API reference

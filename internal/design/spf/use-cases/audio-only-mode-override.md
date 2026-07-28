@@ -415,7 +415,7 @@ configuration drives end-of-stream correctly with no per-type changes.
 - [`packages/spf/src/playback/engines/hls/adapter-audio-only.ts`](../../../../packages/spf/src/playback/engines/hls/adapter-audio-only.ts) — Phase 1 adapter
 - [`packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts) — Phase 1 engine integration tests
 - [`packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts) — Phase 1 adapter tests
-- [`packages/media/src/dom/simple-hls-audio-only/index.ts`](../../../../packages/media/src/dom/simple-hls-audio-only/index.ts) — Phase 1 media wrapper
+- [`packages/media/src/dom/simple-hls-audio-only/media.ts`](../../../../packages/media/src/dom/simple-hls-audio-only/media.ts) — Phase 1 media wrapper
 - [`packages/html/src/media/simple-hls-audio-only/index.ts`](../../../../packages/html/src/media/simple-hls-audio-only/index.ts) — Phase 1 HTML custom element
 - [`packages/react/src/media/simple-hls-audio-only/index.tsx`](../../../../packages/react/src/media/simple-hls-audio-only/index.tsx) — Phase 1 React component
 - [`apps/sandbox/templates/html-simple-hls-audio-only/`](../../../../apps/sandbox/templates/html-simple-hls-audio-only/) — Phase 1 HTML sandbox demo template

@@ -1,5 +1,5 @@
 import type { MediaTextCue, MediaTextTrack, MediaTextTrackState, TextTrackLike } from '@videojs/media';
-import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media/predicate';
+import { isMediaTextTrackCapable, isQuerySelectorAllCapable } from '@videojs/media';
 import { findTrackElement, getTextTrackList, isCaptionOrSubtitleTrack, listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 

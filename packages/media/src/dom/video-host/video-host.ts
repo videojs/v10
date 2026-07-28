@@ -1,41 +1,41 @@
 import type { WebKitDocument, WebKitPresentationMode, WebKitVideoElement } from '@videojs/utils/dom';
 import { isFunction } from '@videojs/utils/predicate';
-import type { Video, VideoEvents, VideoTargetLike } from '../core/types';
-import { getProp, HTMLMediaElementHost, type HTMLMediaTargetLike, setProp } from './media-host';
+import type { Video, VideoEvents, VideoTargetLike } from '../../core/types';
+import { getMediaProp, HTMLMediaElementHost, type HTMLMediaTargetLike, setMediaProp } from '../media-host';
 
 export interface HTMLVideoTargetLike extends VideoTargetLike, HTMLMediaTargetLike {}
 
 export class HTMLVideoElementHost extends HTMLMediaElementHost<HTMLVideoTargetLike, VideoEvents> implements Video {
   get poster() {
-    return getProp(this, 'poster') ?? '';
+    return getMediaProp(this, 'poster') ?? '';
   }
 
   set poster(value: string) {
-    setProp(this, 'poster', value);
+    setMediaProp(this, 'poster', value);
   }
 
   get playsInline() {
-    return getProp(this, 'playsInline') ?? false;
+    return getMediaProp(this, 'playsInline') ?? false;
   }
 
   set playsInline(value: boolean) {
-    setProp(this, 'playsInline', value);
+    setMediaProp(this, 'playsInline', value);
   }
 
   get videoWidth() {
-    return getProp(this, 'videoWidth') ?? 0;
+    return getMediaProp(this, 'videoWidth') ?? 0;
   }
 
   get videoHeight() {
-    return getProp(this, 'videoHeight') ?? 0;
+    return getMediaProp(this, 'videoHeight') ?? 0;
   }
 
   get disablePictureInPicture() {
-    return getProp(this, 'disablePictureInPicture') ?? false;
+    return getMediaProp(this, 'disablePictureInPicture') ?? false;
   }
 
   set disablePictureInPicture(value: boolean) {
-    setProp(this, 'disablePictureInPicture', value);
+    setMediaProp(this, 'disablePictureInPicture', value);
   }
 
   get webkitCurrentPlaybackTargetIsWireless() {

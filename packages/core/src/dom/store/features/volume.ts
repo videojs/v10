@@ -1,5 +1,5 @@
 import type { MediaFeatureAvailability, MediaVolumeState } from '@videojs/media';
-import { isMediaVolumeCapable } from '@videojs/media/predicate';
+import { isMediaVolumeCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 

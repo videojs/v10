@@ -9,7 +9,7 @@ describe('MuxVideo', () => {
     const envKey = vi.spyOn(MuxData.prototype, 'envKey', 'set');
 
     // `useSyncProps` writes `media.config` during render, before the mount
-    // effect registers the components — `addComponent` adopts the early value.
+    // effect registers the components — `addMediaComponent` adopts the early value.
     const { container } = render(<MuxVideo config={{ muxData: { envKey: 'test-key' } }} />);
 
     expect(envKey).toHaveBeenCalledWith('test-key');

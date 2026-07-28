@@ -1,29 +1,29 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { HTMLAudioElementHost } from '../audio-host';
-import { addComponent, type Component } from '../media-host';
+import { addMediaComponent, type MediaComponent } from '../media-host';
 
 afterEach(() => {
   document.body.innerHTML = '';
 });
 
-class MutedOverride implements Component {
+class MutedOverride implements MediaComponent {
   get targetOverride() {
     return { muted: true };
   }
 }
 
-class VolumeOverride implements Component {
+class VolumeOverride implements MediaComponent {
   get targetOverride() {
     return { volume: 0.5 };
   }
 }
 
-class AttachTracking implements Component {
+class AttachTracking implements MediaComponent {
   attach = vi.fn();
   destroy = vi.fn();
 }
 
-class CastLikeOverride implements Component {
+class CastLikeOverride implements MediaComponent {
   readonly api = {
     muted: false,
     playCount: 0,
@@ -38,7 +38,7 @@ class CastLikeOverride implements Component {
   }
 }
 
-class ConfigurableComponent implements Component {
+class ConfigurableComponent implements MediaComponent {
   static readonly configKey = 'fake';
   value = 0;
   label = '';
@@ -53,7 +53,7 @@ describe('HTMLMediaElementHost', () => {
       audio.muted = false;
       host.attach(audio);
 
-      addComponent(host, new MutedOverride());
+      addMediaComponent(host, new MutedOverride());
 
       expect(host.muted).toBe(true);
     });
@@ -64,7 +64,7 @@ describe('HTMLMediaElementHost', () => {
       audio.defaultMuted = true;
       host.attach(audio);
 
-      addComponent(host, new MutedOverride());
+      addMediaComponent(host, new MutedOverride());
 
       // `defaultMuted` isn't overridden, so it reads from the target.
       expect(host.defaultMuted).toBe(true);
@@ -85,7 +85,7 @@ describe('HTMLMediaElementHost', () => {
       audio.muted = true;
       host.attach(audio);
 
-      addComponent(host, new VolumeOverride());
+      addMediaComponent(host, new VolumeOverride());
 
       expect(host.volume).toBe(0.5);
       expect(host.muted).toBe(true);
@@ -104,7 +104,7 @@ describe('HTMLMediaElementHost', () => {
       host.attach(audio);
 
       const component = new CastLikeOverride();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       host.muted = true;
 
@@ -128,7 +128,7 @@ describe('HTMLMediaElementHost', () => {
       host.attach(audio);
 
       const component = new AttachTracking();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       expect(component.attach).toHaveBeenCalledWith(audio);
     });
@@ -137,7 +137,7 @@ describe('HTMLMediaElementHost', () => {
       const host = new HTMLAudioElementHost();
 
       const component = new AttachTracking();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       expect(component.attach).not.toHaveBeenCalled();
     });
@@ -149,8 +149,8 @@ describe('HTMLMediaElementHost', () => {
       host.attach(audio);
 
       const component = new AttachTracking();
-      addComponent(host, component);
-      addComponent(host, new MutedOverride());
+      addMediaComponent(host, component);
+      addMediaComponent(host, new MutedOverride());
 
       host.destroy();
 
@@ -167,7 +167,7 @@ describe('HTMLMediaElementHost', () => {
       host.attach(audio);
 
       const component = new CastLikeOverride();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       await host.play();
 
@@ -194,7 +194,7 @@ describe('HTMLMediaElementHost', () => {
     it('applies a component namespace onto the component when config is set', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       host.config = { fake: { value: 3, label: 'a' } };
 
@@ -204,7 +204,7 @@ describe('HTMLMediaElementHost', () => {
 
     it('stores config as plain values, never component instances', () => {
       const host = new HTMLAudioElementHost();
-      addComponent(host, new ConfigurableComponent());
+      addMediaComponent(host, new ConfigurableComponent());
 
       host.config = { fake: { value: 3 }, hlsJs: { debug: true } };
 
@@ -226,7 +226,7 @@ describe('HTMLMediaElementHost', () => {
 
     it('round-trips through JSON without leaking component instances', () => {
       const host = new HTMLAudioElementHost();
-      addComponent(host, new ConfigurableComponent());
+      addMediaComponent(host, new ConfigurableComponent());
 
       host.config = { fake: { value: 5, label: 'a' }, a: 1 };
 
@@ -238,7 +238,7 @@ describe('HTMLMediaElementHost', () => {
     it('does not apply config when the returned object is mutated directly', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       // Only the setter applies namespaces to components; mutating the bag in
       // place bypasses it.
@@ -262,7 +262,7 @@ describe('HTMLMediaElementHost', () => {
     it('keeps component state when a later config omits its namespace', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       host.config = { fake: { value: 5 }, a: 1 };
       host.config = { b: 2 };
@@ -278,7 +278,7 @@ describe('HTMLMediaElementHost', () => {
     it('overwrites component state only for keys present in the new config', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       host.config = { fake: { value: 5, label: 'a' } };
       host.config = { fake: { value: 9 } };
@@ -290,7 +290,7 @@ describe('HTMLMediaElementHost', () => {
     it('stops applying config to a removed component', () => {
       const host = new HTMLAudioElementHost();
       const component = new ConfigurableComponent();
-      const remove = addComponent(host, component);
+      const remove = addMediaComponent(host, component);
 
       remove();
       host.config = { fake: { value: 7 } };
@@ -303,7 +303,7 @@ describe('HTMLMediaElementHost', () => {
       host.config = { fake: { value: 4, label: 'early' } };
 
       const component = new ConfigurableComponent();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       expect(component.value).toBe(4);
       expect(component.label).toBe('early');
@@ -319,7 +319,7 @@ describe('HTMLMediaElementHost', () => {
       host.config = { a: 1 };
 
       const component = new ConfigurableComponent();
-      addComponent(host, component);
+      addMediaComponent(host, component);
 
       expect(component.value).toBe(0);
       expect(component.label).toBe('');

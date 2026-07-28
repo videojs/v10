@@ -1,5 +1,5 @@
 import type { MediaRemotePlaybackState, RemotePlaybackConnectionState } from '@videojs/media';
-import { isMediaRemotePlaybackCapable } from '@videojs/media/predicate';
+import { isMediaRemotePlaybackCapable } from '@videojs/media';
 import { isWebKitAirPlayCapable, listen, type WebkitAvailabilityEvent } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 import { exitFullscreen, isFullscreen } from '../../presentation/fullscreen';

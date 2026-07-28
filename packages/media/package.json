@@ -22,16 +22,6 @@
       "development": "./dist/dev/index.js",
       "default": "./dist/default/index.js"
     },
-    "./predicate": {
-      "types": "./dist/dev/predicate.d.ts",
-      "development": "./dist/dev/predicate.js",
-      "default": "./dist/default/predicate.js"
-    },
-    "./error": {
-      "types": "./dist/dev/error.d.ts",
-      "development": "./dist/dev/error.js",
-      "default": "./dist/default/error.js"
-    },
     "./dom": {
       "types": "./dist/dev/dom.d.ts",
       "development": "./dist/dev/dom.js",

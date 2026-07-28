@@ -1,4 +1,4 @@
-import type { MediaFeatureAvailability, MediaStreamType, TextTrackKind } from './types';
+import type { ErrorLike, MediaFeatureAvailability, MediaStreamType, TextTrackKind } from './types';
 
 export type { TextTrackKind };
 
@@ -312,28 +312,13 @@ export interface MediaTextTrackState {
   selectSubtitlesTrack(value: string): void;
 }
 
-export interface MediaError {
-  /**
-   * The error code (mirrors MediaError.code constants).
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaError/code
-   */
-  code: number;
-  /**
-   * A human-readable error message.
-   *
-   * @see https://developer.mozilla.org/en-US/docs/Web/API/MediaError/message
-   */
-  message: string;
-}
-
 export interface MediaErrorState {
   /**
    * The current media error, or null if none.
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/HTMLMediaElement/error
    */
-  error: MediaError | null;
+  error: ErrorLike | null;
   /** Dismiss the current error by clearing it. */
   dismissError(): void;
 }

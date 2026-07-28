@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { addComponent } from '../../media-host';
+import { addMediaComponent } from '../../media-host';
 import { HTMLVideoElementHost } from '../../video-host';
 import { GoogleCast } from '../index';
 
@@ -37,7 +37,7 @@ function setup() {
   host.attach(video);
 
   const googleCast = new GoogleCast();
-  addComponent(host, googleCast);
+  addMediaComponent(host, googleCast);
 
   const provider = mocks.FakeProvider.instances.at(-1)!;
   return { host, video, googleCast, provider };

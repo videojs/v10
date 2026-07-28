@@ -369,7 +369,7 @@ After Step 1's report:
   - **Media wrapper** — `packages/media/src/dom/<key>/`
     (~5 LOC; applies the SPF mixin to `HTMLVideoElementHost`). The
     minimum bridge between the SPF adapter and the player packages.
-    Worked example: `simple-hls/index.ts` →
+    Worked example: `simple-hls/media.ts` →
     `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}`.
   - **HTML custom element** — `packages/html/src/media/<key>-video/`
     (~5 LOC; wraps the media host in `CustomMediaElement` +
@@ -438,9 +438,9 @@ typical for use-case implementations:
 
 **Implementation-scope-extension layers (opt-in per Step 2):**
 
-- **Media wrapper** — `packages/media/src/dom/<key>/index.ts`
+- **Media wrapper** — `packages/media/src/dom/<key>/media.ts`
   applying the SPF mixin to `HTMLVideoElementHost` (or audio host for
-  audio-only variants). Inline implementation; ~5 LOC.
+  audio-only variants), exported through the adjacent `index.ts`; ~5 LOC.
 - **HTML custom element + define entry + CDN entry** —
   `packages/html/src/media/<key>-video/index.ts`,
   `packages/html/src/define/media/<key>-video.ts`,

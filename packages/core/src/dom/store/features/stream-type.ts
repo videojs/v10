@@ -1,6 +1,11 @@
 import type { MediaStreamTypeState } from '@videojs/media';
-import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
-import { isMediaBufferCapable, isMediaSeekCapable, isMediaStreamTypeCapable } from '@videojs/media/predicate';
+import {
+  isMediaBufferCapable,
+  isMediaSeekCapable,
+  isMediaStreamTypeCapable,
+  type MediaStreamType,
+  MediaStreamTypes,
+} from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 

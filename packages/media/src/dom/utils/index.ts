@@ -1,1 +1,7 @@
-export { addComponent, getComponents, getOwner, getProp, setProp } from './components';
+export {
+  addMediaComponent,
+  getMediaComponents,
+  getMediaOwner,
+  getMediaProp,
+  setMediaProp,
+} from './media-components';
