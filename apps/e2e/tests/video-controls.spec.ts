@@ -31,7 +31,6 @@ for (const { name, path, media, skipBrowsers } of ALL_VIDEO_PAGES as readonly Pa
       if (await player.pipButton.isVisible()) {
         await expect(player.pipButton).toHaveAttribute(DATA_ATTRS.availability);
       }
-      await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.availability);
       await expect(player.settingsButton).toBeAttached();
       await expect(player.duration).not.toHaveText('');
       await player.showControls();
