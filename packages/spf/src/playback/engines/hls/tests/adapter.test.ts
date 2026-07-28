@@ -384,52 +384,37 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.engine.state.autoplay.get()).toBe(true);
     });
 
-    it('activates loading when autoplay is set with no preload', () => {
+    // Autoplay loads eagerly — the engine's effective preload becomes 'auto'
+    // (breaking the no-preload load-activation deadlock), while the adapter's
+    // own configured preload is left untouched.
+    it('drives the effective preload to "auto" when set', async () => {
       const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
       media.autoplay = true;
-      expect(media.engine.state.loadActivated.get()).toBe(true);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(media.engine.state.preload.get()).toBe('auto');
     });
 
-    it('activates loading when autoplay is set with preload="none"', () => {
+    it('forces "auto" over an explicit preload="none"', async () => {
       const media = new SimpleHlsMediaElement();
       media.preload = 'none';
       media.autoplay = true;
-      expect(media.engine.state.loadActivated.get()).toBe(true);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(media.engine.state.preload.get()).toBe('auto');
+      // The adapter keeps the configured value; only engine state is upgraded.
+      expect(media.preload).toBe('none');
     });
 
-    it('does not activate loading when autoplay is left off', () => {
-      const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
-      media.src = 'https://example.com/v.m3u8';
-      expect(media.engine.state.loadActivated.get()).toBeFalsy();
-    });
-
-    it('keeps loadActivated across a src change while autoplay is on', async () => {
+    it('keeps the effective preload "auto" across a src change', async () => {
       const media = new SimpleHlsMediaElement();
       media.attach(document.createElement('video'));
       media.autoplay = true;
       media.src = 'https://example.com/v1.m3u8';
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      expect(media.engine.state.loadActivated.get()).toBe(true);
+      expect(media.engine.state.preload.get()).toBe('auto');
 
       media.src = 'https://example.com/v2.m3u8';
       await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      expect(media.engine.state.loadActivated.get()).toBe(true);
-    });
-
-    it('resets loadActivated across a src change while autoplay is off', async () => {
-      const media = new SimpleHlsMediaElement();
-      media.attach(document.createElement('video'));
-      media.src = 'https://example.com/v1.m3u8';
-      // Autoplay off, so simulate a play()-driven activation of the first source.
-      media.engine.state.loadActivated.set(true);
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      expect(media.engine.state.loadActivated.get()).toBe(true);
-
-      media.src = 'https://example.com/v2.m3u8';
-      await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      expect(media.engine.state.loadActivated.get()).toBe(false);
+      expect(media.engine.state.preload.get()).toBe('auto');
     });
 
     it('recycles the same engine instance when autoplay is set', () => {

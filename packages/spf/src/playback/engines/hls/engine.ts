@@ -105,8 +105,8 @@ export interface SimpleHlsEngineState {
   loadActivated?: boolean;
   /**
    * Persistent autoplay intent, bridged from the adapter's `autoplay`
-   * property. `trackLoadTriggers` reads it to reset `loadActivated` to the
-   * autoplay intent on source change.
+   * property. `syncPreload` folds it into the effective `preload` as `'auto'`,
+   * so autoplay loads eagerly across every source.
    */
   autoplay?: boolean;
 }

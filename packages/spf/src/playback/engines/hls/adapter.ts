@@ -124,10 +124,6 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // Reflect onto the inner <video> via media-host.
       super.autoplay = value;
       this.#signals.state.autoplay.set(value);
-      // Autoplay implies load intent; activate loading.
-      if (value) {
-        this.#signals.state.loadActivated.set(true);
-      }
     }
 
     // -------------------------------------------------------------------------
