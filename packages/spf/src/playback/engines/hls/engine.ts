@@ -37,6 +37,7 @@ import {
 } from '../../behaviors/calculate-presentation-duration';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
+import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
@@ -126,6 +127,14 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * One-shot command: start the current source at this position
+   * (presentation-timeline seconds). Written by consumers or by
+   * `setupMediaSource`'s recovery snapshot; consumed (cleared) by
+   * `applyStartPosition` once the element seeks. See
+   * `behaviors/dom/apply-start-position.ts`.
+   */
+  startPosition?: number;
   /**
    * Author intent for the AirPlay/remote-playback picker, written by the media
    * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
@@ -424,6 +433,9 @@ export function createSimpleHlsEngine(
 
       // Playback tracking
       trackCurrentTime,
+      // After trackCurrentTime: the one-shot currentTime seed must land after
+      // the mirror's attach-time sync (see apply-start-position.ts).
+      applyStartPosition,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in
