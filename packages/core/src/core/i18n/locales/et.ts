@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Täisekraan',
     pip: 'Pilt pildis',
     exitPip: 'Välju funktsioonist pilt pildis',
+    seekedTo: 'Liigutud ajale {time}',
+  },
+  container: {
+    label: 'Meediumipleier',
   },
   errors: {
     aborted: 'Katkestasid taasesituse',

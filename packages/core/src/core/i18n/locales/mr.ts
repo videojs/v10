@@ -68,6 +68,10 @@ export default {
     fullscreen: 'संपूर्ण पडदा',
     pip: 'पिक्चरमध्ये पिक्चर',
     exitPip: 'पिक्चरमध्ये पिक्चरमधून बाहेर',
+    seekedTo: '{time} वर पोहोचले',
+  },
+  container: {
+    label: 'मीडिया प्लेयर',
   },
   errors: {
     aborted: 'तुम्ही मीडिया प्लेबॅक रद्द केला',

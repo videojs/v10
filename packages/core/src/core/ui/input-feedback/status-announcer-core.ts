@@ -4,11 +4,9 @@ import type { IndicatorCoreProps } from './indicator-lifecycle';
 import { getIndicatorCloseDelay, IndicatorCloseController } from './indicator-lifecycle';
 import {
   DEFAULT_STATUS_ANNOUNCER_LABELS,
-  deriveAnnouncerLabel,
   formatPlaybackRateAnnouncerLabel,
   formatSeekAnnouncerLabel,
   formatVolumeValue,
-  type InputActionEvent,
   type MediaSnapshot,
   type StatusAnnouncerLabels,
 } from './status';
@@ -32,8 +30,7 @@ export class StatusAnnouncerCore {
   #snapshot: MediaSnapshot | null = null;
   #seekStartTime: number | null = null;
   #seekTargetTime: number | null = null;
-  #seekTimer: ReturnType<typeof setTimeout> | null = null;
-  #volumeTimer: ReturnType<typeof setTimeout> | null = null;
+  #timer: ReturnType<typeof setTimeout> | null = null;
   #close = new IndicatorCloseController(
     () => this.state.patch({ label: null }),
     () => getIndicatorCloseDelay(this.#props)
@@ -47,26 +44,13 @@ export class StatusAnnouncerCore {
     this.#snapshot = null;
     this.#seekStartTime = null;
     this.#seekTargetTime = null;
-    this.#clearSeekTimer();
-    this.#clearVolumeTimer();
+    this.#clearTimer();
     this.#close.close();
   }
 
   destroy(): void {
-    this.#clearSeekTimer();
-    this.#clearVolumeTimer();
+    this.#clearTimer();
     this.#close.destroy();
-  }
-
-  processEvent(event: InputActionEvent, snapshot: MediaSnapshot): boolean {
-    const label = deriveAnnouncerLabel(event, snapshot, {
-      ...DEFAULT_STATUS_ANNOUNCER_LABELS,
-      ...this.#props.labels,
-    });
-    if (!label) return false;
-
-    this.#announce(label);
-    return true;
   }
 
   processSnapshot(snapshot: MediaSnapshot): boolean {
@@ -122,8 +106,7 @@ export class StatusAnnouncerCore {
   }
 
   #announce(label: string): boolean {
-    this.#clearSeekTimer();
-    this.#clearVolumeTimer();
+    this.#clearTimer();
     this.state.patch({ label });
     this.#close.arm();
     return true;
@@ -144,8 +127,8 @@ export class StatusAnnouncerCore {
 
     if (volume === undefined && muted === undefined) return false;
 
-    const label = muted || (volume ?? 0) <= 0 ? labels.muted : `${labels.volume} ${formatVolumeValue(volume ?? 0)}`;
-    this.#scheduleVolumeAnnouncement(label, snapshot);
+    const label = muted || (volume ?? 0) <= 0 ? labels.muted : labels.volumeWithValue(formatVolumeValue(volume ?? 0));
+    this.#schedule(label, () => this.#props.shouldAnnounceVolume?.(snapshot) !== false);
     return true;
   }
 
@@ -158,7 +141,7 @@ export class StatusAnnouncerCore {
     if (previous.seeking !== true && snapshot.seeking === true) {
       this.#seekStartTime = previous.currentTime ?? null;
       this.#seekTargetTime = snapshot.currentTime ?? null;
-      this.#clearSeekTimer();
+      this.#clearTimer();
       return false;
     }
 
@@ -178,38 +161,26 @@ export class StatusAnnouncerCore {
     if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return false;
     if (alreadyHandled) return false;
 
-    this.#scheduleSeekAnnouncement(formatSeekAnnouncerLabel(targetTime, labels), snapshot);
+    this.#schedule(
+      formatSeekAnnouncerLabel(targetTime, labels),
+      () => this.#props.shouldAnnounceSeek?.(snapshot) !== false
+    );
     return true;
   }
 
-  #scheduleVolumeAnnouncement(label: string, snapshot: MediaSnapshot): void {
-    this.#clearVolumeTimer();
-    this.#volumeTimer = setTimeout(() => {
-      this.#volumeTimer = null;
-      if (this.#props.shouldAnnounceVolume?.(snapshot) === false) return;
+  #schedule(label: string, shouldAnnounce: () => boolean): void {
+    this.#clearTimer();
+    this.#timer = setTimeout(() => {
+      this.#timer = null;
+      if (!shouldAnnounce()) return;
       this.#announce(label);
     }, ANNOUNCEMENT_DEBOUNCE);
   }
 
-  #scheduleSeekAnnouncement(label: string, snapshot: MediaSnapshot): void {
-    this.#clearSeekTimer();
-    this.#seekTimer = setTimeout(() => {
-      this.#seekTimer = null;
-      if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return;
-      this.#announce(label);
-    }, ANNOUNCEMENT_DEBOUNCE);
-  }
-
-  #clearSeekTimer(): void {
-    if (!this.#seekTimer) return;
-    clearTimeout(this.#seekTimer);
-    this.#seekTimer = null;
-  }
-
-  #clearVolumeTimer(): void {
-    if (!this.#volumeTimer) return;
-    clearTimeout(this.#volumeTimer);
-    this.#volumeTimer = null;
+  #clearTimer(): void {
+    if (!this.#timer) return;
+    clearTimeout(this.#timer);
+    this.#timer = null;
   }
 }
 

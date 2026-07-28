@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Toàn màn hình',
     pip: 'Màn hình trong màn hình',
     exitPip: 'Thoát màn hình trong màn hình',
+    seekedTo: 'Đã chuyển đến {time}',
+  },
+  container: {
+    label: 'Trình phát đa phương tiện',
   },
   errors: {
     aborted: 'Bạn đã hủy việc phát lại media.',

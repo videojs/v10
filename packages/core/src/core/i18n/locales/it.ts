@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Schermo intero',
     pip: 'Picture-in-picture',
     exitPip: 'Esci dalla modalità Picture-in-picture',
+    seekedTo: 'Posizione di riproduzione: {time}',
+  },
+  container: {
+    label: 'Lettore multimediale',
   },
   errors: {
     aborted: 'La riproduzione del contenuto multimediale è stata interrotta.',

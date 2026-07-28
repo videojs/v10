@@ -37,3 +37,8 @@ export const exitPipText = {
   key: `${prefix}exitPip`,
   text: 'Exit picture in picture',
 } as const satisfies Text;
+
+export const seekedToText = {
+  key: `${prefix}seekedTo`,
+  text: 'Seeked to {time}',
+} as const satisfies Text;

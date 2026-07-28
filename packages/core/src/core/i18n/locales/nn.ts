@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Fullskjerm',
     pip: 'Bilete i bilete',
     exitPip: 'Avslutt bilete i bilete',
+    seekedTo: 'Hoppa til {time}',
+  },
+  container: {
+    label: 'Mediespelar',
   },
   errors: {
     aborted: 'Du avbraut avspelinga.',

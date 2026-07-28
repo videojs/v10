@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Pełny ekran',
     pip: 'Obraz w obrazie',
     exitPip: 'Wyjdź z obrazu w obrazie',
+    seekedTo: 'Przewinięto do {time}',
+  },
+  container: {
+    label: 'Odtwarzacz multimediów',
   },
   errors: {
     aborted: 'Odtwarzanie zostało przerwane',

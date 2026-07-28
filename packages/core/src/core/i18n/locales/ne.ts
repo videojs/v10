@@ -68,6 +68,10 @@ export default {
     fullscreen: 'पूर्ण स्क्रिन',
     pip: 'पिक्चर इन पिक्चर',
     exitPip: 'पिक्चर इन पिक्चरबाट बाहिर',
+    seekedTo: '{time} मा सारियो',
+  },
+  container: {
+    label: 'मिडिया प्लेयर',
   },
   errors: {
     aborted: 'तपाईंले मिडिया प्लेब्याक रद्द गर्नुभयो',

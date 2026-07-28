@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Sgrîn lawn',
     pip: 'Llun mewn llun',
     exitPip: 'Gadael llun mewn llun',
+    seekedTo: 'Wedi symud i {time}',
+  },
+  container: {
+    label: 'Chwaraewr cyfryngau',
   },
   errors: {
     aborted: 'Atalwyd y fideo gennych',

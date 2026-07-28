@@ -29,10 +29,14 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 
 function createTestStore(initialState: Record<string, unknown> = {}) {
   let state = initialState;
+  const target = {};
   const listeners = new Set<() => void>();
   const store = {
     get state() {
       return state;
+    },
+    get target() {
+      return target;
     },
     subscribe(callback: () => void) {
       listeners.add(callback);

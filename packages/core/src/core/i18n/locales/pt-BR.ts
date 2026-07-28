@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Tela cheia',
     pip: 'Picture-in-picture',
     exitPip: 'Sair do picture-in-picture',
+    seekedTo: 'Posição alterada para {time}',
+  },
+  container: {
+    label: 'Reprodutor de mídia',
   },
   errors: {
     aborted: 'Você parou a execução do vídeo.',

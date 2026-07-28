@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Pantaila osoa',
     pip: 'Irudiz irudi',
     exitPip: 'Irten irudiz irudiztik',
+    seekedTo: '{time} denborara jauzi egin da',
+  },
+  container: {
+    label: 'Multimedia-erreproduzitzailea',
   },
   errors: {
     aborted: 'Bertan behera utzi duzu',

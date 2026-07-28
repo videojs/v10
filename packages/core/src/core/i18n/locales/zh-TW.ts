@@ -68,6 +68,10 @@ export default {
     fullscreen: '全螢幕',
     pip: '子母畫面',
     exitPip: '離開子母畫面',
+    seekedTo: '已跳轉至 {time}',
+  },
+  container: {
+    label: '媒體播放器',
   },
   errors: {
     aborted: '影片播放已終止',

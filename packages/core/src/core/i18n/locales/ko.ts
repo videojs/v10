@@ -68,6 +68,10 @@ export default {
     fullscreen: '전체 화면',
     pip: '화면 속 화면',
     exitPip: '화면 속 화면 종료',
+    seekedTo: '이동 위치: {time}',
+  },
+  container: {
+    label: '미디어 플레이어',
   },
   errors: {
     aborted: '비디오 재생을 취소했습니다.',

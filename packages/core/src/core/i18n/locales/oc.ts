@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Ecran complèt',
     pip: 'Vidèo incrustada',
     exitPip: 'Sortir de la vidèo incrustada',
+    seekedTo: 'Avançat fins a {time}',
+  },
+  container: {
+    label: 'Lector multimèdia',
   },
   errors: {
     aborted: 'Avètz copat la lectura del mèdia.',

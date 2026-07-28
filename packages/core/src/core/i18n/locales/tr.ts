@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Tam ekran',
     pip: 'Resim içinde resim',
     exitPip: 'Resim içinde resimden çık',
+    seekedTo: '{time} konumuna gidildi',
+  },
+  container: {
+    label: 'Medya oynatıcı',
   },
   errors: {
     aborted: 'Medyayı oynatmayı iptal ettiniz',

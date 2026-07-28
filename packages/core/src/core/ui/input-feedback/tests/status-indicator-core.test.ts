@@ -42,17 +42,6 @@ describe('StatusAnnouncerCore', () => {
   beforeEach(() => vi.useFakeTimers());
   afterEach(() => vi.useRealTimers());
 
-  it('announces status labels and clears them after the delay', () => {
-    const core = new StatusAnnouncerCore();
-    core.setProps({ closeDelay: 100 });
-
-    expect(core.processEvent({ action: 'volumeStep', value: 0.1 }, { volume: 0.5, muted: false })).toBe(true);
-    expect(core.state.current.label).toBe('Volume 60%');
-
-    vi.advanceTimersByTime(100);
-    expect(core.state.current.label).toBeNull();
-  });
-
   it('uses the first snapshot as a baseline only', () => {
     const core = new StatusAnnouncerCore();
 
@@ -107,11 +96,11 @@ describe('StatusAnnouncerCore', () => {
     core.processSnapshot({ playbackRate: 1, currentTime: 45, duration: 120, seeking: false });
     core.processSnapshot({ playbackRate: 1.25, currentTime: 45, duration: 120, seeking: false });
 
-    expect(core.state.current.label).toBe('Playback rate 1.25x');
+    expect(core.state.current.label).toBe('Playback rate 1.25×');
 
     vi.advanceTimersByTime(200);
 
-    expect(core.state.current.label).toBe('Playback rate 1.25x');
+    expect(core.state.current.label).toBe('Playback rate 1.25×');
   });
 
   it('rechecks volume suppression when the debounced announcement fires', () => {
@@ -164,7 +153,7 @@ describe('StatusAnnouncerCore', () => {
       })
     ).toBe(true);
 
-    expect(core.state.current.label).toBe('Playing. Captions on. Fullscreen. Playback rate 1.25x');
+    expect(core.state.current.label).toBe('Playing. Captions on. Fullscreen. Playback rate 1.25×');
   });
 
   it('announces confirmed playback, captions, fullscreen, pip, and playback-rate changes', () => {
@@ -183,7 +172,7 @@ describe('StatusAnnouncerCore', () => {
       [{ subtitlesShowing: true }, 'Captions on'],
       [{ fullscreen: true }, 'Fullscreen'],
       [{ pip: true }, 'Picture in picture'],
-      [{ playbackRate: 1.5 }, 'Playback rate 1.5x'],
+      [{ playbackRate: 1.5 }, 'Playback rate 1.5×'],
     ] as const) {
       expect(process(partial)).toBe(true);
       expect(core.state.current.label).toBe(label);
@@ -212,6 +201,59 @@ describe('StatusAnnouncerCore', () => {
 
     vi.advanceTimersByTime(1);
     expect(core.state.current.label).toBe('Volume 60%');
+  });
+
+  it('uses the translated volume phrase order', () => {
+    const core = new StatusAnnouncerCore();
+    core.setProps({ labels: { volumeWithValue: (value) => `${value} volume` } });
+    const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
+
+    process({ volume: 0.75 });
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBe('75% volume');
+  });
+
+  it('replaces a pending volume announcement with a completed seek', () => {
+    const core = new StatusAnnouncerCore();
+    const process = createSnapshotProcessor(core, {
+      currentTime: 10,
+      seeking: false,
+      volume: 0.5,
+      muted: false,
+    });
+
+    process({ volume: 0.75 });
+    vi.advanceTimersByTime(100);
+    process({ currentTime: 45, seeking: true });
+    process({ seeking: false });
+
+    vi.advanceTimersByTime(100);
+    expect(core.state.current.label).toBeNull();
+
+    vi.advanceTimersByTime(100);
+    expect(core.state.current.label).toBe('Seeked to 45 seconds');
+  });
+
+  it('replaces a pending seek announcement with a volume change', () => {
+    const core = new StatusAnnouncerCore();
+    const process = createSnapshotProcessor(core, {
+      currentTime: 10,
+      seeking: false,
+      volume: 0.5,
+      muted: false,
+    });
+
+    process({ currentTime: 45, seeking: true });
+    process({ seeking: false });
+    vi.advanceTimersByTime(100);
+    process({ volume: 0.75 });
+
+    vi.advanceTimersByTime(100);
+    expect(core.state.current.label).toBeNull();
+
+    vi.advanceTimersByTime(100);
+    expect(core.state.current.label).toBe('Volume 75%');
   });
 
   it('announces muted volume snapshots', () => {

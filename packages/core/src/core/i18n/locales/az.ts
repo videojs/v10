@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Tam ekran',
     pip: 'Şəkil içində şəkil',
     exitPip: 'Şəkil içində şəkildən çıxın',
+    seekedTo: '{time} vaxtına keçildi',
+  },
+  container: {
+    label: 'Media pleyeri',
   },
   errors: {
     aborted: 'Siz medianın oxudulmasını dayandırdınız',

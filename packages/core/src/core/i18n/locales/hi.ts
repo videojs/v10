@@ -68,6 +68,10 @@ export default {
     fullscreen: 'पूर्ण स्क्रीन',
     pip: 'पिक्चर में पिक्चर',
     exitPip: 'पिक्चर में पिक्चर से बाहर',
+    seekedTo: '{time} पर पहुँचा',
+  },
+  container: {
+    label: 'मीडिया प्लेयर',
   },
   errors: {
     aborted: 'आपने मीडिया प्लेबैक को रोक दिया',

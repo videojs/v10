@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Teljes képernyő',
     pip: 'Kép a képben',
     exitPip: 'Kilépés kép a képben módból',
+    seekedTo: 'Ugrás ide: {time}',
+  },
+  container: {
+    label: 'Médialejátszó',
   },
   errors: {
     aborted: 'Leállította a lejátszást',

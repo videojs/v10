@@ -68,6 +68,10 @@ export default {
     fullscreen: 'מסך מלא',
     pip: 'תמונה בתוך תמונה',
     exitPip: 'יציאה מתמונה בתוך תמונה',
+    seekedTo: 'דילוג אל {time}',
+  },
+  container: {
+    label: 'נגן מדיה',
   },
   errors: {
     aborted: 'ביטלת את השמעת המדיה',

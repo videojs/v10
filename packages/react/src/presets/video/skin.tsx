@@ -562,7 +562,7 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="media-sr-only" />
       <div className="media-input-feedback">
         <VolumeIndicator.Root className="media-surface media-input-feedback-island media-input-feedback-island--volume">
           <VolumeIndicator.Fill className="media-input-feedback-island__content">

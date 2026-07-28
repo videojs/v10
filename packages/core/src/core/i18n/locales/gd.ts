@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Làn-sgrìn',
     pip: 'Dealbh beag anns a’ dealbh mhòr',
     exitPip: 'Fàg dealbh beag',
+    seekedTo: 'Air a leum gu {time}',
+  },
+  container: {
+    label: 'Cluicheadair mheadhanan',
   },
   errors: {
     aborted: 'Sguir thu de chluich a’ mheadhain',

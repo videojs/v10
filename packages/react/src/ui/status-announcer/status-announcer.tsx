@@ -1,15 +1,14 @@
 'use client';
 
-import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
-import { getMediaSnapshot, isSliderFocused, visuallyHiddenStyle } from '@videojs/core/dom';
+import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
+import { isSliderFocused, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
-import { useTranslator } from '../../i18n/context';
+import { useLocale, useTranslator } from '../../i18n/context';
 import { useContainer, usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
-import { useInputActionSubscription } from '../input-indicators/use-input-action-subscription';
 
 export interface StatusAnnouncerProps
   extends UIComponentProps<'div', StatusAnnouncerCore.State>,
@@ -21,26 +20,22 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
 ) {
   const { render, className, style, closeDelay, labels, ...elementProps } = componentProps;
   const translator = useTranslator();
+  const locale = useLocale();
   const [core] = useState(() => new StatusAnnouncerCore());
   const store = usePlayer();
   const container = useContainer();
   useDestroy(core);
   core.setProps({
     closeDelay,
-    labels: createInputIndicatorLabels(translator),
+    labels: {
+      ...createStatusAnnouncerLabels(translator, locale),
+      ...labels,
+    },
     shouldAnnounceSeek: () => !container || !isSliderFocused(container),
     shouldAnnounceVolume: () => !container || !isSliderFocused(container),
   });
 
-  useInputActionSubscription((event, snapshot) => {
-    core.processEvent(event, snapshot);
-  });
-
-  useEffect(() => {
-    core.resetSnapshot();
-    core.processSnapshot(getMediaSnapshot(store));
-    return store.subscribe(() => core.processSnapshot(getMediaSnapshot(store)));
-  }, [core, store]);
+  useEffect(() => subscribeToStatusAnnouncer(store, core), [core, store]);
 
   const state = useSyncExternalStore(
     (callback) => core.state.subscribe(callback),
@@ -58,7 +53,7 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
         elementProps,
         {
           role: 'status',
-          children: <span style={visuallyHiddenStyle}>{state.label ?? ''}</span>,
+          children: state.label ?? '',
         },
       ],
     }

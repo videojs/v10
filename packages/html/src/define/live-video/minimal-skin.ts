@@ -146,7 +146,7 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
 
       <!-- Input Feedback -->
-      <media-status-announcer></media-status-announcer>
+      <media-status-announcer class="media-sr-only"></media-status-announcer>
       <div class="media-input-feedback">
         <media-volume-indicator hidden class="media-input-feedback-island media-input-feedback-island--volume">
           <media-volume-indicator-fill class="media-input-feedback-island__content">

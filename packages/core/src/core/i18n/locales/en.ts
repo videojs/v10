@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Fullscreen',
     pip: 'Picture in picture',
     exitPip: 'Exit picture in picture',
+    seekedTo: 'Seeked to {time}',
+  },
+  container: {
+    label: 'Media player',
   },
   errors: {
     aborted: 'You stopped media playback before it finished.',

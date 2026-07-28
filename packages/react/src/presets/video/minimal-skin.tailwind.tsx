@@ -635,7 +635,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
       <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="sr-only" />
       <div className={inputFeedback.root}>
         <VolumeIndicator.Root
           className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}

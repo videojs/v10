@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Цял екран',
     pip: 'Картина в картина',
     exitPip: 'Изход от картина в картина',
+    seekedTo: 'Преместено на {time}',
+  },
+  container: {
+    label: 'Медиен плейър',
   },
   errors: {
     aborted: 'Спряхте възпроизвеждането на видеото',

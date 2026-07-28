@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Puni ekran',
     pip: 'Slika u slici',
     exitPip: 'Izlaz iz slike u slici',
+    seekedTo: 'Premotano na {time}',
+  },
+  container: {
+    label: 'Medijski plejer',
   },
   errors: {
     aborted: 'Isključili ste reprodukciju videa.',

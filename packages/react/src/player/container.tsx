@@ -1,8 +1,9 @@
 'use client';
 
-import { DEFAULT_CONTAINER_LABEL, DEFAULT_CONTAINER_ROLE, DEFAULT_CONTAINER_TAB_INDEX } from '@videojs/core/dom';
-import { containsComposed, getDeepActiveElement } from '@videojs/utils/dom';
+import { DEFAULT_CONTAINER_ROLE, DEFAULT_CONTAINER_TAB_INDEX, focusContainer } from '@videojs/core/dom';
+import { labelText } from '@videojs/core/i18n/text/container';
 import { forwardRef, type HTMLAttributes, type PointerEventHandler, type ReactNode, useEffect, useRef } from 'react';
+import { useTranslator } from '../i18n/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach } from './context';
 
@@ -22,6 +23,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
   ref
 ) {
   const setContainer = useContainerAttach();
+  const translator = useTranslator();
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
 
@@ -34,18 +36,13 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
     props.onPointerUp?.(event);
     const el = internalRef.current;
     if (!el) return;
-    const active = getDeepActiveElement(el.ownerDocument);
-
-    // If nothing inside has focus, grab it so keyboard events reach hotkey listeners.
-    if (!active || active === el.ownerDocument.body || !containsComposed(el, active)) {
-      el.focus({ preventScroll: true });
-    }
+    focusContainer(el);
   };
 
   const accessibleNameProps =
     ariaLabel !== undefined || ariaLabelledBy !== undefined
       ? { 'aria-label': ariaLabel, 'aria-labelledby': ariaLabelledBy }
-      : { 'aria-label': DEFAULT_CONTAINER_LABEL };
+      : { 'aria-label': translator(labelText) };
 
   return (
     <div

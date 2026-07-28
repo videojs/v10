@@ -68,6 +68,10 @@ export default {
     fullscreen: 'เต็มหน้าจอ',
     pip: 'ภาพซ้อนภาพ',
     exitPip: 'ออกจากภาพซ้อนภาพ',
+    seekedTo: 'เลื่อนไปที่ {time}',
+  },
+  container: {
+    label: 'เครื่องเล่นสื่อ',
   },
   errors: {
     aborted: 'คุณยกเลิกการเล่นสื่อแล้ว',

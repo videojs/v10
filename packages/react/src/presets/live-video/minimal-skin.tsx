@@ -319,7 +319,7 @@ export function MinimalLiveVideoSkin(props: MinimalLiveVideoSkinProps): ReactNod
       <Gesture type="doubletap" action="toggleFullscreen" region="center" />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="media-sr-only" />
       <div className="media-input-feedback">
         <VolumeIndicator.Root className="media-input-feedback-island media-input-feedback-island--volume">
           <VolumeIndicator.Fill className="media-input-feedback-island__content">

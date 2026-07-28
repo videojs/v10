@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Fullskjerm',
     pip: 'Bilde i bilde',
     exitPip: 'Avslutt bilde i bilde',
+    seekedTo: 'Hoppet til {time}',
+  },
+  container: {
+    label: 'Mediespiller',
   },
   errors: {
     aborted: 'Du avbrøt avspillingen.',

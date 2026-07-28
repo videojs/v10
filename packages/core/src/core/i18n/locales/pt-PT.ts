@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Ecrã inteiro',
     pip: 'Imagem em imagem',
     exitPip: 'Sair de imagem em imagem',
+    seekedTo: 'Posição alterada para {time}',
+  },
+  container: {
+    label: 'Reprodutor multimédia',
   },
   errors: {
     aborted: 'Parou a reprodução do vídeo.',

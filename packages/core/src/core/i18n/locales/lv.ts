@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Pilnekrāna režīms',
     pip: 'Attēls attēlā',
     exitPip: 'Iziet no attēls attēlā',
+    seekedTo: 'Pārlēkts uz {time}',
+  },
+  container: {
+    label: 'Multivides atskaņotājs',
   },
   errors: {
     aborted: 'Atskaņošana atcelta',

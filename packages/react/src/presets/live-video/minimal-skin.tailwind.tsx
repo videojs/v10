@@ -353,7 +353,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
       <Gesture type="doubletap" action="toggleFullscreen" region="center" />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="sr-only" />
       <div className={inputFeedback.root}>
         <VolumeIndicator.Root
           className={cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}

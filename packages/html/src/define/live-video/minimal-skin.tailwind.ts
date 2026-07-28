@@ -158,7 +158,7 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
 
       <!-- Input Feedback -->
-      <media-status-announcer></media-status-announcer>
+      <media-status-announcer class="sr-only"></media-status-announcer>
       <div class="${inputFeedback.root}">
         <media-volume-indicator hidden class="${cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}">
           <media-volume-indicator-fill data-feedback-island-content class="${inputFeedback.island.content}">

@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Cijeli zaslon',
     pip: 'Slika u slici',
     exitPip: 'Izađi iz slike u slici',
+    seekedTo: 'Premotano na {time}',
+  },
+  container: {
+    label: 'Medijski reproduktor',
   },
   errors: {
     aborted: 'Isključili ste reprodukciju videa.',

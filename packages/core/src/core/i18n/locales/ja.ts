@@ -68,6 +68,10 @@ export default {
     fullscreen: '全画面表示',
     pip: 'ピクチャーインピクチャー表示',
     exitPip: 'ピクチャーインピクチャー表示解除',
+    seekedTo: '{time}に移動しました',
+  },
+  container: {
+    label: 'メディアプレイヤー',
   },
   errors: {
     aborted: '動画再生を中止しました',

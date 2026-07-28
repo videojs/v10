@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Pantalla completa',
     pip: 'Imatge en imatge',
     exitPip: 'Surt de la imatge en imatge',
+    seekedTo: "S'ha saltat a {time}",
+  },
+  container: {
+    label: 'Reproductor multimèdia',
   },
   errors: {
     aborted: 'Has interromput la reproducció del contingut',

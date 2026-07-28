@@ -324,7 +324,7 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
 
       <!-- Input Feedback -->
-      <media-status-announcer></media-status-announcer>
+      <media-status-announcer class="sr-only"></media-status-announcer>
       <div class="${inputFeedback.root}">
         <media-volume-indicator
           hidden

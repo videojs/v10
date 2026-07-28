@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Ecran complet',
     pip: 'Imagine în imagine',
     exitPip: 'Închidere imagine în imagine',
+    seekedTo: 'S-a trecut la {time}',
+  },
+  container: {
+    label: 'Player media',
   },
   errors: {
     aborted: 'Ați abandonat redarea media',

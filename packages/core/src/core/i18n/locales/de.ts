@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Vollbild',
     pip: 'Bild-in-Bild',
     exitPip: 'Bild-in-Bild beenden',
+    seekedTo: 'Zu {time} gesprungen',
+  },
+  container: {
+    label: 'Mediaplayer',
   },
   errors: {
     aborted: 'Sie haben die Videowiedergabe abgebrochen.',

@@ -166,7 +166,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
       <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="sr-only" />
     </Container>
   );
 }

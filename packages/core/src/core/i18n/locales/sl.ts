@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Celozaslonski prikaz',
     pip: 'Slika v sliki',
     exitPip: 'Izhod iz slike v sliki',
+    seekedTo: 'Premaknjeno na {time}',
+  },
+  container: {
+    label: 'Medijski predvajalnik',
   },
   errors: {
     aborted: 'Prekinili ste predvajanje.',

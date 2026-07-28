@@ -293,7 +293,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
       <Hotkey keys="<" action="speedDown" />
 
       {/* Input Feedback */}
-      <StatusAnnouncer />
+      <StatusAnnouncer className="sr-only" />
     </Container>
   );
 }

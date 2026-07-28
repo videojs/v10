@@ -247,6 +247,20 @@ describe('Container', () => {
     expect(el?.getAttribute('aria-label')).toBe('Media player');
   });
 
+  it('translates the default accessible name', () => {
+    const value = createContextValue();
+    const { I18nProvider } = createI18n();
+    const { container } = render(
+      <I18nProvider locale="fr" translations={{ container: { label: 'Lecteur multimédia' } }}>
+        <PlayerContextProvider value={value}>
+          <Container />
+        </PlayerContextProvider>
+      </I18nProvider>
+    );
+
+    expect(container.firstElementChild?.getAttribute('aria-label')).toBe('Lecteur multimédia');
+  });
+
   it('preserves explicit accessible naming', () => {
     const value = createContextValue();
 

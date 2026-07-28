@@ -42,6 +42,7 @@ describe('input indicators', () => {
 
     expect(getByRole('status').hasAttribute('aria-live')).toBe(false);
     expect(getByRole('status').textContent).toBe('');
+    expect(getByRole('status').hasAttribute('class')).toBe(false);
   });
 
   it('updates StatusAnnouncer live text from store snapshots', async () => {
@@ -55,6 +56,17 @@ describe('input indicators', () => {
     await act(async () => {});
 
     expect(getByRole('status').textContent).toBe('Playing');
+  });
+
+  it('uses custom StatusAnnouncer labels', async () => {
+    const { store, setState } = createTestStore({ paused: true });
+    const { getByRole } = renderWithPlayer(<StatusAnnouncer labels={{ playing: 'Custom playing' }} />, store);
+    await act(async () => {});
+
+    setState({ paused: false });
+    await act(async () => {});
+
+    expect(getByRole('status').textContent).toBe('Custom playing');
   });
 
   it('uses the next store snapshot as baseline when StatusAnnouncer store changes', async () => {
@@ -216,10 +228,14 @@ function VisibilityProbe({ close, id }: { close: () => void; id: string }) {
 
 function createTestStore(initialState: Record<string, unknown> = {}) {
   let state = initialState;
+  const target = {};
   const listeners = new Set<() => void>();
   const store = {
     get state() {
       return state;
+    },
+    get target() {
+      return target;
     },
     subscribe(callback: () => void) {
       listeners.add(callback);

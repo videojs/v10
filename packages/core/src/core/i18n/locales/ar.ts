@@ -68,6 +68,10 @@ export default {
     fullscreen: 'ملء الشاشة',
     pip: 'صورة داخل صورة',
     exitPip: 'الخروج من صورة داخل صورة',
+    seekedTo: 'تم الانتقال إلى {time}',
+  },
+  container: {
+    label: 'مشغل الوسائط',
   },
   errors: {
     aborted: 'لقد ألغيت تشغيل الفيديو',

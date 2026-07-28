@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Celá obrazovka',
     pip: 'Obraz v obraze',
     exitPip: 'Ukončit obraz v obraze',
+    seekedTo: 'Přesunuto na {time}',
+  },
+  container: {
+    label: 'Přehrávač médií',
   },
   errors: {
     aborted: 'Přehrávání videa bylo přerušeno.',

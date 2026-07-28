@@ -44,6 +44,8 @@ export interface TranslationParams {
   'status.fullscreen': never;
   'status.pip': never;
   'status.exitPip': never;
+  'status.seekedTo': { time: string | number };
+  'container.label': never;
   'errors.aborted': never;
   'errors.network': never;
   'errors.decode': never;

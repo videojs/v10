@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Plein écran',
     pip: 'Image dans l’image',
     exitPip: 'Quitter l’image dans l’image',
+    seekedTo: 'Position de lecture : {time}',
+  },
+  container: {
+    label: 'Lecteur multimédia',
   },
   errors: {
     aborted: 'Vous avez interrompu la lecture de la vidéo.',

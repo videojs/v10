@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Fullskärm',
     pip: 'Bild i bild',
     exitPip: 'Avsluta bild i bild',
+    seekedTo: 'Hoppade till {time}',
+  },
+  container: {
+    label: 'Mediaspelare',
   },
   errors: {
     aborted: 'Du har avbrutit videouppspelningen.',

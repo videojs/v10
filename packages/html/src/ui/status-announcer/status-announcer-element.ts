@@ -1,5 +1,5 @@
-import { createInputIndicatorLabels, StatusAnnouncerCore } from '@videojs/core';
-import { applyVisuallyHiddenStyle, getMediaSnapshot, isSliderFocused } from '@videojs/core/dom';
+import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
+import { isSliderFocused, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -60,7 +60,7 @@ export class StatusAnnouncerElement extends MediaElement {
     super.willUpdate(changed);
     this.#core.setProps({
       closeDelay: this.closeDelay,
-      labels: createInputIndicatorLabels(this.#i18n.value),
+      labels: createStatusAnnouncerLabels(this.#i18n.value, this.#i18n.locale),
       shouldAnnounceSeek: () => {
         const container = this.#container.value?.container;
         return !container || !isSliderFocused(container);
@@ -87,8 +87,7 @@ export class StatusAnnouncerElement extends MediaElement {
     const store = this.#player.value;
     if (!store) return;
 
-    this.#core.processSnapshot(getMediaSnapshot(store));
-    this.#storeUnsubscribe = store.subscribe(() => this.#core.processSnapshot(getMediaSnapshot(store)));
+    this.#storeUnsubscribe = subscribeToStatusAnnouncer(store, this.#core);
   }
 
   #ensureLiveText(): HTMLElement {
@@ -97,7 +96,6 @@ export class StatusAnnouncerElement extends MediaElement {
     const existing = this.querySelector<HTMLElement>('[data-status-announcer-content]');
     this.#liveText = existing ?? document.createElement('span');
     this.#liveText.setAttribute('data-status-announcer-content', '');
-    applyVisuallyHiddenStyle(this.#liveText);
 
     if (!existing) this.append(this.#liveText);
 

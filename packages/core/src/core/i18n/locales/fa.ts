@@ -68,6 +68,10 @@ export default {
     fullscreen: 'تمام‌صفحه',
     pip: 'تصویر در تصویر',
     exitPip: 'خروج از حالت تصویر در تصویر',
+    seekedTo: 'پرش به {time}',
+  },
+  container: {
+    label: 'پخش‌کننده رسانه',
   },
   errors: {
     aborted: 'شما پخش رسانه را قطع نمودید',

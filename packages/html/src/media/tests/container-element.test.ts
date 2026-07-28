@@ -1,5 +1,7 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { registerI18n } from '@videojs/core/i18n';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaI18nProviderElement } from '../../i18n/provider-element';
 import { MediaContainerElement } from '../container-element';
 
 let tagCounter = 0;
@@ -48,5 +50,19 @@ describe('MediaContainerElement', () => {
 
     expect(container.getAttribute('aria-labelledby')).toBe('player-title');
     expect(container.hasAttribute('aria-label')).toBe(false);
+  });
+
+  it('translates the default accessible name', async () => {
+    if (!customElements.get(MediaI18nProviderElement.tagName)) {
+      customElements.define(MediaI18nProviderElement.tagName, MediaI18nProviderElement);
+    }
+    registerI18n('x-container', { container: { label: 'Translated media player' } });
+    const provider = document.createElement(MediaI18nProviderElement.tagName) as MediaI18nProviderElement;
+    const container = createElement(MediaContainerElement);
+    provider.lang = 'x-container';
+    provider.append(container);
+    document.body.append(provider);
+
+    await vi.waitFor(() => expect(container.getAttribute('aria-label')).toBe('Translated media player'));
   });
 });

@@ -68,6 +68,10 @@ export default {
     fullscreen: 'Koko näyttö',
     pip: 'Kuva kuvassa',
     exitPip: 'Poistu kuva kuvassa -tilasta',
+    seekedTo: 'Siirrytty kohtaan {time}',
+  },
+  container: {
+    label: 'Mediasoitin',
   },
   errors: {
     aborted: 'Olet keskeyttänyt videotoiston',

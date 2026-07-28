@@ -1,7 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  deriveAnnouncerLabel,
   deriveStatus,
   getSeekDirection,
   getSeekIndicatorDisplayValue,
@@ -35,16 +34,13 @@ describe('status', () => {
     });
   });
 
-  it('derives volume status, value, and announcer labels', () => {
+  it('derives volume status and value', () => {
     expect(deriveStatus({ action: 'volumeStep', value: 0.3 }, SNAPSHOT)).toMatchObject({
       status: 'volume-high',
       label: 'Volume',
       value: '80%',
       volumeLevel: 'high',
     });
-
-    expect(deriveAnnouncerLabel({ action: 'volumeStep', value: 0.3 }, SNAPSHOT)).toBe('Volume 80%');
-    expect(deriveAnnouncerLabel({ action: 'toggleMuted' }, SNAPSHOT)).toBe('Muted');
   });
 
   it('derives captions, fullscreen, and picture-in-picture statuses', () => {
