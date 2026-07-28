@@ -2,7 +2,7 @@ import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 
 /**
@@ -21,6 +21,10 @@ export interface LoadTriggersState {
   loadActivated?: boolean;
   /** Current presentation — URL is used to detect source changes. */
   presentation?: MaybeResolvedPresentation;
+  /**
+   * Standing autoplay intent. On source change the slot resets to *this* value.
+   */
+  autoplay?: boolean;
 }
 
 /**
@@ -73,7 +77,8 @@ function deriveState(
  * Sticky-true *within a source identity*: subsequent play/pause/seek
  * cycles don't flip back. Source identity = (mediaElement, presentation
  * URL). Either changing — including direct in-place swap with no
- * `undefined` intermediate — resets the slot to `false`.
+ * `undefined` intermediate — resets the slot. The reset target is
+ * `state.autoplay`.
  *
  * Multi-writer with `hls/adapter.ts:play()` (which writes `true` directly
  * on programmatic play) is intentional — different domains. The adapter
@@ -94,6 +99,7 @@ function trackLoadTriggersSetup({
   state: {
     loadActivated: Signal<LoadTriggersState['loadActivated']>;
     presentation: ReadonlySignal<LoadTriggersState['presentation']>;
+    autoplay: ReadonlySignal<LoadTriggersState['autoplay']>;
   };
   context: { mediaElement: ReadonlySignal<LoadTriggersContext['mediaElement']> };
 }): Reactor<LoadTriggersFsmState | 'destroying' | 'destroyed'> {
@@ -148,7 +154,7 @@ function trackLoadTriggersSetup({
         effects: () => {
           context.mediaElement.get();
           urlSignal.get();
-          return () => state.loadActivated.set(false);
+          return () => state.loadActivated.set(peek(state.autoplay) ?? false);
         },
       },
     },
@@ -156,7 +162,7 @@ function trackLoadTriggersSetup({
 }
 
 export const trackLoadTriggers = defineBehavior({
-  stateKeys: ['loadActivated', 'presentation'],
+  stateKeys: ['loadActivated', 'presentation', 'autoplay'],
   contextKeys: ['mediaElement'],
   setup: trackLoadTriggersSetup,
 });

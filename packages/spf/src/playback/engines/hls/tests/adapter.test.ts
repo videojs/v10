@@ -364,6 +364,83 @@ describe('SimpleHlsMediaElement', () => {
   });
 
   // ---------------------------------------------------------------------------
+  // autoplay — synchronous IDL attribute (WHATWG §4.8.11.2)
+  // ---------------------------------------------------------------------------
+  describe('autoplay', () => {
+    it('returns false before autoplay is set', () => {
+      const media = new SimpleHlsMediaElement();
+      expect(media.autoplay).toBe(false);
+    });
+
+    it('reflects the set value synchronously', () => {
+      const media = new SimpleHlsMediaElement();
+      media.autoplay = true;
+      expect(media.autoplay).toBe(true);
+    });
+
+    it('writes autoplay to engine state', () => {
+      const media = new SimpleHlsMediaElement();
+      media.autoplay = true;
+      expect(media.engine.state.autoplay.get()).toBe(true);
+    });
+
+    it('activates loading when autoplay is set with no preload', () => {
+      const media = new SimpleHlsMediaElement();
+      media.attach(document.createElement('video'));
+      media.autoplay = true;
+      expect(media.engine.state.loadActivated.get()).toBe(true);
+    });
+
+    it('activates loading when autoplay is set with preload="none"', () => {
+      const media = new SimpleHlsMediaElement();
+      media.preload = 'none';
+      media.autoplay = true;
+      expect(media.engine.state.loadActivated.get()).toBe(true);
+    });
+
+    it('does not activate loading when autoplay is left off', () => {
+      const media = new SimpleHlsMediaElement();
+      media.attach(document.createElement('video'));
+      media.src = 'https://example.com/v.m3u8';
+      expect(media.engine.state.loadActivated.get()).toBeFalsy();
+    });
+
+    it('keeps loadActivated across a src change while autoplay is on', async () => {
+      const media = new SimpleHlsMediaElement();
+      media.attach(document.createElement('video'));
+      media.autoplay = true;
+      media.src = 'https://example.com/v1.m3u8';
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(media.engine.state.loadActivated.get()).toBe(true);
+
+      media.src = 'https://example.com/v2.m3u8';
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(media.engine.state.loadActivated.get()).toBe(true);
+    });
+
+    it('resets loadActivated across a src change while autoplay is off', async () => {
+      const media = new SimpleHlsMediaElement();
+      media.attach(document.createElement('video'));
+      media.src = 'https://example.com/v1.m3u8';
+      // Autoplay off, so simulate a play()-driven activation of the first source.
+      media.engine.state.loadActivated.set(true);
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(media.engine.state.loadActivated.get()).toBe(true);
+
+      media.src = 'https://example.com/v2.m3u8';
+      await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      expect(media.engine.state.loadActivated.get()).toBe(false);
+    });
+
+    it('recycles the same engine instance when autoplay is set', () => {
+      const media = new SimpleHlsMediaElement();
+      const engine = media.engine;
+      media.autoplay = true;
+      expect(media.engine).toBe(engine);
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // destroy() — explicit teardown (separate from detach)
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {

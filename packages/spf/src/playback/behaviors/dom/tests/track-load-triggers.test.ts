@@ -7,6 +7,7 @@ function makeState(initial: LoadTriggersState = {}): StateSignals<LoadTriggersSt
   return {
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
     presentation: signal<LoadTriggersState['presentation']>(initial.presentation),
+    autoplay: signal<boolean | undefined>(initial.autoplay),
   };
 }
 
@@ -161,6 +162,27 @@ describe('trackLoadTriggers', () => {
     await flush();
 
     expect(state.loadActivated.get()).toBe(false);
+    reactor.destroy();
+  });
+
+  // With autoplay on, the per-source reset resets to the autoplay intent
+  // (true) instead of false — so load activation persists across sources.
+  it('keeps loadActivated true on URL identity change when autoplay is set', async () => {
+    const { el, play } = makeMediaElement();
+    const { state, reactor } = setupTrackLoadTriggers(
+      { presentation: { url: 'http://example.com/stream1.m3u8' }, autoplay: true },
+      { mediaElement: el }
+    );
+
+    play();
+    await flush();
+    expect(state.loadActivated.get()).toBe(true);
+
+    state.presentation.set({ url: 'http://example.com/stream2.m3u8' });
+    await flush();
+
+    // load-active cleanup resets to peek(autoplay) === true, so it stays active.
+    expect(state.loadActivated.get()).toBe(true);
     reactor.destroy();
   });
 

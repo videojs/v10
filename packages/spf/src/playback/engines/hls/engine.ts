@@ -103,6 +103,12 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * Persistent autoplay intent, bridged from the adapter's `autoplay`
+   * property. `trackLoadTriggers` reads it to reset `loadActivated` to the
+   * autoplay intent on source change.
+   */
+  autoplay?: boolean;
 }
 
 /**
