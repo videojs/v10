@@ -311,7 +311,7 @@ Public re-export: `@videojs/media/dom/simple-hls-audio-only`.
 
 | Export | File | Purpose |
 |---|---|---|
-| `SimpleHlsAudioOnly` | `media/simple-hls-audio-only/index.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', SimpleHlsAudioOnlyMedia)` |
+| `SimpleHlsAudioOnly` | `media/simple-hls-audio-only/media.ts` | Applies `MediaAttachMixin` + `CustomMediaElement('audio', SimpleHlsAudioOnlyMedia)` |
 | `SimpleHlsAudioOnlyElement` (tag `simple-hls-audio-only`) | `define/media/simple-hls-audio-only.ts` | Custom-element definition; registers `<simple-hls-audio-only>` via `safeDefine` |
 
 CDN entry: `packages/html/src/cdn/media/simple-hls-audio-only.ts` →
@@ -416,7 +416,7 @@ configuration drives end-of-stream correctly with no per-type changes.
 - [`packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts) — Phase 1 engine integration tests
 - [`packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts) — Phase 1 adapter tests
 - [`packages/media/src/dom/simple-hls-audio-only/media.ts`](../../../../packages/media/src/dom/simple-hls-audio-only/media.ts) — Phase 1 media wrapper
-- [`packages/html/src/media/simple-hls-audio-only/index.ts`](../../../../packages/html/src/media/simple-hls-audio-only/index.ts) — Phase 1 HTML custom element
-- [`packages/react/src/media/simple-hls-audio-only/index.tsx`](../../../../packages/react/src/media/simple-hls-audio-only/index.tsx) — Phase 1 React component
+- [`packages/html/src/media/simple-hls-audio-only/media.ts`](../../../../packages/html/src/media/simple-hls-audio-only/media.ts) — Phase 1 HTML custom element
+- [`packages/react/src/media/simple-hls-audio-only/media.tsx`](../../../../packages/react/src/media/simple-hls-audio-only/media.tsx) — Phase 1 React component
 - [`apps/sandbox/templates/html-simple-hls-audio-only/`](../../../../apps/sandbox/templates/html-simple-hls-audio-only/) — Phase 1 HTML sandbox demo template
 - [`apps/sandbox/templates/react-simple-hls-audio-only/`](../../../../apps/sandbox/templates/react-simple-hls-audio-only/) — Phase 1 React sandbox demo template

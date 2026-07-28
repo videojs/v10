@@ -6,8 +6,9 @@
  *
  * Convention:
  *   - Define files: packages/html/src/define/media/*.ts with inline class + static tagName
- *   - Media element classes: packages/html/src/media/{name}/index.ts
+ *   - Media element classes: packages/html/src/media/{name}/media.ts
  *     composed as MediaAttachMixin(CustomMediaElement('video'|'audio', Host))
+ *   - React media components: packages/react/src/media/{name}/media.tsx
  *   - Host classes: packages/media/src/dom/{name}/media.ts extending
  *     HTMLVideoElementHost or HTMLAudioElementHost with getter/setter pairs
  *   - Shared data: packages/media/src/dom/custom-media-element/custom-media-element.ts
@@ -92,15 +93,22 @@ function mapDistToSource(resolvedPath: string): string {
     const match = resolvedPath.match(/^(.+\/packages\/[^/]+)\/dist\/dev\/(.+)\.d\.ts$/);
     if (!match) return resolvedPath;
     const [, pkgRoot, rest] = match;
-    const candidates = [`${pkgRoot}/src/${rest}.ts`, `${pkgRoot}/src/${rest}/index.ts`];
+    const candidates = [
+      `${pkgRoot}/src/${rest}.ts`,
+      `${pkgRoot}/src/${rest}.tsx`,
+      `${pkgRoot}/src/${rest}/index.ts`,
+      `${pkgRoot}/src/${rest}/index.tsx`,
+    ];
     const candidate = candidates.find((path) => fs.existsSync(path));
     if (!candidate) return resolvedPath;
     sourcePath = candidate;
   }
 
-  if (sourcePath.endsWith('/index.ts')) {
-    const mediaPath = path.join(path.dirname(sourcePath), 'media.ts');
-    if (fs.existsSync(mediaPath)) return mediaPath;
+  if (sourcePath.endsWith('/index.ts') || sourcePath.endsWith('/index.tsx')) {
+    const mediaPath = ['media.ts', 'media.tsx']
+      .map((file) => path.join(path.dirname(sourcePath), file))
+      .find((file) => fs.existsSync(file));
+    if (mediaPath) return mediaPath;
   }
 
   return sourcePath;
@@ -1053,7 +1061,7 @@ function extractReactReference(
   propertyDefinitions: Record<string, HostPropertyDef>
 ): ReactMediaReference | undefined {
   const mediaDirectory = path.basename(path.dirname(source.mediaFilePath));
-  const reactFilePath = path.join(monorepoRoot, 'packages/react/src/media', mediaDirectory, 'index.tsx');
+  const reactFilePath = path.join(monorepoRoot, 'packages/react/src/media', mediaDirectory, 'media.tsx');
   if (!fs.existsSync(reactFilePath)) return undefined;
 
   const content = fs.readFileSync(reactFilePath, 'utf-8');

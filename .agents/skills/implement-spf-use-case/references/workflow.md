@@ -375,7 +375,7 @@ After Step 1's report:
     (~5 LOC; wraps the media host in `CustomMediaElement` +
     `MediaAttachMixin`) + `packages/html/src/define/media/<key>-video.ts`
     + `packages/html/src/cdn/media/<key>-video.ts` for the CDN entry.
-    Worked example: `simple-hls-video/index.ts` →
+    Worked example: `simple-hls-video/media.ts` →
     `class SimpleHlsVideo extends MediaAttachMixin(CustomMediaElement('video', SimpleHlsMedia)) {}`.
   - **React component** — `packages/react/src/media/<key>-video/`
     (~37 LOC; React adapter exposing props matching the HTML
@@ -442,11 +442,11 @@ typical for use-case implementations:
   applying the SPF mixin to `HTMLVideoElementHost` (or audio host for
   audio-only variants), exported through the adjacent `index.ts`; ~5 LOC.
 - **HTML custom element + define entry + CDN entry** —
-  `packages/html/src/media/<key>-video/index.ts`,
+  `packages/html/src/media/<key>-video/media.ts`,
   `packages/html/src/define/media/<key>-video.ts`,
   `packages/html/src/cdn/media/<key>-video.ts`. Inline implementation;
   ~5 LOC + boilerplate.
-- **React component** — `packages/react/src/media/<key>-video/index.tsx`
+- **React component** — `packages/react/src/media/<key>-video/media.tsx`
   exposing the props surface; ~37 LOC. Inline implementation.
 - **Sandbox demo(s)** — `apps/sandbox/templates/{html,react}-<key>-video/`
   (each ~50–80 LOC). **Write to `templates/`, not `src/`** (which is
