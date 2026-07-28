@@ -39,8 +39,8 @@ import basicUsageHtmlTs from "@/components/docs/demos/pip-button/html/css/BasicU
 
 Toggles picture-in-picture (PiP) mode. The button derives two state hooks from `availability`:
 
-- **`disabled`** (`true` when the API is available but not currently usable, or when the `disabled` prop is set) — sets `aria-disabled="true"` and `data-disabled` so the button stays focusable but does not activate.
-- **`hidden`** (`true` when PiP is `"unsupported"`) — applies the native HTML `hidden` attribute on the custom element; the React component returns `null`.
+- **`disabled`** (`true` until PiP is available, or when the `disabled` prop is set) — sets `aria-disabled="true"` and `data-disabled`. A prop-disabled, available button stays focusable but does not activate.
+- **`hidden`** (`true` while PiP is `"unavailable"` or `"unsupported"`) — applies the native HTML `hidden` attribute on the custom element; the React component returns `null`.
 
 ## Styling
 
@@ -53,7 +53,7 @@ media-pip-button[data-pip] {
   background: red;
 }
 
-/* Non-interactive (disabled prop or temporarily unavailable) */
+/* Non-interactive (disabled prop) */
 media-pip-button[data-disabled] {
   opacity: 0.5;
   cursor: not-allowed;
@@ -70,7 +70,7 @@ React renders a `<button>` element. Add a `className` to style it:
   background: red;
 }
 
-/* Non-interactive (disabled prop or temporarily unavailable) */
+/* Non-interactive (disabled prop) */
 .pip-button[data-disabled] {
   opacity: 0.5;
   cursor: not-allowed;
@@ -78,7 +78,7 @@ React renders a `<button>` element. Add a `className` to style it:
 ```
 </FrameworkCase>
 
-Unsupported environments hide the button automatically — the HTML element receives the native `hidden` attribute, and the React component returns `null`. No extra CSS is required.
+The button remains hidden until picture-in-picture is available. The HTML element receives the native `hidden` attribute, and the React component returns `null`. No extra CSS is required.
 
 ## Accessibility
 

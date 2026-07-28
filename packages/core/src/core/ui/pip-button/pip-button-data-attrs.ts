@@ -8,6 +8,6 @@ export const PiPButtonDataAttrs = {
   availability: 'data-availability',
   /** Present when the button is non-interactive (mirrors `aria-disabled`). */
   disabled: 'data-disabled',
-  /** Present when the button is hidden because picture-in-picture is unsupported. */
+  /** Present when the button is hidden because picture-in-picture is not available. */
   hidden: 'data-hidden',
 } as const satisfies StateAttrMap<PiPButtonState>;

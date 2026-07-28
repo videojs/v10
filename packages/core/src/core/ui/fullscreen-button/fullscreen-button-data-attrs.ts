@@ -8,6 +8,6 @@ export const FullscreenButtonDataAttrs = {
   availability: 'data-availability',
   /** Present when the button is non-interactive (mirrors `aria-disabled`). */
   disabled: 'data-disabled',
-  /** Present when the button is hidden because fullscreen is unsupported. */
+  /** Present when the button is hidden because fullscreen is not available. */
   hidden: 'data-hidden',
 } as const satisfies StateAttrMap<FullscreenButtonState>;

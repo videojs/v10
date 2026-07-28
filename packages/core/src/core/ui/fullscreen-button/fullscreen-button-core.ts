@@ -19,7 +19,7 @@ export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fulls
   availability: MediaFullscreenState['fullscreenAvailability'];
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout because fullscreen is unsupported. */
+  /** Removed from the layout until fullscreen is available. */
   hidden: boolean;
 }
 
@@ -31,9 +31,9 @@ export class FullscreenButtonCore {
 
   readonly state = createState<FullscreenButtonState>({
     fullscreen: false,
-    availability: 'available',
-    disabled: false,
-    hidden: false,
+    availability: 'unavailable',
+    disabled: true,
+    hidden: true,
     label: '',
   });
 
@@ -75,7 +75,7 @@ export class FullscreenButtonCore {
       fullscreen: media.fullscreen,
       availability,
       disabled: this.#props.disabled || availability !== 'available',
-      hidden: availability === 'unsupported',
+      hidden: availability !== 'available',
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 

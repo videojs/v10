@@ -163,7 +163,8 @@ Volume, fullscreen, and picture-in-picture expose an `*Availability` property be
 Components that depend on availability (like <DocsLink slug="reference/pip-button">`PiPButton`</DocsLink> and <DocsLink slug="reference/fullscreen-button">`FullscreenButton`</DocsLink>) handle the three states for you:
 
 - **`unsupported`** — the HTML custom element receives the native `hidden` attribute (and `data-hidden`); React buttons return `null`. No CSS needed.
-- **`unavailable`** or the `disabled` prop — the button stays visible and focusable with `aria-disabled="true"` plus `data-disabled` for styling.
+- **`unavailable`** — the presentation controls stay hidden while capability detection is unresolved. Cast remains visible but disabled when its API is supported and no device is reachable.
+- **`disabled` prop** — an available button stays visible and focusable with `aria-disabled="true"` plus `data-disabled` for styling.
 - **`available`** — fully interactive.
 
 Use `data-disabled` to style the non-interactive state:
@@ -192,7 +193,7 @@ You can also check availability in JS:
 function PiPControl() {
   const availability = usePlayer((s) => s.pipAvailability);
 
-  if (availability === 'unsupported') return null;
+  if (availability !== 'available') return null;
 
   return <PiPButton />;
 }
@@ -202,7 +203,7 @@ function PiPControl() {
 ```ts
 const media = this.#pip.value;
 
-if (media?.availability === 'unsupported') {
+if (media?.pipAvailability !== 'available') {
   this.hidden = true;
 }
 ```

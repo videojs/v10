@@ -7,26 +7,27 @@ date: 2026-04-27
 
 ## Decision
 
-Use `aria-disabled` (never HTML `disabled`) for all toolbar buttons. Three visual states driven by data attributes:
+Use `aria-disabled` (never HTML `disabled`) for all toolbar buttons. Controls distinguish whether an action is available, should remain discoverable, or should be removed from the layout:
 
-| State | ARIA | HTML (custom element) | React | Styling |
-|-------|------|-----------------------|-------|---------|
-| **Unsupported** | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
-| **Unavailable** (Cast only) | `aria-disabled="true"` | `data-disabled` | `data-disabled` on `<button>` | Reduced opacity via `[data-disabled]` |
-| **Disabled** (prop) | `aria-disabled="true"` | `data-disabled` | `data-disabled` on `<button>` | Reduced opacity via `[data-disabled]` |
-| **Available + enabled** | _(none)_ | _(none)_ | _(none)_ | Fully interactive |
+| State | Controls | ARIA | HTML (custom element) | React | Styling |
+|-------|----------|------|-----------------------|-------|---------|
+| **Unsupported** | Fullscreen, PiP, Cast | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
+| **Unavailable and not useful yet** | Fullscreen/PiP support unresolved; captions absent | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
+| **Unavailable but discoverable** | Cast API supported, no device reachable | `aria-disabled="true"` | `data-disabled` | `data-disabled` on `<button>` | Default skin disabled styling |
+| **Disabled** (prop) | Available controls | `aria-disabled="true"` | `data-disabled` | `data-disabled` on `<button>` | Default skin disabled styling |
+| **Available + enabled** | All controls | _(none)_ | _(none)_ | _(none)_ | Fully interactive |
 
 `data-availability` remains as a string enum (`available`, `unavailable`, `unsupported`) for consumers that need the raw value.
 
 ## Context
 
-Feature buttons (Fullscreen, PiP, Cast) need to communicate three distinct states to users and assistive technology:
+Feature buttons (Fullscreen, PiP, Cast, Captions) need to communicate distinct states to users and assistive technology:
 
 1. **Unsupported** — the browser lacks the capability entirely (e.g., PiP on older Safari). Applies to Fullscreen, PiP, and Cast.
-2. **Unavailable** — the API exists but no target is available (e.g., no cast device found). Only applies to Cast.
+2. **Unavailable** — the capability is not usable now. Its meaning depends on the feature: Fullscreen and PiP use it while support is unresolved, Captions uses it when no caption/subtitle tracks exist, and Cast uses it when its API exists but no device is reachable.
 3. **Disabled** — the developer explicitly disabled the control via a prop.
 
-Unsupported features are hidden entirely. Unavailable features (Cast only — no device found) and explicitly disabled buttons remain visible but non-interactive. `disabled` in state covers both the prop and feature unavailability. We evaluated `disabled` vs `aria-disabled`, `hidden` vs `aria-hidden`, and how Radix, Base UI, and WAI-ARIA APG handle these patterns.
+Unsupported features and controls without meaningful content or resolved support are hidden entirely. Cast remains visible but non-interactive when its API is supported and no device is reachable, allowing tooltips to explain the missing target. Explicitly disabled, otherwise available buttons also remain visible and non-interactive. `disabled` in state covers both the prop and feature unavailability. We evaluated `disabled` vs `aria-disabled`, `hidden` vs `aria-hidden`, and how Radix, Base UI, and WAI-ARIA APG handle these patterns.
 
 ## Alternatives Considered
 
@@ -48,30 +49,31 @@ The WAI-ARIA APG toolbar pattern explicitly recommends `aria-disabled` for toolb
 
 This aligns with both Radix (uses `aria-disabled` for custom interactive elements, `[data-disabled]` for styling) and Base UI (uses `aria-disabled` when `focusableWhenDisabled` is true, exposes `[data-disabled]`).
 
-### Why HTML `hidden` for unsupported features
+### Why HTML `hidden` for controls that are not useful yet
 
-When a feature is unsupported, the button should not be visible at all. The HTML `hidden` attribute:
+When a feature is unsupported, capability detection is unresolved, or a content-dependent control has no content, the button should not be visible. The HTML `hidden` attribute:
 
 - Works without CSS — no `display: none` rule needed.
 - Has native browser semantics.
 - Is set via `getAttrs()` alongside `aria-disabled`, keeping all attribute logic in one place.
 
-On the React side, the component returns `null` instead — the idiomatic React approach for conditional rendering. The `createMediaButton` factory accepts an optional `isSupported` callback that defaults to `(state) => !state.hidden` for cast/fullscreen/PiP buttons.
+On the React side, the component returns `null` instead — the idiomatic React approach for conditional rendering. The `createMediaButton` factory accepts an optional `isSupported` callback; Cast, Captions, Fullscreen, and PiP each pass `(state) => !state.hidden`.
 
 ### Why separate `data-disabled` and `data-hidden`
 
-These serve different styling purposes:
+These serve different purposes:
 
-- `data-disabled` — reduced opacity, `cursor: not-allowed` (button is visible but non-interactive).
+- `data-disabled` — a hook for a non-interactive button. Default skins provide disabled styling when the button remains visible.
 - `data-hidden` — a styling hook for consumers; the HTML `hidden` attribute handles actual hiding.
 
 Both are driven by state fields (`disabled`, `hidden`) through the standard `applyStateDataAttrs` data attribute system.
 
 ### Implementation notes
 
-- `getState()` derives `disabled = props.disabled || availability !== 'available'` and `hidden = availability === 'unsupported'`.
+- All affected controls derive `disabled = props.disabled || availability !== 'available'`.
+- Fullscreen and PiP derive `hidden = availability !== 'available'`; Cast derives `hidden = availability === 'unsupported'`; Captions derives `hidden = availability === 'unavailable'`.
 - `getAttrs()` returns `aria-disabled` from `state.disabled` and the native `hidden` attribute from `state.hidden`.
-- `toggle()` short-circuits on `state.current.disabled`, then awaits the underlying media call directly. Errors propagate to the caller (`MediaButtonElement` and `createMediaButton` log them in `__DEV__` and re-throw) instead of being swallowed.
+- `toggle()` short-circuits when the derived state is disabled, then invokes the underlying media call directly. Direct core callers receive any rejection. `MediaButtonElement` and `createMediaButton` log rejected activations in `__DEV__` and absorb them at the UI event boundary to avoid unhandled promise rejections.
 
 ## References
 

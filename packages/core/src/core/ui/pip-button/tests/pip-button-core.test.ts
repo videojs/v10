@@ -26,6 +26,16 @@ function createState(overrides: Partial<PiPButtonState> = {}): PiPButtonState {
 }
 
 describe('PiPButtonCore', () => {
+  it('starts disabled and hidden until availability is known', () => {
+    const core = new PiPButtonCore();
+
+    expect(core.state.current).toMatchObject({
+      availability: 'unavailable',
+      disabled: true,
+      hidden: true,
+    });
+  });
+
   describe('getState', () => {
     it('projects pip and availability', () => {
       const core = new PiPButtonCore();
@@ -45,6 +55,16 @@ describe('PiPButtonCore', () => {
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+    });
+
+    it('marks disabled and hidden when unavailable', () => {
+      const core = new PiPButtonCore();
+      core.setMedia(createMediaState({ pipAvailability: 'unavailable' }));
+      const state = core.getState();
+
+      expect(state.availability).toBe('unavailable');
       expect(state.disabled).toBe(true);
       expect(state.hidden).toBe(true);
     });

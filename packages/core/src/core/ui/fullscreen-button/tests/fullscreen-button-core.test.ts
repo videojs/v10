@@ -26,6 +26,16 @@ function createState(overrides: Partial<FullscreenButtonState> = {}): Fullscreen
 }
 
 describe('FullscreenButtonCore', () => {
+  it('starts disabled and hidden until availability is known', () => {
+    const core = new FullscreenButtonCore();
+
+    expect(core.state.current).toMatchObject({
+      availability: 'unavailable',
+      disabled: true,
+      hidden: true,
+    });
+  });
+
   describe('getState', () => {
     it('projects fullscreen and availability', () => {
       const core = new FullscreenButtonCore();
@@ -45,6 +55,16 @@ describe('FullscreenButtonCore', () => {
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+    });
+
+    it('marks disabled and hidden when unavailable', () => {
+      const core = new FullscreenButtonCore();
+      core.setMedia(createMediaState({ fullscreenAvailability: 'unavailable' }));
+      const state = core.getState();
+
+      expect(state.availability).toBe('unavailable');
       expect(state.disabled).toBe(true);
       expect(state.hidden).toBe(true);
     });

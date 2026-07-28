@@ -19,7 +19,7 @@ export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>,
   availability: MediaPictureInPictureState['pipAvailability'];
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout because picture-in-picture is unsupported. */
+  /** Removed from the layout until picture-in-picture is available. */
   hidden: boolean;
 }
 
@@ -31,9 +31,9 @@ export class PiPButtonCore {
 
   readonly state = createState<PiPButtonState>({
     pip: false,
-    availability: 'available',
-    disabled: false,
-    hidden: false,
+    availability: 'unavailable',
+    disabled: true,
+    hidden: true,
     label: '',
   });
 
@@ -75,7 +75,7 @@ export class PiPButtonCore {
       pip: media.pip,
       availability,
       disabled: this.#props.disabled || availability !== 'available',
-      hidden: availability === 'unsupported',
+      hidden: availability !== 'available',
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });
 
