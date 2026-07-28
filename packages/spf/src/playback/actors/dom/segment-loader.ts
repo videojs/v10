@@ -59,6 +59,14 @@ export type SegmentLoaderTrack = VideoTrack | AudioTrack;
 /**
  * Message sent to a SegmentLoaderActor.
  *
+ * @see {@link SegmentLoaderLoadMessage}
+ * @see {@link SegmentLoaderStopMessage}
+ */
+export type SegmentLoaderMessage = SegmentLoaderLoadMessage | SegmentLoaderStopMessage;
+
+/**
+ * `load` — drive fetching.
+ *
  * `range` is optional to distinguish loading modes:
  * - No range: load init segment only (metadata preload mode)
  * - With range: load init + all segments overlapping [start, end]
@@ -66,11 +74,20 @@ export type SegmentLoaderTrack = VideoTrack | AudioTrack;
  * `start` and `end` are raw time values — no segment snapping.
  * The actor maps them onto segment boundaries internally.
  */
-export type SegmentLoaderMessage = {
+type SegmentLoaderLoadMessage = {
   type: 'load';
   track: SegmentLoaderTrack;
   range?: { start: number; end: number };
 };
+
+/**
+ * `stop` — halt loading: abort the pending queue and return to `idle`. The
+ * in-flight fetch is left to complete, and the SourceBuffer / MediaSource are
+ * deliberately not touched — poking them can disrupt an in-flight AirPlay
+ * handoff (the suspend path in `load-segments.ts` sends this while
+ * `remotePlaybackActive`).
+ */
+type SegmentLoaderStopMessage = { type: 'stop' };
 
 // ============================================================================
 // ACTOR INTERFACE
@@ -249,7 +266,7 @@ export function createSegmentLoaderActor(
    *
    * Case 3 — Segments: all segments in the load window not yet committed.
    */
-  const planTasks = (message: SegmentLoaderMessage): LoadTask[] => {
+  const planTasks = (message: SegmentLoaderLoadMessage): LoadTask[] => {
     const { track, range } = message;
     // `peek` for the same reason as `getBufferedSegments` above — avoid
     // leaking the SourceBufferActor snapshot into the calling dispatcher's
@@ -463,6 +480,10 @@ export function createSegmentLoaderActor(
               }
               scheduleAll(allTasks, ctx);
             }
+          },
+          stop: (_message, ctx) => {
+            ctx.runner.abortPending();
+            ctx.transition('idle');
           },
         },
       },

@@ -22,11 +22,18 @@ interface WebKitVideoLike extends HTMLVideoElement {
  * A real `<video>` decorated with the WebKit AirPlay flag so
  * `isWebKitAirPlayCapable` recognizes it (`'…IsWireless' in media`).
  */
-function makeWebKitVideo(opts: { disableRemotePlayback?: boolean } = {}): WebKitVideoLike {
+function makeWebKitVideo(opts: { wireless?: boolean; disableRemotePlayback?: boolean } = {}): WebKitVideoLike {
   const video = document.createElement('video') as WebKitVideoLike;
-  video.webkitCurrentPlaybackTargetIsWireless = false;
+  video.webkitCurrentPlaybackTargetIsWireless = opts.wireless ?? false;
   video.disableRemotePlayback = opts.disableRemotePlayback ?? false;
   return video;
+}
+
+const WIRELESS_EVENT = 'webkitcurrentplaybacktargetiswirelesschanged';
+
+function setWireless(video: WebKitVideoLike, wireless: boolean): void {
+  video.webkitCurrentPlaybackTargetIsWireless = wireless;
+  video.dispatchEvent(new Event(WIRELESS_EVENT));
 }
 
 function makeSignals(presentation?: MaybeResolvedPresentation) {
@@ -34,6 +41,7 @@ function makeSignals(presentation?: MaybeResolvedPresentation) {
     state: {
       presentation: signal<MaybeResolvedPresentation | undefined>(presentation),
       disableRemotePlayback: signal<boolean | undefined>(undefined),
+      remotePlaybackActive: signal<boolean | undefined>(undefined),
     },
     context: {
       mediaElement: signal<HTMLMediaElement | undefined>(undefined),
@@ -66,6 +74,11 @@ describe('setupAirPlay', () => {
     await flush();
 
     expect(fallbackSourceOf(video)).toBeNull();
+
+    // A wireless event must not touch engine state on an unsupported platform.
+    setWireless(video, true);
+    await flush();
+    expect(state.remotePlaybackActive.get()).toBeUndefined();
 
     reactor.destroy();
   });
@@ -234,6 +247,67 @@ describe('setupAirPlay', () => {
     state.disableRemotePlayback.set(false);
     await flush();
     expect(fallbackSourceOf(video)).not.toBeNull();
+
+    reactor.destroy();
+  });
+
+  it('mirrors the wireless target onto remotePlaybackActive', async () => {
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: false });
+    context.mediaElement.set(video);
+    await flush();
+    // Sync at attach: not wireless → session not active.
+    expect(state.remotePlaybackActive.get()).toBe(false);
+
+    setWireless(video, true);
+    await flush();
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    setWireless(video, false);
+    await flush();
+    expect(state.remotePlaybackActive.get()).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('reflects an AirPlay session already active at attach', async () => {
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    context.mediaElement.set(video);
+    await flush();
+
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    reactor.destroy();
+  });
+
+  it('releases remotePlaybackActive when torn down mid-session', async () => {
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
+    await flush();
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    // Detach mid-session must not strand setupMediaSource holding a dead MS
+    // or the loaders suspended.
+    context.mediaElement.set(undefined);
+    await flush();
+    expect(state.remotePlaybackActive.get()).toBe(false);
+
+    // The listener is gone — a stray wireless event does nothing.
+    setWireless(video, true);
+    await flush();
+    expect(state.remotePlaybackActive.get()).toBe(false);
 
     reactor.destroy();
   });

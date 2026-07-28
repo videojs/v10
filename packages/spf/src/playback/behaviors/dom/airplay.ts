@@ -4,7 +4,12 @@
  * The WebKit-recommended workaround is to append a fallback
  * `<source type="application/x-mpegURL">` carrying the original manifest URL:
  * Safari exposes the AirPlay picker and, when a wireless target is selected,
- * plays that native-HLS source on the receiver.
+ * plays that native-HLS source on the receiver. The wireless-target state is
+ * mirrored onto `state.remotePlaybackActive` — the fact slot the rest of the
+ * engine keys off: `loadXSegments` suspend (no fetching alongside the
+ * receiver) and `setupMediaSource` holds its UA-closed MediaSource until the
+ * session ends, then rebuilds and restores position (see its
+ * "Liveness recovery" doc).
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -34,12 +39,12 @@
  *   it holds the machine in `'preconditions-unmet'` and nothing is set up.
  */
 
-import { isWebKitAirPlayCapable, type WebKitVideoElement } from '@videojs/utils/dom';
+import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 
 type AirPlayFsmState = 'preconditions-unmet' | 'airplay-capable';
@@ -60,6 +65,7 @@ function setupAirPlaySetup({
   state: {
     presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
     disableRemotePlayback: ReadonlySignal<boolean | undefined>;
+    remotePlaybackActive: Signal<boolean | undefined>;
   };
   context: {
     mediaElement: ReadonlySignal<HTMLMediaElement | undefined>;
@@ -77,6 +83,16 @@ function setupAirPlaySetup({
       'airplay-capable': {
         entry: () => {
           const mediaElement = context.mediaElement.get() as WebKitVideoElement;
+
+          // Reflect the wireless target on `state.remotePlaybackActive` — the
+          // fact slot the rest of the engine keys off: `setupMediaSource`
+          // holds the (UA-closed) MediaSource attached until the session ends
+          // and rebuilds on the falling edge; `loadXSegments` suspend so the
+          // engine doesn't fetch alongside the receiver.
+          const sync = () => {
+            state.remotePlaybackActive.set(!!mediaElement.webkitCurrentPlaybackTargetIsWireless);
+          };
+          const unlisten = listen(mediaElement, 'webkitcurrentplaybacktargetiswirelesschanged', sync);
 
           const sourceUrl = computed(() => state.presentation.get()?.url ?? '');
 
@@ -107,13 +123,20 @@ function setupAirPlaySetup({
             }
           });
 
+          // AirPlay may already be active at (re)attach.
+          sync();
+
           return () => {
             disposeSource();
+            unlisten();
             sourceEl?.remove();
             sourceEl = null;
             // Undo the picker enable: hand the element back to its MMS-default
             // `disableRemotePlayback = true`.
             mediaElement.disableRemotePlayback = true;
+            // Don't strand the engine held/suspended if we tear down
+            // mid-session (author opt-out, detach, destroy).
+            state.remotePlaybackActive.set(false);
           };
         },
       },
@@ -122,7 +145,7 @@ function setupAirPlaySetup({
 }
 
 export const setupAirPlay = defineBehavior({
-  stateKeys: ['presentation', 'disableRemotePlayback'],
+  stateKeys: ['presentation', 'disableRemotePlayback', 'remotePlaybackActive'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupAirPlaySetup,
 });
