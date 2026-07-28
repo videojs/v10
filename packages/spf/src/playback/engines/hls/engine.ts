@@ -136,6 +136,15 @@ export interface SimpleHlsEngineState {
    */
   startPosition?: number;
   /**
+   * A remote-playback session (AirPlay wireless target) currently owns
+   * presentation. Sole writer: `setupAirPlay` (from the WebKit wireless-target
+   * events). Readers: `setupMediaSource` (holds the dead MediaSource attached
+   * until the session ends, then rebuilds) and `loadTextTrackSegments`
+   * (suspends text fetching — text actors are MediaSource-independent and
+   * would otherwise fetch alongside the receiver).
+   */
+  remotePlaybackActive?: boolean;
+  /**
    * Author intent for the AirPlay/remote-playback picker, written by the media
    * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
    * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the

@@ -46,7 +46,16 @@ function makeResolvedPresentation(overrides: Partial<Presentation> = {}): Presen
 function makeState(initial: MediaSourceState = {}): StateSignals<MediaSourceState> {
   return {
     presentation: signal<MediaSourceState['presentation']>(initial.presentation),
+    startPosition: signal<number | undefined>(initial.startPosition),
+    remotePlaybackActive: signal<boolean | undefined>(initial.remotePlaybackActive),
   };
+}
+
+/** A media element whose `currentTime` tests can stage for snapshot assertions. */
+function makeVideo(currentTime = 0): HTMLMediaElement {
+  const video = document.createElement('video');
+  Object.defineProperty(video, 'currentTime', { value: currentTime, writable: true });
+  return video;
 }
 
 function makeContext(initial: MediaSourceContext = {}): ContextSignals<MediaSourceContext> {
@@ -274,5 +283,116 @@ describe('setupMediaSource', () => {
     expect(createMediaSource).toHaveBeenCalledTimes(1);
 
     reactor.destroy();
+  });
+
+  describe('liveness recovery', () => {
+    it('recycles with a fresh MediaSource when the UA closes the attached one', async () => {
+      const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+
+      const first = makeMediaSource();
+      const second = makeMediaSource();
+      const firstDetach = vi.fn();
+      const secondDetach = vi.fn();
+      vi.mocked(createMediaSource)
+        .mockImplementationOnce(() => first)
+        .mockImplementationOnce(() => second);
+      vi.mocked(attachMediaSource)
+        .mockImplementationOnce(() => ({ url: 'blob:first', detach: firstDetach }))
+        .mockImplementationOnce(() => ({ url: 'blob:second', detach: secondDetach }));
+
+      const { state, context, reactor } = setupSetupMediaSource();
+      context.mediaElement.set(makeVideo());
+      state.presentation.set(makeResolvedPresentation());
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBe(first));
+
+      // Safari closes the MMS out from under the engine (AirPlay handoff
+      // return, eviction). A closed MediaSource can never reopen — the
+      // behavior must detach it and rebuild a fresh one for the same source.
+      transitionMediaSource(first, 'closed', 'sourceclose');
+
+      await vi.waitFor(() => {
+        expect(firstDetach).toHaveBeenCalledTimes(1);
+        expect(context.mediaSource.get()).toBe(second);
+      });
+
+      reactor.destroy();
+    });
+
+    it('snapshots element.currentTime into startPosition on a recovery exit', async () => {
+      const mediaElement = makeVideo(42.5);
+      const { state, context, reactor } = setupSetupMediaSource();
+      context.mediaElement.set(mediaElement);
+      state.presentation.set(makeResolvedPresentation());
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
+      const first = context.mediaSource.get()!;
+
+      transitionMediaSource(first, 'closed', 'sourceclose');
+
+      // Captured before detach's load() can reset the element, so
+      // applyStartPosition restores the position on the rebuilt source.
+      await vi.waitFor(() => expect(state.startPosition.get()).toBe(42.5));
+
+      reactor.destroy();
+    });
+
+    it('does not snapshot on an ordinary source change', async () => {
+      const mediaElement = makeVideo(42.5);
+      const { state, context, reactor } = setupSetupMediaSource();
+      context.mediaElement.set(mediaElement);
+      state.presentation.set(makeResolvedPresentation());
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
+
+      // Source replacement routes through unresolved — a new source must
+      // start at its own beginning, not inherit the old position.
+      state.presentation.set({ url: 'https://example.com/next.m3u8' });
+
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(state.startPosition.get()).toBeUndefined();
+
+      reactor.destroy();
+    });
+
+    it('holds the dead MediaSource while remotePlaybackActive, recycles on its falling edge', async () => {
+      const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+
+      const first = makeMediaSource();
+      const second = makeMediaSource();
+      const firstDetach = vi.fn();
+      vi.mocked(createMediaSource)
+        .mockImplementationOnce(() => first)
+        .mockImplementationOnce(() => second);
+      vi.mocked(attachMediaSource)
+        .mockImplementationOnce(() => ({ url: 'blob:first', detach: firstDetach }))
+        .mockImplementationOnce(() => ({ url: 'blob:second', detach: vi.fn() }));
+
+      const { state, context, reactor } = setupSetupMediaSource();
+      const mediaElement = makeVideo(12);
+      context.mediaElement.set(mediaElement);
+      state.presentation.set(makeResolvedPresentation());
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBe(first));
+
+      // AirPlay engaged: the receiver owns playback. Safari closes the MMS —
+      // but detaching now would load() under the live session, so the dead
+      // MediaSource must stay attached until the session ends.
+      state.remotePlaybackActive.set(true);
+      transitionMediaSource(first, 'closed', 'sourceclose');
+
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(firstDetach).not.toHaveBeenCalled();
+      expect(context.mediaSource.get()).toBe(first);
+
+      // Session ends: the element still mirrors the receiver position —
+      // snapshot it, then rebuild.
+      (mediaElement as unknown as { currentTime: number }).currentTime = 87;
+      state.remotePlaybackActive.set(false);
+
+      await vi.waitFor(() => {
+        expect(firstDetach).toHaveBeenCalledTimes(1);
+        expect(state.startPosition.get()).toBe(87);
+        expect(context.mediaSource.get()).toBe(second);
+      });
+
+      reactor.destroy();
+    });
   });
 });
