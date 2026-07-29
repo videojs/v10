@@ -2,10 +2,10 @@ import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
 import { when } from '../../core/signals/when';
-import { ConcurrentRunner, Task } from '../../core/tasks/task';
+import { RecurringRunner, type Reschedule, runOnce, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
-import { isResolvedPresentation, isResolvedTrack } from '../../media/types';
+import { deriveStreamType, getMediaPlaylistMetadata, isResolvedPresentation, isResolvedTrack } from '../../media/types';
 import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
@@ -63,6 +63,8 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   fetchResolvableText?: FetchText;
   /** Holds a track's first parse until its placement inputs settle (live anchor); absent → parse immediately. */
   gateFirstParse?: GateFirstParse;
+  /** Live re-run policy for the `RecurringRunner`; absent → resolve once (VOD). */
+  reschedule?: Reschedule<ResolvedTrack>;
 }
 
 /**
@@ -74,19 +76,27 @@ interface ResolveTrackConfig {
   getCdnId?: GetCdnId;
   /** First-parse placement gate (see `primitives/gate-first-parse`); absent → parse immediately. */
   gateFirstParse?: GateFirstParse;
+  /** Live media-playlist re-run policy; absent → resolve once. */
+  reschedule?: Reschedule<ResolvedTrack>;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText, gateFirstParse },
+  config: {
+    selectedKey,
+    findTrackToResolve,
+    fetchResolvableText = defaultFetchResolvableText,
+    gateFirstParse,
+    reschedule,
+  },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
 }) {
-  // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createTaskRunner() with args TBD),
-  // likely eventually passed down via config or a new "definitions" argument. This will allow us to decide if we want our task runner/scheduler
-  // to e.g. run concurrently (like we currently are), serially with a queue, or abort the previous task and replace it with the newly scheduled one. (CJP).
-  const runner = new ConcurrentRunner();
+  // Recurrence lives in the runner: with a `reschedule` (live) it re-runs the
+  // task until the policy stops; `runOnce` (VOD) runs it exactly once. Single-
+  // slot — a selection change re-schedules (abort-and-replace).
+  const runner = new RecurringRunner<ResolvedTrack>(reschedule ?? runOnce);
 
   // Reactor states model the FSM the previous effect-based body was
   // hand-rolling. 'presentation-resolved' is entered when the
@@ -121,35 +131,44 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // The reactor's state transitions handle relevant presentation
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
-            // internal updates (segments added by sibling tasks) don't
-            // re-fire the effect.
+            // internal updates (the post-resolve write, the runner's own
+            // reload cycles) don't re-fire the effect.
             const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;
 
             const track = findTrackToResolve(presentation, trackId);
-            if (!track || isResolvedTrack(track)) return;
+            // Skip a complete or missing track; a resolved-but-incomplete (live)
+            // window still reloads — its window may have slid past the playhead.
+            if (!track || (isResolvedTrack(track) && Number.isFinite(track.duration))) return;
 
-            runner.schedule(
-              // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
-              // likely eventually passed down via config or a new "definitions" argument (CJP).
+            // Abort (selection/source change) settles quietly; a genuine resolve
+            // failure rejects — swallowed for now (TODO: surface to state).
+            const scheduled = runner.schedule(
+              // Re-runs (clones) on each reload, so the body re-reads the live
+              // snapshot (via `trackId`) rather than capturing the gate-time
+              // `track` — a reload carries the prior window's timeline forward.
               new Task(
                 async (signal) => {
+                  const snapshot = peek(state.presentation);
+                  const current = snapshot ? findTrackToResolve(snapshot, trackId) : undefined;
+                  if (!current) throw new Error('resolve-track: selected track not found');
+
                   // `fetchResolvableText` is the behavior's failover-decorated
                   // fetch: it trips the CDN on a failed fetch (network error or
                   // non-OK status). A parse failure is a content issue, not a
-                  // CDN-availability one, so it doesn't trip. The gate-time
-                  // `track` supplies only the playlist URL (stable across the
+                  // CDN-availability one, so it doesn't trip. The run-time
+                  // `current` supplies only the playlist URL (stable across the
                   // fetch).
-                  const text = await fetchResolvableText(track, { signal });
+                  const text = await fetchResolvableText(current, { signal });
 
                   // Hold placement — never the fetch — until this track's
                   // first-parse placement inputs settle (for live, the
                   // wall-clock anchor; see `primitives/gate-first-parse`).
-                  // Every task scheduled here is a first parse (the effect
-                  // skips resolved tracks). Aborting rejects the wait, so a
+                  // First parses only — a reload's window is already on the
+                  // established timeline. Aborting rejects the wait, so a
                   // source change can't strand a gated task.
-                  if (gateFirstParse) {
+                  if (gateFirstParse && !isResolvedTrack(current)) {
                     const { selectedVideoTrackId, selectedAudioTrackId } = state as SiblingSelectionSignals;
                     await when(
                       () =>
@@ -198,14 +217,18 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     // audio↔video (mixed-container sources exist, e.g. muxed-TS
                     // video + raw-.aac audio), which also keeps per-type
                     // resolutions' writes disjoint (no race).
-                    return NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
+                    const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
+                    // Stream nature (live vs on-demand) — stable once parsed.
+                    return { ...relabeled, streamType: deriveStreamType(getMediaPlaylistMetadata(mediaTrack)) };
                   });
+                  return mediaTrack;
                 },
                 { id: track.id }
               )
             );
+            scheduled.catch(() => {});
           },
         ],
       },
