@@ -145,11 +145,13 @@ export interface SimpleHlsEngineState {
   resumePlayback?: boolean;
   /**
    * A remote-playback session (AirPlay wireless target) currently owns
-   * presentation. Sole writer: `setupAirPlay` (from the WebKit wireless-target
-   * events). Readers: `setupMediaSource` (holds the dead MediaSource attached
-   * until the session ends, then rebuilds) and `loadTextTrackSegments`
-   * (suspends text fetching — text actors are MediaSource-independent and
-   * would otherwise fetch alongside the receiver).
+   * presentation. Sole writer: `setupAirPlay` (WebKit wireless flag +
+   * Remote Playback API state, falling edge debounced). Readers:
+   * `setupMediaSource` (defers the post-close rebuild until the session
+   * ends) and `loadTextTrackSegments` (suspends text fetching — text actors
+   * are MediaSource-independent and would otherwise fetch alongside the
+   * receiver; v/a loading stops structurally when the UA closes the
+   * MediaSource).
    */
   remotePlaybackActive?: boolean;
   /**

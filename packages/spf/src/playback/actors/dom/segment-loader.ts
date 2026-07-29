@@ -59,12 +59,6 @@ export type SegmentLoaderTrack = VideoTrack | AudioTrack;
 /**
  * Message sent to a SegmentLoaderActor.
  *
- * @see {@link SegmentLoaderLoadMessage}
- * @see {@link SegmentLoaderStopMessage}
- */
-export type SegmentLoaderMessage = SegmentLoaderLoadMessage | SegmentLoaderStopMessage;
-
-/**
  * `load` — drive fetching.
  *
  * `range` is optional to distinguish loading modes:
@@ -73,21 +67,17 @@ export type SegmentLoaderMessage = SegmentLoaderLoadMessage | SegmentLoaderStopM
  *
  * `start` and `end` are raw time values — no segment snapping.
  * The actor maps them onto segment boundaries internally.
+ *
+ * There is deliberately no `stop`: v/a loading halts structurally — the
+ * actor is torn down when its MediaSource closes or detaches (see
+ * `setup-buffer-actors.ts`). Only the MediaSource-independent text-track
+ * loader needs an in-band stop (see `text-track-segment-loader.ts`).
  */
-type SegmentLoaderLoadMessage = {
+export type SegmentLoaderMessage = {
   type: 'load';
   track: SegmentLoaderTrack;
   range?: { start: number; end: number };
 };
-
-/**
- * `stop` — halt loading: abort the pending queue and return to `idle`. The
- * in-flight fetch is left to complete, and the SourceBuffer / MediaSource are
- * deliberately not touched — poking them can disrupt an in-flight AirPlay
- * handoff (the suspend path in `load-segments.ts` sends this while
- * `remotePlaybackActive`).
- */
-type SegmentLoaderStopMessage = { type: 'stop' };
 
 // ============================================================================
 // ACTOR INTERFACE
@@ -266,7 +256,7 @@ export function createSegmentLoaderActor(
    *
    * Case 3 — Segments: all segments in the load window not yet committed.
    */
-  const planTasks = (message: SegmentLoaderLoadMessage): LoadTask[] => {
+  const planTasks = (message: SegmentLoaderMessage): LoadTask[] => {
     const { track, range } = message;
     // `peek` for the same reason as `getBufferedSegments` above — avoid
     // leaking the SourceBufferActor snapshot into the calling dispatcher's
@@ -480,10 +470,6 @@ export function createSegmentLoaderActor(
               }
               scheduleAll(allTasks, ctx);
             }
-          },
-          stop: (_message, ctx) => {
-            ctx.runner.abortPending();
-            ctx.transition('idle');
           },
         },
       },

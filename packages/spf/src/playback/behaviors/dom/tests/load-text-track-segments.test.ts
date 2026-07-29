@@ -629,4 +629,58 @@ describe('loadTextTrackSegments', () => {
       cleanup();
     });
   });
+
+  // Text loading has no structural tie to the MediaSource — a remote
+  // playback session's suspend is the only thing that stops it (v/a loaders
+  // die with the closed MediaSource instead).
+  describe('remotePlaybackActive (text-only suspend gate)', () => {
+    it('does not dispatch while a remote session is active, even with preload="auto"', async () => {
+      const send = vi.fn();
+      const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
+      const state = makeState({
+        preload: 'auto',
+        remotePlaybackActive: true,
+        selectedTextTrackId: 'text-1',
+        currentTime: 0,
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
+      });
+      const context = makeContext({ textTrackSegmentLoaderActor: fakeLoader });
+      const reactor = loadTextTrackSegments.setup({ state, context });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(send).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'load' }));
+
+      reactor.destroy();
+    });
+
+    it('sends a one-shot stop on suspend and re-dispatches on resume', async () => {
+      // Fake loader captures the messages the dispatcher sends — proving the
+      // `'suspended'` state actively halts the actor (not just parks the
+      // dispatcher). The actor-level tests cover what `stop` does to
+      // in-flight work; this pins the FSM → actor wiring.
+      const send = vi.fn();
+      const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
+      const state = makeState({
+        preload: 'auto',
+        selectedTextTrackId: 'text-1',
+        currentTime: 0,
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
+      });
+      const context = makeContext({ textTrackSegmentLoaderActor: fakeLoader });
+      const reactor = loadTextTrackSegments.setup({ state, context });
+
+      // preload:'auto' → 'full-range' → an initial load dispatch.
+      await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+      send.mockClear();
+
+      state.remotePlaybackActive.set(true);
+      await vi.waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'stop' }));
+      send.mockClear();
+
+      state.remotePlaybackActive.set(false);
+      await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+      reactor.destroy();
+    });
+  });
 });

@@ -1402,7 +1402,7 @@ describe('loadSegments load-mode FSM', () => {
 });
 
 // ---------------------------------------------------------------------------
-// remotePlaybackActive — suspend gate (AirPlay wireless / stopLoad analogue)
+// remotePlaybackActive — v/a variants ignore it (text-only suspend gate)
 // ---------------------------------------------------------------------------
 
 describe('loadSegments orchestration (remotePlaybackActive)', () => {
@@ -1422,82 +1422,17 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     };
   }
 
-  it('does not load segments while a remote session is active, even with preload="auto"', async () => {
-    const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10)];
-
-    const fetchedUrls: string[] = [];
-    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-      fetchedUrls.push(url);
-      return Promise.resolve(new Response(new ArrayBuffer(100)));
-    });
-
-    const { actor } = makeSourceBufferWithActor();
-    const { cleanup } = setupLoadSegments(
-      {
-        preload: 'auto',
-        remotePlaybackActive: true,
-        selectedVideoTrackId: 'track-1',
-        currentTime: 0,
-        presentation: makePresentation(segments),
-      },
-      actor,
-      'video'
-    );
-
-    // Give the (suspended) loader ample time to prove it stays dormant.
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(fetchedUrls).not.toContain('http://example.com/init.mp4');
-    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
-
-    cleanup();
-  });
-
-  it('resumes loading when the remote session ends', async () => {
-    const segments = [makeSegment('s1', 0, 10), makeSegment('s2', 10, 10)];
-
-    const fetchedUrls: string[] = [];
-    globalThis.fetch = vi.fn().mockImplementation((input: RequestInfo | URL) => {
-      const url = typeof input === 'string' ? input : input instanceof URL ? input.href : (input as Request).url;
-      fetchedUrls.push(url);
-      return Promise.resolve(new Response(new ArrayBuffer(100)));
-    });
-
-    const { actor } = makeSourceBufferWithActor();
-    const { state, cleanup } = setupLoadSegments(
-      {
-        preload: 'auto',
-        remotePlaybackActive: true,
-        selectedVideoTrackId: 'track-1',
-        currentTime: 0,
-        presentation: makePresentation(segments),
-      },
-      actor,
-      'video'
-    );
-
-    await new Promise((resolve) => setTimeout(resolve, 50));
-    expect(fetchedUrls).not.toContain('http://example.com/s1.m4s');
-
-    state.remotePlaybackActive.set(false);
-
-    await vi.waitFor(() => {
-      expect(fetchedUrls).toContain('http://example.com/init.mp4');
-      expect(fetchedUrls).toContain('http://example.com/s1.m4s');
-    });
-
-    cleanup();
-  });
-
-  it('sends a stop message to the loader on suspend and re-dispatches on resume', async () => {
-    // Fake loader captures the messages the dispatcher sends — proving the
-    // `'suspended'` state actively halts the actor (not just parks the
-    // dispatcher). The actor-level tests cover what `stop` does to in-flight
-    // work; this pins the FSM → actor wiring.
+  it('v/a dispatch is not gated on remotePlaybackActive', async () => {
+    // V/A loading stops *structurally* during a remote session — the UA
+    // closes the MediaSource and the actor teardown empties the loader slot.
+    // The dispatcher itself must keep working while a loader exists, even
+    // with the session fact set (only the text variant suspends on it —
+    // see load-text-track-segments.test.ts).
     const send = vi.fn();
     const fakeLoader = { send } as unknown as SegmentLoaderActor;
     const state = makeState({
       preload: 'auto',
+      remotePlaybackActive: true,
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation([makeSegment('s1', 0, 10)]),
@@ -1505,15 +1440,6 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
     const reactor = loadVideoSegments.setup({ state, context });
 
-    // preload:'auto' → 'full-range' → an initial load dispatch.
-    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
-    send.mockClear();
-
-    state.remotePlaybackActive.set(true);
-    await vi.waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'stop' }));
-    send.mockClear();
-
-    state.remotePlaybackActive.set(false);
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
 
     reactor.destroy();
