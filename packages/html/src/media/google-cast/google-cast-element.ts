@@ -14,12 +14,12 @@ import { MediaComponentElement } from '../media-component-element';
  * ```html
  * <video-player>
  *   <hlsjs-video src="https://example.com/stream.m3u8"></hlsjs-video>
- *   <media-google-cast receiver="YOUR_APP_ID"></media-google-cast>
+ *   <google-cast receiver="YOUR_APP_ID"></google-cast>
  * </video-player>
  * ```
  */
 export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
-  static readonly tagName = 'media-google-cast';
+  static readonly tagName = 'google-cast';
 
   static override properties = {
     src: { type: String },

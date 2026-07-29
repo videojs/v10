@@ -35,8 +35,8 @@ async function render() {
         <${tag}>
           <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
           <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
-          <media-mux-data player-software-name="mux-audio"></media-mux-data>
-          <media-google-cast></media-google-cast>
+          <mux-data player-software-name="mux-audio"></mux-data>
+          <google-cast></google-cast>
         </${tag}>
       </audio-player>
     </div>

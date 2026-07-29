@@ -50,13 +50,13 @@ export default function App() {
       playsinline
       loop
     ></hlsjs-video>
-    <media-google-cast></media-google-cast>
+    <google-cast></google-cast>
     <media-cast-button></media-cast-button>
   </media-container>
 </video-player>
 ```
 
-Register the `<media-google-cast>` element by importing `@videojs/html/media/google-cast`.
+Register the `<google-cast>` element by importing `@videojs/html/media/google-cast`.
 </FrameworkCase>
 
 The component registers Google Cast with whichever media the player is using, so it works with any of the streaming media elements. The pre-built <DocsLink slug="concepts/skins">skins</DocsLink> include a Cast button already. It appears when a Chromecast device is on the network and stays hidden otherwise.
@@ -113,7 +113,7 @@ Pass Cast options as props of the `GoogleCast` component.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Set Cast options as attributes on the `<media-google-cast>` element. Object-valued options (like `customData`) are properties only.
+Set Cast options as attributes on the `<google-cast>` element. Object-valued options (like `customData`) are properties only.
 </FrameworkCase>
 
 ### Custom receiver application ID
@@ -130,7 +130,7 @@ By default, Video.js casts to Google's [Default Media Receiver](https://develope
 <FrameworkCase frameworks={["html"]}>
 ```html
 <hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video>
-<media-google-cast receiver="YOUR_APP_ID"></media-google-cast> <!-- [!code focus] -->
+<google-cast receiver="YOUR_APP_ID"></google-cast> <!-- [!code focus] -->
 ```
 </FrameworkCase>
 
@@ -147,7 +147,7 @@ Send extra data (auth tokens, user IDs) to the receiver with each load request v
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-const googleCast = document.querySelector('media-google-cast');
+const googleCast = document.querySelector('google-cast');
 googleCast.customData = { token: 'abc123', userId: 'u_789' }; // [!code focus]
 ```
 </FrameworkCase>
@@ -169,10 +169,10 @@ By default the receiver loads the same URL the browser plays. Set `src` (and opt
 <FrameworkCase frameworks={["html"]}>
 ```html
 <hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"></hlsjs-video>
-<media-google-cast
+<google-cast
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
   content-type="application/x-mpegURL"
-></media-google-cast>
+></google-cast>
 ```
 </FrameworkCase>
 
@@ -192,7 +192,7 @@ Set `streamType` to tell the receiver whether the stream is `'on-demand'` or `'l
 <FrameworkCase frameworks={["html"]}>
 ```html
 <hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video>
-<media-google-cast stream-type="live"></media-google-cast> <!-- [!code focus] -->
+<google-cast stream-type="live"></google-cast> <!-- [!code focus] -->
 ```
 </FrameworkCase>
 

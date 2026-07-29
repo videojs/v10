@@ -19,12 +19,12 @@ import { MediaComponentElement } from '../media-component-element';
  * ```html
  * <video-player>
  *   <mux-video src="https://stream.mux.com/abc123.m3u8"></mux-video>
- *   <media-mux-data player-software-name="mux-video"></media-mux-data>
+ *   <mux-data player-software-name="mux-video"></mux-data>
  * </video-player>
  * ```
  */
 export class MuxDataElement extends MediaComponentElement<MuxData> {
-  static readonly tagName = 'media-mux-data';
+  static readonly tagName = 'mux-data';
 
   static override properties = {
     envKey: { type: String, attribute: 'env-key' },

@@ -37,12 +37,12 @@ export default function App() {
 <video-player>
   <media-container>
     <mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" playsinline></mux-video>
-    <media-mux-data></media-mux-data> <!-- [!code focus] -->
+    <mux-data></mux-data> <!-- [!code focus] -->
   </media-container>
 </video-player>
 ```
 
-Register the `<media-mux-data>` element by importing `@videojs/html/media/mux-data`.
+Register the `<mux-data>` element by importing `@videojs/html/media/mux-data`.
 </FrameworkCase>
 
 That's the whole setup for Mux-hosted playback — no environment key required. The component renders nothing; place it inside the player, as a sibling of the media element.
@@ -67,7 +67,7 @@ Set `envKey` when you monitor a source Mux doesn't host — a self-hosted HLS or
 <FrameworkCase frameworks={["html"]}>
 ```html
 <hlsjs-video src="https://example.com/stream.m3u8"></hlsjs-video>
-<media-mux-data env-key="YOUR_ENV_KEY"></media-mux-data> <!-- [!code focus] -->
+<mux-data env-key="YOUR_ENV_KEY"></mux-data> <!-- [!code focus] -->
 ```
 </FrameworkCase>
 
@@ -91,7 +91,7 @@ Pass Mux Data [metadata](https://www.mux.com/docs/guides/make-your-data-actionab
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-const muxData = document.querySelector('media-mux-data');
+const muxData = document.querySelector('mux-data');
 muxData.metadata = { video_title: 'Big Buck Bunny', viewer_user_id: 'u_789' }; // [!code focus]
 ```
 </FrameworkCase>
