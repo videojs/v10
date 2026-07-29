@@ -81,6 +81,16 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
         this.#removeVideoTracks();
         if (!renditions.length) return;
 
+        // "video track" here is the Media UI Extensions concept, which maps onto
+        // the SPF model differently than the name suggests:
+        //   MUE track     -> SPF selection set
+        //   MUE rendition -> SPF track
+        // @see https://github.com/video-dev/media-ui-extensions/blob/main/proposals/0011-renditions-list.md
+        //
+        // Every rendition hangs off a single "main" video track. Multi-track
+        // video (multiple camera angles, CMAF multi-track) isn't supported yet,
+        // so exactly one video track is always exposed; when it lands, this
+        // becomes one track (selection set) per angle.
         const videoTrack = this.addVideoTrack('main');
         videoTrack.selected = true;
 
