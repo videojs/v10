@@ -4,12 +4,13 @@
  * The WebKit-recommended workaround is to append a fallback
  * `<source type="application/x-mpegURL">` carrying the original manifest URL:
  * Safari exposes the AirPlay picker and, when a wireless target is selected,
- * plays that native-HLS source on the receiver. The wireless-target state is
- * mirrored onto `state.remotePlaybackActive` — the fact slot the rest of the
- * engine keys off: `loadXSegments` suspend (no fetching alongside the
- * receiver) and `setupMediaSource` holds its UA-closed MediaSource until the
- * session ends, then rebuilds and restores position (see its
- * "Liveness recovery" doc).
+ * plays that native-HLS source on the receiver. The session state (WebKit's
+ * wireless flag + the standard Remote Playback API, falling edge debounced —
+ * see `REMOTE_INACTIVE_SETTLE_MS`) is mirrored onto
+ * `state.remotePlaybackActive` — the fact slot the rest of the engine keys
+ * off: `loadXSegments` suspend (no fetching alongside the receiver) and
+ * `setupMediaSource` holds its UA-closed MediaSource until the session ends,
+ * then rebuilds and restores position (see its "Liveness recovery" doc).
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -44,8 +45,24 @@ import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { effect } from '../../../core/signals/effect';
-import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
+
+/**
+ * How long the platform's remote-playback signals must read *inactive*
+ * before `state.remotePlaybackActive` clears.
+ *
+ * Measured on Safari 26.4 (macOS): when an AirPlay session engages, Safari
+ * closes the ManagedMediaSource and — while its pipeline switches to the
+ * native-HLS fallback source — transiently reports
+ * `webkitCurrentPlaybackTargetIsWireless === false` (firing the changed
+ * event) and flaps `remote.state` through `disconnected`/`connecting`.
+ * Trusting an instantaneous inactive reading would release
+ * `setupMediaSource`'s rebuild hold mid-handoff; its recovery `load()` then
+ * destroys the very session being established. Rising edges apply
+ * immediately; only the falling edge waits out this settle window.
+ */
+const REMOTE_INACTIVE_SETTLE_MS = 1000;
 
 type AirPlayFsmState = 'preconditions-unmet' | 'airplay-capable';
 
@@ -84,15 +101,49 @@ function setupAirPlaySetup({
         entry: () => {
           const mediaElement = context.mediaElement.get() as WebKitVideoElement;
 
-          // Reflect the wireless target on `state.remotePlaybackActive` — the
-          // fact slot the rest of the engine keys off: `setupMediaSource`
+          // Reflect the remote-playback session on `state.remotePlaybackActive`
+          // — the fact slot the rest of the engine keys off: `setupMediaSource`
           // holds the (UA-closed) MediaSource attached until the session ends
           // and rebuilds on the falling edge; `loadXSegments` suspend so the
           // engine doesn't fetch alongside the receiver.
+          //
+          // Two platform signals feed the fact, because neither is reliable
+          // alone (see `REMOTE_INACTIVE_SETTLE_MS`): the standard Remote
+          // Playback API's `remote.state` leads the engage (`'connecting'`
+          // fires when the user picks a receiver, before Safari closes the
+          // MMS), and WebKit's wireless flag covers sessions the Remote
+          // Playback API doesn't surface. Active from either wins instantly;
+          // inactive from both must settle.
+          const remote = mediaElement.remote as RemotePlayback | undefined;
+          const isSessionActive = () =>
+            !!mediaElement.webkitCurrentPlaybackTargetIsWireless ||
+            remote?.state === 'connecting' ||
+            remote?.state === 'connected';
+
+          let settleTimer: ReturnType<typeof setTimeout> | undefined;
           const sync = () => {
-            state.remotePlaybackActive.set(!!mediaElement.webkitCurrentPlaybackTargetIsWireless);
+            if (isSessionActive()) {
+              clearTimeout(settleTimer);
+              settleTimer = undefined;
+              state.remotePlaybackActive.set(true);
+            } else if (peek(state.remotePlaybackActive)) {
+              // Falling edge: don't trust an instantaneous inactive reading —
+              // re-check once the platform signals have settled.
+              settleTimer ??= setTimeout(() => {
+                settleTimer = undefined;
+                state.remotePlaybackActive.set(isSessionActive());
+              }, REMOTE_INACTIVE_SETTLE_MS);
+            } else {
+              state.remotePlaybackActive.set(false);
+            }
           };
-          const unlisten = listen(mediaElement, 'webkitcurrentplaybacktargetiswirelesschanged', sync);
+          const listenerCleanup = new AbortController();
+          listen(mediaElement, 'webkitcurrentplaybacktargetiswirelesschanged', sync, {
+            signal: listenerCleanup.signal,
+          });
+          for (const eventType of ['connecting', 'connect', 'disconnect'] as const) {
+            remote?.addEventListener(eventType, sync, { signal: listenerCleanup.signal });
+          }
 
           const sourceUrl = computed(() => state.presentation.get()?.url ?? '');
 
@@ -128,7 +179,8 @@ function setupAirPlaySetup({
 
           return () => {
             disposeSource();
-            unlisten();
+            listenerCleanup.abort();
+            clearTimeout(settleTimer);
             sourceEl?.remove();
             sourceEl = null;
             // Undo the picker enable: hand the element back to its MMS-default

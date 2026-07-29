@@ -1,7 +1,10 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
 import { setupAirPlay } from '../airplay';
+
+/** Matches REMOTE_INACTIVE_SETTLE_MS in airplay.ts (falling-edge debounce). */
+const SETTLE_MS = 1000;
 
 // jsdom/Chromium lack WebKit's AirPlay APIs; stub the global support flag that
 // `isWebKitAirPlayCapable` probes for. See `utils/dom/tests/webkit.test.ts`.
@@ -36,6 +39,21 @@ function setWireless(video: WebKitVideoLike, wireless: boolean): void {
   video.dispatchEvent(new Event(WIRELESS_EVENT));
 }
 
+/** Minimal Remote Playback API double (jsdom has no `video.remote`). */
+class FakeRemotePlayback extends EventTarget {
+  state: RemotePlaybackState = 'disconnected';
+  setState(next: RemotePlaybackState, eventType: 'connecting' | 'connect' | 'disconnect'): void {
+    this.state = next;
+    this.dispatchEvent(new Event(eventType));
+  }
+}
+
+function attachFakeRemote(video: WebKitVideoLike): FakeRemotePlayback {
+  const remote = new FakeRemotePlayback();
+  Object.defineProperty(video, 'remote', { value: remote, configurable: true });
+  return remote;
+}
+
 function makeSignals(presentation?: MaybeResolvedPresentation) {
   return {
     state: {
@@ -61,7 +79,10 @@ function fallbackSourceOf(video: HTMLMediaElement): HTMLSourceElement | null {
 }
 
 describe('setupAirPlay', () => {
-  afterEach(() => stubWebKit(false));
+  afterEach(() => {
+    stubWebKit(false);
+    vi.useRealTimers();
+  });
 
   it('is a no-op on non-WebKit platforms', async () => {
     stubWebKit(false);
@@ -251,23 +272,93 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
-  it('mirrors the wireless target onto remotePlaybackActive', async () => {
+  it('mirrors the wireless target onto remotePlaybackActive (falling edge settles)', async () => {
+    vi.useFakeTimers();
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
     const reactor = setupAirPlay.setup({ state, context });
 
     const video = makeWebKitVideo({ wireless: false });
     context.mediaElement.set(video);
-    await flush();
+    await vi.advanceTimersByTimeAsync(0);
     // Sync at attach: not wireless → session not active.
     expect(state.remotePlaybackActive.get()).toBe(false);
 
     setWireless(video, true);
-    await flush();
+    await vi.advanceTimersByTimeAsync(0);
     expect(state.remotePlaybackActive.get()).toBe(true);
 
+    // The falling edge is debounced (Safari transiently reports inactive
+    // mid-handoff) — the fact holds until the inactive reading settles.
     setWireless(video, false);
-    await flush();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+    expect(state.remotePlaybackActive.get()).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('holds remotePlaybackActive through a transient inactive flap', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    // Safari 26.4's engage sequence: right after `sourceclose`, the wireless
+    // flag transiently reads false and the changed event fires, then flips
+    // back as the receiver pipeline settles. The fact must not drop — a drop
+    // releases setupMediaSource's rebuild hold and kills the session.
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS / 2);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    setWireless(video, true);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS * 2);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    reactor.destroy();
+  });
+
+  it('treats a Remote Playback API session (connecting/connected) as active', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: false });
+    const remote = attachFakeRemote(video);
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.remotePlaybackActive.get()).toBe(false);
+
+    // `remote.state = 'connecting'` leads the engage — it fires when the user
+    // picks a receiver, before WebKit's wireless flag flips or the MMS closes.
+    remote.setState('connecting', 'connecting');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    remote.setState('connected', 'connect');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    // While `remote.state` reads active, a wireless=false event alone must
+    // not even start the falling edge.
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS * 2);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+
+    // True disengage: both signals inactive → clears after the settle window.
+    remote.setState('disconnected', 'disconnect');
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.remotePlaybackActive.get()).toBe(true);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
     expect(state.remotePlaybackActive.get()).toBe(false);
 
     reactor.destroy();
