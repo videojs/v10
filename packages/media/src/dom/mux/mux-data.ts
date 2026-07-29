@@ -54,6 +54,8 @@ export class MuxData implements MuxDataProps {
   }
 
   setMedia(media: MuxDataMedia) {
+    if (this.#media === media) return;
+    this.#media?.removeEventListener('loadstart', this.#reinitialize);
     this.#media = media;
     this.#media.addEventListener('loadstart', this.#reinitialize);
   }
@@ -72,9 +74,9 @@ export class MuxData implements MuxDataProps {
   }
 
   destroy() {
+    this.detach();
     this.#media?.removeEventListener('loadstart', this.#reinitialize);
     this.#media = null;
-    this.#target = null;
   }
 
   get MuxDataSdk() {

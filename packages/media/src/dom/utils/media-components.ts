@@ -21,6 +21,9 @@ export function addMediaComponent<T extends MediaComponent>(host: MediaHost, com
   // Get the component's constructor to use as the key for the component in the registry.
   const ctor = component.constructor as MediaComponentConstructor<T>;
 
+  const previous = components.get(ctor);
+  if (previous && previous !== component) previous.detach?.();
+
   components.set(ctor, component);
 
   component.setMedia?.(host);
@@ -30,6 +33,7 @@ export function addMediaComponent<T extends MediaComponent>(host: MediaHost, com
 
   return () => {
     if (components.get(ctor) === component) {
+      component.detach?.();
       components.delete(ctor);
     }
   };

@@ -91,6 +91,40 @@ describe('MuxData', () => {
     );
   });
 
+  it('moves its media listener when registered with another host', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk });
+    const video = document.createElement('video');
+    const first = new FakeMedia();
+    const second = new FakeMedia();
+
+    data.setMedia(first);
+    data.attach(video);
+    await settle();
+
+    data.setMedia(second);
+    first.dispatchEvent(new Event('loadstart'));
+    await settle();
+    expect(monitor).toHaveBeenCalledTimes(1);
+
+    second.dispatchEvent(new Event('loadstart'));
+    await settle();
+    expect(monitor).toHaveBeenCalledTimes(2);
+  });
+
+  it('destroys active monitoring on destroy', () => {
+    const data = new MuxData();
+    const video = document.createElement('video');
+    const destroy = vi.fn();
+    Object.defineProperty(video, 'mux', { value: { destroy }, writable: true, configurable: true });
+
+    data.attach(video);
+    data.destroy();
+
+    expect(destroy).toHaveBeenCalledTimes(1);
+    expect(video.mux).toBeUndefined();
+  });
+
   it('stops re-monitoring after destroy', async () => {
     const { sdk, monitor } = createSdk();
     const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
