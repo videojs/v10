@@ -753,9 +753,11 @@ s0.ts`;
       const s2 = parseMediaPlaylist(liveTsVideo2, s1);
       const s3 = parseMediaPlaylist(liveTsVideo3, s2);
 
-      expect(s1.startTime).toBe(0); // first parse anchors at 0
-      expect(s2.startTime).toBe(4); // slid by one segment (4s)
-      expect(s3.startTime).toBe(12); // slid by TWO segments (8s) — the offset=2 path
+      // Track startTime stays ≡ 0 (the origin); the window edge slides on segments.
+      expect([s1.startTime, s2.startTime, s3.startTime]).toEqual([0, 0, 0]);
+      expect(s1.segments[0]?.startTime).toBe(0); // first parse anchors at 0
+      expect(s2.segments[0]?.startTime).toBe(4); // slid by one segment (4s)
+      expect(s3.segments[0]?.startTime).toBe(12); // slid by TWO segments (8s) — the offset=2 path
       expect(s3.segments[0]?.id).toBe('segment-88');
       expect(s3.mimeType).toBe('video/mp2t'); // TS container detected
       // PDT rides through carry-forward unchanged (absolute, not re-based).
@@ -802,9 +804,9 @@ s0.ts`;
 
       expect(video.startDate).toBeDefined();
       expect(audio.startDate).toBeDefined();
-      // Each track's origin (startTime 0) sits at a different real instant —
-      // audio's window starts one 2s segment later — so the startDate delta is
-      // the relative A/V skew a cross-track aligner removes.
+      // Parsed independently (no shared anchor), each track's origin sits at a
+      // different real instant — audio's window starts one 2s segment later — so
+      // the startDate delta exposes the window offset PDT placement resolves.
       expect((audio.startDate ?? 0) - (video.startDate ?? 0)).toBeCloseTo(2, 3);
     });
   });
@@ -834,7 +836,7 @@ s6.m4s`;
       const r = parseMediaPlaylist(withPdt, { ...shell, startDate: anchor });
       // segment.startTime = segment PDT − anchor (10s and 12s past media-time 0).
       expect(r.segments.map((s) => s.startTime)).toEqual([10, 12]);
-      expect(r.startTime).toBe(10);
+      expect(r.startTime).toBe(0); // the origin — the window edge lives on segments
       // The recomputed track startDate reads back as the anchor.
       expect(r.startDate).toBe(anchor);
     });

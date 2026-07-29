@@ -77,19 +77,20 @@ type ResolveTrack<T> = T extends PartiallyResolvedVideoTrack
  *   used for timing — an upper-bound estimate, since the actual rolled-off
  *   durations are gone (exact recovery is the deferred PDT decision).
  *
- * Returns the rebased segments and the track's resulting `startTime`.
+ * Returns the rebased segments (the window edge is `segments[0].startTime`,
+ * derived — never stored on the track).
  */
 function placeOnPreviousTimeline(
   previous: ResolvedTrack,
   segments: Segment[],
   mediaSequence: number,
   targetDuration: number
-): { segments: Segment[]; startTime: number } {
+): Segment[] {
   const prevSegments = previous.segments;
   const localBase = segments[0]?.startTime ?? 0;
 
   if (prevSegments.length === 0 || segments.length === 0) {
-    return { segments, startTime: localBase };
+    return segments;
   }
 
   const prevMediaSequence = getMediaPlaylistMetadata(previous)?.mediaSequence ?? 0;
@@ -127,9 +128,7 @@ function placeOnPreviousTimeline(
   }
 
   const shift = anchor - localBase;
-  const placed =
-    shift === 0 ? segments : segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
-  return { segments: placed, startTime: anchor };
+  return shift === 0 ? segments : segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
 }
 
 /**
@@ -141,20 +140,18 @@ function placeOnPreviousTimeline(
  * the anchor). Falls back to the local base when no segment carries PDT — there's
  * nothing to anchor against.
  */
-function placeOnAnchor(segments: Segment[], anchor: number): { segments: Segment[]; startTime: number } {
-  const localBase = segments[0]?.startTime ?? 0;
+function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
   const anchorSegment = segments.find((segment) => !isUndefined(segment.startDate));
   if (!anchorSegment || isUndefined(anchorSegment.startDate)) {
-    return { segments, startTime: localBase };
+    return segments;
   }
 
   const shift = anchorSegment.startDate - anchor - anchorSegment.startTime;
   if (shift === 0) {
-    return { segments, startTime: localBase };
+    return segments;
   }
 
-  const placed = segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
-  return { segments: placed, startTime: localBase + shift };
+  return segments.map((segment) => ({ ...segment, startTime: segment.startTime + shift }));
 }
 
 /**
@@ -319,14 +316,14 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   const placed = isResolvedTrack(previous)
     ? placeOnPreviousTimeline(previous, segments, mediaSequence, targetDuration)
     : isUndefined(presetAnchor)
-      ? { segments, startTime: 0 }
+      ? segments
       : placeOnAnchor(segments, presetAnchor);
 
   // Wall-clock anchor: `startDate − startTime` for the first PDT-bearing
   // segment (constant along a linear timeline). Maps this track's origin to
   // wall clock; recomputed each parse, so it stays stable as the window slides
   // and is comparable across tracks for A/V alignment.
-  const anchorSegment = placed.segments.find((segment) => !isUndefined(segment.startDate));
+  const anchorSegment = placed.find((segment) => !isUndefined(segment.startDate));
   const startDate =
     anchorSegment && !isUndefined(anchorSegment.startDate)
       ? anchorSegment.startDate - anchorSegment.startTime
@@ -346,7 +343,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   // trips on fMP4, which mandates the map). Relabel from the fMP4 default
   // `video/mp4` / `audio/mp4` to the container MIME so capability probing prunes
   // it (these containers are currently treated as unplayable; see `canPlayTrack`).
-  const detectedContainer = initSegmentUrl ? undefined : containerMimeFromSegment(placed.segments[0]?.url);
+  const detectedContainer = initSegmentUrl ? undefined : containerMimeFromSegment(placed[0]?.url);
   const mimeType = previous.type !== 'text' && detectedContainer ? detectedContainer : previous.mimeType;
 
   // Generic resolution: type-specific fields already on `previous`; add the
@@ -354,10 +351,12 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   return {
     ...previous,
     mimeType,
-    startTime: placed.startTime,
+    // Track startTime ≡ 0 (the presentation-timeline origin); the sliding
+    // window edge is `segments[0].startTime`, derived — never stored here.
+    startTime: 0,
     startDate,
     duration: trackDuration,
-    segments: placed.segments,
+    segments: placed,
     initialization,
     metadata: {
       ...previous.metadata,

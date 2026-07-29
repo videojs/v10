@@ -126,7 +126,9 @@ export type PartiallyResolvedAudioTrack = PartiallyResolved<AudioTrack>;
  * All URLs are fully qualified (parsers resolve relative URLs).
  */
 /**
- * Track startTime is always 0 (for future multi-period support).
+ * Track startTime is always 0 — the presentation-timeline origin (and future
+ * multi-period base). The live sliding-window edge is `segments[0].startTime`,
+ * derived — never stored here.
  */
 export type Track = Ham &
   AddressableObject &
@@ -140,29 +142,30 @@ export type Track = Ham &
     segments: Segment[];
     /**
      * Media-timeline (decode/encode) coordinate of the track's timeline origin
-     * (`startTime`) — the media-time base value of the coordinate model, peer to
-     * `startTime` (presentation). Derived from the container
+     * (presentation-0) — the media-time base value of the coordinate model, peer
+     * to `startTime` (presentation). Derived from the container
      * (`tfdt.baseMediaDecodeTime ÷ mdhd.timescale`); the relocation offset is
-     * `startTime − startMediaTime`, never stored.
+     * `−startMediaTime` (targets presentation-0 — `Track.startTime` plays no
+     * part), never stored.
      *
-     * Optional: absent until established (0-PTS sources never set it — their
-     * origin is already 0). Established once per source by the
+     * Optional: `undefined` means not yet established, or never establishable
+     * (e.g. text tracks carry no container origin); a near-zero/native origin is
+     * established as `0` (no relocation). Established once per source by the
      * `establishStartMediaTime` reactor. See
      * `internal/design/spf/presentation-timeline-model.md`.
      */
     startMediaTime?: number;
     /**
-     * Wall-clock time (epoch seconds) corresponding to the track's timeline
-     * origin (`startTime`) — i.e. `startDate − startTime`, the single
-     * rolling anchor that maps this track's media timeline to wall clock.
-     * Optional: absent when no segment carries `startDate`.
+     * Wall-clock time (epoch seconds) at the track's timeline origin
+     * (presentation-0) — pure playlist arithmetic over any PDT-bearing segment:
+     * `segment.startDate − segment.startTime`, invariant along a linear
+     * timeline. Optional: absent when no segment carries `startDate`.
      *
-     * Provisional from the manifest, where the origin is the first fetched
-     * segment; later refined from the buffer (`buffered`/`tfdt`) to pin the
-     * origin to encoded-media zero. Comparable across tracks: the difference in
-     * `startDate` between demuxed audio and video is their relative skew — the
-     * offset a cross-track aligner removes — and equal `startDate` across
-     * tracks marks the same presentation instant.
+     * The wall-clock member of the coordinate triple (peer to `startTime` and
+     * `startMediaTime`). For live it is the anchor segments are PDT-placed
+     * against on every parse; equal `startDate` across tracks marks the same
+     * presentation instant. See
+     * `internal/design/spf/live-presentation-timeline-model.md`.
      */
     startDate?: number;
   };

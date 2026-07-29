@@ -116,6 +116,11 @@ export const deriveSharedMinStartMediaTime: DeriveStartMediaTime = (containerDat
  * the default: it flattens real A/V skew (see {@link deriveSharedMinStartMediaTime}).
  * Kept as an opt-in for compositions that know their A/V is aligned and want to skip
  * the shared-`min` barrier (each type stamps as soon as its own origin is discovered).
+ *
+ * Caution: {@link NEAR_ZERO_ORIGIN_THRESHOLD} applies independently per type here — if
+ * two types' origins straddle it, one snaps to `0` and the other doesn't, injecting up
+ * to a threshold's worth of A/V offset. Safe for the intended aligned-A/V opt-in; see
+ * `internal/design/spf/live-presentation-timeline-model.md` (collision 5).
  */
 export const derivePerTypeStartMediaTime: DeriveStartMediaTime = (containerData) => {
   const out: Record<string, number | undefined> = {};
