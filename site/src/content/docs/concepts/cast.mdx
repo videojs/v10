@@ -1,6 +1,6 @@
 ---
 title: Google Cast
-description: Cast playback to Chromecast devices with built-in Google Cast support, and configure the receiver and load request
+description: Cast playback to Chromecast devices with the Google Cast component, and configure the receiver and load request
 ---
 
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
@@ -8,11 +8,12 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
 
-Video.js streaming media elements (HLS and DASH) have Google Cast built in. Add a <DocsLink slug="reference/cast-button">CastButton</DocsLink> and users can move playback to a Chromecast device while the browser stays in control:
+Add Google Cast to any Video.js streaming media element (HLS and DASH) by placing the Google Cast component next to it. Pair it with a <DocsLink slug="reference/cast-button">CastButton</DocsLink> and users can move playback to a Chromecast device while the browser stays in control:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
 import { CastButton, createPlayer } from '@videojs/react';
+import { GoogleCast } from '@videojs/react/media/google-cast';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 
@@ -29,6 +30,7 @@ export default function App() {
           playsInline
           loop
         />
+        <GoogleCast />
         <CastButton />
       </Player.Container>
     </Player.Provider>
@@ -48,13 +50,20 @@ export default function App() {
       playsinline
       loop
     ></hlsjs-video>
+    <media-google-cast></media-google-cast>
     <media-cast-button></media-cast-button>
   </media-container>
 </video-player>
 ```
+
+Register the `<media-google-cast>` element by importing `@videojs/html/media/google-cast`.
 </FrameworkCase>
 
-The pre-built <DocsLink slug="concepts/skins">skins</DocsLink> include a Cast button already. It appears when a Chromecast device is on the network and stays hidden otherwise.
+The component registers Google Cast with whichever media the player is using, so it works with any of the streaming media elements. The pre-built <DocsLink slug="concepts/skins">skins</DocsLink> include a Cast button already. It appears when a Chromecast device is on the network and stays hidden otherwise.
+
+<Aside type="caution">
+Casting needs this component. Without it, <DocsLink slug="reference/cast-button">CastButton</DocsLink> drives the browser's native Remote Playback API rather than a Cast session, so receivers and load requests don't apply.
+</Aside>
 
 <Aside type="note">
 Cast only works in Chromium-based browsers (Chrome, Edge, and others built on Blink). On other browsers, `remotePlaybackAvailability` is `'unsupported'`.
@@ -81,9 +90,9 @@ While `connected`, the media element's `play`, `pause`, `currentTime`, `volume`,
 
 ### The lazy-loaded SDK
 
-Video.js injects the Cast SDK (`cast_sender.js`) as a `<script>` tag the first time a Cast-capable media element loads in a Chromium browser. Browsers that can't cast never load the SDK.
+Video.js injects the Cast SDK (`cast_sender.js`) as a `<script>` tag the first time a Google Cast component is added in a Chromium browser. Browsers that can't cast — and players without the component — never load the SDK.
 
-Set `disableRemotePlayback` on the media element to opt out:
+Set `disableRemotePlayback` on the media element to opt out of remote playback entirely:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -100,11 +109,11 @@ Set `disableRemotePlayback` on the media element to opt out:
 ## Configure Cast
 
 <FrameworkCase frameworks={["react"]}>
-Pass Cast options under the `googleCast` key of the media element's `config` prop.
+Pass Cast options as props of the `GoogleCast` component.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Set Cast options under the `googleCast` key of the media element's `config` property. Set it from JavaScript — there is no HTML attribute for `config`.
+Set Cast options as attributes on the `<media-google-cast>` element. Object-valued options (like `customData`) are properties only.
 </FrameworkCase>
 
 ### Custom receiver application ID
@@ -113,17 +122,15 @@ By default, Video.js casts to Google's [Default Media Receiver](https://develope
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<HlsJsVideo
-  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
-  config={{ googleCast: { receiver: 'YOUR_APP_ID' } }} // [!code focus]
-/>
+<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
+<GoogleCast receiver="YOUR_APP_ID" /> // [!code focus]
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
-const video = document.querySelector('hlsjs-video');
-video.config = { googleCast: { receiver: 'YOUR_APP_ID' } }; // [!code focus]
+```html
+<hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video>
+<media-google-cast receiver="YOUR_APP_ID"></media-google-cast> <!-- [!code focus] -->
 ```
 </FrameworkCase>
 
@@ -133,17 +140,15 @@ Send extra data (auth tokens, user IDs) to the receiver with each load request v
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<HlsJsVideo
-  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
-  config={{ googleCast: { customData: { token: 'abc123', userId: 'u_789' } } }} // [!code focus]
-/>
+<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
+<GoogleCast customData={{ token: 'abc123', userId: 'u_789' }} /> // [!code focus]
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-const video = document.querySelector('hlsjs-video');
-video.config = { googleCast: { customData: { token: 'abc123', userId: 'u_789' } } }; // [!code focus]
+const googleCast = document.querySelector('media-google-cast');
+googleCast.customData = { token: 'abc123', userId: 'u_789' }; // [!code focus]
 ```
 </FrameworkCase>
 
@@ -153,49 +158,41 @@ By default the receiver loads the same URL the browser plays. Set `src` (and opt
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<HlsJsVideo
-  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
-  config={{
-    googleCast: {
-      src: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8',
-      contentType: 'application/x-mpegURL',
-    },
-  }}
+<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />
+<GoogleCast
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+  contentType="application/x-mpegURL"
 />
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
-const video = document.querySelector('hlsjs-video');
-video.config = {
-  googleCast: {
-    src: 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8',
-    contentType: 'application/x-mpegURL',
-  },
-};
+```html
+<hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"></hlsjs-video>
+<media-google-cast
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+  content-type="application/x-mpegURL"
+></media-google-cast>
 ```
 </FrameworkCase>
 
 ### HLS on the receiver
 
-When the source (or `config.googleCast.src`) is an HLS playlist, Video.js inspects the playlist, detects the segment format (TS or fMP4), and sets `hlsSegmentFormat` / `hlsVideoSegmentFormat` on the Cast load request. The default media receiver plays HLS natively; no extra configuration needed.
+When the Cast source is an HLS playlist, Video.js inspects the playlist, detects the segment format (TS or fMP4), and sets `hlsSegmentFormat` / `hlsVideoSegmentFormat` on the Cast load request. The default media receiver plays HLS natively; no extra configuration needed.
 
 Set `streamType` to tell the receiver whether the stream is `'on-demand'` or `'live'`. When unset, it falls back to the player's `streamType`:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<HlsJsVideo
-  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
-  config={{ googleCast: { streamType: 'live' } }} // [!code focus]
-/>
+<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
+<GoogleCast streamType="live" /> // [!code focus]
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-```ts
-const video = document.querySelector('hlsjs-video');
-video.config = { googleCast: { streamType: 'live' } }; // [!code focus]
+```html
+<hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video>
+<media-google-cast stream-type="live"></media-google-cast> <!-- [!code focus] -->
 ```
 </FrameworkCase>
 

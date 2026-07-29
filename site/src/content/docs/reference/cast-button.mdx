@@ -6,6 +6,7 @@ description: Accessible Cast toggle button with state reflection and keyboard su
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -40,6 +41,8 @@ import basicUsageHtmlTs from "@/components/docs/demos/cast-button/html/css/Basic
 Toggles a Google Cast session. Clicking the button while `disconnected` opens the Cast device picker; clicking while `connected` ends the session.
 
 The button does nothing when `availability` is not `'available'` — for example, when no Chromecast is on the network, or on browsers that don't support Cast.
+
+Cast sessions come from the <DocsLink slug="concepts/cast">Google Cast</DocsLink> component. Add it to the player next to your media element; without it the button drives the browser's native Remote Playback API instead, which offers no receiver or load-request configuration.
 
 ## Styling
 
