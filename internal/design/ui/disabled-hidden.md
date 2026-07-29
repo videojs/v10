@@ -11,8 +11,8 @@ Use `aria-disabled` (never HTML `disabled`) for all toolbar buttons. Controls di
 
 | State | Controls | ARIA | HTML (custom element) | React | Styling |
 |-------|----------|------|-----------------------|-------|---------|
-| **Unsupported** | Fullscreen, PiP, Cast | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
-| **Unavailable and not useful yet** | Fullscreen/PiP support unresolved; captions absent | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
+| **Unsupported** | Fullscreen, PiP, Cast, AirPlay | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
+| **Unavailable and not useful yet** | Fullscreen/PiP support unresolved; captions or AirPlay absent | `aria-disabled="true"` | `hidden` + `data-hidden` + `data-disabled` | returns `null` | Browser hides natively |
 | **Unavailable but discoverable** | Cast API supported, no device reachable | `aria-disabled="true"` | `data-disabled` | `data-disabled` on `<button>` | Default skin disabled styling |
 | **Disabled** (prop) | Available controls | `aria-disabled="true"` | `data-disabled` | `data-disabled` on `<button>` | Default skin disabled styling |
 | **Available + enabled** | All controls | _(none)_ | _(none)_ | _(none)_ | Fully interactive |
@@ -21,10 +21,10 @@ Use `aria-disabled` (never HTML `disabled`) for all toolbar buttons. Controls di
 
 ## Context
 
-Feature buttons (Fullscreen, PiP, Cast, Captions) need to communicate distinct states to users and assistive technology:
+Feature buttons (Fullscreen, PiP, Cast, AirPlay, Captions) need to communicate distinct states to users and assistive technology:
 
-1. **Unsupported** — the browser lacks the capability entirely (e.g., PiP on older Safari). Applies to Fullscreen, PiP, and Cast.
-2. **Unavailable** — the capability is not usable now. Its meaning depends on the feature: Fullscreen and PiP use it while support is unresolved, Captions uses it when no caption/subtitle tracks exist, and Cast uses it when its API exists but no device is reachable.
+1. **Unsupported** — the browser lacks the capability entirely (e.g., PiP on older Safari). Applies to Fullscreen, PiP, Cast, and AirPlay.
+2. **Unavailable** — the capability is not usable now. Its meaning depends on the feature: Fullscreen and PiP use it while support is unresolved, Captions uses it when no caption/subtitle tracks exist, Cast uses it when its API exists but no device is reachable, and AirPlay uses it when no target is available.
 3. **Disabled** — the developer explicitly disabled the control via a prop.
 
 Unsupported features and controls without meaningful content or resolved support are hidden entirely. Cast remains visible but non-interactive when its API is supported and no device is reachable, allowing tooltips to explain the missing target. Explicitly disabled, otherwise available buttons also remain visible and non-interactive. `disabled` in state covers both the prop and feature unavailability. We evaluated `disabled` vs `aria-disabled`, `hidden` vs `aria-hidden`, and how Radix, Base UI, and WAI-ARIA APG handle these patterns.
@@ -57,7 +57,7 @@ When a feature is unsupported, capability detection is unresolved, or a content-
 - Has native browser semantics.
 - Is set via `getAttrs()` alongside `aria-disabled`, keeping all attribute logic in one place.
 
-On the React side, the component returns `null` instead — the idiomatic React approach for conditional rendering. The `createMediaButton` factory accepts an optional `isSupported` callback; Cast, Captions, Fullscreen, and PiP each pass `(state) => !state.hidden`.
+On the React side, the component returns `null` instead — the idiomatic React approach for conditional rendering. The `createMediaButton` factory accepts an optional `isSupported` callback; AirPlay, Cast, Captions, Fullscreen, and PiP each pass `(state) => !state.hidden`.
 
 ### Why separate `data-disabled` and `data-hidden`
 
@@ -71,9 +71,9 @@ Both are driven by state fields (`disabled`, `hidden`) through the standard `app
 ### Implementation notes
 
 - All affected controls derive `disabled = props.disabled || availability !== 'available'`.
-- Fullscreen and PiP derive `hidden = availability !== 'available'`; Cast derives `hidden = availability === 'unsupported'`; Captions derives `hidden = availability === 'unavailable'`.
+- Fullscreen, PiP, and AirPlay derive `hidden = availability !== 'available'`; Cast derives `hidden = availability === 'unsupported'`; Captions derives `hidden = availability === 'unavailable'`.
 - `getAttrs()` returns `aria-disabled` from `state.disabled` and the native `hidden` attribute from `state.hidden`.
-- `toggle()` short-circuits when the derived state is disabled, then invokes the underlying media call directly. Direct core callers receive any rejection. `MediaButtonElement` and `createMediaButton` log rejected activations in `__DEV__` and absorb them at the UI event boundary to avoid unhandled promise rejections.
+- `toggle()` short-circuits when the derived state is disabled, then invokes the underlying media call. Direct core callers generally receive any rejection; AirPlay continues to absorb user-cancelled request failures. `MediaButtonElement` and `createMediaButton` log rejected activations in `__DEV__` and absorb them at the UI event boundary to avoid unhandled promise rejections.
 
 ## References
 

@@ -28,6 +28,8 @@ function createState(overrides: Partial<AirPlayButtonState> = {}): AirPlayButton
   return {
     state: 'disconnected',
     availability: 'available',
+    disabled: false,
+    hidden: false,
     label: '',
     ...overrides,
   };
@@ -46,14 +48,27 @@ describe('AirPlayButtonCore', () => {
 
       expect(result.state).toBe('connected');
       expect(result.availability).toBe('available');
+      expect(result.disabled).toBe(false);
+      expect(result.hidden).toBe(false);
     });
 
-    it('reflects unsupported availability', () => {
+    it('marks disabled and hidden when unavailable', () => {
+      const core = new AirPlayButtonCore();
+      core.setMedia(createMediaState({ remotePlaybackAvailability: 'unavailable' }));
+      const state = core.getState();
+
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+    });
+
+    it('marks disabled and hidden when unsupported', () => {
       const core = new AirPlayButtonCore();
       core.setMedia(createMediaState({ remotePlaybackAvailability: 'unsupported' }));
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
     });
 
     it('reflects connecting state', () => {
@@ -71,6 +86,17 @@ describe('AirPlayButtonCore', () => {
       const state = core.getState();
 
       expect(state.availability).toBe('unsupported');
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(true);
+    });
+
+    it('marks disabled when the disabled prop is set, even if available', () => {
+      const core = new AirPlayButtonCore({ disabled: true });
+      core.setMedia(createMediaState({ remotePlaybackAvailability: 'available' }));
+      const state = core.getState();
+
+      expect(state.disabled).toBe(true);
+      expect(state.hidden).toBe(false);
     });
   });
 
@@ -120,9 +146,15 @@ describe('AirPlayButtonCore', () => {
     });
 
     it('sets aria-disabled when disabled', () => {
-      const core = new AirPlayButtonCore({ disabled: true });
-      const attrs = core.getAttrs(createState());
+      const core = new AirPlayButtonCore();
+      const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets the hidden attribute when hidden', () => {
+      const core = new AirPlayButtonCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe('');
     });
   });
 
@@ -148,11 +180,18 @@ describe('AirPlayButtonCore', () => {
       expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
 
-    it('toggles regardless of availability (the button is hidden when unavailable)', async () => {
+    it('does nothing when unavailable', async () => {
+      const core = new AirPlayButtonCore();
+      const media = createMediaState({ remotePlaybackAvailability: 'unavailable' });
+      await core.toggle(media);
+      expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
+    });
+
+    it('does nothing when unsupported', async () => {
       const core = new AirPlayButtonCore();
       const media = createMediaState({ remotePlaybackAvailability: 'unsupported' });
       await core.toggle(media);
-      expect(media.toggleRemotePlayback).toHaveBeenCalled();
+      expect(media.toggleRemotePlayback).not.toHaveBeenCalled();
     });
 
     it('catches AirPlay errors silently', async () => {
