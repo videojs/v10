@@ -1,4 +1,4 @@
-import { signal } from '@videojs/spf';
+import { effect, signal } from '@videojs/spf';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MediaTracksMixin } from '../../../core/media-tracks';
 import { HTMLVideoElementHost } from '../../video-host';
@@ -56,11 +56,21 @@ const aTrack = (over: any) => ({
   ...over,
 });
 
-// Effects (@videojs/spf) and the DOM track/rendition `change` events both
-// re-run on the microtask queue; two turns cover an effect that writes a signal
-// another effect reads. Matches the flush convention in the spf engine/behavior
-// tests and inherits their scheduling instead of hard-coding a macrotask.
-const flush = () => Promise.resolve().then(() => Promise.resolve());
+// Flush by riding the same scheduler the projection uses: bump a throwaway
+// signal and resolve once its effect re-runs. That re-run lands after the SPF
+// effect queue and the microtask-queued track/rendition `change` events have
+// drained, so the flush inherits the runtime's timing instead of hard-coding a
+// micro/macrotask.
+const flush = () =>
+  new Promise<void>((resolve) => {
+    const sig = signal(0);
+    const stop = effect(() => {
+      if (sig.get() === 0) return; // skip the synchronous initial run
+      stop();
+      resolve();
+    });
+    sig.set(1);
+  });
 
 describe('SimpleHlsMediaMediaTracksMixin', () => {
   let engine: Engine;
