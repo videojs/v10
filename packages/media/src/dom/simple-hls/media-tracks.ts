@@ -56,6 +56,7 @@ const sameIds = (a: { id: string }[], b: { id: string }[]): boolean =>
 export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
   class SimpleHlsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
     #abort = new AbortController();
+    #destroyed = false;
     // Memoized SPF model — the last `computed` result per type — so a DOM
     // selection maps back to the engine's match criteria by id via the SPF
     // selection helpers (the DOM lists carry only DOM-shape props).
@@ -141,6 +142,8 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
     }
 
     destroy(): void {
+      if (this.#destroyed) return;
+      this.#destroyed = true;
       this.#abort.abort();
       this.#removeVideoTracks();
       this.#removeAudioTracks();
