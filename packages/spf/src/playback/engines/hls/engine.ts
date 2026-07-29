@@ -103,12 +103,6 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
-  /**
-   * Persistent autoplay intent, bridged from the adapter's `autoplay`
-   * property. `syncPreload` folds it into the effective `preload` as `'auto'`,
-   * so autoplay loads eagerly across every source.
-   */
-  autoplay?: boolean;
 }
 
 /**

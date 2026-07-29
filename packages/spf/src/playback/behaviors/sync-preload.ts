@@ -17,10 +17,6 @@
  * are sticky: read won't overwrite them, write won't push them to the DOM.
  * All writes are deduped to break echo loops and avoid spurious re-triggers
  * downstream (notably `resolvePresentation`, which reads `state.preload`).
- *
- * A third effect folds `state.autoplay` in: autoplay must load eagerly enough
- * to begin playback, so while it's set the effective `state.preload` is
- * `'auto'`. This is engine-internal — the adapter keeps the configured value.
  */
 import { defineBehavior } from '../../core/composition/create-composition';
 import { effect } from '../../core/signals/effect';
@@ -37,10 +33,7 @@ export interface SyncPreloadConfig {
   defaultPreload?: StandardPreload;
 }
 
-type State = Pick<PresentationState, 'preload' | 'presentation'> & {
-  /** Standing autoplay intent - forces the effective preload to `'auto'`. */
-  autoplay?: boolean;
-};
+type State = Pick<PresentationState, 'preload' | 'presentation'>;
 
 function syncPreloadSetup({
   state,
@@ -50,7 +43,6 @@ function syncPreloadSetup({
   state: {
     preload: Signal<State['preload']>;
     presentation: ReadonlySignal<State['presentation']>;
-    autoplay: ReadonlySignal<State['autoplay']>;
   };
   context: { mediaElement: ReadonlySignal<MediaElementLike | undefined> };
   config?: SyncPreloadConfig;
@@ -94,24 +86,14 @@ function syncPreloadSetup({
     mediaElement.preload = next;
   });
 
-  // Autoplay loads eagerly — hold the effective preload at `'auto'` while it's
-  // set. Reads `preload` too, so it re-asserts after the read effect resets it
-  // (element swap) or an explicit preload write lands.
-  const cleanupAutoplay = effect(() => {
-    if (state.autoplay.get() && state.preload.get() !== 'auto') {
-      state.preload.set('auto');
-    }
-  });
-
   return () => {
     cleanupRead();
     cleanupWrite();
-    cleanupAutoplay();
   };
 }
 
 export const syncPreload = defineBehavior({
-  stateKeys: ['preload', 'presentation', 'autoplay'],
+  stateKeys: ['preload', 'presentation'],
   contextKeys: ['mediaElement'],
   setup: syncPreloadSetup,
 });

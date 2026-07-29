@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { ContextSignals, StateSignals } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { type Signal, signal } from '../../../core/signals/primitives';
+import { signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation, MediaElementLike } from '../../../media/types';
 import type { PresentationState } from '../resolve-presentation';
 import { syncPreload } from '../sync-preload';
@@ -9,19 +9,17 @@ import { syncPreload } from '../sync-preload';
 interface State {
   preload?: PresentationState['preload'];
   presentation?: MaybeResolvedPresentation | undefined;
-  autoplay?: boolean;
 }
 
 interface Context {
   mediaElement?: MediaElementLike | undefined;
 }
 
-function makeState(initial: State = {}): StateSignals<PresentationState> & { autoplay: Signal<boolean | undefined> } {
+function makeState(initial: State = {}): StateSignals<PresentationState> {
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     preload: signal<PresentationState['preload']>(initial.preload),
     loadActivated: signal<boolean | undefined>(undefined),
-    autoplay: signal<boolean | undefined>(initial.autoplay),
   };
 }
 
@@ -336,43 +334,6 @@ describe('syncPreload', () => {
       await Promise.resolve();
       expect(writes).toBe(0);
 
-      cleanup();
-    });
-  });
-
-  describe('autoplay (effective preload)', () => {
-    it('forces the effective preload to "auto" when autoplay is set', () => {
-      const state = makeState({ autoplay: true });
-      const cleanup = syncPreload.setup({ state, context: makeContext() });
-
-      expect(state.preload.get()).toBe('auto');
-      cleanup();
-    });
-
-    it('overrides a configured preload while autoplay is set', () => {
-      const state = makeState({ preload: 'none', autoplay: true });
-      const cleanup = syncPreload.setup({ state, context: makeContext() });
-
-      expect(state.preload.get()).toBe('auto');
-      cleanup();
-    });
-
-    it('re-asserts "auto" after a preload write while autoplay is on', async () => {
-      const state = makeState({ autoplay: true });
-      const cleanup = syncPreload.setup({ state, context: makeContext() });
-      expect(state.preload.get()).toBe('auto');
-
-      state.preload.set('none');
-      await Promise.resolve();
-      expect(state.preload.get()).toBe('auto');
-      cleanup();
-    });
-
-    it('leaves preload untouched when autoplay is off', () => {
-      const state = makeState({ preload: 'none' });
-      const cleanup = syncPreload.setup({ state, context: makeContext() });
-
-      expect(state.preload.get()).toBe('none');
       cleanup();
     });
   });

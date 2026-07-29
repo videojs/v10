@@ -11,13 +11,11 @@ import {
 export interface SimpleHlsMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
-  autoplay: boolean;
 }
 
 export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
   src: '',
   preload: '',
-  autoplay: false,
 };
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
@@ -109,21 +107,6 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // value = '' resets the IDL mirror (so `get preload` reflects '') but does
       // not patch state — the engine keeps its current preload until an explicit
       // W3C value replaces it.
-    }
-
-    // -------------------------------------------------------------------------
-    // autoplay — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // -------------------------------------------------------------------------
-
-    /** Whether the element should begin playing as soon as it can. */
-    get autoplay(): boolean {
-      return this.#signals.state.autoplay.get() ?? false;
-    }
-
-    set autoplay(value: boolean) {
-      // Reflect onto the inner <video> via media-host.
-      super.autoplay = value;
-      this.#signals.state.autoplay.set(value);
     }
 
     // -------------------------------------------------------------------------
