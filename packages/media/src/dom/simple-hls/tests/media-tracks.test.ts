@@ -1,5 +1,5 @@
 import { signal } from '@videojs/spf';
-import { describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { MediaTracksMixin } from '../../../core/media-tracks';
 import { HTMLVideoElementHost } from '../../video-host';
 import { SimpleHlsMediaMediaTracksMixin } from '../media-tracks';
@@ -30,9 +30,9 @@ class FakeHost extends HTMLVideoElementHost {
 
 const SimpleHlsMediaMediaTracks = SimpleHlsMediaMediaTracksMixin(MediaTracksMixin(FakeHost as any));
 
-const presentation = (video: any[], audio: any[] = []) => ({
+const presentation = (video: any[], audio: any[] = [], url = 'https://example.com/master.m3u8') => ({
   id: 'pres-1',
-  url: 'https://example.com/master.m3u8',
+  url,
   selectionSets: [
     { id: 'v', type: 'video', switchingSets: [{ id: 'vs', type: 'video', tracks: video }] },
     { id: 'a', type: 'audio', switchingSets: [{ id: 'as', type: 'audio', tracks: audio }] },
@@ -56,14 +56,26 @@ const aTrack = (over: any) => ({
   ...over,
 });
 
-// Drain microtasks (effects) and the queued DOM track/rendition events.
-const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+// Effects (@videojs/spf) and the DOM track/rendition `change` events both
+// re-run on the microtask queue; two turns cover an effect that writes a signal
+// another effect reads. Matches the flush convention in the spf engine/behavior
+// tests and inherits their scheduling instead of hard-coding a macrotask.
+const flush = () => Promise.resolve().then(() => Promise.resolve());
 
 describe('SimpleHlsMediaMediaTracksMixin', () => {
-  it('projects video renditions into a selected main track, deduped by w/h/bandwidth', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
+  let engine: Engine;
+  let host: any;
 
+  beforeEach(() => {
+    engine = createEngine();
+    host = new SimpleHlsMediaMediaTracks(engine) as any;
+  });
+
+  afterEach(() => {
+    host.destroy();
+  });
+
+  it('projects video renditions into a selected main track, deduped by w/h/bandwidth', async () => {
     engine.state.presentation.set(
       presentation([
         vTrack({ id: 'a-1080', width: 1920, height: 1080, bandwidth: 5_000_000, url: 'https://a/v.m3u8' }),
@@ -81,9 +93,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('maps a rational frame rate onto the DOM rendition as a number', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.presentation.set(
       presentation([
         vTrack({
@@ -103,9 +112,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('projects audio tracks by language and enables the resolved one', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.selectedAudioTrackId.set('en');
     engine.state.presentation.set(
       presentation(
@@ -125,9 +131,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('reflects the resolved video selection as active', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.presentation.set(
       presentation([
         vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
@@ -143,9 +146,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('reflects active by properties, so a non-primary CDN resolved id still lights up its rendition', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.presentation.set(
       presentation([
         vTrack({ id: 'a-1080', width: 1920, height: 1080, bandwidth: 5_000_000, url: 'https://a/v.m3u8' }),
@@ -166,9 +166,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('reflects audio enabled by properties across per-CDN copies', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.presentation.set(
       presentation(
         [],
@@ -189,9 +186,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('pins a rendition selection as width/height/bandwidth criteria; Auto clears it', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.presentation.set(
       presentation([
         vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
@@ -210,9 +204,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('pins an audio selection as a language criterion when the user selects another track', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.selectedAudioTrackId.set('en');
     engine.state.presentation.set(
       presentation(
@@ -234,10 +225,7 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('does not write a selection when reflection enables the resolved track', async () => {
-    const engine = createEngine();
-    // Constructed for its wiring side effects; asserted via engine state below.
-    new SimpleHlsMediaMediaTracks(engine);
-
+    // The host (built in beforeEach) is wired for side effects; asserted via engine state below.
     engine.state.selectedAudioTrackId.set('en');
     engine.state.presentation.set(
       presentation([], [aTrack({ id: 'en', language: 'en', default: true }), aTrack({ id: 'es', language: 'es' })])
@@ -248,9 +236,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('preserves renditions across a live-reload presentation swap with the same set', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     const tracks = [
       vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
       vTrack({ id: 'lo', width: 640, height: 360, bandwidth: 800_000 }),
@@ -268,10 +253,63 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
     expect([...host.videoRenditions].map((r: any) => r.active)).toEqual([false, true]);
   });
 
-  it('clears tracks when the source is unset', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
+  it('clears the pinned rendition and audio selection when the source changes', async () => {
+    engine.state.selectedAudioTrackId.set('en');
+    engine.state.presentation.set(
+      presentation(
+        [
+          vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
+          vTrack({ id: 'lo', width: 640, height: 360, bandwidth: 800_000 }),
+        ],
+        [
+          aTrack({ id: 'en', language: 'en', name: 'English', default: true }),
+          aTrack({ id: 'es', language: 'es', name: 'Spanish' }),
+        ]
+      )
+    );
+    await flush();
 
+    // User pins a rendition and switches to an alternate audio track.
+    host.videoRenditions.selectedIndex = 1;
+    host.audioTracks[0].enabled = false;
+    host.audioTracks[1].enabled = true;
+    await flush();
+    expect(engine.state.userVideoTrackSelection.get()).toEqual({ width: 640, height: 360, bandwidth: 800_000 });
+    expect(engine.state.userAudioTrackSelection.get()).toEqual({ language: 'es', name: 'Spanish' });
+
+    // A different source (new manifest URL) drops both pins so the engine re-picks.
+    engine.state.presentation.set(
+      presentation(
+        [vTrack({ id: 'hi2', width: 1920, height: 1080, bandwidth: 5_000_000 })],
+        [aTrack({ id: 'en2', language: 'en', name: 'English', default: true })],
+        'https://example.com/other.m3u8'
+      )
+    );
+    await flush();
+
+    expect(engine.state.userVideoTrackSelection.get()).toBeUndefined();
+    expect(engine.state.userAudioTrackSelection.get()).toBeUndefined();
+  });
+
+  it('keeps the pinned rendition across a same-URL live reload', async () => {
+    const tracks = [
+      vTrack({ id: 'hi', width: 1920, height: 1080, bandwidth: 5_000_000 }),
+      vTrack({ id: 'lo', width: 640, height: 360, bandwidth: 800_000 }),
+    ];
+    engine.state.presentation.set(presentation(tracks));
+    await flush();
+
+    host.videoRenditions.selectedIndex = 1;
+    await flush();
+    expect(engine.state.userVideoTrackSelection.get()).toEqual({ width: 640, height: 360, bandwidth: 800_000 });
+
+    // Live reload: same URL, new presentation object — the pin must survive.
+    engine.state.presentation.set(presentation(tracks.map((t) => ({ ...t }))));
+    await flush();
+    expect(engine.state.userVideoTrackSelection.get()).toEqual({ width: 640, height: 360, bandwidth: 800_000 });
+  });
+
+  it('clears tracks when the source is unset', async () => {
     engine.state.presentation.set(presentation([vTrack({ id: 'hi', width: 1920, height: 1080 })]));
     await flush();
     expect(host.videoRenditions.length).toBe(1);
@@ -283,9 +321,6 @@ describe('SimpleHlsMediaMediaTracksMixin', () => {
   });
 
   it('disposes effects and clears tracks on destroy', async () => {
-    const engine = createEngine();
-    const host = new SimpleHlsMediaMediaTracks(engine) as any;
-
     engine.state.presentation.set(presentation([vTrack({ id: 'hi' })], [aTrack({ id: 'en', language: 'en' })]));
     await flush();
     expect(host.videoTracks.length).toBe(1);
