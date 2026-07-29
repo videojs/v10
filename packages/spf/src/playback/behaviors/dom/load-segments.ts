@@ -15,25 +15,25 @@
  *
  * # Load modes as reactor states
  *
- * Five states encode the load-gating policy directly:
+ * Four states encode the load-gating policy directly:
  *
  * - `'preconditions-unmet'` — no loader actor in context, or the selected
  *   track hasn't resolved.
- * - `'dormant'` — `preload === 'none' && !loadActivated`. Nothing fires.
+ * - `'dormant'` — loading disabled by policy: `remotePlaybackActive` (a
+ *   remote session owns presentation — highest precedence) or
+ *   `preload === 'none' && !loadActivated` (author intent). Nothing fires;
+ *   already-queued loader work drains. Auto-resumes into the derived state
+ *   when the policy lifts. The session gate matters most for text — text
+ *   actors are MediaSource-independent, so parking the dispatcher is the
+ *   only thing that stops text fetching alongside the receiver; v/a stop
+ *   structurally besides (the UA closes the MediaSource and the actor
+ *   teardown empties the loader slot).
  * - `'metadata-only'` — `!loadActivated && preload !== 'auto' && preload !== 'none'`.
  *   Fires an init-segment-only `load` message **once on entry**. The
  *   variant's loader actor decides what to do — v/a's actor fetches the
  *   init segment; text's actor no-ops (no init concept).
  * - `'full-range'` — `loadActivated || preload === 'auto'`. Effect re-fires
  *   on selected-track change and on segment-boundary crossing.
- * - `'suspended'` — `remotePlaybackActive` (highest precedence), **text
- *   variant only** (`suspendOnRemotePlayback` config). V/A loading stops
- *   structurally during a remote-playback session — the UA closes the
- *   MediaSource and the actor teardown cascade empties the loader slot —
- *   but text actors are MediaSource-independent, so this state is the only
- *   thing that stops text fetching alongside the receiver. Sends a one-shot
- *   `'stop'` to the loader on entry; auto-resumes into the preload-derived
- *   state when the remote session ends.
  *
  * # Per-type parameterization (inference-driven)
  *
@@ -82,13 +82,12 @@ export interface SegmentLoadingState {
   /** True once a preload-overriding event has fired for the current source. */
   loadActivated?: boolean;
   /**
-   * A remote-playback session (AirPlay) owns presentation — suspend loading
+   * A remote-playback session (AirPlay) owns presentation — go `'dormant'`
    * while `true` so the engine doesn't fetch alongside the receiver.
-   * Written by `setupAirPlay`. Consumed by the **text** variant only: text
-   * actors are MediaSource-independent, so this is the only thing that
-   * stops text fetching during a session. V/A loading stops structurally —
-   * the UA closes the MediaSource and the actor teardown empties the
-   * loader slot.
+   * Written by `setupAirPlay`. Load-bearing for text (text actors are
+   * MediaSource-independent — nothing else stops them); for v/a it covers
+   * the window between the session engaging and the UA closing the
+   * MediaSource (which stops them structurally).
    */
   remotePlaybackActive?: boolean;
   selectedVideoTrackId?: string;
@@ -107,7 +106,7 @@ export interface SegmentLoadingContext {
 // REACTOR
 // ============================================================================
 
-type SegmentLoadingFsmState = 'preconditions-unmet' | 'dormant' | 'metadata-only' | 'full-range' | 'suspended';
+type SegmentLoadingFsmState = 'preconditions-unmet' | 'dormant' | 'metadata-only' | 'full-range';
 
 type SelectedTrackKey = 'selectedVideoTrackId' | 'selectedAudioTrackId' | 'selectedTextTrackId';
 type SegmentLoaderActorKey = 'videoSegmentLoaderActor' | 'audioSegmentLoaderActor' | 'textTrackSegmentLoaderActor';
@@ -117,12 +116,8 @@ type SegmentLoadingStateMap<K extends SelectedTrackKey> = {
   preload: ReadonlySignal<SegmentLoadingState['preload']>;
   currentTime: ReadonlySignal<SegmentLoadingState['currentTime']>;
   loadActivated: ReadonlySignal<SegmentLoadingState['loadActivated']>;
-} & { [P in K]: ReadonlySignal<SegmentLoadingState[P]> };
-
-/** The text variant's state additionally carries the suspend gate. */
-type SuspendableSegmentLoadingStateMap<K extends SelectedTrackKey> = SegmentLoadingStateMap<K> & {
   remotePlaybackActive: ReadonlySignal<SegmentLoadingState['remotePlaybackActive']>;
-};
+} & { [P in K]: ReadonlySignal<SegmentLoadingState[P]> };
 
 /** Shared message shape parameterized over the resolved track type. */
 type LoaderMessage<Track> = { type: 'load'; track: Track; range?: { start: number; end: number } };
@@ -130,17 +125,6 @@ type LoaderMessage<Track> = { type: 'load'; track: Track; range?: { start: numbe
 /** Structural constraint for any segment-loader-style actor. */
 interface SegmentLoaderLike<Track> {
   send: (message: LoaderMessage<Track>) => void;
-}
-
-/**
- * The `'suspended'` entry's one-shot halt. Only the text variant can reach
- * `'suspended'` (`suspendOnRemotePlayback` + its declared
- * `remotePlaybackActive` state key), and its loader actor accepts `'stop'`
- * — v/a segment-loader actors don't carry the message (they die with the
- * closed MediaSource instead).
- */
-interface SuspendableLoaderLike {
-  send: (message: { type: 'stop' }) => void;
 }
 
 /**
@@ -163,10 +147,7 @@ function setupSegmentLoading<
   context,
   config,
 }: {
-  state: SegmentLoadingStateMap<K> & {
-    /** Present for the text variant only (see `SuspendableSegmentLoadingStateMap`). */
-    remotePlaybackActive?: ReadonlySignal<SegmentLoadingState['remotePlaybackActive']>;
-  };
+  state: SegmentLoadingStateMap<K>;
   context: { [P in L]: ReadonlySignal<SegmentLoaderLike<Track> | undefined> };
   config: {
     selectedKey: K;
@@ -175,17 +156,10 @@ function setupSegmentLoading<
       presentation: MaybeResolvedPresentation | undefined,
       trackId: string | undefined
     ) => Track | undefined;
-    /**
-     * Suspend dispatching (and `'stop'` the loader) while a remote-playback
-     * session owns presentation. Text only — its loader is
-     * MediaSource-independent; v/a loaders stop structurally when the UA
-     * closes the MediaSource.
-     */
-    suspendOnRemotePlayback?: boolean;
     forwardBuffer?: Partial<ForwardBufferConfig>;
   };
 }): Reactor<SegmentLoadingFsmState | 'destroying' | 'destroyed'> {
-  const { selectedKey, loaderKey, findResolvedTrack, suspendOnRemotePlayback = false } = config;
+  const { selectedKey, loaderKey, findResolvedTrack } = config;
   const bufferDuration = config.forwardBuffer?.bufferDuration ?? DEFAULT_FORWARD_BUFFER_CONFIG.bufferDuration;
 
   const selectedTrack = computed<Track | undefined>(() =>
@@ -202,7 +176,10 @@ function setupSegmentLoading<
   });
 
   const derivedStateSignal = computed<SegmentLoadingFsmState>(() => {
-    if (suspendOnRemotePlayback && state.remotePlaybackActive?.get()) return 'suspended';
+    // A remote-playback session owns presentation: loading is policy-off
+    // (highest precedence — even over preconditions, so a mid-session
+    // loader arrival can't dispatch under the receiver).
+    if (state.remotePlaybackActive.get()) return 'dormant';
     if (!context[loaderKey].get() || !selectedTrack.get()) return 'preconditions-unmet';
     if (state.loadActivated.get() || state.preload.get() === 'auto') return 'full-range';
     if (state.preload.get() === 'none') return 'dormant';
@@ -215,20 +192,6 @@ function setupSegmentLoading<
     states: {
       'preconditions-unmet': {},
       dormant: {},
-      suspended: {
-        // Fires once on entry (text variant only — see the derive). Tell the
-        // loader actor to halt: drop the pending queue so an actor
-        // mid-forward-buffer stops scheduling new fetches (leaving
-        // `'full-range'` only prevents *new* dispatches). The in-flight
-        // fetch is left to complete. `peek` + optional chain — the loader
-        // may already be gone; entry is auto-untracked besides. The cast is
-        // safe by construction: only the text variant sets
-        // `suspendOnRemotePlayback`, and its actor accepts `'stop'` (see
-        // `SuspendableLoaderLike`).
-        entry: () => {
-          (peek(context[loaderKey]) as SuspendableLoaderLike | undefined)?.send({ type: 'stop' });
-        },
-      },
       'metadata-only': {
         // Fires once on entry. Matches HTMLMediaElement's preload='metadata'
         // semantics — load enough to surface metadata for the entry-time
@@ -277,9 +240,6 @@ const AUDIO_SEGMENT_LOADING_CONFIG = {
 const TEXT_SEGMENT_LOADING_CONFIG = {
   ...TEXT_TYPE_CONFIG,
   findResolvedTrack: findResolvedTextTrack,
-  // Text loading has no structural tie to the MediaSource — a remote-playback
-  // session's suspend is the only thing that stops it.
-  suspendOnRemotePlayback: true,
 } as const;
 
 // ============================================================================
@@ -287,7 +247,14 @@ const TEXT_SEGMENT_LOADING_CONFIG = {
 // ============================================================================
 
 export const loadVideoSegments = defineBehavior({
-  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedVideoTrackId'],
+  stateKeys: [
+    'presentation',
+    'preload',
+    'currentTime',
+    'loadActivated',
+    'remotePlaybackActive',
+    'selectedVideoTrackId',
+  ],
   contextKeys: ['videoSegmentLoaderActor'],
   setup: ({
     state,
@@ -308,7 +275,14 @@ export const loadVideoSegments = defineBehavior({
 });
 
 export const loadAudioSegments = defineBehavior({
-  stateKeys: ['presentation', 'preload', 'currentTime', 'loadActivated', 'selectedAudioTrackId'],
+  stateKeys: [
+    'presentation',
+    'preload',
+    'currentTime',
+    'loadActivated',
+    'remotePlaybackActive',
+    'selectedAudioTrackId',
+  ],
   contextKeys: ['audioSegmentLoaderActor'],
   setup: ({
     state,
@@ -336,7 +310,7 @@ export const loadTextTrackSegments = defineBehavior({
     context,
     config = {},
   }: {
-    state: SuspendableSegmentLoadingStateMap<'selectedTextTrackId'>;
+    state: SegmentLoadingStateMap<'selectedTextTrackId'>;
     context: {
       textTrackSegmentLoaderActor: ReadonlySignal<SegmentLoadingContext['textTrackSegmentLoaderActor']>;
     };

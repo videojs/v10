@@ -1402,7 +1402,7 @@ describe('loadSegments load-mode FSM', () => {
 });
 
 // ---------------------------------------------------------------------------
-// remotePlaybackActive — v/a variants ignore it (text-only suspend gate)
+// remotePlaybackActive — session-policy 'dormant' gate (uniform across variants)
 // ---------------------------------------------------------------------------
 
 describe('loadSegments orchestration (remotePlaybackActive)', () => {
@@ -1422,12 +1422,7 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     };
   }
 
-  it('v/a dispatch is not gated on remotePlaybackActive', async () => {
-    // V/A loading stops *structurally* during a remote session — the UA
-    // closes the MediaSource and the actor teardown empties the loader slot.
-    // The dispatcher itself must keep working while a loader exists, even
-    // with the session fact set (only the text variant suspends on it —
-    // see load-text-track-segments.test.ts).
+  it('goes dormant while a remote session is active, even with preload="auto"', async () => {
     const send = vi.fn();
     const fakeLoader = { send } as unknown as SegmentLoaderActor;
     const state = makeState({
@@ -1440,6 +1435,38 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
     const reactor = loadVideoSegments.setup({ state, context });
 
+    // Give the (dormant) dispatcher ample time to prove it stays quiet.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(send).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('parks on session engage and re-dispatches on session end', async () => {
+    // Parking the dispatcher is a policy 'dormant', not a distinct state:
+    // no stop message is sent — already-queued loader work drains (v/a
+    // actors are torn down by sourceclose moments later anyway; text
+    // fetches are small and bounded).
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const state = makeState({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state, context });
+
+    // preload:'auto' → 'full-range' → an initial load dispatch.
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+    send.mockClear();
+
+    state.remotePlaybackActive.set(true);
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(send).not.toHaveBeenCalled();
+
+    state.remotePlaybackActive.set(false);
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
 
     reactor.destroy();

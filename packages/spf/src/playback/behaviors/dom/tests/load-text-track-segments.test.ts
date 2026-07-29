@@ -630,10 +630,10 @@ describe('loadTextTrackSegments', () => {
     });
   });
 
-  // Text loading has no structural tie to the MediaSource — a remote
-  // playback session's suspend is the only thing that stops it (v/a loaders
-  // die with the closed MediaSource instead).
-  describe('remotePlaybackActive (text-only suspend gate)', () => {
+  // Text loading has no structural tie to the MediaSource — the session
+  // 'dormant' gate is the only thing that stops it (v/a loaders die with
+  // the closed MediaSource besides).
+  describe('remotePlaybackActive (session dormant gate)', () => {
     it('does not dispatch while a remote session is active, even with preload="auto"', async () => {
       const send = vi.fn();
       const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
@@ -653,11 +653,11 @@ describe('loadTextTrackSegments', () => {
       reactor.destroy();
     });
 
-    it('sends a one-shot stop on suspend and re-dispatches on resume', async () => {
-      // Fake loader captures the messages the dispatcher sends — proving the
-      // `'suspended'` state actively halts the actor (not just parks the
-      // dispatcher). The actor-level tests cover what `stop` does to
-      // in-flight work; this pins the FSM → actor wiring.
+    it('parks on session engage and re-dispatches on resume', async () => {
+      // Fake loader captures the messages the dispatcher sends. The session
+      // gate is a policy 'dormant' — no stop message; queued work drains
+      // (text fetches are small and bounded), and the derive re-dispatches
+      // on the session's falling edge.
       const send = vi.fn();
       const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
       const state = makeState({
@@ -674,8 +674,8 @@ describe('loadTextTrackSegments', () => {
       send.mockClear();
 
       state.remotePlaybackActive.set(true);
-      await vi.waitFor(() => expect(send).toHaveBeenCalledWith({ type: 'stop' }));
-      send.mockClear();
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(send).not.toHaveBeenCalled();
 
       state.remotePlaybackActive.set(false);
       await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
