@@ -12,6 +12,8 @@ import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
+import { GoogleCast } from '@videojs/react/media/google-cast';
+import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -54,6 +56,9 @@ function App() {
             playsInline
             crossOrigin="anonymous"
           />
+          {/* Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. */}
+          <MuxData playerSoftwareName="mux-video" />
+          <GoogleCast />
         </VideoSkinComponent>
       </Provider>
     </SandboxI18nProvider>

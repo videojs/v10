@@ -1,6 +1,8 @@
 import '@app/styles.css';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
+import '@videojs/html/media/google-cast';
+import '@videojs/html/media/mux-data';
 import '@videojs/html/media/mux-video';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
@@ -36,6 +38,9 @@ async function render() {
       <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
         <!-- The storyboard track is derived automatically from the Mux src. -->
         <mux-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
+        <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
+        <media-mux-data player-software-name="mux-video"></media-mux-data>
+        <media-google-cast></media-google-cast>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>

@@ -1,7 +1,9 @@
 import '@app/styles.css';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/audio/player';
+import '@videojs/html/media/google-cast';
 import '@videojs/html/media/mux-audio';
+import '@videojs/html/media/mux-data';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadAudioSkinTag } from '@app/shared/html/skins';
 import {
@@ -32,6 +34,9 @@ async function render() {
       <audio-player>
         <${tag}>
           <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
+          <media-mux-data player-software-name="mux-audio"></media-mux-data>
+          <media-google-cast></media-google-cast>
         </${tag}>
       </audio-player>
     </div>
