@@ -5,6 +5,8 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import { delayedReschedule } from '../../../core/tasks/delayed-reschedule';
+import type { Reschedule } from '../../../core/tasks/task';
 import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
@@ -17,11 +19,13 @@ import {
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
+import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
 import type {
   AudioTrack,
   CanPlayTrack,
   MaybeResolvedPresentation,
   MediaContainerData,
+  ResolvedTrack,
   TextTrack,
   VideoTrack,
 } from '../../../media/types';
@@ -42,9 +46,11 @@ import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
+import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { setupTextTrackActors } from '../../behaviors/dom/setup-text-track-actors';
+import { syncLiveSeekableRange } from '../../behaviors/dom/sync-live-seekable-range';
 import { syncTextTracks } from '../../behaviors/dom/sync-text-tracks';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
 import { trackLoadTriggers } from '../../behaviors/dom/track-load-triggers';
@@ -306,6 +312,15 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * `behaviors/dom/recover-end-stall`.
    */
   endStallNudgeWindow?: number;
+  /**
+   * Live media-playlist re-run policy for the resolve* loaders' `RecurringRunner`:
+   * returns a promise that resolves when the playlist should reload, or `null` to
+   * stop. Defaults to `mediaPlaylistReloadDelay` (target-duration cadence, half on
+   * an unchanged window, stop on `#EXT-X-ENDLIST`) composed with a cancellable
+   * `sleep`. Inert for VoD (a complete playlist stops it after the first resolve).
+   * Override to tune live reload timing.
+   */
+  reschedule?: Reschedule<ResolvedTrack>;
 }
 
 // ============================================================================
@@ -387,6 +402,14 @@ export function createSimpleHlsEngine(
     // waits for the reference track to settle the wall-clock anchor question
     // (see `gate-first-parse.ts`); pairs with the reactor's anchor stamp.
     gateFirstParse: gateFirstParseOnAnchor,
+    // Format-neutral live-latency seam for `seekToLiveEdge` — the HLS resolver
+    // (HOLD-BACK); a DASH engine would inject `suggestedPresentationDelay`.
+    resolveLiveLatency,
+    // The resolve* loaders' RecurringRunner re-runs on this `reschedule`: the pure
+    // target-duration cadence, start-anchored + made awaitable by `delayedReschedule`.
+    // Inert for VoD (the cadence returns null once a playlist is complete), so it
+    // composes always.
+    reschedule: config.reschedule ?? delayedReschedule(mediaPlaylistReloadDelay),
   };
 
   return createComposition(
@@ -470,6 +493,14 @@ export function createSimpleHlsEngine(
       // Segment loading
       loadVideoSegments,
       loadAudioSegments,
+
+      // Live: declare the seekable window, then seek the playhead to the live
+      // edge + keep it in-window. No-op for complete playlists (VoD / ended).
+      // Order matters: the seekable range must be declared (syncLiveSeekableRange)
+      // before seekToLiveEdge moves the playhead into it (a seek outside
+      // `seekable` is clamped).
+      syncLiveSeekableRange,
+      seekToLiveEdge,
 
       // End of stream coordination
       endOfStream,
