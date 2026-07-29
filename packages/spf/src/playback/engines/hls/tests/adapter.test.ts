@@ -15,7 +15,8 @@
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleHlsMediaElement } from '../adapter';
+import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
+import { SimpleHlsMediaElement, SimpleHlsMediaMixin } from '../adapter';
 
 describe('SimpleHlsMediaElement', () => {
   // Prevent real network calls from engines that auto-trigger resolution
@@ -372,6 +373,151 @@ describe('SimpleHlsMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Live surface — streamType / targetLiveWindow / liveEdgeStart
+  // (the contract the player store's stream-type + live features consume)
+  // ---------------------------------------------------------------------------
+  describe('live surface', () => {
+    // The mixin dispatches change events via the base's EventTarget; the bare
+    // SimpleHlsMediaElement has none, so tests compose over EventTarget.
+    class TestMedia extends SimpleHlsMediaMixin(EventTarget) {}
+
+    /**
+     * A resolved live presentation: one selected video track, 5×2s segments at
+     * [100, 110], targetDuration 2 (→ HOLD-BACK latency 6 → liveEdgeStart 104).
+     */
+    function liveVideoPresentation(playlistType?: 'VOD' | 'EVENT'): Presentation {
+      const complete = playlistType === 'VOD';
+      const video = {
+        type: 'video',
+        id: 'v-1',
+        url: 'https://example.com/video.m3u8',
+        mimeType: 'video/mp4',
+        codecs: ['avc1.640020'],
+        bandwidth: 1_000_000,
+        initialization: { url: 'https://example.com/init.mp4' },
+        duration: complete ? 10 : Number.POSITIVE_INFINITY,
+        startTime: 0,
+        segments: [100, 102, 104, 106, 108].map((startTime, i) => ({
+          id: `seg-${i}`,
+          url: `https://example.com/${i}.m4s`,
+          duration: 2,
+          startTime,
+        })),
+        metadata: {
+          [MEDIA_PLAYLIST_METADATA_KEY]: { mediaSequence: 0, targetDuration: 2, playlistType, endList: complete },
+        },
+      };
+      return {
+        id: 'pres-1',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        streamType: playlistType === 'VOD' ? 'on-demand' : 'live',
+        selectionSets: [
+          { id: 'video-set', type: 'video', switchingSets: [{ id: 'vs', type: 'video', tracks: [video] }] },
+        ],
+      } as Presentation;
+    }
+
+    function liveMedia(playlistType?: 'VOD' | 'EVENT') {
+      const media = new TestMedia();
+      media.engine.state.presentation.set(liveVideoPresentation(playlistType));
+      media.engine.state.selectedVideoTrackId.set('v-1');
+      return media;
+    }
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('starts unknown / NaN before anything resolves', () => {
+      const media = new TestMedia();
+      expect(media.streamType).toBe('unknown');
+      expect(media.targetLiveWindow).toBeNaN();
+      expect(media.liveEdgeStart).toBeNaN();
+      media.destroy();
+    });
+
+    it('detects live: streamType live, targetLiveWindow 0, with change events', async () => {
+      const media = new TestMedia();
+      const streamTypeChange = vi.fn();
+      const targetLiveWindowChange = vi.fn();
+      media.addEventListener('streamtypechange', streamTypeChange);
+      media.addEventListener('targetlivewindowchange', targetLiveWindowChange);
+
+      media.engine.state.presentation.set(liveVideoPresentation());
+      media.engine.state.selectedVideoTrackId.set('v-1');
+      await flush();
+
+      expect(media.streamType).toBe('live');
+      expect(media.targetLiveWindow).toBe(0);
+      expect(streamTypeChange).toHaveBeenCalledTimes(1);
+      expect(targetLiveWindowChange).toHaveBeenCalledTimes(1);
+      media.destroy();
+    });
+
+    it('reports Infinity targetLiveWindow for an EVENT (DVR) playlist', async () => {
+      const media = liveMedia('EVENT');
+      await flush();
+      expect(media.streamType).toBe('live');
+      expect(media.targetLiveWindow).toBe(Number.POSITIVE_INFINITY);
+      media.destroy();
+    });
+
+    it('reports on-demand / NaN for a VOD playlist', async () => {
+      const media = liveMedia('VOD');
+      await flush();
+      expect(media.streamType).toBe('on-demand');
+      expect(media.targetLiveWindow).toBeNaN();
+      expect(media.liveEdgeStart).toBeNaN();
+      media.destroy();
+    });
+
+    it('derives liveEdgeStart at read time: window end minus HOLD-BACK, sliding with the window', async () => {
+      const media = liveMedia();
+      await flush();
+      // Window [100, 110], HOLD-BACK 3 × targetDuration(2) = 6 → 104.
+      expect(media.liveEdgeStart).toBe(104);
+
+      // The window slides (reload): derived value follows with no event needed.
+      const slid = liveVideoPresentation();
+      const track = slid.selectionSets[0]!.switchingSets[0]!.tracks[0] as { segments: { startTime: number }[] };
+      for (const segment of track.segments) segment.startTime += 10;
+      media.engine.state.presentation.set(slid);
+      expect(media.liveEdgeStart).toBe(114);
+      media.destroy();
+    });
+
+    it('supports a user streamType override, reverting on unknown', async () => {
+      const media = liveMedia();
+      await flush();
+      expect(media.streamType).toBe('live');
+
+      media.streamType = 'on-demand'; // pin
+      expect(media.streamType).toBe('on-demand');
+
+      // Detection updates don't displace the pin.
+      media.engine.state.presentation.set(liveVideoPresentation());
+      await flush();
+      expect(media.streamType).toBe('on-demand');
+
+      media.streamType = 'unknown'; // revert to detected
+      expect(media.streamType).toBe('live');
+      media.destroy();
+    });
+
+    it('resets to unknown / NaN when the source is cleared', async () => {
+      const media = liveMedia();
+      await flush();
+      expect(media.streamType).toBe('live');
+
+      media.src = '';
+      await flush();
+      expect(media.streamType).toBe('unknown');
+      expect(media.targetLiveWindow).toBeNaN();
+      expect(media.liveEdgeStart).toBeNaN();
+      media.destroy();
     });
   });
 });

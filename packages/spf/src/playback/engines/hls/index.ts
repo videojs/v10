@@ -11,7 +11,7 @@ export {
   derivePerTypeStartMediaTime,
   deriveSharedMinStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
-export type { SimpleHlsMediaAPI, SimpleHlsMediaProps } from './adapter';
+export type { SimpleHlsMediaAPI, SimpleHlsMediaProps, SimpleHlsMediaStreamType } from './adapter';
 export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
 export type { SimpleHlsAudioOnlyMediaAPI, SimpleHlsAudioOnlyMediaProps } from './adapter-audio-only';
 export {

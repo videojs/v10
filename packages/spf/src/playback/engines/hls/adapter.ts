@@ -1,5 +1,17 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
+import { effect } from '../../../core/signals/effect';
+import { resolveLiveLatency } from '../../../media/hls/reload-policy';
+import {
+  deriveStreamType,
+  getMediaPlaylistMetadata,
+  isResolvedPresentation,
+  isResolvedTrack,
+  type MaybeResolvedPresentation,
+  type StreamType,
+} from '../../../media/types';
+import { findTrackById } from '../../../media/utils/tracks';
+import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
   createSimpleHlsEngine,
   type SimpleHlsEngineConfig,
@@ -8,24 +20,55 @@ import {
   type SimpleHlsEngineState,
 } from './engine';
 
+/**
+ * The media-level stream type: the engine's detected {@link StreamType}
+ * (`'live'` / `'on-demand'`) widened with `'unknown'` for "no playlist parsed
+ * yet." String-compatible with `@videojs/core`'s `MediaStreamType` without a
+ * cross-package dependency (spf sits below core).
+ */
+export type SimpleHlsMediaStreamType = StreamType | 'unknown';
+
 export interface SimpleHlsMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
+  streamType: SimpleHlsMediaStreamType;
 }
 
 export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
   src: '',
   preload: '',
   disableRemotePlayback: false,
+  streamType: 'unknown',
 };
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
   readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
+  readonly liveEdgeStart: number;
+  readonly targetLiveWindow: number;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
   play(): Promise<void>;
+}
+
+/**
+ * `targetLiveWindow` per the media-ui-extensions live-edge proposal: `NaN` for
+ * on-demand (or nothing resolved yet), `0` for standard sliding-window live,
+ * `Infinity` for DVR (`#EXT-X-PLAYLIST-TYPE:EVENT` — the window grows from the
+ * start). Read from the timeline-bearing track's playlist metadata.
+ */
+function deriveTargetLiveWindow(
+  presentation: MaybeResolvedPresentation | undefined,
+  trackId: string | undefined
+): number {
+  if (!isResolvedPresentation(presentation) || !trackId) return Number.NaN;
+  const track = findTrackById(presentation, trackId);
+  if (!track || !isResolvedTrack(track)) return Number.NaN;
+  const metadata = getMediaPlaylistMetadata(track);
+  if (!metadata) return Number.NaN;
+  if (metadata.playlistType === 'EVENT') return Number.POSITIVE_INFINITY;
+  return deriveStreamType(metadata) === 'live' ? 0 : Number.NaN;
 }
 
 /**
@@ -36,6 +79,9 @@ export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
  *
  * A single engine instance is created at construction and recycled across src
  * changes.
+ *
+ * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
+ * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
  *
  * @example
  * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -51,6 +97,10 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #signals!: SimpleHlsEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
     #disableRemotePlayback: boolean = simpleHlsMediaDefaultProps.disableRemotePlayback;
+    #streamType: SimpleHlsMediaStreamType = simpleHlsMediaDefaultProps.streamType;
+    #isUserStreamType = false;
+    #targetLiveWindow = Number.NaN;
+    #stopLiveSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -61,6 +111,17 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       const { config } = args?.[0] ?? {};
       this.#config = config;
       this.#engine = this.#createEngine();
+
+      // Mirror the engine's live/stream-type detection onto the media surface,
+      // firing the change events the store features listen for. One effect over
+      // the presentation + selection signals; `liveEdgeStart` is deliberately
+      // NOT cached here — it's derived at read time (the store re-reads it on
+      // `timeupdate`/`progress`), so a sliding window needs no event churn.
+      this.#stopLiveSync = effect(() => {
+        const presentation = this.#signals.state.presentation.get();
+        this.#setDetectedStreamType(presentation?.streamType ?? 'unknown');
+        this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
+      });
     }
 
     /**
@@ -71,6 +132,76 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
      */
     get engine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return this.#engine;
+    }
+
+    // -------------------------------------------------------------------------
+    // Live surface — streamType / targetLiveWindow / liveEdgeStart
+    // (the MediaStreamTypeCapability + MediaLiveCapability contract the player
+    // store's stream-type and live features consume)
+    // -------------------------------------------------------------------------
+
+    /**
+     * The source's stream type — `'live'`, `'on-demand'`, or `'unknown'` until
+     * a media playlist has been parsed. Setting a non-`'unknown'` value pins a
+     * user override (detection stops updating it); setting `'unknown'` reverts
+     * to the engine's detected value.
+     */
+    get streamType(): SimpleHlsMediaStreamType {
+      return this.#streamType;
+    }
+
+    set streamType(value: SimpleHlsMediaStreamType) {
+      if (value === 'unknown') {
+        this.#isUserStreamType = false;
+        this.#updateStreamType(this.#signals.state.presentation.get()?.streamType ?? 'unknown');
+        return;
+      }
+      this.#isUserStreamType = true;
+      this.#updateStreamType(value);
+    }
+
+    /**
+     * Presentation time marking the start of the live-edge window — playback at
+     * `currentTime >= liveEdgeStart` counts as "at the live edge" (the same
+     * target the engine's `seekToLiveEdge` seeks to: window end − HOLD-BACK).
+     * `NaN` when the stream isn't live or nothing is resolved yet. Derived at
+     * read time from the engine's live window — no change event; re-read on
+     * `timeupdate`/`progress` (as the store's live feature does).
+     */
+    get liveEdgeStart(): number {
+      const edge = getLiveEdge({
+        state: this.#signals.state as LiveWindowState,
+        config: { resolveLiveLatency },
+      });
+      return edge?.liveEdgeStart ?? Number.NaN;
+    }
+
+    /**
+     * The target live window: `NaN` for on-demand (or unknown), `0` for
+     * standard sliding-window live, `Infinity` for DVR
+     * (`#EXT-X-PLAYLIST-TYPE:EVENT`). Fires `targetlivewindowchange` on change.
+     */
+    get targetLiveWindow(): number {
+      return this.#targetLiveWindow;
+    }
+
+    #setDetectedStreamType(value: SimpleHlsMediaStreamType): void {
+      if (this.#isUserStreamType) return;
+      this.#updateStreamType(value);
+    }
+
+    #updateStreamType(value: SimpleHlsMediaStreamType): void {
+      if (this.#streamType === value) return;
+      this.#streamType = value;
+      // Optional-chained: with an EventTarget-less base (`SimpleHlsMediaElement`
+      // standalone) there's nowhere to dispatch; hosts forward it to listeners.
+      this.dispatchEvent?.(new Event('streamtypechange'));
+    }
+
+    #setTargetLiveWindow(value: number): void {
+      if (Object.is(this.#targetLiveWindow, value)) return;
+      this.#targetLiveWindow = value;
+      this.dispatchEvent?.(new Event('targetlivewindowchange'));
     }
 
     // -------------------------------------------------------------------------
@@ -90,6 +221,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
 
     destroy(): void {
       this.#cancelPendingPlay();
+      this.#stopLiveSync();
       this.#engine.destroy();
     }
 
