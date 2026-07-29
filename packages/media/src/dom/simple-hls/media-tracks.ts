@@ -129,11 +129,23 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
         }
       };
 
+      // A source change (new manifest URL) invalidates any pinned selection:
+      // rendition identity (width/height/bandwidth) and audio identity
+      // (language/name) don't reliably carry across sources, so drop both pins
+      // and let the engine re-pick for the new source.
+      const sourceUrl = computed(() => state.presentation.get()?.url);
+      const resetSelectionOnSourceChange = () => {
+        sourceUrl.get();
+        state.userVideoTrackSelection.set(undefined);
+        state.userAudioTrackSelection.set(undefined);
+      };
+
       const effectCleanups = [
         effect(reflectRenditions),
         effect(reflectSelectedVideo),
         effect(reflectAudioTracks),
         effect(reflectSelectedAudio),
+        effect(resetSelectionOnSourceChange),
       ];
 
       this.videoRenditions.addEventListener('change', this.#selectRendition, { signal });
