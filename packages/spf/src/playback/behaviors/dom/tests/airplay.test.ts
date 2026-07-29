@@ -127,6 +127,38 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
+  it('keeps the fallback source through a live session when the MediaSource detaches', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo();
+    context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fallbackSourceOf(video)).not.toBeNull();
+
+    // Session engages, then Safari closes the MMS and the engine detaches it
+    // (liveness recovery) — the receiver is playing exactly this fallback
+    // source, so it must survive the mediaSource slot clearing.
+    setWireless(video, true);
+    await vi.advanceTimersByTimeAsync(0);
+    context.mediaSource.set(undefined);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fallbackSourceOf(video)).not.toBeNull();
+
+    // Session's settled falling edge with no MediaSource republished yet —
+    // the rebuild's fresh open re-adopts the source; until then it may drop.
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+    context.mediaSource.set({} as MediaSource);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(fallbackSourceOf(video)).not.toBeNull();
+
+    reactor.destroy();
+  });
+
   it('removes the fallback source when the MediaSource detaches, re-appends on the next open', async () => {
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });

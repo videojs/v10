@@ -116,7 +116,7 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
 
     const detach = (): void => {
       sourceEl.remove();
-      mediaElement.load(); // Reset the element
+      resetIfOwnedAndLive(mediaSource, mediaElement, url);
       URL.revokeObjectURL(url);
     };
 
@@ -129,11 +129,30 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
 
   const detach = (): void => {
     mediaElement.removeAttribute('src');
-    mediaElement.load(); // Reset the element
+    resetIfOwnedAndLive(mediaSource, mediaElement, url);
     URL.revokeObjectURL(url);
   };
 
   return { url, detach };
+}
+
+/**
+ * Detach's `load()` reset, applied only when tearing down a **live**
+ * attachment the element is still committed to:
+ *
+ * - **UA-closed MediaSource**: skip. The pipeline is already dead, and the
+ *   element's frozen `currentTime`/`paused` are the recovery snapshot —
+ *   `setupMediaSource` reads them on re-entry, and the fresh attach's own
+ *   `load()` performs the reset. A `load()` here would also re-run resource
+ *   selection under an AirPlay receiver playing a sibling fallback source.
+ * - **Element moved to another resource** (e.g. Safari switched to the
+ *   native-HLS fallback for an AirPlay handoff): skip — resetting would rip
+ *   that resource out from under its owner.
+ */
+function resetIfOwnedAndLive(mediaSource: MediaSource, mediaElement: HTMLMediaElement, url: string): void {
+  if (mediaSource.readyState !== 'closed' && mediaElement.currentSrc === url) {
+    mediaElement.load();
+  }
 }
 
 /**

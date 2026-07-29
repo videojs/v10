@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   attachMediaSource,
   createMediaSource,
@@ -58,6 +58,62 @@ describe('attachMediaSource', () => {
     detach();
 
     expect(mediaElement.src).toBe('');
+  });
+
+  it('detach resets the element when tearing down a live attachment it still owns', async () => {
+    const mediaElement = document.createElement('video');
+    const mediaSource = createMediaSource();
+    const { url, detach } = attachMediaSource(mediaSource, mediaElement);
+    // A live attachment: the MediaSource has opened (readyState is 'closed'
+    // until the browser's async attach completes).
+    await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
+
+    // The element committed to our resource (browser resource selection is
+    // async — stage the committed state directly).
+    Object.defineProperty(mediaElement, 'currentSrc', { value: url, configurable: true });
+    const load = vi.spyOn(mediaElement, 'load');
+
+    detach();
+
+    expect(load).toHaveBeenCalledTimes(1);
+  });
+
+  it('detach skips the reset for a UA-closed MediaSource — the element carries the recovery snapshot', () => {
+    const mediaElement = document.createElement('video');
+    const mediaSource = createMediaSource();
+    const { url, detach } = attachMediaSource(mediaSource, mediaElement);
+
+    Object.defineProperty(mediaElement, 'currentSrc', { value: url, configurable: true });
+    // The UA killed the MediaSource out from under the engine (AirPlay
+    // handoff, MMS eviction). A load() here would wipe the element's frozen
+    // currentTime/paused — the recovery restore state — and re-run resource
+    // selection under an AirPlay receiver.
+    Object.defineProperty(mediaSource, 'readyState', { value: 'closed', configurable: true });
+    const load = vi.spyOn(mediaElement, 'load');
+
+    detach();
+
+    expect(load).not.toHaveBeenCalled();
+    expect(mediaElement.getAttribute('src')).toBeNull();
+  });
+
+  it('detach skips the reset when the element has moved to another resource', () => {
+    const mediaElement = document.createElement('video');
+    const mediaSource = createMediaSource();
+    const { detach } = attachMediaSource(mediaSource, mediaElement);
+
+    // Resource selection moved on (e.g. Safari switched to a native-HLS
+    // fallback source for an AirPlay handoff) — resetting would rip that
+    // resource out from under its owner.
+    Object.defineProperty(mediaElement, 'currentSrc', {
+      value: 'https://example.com/fallback.m3u8',
+      configurable: true,
+    });
+    const load = vi.spyOn(mediaElement, 'load');
+
+    detach();
+
+    expect(load).not.toHaveBeenCalled();
   });
 });
 

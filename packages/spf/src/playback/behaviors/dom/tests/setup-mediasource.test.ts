@@ -330,8 +330,9 @@ describe('setupMediaSource', () => {
 
       transitionMediaSource(first, 'closed', 'sourceclose');
 
-      // Captured before detach's load() can reset the element (the load
-      // algorithm forces paused = true), so applyStartPosition restores
+      // Recovery detach skips its load() reset, so the element still carries
+      // the playback state; the rebuild's entry snapshots it before the
+      // fresh attach resets the element — applyStartPosition then restores
       // position AND playing state on the rebuilt source.
       await vi.waitFor(() => {
         expect(state.startPosition.get()).toBe(42.5);
@@ -378,7 +379,7 @@ describe('setupMediaSource', () => {
       reactor.destroy();
     });
 
-    it('holds the dead MediaSource while remotePlaybackActive, recycles on its falling edge', async () => {
+    it('detaches on close during a session, defers the rebuild to its falling edge', async () => {
       const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
       const first = makeMediaSource();
@@ -392,29 +393,36 @@ describe('setupMediaSource', () => {
         .mockImplementationOnce(() => ({ url: 'blob:second', detach: vi.fn() }));
 
       const { state, context, reactor } = setupSetupMediaSource();
-      const mediaElement = makeVideo(12);
+      const mediaElement = makeVideo(12, { paused: false });
       context.mediaElement.set(mediaElement);
       state.presentation.set(makeResolvedPresentation());
       await vi.waitFor(() => expect(context.mediaSource.get()).toBe(first));
 
       // AirPlay engaged: the receiver owns playback. Safari closes the MMS —
-      // but detaching now would load() under the live session, so the dead
-      // MediaSource must stay attached until the session ends.
+      // the corpse detaches right away (the ordinary cascade stops the MSE
+      // pipeline), but no rebuild may run under the live session: attaching
+      // would load() out from under the receiver.
       state.remotePlaybackActive.set(true);
       transitionMediaSource(first, 'closed', 'sourceclose');
 
+      await vi.waitFor(() => {
+        expect(firstDetach).toHaveBeenCalledTimes(1);
+        expect(context.mediaSource.get()).toBeUndefined();
+      });
       await new Promise((resolve) => setTimeout(resolve, 20));
-      expect(firstDetach).not.toHaveBeenCalled();
-      expect(context.mediaSource.get()).toBe(first);
+      expect(createMediaSource).toHaveBeenCalledTimes(1);
+      // No mid-session restore commands: the element (mirroring the
+      // receiver) is the source of truth until the session ends.
+      expect(state.startPosition.get()).toBeUndefined();
 
-      // Session ends: the element still mirrors the receiver position —
-      // snapshot it, then rebuild.
+      // Session ends: the element still mirrors the receiver's final state —
+      // the rebuild's entry snapshots it before the fresh attach resets it.
       (mediaElement as unknown as { currentTime: number }).currentTime = 87;
       state.remotePlaybackActive.set(false);
 
       await vi.waitFor(() => {
-        expect(firstDetach).toHaveBeenCalledTimes(1);
         expect(state.startPosition.get()).toBe(87);
+        expect(state.resumePlayback.get()).toBe(true);
         expect(context.mediaSource.get()).toBe(second);
       });
 

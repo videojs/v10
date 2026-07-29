@@ -148,30 +148,35 @@ function setupAirPlaySetup({
           const sourceUrl = computed(() => state.presentation.get()?.url ?? '');
 
           // This effect combines:
-          // - adding a native HLS fallback source when the
-          // mediaSource is attached/destroying it when its detached.
+          // - adding a native HLS fallback source when the mediaSource is
+          //   attached / removing it when it's detached — UNLESS a session is
+          //   live: during an AirPlay session the engine detaches its dead
+          //   MediaSource (see setupMediaSource's liveness recovery) while
+          //   the receiver is playing exactly this fallback source, so it
+          //   must survive until the session's falling edge (the rebuild's
+          //   republish then adopts it again).
           // - keeping this sourceEl's src in sync with the current presentation.
           // The created source is also cleaned on state exit.
-          // The dependence on context.mediaSource helps us append the source after the
-          // MMS has been attached and opened (therefore we can flip disableRemotePlayback).
-          // Being in this state also implies that the author has not disabled remote playback
+          // The dependence on context.mediaSource means the source is appended
+          // only after the MMS has been attached and opened (therefore we can
+          // flip disableRemotePlayback). Being in this state also implies
+          // that the author has not disabled remote playback.
           let sourceEl: HTMLSourceElement | null = null;
           const disposeSource = effect(() => {
             const hasMediaSource = !!context.mediaSource.get();
+            const sessionActive = !!state.remotePlaybackActive.get();
             const url = sourceUrl.get();
 
-            if (!hasMediaSource) {
+            if (!hasMediaSource && !sessionActive) {
               sourceEl?.remove();
               sourceEl = null;
-            } else {
-              if (!sourceEl || sourceEl.parentNode !== mediaElement) {
-                sourceEl = document.createElement('source');
-                sourceEl.type = 'application/x-mpegURL';
-                mediaElement.append(sourceEl);
-                mediaElement.disableRemotePlayback = false;
-              }
-              sourceEl.src = url;
+            } else if (hasMediaSource && (!sourceEl || sourceEl.parentNode !== mediaElement)) {
+              sourceEl = document.createElement('source');
+              sourceEl.type = 'application/x-mpegURL';
+              mediaElement.append(sourceEl);
+              mediaElement.disableRemotePlayback = false;
             }
+            if (sourceEl) sourceEl.src = url;
           });
 
           // AirPlay may already be active at (re)attach.

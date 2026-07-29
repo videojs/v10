@@ -39,21 +39,30 @@
  * an AirPlay handoff (and never re-selects the MSE source itself; see
  * `setupAirPlay`), and a ManagedMediaSource can be evicted under memory
  * pressure. A closed MediaSource can never reopen, so a behavior-local
- * `sourceclose`-driven flag feeds `deriveState`: the machine cycles out
- * (state-exit cleanup detaches the dead MS) and immediately back in with a
- * fresh MediaSource for the *same* source — cause-agnostic recovery reusing
- * the ordinary teardown cascade. Two extras ride the recovery path:
+ * `sourceclose`-driven flag feeds `deriveState`: the machine cycles out —
+ * the state-exit cleanup detaches the corpse, and the ordinary teardown
+ * cascade (cleared `context.mediaSource`) stops the rest of the MSE
+ * pipeline — then back in with a fresh MediaSource for the *same* source.
+ * Cause-agnostic. Two rules shape the cycle:
  *
- * - **Remote-playback hold.** While `state.remotePlaybackActive`, the dead
- *   MediaSource stays attached — detaching runs `element.load()`, which
- *   would re-run resource selection under the live receiver. Recovery runs
- *   on the session's falling edge instead.
- * - **Playback snapshot.** Recovery exits (and only they) write
- *   `element.currentTime → state.startPosition` and
- *   `!element.paused → state.resumePlayback` before detach's `load()` resets
- *   the element (the load algorithm forces `paused = true`), so
- *   `applyStartPosition` resumes the rebuilt source where playback left off,
- *   playing when it was playing. Source-identity exits skip the snapshot.
+ * - **Rebuild waits out a remote-playback session.** While a recovery is
+ *   pending and `state.remotePlaybackActive` holds, `deriveState` keeps the
+ *   machine detached-and-idle; the session's (settled) falling edge
+ *   re-derives into the fresh attach — re-attaching runs `element.load()`,
+ *   which would re-run resource selection under the live receiver. (The
+ *   exit itself is safe mid-session: detach skips its `load()` reset for a
+ *   UA-closed MediaSource — see `attachMediaSource`.)
+ * - **Playback snapshot on re-entry.** Because recovery detaches without
+ *   resetting the element, the element itself carries the restore state:
+ *   frozen `currentTime`/`paused` after an eviction, the receiver-mirrored
+ *   values through an AirPlay session. Recovery re-entries (and only they)
+ *   read `element.currentTime → state.startPosition` and
+ *   `!element.paused → state.resumePlayback` synchronously *before* the
+ *   fresh attach's `load()` resets the element (the load algorithm forces
+ *   `paused = true`), so `applyStartPosition` resumes the rebuilt source
+ *   where playback left off, playing when it was playing — and the one-shot
+ *   commands are never live while a session still owns the element.
+ *   Source-identity exits skip the snapshot.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
  * (`setupVideoBufferActors`, `setupAudioBufferActors`,
@@ -90,9 +99,9 @@ export interface MediaSourceState {
   resumePlayback?: boolean;
   /**
    * A remote-playback session (AirPlay wireless target) currently owns
-   * presentation. Written by `setupAirPlay`; read here to hold the dead
-   * MediaSource attached until the session ends — detaching mid-session
-   * would `load()` under the receiver.
+   * presentation. Written by `setupAirPlay`; read here to defer the
+   * post-close rebuild until the session ends — re-attaching would `load()`
+   * under the receiver.
    */
   remotePlaybackActive?: boolean;
 }
@@ -111,17 +120,18 @@ function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
   mediaElement: HTMLMediaElement | undefined,
   mediaSourceClosed: boolean,
-  remotePlaybackActive: boolean | undefined
+  rebuildHeldBySession: boolean
 ): MediaSourceFsmState {
   if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
   // The UA closed the owned MediaSource (AirPlay handoff, MMS eviction). A
   // closed MediaSource can never reopen — cycle out so the state-exit
-  // cleanup detaches it and the re-entry builds a fresh one. UNLESS a
-  // remote-playback session is live: detaching runs `load()` under the
-  // receiver, so hold the dead MS attached until the session ends (the
-  // buffer actors are already torn down via their own `sourceclose`
-  // listener — see `setup-buffer-actors.ts`).
-  if (mediaSourceClosed && !remotePlaybackActive) return 'preconditions-unmet';
+  // cleanup detaches it.
+  if (mediaSourceClosed) return 'preconditions-unmet';
+  // A recovery rebuild waits out a live remote-playback session — attaching
+  // runs `load()`, which would re-run resource selection under the
+  // receiver. The session's (settled) falling edge re-derives into the
+  // fresh attach.
+  if (rebuildHeldBySession) return 'preconditions-unmet';
   return 'mediasource-attached';
 }
 
@@ -142,15 +152,22 @@ function setupMediaSourceSetup({
 }): Reactor<MediaSourceFsmState | 'destroying' | 'destroyed'> {
   // Behavior-local liveness flag for the currently-owned MediaSource. Set by
   // the entry's `sourceclose` listener; reset by the state-exit cleanup so
-  // the machine immediately re-derives into a fresh attach.
+  // the machine immediately re-derives.
   const mediaSourceClosed = signal(false);
+
+  // Breadcrumb from a recovery exit to the recovery re-entry: the element
+  // still carries the playback state (detach skips its reset for a UA-closed
+  // MS), and the entry snapshots it before the fresh attach wipes it. Also
+  // holds the rebuild out (with `remotePlaybackActive`) while a session owns
+  // the element — see `deriveState`.
+  const recoveryPending = signal(false);
 
   const derivedStateSignal = computed(() =>
     deriveState(
       state.presentation.get(),
       context.mediaElement.get(),
       mediaSourceClosed.get(),
-      state.remotePlaybackActive.get()
+      recoveryPending.get() && !!state.remotePlaybackActive.get()
     )
   );
 
@@ -168,6 +185,19 @@ function setupMediaSourceSetup({
         entry: () => {
           const mediaElement = context.mediaElement.get()!;
           const controller = new AbortController();
+
+          if (peek(recoveryPending)) {
+            // Recovery re-entry: the element still carries where playback
+            // was (frozen after an eviction, receiver-mirrored through an
+            // AirPlay session). Snapshot it into the one-shot restore
+            // commands NOW — the attach below `load()`s, resetting the
+            // element (and forcing `paused = true`). Writing and resetting
+            // in the same synchronous entry means `applyStartPosition` can
+            // only ever see these commands against the rebuilt source.
+            recoveryPending.set(false);
+            state.startPosition.set(mediaElement.currentTime);
+            state.resumePlayback.set(!mediaElement.paused);
+          }
 
           const mediaSource = createMediaSource({ preferManaged: true });
           // Sync attach: the returned `detach` closes over the element +
@@ -210,26 +240,21 @@ function setupMediaSourceSetup({
 
           return () => {
             // Order matters: abort the wait first so a late publish can't
-            // race the slot clear; then — on recovery exits only — snapshot
-            // the element position *before* detach (whose `load()` resets
-            // the element); then detach to release the element; then clear
-            // the slot so downstream behaviors see no MediaSource; finally
-            // reset the liveness flag so the machine re-derives into a
-            // fresh attach for the same source.
+            // race the slot clear; then detach (a no-reset detach for a
+            // UA-closed MS — the element keeps carrying the playback state
+            // for the re-entry snapshot); then clear the slot so the
+            // ordinary teardown cascade stops the downstream MSE pipeline.
+            // Recovery exits leave the breadcrumb for the re-entry snapshot
+            // before resetting the liveness flag — the re-derive then either
+            // rebuilds immediately (eviction) or waits out the session (see
+            // `deriveState`).
             controller.abort();
-            if (peek(mediaSourceClosed)) {
-              // The UA killed the MS (not a source change): capture where
-              // playback was — during an AirPlay session the element mirrors
-              // the receiver position — so `applyStartPosition` restores it
-              // on the rebuild, resuming playing when the element was (the
-              // detach's `load()` below forces `paused = true`). Source-
-              // identity exits skip both: a new source starts fresh.
-              state.startPosition.set(mediaElement.currentTime);
-              state.resumePlayback.set(!mediaElement.paused);
-            }
             detach();
             context.mediaSource.set(undefined);
-            mediaSourceClosed.set(false);
+            if (peek(mediaSourceClosed)) {
+              recoveryPending.set(true);
+              mediaSourceClosed.set(false);
+            }
           };
         },
       },
