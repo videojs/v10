@@ -120,6 +120,13 @@
       }
       #throughput-display.has-data { color: #16a34a; }
       #throughput-display.warming { color: #d97706; }
+      #live-status {
+        margin-bottom: 12px;
+        font-family: monospace;
+        font-size: 12px;
+        color: #555;
+      }
+      #live-status.is-live { font-weight: bold; color: #dc2626; }
 
       /* ── Rendition / resolution / audio panels ── */
       #rendition-picker,
@@ -257,6 +264,8 @@
     <div id="controls">
       <button type="button" id="play">Play</button>
       <button type="button" id="pause">Pause</button>
+      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">Seek to Live Edge</button>
+      <button type="button" id="seek-behind-window" title="Seek 30s behind the window start — exercises the window-exit rescue">Seek Out of Window</button>
       <button type="button" id="inspect">Inspect State</button>
       <button type="button" id="clearLogs">Clear Logs</button>
     </div>
@@ -265,6 +274,7 @@
     <video id="video" controls preload="none"></video>
     <div id="now-playing-quality"></div>
     <div id="throughput-display"></div>
+    <div id="live-status"></div>
 
     <div id="rendition-picker">
       <h2>Video Renditions</h2>
