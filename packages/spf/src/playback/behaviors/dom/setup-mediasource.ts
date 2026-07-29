@@ -48,10 +48,12 @@
  *   MediaSource stays attached — detaching runs `element.load()`, which
  *   would re-run resource selection under the live receiver. Recovery runs
  *   on the session's falling edge instead.
- * - **Position snapshot.** Recovery exits (and only they) write
- *   `element.currentTime → state.startPosition` before detach's `load()`
- *   resets the element, so `applyStartPosition` resumes the rebuilt source
- *   where playback left off. Source-identity exits skip the snapshot.
+ * - **Playback snapshot.** Recovery exits (and only they) write
+ *   `element.currentTime → state.startPosition` and
+ *   `!element.paused → state.resumePlayback` before detach's `load()` resets
+ *   the element (the load algorithm forces `paused = true`), so
+ *   `applyStartPosition` resumes the rebuilt source where playback left off,
+ *   playing when it was playing. Source-identity exits skip the snapshot.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
  * (`setupVideoBufferActors`, `setupAudioBufferActors`,
@@ -79,6 +81,13 @@ export interface MediaSourceState {
    * consumer `applyStartPosition`.
    */
   startPosition?: number;
+  /**
+   * One-shot companion to `startPosition` (see `apply-start-position.ts`).
+   * Written on recovery exits: `true` when the element was playing at
+   * snapshot time, so the rebuilt source resumes playing — detach's `load()`
+   * forces `paused = true`, losing the state otherwise.
+   */
+  resumePlayback?: boolean;
   /**
    * A remote-playback session (AirPlay wireless target) currently owns
    * presentation. Written by `setupAirPlay`; read here to hold the dead
@@ -123,6 +132,7 @@ function setupMediaSourceSetup({
   state: {
     presentation: ReadonlySignal<MediaSourceState['presentation']>;
     startPosition: Signal<MediaSourceState['startPosition']>;
+    resumePlayback: Signal<MediaSourceState['resumePlayback']>;
     remotePlaybackActive: ReadonlySignal<MediaSourceState['remotePlaybackActive']>;
   };
   context: {
@@ -211,9 +221,11 @@ function setupMediaSourceSetup({
               // The UA killed the MS (not a source change): capture where
               // playback was — during an AirPlay session the element mirrors
               // the receiver position — so `applyStartPosition` restores it
-              // on the rebuild. Source-identity exits skip this: a new
-              // source starts at its own beginning.
+              // on the rebuild, resuming playing when the element was (the
+              // detach's `load()` below forces `paused = true`). Source-
+              // identity exits skip both: a new source starts fresh.
               state.startPosition.set(mediaElement.currentTime);
+              state.resumePlayback.set(!mediaElement.paused);
             }
             detach();
             context.mediaSource.set(undefined);
@@ -226,7 +238,7 @@ function setupMediaSourceSetup({
 }
 
 export const setupMediaSource = defineBehavior({
-  stateKeys: ['presentation', 'startPosition', 'remotePlaybackActive'],
+  stateKeys: ['presentation', 'startPosition', 'resumePlayback', 'remotePlaybackActive'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupMediaSourceSetup,
 });

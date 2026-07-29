@@ -47,14 +47,16 @@ function makeState(initial: MediaSourceState = {}): StateSignals<MediaSourceStat
   return {
     presentation: signal<MediaSourceState['presentation']>(initial.presentation),
     startPosition: signal<number | undefined>(initial.startPosition),
+    resumePlayback: signal<boolean | undefined>(initial.resumePlayback),
     remotePlaybackActive: signal<boolean | undefined>(initial.remotePlaybackActive),
   };
 }
 
-/** A media element whose `currentTime` tests can stage for snapshot assertions. */
-function makeVideo(currentTime = 0): HTMLMediaElement {
+/** A media element whose `currentTime`/`paused` tests can stage for snapshot assertions. */
+function makeVideo(currentTime = 0, opts: { paused?: boolean } = {}): HTMLMediaElement {
   const video = document.createElement('video');
   Object.defineProperty(video, 'currentTime', { value: currentTime, writable: true });
+  Object.defineProperty(video, 'paused', { value: opts.paused ?? true, writable: true });
   return video;
 }
 
@@ -318,8 +320,8 @@ describe('setupMediaSource', () => {
       reactor.destroy();
     });
 
-    it('snapshots element.currentTime into startPosition on a recovery exit', async () => {
-      const mediaElement = makeVideo(42.5);
+    it('snapshots element.currentTime + playing state on a recovery exit', async () => {
+      const mediaElement = makeVideo(42.5, { paused: false });
       const { state, context, reactor } = setupSetupMediaSource();
       context.mediaElement.set(mediaElement);
       state.presentation.set(makeResolvedPresentation());
@@ -328,26 +330,50 @@ describe('setupMediaSource', () => {
 
       transitionMediaSource(first, 'closed', 'sourceclose');
 
-      // Captured before detach's load() can reset the element, so
-      // applyStartPosition restores the position on the rebuilt source.
-      await vi.waitFor(() => expect(state.startPosition.get()).toBe(42.5));
+      // Captured before detach's load() can reset the element (the load
+      // algorithm forces paused = true), so applyStartPosition restores
+      // position AND playing state on the rebuilt source.
+      await vi.waitFor(() => {
+        expect(state.startPosition.get()).toBe(42.5);
+        expect(state.resumePlayback.get()).toBe(true);
+      });
+
+      reactor.destroy();
+    });
+
+    it('snapshots resumePlayback=false when the element was paused at recovery', async () => {
+      const mediaElement = makeVideo(42.5, { paused: true });
+      const { state, context, reactor } = setupSetupMediaSource();
+      context.mediaElement.set(mediaElement);
+      state.presentation.set(makeResolvedPresentation());
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
+      const first = context.mediaSource.get()!;
+
+      transitionMediaSource(first, 'closed', 'sourceclose');
+
+      await vi.waitFor(() => {
+        expect(state.startPosition.get()).toBe(42.5);
+        // A paused element must come back paused — no surprise autoplay.
+        expect(state.resumePlayback.get()).toBe(false);
+      });
 
       reactor.destroy();
     });
 
     it('does not snapshot on an ordinary source change', async () => {
-      const mediaElement = makeVideo(42.5);
+      const mediaElement = makeVideo(42.5, { paused: false });
       const { state, context, reactor } = setupSetupMediaSource();
       context.mediaElement.set(mediaElement);
       state.presentation.set(makeResolvedPresentation());
       await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
 
       // Source replacement routes through unresolved — a new source must
-      // start at its own beginning, not inherit the old position.
+      // start at its own beginning, not inherit the old position/play state.
       state.presentation.set({ url: 'https://example.com/next.m3u8' });
 
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(state.startPosition.get()).toBeUndefined();
+      expect(state.resumePlayback.get()).toBeUndefined();
 
       reactor.destroy();
     });

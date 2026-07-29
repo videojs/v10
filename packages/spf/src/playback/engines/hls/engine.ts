@@ -136,6 +136,14 @@ export interface SimpleHlsEngineState {
    */
   startPosition?: number;
   /**
+   * One-shot companion to `startPosition`: resume playing once the pending
+   * position applies. Written by `setupMediaSource`'s recovery snapshot when
+   * the element was playing as the UA killed the MediaSource (the rebuild's
+   * `load()` forces `paused = true`); consumed with `startPosition` by
+   * `applyStartPosition`.
+   */
+  resumePlayback?: boolean;
+  /**
    * A remote-playback session (AirPlay wireless target) currently owns
    * presentation. Sole writer: `setupAirPlay` (from the WebKit wireless-target
    * events). Readers: `setupMediaSource` (holds the dead MediaSource attached

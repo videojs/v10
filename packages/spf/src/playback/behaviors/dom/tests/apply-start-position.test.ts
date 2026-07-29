@@ -18,6 +18,8 @@ function makeVideo(opts: { readyState?: number } = {}): HTMLVideoElement {
   const video = document.createElement('video');
   Object.defineProperty(video, 'currentTime', { value: 0, writable: true });
   Object.defineProperty(video, 'readyState', { value: opts.readyState ?? 0, writable: true });
+  // jsdom has no media pipeline; `play()` must exist for the resume command.
+  video.play = vi.fn(() => Promise.resolve());
   return video;
 }
 
@@ -30,6 +32,7 @@ function makeState(initial: StartPositionState = {}): StateSignals<StartPosition
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     startPosition: signal<number | undefined>(initial.startPosition),
+    resumePlayback: signal<boolean | undefined>(initial.resumePlayback),
     currentTime: signal<number | undefined>(initial.currentTime),
   };
 }
@@ -150,6 +153,62 @@ describe('applyStartPosition', () => {
     await vi.waitFor(() => {
       expect(video.currentTime).toBe(42);
       expect(state.startPosition.get()).toBeUndefined();
+    });
+
+    reactor.destroy();
+  });
+
+  it('resumes playing after the seek when resumePlayback rides the command', async () => {
+    const video = makeVideo();
+    const { state, reactor } = setupApplyStartPosition(
+      { presentation: makeResolvedPresentation(), startPosition: 42, resumePlayback: true },
+      { mediaElement: video }
+    );
+    await vi.waitFor(() => expect(state.currentTime.get()).toBe(42));
+    // Not consumed early — play() must wait for the position to apply.
+    expect(video.play).not.toHaveBeenCalled();
+
+    reachMetadata(video);
+
+    await vi.waitFor(() => {
+      expect(video.currentTime).toBe(42);
+      expect(video.play).toHaveBeenCalledTimes(1);
+      // Both one-shots consumed together.
+      expect(state.startPosition.get()).toBeUndefined();
+      expect(state.resumePlayback.get()).toBeUndefined();
+    });
+
+    reactor.destroy();
+  });
+
+  it('stays paused when the snapshot recorded a paused element', async () => {
+    const video = makeVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
+    const { state, reactor } = setupApplyStartPosition(
+      { presentation: makeResolvedPresentation(), startPosition: 42, resumePlayback: false },
+      { mediaElement: video }
+    );
+
+    await vi.waitFor(() => {
+      expect(video.currentTime).toBe(42);
+      expect(state.startPosition.get()).toBeUndefined();
+    });
+    expect(video.play).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('degrades to paused-at-position when play() rejects (autoplay policy)', async () => {
+    const video = makeVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
+    video.play = vi.fn(() => Promise.reject(new DOMException('denied', 'NotAllowedError')));
+    const { state, reactor } = setupApplyStartPosition(
+      { presentation: makeResolvedPresentation(), startPosition: 42, resumePlayback: true },
+      { mediaElement: video }
+    );
+
+    await vi.waitFor(() => {
+      expect(video.currentTime).toBe(42);
+      // Consumed despite the rejection — the command must not replay.
+      expect(state.resumePlayback.get()).toBeUndefined();
     });
 
     reactor.destroy();
