@@ -98,6 +98,18 @@ afterEach(() => {
 });
 
 describe('ControlsElement', () => {
+  it('marks the controls surface as interactive', async () => {
+    const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
+    const controls = createDefinedElement(ControlsElement);
+
+    document.body.append(provider);
+    provider.append(controls);
+
+    await controls.updateComplete;
+
+    expect(controls.hasAttribute('data-interactive')).toBe(true);
+  });
+
   it('closes owned popovers, menus, and tooltips when controls hide', async () => {
     const provider = document.createElement('test-controls-player-provider') as TestPlayerProviderElement;
     const controls = createDefinedElement(ControlsElement);

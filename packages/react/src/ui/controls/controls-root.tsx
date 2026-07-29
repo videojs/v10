@@ -42,7 +42,7 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
           state,
           stateAttrMap: ControlsDataAttrs,
           ref: [forwardedRef],
-          props: [{ children }, elementProps],
+          props: [{ children }, elementProps, { 'data-interactive': '' }],
         }
       )}
     </ControlsContextProvider>
