@@ -41,6 +41,13 @@ native-PTS space, simplifying the seekable/edge math.
 
 ## Phase 1 convergence design (the crux)
 
+> **2026-07-28 — partially superseded.** The Phase 1 contract now lives in
+> `internal/design/spf/live-presentation-timeline-model.md` (revised: **PDT-primary**
+> segment placement on every parse; shared-min derive stays the default per RFC 8216
+> §6.2.4's cross-track timestamp MUST; `placeOnAnchor` **KEPT** and promoted — not
+> deleted as stated below). Where this section and the design doc disagree, the design
+> doc wins.
+
 **Keep the 0-based model. Add the wall-clock edge as pure playlist arithmetic.**
 
 The live anchor needed two things the VOD model didn't: (a) a shared origin across
