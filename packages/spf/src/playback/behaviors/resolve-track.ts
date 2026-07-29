@@ -1,6 +1,7 @@
 import { defineBehavior } from '../../core/composition/create-composition';
 import { createMachineReactor } from '../../core/reactors/create-machine-reactor';
 import { computed, peek, type ReadonlySignal, type Signal, update } from '../../core/signals/primitives';
+import { when } from '../../core/signals/when';
 import { ConcurrentRunner, Task } from '../../core/tasks/task';
 import { NON_FMP4_CONTAINER_MIMES, parseMediaPlaylist } from '../../media/hls/parse-media-playlist';
 import type { MaybeResolvedPresentation, PartiallyResolvedTrack, ResolvedTrack } from '../../media/types';
@@ -9,6 +10,7 @@ import type { GetCdnId } from '../../media/utils/cdn';
 import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '../../media/utils/tracks';
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
+import type { GateFirstParse } from '../primitives/gate-first-parse';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 
 // ============================================================================
@@ -40,6 +42,17 @@ type ResolveTrackStateMap<K extends SelectedTrackKey> = {
   presentation: Signal<ResolveTrackState['presentation']>;
 } & { [P in K]: ReadonlySignal<ResolveTrackState[P]> };
 
+/**
+ * Sibling-owned A/V selection signals, present at runtime iff a sibling
+ * behavior owns them. Deliberately not in the typed slice / `stateKeys`
+ * (declaring them would force every composition to carry both selections);
+ * read only to build the injected first-parse gate's selection context.
+ */
+type SiblingSelectionSignals = {
+  selectedVideoTrackId?: ReadonlySignal<ResolveTrackState['selectedVideoTrackId']>;
+  selectedAudioTrackId?: ReadonlySignal<ResolveTrackState['selectedAudioTrackId']>;
+};
+
 interface TrackResolutionConfig<K extends SelectedTrackKey> {
   selectedKey: K;
   findTrackToResolve: (
@@ -48,6 +61,8 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   ) => PartiallyResolvedTrack | ResolvedTrack | undefined;
   /** Fetch a track's media-playlist text — already failover-decorated by the behavior. */
   fetchResolvableText?: FetchText;
+  /** Holds a track's first parse until its placement inputs settle (live anchor); absent → parse immediately. */
+  gateFirstParse?: GateFirstParse;
 }
 
 /**
@@ -57,11 +72,13 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
 interface ResolveTrackConfig {
   /** CDN-id derivation for the failover trip; defaults to origin-based `getCdnId`. */
   getCdnId?: GetCdnId;
+  /** First-parse placement gate (see `primitives/gate-first-parse`); absent → parse immediately. */
+  gateFirstParse?: GateFirstParse;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
   state,
-  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText },
+  config: { selectedKey, findTrackToResolve, fetchResolvableText = defaultFetchResolvableText, gateFirstParse },
 }: {
   state: ResolveTrackStateMap<K>;
   config: TrackResolutionConfig<K>;
@@ -121,9 +138,47 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // `fetchResolvableText` is the behavior's failover-decorated
                   // fetch: it trips the CDN on a failed fetch (network error or
                   // non-OK status). A parse failure is a content issue, not a
-                  // CDN-availability one, so it doesn't trip.
+                  // CDN-availability one, so it doesn't trip. The gate-time
+                  // `track` supplies only the playlist URL (stable across the
+                  // fetch).
                   const text = await fetchResolvableText(track, { signal });
-                  const mediaTrack = parseMediaPlaylist(text, track);
+
+                  // Hold placement — never the fetch — until this track's
+                  // first-parse placement inputs settle (for live, the
+                  // wall-clock anchor; see `primitives/gate-first-parse`).
+                  // Every task scheduled here is a first parse (the effect
+                  // skips resolved tracks). Aborting rejects the wait, so a
+                  // source change can't strand a gated task.
+                  if (gateFirstParse) {
+                    const { selectedVideoTrackId, selectedAudioTrackId } = state as SiblingSelectionSignals;
+                    await when(
+                      () =>
+                        gateFirstParse(
+                          state.presentation.get(),
+                          {
+                            selectedVideoTrackId: selectedVideoTrackId?.get(),
+                            selectedAudioTrackId: selectedAudioTrackId?.get(),
+                          },
+                          trackId
+                        ),
+                      { signal }
+                    );
+                  }
+
+                  // Re-read `previous` after the awaits: a concurrent write
+                  // during them — notably the establishment reactor stamping
+                  // the anchor `startDate` onto this track's shell — must feed
+                  // the parse, not be clobbered (anchoring is establish-once;
+                  // parsing the pre-fetch snapshot would strand the track off
+                  // the anchor for good). Correctness rests on a
+                  // run-to-completion invariant: NOTHING may yield (await)
+                  // between this re-read and the write below, so no writer can
+                  // interleave. `parseMediaPlaylist` is synchronous — keep it
+                  // that way, or move the read into the updater.
+                  const live = peek(state.presentation);
+                  const previous = live ? findTrackToResolve(live, trackId) : undefined;
+                  if (!previous) throw new Error('resolve-track: selected track not found');
+                  const mediaTrack = parseMediaPlaylist(text, previous);
 
                   // Updater handles undefined inputs by returning current
                   // unchanged; isResolvedPresentation narrows for the patch.

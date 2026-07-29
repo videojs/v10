@@ -109,6 +109,16 @@ survives; their native-PTS impl does not.
 - **Phase 1 — anchor convergence.** Fold `anchor-presentation-timeline` into the
   establishment reactor; stamp `startDate` from PDT; delete the buffered-anchor/align stack.
   Resolve the open questions below.
+  **2026-07-29 — establishment fold landed.** `establishStartMediaTime` freezes the
+  reference-track (selected video ?? audio) PDT anchor and stamps `startDate` onto every
+  track lacking one; `resolve-track` gained an injected first-parse gate
+  (`gateFirstParseOnAnchor`, seam in `primitives/gate-first-parse.ts`, awaited via the new
+  `core/signals/when`) plus the re-read-previous-after-await race fix re-landed from the
+  reference branch; the HLS engine wires the gate. The buffered-anchor stack was never
+  re-landed on this branch, so there was nothing to delete. Remaining Phase 1 item:
+  PDT-primary placement on **reload** parses (promote `placeOnAnchor` over
+  `placeOnPreviousTimeline` when the previous track carries `startDate`) — inert until the
+  live reload loop re-lands, so it can ride with Phase 2.
 - **Phase 2 — live mechanics on 0-based space.** `live-window` + `sync-live-seekable-range`
   + `seek-to-live-edge` (gate rewired to establishment); `end-of-stream` guard merge; live
   adapter. Coordinate-review every window/edge computation for 0-based space.

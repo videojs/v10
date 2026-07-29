@@ -322,6 +322,12 @@ Phase 1, before touching the establishment reactor.
   is **kept** (sign-traced: the anchor segment lands at `startDate − anchor`, and the
   recomputed track `startDate` reads back as the anchor — idempotent). Its remaining
   bug is collision 2: it must return track `startTime: 0`, not the shifted local base.
+  **Landed 2026-07-29:** the reactor freezes + stamps the reference-track anchor; the
+  gated first parse is `resolve-track`'s injected `gateFirstParse` seam
+  (`primitives/gate-first-parse.ts`) with `gateFirstParseOnAnchor` as the policy, and
+  the parse re-reads its `previous` after the awaits so the stamp can't be clobbered.
+  Reload-parse PDT-primary placement (promoting `placeOnAnchor` over carry-forward)
+  rides with the reload loop's re-landing.
 
 ---
 

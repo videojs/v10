@@ -57,6 +57,7 @@ import {
   type DeriveStartMediaTime,
   deriveSharedMinStartMediaTime,
   establishStartMediaTime,
+  gateFirstParseOnAnchor,
 } from '../../behaviors/establish-start-media-time';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../../behaviors/resolve-track';
@@ -382,6 +383,10 @@ export function createSimpleHlsEngine(
     // these two lines with the reactor.
     videoMessagePipelines: relocationPipelinesFor('video', deriveStartMediaTime),
     audioMessagePipelines: relocationPipelinesFor('audio', deriveStartMediaTime),
+    // Live-anchor establishment order: each non-reference track's first parse
+    // waits for the reference track to settle the wall-clock anchor question
+    // (see `gate-first-parse.ts`); pairs with the reactor's anchor stamp.
+    gateFirstParse: gateFirstParseOnAnchor,
   };
 
   return createComposition(

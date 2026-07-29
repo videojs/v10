@@ -411,6 +411,141 @@ http://example.com/a-seg1.m4s
   });
 });
 
+describe('resolveAudioTrack — first-parse gate', () => {
+  const videoShell: PartiallyResolvedVideoTrack = {
+    type: 'video',
+    id: 'video-1',
+    url: 'http://example.com/video.m3u8',
+    bandwidth: 2_000_000,
+    mimeType: 'video/mp4',
+    codecs: [],
+  };
+  const audioShell: PartiallyResolvedAudioTrack = {
+    type: 'audio',
+    id: 'audio-1',
+    url: 'http://example.com/audio.m3u8',
+    groupId: 'audio-group',
+    name: 'English',
+    bandwidth: 128000,
+    mimeType: 'audio/mp4',
+    sampleRate: 48000,
+    channels: 2,
+    codecs: ['mp4a.40.2'],
+  };
+
+  function makePresentation(): Presentation {
+    return {
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [{ id: 'sw-v', type: 'video', tracks: [{ ...videoShell }] }],
+        },
+        {
+          id: 'audio-set',
+          type: 'audio',
+          switchingSets: [{ id: 'sw-a', type: 'audio', tracks: [{ ...audioShell }] }],
+        },
+      ],
+      startTime: 0,
+    };
+  }
+
+  // 00:00:10Z in epoch seconds — the audio playlist's PDT.
+  const SEGMENT_PDT = Date.parse('2026-07-29T00:00:10.000Z') / 1000;
+
+  const PDT_PLAYLIST = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:10
+#EXT-X-PROGRAM-DATE-TIME:2026-07-29T00:00:10.000Z
+#EXTINF:10.0,
+http://example.com/audio-seg1.m4s
+#EXT-X-ENDLIST`;
+
+  // A stand-in for `gateFirstParseOnAnchor`'s anchored branch: open once the
+  // track's shell carries a (stamped) `startDate`. Keeps the seam mechanics
+  // under test decoupled from the establishment behavior's policy.
+  const gateOnOwnStartDate = (pres: MaybeResolvedPresentation | undefined, _ctx: object, trackId: string) =>
+    pres !== undefined && findTrackById(pres, trackId)?.startDate !== undefined;
+
+  it('holds the parse (not the fetch) until the gate opens, then parses the re-read anchor-stamped shell', async () => {
+    const state = makeState({
+      presentation: makePresentation(),
+      selectedVideoTrackId: 'video-1',
+      selectedAudioTrackId: 'audio-1',
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PDT_PLAYLIST));
+
+    const reactor = resolveAudioTrack.setup({ state, config: { gateFirstParse: gateOnOwnStartDate } });
+
+    // The fetch fires immediately; the parse is what waits on the gate.
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+    await new Promise((resolve) => setTimeout(resolve, 10));
+    expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'audio-1')!)).toBe(false);
+
+    // Stamp the wall-clock anchor onto the shell (what the establishment
+    // reactor does): 5s before the segment's PDT, so `placeOnAnchor` should
+    // land the segment at startTime 5.
+    const anchor = SEGMENT_PDT - 5;
+    const presentation = state.presentation.get()!;
+    state.presentation.set({
+      ...presentation,
+      selectionSets: presentation.selectionSets!.map((selectionSet) =>
+        selectionSet.type === 'audio'
+          ? {
+              ...selectionSet,
+              switchingSets: selectionSet.switchingSets.map((switchingSet) => ({
+                ...switchingSet,
+                tracks: switchingSet.tracks.map((track) => ({ ...track, startDate: anchor })),
+              })),
+            }
+          : selectionSet
+      ),
+    } as Presentation);
+
+    await vi.waitFor(() => {
+      expect(isResolvedTrack(findTrackById(state.presentation.get()!, 'audio-1')!)).toBe(true);
+    });
+
+    // The parse consumed the re-read (stamped) shell, not the pre-fetch
+    // snapshot: segments are placed on the anchor, and the recomputed track
+    // startDate reads back as the anchor.
+    const resolved = findTrackById(state.presentation.get()!, 'audio-1')!;
+    expect(resolved.segments[0].startTime).toBe(5);
+    expect(resolved.startDate).toBe(anchor);
+
+    reactor.destroy();
+  });
+
+  it('aborts a gated parse with the runner when the presentation resets', async () => {
+    const state = makeState({
+      presentation: makePresentation(),
+      selectedVideoTrackId: 'video-1',
+      selectedAudioTrackId: 'audio-1',
+    });
+
+    const fetchSpy = vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(PDT_PLAYLIST));
+
+    const reactor = resolveAudioTrack.setup({ state, config: { gateFirstParse: () => false } });
+
+    await vi.waitFor(() => expect(fetchSpy).toHaveBeenCalledTimes(1));
+
+    // Source reset: leaving 'presentation-resolved' aborts the runner, which
+    // rejects the gate wait — the task dies instead of parsing into the new
+    // source (rejection is suppressed by the runner; nothing unhandled).
+    state.presentation.set(undefined);
+    await new Promise((resolve) => setTimeout(resolve, 10));
+
+    expect(state.presentation.get()).toBeUndefined();
+    expect(fetchSpy).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+});
+
 // Helper to find track by ID in presentation
 function findTrackById(
   presentation: MaybeResolvedPresentation,
