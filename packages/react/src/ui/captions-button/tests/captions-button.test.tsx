@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { Menu } from '../../menu';
+import { Tooltip, useOptionalTooltipContext } from '../../tooltip';
 import { CaptionsButton } from '../captions-button';
 
 afterEach(cleanup);
@@ -41,6 +42,34 @@ function renderCaptionsTrigger({
 }
 
 describe('CaptionsButton', () => {
+  it('does not register tooltip content when hidden', () => {
+    const { Wrapper } = createPlayerWrapper({
+      textTrackList: [],
+      subtitlesShowing: false,
+      selectSubtitlesTrack: vi.fn(),
+      chaptersCues: [],
+      thumbnailCues: [],
+      thumbnailTrackSrc: null,
+      toggleSubtitles: vi.fn(),
+    });
+
+    function TooltipContentProbe() {
+      const tooltip = useOptionalTooltipContext();
+      return <span data-testid="tooltip-label">{tooltip?.content?.label}</span>;
+    }
+
+    render(
+      <Tooltip.Root>
+        <CaptionsButton data-testid="trigger" />
+        <TooltipContentProbe />
+      </Tooltip.Root>,
+      { wrapper: Wrapper }
+    );
+
+    expect(screen.queryByTestId('trigger')).toBeNull();
+    expect(screen.getByTestId('tooltip-label').textContent).toBe('');
+  });
+
   it('does not toggle captions when rendered inside Menu.Trigger with multiple tracks', () => {
     const { toggleSubtitles } = renderCaptionsTrigger();
 

@@ -111,8 +111,10 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
     type State = InferComponentState<Core>;
     if (feature) core.setMedia(feature);
     const state = feature ? (core.getState() as State) : null;
-    const label = state ? translateText(core.getLabel(state), translator, getLabelParams(core, state)) : undefined;
-    const tooltipText = state ? (tooltipLabel?.(core, state) ?? label) : undefined;
+    const supported = state ? (isSupported?.(state) ?? true) : false;
+    const label =
+      state && supported ? translateText(core.getLabel(state), translator, getLabelParams(core, state)) : undefined;
+    const tooltipText = state && supported ? (tooltipLabel?.(core, state) ?? label) : undefined;
 
     // Forward label to tooltip popup content when inside a Tooltip.Root.
     useLayoutEffect(() => {
@@ -126,7 +128,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
       return null;
     }
 
-    if (isSupported && !isSupported(state)) return null;
+    if (!supported) return null;
 
     const attrs = core.getAttrs(state) as Record<string, unknown>;
     const ariaLabel = attrs['aria-label'];
