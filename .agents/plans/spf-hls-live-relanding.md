@@ -122,10 +122,33 @@ survives; their native-PTS impl does not.
 - **Phase 2 — live mechanics on 0-based space.** `live-window` + `sync-live-seekable-range`
   + `seek-to-live-edge` (gate rewired to establishment); `end-of-stream` guard merge; live
   adapter. Coordinate-review every window/edge computation for 0-based space.
+  **2026-07-29 — landed** across four commits: PDT-primary reload placement
+  (`placeOnAnchor` promoted whenever the track carries an anchor and the window has PDT;
+  carry-forward demoted to the PDT-less fallback); the `RecurringRunner` reload loop in
+  `resolve-track` (reschedule seam, incomplete live tracks keep reloading, `streamType`
+  stamped); the live-window stack (`liveWindowFor` live read over segments;
+  `liveWindowFromState` upgraded to the **intersection over selected A/V** — max starts /
+  min ends, clamping negative pre-join starts; `seekToLiveEdge` drops the old
+  `presentationAnchor` gate — placement is settled at parse time, so a derivable edge is
+  final, resolving open question 3); and the end-of-stream completeness guard ANDed with
+  the slack guard + `updateMediaSourceDuration`'s live Infinity path.
 - **Phase 3 — engine composition.** Reconcile `engine.ts`/`index.ts` — one composition that
   wires establishment (with live `startDate`) + relocation pipelines + live behaviors.
+  **2026-07-29 — landed.** `reschedule` defaults to
+  `delayedReschedule(mediaPlaylistReloadDelay)`, `resolveLiveLatency` (HOLD-BACK) feeds
+  `seekToLiveEdge`, `syncLiveSeekableRange` + `seekToLiveEdge` compose after segment
+  loading; `MediaPlaylistMetadata` re-exported.
 - **Phase 4 — sandbox + EVENT/DVR + fixtures + verification.** Live-hls harness, EVENT/DVR
   classification, test fixtures; end-to-end smoke against Mux LL-HLS + ffmpeg local live.
+  **2026-07-29 — smoke passed** against the ported ffmpeg local-live harness
+  (`apps/sandbox/scripts/live/local-live.sh`, demuxed CMAF + PDT): playback at
+  HOLD-BACK latency behind the edge, sliding `seekable`, frozen anchor
+  (per-SourceBuffer `timestampOffset` stable at the shared-min value, A/V buffered ranges
+  aligned), fell-behind resume snaps to the edge; VOD regression (Mux CMAF) plays to
+  `ended`, identical to a main-build control. EVENT/DVR classification is parsed +
+  exported (`streamType`, `playlistType`) but start-in-place DVR behavior remains future
+  work. Note: `tos_ismc` not buffering through the scratch page reproduces on main —
+  pre-existing, not from this branch.
 
 ## Phase 0 carry-over to revisit in Phase 1
 
