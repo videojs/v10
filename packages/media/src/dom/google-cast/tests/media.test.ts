@@ -84,6 +84,16 @@ describe('GoogleCast', () => {
     expect(provider.remote.listenerCounts.get('disconnect')).toBe(1);
   });
 
+  it('keeps the provider override when media changes during a connected session', () => {
+    const { googleCast, provider } = setup();
+    const nextHost = new HTMLVideoElementHost();
+
+    connect(provider);
+    googleCast.setMedia(nextHost);
+
+    expect(googleCast.targetOverride).toBe(provider);
+  });
+
   describe('override swap on connect/disconnect', () => {
     it('routes host reads to the target while disconnected', () => {
       const { host, googleCast, provider } = setup();

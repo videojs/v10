@@ -49,9 +49,8 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
       this.#provider = new GoogleCastProvider(this);
       this.#provider.remote.addEventListener('connect', this.#onStateChange);
       this.#provider.remote.addEventListener('disconnect', this.#onStateChange);
+      this.#override = this.#createRemoteOverride();
     }
-
-    this.#override = this.#createRemoteOverride();
   }
 
   attach(target: HTMLMediaTargetLike) {
