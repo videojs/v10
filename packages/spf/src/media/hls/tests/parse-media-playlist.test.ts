@@ -578,6 +578,69 @@ segment11.m4s`;
       // (The target-duration estimate would over-shoot to 15 + (10−3)×6 = 57.)
       expect(next.segments.map((s) => s.startTime)).toEqual([50, 55]);
     });
+
+    it('re-places reload windows from PDT against the frozen anchor, not EXTINF carry-forward', () => {
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2024-01-01T00:00:00.000Z
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo); // [0, 6, 12], anchor = origin
+
+      // The overlap reload declares segment1's PDT as origin+6.5 — the encoder's
+      // actual content ran long vs the EXTINF it declared last window. PDT-primary
+      // placement corrects to the actual timeline; carry-forward would pin
+      // segment1 at its stale previous position (6).
+      const reload = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:1
+#EXT-X-PROGRAM-DATE-TIME:2024-01-01T00:00:06.500Z
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s
+#EXTINF:6.0,
+segment3.m4s`;
+      const next = parseMediaPlaylist(reload, previous);
+
+      expect(next.segments.map((s) => s.startTime)).toEqual([6.5, 12.5, 18.5]);
+      // The anchor stays frozen — re-derived startDate reads back unchanged.
+      expect(next.startDate).toBe(previous.startDate);
+    });
+
+    it('falls back to carry-forward when a reload window loses PDT', () => {
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2024-01-01T00:00:00.000Z
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo);
+
+      // Non-conformant: PDT disappears mid-stream. The window must carry
+      // forward from the media-sequence overlap, not reset to the local base.
+      const reload = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:1
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s
+#EXTINF:6.0,
+segment3.m4s`;
+      const next = parseMediaPlaylist(reload, previous);
+
+      expect(next.segments.map((s) => s.startTime)).toEqual([6, 12, 18]);
+    });
   });
 
   describe('EXT-X-PROGRAM-DATE-TIME', () => {
