@@ -34,7 +34,6 @@ export interface MediaComponent<Target extends HTMLMediaTargetLike = HTMLMediaTa
 
 export interface MediaComponentConstructor<T extends MediaComponent = MediaComponent> {
   new (...args: any[]): T;
-  readonly configKey?: string;
 }
 
 export interface MediaComponents extends Map<MediaComponentConstructor, MediaComponent> {
@@ -42,11 +41,8 @@ export interface MediaComponents extends Map<MediaComponentConstructor, MediaCom
   set<T extends MediaComponent>(component: MediaComponentConstructor<T>, instance: T): this;
 }
 
-// biome-ignore lint/suspicious/noEmptyInterface: augmentation target for component config namespaces
-export interface MediaComponentConfig {}
-
-/** Host config bag: free-form host/engine settings plus per-component config namespaces. */
-export type MediaConfig = Partial<MediaComponentConfig> & Record<string, unknown>;
+/** Host config bag for host/engine settings. Media components are configured directly. */
+export type MediaConfig = Record<string, unknown>;
 
 export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
@@ -159,12 +155,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   }
   set config(value: MediaConfig) {
     this.#config = value;
-
-    for (const component of getMediaComponents(this).values()) {
-      const ctor = component.constructor as MediaComponentConstructor;
-      const componentConfig = ctor.configKey && value[ctor.configKey];
-      if (componentConfig) Object.assign(component, componentConfig);
-    }
   }
 
   get title() {

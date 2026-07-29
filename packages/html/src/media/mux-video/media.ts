@@ -1,8 +1,6 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { GoogleCast } from '@videojs/media/dom/google-cast';
 import { StreamTypes } from '@videojs/media/dom/hls-js';
-import { addMediaComponent } from '@videojs/media/dom/media-host';
-import { MuxData, MuxMedia } from '@videojs/media/dom/mux';
+import { MuxMedia } from '@videojs/media/dom/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 const MuxVideoBase = MediaAttachMixin(CustomMediaElement('video', MuxMedia));
@@ -16,8 +14,6 @@ export class MuxVideo extends MuxVideoBase {
 
   constructor() {
     super();
-    addMediaComponent(this.host, new MuxData({ playerSoftwareName: 'mux-video' }));
-    addMediaComponent(this.host, new GoogleCast());
     // Storyboards aren't generated for live streams; re-evaluate when the type is detected.
     this.host.addEventListener('streamtypechange', () => this.#syncStoryboard());
     // Covers both the `src` attribute and the `source` property (JS-only).

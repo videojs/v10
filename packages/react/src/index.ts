@@ -158,5 +158,6 @@ export { useAttachMedia } from './utils/use-attach-media';
 export { composeRefs, useComposedRefs } from './utils/use-composed-refs';
 export { useDestroy } from './utils/use-destroy';
 export { useLatestRef } from './utils/use-latest-ref';
+export { useMediaComponent } from './utils/use-media-component';
 export { useMediaInstance } from './utils/use-media-instance';
 export { renderElement } from './utils/use-render';

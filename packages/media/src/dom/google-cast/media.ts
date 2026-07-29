@@ -18,15 +18,15 @@ export interface GoogleCastProps {
   customData?: Record<string, unknown> | null | undefined;
 }
 
-declare module '../media-host' {
-  interface MediaComponentConfig {
-    googleCast: GoogleCastProps;
-  }
-}
+export const googleCastDefaultProps: GoogleCastProps = {
+  src: undefined,
+  contentType: undefined,
+  streamType: undefined,
+  receiver: undefined,
+  customData: undefined,
+};
 
 export class GoogleCast implements GoogleCastProps, MediaComponent {
-  static readonly configKey = 'googleCast';
-
   #src: string | undefined;
   #contentType: string | undefined;
   #streamType: MediaStreamType | undefined;
@@ -93,7 +93,7 @@ export class GoogleCast implements GoogleCastProps, MediaComponent {
     return this.#src ?? this.#media?.querySelector('source')?.src ?? this.#media?.src ?? this.#media?.currentSrc ?? '';
   }
 
-  set src(value: string) {
+  set src(value: string | undefined) {
     if (this.#src === value) return;
     this.#src = value;
     this.#load();

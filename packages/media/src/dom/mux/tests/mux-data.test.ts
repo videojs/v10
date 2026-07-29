@@ -1,6 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HlsJsMedia } from '../../hls-js';
-import { addMediaComponent } from '../../media-host';
+import type { HlsJsMedia } from '../../hls-js';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -90,26 +89,6 @@ describe('MuxData', () => {
         data: expect.objectContaining({ video_id: 'abc123' }),
       })
     );
-  });
-
-  it('exposes mux config under host.config.muxData with inferred types', () => {
-    const media = new HlsJsMedia();
-    const muxData = new MuxData();
-    addMediaComponent(media, muxData);
-
-    // Type-level: `config.muxData` infers `Partial<MuxDataProps>` via the
-    // component's `configKey` augmentation, so the assignment/read are checked.
-    // This fails to compile if inference regresses.
-    media.config = { muxData: { envKey: 'key', debug: true } };
-    const envKey: string | undefined = media.config.muxData?.envKey;
-
-    expect(envKey).toBe('key');
-    // `config` stores the plain namespace POJO, not the component instance.
-    expect(media.config.muxData).toEqual({ envKey: 'key', debug: true });
-    expect(media.config.muxData).not.toBeInstanceOf(MuxData);
-    // The setter still routed those values onto the live component instance.
-    expect(muxData.envKey).toBe('key');
-    expect(muxData.debug).toBe(true);
   });
 
   it('stops re-monitoring after destroy', async () => {

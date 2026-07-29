@@ -21,13 +21,7 @@ export function addMediaComponent<T extends MediaComponent>(host: MediaHost, com
   // Get the component's constructor to use as the key for the component in the registry.
   const ctor = component.constructor as MediaComponentConstructor<T>;
 
-  // Adopt any config set under this namespace before the component registered.
-  const { configKey } = ctor;
-  const staged = configKey ? host.config[configKey] : undefined;
-
   components.set(ctor, component);
-
-  if (staged !== undefined) Object.assign(component, staged);
 
   component.setMedia?.(host);
 

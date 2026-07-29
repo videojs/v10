@@ -31,8 +31,10 @@ const presets = [
   'background',
 ];
 const media = [
+  'google-cast',
   'hlsjs-video',
   'mux-audio',
+  'mux-data',
   'mux-video',
   'native-hls-video',
   'simple-hls-audio-only',

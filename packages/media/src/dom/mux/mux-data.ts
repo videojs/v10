@@ -15,6 +15,19 @@ export interface MuxDataProps {
   metadata: MuxDataOptions['data'] | undefined;
 }
 
+export const muxDataDefaultProps: MuxDataProps = {
+  MuxDataSdk: Mux,
+  beaconCollectionDomain: undefined,
+  debug: false,
+  disableCookies: false,
+  envKey: undefined,
+  playerSoftwareName: undefined,
+  playerSoftwareVersion: getPlayerVersion(),
+  // Generated per instance; see `#generatePlayerInitTime()`.
+  playerInitTime: undefined,
+  metadata: undefined,
+};
+
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
 export interface MuxDataMedia extends EventTarget {
@@ -22,24 +35,16 @@ export interface MuxDataMedia extends EventTarget {
   readonly src: string;
 }
 
-declare module '../media-host' {
-  interface MediaComponentConfig {
-    muxData: Partial<MuxDataProps>;
-  }
-}
-
 export class MuxData implements MuxDataProps {
-  static readonly configKey = 'muxData';
-
-  #MuxDataSdk: MuxDataSdk | undefined = Mux;
+  #MuxDataSdk: MuxDataSdk | undefined = muxDataDefaultProps.MuxDataSdk;
   #pendingInitialize: Promise<void> | null = null;
-  #beaconCollectionDomain: string | undefined;
-  #debug = false;
-  #disableCookies = false;
-  #metadata: MuxDataOptions['data'] | undefined;
-  #envKey: string | undefined;
-  #playerSoftwareName: string | undefined;
-  #playerSoftwareVersion: string | undefined = getPlayerVersion();
+  #beaconCollectionDomain: string | undefined = muxDataDefaultProps.beaconCollectionDomain;
+  #debug = muxDataDefaultProps.debug;
+  #disableCookies = muxDataDefaultProps.disableCookies;
+  #metadata: MuxDataOptions['data'] | undefined = muxDataDefaultProps.metadata;
+  #envKey: string | undefined = muxDataDefaultProps.envKey;
+  #playerSoftwareName: string | undefined = muxDataDefaultProps.playerSoftwareName;
+  #playerSoftwareVersion: string | undefined = muxDataDefaultProps.playerSoftwareVersion;
   #playerInitTime: number | undefined = this.#generatePlayerInitTime();
   #media: MuxDataMedia | null = null;
   #target: HTMLVideoElement | null = null;
@@ -112,6 +117,12 @@ export class MuxData implements MuxDataProps {
     this.#reinitialize();
   }
 
+  /**
+   * Mux Data environment key. Omitted from the beacon when unset, which is the
+   * norm for Mux-hosted playback: the view reports the Mux playback ID as its
+   * `video_id` (see {@link toVideoId}) and Mux attributes it to the owning
+   * environment. Set this to monitor sources Mux doesn't host.
+   */
   get envKey() {
     return this.#envKey;
   }

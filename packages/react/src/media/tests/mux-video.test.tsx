@@ -1,36 +1,15 @@
 import { render } from '@testing-library/react';
 import { HlsJsMedia } from '@videojs/media/dom/hls-js';
-import { MuxData, MuxMedia } from '@videojs/media/dom/mux';
+import { MuxMedia } from '@videojs/media/dom/mux';
 import { describe, expect, it, vi } from 'vitest';
 import { MuxVideo } from '../mux-video';
 
 describe('MuxVideo', () => {
-  it('routes component config to the MuxData component', () => {
-    const envKey = vi.spyOn(MuxData.prototype, 'envKey', 'set');
+  it('does not spread the config prop onto the element', () => {
+    const { container } = render(<MuxVideo config={{ preferPlayback: 'native' }} />);
 
-    // `useSyncProps` writes `media.config` during render, before the mount
-    // effect registers the components — `addMediaComponent` adopts the early value.
-    const { container } = render(<MuxVideo config={{ muxData: { envKey: 'test-key' } }} />);
-
-    expect(envKey).toHaveBeenCalledWith('test-key');
     // The config prop is consumed by the media, not spread onto the element.
     expect(container.querySelector('video')!.hasAttribute('config')).toBe(false);
-
-    envKey.mockRestore();
-  });
-
-  it('does not reinitialize mux data when the same config is re-rendered', () => {
-    const reinit = vi.spyOn(MuxData.prototype, 'envKey', 'set');
-
-    const { rerender } = render(<MuxVideo config={{ muxData: { envKey: 'test-key' } }} />);
-    rerender(<MuxVideo config={{ muxData: { envKey: 'test-key' } }} />);
-
-    // The setter runs per assignment but dedupes same values internally;
-    // assert it was only handed the same value.
-    expect(reinit).toHaveBeenCalledWith('test-key');
-    expect(reinit.mock.calls.every(([value]) => value === 'test-key')).toBe(true);
-
-    reinit.mockRestore();
   });
 
   it('derives the media src from the source prop', () => {
