@@ -22,17 +22,11 @@ import type { TextTracksActor } from './text-tracks';
 // =============================================================================
 
 /**
- * Message sent to a TextTrackSegmentLoaderActor. Mirrors the v/a
- * `SegmentLoaderMessage` shape.
- *
- * `load` — `range` carries the forward-window anchor (`range.start` is
- * treated as the load anchor; the actor computes its own forward window
- * internally via `getSegmentsToLoad`). When `range` is omitted (metadata
- * mode), this actor is a no-op — text tracks have no init-segment concept.
- *
- * Like the v/a loader, there is no in-band `stop`: the dispatcher simply
- * stops sending `load` (its `'dormant'` state) and any queued fetches
- * drain; teardown aborts outright.
+ * Mirrors the v/a `SegmentLoaderMessage` shape. `range` carries the
+ * forward-window anchor (`range.start` is treated as the load anchor;
+ * the actor computes its own forward window internally via
+ * `getSegmentsToLoad`). When `range` is omitted (metadata mode), this
+ * actor is a no-op — text tracks have no init-segment concept.
  */
 export type TextTrackSegmentLoaderMessage = {
   type: 'load';

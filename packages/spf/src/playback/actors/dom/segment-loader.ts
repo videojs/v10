@@ -59,19 +59,12 @@ export type SegmentLoaderTrack = VideoTrack | AudioTrack;
 /**
  * Message sent to a SegmentLoaderActor.
  *
- * `load` — drive fetching.
- *
  * `range` is optional to distinguish loading modes:
  * - No range: load init segment only (metadata preload mode)
  * - With range: load init + all segments overlapping [start, end]
  *
  * `start` and `end` are raw time values — no segment snapping.
  * The actor maps them onto segment boundaries internally.
- *
- * There is deliberately no `stop`: v/a loading halts structurally — the
- * actor is torn down when its MediaSource closes or detaches (see
- * `setup-buffer-actors.ts`). Only the MediaSource-independent text-track
- * loader needs an in-band stop (see `text-track-segment-loader.ts`).
  */
 export type SegmentLoaderMessage = {
   type: 'load';
