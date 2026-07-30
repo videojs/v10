@@ -225,12 +225,18 @@ class CastStatus extends HTMLElement {
 
 ## Browser availability
 
-The Remote Playback feature reports availability as `'available'` (a device is on the network), `'unavailable'` (no device found), or `'unsupported'` (the browser can't cast). The `CastButton` reflects it as a `data-availability` attribute. Use it to hide the button where casting never works:
+The Remote Playback feature reports availability as `'available'` (a device is on the network), `'unavailable'` (no device found), or `'unsupported'` (the browser can't cast). The `CastButton` keeps this raw value in `data-availability`, but handles presentation for you:
+
+- When Cast is unsupported, the HTML custom element receives the native `hidden` attribute and the React component returns `null`.
+- When Cast is supported but no device is reachable, the button remains visible with `aria-disabled="true"` and `data-disabled`.
+
+Use `data-disabled` to style the visible, non-interactive state:
 
 <FrameworkCase frameworks={["html"]}>
 ```css
-media-cast-button[data-availability="unsupported"] {
-  display: none;
+media-cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
 </FrameworkCase>
@@ -243,11 +249,14 @@ media-cast-button[data-availability="unsupported"] {
 ```
 
 ```css
-.cast-button[data-availability="unsupported"] {
-  display: none;
+.cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 ```
 </FrameworkCase>
+
+Unsupported buttons hide automatically, so no availability selector or extra hiding CSS is required.
 
 ## See also
 

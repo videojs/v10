@@ -20,6 +20,8 @@
   backdrop-filter: blur(10px);
 }
 
-.media-cast-button[data-availability="unsupported"] {
-  display: none;
+.media-cast-button[data-disabled] {
+  cursor: not-allowed;
+  opacity: 0.5;
+  filter: grayscale(1);
 }
