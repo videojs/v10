@@ -24,7 +24,7 @@ interface TextTrackSegmentLoadingState {
   currentTime?: number;
   preload?: string;
   loadActivated?: boolean;
-  remotePlaybackActive?: boolean;
+  loadingSuspended?: boolean;
 }
 
 interface TextTrackSegmentLoadingContext {
@@ -55,7 +55,7 @@ function makeState(initial: TextTrackSegmentLoadingState = {}): StateSignals<Tex
     currentTime: signal<number | undefined>(initial.currentTime),
     preload: signal<string | undefined>(initial.preload),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
-    remotePlaybackActive: signal<boolean | undefined>(initial.remotePlaybackActive),
+    loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
   };
 }
 
@@ -630,16 +630,16 @@ describe('loadTextTrackSegments', () => {
     });
   });
 
-  // Text loading has no structural tie to the MediaSource — the session
-  // 'dormant' gate is the only thing that stops it (v/a loaders die with
-  // the closed MediaSource besides).
-  describe('remotePlaybackActive (session dormant gate)', () => {
-    it('does not dispatch while a remote session is active, even with preload="auto"', async () => {
+  // Text loading has no structural tie to the MediaSource — the observed
+  // 'dormant' policy gate is the only thing that stops it (v/a loaders die
+  // with the closed MediaSource besides).
+  describe('loadingSuspended (observed dormant gate)', () => {
+    it('does not dispatch while suspended, even with preload="auto"', async () => {
       const send = vi.fn();
       const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
       const state = makeState({
         preload: 'auto',
-        remotePlaybackActive: true,
+        loadingSuspended: true,
         selectedTextTrackId: 'text-1',
         currentTime: 0,
         presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
@@ -653,11 +653,11 @@ describe('loadTextTrackSegments', () => {
       reactor.destroy();
     });
 
-    it('parks on session engage and re-dispatches on resume', async () => {
-      // Fake loader captures the messages the dispatcher sends. The session
-      // gate is a policy 'dormant' — no stop message; queued work drains
+    it('parks while suspended and re-dispatches when the policy lifts', async () => {
+      // Fake loader captures the messages the dispatcher sends. Suspension
+      // is a policy 'dormant' — no stop message; queued work drains
       // (text fetches are small and bounded), and the derive re-dispatches
-      // on the session's falling edge.
+      // when the writer clears the slot.
       const send = vi.fn();
       const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
       const state = makeState({
@@ -673,11 +673,11 @@ describe('loadTextTrackSegments', () => {
       await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
       send.mockClear();
 
-      state.remotePlaybackActive.set(true);
+      state.loadingSuspended.set(true);
       await new Promise((resolve) => setTimeout(resolve, 50));
       expect(send).not.toHaveBeenCalled();
 
-      state.remotePlaybackActive.set(false);
+      state.loadingSuspended.set(false);
       await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
 
       reactor.destroy();

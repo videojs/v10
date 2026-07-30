@@ -24,7 +24,7 @@ function makeState(initial: SegmentLoadingState = {}): StateSignals<SegmentLoadi
     preload: signal<string | undefined>(initial.preload),
     currentTime: signal<number | undefined>(initial.currentTime),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
-    remotePlaybackActive: signal<boolean | undefined>(initial.remotePlaybackActive),
+    loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
     selectedVideoTrackId: signal<string | undefined>(initial.selectedVideoTrackId),
     selectedAudioTrackId: signal<string | undefined>(initial.selectedAudioTrackId),
     selectedTextTrackId: signal<string | undefined>(initial.selectedTextTrackId),
@@ -1402,10 +1402,10 @@ describe('loadSegments load-mode FSM', () => {
 });
 
 // ---------------------------------------------------------------------------
-// remotePlaybackActive — session-policy 'dormant' gate (uniform across variants)
+// loadingSuspended — observed policy 'dormant' gate (uniform across variants)
 // ---------------------------------------------------------------------------
 
-describe('loadSegments orchestration (remotePlaybackActive)', () => {
+describe('loadSegments orchestration (loadingSuspended)', () => {
   function makePresentation(segments: Segment[]) {
     return {
       id: 'p1',
@@ -1422,12 +1422,12 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     };
   }
 
-  it('goes dormant while a remote session is active, even with preload="auto"', async () => {
+  it('goes dormant while suspended, even with preload="auto"', async () => {
     const send = vi.fn();
     const fakeLoader = { send } as unknown as SegmentLoaderActor;
     const state = makeState({
       preload: 'auto',
-      remotePlaybackActive: true,
+      loadingSuspended: true,
       selectedVideoTrackId: 'track-1',
       currentTime: 0,
       presentation: makePresentation([makeSegment('s1', 0, 10)]),
@@ -1442,7 +1442,7 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     reactor.destroy();
   });
 
-  it('parks on session engage and re-dispatches on session end', async () => {
+  it('parks while suspended and re-dispatches when the policy lifts', async () => {
     // Parking the dispatcher is a policy 'dormant', not a distinct state:
     // no stop message is sent — already-queued loader work drains (v/a
     // actors are torn down by sourceclose moments later anyway; text
@@ -1462,11 +1462,30 @@ describe('loadSegments orchestration (remotePlaybackActive)', () => {
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
     send.mockClear();
 
-    state.remotePlaybackActive.set(true);
+    state.loadingSuspended.set(true);
     await new Promise((resolve) => setTimeout(resolve, 50));
     expect(send).not.toHaveBeenCalled();
 
-    state.remotePlaybackActive.set(false);
+    state.loadingSuspended.set(false);
+    await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+    reactor.destroy();
+  });
+
+  it('treats an absent loadingSuspended slot as never suspended', async () => {
+    // No variant declares the key, so compositions without a writer have no
+    // slot at all — the dispatcher must behave exactly as if unsuspended.
+    const send = vi.fn();
+    const fakeLoader = { send } as unknown as SegmentLoaderActor;
+    const { loadingSuspended: _omitted, ...state } = makeState({
+      preload: 'auto',
+      selectedVideoTrackId: 'track-1',
+      currentTime: 0,
+      presentation: makePresentation([makeSegment('s1', 0, 10)]),
+    });
+    const context = makeContext({ videoSegmentLoaderActor: fakeLoader });
+    const reactor = loadVideoSegments.setup({ state: state as ReturnType<typeof makeState>, context });
+
     await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
 
     reactor.destroy();

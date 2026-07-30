@@ -6,11 +6,13 @@
  * Safari exposes the AirPlay picker and, when a wireless target is selected,
  * plays that native-HLS source on the receiver. The session state (WebKit's
  * wireless flag + the standard Remote Playback API, falling edge debounced —
- * see `REMOTE_INACTIVE_SETTLE_MS`) is mirrored onto
- * `state.remotePlaybackActive` — the fact slot the rest of the engine keys
- * off: `loadXSegments` suspend (no fetching alongside the receiver) and
- * `setupMediaSource` holds its UA-closed MediaSource until the session ends,
- * then rebuilds and restores position (see its "Liveness recovery" doc).
+ * see `REMOTE_INACTIVE_SETTLE_MS`) is written to two slots: the fact
+ * `state.remotePlaybackActive`, read by `setupMediaSource` to hold its
+ * UA-closed MediaSource until the session ends, then rebuild and restore
+ * position (see its "Liveness recovery" doc); and the intent-level
+ * `state.loadingSuspended`, the optional key the `loadXSegments` dispatchers
+ * observe (no fetching alongside the receiver) — declared here, by the
+ * writer, so the cause→policy mapping stays with the feature.
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -47,6 +49,7 @@ import { createMachineReactor } from '../../../core/reactors/create-machine-reac
 import { effect } from '../../../core/signals/effect';
 import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
+import type { SegmentLoadingState } from './load-segments';
 
 /**
  * How long the platform's remote-playback signals must read *inactive*
@@ -83,6 +86,7 @@ function setupAirPlaySetup({
     presentation: ReadonlySignal<MaybeResolvedPresentation | undefined>;
     disableRemotePlayback: ReadonlySignal<boolean | undefined>;
     remotePlaybackActive: Signal<boolean | undefined>;
+    loadingSuspended: Signal<SegmentLoadingState['loadingSuspended']>;
   };
   context: {
     mediaElement: ReadonlySignal<HTMLMediaElement | undefined>;
@@ -101,11 +105,12 @@ function setupAirPlaySetup({
         entry: () => {
           const mediaElement = context.mediaElement.get() as WebKitVideoElement;
 
-          // Reflect the remote-playback session on `state.remotePlaybackActive`
-          // — the fact slot the rest of the engine keys off: `setupMediaSource`
-          // holds the (UA-closed) MediaSource attached until the session ends
-          // and rebuilds on the falling edge; `loadXSegments` suspend so the
-          // engine doesn't fetch alongside the receiver.
+          // Reflect the remote-playback session on two slots: the fact
+          // (`remotePlaybackActive` — `setupMediaSource` holds the UA-closed
+          // MediaSource attached until the session ends and rebuilds on the
+          // falling edge) and the policy derived from it (`loadingSuspended`
+          // — the `loadXSegments` dispatchers park so the engine doesn't
+          // fetch alongside the receiver).
           //
           // Two platform signals feed the fact, because neither is reliable
           // alone (see `REMOTE_INACTIVE_SETTLE_MS`): the standard Remote
@@ -120,21 +125,26 @@ function setupAirPlaySetup({
             remote?.state === 'connecting' ||
             remote?.state === 'connected';
 
+          const setSessionActive = (active: boolean) => {
+            state.remotePlaybackActive.set(active);
+            state.loadingSuspended.set(active);
+          };
+
           let settleTimer: ReturnType<typeof setTimeout> | undefined;
           const sync = () => {
             if (isSessionActive()) {
               clearTimeout(settleTimer);
               settleTimer = undefined;
-              state.remotePlaybackActive.set(true);
+              setSessionActive(true);
             } else if (peek(state.remotePlaybackActive)) {
               // Falling edge: don't trust an instantaneous inactive reading —
               // re-check once the platform signals have settled.
               settleTimer ??= setTimeout(() => {
                 settleTimer = undefined;
-                state.remotePlaybackActive.set(isSessionActive());
+                setSessionActive(isSessionActive());
               }, REMOTE_INACTIVE_SETTLE_MS);
             } else {
-              state.remotePlaybackActive.set(false);
+              setSessionActive(false);
             }
           };
           const listenerCleanup = new AbortController();
@@ -193,7 +203,7 @@ function setupAirPlaySetup({
             mediaElement.disableRemotePlayback = true;
             // Don't strand the engine held/suspended if we tear down
             // mid-session (author opt-out, detach, destroy).
-            state.remotePlaybackActive.set(false);
+            setSessionActive(false);
           };
         },
       },
@@ -202,7 +212,7 @@ function setupAirPlaySetup({
 }
 
 export const setupAirPlay = defineBehavior({
-  stateKeys: ['presentation', 'disableRemotePlayback', 'remotePlaybackActive'],
+  stateKeys: ['presentation', 'disableRemotePlayback', 'remotePlaybackActive', 'loadingSuspended'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupAirPlaySetup,
 });

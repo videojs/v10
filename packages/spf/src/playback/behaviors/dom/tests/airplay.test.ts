@@ -60,6 +60,7 @@ function makeSignals(presentation?: MaybeResolvedPresentation) {
       presentation: signal<MaybeResolvedPresentation | undefined>(presentation),
       disableRemotePlayback: signal<boolean | undefined>(undefined),
       remotePlaybackActive: signal<boolean | undefined>(undefined),
+      loadingSuspended: signal<boolean | undefined>(undefined),
     },
     context: {
       mediaElement: signal<HTMLMediaElement | undefined>(undefined),
@@ -315,10 +316,13 @@ describe('setupAirPlay', () => {
     await vi.advanceTimersByTimeAsync(0);
     // Sync at attach: not wireless → session not active.
     expect(state.remotePlaybackActive.get()).toBe(false);
+    expect(state.loadingSuspended.get()).toBe(false);
 
     setWireless(video, true);
     await vi.advanceTimersByTimeAsync(0);
     expect(state.remotePlaybackActive.get()).toBe(true);
+    // The intent-level policy slot is written alongside the fact.
+    expect(state.loadingSuspended.get()).toBe(true);
 
     // The falling edge is debounced (Safari transiently reports inactive
     // mid-handoff) — the fact holds until the inactive reading settles.
@@ -328,6 +332,7 @@ describe('setupAirPlay', () => {
 
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
     expect(state.remotePlaybackActive.get()).toBe(false);
+    expect(state.loadingSuspended.get()).toBe(false);
 
     reactor.destroy();
   });
@@ -426,6 +431,7 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(undefined);
     await flush();
     expect(state.remotePlaybackActive.get()).toBe(false);
+    expect(state.loadingSuspended.get()).toBe(false);
 
     // The listener is gone — a stray wireless event does nothing.
     setWireless(video, true);

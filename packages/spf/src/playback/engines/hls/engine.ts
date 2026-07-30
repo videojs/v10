@@ -146,14 +146,20 @@ export interface SimpleHlsEngineState {
   /**
    * A remote-playback session (AirPlay wireless target) currently owns
    * presentation. Sole writer: `setupAirPlay` (WebKit wireless flag +
-   * Remote Playback API state, falling edge debounced). Readers:
+   * Remote Playback API state, falling edge debounced). Sole reader:
    * `setupMediaSource` (defers the post-close rebuild until the session
-   * ends) and `loadTextTrackSegments` (suspends text fetching — text actors
-   * are MediaSource-independent and would otherwise fetch alongside the
-   * receiver; v/a loading stops structurally when the UA closes the
-   * MediaSource).
+   * ends). The loading-policy consequence is carried separately on
+   * `loadingSuspended`.
    */
   remotePlaybackActive?: boolean;
+  /**
+   * Intent-level loading policy derived from the session fact above —
+   * written alongside it by `setupAirPlay` (the only behavior declaring the
+   * key) and observed by the `loadXSegments` dispatchers, which park in
+   * `'dormant'` while `true` so the engine doesn't fetch alongside the
+   * receiver. See `SegmentLoadingState['loadingSuspended']`.
+   */
+  loadingSuspended?: boolean;
   /**
    * Author intent for the AirPlay/remote-playback picker, written by the media
    * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
