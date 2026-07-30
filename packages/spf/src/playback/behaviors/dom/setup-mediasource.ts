@@ -39,12 +39,13 @@
  * AirPlay handoff — see `setupAirPlay` — or a ManagedMediaSource evicted
  * under memory pressure), and a closed MediaSource can never reopen. The
  * `sourceclose` listener tears the attachment down synchronously and records
- * the close on a local phase signal, which drives the machine out and back in
- * with a fresh MediaSource for the *same* source. Cause-agnostic. One rule:
- * a pending rebuild honors an observed `loadingSuspended` (attaching runs
- * `element.load()` — new loading work, e.g. resource selection under a live
- * AirPlay receiver). Suspension only holds *rebuilds*; it never tears down a
- * live attachment.
+ * the close on a local liveness fact, which holds the machine out until the
+ * fact is consumed — then the re-derive comes back in with a fresh
+ * MediaSource for the *same* source. Cause-agnostic. Consumption honors an
+ * observed `loadingSuspended` (attaching runs `element.load()` — new loading
+ * work, e.g. resource selection under a live AirPlay receiver), and happens
+ * only while the machine is out, so a suspension can never tear down a live
+ * attachment.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
  * (`setupVideoBufferActors`, `setupAudioBufferActors`,
@@ -77,28 +78,17 @@ export interface MediaSourceContext {
 
 type MediaSourceFsmState = 'preconditions-unmet' | 'mediasource-attached';
 
-/**
- * Liveness phase of the owned MediaSource. `'closed'` (the UA fired
- * `sourceclose`) forces the machine out; the state-exit hands it to
- * `'rebuild-pending'`, which re-derives into a fresh attach once any
- * observed suspension lifts; entry returns it to `'live'`.
- */
-type MediaSourcePhase = 'live' | 'closed' | 'rebuild-pending';
-
 function deriveState(
   presentation: MaybeResolvedPresentation | undefined,
   mediaElement: HTMLMediaElement | undefined,
-  phase: MediaSourcePhase,
-  loadingSuspended: boolean
+  mediaSourceClosed: boolean
 ): MediaSourceFsmState {
   if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
   // The UA closed the owned MediaSource — a closed MediaSource can never
-  // reopen, so cycle out; the exit converts the phase to 'rebuild-pending'
-  // and the re-derive comes back in.
-  if (phase === 'closed') return 'preconditions-unmet';
-  // A pending rebuild initiates new loading work (attach runs `load()`), so
-  // it waits out an observed suspension. Never applies to a live attachment.
-  if (phase === 'rebuild-pending' && loadingSuspended) return 'preconditions-unmet';
+  // reopen, so there is no live attachment to be in. The fact stands until
+  // the `'preconditions-unmet'` effects consume it (see below); the reset
+  // then re-derives into a fresh attach for the same source.
+  if (mediaSourceClosed) return 'preconditions-unmet';
   return 'mediasource-attached';
 }
 
@@ -121,17 +111,31 @@ function setupMediaSourceSetup({
   const loadingSuspended = (state as { loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']> })
     .loadingSuspended;
 
-  const phase = signal<MediaSourcePhase>('live');
+  // Liveness fact for the currently-owned MediaSource, flipped by the
+  // entry's `sourceclose` listener. Consumed in `'preconditions-unmet'`.
+  const mediaSourceClosed = signal(false);
 
   const derivedStateSignal = computed(() =>
-    deriveState(state.presentation.get(), context.mediaElement.get(), phase.get(), !!loadingSuspended?.get())
+    deriveState(state.presentation.get(), context.mediaElement.get(), mediaSourceClosed.get())
   );
 
   return createMachineReactor<MediaSourceFsmState>({
     initial: 'preconditions-unmet',
     monitor: () => derivedStateSignal.get(),
     states: {
-      'preconditions-unmet': {},
+      'preconditions-unmet': {
+        // Consume a recorded close once new loading work may initiate — the
+        // reset re-derives into `'mediasource-attached'`, rebuilding a fresh
+        // MediaSource for the same source. While an observed
+        // `loadingSuspended` holds, the fact stands and the rebuild waits:
+        // attaching runs `element.load()`, which is exactly the loading work
+        // the suspension forbids. Consuming only from this state means a
+        // suspension can never tear down a live attachment — there is no
+        // code path from `loadingSuspended` to an exit.
+        effects: () => {
+          if (!loadingSuspended?.get() && peek(mediaSourceClosed)) mediaSourceClosed.set(false);
+        },
+      },
 
       'mediasource-attached': {
         // entry body is auto-untracked. deriveState handles source resets via
@@ -141,7 +145,6 @@ function setupMediaSourceSetup({
         entry: () => {
           const mediaElement = context.mediaElement.get()!;
           const controller = new AbortController();
-          phase.set('live');
 
           const mediaSource = createMediaSource({ preferManaged: true });
           // Sync attach: the returned `detach` closes over the element +
@@ -170,13 +173,13 @@ function setupMediaSourceSetup({
           // eviction) tears the attachment down synchronously — detach skips
           // its `load()` reset for a closed MediaSource (see
           // `attachMediaSource`), leaving the element as the session or
-          // eviction left it — and records the close on `phase` to drive the
-          // rebuild re-derive.
+          // eviction left it — and records the close to drive the rebuild
+          // re-derive.
           listen(
             mediaSource,
             'sourceclose',
             () => {
-              phase.set('closed');
+              mediaSourceClosed.set(true);
               teardown();
             },
             { signal: controller.signal }
@@ -208,14 +211,9 @@ function setupMediaSourceSetup({
 
           publishWhenOpen().catch((err) => console.error('[setupMediaSource] failed to publish MediaSource:', err));
 
-          return () => {
-            teardown();
-            // A UA-closed exit becomes a pending rebuild — the re-derive then
-            // either rebuilds immediately or waits out an observed suspension
-            // (see `deriveState`). Source-identity exits leave the phase
-            // `'live'` for the next entry.
-            if (peek(phase) === 'closed') phase.set('rebuild-pending');
-          };
+          // State-exit cleanup — fires on source unload, element detach, or
+          // behavior destroy; a no-op after a `sourceclose` already tore down.
+          return teardown;
         },
       },
     },
