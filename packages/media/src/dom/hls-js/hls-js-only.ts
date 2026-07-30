@@ -10,6 +10,7 @@ import type {
 } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaAirPlayMixin } from './airplay-bridge';
+import { type DrmConfig, HlsJsMediaDrmMixin, type HlsJsMediaDrmProps } from './drm';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaLiveMixin } from './live';
 import { HlsJsMediaMediaTracksMixin } from './media-tracks';
@@ -27,10 +28,17 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   autoStartLoad: false,
 };
 
+export interface HlsJsOnlyMediaParams {
+  /** Options forwarded to the hls.js constructor, merged over {@link defaultHlsConfig}. */
+  config: Partial<HlsConfig>;
+  /** License servers for DRM-protected playback. Consumed by the DRM mixin. */
+  drm?: DrmConfig | null;
+}
+
 class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
 
-  constructor(params: { config: Partial<HlsConfig> }) {
+  constructor(params: HlsJsOnlyMediaParams) {
     super();
     this.#engine = new Hls({
       ...defaultHlsConfig,
@@ -70,7 +78,8 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
 interface HlsJsMediaCapabilities
   extends MediaStreamTypeCapability,
     MediaLiveCapability,
-    Pick<MediaSourceCapability, 'preload'> {
+    Pick<MediaSourceCapability, 'preload'>,
+    HlsJsMediaDrmProps {
   readonly error: MediaError | null;
 }
 
@@ -80,7 +89,7 @@ const HlsJsOnlyMediaComposed = HlsJsMediaAirPlayMixin(
       HlsJsMediaStreamTypeMixin(
         HlsJsMediaMediaTracksMixin(
           HlsJsMediaMetadataTracksMixin(
-            HlsJsMediaTextTracksMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase)))
+            HlsJsMediaTextTracksMixin(HlsJsMediaDrmMixin(HlsJsMediaErrorsMixin(MediaTracksMixin(HlsJsOnlyMediaBase))))
           )
         )
       )

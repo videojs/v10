@@ -3,7 +3,7 @@ import { MediaError } from '../../../core/media-error';
 import type { RemotePlaybackLike } from '../../../core/types';
 import { addMediaComponent, type MediaComponent } from '../../media-host';
 import { NativeHlsMedia } from '../../native-hls';
-import { ContentTypes, Hls, HlsJsMedia } from '../index';
+import { ContentTypes, Hls, HlsJsMedia, type HlsSource } from '../index';
 
 afterEach(() => {
   document.body.innerHTML = '';
@@ -224,6 +224,73 @@ describe('HlsJsMedia', () => {
       // A new source object signals a fresh start: options set in `setup()` are
       // dropped rather than merged.
       expect(media.source).toEqual({ engine: { maxBufferLength: 60 } });
+    });
+  });
+
+  describe('drm', () => {
+    const WIDEVINE_LICENSE = 'https://license.test/widevine';
+
+    function setupMse(source: HlsSource) {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const video = document.createElement('video');
+      document.body.appendChild(video);
+
+      const media = new HlsJsMedia();
+      media.attach(video);
+      media.source = { ...source, src: 'https://example.com/video.m3u8' };
+      media.load();
+
+      return { media, video };
+    }
+
+    it('enables EME on the hls.js engine from `source.keySystems`', () => {
+      const { media } = setupMse({ keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } });
+
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
+      expect(media.drmType).toBeNull();
+    });
+
+    it('leaves EME disabled without `source.keySystems`', () => {
+      const { media } = setupMse({});
+      expect(media.engine!.config.emeEnabled).toBe(false);
+    });
+
+    it('reuses the engine for an equivalent key systems config', () => {
+      const { media } = setupMse({ keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } });
+      const engine = media.engine;
+
+      // Same license servers in a new object (e.g. an inline React prop).
+      media.source = { src: media.src, keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } };
+      media.load();
+
+      expect(media.engine).toBe(engine);
+    });
+
+    it('recreates the engine when a license server changes', () => {
+      const { media } = setupMse({ keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } });
+      const engine = media.engine;
+
+      media.source = { src: media.src, keySystems: { widevine: { licenseUrl: 'https://other.test/widevine' } } };
+      media.load();
+
+      expect(media.engine).not.toBe(engine);
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' },
+      });
+    });
+
+    it('warns and reports no DRM system for native playback', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { media } = setup();
+      media.source = { ...media.source, keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } };
+      media.load();
+
+      expect(media.engine).toBeNull();
+      expect(media.drmType).toBeNull();
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('source.keySystems'));
     });
   });
 
