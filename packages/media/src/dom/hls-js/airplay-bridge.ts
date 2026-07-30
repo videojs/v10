@@ -1,6 +1,8 @@
 import { isWebKitAirPlayCapable, listen, type WebKitVideoElement } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
+import { RemotePlaybackPreference } from '../airplay/remote-playback-preference';
+import { getMediaComponents } from '../media-host';
 import type { HlsEngineHost } from './types';
 
 /**
@@ -37,12 +39,17 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       const target = this.target;
       if (!target || !isWebKitAirPlayCapable(target)) return;
 
-      // Counter the `disableRemotePlayback = true` that other code paths may
-      // set for MSE; AirPlay requires the picker to be available on this
-      // element.
-      target.disableRemotePlayback = false;
+      // Counter the `disableRemotePlayback = true` that other code paths set
+      // for MSE; AirPlay requires the picker on this element.
+      if (!this.#authorDisabledRemotePlayback()) {
+        target.disableRemotePlayback = false;
+      }
       this.#attachSource(target);
       this.#setupLoadControl(target);
+    }
+
+    #authorDisabledRemotePlayback(): boolean {
+      return getMediaComponents(this).get(RemotePlaybackPreference)?.developerWantsDisabled ?? false;
     }
 
     #attachSource(target: WebKitVideoElement) {

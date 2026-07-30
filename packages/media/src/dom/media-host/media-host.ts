@@ -11,6 +11,7 @@ import {
 } from '../../core/types';
 import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
+export { RemotePlaybackPreference } from '../airplay/remote-playback-preference';
 export {
   addMediaComponent,
   getMediaComponents,

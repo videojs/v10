@@ -1,6 +1,8 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { RemotePlaybackPreference } from '../../airplay/remote-playback-preference';
+import { addMediaComponent } from '../../media-host';
 import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 
@@ -85,6 +87,37 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const video = createVideo();
     video.disableRemotePlayback = true;
     host.target = video;
+
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+    expect(video.disableRemotePlayback).toBe(false);
+  });
+
+  it('preserves disableRemotePlayback when the author explicitly disabled it', () => {
+    const engine = createEngine();
+    const host = new AirPlayHost(engine);
+    const video = createVideo();
+    host.target = video;
+
+    const preference = new RemotePlaybackPreference();
+    addMediaComponent(host as any, preference);
+    // The author opts out of remote playback through the host API.
+    (preference.targetOverride as { disableRemotePlayback: boolean }).disableRemotePlayback = true;
+
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+    expect(video.disableRemotePlayback).toBe(true);
+  });
+
+  it('enables AirPlay when disableRemotePlayback was set programmatically (no author intent)', () => {
+    const engine = createEngine();
+    const host = new AirPlayHost(engine);
+    const video = createVideo();
+    // hls.js / ManagedMediaSource sets this directly on the element, not via the host.
+    video.disableRemotePlayback = true;
+    host.target = video;
+
+    addMediaComponent(host as any, new RemotePlaybackPreference());
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
