@@ -76,3 +76,15 @@
     opacity: 1;
   }
 }
+
+/*
+ * Markdown component overrides also decorate fenced code in recent Sätteri
+ * versions. Keep the inline-code treatment out of Shiki blocks.
+ */
+.astro-code > code {
+  padding: 0;
+  overflow-wrap: normal;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+}
