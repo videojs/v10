@@ -1,5 +1,6 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals } from '../../../../core/composition/create-composition';
+import type { Reactor } from '../../../../core/reactors/create-machine-reactor';
 import { signal } from '../../../../core/signals/primitives';
 import type { Presentation } from '../../../../media/types';
 import { type MediaSourceContext, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
@@ -73,7 +74,13 @@ function setupSetupMediaSource(
 ) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
-  const reactor = setupMediaSource.setup({ state, context });
+  // setupMediaSource is a manual `Behavior` literal (see its definition):
+  // its public setup signature requires config even though the behavior
+  // takes none, and widens the return to BehaviorCleanup — the real return
+  // is the reactor.
+  const reactor = setupMediaSource.setup({ state, context, config: {} }) as Reactor<
+    'preconditions-unmet' | 'mediasource-attached' | 'destroying' | 'destroyed'
+  >;
   return { state, context, reactor };
 }
 
