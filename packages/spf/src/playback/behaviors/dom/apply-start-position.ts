@@ -63,8 +63,8 @@ export interface StartPositionState {
   startPosition?: number;
   /**
    * One-shot companion command: resume playing when the pending
-   * `startPosition` applies. Written by `setupMediaSource`'s recovery
-   * snapshot (element was playing when the UA killed the MediaSource);
+   * `startPosition` applies. Written by `setupAirPlay`'s session-end
+   * snapshot (element was playing on the receiver when the session ended);
    * consumed alongside `startPosition`.
    */
   resumePlayback?: boolean;

@@ -77,12 +77,14 @@ export interface SegmentLoadingState {
   /** True once a preload-overriding event has fired for the current source. */
   loadActivated?: boolean;
   /**
-   * Intent-level policy input: park loading (`'dormant'`, highest
-   * precedence) while `true`. **Observed, never declared**: no variant
-   * lists this key in `stateKeys`, so the slot exists only in compositions
-   * where a feature behavior declares and writes it (e.g. `setupAirPlay`,
-   * while a remote-playback session owns presentation). An absent slot
-   * means never suspended. See
+   * Intent-level policy input: initiate no new loading work while `true`.
+   * Read here by the `loadXSegments` dispatchers (park in `'dormant'`,
+   * highest precedence) and by `setupMediaSource` (a pending MediaSource
+   * rebuild waits — attach runs the element's load algorithm). **Observed,
+   * never declared**: no reader lists this key in `stateKeys`, so the slot
+   * exists only in compositions where a feature behavior declares and
+   * writes it (e.g. `setupAirPlay`, while a remote-playback session owns
+   * presentation). An absent slot means never suspended. See
    * `internal/decisions/spf/optional-observed-state-keys.md`.
    */
   loadingSuspended?: boolean;

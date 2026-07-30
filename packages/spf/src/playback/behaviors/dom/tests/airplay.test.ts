@@ -59,8 +59,9 @@ function makeSignals(presentation?: MaybeResolvedPresentation) {
     state: {
       presentation: signal<MaybeResolvedPresentation | undefined>(presentation),
       disableRemotePlayback: signal<boolean | undefined>(undefined),
-      remotePlaybackActive: signal<boolean | undefined>(undefined),
       loadingSuspended: signal<boolean | undefined>(undefined),
+      startPosition: signal<number | undefined>(undefined),
+      resumePlayback: signal<boolean | undefined>(undefined),
     },
     context: {
       mediaElement: signal<HTMLMediaElement | undefined>(undefined),
@@ -100,7 +101,7 @@ describe('setupAirPlay', () => {
     // A wireless event must not touch engine state on an unsupported platform.
     setWireless(video, true);
     await flush();
-    expect(state.remotePlaybackActive.get()).toBeUndefined();
+    expect(state.loadingSuspended.get()).toBeUndefined();
 
     reactor.destroy();
   });
@@ -305,7 +306,7 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
-  it('mirrors the wireless target onto remotePlaybackActive (falling edge settles)', async () => {
+  it('mirrors the wireless target onto loadingSuspended (falling edge settles)', async () => {
     vi.useFakeTimers();
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
@@ -315,29 +316,56 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
     // Sync at attach: not wireless → session not active.
-    expect(state.remotePlaybackActive.get()).toBe(false);
     expect(state.loadingSuspended.get()).toBe(false);
 
     setWireless(video, true);
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(true);
-    // The intent-level policy slot is written alongside the fact.
     expect(state.loadingSuspended.get()).toBe(true);
 
     // The falling edge is debounced (Safari transiently reports inactive
-    // mid-handoff) — the fact holds until the inactive reading settles.
+    // mid-handoff) — the suspension holds until the inactive reading settles.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
-    expect(state.remotePlaybackActive.get()).toBe(false);
     expect(state.loadingSuspended.get()).toBe(false);
 
     reactor.destroy();
   });
 
-  it('holds remotePlaybackActive through a transient inactive flap', async () => {
+  it('snapshots the element playback state at the settled session end', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    Object.defineProperty(video, 'paused', { value: false, configurable: true });
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.loadingSuspended.get()).toBe(true);
+
+    // No commands mid-session: the element (mirroring the receiver) is the
+    // source of truth until the session ends.
+    expect(state.startPosition.get()).toBeUndefined();
+    expect(state.resumePlayback.get()).toBeUndefined();
+
+    // Settled session end: the element still carries the receiver-mirrored
+    // state, and the rebuild only proceeds once the suspension release lets
+    // it — so the one-shot commands are written first, from a pre-`load()`
+    // element.
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+    expect(state.startPosition.get()).toBe(87);
+    expect(state.resumePlayback.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(false);
+
+    reactor.destroy();
+  });
+
+  it('holds loadingSuspended through a transient inactive flap', async () => {
     vi.useFakeTimers();
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
@@ -346,19 +374,19 @@ describe('setupAirPlay', () => {
     const video = makeWebKitVideo({ wireless: true });
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     // Safari 26.4's engage sequence: right after `sourceclose`, the wireless
     // flag transiently reads false and the changed event fires, then flips
-    // back as the receiver pipeline settles. The fact must not drop — a drop
-    // releases setupMediaSource's rebuild hold and kills the session.
+    // back as the receiver pipeline settles. The suspension must not drop —
+    // a drop releases setupMediaSource's rebuild hold and kills the session.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(SETTLE_MS / 2);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     setWireless(video, true);
     await vi.advanceTimersByTimeAsync(SETTLE_MS * 2);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     reactor.destroy();
   });
@@ -373,30 +401,30 @@ describe('setupAirPlay', () => {
     const remote = attachFakeRemote(video);
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(false);
+    expect(state.loadingSuspended.get()).toBe(false);
 
     // `remote.state = 'connecting'` leads the engage — it fires when the user
     // picks a receiver, before WebKit's wireless flag flips or the MMS closes.
     remote.setState('connecting', 'connecting');
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     remote.setState('connected', 'connect');
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     // While `remote.state` reads active, a wireless=false event alone must
     // not even start the falling edge.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(SETTLE_MS * 2);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     // True disengage: both signals inactive → clears after the settle window.
     remote.setState('disconnected', 'disconnect');
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
-    expect(state.remotePlaybackActive.get()).toBe(false);
+    expect(state.loadingSuspended.get()).toBe(false);
 
     reactor.destroy();
   });
@@ -410,12 +438,12 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     await flush();
 
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     reactor.destroy();
   });
 
-  it('releases remotePlaybackActive when torn down mid-session', async () => {
+  it('releases loadingSuspended when torn down mid-session', async () => {
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
     const reactor = setupAirPlay.setup({ state, context });
@@ -424,19 +452,21 @@ describe('setupAirPlay', () => {
     context.mediaElement.set(video);
     context.mediaSource.set(fakeMediaSource);
     await flush();
-    expect(state.remotePlaybackActive.get()).toBe(true);
+    expect(state.loadingSuspended.get()).toBe(true);
 
     // Detach mid-session must not strand setupMediaSource holding a dead MS
-    // or the loaders suspended.
+    // or the loaders suspended — and it is not a session end, so no restore
+    // commands are written.
     context.mediaElement.set(undefined);
     await flush();
-    expect(state.remotePlaybackActive.get()).toBe(false);
     expect(state.loadingSuspended.get()).toBe(false);
+    expect(state.startPosition.get()).toBeUndefined();
+    expect(state.resumePlayback.get()).toBeUndefined();
 
     // The listener is gone — a stray wireless event does nothing.
     setWireless(video, true);
     await flush();
-    expect(state.remotePlaybackActive.get()).toBe(false);
+    expect(state.loadingSuspended.get()).toBe(false);
 
     reactor.destroy();
   });

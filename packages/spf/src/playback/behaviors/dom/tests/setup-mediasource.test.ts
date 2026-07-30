@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { ContextSignals, StateSignals } from '../../../../core/composition/create-composition';
+import type { ContextSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
 import type { Presentation } from '../../../../media/types';
 import { type MediaSourceContext, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
@@ -43,12 +43,12 @@ function makeResolvedPresentation(overrides: Partial<Presentation> = {}): Presen
   } as Presentation;
 }
 
-function makeState(initial: MediaSourceState = {}): StateSignals<MediaSourceState> {
+function makeState(initial: MediaSourceState & { loadingSuspended?: boolean } = {}) {
   return {
     presentation: signal<MediaSourceState['presentation']>(initial.presentation),
-    startPosition: signal<number | undefined>(initial.startPosition),
-    resumePlayback: signal<boolean | undefined>(initial.resumePlayback),
-    remotePlaybackActive: signal<boolean | undefined>(initial.remotePlaybackActive),
+    // Observed, never declared — present here to simulate a composition
+    // where a feature behavior (e.g. setupAirPlay) declares the key.
+    loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
   };
 }
 
@@ -67,7 +67,10 @@ function makeContext(initial: MediaSourceContext = {}): ContextSignals<MediaSour
   };
 }
 
-function setupSetupMediaSource(initialState: MediaSourceState = {}, initialContext: MediaSourceContext = {}) {
+function setupSetupMediaSource(
+  initialState: MediaSourceState & { loadingSuspended?: boolean } = {},
+  initialContext: MediaSourceContext = {}
+) {
   const state = makeState(initialState);
   const context = makeContext(initialContext);
   const reactor = setupMediaSource.setup({ state, context });
@@ -320,66 +323,7 @@ describe('setupMediaSource', () => {
       reactor.destroy();
     });
 
-    it('snapshots element.currentTime + playing state on a recovery exit', async () => {
-      const mediaElement = makeVideo(42.5, { paused: false });
-      const { state, context, reactor } = setupSetupMediaSource();
-      context.mediaElement.set(mediaElement);
-      state.presentation.set(makeResolvedPresentation());
-      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
-      const first = context.mediaSource.get()!;
-
-      transitionMediaSource(first, 'closed', 'sourceclose');
-
-      // Recovery detach skips its load() reset, so the element still carries
-      // the playback state; the rebuild's entry snapshots it before the
-      // fresh attach resets the element — applyStartPosition then restores
-      // position AND playing state on the rebuilt source.
-      await vi.waitFor(() => {
-        expect(state.startPosition.get()).toBe(42.5);
-        expect(state.resumePlayback.get()).toBe(true);
-      });
-
-      reactor.destroy();
-    });
-
-    it('snapshots resumePlayback=false when the element was paused at recovery', async () => {
-      const mediaElement = makeVideo(42.5, { paused: true });
-      const { state, context, reactor } = setupSetupMediaSource();
-      context.mediaElement.set(mediaElement);
-      state.presentation.set(makeResolvedPresentation());
-      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
-      const first = context.mediaSource.get()!;
-
-      transitionMediaSource(first, 'closed', 'sourceclose');
-
-      await vi.waitFor(() => {
-        expect(state.startPosition.get()).toBe(42.5);
-        // A paused element must come back paused — no surprise autoplay.
-        expect(state.resumePlayback.get()).toBe(false);
-      });
-
-      reactor.destroy();
-    });
-
-    it('does not snapshot on an ordinary source change', async () => {
-      const mediaElement = makeVideo(42.5, { paused: false });
-      const { state, context, reactor } = setupSetupMediaSource();
-      context.mediaElement.set(mediaElement);
-      state.presentation.set(makeResolvedPresentation());
-      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
-
-      // Source replacement routes through unresolved — a new source must
-      // start at its own beginning, not inherit the old position/play state.
-      state.presentation.set({ url: 'https://example.com/next.m3u8' });
-
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      expect(state.startPosition.get()).toBeUndefined();
-      expect(state.resumePlayback.get()).toBeUndefined();
-
-      reactor.destroy();
-    });
-
-    it('detaches on close during a session, defers the rebuild to its falling edge', async () => {
+    it('defers a pending rebuild while loading is suspended, rebuilds on release', async () => {
       const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
       const first = makeMediaSource();
@@ -393,16 +337,15 @@ describe('setupMediaSource', () => {
         .mockImplementationOnce(() => ({ url: 'blob:second', detach: vi.fn() }));
 
       const { state, context, reactor } = setupSetupMediaSource();
-      const mediaElement = makeVideo(12, { paused: false });
-      context.mediaElement.set(mediaElement);
+      context.mediaElement.set(makeVideo(12, { paused: false }));
       state.presentation.set(makeResolvedPresentation());
       await vi.waitFor(() => expect(context.mediaSource.get()).toBe(first));
 
-      // AirPlay engaged: the receiver owns playback. Safari closes the MMS —
-      // the corpse detaches right away (the ordinary cascade stops the MSE
-      // pipeline), but no rebuild may run under the live session: attaching
-      // would load() out from under the receiver.
-      state.remotePlaybackActive.set(true);
+      // AirPlay engaged: setupAirPlay holds `loadingSuspended`; Safari closes
+      // the MMS. The corpse detaches right away (the ordinary cascade stops
+      // the MSE pipeline), but no rebuild may run while loading is suspended:
+      // attaching would load() out from under the receiver.
+      state.loadingSuspended.set(true);
       transitionMediaSource(first, 'closed', 'sourceclose');
 
       await vi.waitFor(() => {
@@ -411,20 +354,32 @@ describe('setupMediaSource', () => {
       });
       await new Promise((resolve) => setTimeout(resolve, 20));
       expect(createMediaSource).toHaveBeenCalledTimes(1);
-      // No mid-session restore commands: the element (mirroring the
-      // receiver) is the source of truth until the session ends.
-      expect(state.startPosition.get()).toBeUndefined();
 
-      // Session ends: the element still mirrors the receiver's final state —
-      // the rebuild's entry snapshots it before the fresh attach resets it.
-      (mediaElement as unknown as { currentTime: number }).currentTime = 87;
-      state.remotePlaybackActive.set(false);
+      // Suspension lifts (session ended): the pending rebuild proceeds.
+      state.loadingSuspended.set(false);
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBe(second));
 
-      await vi.waitFor(() => {
-        expect(state.startPosition.get()).toBe(87);
-        expect(state.resumePlayback.get()).toBe(true);
-        expect(context.mediaSource.get()).toBe(second);
-      });
+      reactor.destroy();
+    });
+
+    it('never tears down a live attachment on suspension alone', async () => {
+      const { attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+      const detach = vi.fn();
+      vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
+
+      const { state, context, reactor } = setupSetupMediaSource();
+      context.mediaElement.set(makeVideo());
+      state.presentation.set(makeResolvedPresentation());
+      await vi.waitFor(() => expect(context.mediaSource.get()).toBeDefined());
+      const first = context.mediaSource.get();
+
+      // Suspension rises before the UA closes anything (the engage's rising
+      // edge leads `sourceclose`). A live attachment must survive it —
+      // detaching here would load()-reset the element mid-handoff.
+      state.loadingSuspended.set(true);
+      await new Promise((resolve) => setTimeout(resolve, 20));
+      expect(detach).not.toHaveBeenCalled();
+      expect(context.mediaSource.get()).toBe(first);
 
       reactor.destroy();
     });

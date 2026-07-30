@@ -130,34 +130,25 @@ export interface SimpleHlsEngineState {
   /**
    * One-shot command: start the current source at this position
    * (presentation-timeline seconds). Written by consumers or by
-   * `setupMediaSource`'s recovery snapshot; consumed (cleared) by
+   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
    * `applyStartPosition` once the element seeks. See
    * `behaviors/dom/apply-start-position.ts`.
    */
   startPosition?: number;
   /**
    * One-shot companion to `startPosition`: resume playing once the pending
-   * position applies. Written by `setupMediaSource`'s recovery snapshot when
-   * the element was playing as the UA killed the MediaSource (the rebuild's
-   * `load()` forces `paused = true`); consumed with `startPosition` by
-   * `applyStartPosition`.
+   * position applies. Written by `setupAirPlay`'s session-end snapshot when
+   * the element was playing on the receiver (the rebuild's `load()` forces
+   * `paused = true`); consumed with `startPosition` by `applyStartPosition`.
    */
   resumePlayback?: boolean;
   /**
-   * A remote-playback session (AirPlay wireless target) currently owns
-   * presentation. Sole writer: `setupAirPlay` (WebKit wireless flag +
-   * Remote Playback API state, falling edge debounced). Sole reader:
-   * `setupMediaSource` (defers the post-close rebuild until the session
-   * ends). The loading-policy consequence is carried separately on
-   * `loadingSuspended`.
-   */
-  remotePlaybackActive?: boolean;
-  /**
-   * Intent-level loading policy derived from the session fact above —
-   * written alongside it by `setupAirPlay` (the only behavior declaring the
-   * key) and observed by the `loadXSegments` dispatchers, which park in
-   * `'dormant'` while `true` so the engine doesn't fetch alongside the
-   * receiver. See `SegmentLoadingState['loadingSuspended']`.
+   * Intent-level loading policy: initiate no new loading work while `true`.
+   * Written by `setupAirPlay` (the only behavior declaring the key) while a
+   * remote-playback session owns presentation; observed by the
+   * `loadXSegments` dispatchers (park in `'dormant'`) and by
+   * `setupMediaSource` (a pending rebuild waits). See
+   * `SegmentLoadingState['loadingSuspended']`.
    */
   loadingSuspended?: boolean;
   /**

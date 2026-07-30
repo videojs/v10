@@ -9,7 +9,9 @@ date: 2026-07-30
 
 A behavior may *observe* a state key it does not declare in `stateKeys`, when the key is an optional policy input whose presence is decided by the feature that writes it. The reader types the slot as optional (`key?: ReadonlySignal<T>`) and reads with optional access; the writer declares the key in its own `stateKeys`, which is what materializes the slot in a composition. An absent slot must mean the neutral policy (e.g. "not suspended").
 
-First use: `loadingSuspended` — the `loadXSegments` dispatchers park in `'dormant'` while it holds, but no load-segments variant declares it. `setupAirPlay` declares and writes it (alongside the session fact `remotePlaybackActive`, whose only reader is `setupMediaSource`'s rebuild hold). Compositions without a remote-playback feature (e.g. background-video) carry no slot and pay nothing.
+First use: `loadingSuspended` — "initiate no new loading work." The `loadXSegments` dispatchers park in `'dormant'` while it holds, and `setupMediaSource` holds a pending rebuild (attach runs the element's load algorithm); neither reader declares it. `setupAirPlay` declares and writes it. Compositions without a remote-playback feature (e.g. background-video) carry no slot and pay nothing.
+
+The key deliberately serves both readers ("double duty") because one sentence covers both: don't *initiate* loading work — a segment fetch and an element `load()` alike. Split trigger: the day a writer needs to suspend fetch dispatch and attach-holds independently (e.g. a data-saver policy that parks fetching but permits rebuilds), split into two keys; observed keys have greppable readers, so the split is "add a key, move one read."
 
 ## Context
 
