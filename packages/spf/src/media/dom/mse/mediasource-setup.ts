@@ -104,18 +104,26 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
     return { url: '', detach };
   }
 
-  return attachAsSrcAttribute(mediaSource, mediaElement);
+  // Use createObjectURL for regular MediaSource
+  const url = URL.createObjectURL(mediaSource);
+  mediaElement.src = url;
+
+  const detach = (): void => {
+    mediaElement.removeAttribute('src');
+    resetIfOwnedAndLive(mediaSource, mediaElement, url);
+    URL.revokeObjectURL(url);
+  };
+
+  return { url, detach };
 }
 
 /**
- * Attach a MediaSource as a `<source>` child element (ManagedMediaSource
- * only; a regular MediaSource attaches via the `src` attribute, identical to
- * `attachMediaSource`).
+ * Attach a MediaSource as a `<source>` child element.
  *
  * The object URL rides a `<source type="video/mp4">` inserted as the
  * element's FIRST child (any bare `src` attribute is dropped; `load()`
- * re-runs resource selection). Unlike `srcObject` — which commits the
- * element to the MSE resource and ignores every `<source>` child — this
+ * re-runs resource selection). Unlike `srcObject`/`src` — which commit the
+ * element to the MSE resource and ignore every `<source>` child — this
  * keeps sibling `<source>` alternatives part of resource selection, so a
  * composition can offer the element a natively-playable alternative next to
  * MSE. Canonical consumer: `setupAirPlay`'s native-HLS fallback source,
@@ -126,14 +134,13 @@ export function attachMediaSourceAsSourceElement(
   mediaSource: MediaSource,
   mediaElement: HTMLMediaElement
 ): AttachMediaSourceResult {
-  const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
-
-  if (!isManagedMediaSource) return attachAsSrcAttribute(mediaSource, mediaElement);
-
   // ManagedMediaSource requires disableRemotePlayback — without it Safari
-  // will not fire sourceopen. Features that need it false (e.g. a remote
-  // playback picker) flip it once the source is open.
-  mediaElement.disableRemotePlayback = true;
+  // will not fire sourceopen. (MMS-only: on other platforms the flag governs
+  // the standard Remote Playback API and must be left alone.) Features that
+  // need it false flip it once the source is open.
+  if (supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!) {
+    mediaElement.disableRemotePlayback = true;
+  }
 
   const url = URL.createObjectURL(mediaSource);
   const sourceEl = document.createElement('source');
@@ -146,20 +153,6 @@ export function attachMediaSourceAsSourceElement(
 
   const detach = (): void => {
     sourceEl.remove();
-    resetIfOwnedAndLive(mediaSource, mediaElement, url);
-    URL.revokeObjectURL(url);
-  };
-
-  return { url, detach };
-}
-
-/** Shared non-MMS attach: object URL on the `src` attribute. */
-function attachAsSrcAttribute(mediaSource: MediaSource, mediaElement: HTMLMediaElement): AttachMediaSourceResult {
-  const url = URL.createObjectURL(mediaSource);
-  mediaElement.src = url;
-
-  const detach = (): void => {
-    mediaElement.removeAttribute('src');
     resetIfOwnedAndLive(mediaSource, mediaElement, url);
     URL.revokeObjectURL(url);
   };

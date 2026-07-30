@@ -119,17 +119,26 @@ describe('attachMediaSource', () => {
 });
 
 describe('attachMediaSourceAsSourceElement', () => {
-  it('attaches a regular MediaSource via the src attribute, same as attachMediaSource', () => {
+  it('attaches a regular MediaSource via a <source> child and reaches sourceopen', async () => {
     const mediaElement = document.createElement('video');
     const mediaSource = createMediaSource();
 
     const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
 
-    expect(mediaElement.src).toBe(url);
-    expect(mediaElement.querySelector('source')).toBeNull();
+    expect(mediaElement.getAttribute('src')).toBeNull();
+    const sourceEl = mediaElement.querySelector('source');
+    expect(sourceEl!.src).toBe(url);
+    expect(sourceEl!.type).toBe('video/mp4');
+    // The flag is MMS-only — a regular MediaSource must leave the standard
+    // Remote Playback API alone.
+    expect(mediaElement.disableRemotePlayback).toBe(false);
+
+    // The mechanism genuinely attaches: resource selection picks the
+    // <source> child and the MediaSource opens.
+    await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
 
     detach();
-    expect(mediaElement.getAttribute('src')).toBeNull();
+    expect(mediaElement.querySelector('source')).toBeNull();
   });
 
   it('attaches a ManagedMediaSource as the FIRST <source> child, keeping siblings', () => {

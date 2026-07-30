@@ -1727,11 +1727,12 @@ http://example.com/video-seg1.m4s
     // Wait for text tracks to be set up
     await vi.waitFor(
       () => {
-        // Track elements should be in DOM
-        expect(mediaElement.children.length).toBe(3);
+        // Track elements should be in DOM (count <track> specifically — the
+        // MSE attach contributes a <source> child).
+        expect(mediaElement.querySelectorAll('track')).toHaveLength(3);
 
         // Verify track elements
-        const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+        const tracks = Array.from(mediaElement.querySelectorAll('track'));
 
         // English track
         expect(tracks[0]!.kind).toBe('subtitles');
@@ -1820,15 +1821,16 @@ http://example.com/text-es-seg1.vtt
     engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
     engine.state.preload.set('auto');
 
-    // Wait for text tracks to be set up
+    // Wait for text tracks to be set up (count <track> specifically — the
+    // MSE attach contributes a <source> child).
     await vi.waitFor(
       () => {
-        expect(mediaElement.children.length).toBe(2);
+        expect(mediaElement.querySelectorAll('track')).toHaveLength(2);
       },
       { timeout: 2000 }
     );
 
-    const tracks = Array.from(mediaElement.children) as HTMLTrackElement[];
+    const tracks = Array.from(mediaElement.querySelectorAll('track'));
     const englishTrack = tracks.find((el) => el.srclang === 'en')!;
     const spanishTrack = tracks.find((el) => el.srclang === 'es')!;
 
