@@ -14,10 +14,11 @@
  *   the `loadXSegments` dispatchers (no fetching alongside the receiver) and
  *   by `setupMediaSource` (its post-close rebuild waits — attaching runs
  *   `element.load()` under the live receiver).
- * - `state.startPosition` — one-shot command snapshotted from the element at
- *   the session's settled end, before the suspension release lets the
- *   rebuild's `load()` reset the element, so `applyStartPosition` starts the
- *   rebuilt source where the receiver left off.
+ * - `state.startPosition` — one-shot command: the position is captured from
+ *   the element at the session's settled end (still receiver-mirrored) and
+ *   written once the rebuild's `load()` resets the element (its `'emptied'`),
+ *   so `applyStartPosition` applies it to the rebuilt source — never to the
+ *   pre-rebuild element — and starts it where the receiver left off.
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -135,6 +136,18 @@ function setupAirPlaySetup({
           };
 
           let settleTimer: ReturnType<typeof setTimeout> | undefined;
+          // Pending session-end snapshot: the position is captured at the
+          // settled falling edge (the element still mirrors the receiver),
+          // but the one-shot command is written only when the element's next
+          // `'emptied'` fires — i.e. once the rebuild's `load()` has reset
+          // the element. Writing earlier would hand `applyStartPosition` a
+          // command against the pre-rebuild element (readyState still >=
+          // HAVE_METADATA), which it would apply and consume before the
+          // rebuilt source exists. Guarded by presentation identity so a
+          // source change while a rebuild is held can't inherit the old
+          // position.
+          let pendingStartPosition: { position: number; presentationUrl: string | undefined } | undefined;
+
           const sync = () => {
             if (isSessionActive()) {
               clearTimeout(settleTimer);
@@ -147,13 +160,10 @@ function setupAirPlaySetup({
                 settleTimer = undefined;
                 const stillActive = isSessionActive();
                 if (!stillActive) {
-                  // Session over. The element still carries the
-                  // receiver-mirrored position, and nothing has `load()`ed
-                  // it yet — `setupMediaSource`'s rebuild only proceeds once
-                  // the suspension release below lets it. Snapshot into the
-                  // one-shot command first, so `applyStartPosition` starts
-                  // the rebuilt source where the receiver left off.
-                  state.startPosition.set(mediaElement.currentTime);
+                  pendingStartPosition = {
+                    position: mediaElement.currentTime,
+                    presentationUrl: peek(state.presentation)?.url,
+                  };
                 }
                 setSessionActive(stillActive);
               }, REMOTE_INACTIVE_SETTLE_MS);
@@ -165,6 +175,17 @@ function setupAirPlaySetup({
           listen(mediaElement, 'webkitcurrentplaybacktargetiswirelesschanged', sync, {
             signal: listenerCleanup.signal,
           });
+          listen(
+            mediaElement,
+            'emptied',
+            () => {
+              if (!pendingStartPosition) return;
+              const { position, presentationUrl } = pendingStartPosition;
+              pendingStartPosition = undefined;
+              if (peek(state.presentation)?.url === presentationUrl) state.startPosition.set(position);
+            },
+            { signal: listenerCleanup.signal }
+          );
           for (const eventType of ['connecting', 'connect', 'disconnect'] as const) {
             remote?.addEventListener(eventType, sync, { signal: listenerCleanup.signal });
           }

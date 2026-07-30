@@ -349,14 +349,42 @@ describe('setupAirPlay', () => {
     // source of truth until the session ends.
     expect(state.startPosition.get()).toBeUndefined();
 
-    // Settled session end: the element still carries the receiver-mirrored
-    // position, and the rebuild only proceeds once the suspension release
-    // lets it — so the one-shot command is written first, from a
-    // pre-`load()` element.
+    // Settled session end: the position is captured (the element still
+    // mirrors the receiver) but NOT yet written — the pre-rebuild element
+    // still has metadata, so applyStartPosition would consume the command
+    // against it before the fresh source exists.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
-    expect(state.startPosition.get()).toBe(87);
     expect(state.loadingSuspended.get()).toBe(false);
+    expect(state.startPosition.get()).toBeUndefined();
+
+    // The rebuild's load() resets the element ('emptied') — NOW the one-shot
+    // is written, against the fresh load.
+    video.dispatchEvent(new Event('emptied'));
+    expect(state.startPosition.get()).toBe(87);
+
+    reactor.destroy();
+  });
+
+  it('discards the pending snapshot when the source changed before the rebuild', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+
+    // A src change lands before the rebuild — the new source must start at
+    // its own beginning, not inherit the receiver's position.
+    state.presentation.set({ url: 'https://example.com/b.m3u8' });
+    video.dispatchEvent(new Event('emptied'));
+    expect(state.startPosition.get()).toBeUndefined();
 
     reactor.destroy();
   });
