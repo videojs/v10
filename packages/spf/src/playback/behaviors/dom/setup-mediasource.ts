@@ -59,7 +59,6 @@ import { createMachineReactor } from '../../../core/reactors/create-machine-reac
 import { computed, type ReadonlySignal, type Signal, signal } from '../../../core/signals/primitives';
 import { attachMediaSource, createMediaSource, waitForMediaSourceOpen } from '../../../media/dom/mse/mediasource-setup';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
-import type { SegmentLoadingState } from './load-segments';
 
 /**
  * State shape required for MediaSource setup.
@@ -99,7 +98,9 @@ function setupMediaSourceSetup({
   state: {
     presentation: ReadonlySignal<MediaSourceState['presentation']>;
     // See behavior definition for details on this optional state signal.
-    loadingSuspended?: ReadonlySignal<SegmentLoadingState['loadingSuspended']>;
+    // Redefined locally (canonical shape: `SegmentLoadingState['loadingSuspended']`)
+    // to avoid a type dependency on the load-segments module.
+    loadingSuspended?: ReadonlySignal<boolean | undefined>;
   };
   context: {
     mediaElement: ReadonlySignal<MediaSourceContext['mediaElement']>;
