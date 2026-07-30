@@ -308,7 +308,7 @@ describe('setupMediaSource', () => {
     expect(customDetach).toHaveBeenCalled();
   });
 
-  describe('liveness recovery', () => {
+  describe('sourceclose recovery', () => {
     it('recycles with a fresh MediaSource when the UA closes the attached one', async () => {
       const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
 
@@ -382,7 +382,7 @@ describe('setupMediaSource', () => {
       reactor.destroy();
     });
 
-    it('never tears down a live attachment on suspension alone', async () => {
+    it('never tears down an existing attachment on suspension alone', async () => {
       const { attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
       const detach = vi.fn();
       vi.mocked(attachMediaSource).mockImplementation(() => ({ url: 'blob:mock', detach }));
@@ -394,7 +394,7 @@ describe('setupMediaSource', () => {
       const first = context.mediaSource.get();
 
       // Suspension rises before the UA closes anything (the engage's rising
-      // edge leads `sourceclose`). A live attachment must survive it —
+      // edge leads `sourceclose`). An existing attachment must survive it —
       // detaching here would load()-reset the element mid-handoff.
       state.loadingSuspended.set(true);
       await new Promise((resolve) => setTimeout(resolve, 20));

@@ -141,7 +141,7 @@ describe('setupAirPlay', () => {
     expect(fallbackSourceOf(video)).not.toBeNull();
 
     // Session engages, then Safari closes the MMS and the engine detaches it
-    // (liveness recovery) — the receiver is playing exactly this fallback
+    // (sourceclose recovery) — the receiver is playing exactly this fallback
     // source, so it must survive the mediaSource slot clearing.
     setWireless(video, true);
     await vi.advanceTimersByTimeAsync(0);

@@ -61,11 +61,11 @@ describe('attachMediaSource', () => {
     expect(mediaElement.src).toBe('');
   });
 
-  it('detach resets the element when tearing down a live attachment it still owns', async () => {
+  it('detach resets the element when tearing down an unclosed attachment it still owns', async () => {
     const mediaElement = document.createElement('video');
     const mediaSource = createMediaSource();
     const { url, detach } = attachMediaSource(mediaSource, mediaElement);
-    // A live attachment: the MediaSource has opened (readyState is 'closed'
+    // An unclosed attachment: the MediaSource has opened (readyState is 'closed'
     // until the browser's async attach completes).
     await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
 

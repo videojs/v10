@@ -97,7 +97,7 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
 
   const detach = (): void => {
     mediaElement.removeAttribute('src');
-    resetIfOwnedAndLive(mediaSource, mediaElement, url);
+    resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
     URL.revokeObjectURL(url);
   };
 
@@ -140,7 +140,7 @@ export function attachMediaSourceAsSourceElement(
 
   const detach = (): void => {
     sourceEl.remove();
-    resetIfOwnedAndLive(mediaSource, mediaElement, url);
+    resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
     URL.revokeObjectURL(url);
   };
 
@@ -148,7 +148,7 @@ export function attachMediaSourceAsSourceElement(
 }
 
 /**
- * Detach's `load()` reset, applied only when tearing down a **live**
+ * Detach's `load()` reset, applied only when tearing down an **unclosed**
  * attachment the element is still committed to:
  *
  * - **Closed MediaSource**: skip. The attachment is already dead, and the
@@ -157,7 +157,7 @@ export function attachMediaSourceAsSourceElement(
  * - **Element moved to another resource**: skip — resetting would rip that
  *   resource out from under its owner.
  */
-function resetIfOwnedAndLive(mediaSource: MediaSource, mediaElement: HTMLMediaElement, url: string): void {
+function resetIfOwnedAndNotClosed(mediaSource: MediaSource, mediaElement: HTMLMediaElement, url: string): void {
   if (mediaSource.readyState !== 'closed' && mediaElement.currentSrc === url) {
     mediaElement.load();
   }

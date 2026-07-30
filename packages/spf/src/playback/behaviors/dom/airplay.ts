@@ -175,7 +175,7 @@ function setupAirPlaySetup({
           // - adding a native HLS fallback source when the mediaSource is
           //   attached / removing it when it's detached — UNLESS a session is
           //   live: during an AirPlay session the engine detaches its dead
-          //   MediaSource (see setupMediaSource's liveness recovery) while
+          //   MediaSource (see setupMediaSource's sourceclose recovery) while
           //   the receiver is playing exactly this fallback source, so it
           //   must survive until the session's falling edge (the rebuild's
           //   republish then adopts it again).

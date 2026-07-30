@@ -32,20 +32,20 @@
  * and clears `context.mediaSource`. Order: abort first (prevents a late
  * publish racing the slot clear), then detach, then clear.
  *
- * # Liveness recovery
+ * # Sourceclose recovery
  *
- * The behavior owns one **live** MediaSource per source identity. The UA can
+ * The behavior owns one **unclosed** MediaSource per source identity. The UA can
  * close the attached MediaSource out from under the engine (Safari on an
  * AirPlay handoff — see `setupAirPlay` — or a ManagedMediaSource evicted
  * under memory pressure), and a closed MediaSource can never reopen. The
  * `sourceclose` listener tears the attachment down synchronously; every
- * teardown records a local liveness fact, which holds the machine out until
+ * teardown records a local close-fact, which holds the machine out until
  * the fact is consumed — then the re-derive comes back in with a fresh
  * MediaSource for the *same* source. Cause-agnostic. Consumption honors an
- * `loadingSuspended` (attaching runs `element.load()` — new loading work,
- * e.g. resource selection under a live AirPlay receiver), and happens only
- * while the machine is out, so a suspension can never tear down a live
- * attachment.
+ * observed `loadingSuspended` (attaching runs `element.load()` — new loading
+ * work, e.g. resource selection under an active AirPlay receiver), and
+ * happens only while the machine is out, so a suspension can never tear
+ * down an existing attachment.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
  * (`setupVideoBufferActors`, `setupAudioBufferActors`,
@@ -130,7 +130,7 @@ function setupMediaSourceSetup({
   // `internal/decisions/spf/optional-observed-state-keys.md`.
   const loadingSuspended = (state as { loadingSuspended?: ReadonlySignal<boolean | undefined> }).loadingSuspended;
 
-  // Liveness fact for the currently-owned MediaSource, flipped by the
+  // Close-fact for the currently-owned MediaSource, flipped by the
   // entry's shared teardown. Consumed in `'preconditions-unmet'`.
   const mediaSourceClosed = signal(false);
 
@@ -149,8 +149,8 @@ function setupMediaSourceSetup({
         // `loadingSuspended` holds, the fact stands and the rebuild waits:
         // attaching runs `element.load()`, which is exactly the loading work
         // the suspension forbids. Consuming only from this state means a
-        // suspension can never tear down a live attachment — there is no
-        // code path from `loadingSuspended` to an exit.
+        // suspension can never tear down an existing attachment — there is
+        // no code path from `loadingSuspended` to an exit.
         effects: () => {
           // `mediaSourceClosed` is tracked, not peeked: a new state's effects
           // can run BEFORE the old state's exit cleanup (effects run in
@@ -191,8 +191,9 @@ function setupMediaSourceSetup({
             context.mediaSource.set(undefined);
           };
 
-          // Liveness: the UA closing this MediaSource (AirPlay handoff, MMS
-          // eviction) tears the attachment down synchronously — detach skips
+          // Sourceclose recovery: the UA closing this MediaSource (AirPlay
+          // handoff, MMS eviction) tears the attachment down synchronously —
+          // detach skips
           // its `load()` reset for a closed MediaSource (see
           // `attachMediaSource`), leaving the element as the session or
           // eviction left it.

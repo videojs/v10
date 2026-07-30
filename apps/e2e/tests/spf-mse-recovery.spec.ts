@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { PlayerPage } from '../page-objects/player';
 
 /**
- * SPF MediaSource attach + liveness-recovery smoke tests.
+ * SPF MediaSource attach + sourceclose-recovery smoke tests.
  *
  * Runs against the SPF engine page (`simple-hls-video`) on every vite-*
  * project (Chromium, WebKit, Firefox). Two things under test:
@@ -11,7 +11,7 @@ import { PlayerPage } from '../page-objects/player';
  *    child (the WebKit AirPlay pattern — an MSE `srcObject` would make any
  *    sibling native-HLS fallback source inert); everywhere else the object
  *    URL rides the `src` attribute.
- * 2. Liveness recovery: when the MSE attachment is torn down out from under
+ * 2. Sourceclose recovery: when the MSE attachment is torn down out from under
  *    the engine (the observable shape of an AirPlay handoff return or MMS
  *    eviction — the MediaSource fires `sourceclose`), `setupMediaSource`
  *    must rebuild a fresh MediaSource for the same source and playback
