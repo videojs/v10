@@ -38,13 +38,13 @@
  * close the attached MediaSource out from under the engine (Safari on an
  * AirPlay handoff — see `setupAirPlay` — or a ManagedMediaSource evicted
  * under memory pressure), and a closed MediaSource can never reopen. The
- * `sourceclose` listener tears the attachment down synchronously and records
- * the close on a local liveness fact, which holds the machine out until the
- * fact is consumed — then the re-derive comes back in with a fresh
+ * `sourceclose` listener tears the attachment down synchronously; every
+ * teardown records a local liveness fact, which holds the machine out until
+ * the fact is consumed — then the re-derive comes back in with a fresh
  * MediaSource for the *same* source. Cause-agnostic. Consumption honors an
- * observed `loadingSuspended` (attaching runs `element.load()` — new loading
- * work, e.g. resource selection under a live AirPlay receiver), and happens
- * only while the machine is out, so a suspension can never tear down a live
+ * `loadingSuspended` (attaching runs `element.load()` — new loading work,
+ * e.g. resource selection under a live AirPlay receiver), and happens only
+ * while the machine is out, so a suspension can never tear down a live
  * attachment.
  *
  * Sole writer of `context.mediaSource`; other MSE behaviors
@@ -84,10 +84,10 @@ function deriveState(
   mediaSourceClosed: boolean
 ): MediaSourceFsmState {
   if (!mediaElement || !isResolvedPresentation(presentation)) return 'preconditions-unmet';
-  // The UA closed the owned MediaSource — a closed MediaSource can never
-  // reopen, so there is no live attachment to be in. The fact stands until
-  // the `'preconditions-unmet'` effects consume it (see below); the reset
-  // then re-derives into a fresh attach for the same source.
+  // The current attachment was torn down (typically a UA-fired
+  // `sourceclose`). The fact stands until the `'preconditions-unmet'`
+  // effects consume it (see below); the reset then re-derives into a fresh
+  // attach for the same source.
   if (mediaSourceClosed) return 'preconditions-unmet';
   return 'mediasource-attached';
 }
@@ -107,7 +107,7 @@ function setupMediaSourceSetup({
   };
 }): Reactor<MediaSourceFsmState | 'destroying' | 'destroyed'> {
   // Liveness fact for the currently-owned MediaSource, flipped by the
-  // entry's `sourceclose` listener. Consumed in `'preconditions-unmet'`.
+  // entry's shared teardown. Consumed in `'preconditions-unmet'`.
   const mediaSourceClosed = signal(false);
 
   const derivedStateSignal = computed(() =>
@@ -128,10 +128,12 @@ function setupMediaSourceSetup({
         // suspension can never tear down a live attachment — there is no
         // code path from `loadingSuspended` to an exit.
         effects: () => {
-          // Not suspended = the slot is absent (no writer composed) OR its
-          // value is falsy. The write dedups (false over false notifies
-          // nothing), so no guard is needed.
-          if (!state.loadingSuspended?.get()) mediaSourceClosed.set(false);
+          // `mediaSourceClosed` is tracked, not peeked: a new state's effects
+          // can run BEFORE the old state's exit cleanup (effects run in
+          // states-declaration order), so a teardown's fact-write can land
+          // after this effect's entry run — tracking re-fires the consume.
+          // Not suspended = slot absent (no writer composed) or value falsy.
+          if (mediaSourceClosed.get() && !state.loadingSuspended?.get()) mediaSourceClosed.set(false);
         },
       },
 
@@ -152,16 +154,14 @@ function setupMediaSourceSetup({
           const { detach } = attachMediaSource(mediaSource, mediaElement);
 
           // One complete teardown, shared by both triggers (the sourceclose
-          // listener below and the state-exit cleanup); runs exactly once —
-          // whichever trigger fires first does the work. Order matters:
+          // listener below and the state-exit cleanup) — whichever fires
+          // first does the work; a re-run is harmless. Order matters:
           // abort first (kills the open-wait and the listener, so a late
           // publish can't race the slot clear), then detach, then clear the
           // slot so the ordinary teardown cascade stops the downstream MSE
           // pipeline.
-          let toreDown = false;
           const teardown = () => {
-            if (toreDown) return;
-            toreDown = true;
+            mediaSourceClosed.set(true);
             controller.abort();
             detach();
             context.mediaSource.set(undefined);
@@ -171,17 +171,8 @@ function setupMediaSourceSetup({
           // eviction) tears the attachment down synchronously — detach skips
           // its `load()` reset for a closed MediaSource (see
           // `attachMediaSource`), leaving the element as the session or
-          // eviction left it — and records the close to drive the rebuild
-          // re-derive.
-          listen(
-            mediaSource,
-            'sourceclose',
-            () => {
-              mediaSourceClosed.set(true);
-              teardown();
-            },
-            { signal: controller.signal }
-          );
+          // eviction left it.
+          listen(mediaSource, 'sourceclose', teardown, { signal: controller.signal });
 
           const publishWhenOpen = async () => {
             await waitForMediaSourceOpen(mediaSource, controller.signal);
@@ -210,7 +201,8 @@ function setupMediaSourceSetup({
           publishWhenOpen().catch((err) => console.error('[setupMediaSource] failed to publish MediaSource:', err));
 
           // State-exit cleanup — fires on source unload, element detach, or
-          // behavior destroy; a no-op after a `sourceclose` already tore down.
+          // behavior destroy; a harmless re-run after a `sourceclose`
+          // already tore down.
           return teardown;
         },
       },
