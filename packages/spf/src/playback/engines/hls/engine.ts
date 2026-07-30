@@ -9,6 +9,7 @@ import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
+import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
   addSubtitlesTracksToMedia,
@@ -362,6 +363,10 @@ export function createSimpleHlsEngine(
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
+    // Baked (not user-overridable): this engine composes `setupAirPlay`,
+    // whose native fallback `<source>` requires the MSE attachment to keep
+    // sibling source alternatives part of resource selection.
+    attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the

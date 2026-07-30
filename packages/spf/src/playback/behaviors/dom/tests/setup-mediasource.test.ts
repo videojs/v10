@@ -290,6 +290,24 @@ describe('setupMediaSource', () => {
     reactor.destroy();
   });
 
+  it('uses the config-supplied attach strategy over the default', async () => {
+    const customDetach = vi.fn();
+    const customAttach = vi.fn(() => ({ url: 'blob:custom', detach: customDetach }));
+
+    const state = makeState();
+    const context = makeContext();
+    const reactor = setupMediaSource.setup({ state, context, config: { attachMediaSource: customAttach } });
+    context.mediaElement.set(makeVideo());
+    state.presentation.set(makeResolvedPresentation());
+
+    await vi.waitFor(() => expect(customAttach).toHaveBeenCalledTimes(1));
+    const { attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+    expect(attachMediaSource).not.toHaveBeenCalled();
+
+    reactor.destroy();
+    expect(customDetach).toHaveBeenCalled();
+  });
+
   describe('liveness recovery', () => {
     it('recycles with a fresh MediaSource when the UA closes the attached one', async () => {
       const { createMediaSource, attachMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');

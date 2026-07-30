@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   attachMediaSource,
+  attachMediaSourceAsSourceElement,
   createMediaSource,
   createSourceBuffer,
   isCodecSupported,
@@ -114,6 +115,59 @@ describe('attachMediaSource', () => {
     detach();
 
     expect(load).not.toHaveBeenCalled();
+  });
+});
+
+describe('attachMediaSourceAsSourceElement', () => {
+  it('attaches a regular MediaSource via the src attribute, same as attachMediaSource', () => {
+    const mediaElement = document.createElement('video');
+    const mediaSource = createMediaSource();
+
+    const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
+
+    expect(mediaElement.src).toBe(url);
+    expect(mediaElement.querySelector('source')).toBeNull();
+
+    detach();
+    expect(mediaElement.getAttribute('src')).toBeNull();
+  });
+
+  it('attaches a ManagedMediaSource as the FIRST <source> child, keeping siblings', () => {
+    class FakeManagedMediaSource extends EventTarget {
+      readyState = 'closed';
+    }
+    vi.stubGlobal('ManagedMediaSource', FakeManagedMediaSource);
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:fake-mms');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
+    try {
+      const mediaSource = new FakeManagedMediaSource() as unknown as MediaSource;
+      const mediaElement = document.createElement('video');
+      mediaElement.setAttribute('src', 'https://example.com/old.mp4');
+      const sibling = document.createElement('source');
+      mediaElement.append(sibling);
+
+      const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
+
+      expect(url).toBe('blob:fake-mms');
+      // Bare src dropped; MSE source is the FIRST child so local playback
+      // selects it; the sibling alternative stays second.
+      expect(mediaElement.getAttribute('src')).toBeNull();
+      expect(mediaElement.disableRemotePlayback).toBe(true);
+      const sources = mediaElement.querySelectorAll('source');
+      expect(sources).toHaveLength(2);
+      expect(sources[0]!.src).toBe('blob:fake-mms');
+      expect(sources[0]!.type).toBe('video/mp4');
+      expect(sources[1]).toBe(sibling);
+
+      detach();
+      expect(mediaElement.querySelectorAll('source')).toHaveLength(1);
+      expect(mediaElement.querySelector('source')).toBe(sibling);
+      expect(revokeObjectURL).toHaveBeenCalledWith('blob:fake-mms');
+    } finally {
+      vi.unstubAllGlobals();
+      createObjectURL.mockRestore();
+      revokeObjectURL.mockRestore();
+    }
   });
 });
 

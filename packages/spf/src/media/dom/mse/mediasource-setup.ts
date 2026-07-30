@@ -69,18 +69,7 @@ export interface AttachMediaSourceResult {
 /**
  * Attach a MediaSource to an HTMLMediaElement.
  *
- * For ManagedMediaSource (Safari), the object URL is attached as a `<source>`
- * child element rather than `srcObject`. This is the WebKit-recommended AirPlay
- * pattern: `srcObject` makes the element commit to the MSE resource and ignore
- * every `<source>` child, which leaves any sibling native-HLS `<source>`
- * (appended by `setupAirPlay` for AirPlay handoff) inert — Safari has no
- * AirPlay-capable resource to hand off and reverts to local playback. Attaching
- * the MSE as the *first* `<source>` keeps local playback on MSE while letting
- * the AirPlay `<source>` coexist as a second, native-playable alternative.
- * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
- *
- * Regular MediaSource (Chromium/Firefox, no AirPlay) keeps using the `src`
- * attribute.
+ * Uses srcObject for ManagedMediaSource (Safari), or createObjectURL for regular MediaSource.
  *
  * @param mediaSource - The MediaSource to attach
  * @param mediaElement - The media element to attach to
@@ -94,36 +83,78 @@ export interface AttachMediaSourceResult {
  * detach();
  */
 export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMediaElement): AttachMediaSourceResult {
+  // ManagedMediaSource requires srcObject instead of createObjectURL
   const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
 
   if (isManagedMediaSource) {
-    // MMS opens with either `disableRemotePlayback = true` or a source
-    // alternative present; `setupAirPlay` flips this back to `false` once open
-    // so the AirPlay picker is offered.
+    // ManagedMediaSource requires disableRemotePlayback — without it Safari
+    // will not fire sourceopen.
     mediaElement.disableRemotePlayback = true;
 
-    const url = URL.createObjectURL(mediaSource);
-    const sourceEl = document.createElement('source');
-    sourceEl.type = 'video/mp4';
-    sourceEl.src = url;
-
-    // Drop any bare `src` and insert the MSE source as the FIRST child so local
-    // playback selects MSE, and a `setupAirPlay`-appended native-HLS `<source>`
-    // stays second (AirPlay fallback). `load()` re-runs resource selection.
-    mediaElement.removeAttribute('src');
-    mediaElement.prepend(sourceEl);
-    mediaElement.load();
+    // Use srcObject for ManagedMediaSource
+    (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = mediaSource;
 
     const detach = (): void => {
-      sourceEl.remove();
-      resetIfOwnedAndLive(mediaSource, mediaElement, url);
-      URL.revokeObjectURL(url);
+      (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = null;
+      // Only the liveness half of `resetIfOwnedAndLive`'s guard — srcObject
+      // has no owning URL to compare.
+      if (mediaSource.readyState !== 'closed') mediaElement.load();
     };
 
-    return { url, detach };
+    return { url: '', detach };
   }
 
-  // Use createObjectURL for regular MediaSource
+  return attachAsSrcAttribute(mediaSource, mediaElement);
+}
+
+/**
+ * Attach a MediaSource as a `<source>` child element (ManagedMediaSource
+ * only; a regular MediaSource attaches via the `src` attribute, identical to
+ * `attachMediaSource`).
+ *
+ * The object URL rides a `<source type="video/mp4">` inserted as the
+ * element's FIRST child (any bare `src` attribute is dropped; `load()`
+ * re-runs resource selection). Unlike `srcObject` — which commits the
+ * element to the MSE resource and ignores every `<source>` child — this
+ * keeps sibling `<source>` alternatives part of resource selection, so a
+ * composition can offer the element a natively-playable alternative next to
+ * MSE. Canonical consumer: `setupAirPlay`'s native-HLS fallback source,
+ * wired through `setupMediaSource`'s `attachMediaSource` config
+ * (https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/).
+ */
+export function attachMediaSourceAsSourceElement(
+  mediaSource: MediaSource,
+  mediaElement: HTMLMediaElement
+): AttachMediaSourceResult {
+  const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
+
+  if (!isManagedMediaSource) return attachAsSrcAttribute(mediaSource, mediaElement);
+
+  // ManagedMediaSource requires disableRemotePlayback — without it Safari
+  // will not fire sourceopen. Features that need it false (e.g. a remote
+  // playback picker) flip it once the source is open.
+  mediaElement.disableRemotePlayback = true;
+
+  const url = URL.createObjectURL(mediaSource);
+  const sourceEl = document.createElement('source');
+  sourceEl.type = 'video/mp4';
+  sourceEl.src = url;
+
+  mediaElement.removeAttribute('src');
+  mediaElement.prepend(sourceEl);
+  mediaElement.load();
+
+  const detach = (): void => {
+    sourceEl.remove();
+    resetIfOwnedAndLive(mediaSource, mediaElement, url);
+    URL.revokeObjectURL(url);
+  };
+
+  return { url, detach };
+}
+
+/** Shared non-MMS attach: object URL on the `src` attribute. */
+function attachAsSrcAttribute(mediaSource: MediaSource, mediaElement: HTMLMediaElement): AttachMediaSourceResult {
   const url = URL.createObjectURL(mediaSource);
   mediaElement.src = url;
 
@@ -140,14 +171,11 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
  * Detach's `load()` reset, applied only when tearing down a **live**
  * attachment the element is still committed to:
  *
- * - **UA-closed MediaSource**: skip. The pipeline is already dead, and the
- *   element's frozen `currentTime`/`paused` are the recovery snapshot —
- *   `setupMediaSource` reads them on re-entry, and the fresh attach's own
- *   `load()` performs the reset. A `load()` here would also re-run resource
- *   selection under an AirPlay receiver playing a sibling fallback source.
- * - **Element moved to another resource** (e.g. Safari switched to the
- *   native-HLS fallback for an AirPlay handoff): skip — resetting would rip
- *   that resource out from under its owner.
+ * - **Closed MediaSource**: skip. The attachment is already dead, and the
+ *   element deliberately keeps whatever playback state it carries for
+ *   whatever attaches next — that attach's own `load()` performs the reset.
+ * - **Element moved to another resource**: skip — resetting would rip that
+ *   resource out from under its owner.
  */
 function resetIfOwnedAndLive(mediaSource: MediaSource, mediaElement: HTMLMediaElement, url: string): void {
   if (mediaSource.readyState !== 'closed' && mediaElement.currentSrc === url) {

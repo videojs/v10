@@ -75,6 +75,20 @@ export interface MediaSourceContext {
   mediaSource?: MediaSource;
 }
 
+/**
+ * Config for MediaSource setup.
+ */
+export interface MediaSourceSetupConfig {
+  /**
+   * Attach strategy — a composition-supplied implementation. Defaults to
+   * `attachMediaSource` (srcObject / `src`-attribute). Compositions that
+   * pair MSE with sibling `<source>` alternatives wire
+   * `attachMediaSourceAsSourceElement` (e.g. the HLS engine, for
+   * `setupAirPlay`'s native fallback source).
+   */
+  attachMediaSource?: typeof attachMediaSource;
+}
+
 type MediaSourceFsmState = 'preconditions-unmet' | 'mediasource-attached';
 
 function deriveState(
@@ -94,6 +108,7 @@ function deriveState(
 function setupMediaSourceSetup({
   state,
   context,
+  config = {},
 }: {
   state: {
     presentation: ReadonlySignal<MediaSourceState['presentation']>;
@@ -102,7 +117,9 @@ function setupMediaSourceSetup({
     mediaElement: ReadonlySignal<MediaSourceContext['mediaElement']>;
     mediaSource: Signal<MediaSourceContext['mediaSource']>;
   };
+  config?: MediaSourceSetupConfig;
 }): Reactor<MediaSourceFsmState | 'destroying' | 'destroyed'> {
+  const attach = config.attachMediaSource ?? attachMediaSource;
   // `loadingSuspended` is observed, never declared: the slot exists only in
   // compositions where a feature behavior (e.g. `setupAirPlay`) declares and
   // writes it, so it lives behind a cast rather than in the typed param
@@ -158,7 +175,7 @@ function setupMediaSourceSetup({
           // object-URL captured at this moment, so state-exit cleanup tears
           // down exactly this attachment regardless of how the wait below
           // resolves.
-          const { detach } = attachMediaSource(mediaSource, mediaElement);
+          const { detach } = attach(mediaSource, mediaElement);
 
           // One complete teardown, shared by both triggers (the sourceclose
           // listener below and the state-exit cleanup) — whichever fires
