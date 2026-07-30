@@ -147,7 +147,7 @@ export function createMediaButton<Core extends Required<MediaButtonComponent>, P
         state,
         stateAttrMap,
         ref: [forwardedRef, buttonRef],
-        props: [getButtonProps(), elementProps, resolvedAttrs],
+        props: [getButtonProps(), resolvedAttrs, elementProps],
       }
     );
   });

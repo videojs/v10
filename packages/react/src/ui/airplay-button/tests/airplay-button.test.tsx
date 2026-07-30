@@ -11,14 +11,14 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-function renderAirPlayButton() {
+function renderAirPlayButton(props: AirPlayButton.Props = {}) {
   const { Wrapper } = createPlayerWrapper({
     remotePlaybackState: 'disconnected',
     remotePlaybackAvailability: 'available',
     toggleRemotePlayback: vi.fn(),
   });
 
-  render(<AirPlayButton data-testid="airplay" />, { wrapper: Wrapper });
+  render(<AirPlayButton data-testid="airplay" {...props} />, { wrapper: Wrapper });
 }
 
 describe('AirPlayButton', () => {
@@ -34,5 +34,15 @@ describe('AirPlayButton', () => {
     renderAirPlayButton();
 
     expect(screen.getByTestId('airplay')).toBeDefined();
+  });
+
+  it('lets element props override generated attributes', () => {
+    vi.stubGlobal('WebKitPlaybackTargetAvailabilityEvent', class {});
+
+    renderAirPlayButton({ hidden: true, 'aria-label': 'Custom AirPlay' });
+
+    const button = screen.getByTestId('airplay');
+    expect(button.hidden).toBe(true);
+    expect(button.getAttribute('aria-label')).toBe('Custom AirPlay');
   });
 });
