@@ -81,8 +81,8 @@ export interface MediaSourceContext {
 export interface MediaSourceSetupConfig {
   /**
    * Attach strategy — a composition-supplied implementation. Defaults to
-   * `attachMediaSource` (srcObject / `src`-attribute). Compositions that
-   * pair MSE with sibling `<source>` alternatives wire
+   * `attachMediaSource` (object URL on the `src` attribute). Compositions
+   * that pair MSE with sibling `<source>` alternatives wire
    * `attachMediaSourceAsSourceElement` (e.g. the HLS engine, for
    * `setupAirPlay`'s native fallback source).
    */

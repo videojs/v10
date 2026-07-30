@@ -60,16 +60,18 @@ export function createMediaSource(options: CreateMediaSourceOptions = {}): Media
  * Result of attaching a MediaSource to a media element.
  */
 export interface AttachMediaSourceResult {
-  /** The object URL created for the MediaSource (empty string for ManagedMediaSource). */
+  /** The object URL created for the MediaSource. */
   url: string;
   /** Detach the MediaSource and clean up resources. */
   detach: () => void;
 }
 
 /**
- * Attach a MediaSource to an HTMLMediaElement.
+ * Attach a MediaSource to an HTMLMediaElement via the `src` attribute.
  *
- * Uses srcObject for ManagedMediaSource (Safari), or createObjectURL for regular MediaSource.
+ * The object URL on the `src` attribute is the industry-hardened MSE attach
+ * across the browser matrix, and works for ManagedMediaSource too (`srcObject`
+ * buys nothing over it and forfeits the uniform URL lifecycle).
  *
  * @param mediaSource - The MediaSource to attach
  * @param mediaElement - The media element to attach to
@@ -83,28 +85,13 @@ export interface AttachMediaSourceResult {
  * detach();
  */
 export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMediaElement): AttachMediaSourceResult {
-  // ManagedMediaSource requires srcObject instead of createObjectURL
-  const isManagedMediaSource = supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!;
-
-  if (isManagedMediaSource) {
-    // ManagedMediaSource requires disableRemotePlayback — without it Safari
-    // will not fire sourceopen.
+  // ManagedMediaSource requires disableRemotePlayback — without it Safari
+  // will not fire sourceopen. (MMS-only: on other platforms the flag governs
+  // the standard Remote Playback API and must be left alone.)
+  if (supportsManagedMediaSource() && mediaSource instanceof ManagedMediaSource!) {
     mediaElement.disableRemotePlayback = true;
-
-    // Use srcObject for ManagedMediaSource
-    (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = mediaSource;
-
-    const detach = (): void => {
-      (mediaElement as HTMLMediaElement & { srcObject: MediaSource | null }).srcObject = null;
-      // Only the liveness half of `resetIfOwnedAndLive`'s guard — srcObject
-      // has no owning URL to compare.
-      if (mediaSource.readyState !== 'closed') mediaElement.load();
-    };
-
-    return { url: '', detach };
   }
 
-  // Use createObjectURL for regular MediaSource
   const url = URL.createObjectURL(mediaSource);
   mediaElement.src = url;
 
