@@ -21,7 +21,7 @@
 import type { AudioTrack, FrameRate, MaybeResolvedPresentation, VideoTrack } from '../types';
 import { findTrackById, getTracksByType } from '../utils/tracks';
 
-export type { VideoTrack, AudioTrack };
+export type { AudioTrack, VideoTrack };
 
 /** Properties that identify a distinct video rendition (multi-CDN copies share them). */
 export interface VideoDedupeKey {
