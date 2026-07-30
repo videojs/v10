@@ -62,6 +62,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #isUserStreamType = false;
   #loadRequested?: Promise<void> | null;
   #prevEngineConfigKey?: Record<string, any> | null;
+  #authorDisableRemotePlayback = false;
 
   constructor() {
     super();
@@ -71,6 +72,9 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   attach(target: HTMLVideoElement) {
     this.#mediaElement = target;
+    // Snapshot before any engine attaches: hls.js overwrites the element's
+    // `disableRemotePlayback` (forces it on for MMS on Safari).
+    this.#authorDisableRemotePlayback = target.disableRemotePlayback;
     super.attach(target);
     this.#delegate?.attach(target);
   }
@@ -211,6 +215,11 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
         Hls.isSupported() && contentType === ContentTypes.M3U8 && this.config.preferPlayback !== PlaybackTypes.NATIVE;
 
       this.#delegate = useMse ? new HlsJsOnlyMedia({ config: { ...this.config?.hlsJs } }) : new NativeHlsMedia();
+
+      // The AirPlay bridge lives on the delegate; give it the captured intent.
+      if (this.#delegate instanceof HlsJsOnlyMedia) {
+        this.#delegate.authorDisableRemotePlayback = this.#authorDisableRemotePlayback;
+      }
 
       bridgeEvents(this.#delegate, this);
 

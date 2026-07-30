@@ -1,8 +1,6 @@
 import type { Constructor } from '@videojs/utils/types';
 import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { RemotePlaybackPreference } from '../../airplay/remote-playback-preference';
-import { addMediaComponent } from '../../media-host';
 import { HlsJsMediaAirPlayMixin } from '../airplay-bridge';
 import type { HlsEngineHost } from '../types';
 
@@ -97,12 +95,10 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
+    video.disableRemotePlayback = true;
     host.target = video;
-
-    const preference = new RemotePlaybackPreference();
-    addMediaComponent(host as any, preference);
-    // The author opts out of remote playback through the host API.
-    (preference.targetOverride as { disableRemotePlayback: boolean }).disableRemotePlayback = true;
+    // HlsJsMedia captured the author's intent before hls.js ran.
+    (host as unknown as { authorDisableRemotePlayback: boolean }).authorDisableRemotePlayback = true;
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 
@@ -113,11 +109,9 @@ describe('HlsJsMediaAirPlayMixin', () => {
     const engine = createEngine();
     const host = new AirPlayHost(engine);
     const video = createVideo();
-    // hls.js / ManagedMediaSource sets this directly on the element, not via the host.
+    // hls.js sets this directly on the element; no author intent was captured.
     video.disableRemotePlayback = true;
     host.target = video;
-
-    addMediaComponent(host as any, new RemotePlaybackPreference());
 
     (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
 

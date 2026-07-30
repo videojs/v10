@@ -1,13 +1,12 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { GoogleCast } from '@videojs/media/dom/google-cast';
 import { HlsJsMedia } from '@videojs/media/dom/hls-js';
-import { addMediaComponent, RemotePlaybackPreference } from '@videojs/media/dom/media-host';
+import { addMediaComponent } from '@videojs/media/dom/media-host';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 export class HlsJsVideo extends MediaAttachMixin(CustomMediaElement('video', HlsJsMedia)) {
   constructor() {
     super();
-    addMediaComponent(this.host, new RemotePlaybackPreference());
     addMediaComponent(this.host, new GoogleCast());
   }
 }
