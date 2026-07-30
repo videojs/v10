@@ -31,10 +31,14 @@ class LocalizedText extends TextMixin(ReactiveElement) {}
 ```tsx
 import { createI18n } from '@videojs/react/i18n';
 
+const loaders = {
+  ja: () => import('@videojs/react/i18n/locales/ja'),
+};
+
 const { I18nProvider, useTranslator } = createI18n({
   loader: async (tag) => {
-    const mod = await import(`@videojs/react/i18n/locales/${tag}`);
-    return mod.default;
+    const load = loaders[tag as keyof typeof loaders];
+    return load ? (await load()).default : undefined;
   },
 });
 

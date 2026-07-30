@@ -15,7 +15,7 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import { hasRegisteredLocale, registerI18n } from '@videojs/html/i18n';
 
 hasRegisteredLocale('fr'); // false until registered
-registerI18n('fr', { Play: 'Lecture' });
+registerI18n('fr', { buttons: { play: 'Lecture' } });
 hasRegisteredLocale('fr'); // true
 ```
 
@@ -27,7 +27,7 @@ hasRegisteredLocale('fr'); // true
 import { hasRegisteredLocale, registerI18n } from '@videojs/react/i18n';
 
 hasRegisteredLocale('fr'); // false until registered
-registerI18n('fr', { Play: 'Lecture' });
+registerI18n('fr', { buttons: { play: 'Lecture' } });
 hasRegisteredLocale('fr'); // true
 ```
 

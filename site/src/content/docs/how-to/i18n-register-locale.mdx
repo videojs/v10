@@ -21,12 +21,12 @@ To opt into another language, mount `I18nProvider`. Pass its `locale` prop to fo
 
 </FrameworkCase>
 
-Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to phrase keys and the registry.
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to translation keys and the registry.
 
-### Prerequisites
+## Prerequisites
 
 - A locale tag ([BCP 47](https://www.rfc-editor.org/rfc/rfc5646), e.g. `es`, `pt-BR`)
-- A partial translation map keyed by current English phrases (`Play`, `Pause`, …)
+- A partial translation map keyed by semantic groups and names (`buttons.play`, `buttons.pause`, …)
 
 ## Use a shipped pack synchronously
 
@@ -87,10 +87,12 @@ Wrap the player subtree with <DocsLink slug="reference/i18n-provider">`I18nProvi
 import type { Translations } from '@videojs/html/i18n';
 
 const es = {
-  Play: 'Reproducir',
-  Pause: 'Pausa',
-  Mute: 'Silenciar',
-  Unmute: 'Activar sonido',
+  buttons: {
+    play: 'Reproducir',
+    pause: 'Pausa',
+    mute: 'Silenciar',
+    unmute: 'Activar sonido',
+  },
 } satisfies Partial<Translations>;
 
 export default es;
@@ -104,10 +106,12 @@ export default es;
 import type { Translations } from '@videojs/react/i18n';
 
 const es = {
-  Play: 'Reproducir',
-  Pause: 'Pausa',
-  Mute: 'Silenciar',
-  Unmute: 'Activar sonido',
+  buttons: {
+    play: 'Reproducir',
+    pause: 'Pausa',
+    mute: 'Silenciar',
+    unmute: 'Activar sonido',
+  },
 } satisfies Partial<Translations>;
 
 export default es;
@@ -170,8 +174,10 @@ CDN locale files import `registerI18n` from the shared `cdn/i18n.js` bundle so e
 import { registerI18n } from 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn/i18n.js';
 
 registerI18n('es', {
-  Play: 'Reproducir',
-  Pause: 'Pausa',
+  buttons: {
+    play: 'Reproducir',
+    pause: 'Pausa',
+  },
 });
 ```
 
@@ -182,6 +188,5 @@ Load your module after the player script and before playback starts.
 ## What's next?
 
 - <DocsLink slug="how-to/i18n-override-translations">Override individual keys</DocsLink>
-- <DocsLink slug="reference/translations">`Translations`</DocsLink> type
 - <DocsLink slug="how-to/i18n-switch-locale">Switch locale at runtime</DocsLink>
 - <DocsLink slug="reference/register-i18n">`registerI18n` reference</DocsLink>

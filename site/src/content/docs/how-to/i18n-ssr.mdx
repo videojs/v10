@@ -35,8 +35,15 @@ Import the locale pack on the server (or in a server component) and pass it to <
 import { I18nProvider } from '@videojs/react/i18n';
 import { Provider, VideoSkin, Video } from '@videojs/react/video';
 
+const loaders = {
+  es: () => import('@videojs/react/i18n/locales/es'),
+  fr: () => import('@videojs/react/i18n/locales/fr'),
+};
+
 export async function Player({ locale }: { locale: string }) {
-  const { default: translations } = await import(`@videojs/react/i18n/locales/${locale}`);
+  const load = loaders[locale as keyof typeof loaders];
+  if (!load) throw new Error(`Unsupported locale: ${locale}`);
+  const { default: translations } = await load();
 
   return (
     <Provider>
@@ -108,7 +115,13 @@ The registry is module singleton state. Registration in server entry points carr
 import { getLocale } from 'next-intl/server';
 
 const locale = await getLocale();
-const { default: translations } = await import(`@videojs/react/i18n/locales/${locale}`);
+const loaders = {
+  es: () => import('@videojs/react/i18n/locales/es'),
+  fr: () => import('@videojs/react/i18n/locales/fr'),
+};
+const load = loaders[locale as keyof typeof loaders];
+if (!load) throw new Error(`Unsupported locale: ${locale}`);
+const { default: translations } = await load();
 
 <I18nProvider locale={locale} translations={translations}>
   ...

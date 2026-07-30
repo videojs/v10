@@ -7,9 +7,9 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js starts in English and re-resolves translations when you opt into another active locale. How you trigger that depends on the platform.
+Video.js starts in English and re-resolves translations when you opt into another active locale.
 
-### Prerequisites
+## Prerequisites
 
 - A target locale from a shipped lazy-loaded pack, a registered custom pack, or a Chrome browser translation fallback
 
@@ -148,8 +148,13 @@ When you cannot register every locale up front, import and register immediately 
 ```tsx
 import { registerI18n } from '@videojs/react/i18n';
 
-async function switchTo(next: 'es' | 'fr') {
-  const { default: translations } = await import(`@videojs/react/i18n/locales/${next}`);
+const loaders = {
+  es: () => import('@videojs/react/i18n/locales/es'),
+  fr: () => import('@videojs/react/i18n/locales/fr'),
+};
+
+async function switchTo(next: keyof typeof loaders) {
+  const { default: translations } = await loaders[next]();
   registerI18n(next, translations);
   setLocale(next);
 }
@@ -161,13 +166,20 @@ async function switchTo(next: 'es' | 'fr') {
 
 You still pay the import cost once per locale, but later switches to the same tag stay synchronous.
 
-### Scoped overrides with `translations` (React)
+### Scoped overrides with `translations`
 
 Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> when overrides should apply to one subtree only, or when you want copy colocated with the switch handler:
 
 ```tsx
+const loaders = {
+  es: () => import('@videojs/react/i18n/locales/es'),
+  fr: () => import('@videojs/react/i18n/locales/fr'),
+};
+
 async function switchTo(next: string) {
-  const { default: translations } = await import(`@videojs/react/i18n/locales/${next}`);
+  const load = loaders[next as keyof typeof loaders];
+  if (!load) throw new Error(`Unsupported locale: ${next}`);
+  const { default: translations } = await load();
   setState({ locale: next, translations });
 }
 

@@ -1,0 +1,30 @@
+.react-use-locale-basic {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.react-use-locale-basic label,
+.react-use-locale-basic__output div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.react-use-locale-basic select {
+  padding: 4px 8px;
+}
+
+.react-use-locale-basic__output {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.react-use-locale-basic__output dt {
+  color: #6b7280;
+}
+
+.react-use-locale-basic__output dd {
+  margin: 0;
+}

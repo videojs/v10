@@ -17,7 +17,7 @@ See <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for merge ord
 import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
 
 const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
-t('Play');
+t('buttons.play', { default: 'Play' });
 ```
 
 </FrameworkCase>
@@ -28,7 +28,7 @@ t('Play');
 import { createTranslator, getI18nTranslations } from '@videojs/react/i18n';
 
 const t = createTranslator(getI18nTranslations('pt-BR'), 'pt-BR');
-t('Play');
+t('buttons.play', { default: 'Play' });
 ```
 
 </FrameworkCase>

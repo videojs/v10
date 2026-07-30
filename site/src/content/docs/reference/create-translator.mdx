@@ -4,10 +4,9 @@ description: Build a typed translator from a resolved translation map
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
-import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 
-`createTranslator` wraps a <DocsLink slug="reference/translations">`Translations`</DocsLink> map and returns a <DocsLink slug="reference/translator">`Translator`</DocsLink>. Providers call this internally after merging registry, lazy-loaded built-in packs, browser-translated fallback copy, and provider layers. Use it directly for custom UI outside built-in controls.
+`createTranslator` wraps the flat map returned by `getI18nTranslations` and returns a typed translator. Providers call this internally after merging registry, lazy-loaded built-in packs, browser-translated fallback copy, and provider layers. Use it directly for custom UI outside built-in controls.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -15,8 +14,8 @@ import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import { createTranslator, getI18nTranslations } from '@videojs/html/i18n';
 
 const t = createTranslator(getI18nTranslations('fr'), 'fr');
-t('Play');
-t('Seek forward {seconds} seconds', { seconds: 5 });
+t('buttons.play', { default: 'Play' });
+t('seek.forward', { seconds: 5, default: 'Seek forward {seconds} seconds' });
 ```
 
 </FrameworkCase>
@@ -27,8 +26,8 @@ t('Seek forward {seconds} seconds', { seconds: 5 });
 import { createTranslator, getI18nTranslations } from '@videojs/react/i18n';
 
 const t = createTranslator(getI18nTranslations('fr'), 'fr');
-t('Play');
-t('Seek forward {seconds} seconds', { seconds: 5 });
+t('buttons.play', { default: 'Play' });
+t('seek.forward', { seconds: 5, default: 'Seek forward {seconds} seconds' });
 ```
 
 </FrameworkCase>

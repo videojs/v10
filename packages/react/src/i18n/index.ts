@@ -14,6 +14,7 @@ export {
   getI18nTranslations,
   hasRegisteredLocale,
   isText,
+  LOCALES,
   onI18nRegistryChange,
   registerI18n,
 } from '@videojs/core/i18n';
