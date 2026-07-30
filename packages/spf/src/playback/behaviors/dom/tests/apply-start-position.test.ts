@@ -32,7 +32,6 @@ function makeState(initial: StartPositionState = {}): StateSignals<StartPosition
   return {
     presentation: signal<MaybeResolvedPresentation | undefined>(initial.presentation),
     startPosition: signal<number | undefined>(initial.startPosition),
-    resumePlayback: signal<boolean | undefined>(initial.resumePlayback),
     currentTime: signal<number | undefined>(initial.currentTime),
   };
 }
@@ -158,33 +157,10 @@ describe('applyStartPosition', () => {
     reactor.destroy();
   });
 
-  it('resumes playing after the seek when resumePlayback rides the command', async () => {
-    const video = makeVideo();
-    const { state, reactor } = setupApplyStartPosition(
-      { presentation: makeResolvedPresentation(), startPosition: 42, resumePlayback: true },
-      { mediaElement: video }
-    );
-    await vi.waitFor(() => expect(state.currentTime.get()).toBe(42));
-    // Not consumed early — play() must wait for the position to apply.
-    expect(video.play).not.toHaveBeenCalled();
-
-    reachMetadata(video);
-
-    await vi.waitFor(() => {
-      expect(video.currentTime).toBe(42);
-      expect(video.play).toHaveBeenCalledTimes(1);
-      // Both one-shots consumed together.
-      expect(state.startPosition.get()).toBeUndefined();
-      expect(state.resumePlayback.get()).toBeUndefined();
-    });
-
-    reactor.destroy();
-  });
-
-  it('stays paused when the snapshot recorded a paused element', async () => {
+  it('does not touch playing/paused — position only', async () => {
     const video = makeVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
     const { state, reactor } = setupApplyStartPosition(
-      { presentation: makeResolvedPresentation(), startPosition: 42, resumePlayback: false },
+      { presentation: makeResolvedPresentation(), startPosition: 42 },
       { mediaElement: video }
     );
 
@@ -193,23 +169,6 @@ describe('applyStartPosition', () => {
       expect(state.startPosition.get()).toBeUndefined();
     });
     expect(video.play).not.toHaveBeenCalled();
-
-    reactor.destroy();
-  });
-
-  it('degrades to paused-at-position when play() rejects (autoplay policy)', async () => {
-    const video = makeVideo({ readyState: HTMLMediaElement.HAVE_METADATA });
-    video.play = vi.fn(() => Promise.reject(new DOMException('denied', 'NotAllowedError')));
-    const { state, reactor } = setupApplyStartPosition(
-      { presentation: makeResolvedPresentation(), startPosition: 42, resumePlayback: true },
-      { mediaElement: video }
-    );
-
-    await vi.waitFor(() => {
-      expect(video.currentTime).toBe(42);
-      // Consumed despite the rejection — the command must not replay.
-      expect(state.resumePlayback.get()).toBeUndefined();
-    });
 
     reactor.destroy();
   });

@@ -3,7 +3,7 @@
  * is a one-shot command — "when the current source can seek, start there" —
  * the SPF analogue of hls.js's `startPosition` (and the primitive `EXT-X-START`,
  * resume-where-you-left-off, and MediaSource-recovery restore build on).
- * Consumers (adapters, `setupMediaSource`'s recovery snapshot) write it;
+ * Consumers (adapters, `setupAirPlay`'s session-end snapshot) write it;
  * this behavior is its sole consumer and clears it after applying, so a
  * stale position can never replay against a later source or rebuild.
  *
@@ -25,14 +25,11 @@
  *    clamps the seek to its seekable range per spec, and the resulting
  *    `seeking` event flows back through `trackCurrentTime` — from here the
  *    ordinary seek path owns the position.
- * 3. **Resume playing, when commanded.** `state.resumePlayback` is a
- *    companion one-shot: it rides the position application (applied right
- *    after the seek, consumed with it) so a recovery rebuild resumes playing
- *    when the element was playing at snapshot time — the media element load
- *    algorithm forces `paused = true`, so without this the rebuild always
- *    comes back paused. A rejected `play()` (autoplay policy) degrades to
- *    paused-at-position. Set alone (no `startPosition`), the flag waits —
- *    it's a restore command, not a general "play()" channel.
+ *
+ * Position only — playing/paused is deliberately out of scope. The media
+ * element load algorithm forces `paused = true`, so a source that was
+ * playing before a rebuild comes back paused at the restored position;
+ * resume intent is a separate concern for a future channel.
  *
  * Deliberately NOT relying on the pre-metadata "default playback start
  * position" write (setting `currentTime` at HAVE_NOTHING): cross-browser MSE
@@ -50,7 +47,7 @@ import { isUndefined } from '@videojs/utils/predicate';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
+import { computed, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import { isResolvedPresentation, type MaybeResolvedPresentation } from '../../../media/types';
 
 export interface StartPositionState {
@@ -61,13 +58,6 @@ export interface StartPositionState {
    * by `applyStartPosition` once the element seeks.
    */
   startPosition?: number;
-  /**
-   * One-shot companion command: resume playing when the pending
-   * `startPosition` applies. Written by `setupAirPlay`'s session-end
-   * snapshot (element was playing on the receiver when the session ended);
-   * consumed alongside `startPosition`.
-   */
-  resumePlayback?: boolean;
   currentTime?: number;
 }
 
@@ -94,7 +84,6 @@ function applyStartPositionSetup({
   state: {
     presentation: ReadonlySignal<StartPositionState['presentation']>;
     startPosition: Signal<StartPositionState['startPosition']>;
-    resumePlayback: Signal<StartPositionState['resumePlayback']>;
     currentTime: Signal<StartPositionState['currentTime']>;
   };
   context: {
@@ -122,18 +111,10 @@ function applyStartPositionSetup({
           // Step 1 — point the loaders' first load window at the position.
           state.currentTime.set(position);
 
-          // Step 2 — seek once the element can honor it, then consume. The
-          // companion resume command applies after the seek so playback
-          // starts at the restored position, not 0.
+          // Step 2 — seek once the element can honor it, then consume.
           const apply = () => {
             mediaElement.currentTime = position;
             state.startPosition.set(undefined);
-            if (peek(state.resumePlayback)) {
-              state.resumePlayback.set(undefined);
-              mediaElement.play().catch((err) => {
-                console.warn('[applyStartPosition] resume play() rejected — staying paused at position:', err);
-              });
-            }
           };
 
           if (mediaElement.readyState >= HTMLMediaElement.HAVE_METADATA) {
@@ -148,7 +129,7 @@ function applyStartPositionSetup({
 }
 
 export const applyStartPosition = defineBehavior({
-  stateKeys: ['presentation', 'startPosition', 'resumePlayback', 'currentTime'],
+  stateKeys: ['presentation', 'startPosition', 'currentTime'],
   contextKeys: ['mediaElement'],
   setup: applyStartPositionSetup,
 });

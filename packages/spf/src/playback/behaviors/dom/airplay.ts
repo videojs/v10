@@ -14,11 +14,10 @@
  *   the `loadXSegments` dispatchers (no fetching alongside the receiver) and
  *   by `setupMediaSource` (its post-close rebuild waits — attaching runs
  *   `element.load()` under the live receiver).
- * - `state.startPosition` / `state.resumePlayback` — one-shot commands
- *   snapshotted from the element at the session's settled end, before the
- *   suspension release lets the rebuild's `load()` reset the element, so
- *   `applyStartPosition` resumes the rebuilt source where the receiver
- *   left off.
+ * - `state.startPosition` — one-shot command snapshotted from the element at
+ *   the session's settled end, before the suspension release lets the
+ *   rebuild's `load()` reset the element, so `applyStartPosition` starts the
+ *   rebuilt source where the receiver left off.
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -94,7 +93,6 @@ function setupAirPlaySetup({
     disableRemotePlayback: ReadonlySignal<boolean | undefined>;
     loadingSuspended: Signal<SegmentLoadingState['loadingSuspended']>;
     startPosition: Signal<StartPositionState['startPosition']>;
-    resumePlayback: Signal<StartPositionState['resumePlayback']>;
   };
   context: {
     mediaElement: ReadonlySignal<HTMLMediaElement | undefined>;
@@ -150,14 +148,12 @@ function setupAirPlaySetup({
                 const stillActive = isSessionActive();
                 if (!stillActive) {
                   // Session over. The element still carries the
-                  // receiver-mirrored playback state, and nothing has
-                  // `load()`ed it yet — `setupMediaSource`'s rebuild only
-                  // proceeds once the suspension release below lets it.
-                  // Snapshot into the one-shot restore commands first, so
-                  // `applyStartPosition` resumes the rebuilt source where
-                  // the receiver left off.
+                  // receiver-mirrored position, and nothing has `load()`ed
+                  // it yet — `setupMediaSource`'s rebuild only proceeds once
+                  // the suspension release below lets it. Snapshot into the
+                  // one-shot command first, so `applyStartPosition` starts
+                  // the rebuilt source where the receiver left off.
                   state.startPosition.set(mediaElement.currentTime);
-                  state.resumePlayback.set(!mediaElement.paused);
                 }
                 setSessionActive(stillActive);
               }, REMOTE_INACTIVE_SETTLE_MS);
@@ -230,7 +226,7 @@ function setupAirPlaySetup({
 }
 
 export const setupAirPlay = defineBehavior({
-  stateKeys: ['presentation', 'disableRemotePlayback', 'loadingSuspended', 'startPosition', 'resumePlayback'],
+  stateKeys: ['presentation', 'disableRemotePlayback', 'loadingSuspended', 'startPosition'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupAirPlaySetup,
 });

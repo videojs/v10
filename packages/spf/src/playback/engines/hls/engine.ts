@@ -136,13 +136,6 @@ export interface SimpleHlsEngineState {
    */
   startPosition?: number;
   /**
-   * One-shot companion to `startPosition`: resume playing once the pending
-   * position applies. Written by `setupAirPlay`'s session-end snapshot when
-   * the element was playing on the receiver (the rebuild's `load()` forces
-   * `paused = true`); consumed with `startPosition` by `applyStartPosition`.
-   */
-  resumePlayback?: boolean;
-  /**
    * Intent-level loading policy: initiate no new loading work while `true`.
    * Written by `setupAirPlay` (the only behavior declaring the key) while a
    * remote-playback session owns presentation; observed by the

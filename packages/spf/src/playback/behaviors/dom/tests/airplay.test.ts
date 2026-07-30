@@ -61,7 +61,6 @@ function makeSignals(presentation?: MaybeResolvedPresentation) {
       disableRemotePlayback: signal<boolean | undefined>(undefined),
       loadingSuspended: signal<boolean | undefined>(undefined),
       startPosition: signal<number | undefined>(undefined),
-      resumePlayback: signal<boolean | undefined>(undefined),
     },
     context: {
       mediaElement: signal<HTMLMediaElement | undefined>(undefined),
@@ -334,7 +333,7 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
-  it('snapshots the element playback state at the settled session end', async () => {
+  it('snapshots the element position at the settled session end', async () => {
     vi.useFakeTimers();
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
@@ -342,24 +341,21 @@ describe('setupAirPlay', () => {
 
     const video = makeWebKitVideo({ wireless: true });
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
-    Object.defineProperty(video, 'paused', { value: false, configurable: true });
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
     expect(state.loadingSuspended.get()).toBe(true);
 
-    // No commands mid-session: the element (mirroring the receiver) is the
+    // No command mid-session: the element (mirroring the receiver) is the
     // source of truth until the session ends.
     expect(state.startPosition.get()).toBeUndefined();
-    expect(state.resumePlayback.get()).toBeUndefined();
 
     // Settled session end: the element still carries the receiver-mirrored
-    // state, and the rebuild only proceeds once the suspension release lets
-    // it — so the one-shot commands are written first, from a pre-`load()`
-    // element.
+    // position, and the rebuild only proceeds once the suspension release
+    // lets it — so the one-shot command is written first, from a
+    // pre-`load()` element.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
     expect(state.startPosition.get()).toBe(87);
-    expect(state.resumePlayback.get()).toBe(true);
     expect(state.loadingSuspended.get()).toBe(false);
 
     reactor.destroy();
@@ -461,7 +457,6 @@ describe('setupAirPlay', () => {
     await flush();
     expect(state.loadingSuspended.get()).toBe(false);
     expect(state.startPosition.get()).toBeUndefined();
-    expect(state.resumePlayback.get()).toBeUndefined();
 
     // The listener is gone — a stray wireless event does nothing.
     setWireless(video, true);
