@@ -145,6 +145,7 @@ describe('CastButtonCore', () => {
     });
 
     it('does nothing when the disabled prop is set', async () => {
+      stubCastSupport();
       const core = new CastButtonCore({ disabled: true });
       const media = createMediaState();
       await core.toggle(media);
