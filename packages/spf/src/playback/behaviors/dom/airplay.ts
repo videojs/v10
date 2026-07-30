@@ -18,7 +18,10 @@
  *   the element at the session's settled end (still receiver-mirrored) and
  *   written once the rebuild's `load()` resets the element (its `'emptied'`),
  *   so `applyStartPosition` applies it to the rebuilt source — never to the
- *   pre-rebuild element — and starts it where the receiver left off.
+ *   pre-rebuild element — and starts it where the receiver left off. The
+ *   playing state rides the same snapshot but stays behavior-local: this
+ *   behavior itself calls `play()` on the rebuilt source's `loadedmetadata`
+ *   when the receiver was playing at session end.
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -136,17 +139,19 @@ function setupAirPlaySetup({
           };
 
           let settleTimer: ReturnType<typeof setTimeout> | undefined;
-          // Pending session-end snapshot: the position is captured at the
-          // settled falling edge (the element still mirrors the receiver),
-          // but the one-shot command is written only when the element's next
+          // Pending session-end snapshot: position and playing state are
+          // captured at the settled falling edge (the element still mirrors
+          // the receiver), but acted on only when the element's next
           // `'emptied'` fires — i.e. once the rebuild's `load()` has reset
-          // the element. Writing earlier would hand `applyStartPosition` a
-          // command against the pre-rebuild element (readyState still >=
-          // HAVE_METADATA), which it would apply and consume before the
-          // rebuilt source exists. Guarded by presentation identity so a
-          // source change while a rebuild is held can't inherit the old
-          // position.
-          let pendingStartPosition: { position: number; presentationUrl: string | undefined } | undefined;
+          // the element. Writing the position earlier would hand
+          // `applyStartPosition` a command against the pre-rebuild element
+          // (readyState still >= HAVE_METADATA), which it would apply and
+          // consume before the rebuilt source exists. Guarded by
+          // presentation identity so a source change while a rebuild is held
+          // can't inherit the old session's state.
+          let pendingRestore:
+            | { position: number; wasPlaying: boolean; presentationUrl: string | undefined }
+            | undefined;
 
           const sync = () => {
             if (isSessionActive()) {
@@ -160,8 +165,9 @@ function setupAirPlaySetup({
                 settleTimer = undefined;
                 const stillActive = isSessionActive();
                 if (!stillActive) {
-                  pendingStartPosition = {
+                  pendingRestore = {
                     position: mediaElement.currentTime,
+                    wasPlaying: !mediaElement.paused,
                     presentationUrl: peek(state.presentation)?.url,
                   };
                 }
@@ -179,10 +185,27 @@ function setupAirPlaySetup({
             mediaElement,
             'emptied',
             () => {
-              if (!pendingStartPosition) return;
-              const { position, presentationUrl } = pendingStartPosition;
-              pendingStartPosition = undefined;
-              if (peek(state.presentation)?.url === presentationUrl) state.startPosition.set(position);
+              if (!pendingRestore) return;
+              const { position, wasPlaying, presentationUrl } = pendingRestore;
+              pendingRestore = undefined;
+              if (peek(state.presentation)?.url !== presentationUrl) return;
+              state.startPosition.set(position);
+              if (!wasPlaying) return;
+              // Resume playing on the rebuilt source once it's ready — the
+              // rebuild's load algorithm forced `paused = true`. Deferred to
+              // `loadedmetadata` so the play() can't be swept up by the load
+              // algorithm's pending-promise rejection; a rejection here
+              // (autoplay policy) degrades to paused-at-position.
+              listen(
+                mediaElement,
+                'loadedmetadata',
+                () => {
+                  mediaElement.play().catch((err) => {
+                    console.warn('[setupAirPlay] session-end resume play() rejected — staying paused:', err);
+                  });
+                },
+                { once: true, signal: listenerCleanup.signal }
+              );
             },
             { signal: listenerCleanup.signal }
           );

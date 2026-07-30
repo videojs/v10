@@ -29,7 +29,8 @@
  * Position only — playing/paused is deliberately out of scope. The media
  * element load algorithm forces `paused = true`, so a source that was
  * playing before a rebuild comes back paused at the restored position;
- * resume intent is a separate concern for a future channel.
+ * resume intent belongs to whoever commands the start (e.g. `setupAirPlay`
+ * restores its session-end playing state itself).
  *
  * Deliberately NOT relying on the pre-metadata "default playback start
  * position" write (setting `currentTime` at HAVE_NOTHING): cross-browser MSE

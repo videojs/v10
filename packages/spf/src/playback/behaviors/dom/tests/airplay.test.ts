@@ -341,6 +341,9 @@ describe('setupAirPlay', () => {
 
     const video = makeWebKitVideo({ wireless: true });
     Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    Object.defineProperty(video, 'paused', { value: false, configurable: true });
+    const play = vi.fn(() => Promise.resolve());
+    video.play = play;
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
     expect(state.loadingSuspended.get()).toBe(true);
@@ -349,19 +352,52 @@ describe('setupAirPlay', () => {
     // source of truth until the session ends.
     expect(state.startPosition.get()).toBeUndefined();
 
-    // Settled session end: the position is captured (the element still
-    // mirrors the receiver) but NOT yet written — the pre-rebuild element
-    // still has metadata, so applyStartPosition would consume the command
-    // against it before the fresh source exists.
+    // Settled session end: position + playing state are captured (the
+    // element still mirrors the receiver) but NOT yet acted on — the
+    // pre-rebuild element still has metadata, so applyStartPosition would
+    // consume the command against it before the fresh source exists.
     setWireless(video, false);
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
     expect(state.loadingSuspended.get()).toBe(false);
     expect(state.startPosition.get()).toBeUndefined();
 
     // The rebuild's load() resets the element ('emptied') — NOW the one-shot
-    // is written, against the fresh load.
+    // is written, against the fresh load. The resume waits for the rebuilt
+    // source's metadata.
     video.dispatchEvent(new Event('emptied'));
     expect(state.startPosition.get()).toBe(87);
+    expect(play).not.toHaveBeenCalled();
+
+    // Rebuilt source ready → the receiver-playing state is restored locally
+    // by this behavior (no shared resume channel).
+    video.dispatchEvent(new Event('loadedmetadata'));
+    expect(play).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+
+  it('stays paused after the rebuild when the receiver was paused at session end', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    Object.defineProperty(video, 'paused', { value: true, configurable: true });
+    const play = vi.fn(() => Promise.resolve());
+    video.play = play;
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+    video.dispatchEvent(new Event('emptied'));
+    expect(state.startPosition.get()).toBe(87);
+
+    video.dispatchEvent(new Event('loadedmetadata'));
+    // A paused receiver must come back paused — no surprise autoplay.
+    expect(play).not.toHaveBeenCalled();
 
     reactor.destroy();
   });
