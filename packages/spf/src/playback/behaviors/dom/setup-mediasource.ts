@@ -53,7 +53,7 @@
  * read.
  */
 import { listen } from '@videojs/utils/dom';
-import type { Behavior } from '../../../core/composition/create-composition';
+import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
 import { computed, type ReadonlySignal, type Signal, signal } from '../../../core/signals/primitives';
@@ -97,16 +97,22 @@ function setupMediaSourceSetup({
 }: {
   state: {
     presentation: ReadonlySignal<MediaSourceState['presentation']>;
-    // See behavior definition for details on this optional state signal.
-    // Redefined locally (canonical shape: `SegmentLoadingState['loadingSuspended']`)
-    // to avoid a type dependency on the load-segments module.
-    loadingSuspended?: ReadonlySignal<boolean | undefined>;
   };
   context: {
     mediaElement: ReadonlySignal<MediaSourceContext['mediaElement']>;
     mediaSource: Signal<MediaSourceContext['mediaSource']>;
   };
 }): Reactor<MediaSourceFsmState | 'destroying' | 'destroyed'> {
+  // `loadingSuspended` is observed, never declared: the slot exists only in
+  // compositions where a feature behavior (e.g. `setupAirPlay`) declares and
+  // writes it, so it lives behind a cast rather than in the typed param
+  // above — an optional param key would force declaring it in `stateKeys`,
+  // which is what materializes a slot. Shape redefined locally (canonical:
+  // `SegmentLoadingState['loadingSuspended']`) to avoid a load-segments
+  // module dependency. See
+  // `internal/decisions/spf/optional-observed-state-keys.md`.
+  const loadingSuspended = (state as { loadingSuspended?: ReadonlySignal<boolean | undefined> }).loadingSuspended;
+
   // Liveness fact for the currently-owned MediaSource, flipped by the
   // entry's shared teardown. Consumed in `'preconditions-unmet'`.
   const mediaSourceClosed = signal(false);
@@ -134,7 +140,7 @@ function setupMediaSourceSetup({
           // states-declaration order), so a teardown's fact-write can land
           // after this effect's entry run — tracking re-fires the consume.
           // Not suspended = slot absent (no writer composed) or value falsy.
-          if (mediaSourceClosed.get() && !state.loadingSuspended?.get()) mediaSourceClosed.set(false);
+          if (mediaSourceClosed.get() && !loadingSuspended?.get()) mediaSourceClosed.set(false);
         },
       },
 
@@ -211,23 +217,8 @@ function setupMediaSourceSetup({
   });
 }
 
-/**
- * `setupMediaSource` uses a manual `Behavior<>` literal (rather than
- * `defineBehavior`) because it reads `loadingSuspended` defensively without
- * declaring it in its stateKeys — that slot is contributed by a feature
- * behavior (e.g. `setupAirPlay`) and composes conditionally per engine
- * variant. The `Behavior<>` generics carry only the declared keys; the
- * optional field lives on `setupMediaSourceSetup`'s state param. See
- * `internal/decisions/spf/optional-observed-state-keys.md`.
- */
-export const setupMediaSource: Behavior<
-  { presentation: ReadonlySignal<MediaSourceState['presentation']> },
-  {
-    mediaElement: ReadonlySignal<MediaSourceContext['mediaElement']>;
-    mediaSource: Signal<MediaSourceContext['mediaSource']>;
-  }
-> = {
+export const setupMediaSource = defineBehavior({
   stateKeys: ['presentation'],
   contextKeys: ['mediaElement', 'mediaSource'],
   setup: setupMediaSourceSetup,
-};
+});
