@@ -192,13 +192,12 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           context[actorKey].set(bufferActor);
           context[loaderKey].set(segmentLoader);
 
-          // One complete teardown, shared by both triggers below. Destroy the
+          // State-exit cleanup — fires when `mediaSource` detaches, the
+          // selection unsets, or the behavior is destroyed. Destroy the
           // loader before its upstream buffer-actor so any in-flight
-          // `appendBuffer` is aborted before the buffer-actor's own teardown.
-          // Idempotent end to end — actor `destroy` no-ops when already
-          // destroyed, the undefined-over-undefined slot writes dedup, and
-          // `abort` re-runs harmlessly — so whichever trigger fires first does
-          // the work and the other is a no-op.
+          // `appendBuffer` is aborted before the buffer-actor's own
+          // teardown. Idempotent, so the sourceclose listener below shares it.
+          const disconnect = new AbortController();
           const teardownActors = () => {
             segmentLoader.destroy();
             bufferActor.destroy();
@@ -207,20 +206,13 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
             disconnect.abort();
           };
 
-          // Trigger 1 — the user agent closes the MediaSource out from under
-          // us (notably an AirPlay handoff; see `setupAirPlay`). This must be
-          // a DOM listener, not reactive cleanup: the loader's already-queued
-          // append continuations run ahead of any effect flush, and only a
-          // synchronous abort during event dispatch flips their abort flags
-          // before one touches the dead SourceBuffer (InvalidStateError).
-          // The reactive exit still follows — `setupMediaSource`'s own
-          // `sourceclose` handling detaches and clears `context.mediaSource`,
-          // and the derive leaves this state.
-          const disconnect = new AbortController();
+          // Also tear down when the UA closes the MediaSource out from under
+          // us (notably an AirPlay handoff — see `setupAirPlay`). Must be a
+          // DOM listener, not reactive cleanup: already-queued append
+          // continuations outrun any effect flush, and only a synchronous
+          // abort keeps them off the dead SourceBuffer (InvalidStateError).
           listen(mediaSource, 'sourceclose', teardownActors, { signal: disconnect.signal });
 
-          // Trigger 2 — state-exit cleanup: `mediaSource` detaches, the
-          // selection unsets, or the behavior is destroyed.
           return teardownActors;
         },
       },
