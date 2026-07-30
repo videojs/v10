@@ -261,9 +261,12 @@ describe('setupVideoBufferActors + setupAudioBufferActors', () => {
 
     expect(loader.destroy).toHaveBeenCalled();
     expect(bufferActor.snapshot.get().value).toBe('destroyed');
-    // Only the actors are torn down — `context.mediaSource` and the slots are
-    // left in place for the normal source-reset path.
-    expect(context.videoBufferActor.get()).toBe(bufferActor);
+    // The full teardown runs from the listener: actors destroyed AND slots
+    // unpublished, synchronously. `context.mediaSource` is not this
+    // behavior's slot — `setupMediaSource` detaches it via its own
+    // `sourceclose` handling.
+    expect(context.videoBufferActor.get()).toBeUndefined();
+    expect(context.videoSegmentLoaderActor.get()).toBeUndefined();
     expect(context.mediaSource.get()).toBe(mediaSource);
 
     cleanup();
