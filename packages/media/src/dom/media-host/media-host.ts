@@ -87,12 +87,11 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   destroy() {
     this.detach();
     this.#eventTypes.clear();
-
-    const components = getMediaComponents(this);
-    for (const component of components.values()) {
-      component.destroy?.();
-    }
-    components.clear();
+    // Media components are owned by whoever registered them (e.g. `<mux-data>`,
+    // `<google-cast>`), which may outlive this host. `detach()` above releases
+    // them from the target, so only drop the registrations here and leave
+    // destruction to the owner.
+    getMediaComponents(this).clear();
   }
 
   querySelectorAll<E extends Element = Element, S extends string = string>(selectors: S) {

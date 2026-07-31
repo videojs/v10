@@ -20,6 +20,7 @@ class VolumeOverride implements MediaComponent {
 
 class AttachTracking implements MediaComponent {
   attach = vi.fn();
+  detach = vi.fn();
   destroy = vi.fn();
 }
 
@@ -135,7 +136,7 @@ describe('HTMLMediaElementHost', () => {
       expect(component.attach).not.toHaveBeenCalled();
     });
 
-    it('destroys and unregisters components on destroy', () => {
+    it('detaches and unregisters components on destroy', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
       audio.muted = false;
@@ -147,11 +148,24 @@ describe('HTMLMediaElementHost', () => {
 
       host.destroy();
 
-      expect(component.destroy).toHaveBeenCalledTimes(1);
+      expect(component.detach).toHaveBeenCalledTimes(1);
 
-      // The destroyed override no longer participates in property resolution.
+      // The unregistered override no longer participates in property resolution.
       host.attach(audio);
       expect(host.muted).toBe(false);
+    });
+
+    it('does not destroy components it does not own on destroy', () => {
+      const host = new HTMLAudioElementHost();
+      host.attach(document.createElement('audio'));
+
+      const component = new AttachTracking();
+      addMediaComponent(host, component);
+
+      host.destroy();
+
+      // `<mux-data>` / `MuxData` own their component and may outlive the host.
+      expect(component.destroy).not.toHaveBeenCalled();
     });
 
     it('invokes the override method when it owns the property', async () => {
