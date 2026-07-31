@@ -126,8 +126,7 @@ function setupMediaSourceSetup({
   // above — an optional param key would force declaring it in `stateKeys`,
   // which is what materializes a slot. Shape redefined locally (canonical:
   // `SegmentLoadingState['loadingSuspended']`) to avoid a load-segments
-  // module dependency. See
-  // `internal/decisions/spf/optional-observed-state-keys.md`.
+  // module dependency.
   const loadingSuspended = (state as { loadingSuspended?: ReadonlySignal<boolean | undefined> }).loadingSuspended;
 
   // Close-fact for the currently-owned MediaSource, flipped by the

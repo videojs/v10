@@ -84,8 +84,7 @@ export interface SegmentLoadingState {
    * never declared**: no reader lists this key in `stateKeys`, so the slot
    * exists only in compositions where a feature behavior declares and
    * writes it (e.g. `setupAirPlay`, while a remote-playback session owns
-   * presentation). An absent slot means never suspended. See
-   * `internal/decisions/spf/optional-observed-state-keys.md`.
+   * presentation). An absent slot means never suspended.
    */
   loadingSuspended?: boolean;
   selectedVideoTrackId?: string;
