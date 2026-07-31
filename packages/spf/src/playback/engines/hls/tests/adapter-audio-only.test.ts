@@ -72,7 +72,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   });
 
   // ---------------------------------------------------------------------------
-  // attach / detach
+  // attach / detach — media element lifecycle (reuses the same engine)
   // ---------------------------------------------------------------------------
   describe('attach / detach', () => {
     it('exposes the engine immediately (created at construction, not on attach)', () => {
@@ -99,26 +99,35 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       expect(media.engine).toBe(engine);
     });
 
-    it('creates a new engine when src is set', () => {
+    it('reuses the same engine instance when src is set', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       const initial = media.engine;
       media.src = 'https://example.com/v1.m3u8';
-      expect(media.engine).not.toBe(initial);
+      expect(media.engine).toBe(initial);
     });
 
-    it('destroys the old engine when src changes', () => {
+    it('reuses the same engine instance when src changes', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.src = 'https://example.com/v1.m3u8';
+      const engine = media.engine;
+      media.src = 'https://example.com/v2.m3u8';
+      expect(media.engine).toBe(engine);
+    });
+
+    it('does not destroy the engine when src changes', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       const spy = vi.spyOn(media.engine, 'destroy');
       media.src = 'https://example.com/v2.m3u8';
-      expect(spy).toHaveBeenCalledOnce();
+      expect(spy).not.toHaveBeenCalled();
     });
 
-    it('re-attaches the media element to the new engine when src changes', () => {
+    it('keeps the attached media element across src changes', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
+      media.src = 'https://example.com/v2.m3u8';
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
@@ -245,12 +254,55 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       expect(media.engine.state.preload.get()).toBe('none');
     });
 
-    it('survives src reassignment — explicit preload is preserved across engine recreation', () => {
+    it('keeps explicit preload in engine state across src changes', () => {
       const media = new SimpleHlsAudioOnlyMediaElement();
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
+      // The engine is recycled, so state.preload is an engine-wide preference
+      // that simply persists across the src change — no re-application needed.
       expect(media.preload).toBe('none');
       expect(media.engine.state.preload.get()).toBe('none');
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // disableRemotePlayback — synchronous IDL attribute (WHATWG Remote Playback)
+  // ---------------------------------------------------------------------------
+  describe('disableRemotePlayback', () => {
+    it('defaults to false', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      expect(media.disableRemotePlayback).toBe(false);
+    });
+
+    it('reflects the set value synchronously', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.disableRemotePlayback = true;
+      expect(media.disableRemotePlayback).toBe(true);
+    });
+
+    it('updates engine state immediately when set', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.disableRemotePlayback = true;
+      expect(media.engine.state.disableRemotePlayback.get()).toBe(true);
+    });
+
+    it('keeps the author opt-out in engine state across src changes', () => {
+      // The engine is recycled, so author intent persists on the same signal.
+      // An opted-out consumer must never get an AirPlay picker back on a
+      // source change.
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.disableRemotePlayback = true;
+      media.src = 'https://example.com/v.m3u8';
+      expect(media.disableRemotePlayback).toBe(true);
+      expect(media.engine.state.disableRemotePlayback.get()).toBe(true);
+    });
+
+    it('keeps a re-enabled remote playback across src changes', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.disableRemotePlayback = true;
+      media.disableRemotePlayback = false;
+      media.src = 'https://example.com/v.m3u8';
+      expect(media.engine.state.disableRemotePlayback.get()).toBe(false);
     });
   });
 
