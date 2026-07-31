@@ -219,15 +219,27 @@ function setupAirPlaySetup({
           // rebuild is held by `loadingSuspended`, so the receiver stays on the
           // outgoing stream until the user disengages.
           //
-          // Releasing the hold lets the rebuild's `load()` re-run resource
-          // selection, and WebKit then switches the receiver to the AirPlay
-          // alternate — by then re-created against the new presentation — so the
-          // session follows the source change. Measured behavior, not a
-          // contract: this is under-specified territory, so nothing here depends
-          // on the handover succeeding. If a UA instead drops the session, the
-          // falling edge runs its ordinary course; the restore is suppressed
-          // either way because the snapshot is bound to the presentation the
-          // session owned.
+          // Releasing the hold lets the rebuild proceed, and the receiver ends
+          // up on the new stream — measured on Safari 26.4. Note where the
+          // handover actually happens, because it is not the rebuild's `load()`:
+          // clearing the hold also makes the source effect below see an inactive
+          // session with no `context.mediaSource`, so it drops the fallback, and
+          // the rebuild's resource selection runs with the MSE source alone. The
+          // switch comes afterwards, when that effect re-creates the fallback
+          // against the new presentation once the MediaSource opens and WebKit
+          // moves the live session onto the newly-appeared alternate.
+          //
+          // That leaves a window where an active session has no compatible
+          // alternate on the element, and it survives it. Holding the fallback
+          // across the rebuild instead would close the window and make the
+          // handover selection-driven, but it swaps a measured path for an
+          // argued one — don't without a device pass.
+          //
+          // Measured, not contracted: this is under-specified territory, so
+          // nothing here depends on the handover succeeding. If a UA drops the
+          // session instead, the falling edge runs its ordinary course; the
+          // restore is suppressed either way because the snapshot is bound to
+          // the presentation the session owned.
           //
           // Note this is *not* an attempt to end the session. Setting
           // `disableRemotePlayback = true` was tried: the Remote Playback API
