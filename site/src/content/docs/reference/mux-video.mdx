@@ -27,39 +27,40 @@ Video element for playing Mux-hosted HLS streams. Built on hls.js with Mux-speci
 
 ## Load a source
 
-MuxVideo takes Mux content two ways: a structured `source` object, or a stream URL through `src`.
-
 <FrameworkCase frameworks={["react"]}>
-Prefer `source`. It's typed, so you get autocomplete and type checking on the playback ID and playback params, and MuxVideo builds the URL for you. Reach for `src` as an escape hatch when you already have a Mux HLS URL as a string.
-</FrameworkCase>
+The `source` param builds the URL for you from a playback ID, an optional custom domain, and `playback` params. Playback params are just camelCased [Mux playback query params](https://www.mux.com/docs/api-reference/stream/streaming/get-hls-manifest); for example, `max_resolution` becomes `maxResolution`.
 
-<FrameworkCase frameworks={["html"]}>
-`src` and `source` are peers. Use `src` when you have a Mux HLS URL, or `source` to build one from its parts.
-</FrameworkCase>
-
-`src` takes a Mux HLS URL. MuxVideo parses the playback ID and query params out of it into `source`; a non-Mux URL passes through unchanged.
-
-<FrameworkCase frameworks={["react"]}>
 ```tsx
-<MuxVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
+<MuxVideo
+  source={{ 
+    playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM',
+    customDomain: 'media.example.com',
+    playback: { maxResolution: '1080p' }
+  }} 
+/>
 ```
+
+If for some reason you need a bit more control, you can use the `src` param with a plain 'ol URL, too:
+
+```tsx
+<MuxVideo
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
+/>
+```
+
+MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again, like a fresh object on a React re-render, doesn't fire it.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
+
+MuxVideo takes Mux content two ways: a stream URL through `src`, or a structured `source` object.
+
 ```html
 <mux-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></mux-video>
 ```
-</FrameworkCase>
 
-`source` builds the URL for you from a playback ID, an optional custom domain, and typed `playback` params (serialized to `snake_case` query params). Setting `source` derives `src`; setting `src` re-derives `source`. It's an object, so in HTML it's a property with no matching attribute.
+The `source` object builds the URL for you from a playback ID, an optional custom domain, and `playback` params. Playback params are just camelCased [Mux playback query params](https://www.mux.com/docs/api-reference/stream/streaming/get-hls-manifest); for example, `max_resolution` becomes `maxResolution`.
 
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<MuxVideo source={{ playbackId: 'BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM', playback: { maxResolution: '1080p' } }} />
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
 ```ts
 const video = document.querySelector('mux-video');
 video.source = {
@@ -68,9 +69,9 @@ video.source = {
   playback: { maxResolution: '1080p' },
 };
 ```
-</FrameworkCase>
 
-MuxVideo fires a `sourcechange` event when the source actually changes, whether you set `source` directly or assign a new `src`. Setting the same values again, like a fresh object on a React re-render, doesn't fire it.
+MuxVideo fires a `sourcechange` event when the source actually changes. Setting the same values again doesn't fire it.
+</FrameworkCase>
 
 ## Thumbnails and storyboards
 
