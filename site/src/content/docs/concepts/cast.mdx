@@ -73,8 +73,8 @@ Cast only works in Chromium-based browsers (Chrome, Edge, and others built on Bl
 
 Cast uses a **sender / receiver** model:
 
-- **Sender** — the browser tab. It sends the receiver a load request with the source URL and metadata, then issues playback commands (play, pause, seek, volume).
-- **Receiver** — the Chromecast device running a receiver application: Google's default media receiver, or a custom one you configure.
+- **Sender**: the browser tab. It sends the receiver a load request with the source URL and metadata, then issues playback commands (play, pause, seek, volume).
+- **Receiver**: the Chromecast device running a receiver application, either Google's default media receiver or a custom one you configure.
 
 ### Session lifecycle
 
@@ -86,7 +86,7 @@ A Cast session moves through three states, exposed by the <DocsLink slug="refere
 | `'connecting'` | Device picked; session starting |
 | `'connected'` | Session active; receiver has the media |
 
-While `connected`, the media element's `play`, `pause`, `currentTime`, `volume`, `muted`, and `playbackRate` all proxy to the Cast receiver. Local playback is suspended.
+While `connected`, the media element's `play`, `pause`, `currentTime`, `volume`, `muted`, and `playbackRate` all forward to the Cast receiver. Local playback is suspended.
 
 ### The lazy-loaded SDK
 
@@ -163,10 +163,10 @@ class CastStatus extends HTMLElement {
 
 ## Browser availability
 
-The Remote Playback feature reports availability as `'available'` (a device is on the network), `'unavailable'` (no device found), or `'unsupported'` (the browser can't cast). A <DocsLink slug="reference/cast-button">CastButton</DocsLink> turns this into presentation for you: it hides itself when Cast is unsupported and shows a disabled state when Cast is supported but no device is reachable. See its reference for the data attributes and styling hooks.
+The Remote Playback feature reports availability as `'available'` (a device is on the network), `'unavailable'` (no device found), or `'unsupported'` (the browser can't cast). A <DocsLink slug="reference/cast-button">CastButton</DocsLink> handles the presentation for you: it hides itself when Cast is unsupported, and shows a disabled state when Cast is supported but no device is reachable. See its reference for the data attributes and styling hooks.
 
 ## See also
 
-<DocsLinkCard slug="reference/google-cast">GoogleCast reference — every option</DocsLinkCard>
+<DocsLinkCard slug="reference/google-cast">GoogleCast reference</DocsLinkCard>
 <DocsLinkCard slug="reference/cast-button">CastButton component reference</DocsLinkCard>
 <DocsLinkCard slug="reference/feature-remote-playback">Remote Playback feature reference</DocsLinkCard>

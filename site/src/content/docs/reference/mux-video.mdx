@@ -27,7 +27,15 @@ Video element for playing Mux-hosted HLS streams. Built on hls.js with Mux-speci
 
 ## Load a source
 
-Point MuxVideo at Mux content two ways: a stream URL through `src`, or a structured `source` object.
+MuxVideo takes Mux content two ways: a structured `source` object, or a stream URL through `src`.
+
+<FrameworkCase frameworks={["react"]}>
+Prefer `source`. It's typed, so you get autocomplete and type checking on the playback ID and playback params, and MuxVideo builds the URL for you. Reach for `src` as an escape hatch when you already have a Mux HLS URL as a string.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+`src` and `source` are peers. Use `src` when you have a Mux HLS URL, or `source` to build one from its parts.
+</FrameworkCase>
 
 `src` takes a Mux HLS URL. MuxVideo parses the playback ID and query params out of it into `source`; a non-Mux URL passes through unchanged.
 
@@ -62,7 +70,7 @@ video.source = {
 ```
 </FrameworkCase>
 
-MuxVideo fires a `sourcechange` event whenever the effective source changes structurally, whether you set `source` directly or assign a new `src`. Setting an equivalent source, such as a fresh object with the same values on a React re-render, doesn't re-fire it.
+MuxVideo fires a `sourcechange` event when the source actually changes, whether you set `source` directly or assign a new `src`. Setting the same values again, like a fresh object on a React re-render, doesn't fire it.
 
 ## Thumbnails and storyboards
 
@@ -125,8 +133,8 @@ import { MuxVideo } from '@videojs/react/media/mux-video';
 Register the elements by importing `@videojs/html/media/mux-data` and `@videojs/html/media/google-cast`.
 </FrameworkCase>
 
-<DocsLinkCard slug="concepts/mux-data">Mux Data — metadata, options, and configuration</DocsLinkCard>
-<DocsLinkCard slug="concepts/cast">Google Cast — receivers, load requests, and session state</DocsLinkCard>
+<DocsLinkCard slug="concepts/mux-data" description="Metadata, options, and configuration">Mux Data</DocsLinkCard>
+<DocsLinkCard slug="concepts/cast" description="Receivers, load requests, and session state">Google Cast</DocsLinkCard>
 
 ## Examples
 

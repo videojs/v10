@@ -8,7 +8,7 @@ import DocsLink from '@/components/docs/DocsLink.astro';
 import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Aside from '@/components/Aside.astro';
 
-[Mux Data](https://www.mux.com/data) measures playback quality — startup time, rebuffering, playback failures, and watch time. Add the Mux Data component to a player and it monitors whichever media that player is playing:
+[Mux Data](https://www.mux.com/data) measures playback quality: startup time, rebuffering, playback failures, and watch time. Add the Mux Data component to a player and it monitors whichever media that player is playing:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
@@ -55,7 +55,7 @@ Mux Data is opt-in. No media element monitors playback on its own, Mux ones incl
 
 Mux Data needs to know which environment a view belongs to. For Mux-hosted playback it works that out on its own: the component reports the Mux playback ID as the view's `video_id`, and Mux attributes the view to the environment that owns that playback ID.
 
-Set `envKey` when you monitor a source Mux doesn't host — a self-hosted HLS or DASH stream, for example. Find the key in the [Mux dashboard](https://dashboard.mux.com/settings/data):
+Set `envKey` when you monitor a source Mux doesn't host, like a self-hosted HLS or DASH stream. Find the key in the [Mux dashboard](https://dashboard.mux.com/settings/data):
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -98,11 +98,11 @@ muxData.metadata = { video_title: 'Big Buck Bunny', viewer_user_id: 'u_789' }; /
 
 ## Configuration
 
-The <DocsLink slug="reference/mux-data">MuxData reference</DocsLink> lists every option — the metadata and software fields above, plus the beacon domain, cookie, debug, and SDK settings. Most options update the current view in place; changing `MuxDataSdk`, `beaconCollectionDomain`, `debug`, or `disableCookies` restarts monitoring, ending the current view and starting a new one.
+The <DocsLink slug="reference/mux-data">MuxData reference</DocsLink> lists every option: the metadata and software fields above, plus the beacon domain, cookie, debug, and SDK settings. Most options update the current view in place; changing `MuxDataSdk`, `beaconCollectionDomain`, `debug`, or `disableCookies` restarts monitoring, ending the current view and starting a new one.
 
 ## See also
 
-<DocsLinkCard slug="reference/mux-data">MuxData reference — every option</DocsLinkCard>
+<DocsLinkCard slug="reference/mux-data">MuxData reference</DocsLinkCard>
 <DocsLinkCard slug="reference/mux-video">MuxVideo element reference</DocsLinkCard>
 <DocsLinkCard slug="reference/mux-audio">MuxAudio element reference</DocsLinkCard>
-<DocsLinkCard slug="concepts/cast">Google Cast — the other media component you compose onto a player</DocsLinkCard>
+<DocsLinkCard slug="concepts/cast" description="The other media component you compose onto a player">Google Cast</DocsLinkCard>
