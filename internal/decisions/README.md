@@ -52,6 +52,7 @@ Why this choice wins. Keep concise.
 
 | Area | Decisions |
 | --- | --- |
+| `media/` | Media element contracts, sources, and engine configuration |
 | `player/` | Provider, container, media discovery, and player composition |
 | `spf/` | Stream-processing ownership and coordination |
 | `store/` | State-management contracts |

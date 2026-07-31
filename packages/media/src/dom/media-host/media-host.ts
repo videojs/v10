@@ -41,9 +41,6 @@ export interface MediaComponents extends Map<MediaComponentConstructor, MediaCom
   set<T extends MediaComponent>(component: MediaComponentConstructor<T>, instance: T): this;
 }
 
-/** Host config bag for host/engine settings. Media components are configured directly. */
-export type MediaConfig = Record<string, unknown>;
-
 export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events extends { [K in keyof Events]: EventLike }>
   extends EventTarget
   implements MediaFull
@@ -51,7 +48,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
   #target: Target | null = null;
   #eventTypes = new Set<string>();
   #streamType: MediaStreamType = MediaStreamTypes.UNKNOWN;
-  #config: MediaConfig = {};
 
   protected get target() {
     return this.#target;
@@ -147,13 +143,6 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
 
   get targetLiveWindow() {
     return getMediaProp(this, 'targetLiveWindow') ?? Number.NaN;
-  }
-
-  get config(): MediaConfig {
-    return this.#config;
-  }
-  set config(value: MediaConfig) {
-    this.#config = value;
   }
 
   get title() {

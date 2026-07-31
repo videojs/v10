@@ -88,12 +88,28 @@ describe('MuxMedia', () => {
     });
   });
 
-  it('passes non-Mux src through with a null source', () => {
+  it('keeps a non-Mux src as a plain source url', () => {
     const media = new MuxMedia();
     media.src = 'https://example.com/custom.m3u8';
 
     expect(media.src).toBe('https://example.com/custom.m3u8');
-    expect(media.source).toBeNull();
+    expect(media.source).toEqual({ src: 'https://example.com/custom.m3u8' });
+  });
+
+  it('plays a non-Mux source url given through source', () => {
+    const media = new MuxMedia();
+    media.source = { src: 'https://example.com/custom.m3u8', preferPlayback: 'native' };
+
+    expect(media.src).toBe('https://example.com/custom.m3u8');
+  });
+
+  it('preserves engine options across a src change', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+
+    media.src = 'https://stream.mux.com/other.m3u8';
+
+    expect(media.source).toEqual({ playbackId: 'other', preferPlayback: 'native' });
   });
 
   it('derives the thumbnail URL from source', () => {
@@ -209,13 +225,25 @@ describe('MuxMedia', () => {
     expect(onSourceChange).toHaveBeenCalledTimes(1);
   });
 
-  it('does not fire sourcechange when a non-Mux src replaces another', () => {
+  it('fires sourcechange when a non-Mux src replaces another', () => {
     const media = new MuxMedia();
     media.src = 'https://example.com/a.m3u8';
 
     const onSourceChange = vi.fn();
     media.addEventListener('sourcechange', onSourceChange);
     media.src = 'https://example.com/b.m3u8';
+
+    expect(onSourceChange).toHaveBeenCalledOnce();
+    expect(media.source).toEqual({ src: 'https://example.com/b.m3u8' });
+  });
+
+  it('does not fire sourcechange when the same src is reassigned', () => {
+    const media = new MuxMedia();
+    media.src = 'https://example.com/a.m3u8';
+
+    const onSourceChange = vi.fn();
+    media.addEventListener('sourcechange', onSourceChange);
+    media.src = 'https://example.com/a.m3u8';
 
     expect(onSourceChange).not.toHaveBeenCalled();
   });

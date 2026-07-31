@@ -14,13 +14,26 @@ afterEach(() => {
 });
 
 describe('MuxVideo', () => {
-  it('exposes the element config as a property, not an attribute', () => {
+  it('exposes the element source as a property, not an attribute', () => {
     const el = createMuxVideo();
 
-    el.config = { preferPlayback: 'native' };
+    el.source = { playbackId: 'abc123', preferPlayback: 'native' };
 
-    expect(el.config.preferPlayback).toBe('native');
-    expect(el.hasAttribute('config')).toBe(false);
+    expect(el.source?.preferPlayback).toBe('native');
+    expect(el.hasAttribute('source')).toBe(false);
+  });
+
+  it('keeps engine options when the src attribute changes', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { maxBufferLength: 60 } };
+    el.setAttribute('src', 'https://stream.mux.com/other.m3u8');
+
+    expect(el.source).toEqual({
+      playbackId: 'other',
+      preferPlayback: 'native',
+      engine: { maxBufferLength: 60 },
+    });
   });
 
   it('parses the host source from the src attribute', () => {

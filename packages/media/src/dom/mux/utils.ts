@@ -2,6 +2,7 @@ import { parseJwt } from '@videojs/utils/jwt';
 import { deepEqual } from '@videojs/utils/object';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
+import type { HlsSource } from '../hls-js';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -78,8 +79,13 @@ export interface MuxDrmParams {
   token?: string | undefined;
 }
 
-export interface MuxSource {
-  playbackId: string;
+/**
+ * Structured Mux source. `playbackId` and `customDomain` identify the stream and
+ * derive `src`; the inherited `engine` carries HLS engine options, and the
+ * inherited `src` is a fallback for playing a non-Mux URL.
+ */
+export interface MuxSource extends HlsSource {
+  playbackId?: string | undefined;
   customDomain?: string | undefined;
   playback?: MuxPlaybackParams | undefined;
   thumbnail?: MuxThumbnailParams | MuxThumbnailParams[] | undefined;

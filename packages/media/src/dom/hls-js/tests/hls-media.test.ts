@@ -33,7 +33,7 @@ function setup() {
   const handler = vi.fn();
   media.addEventListener('error', handler);
 
-  media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
+  media.source = { type: ContentTypes.M3U8, preferPlayback: 'native' };
   media.load();
 
   return { media, video, handler };
@@ -88,7 +88,7 @@ describe('HlsJsMedia', () => {
       const pauseHandler = vi.fn();
       media.addEventListener('pause', pauseHandler);
 
-      media.config = { preferPlayback: 'native', contentType: ContentTypes.M3U8 };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native' };
       media.load();
 
       video.dispatchEvent(new Event('pause'));
@@ -125,8 +125,8 @@ describe('HlsJsMedia', () => {
     });
   });
 
-  describe('config', () => {
-    it('recreates the engine when a new hlsJs config is assigned', () => {
+  describe('source', () => {
+    it('recreates the engine when new engine options are assigned', () => {
       const { media, video } = setup();
 
       fireDurationChange(video, Infinity);
@@ -135,8 +135,8 @@ describe('HlsJsMedia', () => {
       const handler = vi.fn();
       media.addEventListener('streamtypechange', handler);
 
-      // New `hlsJs` option values must recreate the engine to take effect.
-      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
+      // New hls.js option values must recreate the engine to take effect.
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { maxBufferLength: 60 } };
       media.load();
 
       // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
@@ -144,10 +144,16 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
     });
 
-    it('does not recreate the engine for an equivalent hlsJs config', () => {
+    it('does not recreate the engine for a structurally equal source', () => {
       const { media, video } = setup();
 
-      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
+      const source = {
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+        engine: { maxBufferLength: 60 },
+      } as const;
+
+      media.source = { ...source };
       media.load();
 
       fireDurationChange(video, Infinity);
@@ -155,11 +161,39 @@ describe('HlsJsMedia', () => {
       media.addEventListener('streamtypechange', handler);
 
       // Same option values in a new object (e.g. an inline React prop).
-      media.config = { ...media.config, hlsJs: { maxBufferLength: 60 } };
+      media.source = { ...source };
       media.load();
 
       // No engine teardown → no streamType churn.
       expect(handler).not.toHaveBeenCalled();
+    });
+
+    it('preserves engine options when src changes', () => {
+      const { media } = setup();
+
+      media.src = 'https://example.com/video.m3u8';
+
+      expect(media.source).toEqual({
+        src: 'https://example.com/video.m3u8',
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+      });
+    });
+
+    it('derives src from source and fires sourcechange', () => {
+      const media = new HlsJsMedia();
+      const handler = vi.fn();
+      media.addEventListener('sourcechange', handler);
+
+      media.source = { src: 'https://example.com/video.m3u8' };
+
+      expect(media.src).toBe('https://example.com/video.m3u8');
+      expect(handler).toHaveBeenCalledOnce();
+
+      media.source = null;
+
+      expect(media.src).toBe('');
+      expect(handler).toHaveBeenCalledTimes(2);
     });
 
     it('recreates the engine when inferred content type changes', () => {
@@ -182,16 +216,14 @@ describe('HlsJsMedia', () => {
       expect(media.engine).not.toBeNull();
     });
 
-    it('resets free-form config when a new object is assigned', () => {
+    it('replaces the source rather than merging it', () => {
       const { media } = setup();
 
-      media.config = { hlsJs: { maxBufferLength: 60 } };
+      media.source = { engine: { maxBufferLength: 60 } };
 
-      // A new config object signals a fresh start: prior free-form keys
-      // (set in `setup()`) are dropped rather than merged.
-      expect(media.config.preferPlayback).toBeUndefined();
-      expect(media.config.contentType).toBeUndefined();
-      expect(media.config.hlsJs).toEqual({ maxBufferLength: 60 });
+      // A new source object signals a fresh start: options set in `setup()` are
+      // dropped rather than merged.
+      expect(media.source).toEqual({ engine: { maxBufferLength: 60 } });
     });
   });
 
@@ -323,9 +355,9 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       handler.mockClear();
-      // `config.hlsJs.debug` is part of `HlsJsMedia`'s engine props — toggling it
+      // `engine.debug` is part of `HlsJsMedia`'s engine key — toggling it
       // recreates the native delegate without switching playback engines.
-      media.config = { ...media.config, hlsJs: { debug: true } };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { debug: true } };
       media.load();
 
       // Teardown: a single `live` → `unknown`, then the new delegate re-detects
@@ -347,7 +379,7 @@ describe('HlsJsMedia', () => {
       });
 
       // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
-      media.config = { ...media.config, hlsJs: { debug: true } };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { debug: true } };
       media.load();
 
       expect(seen).not.toContain('on-demand');
@@ -416,7 +448,7 @@ describe('HlsJsMedia', () => {
       media.streamType = 'live';
       expect(media.streamType).toBe('live');
 
-      media.config = { ...media.config, preferPlayback: 'mse' };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('live');
@@ -428,7 +460,7 @@ describe('HlsJsMedia', () => {
       media.streamType = 'live';
       media.streamType = 'unknown';
 
-      media.config = { ...media.config, preferPlayback: 'mse' };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'mse' };
       media.load();
 
       expect(media.streamType).toBe('unknown');

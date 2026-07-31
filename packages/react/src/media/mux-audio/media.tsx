@@ -11,14 +11,19 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
+// `source` comes from `MuxMediaProps` only: `MuxSource` extends `HlsSource` with
+// Mux identity fields, so the narrower type has to win.
 export interface MuxAudioProps
   extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsMediaProps | keyof MuxMediaProps>,
-    Partial<HlsMediaProps>,
+    Partial<Omit<HlsMediaProps, 'source'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;
 }
 
-const muxAudioDefaultProps: HlsMediaProps & MuxMediaProps = { ...hlsMediaDefaultProps, ...muxMediaDefaultProps };
+const muxAudioDefaultProps: Omit<HlsMediaProps, 'source'> & MuxMediaProps = {
+  ...hlsMediaDefaultProps,
+  ...muxMediaDefaultProps,
+};
 
 export const MuxAudio = forwardRef<HTMLAudioElement, MuxAudioProps>(function MuxAudio({ children, ...props }, ref) {
   const media = useMediaInstance(MuxMedia);

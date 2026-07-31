@@ -41,6 +41,7 @@ export const sidebar: Sidebar = [
       { slug: 'concepts/presets' },
       { slug: 'concepts/ui-components' },
       { slug: 'concepts/accessibility' },
+      { slug: 'concepts/media-sources' },
       { slug: 'concepts/cast', sidebarLabel: 'Google Cast' },
       { slug: 'concepts/mux-data' },
       { slug: 'concepts/security' },

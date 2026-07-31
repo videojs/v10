@@ -196,26 +196,4 @@ describe('HTMLMediaElementHost', () => {
       await expect(host.play()).rejects.toBeInstanceOf(DOMException);
     });
   });
-
-  describe('config', () => {
-    it('returns the same object that was assigned', () => {
-      const host = new HTMLAudioElementHost();
-      const value = { hlsJs: { debug: true }, a: 2 };
-
-      host.config = value;
-
-      expect(host.config).toBe(value);
-    });
-
-    it('replaces the entire config object on set', () => {
-      const host = new HTMLAudioElementHost();
-
-      host.config = { a: 1 };
-      host.config = { b: 2 };
-
-      // A new object replaces the old one wholesale; prior keys are dropped.
-      expect(host.config.a).toBeUndefined();
-      expect(host.config.b).toBe(2);
-    });
-  });
 });

@@ -1,18 +1,26 @@
+import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
-import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
+import { resolveSourceObject } from '../../core/media-source';
+import type { ErrorLike, MediaPreloadType, MediaSourceObject, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
-/** Public Vimeo embed configuration. Forwarded to `@vimeo/player`. */
-export interface VimeoConfig extends VimeoEmbedParameters {
+/**
+ * Vimeo engine options. Embed parameters are Vimeo's engine configuration, so
+ * they are forwarded verbatim to `@vimeo/player` and to the embed URL.
+ */
+export interface VimeoEngineConfig extends VimeoEmbedParameters {
   referrerPolicy?: ReferrerPolicy;
 }
 
+/** Structured Vimeo source: a Vimeo URL or id in `src`, embed options in `engine`. */
+export interface VimeoSource extends MediaSourceObject<VimeoEngineConfig> {}
+
 /** Parsed pieces of a Vimeo source URL. */
-export interface VimeoSource {
+export interface ParsedVimeoSource {
   id: number;
   /** `'video'` for regular clips, `'event'` for live events. */
   kind: 'video' | 'event';
@@ -30,7 +38,7 @@ export interface VimeoMediaProps {
   playsInline: boolean;
   preload: MediaPreloadType;
   poster: string;
-  config: VimeoConfig;
+  source: VimeoSource | null;
 }
 
 export const vimeoMediaDefaultProps: VimeoMediaProps = {
@@ -43,11 +51,14 @@ export const vimeoMediaDefaultProps: VimeoMediaProps = {
   playsInline: true,
   preload: 'metadata',
   poster: '',
-  config: {},
+  source: null,
 };
 
 const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
 
+/**
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ */
 export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
@@ -61,7 +72,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #playsInline = vimeoMediaDefaultProps.playsInline;
   #preload = vimeoMediaDefaultProps.preload;
   #poster = vimeoMediaDefaultProps.poster;
-  #config = vimeoMediaDefaultProps.config;
+  #source: VimeoSource | null = vimeoMediaDefaultProps.source;
 
   #paused = true;
   #ended = false;
@@ -126,10 +137,15 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   get src() {
     return this.#src;
   }
+  /** Vimeo URL or id. Setting it re-derives `source`, carrying over its options. */
   set src(value) {
     if (this.#src === value) return;
+    const source = resolveSourceObject<VimeoSource>(value, this.#source);
+    const changed = !deepEqual(this.#source, source);
     this.#src = value;
+    this.#source = source;
     void this.load();
+    if (changed) this.dispatchEvent(new Event('sourcechange'));
   }
 
   get currentSrc() {
@@ -147,7 +163,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#loadComplete = createPublicPromise<void>();
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
-    const loadOptions = toLoadVideoOptions(this.#src, this.#config);
+    const loadOptions = toLoadVideoOptions(this.#src, this.#source?.engine);
     if (!loadOptions) return;
     // Vimeo dispatches an `error` event separately on failure.
     await this.#player.loadVideo(loadOptions).catch(() => {});
@@ -264,11 +280,23 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#poster = value;
   }
 
-  get config() {
-    return this.#config as Record<string, unknown>;
+  /**
+   * Structured source: the Vimeo URL or ID in `src`, plus embed options under
+   * `engine`. Replacing it re-derives `src`; assigning an equivalent source is
+   * a no-op.
+   */
+  get source(): VimeoSource | null {
+    return this.#source;
   }
-  set config(value) {
-    this.#config = value as VimeoConfig;
+  set source(value: VimeoSource | null) {
+    if (deepEqual(this.#source ?? null, value ?? null)) return;
+    this.#source = value ?? null;
+    const src = value?.src ?? '';
+    if (this.#src !== src) {
+      this.#src = src;
+      void this.load();
+    }
+    this.dispatchEvent(new Event('sourcechange'));
   }
 
   get buffered() {
@@ -355,7 +383,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       controls: this.#controls,
       playsInline: this.#playsInline,
       preload: this.#preload || vimeoMediaDefaultProps.preload,
-      config: this.#config,
+      source: this.#source,
     };
   }
 
@@ -521,7 +549,7 @@ export function parseVimeoVideoId(src: string) {
  * `vimeo.com/video/<id>`, `player.vimeo.com/video/<id>`, `vimeo.com/event/<id>`
  * (live events), and unlisted/event hashes via `?h=` or a `/<hash>` segment.
  */
-export function parseVimeoSource(src: string): VimeoSource | null {
+export function parseVimeoSource(src: string): ParsedVimeoSource | null {
   if (!src) return null;
   if (/^\d+$/.test(src)) return { id: Number(src), kind: 'video', hash: null };
   const match = MATCH_SRC.exec(src);
@@ -551,7 +579,7 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
     transparent: false,
     h: parsed.hash,
     // Vimeo-specific knobs (`autopause`, `byline`, `dnt`, …) flow through here.
-    ...(props.config ?? undefined),
+    ...(props.source?.engine ?? undefined),
   };
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
@@ -573,12 +601,12 @@ function createTimeRanges(start: number, end: number) {
   return { length: 1, start: () => start, end: () => end };
 }
 
-function toLoadVideoOptions(src: string, config: VimeoConfig) {
+function toLoadVideoOptions(src: string, engine?: VimeoEngineConfig) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return null;
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
   const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
-  return { url, ...config } as LoadVideoOptions;
+  return { url, ...engine } as LoadVideoOptions;
 }
 
 function serialize(props: Record<string, unknown>) {

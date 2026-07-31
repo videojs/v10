@@ -21,7 +21,10 @@ export const VimeoVideo = forwardRef<HTMLIFrameElement, VimeoVideoProps>(functio
   const props: Partial<VimeoMediaProps> & Record<string, unknown> = { ...rawProps };
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
-  const [initialSrc] = useState(() => buildVimeoIframeSrc(props.src ?? '', { ...vimeoMediaDefaultProps, ...props }));
+  const [initialSrc] = useState(() =>
+    // `source.src` is the only other way to name a video, so honor it when `src` is absent.
+    buildVimeoIframeSrc(props.src || props.source?.src || '', { ...vimeoMediaDefaultProps, ...props })
+  );
   const iframeProps = useSyncProps<VimeoMediaProps, Record<string, unknown>>(media, props, vimeoMediaDefaultProps);
 
   return (
@@ -34,7 +37,7 @@ export const VimeoVideo = forwardRef<HTMLIFrameElement, VimeoVideoProps>(functio
       frameBorder={0}
       width="100%"
       height="100%"
-      referrerPolicy={props.config?.referrerPolicy}
+      referrerPolicy={props.source?.engine?.referrerPolicy}
       {...iframeProps}
       ref={composedRef}
     >

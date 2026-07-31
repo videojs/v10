@@ -30,7 +30,7 @@ class TestVideoHost extends HTMLVideoElementHost {
 
 class TestVideoHostWithObjects extends HTMLVideoElementHost {
   #src = '';
-  #config: Record<string, any> = {};
+  #source: Record<string, any> | null = null;
   #metadata: Record<string, any> | undefined;
   #debug = false;
 
@@ -42,12 +42,12 @@ class TestVideoHostWithObjects extends HTMLVideoElementHost {
     this.#src = value;
   }
 
-  get config() {
-    return this.#config;
+  get source() {
+    return this.#source;
   }
 
-  set config(value: Record<string, any>) {
-    this.#config = value;
+  set source(value: Record<string, any> | null) {
+    this.#source = value;
   }
 
   get metadata() {
@@ -748,16 +748,16 @@ describe('CustomMediaElement', () => {
     it('excludes non-Attributes properties from observedAttributes', () => {
       const { Ctor } = defineVideoElementWithObjects();
       const observed = Ctor.observedAttributes;
-      expect(observed).not.toContain('config');
+      expect(observed).not.toContain('source');
       expect(observed).not.toContain('debug');
       expect(observed).toContain('src');
     });
 
     it('allows object properties to be set via JS', () => {
       const el = create(defineVideoElementWithObjects());
-      const newConfig = { startLevel: 3, maxBufferLength: 60 };
-      el.config = newConfig;
-      expect(el.config).toBe(newConfig);
+      const newSource = { src: 'https://example.com/video.m3u8', engine: { maxBufferLength: 60 } };
+      el.source = newSource;
+      expect(el.source).toBe(newSource);
     });
 
     it('directly delegates primitive properties not in Attributes', () => {
@@ -918,11 +918,11 @@ describe('CustomMediaElement', () => {
 
     it('object-typed properties bypass attribute and delegate directly to MediaHost', () => {
       const el = create(defineVideoElementWithObjects());
-      const config = { startLevel: 2 };
-      el.config = config;
+      const source = { engine: { startLevel: 2 } };
+      el.source = source;
 
-      expect(el.hasAttribute('config')).toBe(false);
-      expect(el.config).toBe(config);
+      expect(el.hasAttribute('source')).toBe(false);
+      expect(el.source).toBe(source);
     });
   });
 
