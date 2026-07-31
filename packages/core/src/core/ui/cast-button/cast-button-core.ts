@@ -16,7 +16,7 @@ export interface CastButtonProps {
 
 export interface CastButtonState extends ButtonState {
   /** Current cast connection state (`disconnected`, `connecting`, or `connected`). */
-  castState: RemotePlaybackConnectionState;
+  connection: RemotePlaybackConnectionState;
   /** Whether casting is `available` (a device is reachable), `unavailable` (no device), or `unsupported`. */
   availability: MediaFeatureAvailability;
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
@@ -32,7 +32,7 @@ export class CastButtonCore {
   };
 
   readonly state = createState<CastButtonState>({
-    castState: 'disconnected',
+    connection: 'disconnected',
     availability: 'unsupported',
     disabled: true,
     hidden: true,
@@ -54,8 +54,8 @@ export class CastButtonCore {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    if (state.castState === 'connected') return stopText;
-    if (state.castState === 'connecting') return connectingText;
+    if (state.connection === 'connected') return stopText;
+    if (state.connection === 'connecting') return connectingText;
     return startText;
   }
 
@@ -77,7 +77,7 @@ export class CastButtonCore {
     const availability = castSupported ? media.remotePlaybackAvailability : 'unsupported';
 
     this.state.patch({
-      castState: media.remotePlaybackState,
+      connection: media.remotePlaybackState,
       availability,
       disabled: this.#props.disabled || availability !== 'available',
       hidden: availability === 'unsupported',

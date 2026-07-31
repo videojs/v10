@@ -14,7 +14,7 @@ function createMediaState(overrides: Partial<MediaRemotePlaybackState> = {}): Me
 
 function createState(overrides: Partial<CastButtonState> = {}): CastButtonState {
   return {
-    castState: 'disconnected',
+    connection: 'disconnected',
     availability: 'available',
     disabled: false,
     hidden: false,
@@ -33,14 +33,14 @@ describe('CastButtonCore', () => {
   });
 
   describe('getState', () => {
-    it('projects castState and availability', () => {
+    it('projects connection and availability', () => {
       stubCastSupport();
       const core = new CastButtonCore();
       const media = createMediaState({ remotePlaybackState: 'connected' });
       core.setMedia(media);
       const state = core.getState();
 
-      expect(state.castState).toBe('connected');
+      expect(state.connection).toBe('connected');
       expect(state.availability).toBe('available');
       expect(state.disabled).toBe(false);
       expect(state.hidden).toBe(false);
@@ -80,7 +80,7 @@ describe('CastButtonCore', () => {
   describe('getLabel', () => {
     it('returns Start casting when disconnected', () => {
       const core = new CastButtonCore();
-      expect(core.getLabel(createState({ castState: 'disconnected' }))).toMatchObject({
+      expect(core.getLabel(createState({ connection: 'disconnected' }))).toMatchObject({
         key: 'cast.start',
         text: 'Start casting',
       });
@@ -88,7 +88,7 @@ describe('CastButtonCore', () => {
 
     it('returns Stop casting when connected', () => {
       const core = new CastButtonCore();
-      expect(core.getLabel(createState({ castState: 'connected' }))).toMatchObject({
+      expect(core.getLabel(createState({ connection: 'connected' }))).toMatchObject({
         key: 'cast.stop',
         text: 'Stop casting',
       });
@@ -96,7 +96,7 @@ describe('CastButtonCore', () => {
 
     it('returns Connecting when connecting', () => {
       const core = new CastButtonCore();
-      expect(core.getLabel(createState({ castState: 'connecting' }))).toMatchObject({
+      expect(core.getLabel(createState({ connection: 'connecting' }))).toMatchObject({
         key: 'cast.connecting',
         text: 'Connecting',
       });
@@ -109,9 +109,9 @@ describe('CastButtonCore', () => {
 
     it('returns custom function label', () => {
       const core = new CastButtonCore({
-        label: (state) => (state.castState === 'connected' ? 'Disconnect' : 'Connect'),
+        label: (state) => (state.connection === 'connected' ? 'Disconnect' : 'Connect'),
       });
-      expect(core.getLabel(createState({ castState: 'connected' }))).toBe('Disconnect');
+      expect(core.getLabel(createState({ connection: 'connected' }))).toBe('Disconnect');
     });
   });
 

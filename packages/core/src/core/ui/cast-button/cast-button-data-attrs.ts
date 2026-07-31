@@ -7,7 +7,7 @@ export const CastButtonDataAttrs = {
    *
    * @see https://developer.mozilla.org/en-US/docs/Web/API/RemotePlayback/state
    */
-  castState: 'data-cast-state',
+  connection: 'data-cast-state',
   /**
    * Whether remote playback can be requested on this platform.
    *

@@ -12,7 +12,7 @@ export default function BasicUsage() {
         <CastButton
           className="media-cast-button"
           render={(props, state) => (
-            <button {...props}>{state.castState === 'connected' ? 'Stop casting' : 'Start casting'}</button>
+            <button {...props}>{state.connection === 'connected' ? 'Stop casting' : 'Start casting'}</button>
           )}
         />
       </Player.Container>
