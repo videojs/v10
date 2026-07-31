@@ -335,15 +335,16 @@ describe('setupMediaSource', () => {
       });
       const airPlayReactor = setupAirPlay.setup({ state, context });
 
-      return {
-        state,
-        context,
-        destroy: () => {
-          mediaSourceReactor.destroy();
-          airPlayReactor.destroy();
-          delete (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY];
-        },
+      // Mirrors `createComposition`'s destroy: cleanups are invoked in
+      // composition order (setupMediaSource first, since it is composed first
+      // in both HLS engines) and only then awaited together.
+      const destroy = async () => {
+        const results = [mediaSourceReactor.destroy(), airPlayReactor.destroy()];
+        await Promise.all(results);
+        delete (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY];
       };
+
+      return { state, context, destroy };
     }
 
     interface WebKitVideoLike extends HTMLVideoElement {
@@ -357,7 +358,13 @@ describe('setupMediaSource', () => {
       return video;
     }
 
-    it('does not run resource selection while the AirPlay fallback is still in the DOM', async () => {
+    /**
+     * Composes both behaviors, attaches, and arms detach's reset: waits for
+     * both `<source>` children, stages the element as committed to the MSE
+     * object URL (real resource selection is async), and records whether the
+     * fallback was still in the DOM when the reset `load()` ran.
+     */
+    async function arrangeAttached() {
       const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
       vi.mocked(createMediaSource).mockImplementation(() => new MediaSource());
 
@@ -372,23 +379,42 @@ describe('setupMediaSource', () => {
         expect(mediaElement.querySelector('source[type="application/x-mpegURL"]')).not.toBeNull();
       });
 
-      // The element committed to the MSE resource (staged — real resource
-      // selection is async), which is what arms detach's reset.
       const mseUrl = mediaElement.querySelector<HTMLSourceElement>('source[type="video/mp4"]')!.src;
       Object.defineProperty(mediaElement, 'currentSrc', { value: mseUrl, configurable: true });
 
-      let fallbackPresentAtReset: boolean | undefined;
+      const seen: { fallbackPresentAtReset?: boolean } = {};
       const load = vi.spyOn(mediaElement, 'load').mockImplementation(() => {
-        fallbackPresentAtReset = !!mediaElement.querySelector('source[type="application/x-mpegURL"]');
+        seen.fallbackPresentAtReset = !!mediaElement.querySelector('source[type="application/x-mpegURL"]');
       });
 
-      // Intentional teardown: source unload with the MediaSource still open.
+      return { state, destroy, load, seen };
+    }
+
+    it('does not run resource selection while the AirPlay fallback is still in the DOM', async () => {
+      const { state, destroy, load, seen } = await arrangeAttached();
+
+      // Source unload with the MediaSource still open. `setupAirPlay` never
+      // leaves `'airplay-capable'` here, so only its effect can drop the
+      // fallback — the reset has to be queued behind that pass.
       state.presentation.set(undefined);
 
       await vi.waitFor(() => expect(load).toHaveBeenCalled());
-      expect(fallbackPresentAtReset).toBe(false);
+      expect(seen.fallbackPresentAtReset).toBe(false);
 
-      destroy();
+      await destroy();
+    });
+
+    it('does not run resource selection on destroy either', async () => {
+      const { destroy, load, seen } = await arrangeAttached();
+
+      // Behavior destroy, in composition order. `setupMediaSource` tears down
+      // first, so its deferred reset must still land behind whichever removes
+      // the fallback — `setupAirPlay`'s own state-exit cleanup or the effect
+      // pass queued by the slot clear, both of which trail the detach.
+      await destroy();
+
+      await vi.waitFor(() => expect(load).toHaveBeenCalled());
+      expect(seen.fallbackPresentAtReset).toBe(false);
     });
   });
 
