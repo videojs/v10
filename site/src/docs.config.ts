@@ -95,8 +95,10 @@ export const sidebar: Sidebar = [
     contents: [
       { slug: 'reference/background-video' },
       { slug: 'reference/dash-video' },
+      { slug: 'reference/google-cast' },
       { slug: 'reference/hlsjs-video' },
       { slug: 'reference/mux-audio' },
+      { slug: 'reference/mux-data' },
       { slug: 'reference/mux-video' },
       { slug: 'reference/native-hls-video' },
       { slug: 'reference/simple-hls-audio-only' },

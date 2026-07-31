@@ -108,58 +108,13 @@ Set `disableRemotePlayback` on the media element to opt out of remote playback e
 
 ## Configure Cast
 
-<FrameworkCase frameworks={["react"]}>
-Pass Cast options as props of the `GoogleCast` component.
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-Set Cast options as attributes on the `<google-cast>` element. Object-valued options (like `customData`) are properties only.
-</FrameworkCase>
-
-### Custom receiver application ID
-
-By default, Video.js casts to Google's [Default Media Receiver](https://developers.google.com/cast/docs/web_sender/integrate#default_media_web_receiver) (`CC1AD845`). To use your own receiver app, set `receiver`:
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
-<GoogleCast receiver="YOUR_APP_ID" /> // [!code focus]
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```html
-<hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video>
-<google-cast receiver="YOUR_APP_ID"></google-cast> <!-- [!code focus] -->
-```
-</FrameworkCase>
-
-### Custom data on load
-
-Send extra data (auth tokens, user IDs) to the receiver with each load request via `customData`. The receiver app reads it from the load request's `customData` field:
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
-<GoogleCast customData={{ token: 'abc123', userId: 'u_789' }} /> // [!code focus]
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```ts
-const googleCast = document.querySelector('google-cast');
-googleCast.customData = { token: 'abc123', userId: 'u_789' }; // [!code focus]
-```
-</FrameworkCase>
-
-### Cast a different source
-
-By default the receiver loads the same URL the browser plays. Set `src` (and optionally `contentType`) to send the receiver a different one — for example, cast an HLS stream while the browser plays an MP4:
+By default, the receiver loads the same source the browser plays through Google's [Default Media Receiver](https://developers.google.com/cast/docs/web_sender/integrate#default_media_web_receiver). Point Cast at your own receiver app, send a different source, attach custom data to the load request, or override the stream type through the component's options:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
 <HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />
 <GoogleCast
+  receiver="YOUR_APP_ID"
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
   contentType="application/x-mpegURL"
 />
@@ -170,31 +125,14 @@ By default the receiver loads the same URL the browser plays. Set `src` (and opt
 ```html
 <hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"></hlsjs-video>
 <google-cast
+  receiver="YOUR_APP_ID"
   src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"
   content-type="application/x-mpegURL"
 ></google-cast>
 ```
 </FrameworkCase>
 
-### HLS on the receiver
-
-When the Cast source is an HLS playlist, Video.js inspects the playlist, detects the segment format (TS or fMP4), and sets `hlsSegmentFormat` / `hlsVideoSegmentFormat` on the Cast load request. The default media receiver plays HLS natively; no extra configuration needed.
-
-Set `streamType` to tell the receiver whether the stream is `'on-demand'` or `'live'`. When unset, it falls back to the player's `streamType`:
-
-<FrameworkCase frameworks={["react"]}>
-```tsx
-<HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" />
-<GoogleCast streamType="live" /> // [!code focus]
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["html"]}>
-```html
-<hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8"></hlsjs-video>
-<google-cast stream-type="live"></google-cast> <!-- [!code focus] -->
-```
-</FrameworkCase>
+The <DocsLink slug="reference/google-cast">GoogleCast reference</DocsLink> documents every option. HLS sources need no extra receiver setup: Video.js detects the segment format and configures the load request, and the Default Media Receiver plays HLS natively.
 
 ## Read Cast state
 
@@ -225,40 +163,10 @@ class CastStatus extends HTMLElement {
 
 ## Browser availability
 
-The Remote Playback feature reports availability as `'available'` (a device is on the network), `'unavailable'` (no device found), or `'unsupported'` (the browser can't cast). The `CastButton` keeps this raw value in `data-availability`, but handles presentation for you:
-
-- When Cast is unsupported, the HTML custom element receives the native `hidden` attribute and the React component returns `null`.
-- When Cast is supported but no device is reachable, the button remains visible with `aria-disabled="true"` and `data-disabled`.
-
-Use `data-disabled` to style the visible, non-interactive state:
-
-<FrameworkCase frameworks={["html"]}>
-```css
-media-cast-button[data-disabled] {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-```
-</FrameworkCase>
-
-<FrameworkCase frameworks={["react"]}>
-`CastButton` renders a `<button>` element. Give it a `className` to target:
-
-```tsx
-<CastButton className="cast-button" />
-```
-
-```css
-.cast-button[data-disabled] {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-```
-</FrameworkCase>
-
-Unsupported buttons hide automatically, so no availability selector or extra hiding CSS is required.
+The Remote Playback feature reports availability as `'available'` (a device is on the network), `'unavailable'` (no device found), or `'unsupported'` (the browser can't cast). A <DocsLink slug="reference/cast-button">CastButton</DocsLink> turns this into presentation for you: it hides itself when Cast is unsupported and shows a disabled state when Cast is supported but no device is reachable. See its reference for the data attributes and styling hooks.
 
 ## See also
 
+<DocsLinkCard slug="reference/google-cast">GoogleCast reference — every option</DocsLinkCard>
 <DocsLinkCard slug="reference/cast-button">CastButton component reference</DocsLinkCard>
 <DocsLinkCard slug="reference/feature-remote-playback">Remote Playback feature reference</DocsLinkCard>
