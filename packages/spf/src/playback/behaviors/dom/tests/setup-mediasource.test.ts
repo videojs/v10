@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { ContextSignals } from '../../../../core/composition/create-composition';
 import { signal } from '../../../../core/signals/primitives';
+import { attachMediaSourceAsSourceElement } from '../../../../media/dom/mse/mediasource-setup';
 import type { Presentation } from '../../../../media/types';
+import { setupAirPlay } from '../airplay';
 import { type MediaSourceContext, type MediaSourceState, setupMediaSource } from '../setup-mediasource';
 
 // Mock createMediaSource and attachMediaSource while keeping
@@ -306,6 +308,88 @@ describe('setupMediaSource', () => {
 
     reactor.destroy();
     expect(customDetach).toHaveBeenCalled();
+  });
+
+  // Regression: `detach`'s reset `load()` used to run synchronously, before
+  // `setupAirPlay`'s effect could drop its native-HLS fallback `<source>`.
+  // Resource selection then picked that fallback and started native HLS of the
+  // manifest being torn down (WebKit only — the fallback exists nowhere else).
+  describe('teardown alongside a sibling <source> owner', () => {
+    const AIRPLAY_KEY = 'WebKitPlaybackTargetAvailabilityEvent';
+
+    function composeWithAirPlay() {
+      (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY] = class {};
+
+      const state = {
+        presentation: signal<MediaSourceState['presentation']>(undefined),
+        disableRemotePlayback: signal<boolean | undefined>(undefined),
+        loadingSuspended: signal<boolean | undefined>(undefined),
+        startPosition: signal<number | undefined>(undefined),
+      };
+      const context = makeContext();
+
+      const mediaSourceReactor = setupMediaSource.setup({
+        state,
+        context,
+        config: { attachMediaSource: attachMediaSourceAsSourceElement },
+      });
+      const airPlayReactor = setupAirPlay.setup({ state, context });
+
+      return {
+        state,
+        context,
+        destroy: () => {
+          mediaSourceReactor.destroy();
+          airPlayReactor.destroy();
+          delete (globalThis as unknown as Record<string, unknown>)[AIRPLAY_KEY];
+        },
+      };
+    }
+
+    interface WebKitVideoLike extends HTMLVideoElement {
+      webkitCurrentPlaybackTargetIsWireless: boolean;
+    }
+
+    /** A `<video>` WebKit's AirPlay probe recognizes (`'…IsWireless' in media`). */
+    function makeAirPlayVideo(): WebKitVideoLike {
+      const video = document.createElement('video') as WebKitVideoLike;
+      video.webkitCurrentPlaybackTargetIsWireless = false;
+      return video;
+    }
+
+    it('does not run resource selection while the AirPlay fallback is still in the DOM', async () => {
+      const { createMediaSource } = await import('../../../../media/dom/mse/mediasource-setup');
+      vi.mocked(createMediaSource).mockImplementation(() => new MediaSource());
+
+      const { state, context, destroy } = composeWithAirPlay();
+      const mediaElement = makeAirPlayVideo();
+      context.mediaElement.set(mediaElement);
+      state.presentation.set(makeResolvedPresentation());
+
+      // Both sources present: the MSE attachment plus AirPlay's fallback.
+      await vi.waitFor(() => {
+        expect(mediaElement.querySelector('source[type="video/mp4"]')).not.toBeNull();
+        expect(mediaElement.querySelector('source[type="application/x-mpegURL"]')).not.toBeNull();
+      });
+
+      // The element committed to the MSE resource (staged — real resource
+      // selection is async), which is what arms detach's reset.
+      const mseUrl = mediaElement.querySelector<HTMLSourceElement>('source[type="video/mp4"]')!.src;
+      Object.defineProperty(mediaElement, 'currentSrc', { value: mseUrl, configurable: true });
+
+      let fallbackPresentAtReset: boolean | undefined;
+      const load = vi.spyOn(mediaElement, 'load').mockImplementation(() => {
+        fallbackPresentAtReset = !!mediaElement.querySelector('source[type="application/x-mpegURL"]');
+      });
+
+      // Intentional teardown: source unload with the MediaSource still open.
+      state.presentation.set(undefined);
+
+      await vi.waitFor(() => expect(load).toHaveBeenCalled());
+      expect(fallbackPresentAtReset).toBe(false);
+
+      destroy();
+    });
   });
 
   describe('sourceclose recovery', () => {

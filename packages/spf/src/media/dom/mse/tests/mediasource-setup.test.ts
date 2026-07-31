@@ -178,6 +178,59 @@ describe('attachMediaSourceAsSourceElement', () => {
       revokeObjectURL.mockRestore();
     }
   });
+
+  it('detach with deferReset holds the reset until sibling <source> owners have dropped theirs', async () => {
+    const mediaElement = document.createElement('video');
+    const mediaSource = createMediaSource();
+    const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
+    await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
+
+    // A sibling alternative owned by another behavior (setupAirPlay's
+    // native-HLS fallback), removed from a signal effect — i.e. on a
+    // microtask queued before detach's.
+    const fallback = document.createElement('source');
+    fallback.type = 'application/x-mpegURL';
+    fallback.src = 'https://example.com/outgoing.m3u8';
+    mediaElement.append(fallback);
+    queueMicrotask(() => fallback.remove());
+
+    Object.defineProperty(mediaElement, 'currentSrc', { value: url, configurable: true });
+    // Capture what resource selection would see at reset time.
+    let typesAtReset: string[] | undefined;
+    const load = vi.spyOn(mediaElement, 'load').mockImplementation(() => {
+      typesAtReset = [...mediaElement.querySelectorAll('source')].map((el) => el.type);
+    });
+
+    detach({ deferReset: true });
+
+    // A synchronous reset here would run resource selection against the
+    // fallback and start native HLS of the outgoing manifest.
+    expect(load).not.toHaveBeenCalled();
+
+    await Promise.resolve();
+
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(typesAtReset).toEqual([]);
+  });
+
+  it('detach with deferReset re-checks ownership at fire time — a re-attach suppresses the reset', async () => {
+    const mediaElement = document.createElement('video');
+    const mediaSource = createMediaSource();
+    const { url, detach } = attachMediaSourceAsSourceElement(mediaSource, mediaElement);
+    await new Promise<void>((resolve) => mediaSource.addEventListener('sourceopen', () => resolve(), { once: true }));
+
+    Object.defineProperty(mediaElement, 'currentSrc', { value: url, configurable: true });
+    const load = vi.spyOn(mediaElement, 'load');
+
+    detach({ deferReset: true });
+    // A new attachment committed the element before the deferred reset ran;
+    // resetting now would rip that resource out from under its owner.
+    Object.defineProperty(mediaElement, 'currentSrc', { value: 'blob:next-attachment', configurable: true });
+
+    await Promise.resolve();
+
+    expect(load).not.toHaveBeenCalled();
+  });
 });
 
 describe('createSourceBuffer', () => {

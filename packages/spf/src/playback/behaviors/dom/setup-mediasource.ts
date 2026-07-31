@@ -179,15 +179,29 @@ function setupMediaSourceSetup({
           // One complete teardown, shared by both triggers (the sourceclose
           // listener below and the state-exit cleanup) — whichever fires
           // first does the work; a re-run is harmless. Order matters:
-          // abort first (kills the open-wait and the listener, so a late
-          // publish can't race the slot clear), then detach, then clear the
-          // slot so the ordinary teardown cascade stops the downstream MSE
-          // pipeline.
+          //
+          // 1. Abort first — kills the open-wait and the listener, so a late
+          //    publish can't race the slot clear.
+          // 2. Clear the slot, which stops the downstream MSE pipeline and
+          //    dirties the effects of behaviors owning sibling `<source>`
+          //    children (`setupAirPlay`'s native-HLS fallback), queueing their
+          //    removal pass. Kept ahead of the detach so that queueing is
+          //    explicit: the `mediaSourceClosed` write above happens to queue
+          //    the same pass today, but depending on it would couple this to
+          //    an unrelated write.
+          // 3. Detach with `deferReset`, which queues detach's `load()` reset
+          //    behind that pass. A synchronous reset would run resource
+          //    selection while the fallback is still in the DOM and commit the
+          //    element to the outgoing manifest — starting native HLS playback
+          //    of the source being torn down. Removing our own `<source>`
+          //    doesn't re-run selection on its own, so nothing starts in the
+          //    gap. The ownership guard re-checks at fire time, so a re-attach
+          //    landing in between suppresses the reset.
           const teardown = () => {
             mediaSourceClosed.set(true);
             controller.abort();
-            detach();
             context.mediaSource.set(undefined);
+            detach({ deferReset: true });
           };
 
           // Sourceclose recovery: the UA closing this MediaSource (AirPlay

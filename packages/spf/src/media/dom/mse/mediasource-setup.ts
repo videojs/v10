@@ -57,13 +57,33 @@ export function createMediaSource(options: CreateMediaSourceOptions = {}): Media
 }
 
 /**
+ * Options for `detach`.
+ */
+export interface DetachOptions {
+  /**
+   * Run the `load()` reset on the next microtask instead of synchronously.
+   *
+   * Required whenever another owner contributes sibling `<source>` children to
+   * the same element and drops them from a signal effect: effects re-run on a
+   * microtask, so a synchronous reset would run resource selection while those
+   * siblings are still in the DOM and commit the element to one of them.
+   * Canonical caller: `setupMediaSource`, whose compositions may include
+   * `setupAirPlay`'s native-HLS fallback source.
+   *
+   * The ownership guard is evaluated when the reset actually fires, so a
+   * re-attach landing in the interim correctly suppresses it.
+   */
+  deferReset?: boolean;
+}
+
+/**
  * Result of attaching a MediaSource to a media element.
  */
 export interface AttachMediaSourceResult {
   /** The object URL created for the MediaSource. */
   url: string;
   /** Detach the MediaSource and clean up resources. */
-  detach: () => void;
+  detach: (options?: DetachOptions) => void;
 }
 
 /**
@@ -95,9 +115,9 @@ export function attachMediaSource(mediaSource: MediaSource, mediaElement: HTMLMe
   const url = URL.createObjectURL(mediaSource);
   mediaElement.src = url;
 
-  const detach = (): void => {
+  const detach = ({ deferReset }: DetachOptions = {}): void => {
     mediaElement.removeAttribute('src');
-    resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
+    scheduleReset(mediaSource, mediaElement, url, deferReset);
     URL.revokeObjectURL(url);
   };
 
@@ -138,9 +158,9 @@ export function attachMediaSourceAsSourceElement(
   mediaElement.prepend(sourceEl);
   mediaElement.load();
 
-  const detach = (): void => {
+  const detach = ({ deferReset }: DetachOptions = {}): void => {
     sourceEl.remove();
-    resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
+    scheduleReset(mediaSource, mediaElement, url, deferReset);
     URL.revokeObjectURL(url);
   };
 
@@ -161,6 +181,27 @@ function resetIfOwnedAndNotClosed(mediaSource: MediaSource, mediaElement: HTMLMe
   if (mediaSource.readyState !== 'closed' && mediaElement.currentSrc === url) {
     mediaElement.load();
   }
+}
+
+/**
+ * Run the reset now, or on the next microtask when the caller has sibling
+ * `<source>` owners that clear on an effect (see {@link DetachOptions.deferReset}).
+ *
+ * Deferring is safe because removing this attachment's own source does not by
+ * itself re-run resource selection: the element stays committed to the object
+ * URL until something calls `load()`, so nothing starts playing in the gap.
+ */
+function scheduleReset(
+  mediaSource: MediaSource,
+  mediaElement: HTMLMediaElement,
+  url: string,
+  deferReset: boolean | undefined
+): void {
+  if (deferReset) {
+    queueMicrotask(() => resetIfOwnedAndNotClosed(mediaSource, mediaElement, url));
+    return;
+  }
+  resetIfOwnedAndNotClosed(mediaSource, mediaElement, url);
 }
 
 /**
