@@ -23,7 +23,7 @@ export interface ThumbnailState {
   loading: boolean;
   /** The thumbnail image failed to load. */
   error: boolean;
-  /** No thumbnail is available and not loading — the component should be hidden. */
+  /** Whether the component is hidden because no thumbnail is available and it is not loading. */
   hidden: boolean;
 }
 

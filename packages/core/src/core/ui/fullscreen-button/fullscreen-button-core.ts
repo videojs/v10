@@ -19,7 +19,7 @@ export interface FullscreenButtonState extends Pick<MediaFullscreenState, 'fulls
   availability: MediaFullscreenState['fullscreenAvailability'];
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout until fullscreen is available. */
+  /** Whether the button is hidden until fullscreen is available. */
   hidden: boolean;
 }
 

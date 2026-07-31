@@ -21,7 +21,7 @@ export interface CastButtonState extends ButtonState {
   availability: MediaFeatureAvailability;
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout because the feature is unsupported. */
+  /** Whether the button is hidden because the feature is unsupported. */
   hidden: boolean;
 }
 

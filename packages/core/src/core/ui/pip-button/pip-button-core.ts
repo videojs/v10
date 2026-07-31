@@ -19,7 +19,7 @@ export interface PiPButtonState extends Pick<MediaPictureInPictureState, 'pip'>,
   availability: MediaPictureInPictureState['pipAvailability'];
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout until picture-in-picture is available. */
+  /** Whether the button is hidden until picture-in-picture is available. */
   hidden: boolean;
 }
 

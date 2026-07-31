@@ -23,7 +23,7 @@ export interface AirPlayButtonState extends ButtonState {
   availability: MediaFeatureAvailability;
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout until AirPlay is available. */
+  /** Whether the button is hidden until AirPlay is available. */
   hidden: boolean;
 }
 

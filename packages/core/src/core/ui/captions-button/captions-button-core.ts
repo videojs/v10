@@ -22,7 +22,7 @@ export interface CaptionsButtonState extends Pick<MediaTextTrackState, 'subtitle
   availability: 'available' | 'unavailable';
   /** Non-interactive but still focusable (mirrors `aria-disabled`). */
   disabled: boolean;
-  /** Removed from the layout because no caption tracks are present. */
+  /** Whether the button is hidden because no caption tracks are present. */
   hidden: boolean;
 }
 
