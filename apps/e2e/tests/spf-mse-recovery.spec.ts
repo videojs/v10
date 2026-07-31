@@ -7,10 +7,12 @@ import { PlayerPage } from '../page-objects/player';
  * Runs against the SPF engine page (`simple-hls-video`) on every vite-*
  * project (Chromium, WebKit, Firefox). Two things under test:
  *
- * 1. The attach shape: WebKit's ManagedMediaSource attaches as a `<source>`
- *    child (the WebKit AirPlay pattern — an MSE `srcObject` would make any
- *    sibling native-HLS fallback source inert); everywhere else the object
- *    URL rides the `src` attribute.
+ * 1. The attach shape: the object URL rides a `<source>` child on every
+ *    platform, not the `src` attribute. The HLS engine bakes
+ *    `attachMediaSourceAsSourceElement` unconditionally because it composes
+ *    `setupAirPlay`, whose native-HLS fallback has to stay a selectable
+ *    sibling — `src`/`srcObject` would commit the element to the MSE resource
+ *    and make any sibling inert.
  * 2. Sourceclose recovery: when the MSE attachment is torn down out from under
  *    the engine (the observable shape of an AirPlay handoff return or MMS
  *    eviction — the MediaSource fires `sourceclose`), `setupMediaSource`
@@ -27,7 +29,6 @@ const PAGE = '/pages/html-simple-hls-video-fmp4.html';
 
 /** Serializable snapshot of the media element's MSE attachment. */
 interface AttachShape {
-  hasMMS: boolean;
   airPlayCapable: boolean;
   srcAttr: string;
   sources: Array<{ type: string; src: string }>;
@@ -38,7 +39,6 @@ function readAttachShape(): AttachShape {
   const host = document.querySelector('simple-hls-video');
   const video = (host?.shadowRoot?.querySelector('video') ?? host?.querySelector('video') ?? host) as HTMLVideoElement;
   return {
-    hasMMS: 'ManagedMediaSource' in window,
     airPlayCapable: 'WebKitPlaybackTargetAvailabilityEvent' in window,
     srcAttr: video.getAttribute('src') ?? '',
     sources: Array.from(video.querySelectorAll('source')).map((s) => ({ type: s.type, src: s.src })),
@@ -61,20 +61,20 @@ test.describe('SPF MediaSource attach + recovery', () => {
     await player.waitForMediaReady();
   });
 
-  test('attaches MSE as a source child under MMS, src attribute elsewhere', async ({ page }) => {
+  test('attaches MSE as a <source> child on every platform', async ({ page }) => {
     const shape = await page.evaluate(readAttachShape);
 
-    expect(mseAttachmentOf(shape)).not.toBe('');
-    if (shape.hasMMS) {
-      // WebKit/MMS: the MSE rides a <source> child so a native-HLS AirPlay
-      // fallback can coexist as a second, selectable resource.
-      expect(shape.sources.some((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))).toBe(true);
-      if (shape.airPlayCapable) {
-        // The setupAirPlay fallback source, carrying the manifest URL.
-        expect(shape.sources.some((s) => s.type === 'application/x-mpegURL' && s.src.includes('.m3u8'))).toBe(true);
-      }
-    } else {
-      expect(shape.srcAttr.startsWith('blob:')).toBe(true);
+    // The MSE rides a <source> child so a native-HLS AirPlay fallback can
+    // coexist as a second, selectable resource — no longer conditional on
+    // ManagedMediaSource being available.
+    expect(shape.sources.some((s) => s.type === 'video/mp4' && s.src.startsWith('blob:'))).toBe(true);
+    // And the attach clears any bare `src`: a src attribute would win resource
+    // selection outright and make every sibling inert.
+    expect(shape.srcAttr).toBe('');
+
+    if (shape.airPlayCapable) {
+      // The setupAirPlay fallback source, carrying the manifest URL.
+      expect(shape.sources.some((s) => s.type === 'application/x-mpegURL' && s.src.includes('.m3u8'))).toBe(true);
     }
   });
 
