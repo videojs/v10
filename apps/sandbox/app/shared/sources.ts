@@ -79,6 +79,16 @@ export const SOURCES = {
     url: 'https://dash.akamaized.net/envivio/EnvivioDash3/manifest.mpd',
     type: 'dash',
   },
+  // Empty src — exercises source teardown with nothing re-attaching, and the
+  // engine's fresh-but-attached "no source" state. `src` forwards to the host
+  // property rather than being mirrored onto the inner native element, so this
+  // reaches the adapter as `''` (un-resolving the presentation) instead of
+  // making the element load the document URL.
+  none: {
+    label: 'None (empty src)',
+    url: '',
+    type: 'none',
+  },
 } as const;
 
 export type SourceId = keyof typeof SOURCES;

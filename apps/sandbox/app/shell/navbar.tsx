@@ -140,6 +140,9 @@ export function Navbar({
           onChange={onSourceChange}
           options={availableSources
             .filter((id) => {
+              // The empty-src entry carries no media, so it's offered wherever
+              // the preset can render one rather than being filtered by format.
+              if (sources[id].type === 'none') return true;
               if (isSimpleHls) return sources[id].subType === 'mp4';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
