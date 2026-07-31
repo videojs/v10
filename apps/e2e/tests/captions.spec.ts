@@ -37,4 +37,24 @@ test.describe('Captions', () => {
     const options = page.locator(SELECTORS.activeMenuOptions);
     await expect(options).toHaveCount(2, { timeout: 5_000 });
   });
+
+  test('captions button toggles captions', async ({ page }) => {
+    await page.evaluate(() => {
+      const video = document.querySelector('video') as HTMLVideoElement;
+      if (!video) return;
+
+      const track = document.createElement('track');
+      track.kind = 'subtitles';
+      track.label = 'English';
+      track.srclang = 'en';
+      track.src = `data:text/vtt,${encodeURIComponent('WEBVTT\n\n00:00:00.000 --> 00:00:30.000\nTest caption')}`;
+      video.appendChild(track);
+    });
+
+    await player.showControls();
+    await player.captionsButton.click();
+    await expect(player.captionsButton).toHaveAttribute(DATA_ATTRS.active, '');
+    await player.captionsButton.click();
+    await expect(player.captionsButton).not.toHaveAttribute(DATA_ATTRS.active);
+  });
 });

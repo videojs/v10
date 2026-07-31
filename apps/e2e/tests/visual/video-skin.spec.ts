@@ -41,9 +41,8 @@ for (const { name, path } of VISUAL_PAGES) {
       await player.hoverTimeSlider(50);
 
       // Wait for thumbnail to finish loading (deterministic, no fixed timeout)
-      const thumbnail = page.locator(SELECTORS.thumbnail).first();
-      await expect(thumbnail).toBeAttached({ timeout: 10_000 });
-      await expect(thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 10_000 });
+      await expect(player.thumbnail).toBeAttached({ timeout: 10_000 });
+      await expect(player.thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 10_000 });
 
       await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-storyboard.png`);
     });

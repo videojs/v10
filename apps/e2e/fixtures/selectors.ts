@@ -69,7 +69,7 @@ export const SELECTORS = {
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
   timeSlider: 'media-time-slider, .media-time-controls .media-slider',
-  volumeSlider: 'media-volume-slider, .media-slider[data-orientation="vertical"]',
+  volumeSlider: 'media-volume-slider, .media-popover--volume .media-slider',
   sliderThumb: 'media-slider-thumb, .media-slider__thumb',
 
   // Display elements
@@ -81,11 +81,10 @@ export const SELECTORS = {
     '[data-type="duration"].media-time',
     '[data-type="remaining"].media-time',
   ].join(', '),
-  poster: 'media-poster, img[data-visible]',
+  poster: 'media-poster, img[data-loaded]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
   thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
 
-  // Popover & tooltip
   tooltip: 'media-tooltip, .media-tooltip',
   popover: 'media-popover, .media-popover',
   errorDialog: 'media-error-dialog, .media-error',

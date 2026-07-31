@@ -98,6 +98,14 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.thumbnail).first();
   }
 
+  get tooltip(): Locator {
+    return this.page.locator(SELECTORS.tooltip);
+  }
+
+  get playTooltip(): Locator {
+    return this.tooltip.filter({ hasText: 'Play' }).first();
+  }
+
   get popover(): Locator {
     return this.page.locator(SELECTORS.popover).first();
   }
