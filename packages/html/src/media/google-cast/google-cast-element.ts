@@ -26,7 +26,8 @@ export class GoogleCastElement extends MediaComponentElement<GoogleCast> {
     contentType: { type: String, attribute: 'content-type' },
     streamType: { type: String, attribute: 'stream-type' },
     receiver: { type: String },
-  } satisfies PropertyDeclarationMap<'src' | 'contentType' | 'streamType' | 'receiver'>;
+    // `customData` takes an object, so it's a property-only prop.
+  } satisfies PropertyDeclarationMap<Exclude<keyof GoogleCastProps, 'customData'>>;
 
   protected createComponent(): GoogleCast {
     return new GoogleCast();

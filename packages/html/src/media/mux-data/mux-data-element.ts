@@ -34,15 +34,8 @@ export class MuxDataElement extends MediaComponentElement<MuxData> {
     playerSoftwareName: { type: String, attribute: 'player-software-name' },
     playerSoftwareVersion: { type: String, attribute: 'player-software-version' },
     playerInitTime: { type: Number, attribute: 'player-init-time' },
-  } satisfies PropertyDeclarationMap<
-    | 'envKey'
-    | 'beaconCollectionDomain'
-    | 'debug'
-    | 'disableCookies'
-    | 'playerSoftwareName'
-    | 'playerSoftwareVersion'
-    | 'playerInitTime'
-  >;
+    // `metadata` and `MuxDataSdk` take objects, so they're property-only props.
+  } satisfies PropertyDeclarationMap<Exclude<keyof MuxDataProps, 'metadata' | 'MuxDataSdk'>>;
 
   protected createComponent(): MuxData {
     return new MuxData();
