@@ -12,16 +12,24 @@
  * - `state.loadingSuspended` — held while the session is live. Observed by
  *   the `loadXSegments` dispatchers (no fetching alongside the receiver) and
  *   by `setupMediaSource` (its post-close rebuild waits — attaching runs
- *   `element.load()` under the live receiver). The suspension this behavior
- *   holds doubles as its own session fact — same writer, same edges.
+ *   `element.load()` under the live receiver, which destroys a session still
+ *   being established). The suspension this behavior holds doubles as its own
+ *   session fact — same writer, same edges.
  * - `state.startPosition` — one-shot command: the position is captured from
  *   the element at the session's settled end (still receiver-mirrored) and
  *   written once the rebuild's `load()` resets the element (its `'emptied'`),
  *   so `applyStartPosition` applies it to the rebuilt source — never to the
  *   pre-rebuild element — and starts it where the receiver left off. The
  *   playing state rides the same snapshot but stays behavior-local: this
- *   behavior itself calls `play()` on the rebuilt source's `loadedmetadata`
- *   when the receiver was playing at session end.
+ *   behavior itself calls `play()` once the command has been *consumed* — i.e.
+ *   after the seek — when the receiver was playing at session end. The whole
+ *   restore is bound to the presentation the session owned and retracted if
+ *   that changes.
+ *
+ * A source change during a live session releases the hold rather than deferring
+ * until the session ends, so the rebuild runs and WebKit switches the receiver
+ * to the newly-built AirPlay alternate. Measured, not contracted — see the
+ * effect below.
  * https://webkit.org/blog/15036/how-to-use-media-source-extensions-with-airplay/
  *
  * Single-positive-state reactor (`'preconditions-unmet'` ↔ `'airplay-capable'`):
@@ -123,24 +131,35 @@ function setupAirPlaySetup({
           const isSessionActive = () => !!mediaElement.webkitCurrentPlaybackTargetIsWireless;
 
           let settleTimer: ReturnType<typeof setTimeout> | undefined;
-          // Pending session-end snapshot: position and playing state are
-          // captured at the settled falling edge (the element still mirrors
-          // the receiver), but acted on only when the element's next
-          // `'emptied'` fires — i.e. once the rebuild's `load()` has reset
-          // the element. Writing the position earlier would hand
-          // `applyStartPosition` a command against the pre-rebuild element
+          // Session-end restore. The position/playing snapshot is taken at the
+          // settled falling edge (the element still mirrors the receiver) but
+          // acted on only at the element's next `'emptied'` — once the
+          // rebuild's `load()` has reset the element. Writing it earlier would
+          // hand `applyStartPosition` a command against the pre-rebuild element
           // (readyState still >= HAVE_METADATA), which it would apply and
-          // consume before the rebuilt source exists. Guarded by
-          // presentation identity so a source change while a rebuild is held
-          // can't inherit the old session's state.
+          // consume before the rebuilt source exists.
+          //
+          // The restore is bound to the presentation the session owned, and
+          // that identity is re-checked at *every* async hop — settle timer,
+          // `'emptied'`, and the outstanding-command effect below. Checking at
+          // only one hop leaves the others open: a source change inside the
+          // settle window, or between `'emptied'` and the element becoming
+          // seekable, would otherwise strand the old session's position (and an
+          // unrequested `play()`) on the new source.
+          let sessionPresentationUrl: string | undefined;
           let pendingRestore:
             | { position: number; wasPlaying: boolean; presentationUrl: string | undefined }
             | undefined;
+          /** Presentation an already-written `state.startPosition` belongs to. */
+          let restoreOwnerUrl: string | undefined;
+          let resumeWhenRestored = false;
 
           const sync = () => {
             if (isSessionActive()) {
               clearTimeout(settleTimer);
               settleTimer = undefined;
+              // Rising edge — the presentation the receiver is taking over.
+              if (!peek(state.loadingSuspended)) sessionPresentationUrl = peek(state.presentation)?.url;
               state.loadingSuspended.set(true);
             } else if (peek(state.loadingSuspended)) {
               // Falling edge: don't trust an instantaneous inactive reading —
@@ -149,11 +168,21 @@ function setupAirPlaySetup({
                 settleTimer = undefined;
                 const stillActive = isSessionActive();
                 if (!stillActive) {
-                  pendingRestore = {
-                    position: mediaElement.currentTime,
-                    wasPlaying: !mediaElement.paused,
-                    presentationUrl: peek(state.presentation)?.url,
-                  };
+                  const ownerUrl = sessionPresentationUrl;
+                  sessionPresentationUrl = undefined;
+                  // Snapshot only while the session's own presentation is still
+                  // current. `currentTime` here belongs to that presentation —
+                  // during a session `setupMediaSource` has already torn down,
+                  // so a source change inside this window resets neither the
+                  // element nor its position, and pairing that position with the
+                  // incoming URL would smuggle it onto the new source.
+                  if (peek(state.presentation)?.url === ownerUrl) {
+                    pendingRestore = {
+                      position: mediaElement.currentTime,
+                      wasPlaying: !mediaElement.paused,
+                      presentationUrl: ownerUrl,
+                    };
+                  }
                 }
                 state.loadingSuspended.set(stillActive);
               }, REMOTE_INACTIVE_SETTLE_MS);
@@ -174,25 +203,84 @@ function setupAirPlaySetup({
               pendingRestore = undefined;
               if (peek(state.presentation)?.url !== presentationUrl) return;
               state.startPosition.set(position);
-              if (!wasPlaying) return;
-              // Resume playing on the rebuilt source once it's ready — the
-              // rebuild's load algorithm forced `paused = true`. Deferred to
-              // `loadedmetadata` so the play() can't be swept up by the load
-              // algorithm's pending-promise rejection; a rejection here
-              // (autoplay policy) degrades to paused-at-position.
-              listen(
-                mediaElement,
-                'loadedmetadata',
-                () => {
-                  mediaElement.play().catch((err) => {
-                    console.warn('[setupAirPlay] session-end resume play() rejected — staying paused:', err);
-                  });
-                },
-                { once: true, signal: listenerCleanup.signal }
-              );
+              restoreOwnerUrl = presentationUrl;
+              resumeWhenRestored = wasPlaying;
             },
             { signal: listenerCleanup.signal }
           );
+
+          // A source change during a live session releases the hold, letting the
+          // rebuild run instead of waiting for the session to end.
+          //
+          // Doing nothing is not a neutral choice — it silently defers the
+          // change. `<source>` children are only consulted while resource
+          // selection runs, so the effect below rewriting the fallback's `src`
+          // does nothing to what the receiver is already playing, and the
+          // rebuild is held by `loadingSuspended`, so the receiver stays on the
+          // outgoing stream until the user disengages.
+          //
+          // Releasing the hold lets the rebuild's `load()` re-run resource
+          // selection, and WebKit then switches the receiver to the AirPlay
+          // alternate — by then re-created against the new presentation — so the
+          // session follows the source change. Measured behavior, not a
+          // contract: this is under-specified territory, so nothing here depends
+          // on the handover succeeding. If a UA instead drops the session, the
+          // falling edge runs its ordinary course; the restore is suppressed
+          // either way because the snapshot is bound to the presentation the
+          // session owned.
+          //
+          // Note this is *not* an attempt to end the session. Setting
+          // `disableRemotePlayback = true` was tried: the Remote Playback API
+          // requires it to disconnect (spec §5.3.2) but WebKit does not honor
+          // that for AirPlay — the session survived, measured on Safari 26.4.
+          // Deliberately not written here, so that behavior can't silently flip
+          // to "receiver drops" if WebKit ever implements the disconnect.
+          const disposeSourceChangeEnd = effect(() => {
+            const url = state.presentation.get()?.url;
+            // `loadingSuspended` is this behavior's own session fact; peeked so
+            // clearing it below doesn't re-trigger.
+            if (!peek(state.loadingSuspended) || url === sessionPresentationUrl) return;
+            sessionPresentationUrl = undefined;
+            clearTimeout(settleTimer);
+            settleTimer = undefined;
+            state.loadingSuspended.set(false);
+          });
+
+          // Watches an outstanding restore command to its end. Two outcomes:
+          //
+          // - **Consumed** (`startPosition` back to `undefined`): the element is
+          //   at the restored position, so resuming is safe. Keying the resume
+          //   off consumption rather than off `'loadedmetadata'` orders it after
+          //   `applyStartPosition`'s seek — arming a listener for the same event
+          //   would put `play()` ahead of the seek, since this behavior registers
+          //   synchronously while `applyStartPosition` only reaches its state a
+          //   microtask later. The rebuild's load algorithm forced `paused =
+          //   true`; a rejection here (autoplay policy) degrades to
+          //   paused-at-position. Requires a `startPosition` consumer in the
+          //   composition (`applyStartPosition`) — without one the position is
+          //   never restored either, so resuming would be wrong anyway.
+          // - **Superseded** (presentation changed): retract the command and
+          //   disarm, so neither the seek nor the resume reaches the new source.
+          const disposeRestoreWatch = effect(() => {
+            const url = state.presentation.get()?.url;
+            const position = state.startPosition.get();
+            if (!restoreOwnerUrl) return;
+
+            if (url !== restoreOwnerUrl) {
+              restoreOwnerUrl = undefined;
+              resumeWhenRestored = false;
+              if (position !== undefined) state.startPosition.set(undefined);
+              return;
+            }
+
+            if (position !== undefined) return;
+            restoreOwnerUrl = undefined;
+            if (!resumeWhenRestored) return;
+            resumeWhenRestored = false;
+            mediaElement.play().catch((err) => {
+              console.warn('[setupAirPlay] session-end resume play() rejected — staying paused:', err);
+            });
+          });
 
           // This effect combines:
           // - adding a native HLS fallback source when the mediaSource is
@@ -231,6 +319,8 @@ function setupAirPlaySetup({
 
           return () => {
             disposeSource();
+            disposeSourceChangeEnd();
+            disposeRestoreWatch();
             listenerCleanup.abort();
             clearTimeout(settleTimer);
             sourceEl?.remove();
@@ -241,6 +331,12 @@ function setupAirPlaySetup({
             // Don't strand the engine held/suspended if we tear down
             // mid-session (author opt-out, detach, destroy).
             state.loadingSuspended.set(false);
+            // Nor leave a restore command behind for the next source to apply.
+            if (restoreOwnerUrl) {
+              restoreOwnerUrl = undefined;
+              resumeWhenRestored = false;
+              if (peek(state.startPosition) !== undefined) state.startPosition.set(undefined);
+            }
           };
         },
       },

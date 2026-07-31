@@ -347,16 +347,122 @@ describe('setupAirPlay', () => {
     expect(state.startPosition.get()).toBeUndefined();
 
     // The rebuild's load() resets the element ('emptied') — NOW the one-shot
-    // is written, against the fresh load. The resume waits for the rebuilt
-    // source's metadata.
+    // is written, against the fresh load. The resume waits for it to be
+    // consumed, so it can't run ahead of the seek.
     video.dispatchEvent(new Event('emptied'));
     expect(state.startPosition.get()).toBe(87);
     expect(play).not.toHaveBeenCalled();
 
-    // Rebuilt source ready → the receiver-playing state is restored locally
-    // by this behavior (no shared resume channel).
+    // Metadata alone doesn't resume — the position hasn't been applied yet.
     video.dispatchEvent(new Event('loadedmetadata'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(play).not.toHaveBeenCalled();
+
+    // `applyStartPosition` seeks and consumes the command → the
+    // receiver-playing state is restored locally by this behavior.
+    state.startPosition.set(undefined);
+    await vi.advanceTimersByTimeAsync(0);
     expect(play).toHaveBeenCalledTimes(1);
+
+    reactor.destroy();
+  });
+
+  it('releases the hold on a mid-session source change so the rebuild can run', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    Object.defineProperty(video, 'paused', { value: false, configurable: true });
+    context.mediaElement.set(video);
+    context.mediaSource.set(fakeMediaSource);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.loadingSuspended.get()).toBe(true);
+    expect(video.disableRemotePlayback).toBe(false);
+
+    // Deferring instead would leave the receiver on the outgoing stream: the
+    // fallback's src is only consulted during resource selection, and the
+    // rebuild that would hand over the new stream is held by the suspension.
+    state.presentation.set({ url: 'https://example.com/b.m3u8' });
+    await vi.advanceTimersByTimeAsync(0);
+
+    // Released immediately — no settle window, since this isn't a platform
+    // edge we're debouncing.
+    expect(state.loadingSuspended.get()).toBe(false);
+    // And deliberately no attempt to end the session: WebKit doesn't honor
+    // `disableRemotePlayback` as a disconnect for AirPlay, and writing it
+    // anyway would silently flip behavior if that ever changed.
+    expect(video.disableRemotePlayback).toBe(false);
+
+    // No position carried across: the new source starts on its own terms.
+    video.dispatchEvent(new Event('emptied'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.startPosition.get()).toBeUndefined();
+
+    reactor.destroy();
+  });
+
+  it('does not snapshot when the source changes inside the settle window', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    Object.defineProperty(video, 'paused', { value: false, configurable: true });
+    const play = vi.fn(() => Promise.resolve());
+    video.play = play;
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.loadingSuspended.get()).toBe(true);
+
+    // Falling edge starts, then the source changes before it settles. During a
+    // session setupMediaSource has already torn down, so nothing resets the
+    // element — `currentTime` still belongs to the OUTGOING presentation and
+    // must not be paired with the incoming one.
+    setWireless(video, false);
+    state.presentation.set({ url: 'https://example.com/b.m3u8' });
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+
+    video.dispatchEvent(new Event('emptied'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.startPosition.get()).toBeUndefined();
+    expect(play).not.toHaveBeenCalled();
+
+    reactor.destroy();
+  });
+
+  it('retracts the restore when the source changes before the position is applied', async () => {
+    vi.useFakeTimers();
+    stubWebKit(true);
+    const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
+    const reactor = setupAirPlay.setup({ state, context });
+
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'currentTime', { value: 87, writable: true, configurable: true });
+    Object.defineProperty(video, 'paused', { value: false, configurable: true });
+    const play = vi.fn(() => Promise.resolve());
+    video.play = play;
+    context.mediaElement.set(video);
+    await vi.advanceTimersByTimeAsync(0);
+
+    setWireless(video, false);
+    await vi.advanceTimersByTimeAsync(SETTLE_MS);
+    video.dispatchEvent(new Event('emptied'));
+    expect(state.startPosition.get()).toBe(87);
+
+    // Source changes while the command is still outstanding: it must be
+    // retracted, and the resume disarmed, so neither reaches the new source.
+    state.presentation.set({ url: 'https://example.com/b.m3u8' });
+    await vi.advanceTimersByTimeAsync(0);
+    expect(state.startPosition.get()).toBeUndefined();
+
+    video.dispatchEvent(new Event('loadedmetadata'));
+    await vi.advanceTimersByTimeAsync(0);
+    expect(play).not.toHaveBeenCalled();
 
     reactor.destroy();
   });
