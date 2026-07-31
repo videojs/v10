@@ -6,7 +6,6 @@ import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
-import { controlsContext } from '../../controls/context';
 import { ControlsElement } from '../../controls/controls-element';
 import { MediaElement } from '../../media-element';
 import { MenuBackElement } from '../menu-back-element';
@@ -39,14 +38,16 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
   }
 }
 
-function createControlsStore(): AnyPlayerStore {
+function createControlsStore(
+  requestControlsLock: MediaControlsState['requestControlsLock'] = () => () => {}
+): AnyPlayerStore {
   return createStore<unknown>()<MediaControlsState>({
     name: 'controls',
     state: ({ get, set }) => {
       return {
         userActive: true,
         controlsVisible: true,
-        requestControlsLock: () => () => {},
+        requestControlsLock,
         toggleControls() {
           const visible = !(get().controlsVisible as boolean);
 
@@ -60,7 +61,9 @@ function createControlsStore(): AnyPlayerStore {
 }
 
 class TestPlayerProviderElement extends MediaElement {
-  store = createControlsStore();
+  readonly releaseControlsLock = vi.fn();
+  readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
+  store = createControlsStore(this.requestControlsLock);
 
   readonly #provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
 
@@ -79,21 +82,7 @@ class TestPlayerProviderElement extends MediaElement {
   }
 }
 
-class TestControlsContextProviderElement extends MediaElement {
-  readonly releaseControlsLock = vi.fn();
-  readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
-  readonly provider = new ContextProvider(this, {
-    context: controlsContext,
-    initialValue: {
-      state: { visible: true, userActive: true },
-      stateAttrMap: { visible: 'data-visible', userActive: 'data-user-active' },
-      requestControlsLock: this.requestControlsLock,
-    },
-  });
-}
-
 defineElement('test-menu-player-provider', TestPlayerProviderElement);
-defineElement('test-menu-controls-provider', TestControlsContextProviderElement);
 
 function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -777,7 +766,7 @@ describe('MenuElement', () => {
   });
 
   it('holds a controls visibility lock while a root menu is open', async () => {
-    const provider = document.createElement('test-menu-controls-provider') as TestControlsContextProviderElement;
+    const provider = document.createElement('test-menu-player-provider') as TestPlayerProviderElement;
     const root = createElement(MenuElement);
 
     root.open = true;

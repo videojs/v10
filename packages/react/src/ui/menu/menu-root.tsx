@@ -1,16 +1,21 @@
 'use client';
 
 import { MenuCore, MenuDataAttrs } from '@videojs/core';
-import { createMenu, createTransition, type MenuChangeDetails, type PositioningBoundary } from '@videojs/core/dom';
+import {
+  createMenu,
+  createTransition,
+  type MenuChangeDetails,
+  type PositioningBoundary,
+  selectControls,
+} from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useMemo, useState } from 'react';
-import { useOptionalContainer, useOptionalPopupGroup } from '../../player/context';
+import { useOptionalContainer, useOptionalPlayer, useOptionalPopupGroup } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
-import { useControlsLock } from '../controls/use-controls-lock';
 import { usePositionedState } from '../hooks/use-positioned-state';
 import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
@@ -37,9 +42,9 @@ export function MenuRoot({
   // a submenu: no popover positioning, Trigger acts as a parent item.
   const parentMenu = useOptionalMenuContext();
   const controls = useOptionalControlsContext();
+  const controlsState = useOptionalPlayer(selectControls);
   const container = useOptionalContainer();
   const popupGroup = useOptionalPopupGroup();
-  const controlsLock = useControlsLock();
   const isSubmenu = parentMenu !== null;
   const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
 
@@ -103,14 +108,10 @@ export function MenuRoot({
   const input = useSnapshot(menu.input);
 
   useEffect(() => {
-    if (!input.active || isSubmenu) {
-      controlsLock.unlock();
-      return;
-    }
+    if (!input.active || isSubmenu) return;
 
-    controlsLock.lock();
-    return controlsLock.unlock;
-  }, [controlsLock, input.active, isSubmenu]);
+    return controlsState?.requestControlsLock();
+  }, [controlsState?.requestControlsLock, input.active, isSubmenu]);
 
   const preferredState = useMemo(() => {
     core.setProps({ side, align, closeOnEscape, closeOnOutsideClick, isSubmenu });

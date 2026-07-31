@@ -1,6 +1,9 @@
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
+import type { MediaControlsState } from '@videojs/media';
+import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { controlsContext } from '../../controls/context';
+import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { SliderBufferElement } from '../slider-buffer-element';
 import { SliderElement } from '../slider-element';
@@ -22,16 +25,25 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
-class TestControlsProviderElement extends MediaElement {
+function createControlsStore(requestControlsLock: MediaControlsState['requestControlsLock']): AnyPlayerStore {
+  return createStore<unknown>()<MediaControlsState>({
+    name: 'controls',
+    state: () => ({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock,
+      toggleControls: () => true,
+    }),
+  }) as unknown as AnyPlayerStore;
+}
+
+class TestPlayerProviderElement extends MediaElement {
   readonly releaseControlsLock = vi.fn();
   readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
+  readonly store = createControlsStore(this.requestControlsLock);
   readonly provider = new ContextProvider(this, {
-    context: controlsContext,
-    initialValue: {
-      state: { visible: true, userActive: true },
-      stateAttrMap: { visible: 'data-visible', userActive: 'data-user-active' },
-      requestControlsLock: this.requestControlsLock,
-    },
+    context: playerContext,
+    initialValue: this.store,
   });
 }
 
@@ -145,7 +157,7 @@ describe('SliderElement', () => {
   });
 
   it('holds a controls visibility lock for the duration of a drag', async () => {
-    const provider = createElement(TestControlsProviderElement);
+    const provider = createElement(TestPlayerProviderElement);
     const slider = createElement(SliderElement);
 
     provider.append(slider);

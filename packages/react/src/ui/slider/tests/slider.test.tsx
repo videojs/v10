@@ -2,7 +2,7 @@ import { cleanup, render } from '@testing-library/react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { ControlsContextProvider } from '../../controls/context';
+import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../slider-buffer';
 import { SliderFill } from '../slider-fill';
 import { SliderRoot } from '../slider-root';
@@ -81,7 +81,9 @@ vi.mock('@videojs/core/dom', async (importOriginal) => {
 
 vi.mock('@videojs/store/react', () => ({
   useSnapshot: vi.fn((state: { current: unknown }) => state.current),
-  useStore: vi.fn(),
+  useStore: vi.fn((store: { state: object }, selector?: (state: object) => unknown) =>
+    selector ? selector(store.state) : store
+  ),
 }));
 
 afterEach(cleanup);
@@ -127,18 +129,14 @@ describe('SliderRoot', () => {
   it('holds a controls visibility lock for the duration of a drag', () => {
     const releaseControlsLock = vi.fn();
     const requestControlsLock = vi.fn(() => releaseControlsLock);
+    const { Wrapper } = createPlayerWrapper({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock,
+      toggleControls: vi.fn(),
+    });
 
-    render(
-      <ControlsContextProvider
-        value={{
-          state: { visible: true, userActive: true },
-          stateAttrMap: { visible: 'data-visible', userActive: 'data-user-active' },
-          requestControlsLock,
-        }}
-      >
-        <SliderRoot />
-      </ControlsContextProvider>
-    );
+    render(<SliderRoot />, { wrapper: Wrapper });
 
     sliderOptionsRef.current?.onDragStart?.();
     expect(requestControlsLock).toHaveBeenCalledTimes(1);

@@ -34,9 +34,7 @@ export const ControlsRoot = forwardRef(function ControlsRoot(
   const state = core.getState();
 
   return (
-    <ControlsContextProvider
-      value={{ state, stateAttrMap: ControlsDataAttrs, requestControlsLock: controls.requestControlsLock }}
-    >
+    <ControlsContextProvider value={{ state, stateAttrMap: ControlsDataAttrs }}>
       {renderElement(
         'div',
         { render, className, style },

@@ -7,6 +7,7 @@ import {
   getSliderCSSVars,
   logMissingFeature,
   type SliderApi,
+  selectControls,
   selectVolume,
 } from '@videojs/core/dom';
 import { type Text, translateText } from '@videojs/core/i18n';
@@ -18,7 +19,6 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
-import { ControlsLockController } from '../controls/controls-lock-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
 
@@ -44,13 +44,14 @@ export class VolumeSliderElement extends MediaElement {
   thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new VolumeSliderCore();
-  readonly #controlsLock = new ControlsLockController(this);
+  readonly #controlsState = new PlayerController(this, playerContext, selectControls);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
   readonly #i18n = new I18nController(this, i18nContext);
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
+  #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -76,11 +77,11 @@ export class VolumeSliderElement extends MediaElement {
       onValueChange: setVolume,
       onValueCommit: setVolume,
       onDragStart: () => {
-        this.#controlsLock.lock();
+        this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        this.#controlsLock.unlock();
+        this.#releaseControlsVisibilityLock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -105,14 +106,21 @@ export class VolumeSliderElement extends MediaElement {
   }
 
   override disconnectedCallback(): void {
+    this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
     this.#disconnect?.abort();
     this.#disconnect = null;
   }
 
   override destroyCallback(): void {
+    this.#releaseControlsVisibilityLock();
     this.#slider?.destroy();
     super.destroyCallback();
+  }
+
+  #releaseControlsVisibilityLock(): void {
+    this.#releaseControlsLock?.();
+    this.#releaseControlsLock = null;
   }
 
   protected override willUpdate(_changed: PropertyValues): void {
