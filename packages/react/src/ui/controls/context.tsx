@@ -1,11 +1,13 @@
 'use client';
 
 import type { ControlsState, StateAttrMap } from '@videojs/core';
+import type { MediaControlsState } from '@videojs/media';
 import { createContext, useContext } from 'react';
 
 export interface ControlsContextValue {
   state: ControlsState;
   stateAttrMap: StateAttrMap<ControlsState>;
+  requestControlsLock: MediaControlsState['requestControlsLock'];
 }
 
 const ControlsContext = createContext<ControlsContextValue | null>(null);

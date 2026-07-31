@@ -223,15 +223,18 @@ function RootPropagationFixture({ onContainerKeyDown }: { onContainerKeyDown: Ke
 function ControlsHiddenFixture({
   visible,
   onOpenChange,
+  requestControlsLock = () => () => {},
 }: {
   visible: boolean;
   onOpenChange: NonNullable<MenuRoot.Props['onOpenChange']>;
+  requestControlsLock?: () => () => void;
 }) {
   return (
     <ControlsContextProvider
       value={{
         state: { visible, userActive: visible },
         stateAttrMap: { visible: 'data-visible', userActive: 'data-user-active' },
+        requestControlsLock,
       }}
     >
       <MenuRoot defaultOpen onOpenChange={onOpenChange}>
@@ -847,6 +850,23 @@ describe('MenuContent', () => {
 
     await waitFor(() => {
       expect(onOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'imperative-action' }));
+    });
+  });
+
+  it('holds a controls visibility lock while a root menu is open', async () => {
+    const releaseControlsLock = vi.fn();
+    const requestControlsLock = vi.fn(() => releaseControlsLock);
+
+    render(<ControlsHiddenFixture visible onOpenChange={vi.fn()} requestControlsLock={requestControlsLock} />);
+
+    await waitFor(() => {
+      expect(requestControlsLock).toHaveBeenCalledTimes(1);
+    });
+
+    fireEvent.click(screen.getByTestId('trigger'));
+
+    await waitFor(() => {
+      expect(releaseControlsLock).toHaveBeenCalledTimes(1);
     });
   });
 

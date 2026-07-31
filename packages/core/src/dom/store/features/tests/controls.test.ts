@@ -429,6 +429,72 @@ describe('controlsFeature', () => {
     });
   });
 
+  describe('controls visibility locks', () => {
+    it('shows hidden controls and suspends the idle timeout while locked', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+      expect(store.state.controlsVisible).toBe(false);
+
+      const release = store.state.requestControlsLock();
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      release();
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY - 1);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      vi.advanceTimersByTime(1);
+      flush();
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
+    it('keeps controls visible when activity is explicitly cleared while locked', () => {
+      const video = createMockVideo({ paused: false });
+      const { store, container } = createPlayerStore(video);
+      const release = store.state.requestControlsLock();
+
+      container!.dispatchEvent(new Event('mouseleave'));
+      flush();
+
+      expect(store.state.userActive).toBe(false);
+      expect(store.state.controlsVisible).toBe(true);
+
+      release();
+    });
+
+    it('waits for every lock to release and treats releases as idempotent', () => {
+      const video = createMockVideo({ paused: false });
+      const { store } = createPlayerStore(video);
+      const releaseFirst = store.state.requestControlsLock();
+      const releaseSecond = store.state.requestControlsLock();
+
+      releaseFirst();
+      releaseFirst();
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(true);
+
+      releaseSecond();
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+  });
+
   describe('toggleControls', () => {
     it('hides controls when visible and playing', () => {
       const video = createMockVideo({ paused: false });

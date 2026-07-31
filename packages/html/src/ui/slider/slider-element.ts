@@ -12,6 +12,7 @@ import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
+import { ControlsLockController } from '../controls/controls-lock-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from './context';
 
@@ -41,6 +42,7 @@ export class SliderElement extends MediaElement {
   thumbAlignment = SliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new SliderCore();
+  readonly #controlsLock = new ControlsLockController(this);
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
 
@@ -72,9 +74,11 @@ export class SliderElement extends MediaElement {
         this.dispatchEvent(new CustomEvent('value-commit', { detail: { value: this.value }, bubbles: true }));
       },
       onDragStart: () => {
+        this.#controlsLock.lock();
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#controlsLock.unlock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),

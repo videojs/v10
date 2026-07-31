@@ -33,6 +33,7 @@ import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { applyStyles, supportsAnchorPositioning, tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext } from '../../player/context';
+import { ControlsLockController } from '../controls/controls-lock-controller';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, menuContext } from './context';
@@ -63,6 +64,7 @@ export class MenuElement extends MediaElement {
   readonly #core = new MenuCore();
   readonly #provider = new ContextProvider(this, { context: menuContext });
   readonly #position = new PositionController(this);
+  readonly #controlsLock = new ControlsLockController(this);
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
@@ -201,6 +203,12 @@ export class MenuElement extends MediaElement {
     const input = this.#menu.input.current;
     this.#core.setInput(input);
     const state = this.#core.getState();
+
+    if (!isSubmenu && state.open) {
+      this.#controlsLock.lock();
+    } else {
+      this.#controlsLock.unlock();
+    }
 
     if (isSubmenu && parentCtx) {
       this.#updateAsSubmenu(parentCtx);

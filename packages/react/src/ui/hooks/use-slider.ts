@@ -15,6 +15,7 @@ import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { useDestroy } from '../../utils/use-destroy';
 import { useForceRender } from '../../utils/use-force-render';
 import { useLatestRef } from '../../utils/use-latest-ref';
+import { useControlsLock } from '../controls/use-controls-lock';
 
 export interface UseSliderOptions<State extends SliderState = SliderState>
   extends Pick<
@@ -58,6 +59,8 @@ export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
   const optionsRef = useLatestRef(options);
+  const controlsLock = useControlsLock();
+  const controlsLockRef = useLatestRef(controlsLock);
 
   const rootElementRef = useRef<HTMLElement | null>(null);
   const thumbElementRef = useRef<HTMLElement | null>(null);
@@ -78,8 +81,14 @@ export function useSlider<State extends SliderState = SliderState>(
       adjustPercent: optionsRef.current.adjustPercent,
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
-      onDragStart: () => optionsRef.current.onDragStart?.(),
-      onDragEnd: () => optionsRef.current.onDragEnd?.(),
+      onDragStart: () => {
+        controlsLockRef.current.lock();
+        optionsRef.current.onDragStart?.();
+      },
+      onDragEnd: () => {
+        controlsLockRef.current.unlock();
+        optionsRef.current.onDragEnd?.();
+      },
     };
 
     return createSlider(stableOptions);

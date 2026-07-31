@@ -39,6 +39,7 @@ function createControlsStore(): AnyPlayerStore {
       return {
         userActive: true,
         controlsVisible: true,
+        requestControlsLock: () => () => {},
         toggleControls() {
           const visible = !(get().controlsVisible as boolean);
 

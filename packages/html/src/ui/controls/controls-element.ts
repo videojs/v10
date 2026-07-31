@@ -41,6 +41,7 @@ export class ControlsElement extends MediaElement {
     this.#provider.setValue({
       state,
       stateAttrMap: ControlsDataAttrs,
+      requestControlsLock: media.requestControlsLock,
     });
 
     const wasVisible = this.#visible;

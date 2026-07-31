@@ -20,6 +20,7 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
+import { ControlsLockController } from '../controls/controls-lock-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
 
@@ -47,6 +48,7 @@ export class TimeSliderElement extends MediaElement {
   pauseOnDrag = TimeSliderCore.defaultProps.pauseOnDrag;
 
   readonly #core = new TimeSliderCore();
+  readonly #controlsLock = new ControlsLockController(this);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
@@ -82,10 +84,12 @@ export class TimeSliderElement extends MediaElement {
       },
       changeThrottle: this.changeThrottle,
       onDragStart: () => {
+        this.#controlsLock.lock();
         this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#controlsLock.unlock();
         this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },

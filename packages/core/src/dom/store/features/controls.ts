@@ -15,6 +15,11 @@ export const controlsFeature = definePlayerFeature({
   state: ({ get, set }): MediaControlsState => ({
     userActive: true,
     controlsVisible: true,
+    requestControlsLock() {
+      // Fallback before attach — show controls, but there is no idle timer to suspend.
+      set({ controlsVisible: true });
+      return () => {};
+    },
     toggleControls() {
       // Fallback before attach — no idle timer, just flip state.
       const next = !get().userActive;
@@ -33,12 +38,19 @@ export const controlsFeature = definePlayerFeature({
       return;
     }
 
-    const computeVisible = (userActive: boolean): boolean => {
-      return userActive || media.paused || isRemotePlaybackConnected(media) || isRemotePlaybackConnecting(media);
-    };
-
     // Idle timer
     let idleTimer: ReturnType<typeof setTimeout> | undefined;
+    let controlsLockCount = 0;
+
+    const computeVisible = (userActive: boolean): boolean => {
+      return (
+        controlsLockCount > 0 ||
+        userActive ||
+        media.paused ||
+        isRemotePlaybackConnected(media) ||
+        isRemotePlaybackConnecting(media)
+      );
+    };
 
     function clearIdle() {
       clearTimeout(idleTimer);
@@ -47,6 +59,7 @@ export const controlsFeature = definePlayerFeature({
 
     function scheduleIdle() {
       clearIdle();
+      if (controlsLockCount > 0) return;
       idleTimer = setTimeout(setInactive, IDLE_DELAY);
     }
 
@@ -62,8 +75,31 @@ export const controlsFeature = definePlayerFeature({
       set({ userActive: false, controlsVisible: computeVisible(false) });
     }
 
-    // Expose toggleControls with access to idle timer.
+    function requestControlsLock(): () => void {
+      controlsLockCount++;
+      clearIdle();
+
+      if (!get().controlsVisible) {
+        set({ controlsVisible: true });
+      }
+
+      let released = false;
+
+      return () => {
+        if (released || signal.aborted) return;
+        released = true;
+        controlsLockCount--;
+
+        if (controlsLockCount === 0) {
+          // Give the user a full activity window after the interaction ends.
+          setActive();
+        }
+      };
+    }
+
+    // Expose controls actions with access to the idle timer and lock count.
     set({
+      requestControlsLock,
       toggleControls() {
         if (get().controlsVisible) {
           setInactive();
@@ -193,8 +229,15 @@ export const controlsFeature = definePlayerFeature({
       listen(media.remote, 'disconnect', onCastChange, { signal });
     }
 
-    // Clean up timer on signal abort.
-    signal.addEventListener('abort', clearIdle, { once: true });
+    // Clean up timer and invalidate outstanding releases on detach.
+    signal.addEventListener(
+      'abort',
+      () => {
+        controlsLockCount = 0;
+        clearIdle();
+      },
+      { once: true }
+    );
 
     // Always schedule idle initially. When paused, userActive will go false
     // but controlsVisible stays true (because paused keeps controls visible).

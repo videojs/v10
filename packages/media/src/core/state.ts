@@ -203,8 +203,15 @@ export interface MediaFullscreenState {
 export interface MediaControlsState {
   /** Whether the user has recently interacted with the player. */
   userActive: boolean;
-  /** Whether controls should be visible (userActive || paused). */
+  /** Whether controls should be visible. */
   controlsVisible: boolean;
+  /**
+   * Keep controls visible during a sustained interaction.
+   *
+   * The returned function releases the lock. Multiple concurrent locks are
+   * supported and each release function is idempotent.
+   */
+  requestControlsLock(): () => void;
   /** Toggle controls visibility. Returns the new `controlsVisible` value. */
   toggleControls(): boolean;
 }

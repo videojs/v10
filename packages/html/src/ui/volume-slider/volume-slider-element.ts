@@ -18,6 +18,7 @@ import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
+import { ControlsLockController } from '../controls/controls-lock-controller';
 import { MediaElement } from '../media-element';
 import { sliderContext } from '../slider/context';
 
@@ -43,6 +44,7 @@ export class VolumeSliderElement extends MediaElement {
   thumbAlignment = VolumeSliderCore.defaultProps.thumbAlignment;
 
   readonly #core = new VolumeSliderCore();
+  readonly #controlsLock = new ControlsLockController(this);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #volumeState = new PlayerController(this, playerContext, selectVolume);
   readonly #i18n = new I18nController(this, i18nContext);
@@ -74,9 +76,11 @@ export class VolumeSliderElement extends MediaElement {
       onValueChange: setVolume,
       onValueCommit: setVolume,
       onDragStart: () => {
+        this.#controlsLock.lock();
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
+        this.#controlsLock.unlock();
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),

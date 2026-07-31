@@ -10,6 +10,7 @@ import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
+import { useControlsLock } from '../controls/use-controls-lock';
 import { usePositionedState } from '../hooks/use-positioned-state';
 import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
 
@@ -38,6 +39,7 @@ export function MenuRoot({
   const controls = useOptionalControlsContext();
   const container = useOptionalContainer();
   const popupGroup = useOptionalPopupGroup();
+  const controlsLock = useControlsLock();
   const isSubmenu = parentMenu !== null;
   const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
 
@@ -99,6 +101,17 @@ export function MenuRoot({
   useDestroy(menu);
 
   const input = useSnapshot(menu.input);
+
+  useEffect(() => {
+    if (!input.active || isSubmenu) {
+      controlsLock.unlock();
+      return;
+    }
+
+    controlsLock.lock();
+    return controlsLock.unlock;
+  }, [controlsLock, input.active, isSubmenu]);
+
   const preferredState = useMemo(() => {
     core.setProps({ side, align, closeOnEscape, closeOnOutsideClick, isSubmenu });
     core.setInput(input);

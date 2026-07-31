@@ -6,6 +6,7 @@ import { createStore, flush } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { playerContext } from '../../../player/context';
+import { controlsContext } from '../../controls/context';
 import { ControlsElement } from '../../controls/controls-element';
 import { MediaElement } from '../../media-element';
 import { MenuBackElement } from '../menu-back-element';
@@ -45,6 +46,7 @@ function createControlsStore(): AnyPlayerStore {
       return {
         userActive: true,
         controlsVisible: true,
+        requestControlsLock: () => () => {},
         toggleControls() {
           const visible = !(get().controlsVisible as boolean);
 
@@ -77,7 +79,21 @@ class TestPlayerProviderElement extends MediaElement {
   }
 }
 
+class TestControlsContextProviderElement extends MediaElement {
+  readonly releaseControlsLock = vi.fn();
+  readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
+  readonly provider = new ContextProvider(this, {
+    context: controlsContext,
+    initialValue: {
+      state: { visible: true, userActive: true },
+      stateAttrMap: { visible: 'data-visible', userActive: 'data-user-active' },
+      requestControlsLock: this.requestControlsLock,
+    },
+  });
+}
+
 defineElement('test-menu-player-provider', TestPlayerProviderElement);
+defineElement('test-menu-controls-provider', TestControlsContextProviderElement);
 
 function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
@@ -758,5 +774,29 @@ describe('MenuElement', () => {
       expect.objectContaining({ detail: expect.objectContaining({ open: false, reason: 'imperative-action' }) })
     );
     expect(focus).not.toHaveBeenCalled();
+  });
+
+  it('holds a controls visibility lock while a root menu is open', async () => {
+    const provider = document.createElement('test-menu-controls-provider') as TestControlsContextProviderElement;
+    const root = createElement(MenuElement);
+
+    root.open = true;
+    provider.append(root);
+    document.body.append(provider);
+
+    await root.updateComplete;
+
+    expect(root.hasAttribute('data-open')).toBe(true);
+
+    await waitForAssertion(() => {
+      expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
+    });
+
+    root.open = false;
+    await root.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
+    });
   });
 });
