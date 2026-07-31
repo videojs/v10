@@ -32,11 +32,14 @@ export type MuxDataProps = Partial<MuxDataComponentProps>;
 export function MuxData(props: MuxDataProps): ReactNode {
   const component = useMediaComponent(MuxDataComponent);
   const { MuxDataSdk, ...rest } = props;
-  const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
 
-  // `useSyncProps` treats `undefined` as "reset to default", but explicitly
-  // passing `MuxDataSdk={undefined}` is how consumers disable monitoring.
+  // `useSyncProps` treats an `undefined` prop as "reset to the default", but
+  // `MuxDataSdk={undefined}` is how consumers disable monitoring. Sync it here
+  // instead: passing the prop wins even when its value is `undefined`, and only
+  // omitting it falls back to the default SDK.
+  const sdk = 'MuxDataSdk' in props ? MuxDataSdk : muxDataDefaultProps.MuxDataSdk;
   if (component.MuxDataSdk !== sdk) component.MuxDataSdk = sdk;
+
   useSyncProps(component, rest, muxDataDefaultProps);
 
   return null;
