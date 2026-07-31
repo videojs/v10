@@ -39,21 +39,6 @@ function setWireless(video: WebKitVideoLike, wireless: boolean): void {
   video.dispatchEvent(new Event(WIRELESS_EVENT));
 }
 
-/** Minimal Remote Playback API double (jsdom has no `video.remote`). */
-class FakeRemotePlayback extends EventTarget {
-  state: RemotePlaybackState = 'disconnected';
-  setState(next: RemotePlaybackState, eventType: 'connecting' | 'connect' | 'disconnect'): void {
-    this.state = next;
-    this.dispatchEvent(new Event(eventType));
-  }
-}
-
-function attachFakeRemote(video: WebKitVideoLike): FakeRemotePlayback {
-  const remote = new FakeRemotePlayback();
-  Object.defineProperty(video, 'remote', { value: remote, configurable: true });
-  return remote;
-}
-
 function makeSignals(presentation?: MaybeResolvedPresentation) {
   return {
     state: {
@@ -451,38 +436,22 @@ describe('setupAirPlay', () => {
     reactor.destroy();
   });
 
-  it('treats a Remote Playback API session (connecting/connected) as active', async () => {
+  it('ignores the Remote Playback API — a stale connected `remote` cannot hold the session', async () => {
     vi.useFakeTimers();
     stubWebKit(true);
     const { state, context } = makeSignals({ url: 'https://example.com/a.m3u8' });
     const reactor = setupAirPlay.setup({ state, context });
 
-    const video = makeWebKitVideo({ wireless: false });
-    const remote = attachFakeRemote(video);
+    // `remote.state` is unreliable for AirPlay on WebKit and stays unread; a
+    // stuck `'connected'` must not pin `loadingSuspended` past the wireless
+    // flag's falling edge, which would strand setupMediaSource's rebuild.
+    const video = makeWebKitVideo({ wireless: true });
+    Object.defineProperty(video, 'remote', { value: { state: 'connected' }, configurable: true });
     context.mediaElement.set(video);
     await vi.advanceTimersByTimeAsync(0);
-    expect(state.loadingSuspended.get()).toBe(false);
-
-    // `remote.state = 'connecting'` leads the engage — it fires when the user
-    // picks a receiver, before WebKit's wireless flag flips or the MMS closes.
-    remote.setState('connecting', 'connecting');
-    await vi.advanceTimersByTimeAsync(0);
     expect(state.loadingSuspended.get()).toBe(true);
 
-    remote.setState('connected', 'connect');
-    await vi.advanceTimersByTimeAsync(0);
-    expect(state.loadingSuspended.get()).toBe(true);
-
-    // While `remote.state` reads active, a wireless=false event alone must
-    // not even start the falling edge.
     setWireless(video, false);
-    await vi.advanceTimersByTimeAsync(SETTLE_MS * 2);
-    expect(state.loadingSuspended.get()).toBe(true);
-
-    // True disengage: both signals inactive → clears after the settle window.
-    remote.setState('disconnected', 'disconnect');
-    await vi.advanceTimersByTimeAsync(0);
-    expect(state.loadingSuspended.get()).toBe(true);
     await vi.advanceTimersByTimeAsync(SETTLE_MS);
     expect(state.loadingSuspended.get()).toBe(false);
 
