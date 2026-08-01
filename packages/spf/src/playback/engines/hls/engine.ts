@@ -47,6 +47,7 @@ import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
+import { observePlayerSize, type PlayerSizeCapConfig } from '../../behaviors/dom/observe-player-size';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
 import { seekToLiveEdge } from '../../behaviors/dom/seek-to-live-edge';
 import { setupAudioBufferActors, setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
@@ -148,6 +149,14 @@ export interface HlsVideoEngineState {
    */
   errors?: SvtaError[];
   currentTime?: number;
+  /**
+   * Rendered area of the attached media element, in device pixels — owned by
+   * `observePlayerSize`, read by `track-switching`'s `capToPlayerSize` rule to
+   * keep ABR off renditions larger than what's actually on screen. Absent (or
+   * `0`) means no measurement — no element attached, hidden, or not yet laid
+   * out — and the cap goes inert.
+   */
+  playerPixelArea?: number;
   loadActivated?: boolean;
   /**
    * One-shot command: start the current source at this position
@@ -303,6 +312,15 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    * ratio gating ABR upgrades. Defaults: `DEFAULT_QUALITY_CONFIG` (0.85 / 1.15).
    */
   quality?: Partial<QualityConfig>;
+  /**
+   * Player-size cap. `enabled` (default `true`) keeps ABR from selecting a
+   * rendition larger than the smallest tier covering the player's rendered
+   * size; `useDevicePixelRatio` (default `true`) measures in device rather than
+   * CSS pixels. Read by `observePlayerSize`; the cap itself is
+   * `track-switching`'s `capToPlayerSize` rule. Defaults:
+   * `DEFAULT_PLAYER_SIZE_CAP_CONFIG`.
+   */
+  playerSizeCap?: Partial<PlayerSizeCapConfig>;
   /**
    * Multi-CDN failover monitor tuning. `cooldownMs` is how long a CDN stays
    * excluded after a failed fetch trips it. Defaults:
@@ -506,6 +524,11 @@ export function createHlsVideoEngine(
       // After trackCurrentTime: the one-shot currentTime seed must land after
       // the mirror's attach-time sync (see apply-start-position.ts).
       applyStartPosition,
+
+      // Owns `playerPixelArea`, which switchVideoTrack's capToPlayerSize rule
+      // reads. Ordering isn't load-bearing — selection is reactive, so a
+      // measurement that lands after the first pick just re-fires it.
+      observePlayerSize,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in

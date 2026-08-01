@@ -15,12 +15,20 @@
       h1 { margin-bottom: 6px; }
       p { margin: 0 0 12px; }
 
+      /* Drag the bottom-right corner to exercise the player-size cap. */
+      #video-frame {
+        width: 640px;
+        max-width: 100%;
+        height: 360px;
+        margin: 12px 0 4px;
+        overflow: hidden;
+        resize: both;
+        border: 2px solid #333;
+      }
       video {
         display: block;
         width: 100%;
-        max-width: 640px;
-        margin: 12px 0 4px;
-        border: 2px solid #333;
+        height: 100%;
       }
 
       /* ── Src controls ── */
@@ -112,6 +120,12 @@
         color: #555;
       }
       #now-playing-quality.has-quality { font-weight: bold; color: #0070f3; }
+      #player-size-display {
+        margin-bottom: 2px;
+        font-family: monospace;
+        font-size: 12px;
+        color: #555;
+      }
       #throughput-display {
         margin-bottom: 12px;
         font-family: monospace;
@@ -270,9 +284,12 @@
       <button type="button" id="clearLogs">Clear Logs</button>
     </div>
 
-    <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
-    <video id="video" controls preload="none"></video>
+    <div id="video-frame">
+      <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
+      <video id="video" controls preload="none"></video>
+    </div>
     <div id="now-playing-quality"></div>
+    <div id="player-size-display"></div>
     <div id="throughput-display"></div>
     <div id="live-status"></div>
 
