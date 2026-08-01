@@ -150,10 +150,9 @@ export interface HlsVideoEngineState {
   errors?: SvtaError[];
   currentTime?: number;
   /**
-   * Rendered area of the attached media element, in device pixels — owned by
-   * `observePlayerSize`, read by `track-switching`'s `capToPlayerSize` rule to
-   * keep ABR off renditions larger than what's actually on screen. Absent (or
-   * `0`) means no measurement — no element attached, hidden, or not yet laid
+   * Rendered area of the attached media element, in device pixels. Owned by
+   * `observePlayerSize`, read by `track-switching`'s `capToPlayerSize`. Absent
+   * or `0` means no measurement — nothing attached, hidden, or not yet laid
    * out — and the cap goes inert.
    */
   playerPixelArea?: number;
@@ -313,12 +312,10 @@ export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineS
    */
   quality?: Partial<QualityConfig>;
   /**
-   * Player-size cap. `enabled` (default `true`) keeps ABR from selecting a
-   * rendition larger than the smallest tier covering the player's rendered
-   * size; `useDevicePixelRatio` (default `true`) measures in device rather than
-   * CSS pixels. Read by `observePlayerSize`; the cap itself is
-   * `track-switching`'s `capToPlayerSize` rule. Defaults:
-   * `DEFAULT_PLAYER_SIZE_CAP_CONFIG`.
+   * Player-size cap tuning, read by `observePlayerSize`: `enabled` stops the
+   * measurement (and with it the cap), `useDevicePixelRatio` switches between
+   * device and CSS pixels. Defaults: `DEFAULT_PLAYER_SIZE_CAP_CONFIG` (both
+   * `true`).
    */
   playerSizeCap?: Partial<PlayerSizeCapConfig>;
   /**
@@ -525,9 +522,8 @@ export function createHlsVideoEngine(
       // the mirror's attach-time sync (see apply-start-position.ts).
       applyStartPosition,
 
-      // Owns `playerPixelArea`, which switchVideoTrack's capToPlayerSize rule
-      // reads. Ordering isn't load-bearing — selection is reactive, so a
-      // measurement that lands after the first pick just re-fires it.
+      // Ordering isn't load-bearing — selection is reactive, so a measurement
+      // that lands after the first pick just re-fires it.
       observePlayerSize,
       switchVideoTrack,
       switchAudioTrack,

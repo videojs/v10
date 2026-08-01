@@ -15,9 +15,8 @@
  *   1. **user intent** — a soft filter on `user*TrackSelection`: narrow to the
  *      partial-track match; an empty match falls through to the full set.
  *   2. **player size** — a soft filter on `playerPixelArea` (`capToPlayerSize`,
- *      video only): narrow to the smallest rendition tier covering the player's
- *      rendered size, plus everything below it. Runs after user intent, so the
- *      cap governs automatic selection only. No-op without a measurement.
+ *      video only): narrow to the smallest rendition tier covering the player,
+ *      plus everything below it. No-op without a measurement.
  *   3. **active CDN** — a soft filter on `cdnPriority` (`preferActiveCdn`):
  *      narrow to the highest-priority CDN that still has tracks; an empty match
  *      falls through. Shared by video and audio, so every type stays on one CDN
@@ -42,9 +41,9 @@
  * `setupTrackSwitching` owns only the lifecycle and runs what it's given. Video
  * and audio run constraints `[excludeFailedCdns, excludeUnplayableTracks]` then
  * rules `[filterByUserSelection, preferActiveCdn, rankByBandwidth]` and take the
- * head; video inserts `capToPlayerSize` after the user filter (audio has no
- * resolution to cap), and `switchVideoTrack` also accepts ABR tuning config,
- * `switchAudioTrack` takes none. `switchTextTrack` differs — selection is *optional* (captions are
+ * head; video inserts `capToPlayerSize` after the user filter, and
+ * `switchVideoTrack` also accepts ABR tuning config, `switchAudioTrack` takes
+ * none. `switchTextTrack` differs — selection is *optional* (captions are
  * opt-in / off-able), so it runs `[excludeFailedCdns]` + `[preferActiveCdn]` and
  * supplies a text terminal (`pickResolvedTextTrack`) that resolves standing user
  * intent (`userTextTrackSelection`, incl. `'off'`) and may yield no selection.
@@ -328,10 +327,9 @@ type BandwidthRankerConfig<S extends SelectionKey, T extends SwitchableTrack> = 
 
 /**
  * State the player-size cap reads: the lifecycle map plus an *optional*
- * `playerPixelArea` — the rendered area of the media element in device pixels.
- * The signal exists only when the composition includes `observePlayerSize`
- * (which materializes + owns it); the cap reads it defensively and passes
- * through when it's absent, zero, or the cap is disabled.
+ * `playerPixelArea`. The signal exists only when the composition includes
+ * `observePlayerSize` (which materializes + owns it); the cap reads it
+ * defensively and passes everything through when it's absent or `0`.
  */
 type PlayerSizeCapStateMap<S extends SelectionKey> = TrackSwitchingStateMap<S> & {
   playerPixelArea?: ReadonlySignal<number | undefined>;
@@ -397,31 +395,22 @@ function filterByUserSelection<S extends SelectionKey, U extends UserSelectionKe
 
 /**
  * Player-size cap — a soft filter, video only. Narrows to the renditions worth
- * delivering at the player's rendered size (`playerPixelArea`, device pixels,
- * owned by `observePlayerSize`), so a small embed doesn't pull 1080p segments
- * nobody can perceive.
+ * delivering at the player's rendered size, so a small embed doesn't pull
+ * segments nobody can perceive.
  *
  * The cap is the *smallest tier that still covers the player*, and everything
- * at or below it survives — not "everything at or below the player's area."
- * Capping at-or-below under-serves: an 800×450 player against a 360p/720p/1080p
- * ladder has no rendition at or below it, and the honest answer is 720p (the
- * covering tier), not 360p. Same shape as hls.js's `getMaxLevelByMediaSize`.
+ * at or below it survives — not "everything at or below the player's area,"
+ * which under-serves: an 800×450 player against a 360p/720p/1080p ladder has no
+ * rendition at or below it, and the honest answer is 720p, not 360p.
  *
- * Two consequences worth naming. The rule can't empty the set — when nothing
- * covers the player the cap is `Infinity` and every track survives — so there's
- * no fallback policy to get wrong. And it narrows to a *set*, leaving
- * `rankByBandwidth` to pick within it, so the cap and the throughput estimate
- * compose instead of competing.
+ * Narrowing to a set rather than a pick leaves `rankByBandwidth` to choose
+ * within the cap, so the two compose instead of competing. Running after
+ * `filterByUserSelection` means a manual rendition pick outranks the cap.
  *
- * Passes through when there's no `playerPixelArea` signal/value or the area is
- * `0` (element detached, hidden, or not yet laid out — see `observePlayerSize`).
- * Renditions that declare no RESOLUTION compare as area `0`, so they're never
- * capped out; they can't be judged against the player, and dropping them could
- * strand a source whose variants all omit it.
- *
- * Runs after `filterByUserSelection` so a manual rendition pick outranks it —
- * the cap governs automatic selection only, matching hls.js's
- * `capLevelToPlayerSize`.
+ * Renditions declaring no RESOLUTION compare as area `0` and are never capped
+ * out — they can't be judged against the player, and dropping them could strand
+ * a source whose variants all omit it. Passes through entirely when there's no
+ * measurement (see `playerPixelArea`).
  */
 function capToPlayerSize<S extends SelectionKey, T extends SwitchableTrack>(
   tracks: readonly T[],
@@ -431,8 +420,10 @@ function capToPlayerSize<S extends SelectionKey, T extends SwitchableTrack>(
   if (!playerPixelArea) return tracks;
 
   const covering = tracks.map((track) => resolutionArea(track)).filter((area) => area >= playerPixelArea);
-  // No rendition covers the player — nothing to cap against.
-  const cap = covering.length ? Math.min(...covering) : Number.POSITIVE_INFINITY;
+  // Nothing covers the player — no opinion, fall through to the full set.
+  if (!covering.length) return [];
+
+  const cap = Math.min(...covering);
   return tracks.filter((track) => resolutionArea(track) <= cap);
 }
 

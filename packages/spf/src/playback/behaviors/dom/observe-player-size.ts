@@ -1,12 +1,7 @@
 /**
  * **Player-size measurement.** Mirrors the rendered area of the attached media
- * element into `state.playerPixelArea`, in device pixels. `track-switching`'s
- * `capToPlayerSize` rule reads it to keep ABR from selecting a rendition
- * materially larger than what is actually on screen.
- *
- * Measurement is the whole job — this behavior holds no cap policy. It writes a
- * fact (how big the video is being drawn); the rule decides what that means for
- * the candidate set.
+ * element into `state.playerPixelArea`. Measurement is the whole job — the
+ * policy built on it is `track-switching`'s `capToPlayerSize` rule.
  *
  * Two things move the number, and both are watched:
  * - the element's box, via `ResizeObserver`
@@ -15,13 +10,11 @@
  *   necessarily resize the element, so the observer alone would miss it.
  *
  * The area is `cssWidth × dpr × cssHeight × dpr` — dpr enters squared because
- * both axes scale. Set `playerSizeCap.useDevicePixelRatio` to `false` for
- * CSS-pixel semantics (VHS's default), or `playerSizeCap.enabled` to `false` to
- * stop measuring entirely.
+ * both axes scale.
  *
  * An unmeasurable element — detached, `display: none`, not yet laid out —
- * reports a `0` box. That writes `undefined`, not `0`, so the cap goes inert
- * rather than pinning playback to the smallest rendition on a hidden player.
+ * reports a `0` box, which writes `undefined` rather than `0` per the slot's
+ * contract.
  */
 
 import { listen } from '@videojs/utils/dom';
@@ -42,10 +35,9 @@ export interface PlayerSizeCapConfig {
   /** Measure at all. `false` leaves `playerPixelArea` unset, so the cap is inert. */
   enabled: boolean;
   /**
-   * Scale the measurement by `devicePixelRatio`. On by default, matching
-   * hls.js (`ignoreDevicePixelRatio: false`) and Mux Player: a 640-CSS-px
-   * player on a 2x display is really 1280 device pixels, and capping it to
-   * 720p would under-serve the display it's on.
+   * Scale the measurement by `devicePixelRatio`. A 640-CSS-px player on a 2x
+   * display is really 1280 device pixels; measuring in CSS pixels would cap it
+   * to 720p and under-serve the display.
    */
   useDevicePixelRatio: boolean;
 }
