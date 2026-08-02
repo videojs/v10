@@ -1,7 +1,7 @@
 {
   "name": "@videojs/media",
   "type": "module",
-  "version": "10.0.0-beta.25",
+  "version": "10.0.0-beta.26",
   "description": "Media contracts, hosts, and playback engines for Video.js",
   "license": "Apache-2.0",
   "repository": {

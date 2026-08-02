@@ -1,5 +1,34 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.25...@videojs/skins@10.0.0-beta.26) (2026-08-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace button availability with disabled and hidden state ([#1474](https://github.com/videojs/v10/issues/1474))
+
+### Features
+
+* **skin:** improved responsive design ([#1832](https://github.com/videojs/v10/issues/1832)) ([c8a9eec](https://github.com/videojs/v10/commit/c8a9eecaf89139bd80965f39052c1483b910d6bc))
+
+
+### Bug Fixes
+
+* **sandbox:** prevent css causing full app refresh ([#1869](https://github.com/videojs/v10/issues/1869)) ([5cb93c1](https://github.com/videojs/v10/commit/5cb93c17010dbb5eabb3fff71250bea13b211043))
+* **test:** remove seek tests, add missing tests ([#1892](https://github.com/videojs/v10/issues/1892)) ([115229b](https://github.com/videojs/v10/commit/115229b3bca742834dbd412af1e9722e2ed3dd5f))
+
+
+### Code Refactoring
+
+* **packages:** replace button availability with disabled and hidden state ([#1474](https://github.com/videojs/v10/issues/1474)) ([066227d](https://github.com/videojs/v10/commit/066227de5819570a339fd0e291fc236c51632017))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.26
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.24...@videojs/skins@10.0.0-beta.25) (2026-07-07)
 
 

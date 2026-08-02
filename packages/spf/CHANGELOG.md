@@ -1,5 +1,28 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.25...@videojs/spf@10.0.0-beta.26) (2026-08-02)
+
+
+### Features
+
+* **packages:** i18n ([#1708](https://github.com/videojs/v10/issues/1708)) ([028dadb](https://github.com/videojs/v10/commit/028dadb385eb4f879f80932a4002676dc11d5300))
+* **spf:** Added autoplay support ([#1880](https://github.com/videojs/v10/issues/1880)) ([b16f28f](https://github.com/videojs/v10/commit/b16f28fb74eee108a1a0eb94e7d83b2f5f11ba5b))
+* **spf:** airplay mse recovery ([#1888](https://github.com/videojs/v10/issues/1888)) ([c0a43ac](https://github.com/videojs/v10/commit/c0a43acb0e3af0108de0dc0ca61a23b5069d6812))
+* **spf:** expose media tracks on the SPF media adapter ([#1826](https://github.com/videojs/v10/issues/1826)) ([c83b044](https://github.com/videojs/v10/commit/c83b044986bb0a7445a2c54be18ff66cc96e1f66))
+* **spf:** relocate non-zero-PTS sources to a 0-based timeline (VOD) ([#1847](https://github.com/videojs/v10/issues/1847)) ([7fdc255](https://github.com/videojs/v10/commit/7fdc2559013527f5c5ace542b33b992c3929fcd8))
+
+
+### Bug Fixes
+
+* **spf:** load final segment when seeking to exact end ([#1828](https://github.com/videojs/v10/issues/1828)) ([#1852](https://github.com/videojs/v10/issues/1852)) ([12ae97d](https://github.com/videojs/v10/commit/12ae97ddba743fb6a8b4e09108f0928b2611e820))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.26
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.24...@videojs/spf@10.0.0-beta.25) (2026-07-07)
 
 

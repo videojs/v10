@@ -1,5 +1,50 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.25...@videojs/core@10.0.0-beta.26) (2026-08-02)
+
+
+### ⚠ BREAKING CHANGES
+
+* **packages:** replace button availability with disabled and hidden state ([#1474](https://github.com/videojs/v10/issues/1474))
+* **media:** extract media package from core ([#1879](https://github.com/videojs/v10/issues/1879))
+
+### Features
+
+* **core:** add status announcer state updates ([#1659](https://github.com/videojs/v10/issues/1659)) ([a5e7339](https://github.com/videojs/v10/commit/a5e73393fef381af7e148178822d5c3d94739834))
+* **i18n:** convert to opaque keys ([#1848](https://github.com/videojs/v10/issues/1848)) ([a3e673b](https://github.com/videojs/v10/commit/a3e673bd6854e006f4ae36e3ebfbfd6c6120e197))
+* **packages:** add flip functionality to popovers/tooltips/menus ([#1857](https://github.com/videojs/v10/issues/1857)) ([be89470](https://github.com/videojs/v10/commit/be89470447e84bb654cd17be7f4d4f6cec767e4f))
+* **packages:** add mux media with src parsing, structured source, and storyboards ([#1850](https://github.com/videojs/v10/issues/1850)) ([409e7ef](https://github.com/videojs/v10/commit/409e7ef225c7abb79a49c8b1adcc8c6ed0242cf6))
+* **packages:** i18n ([#1708](https://github.com/videojs/v10/issues/1708)) ([028dadb](https://github.com/videojs/v10/commit/028dadb385eb4f879f80932a4002676dc11d5300))
+
+
+### Bug Fixes
+
+* **core:** add missing i18n translations ([#1817](https://github.com/videojs/v10/issues/1817)) ([c1348ea](https://github.com/videojs/v10/commit/c1348eaac894680313f8df6cf513eb0a938b84c8))
+* **core:** keep controls visible while tapping controls on touch ([#1704](https://github.com/videojs/v10/issues/1704)) ([cfb5632](https://github.com/videojs/v10/commit/cfb5632265e3f955ff904c91adf1af85c5f7332a))
+* **i18n:** error text updates ([#1822](https://github.com/videojs/v10/issues/1822)) ([82b9e43](https://github.com/videojs/v10/commit/82b9e43bb5fee613031f653b575df015d6187d6f))
+* **packages:** prevent controls click triggering interactions ([#1885](https://github.com/videojs/v10/issues/1885)) ([0f4a9b4](https://github.com/videojs/v10/commit/0f4a9b4127d3fbb59b11e278af70c23f83f51c6f))
+* **site:** surface native media properties on element reference pages ([#1722](https://github.com/videojs/v10/issues/1722)) ([0dd84b8](https://github.com/videojs/v10/commit/0dd84b819ea18932e5acca1da484b9586f812834))
+
+
+### Performance Improvements
+
+* **core:** batch menu viewport measurements ([#1823](https://github.com/videojs/v10/issues/1823)) ([72e175e](https://github.com/videojs/v10/commit/72e175e1bd1886124fc907be79a23b405ee6ab1a))
+
+
+### Code Refactoring
+
+* **media:** extract media package from core ([#1879](https://github.com/videojs/v10/issues/1879)) ([75dcc66](https://github.com/videojs/v10/commit/75dcc6675bd19e9be05c4e295830c80c0ca2180f))
+* **packages:** replace button availability with disabled and hidden state ([#1474](https://github.com/videojs/v10/issues/1474)) ([066227d](https://github.com/videojs/v10/commit/066227de5819570a339fd0e291fc236c51632017))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.26
+    * @videojs/store bumped to 10.0.0-beta.26
+    * @videojs/utils bumped to 10.0.0-beta.26
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.24...@videojs/core@10.0.0-beta.25) (2026-07-07)
 
 
