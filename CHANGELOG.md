@@ -2,6 +2,69 @@
 
 All notable changes to this project will be documented in this file.
 
+## [@videojs/core@10.0.0-beta.26] - 2026-08-02
+
+### 🚀 Features
+- *(packages)* I18n ([#1708](https://github.com/videojs/v10/pull/1708)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Wire videojs_changelog index into search ([#1796](https://github.com/videojs/v10/pull/1796)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add responsive table of contents rail ([#1858](https://github.com/videojs/v10/pull/1858)) by [@decepulis](https://github.com/decepulis)
+- *(spf)* Relocate non-zero-PTS sources to a 0-based timeline (VOD) ([#1847](https://github.com/videojs/v10/pull/1847)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(packages)* Add mux media with src parsing, structured source, and storyboards ([#1850](https://github.com/videojs/v10/pull/1850)) by [@luwes](https://github.com/luwes)
+- *(packages)* Add flip functionality to popovers/tooltips/menus ([#1857](https://github.com/videojs/v10/pull/1857)) by [@sampotts](https://github.com/sampotts)
+- *(i18n)* Convert to opaque keys ([#1848](https://github.com/videojs/v10/pull/1848)) by [@sampotts](https://github.com/sampotts)
+- *(spf)* Added autoplay support ([#1880](https://github.com/videojs/v10/pull/1880)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(spf)* Expose media tracks on the SPF media adapter ([#1826](https://github.com/videojs/v10/pull/1826)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(skin)* Improved responsive design ([#1832](https://github.com/videojs/v10/pull/1832)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Add status announcer state updates ([#1659](https://github.com/videojs/v10/pull/1659)) by [@sampotts](https://github.com/sampotts)
+- *(packages)* [**breaking**] Support media components as markup ([#1883](https://github.com/videojs/v10/pull/1883)) by [@luwes](https://github.com/luwes)
+- *(spf)* Airplay mse recovery ([#1888](https://github.com/videojs/v10/pull/1888)) by [@cjpillsbury](https://github.com/cjpillsbury)
+
+### 🐛 Bug Fixes
+- *(docs)* Split ejected React skin sample into player + component files ([#1588](https://github.com/videojs/v10/pull/1588)) by [@R-Delfino95](https://github.com/R-Delfino95)
+- *(core)* Add missing i18n translations ([#1817](https://github.com/videojs/v10/pull/1817)) by [@sampotts](https://github.com/sampotts)
+- *(i18n)* Error text updates ([#1822](https://github.com/videojs/v10/pull/1822)) by [@heff](https://github.com/heff)
+- *(site)* Surface native media properties on element reference pages ([#1722](https://github.com/videojs/v10/pull/1722)) by [@decepulis](https://github.com/decepulis)
+- *(ci)* Unbreak changelog prose pipeline and add beta.25 prose ([#1810](https://github.com/videojs/v10/pull/1810)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Render changelog with shared MDX typography ([#1846](https://github.com/videojs/v10/pull/1846)) by [@decepulis](https://github.com/decepulis)
+- *(sandbox)* Fix broken scripts on sandbox build ([#1824](https://github.com/videojs/v10/pull/1824)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(site)* Restore react demos for ssr-safe media elements ([#1867](https://github.com/videojs/v10/pull/1867)) by [@decepulis](https://github.com/decepulis)
+- *(sandbox)* Prevent css causing full app refresh ([#1869](https://github.com/videojs/v10/pull/1869)) by [@sampotts](https://github.com/sampotts)
+- *(spf)* Load final segment when seeking to exact end ([#1828](https://github.com/videojs/v10/pull/1828)) ([#1852](https://github.com/videojs/v10/pull/1852)) by [@cjpillsbury](https://github.com/cjpillsbury)
+- *(html)* Register tooltip label and shortcut in live presets ([#1881](https://github.com/videojs/v10/pull/1881)) by [@mmcc](https://github.com/mmcc)
+- *(packages)* Prevent controls click triggering interactions ([#1885](https://github.com/videojs/v10/pull/1885)) by [@sampotts](https://github.com/sampotts)
+- *(docs)* Fix broken code block styles ([#1887](https://github.com/videojs/v10/pull/1887)) by [@sampotts](https://github.com/sampotts)
+- *(test)* Remove seek tests, add missing tests ([#1892](https://github.com/videojs/v10/pull/1892)) by [@sampotts](https://github.com/sampotts)
+- *(core)* Keep controls visible while tapping controls on touch ([#1704](https://github.com/videojs/v10/pull/1704)) by [@R-Delfino95](https://github.com/R-Delfino95)
+
+### 🚜 Refactor
+- *(spf)* Changed adapter code to recycle engine on src change ([#1813](https://github.com/videojs/v10/pull/1813)) by [@spuppo-mux](https://github.com/spuppo-mux)
+- *(site)* Centralize demo media sources ([#1829](https://github.com/videojs/v10/pull/1829)) by [@decepulis](https://github.com/decepulis)
+- *(media)* [**breaking**] Extract media package from core ([#1879](https://github.com/videojs/v10/pull/1879)) by [@mihar-22](https://github.com/mihar-22)
+- *(packages)* [**breaking**] Replace button availability with disabled and hidden state ([#1474](https://github.com/videojs/v10/pull/1474)) by [@mihar-22](https://github.com/mihar-22)
+
+### 📚 Documentation
+- *(site)* Rework Google Cast concept page and move it in the sidebar ([#1806](https://github.com/videojs/v10/pull/1806)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Refresh write-guides page and align docs skill Diátaxis guidance ([#1809](https://github.com/videojs/v10/pull/1809)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Complete menu radio group references with demos and options hooks ([#1807](https://github.com/videojs/v10/pull/1807)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Update localized label docs ([#1820](https://github.com/videojs/v10/pull/1820)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Update tooltip parts docs ([#1819](https://github.com/videojs/v10/pull/1819)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Update stale popup docs ([#1818](https://github.com/videojs/v10/pull/1818)) by [@sampotts](https://github.com/sampotts)
+- *(site)* Add Security concept page ([#1559](https://github.com/videojs/v10/pull/1559)) by [@decepulis](https://github.com/decepulis)
+- Fix `selectTextTracks` → `selectTextTrack` in text-tracks reference ([#1876](https://github.com/videojs/v10/pull/1876)) by [@claude[bot]](https://github.com/claude[bot])
+- *(site)* Add MuxData and GoogleCast API references; document status announcer and mux-video source API ([#1902](https://github.com/videojs/v10/pull/1902)) by [@decepulis](https://github.com/decepulis)
+- *(site)* Add i18n concept, guides, and API reference ([#1600](https://github.com/videojs/v10/pull/1600)) by [@sampotts](https://github.com/sampotts)
+
+### ⚡ Performance
+- *(core)* Batch menu viewport measurements ([#1823](https://github.com/videojs/v10/pull/1823)) by [@sampotts](https://github.com/sampotts)
+
+### ⚙️ Miscellaneous Tasks
+- *(root)* Refresh agent skills and docs ([#1835](https://github.com/videojs/v10/pull/1835)) by [@mihar-22](https://github.com/mihar-22)
+- *(ci)* Upgrade deps ([#1868](https://github.com/videojs/v10/pull/1868)) by [@sampotts](https://github.com/sampotts)
+
+### New Contributors
+* @mmcc made their first contribution in [#1881](https://github.com/videojs/v10/pull/1881)
+* @claude[bot] made their first contribution in [#1876](https://github.com/videojs/v10/pull/1876)
+
 ## [@videojs/core@10.0.0-beta.25] - 2026-07-07
 
 ### 🚀 Features
@@ -1444,6 +1507,7 @@ All notable changes to this project will be documented in this file.
 * @decepulis made their first contribution in [#118](https://github.com/videojs/v10/pull/118)
 * @heff made their first contribution
 
+[@videojs/core@10.0.0-beta.26]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.25...@videojs/core@10.0.0-beta.26
 [@videojs/core@10.0.0-beta.25]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.24...@videojs/core@10.0.0-beta.25
 [@videojs/core@10.0.0-beta.24]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.23...@videojs/core@10.0.0-beta.24
 [@videojs/core@10.0.0-beta.23]: https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.22...@videojs/core@10.0.0-beta.23
