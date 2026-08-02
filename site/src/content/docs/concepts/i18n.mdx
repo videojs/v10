@@ -82,7 +82,9 @@ Translation packs replace the fallback for a language:
 }
 ```
 
-The key stays the same if the English wording changes. If the active language does not contain a key, the component keeps its readable English fallback.
+You can count on this key staying the same, even if we change the english wording. For example, if we changed "Play" to "Banana" in the UI, the key will still be `buttons.play`. 
+
+You also don't have to include every key to provide a translation. Any missing keys will display their readable English fallback
 
 Some translations include values supplied by the component. For example, `seek.forward` uses the English fallback `Seek forward {seconds} seconds`. Translations keep `{seconds}` where the number should appear.
 
