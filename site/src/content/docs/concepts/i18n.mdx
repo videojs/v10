@@ -6,8 +6,10 @@ description: How Video.js chooses a language and translates built-in player text
 import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
 import Demo from '@/components/docs/demos/Demo.astro';
 import StyleCase from '@/components/docs/StyleCase.astro';
+import { Tab, TabsList, TabsPanel, TabsRoot } from '@/components/Tabs.tsx';
 import LanguageDemoHtml from '@/components/docs/demos/i18n/html/css/Language.astro';
 import languageHtml from '@/components/docs/demos/i18n/html/css/Language.html?raw';
 import languageHtmlCss from '@/components/docs/demos/i18n/html/css/Language.css?raw';
@@ -15,6 +17,21 @@ import languageHtmlTs from '@/components/docs/demos/i18n/html/css/Language.ts?ra
 import LanguageDemoReact from '@/components/docs/demos/i18n/react/css/Language';
 import languageReactTsx from '@/components/docs/demos/i18n/react/css/Language.tsx?raw';
 import languageReactCss from '@/components/docs/demos/i18n/react/css/Language.css?raw';
+import SourceDemo from '@/components/docs/demos/i18n/SourceDemo.astro';
+import RegisteredDemoHtml from '@/components/docs/demos/i18n/html/css/Registered.astro';
+import registeredHtmlTs from '@/components/docs/demos/i18n/html/css/Registered.ts?raw';
+import BuiltInDemoHtml from '@/components/docs/demos/i18n/html/css/BuiltIn.astro';
+import builtInHtml from '@/components/docs/demos/i18n/html/css/BuiltIn.html?raw';
+import FallbackDemoHtml from '@/components/docs/demos/i18n/html/css/Fallback.astro';
+import fallbackHtml from '@/components/docs/demos/i18n/html/css/Fallback.html?raw';
+import OverrideDemoReact from '@/components/docs/demos/i18n/react/css/Override';
+import overrideReactTsx from '@/components/docs/demos/i18n/react/css/Override.tsx?raw';
+import RegisteredDemoReact from '@/components/docs/demos/i18n/react/css/Registered';
+import registeredReactTsx from '@/components/docs/demos/i18n/react/css/Registered.tsx?raw';
+import BuiltInDemoReact from '@/components/docs/demos/i18n/react/css/BuiltIn';
+import builtInReactTsx from '@/components/docs/demos/i18n/react/css/BuiltIn.tsx?raw';
+import FallbackDemoReact from '@/components/docs/demos/i18n/react/css/Fallback';
+import fallbackReactTsx from '@/components/docs/demos/i18n/react/css/Fallback.tsx?raw';
 
 Video.js displays its controls in English by default. Use internationalization when the player should match another language used by your site or application.
 
@@ -82,9 +99,9 @@ Translation packs replace the fallback for a language:
 }
 ```
 
-You can count on this key staying the same, even if we change the english wording. For example, if we changed "Play" to "Banana" in the UI, the key will still be `buttons.play`. 
+You can count on this key staying the same, even if we change the English wording. For example, if we changed "Play" to "Banana" in the UI, the key would still be `buttons.play`.
 
-You also don't have to include every key to provide a translation. Any missing keys will display their readable English fallback
+You don't have to include every key in a translation. Missing keys display their readable English fallback.
 
 Some translations include values supplied by the component. For example, `seek.forward` uses the English fallback `Seek forward {seconds} seconds`. When you write a translation, make sure to include `{seconds}` where the number should appear.
 
@@ -94,10 +111,82 @@ See <DocsLink slug="reference/translation-phrases">Translation keys</DocsLink> f
 
 Video.js looks for translated text in these places:
 
+<FrameworkCase frameworks={["react"]}>
+
 1. Overrides supplied to the current player
 2. Registered custom translations
 3. A built-in locale pack
 4. The component's English fallback
+
+Choose a source, then hover the play button to see its resolved label.
+
+<StyleCase styles={["css"]}>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="Translation source examples">
+      <Tab client:idle value="override" initial>Player override</Tab>
+      <Tab client:idle value="registered">Registered</Tab>
+      <Tab client:idle value="built-in">Built-in</Tab>
+      <Tab client:idle value="fallback">Fallback</Tab>
+    </TabsList>
+    <TabsPanel client:idle value="override" initial className="max-h-none overflow-visible p-0">
+      <SourceDemo code={overrideReactTsx} lang="tsx">
+        <OverrideDemoReact client:idle />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="registered" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={registeredReactTsx} lang="tsx">
+        <RegisteredDemoReact client:idle />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="built-in" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={builtInReactTsx} lang="tsx">
+        <BuiltInDemoReact client:idle />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="fallback" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={fallbackReactTsx} lang="tsx">
+        <FallbackDemoReact client:idle />
+      </SourceDemo>
+    </TabsPanel>
+  </TabsRoot>
+</StyleCase>
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+1. Registered custom translations
+2. A built-in locale pack
+3. The component's English fallback
+
+Choose a source, then hover the play button to see its resolved label.
+
+<StyleCase styles={["css"]}>
+  <TabsRoot client:idle>
+    <TabsList client:idle label="Translation source examples">
+      <Tab client:idle value="registered" initial>Registered</Tab>
+      <Tab client:idle value="built-in">Built-in</Tab>
+      <Tab client:idle value="fallback">Fallback</Tab>
+    </TabsList>
+    <TabsPanel client:idle value="registered" initial className="max-h-none overflow-visible p-0">
+      <SourceDemo code={registeredHtmlTs} lang="ts">
+        <RegisteredDemoHtml />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="built-in" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={builtInHtml} lang="html">
+        <BuiltInDemoHtml />
+      </SourceDemo>
+    </TabsPanel>
+    <TabsPanel client:idle value="fallback" className="max-h-none overflow-visible p-0">
+      <SourceDemo code={fallbackHtml} lang="html">
+        <FallbackDemoHtml />
+      </SourceDemo>
+    </TabsPanel>
+  </TabsRoot>
+</StyleCase>
+
+</FrameworkCase>
 
 Built-in packs load when the provider first encounters their language. You do not need to import Spanish, French, or another shipped language for normal client-rendered players.
 
@@ -123,7 +212,7 @@ registerI18n('es', {
 });
 ```
 
-If registered and built-in translations still leave text missing, Chrome can use its [Browser Translation API](https://developer.mozilla.org/en-US/docs/Web/API/Translator) when the required on-device model is already installed. Treat browser translation as a fallback. Use reviewed locale packs for production-critical text.
+If registered and built-in translations still leave text missing, Video.js automatically tries Chrome's [Browser Translation API](https://developer.mozilla.org/en-US/docs/Web/API/Translator). You do not need to call the API. This fallback only runs when Chrome exposes the API and the required on-device model is already installed. Video.js does not download the model. Use reviewed locale packs for production-critical text.
 
 ## Locale fallback
 
@@ -143,15 +232,15 @@ Preload or register translations before rendering when the first translated pain
 
 <FrameworkCase frameworks={["react"]}>
 
-- <DocsLink slug="how-to/i18n-ssr">Render translated text during SSR</DocsLink>
-- <DocsLink slug="how-to/i18n-switch-locale">Preload languages before switching</DocsLink>
+<DocsLinkCard slug="how-to/i18n-ssr">Render translated text during SSR</DocsLinkCard>
+<DocsLinkCard slug="how-to/i18n-switch-locale">Preload languages before switching</DocsLinkCard>
 
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 
-- <DocsLink slug="how-to/i18n-register-locale">Register a locale before rendering</DocsLink>
-- <DocsLink slug="how-to/i18n-switch-locale">Preload languages before switching</DocsLink>
+<DocsLinkCard slug="how-to/i18n-register-locale">Register a locale before rendering</DocsLinkCard>
+<DocsLinkCard slug="how-to/i18n-switch-locale">Preload languages before switching</DocsLinkCard>
 
 </FrameworkCase>
 

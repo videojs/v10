@@ -7,7 +7,7 @@ import FrameworkCase from '@/components/docs/FrameworkCase.astro';
 import Aside from '@/components/Aside.astro';
 import DocsLink from '@/components/docs/DocsLink.astro';
 
-Video.js is English by default. Built-in packs lazy-load automatically for app bundles; use <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> when you have custom strings, need synchronous first paint, or load locales from the CDN.
+Video.js is English by default. Built-in packs lazy-load automatically when your app imports Video.js packages. Use <DocsLink slug="reference/register-i18n">`registerI18n`</DocsLink> when you have custom strings, need synchronous first paint, or load locales from the CDN.
 
 <FrameworkCase frameworks={["html"]}>
 
@@ -20,8 +20,6 @@ To opt into another language, mount `<media-i18n>` and set its `lang` attribute 
 To opt into another language, mount `I18nProvider`. Pass its `locale` prop to force a tag, or omit it to inherit `lang`.
 
 </FrameworkCase>
-
-Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> first if you are new to translation keys and the registry.
 
 ## Prerequisites
 

@@ -1,0 +1,10 @@
+---
+import HtmlDemo from '@/components/docs/demos/HtmlDemo.astro';
+import html from './Fallback.html?raw';
+import './Sources.css';
+---
+
+<HtmlDemo html={html} />
+<script>
+  import "./Fallback.ts";
+</script>
