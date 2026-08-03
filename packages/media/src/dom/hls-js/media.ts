@@ -1,7 +1,7 @@
 import { deepEqual, shallowEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
-import { resolveSourceObject } from '../../core/media-source';
+
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
@@ -147,7 +147,17 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   set src(src: string) {
-    const source = resolveSourceObject(src, this.#source);
+    // `src` says which source to play; every other field says how to play it, so
+    // they carry over.
+    const { type, preferPlayback, engine } = this.#source ?? {};
+    const next: HlsSource = {
+      ...(type && { type }),
+      ...(preferPlayback && { preferPlayback }),
+      ...(engine && { engine }),
+      ...(src && { src }),
+    };
+
+    const source = Object.keys(next).length > 0 ? next : null;
     const changed = !deepEqual(this.#source, source);
 
     this.#src = src;

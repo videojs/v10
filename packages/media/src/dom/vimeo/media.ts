@@ -2,7 +2,7 @@ import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
-import { resolveSourceObject } from '../../core/media-source';
+
 import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
@@ -142,10 +142,14 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   get src() {
     return this.#src;
   }
-  /** Vimeo URL or id. Setting it re-derives `source`, carrying over its options. */
+  /** Vimeo URL or id. Setting it re-derives `source`, carrying its embed options over. */
   set src(value) {
     if (this.#src === value) return;
-    const source = resolveSourceObject<VimeoSource>(value, this.#source);
+
+    const { engine } = this.#source ?? {};
+    const next: VimeoSource = { ...(engine && { engine }), ...(value && { src: value }) };
+
+    const source = Object.keys(next).length > 0 ? next : null;
     const changed = !deepEqual(this.#source, source);
     this.#src = value;
     this.#source = source;

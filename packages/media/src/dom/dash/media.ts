@@ -1,6 +1,6 @@
 import { deepEqual } from '@videojs/utils/object';
 import * as dashjs from 'dashjs';
-import { resolveSourceObject } from '../../core/media-source';
+
 import { MediaTracksMixin } from '../../core/media-tracks';
 import type { MediaEngineHost } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
@@ -75,9 +75,12 @@ export class DashMedia
     return this.#src;
   }
 
-  /** MPD URL. Setting it re-derives `source`, carrying over its options. */
+  /** MPD URL. Setting it re-derives `source`, carrying its settings over. */
   set src(value) {
-    const source = resolveSourceObject<DashSource>(value, this.#source);
+    const { engine } = this.#source ?? {};
+    const next: DashSource = { ...(engine && { engine }), ...(value && { src: value }) };
+
+    const source = Object.keys(next).length > 0 ? next : null;
     const changed = !deepEqual(this.#source, source);
     this.#src = value;
     this.#source = source;
