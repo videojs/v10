@@ -28,7 +28,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * are kept as a plain `src`.
    *
    * Only playback options carry over. Mux identity comes from the URL, and the
-   * signed `thumbnail`, `storyboard`, and `drm` tokens are scoped to a playback
+   * signed `poster`, `storyboard`, and `drm` tokens are scoped to a playback
    * ID, so carrying them onto a different source would build rejected URLs.
    */
   static override resolveSource(src: string, previous: MuxSource | null): MuxSource | null {

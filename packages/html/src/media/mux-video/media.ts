@@ -1,11 +1,20 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { StreamTypes } from '@videojs/media/dom/hls-js';
 import { createMuxStoryboardURL, MuxMedia } from '@videojs/media/dom/mux';
+import { isUndefined } from '@videojs/utils/predicate';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 const MuxVideoBase = MediaAttachMixin(CustomMediaElement('video', MuxMedia));
 
 export class MuxVideo extends MuxVideoBase {
+  // Declared here rather than in `static properties` because it does not map to a
+  // host property of its own: it feeds `source.poster.time`. The generic path
+  // would also coerce a removed attribute to `0`, which is a valid poster time.
+  static get observedAttributes(): string[] {
+    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+    return [...super.observedAttributes, 'poster-time'];
+  }
+
   constructor() {
     super();
     // Storyboards aren't generated for live streams; re-evaluate when the type is detected.
@@ -13,8 +22,47 @@ export class MuxVideo extends MuxVideoBase {
     // Covers both the `src` attribute and the `source` property (JS-only).
     this.host.addEventListener('sourcechange', () => {
       this.#reflectSrc();
+      this.#syncPosterTime();
       this.#syncStoryboard();
     });
+  }
+
+  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
+    if (name === 'poster-time') {
+      this.#applyPosterTime(this.#posterTimeAttr());
+      return;
+    }
+    super.attributeChangedCallback(name, oldValue, newValue);
+  }
+
+  #posterTimeAttr() {
+    const attr = this.getAttribute('poster-time');
+    const parsed = attr ? Number(attr) : Number.NaN;
+    return Number.isNaN(parsed) ? undefined : parsed;
+  }
+
+  // Re-applies `poster-time` after a source change, because Mux identity comes
+  // from the URL and carries no poster params over. An absent attribute means no
+  // opinion here, so a `source.poster.time` set through JS is left alone — only
+  // removing the attribute clears it.
+  #syncPosterTime() {
+    const time = this.#posterTimeAttr();
+    if (!isUndefined(time)) this.#applyPosterTime(time);
+  }
+
+  // Mirrors the `poster-time` attribute into `source.poster.time`, which is what
+  // the derived poster URL is built from.
+  #applyPosterTime(time: number | undefined) {
+    const source = this.host.source;
+    if (source?.poster?.time === time) return;
+    // Nothing to write into, and nothing to write.
+    if (!source && isUndefined(time)) return;
+
+    const poster = { ...source?.poster };
+    if (isUndefined(time)) delete poster.time;
+    else poster.time = time;
+
+    this.host.source = { ...source, poster: Object.keys(poster).length > 0 ? poster : undefined };
   }
 
   // Mirrors the host `src` to the `src` attribute so it matches the active playback URL.

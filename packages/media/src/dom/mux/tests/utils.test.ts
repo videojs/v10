@@ -1,8 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  createMuxPosterURL,
   createMuxQuery,
   createMuxStoryboardURL,
-  createMuxThumbnailURL,
   createMuxVideoURL,
   isSameMuxSource,
   parseMuxVideoURL,
@@ -157,10 +157,10 @@ describe('isSameMuxSource', () => {
   });
 
   it('compares nested params', () => {
-    const a = { playbackId: 'abc123', playback: { maxResolution: '1080p' as const }, thumbnail: [{ time: 5 }] };
-    expect(isSameMuxSource(a, { ...a, playback: { maxResolution: '1080p' }, thumbnail: [{ time: 5 }] })).toBe(true);
+    const a = { playbackId: 'abc123', playback: { maxResolution: '1080p' as const }, poster: { time: 5 } };
+    expect(isSameMuxSource(a, { ...a, playback: { maxResolution: '1080p' }, poster: { time: 5 } })).toBe(true);
     expect(isSameMuxSource(a, { ...a, playback: { maxResolution: '720p' } })).toBe(false);
-    expect(isSameMuxSource(a, { ...a, thumbnail: [{ time: 6 }] })).toBe(false);
+    expect(isSameMuxSource(a, { ...a, poster: { time: 6 } })).toBe(false);
   });
 
   it('treats keys set to undefined as absent', () => {
@@ -183,28 +183,22 @@ describe('createMuxQuery', () => {
   });
 });
 
-describe('createMuxThumbnailURL', () => {
-  it('builds a thumbnail URL with params', () => {
-    expect(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { time: 5, ext: 'jpg' } })).toBe(
+describe('createMuxPosterURL', () => {
+  it('builds a poster URL with params', () => {
+    expect(createMuxPosterURL({ playbackId: 'abc123', poster: { time: 5, ext: 'jpg' } })).toBe(
       'https://image.mux.com/abc123/thumbnail.jpg?time=5'
     );
   });
 
   it('defaults the extension to webp', () => {
-    expect(createMuxThumbnailURL({ playbackId: 'abc123' })).toBe('https://image.mux.com/abc123/thumbnail.webp');
-  });
-
-  it('uses the first entry of a thumbnail array', () => {
-    expect(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: [{ ext: 'webp' }, { ext: 'jpg' }] })).toBe(
-      'https://image.mux.com/abc123/thumbnail.webp'
-    );
+    expect(createMuxPosterURL({ playbackId: 'abc123' })).toBe('https://image.mux.com/abc123/thumbnail.webp');
   });
 
   it('appends transformation modifiers as snake_case query params', () => {
     const url = new URL(
-      createMuxThumbnailURL({
+      createMuxPosterURL({
         playbackId: 'abc123',
-        thumbnail: {
+        poster: {
           time: 5,
           width: 640,
           height: 360,
@@ -228,33 +222,31 @@ describe('createMuxThumbnailURL', () => {
     expect(url.searchParams.get('latest')).toBe('true');
   });
 
-  it('uses explicit params over the source thumbnail', () => {
-    expect(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { ext: 'webp' } }, { ext: 'jpg', time: 2 })).toBe(
+  it('merges explicit params over source.poster', () => {
+    expect(createMuxPosterURL({ playbackId: 'abc123', poster: { ext: 'webp' } }, { ext: 'jpg', time: 2 })).toBe(
       'https://image.mux.com/abc123/thumbnail.jpg?time=2'
     );
   });
 
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 't' });
-    const url = new URL(createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { token, time: 5 } })!);
+    const url = new URL(createMuxPosterURL({ playbackId: 'abc123', poster: { token, time: 5 } })!);
     expect(url.pathname).toBe('/abc123/thumbnail.webp');
     expect(url.searchParams.get('token')).toBe(token);
     expect(url.searchParams.has('time')).toBe(false);
   });
 
   it('returns undefined for a token with the wrong audience', () => {
-    expect(
-      createMuxThumbnailURL({ playbackId: 'abc123', thumbnail: { token: fakeJwt({ aud: 's' }) } })
-    ).toBeUndefined();
+    expect(createMuxPosterURL({ playbackId: 'abc123', poster: { token: fakeJwt({ aud: 's' }) } })).toBeUndefined();
   });
 
-  it('returns undefined for signed playback without a thumbnail token', () => {
-    expect(createMuxThumbnailURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
+  it('returns undefined for signed playback without an image token', () => {
+    expect(createMuxPosterURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
   });
 
   it('returns undefined without a playbackId', () => {
-    expect(createMuxThumbnailURL()).toBeUndefined();
-    expect(createMuxThumbnailURL({ playbackId: '' })).toBeUndefined();
+    expect(createMuxPosterURL()).toBeUndefined();
+    expect(createMuxPosterURL({ playbackId: '' })).toBeUndefined();
   });
 });
 

@@ -8,8 +8,8 @@ export const MUX_VIDEO_DOMAIN = 'mux.com';
 
 export type MuxResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080p' | '1440p' | '2160p';
 export type MuxRenditionOrder = 'desc';
-export type MuxThumbnailExt = 'webp' | 'jpg' | 'png';
-export type MuxThumbnailFitMode = 'preserve' | 'stretch' | 'crop' | 'smartcrop' | 'pad';
+export type MuxImageExt = 'webp' | 'jpg' | 'png';
+export type MuxPosterFitMode = 'preserve' | 'stretch' | 'crop' | 'smartcrop' | 'pad';
 
 /**
  * Playback modifiers appended to the stream URL as `snake_case` query params
@@ -43,27 +43,31 @@ export interface MuxPlaybackParams {
   [param: string]: string | number | boolean | undefined;
 }
 
-export interface MuxThumbnailParams {
+/**
+ * Modifiers for the poster still, appended to the image URL as `snake_case`
+ * query params. Mux serves it from its `thumbnail` image endpoint.
+ */
+export interface MuxPosterParams {
   token?: string | undefined;
   /** Image format used in the URL path (`thumbnail.<ext>`). Defaults to `webp`. */
-  ext?: MuxThumbnailExt | undefined;
+  ext?: MuxImageExt | undefined;
   /** Video time (in seconds) the image is pulled from. Defaults to the middle of the video. */
   time?: number | undefined;
-  /** Width of the thumbnail (in pixels). Defaults to the width of the original video. */
+  /** Width of the image (in pixels). Defaults to the width of the original video. */
   width?: number | undefined;
-  /** Height of the thumbnail (in pixels). Defaults to the height of the original video. */
+  /** Height of the image (in pixels). Defaults to the height of the original video. */
   height?: number | undefined;
   /** Rotate the image clockwise by the given number of degrees. */
   rotate?: number | undefined;
-  /** How to fit the thumbnail within the specified width + height. */
-  fitMode?: MuxThumbnailFitMode | undefined;
+  /** How to fit the image within the specified width + height. */
+  fitMode?: MuxPosterFitMode | undefined;
   /** Flip the image top-bottom after performing all other transformations. */
   flipV?: boolean | undefined;
   /** Flip the image left-right after performing all other transformations. */
   flipH?: boolean | undefined;
-  /** Thumbnail time for instant-clipping assets, as an epoch integer compared to the stream's program date time. */
+  /** Poster time for instant-clipping assets, as an epoch integer compared to the stream's program date time. */
   programTime?: number | undefined;
-  /** Pull the latest thumbnail from an ongoing live stream. */
+  /** Pull the latest frame from an ongoing live stream. */
   latest?: boolean | undefined;
   [param: string]: string | number | boolean | undefined;
 }
@@ -71,7 +75,7 @@ export interface MuxThumbnailParams {
 export interface MuxStoryboardParams {
   token?: string | undefined;
   /** Image format of the storyboard tiles referenced by the VTT. Defaults to `webp`. */
-  format?: MuxThumbnailExt | undefined;
+  format?: MuxImageExt | undefined;
   [param: string]: string | number | undefined;
 }
 
@@ -88,7 +92,7 @@ export interface MuxSource extends HlsSource {
   playbackId?: string | undefined;
   customDomain?: string | undefined;
   playback?: MuxPlaybackParams | undefined;
-  thumbnail?: MuxThumbnailParams | MuxThumbnailParams[] | undefined;
+  poster?: MuxPosterParams | undefined;
   storyboard?: MuxStoryboardParams | undefined;
   drm?: MuxDrmParams | undefined;
 }
@@ -179,17 +183,17 @@ function parseMuxParamValue(value: string): string | number | boolean {
 }
 
 /**
- * Build the thumbnail image URL for a source. Uses the first entry when
- * `source.thumbnail` is an array, unless explicit `params` are given.
+ * Build the poster image URL for a source. `params` override `source.poster`,
+ * so a caller can vary one modifier without rebuilding the source.
  */
-export function createMuxThumbnailURL(source?: MuxSource | null, params?: MuxThumbnailParams): string | undefined {
+export function createMuxPosterURL(source?: MuxSource | null, params?: MuxPosterParams): string | undefined {
   if (!source?.playbackId) return undefined;
-  const { playbackId, customDomain = MUX_VIDEO_DOMAIN, thumbnail, playback } = source;
-  const { ext = 'webp', token, ...query } = params ?? (Array.isArray(thumbnail) ? thumbnail[0] : thumbnail) ?? {};
+  const { playbackId, customDomain = MUX_VIDEO_DOMAIN, poster, playback } = source;
+  const { ext = 'webp', token, ...query } = { ...poster, ...params };
 
-  // Thumbnail tokens must carry the image (`t`) audience.
+  // Image tokens must carry the image (`t`) audience.
   if (token && parseJwt<MuxJWT>(token)?.aud !== 't') return undefined;
-  // Signed playback requires a matching thumbnail token; an unsigned URL would be rejected.
+  // Signed playback requires a matching image token; an unsigned URL would be rejected.
   if (!token && playback?.token) return undefined;
 
   return `https://image.${customDomain}/${playbackId}/thumbnail.${ext}${createMuxQuery({ token, ...query })}`;

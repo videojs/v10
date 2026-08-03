@@ -160,11 +160,74 @@ describe('MuxVideo', () => {
     expect(el.host.src).toBe('');
   });
 
-  it('does not sync the source thumbnail to the media poster', () => {
+  it('does not sync source.poster to the media poster', () => {
     const el = createMuxVideo();
 
-    el.source = { playbackId: 'abc123', thumbnail: { time: 5, ext: 'webp' } };
+    el.source = { playbackId: 'abc123', poster: { time: 5, ext: 'jpg' } };
 
-    expect(el.shadowRoot!.querySelector('video')?.getAttribute('poster')).toBeNull();
+    expect(el.host.poster).toBe('');
+  });
+
+  it('reflects the poster-time attribute to source.poster.time', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.setAttribute('poster-time', '12');
+
+    expect(el.host.source?.poster?.time).toBe(12);
+  });
+
+  it('reflects poster-time set before the src', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('poster-time', '12');
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+
+    // Mux identity comes from the URL and carries no poster params over, so the
+    // attribute has to be re-applied after the source changes.
+    expect(el.host.source?.poster?.time).toBe(12);
+  });
+
+  it('keeps poster-time across a source change', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('poster-time', '12');
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.setAttribute('src', 'https://stream.mux.com/xyz789.m3u8');
+
+    expect(el.host.source).toEqual({ playbackId: 'xyz789', poster: { time: 12 } });
+  });
+
+  it('clears source.poster.time when poster-time is removed', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.setAttribute('poster-time', '12');
+    el.removeAttribute('poster-time');
+
+    expect(el.host.source).toEqual({ playbackId: 'abc123' });
+  });
+
+  it('leaves a source.poster.time set through JS alone', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123', poster: { time: 5 } };
+    el.setAttribute('src', 'https://stream.mux.com/xyz789.m3u8');
+
+    // No `poster-time` attribute means no opinion, not "clear it". The value is
+    // only dropped because Mux identity changed, matching every other poster param.
+    expect(el.host.source).toEqual({ playbackId: 'xyz789' });
+
+    el.source = { playbackId: 'abc123', poster: { time: 5 } };
+    expect(el.host.source?.poster?.time).toBe(5);
+  });
+
+  it('ignores a non-numeric poster-time', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.setAttribute('poster-time', 'soon');
+
+    expect(el.host.source?.poster?.time).toBeUndefined();
   });
 });

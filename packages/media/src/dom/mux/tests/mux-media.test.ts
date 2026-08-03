@@ -112,6 +112,16 @@ describe('MuxMedia', () => {
     expect(media.source).toEqual({ playbackId: 'other', preferPlayback: 'native' });
   });
 
+  it('keeps source.poster as data, without applying it to the media poster', () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+
+    media.source = { playbackId: 'abc123', poster: { time: 5 } };
+
+    expect(media.source?.poster).toEqual({ time: 5 });
+    expect(media.poster).toBe('');
+  });
+
   it('fires sourcechange when source is set', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn(() => media.source);

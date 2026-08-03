@@ -238,21 +238,41 @@ video.source = {
 
 Setting a Mux stream URL as `src` works too — the element parses the playback ID and query params back out into `source`. To play something Mux doesn't host, name it with `src` inside `source`; engine options still apply.
 
-`MuxVideo` derives its storyboard from `source` and adds the thumbnail `<track>` for you, so hover previews work without any extra markup. `source.storyboard` tunes that URL, and `source.thumbnail` builds poster-style stills — both are source params, since a signed token scopes them to one playback ID:
+Two more source params describe images rather than playback. `source.storyboard` and `source.poster` carry the modifiers for the storyboard VTT and the poster still — both belong to the source, since a signed token scopes them to one playback ID:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<MuxVideo source={{ playbackId, storyboard: { format: 'jpg' }, thumbnail: { time: 12 } }} playsInline />
+<MuxVideo source={{ playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 } }} playsInline />
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-video.source = { playbackId, storyboard: { format: 'jpg' }, thumbnail: { time: 12 } };
+video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 } };
 ```
 </FrameworkCase>
 
-Live streams have no storyboard, so the track is dropped once the stream type is known. Signed playback needs a matching storyboard token, without which no track is added.
+`MuxVideo` uses the storyboard itself, adding the thumbnail `<track>` for you so hover previews work without extra markup. Live streams have no storyboard, so the track is dropped once the stream type is known, and signed playback without a matching storyboard token adds none.
+
+`source.poster` is only data. Nothing applies it to the media, so build the URL with `createMuxPosterURL` and use it wherever you need a still:
+
+```ts
+import { createMuxPosterURL } from '@videojs/media/dom/mux';
+
+const url = createMuxPosterURL(video.source);
+```
+
+Passing a second argument merges over `source.poster`, so you can vary one modifier without rebuilding the source — `createMuxPosterURL(video.source, { width: 320 })`, for instance.
+
+<FrameworkCase frameworks={["html"]}>
+Because `source` has no attribute, the poster frame has one of its own. `poster-time` reflects to `source.poster.time`, letting you set it from markup:
+
+```html
+<mux-video src="https://stream.mux.com/PLAYBACK_ID.m3u8" poster-time="12"></mux-video>
+```
+
+It survives a `src` change, so swapping the source keeps the frame you asked for.
+</FrameworkCase>
 
 ## Elements without engine options
 

@@ -125,8 +125,8 @@ describe('MuxVideo', () => {
     streamType.mockRestore();
   });
 
-  it('does not sync the source thumbnail to the media poster', () => {
-    const { container } = render(<MuxVideo source={{ playbackId: 'abc123', thumbnail: { time: 5 } }} />);
+  it('does not sync source.poster to the media poster', () => {
+    const { container } = render(<MuxVideo source={{ playbackId: 'abc123', poster: { time: 5 } }} />);
 
     expect(container.querySelector('video')?.getAttribute('poster')).toBeNull();
   });
