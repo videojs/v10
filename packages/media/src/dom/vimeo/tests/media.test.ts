@@ -331,14 +331,22 @@ describe('VimeoMedia', () => {
     expect(media.source).toEqual({ src: 'https://vimeo.com/12345', engine: { autopause: true } });
   });
 
-  it('ignores a structurally equal source', () => {
+  it('does not reload for a structurally equal source', async () => {
     const media = new VimeoMedia();
+    const { player } = await attachAndLoad(media);
     media.source = { src: '76979871', engine: { autopause: true } };
+    await Promise.resolve();
+
     const sourcechange = vi.fn();
     media.addEventListener('sourcechange', sourcechange);
+    player.loadVideo.mockClear();
 
     media.source = { src: '76979871', engine: { autopause: true } };
-    expect(sourcechange).not.toHaveBeenCalled();
+    await Promise.resolve();
+
+    // Assigning is always announced, but nothing reaches the Vimeo player.
+    expect(sourcechange).toHaveBeenCalledOnce();
+    expect(player.loadVideo).not.toHaveBeenCalled();
     expect(media.src).toBe('76979871');
   });
 

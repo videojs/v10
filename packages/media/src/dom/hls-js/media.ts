@@ -1,4 +1,4 @@
-import { deepEqual, shallowEqual } from '@videojs/utils/object';
+import { shallowEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
 
@@ -157,14 +157,9 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       ...(src && { src }),
     };
 
-    const source = Object.keys(next).length > 0 ? next : null;
-    const changed = !deepEqual(this.#source, source);
-
-    this.#src = src;
-    this.#source = source;
-
-    if (changed) this.dispatchEvent(new Event('sourcechange'));
-    this.#requestLoad();
+    // Everything happens in the `source` setter, so there is one path for storing
+    // it, deciding on a load, and dispatching `sourcechange`.
+    this.source = Object.keys(next).length > 0 ? next : null;
   }
 
   /**
@@ -181,18 +176,19 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   set source(value: HlsSource | null) {
     const source = value ?? null;
-    if (deepEqual(this.#source, source)) return;
+    const src = source?.src ?? '';
+    const srcChanged = this.#src !== src;
 
-    const previousSrc = this.#src;
     this.#source = source;
-    this.#src = source?.src ?? '';
+    this.#src = src;
 
+    // Assigning is always a source change, so it is always announced.
     this.dispatchEvent(new Event('sourcechange'));
 
     // Only reload for something playback depends on. Subclasses add params that
     // describe images rather than the stream — Mux's `poster` and `storyboard` —
     // and changing one of those must not restart what is already playing.
-    if (this.#src !== previousSrc || this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
+    if (srcChanged || this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
   }
 
   /** Preload type (`'none'` / `'metadata'` / `'auto'`). */

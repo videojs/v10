@@ -241,7 +241,7 @@ describe('MuxMedia', () => {
     expect(onSourceChange).toHaveBeenCalledTimes(2);
   });
 
-  it('does not fire sourcechange for the same source reference', () => {
+  it('announces every source assignment', () => {
     const media = new MuxMedia();
     const source = { playbackId: 'abc123' };
     media.source = source;
@@ -250,22 +250,27 @@ describe('MuxMedia', () => {
     media.addEventListener('sourcechange', onSourceChange);
     media.source = source;
 
-    expect(onSourceChange).not.toHaveBeenCalled();
+    expect(onSourceChange).toHaveBeenCalledOnce();
   });
 
-  it('does not fire sourcechange for a structurally equal source', () => {
+  it('does not reload for a structurally equal source', async () => {
     const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '1080p' } };
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
 
-    const onSourceChange = vi.fn();
-    media.addEventListener('sourcechange', onSourceChange);
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '1080p' } };
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
 
-    expect(onSourceChange).not.toHaveBeenCalled();
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
 
-    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
+    expect(loadstart).not.toHaveBeenCalled();
 
-    expect(onSourceChange).toHaveBeenCalledTimes(1);
+    media.source = { playbackId: 'other', preferPlayback: 'native' };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalledOnce();
   });
 
   it('parses typed playback params from a Mux stream src', () => {
@@ -300,14 +305,18 @@ describe('MuxMedia', () => {
     expect(media.source).toEqual({ src: 'https://example.com/b.m3u8' });
   });
 
-  it('does not fire sourcechange when the same src is reassigned', () => {
+  it('ignores a src that already describes the current source', () => {
     const media = new MuxMedia();
-    media.src = 'https://example.com/a.m3u8';
+    media.source = { playbackId: 'abc123', poster: { time: 5 } };
 
     const onSourceChange = vi.fn();
     media.addEventListener('sourcechange', onSourceChange);
-    media.src = 'https://example.com/a.m3u8';
+
+    // `<mux-video>` reflects the derived URL back to the host, so this has to be
+    // a no-op rather than re-deriving and dropping `poster`.
+    media.src = 'https://stream.mux.com/abc123.m3u8';
 
     expect(onSourceChange).not.toHaveBeenCalled();
+    expect(media.source).toEqual({ playbackId: 'abc123', poster: { time: 5 } });
   });
 });

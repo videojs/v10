@@ -1,4 +1,3 @@
-import { deepEqual } from '@videojs/utils/object';
 import { HlsJsMedia } from '../hls-js';
 import {
   createMuxPosterURL,
@@ -38,6 +37,9 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   }
 
   set src(value: string) {
+    // A URL already describing the current source leaves it alone. `<mux-video>`
+    // reflects the derived `src` back to the host, and re-deriving would drop the
+    // params a Mux URL does not carry, such as `poster`.
     if (super.src === value) return;
 
     const { type, preferPlayback, engine } = this.#source ?? {};
@@ -63,8 +65,6 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
   set source(value: MuxSource | null) {
     const source = value ?? null;
-    if (deepEqual(this.#source, source)) return;
-
     this.#source = source;
 
     // Hand the same source down with `src` resolved from the playback ID. The

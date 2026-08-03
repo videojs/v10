@@ -144,17 +144,12 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
   /** Vimeo URL or id. Setting it re-derives `source`, carrying its embed options over. */
   set src(value) {
-    if (this.#src === value) return;
-
     const { engine } = this.#source ?? {};
     const next: VimeoSource = { ...(engine && { engine }), ...(value && { src: value }) };
 
-    const source = Object.keys(next).length > 0 ? next : null;
-    const changed = !deepEqual(this.#source, source);
-    this.#src = value;
-    this.#source = source;
-    void this.load();
-    if (changed) this.dispatchEvent(new Event('sourcechange'));
+    // Everything happens in the `source` setter, so there is one path for storing
+    // it, deciding on a load, and dispatching `sourcechange`.
+    this.source = Object.keys(next).length > 0 ? next : null;
   }
 
   get currentSrc() {
@@ -299,18 +294,18 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
   set source(value: VimeoSource | null) {
     const source = value ?? null;
-    if (deepEqual(this.#source, source)) return;
-
-    const previousSrc = this.#src;
+    const src = source?.src ?? '';
+    const srcChanged = this.#src !== src;
     // Embed options are read when the video is loaded, so a change to them needs
     // a reload of its own even though the URL is the same.
     const engineChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
 
     this.#source = source;
-    this.#src = source?.src ?? '';
+    this.#src = src;
 
-    if (this.#src !== previousSrc || engineChanged) void this.load();
+    if (srcChanged || engineChanged) void this.load();
 
+    // Assigning is always a source change, so it is always announced.
     this.dispatchEvent(new Event('sourcechange'));
   }
 
