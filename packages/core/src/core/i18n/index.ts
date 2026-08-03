@@ -1,5 +1,7 @@
 import en from './locales/en';
 
+export { DEFAULT_LOCALE } from '@videojs/utils/i18n';
+
 export type { GetBrowserTranslationsOptions } from './browser-translation';
 export {
   getBrowserTranslations,

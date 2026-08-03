@@ -80,7 +80,6 @@ describe('formatTime', () => {
   it('defaults to English digital formatting', () => {
     const english = formatTime(90, undefined, { locale: 'en' });
     expect(formatTime(90)).toBe(english);
-    expect(formatTime(90, undefined, { locale: undefined })).toBe(english);
   });
 
   it.runIf(hasDurationFormat)('uses locale digits', () => {

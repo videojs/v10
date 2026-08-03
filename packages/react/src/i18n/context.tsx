@@ -2,6 +2,7 @@
 
 import {
   createTranslator,
+  DEFAULT_LOCALE,
   getI18nTranslations,
   type Locale,
   onI18nRegistryChange,
@@ -43,7 +44,7 @@ export function useTranslator(): Translator {
 
   const fallback = useMemo(() => {
     void registryEpoch;
-    return createTranslator(getI18nTranslations('en'), 'en');
+    return createTranslator(getI18nTranslations(DEFAULT_LOCALE), DEFAULT_LOCALE);
   }, [registryEpoch]);
 
   if (!ctx) {
@@ -59,5 +60,5 @@ export function useTranslator(): Translator {
  */
 export function useLocale(): Locale {
   const ctx = useContext(I18nContext);
-  return ctx?.locale ?? 'en';
+  return ctx?.locale ?? DEFAULT_LOCALE;
 }

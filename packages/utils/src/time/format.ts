@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '../i18n';
 import { isNumber } from '../predicate/predicate';
 
 export type TimeFormatOptions = {
@@ -16,7 +17,6 @@ type DurationFormatConstructor = new (
   options?: { style?: TimeFormatOptions['style']; hoursDisplay?: 'auto' | 'always' }
 ) => { format: (duration: DurationRecord) => string };
 
-const DEFAULT_LOCALE = 'en';
 const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
 
 type DurationFormatter = { format: (duration: DurationRecord) => string };
@@ -70,7 +70,7 @@ function localeCacheKey(locale?: string | string[]): string {
 function isEnglishLocale(locale?: string | string[]): boolean {
   const tag = Array.isArray(locale) ? locale[0] : locale;
   if (!tag) return true;
-  return tag === 'en' || tag.startsWith('en-');
+  return tag === DEFAULT_LOCALE || tag.startsWith(`${DEFAULT_LOCALE}-`);
 }
 
 function getDurationFormatter(

@@ -27,6 +27,10 @@
       "types": "./dist/function.d.ts",
       "default": "./dist/function.js"
     },
+    "./i18n": {
+      "types": "./dist/i18n.d.ts",
+      "default": "./dist/i18n.js"
+    },
     "./jwt": {
       "types": "./dist/jwt.d.ts",
       "default": "./dist/jwt.js"
