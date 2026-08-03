@@ -129,7 +129,7 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
   const padMinutes = showHours || guideMinutes >= 10;
 
   const duration = showHours ? { hours, minutes, seconds: secondsPart } : { minutes, seconds: secondsPart };
-  const { locale } = options ?? {};
+  const { locale = 'en' } = options ?? {};
   let body = getDurationFormatter(locale, 'digital', showHours ? 'always' : 'auto').format(duration);
 
   if (!padMinutes) {

@@ -77,6 +77,12 @@ describe('formatTime', () => {
     expect(formatTime(-Infinity)).toBe('0:00');
   });
 
+  it('defaults to English digital formatting', () => {
+    const english = formatTime(90, undefined, { locale: 'en' });
+    expect(formatTime(90)).toBe(english);
+    expect(formatTime(90, undefined, { locale: undefined })).toBe(english);
+  });
+
   it.runIf(hasDurationFormat)('uses locale digits', () => {
     expect(formatTime(90, undefined, { locale: 'fa' })).toBe('۱:۳۰');
     expect(formatTime(35, 600, { locale: 'fa' })).toBe('۰۰:۳۵');
