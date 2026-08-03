@@ -6,7 +6,6 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 # To use Turborepo Remote Caching, set the following environment variables.
 # env:
@@ -15,7 +14,6 @@ on:
 
 jobs:
   release:
-    if: ${{ github.event_name != 'workflow_dispatch' || github.ref == 'refs/heads/main' }}
     runs-on: ubuntu-latest
     environment: production
     permissions:
@@ -25,7 +23,6 @@ jobs:
 
     steps:
       - uses: googleapis/release-please-action@v4
-        if: ${{ github.event_name == 'push' }}
         id: release
         with:
           # Use a fine grained token for release-please so this workflow
@@ -38,26 +35,26 @@ jobs:
       - uses: actions/checkout@v5
         # these if statements ensure that a publication only occurs when
         # a new release is created:
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           fetch-depth: 0 # Fetch all history for all tags and branches
 
       - name: Setup pnpm
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v5
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         with:
           node-version-file: '.nvmrc'
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm i --frozen-lockfile
 
       - name: Cache turbo build setup
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         uses: actions/cache@v5
         with:
           path: .turbo
@@ -66,15 +63,15 @@ jobs:
             ${{ runner.os }}-turbo-
 
       - name: Clean
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm clean
 
       - name: Build
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:packages
 
       - name: Build CDN bundles
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:cdn
 
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
@@ -83,19 +80,19 @@ jobs:
       # build:cli also depends on the site build transitively; turbo caches it, so this step
       # adds no rebuild cost — it just makes the dependency visible in CI.
       - name: Build site (required by html/react prepack and CLI)
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:site
 
       - name: Build CLI
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:cli
 
       - name: Publish
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm -r publish --filter "./packages/*" --access public --provenance --no-git-checks
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update site/v10 branch
-        if: ${{ github.event_name == 'workflow_dispatch' || steps.release.outputs.releases_created == 'true' }}
+        if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: git push origin HEAD:refs/heads/site/v10 --force
