@@ -1,5 +1,5 @@
 import { HlsJsMedia } from '../hls-js';
-import { createMuxVideoURL, type MuxSource, parseMuxVideoURL } from './utils';
+import { createMuxPosterURL, createMuxVideoURL, type MuxSource, parseMuxVideoURL } from './utils';
 
 export interface MuxMediaProps {
   src: string;
@@ -68,5 +68,20 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
   set source(value: MuxSource | null) {
     super.source = value;
+  }
+
+  /**
+   * Poster image URL for the current content, built from `source` and its
+   * `poster` params. Read-only, and never applied on its own — assign it to
+   * `poster` to use it, or ignore it and set your own.
+   *
+   * Empty when there is no playback ID, or when signed playback has no matching
+   * image token. Changes with `source`, so read it again after `sourcechange`.
+   *
+   * Use `createMuxPosterURL` directly to vary a modifier without touching
+   * `source`, such as requesting a narrower image for a small viewport.
+   */
+  get contentPoster(): string {
+    return createMuxPosterURL(this.source) ?? '';
   }
 }

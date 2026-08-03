@@ -168,6 +168,15 @@ describe('MuxVideo', () => {
     expect(el.host.poster).toBe('');
   });
 
+  it('exposes the content poster on the element', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.setAttribute('poster-time', '12');
+
+    expect(el.contentPoster).toBe('https://image.mux.com/abc123/thumbnail.webp?time=12');
+  });
+
   it('reflects the poster-time attribute to source.poster.time', () => {
     const el = createMuxVideo();
 

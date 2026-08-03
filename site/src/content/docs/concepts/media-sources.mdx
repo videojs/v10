@@ -254,15 +254,32 @@ video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 }
 
 `MuxVideo` uses the storyboard itself, adding the thumbnail `<track>` for you so hover previews work without extra markup. Live streams have no storyboard, so the track is dropped once the stream type is known, and signed playback without a matching storyboard token adds none.
 
-`source.poster` is only data. Nothing applies it to the media, so build the URL with `createMuxPosterURL` and use it wherever you need a still:
+`source.poster` is only data — nothing applies it to the media. Read the URL it describes from `contentPoster`, and use it wherever you need a still:
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.contentPoster; // 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=12'
+
+// Use it as the poster, if that's what you want it for.
+video.poster = video.contentPoster;
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```ts
+media.contentPoster; // 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=12'
+```
+</FrameworkCase>
+
+It's read-only and tracks `source`, so read it again after `sourcechange`. It's empty when there is no playback ID, and when signed playback has no matching image token.
+
+To vary a modifier without touching `source` — asking for a narrower image on a small viewport, say — build the URL directly. The second argument merges over `source.poster`:
 
 ```ts
 import { createMuxPosterURL } from '@videojs/media/dom/mux';
 
-const url = createMuxPosterURL(video.source);
+const small = createMuxPosterURL(video.source, { width: 320 });
 ```
-
-Passing a second argument merges over `source.poster`, so you can vary one modifier without rebuilding the source — `createMuxPosterURL(video.source, { width: 320 })`, for instance.
 
 <FrameworkCase frameworks={["html"]}>
 Because `source` has no attribute, the poster frame has one of its own. `poster-time` reflects to `source.poster.time`, letting you set it from markup:

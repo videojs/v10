@@ -122,6 +122,38 @@ describe('MuxMedia', () => {
     expect(media.poster).toBe('');
   });
 
+  it('exposes the content poster derived from source', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', poster: { time: 5, ext: 'jpg' } };
+
+    expect(media.contentPoster).toBe('https://image.mux.com/abc123/thumbnail.jpg?time=5');
+  });
+
+  it('tracks source changes in the content poster', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+    media.source = { playbackId: 'xyz789' };
+
+    expect(media.contentPoster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+  });
+
+  it('has no content poster without a playback id', () => {
+    const media = new MuxMedia();
+
+    expect(media.contentPoster).toBe('');
+
+    media.src = 'https://example.com/custom.m3u8';
+
+    expect(media.contentPoster).toBe('');
+  });
+
+  it('has no content poster for signed playback without an image token', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
+
+    expect(media.contentPoster).toBe('');
+  });
+
   it('fires sourcechange when source is set', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn(() => media.source);
