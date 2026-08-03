@@ -55,8 +55,10 @@ export class MuxVideo extends MuxVideoBase {
   #applyPosterTime(time: number | undefined) {
     const source = this.host.source;
     if (source?.poster?.time === time) return;
-    // Nothing to write into, and nothing to write.
-    if (!source && isUndefined(time)) return;
+    // Nothing to write into yet. `#syncPosterTime` re-applies the attribute once a
+    // source arrives, so a poster-only source is never worth fabricating — it has
+    // no URL to play, and assigning it would schedule a load anyway.
+    if (!source) return;
 
     const poster = { ...source?.poster };
     if (isUndefined(time)) delete poster.time;

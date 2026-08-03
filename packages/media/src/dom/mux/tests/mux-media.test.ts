@@ -192,6 +192,52 @@ describe('MuxMedia', () => {
     expect(loadstart).toHaveBeenCalled();
   });
 
+  it('does not reload for an equivalent nested engine option', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    const engine = { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    // Same values, new object identity all the way down — as React would hand it
+    // over. A flat comparison would call this an engine change and restart.
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+      poster: { time: 5 },
+    };
+    await flushLoad();
+
+    expect(loadstart).not.toHaveBeenCalled();
+  });
+
+  it('reloads when a nested engine option changes', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+    };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/other' } } },
+    };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalled();
+  });
+
   it('reloads when engine options change', async () => {
     const media = new MuxMedia();
     media.attach(document.createElement('video'));

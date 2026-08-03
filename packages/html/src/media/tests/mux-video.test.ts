@@ -186,6 +186,16 @@ describe('MuxVideo', () => {
     expect(el.host.source?.poster?.time).toBe(12);
   });
 
+  it('does not build a source from poster-time alone', () => {
+    const el = createMuxVideo();
+
+    el.setAttribute('poster-time', '12');
+
+    // A poster-only source has no URL to play, and assigning one would schedule a
+    // load. The attribute is re-applied once a real source arrives.
+    expect(el.host.source).toBeNull();
+  });
+
   it('reflects poster-time set before the src', () => {
     const el = createMuxVideo();
 

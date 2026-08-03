@@ -1,4 +1,4 @@
-import { shallowEqual } from '@videojs/utils/object';
+import { deepEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
 
@@ -292,20 +292,18 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   #shouldEngineUpdate(nextEngineConfigKey: Record<string, any>) {
-    return !shallowEqual(this.#prevEngineConfigKey, nextEngineConfigKey);
+    return !deepEqual(this.#prevEngineConfigKey, nextEngineConfigKey);
   }
 
   /**
-   * Flat identity for every value the engine is constructed from. Compared
-   * shallowly, so an equivalent `source.engine` never triggers a rebuild.
+   * Every value the engine is constructed from. Compared structurally, so an
+   * equivalent `source.engine` never triggers a rebuild — including nested
+   * options like `drmSystems`, which a flat comparison would see as changed
+   * whenever the object identity did.
    */
   #engineConfigKey() {
     const { type, preferPlayback, engine } = this.source ?? {};
-    return {
-      ...engine,
-      preferPlayback,
-      contentType: type ?? inferContentType(this.src),
-    };
+    return { engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
   }
 
   #engineDestroy() {
