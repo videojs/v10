@@ -241,6 +241,16 @@ describe('MuxVideo', () => {
     expect(el.host.source?.poster?.time).toBe(5);
   });
 
+  it('keeps an existing poster time when poster-time is not a number', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123', poster: { time: 5 } };
+    el.setAttribute('poster-time', 'soon');
+
+    // Invalid is not the same as removed, so the JS-set value survives.
+    expect(el.host.source?.poster?.time).toBe(5);
+  });
+
   it('ignores a non-numeric poster-time', () => {
     const el = createMuxVideo();
 

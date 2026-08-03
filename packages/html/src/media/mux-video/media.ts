@@ -29,7 +29,11 @@ export class MuxVideo extends MuxVideoBase {
 
   attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
     if (name === 'poster-time') {
-      this.#applyPosterTime(this.#posterTimeAttr());
+      // Removing the attribute clears what it set. A value that is present but not
+      // a number is ignored rather than treated as removal, so it cannot wipe a
+      // `source.poster.time` set through JS.
+      if (newValue === null) this.#applyPosterTime(undefined);
+      else this.#syncPosterTime();
       return;
     }
     super.attributeChangedCallback(name, oldValue, newValue);
