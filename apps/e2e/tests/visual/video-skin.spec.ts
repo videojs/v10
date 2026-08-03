@@ -78,7 +78,7 @@ test.describe('Visual — Live Button', () => {
     });
 
     expect(styles.live).toEqual({ filter: 'none', opacity: '0.5' });
-    expect(styles.disabled.filter).not.toBe('none');
+    expect(styles.disabled).toEqual({ filter: 'none', opacity: '0.5' });
   });
 });
 
