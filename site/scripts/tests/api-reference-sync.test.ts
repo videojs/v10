@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -76,5 +76,15 @@ describe('classifySnapshots', () => {
       hasNew: true,
     });
     expect(readFileSync(join(root, 'diff.patch'), 'utf-8')).toContain('new.json');
+  });
+
+  it('writes patches larger than the spawnSync default buffer', () => {
+    const root = createSnapshots();
+    writeJson(root, 'after', 'components', 'large.json', { value: 'x'.repeat(1024 * 1024) });
+    const result = classifySnapshots(root);
+
+    writeClassification(root, result);
+
+    expect(statSync(join(root, 'diff.patch')).size).toBeGreaterThan(1024 * 1024);
   });
 });

@@ -4,6 +4,7 @@ import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const SNAPSHOT_KINDS = ['components', 'utils'] as const;
+const MAX_DIFF_BUFFER_BYTES = 32 * 1024 * 1024;
 type SnapshotKind = (typeof SNAPSHOT_KINDS)[number];
 
 export interface DirectoryChanges {
@@ -66,9 +67,12 @@ export function classifySnapshots(artifactDirectory: string): ApiReferenceChange
 }
 
 function directoryDiff(beforeDirectory: string, afterDirectory: string): string {
-  const result = spawnSync('diff', ['-ruN', beforeDirectory, afterDirectory], { encoding: 'utf-8' });
-  if (result.status !== 0 && result.status !== 1) {
-    throw new Error(result.stderr || `diff exited with status ${result.status}`);
+  const result = spawnSync('diff', ['-ruN', beforeDirectory, afterDirectory], {
+    encoding: 'utf-8',
+    maxBuffer: MAX_DIFF_BUFFER_BYTES,
+  });
+  if (result.error || (result.status !== 0 && result.status !== 1)) {
+    throw new Error(result.stderr || result.error?.message || `diff exited with status ${result.status}`);
   }
   return result.stdout;
 }
