@@ -79,24 +79,6 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #loadRequested?: Promise<void> | null;
   #prevEngineConfigKey?: Record<string, any> | null;
 
-  /**
-   * Resolve the media URL a structured source describes. Subclasses override
-   * this to derive `src` from their own source identity, such as a Mux playback
-   * ID. Called whenever `source` is assigned.
-   */
-  static resolveSrc(source: HlsSource | null): string {
-    return source?.src ?? '';
-  }
-
-  /**
-   * Resolve the structured source a media URL describes. Subclasses override
-   * this to parse identity out of the URL. `type` and `engine` carry over from
-   * `previous`, so assigning `src` never drops engine configuration.
-   */
-  static resolveSource(src: string, previous: HlsSource | null): HlsSource | null {
-    return resolveSourceObject(src, previous);
-  }
-
   constructor() {
     super();
     // Cancel the native loadstart event, it's handled in the load method.
@@ -165,7 +147,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   set src(src: string) {
-    const source = this.#ctor.resolveSource(src, this.#source);
+    const source = resolveSourceObject(src, this.#source);
     const changed = !deepEqual(this.#source, source);
 
     this.#src = src;
@@ -193,7 +175,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
     const previousSrc = this.#src;
     this.#source = source;
-    this.#src = this.#ctor.resolveSrc(source);
+    this.#src = source?.src ?? '';
 
     this.dispatchEvent(new Event('sourcechange'));
 
@@ -201,11 +183,6 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     // describe images rather than the stream — Mux's `poster` and `storyboard` —
     // and changing one of those must not restart what is already playing.
     if (this.#src !== previousSrc || this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
-  }
-
-  /** Own constructor, so subclass overrides of the static resolvers are used. */
-  get #ctor() {
-    return this.constructor as typeof HlsJsMedia;
   }
 
   /** Preload type (`'none'` / `'metadata'` / `'auto'`). */

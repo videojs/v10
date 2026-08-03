@@ -1,3 +1,4 @@
+import { deepEqual } from '@videojs/utils/object';
 import { HlsJsMedia } from '../hls-js';
 import {
   createMuxPosterURL,
@@ -21,37 +22,16 @@ export const muxMediaDefaultProps: MuxMediaProps = {
  * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the new value.
  */
 export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
-  /**
-   * Build the stream URL from the playback ID, custom domain, and `playback`
-   * params. Falls back to an explicit `source.src` so a non-Mux URL still plays.
-   */
-  static override resolveSrc(source: MuxSource | null): string {
-    return createMuxVideoURL(source) ?? source?.src ?? '';
-  }
-
-  /**
-   * Extract the playback ID and query params from a Mux stream URL. Non-Mux URLs
-   * are kept as a plain `src`.
-   *
-   * Only playback options carry over. Mux identity comes from the URL, and the
-   * signed `poster`, `storyboard`, and `drm` tokens are scoped to a playback
-   * ID, so carrying them onto a different source would build rejected URLs.
-   */
-  static override resolveSource(src: string, previous: MuxSource | null): MuxSource | null {
-    const { type, preferPlayback, engine } = previous ?? {};
-    const source: MuxSource = {
-      ...(type && { type }),
-      ...(preferPlayback && { preferPlayback }),
-      ...(engine && { engine }),
-      ...(parseMuxVideoURL(src) ?? (src ? { src } : null)),
-    };
-    return Object.keys(source).length > 0 ? source : null;
-  }
+  #source: MuxSource | null = muxMediaDefaultProps.source;
 
   /**
    * Media source URL. Setting a Mux stream URL
    * (`https://stream.mux.com/<playback-id>.m3u8?...`) extracts the playback ID
-   * and query params into `source`; other URLs pass through unchanged.
+   * and query params into `source`; other URLs are kept as a plain `source.src`.
+   *
+   * Only playback options carry over. Mux identity comes from the URL, and the
+   * signed `poster`, `storyboard`, and `drm` tokens are scoped to a playback ID,
+   * so carrying them onto a different source would build rejected URLs.
    */
   get src(): string {
     return super.src;
@@ -59,7 +39,16 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
   set src(value: string) {
     if (super.src === value) return;
-    super.src = value;
+
+    const { type, preferPlayback, engine } = this.#source ?? {};
+    const source: MuxSource = {
+      ...(type && { type }),
+      ...(preferPlayback && { preferPlayback }),
+      ...(engine && { engine }),
+      ...(parseMuxVideoURL(value) ?? (value ? { src: value } : null)),
+    };
+
+    this.source = Object.keys(source).length > 0 ? source : null;
   }
 
   /**
@@ -69,11 +58,19 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * them into the token. Engine options live under `engine`.
    */
   get source(): MuxSource | null {
-    return super.source;
+    return this.#source;
   }
 
   set source(value: MuxSource | null) {
-    super.source = value;
+    const source = value ?? null;
+    if (deepEqual(this.#source, source)) return;
+
+    this.#source = source;
+
+    // Hand the same source down with `src` resolved from the playback ID. The
+    // base keeps `src` in step, decides whether playback has to reload, and
+    // dispatches `sourcechange`.
+    super.source = source && { ...source, src: createMuxVideoURL(source) ?? source.src ?? '' };
   }
 
   /**
