@@ -1,6 +1,8 @@
 import { flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { TooltipGroupCore } from '../../../../core/ui/tooltip/tooltip-group-core';
+import { createPopupGroup } from '../../popover/popup-group';
+import { createTestPopover } from '../../popover/tests/popover-helpers';
 import { createTestTooltip } from './tooltip-helpers';
 
 describe('createTooltip', () => {
@@ -206,11 +208,14 @@ describe('createTooltip', () => {
         expect(onOpenChange).not.toHaveBeenCalled();
       });
 
-      it('does not open while its trigger popup is expanded', () => {
-        const { tooltip, onOpenChange } = createTestTooltip();
+      it('does not open while its trigger owns an open popup', () => {
+        const group = createPopupGroup();
+        const owner = createTestPopover({ group: () => group });
+        const { tooltip, onOpenChange } = createTestTooltip({ popupGroup: () => group });
         const trigger = document.createElement('button');
-        trigger.setAttribute('aria-expanded', 'true');
+        owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
+        owner.popover.open();
 
         tooltip.triggerProps.onPointerEnter({
           clientX: 0,
@@ -227,16 +232,17 @@ describe('createTooltip', () => {
         expect(onOpenChange).not.toHaveBeenCalled();
       });
 
-      it('closes when its trigger popup expands', async () => {
-        const { tooltip, onOpenChange } = createTestTooltip();
+      it('closes when its trigger opens another popup', () => {
+        const group = createPopupGroup();
+        const owner = createTestPopover({ group: () => group });
+        const { tooltip, onOpenChange } = createTestTooltip({ popupGroup: () => group });
         const trigger = document.createElement('button');
-        trigger.setAttribute('aria-expanded', 'false');
+        owner.popover.setTriggerElement(trigger);
         tooltip.setTriggerElement(trigger);
         tooltip.open();
         onOpenChange.mockClear();
 
-        trigger.setAttribute('aria-expanded', 'true');
-        await Promise.resolve();
+        owner.popover.open();
 
         expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
       });

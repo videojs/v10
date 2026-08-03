@@ -9,6 +9,7 @@ import {
   type PopoverPopupProps,
   type PopoverTriggerProps,
 } from '../popover/popover';
+import type { PopupGroup } from '../popover/popup-group';
 import type { TransitionApi } from '../transition';
 
 export type TooltipOpenChangeReason = 'hover' | 'focus' | 'escape' | 'blur' | 'imperative-action';
@@ -27,6 +28,7 @@ export interface TooltipOptions {
   disableHoverablePopup?: () => boolean;
   disabled?: () => boolean;
   group?: () => TooltipGroupCore | undefined;
+  popupGroup?: () => PopupGroup | undefined;
 }
 
 export interface TooltipTriggerProps extends Omit<PopoverTriggerProps, 'onClick'> {
@@ -89,23 +91,28 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
   // suppressed during tap. The browser fires pointerdown → focus → pointerup,
   // so the flag is true during tap-triggered focus but false during keyboard Tab.
   let isPointerDown = false;
-  let expandedObserver: MutationObserver | null = null;
+  let popupGroup: PopupGroup | undefined;
+  let unsubscribe: (() => void) | undefined;
 
-  function isTriggerExpanded(): boolean {
-    return popover.triggerElement?.getAttribute('aria-expanded') === 'true';
+  function isTriggerPopupOpen(): boolean {
+    return popupGroup?.isOpenFor(popover.triggerElement) ?? false;
+  }
+
+  function syncPopupGroup(): void {
+    const next = options.popupGroup?.();
+    if (next === popupGroup) return;
+
+    unsubscribe?.();
+    popupGroup = next;
+    unsubscribe = popupGroup?.subscribe(() => {
+      if (isTriggerPopupOpen()) popover.close('imperative-action');
+    });
   }
 
   function setTriggerElement(el: HTMLElement | null): void {
-    expandedObserver?.disconnect();
-    expandedObserver = null;
     popover.setTriggerElement(el);
-
-    if (!el || typeof MutationObserver !== 'function') return;
-
-    expandedObserver = new MutationObserver(() => {
-      if (isTriggerExpanded()) popover.close('imperative-action');
-    });
-    expandedObserver.observe(el, { attributes: true, attributeFilter: ['aria-expanded'] });
+    syncPopupGroup();
+    if (isTriggerPopupOpen()) popover.close('imperative-action');
   }
 
   // Spread popover trigger props, omit onClick, guard disabled/touch on open handlers.
@@ -113,18 +120,21 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
   const triggerProps: TooltipTriggerProps = {
     ...baseTriggerProps,
     onPointerDown() {
+      syncPopupGroup();
       isPointerDown = true;
       popover.close('imperative-action');
     },
     onPointerEnter(event) {
+      syncPopupGroup();
       if (options.disabled?.()) return;
-      if (isTriggerExpanded()) return;
+      if (isTriggerPopupOpen()) return;
       if (event.pointerType === 'touch') return;
       baseTriggerProps.onPointerEnter(event);
     },
     onFocusIn(event) {
+      syncPopupGroup();
       if (options.disabled?.()) return;
-      if (isTriggerExpanded()) return;
+      if (isTriggerPopupOpen()) return;
       if (isPointerDown) {
         isPointerDown = false;
         return;
@@ -150,10 +160,13 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
       return popover.triggerElement;
     },
     setTriggerElement,
-    open: () => popover.open('hover'),
+    open: () => {
+      syncPopupGroup();
+      if (!isTriggerPopupOpen()) popover.open('hover');
+    },
     close: (reason: TooltipOpenChangeReason = 'hover') => popover.close(reason),
     destroy() {
-      expandedObserver?.disconnect();
+      unsubscribe?.();
       popover.destroy();
     },
   };

@@ -104,6 +104,7 @@ export class TooltipElement extends MediaElement {
       disabled: () => this.disabled,
       // Lazy getter — group may arrive after connect via context.
       group: () => this.#groupConsumer.value,
+      popupGroup: () => this.#containerCtx.value?.popupGroup,
     });
 
     // Register self as the popup element — the element IS the popup.

@@ -89,6 +89,9 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     close(reason: 'group-open') {
       applyClose(reason);
     },
+    get triggerElement() {
+      return triggerEl;
+    },
   };
 
   // --- Hover management ---
