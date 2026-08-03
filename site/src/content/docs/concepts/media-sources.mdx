@@ -238,6 +238,22 @@ video.source = {
 
 Setting a Mux stream URL as `src` works too — the element parses the playback ID and query params back out into `source`. To play something Mux doesn't host, name it with `src` inside `source`; engine options still apply.
 
+`MuxVideo` derives its storyboard from `source` and adds the thumbnail `<track>` for you, so hover previews work without any extra markup. `source.storyboard` tunes that URL, and `source.thumbnail` builds poster-style stills — both are source params, since a signed token scopes them to one playback ID:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo source={{ playbackId, storyboard: { format: 'jpg' }, thumbnail: { time: 12 } }} playsInline />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = { playbackId, storyboard: { format: 'jpg' }, thumbnail: { time: 12 } };
+```
+</FrameworkCase>
+
+Live streams have no storyboard, so the track is dropped once the stream type is known. Signed playback needs a matching storyboard token, without which no track is added.
+
 ## Elements without engine options
 
 Two elements take `src` and the usual media attributes, but expose no `source`:

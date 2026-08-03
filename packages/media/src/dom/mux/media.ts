@@ -1,33 +1,20 @@
 import { HlsJsMedia } from '../hls-js';
-import {
-  createMuxStoryboardURL,
-  createMuxThumbnailURL,
-  createMuxVideoURL,
-  type MuxSource,
-  parseMuxVideoURL,
-} from './utils';
+import { createMuxVideoURL, type MuxSource, parseMuxVideoURL } from './utils';
 
 export interface MuxMediaProps {
   src: string;
   source: MuxSource | null;
-  thumbnail: string;
-  storyboard: string;
 }
 
 export const muxMediaDefaultProps: MuxMediaProps = {
   src: '',
   source: null,
-  thumbnail: '',
-  storyboard: '',
 };
 
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the new value.
  */
 export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
-  #thumbnail = muxMediaDefaultProps.thumbnail;
-  #storyboard = muxMediaDefaultProps.storyboard;
-
   /**
    * Build the stream URL from the playback ID, custom domain, and `playback`
    * params. Falls back to an explicit `source.src` so a non-Mux URL still plays.
@@ -81,23 +68,5 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
   set source(value: MuxSource | null) {
     super.source = value;
-  }
-
-  /** Thumbnail image URL. Falls back to one derived from `source`. */
-  get thumbnail(): string {
-    return this.#thumbnail || (createMuxThumbnailURL(this.source) ?? '');
-  }
-
-  set thumbnail(value: string) {
-    this.#thumbnail = value;
-  }
-
-  /** Storyboard (thumbnail sprite) VTT URL. Falls back to one derived from `source`. */
-  get storyboard(): string {
-    return this.#storyboard || (createMuxStoryboardURL(this.source) ?? '');
-  }
-
-  set storyboard(value: string) {
-    this.#storyboard = value;
   }
 }

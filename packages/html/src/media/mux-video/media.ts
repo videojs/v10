@@ -1,17 +1,11 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { StreamTypes } from '@videojs/media/dom/hls-js';
-import { MuxMedia } from '@videojs/media/dom/mux';
+import { createMuxStoryboardURL, MuxMedia } from '@videojs/media/dom/mux';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
 const MuxVideoBase = MediaAttachMixin(CustomMediaElement('video', MuxMedia));
 
 export class MuxVideo extends MuxVideoBase {
-  static properties = {
-    ...MuxVideoBase.properties,
-    thumbnail: { type: String, empty: '' },
-    storyboard: { type: String, empty: '' },
-  };
-
   constructor() {
     super();
     // Storyboards aren't generated for live streams; re-evaluate when the type is detected.
@@ -21,11 +15,6 @@ export class MuxVideo extends MuxVideoBase {
       this.#reflectSrc();
       this.#syncStoryboard();
     });
-  }
-
-  attributeChangedCallback(name: string, oldValue: string | null, newValue: string | null) {
-    super.attributeChangedCallback(name, oldValue, newValue);
-    if (name === 'storyboard') this.#syncStoryboard();
   }
 
   // Mirrors the host `src` to the `src` attribute so it matches the active playback URL.
@@ -38,10 +27,11 @@ export class MuxVideo extends MuxVideoBase {
     }
   }
 
-  // Keeps a storyboard track child in sync, from the `storyboard` attribute or derived from `source`.
+  // Keeps a storyboard track child in sync with the URL derived from `source`.
   #syncStoryboard() {
     // Live streams have no storyboard; skip until the type is known to be otherwise.
-    const src = this.host.streamType === StreamTypes.LIVE ? undefined : this.host.storyboard || undefined;
+    const src =
+      this.host.streamType === StreamTypes.LIVE ? undefined : createMuxStoryboardURL(this.host.source) || undefined;
 
     let track = this.querySelector<HTMLTrackElement>('track[data-storyboard]');
 

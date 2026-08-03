@@ -84,13 +84,12 @@ describe('MuxVideo', () => {
     );
   });
 
-  it('prefers the storyboard attribute over the derived URL', () => {
+  it('adds no storyboard track for signed playback without a storyboard token', () => {
     const el = createMuxVideo();
 
-    el.setAttribute('storyboard', 'https://image.mux.com/other/storyboard.vtt?token=jwt');
-    el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
+    el.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
 
-    expect(el.querySelector('track')?.getAttribute('src')).toBe('https://image.mux.com/other/storyboard.vtt?token=jwt');
+    expect(el.querySelector('track')).toBeNull();
   });
 
   it('removes the storyboard track when the src is cleared', () => {
@@ -161,12 +160,11 @@ describe('MuxVideo', () => {
     expect(el.host.src).toBe('');
   });
 
-  it('exposes the effective thumbnail URL without touching the media poster', () => {
+  it('does not sync the source thumbnail to the media poster', () => {
     const el = createMuxVideo();
 
     el.source = { playbackId: 'abc123', thumbnail: { time: 5, ext: 'webp' } };
 
-    expect(el.thumbnail).toBe('https://image.mux.com/abc123/thumbnail.webp?time=5');
     expect(el.shadowRoot!.querySelector('video')?.getAttribute('poster')).toBeNull();
   });
 });

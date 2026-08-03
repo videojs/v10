@@ -112,56 +112,6 @@ describe('MuxMedia', () => {
     expect(media.source).toEqual({ playbackId: 'other', preferPlayback: 'native' });
   });
 
-  it('derives the thumbnail URL from source', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', thumbnail: { time: 5, ext: 'jpg' } };
-
-    expect(media.thumbnail).toBe('https://image.mux.com/abc123/thumbnail.jpg?time=5');
-  });
-
-  it('uses the first entry when source.thumbnail is an array', () => {
-    const media = new MuxMedia();
-    media.source = {
-      playbackId: 'abc123',
-      thumbnail: [
-        { time: 5, ext: 'webp' },
-        { time: 5, ext: 'jpg' },
-      ],
-    };
-
-    expect(media.thumbnail).toBe('https://image.mux.com/abc123/thumbnail.webp?time=5');
-  });
-
-  it('prefers an explicitly set thumbnail URL', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123' };
-    media.thumbnail = 'https://image.mux.com/other/thumbnail.webp';
-
-    expect(media.thumbnail).toBe('https://image.mux.com/other/thumbnail.webp');
-  });
-
-  it('derives the storyboard URL from source', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123' };
-
-    expect(media.storyboard).toBe('https://image.mux.com/abc123/storyboard.vtt?format=webp');
-  });
-
-  it('prefers an explicitly set storyboard URL', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123' };
-    media.storyboard = 'https://image.mux.com/other/storyboard.vtt';
-
-    expect(media.storyboard).toBe('https://image.mux.com/other/storyboard.vtt');
-  });
-
-  it('returns no storyboard for signed playback without a storyboard token', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
-
-    expect(media.storyboard).toBe('');
-  });
-
   it('fires sourcechange when source is set', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn(() => media.source);

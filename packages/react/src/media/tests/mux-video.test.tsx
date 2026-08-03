@@ -109,18 +109,10 @@ describe('MuxVideo', () => {
     consoleError.mockRestore();
   });
 
-  it('clears a storyboard override when the prop is removed', () => {
-    const { container, rerender } = render(
-      <MuxVideo source={{ playbackId: 'abc123' }} storyboard="https://image.mux.com/other/storyboard.vtt" />
-    );
+  it('adds no storyboard track for signed playback without a storyboard token', () => {
+    const { container } = render(<MuxVideo source={{ playbackId: 'abc123', playback: { token: 'jwt' } }} />);
 
-    expect(container.querySelector('track')?.getAttribute('src')).toBe('https://image.mux.com/other/storyboard.vtt');
-
-    rerender(<MuxVideo source={{ playbackId: 'abc123' }} />);
-
-    expect(container.querySelector('track')?.getAttribute('src')).toBe(
-      'https://image.mux.com/abc123/storyboard.vtt?format=webp'
-    );
+    expect(container.querySelector('track')).toBeNull();
   });
 
   it('does not add a storyboard track for live streams', () => {
