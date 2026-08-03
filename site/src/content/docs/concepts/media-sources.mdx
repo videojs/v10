@@ -273,13 +273,19 @@ media.contentPoster; // 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=1
 
 It's read-only and tracks `source`, so read it again after `sourcechange`. It's empty when there is no playback ID, and when signed playback has no matching image token.
 
-To vary a modifier without touching `source` — asking for a narrower image on a small viewport, say — build the URL directly. The second argument merges over `source.poster`:
+To change the image, change the params it's built from. `source.poster` takes the [full set of Mux image modifiers](https://www.mux.com/docs/guides/get-images-from-a-video), so a narrower still for a small viewport is a `width`:
 
-```ts
-import { createMuxPosterURL } from '@videojs/media/dom/mux';
-
-const small = createMuxPosterURL(video.source, { width: 320 });
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo source={{ playbackId, poster: { width: 320 } }} playsInline />
 ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = { ...video.source, poster: { width: 320 } };
+```
+</FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
 Because `source` has no attribute, the poster frame has one of its own. `poster-time` reflects to `source.poster.time`, letting you set it from markup:

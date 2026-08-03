@@ -78,8 +78,8 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * Empty when there is no playback ID, or when signed playback has no matching
    * image token. Changes with `source`, so read it again after `sourcechange`.
    *
-   * Use `createMuxPosterURL` directly to vary a modifier without touching
-   * `source`, such as requesting a narrower image for a small viewport.
+   * Set `source.poster` to change the image — a `width` for a small viewport,
+   * say, or a `time` to pick the frame.
    */
   get contentPoster(): string {
     return createMuxPosterURL(this.source) ?? '';

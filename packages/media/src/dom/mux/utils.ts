@@ -183,13 +183,15 @@ function parseMuxParamValue(value: string): string | number | boolean {
 }
 
 /**
- * Build the poster image URL for a source. `params` override `source.poster`,
- * so a caller can vary one modifier without rebuilding the source.
+ * Build the poster image URL a source describes. Reached through `MuxMedia`'s
+ * `contentPoster`, which is the supported way to read it.
+ *
+ * @internal
  */
-export function createMuxPosterURL(source?: MuxSource | null, params?: MuxPosterParams): string | undefined {
+export function createMuxPosterURL(source?: MuxSource | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, poster, playback } = source;
-  const { ext = 'webp', token, ...query } = { ...poster, ...params };
+  const { ext = 'webp', token, ...query } = poster ?? {};
 
   // Image tokens must carry the image (`t`) audience.
   if (token && parseJwt<MuxJWT>(token)?.aud !== 't') return undefined;

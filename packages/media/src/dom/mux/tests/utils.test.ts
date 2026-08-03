@@ -222,12 +222,6 @@ describe('createMuxPosterURL', () => {
     expect(url.searchParams.get('latest')).toBe('true');
   });
 
-  it('merges explicit params over source.poster', () => {
-    expect(createMuxPosterURL({ playbackId: 'abc123', poster: { ext: 'webp' } }, { ext: 'jpg', time: 2 })).toBe(
-      'https://image.mux.com/abc123/thumbnail.jpg?time=2'
-    );
-  });
-
   it('keeps only the token when one is set', () => {
     const token = fakeJwt({ aud: 't' });
     const url = new URL(createMuxPosterURL({ playbackId: 'abc123', poster: { token, time: 5 } })!);
