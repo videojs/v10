@@ -39,24 +39,53 @@ trap cleanup INT TERM
 npx http-server "$OUT" -p "$PORT" --cors -c-1 -s & SVR=$!
 sleep 1
 
-echo "▶ live: http://localhost:$PORT/master.m3u8  (sliding-window, demuxed CMAF)"
-echo "  sandbox: http://localhost:5173/spf-segment-loading/?src=http://localhost:$PORT/master.m3u8&muted=true&autoplay=true&preload=auto"
-echo "  Ctrl-C to stop."
-
 # Demuxed via --var_stream_map (video variant + EXT-X-MEDIA audio group); fMP4
 # segments via -hls_segment_type fmp4; PDT for cross-track/reload timeline sync.
 ffmpeg -re \
   -f lavfi -i testsrc=size=1280x720:rate=30 \
   -f lavfi -i sine=frequency=440:sample_rate=48000 \
   -map 0:v -map 1:a \
-  -c:v libx264 -preset veryfast -tune zerolatency -g 60 -keyint_min 60 -pix_fmt yuv420p \
+  -c:v libx264 -preset veryfast -tune zerolatency -crf 23 -maxrate 3M -bufsize 6M \
+  -g 60 -keyint_min 60 -pix_fmt yuv420p \
   -c:a aac -b:a 128k -ar 48000 \
   -f hls -hls_time 2 -hls_list_size 6 \
   -hls_flags independent_segments+omit_endlist+program_date_time \
   -hls_segment_type fmp4 \
   -hls_fmp4_init_filename 'init_%v.mp4' \
   -hls_segment_filename "$OUT/seg_%v_%05d.m4s" \
-  -master_pl_name master.m3u8 \
+  -master_pl_name ffmpeg-master.m3u8 \
   -var_stream_map "v:0,agroup:aud,name:video a:0,agroup:aud,default:yes,name:audio" \
   "$OUT/stream_%v.m3u8" > "$OUT/ffmpeg.log" 2>&1 & FF=$!
+
+# Publish a corrected master. ffmpeg (checked 7.1.1 and 8.0) never assigns
+# `avg_bandwidth` on the live/non-final path in hlsenc.c's create_master_playlist,
+# so AVERAGE-BANDWIDTH is uninitialized stack memory — observed both negative and
+# implausibly large positive values, differing per run. Rewrite it to equal
+# BANDWIDTH, which is what Mux Video emits (live and VOD, every rendition), so this
+# fixture matches the shape of the real source it stands in for.
+#
+# A one-time snapshot is enough despite ffmpeg rewriting its own copy on every
+# segment: the master is invariant here (one variant, fixed codecs/resolution).
+# `-maxrate` above is what makes BANDWIDTH honest at all — without it libx264 runs
+# pure CRF, `codecpar->bit_rate` stays 0, and BANDWIDTH ends up advertising only the
+# audio bitrate (~140 kbps for 720p). `get_stream_bit_rate` falls back to the CPB
+# max_bitrate, so capped CRF keeps CRF's rate control and still declares a ceiling.
+FFMPEG_MASTER="$OUT/ffmpeg-master.m3u8"
+for _ in $(seq 1 50); do
+  [ -s "$FFMPEG_MASTER" ] && break
+  kill -0 "$FF" 2>/dev/null || break
+  sleep 0.2
+done
+if [ ! -s "$FFMPEG_MASTER" ]; then
+  echo "✗ ffmpeg never wrote $FFMPEG_MASTER — see $OUT/ffmpeg.log" >&2
+  kill "$SVR" "$FF" 2>/dev/null
+  exit 1
+fi
+sed -E 's/([:,])BANDWIDTH=([0-9]+),AVERAGE-BANDWIDTH=-?[0-9]+/\1BANDWIDTH=\2,AVERAGE-BANDWIDTH=\2/g' \
+  "$FFMPEG_MASTER" > "$OUT/master.m3u8"
+
+echo "▶ live: http://localhost:$PORT/master.m3u8  (sliding-window, demuxed CMAF)"
+echo "  sandbox: http://localhost:5173/spf-segment-loading/?src=http://localhost:$PORT/master.m3u8&muted=true&autoplay=true&preload=auto"
+echo "  Ctrl-C to stop."
+
 wait "$FF"

@@ -38,6 +38,13 @@ not a player bug. Mux gets this right; a plain static file server does not by
 default. (This is VOD-free and doesn't model DVR/EVENT — use the Mux flow above
 for those.)
 
+Two things the script corrects in ffmpeg's output, both explained inline in
+`local-live.sh`: `-maxrate` is set so `BANDWIDTH` reflects the video (pure CRF
+leaves it advertising only the audio bitrate), and the served `master.m3u8` is
+republished from ffmpeg's own `ffmpeg-master.m3u8` with `AVERAGE-BANDWIDTH` set
+equal to `BANDWIDTH` — ffmpeg emits uninitialized memory there on the live path,
+and equal is what Mux emits, so the fixture matches the real source's shape.
+
 ## Prerequisites (Mux flow)
 
 - `ffmpeg`, `curl`, `jq` on `PATH`.
