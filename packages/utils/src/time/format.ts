@@ -16,6 +16,7 @@ type DurationFormatConstructor = new (
   options?: { style?: TimeFormatOptions['style']; hoursDisplay?: 'auto' | 'always' }
 ) => { format: (duration: DurationRecord) => string };
 
+const DEFAULT_LOCALE = 'en';
 const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
 
 type DurationFormatter = { format: (duration: DurationRecord) => string };
@@ -129,7 +130,7 @@ export function formatTime(seconds: number, guide?: number, options?: Pick<TimeF
   const padMinutes = showHours || guideMinutes >= 10;
 
   const duration = showHours ? { hours, minutes, seconds: secondsPart } : { minutes, seconds: secondsPart };
-  const { locale = 'en' } = options ?? {};
+  const { locale = DEFAULT_LOCALE } = options ?? {};
   let body = getDurationFormatter(locale, 'digital', showHours ? 'always' : 'auto').format(duration);
 
   if (!padMinutes) {
