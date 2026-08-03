@@ -22,7 +22,7 @@ export default {
   },
   pip: {
     enter: 'Vaizdas vaizde',
-    exit: 'Išeiti iš vaizdo vaizde',
+    exit: 'Išjungti vaizdą vaizde',
   },
   live: {
     playing: 'Rodoma tiesiogiai',
@@ -31,7 +31,7 @@ export default {
   },
   cast: {
     start: 'Pradėti perdavimą',
-    stop: 'Baigti perdavimą',
+    stop: 'Stabdyti perdavimą',
     connecting: 'Prisijungiama',
   },
   airplay: {
@@ -42,14 +42,14 @@ export default {
     seek: 'Persukimas',
   },
   time: {
-    current: 'Esamas laikas',
+    current: 'Dabartinis laikas',
     duration: 'Trukmė',
     remaining: 'Likęs laikas',
     remainingSuffix: 'Liko {duration}',
     showElapsed: '{duration}. Rodyti praėjusį laiką.',
     showDuration: '{duration}. Rodyti trukmę.',
     showRemaining: '{duration}. Rodyti likusį laiką.',
-    position: '{current} iš {duration}',
+    position: '{current} / {duration}',
   },
   playback: {
     rate: 'Atkūrimo greitis {rate}',
@@ -67,18 +67,18 @@ export default {
     playing: 'Leidžiama',
     fullscreen: 'Visas ekranas',
     pip: 'Vaizdas vaizde',
-    exitPip: 'Išeiti iš vaizdo vaizde',
-    seekedTo: 'Persukta į {time}',
+    exitPip: 'Vaizdas vaizde išjungtas',
+    seekedTo: 'Persukta: {time}',
   },
   container: {
-    label: 'Medijos leistuvas',
+    label: 'Medijos leistuvė',
   },
   errors: {
     aborted: 'Sustabdėte atkūrimą jam dar nepasibaigus.',
     network: 'Šios medijos nepavyko įkelti dėl tinklo arba serverio klaidos.',
     decode: 'Šios medijos nepavyko atkurti. Ji gali būti sugadinta arba naršyklė nepalaiko jos formato.',
     source: 'Šios medijos nepavyko įkelti. Ji gali būti nepasiekiama arba naršyklė nepalaiko jos formato.',
-    encrypted: 'Šios medijos nepavyko atkurti, nes jos nepavyko iššifruoti.',
+    encrypted: 'Šios medijos nepavyko atkurti, nes nepavyko jos iššifruoti.',
     title: 'Kažkas nutiko ne taip.',
     unexpected: 'Įvyko nenumatyta klaida.',
   },
@@ -89,15 +89,15 @@ export default {
   menu: {
     settings: 'Nustatymai',
     quality: 'Kokybė',
-    audio: 'Garsas',
+    audio: 'Garso takelis',
     default: 'Numatytasis',
     speed: 'Greitis',
     captions: 'Subtitrai',
     playbackRate: 'Atkūrimo greitis',
     back: 'Atgal',
     off: 'Išjungta',
-    auto: 'Automatinis',
-    autoWithLabel: 'Automatinis ({label})',
+    auto: 'Automatinė',
+    autoWithLabel: 'Automatinė ({label})',
     subtitles: 'Subtitrai',
   },
 } as const satisfies Translations;
