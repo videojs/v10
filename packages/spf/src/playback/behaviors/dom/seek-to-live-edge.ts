@@ -2,10 +2,10 @@
  * Keep the playhead in the live window, via a two-state reactor gated on the
  * preconditions for "we know where live is":
  *
- * - **`inactive`** — no media element, no (published, hence open) MediaSource,
- *   or no live edge (`getLiveEdge` is `null`: VOD, ended, or unresolved). Idle.
- * - **`live`** — preconditions met. `entry` seeks `currentTime` once to the
- *   target live latency behind the edge (clamped to the window start) so
+ * - **`inactive`** — no media element, or no live edge (`getLiveEdge` is `null`:
+ *   VOD, ended, or unresolved). Idle.
+ * - **`live`** — preconditions met. `entry` commands `state.startPosition` once
+ *   to the target live latency behind the edge (clamped to the window start) so
  *   playback begins near the edge and the loader dispatches an in-window range;
  *   `effects` runs the window-exit guard.
  *
@@ -19,12 +19,14 @@
  * `internal/design/spf/live-presentation-timeline-model.md`).
  *
  * The two pieces split along the axis a future DVR / EVENT mode will care about:
- * the **one-time seek** (`entry`) is the *live-specific* behavior — jump to the
- * edge on load; a DVR mode makes it conditional (start in place). The
+ * the **one-time start position** (`entry`) is the *live-specific* behavior — start
+ * near the edge on load; a DVR mode makes it conditional (start in place). The
  * **window-exit guard** (`effects`) is the *general windowed-live* behavior —
- * applies to sliding-window live, DVR, and EVENT alike. Because the seek is an
+ * applies to sliding-window live, DVR, and EVENT alike. Because the command is an
  * `entry`, it fires once per entry into `live`; a source change exits to
- * `inactive`, so the next source re-seeks (no closure latch to reset).
+ * `inactive`, so the next source re-commands (no closure latch to reset). The
+ * guard stays a direct seek — it is recurring, while `startPosition` is a
+ * self-clearing one-shot.
  *
  * Window-exit guard: while playing (not paused), reposition to the live edge
  * when the playhead has fallen behind the window start — including when a seek
@@ -40,17 +42,16 @@
  * pause / DVR scrub-back are left untouched.
  *
  * The latency comes from the injected `resolveLiveLatency` seam (HLS:
- * `HOLD-BACK`), so this behavior carries no delivery-format specifics. The
- * MediaSource precondition ties the seek to the declared seekable range:
- * `sync-live-seekable-range` (composed before this) declares it while the
- * MediaSource is open, so seeks land in-window (a seek outside `seekable` is
- * clamped). `setupMediaSource` publishes `context.mediaSource` only once open,
- * so the signal's *presence* is the open gate — no `readyState` re-check.
+ * `HOLD-BACK`), so this behavior carries no delivery-format specifics.
+ * `applyStartPosition` performs the seek, gated on `loadedmetadata` — which
+ * implies an open MediaSource and hence a declared seekable range (a seek outside
+ * `seekable` is clamped) — so this behavior needs no MediaSource precondition of
+ * its own.
  */
 import { listen } from '@videojs/utils/dom';
 import type { Behavior } from '../../../core/composition/create-composition';
 import { createMachineReactor, type Reactor } from '../../../core/reactors/create-machine-reactor';
-import { computed, peek, type ReadonlySignal } from '../../../core/signals/primitives';
+import { computed, peek, type ReadonlySignal, type Signal } from '../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { getLiveEdge, type LiveEdge, type ResolveLiveLatency } from '../../primitives/live-window';
 
@@ -62,13 +63,17 @@ const REPOSITION_TOLERANCE = 0.1;
 
 export interface SeekToLiveEdgeState {
   presentation?: MaybeResolvedPresentation;
+  /**
+   * One-shot start-position command in presentation-timeline seconds. Written
+   * here on entry into `live`; consumed (cleared) by `applyStartPosition`.
+   */
+  startPosition?: number;
   selectedVideoTrackId?: string;
   selectedAudioTrackId?: string;
 }
 
 export interface SeekToLiveEdgeContext {
   mediaElement?: HTMLMediaElement | undefined;
-  mediaSource?: MediaSource;
 }
 
 export interface SeekToLiveEdgeConfig {
@@ -85,16 +90,25 @@ export interface SeekToLiveEdgeConfig {
 type SeekToLiveEdgeFsmState = 'inactive' | 'live';
 
 /**
- * `'live'` once the seek preconditions hold: a media element, a (published →
- * open) MediaSource, and a derivable live edge (whose placement is final by
- * construction — see the module docstring). `'inactive'` otherwise.
+ * `'live'` once the preconditions hold: a media element and a derivable live edge
+ * (whose placement is final by construction — see the module docstring).
+ * `'inactive'` otherwise.
+ *
+ * Deliberately narrow: every signal here can flip the reactor out of and back into
+ * `live`, re-firing `entry`. Neither blinks mid-source — the edge can't, because
+ * `liveWindowForType` falls back to any resolved track of the type — so `entry`
+ * fires once per source without a latch, and a live reload (same source, slid
+ * window) correctly doesn't re-command.
+ *
+ * The flip side: the presentation *url* is not part of this state, so replacing one
+ * already-resolved live presentation with another would stay in `live` and never
+ * command a start position for the new source. Unreachable today — every writer
+ * sets `{ url }` (unresolved) or `undefined` first, so a source change always
+ * transits `inactive`. Supporting a seeded pre-resolved presentation (via
+ * `initialState`) that later changes would mean folding the url in here.
  */
-function deriveState(
-  mediaElement: HTMLMediaElement | undefined,
-  mediaSource: MediaSource | undefined,
-  edge: LiveEdge | null
-): SeekToLiveEdgeFsmState {
-  return mediaElement && mediaSource && edge ? 'live' : 'inactive';
+function deriveState(mediaElement: HTMLMediaElement | undefined, edge: LiveEdge | null): SeekToLiveEdgeFsmState {
+  return mediaElement && edge ? 'live' : 'inactive';
 }
 
 function seekToLiveEdgeSetup({
@@ -104,24 +118,16 @@ function seekToLiveEdgeSetup({
 }: {
   state: {
     presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
+    startPosition: Signal<SeekToLiveEdgeState['startPosition']>;
     selectedVideoTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedVideoTrackId']>;
     selectedAudioTrackId?: ReadonlySignal<SeekToLiveEdgeState['selectedAudioTrackId']>;
   };
   context: {
     mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
-    mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
   };
   config?: SeekToLiveEdgeConfig;
 }): Reactor<SeekToLiveEdgeFsmState | 'destroying' | 'destroyed'> {
-  const derivedStateSignal = computed(() =>
-    deriveState(context.mediaElement.get(), context.mediaSource.get(), getLiveEdge({ state, config }))
-  );
-
-  // The source (manifest url) the initial edge seek has already fired for. The
-  // seek is once *per source* — `entry` fires on every entry into `live`, but a
-  // transient precondition flip (e.g. the live window briefly unknown mid
-  // track-switch) re-enters `live` for the *same* source and must not re-seek.
-  let seekedForSource: string | undefined;
+  const derivedStateSignal = computed(() => deriveState(context.mediaElement.get(), getLiveEdge({ state, config })));
 
   return createMachineReactor<SeekToLiveEdgeFsmState>({
     initial: 'inactive',
@@ -130,25 +136,18 @@ function seekToLiveEdgeSetup({
       inactive: {},
 
       live: {
-        // One-time-per-source seek into the window so the loader dispatches an
-        // in-window range and preload shows the right frame. The business rule is
-        // "on initial load of a source, jump near the live edge — once" — not
-        // "whenever the live preconditions hold." Latching on the source url makes
-        // that explicit: a genuine source change (new url) re-seeks; a transient
-        // re-entry into `live` does not (which would otherwise yank a viewer who
-        // has scrubbed back into the DVR window). The window-exit guard below is
+        // One-time-per-source start position so the loader dispatches an in-window
+        // range and preload shows the right frame. The window-exit guard below is
         // the separate, continuous rule. Live-specific — a future DVR mode skips
-        // even the first seek (starts in place).
+        // even this first command (starts in place).
         entry: () => {
-          const source = peek(state.presentation)?.url;
-          if (source !== undefined && source === seekedForSource) return;
-          seekedForSource = source;
           // The monitor guarantees a media element + live edge while in `live`.
           const mediaElement = context.mediaElement.get()!;
           const { liveEdgeStart } = getLiveEdge({ state, config })!;
-          if (mediaElement.currentTime < liveEdgeStart) {
-            mediaElement.currentTime = liveEdgeStart;
-          }
+          // Never command backwards: seeding `state.currentTime` behind a playhead
+          // already at/past the edge would drag the loaders back.
+          if (mediaElement.currentTime >= liveEdgeStart) return;
+          state.startPosition.set(liveEdgeStart);
         },
 
         // Window-exit guard. Repositions to the live edge when the playhead has
@@ -193,19 +192,19 @@ function seekToLiveEdgeSetup({
 
 /**
  * Manual `Behavior<>` literal (like `calculatePresentationDuration`): declares
- * only `presentation` in stateKeys while reading `selectedVideoTrackId` /
- * `selectedAudioTrackId` defensively (contributed by the switch* behaviors), so
- * it composes without a stateKeys/type conflict.
+ * only `presentation` + `startPosition` in stateKeys while reading
+ * `selectedVideoTrackId` / `selectedAudioTrackId` defensively (contributed by the
+ * switch* behaviors), so it composes without a stateKeys/type conflict.
  */
 export const seekToLiveEdge: Behavior<
-  { presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']> },
   {
-    mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']>;
-    mediaSource: ReadonlySignal<SeekToLiveEdgeContext['mediaSource']>;
+    presentation: ReadonlySignal<SeekToLiveEdgeState['presentation']>;
+    startPosition: Signal<SeekToLiveEdgeState['startPosition']>;
   },
+  { mediaElement: ReadonlySignal<SeekToLiveEdgeContext['mediaElement']> },
   SeekToLiveEdgeConfig
 > = {
-  stateKeys: ['presentation'],
-  contextKeys: ['mediaElement', 'mediaSource'],
+  stateKeys: ['presentation', 'startPosition'],
+  contextKeys: ['mediaElement'],
   setup: seekToLiveEdgeSetup,
 };

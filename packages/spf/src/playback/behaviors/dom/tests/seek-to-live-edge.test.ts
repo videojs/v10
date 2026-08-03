@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { signal } from '../../../../core/signals/primitives';
 import {
   type MaybeResolvedPresentation,
@@ -41,14 +41,6 @@ function makePresentation(windowStart = 100, mediaSequence = 50): Presentation {
   };
 }
 
-function fakeMediaSource(readyState: MediaSource['readyState'] = 'open') {
-  return {
-    readyState,
-    duration: Number.NaN,
-    setLiveSeekableRange: vi.fn(),
-  } as unknown as MediaSource & { setLiveSeekableRange: ReturnType<typeof vi.fn> };
-}
-
 type FakeMediaElement = HTMLMediaElement & {
   currentTime: number;
   paused: boolean;
@@ -76,7 +68,7 @@ function run(opts: {
   presentation?: MaybeResolvedPresentation;
   trackId?: string;
   mediaElement?: HTMLMediaElement;
-  mediaSource?: MediaSource;
+  startPosition?: number;
   config?: SeekToLiveEdgeConfig;
 }) {
   // Built as vars (not inline literals) so the defensively-read
@@ -84,11 +76,13 @@ function run(opts: {
   // the behavior's declared `{ presentation }` state slice.
   const state = {
     presentation: signal<MaybeResolvedPresentation | undefined>(opts.presentation),
+    // `applyStartPosition` owns consuming this; here it stands in as the
+    // observable output of the startup path.
+    startPosition: signal<number | undefined>(opts.startPosition),
     selectedVideoTrackId: signal<string | undefined>(opts.trackId),
   };
   const context = {
     mediaElement: signal<HTMLMediaElement | undefined>(opts.mediaElement),
-    mediaSource: signal<MediaSource | undefined>(opts.mediaSource),
   };
   // The engine injects this seam; here a fixed 6s latency (HLS 3 × targetDuration(2))
   // stands in so the live-edge start lands at windowEnd − 6.
@@ -103,37 +97,20 @@ function run(opts: {
 const flush = () => Promise.resolve();
 
 describe('seekToLiveEdge', () => {
-  it('seeks near the live edge on entry (target live latency behind)', () => {
-    const ms = fakeMediaSource();
+  it('commands a start position near the live edge on entry (target live latency behind)', () => {
     const el = fakeMediaElement();
 
-    const { cleanup } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el, mediaSource: ms });
+    const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
 
     // Start the live latency (6s) behind the edge: 110 − 6 = 104, not the window start.
-    expect(el.currentTime).toBe(104);
-
-    cleanup();
-  });
-
-  it('does not seek until the MediaSource is published (open)', () => {
-    const el = fakeMediaElement();
-
-    // `setupMediaSource` publishes `context.mediaSource` only once open, so an
-    // unpublished (absent) MediaSource is the "not ready" gate.
-    const { cleanup } = run({
-      presentation: makePresentation(),
-      trackId: 'v-1',
-      mediaElement: el,
-      mediaSource: undefined,
-    });
-
+    expect(state.startPosition.get()).toBe(104);
+    // The startup seek belongs to `applyStartPosition` — not performed here.
     expect(el.currentTime).toBe(0);
 
     cleanup();
   });
 
   it('no-ops for a complete (finite-duration) playlist — VoD / ended live', () => {
-    const ms = fakeMediaSource();
     const el = fakeMediaElement();
 
     const presentation = makePresentation();
@@ -141,64 +118,52 @@ describe('seekToLiveEdge', () => {
     const video = presentation.selectionSets[0]!.switchingSets[0]!.tracks[0] as VideoTrack;
     video.duration = 110;
 
-    const { cleanup } = run({ presentation, trackId: 'v-1', mediaElement: el, mediaSource: ms });
+    const { cleanup, state } = run({ presentation, trackId: 'v-1', mediaElement: el });
 
-    expect(el.currentTime).toBe(0);
+    expect(state.startPosition.get()).toBeUndefined();
 
     cleanup();
   });
 
   it('no-ops without a resolved presentation or selected track', () => {
-    const ms = fakeMediaSource();
     const el = fakeMediaElement();
 
-    const { cleanup } = run({ presentation: undefined, trackId: undefined, mediaElement: el, mediaSource: ms });
+    const { cleanup, state } = run({ presentation: undefined, trackId: undefined, mediaElement: el });
 
-    expect(el.currentTime).toBe(0);
+    expect(state.startPosition.get()).toBeUndefined();
 
     cleanup();
   });
 
-  it('seeks once per source — a transient re-entry into live does not re-fire the edge seek', async () => {
-    const ms = fakeMediaSource();
+  it('commands once per source — a playlist reload does not re-command', async () => {
     const el = fakeMediaElement();
 
-    const { cleanup, context } = run({
-      presentation: makePresentation(),
-      trackId: 'v-1',
-      mediaElement: el,
-      mediaSource: ms,
-    });
-    expect(el.currentTime).toBe(104); // initial edge seek
+    const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+    expect(state.startPosition.get()).toBe(104); // initial command
 
-    // Viewer scrubs back into the DVR window (still inside it, above the start).
+    // `applyStartPosition` consumes (clears) the command and seeks; the viewer
+    // then scrubs back into the DVR window (still inside it, above the start).
+    state.startPosition.set(undefined);
     el.currentTime = 100;
 
-    // A transient precondition flip (here the MediaSource blinks, standing in
-    // for the live edge briefly going unknown mid track-switch) takes the
-    // reactor inactive → live for the SAME source.
-    context.mediaSource.set(undefined);
-    await flush();
-    context.mediaSource.set(ms);
+    // A live reload re-publishes the presentation for the SAME source with a slid
+    // window. The derived state stays `live`, so `entry` must not re-fire — this is
+    // what keeps the once-per-source rule without a closure latch.
+    state.presentation.set(makePresentation(102, 51));
     await flush();
 
-    // Not yanked back to the edge — the seek is once per source.
+    expect(state.startPosition.get()).toBeUndefined();
     expect(el.currentTime).toBe(100);
 
     cleanup();
   });
 
-  it('re-seeks on a genuine source change (new url)', async () => {
-    const ms = fakeMediaSource();
+  it('re-commands on a genuine source change (new url)', async () => {
     const el = fakeMediaElement();
 
-    const { cleanup, state } = run({
-      presentation: makePresentation(),
-      trackId: 'v-1',
-      mediaElement: el,
-      mediaSource: ms,
-    });
-    expect(el.currentTime).toBe(104);
+    const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+    expect(state.startPosition.get()).toBe(104);
+    state.startPosition.set(undefined); // consumed by applyStartPosition
     el.currentTime = 100; // viewer moved
 
     // Source change goes through an unresolved presentation (exits live), then a
@@ -210,25 +175,35 @@ describe('seekToLiveEdge', () => {
     state.presentation.set(next);
     await flush();
 
-    // New source → re-seeks to its live edge (window [200,210], 6s latency → 204).
-    expect(el.currentTime).toBe(204);
+    // New source → commands its live edge (window [200,210], 6s latency → 204).
+    expect(state.startPosition.get()).toBe(204);
+
+    cleanup();
+  });
+
+  it('does not command a start position when the playhead is already at or past the edge', () => {
+    // Already ahead of the 104 edge start — a backwards command would drag the
+    // loaders (and the playhead) back.
+    const el = fakeMediaElement({ currentTime: 108 });
+
+    const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+
+    expect(state.startPosition.get()).toBeUndefined();
+    expect(el.currentTime).toBe(108);
 
     cleanup();
   });
 
   describe('live-window playhead guard', () => {
     function started() {
-      const ms = fakeMediaSource();
       const el = fakeMediaElement();
-      const { cleanup, state } = run({
-        presentation: makePresentation(),
-        trackId: 'v-1',
-        mediaElement: el,
-        mediaSource: ms,
-      });
-      // Initial entry seeked into the window at the live edge (104). Window [100, 110].
-      expect(el.currentTime).toBe(104);
-      return { el, ms, state, cleanup };
+      const { cleanup, state } = run({ presentation: makePresentation(), trackId: 'v-1', mediaElement: el });
+      // Stand in for `applyStartPosition`: consume the command and seek, leaving
+      // the playhead at the live edge (104) inside the window [100, 110].
+      expect(state.startPosition.get()).toBe(104);
+      el.currentTime = state.startPosition.get()!;
+      state.startPosition.set(undefined);
+      return { el, state, cleanup };
     }
 
     it('leaves the playhead alone when playing inside the window (resume)', () => {

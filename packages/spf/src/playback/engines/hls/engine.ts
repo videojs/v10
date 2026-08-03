@@ -494,11 +494,10 @@ export function createSimpleHlsEngine(
       loadVideoSegments,
       loadAudioSegments,
 
-      // Live: declare the seekable window, then seek the playhead to the live
-      // edge + keep it in-window. No-op for complete playlists (VoD / ended).
-      // Order matters: the seekable range must be declared (syncLiveSeekableRange)
-      // before seekToLiveEdge moves the playhead into it (a seek outside
-      // `seekable` is clamped).
+      // Live: declare the seekable window, then command the live-edge start
+      // position + keep the playhead in-window. No-op for complete playlists
+      // (VoD / ended). `seekToLiveEdge` commands `state.startPosition`;
+      // `applyStartPosition` (composed above) performs the seek.
       syncLiveSeekableRange,
       seekToLiveEdge,
 
