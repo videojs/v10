@@ -2,6 +2,13 @@ import { describe, expect, it, vi } from 'vitest';
 import { HlsJsMedia } from '../../hls-js';
 import { MuxMedia } from '..';
 
+// `source` and `src` request a load on a microtask, so give it a chance to run.
+function flushLoad() {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 describe('MuxMedia', () => {
   it('extends HlsJsMedia', () => {
     expect(new MuxMedia()).toBeInstanceOf(HlsJsMedia);
@@ -152,6 +159,52 @@ describe('MuxMedia', () => {
     media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
 
     expect(media.contentPoster).toBe('');
+  });
+
+  it('does not reload when only image params change', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    // `poster` describes an image, not the stream, so playback must not restart.
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', poster: { time: 5 } };
+    await flushLoad();
+
+    expect(loadstart).not.toHaveBeenCalled();
+  });
+
+  it('reloads when the playback id changes', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'xyz789', preferPlayback: 'native' };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalled();
+  });
+
+  it('reloads when engine options change', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', preferPlayback: 'native' };
+    await flushLoad();
+
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { maxBufferLength: 60 } };
+    await flushLoad();
+
+    expect(loadstart).toHaveBeenCalled();
   });
 
   it('exposes the content storyboard derived from source', () => {

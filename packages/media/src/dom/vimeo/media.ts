@@ -289,13 +289,19 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     return this.#source;
   }
   set source(value: VimeoSource | null) {
-    if (deepEqual(this.#source ?? null, value ?? null)) return;
-    this.#source = value ?? null;
-    const src = value?.src ?? '';
-    if (this.#src !== src) {
-      this.#src = src;
-      void this.load();
-    }
+    const source = value ?? null;
+    if (deepEqual(this.#source, source)) return;
+
+    const previousSrc = this.#src;
+    // Embed options are read when the video is loaded, so a change to them needs
+    // a reload of its own even though the URL is the same.
+    const engineChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
+
+    this.#source = source;
+    this.#src = source?.src ?? '';
+
+    if (this.#src !== previousSrc || engineChanged) void this.load();
+
     this.dispatchEvent(new Event('sourcechange'));
   }
 

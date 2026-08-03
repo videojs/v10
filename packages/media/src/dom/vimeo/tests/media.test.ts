@@ -361,6 +361,24 @@ describe('VimeoMedia', () => {
     expect(iframe.src).toContain('autopause=1');
   });
 
+  it('reloads when only engine options change', async () => {
+    const media = new VimeoMedia();
+    const { player } = await attachAndLoad(media);
+    media.source = { src: '76979871', engine: { autopause: true } };
+    await Promise.resolve();
+    player.loadVideo.mockClear();
+
+    // Same video, new embed options. They are read at load time, so the video
+    // has to be loaded again for them to take effect.
+    media.source = { src: '76979871', engine: { autopause: false } };
+    await Promise.resolve();
+
+    expect(player.loadVideo).toHaveBeenCalledWith({
+      url: 'https://player.vimeo.com/video/76979871',
+      autopause: false,
+    });
+  });
+
   it('carries engine options into loadVideo options', async () => {
     const media = new VimeoMedia();
     const { player } = await attachAndLoad(media);

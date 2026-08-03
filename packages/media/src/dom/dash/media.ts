@@ -93,9 +93,9 @@ export class DashMedia
 
   set source(value: DashSource | null) {
     if (deepEqual(this.#source ?? null, value ?? null)) return;
-    const engineChanged = !deepEqual(this.#source?.engine ?? null, value?.engine ?? null);
+    const configChanged = !deepEqual(this.#source?.engine ?? null, value?.engine ?? null);
     this.#source = value ?? null;
-    if (engineChanged) this.#applyEngineConfig(value?.engine);
+    if (configChanged) this.#applyEngineConfig(value?.engine);
     const src = value?.src ?? '';
     if (this.#src !== src) {
       this.#src = src;

@@ -188,11 +188,16 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     const source = value ?? null;
     if (deepEqual(this.#source, source)) return;
 
+    const previousSrc = this.#src;
     this.#source = source;
     this.#src = this.#ctor.resolveSrc(source);
 
     this.dispatchEvent(new Event('sourcechange'));
-    this.#requestLoad();
+
+    // Only reload for something playback depends on. Subclasses add params that
+    // describe images rather than the stream — Mux's `poster` and `storyboard` —
+    // and changing one of those must not restart what is already playing.
+    if (this.#src !== previousSrc || this.#shouldEngineUpdate(this.#engineConfigKey())) this.#requestLoad();
   }
 
   /** Own constructor, so subclass overrides of the static resolvers are used. */
