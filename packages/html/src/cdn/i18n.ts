@@ -6,6 +6,7 @@ export type {
 } from '@videojs/core/i18n';
 export {
   createTranslator,
+  DEFAULT_LOCALE,
   findLocaleKeys,
   getBrowserTranslations,
   getI18nTranslations,
