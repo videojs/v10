@@ -142,6 +142,53 @@ describe('MenuElement', () => {
     expect(root.getAttribute('data-side')).toBe('bottom');
   });
 
+  it('resizes the menu view when the positioning boundary changes', async () => {
+    const trigger = document.createElement('button');
+    const root = createElement(MenuElement);
+    const view = createElement(MenuViewElement);
+    let boundaryWidth = 300;
+
+    root.id = 'menu';
+    root.open = true;
+    root.side = 'top';
+    root.boundary = 'viewport';
+    trigger.setAttribute('commandfor', root.id);
+    view.setAttribute('data-menu-root-view', '');
+    view.setAttribute('data-menu-view', '');
+
+    vi.spyOn(trigger, 'getBoundingClientRect').mockReturnValue(new DOMRect(100, 100, 40, 20));
+    vi.spyOn(root, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 260, 80));
+    vi.spyOn(document.documentElement, 'getBoundingClientRect').mockImplementation(
+      () => new DOMRect(0, 0, boundaryWidth, 300)
+    );
+    vi.spyOn(view, 'getBoundingClientRect').mockReturnValue(new DOMRect(0, 0, 260, 80));
+    Object.defineProperty(root, 'offsetWidth', { configurable: true, value: 260 });
+    Object.defineProperty(root, 'offsetHeight', { configurable: true, value: 80 });
+    Object.defineProperty(root, 'scrollHeight', { configurable: true, value: 80 });
+    Object.defineProperty(view, 'scrollWidth', { configurable: true, value: 260 });
+    Object.defineProperty(view, 'scrollHeight', { configurable: true, value: 80 });
+
+    root.append(view);
+    document.body.append(trigger, root);
+    await root.updateComplete;
+
+    await waitForAssertion(() => {
+      expect(root.style.getPropertyValue('--media-menu-width')).toBe('260px');
+    });
+    await nextFrame();
+    await root.updateComplete;
+
+    // Isolate positioner-driven sizing from unrelated reactive updates.
+    vi.spyOn(root, 'requestUpdate').mockImplementation(() => {});
+    boundaryWidth = 180;
+    window.dispatchEvent(new Event('resize'));
+
+    await waitForAssertion(() => {
+      expect(root.style.getPropertyValue('--media-popover-available-width')).toBe('180px');
+      expect(root.style.getPropertyValue('--media-menu-width')).toBe('180px');
+    });
+  });
+
   it('scopes menu state data attributes to menu elements', async () => {
     const root = createElement(MenuElement);
     const label = createElement(MenuGroupLabelElement);

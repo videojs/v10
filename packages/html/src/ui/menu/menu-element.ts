@@ -1,4 +1,4 @@
-import { MenuCore, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR, PopoverCSSVars } from '@videojs/core';
+import { MenuCore, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -257,11 +257,11 @@ export class MenuElement extends MediaElement {
       trigger: this.#currentTrigger,
       boundary: this.boundary,
       container: this.#containerCtx.value?.container ?? null,
-      onSideChange: (side) => this.setAttribute(MenuDataAttrs.side, side),
+      onSideChange: (side) => {
+        this.setAttribute(MenuDataAttrs.side, side);
+        syncMenuViewRoot(this, this.#navState.stack.length > 0);
+      },
     });
-
-    const availableWidth = this.style.getPropertyValue(PopoverCSSVars.availableWidth);
-    syncMenuViewRoot(this, this.#navState.stack.length > 0, availableWidth ? { availableWidth } : undefined);
   }
 
   #updateAsSubmenu(parentCtx: MenuContextValue): void {
