@@ -7,14 +7,20 @@
 # A live playlist MUST be served no-cache (http-server -c-1): otherwise reloads
 # return a stale media-sequence and the client's window never advances.
 #
-# Usage: ./local-live.sh [--port N]   (default 8080). Ctrl-C to stop.
+# Usage: ./local-live.sh [--port N]   (default 5399). Ctrl-C to stop.
 #   Then open, e.g.:
-#   http://localhost:5173/spf-segment-loading/?src=http://localhost:8080/master.m3u8&muted=true&autoplay=true&preload=auto
+#   http://localhost:5173/spf-segment-loading/?src=http://localhost:5399/master.m3u8&muted=true&autoplay=true&preload=auto
 #
 # Requires: ffmpeg, npx (http-server).
+#
+# 5399 rather than a conventional 8080/8000: a collision here is actively
+# misleading, not merely inconvenient. Serving these playlists from someone
+# else's server — with ordinary caching — reproduces the stale-media-sequence
+# stall described above, which reads as a player bug. 5399 also stays clear of
+# Vite's climb from 5173 and the e2e servers on 5180 / 5299.
 set -uo pipefail
 
-PORT=8080
+PORT=5399
 while [ $# -gt 0 ]; do
   case "$1" in
     --port) PORT="$2"; shift 2 ;;

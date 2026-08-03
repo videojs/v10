@@ -26,9 +26,9 @@ ffmpeg's own HLS muxer to write **demuxed CMAF/fMP4** (master + audio group +
 fMP4 init/segments) to a temp dir, served with CORS and **no caching**:
 
 ```sh
-./local-live.sh                # serves http://localhost:8080/master.m3u8
+./local-live.sh                # serves http://localhost:5399/master.m3u8
 # then open the sandbox at that src (start `pnpm dev` first):
-open "http://localhost:5173/spf-segment-loading/?src=http://localhost:8080/master.m3u8&muted=true&autoplay=true&preload=auto"
+open "http://localhost:5173/spf-segment-loading/?src=http://localhost:5399/master.m3u8&muted=true&autoplay=true&preload=auto"
 ```
 
 The no-cache part is load-bearing (`http-server -c-1`): a live playlist served
