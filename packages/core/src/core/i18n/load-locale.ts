@@ -32,6 +32,7 @@ const loaders = {
   it: () => import('./locales/it'),
   ja: () => import('./locales/ja'),
   ko: () => import('./locales/ko'),
+  lt: () => import('./locales/lt'),
   lv: () => import('./locales/lv'),
   mr: () => import('./locales/mr'),
   nb: () => import('./locales/nb'),

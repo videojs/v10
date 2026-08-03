@@ -28,6 +28,7 @@ import id from './id';
 import it from './it';
 import ja from './ja';
 import ko from './ko';
+import lt from './lt';
 import lv from './lv';
 import mr from './mr';
 import nb from './nb';
@@ -84,6 +85,7 @@ export const all = {
   it,
   ja,
   ko,
+  lt,
   lv,
   mr,
   nb,
