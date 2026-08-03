@@ -49,7 +49,7 @@ export const TooltipPopup = forwardRef<HTMLDivElement, TooltipPopupProps>(functi
     open: state.open,
     anchorName,
     position: posOpts,
-    trigger: tooltip.triggerElement,
+    triggerSource: tooltip,
     popupRef: internalRef,
     boundary,
     container,

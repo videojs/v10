@@ -47,7 +47,7 @@ export const PopoverPopup = forwardRef<HTMLDivElement, PopoverPopupProps>(functi
     open: state.open,
     anchorName,
     position: posOpts,
-    trigger: popover.triggerElement,
+    triggerSource: popover,
     popupRef: internalRef,
     boundary,
     container,

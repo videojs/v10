@@ -36,6 +36,8 @@ describe('Popover', () => {
       </Popover.Root>
     );
 
+    expect(screen.getByTestId('popup').style.top).toBe('30px');
+
     await waitFor(() => {
       for (const part of ['trigger', 'popup', 'arrow']) {
         expect(screen.getByTestId(part).getAttribute('data-side')).toBe('bottom');

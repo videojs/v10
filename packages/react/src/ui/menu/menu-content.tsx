@@ -253,7 +253,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     open: state.open && !isSubmenu,
     anchorName,
     position: positionOptions,
-    trigger: menu.triggerElement,
+    triggerSource: menu,
     popupRef: internalRef,
     boundary,
     container,

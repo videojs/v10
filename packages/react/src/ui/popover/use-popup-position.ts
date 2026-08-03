@@ -19,7 +19,7 @@ interface UsePopupPositionOptions {
   open: boolean;
   anchorName: string;
   position: PositioningOptions | null;
-  trigger: HTMLElement | null;
+  triggerSource: { readonly triggerElement: HTMLElement | null };
   popupRef: RefObject<HTMLElement | null>;
   boundary: PositioningBoundary;
   container: MediaContainer | null;
@@ -31,7 +31,7 @@ export function usePopupPosition({
   open,
   anchorName,
   position,
-  trigger,
+  triggerSource,
   popupRef,
   boundary,
   container,
@@ -49,7 +49,7 @@ export function usePopupPosition({
     positioner.sync({
       anchorName,
       position,
-      trigger,
+      trigger: triggerSource.triggerElement,
       popup: popupRef.current,
       boundary,
       container,
@@ -58,7 +58,7 @@ export function usePopupPosition({
     });
 
     return () => positioner.cleanup();
-  }, [open, anchorName, position, trigger, popupRef, boundary, container, cssVars, onSideChange, positioner]);
+  }, [open, anchorName, position, triggerSource, popupRef, boundary, container, cssVars, onSideChange, positioner]);
 
   return POPOVER_RESET;
 }
