@@ -100,6 +100,35 @@ describe('liveWindowFromState', () => {
     });
   });
 
+  // `sync-live-seekable-range` writes the result straight to
+  // `setLiveSeekableRange` with no try/catch, on the stated invariant that
+  // `0 <= start < end`. The `max` clamp above only rescues a *non-reference*
+  // track — these pin down what happens when the reference window itself is
+  // negative, which a mis-anchored source produces.
+  it('does NOT clamp a negative reference-track window start (the mis-anchored case)', () => {
+    const pres = presentation({ video: videoTrack(-2), audio: audioTrack(0) });
+    expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
+      start: 0,
+      end: 8,
+    });
+  });
+
+  it('yields a negative start when every selected window is negative (no floor at 0)', () => {
+    const pres = presentation({ video: videoTrack(-2), audio: audioTrack(-2) });
+    expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toEqual({
+      start: -2,
+      end: 8,
+    });
+  });
+
+  it('yields a negative start for a single mis-anchored track (audio-only / video-only)', () => {
+    const pres = presentation({ video: videoTrack(-2) });
+    expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: undefined }))).toEqual({
+      start: -2,
+      end: 8,
+    });
+  });
+
   it('returns null on a degenerate intersection (disjoint windows — no position both types can serve)', () => {
     const pres = presentation({ video: videoTrack(100), audio: audioTrack(200) });
     expect(liveWindowFromState(state({ presentation: pres, videoId: 'v-1', audioId: 'a-1' }))).toBeNull();
