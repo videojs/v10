@@ -51,6 +51,7 @@ export class VolumeSliderElement extends MediaElement {
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
+  #requestControlsLock: (() => () => void) | null = null;
   #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
@@ -77,11 +78,11 @@ export class VolumeSliderElement extends MediaElement {
       onValueChange: setVolume,
       onValueCommit: setVolume,
       onDragStart: () => {
-        this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
+        this.#syncControlsVisibilityLock(true);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        this.#releaseControlsVisibilityLock();
+        this.#syncControlsVisibilityLock(false);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
       adjustPercent: (raw, thumbSize, trackSize) => this.#core.adjustPercentForAlignment(raw, thumbSize, trackSize),
@@ -118,8 +119,20 @@ export class VolumeSliderElement extends MediaElement {
     super.destroyCallback();
   }
 
+  #syncControlsVisibilityLock(active: boolean): void {
+    const requestControlsLock = active ? (this.#controlsState.value?.requestControlsLock ?? null) : null;
+    if (requestControlsLock === this.#requestControlsLock) return;
+
+    this.#releaseControlsVisibilityLock();
+    if (!requestControlsLock) return;
+
+    this.#requestControlsLock = requestControlsLock;
+    this.#releaseControlsLock = requestControlsLock();
+  }
+
   #releaseControlsVisibilityLock(): void {
     this.#releaseControlsLock?.();
+    this.#requestControlsLock = null;
     this.#releaseControlsLock = null;
   }
 
@@ -133,6 +146,7 @@ export class VolumeSliderElement extends MediaElement {
     super.update(_changed);
     if (!this.#slider) return;
 
+    this.#syncControlsVisibilityLock(this.#slider.input.current.dragging);
     const media = this.#volumeState.value;
     if (!media) return;
 

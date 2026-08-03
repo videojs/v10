@@ -57,6 +57,7 @@ export class TimeSliderElement extends MediaElement {
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
+  #requestControlsLock: (() => () => void) | null = null;
   #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
@@ -85,12 +86,12 @@ export class TimeSliderElement extends MediaElement {
       },
       changeThrottle: this.changeThrottle,
       onDragStart: () => {
-        this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
+        this.#syncControlsVisibilityLock(true);
         this.#core.startDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-start', { bubbles: true }));
       },
       onDragEnd: () => {
-        this.#releaseControlsVisibilityLock();
+        this.#syncControlsVisibilityLock(false);
         this.#core.endDrag(this.#playbackState.value);
         this.dispatchEvent(new CustomEvent('drag-end', { bubbles: true }));
       },
@@ -129,8 +130,20 @@ export class TimeSliderElement extends MediaElement {
     this.#core.endDrag(this.#playbackState.value);
   }
 
+  #syncControlsVisibilityLock(active: boolean): void {
+    const requestControlsLock = active ? (this.#controlsState.value?.requestControlsLock ?? null) : null;
+    if (requestControlsLock === this.#requestControlsLock) return;
+
+    this.#releaseControlsVisibilityLock();
+    if (!requestControlsLock) return;
+
+    this.#requestControlsLock = requestControlsLock;
+    this.#releaseControlsLock = requestControlsLock();
+  }
+
   #releaseControlsVisibilityLock(): void {
     this.#releaseControlsLock?.();
+    this.#requestControlsLock = null;
     this.#releaseControlsLock = null;
   }
 
@@ -153,6 +166,7 @@ export class TimeSliderElement extends MediaElement {
     super.update(_changed);
     if (!this.#slider) return;
 
+    this.#syncControlsVisibilityLock(this.#slider.input.current.dragging);
     const time = this.#timeState.value;
     const buffer = this.#bufferState.value;
     if (!time) return;

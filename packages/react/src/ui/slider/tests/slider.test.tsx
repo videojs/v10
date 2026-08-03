@@ -145,6 +145,38 @@ describe('SliderRoot', () => {
     sliderOptionsRef.current?.onDragEnd?.();
     expect(releaseControlsLock).toHaveBeenCalledTimes(1);
   });
+
+  it('transfers an active drag lock when the controls action changes', () => {
+    const initialReleaseControlsLock = vi.fn();
+    const initialRequestControlsLock = vi.fn(() => initialReleaseControlsLock);
+    const releaseControlsLock = vi.fn();
+    const requestControlsLock = vi.fn(() => releaseControlsLock);
+    const { Wrapper, store } = createPlayerWrapper({
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock: initialRequestControlsLock,
+      toggleControls: vi.fn(),
+    });
+    const view = render(<SliderRoot />, { wrapper: Wrapper });
+
+    sliderOptionsRef.current?.onDragStart?.();
+    expect(initialRequestControlsLock).toHaveBeenCalledTimes(1);
+
+    store.state = { ...store.state, requestControlsLock };
+    view.rerender(<SliderRoot />);
+
+    expect(initialReleaseControlsLock).toHaveBeenCalledTimes(1);
+    expect(requestControlsLock).toHaveBeenCalledTimes(1);
+
+    store.state = { ...store.state, requestControlsLock: initialRequestControlsLock };
+    view.rerender(<SliderRoot />);
+
+    expect(releaseControlsLock).toHaveBeenCalledTimes(1);
+    expect(initialRequestControlsLock).toHaveBeenCalledTimes(2);
+
+    sliderOptionsRef.current?.onDragEnd?.();
+    expect(initialReleaseControlsLock).toHaveBeenCalledTimes(2);
+  });
 });
 
 describe('SliderTrack', () => {

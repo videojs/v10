@@ -92,6 +92,7 @@ export class MenuElement extends MediaElement {
   #triggerAbort: AbortController | null = null;
   #cleanupContentObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #requestControlsLock: (() => () => void) | null = null;
   #releaseControlsLock: (() => void) | null = null;
 
   override connectedCallback(): void {
@@ -207,11 +208,7 @@ export class MenuElement extends MediaElement {
     this.#core.setInput(input);
     const state = this.#core.getState();
 
-    if (!isSubmenu && state.open) {
-      this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
-    } else {
-      this.#releaseControlsVisibilityLock();
-    }
+    this.#syncControlsVisibilityLock(!isSubmenu && state.open);
 
     if (isSubmenu && parentCtx) {
       this.#updateAsSubmenu(parentCtx);
@@ -231,8 +228,20 @@ export class MenuElement extends MediaElement {
     });
   }
 
+  #syncControlsVisibilityLock(active: boolean): void {
+    const requestControlsLock = active ? (this.#controlsState.value?.requestControlsLock ?? null) : null;
+    if (requestControlsLock === this.#requestControlsLock) return;
+
+    this.#releaseControlsVisibilityLock();
+    if (!requestControlsLock) return;
+
+    this.#requestControlsLock = requestControlsLock;
+    this.#releaseControlsLock = requestControlsLock();
+  }
+
   #releaseControlsVisibilityLock(): void {
     this.#releaseControlsLock?.();
+    this.#requestControlsLock = null;
     this.#releaseControlsLock = null;
   }
 
