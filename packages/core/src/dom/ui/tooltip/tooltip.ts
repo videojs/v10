@@ -89,6 +89,24 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
   // suppressed during tap. The browser fires pointerdown → focus → pointerup,
   // so the flag is true during tap-triggered focus but false during keyboard Tab.
   let isPointerDown = false;
+  let expandedObserver: MutationObserver | null = null;
+
+  function isTriggerExpanded(): boolean {
+    return popover.triggerElement?.getAttribute('aria-expanded') === 'true';
+  }
+
+  function setTriggerElement(el: HTMLElement | null): void {
+    expandedObserver?.disconnect();
+    expandedObserver = null;
+    popover.setTriggerElement(el);
+
+    if (!el || typeof MutationObserver !== 'function') return;
+
+    expandedObserver = new MutationObserver(() => {
+      if (isTriggerExpanded()) popover.close('imperative-action');
+    });
+    expandedObserver.observe(el, { attributes: true, attributeFilter: ['aria-expanded'] });
+  }
 
   // Spread popover trigger props, omit onClick, guard disabled/touch on open handlers.
   const { onClick: _, ...baseTriggerProps } = popover.triggerProps;
@@ -96,14 +114,17 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     ...baseTriggerProps,
     onPointerDown() {
       isPointerDown = true;
+      popover.close('imperative-action');
     },
     onPointerEnter(event) {
       if (options.disabled?.()) return;
+      if (isTriggerExpanded()) return;
       if (event.pointerType === 'touch') return;
       baseTriggerProps.onPointerEnter(event);
     },
     onFocusIn(event) {
       if (options.disabled?.()) return;
+      if (isTriggerExpanded()) return;
       if (isPointerDown) {
         isPointerDown = false;
         return;
@@ -128,7 +149,12 @@ export function createTooltip(options: TooltipOptions): TooltipApi {
     get triggerElement() {
       return popover.triggerElement;
     },
+    setTriggerElement,
     open: () => popover.open('hover'),
     close: (reason: TooltipOpenChangeReason = 'hover') => popover.close(reason),
+    destroy() {
+      expandedObserver?.disconnect();
+      popover.destroy();
+    },
   };
 }

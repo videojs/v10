@@ -98,7 +98,7 @@ function getTemplateHTML() {
                 <media-tooltip-shortcut class="media-tooltip__kbd"></media-tooltip-shortcut>
               </media-tooltip>
 
-              <button commandfor="settings-menu" aria-labelledby="settings-label" class="media-button media-button--subtle media-button--icon media-button--settings">
+              <button id="settings-trigger" commandfor="settings-menu" aria-labelledby="settings-label" class="media-button media-button--subtle media-button--icon media-button--settings">
                 ${renderIcon('gear', { class: 'media-icon media-icon--settings' })}
                 ${renderText(settingsText, { id: 'settings-label', class: 'media-sr-only' })}
               </button>
@@ -216,6 +216,9 @@ function getTemplateHTML() {
                   </media-captions-radio-group>
                 </media-menu>
               </media-menu>
+              <media-tooltip id="settings-tooltip" trigger="settings-trigger" side="top" class="media-surface media-tooltip">
+                ${renderText(settingsText)}
+              </media-tooltip>
             </div>
           </div>
 

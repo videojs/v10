@@ -106,6 +106,10 @@ export class PlayerPage {
     return this.tooltip.filter({ hasText: 'Play' }).first();
   }
 
+  get settingsTooltip(): Locator {
+    return this.tooltip.filter({ hasText: 'Settings' }).first();
+  }
+
   get popover(): Locator {
     return this.page.locator(SELECTORS.popover).first();
   }

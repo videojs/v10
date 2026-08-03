@@ -207,6 +207,35 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await expect.poll(() => getMediaVolume(page)).toBeLessThan(0.5);
     });
 
+    test('settings button shows its tooltip on focus and still opens the menu', async ({ page }) => {
+      await player.showControls();
+      await player.settingsButton.focus();
+
+      await expect(player.settingsTooltip).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 2_000 });
+
+      const playerBox = await player.playerRoot.boundingBox();
+      const triggerBox = await player.settingsButton.boundingBox();
+      const tooltipBox = await player.settingsTooltip.boundingBox();
+      if (!playerBox || !triggerBox || !tooltipBox) throw new Error('Settings tooltip not visible');
+      expect(tooltipBox.x).toBeGreaterThanOrEqual(playerBox.x);
+      expect(tooltipBox.y).toBeGreaterThanOrEqual(playerBox.y);
+      expect(tooltipBox.x + tooltipBox.width).toBeLessThanOrEqual(playerBox.x + playerBox.width);
+      expect(tooltipBox.y + tooltipBox.height).toBeLessThanOrEqual(playerBox.y + playerBox.height);
+      expect(tooltipBox.y + tooltipBox.height).toBeLessThanOrEqual(triggerBox.y);
+      expect(tooltipBox.y + tooltipBox.height).toBeGreaterThanOrEqual(triggerBox.y - 16);
+
+      await player.settingsButton.click();
+      await expect(player.settingsSpeedItem).toBeVisible();
+      await expect(player.settingsTooltip).not.toBeVisible();
+
+      await page.waitForTimeout(500);
+      await expect(player.settingsSpeedItem).toBeVisible();
+
+      await player.settingsButton.hover();
+      await page.waitForTimeout(700);
+      await expect(player.settingsTooltip).not.toBeVisible();
+    });
+
     test('buffering indicator follows waiting state', async ({ page }) => {
       await player.play();
       await page.evaluate((selector) => {

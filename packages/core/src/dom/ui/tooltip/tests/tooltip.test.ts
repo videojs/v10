@@ -169,6 +169,78 @@ describe('createTooltip', () => {
         expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'hover' });
       });
 
+      it('closes on pointer down', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+        tooltip.open();
+        onOpenChange.mockClear();
+
+        tooltip.triggerProps.onPointerDown({
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'mouse',
+          buttons: 1,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        });
+
+        expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+      });
+
+      it('cancels a pending hover open on pointer down', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+        const event = {
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'mouse' as const,
+          buttons: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        };
+
+        tooltip.triggerProps.onPointerEnter(event);
+        tooltip.triggerProps.onPointerDown(event);
+        vi.advanceTimersByTime(600);
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+      });
+
+      it('does not open while its trigger popup is expanded', () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+        const trigger = document.createElement('button');
+        trigger.setAttribute('aria-expanded', 'true');
+        tooltip.setTriggerElement(trigger);
+
+        tooltip.triggerProps.onPointerEnter({
+          clientX: 0,
+          clientY: 0,
+          pointerId: 1,
+          pointerType: 'mouse',
+          buttons: 0,
+          preventDefault: vi.fn(),
+          stopPropagation: vi.fn(),
+        });
+        tooltip.triggerProps.onFocusIn({ relatedTarget: null, preventDefault: vi.fn(), stopPropagation: vi.fn() });
+        vi.advanceTimersByTime(600);
+
+        expect(onOpenChange).not.toHaveBeenCalled();
+      });
+
+      it('closes when its trigger popup expands', async () => {
+        const { tooltip, onOpenChange } = createTestTooltip();
+        const trigger = document.createElement('button');
+        trigger.setAttribute('aria-expanded', 'false');
+        tooltip.setTriggerElement(trigger);
+        tooltip.open();
+        onOpenChange.mockClear();
+
+        trigger.setAttribute('aria-expanded', 'true');
+        await Promise.resolve();
+
+        expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'imperative-action' });
+      });
+
       it('does not open via focus after pointer down (tap)', () => {
         const { tooltip, onOpenChange } = createTestTooltip();
         const pointerEvent = {

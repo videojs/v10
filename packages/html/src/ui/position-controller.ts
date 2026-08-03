@@ -15,10 +15,13 @@ export class PositionController implements ReactiveController {
     host.addController(this);
   }
 
-  /** Discover a trigger element linked via `commandfor` attribute. */
-  findTrigger(): HTMLElement | null {
-    if (!this.#host.id) return null;
+  /** Discover an explicit trigger by ID or one linked via `commandfor`. */
+  findTrigger(trigger?: string): HTMLElement | null {
     const root = this.#host.getRootNode() as Document | ShadowRoot;
+    if (trigger) {
+      return root.getElementById(trigger);
+    }
+    if (!this.#host.id) return null;
     return root.querySelector<HTMLElement>(`[commandfor="${this.#host.id}"]`);
   }
 

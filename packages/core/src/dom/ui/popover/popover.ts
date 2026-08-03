@@ -198,6 +198,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   }
 
   function close(reason: PopoverOpenChangeReason = 'click'): void {
+    clearHoverTimeout();
     applyClose(reason);
   }
 
