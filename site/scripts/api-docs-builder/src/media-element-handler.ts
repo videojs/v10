@@ -23,16 +23,10 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import * as tae from 'typescript-api-extractor';
 import { extractCSSVars } from './css-vars-handler.js';
-import type {
-  HostPropertyDef,
-  MediaElementReference,
-  MediaElementResult,
-  MediaEventDef,
-  MediaTargetTag,
-  ReactMediaReference,
-} from './pipeline.js';
+import type { HostPropertyDef, MediaEventDef, MediaReference, MediaTargetTag, ReactMediaReference } from './types.js';
+import { loadCompilerOptions } from './typescript.js';
+import { getJSDocDescription } from './utils.js';
 
 // ─── Constants ──────────────────────────────────────────────────────
 
@@ -55,6 +49,11 @@ interface MediaElementSource {
   hostClassName: string;
   mediaType: 'video' | 'audio';
   targetTag: MediaTargetTag;
+}
+
+export interface MediaElementResult {
+  name: string;
+  reference: MediaReference;
 }
 
 interface StaticMediaProperty {
@@ -788,27 +787,6 @@ function findImportPath(sourceFile: ts.SourceFile, name: string): string | undef
   return importPath;
 }
 
-// ─── JSDoc Extraction ────────────────────────────────────────────────
-
-function getJSDocDescription(node: ts.Node): string | undefined {
-  const jsDocNodes = (node as { jsDoc?: ts.JSDoc[] }).jsDoc;
-  if (!jsDocNodes || jsDocNodes.length === 0) return undefined;
-
-  const doc = jsDocNodes[0]!;
-  if (typeof doc.comment === 'string') return doc.comment;
-  if (!doc.comment) return undefined;
-
-  const parts: string[] = [];
-  for (const part of doc.comment) {
-    if (typeof part === 'string') {
-      parts.push(part);
-    } else if ('text' in part) {
-      parts.push(part.text);
-    }
-  }
-  return parts.join('') || undefined;
-}
-
 // ─── Default Value Extraction ────────────────────────────────────────
 
 const fileDefaultsCache = new Map<string, Map<string, string>>();
@@ -1527,10 +1505,7 @@ function collectNativeMemberNames(program: ts.Program, anchorFile: ts.SourceFile
 // ─── Pipeline ────────────────────────────────────────────────────────
 
 export function generateMediaElementReferences(monorepoRoot: string): MediaElementResult[] {
-  const tsconfigPath = path.join(monorepoRoot, 'tsconfig.base.json');
-  const config = tae.loadConfig(tsconfigPath);
-  config.options.rootDir = monorepoRoot;
-  const compilerOptions = config.options;
+  const compilerOptions = loadCompilerOptions(monorepoRoot);
 
   const sources = discoverMediaElements(monorepoRoot, compilerOptions);
   if (sources.length === 0) return [];
@@ -1747,7 +1722,7 @@ export function generateMediaElementReferences(monorepoRoot: string): MediaEleme
 
     const react = extractReactReference(monorepoRoot, source, compilerOptions, publicProperties);
 
-    const reference: MediaElementReference = {
+    const reference: MediaReference = {
       name: source.className,
       tagName: source.tagName,
       mediaType: source.mediaType,

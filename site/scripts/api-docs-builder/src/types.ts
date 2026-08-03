@@ -15,9 +15,24 @@ export { ComponentReferenceSchema, PartReferenceSchema } from '../../../src/type
 
 export type { FeatureActionDef, FeatureReference, FeatureStateDef } from '../../../src/types/feature-reference.js';
 export { FeatureReferenceSchema } from '../../../src/types/feature-reference.js';
-
-export type { PresetReference, PresetSkinDef } from '../../../src/types/preset-reference.js';
+export type {
+  HostPropertyDef,
+  HtmlMediaReference,
+  MediaEventDef,
+  MediaReference,
+  MediaTargetTag,
+  ReactMediaReference,
+} from '../../../src/types/media-reference.js';
+export { MediaReferenceSchema } from '../../../src/types/media-reference.js';
+export type {
+  PresetFeatureRef,
+  PresetReference,
+  PresetSkinDef,
+} from '../../../src/types/preset-reference.js';
 export { PresetReferenceSchema } from '../../../src/types/preset-reference.js';
+
+export type { UtilReference } from '../../../src/types/util-reference.js';
+export { UtilReferenceSchema } from '../../../src/types/util-reference.js';
 
 /**
  * Discovered part within a multi-part component.

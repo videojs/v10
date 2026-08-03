@@ -1,13 +1,12 @@
 /**
- * Testable pipeline functions for the API docs builder.
+ * Component reference discovery, extraction, and building.
  *
- * Extracted from index.ts so that E2E tests can run the full pipeline
+ * Kept separate from the CLI so E2E tests can run the component pipeline
  * against a fixture monorepo by passing a custom root path.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import * as tae from 'typescript-api-extractor';
 import { NAME_OVERRIDES } from '../../../src/utils/api-reference-overrides.js';
 import { extractCore } from './core-handler.js';
 import { extractCSSVars } from './css-vars-handler.js';
@@ -29,6 +28,7 @@ import type {
   PropDef,
   StateDef,
 } from './types.js';
+import { createTypeScriptProgram } from './typescript.js';
 import { getJSDocTagValue, kebabToPascal, log, partKebabFromSource, sortProps } from './utils.js';
 
 // ─── Overrides ─────────────────────────────────────────────────────
@@ -264,11 +264,7 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
     }
   }
 
-  const tsconfigPath = path.join(monorepoRoot, 'tsconfig.base.json');
-  const config = tae.loadConfig(tsconfigPath);
-  config.options.rootDir = monorepoRoot;
-
-  return ts.createProgram(files, config.options);
+  return createTypeScriptProgram(monorepoRoot, files);
 }
 
 // ─── Part Discovery ────────────────────────────────────────────────
@@ -578,135 +574,3 @@ export function generateComponentReferences(monorepoRoot: string): ComponentResu
 
   return results;
 }
-
-// ═══════════════════════════════════════════════════════════════════════
-// FEATURE REFERENCE PIPELINE
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface FeatureStateDef {
-  type: string;
-  detailedType?: string;
-  description?: string;
-}
-
-export interface FeatureActionDef {
-  type: string;
-  detailedType?: string;
-  description?: string;
-}
-
-export interface FeatureReference {
-  name: string;
-  slug: string;
-  description?: string;
-  state: Record<string, FeatureStateDef>;
-  actions: Record<string, FeatureActionDef>;
-}
-
-export interface FeatureResult {
-  name: string;
-  slug: string;
-  reference: FeatureReference;
-}
-
-export { generateFeatureReferences } from './feature-handler.js';
-
-// ═══════════════════════════════════════════════════════════════════════
-// PRESET REFERENCE PIPELINE
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface PresetSkinDef {
-  name: string;
-  tagName?: string;
-  cssImport?: string;
-}
-
-export interface PresetFeatureRef {
-  name: string;
-  slug: string;
-  hasReference: boolean;
-}
-
-export interface PresetReference {
-  name: string;
-  description?: string;
-  featureBundle: string;
-  features: PresetFeatureRef[];
-  html: {
-    skins: PresetSkinDef[];
-    mediaElement?: string;
-  };
-  react: {
-    skins: PresetSkinDef[];
-    mediaElement: string;
-  };
-}
-
-export interface PresetResult {
-  name: string;
-  reference: PresetReference;
-}
-
-export { generatePresetReferences } from './preset-handler.js';
-
-// ═══════════════════════════════════════════════════════════════════════
-// MEDIA ELEMENT REFERENCE PIPELINE
-// ═══════════════════════════════════════════════════════════════════════
-
-export interface HostPropertyDef {
-  type: string;
-  description?: string;
-  readonly: boolean;
-  overridesNative?: boolean;
-  /** Serialized default value from the host's `*DefaultProps` export. */
-  default?: string;
-}
-
-export interface MediaEventDef {
-  name: string;
-  /** Description from a `@fires` JSDoc tag on the dispatching class or mixin. */
-  description?: string;
-}
-
-export type MediaTargetTag = 'video' | 'audio' | 'iframe';
-
-export interface HtmlMediaReference {
-  target: MediaTargetTag;
-  attributes: {
-    standard: string[];
-    custom: Record<string, HostPropertyDef>;
-  };
-  properties: {
-    definitions: Record<string, HostPropertyDef>;
-    native: string[];
-  };
-  events: {
-    standard: string[];
-    custom: MediaEventDef[];
-  };
-  methods: string[];
-  cssCustomProperties: Record<string, { description: string }>;
-}
-
-export interface ReactMediaReference {
-  target: MediaTargetTag;
-  acceptsNativeProps: boolean;
-  props: Record<string, HostPropertyDef>;
-}
-
-export interface MediaElementReference {
-  name: string;
-  tagName: string;
-  mediaType: 'video' | 'audio';
-  platforms: {
-    html: HtmlMediaReference;
-    react?: ReactMediaReference;
-  };
-}
-
-export interface MediaElementResult {
-  name: string;
-  reference: MediaElementReference;
-}
-
-export { generateMediaElementReferences } from './media-element-handler.js';

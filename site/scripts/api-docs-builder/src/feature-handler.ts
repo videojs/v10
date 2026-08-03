@@ -18,8 +18,9 @@
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import * as tae from 'typescript-api-extractor';
-import type { FeatureActionDef, FeatureReference, FeatureResult, FeatureStateDef } from './pipeline.js';
+import type { FeatureActionDef, FeatureReference, FeatureStateDef } from './types.js';
+import { createTypeScriptProgram } from './typescript.js';
+import { getJSDocDescription } from './utils.js';
 
 const SKIP_FILES = new Set(['index.ts', 'presets.ts', 'feature.parts.ts']);
 
@@ -27,6 +28,12 @@ interface FeatureSource {
   filePath: string;
   name: string;
   stateTypeName?: string;
+}
+
+export interface FeatureResult {
+  name: string;
+  slug: string;
+  reference: FeatureReference;
 }
 
 // ─── Discovery ────────────────────────────────────────────────────
@@ -119,28 +126,6 @@ function formatCheckerType(type: ts.Type, checker: ts.TypeChecker): string {
   return checker.typeToString(type);
 }
 
-// ─── JSDoc Extraction ─────────────────────────────────────────────
-
-function getJSDocDescription(node: ts.Node): string | undefined {
-  const jsDocNodes = (node as { jsDoc?: ts.JSDoc[] }).jsDoc;
-  if (!jsDocNodes || jsDocNodes.length === 0) return undefined;
-
-  const doc = jsDocNodes[0]!;
-  if (typeof doc.comment === 'string') return doc.comment;
-  if (!doc.comment) return undefined;
-
-  // NodeArray<JSDocComment> — concatenate text parts
-  const parts: string[] = [];
-  for (const part of doc.comment) {
-    if (typeof part === 'string') {
-      parts.push(part);
-    } else if ('text' in part) {
-      parts.push(part.text);
-    }
-  }
-  return parts.join('') || undefined;
-}
-
 // ─── Interface Extraction ─────────────────────────────────────────
 
 function extractInterfaceMembers(
@@ -198,10 +183,7 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
   if (sources.length === 0) return [];
 
   // Create a TS program with the state file for the checker
-  const tsconfigPath = path.join(monorepoRoot, 'tsconfig.base.json');
-  const config = tae.loadConfig(tsconfigPath);
-  config.options.rootDir = monorepoRoot;
-  const program = ts.createProgram([stateFilePath], config.options);
+  const program = createTypeScriptProgram(monorepoRoot, [stateFilePath]);
   const checker = program.getTypeChecker();
   const stateSourceFile = program.getSourceFile(stateFilePath);
   if (!stateSourceFile) return [];

@@ -164,7 +164,7 @@ Use `ogTitle` in docs/blog frontmatter when the page title is too long for the s
 
 ### References
 
-API reference pages are generated from TypeScript source code by the builder in [`scripts/api-docs-builder/`](scripts/api-docs-builder/). It extracts props, state, data attributes, and part information, then outputs JSON to `src/content/generated-api-reference/` (gitignored).
+API reference pages are generated from TypeScript source code by the builder in [`scripts/api-docs-builder/`](scripts/api-docs-builder/). It extracts component, utility, feature, media, and preset information into the gitignored `src/content/generated-*-reference/` collections.
 
 The JSON is regenerated automatically on `pnpm dev` and `pnpm build`, or manually via `pnpm api-docs`.
 

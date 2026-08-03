@@ -143,28 +143,10 @@ export function formatDetailedType(
   }
 
   if (type instanceof tae.UnionNode) {
-    let memberTypes = type.types;
-
-    if (removeUndefined) {
-      memberTypes = memberTypes.filter((t) => !(t instanceof tae.IntrinsicNode && t.intrinsic === 'undefined'));
-    }
-
-    const flattenedMemberTypes = memberTypes.flatMap((t) => {
-      if (t instanceof tae.UnionNode) {
-        return t.typeName ? t : t.types;
-      }
-      if (
-        t instanceof tae.TypeParameterNode &&
-        t.constraint instanceof tae.UnionNode &&
-        t.constraint.types.length <= 5
-      ) {
-        return t.constraint.types;
-      }
-      return t;
-    });
-
     const formattedMemberTypes = uniq(
-      orderMembers(flattenedMemberTypes).map((t) => formatDetailedType(t, allExports, removeUndefined, visited))
+      orderMembers(flattenUnionMembers(type.types, removeUndefined)).map((t) =>
+        formatDetailedType(t, allExports, removeUndefined, visited)
+      )
     );
 
     return formattedMemberTypes.join(' | ');
@@ -204,27 +186,9 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
       return getFullyQualifiedName(type.typeName);
     }
 
-    let memberTypes = type.types;
-
-    if (removeUndefined) {
-      memberTypes = memberTypes.filter((t) => !(t instanceof tae.IntrinsicNode && t.intrinsic === 'undefined'));
-    }
-
-    const flattenedMemberTypes = memberTypes.flatMap((t) => {
-      if (t instanceof tae.UnionNode) {
-        return t.typeName ? t : t.types;
-      }
-      if (
-        t instanceof tae.TypeParameterNode &&
-        t.constraint instanceof tae.UnionNode &&
-        t.constraint.types.length <= 5
-      ) {
-        return t.constraint.types;
-      }
-      return t;
-    });
-
-    const formattedMemberTypes = uniq(orderMembers(flattenedMemberTypes).map((t) => formatType(t, removeUndefined)));
+    const formattedMemberTypes = uniq(
+      orderMembers(flattenUnionMembers(type.types, removeUndefined)).map((t) => formatType(t, removeUndefined))
+    );
 
     return formattedMemberTypes.join(' | ');
   }
@@ -293,6 +257,24 @@ export function formatType(type: tae.AnyType, removeUndefined: boolean): string 
   }
 
   return 'unknown';
+}
+
+function flattenUnionMembers(members: readonly tae.AnyType[], removeUndefined: boolean): tae.AnyType[] {
+  return members
+    .filter((member) => !removeUndefined || !(member instanceof tae.IntrinsicNode && member.intrinsic === 'undefined'))
+    .flatMap((member) => {
+      if (member instanceof tae.UnionNode) {
+        return member.typeName ? member : member.types;
+      }
+      if (
+        member instanceof tae.TypeParameterNode &&
+        member.constraint instanceof tae.UnionNode &&
+        member.constraint.types.length <= 5
+      ) {
+        return member.constraint.types;
+      }
+      return member;
+    });
 }
 
 function getFullyQualifiedName(typeName: tae.TypeName): string {

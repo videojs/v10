@@ -93,15 +93,10 @@
  */
 import * as path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import {
-  type FeatureResult,
-  generateComponentReferences,
-  generateFeatureReferences,
-  generateMediaElementReferences,
-  generatePresetReferences,
-  type MediaElementResult,
-  type PresetResult,
-} from '../pipeline';
+import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
+import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
+import { generateComponentReferences } from '../pipeline';
+import { generatePresetReferences, type PresetResult } from '../preset-handler';
 import { getUtilEntries, type UtilEntry } from '../util-handler';
 
 const FIXTURE_ROOT = path.resolve(import.meta.dirname, 'fixtures/monorepo');

@@ -1,4 +1,4 @@
-import type * as ts from 'typescript';
+import * as ts from 'typescript';
 import type { PropDef } from './types.js';
 
 const PREFIX = '\x1b[35m[api-docs-builder]\x1b[0m';
@@ -7,11 +7,22 @@ export const log = {
   info: (...args: unknown[]) => console.log(PREFIX, ...args),
   warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
   error: (...args: unknown[]) => console.error(PREFIX, '\x1b[31merror:\x1b[0m', ...args),
+  success: (...args: unknown[]) => console.log(PREFIX, ...args),
 };
 
+export function getJSDocNodes(node: ts.Node): readonly ts.JSDoc[] {
+  return (node as ts.Node & { jsDoc?: ts.JSDoc[] }).jsDoc ?? [];
+}
+
+export function getJSDocDescription(node: ts.Node): string | undefined {
+  const doc = getJSDocNodes(node)[0];
+  if (!doc?.comment) return undefined;
+  if (typeof doc.comment === 'string') return doc.comment;
+  return doc.comment.map((part) => ('text' in part ? part.text : '')).join('') || undefined;
+}
+
 export function hasJSDocTag(node: ts.Node, tagName: string): boolean {
-  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
-  if (!jsDocNodes?.length) return false;
+  const jsDocNodes = getJSDocNodes(node);
 
   for (const doc of jsDocNodes) {
     if (!doc.tags) continue;
@@ -23,8 +34,7 @@ export function hasJSDocTag(node: ts.Node, tagName: string): boolean {
 }
 
 export function getJSDocTagValue(node: ts.Node, tagName: string): string | undefined {
-  const jsDocNodes = (node as any).jsDoc as ts.JSDoc[] | undefined;
-  if (!jsDocNodes?.length) return undefined;
+  const jsDocNodes = getJSDocNodes(node);
 
   // TS attaches every leading JSDoc block to the node (file headers included)
   // and parses @tags even mid-sentence — the block closest to the declaration
@@ -43,6 +53,14 @@ export function getJSDocTagValue(node: ts.Node, tagName: string): string | undef
     }
   }
 
+  return undefined;
+}
+
+export function unwrapObjectLiteral(node: ts.Expression): ts.ObjectLiteralExpression | undefined {
+  if (ts.isObjectLiteralExpression(node)) return node;
+  if (ts.isParenthesizedExpression(node) || ts.isAsExpression(node) || ts.isSatisfiesExpression(node)) {
+    return unwrapObjectLiteral(node.expression);
+  }
   return undefined;
 }
 
