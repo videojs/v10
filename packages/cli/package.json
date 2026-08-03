@@ -15,7 +15,7 @@
     "docs"
   ],
   "scripts": {
-    "copy-docs": "node scripts/copy-docs.js",
+    "copy-docs": "node --import tsx ../../site/scripts/copy-package-docs.ts cli",
     "build": "pnpm run copy-docs && tsdown",
     "dev": "tsdown --watch",
     "test": "vitest run",

@@ -18,18 +18,14 @@ export function docExistsInAnyFramework(slug: string): boolean {
   });
 }
 
-function stripLlmsFooter(content: string): string {
-  return content.replace(/\n---\n\n(\w+ documentation: https:\/\/.*\n)?All documentation: https:\/\/.*\n*$/, '');
-}
-
 export function readBundledDoc(framework: string, slug: string): string | null {
   const mdPath = safePath(framework, `${slug}.md`);
   if (!mdPath || !existsSync(mdPath)) return null;
-  return stripLlmsFooter(readFileSync(mdPath, 'utf-8'));
+  return readFileSync(mdPath, 'utf-8');
 }
 
 export function readLlmsTxt(framework: string): string | null {
   const txtPath = safePath(framework, 'llms.txt');
   if (!txtPath || !existsSync(txtPath)) return null;
-  return stripLlmsFooter(readFileSync(txtPath, 'utf-8'));
+  return readFileSync(txtPath, 'utf-8');
 }
