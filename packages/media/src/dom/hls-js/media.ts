@@ -2,7 +2,7 @@ import { deepEqual, shallowEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
 import { resolveSourceObject } from '../../core/media-source';
-import { type MediaSourceObject, type MediaStreamType, MediaStreamTypes } from '../../core/types';
+import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsOnlyMedia } from './hls-js-only';
@@ -35,20 +35,23 @@ export interface HlsMediaProps {
 }
 
 /**
- * Structured HLS source: the manifest URL in `src`, an explicit `type` to skip
- * inference from the URL, a preferred playback path, and hls.js's own options
- * under `engine`.
+ * Structured HLS source: which source to play, plus how to play it.
  *
  * `preferPlayback` and `engine` are both read when the engine is constructed, so
  * changing either recreates it.
  */
-export interface HlsSource extends MediaSourceObject<Partial<HlsJsConfig>> {
+export interface HlsSource {
+  /** Manifest URL. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** MIME type of the source. Takes precedence over inference from `src`. */
   type?: SourceType | undefined;
   /**
    * Preferred playback path: `'mse'` for hls.js, `'native'` for the browser's
    * own HLS support. Ignored when the preferred path cannot play the source.
    */
   preferPlayback?: PlaybackType | undefined;
+  /** hls.js's own configuration, passed through untouched. */
+  engine?: Partial<HlsJsConfig> | undefined;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {

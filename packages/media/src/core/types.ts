@@ -132,27 +132,6 @@ export interface MediaSourceCapability {
   canPlayType(type: string): CanPlayTypeResult;
 }
 
-/**
- * Structured media source: which source to play, plus how the engine should
- * play it.
- *
- * `src` and `type` identify the source. `engine` is the playback engine's own
- * configuration object, passed through untouched, and hosts add their own
- * normalized options alongside it (see `HlsSource`'s `preferPlayback`).
- *
- * Hosts compare sources structurally, so reassigning an equivalent source is a
- * no-op. Hosts may also add identity fields of their own in place of `src` (see
- * `MuxSource`'s `playbackId`).
- */
-export interface MediaSourceObject<Engine = unknown> {
-  /** Source URL. Mirrors the host's `src` property. */
-  src?: string | undefined;
-  /** MIME type of the source. Takes precedence over inference from `src`. */
-  type?: string | undefined;
-  /** The playback engine's own configuration. Changing it recreates the engine unless the engine accepts live updates. */
-  engine?: Engine | undefined;
-}
-
 // ----------------------------------------
 // Volume
 // ----------------------------------------

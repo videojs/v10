@@ -3,7 +3,7 @@ import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { resolveSourceObject } from '../../core/media-source';
-import type { ErrorLike, MediaPreloadType, MediaSourceObject, TextTrackListLike, Video } from '../../core/types';
+import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
@@ -16,8 +16,13 @@ export interface VimeoEngineConfig extends VimeoEmbedParameters {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Structured Vimeo source: a Vimeo URL or id in `src`, embed options in `engine`. */
-export interface VimeoSource extends MediaSourceObject<VimeoEngineConfig> {}
+/** Structured Vimeo source: which source to play, plus how to play it. */
+export interface VimeoSource {
+  /** Vimeo URL or id. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** Vimeo's own embed parameters, passed through untouched. */
+  engine?: VimeoEngineConfig | undefined;
+}
 
 /** Parsed pieces of a Vimeo source URL. */
 export interface ParsedVimeoSource {

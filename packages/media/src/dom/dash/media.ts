@@ -2,14 +2,19 @@ import { deepEqual } from '@videojs/utils/object';
 import * as dashjs from 'dashjs';
 import { resolveSourceObject } from '../../core/media-source';
 import { MediaTracksMixin } from '../../core/media-tracks';
-import type { MediaEngineHost, MediaSourceObject } from '../../core/types';
+import type { MediaEngineHost } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 
-/**
- * Structured DASH source: the MPD URL in `src`, dash.js's own settings in
- * `engine`. Replacing `engine` resets any previously applied settings.
- */
-export interface DashSource extends MediaSourceObject<dashjs.MediaPlayerSettingClass> {}
+/** Structured DASH source: which source to play, plus how to play it. */
+export interface DashSource {
+  /** MPD URL. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /**
+   * dash.js's own settings, passed through untouched. Replacing them resets any
+   * previously applied settings.
+   */
+  engine?: dashjs.MediaPlayerSettingClass | undefined;
+}
 
 export interface DashMediaProps {
   src: string;
