@@ -54,14 +54,18 @@ export function mediaPlaylistReloadDelay(current: ResolvedTrack, previous: Resol
 
 /**
  * Target live latency (seconds) for a resolved track — how far behind the live
- * edge the playhead should sit. HLS derives it from `EXT-X-SERVER-CONTROL`
- * `HOLD-BACK`, defaulting to {@link HOLD_BACK_TARGET_MULTIPLIER}× the target
- * duration. This is the HLS side of the format-neutral `resolveLiveLatency`
- * seam consumed by `seek-to-live-edge`; a DASH engine supplies its own
- * (`suggestedPresentationDelay`).
+ * edge the playhead should sit. Prefers the server's declared
+ * `EXT-X-SERVER-CONTROL` `HOLD-BACK`, falling back to
+ * {@link HOLD_BACK_TARGET_MULTIPLIER}× the target duration when absent (the
+ * spec default). This is the HLS side of the format-neutral
+ * `resolveLiveLatency` seam consumed by `seek-to-live-edge`; a DASH engine
+ * supplies its own (`suggestedPresentationDelay`).
+ *
+ * Only `HOLD-BACK` — never `PART-HOLD-BACK`, which assumes partial-segment
+ * playback. See {@link MediaPlaylistMetadata.holdBack}.
  */
 export function liveLatencyFor(track: ResolvedTrack): number {
-  return HOLD_BACK_TARGET_MULTIPLIER * targetDurationOf(track);
+  return getMediaPlaylistMetadata(track)?.holdBack ?? HOLD_BACK_TARGET_MULTIPLIER * targetDurationOf(track);
 }
 
 /**

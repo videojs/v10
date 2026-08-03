@@ -350,14 +350,18 @@ follows from PDT-primary re-derivation: a stored edge would just go stale).
   `liveWindowFromState` (`playback/primitives/live-window.ts`), with the `max` also
   clamping a pre-join non-reference track's negative `startTime`.
 
-  **Deviation on holdback.** This doc specified deriving holdback from §14.3
+  **Partial deviation on holdback.** This doc specified deriving holdback from §14.3
   (`PART-HOLD-BACK` ≥ 3 × part target duration) rather than "the old branch's
-  `3 × targetDuration`". What shipped is `3 × targetDuration` (`resolveLiveLatency` in
-  `media/hls/reload-policy.ts`), injected through `seekToLiveEdge`'s
-  `resolveLiveLatency` seam. The seam keeps the behavior format-neutral, so the policy
-  can change without touching it — but the LL-HLS-aware value is not yet implemented,
-  and `3 × targetDuration` is one of the HLS-specific assumptions to unwind before
-  DASH.
+  `3 × targetDuration`". What shipped reads the server's `EXT-X-SERVER-CONTROL`
+  `HOLD-BACK` when declared and falls back to `3 × targetDuration` otherwise
+  (`liveLatencyFor` in `media/hls/reload-policy.ts`), injected through
+  `seekToLiveEdge`'s `resolveLiveLatency` seam.
+
+  `PART-HOLD-BACK` is **intentionally** not used, and this doc's original framing was
+  wrong to prefer it unconditionally: it is the holdback for clients playing *partial
+  segments*. While the engine fetches whole segments only, seating the playhead at
+  `PART-HOLD-BACK` would put it ahead of the last complete segment. It becomes correct
+  with LL-HLS partial-segment support, not before.
 
 ### Still open
 

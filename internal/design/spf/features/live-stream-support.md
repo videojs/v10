@@ -218,7 +218,7 @@ endOfStream,
 | Helper | File | Role |
 |---|---|---|
 | `mediaPlaylistReloadDelay(current, previous)` | `packages/spf/src/media/hls/reload-policy.ts` | Pure pacing policy: target duration, halved when the window is unchanged, `null` once complete (stops the loop) |
-| `liveLatencyFor(track)` / `resolveLiveLatency(presentation, trackId)` | `packages/spf/src/media/hls/reload-policy.ts` | HLS `HOLD-BACK` (3 × target duration). Injected into `seekToLiveEdge` so the behavior stays format-neutral |
+| `liveLatencyFor(track)` / `resolveLiveLatency(presentation, trackId)` | `packages/spf/src/media/hls/reload-policy.ts` | The server's `EXT-X-SERVER-CONTROL` `HOLD-BACK` when declared, else the spec default 3 × target duration. Never `PART-HOLD-BACK` — that assumes partial-segment playback. Injected into `seekToLiveEdge` so the behavior stays format-neutral |
 | `liveWindowFor(presentation, trackId)` | `packages/spf/src/media/live-window.ts` | One track's window as a live read over `segments`; `null` for a complete playlist |
 | `liveWindowFromState(state)` / `getLiveEdge({state, config})` / `liveTrackId(state)` | `packages/spf/src/playback/primitives/live-window.ts` | The A/V window intersection, the edge target, and the timeline-bearing track pick — the single call site `seekToLiveEdge` and `syncLiveSeekableRange` share |
 | `gateFirstParseOnAnchor` | `packages/spf/src/playback/primitives/gate-first-parse.ts` | Holds a non-reference track's first parse until the anchor is stamped |
@@ -253,7 +253,12 @@ exposes `streamType`, `targetLiveWindow`, and `liveEdgeStart` with
     "stops (null) once the playlist is complete (finite duration)" —
     the pacing policy, including loop termination
   - `packages/spf/src/media/hls/tests/reload-policy.test.ts` →
-    "is 3× the target duration (default HOLD-BACK)" — holdback derivation
+    "is 3× the target duration (default HOLD-BACK)", "prefers a declared
+    HOLD-BACK over the target-duration default" — holdback derivation
+  - `packages/spf/src/media/hls/tests/parse-media-playlist.test.ts` →
+    "surfaces EXT-X-SERVER-CONTROL HOLD-BACK, ignoring PART-HOLD-BACK",
+    "leaves holdBack undefined when SERVER-CONTROL declares only
+    PART-HOLD-BACK" — the LL-HLS-server shape this must not misread
   - `packages/spf/src/playback/behaviors/tests/resolve-track.test.ts` →
     "re-resolves while the window is incomplete (reschedule resolves)",
     "resolves once and never reloads when no reschedule is configured
@@ -371,12 +376,17 @@ exposes `streamType`, `targetLiveWindow`, and `liveEdgeStart` with
   the former, but worth confirming the precedent. Untested — no fixture
   where the two types terminate at different times.
 - **HLS-specific assumptions baked into format-neutral behaviors.**
-  `liveWindowFor` reads `getMediaPlaylistMetadata` / `targetDuration`,
-  and the shipped holdback is `3 × targetDuration`. Both are HLS
-  vocabulary sitting below the `resolveLiveLatency` seam that exists to
-  keep the behaviors format-neutral. Needs unwinding before DASH — see
-  [live-presentation-timeline-model.md](../live-presentation-timeline-model.md)
-  for the holdback deviation this connects to.
+  `liveWindowFor` reads `getMediaPlaylistMetadata` / `targetDuration` —
+  HLS vocabulary sitting *below* the `resolveLiveLatency` seam that exists
+  to keep the behaviors format-neutral. Needs unwinding before DASH. (The
+  latency policy itself is no longer part of this: it reads the server's
+  declared `HOLD-BACK` and only falls back to `3 × targetDuration`, and it
+  lives above the seam where format-specific vocabulary belongs.)
+- **`PART-HOLD-BACK` is deliberately unread.** It only applies to clients
+  playing partial segments; using it while fetching whole segments would
+  seat the playhead ahead of the last complete segment. Belongs with
+  [ll-hls-support](./ll-hls-support.md), not here — which is also why
+  `MediaPlaylistMetadata` doesn't carry it (no write-only state).
 - **`syncLiveSeekableRange` writes an unguarded range.** Its docstring
   justifies having no try/catch on the invariant that
   `liveWindowFromState` guarantees `0 ≤ start < end`. It doesn't: the A/V

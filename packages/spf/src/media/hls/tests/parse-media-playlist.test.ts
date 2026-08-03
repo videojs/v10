@@ -420,6 +420,41 @@ segment1.m4s`;
       expect(result.duration).toBe(Number.POSITIVE_INFINITY);
       expect(result.startTime).toBe(0);
       expect(getMediaPlaylistMetadata(result)?.endList).toBe(false);
+      // No EXT-X-SERVER-CONTROL → undefined, so the latency policy applies its default.
+      expect(getMediaPlaylistMetadata(result)?.holdBack).toBeUndefined();
+    });
+
+    it('surfaces EXT-X-SERVER-CONTROL HOLD-BACK, ignoring PART-HOLD-BACK', () => {
+      // Shaped after a real LL-HLS-capable server: PART-HOLD-BACK is advertised
+      // alongside HOLD-BACK, but only applies to partial-segment playback.
+      const playlist = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:2
+#EXT-X-SERVER-CONTROL:CAN-BLOCK-RELOAD=YES,HOLD-BACK=7.5,PART-HOLD-BACK=2.171
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:2.0,
+segment0.m4s`;
+
+      const metadata = getMediaPlaylistMetadata(parseMediaPlaylist(playlist, unresolvedVideo));
+
+      expect(metadata?.holdBack).toBe(7.5);
+      expect(metadata).not.toHaveProperty('partHoldBack');
+    });
+
+    it('leaves holdBack undefined when SERVER-CONTROL declares only PART-HOLD-BACK', () => {
+      // The common Mux/LL-HLS shape. Reading PART-HOLD-BACK here would seat the
+      // playhead ahead of the last complete segment.
+      const playlist = `#EXTM3U
+#EXT-X-VERSION:7
+#EXT-X-TARGETDURATION:2
+#EXT-X-SERVER-CONTROL:CAN-BLOCK-RELOAD=YES,PART-HOLD-BACK=2.171
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:2.0,
+segment0.m4s`;
+
+      expect(getMediaPlaylistMetadata(parseMediaPlaylist(playlist, unresolvedVideo))?.holdBack).toBeUndefined();
     });
 
     it('reports Infinity duration for an unended EVENT playlist', () => {

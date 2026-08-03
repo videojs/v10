@@ -202,6 +202,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   let mediaSequence = 0;
   let playlistType: 'VOD' | 'EVENT' | undefined;
   let endList = false;
+  let holdBack: number | undefined;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -229,6 +230,18 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     if (trimmed.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
       const value = trimmed.slice('#EXT-X-PLAYLIST-TYPE:'.length).trim();
       playlistType = value === 'VOD' || value === 'EVENT' ? value : undefined;
+      continue;
+    }
+
+    // #EXT-X-SERVER-CONTROL — only HOLD-BACK is read; see MediaPlaylistMetadata
+    // on why PART-HOLD-BACK is deliberately left out until LL-HLS.
+    const serverControl = matchTag(trimmed, 'EXT-X-SERVER-CONTROL');
+    if (serverControl) {
+      const value = serverControl.get('HOLD-BACK');
+      if (value !== undefined) {
+        const parsed = Number.parseFloat(value);
+        if (Number.isFinite(parsed) && parsed > 0) holdBack = parsed;
+      }
       continue;
     }
 
@@ -373,6 +386,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         mediaSequence,
         playlistType,
         endList,
+        holdBack,
       } satisfies MediaPlaylistMetadata,
     },
   } as unknown as ResolveTrack<T>;

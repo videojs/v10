@@ -431,6 +431,19 @@ export interface MediaPlaylistMetadata {
   mediaSequence: number;
   playlistType?: 'VOD' | 'EVENT';
   endList: boolean;
+  /**
+   * `EXT-X-SERVER-CONTROL` `HOLD-BACK` (seconds) — the server's declared distance
+   * from the live edge for clients playing *complete* segments. Absent when the
+   * server doesn't advertise it, in which case the spec default (3 × target
+   * duration) applies. Deliberately HLS vocabulary living in the playlist
+   * metadata rather than on `Track`: whether a wall-clock holdback generalizes
+   * across delivery formats is unresolved.
+   *
+   * `PART-HOLD-BACK` is **not** captured — it only applies to clients playing
+   * partial segments, and using it while fetching whole segments would put the
+   * playhead ahead of the last complete segment. Add it with LL-HLS support.
+   */
+  holdBack?: number;
 }
 
 /** Key under `Ham.metadata` where {@link MediaPlaylistMetadata} is stored. */

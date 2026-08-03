@@ -8,6 +8,7 @@ function track(opts: {
   targetDuration?: number;
   mediaSequence?: number;
   segments?: number;
+  holdBack?: number;
 }): ResolvedTrack {
   return {
     duration: opts.duration ?? Number.POSITIVE_INFINITY,
@@ -17,6 +18,7 @@ function track(opts: {
         targetDuration: opts.targetDuration ?? 4,
         mediaSequence: opts.mediaSequence ?? 0,
         endList: Number.isFinite(opts.duration ?? Number.POSITIVE_INFINITY),
+        holdBack: opts.holdBack,
       },
     },
   } as unknown as ResolvedTrack;
@@ -56,6 +58,17 @@ describe('liveLatencyFor', () => {
 
   it('falls back to 3× the 6s default when no usable target duration is declared', () => {
     expect(liveLatencyFor(track({ targetDuration: 0 }))).toBe(18);
+  });
+
+  it('prefers a declared HOLD-BACK over the target-duration default', () => {
+    expect(liveLatencyFor(track({ targetDuration: 2, holdBack: 9 }))).toBe(9);
+  });
+
+  it('uses a declared HOLD-BACK even when it undercuts 3× target duration', () => {
+    // The spec floors HOLD-BACK at 3× target duration, so this is non-conformant
+    // input. We honor the server rather than second-guessing it — consistent with
+    // the parser's spec-valid-input stance.
+    expect(liveLatencyFor(track({ targetDuration: 4, holdBack: 5 }))).toBe(5);
   });
 });
 

@@ -34,8 +34,12 @@ low-latency the producer optimized the stream for.
   `#EXT-X-SERVER-CONTROL`, and `#EXT-X-PRELOAD-HINT`; reload pacing is
   interval-based (`mediaPlaylistReloadDelay`) with no blocking-reload
   `_HLS_msn` / `_HLS_part` query support; `forward-buffer`'s planner and
-  `createTrackedFetch` handle whole segments only. Holdback is
-  `3 × targetDuration`, not the LL-HLS `PART-HOLD-BACK`.
+  `createTrackedFetch` handle whole segments only. `EXT-X-SERVER-CONTROL`
+  is parsed, but only for `HOLD-BACK` — `PART-HOLD-BACK` is deliberately
+  unread until partial-segment playback exists, since seating the playhead
+  there while fetching whole segments would put it ahead of the last
+  complete segment. Capturing `PART-HOLD-BACK` (and `PART-TARGET`) in the
+  playlist metadata belongs to this feature's partial-segments phase.
 - **Note:** live playback has been *validated against* Mux LL-HLS
   sources, which advertise `CAN-BLOCK-RELOAD=YES` and `PART-TARGET`.
   That is the interval-reload path working on an LL-HLS-capable server —
