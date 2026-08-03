@@ -58,6 +58,7 @@ export const Value = forwardRef(function Value(
   }
 
   core.setMedia(time);
+  core.setFormatLocale(locale);
   const state = core.getState();
   const attrs = core.getAttrs(state, defaultType);
   const labelParams = core.getLabelParams(state);

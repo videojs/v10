@@ -29,15 +29,17 @@ const durationFormatters = new Map<string, DurationFormatter>();
  */
 function createFallbackFormatter(
   style: NonNullable<TimeFormatOptions['style']>,
-  hoursDisplay?: 'auto' | 'always'
+  hoursDisplay?: 'auto' | 'always',
+  locale?: string | string[]
 ): DurationFormatter {
   if (style === 'digital') {
-    const pad = (value: number): string => String(value).padStart(2, '0');
+    const number = new Intl.NumberFormat(locale, { useGrouping: false });
+    const padded = new Intl.NumberFormat(locale, { minimumIntegerDigits: 2, useGrouping: false });
     return {
       format: (duration) => {
-        const body = `${pad(duration.minutes ?? 0)}:${pad(duration.seconds ?? 0)}`;
+        const body = `${padded.format(duration.minutes ?? 0)}:${padded.format(duration.seconds ?? 0)}`;
         const showHours = hoursDisplay === 'always' || duration.hours !== undefined;
-        return showHours ? `${duration.hours ?? 0}:${body}` : body;
+        return showHours ? `${number.format(duration.hours ?? 0)}:${body}` : body;
       },
     };
   }
@@ -82,7 +84,7 @@ function getDurationFormatter(
       const options = hoursDisplay === undefined ? { style } : { style, hoursDisplay };
       formatter = new DurationFormat(locale, options);
     } else {
-      formatter = createFallbackFormatter(style, hoursDisplay);
+      formatter = createFallbackFormatter(style, hoursDisplay, locale);
     }
     durationFormatters.set(key, formatter);
   }
@@ -98,6 +100,7 @@ function isValidTime(value: number): boolean {
  *
  * @param seconds - Time in seconds (can be negative)
  * @param guide - Guide time (typically duration) to determine display format
+ * @param options - Digital formatting options
  * @returns Formatted string like "1:30" or "1:05:30"
  *
  * @example
@@ -106,7 +109,7 @@ function isValidTime(value: number): boolean {
  * formatTime(35, 3600) // "0:00:35" (guided by 1-hour duration)
  * formatTime(35, 600) // "00:35" (guided by 10-minute duration)
  */
-export function formatTime(seconds: number, guide?: number): string {
+export function formatTime(seconds: number, guide?: number, options?: Pick<TimeFormatOptions, 'locale'>): string {
   if (!isValidTime(seconds)) {
     return '0:00';
   }
@@ -126,10 +129,12 @@ export function formatTime(seconds: number, guide?: number): string {
   const padMinutes = showHours || guideMinutes >= 10;
 
   const duration = showHours ? { hours, minutes, seconds: secondsPart } : { minutes, seconds: secondsPart };
-  let body = getDurationFormatter('en', 'digital', showHours ? 'always' : 'auto').format(duration);
+  const { locale } = options ?? {};
+  let body = getDurationFormatter(locale, 'digital', showHours ? 'always' : 'auto').format(duration);
 
   if (!padMinutes) {
-    body = body.replace(/^0(?=\d:)/, '');
+    const zero = new Intl.NumberFormat(locale, { useGrouping: false }).format(0);
+    body = body.replace(new RegExp(`^${zero}(?=\\p{Nd}\\D)`, 'u'), '');
   }
 
   return `${negative ? '-' : ''}${body}`;

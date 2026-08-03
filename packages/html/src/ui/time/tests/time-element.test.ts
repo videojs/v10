@@ -152,6 +152,12 @@ describe('TimeElement', () => {
     expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(300, { locale: 'fr' })}. Afficher restant.`);
   });
 
+  it('formats digital time with locale digits', async () => {
+    const { time } = await setup({}, 'fa');
+
+    expect(time.textContent).toBe('۱:۳۰');
+  });
+
   it('does not toggle before media state is available', async () => {
     const provider = document.createElement('test-time-player') as TestPlayerProviderElement;
     const time = createElement(TimeElement);

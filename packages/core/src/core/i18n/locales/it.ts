@@ -21,8 +21,8 @@ export default {
     disable: 'Disattiva sottotitoli',
   },
   pip: {
-    enter: 'Picture-in-Picture',
-    exit: 'Esci dalla modalità Picture-in-Picture',
+    enter: 'Riproduzione in finestra',
+    exit: 'Chiudi riproduzione in finestra',
   },
   live: {
     playing: 'Riproduzione in diretta',
@@ -66,8 +66,8 @@ export default {
     paused: 'In pausa',
     playing: 'In riproduzione',
     fullscreen: 'Schermo intero',
-    pip: 'Picture-in-picture',
-    exitPip: 'Esci dalla modalità Picture-in-picture',
+    pip: 'Riproduzione in finestra',
+    exitPip: 'Chiudi riproduzione in finestra',
     seekedTo: 'Posizione di riproduzione: {time}',
   },
   container: {

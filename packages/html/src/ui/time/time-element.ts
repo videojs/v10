@@ -90,6 +90,7 @@ export class TimeElement extends MediaElement {
       toggle: this.toggle,
     });
     this.#core.setMedia(media);
+    this.#core.setFormatLocale(this.#i18n.locale);
     const state = this.#core.getState();
 
     this.#signSpan.hidden = !state.negative;

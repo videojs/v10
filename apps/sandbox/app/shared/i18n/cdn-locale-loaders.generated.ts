@@ -26,6 +26,7 @@ export const cdnLocaleLoaders = {
   hi: () => import('@videojs/html/cdn/locales/hi'),
   hr: () => import('@videojs/html/cdn/locales/hr'),
   hu: () => import('@videojs/html/cdn/locales/hu'),
+  id: () => import('@videojs/html/cdn/locales/id'),
   it: () => import('@videojs/html/cdn/locales/it'),
   ja: () => import('@videojs/html/cdn/locales/ja'),
   ko: () => import('@videojs/html/cdn/locales/ko'),

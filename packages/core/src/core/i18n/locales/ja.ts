@@ -94,7 +94,7 @@ export default {
     audio: '音声',
     default: 'デフォルト',
     speed: '速度',
-    captions: 'キャプション',
+    captions: '字幕',
     playbackRate: '再生速度',
     back: '戻る',
     off: 'オフ',

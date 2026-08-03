@@ -101,6 +101,14 @@ describe('TimeCore', () => {
 
       expect(state.text).toBe('0:01:30');
     });
+
+    it('formats digital time with locale digits', () => {
+      const core = new TimeCore({ type: 'current' });
+      core.setFormatLocale('fa');
+      core.setMedia(createMediaState({ currentTime: 90 }));
+
+      expect(core.getState().text).toBe('۱:۳۰');
+    });
   });
 
   describe('getLabel', () => {

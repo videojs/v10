@@ -173,7 +173,7 @@ export class TimeSliderElement extends MediaElement {
         ),
       },
       thumbProps: this.#slider.thumbProps,
-      formatValue: (value) => formatTime(value, state.duration),
+      formatValue: (value) => formatTime(value, state.duration, { locale: this.#i18n.locale }),
     });
   }
 }
