@@ -92,7 +92,7 @@ describe('DashMedia', () => {
       expect(sourcechange).toHaveBeenCalledTimes(1);
     });
 
-    it('ignores a structurally equal source', () => {
+    it('leaves the engine alone for a structurally equal source', () => {
       const { media, engine } = setup();
       const source: DashSource = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
       media.source = source;
@@ -105,7 +105,9 @@ describe('DashMedia', () => {
 
       media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
 
-      expect(sourcechange).not.toHaveBeenCalled();
+      // Assigning is always announced, but nothing reaches dash.js, so an inline
+      // React prop cannot disturb what is already playing.
+      expect(sourcechange).toHaveBeenCalledOnce();
       expect(engine.attachSource).not.toHaveBeenCalled();
       expect(engine.updateSettings).not.toHaveBeenCalled();
       expect(engine.resetSettings).not.toHaveBeenCalled();
@@ -185,8 +187,8 @@ describe('DashMedia', () => {
       expect(engine.updateSettings).not.toHaveBeenCalled();
     });
 
-    it('fires sourcechange when the derived source changes', () => {
-      const { media } = setup();
+    it('fires sourcechange through the source setter', () => {
+      const { media, engine } = setup();
       const sourcechange = vi.fn(() => media.source?.src);
       media.addEventListener('sourcechange', sourcechange);
 
@@ -195,8 +197,12 @@ describe('DashMedia', () => {
       expect(sourcechange).toHaveBeenCalledTimes(1);
       expect(sourcechange).toHaveReturnedWith(MANIFEST);
 
+      engine.attachSource.mockClear();
       media.src = MANIFEST;
-      expect(sourcechange).toHaveBeenCalledTimes(1);
+
+      // Every assignment is announced, but the same URL is not re-attached.
+      expect(sourcechange).toHaveBeenCalledTimes(2);
+      expect(engine.attachSource).not.toHaveBeenCalled();
     });
   });
 });

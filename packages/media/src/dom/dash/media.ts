@@ -80,17 +80,14 @@ export class DashMedia
     const { engine } = this.#source ?? {};
     const next: DashSource = { ...(engine && { engine }), ...(value && { src: value }) };
 
-    const source = Object.keys(next).length > 0 ? next : null;
-    const changed = !deepEqual(this.#source, source);
-    this.#src = value;
-    this.#source = source;
-    this.#engine.attachSource(value);
-    if (changed) this.dispatchEvent(new Event('sourcechange'));
+    // Everything happens in the `source` setter, so there is one path for
+    // storing it, telling the engine, and dispatching `sourcechange`.
+    this.source = Object.keys(next).length > 0 ? next : null;
   }
 
   /**
    * Structured source: the MPD URL in `src`, plus dash.js settings in `engine`.
-   * Replacing it re-derives `src`; assigning an equivalent source is a no-op.
+   * Replacing it re-derives `src`.
    *
    * dash.js takes settings on a live player, so changing `engine` re-applies
    * them in place instead of recreating the engine.
@@ -100,15 +97,21 @@ export class DashMedia
   }
 
   set source(value: DashSource | null) {
-    if (deepEqual(this.#source ?? null, value ?? null)) return;
-    const configChanged = !deepEqual(this.#source?.engine ?? null, value?.engine ?? null);
-    this.#source = value ?? null;
-    if (configChanged) this.#applyEngineConfig(value?.engine);
-    const src = value?.src ?? '';
-    if (this.#src !== src) {
-      this.#src = src;
-      this.#engine.attachSource(src);
-    }
+    const source = value ?? null;
+    const src = source?.src ?? '';
+
+    // Assigning is always a source change, so it is always announced. Only the
+    // engine calls are guarded, so re-assigning an equivalent source — an inline
+    // React prop, say — never disturbs what is already playing.
+    const configChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
+    const srcChanged = this.#src !== src;
+
+    this.#source = source;
+    this.#src = src;
+
+    if (configChanged) this.#applyEngineConfig(source?.engine);
+    if (srcChanged) this.#engine.attachSource(src);
+
     this.dispatchEvent(new Event('sourcechange'));
   }
 
