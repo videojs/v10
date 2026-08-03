@@ -1,6 +1,6 @@
 ---
-status: draft
-date: 2026-07-28
+status: implemented
+date: 2026-08-03
 ---
 
 # Live Presentation Timeline Coordinate Model
@@ -11,14 +11,11 @@ the three-timeline model (media / presentation / wall-clock) and shipped it for
 **VOD**, explicitly parking the live convergence in its
 [Open questions](./presentation-timeline-model.md#open-questions). This doc is that
 convergence: how the `startTime` / `startMediaTime` / `startDate` triple behaves for
-a **sliding live window**, and what that means for re-landing the live work onto the
-`startMediaTime` / `timestampOffset` model (Phase 1 of
-[`spf-hls-live-relanding.md`](../../../.agents/plans/spf-hls-live-relanding.md)).
+a **sliding live window**, and the model the live work was re-landed onto.
 
-**Status: draft — still being figured out.** The sections under
-[What's settled](#whats-settled) are the working contract we've agreed on; the
-[Open questions](#open-questions) are not yet resolved. This exists so the reasoning
-survives a branch switch, not because it's final.
+The sections under [What's settled](#whats-settled) are the shipped contract — live
+HLS plays against this model in `createSimpleHlsEngine`. The remaining
+[Open questions](#open-questions) are the parts still deliberately unresolved.
 
 **Revised 2026-07-28 (PDT-primary placement; timestamps for sample sync).** The first
 draft treated PDT alignment as a once-at-establishment input and left live segment
@@ -333,32 +330,46 @@ Phase 1, before touching the establishment reactor.
 
 ## Open questions
 
-Not yet resolved — the "more to discuss" this doc is a checkpoint for.
-
 Resolved by the 2026-07-28 revision (into [What's settled](#whats-settled)): one
 establishment unit with internal order (was Q1); anchor = reference-track PDT, gated
 first parse, shell-stamped (was Q2); `placeOnAnchor` kept and promoted, sign-traced
 (was Q4); window edge derived from `segments[0].startTime` at read time (was Q6 —
 follows from PDT-primary re-derivation: a stored edge would just go stale).
 
-1. **What `seekToLiveEdge` gates on post-convergence** — `startMediaTime` present,
-   `startDate` present, or a derived "live window derivable" predicate. Leaning
-   "establishment done + window derivable"; confirm in Phase 2.
-2. **How tracks *should* work** more broadly (the user-flagged larger question) — the
+### Resolved during implementation
+
+- **What `seekToLiveEdge` gates on post-convergence** — a derived
+  "live window derivable" predicate, plus a media element. No `startMediaTime` /
+  `startDate` gate: the window is playlist arithmetic and settles independently of the
+  byte-level origin. No MediaSource gate either — `seekToLiveEdge` commands
+  `state.startPosition` and `applyStartPosition` performs the seek behind
+  `loadedmetadata`, which already implies an open MediaSource and a declared seekable
+  range. See `playback/behaviors/dom/seek-to-live-edge.ts`.
+- **Phase 2 window math** — shipped as specified for the geometry: the
+  intersection over the selected A/V windows (`max` of starts, `min` of ends) in
+  `liveWindowFromState` (`playback/primitives/live-window.ts`), with the `max` also
+  clamping a pre-join non-reference track's negative `startTime`.
+
+  **Deviation on holdback.** This doc specified deriving holdback from §14.3
+  (`PART-HOLD-BACK` ≥ 3 × part target duration) rather than "the old branch's
+  `3 × targetDuration`". What shipped is `3 × targetDuration` (`resolveLiveLatency` in
+  `media/hls/reload-policy.ts`), injected through `seekToLiveEdge`'s
+  `resolveLiveLatency` seam. The seam keeps the behavior format-neutral, so the policy
+  can change without touching it — but the LL-HLS-aware value is not yet implemented,
+  and `3 × targetDuration` is one of the HLS-specific assumptions to unwind before
+  DASH.
+
+### Still open
+
+1. **How tracks *should* work** more broadly (the user-flagged larger question) — the
    per-track vs presentation-level anchor split is deferred (track-level for now), but
    the final shape is open. The revision sharpens it: both default anchor values are
    presentation-level scalars (`startDate`, shared-min `startMediaTime`); only the
    per-type escape hatch needs per-track `startMediaTime`.
-3. **Fallback policy for non-conformant live** (PDT missing or partial, against §8.4):
+2. **Fallback policy for non-conformant live** (PDT missing or partial, against §8.4):
    when exactly does `placeOnPreviousTimeline` carry-forward engage — per-track or
    per-presentation, detected once or per reload — and does a source that *loses* PDT
    mid-stream keep its anchor?
-4. **Phase 2 window math** (noted here so it isn't lost): `seekable` as the
-   intersection over selected A/V (`max` of window starts — which also clamps the
-   legitimate negative `startTime` of pre-join non-reference segments — `min` of window
-   ends) to absorb cross-playlist publication skew; holdback derived from §14.3
-   (`PART-HOLD-BACK` ≥ 3 × part target duration) rather than the old branch's
-   `3 × targetDuration`.
 
 ---
 
@@ -373,8 +384,6 @@ follows from PDT-primary re-derivation: a stored edge would just go stale).
   LL-HLS PDT profile) — cited as `RFC §n.n` / `bis §n.n`.
 - [presentation-timeline-model.md](./presentation-timeline-model.md) — the VOD model
   this extends; its Open questions park exactly this convergence.
-- [`.agents/plans/spf-hls-live-relanding.md`](../../../.agents/plans/spf-hls-live-relanding.md)
-  — the re-landing plan; this doc is its Phase 1 conceptual contract.
 - [../../decisions/spf/mse-timestamp-offset.md](../../decisions/spf/mse-timestamp-offset.md) —
   native-PTS default; relocation for 0-based cases.
 - `internal/decisions/live-presentation-anchor.md`,
