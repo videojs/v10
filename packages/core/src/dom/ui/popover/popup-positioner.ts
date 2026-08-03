@@ -141,21 +141,38 @@ export class PopupPositioner {
     const triggerRect = options.trigger.getBoundingClientRect();
     const boundaryRect = getPositioningBoundaryRect(this.#boundaryElement);
     const offsets = resolveOffsets(options.popup, options.cssVars);
-    const popupRect = getPopupPositionRect(options.popup, options.position.side);
-    const side = getPositionedSide(triggerRect, popupRect, boundaryRect, options.position, offsets);
-    const { positionAnchor: _, ...style } = getAnchorPositionStyle(
-      options.anchorName,
-      { ...options.position, side },
-      triggerRect,
-      supportsAnchorPositioning() ? undefined : popupRect,
-      boundaryRect,
-      offsets,
-      options.cssVars
-    );
+    const preferredPosition = options.position;
+    const anchorSupported = supportsAnchorPositioning();
+    const getPosition = (popupRect: DOMRect) => {
+      const side = getPositionedSide(triggerRect, popupRect, boundaryRect, preferredPosition, offsets);
+      const { positionAnchor: _, ...style } = getAnchorPositionStyle(
+        options.anchorName,
+        { ...preferredPosition, side },
+        triggerRect,
+        anchorSupported ? undefined : popupRect,
+        boundaryRect,
+        offsets,
+        options.cssVars
+      );
+
+      return { popupRect, side, style };
+    };
+    const position = getPosition(getPopupPositionRect(options.popup, preferredPosition.side));
 
     this.#capturePopupStyles(options.popup, options.cssVars ?? PopoverCSSVars);
-    applyStyles(options.popup, style);
-    options.onSideChange?.(side);
+    applyStyles(options.popup, position.style);
+    options.onSideChange?.(position.side);
+
+    if (anchorSupported || !options.onSideChange) return;
+
+    // Menu callbacks can constrain the popup from the available-size variables.
+    // Correct fallback coordinates synchronously so alignment is stable before paint.
+    const popupRect = getPopupPositionRect(options.popup, preferredPosition.side);
+    if (popupRect.width === position.popupRect.width && popupRect.height === position.popupRect.height) return;
+
+    const nextPosition = getPosition(popupRect);
+    applyStyles(options.popup, nextPosition.style);
+    if (nextPosition.side !== position.side) options.onSideChange(nextPosition.side);
   }
 
   #capturePopupStyles(popup: HTMLElement, cssVars: PositioningCSSVars): void {
