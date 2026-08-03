@@ -3,7 +3,7 @@
 import type { HlsMediaProps } from '@videojs/media/dom/hls-js';
 import { hlsMediaDefaultProps, StreamTypes } from '@videojs/media/dom/hls-js';
 import type { MuxMediaProps } from '@videojs/media/dom/mux';
-import { createMuxStoryboardURL, MuxMedia, muxMediaDefaultProps } from '@videojs/media/dom/mux';
+import { MuxMedia, muxMediaDefaultProps } from '@videojs/media/dom/mux';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef, useCallback, useSyncExternalStore } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
@@ -72,7 +72,7 @@ function MuxStoryboard({ media }: { media: MuxMedia }) {
   );
 
   // The stream type is detected at runtime and live streams have no storyboard.
-  const getSnapshot = () => (media.streamType === StreamTypes.LIVE ? '' : (createMuxStoryboardURL(media.source) ?? ''));
+  const getSnapshot = () => (media.streamType === StreamTypes.LIVE ? '' : media.contentStoryboard);
   const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   if (!src) return null;

@@ -1,5 +1,4 @@
 import { parseJwt } from '@videojs/utils/jwt';
-import { deepEqual } from '@videojs/utils/object';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
 import type { HlsSource } from '../hls-js';
@@ -160,14 +159,6 @@ export function parseMuxVideoURL(src: string): MuxSource | undefined {
   if (Object.keys(playback).length > 0) source.playback = playback;
 
   return source;
-}
-
-/**
- * Structural equality for Mux sources. Compares nested playback / thumbnail /
- * storyboard / drm params, treating keys explicitly set to `undefined` as absent.
- */
-export function isSameMuxSource(a?: MuxSource | null, b?: MuxSource | null): boolean {
-  return deepEqual(a ?? null, b ?? null);
 }
 
 /**

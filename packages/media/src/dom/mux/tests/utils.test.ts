@@ -4,7 +4,6 @@ import {
   createMuxQuery,
   createMuxStoryboardURL,
   createMuxVideoURL,
-  isSameMuxSource,
   parseMuxVideoURL,
 } from '../utils';
 
@@ -142,29 +141,6 @@ describe('parseMuxVideoURL', () => {
   it('round-trips through createMuxVideoURL', () => {
     const src = 'https://stream.example.com/abc123.m3u8?asset_start_time=3&max_resolution=1080p';
     expect(createMuxVideoURL(parseMuxVideoURL(src))).toBe(src);
-  });
-});
-
-describe('isSameMuxSource', () => {
-  it('treats nullish sources as equal', () => {
-    expect(isSameMuxSource(null, undefined)).toBe(true);
-    expect(isSameMuxSource(null, { playbackId: 'abc123' })).toBe(false);
-  });
-
-  it('compares sources structurally', () => {
-    expect(isSameMuxSource({ playbackId: 'abc123' }, { playbackId: 'abc123' })).toBe(true);
-    expect(isSameMuxSource({ playbackId: 'abc123' }, { playbackId: 'other' })).toBe(false);
-  });
-
-  it('compares nested params', () => {
-    const a = { playbackId: 'abc123', playback: { maxResolution: '1080p' as const }, poster: { time: 5 } };
-    expect(isSameMuxSource(a, { ...a, playback: { maxResolution: '1080p' }, poster: { time: 5 } })).toBe(true);
-    expect(isSameMuxSource(a, { ...a, playback: { maxResolution: '720p' } })).toBe(false);
-    expect(isSameMuxSource(a, { ...a, poster: { time: 6 } })).toBe(false);
-  });
-
-  it('treats keys set to undefined as absent', () => {
-    expect(isSameMuxSource({ playbackId: 'abc123', customDomain: undefined }, { playbackId: 'abc123' })).toBe(true);
   });
 });
 
