@@ -68,6 +68,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
   #loadComplete = createPublicPromise<void>();
+  #loadId = 0;
 
   #src = vimeoMediaDefaultProps.src;
   #autoplay = vimeoMediaDefaultProps.autoplay;
@@ -164,11 +165,18 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   /** Reload the current source via Vimeo's `loadVideo`; no-op until `attach()`. */
   async load() {
     if (!this.#player) return;
+    // Supersedes any metadata read still in flight for the outgoing source.
+    this.#loadId++;
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old video still has to go. The events and the
     // load barrier are left alone, so nothing already awaiting a load hangs.
     this.#resetState();
-    if (!this.#src) return;
+    if (!this.#src) {
+      // The embed has to stop too. Left running it keeps playing and writes the
+      // state just cleared straight back through its own events.
+      await this.#player.unload().catch(() => {});
+      return;
+    }
     this.#loadComplete = createPublicPromise<void>();
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
@@ -436,8 +444,10 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   async #onLoaded() {
+    const loadId = this.#loadId;
     this.#readyState = READY_STATE_HAVE_METADATA;
     const player = this.#player;
+    let superseded = false;
     if (player) {
       // Each value falls back to the current one so a single failure isn't fatal.
       const [muted, volume, duration, title] = await Promise.all([
@@ -446,14 +456,22 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
         player.getDuration().catch(() => this.#duration),
         player.getVideoTitle().catch(() => this.#title),
       ]);
-      this.#muted = muted;
-      this.#volume = volume;
-      this.#duration = duration;
-      this.#title = title;
+      // A source change or clear while the reads were in flight leaves these
+      // describing a video this media no longer has.
+      superseded = loadId !== this.#loadId;
+      if (!superseded) {
+        this.#muted = muted;
+        this.#volume = volume;
+        this.#duration = duration;
+        this.#title = title;
+      }
     }
-    for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
-      this.dispatchEvent(new Event(type));
+    if (!superseded) {
+      for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
+        this.dispatchEvent(new Event(type));
+      }
     }
+    // Resolved either way; a superseded load still has callers awaiting it.
     this.#loadComplete.resolve();
   }
 

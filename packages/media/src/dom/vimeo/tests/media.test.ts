@@ -85,6 +85,7 @@ async function attachAndLoad(media: VimeoMedia): Promise<{ iframe: HTMLIFrameEle
 interface MockPlayerLike {
   emit(event: string, data?: unknown): void;
   getVideoTitle: ReturnType<typeof vi.fn>;
+  unload: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
   pause: ReturnType<typeof vi.fn>;
   setVolume: ReturnType<typeof vi.fn>;
@@ -268,10 +269,38 @@ describe('VimeoMedia', () => {
   it('clears state reported about the old video when the source is cleared', async () => {
     const media = new VimeoMedia();
     media.src = '76979871';
-    await attachAndLoad(media);
+    const { player } = await attachAndLoad(media);
 
     // There is nothing to load, so the reset has to happen without one.
     media.source = null;
+
+    expect(media.contentData).toEqual({});
+    expect(media.duration).toBeNaN();
+    // A running embed would write all of that back through its own events.
+    expect(player.unload).toHaveBeenCalled();
+  });
+
+  it('ignores metadata that arrives after the source is cleared', async () => {
+    const media = new VimeoMedia();
+    media.src = '76979871';
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = media.engine as unknown as MockPlayerLike;
+
+    // Hold the metadata reads open so they resolve after the clear.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    player.getVideoTitle.mockImplementationOnce(async () => {
+      await held;
+      return 'Sample Video';
+    });
+
+    player.emit('loaded');
+    media.source = null;
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 0));
 
     expect(media.contentData).toEqual({});
     expect(media.duration).toBeNaN();
