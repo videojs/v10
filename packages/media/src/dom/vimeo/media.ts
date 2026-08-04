@@ -163,8 +163,12 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   /** Reload the current source via Vimeo's `loadVideo`; no-op until `attach()`. */
   async load() {
-    if (!this.#player || !this.#src) return;
+    if (!this.#player) return;
+    // Reset before bailing on an empty src: a cleared source has nothing to load,
+    // but what we report about the old video still has to go. The events and the
+    // load barrier are left alone, so nothing already awaiting a load hangs.
     this.#resetState();
+    if (!this.#src) return;
     this.#loadComplete = createPublicPromise<void>();
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));

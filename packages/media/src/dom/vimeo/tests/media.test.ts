@@ -265,6 +265,18 @@ describe('VimeoMedia', () => {
     expect(media.contentData).toEqual({});
   });
 
+  it('clears state reported about the old video when the source is cleared', async () => {
+    const media = new VimeoMedia();
+    media.src = '76979871';
+    await attachAndLoad(media);
+
+    // There is nothing to load, so the reset has to happen without one.
+    media.source = null;
+
+    expect(media.contentData).toEqual({});
+    expect(media.duration).toBeNaN();
+  });
+
   it('omits the title when Vimeo reports none', async () => {
     const media = new VimeoMedia();
     const iframe = createIframe();
