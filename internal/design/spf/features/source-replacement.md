@@ -56,7 +56,8 @@ distinct engine behavior observable from outside.
 - **Source-error recovery state** — `resolvePresentation` currently
   surfaces fetch / parse failures via `console.error` (with a TODO in
   the code: "route to a state-error slot once one exists"). Consumers
-  have no observable signal for "source failed to load."
+  have no observable signal for "source failed to load." Owned by
+  [errors](./errors.md) (its phase 6).
 - **Per-source `bandwidthState` reset opt-in** — preservation is the
   baked-in policy (ABR resume). No opt-out exists for testing or
   fresh-session scenarios that want a clean estimator.
@@ -165,7 +166,8 @@ semantics — every replaced source runs through the same parser.
   `console.error` for fetch / parse failures and has a `TODO(error-
   management)` for a state-error slot. The shape of this slot — single
   error vs per-source — affects how consumers respond to "source failed
-  to load."
+  to load." Now tracked in [errors](./errors.md); this feature's
+  resolved/unresolved cascade is that doc's per-source reset mechanism.
 - **Adapter rationale.** Resolved: the canonical adapter
   now recycles a single engine and drives source changes through in-place
   `state.presentation` replacement — the same load-bearing cascade the

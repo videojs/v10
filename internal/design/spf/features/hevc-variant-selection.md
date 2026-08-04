@@ -191,11 +191,11 @@ Things this feature probably forces decisions on, not just additions:
 - **[mse-mms-pipeline](./mse-mms-pipeline.md)** — `changeType()` call
   site lives in the buffer-setup neighborhood (Tier 2 mid-stream
   phase only). Same-codec phases don't touch MSE setup at all.
-- **`[unsupported-case-error-mapping]`** *(candidate)* — when the
-  filter pipeline narrows the candidate set to zero (e.g., no AVC
-  variants available + `videoCodecPreference: 'avc'` set), the
-  resulting error surfaces through capability-probing's error
-  primitive, then through this consumer-facing mapping.
+- **[errors](./errors.md)** — when the filter pipeline narrows the
+  candidate set to zero (e.g., no AVC variants available +
+  `videoCodecPreference: 'avc'` set), the resulting error surfaces
+  through that feature's phase 2, then through its consumer-facing
+  mapping.
 
 ## See also
 
