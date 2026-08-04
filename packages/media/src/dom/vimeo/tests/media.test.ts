@@ -296,6 +296,54 @@ describe('VimeoMedia', () => {
     expect(player.play).toHaveBeenCalled();
   });
 
+  it('does not settle the new load when a superseded one finishes', async () => {
+    const media = new VimeoMedia();
+    media.src = '76979871';
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = media.engine as unknown as MockPlayerLike;
+
+    // Hold the first load's metadata reads open, then supersede it.
+    let release = () => {};
+    const held = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    player.getVideoTitle.mockImplementationOnce(async () => {
+      await held;
+      return 'First Video';
+    });
+    player.emit('loaded');
+    media.src = '12345';
+
+    let playing = false;
+    const played = media.play().then(() => {
+      playing = true;
+    });
+
+    // The superseded load finishing says nothing about the one now in progress.
+    release();
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(playing).toBe(false);
+
+    player.emit('loaded');
+    await played;
+    expect(playing).toBe(true);
+    expect(media.contentData).toEqual({ title: 'Sample Video' });
+  });
+
+  it('settles the load for a src the player can never load', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = media.engine as unknown as MockPlayerLike;
+
+    media.src = 'not-a-vimeo-url';
+
+    // No `loaded` will ever arrive for it, so waiting on the load must not hang.
+    await media.play();
+    expect(player.loadVideo).not.toHaveBeenCalled();
+  });
+
   it('ignores metadata that arrives after the source is cleared', async () => {
     const media = new VimeoMedia();
     media.src = '76979871';

@@ -67,8 +67,12 @@ const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
 export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
   #player: VimeoPlayer | null = null;
+  /**
+   * Barrier for the load in progress. Player calls wait on it, and its identity
+   * doubles as the load's identity — a late response compares the barrier it
+   * started with against this one to learn whether it still owns the load.
+   */
   #loadComplete = createPublicPromise<void>();
-  #loadId = 0;
 
   #src = vimeoMediaDefaultProps.src;
   #autoplay = vimeoMediaDefaultProps.autoplay;
@@ -120,7 +124,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       const initialSrc = buildVimeoIframeSrc(this.#src, this.#snapshotProps());
       if (initialSrc) target.src = initialSrc;
     }
-    this.#loadComplete = createPublicPromise<void>();
+    this.#beginLoad();
     this.#player = new VimeoPlayer(target);
     this.#bindPlayerEvents(this.#player);
     this.#setupTextTracks(this.#player);
@@ -133,6 +137,8 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#player?.destroy().catch(() => {});
     this.#player = null;
     this.#target = null;
+    // No player left to finish a load, so nothing should still be waiting on one.
+    this.#loadComplete.resolve();
     this.#resetState();
   }
 
@@ -165,27 +171,39 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   /** Reload the current source via Vimeo's `loadVideo`; no-op until `attach()`. */
   async load() {
     if (!this.#player) return;
-    // Supersedes any metadata read still in flight for the outgoing source.
-    this.#loadId++;
-    // Unblock whoever is awaiting the outgoing load before the barrier is replaced
-    // below. The replacement leaves them holding a promise nothing resolves.
-    this.#loadComplete.resolve();
+    const load = this.#beginLoad();
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old video still has to go.
     this.#resetState();
     if (!this.#src) {
       // The embed has to stop too. Left running it keeps playing and writes the
       // state just cleared straight back through its own events.
+      load.resolve();
       await this.#player.unload().catch(() => {});
       return;
     }
-    this.#loadComplete = createPublicPromise<void>();
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const loadOptions = toLoadVideoOptions(this.#src, this.#source?.engine);
-    if (!loadOptions) return;
+    // An unparsable src never reaches the player, so no `loaded` will ever settle
+    // this load.
+    if (!loadOptions) {
+      load.resolve();
+      return;
+    }
     // Vimeo dispatches an `error` event separately on failure.
     await this.#player.loadVideo(loadOptions).catch(() => {});
+  }
+
+  /**
+   * Take over as the current load, returning its barrier. Settling the outgoing
+   * one is what keeps a superseded load from stranding callers that are already
+   * waiting; every exit from `load()` settles the barrier it was handed.
+   */
+  #beginLoad(): PublicPromise<void> {
+    this.#loadComplete.resolve();
+    this.#loadComplete = createPublicPromise<void>();
+    return this.#loadComplete;
   }
 
   get paused() {
@@ -446,10 +464,9 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   async #onLoaded() {
-    const loadId = this.#loadId;
+    const load = this.#loadComplete;
     this.#readyState = READY_STATE_HAVE_METADATA;
     const player = this.#player;
-    let superseded = false;
     if (player) {
       // Each value falls back to the current one so a single failure isn't fatal.
       const [muted, volume, duration, title] = await Promise.all([
@@ -458,23 +475,19 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
         player.getDuration().catch(() => this.#duration),
         player.getVideoTitle().catch(() => this.#title),
       ]);
-      // A source change or clear while the reads were in flight leaves these
-      // describing a video this media no longer has.
-      superseded = loadId !== this.#loadId;
-      if (!superseded) {
-        this.#muted = muted;
-        this.#volume = volume;
-        this.#duration = duration;
-        this.#title = title;
-      }
+      // A source change or clear during the reads means these describe a video
+      // this media no longer has. `#beginLoad` settled this load on the way out,
+      // and the load that replaced it settles on its own `loaded`.
+      if (load !== this.#loadComplete) return;
+      this.#muted = muted;
+      this.#volume = volume;
+      this.#duration = duration;
+      this.#title = title;
     }
-    if (!superseded) {
-      for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
-        this.dispatchEvent(new Event(type));
-      }
+    for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
+      this.dispatchEvent(new Event(type));
     }
-    // Resolved either way; a superseded load still has callers awaiting it.
-    this.#loadComplete.resolve();
+    load.resolve();
   }
 
   #bindPlayerEvents(player: VimeoPlayer) {
