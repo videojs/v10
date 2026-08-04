@@ -993,3 +993,56 @@ s6.m4s`;
     });
   });
 });
+
+describe('parseMediaPlaylist (encryption detection)', () => {
+  const withKey = (keyLines: string) => `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+${keyLines}
+#EXTINF:4.0,
+0.m4s
+#EXT-X-ENDLIST
+`;
+
+  const unresolved: PartiallyResolvedVideoTrack = {
+    id: 'v-1',
+    type: 'video',
+    url: 'https://example.com/v.m3u8',
+    bandwidth: 1000,
+    codecs: ['avc1.4d401f'],
+    mimeType: 'video/mp4',
+  };
+
+  it('reports no encryption when the playlist has no EXT-X-KEY', () => {
+    const track = parseMediaPlaylist(withKey(''), unresolved);
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(false);
+  });
+
+  it('reports no encryption for METHOD=NONE', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=NONE'), unresolved);
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(false);
+  });
+
+  it('reports encryption for a real METHOD', () => {
+    const track = parseMediaPlaylist(
+      withKey('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k",KEYFORMAT="com.apple.streamingkeydelivery"'),
+      unresolved
+    );
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(true);
+  });
+
+  it('reports encryption for a clear lead — METHOD=NONE followed by a real key', () => {
+    // Conservative by design: the opening segments are playable, but we can only
+    // report whether decryption is needed at all, so this reads as encrypted.
+    const track = parseMediaPlaylist(
+      withKey('#EXT-X-KEY:METHOD=NONE\n#EXT-X-KEY:METHOD=AES-128,URI="k.bin"'),
+      unresolved
+    );
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(true);
+  });
+
+  it('does not treat EXT-X-KEY as a segment tag', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=AES-128,URI="k.bin"'), unresolved);
+    expect(track.segments).toHaveLength(1);
+  });
+});
