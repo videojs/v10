@@ -34,6 +34,18 @@ describe('addAnchorName', () => {
     cleanupTooltip();
     expect(getAnchorNames(el)).toEqual([]);
   });
+
+  it('preserves a pre-existing anchor name on cleanup', () => {
+    const el = document.createElement('button');
+
+    el.style.setProperty('anchor-name', '--settings-menu');
+
+    const cleanup = addAnchorName(el, 'settings-menu');
+
+    cleanup();
+
+    expect(getAnchorNames(el)).toEqual(['--settings-menu']);
+  });
 });
 
 describe('resolveCSSLength', () => {
