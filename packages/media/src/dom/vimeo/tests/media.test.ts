@@ -86,7 +86,6 @@ interface MockPlayerLike {
   emit(event: string, data?: unknown): void;
   getVideoTitle: ReturnType<typeof vi.fn>;
   unload: ReturnType<typeof vi.fn>;
-  loadVideo: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
   pause: ReturnType<typeof vi.fn>;
   setVolume: ReturnType<typeof vi.fn>;
