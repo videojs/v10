@@ -13,9 +13,10 @@ afterEach(() => {
 });
 
 describe('Popover', () => {
-  it('exposes the positioned side on every part', async () => {
+  it('positions default-open and remounted popups before paint', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
-      if (this.dataset.testid === 'trigger') return makeDOMRect(100, 10, 40, 20);
+      if (this.dataset.testid === 'trigger')
+        return makeDOMRect(this.hasAttribute('data-remounted') ? 200 : 100, 10, 40, 20);
       if (this.dataset.testid === 'popup') return makeDOMRect(0, 0, 100, 60);
       return makeDOMRect(0, 0, 300, 200);
     });
@@ -26,15 +27,22 @@ describe('Popover', () => {
       return this.dataset.testid === 'popup' ? 60 : 0;
     });
 
-    render(
+    const getPopover = (remounted = false) => (
       <Popover.Root defaultOpen side="top" boundary="viewport">
-        <Popover.Trigger data-testid="trigger">Open</Popover.Trigger>
+        <Popover.Trigger
+          key={remounted ? 'remounted' : 'initial'}
+          data-remounted={remounted ? '' : undefined}
+          data-testid="trigger"
+        >
+          Open
+        </Popover.Trigger>
         <Popover.Popup data-testid="popup">
           Content
           <Popover.Arrow data-testid="arrow" />
         </Popover.Popup>
       </Popover.Root>
     );
+    const { rerender } = render(getPopover());
 
     expect(screen.getByTestId('popup').style.top).toBe('30px');
 
@@ -43,5 +51,8 @@ describe('Popover', () => {
         expect(screen.getByTestId(part).getAttribute('data-side')).toBe('bottom');
       }
     });
+
+    rerender(getPopover(true));
+    expect(screen.getByTestId('popup').style.left).toBe('170px');
   });
 });

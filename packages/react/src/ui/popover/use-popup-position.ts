@@ -56,9 +56,9 @@ export function usePopupPosition({
       ...(cssVars ? { cssVars } : {}),
       ...(onSideChange ? { onSideChange } : {}),
     });
+  });
 
-    return () => positioner.cleanup();
-  }, [open, anchorName, position, triggerSource, popupRef, boundary, container, cssVars, onSideChange, positioner]);
+  useLayoutEffect(() => () => positioner.cleanup(), [positioner]);
 
   return POPOVER_RESET;
 }
