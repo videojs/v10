@@ -37,7 +37,7 @@ export {
   type ShadowStyle,
 } from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
-export { applyStyles, resolveCSSLength } from './style';
+export { addAnchorName, applyStyles, getAnchorNames, resolveCSSLength } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
 export { createTemplate, renderTemplate } from './template';
 export {

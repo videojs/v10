@@ -1,4 +1,10 @@
-import { applyStyles, getPositionedSide, rafThrottle, supportsAnchorPositioning } from '@videojs/utils/dom';
+import {
+  applyStyles,
+  getAnchorNames,
+  getPositionedSide,
+  rafThrottle,
+  supportsAnchorPositioning,
+} from '@videojs/utils/dom';
 import { kebabCase } from '@videojs/utils/string';
 import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
 import { isEventWithinElement } from '../../utils/event';
@@ -189,8 +195,7 @@ export class PopupPositioner {
     const triggerAnchor = this.#readStyle(trigger, 'anchor-name');
     this.#popupAnchor = this.#readStyle(popup, 'position-anchor');
 
-    const authoredNames = triggerAnchor.value.trim();
-    const names = authoredNames && authoredNames !== 'none' ? authoredNames.split(',').map((name) => name.trim()) : [];
+    const names = getAnchorNames(trigger);
     this.#triggerAnchorName = generatedName;
     this.#triggerAnchorAdded = !names.includes(generatedName);
     if (this.#triggerAnchorAdded) names.push(generatedName);
@@ -205,10 +210,7 @@ export class PopupPositioner {
 
     if (this.#triggerAnchorName && this.#triggerAnchorAdded) {
       const current = this.#readStyle(options.trigger, 'anchor-name');
-      const names = current.value
-        .split(',')
-        .map((name) => name.trim())
-        .filter((name) => name && name !== this.#triggerAnchorName);
+      const names = getAnchorNames(options.trigger).filter((name) => name !== this.#triggerAnchorName);
       this.#writeStyle(options.trigger, 'anchor-name', { value: names.join(', '), priority: current.priority });
     }
     if (this.#popupAnchor) this.#writeStyle(options.popup, 'position-anchor', this.#popupAnchor);

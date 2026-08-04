@@ -1,5 +1,35 @@
 import { kebabCase } from '../string/casing';
 
+export function getAnchorNames(element: HTMLElement): string[] {
+  const value = element.style.getPropertyValue('anchor-name').trim();
+
+  if (!value || value === 'none') return [];
+
+  return value
+    .split(',')
+    .map((name) => name.trim())
+    .filter(Boolean);
+}
+
+export function addAnchorName(element: HTMLElement, name: string): () => void {
+  const anchor = `--${name}`;
+  const anchors = getAnchorNames(element);
+
+  if (!anchors.includes(anchor)) {
+    element.style.setProperty('anchor-name', [...anchors, anchor].join(', '));
+  }
+
+  return () => {
+    const next = getAnchorNames(element).filter((name) => name !== anchor);
+
+    if (next.length) {
+      element.style.setProperty('anchor-name', next.join(', '));
+    } else {
+      element.style.removeProperty('anchor-name');
+    }
+  };
+}
+
 export function applyStyles(element: HTMLElement, styles: Record<string, string | undefined>): void {
   for (const [prop, value] of Object.entries(styles)) {
     if (typeof value === 'string') {

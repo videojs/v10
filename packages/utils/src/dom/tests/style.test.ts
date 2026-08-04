@@ -1,6 +1,40 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { resolveCSSLength } from '../style';
+import { addAnchorName, getAnchorNames, resolveCSSLength } from '../style';
+
+describe('getAnchorNames', () => {
+  it('returns normalized anchor names', () => {
+    const el = document.createElement('button');
+
+    el.style.setProperty('anchor-name', '--menu,  --tooltip');
+
+    expect(getAnchorNames(el)).toEqual(['--menu', '--tooltip']);
+  });
+
+  it('returns no names for none', () => {
+    const el = document.createElement('button');
+
+    el.style.setProperty('anchor-name', 'none');
+
+    expect(getAnchorNames(el)).toEqual([]);
+  });
+});
+
+describe('addAnchorName', () => {
+  it('composes anchor names and cleans up only its own name', () => {
+    const el = document.createElement('button');
+    const cleanupMenu = addAnchorName(el, 'settings-menu');
+    const cleanupTooltip = addAnchorName(el, 'settings-tooltip');
+
+    expect(getAnchorNames(el)).toEqual(['--settings-menu', '--settings-tooltip']);
+
+    cleanupMenu();
+    expect(getAnchorNames(el)).toEqual(['--settings-tooltip']);
+
+    cleanupTooltip();
+    expect(getAnchorNames(el)).toEqual([]);
+  });
+});
 
 describe('resolveCSSLength', () => {
   afterEach(() => {
