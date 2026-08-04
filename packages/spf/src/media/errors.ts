@@ -42,6 +42,19 @@ export interface SvtaError {
   data?: unknown;
 }
 
+/** SVTA 1 [Media Content] 004 — the video is in a format we can't play (e.g. an MPEG-TS container). */
+export const SVTA_UNSUPPORTED_VIDEO_FORMAT = 1004;
+
+/** SVTA 1 [Media Content] 005 — the audio counterpart of {@link SVTA_UNSUPPORTED_VIDEO_FORMAT}. */
+export const SVTA_UNSUPPORTED_AUDIO_FORMAT = 1005;
+
+/**
+ * SVTA 4 [Content Protection] 008 — unsupported or unavailable DRM system. Used
+ * for "this source is encrypted and we have no decryption pipeline," which is
+ * detection, not a license failure.
+ */
+export const SVTA_UNSUPPORTED_DRM_SYSTEM = 4008;
+
 /**
  * SVTA 2 [Playback] 011 — no video track the environment can play. For a source
  * that *has* video renditions where every one was excluded as unplayable.

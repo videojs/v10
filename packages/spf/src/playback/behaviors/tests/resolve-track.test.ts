@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { StateSignals } from '../../../core/composition/create-composition';
 import { signal } from '../../../core/signals/primitives';
 import type { TaskLike } from '../../../core/tasks/task';
+import { SVTA_UNSUPPORTED_DRM_SYSTEM, type SvtaError } from '../../../media/errors';
 import type {
   MaybeResolvedPresentation,
   PartiallyResolvedAudioTrack,
@@ -11,6 +12,7 @@ import type {
   ResolvedTrack,
 } from '../../../media/types';
 import { isResolvedTrack } from '../../../media/types';
+import { reportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
 import { type ResolveTrackState, resolveAudioTrack, resolveTextTrack, resolveVideoTrack } from '../resolve-track';
 
 afterEach(() => {
@@ -766,3 +768,81 @@ function findTrackById(
   }
   return undefined;
 }
+
+describe('resolveVideoTrack — playlist-derived condition reporting', () => {
+  const unresolved: PartiallyResolvedVideoTrack = {
+    type: 'video',
+    id: 'track-1',
+    url: 'http://example.com/variant1.m3u8',
+    bandwidth: 1_000_000,
+    mimeType: 'video/mp4',
+    codecs: [],
+  };
+
+  const presentation = (): Presentation =>
+    ({
+      id: 'pres-1',
+      url: 'http://example.com/playlist.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [{ id: 'switching-1', type: 'video', tracks: [unresolved] }],
+        },
+      ],
+    }) as Presentation;
+
+  const playlist = (keyLine = '') => `#EXTM3U
+#EXT-X-TARGETDURATION:10
+#EXT-X-MAP:URI="init.mp4"
+${keyLine}
+#EXTINF:10.0,
+http://example.com/segment1.m4s
+#EXT-X-ENDLIST
+`;
+
+  const setup = (keyLine?: string) => {
+    const state = {
+      ...makeState({ presentation: presentation(), selectedVideoTrackId: 'track-1' }),
+      errors: signal<SvtaError[] | undefined>(undefined),
+    };
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async () => new Response(playlist(keyLine)));
+    return state;
+  };
+
+  const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it('reports nothing for a playable rendition', async () => {
+    const state = setup();
+    const reactor = resolveVideoTrack.setup({
+      state,
+      config: { reportTrackConditions: reportUnsupportedTrackConditions },
+    });
+    await flush();
+
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('reports unsupported DRM through the seam when the playlist is encrypted', async () => {
+    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
+    const reactor = resolveVideoTrack.setup({
+      state,
+      config: { reportTrackConditions: reportUnsupportedTrackConditions },
+    });
+    await flush();
+
+    expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
+    reactor.destroy();
+  });
+
+  it('reports nothing when no seam is wired', async () => {
+    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
+    const reactor = resolveVideoTrack.setup({ state });
+    await flush();
+
+    expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+});

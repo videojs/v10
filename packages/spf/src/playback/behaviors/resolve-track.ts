@@ -11,7 +11,9 @@ import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '..
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
 import type { GateFirstParse } from '../primitives/gate-first-parse';
+import type { ReportTrackConditions } from '../primitives/report-track-conditions';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
+import { type ErrorEmitterState, emitError } from './collect-errors';
 
 // ============================================================================
 // Specialization helper
@@ -65,6 +67,11 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
   gateFirstParse?: GateFirstParse;
   /** Live re-run policy for the `RecurringRunner`; absent → resolve once (VOD). */
   reschedule?: Reschedule<ResolvedTrack>;
+  /**
+   * Report conditions found in the parsed playlist (see
+   * `primitives/report-track-conditions`); absent → report nothing.
+   */
+  reportTrackConditions?: ReportTrackConditions;
 }
 
 /**
@@ -78,6 +85,8 @@ interface ResolveTrackConfig {
   gateFirstParse?: GateFirstParse;
   /** Live media-playlist re-run policy; absent → resolve once. */
   reschedule?: Reschedule<ResolvedTrack>;
+  /** Playlist-derived condition reporting (see `primitives/report-track-conditions`). */
+  reportTrackConditions?: ReportTrackConditions;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
@@ -88,9 +97,13 @@ function setupTrackResolution<K extends SelectedTrackKey>({
     fetchResolvableText = defaultFetchResolvableText,
     gateFirstParse,
     reschedule,
+    reportTrackConditions,
   },
 }: {
-  state: ResolveTrackStateMap<K>;
+  // Widened with the optional `errors` slot: reporting writes through it without
+  // the behavior declaring ownership, and no-ops when `collectErrors` isn't
+  // composed. Same contract as `failedCdns` / `failoverFetch`.
+  state: ResolveTrackStateMap<K> & ErrorEmitterState;
   config: TrackResolutionConfig<K>;
 }) {
   // Recurrence lives in the runner: with a `reschedule` (live) it re-runs the
@@ -201,6 +214,16 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   const previous = live ? findTrackToResolve(live, trackId) : undefined;
                   if (!previous) throw new Error('resolve-track: selected track not found');
                   const mediaTrack = parseMediaPlaylist(text, previous);
+
+                  // Report what the parse revealed about this rendition, before
+                  // committing it. Causes only — one unplayable rendition doesn't
+                  // make the source unplayable, so the verdict stays with
+                  // track-switching's empty-candidate branch.
+                  if (reportTrackConditions) {
+                    for (const condition of reportTrackConditions(mediaTrack as ResolvedTrack)) {
+                      emitError(state, condition);
+                    }
+                  }
 
                   // Updater handles undefined inputs by returning current
                   // unchanged; isResolvedPresentation narrows for the patch.
