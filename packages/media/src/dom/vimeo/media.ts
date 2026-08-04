@@ -167,9 +167,11 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     if (!this.#player) return;
     // Supersedes any metadata read still in flight for the outgoing source.
     this.#loadId++;
+    // Unblock whoever is awaiting the outgoing load before the barrier is replaced
+    // below. The replacement leaves them holding a promise nothing resolves.
+    this.#loadComplete.resolve();
     // Reset before bailing on an empty src: a cleared source has nothing to load,
-    // but what we report about the old video still has to go. The events and the
-    // load barrier are left alone, so nothing already awaiting a load hangs.
+    // but what we report about the old video still has to go.
     this.#resetState();
     if (!this.#src) {
       // The embed has to stop too. Left running it keeps playing and writes the

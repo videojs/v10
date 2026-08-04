@@ -86,6 +86,7 @@ interface MockPlayerLike {
   emit(event: string, data?: unknown): void;
   getVideoTitle: ReturnType<typeof vi.fn>;
   unload: ReturnType<typeof vi.fn>;
+  loadVideo: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
   pause: ReturnType<typeof vi.fn>;
   setVolume: ReturnType<typeof vi.fn>;
@@ -278,6 +279,22 @@ describe('VimeoMedia', () => {
     expect(media.duration).toBeNaN();
     // A running embed would write all of that back through its own events.
     expect(player.unload).toHaveBeenCalled();
+  });
+
+  it('unblocks a pending play() when the source is replaced mid-load', async () => {
+    const media = new VimeoMedia();
+    media.src = '76979871';
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = media.engine as unknown as MockPlayerLike;
+
+    // Never loads, so `play()` is left waiting on the current load barrier.
+    const played = media.play();
+    media.src = '12345';
+
+    // Replacing the barrier without resolving it would hang this forever.
+    await played;
+    expect(player.play).toHaveBeenCalled();
   });
 
   it('ignores metadata that arrives after the source is cleared', async () => {
