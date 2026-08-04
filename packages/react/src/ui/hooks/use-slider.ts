@@ -60,7 +60,8 @@ export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
   const optionsRef = useLatestRef(options);
-  const requestControlsLock = useOptionalPlayer(selectControls)?.requestControlsLock;
+  const controls = useOptionalPlayer(selectControls);
+  const requestControlsLock = controls?.requestControlsLock;
   const releaseControlsLockRef = useRef<(() => void) | null>(null);
 
   const releaseControlsLock = useCallback(() => {
