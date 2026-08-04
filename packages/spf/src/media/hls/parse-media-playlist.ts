@@ -204,6 +204,10 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   let playlistType: 'VOD' | 'EVENT' | undefined;
   let endList = false;
   let holdBack: number | undefined;
+  // Any EXT-X-KEY with a real METHOD makes the rendition encrypted. Sticky: a
+  // clear lead (METHOD=NONE first, a real key later) still counts, since we can
+  // only report whether decryption is needed at all.
+  let encrypted = false;
 
   for (const line of lines) {
     const trimmed = line.trim();
@@ -231,6 +235,13 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     if (trimmed.startsWith('#EXT-X-PLAYLIST-TYPE:')) {
       const value = trimmed.slice('#EXT-X-PLAYLIST-TYPE:'.length).trim();
       playlistType = value === 'VOD' || value === 'EVENT' ? value : undefined;
+      continue;
+    }
+
+    const key = matchTag(trimmed, 'EXT-X-KEY');
+    if (key) {
+      const method = key.get('METHOD');
+      if (method !== undefined && method !== 'NONE') encrypted = true;
       continue;
     }
 
@@ -390,6 +401,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         playlistType,
         endList,
         holdBack,
+        encrypted,
       } satisfies MediaPlaylistMetadata,
     },
   } as unknown as ResolveTrack<T>;

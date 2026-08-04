@@ -263,7 +263,11 @@ export type TextTrack = Track & {
  * carry. `mimeType` is optional so unprobeable candidates (no MIME) can be
  * passed straight through as playable rather than dropped.
  */
-export type CanPlayTrack = (track: { mimeType?: string; codecs?: string[] }) => boolean;
+export type CanPlayTrack = (track: {
+  mimeType?: string;
+  codecs?: string[];
+  metadata?: Record<string, unknown>;
+}) => boolean;
 
 /**
  * Minimal text-track cue shape — start time, end time, and display text.
@@ -429,6 +433,25 @@ export interface MediaPlaylistMetadata {
   playlistType?: 'VOD' | 'EVENT';
   endList: boolean;
   /**
+   * Whether this rendition carries encrypted segments — any `#EXT-X-KEY` whose
+   * `METHOD` isn't `NONE`. Detection only: enough to tell that playback needs
+   * decryption support, not enough to perform it.
+   *
+   * Deliberately *not* a model-level `protection` shape. CMAF-HAM puts
+   * `protection` on `SwitchingSet`, but that can't express two real cases: a
+   * clear lead (`METHOD=NONE` segments followed by encrypted ones — protection
+   * varies along the timeline within one rendition) or key rotation (its single
+   * `defaultKid` can't represent a key changing over time). Modeling it properly
+   * belongs to DRM support; until then this records the one fact a playlist
+   * reliably gives us. Per-rendition because that's HLS's granularity —
+   * `EXT-X-KEY` is a media-playlist tag.
+   *
+   * Conservative for a clear lead: a rendition whose opening segments are clear
+   * still reads as encrypted, so it's judged unplayable rather than played until
+   * it breaks.
+   */
+  encrypted?: boolean;
+  /**
    * `EXT-X-SERVER-CONTROL` `HOLD-BACK` (seconds) — the server's declared distance
    * from the live edge for clients playing *complete* segments. Absent when the
    * server doesn't advertise it, in which case the spec default (3 × target
@@ -447,7 +470,7 @@ export interface MediaPlaylistMetadata {
 export const MEDIA_PLAYLIST_METADATA_KEY = 'mediaPlaylist';
 
 /** Typed read of the media-playlist metadata stashed in `ham.metadata`. */
-export function getMediaPlaylistMetadata(ham: Ham): MediaPlaylistMetadata | undefined {
+export function getMediaPlaylistMetadata(ham: Pick<Ham, 'metadata'>): MediaPlaylistMetadata | undefined {
   return ham.metadata?.[MEDIA_PLAYLIST_METADATA_KEY] as MediaPlaylistMetadata | undefined;
 }
 
