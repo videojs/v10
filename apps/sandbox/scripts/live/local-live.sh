@@ -33,8 +33,15 @@ OUT="${TMPDIR:-/tmp}/spf-local-live"
 rm -rf "$OUT"; mkdir -p "$OUT"
 
 SVR=""; FF=""
-cleanup() { kill "$SVR" "$FF" 2>/dev/null; exit 0; }
-trap cleanup INT TERM
+cleanup() { kill "$SVR" "$FF" 2>/dev/null; }
+# On EXIT, not just the signals: ffmpeg can die on its own (bad args, encoder
+# error), which returns the `wait` at the end and drops off the script — leaving
+# http-server holding the port. A stale server there is the misleading failure
+# this port choice exists to avoid. INT/TERM route through `exit` so one handler
+# runs and the error paths keep their own status.
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 npx http-server "$OUT" -p "$PORT" --cors -c-1 -s & SVR=$!
 sleep 1
@@ -78,7 +85,6 @@ for _ in $(seq 1 50); do
 done
 if [ ! -s "$FFMPEG_MASTER" ]; then
   echo "✗ ffmpeg never wrote $FFMPEG_MASTER — see $OUT/ffmpeg.log" >&2
-  kill "$SVR" "$FF" 2>/dev/null
   exit 1
 fi
 sed -E 's/([:,])BANDWIDTH=([0-9]+),AVERAGE-BANDWIDTH=-?[0-9]+/\1BANDWIDTH=\2,AVERAGE-BANDWIDTH=\2/g' \
@@ -88,4 +94,4 @@ echo "▶ live: http://localhost:$PORT/master.m3u8  (sliding-window, demuxed CMA
 echo "  sandbox: http://localhost:5173/spf-segment-loading/?src=http://localhost:$PORT/master.m3u8&muted=true&autoplay=true&preload=auto"
 echo "  Ctrl-C to stop."
 
-wait "$FF"
+wait "$FF" || echo "✗ ffmpeg exited — see $OUT/ffmpeg.log" >&2
