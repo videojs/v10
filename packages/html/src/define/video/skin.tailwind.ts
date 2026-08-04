@@ -120,7 +120,7 @@ function getTemplateHTML() {
                 <media-tooltip-shortcut class="${popup.tooltipShortcut}"></media-tooltip-shortcut>
               </media-tooltip>
 
-              <button commandfor="settings-menu" aria-labelledby="settings-label" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger)}">
+              <button id="settings-trigger" commandfor="settings-menu" aria-labelledby="settings-label" class="${cn(button.base, button.subtle, button.icon, menu.settingsTrigger)}">
                 ${renderIcon('gear', { class: cn(icon, menu.settingsIcon) })}
                 ${renderText(settingsText, { id: 'settings-label', class: 'sr-only' })}
               </button>
@@ -238,6 +238,9 @@ function getTemplateHTML() {
                   </media-captions-radio-group>
                 </media-menu>
               </media-menu>
+              <media-tooltip id="settings-tooltip" trigger="settings-trigger" side="top" class="${cn(popup.tooltip)}">
+                ${renderText(settingsText)}
+              </media-tooltip>
             </div>
           </div>
 

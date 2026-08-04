@@ -103,6 +103,20 @@ afterEach(() => {
 });
 
 describe('TooltipElement', () => {
+  it('uses an explicit trigger that already controls another popup', async () => {
+    defineTestElements();
+    const trigger = document.createElement('test-tooltip-trigger') as TestTriggerElement;
+    const tooltip = createElement(TooltipElement);
+    trigger.id = 'settings-trigger';
+    trigger.setAttribute('commandfor', 'settings-menu');
+    tooltip.trigger = trigger.id;
+    document.body.append(trigger, tooltip);
+
+    await tooltip.updateComplete;
+
+    expect(TooltipLabelElement.findIn(tooltip)?.textContent).toBe('Play');
+  });
+
   it('exposes the positioned side on the popup', async () => {
     const { tooltip, trigger } = setup();
 

@@ -57,7 +57,8 @@ export class TooltipElement extends MediaElement {
     disableHoverablePopup: { type: Boolean, attribute: 'disable-hoverable-popup' },
     disabled: { type: Boolean },
     boundary: { type: String },
-  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary'>;
+    trigger: { type: String },
+  } satisfies PropertyDeclarationMap<keyof TooltipCore.Props | 'boundary' | 'trigger'>;
 
   open = TooltipCore.defaultProps.open;
   defaultOpen = TooltipCore.defaultProps.defaultOpen;
@@ -68,6 +69,7 @@ export class TooltipElement extends MediaElement {
   disableHoverablePopup = TooltipCore.defaultProps.disableHoverablePopup;
   disabled = TooltipCore.defaultProps.disabled;
   boundary: PositioningBoundary = 'container';
+  trigger = '';
 
   readonly #core = new TooltipCore();
   readonly #i18n = new I18nController(this, i18nContext);
@@ -102,6 +104,7 @@ export class TooltipElement extends MediaElement {
       disabled: () => this.disabled,
       // Lazy getter — group may arrive after connect via context.
       group: () => this.#groupConsumer.value,
+      popupGroup: () => this.#containerCtx.value?.popupGroup,
     });
 
     // Register self as the popup element — the element IS the popup.
@@ -162,8 +165,7 @@ export class TooltipElement extends MediaElement {
     super.update(_changed);
     if (!this.#tooltip) return;
 
-    // Discover trigger via commandfor linkage.
-    const triggerEl = this.#position.findTrigger();
+    const triggerEl = this.#position.findTrigger(this.trigger);
     this.#syncTrigger(triggerEl);
 
     if (this.#currentTrigger && isLabelTrigger(this.#currentTrigger)) {

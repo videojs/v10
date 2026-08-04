@@ -2,7 +2,6 @@
 
 import type { MenuState } from '@videojs/core';
 import { isMenuNavigationKey, type UIKeyboardEvent } from '@videojs/core/dom';
-import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import { forwardRef, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -58,7 +57,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   { render, className, style, disabled, type, onClick, onKeyDown, ...elementProps },
   forwardedRef
 ) {
-  const { core, menu, state, anchorName, contentId } = useMenuContext();
+  const { core, menu, state, contentId } = useMenuContext();
   const subMenuCtx = useSubMenuContext();
   const isSubMenuTrigger = subMenuCtx !== null;
 
@@ -115,11 +114,8 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
   const triggerRef = useCallback(
     (element: HTMLButtonElement | null) => {
       menu.setTriggerElement(element);
-      if (element && supportsAnchorPositioning()) {
-        element.style.setProperty('anchor-name', `--${anchorName}`);
-      }
     },
-    [menu, anchorName]
+    [menu]
   );
 
   const rootTriggerProps = useMemo(() => {

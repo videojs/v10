@@ -132,9 +132,18 @@ function SettingsMenu(): ReactNode {
 
   return (
     <Menu.Root side="top" align="center">
-      <Menu.Trigger aria-label={t(settingsText)} className="media-button--settings" render={<Button />}>
-        <GearIcon className="media-icon media-icon--settings" />
-      </Menu.Trigger>
+      <Tooltip.Root side="top">
+        <Tooltip.Trigger
+          render={
+            <Menu.Trigger aria-label={t(settingsText)} className="media-button--settings" render={<Button />}>
+              <GearIcon className="media-icon media-icon--settings" />
+            </Menu.Trigger>
+          }
+        />
+        <Tooltip.Popup className="media-surface media-tooltip">
+          <Tooltip.Label>{t(settingsText)}</Tooltip.Label>
+        </Tooltip.Popup>
+      </Tooltip.Root>
       <Menu.Content className="media-surface media-popover media-menu media-menu--settings">
         <Menu.View className="media-menu__panel">
           <div className="media-menu__group">
