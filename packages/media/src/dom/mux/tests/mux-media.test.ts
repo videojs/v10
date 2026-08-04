@@ -253,6 +253,24 @@ describe('MuxMedia', () => {
     expect(loadstart).toHaveBeenCalled();
   });
 
+  it('exposes the storyboard derived from source', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', storyboard: { format: 'jpg' } };
+
+    expect(media.storyboard).toBe('https://image.mux.com/abc123/storyboard.vtt?format=jpg');
+  });
+
+  it('has no storyboard without a playback id', () => {
+    expect(new MuxMedia().storyboard).toBe('');
+  });
+
+  it('has no storyboard for signed playback without an image token', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
+
+    expect(media.storyboard).toBe('');
+  });
+
   it('fires sourcechange when source is set', () => {
     const media = new MuxMedia();
     const onSourceChange = vi.fn(() => media.source);

@@ -1,6 +1,6 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
 import { StreamTypes } from '@videojs/media/dom/hls-js';
-import { createMuxStoryboardURL, MuxMedia } from '@videojs/media/dom/mux';
+import { MuxMedia } from '@videojs/media/dom/mux';
 import { isUndefined } from '@videojs/utils/predicate';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 
@@ -84,8 +84,7 @@ export class MuxVideo extends MuxVideoBase {
   // Keeps a storyboard track child in sync with the URL derived from `source`.
   #syncStoryboard() {
     // Live streams have no storyboard; skip until the type is known to be otherwise.
-    const src =
-      this.host.streamType === StreamTypes.LIVE ? undefined : createMuxStoryboardURL(this.host.source) || undefined;
+    const src = this.host.streamType === StreamTypes.LIVE ? undefined : this.host.storyboard || undefined;
 
     let track = this.querySelector<HTMLTrackElement>('track[data-storyboard]');
 
