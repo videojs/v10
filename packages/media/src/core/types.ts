@@ -502,6 +502,23 @@ export interface MediaPosterCapability {
 }
 
 // ----------------------------------------
+// Content metadata
+// ----------------------------------------
+
+/** A media-owned content value. `undefined` means the capability is unsupported. */
+export type MediaContentValue = string | null | undefined;
+
+/** Events emitted by a media implementation that donates content title metadata. */
+export interface MediaContentTitleEvents {
+  contenttitlechange: EventLike;
+}
+
+/** Optional media-owned title metadata, independent from the legacy `title` property. */
+export interface MediaContentTitleCapability {
+  readonly contentTitle: MediaContentValue;
+}
+
+// ----------------------------------------
 // Video dimensions (video-only)
 // ----------------------------------------
 
@@ -539,7 +556,8 @@ export interface MediaFullEvents
     MediaErrorEvents,
     TextTrackListEvents,
     MediaStreamTypeEvents,
-    MediaLiveEvents {}
+    MediaLiveEvents,
+    MediaContentTitleEvents {}
 
 export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
   extends Media<Events>,
@@ -554,6 +572,7 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
     MediaTextTrackCapability,
     MediaStreamTypeCapability,
     MediaLiveCapability,
+    MediaContentTitleCapability,
     MediaRemotePlaybackCapability,
     MediaControlsCapability,
     MediaAutoplayCapability {}
@@ -591,7 +610,8 @@ export interface MediaTargetLike
     MediaControlsCapability,
     MediaAutoplayCapability,
     Partial<MediaLiveCapability>,
-    Partial<MediaStreamTypeCapability> {
+    Partial<MediaStreamTypeCapability>,
+    Partial<MediaContentTitleCapability> {
   title: string;
 }
 

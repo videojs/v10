@@ -16,7 +16,8 @@ import type {
   MediaTimeState,
   MediaVolumeState,
 } from '@videojs/media';
-import type { AnySlice, Slice, Store, UnionSliceState } from '@videojs/store';
+import type { AnySlice, Slice, Store, UnionSliceConfig, UnionSliceState } from '@videojs/store';
+import type { metadataFeature } from './store/features/metadata';
 
 export interface MediaContainer extends HTMLElement {}
 
@@ -25,11 +26,15 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export type PlayerFeature<State> = Slice<PlayerTarget, State>;
+export type PlayerFeature<State, Config = object, Derived = object> = Slice<PlayerTarget, State, Config, Derived>;
 
 export type AnyPlayerFeature = AnySlice<PlayerTarget>;
 
-export type PlayerStore<Features extends AnyPlayerFeature[] = []> = Store<PlayerTarget, UnionSliceState<Features>>;
+export type PlayerStore<Features extends AnyPlayerFeature[] = []> = Store<
+  PlayerTarget,
+  UnionSliceState<Features>,
+  UnionSliceConfig<Features>
+>;
 
 export type AnyPlayerStore = Store<PlayerTarget, object>;
 
@@ -52,6 +57,7 @@ export type VideoFeatures = [
   PlayerFeature<MediaControlsState>,
   PlayerFeature<MediaTextTrackState>,
   PlayerFeature<MediaErrorState>,
+  typeof metadataFeature,
 ];
 
 export type AudioFeatures = [
@@ -62,6 +68,7 @@ export type AudioFeatures = [
   PlayerFeature<MediaSourceState>,
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaErrorState>,
+  typeof metadataFeature,
 ];
 
 // TODO: Define background video features (e.g., playback, source, buffer)
@@ -86,6 +93,7 @@ export type LiveVideoFeatures = [
   PlayerFeature<MediaTextTrackState>,
   PlayerFeature<MediaErrorState>,
   PlayerFeature<MediaLiveState>,
+  typeof metadataFeature,
 ];
 
 /**
@@ -102,6 +110,7 @@ export type LiveAudioFeatures = [
   PlayerFeature<MediaBufferState>,
   PlayerFeature<MediaErrorState>,
   PlayerFeature<MediaLiveState>,
+  typeof metadataFeature,
 ];
 
 export type VideoPlayerStore = PlayerStore<VideoFeatures>;

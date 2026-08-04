@@ -18,6 +18,12 @@ class VolumeOverride implements MediaComponent {
   }
 }
 
+class ContentTitleOverride implements MediaComponent {
+  get targetOverride() {
+    return { contentTitle: 'Component title' };
+  }
+}
+
 class AttachTracking implements MediaComponent {
   attach = vi.fn();
   detach = vi.fn();
@@ -89,6 +95,21 @@ describe('HTMLMediaElementHost', () => {
       const host = new HTMLAudioElementHost();
       expect(host.paused).toBe(true);
       expect(host.muted).toBe(false);
+      expect(host.contentTitle).toBeUndefined();
+    });
+
+    it('reads content title independently from the legacy title property', () => {
+      const host = new HTMLAudioElementHost();
+      const audio = document.createElement('audio');
+      audio.title = 'Legacy title';
+      host.attach(audio);
+
+      expect(host.contentTitle).toBeUndefined();
+
+      addMediaComponent(host, new ContentTitleOverride());
+
+      expect(host.contentTitle).toBe('Component title');
+      expect(host.title).toBe('Legacy title');
     });
 
     it('writes setter values to the override when it owns the property', () => {
@@ -195,5 +216,21 @@ describe('HTMLMediaElementHost', () => {
 
       await expect(host.play()).rejects.toBeInstanceOf(DOMException);
     });
+  });
+
+  it('forwards contenttitlechange from the attached media target', () => {
+    const host = new HTMLAudioElementHost();
+    const audio = document.createElement('audio') as HTMLAudioElement & { contentTitle: string | null };
+    audio.contentTitle = null;
+    const listener = vi.fn();
+
+    host.attach(audio);
+    host.addEventListener('contenttitlechange', listener);
+
+    audio.contentTitle = 'Media title';
+    audio.dispatchEvent(new Event('contenttitlechange'));
+
+    expect(listener).toHaveBeenCalledOnce();
+    expect(host.contentTitle).toBe('Media title');
   });
 });

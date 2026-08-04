@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
-import { isMediaBufferCapable, isMediaRemotePlaybackCapable, isMediaTextTrackCapable } from '../predicate';
+import {
+  isMediaBufferCapable,
+  isMediaContentTitleCapable,
+  isMediaRemotePlaybackCapable,
+  isMediaTextTrackCapable,
+} from '../predicate';
+
+describe('isMediaContentTitleCapable', () => {
+  it('uses undefined as the unsupported sentinel', () => {
+    expect(isMediaContentTitleCapable({})).toBe(false);
+    expect(isMediaContentTitleCapable({ contentTitle: undefined })).toBe(false);
+    expect(isMediaContentTitleCapable({ contentTitle: null })).toBe(true);
+    expect(isMediaContentTitleCapable({ contentTitle: '' })).toBe(true);
+  });
+});
 
 describe('isMediaBufferCapable', () => {
   it('rejects empty time range stubs', () => {

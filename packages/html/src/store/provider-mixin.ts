@@ -1,16 +1,19 @@
 import { createPopupGroup, type MediaContainer, type PlayerStore, type PlayerTarget } from '@videojs/core/dom';
+import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
+import { kebabCase } from '@videojs/utils/string';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
-import type { PlayerProvider, PlayerProviderConstructor } from './types';
+import type { PlayerProviderConstructor } from './types';
 
 export interface ProviderMixinConfig<Store extends PlayerStore> {
   playerContext: PlayerContext<Store>;
   mediaContext: MediaContext;
   containerContext: ContainerContext;
   factory: () => Store;
+  configKeys: readonly string[];
 }
 
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
@@ -34,8 +37,14 @@ export function createProviderMixin<Store extends PlayerStore>(
   config: ProviderMixinConfig<Store>
 ): ProviderMixin<Store> {
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
-    class PlayerProviderElement extends BaseClass implements PlayerProvider<Store> {
+    class PlayerProviderElement extends BaseClass {
+      static properties = {
+        ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,
+        ...Object.fromEntries(config.configKeys.map((key) => [key, { type: String, attribute: kebabCase(key) }])),
+      };
+
       #store: Store | null = config.factory();
+      #configuredStore: Store | null = null;
       #detach: (() => void) | null = null;
       #media: Media | null = null;
       #container: MediaContainer | null = null;
@@ -88,6 +97,7 @@ export function createProviderMixin<Store extends PlayerStore>(
       }
 
       override connectedCallback() {
+        this.#syncInitialConfig();
         super.connectedCallback();
         this.#playerProvider.setValue(this.store);
         this.#mediaProvider.setValue({ media: this.#media, setMedia: this.#setMedia });
@@ -110,6 +120,21 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#store?.destroy();
         this.#store = null;
         super.destroyCallback();
+      }
+
+      protected override willUpdate(changed: PropertyValues): void {
+        super.willUpdate(changed);
+
+        const patch: Record<string, unknown> = {};
+        let hasConfigChange = false;
+
+        for (const key of config.configKeys) {
+          if (!changed.has(key)) continue;
+          patch[key] = (this as unknown as Record<string, unknown>)[key];
+          hasConfigChange = true;
+        }
+
+        if (hasConfigChange) this.store.$config.set(patch);
       }
 
       #tryAttach(): void {
@@ -140,6 +165,17 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#detach = null;
       }
 
+      #syncInitialConfig(): void {
+        const store = this.store;
+        if (this.#configuredStore === store) return;
+
+        const patch = Object.fromEntries(
+          config.configKeys.map((key) => [key, (this as unknown as Record<string, unknown>)[key]])
+        );
+        store.$config.set(patch);
+        this.#configuredStore = store;
+      }
+
       #queueFallbackDiscovery(): void {
         if (this.#media || this.#fallbackQueued) return;
         this.#fallbackQueued = true;
@@ -158,6 +194,6 @@ export function createProviderMixin<Store extends PlayerStore>(
       }
     }
 
-    return PlayerProviderElement;
+    return PlayerProviderElement as unknown as Class & PlayerProviderConstructor<Store>;
   };
 }

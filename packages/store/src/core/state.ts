@@ -15,6 +15,7 @@ export interface State<T> {
 
 export interface WritableState<T> extends State<T> {
   patch: (partial: Partial<T>) => void;
+  replace: (next: T, forceNotify?: boolean) => void;
 }
 
 let isFlushScheduled = false;
@@ -52,7 +53,7 @@ class StateContainer<T> implements WritableState<T> {
 
     let changed = false;
 
-    for (const key in partial) {
+    for (const key of Reflect.ownKeys(partial as object) as (keyof T)[]) {
       if (!hasOwnProp.call(partial, key)) continue;
 
       const value = partial[key];
@@ -64,9 +65,16 @@ class StateContainer<T> implements WritableState<T> {
     }
 
     if (changed) {
-      this.#current = Object.freeze(next);
-      this.#markPending();
+      this.replace(next);
     }
+  }
+
+  replace(next: T, forceNotify = false): void {
+    const changed = forceNotify || !shallowEqual(this.#current, next);
+    if (!changed) return;
+
+    this.#current = Object.freeze({ ...next });
+    this.#markPending();
   }
 
   subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
@@ -99,6 +107,18 @@ class StateContainer<T> implements WritableState<T> {
     pendingContainers.add(this);
     scheduleFlush();
   }
+}
+
+function shallowEqual<T>(a: T, b: T): boolean {
+  const aKeys = Reflect.ownKeys(a as object);
+  const bKeys = Reflect.ownKeys(b as object);
+  if (aKeys.length !== bKeys.length) return false;
+
+  for (const key of aKeys) {
+    if (!hasOwnProp.call(b, key) || !Object.is(a[key as keyof T], b[key as keyof T])) return false;
+  }
+
+  return true;
 }
 
 export function createState<T>(initial: T): WritableState<T> {

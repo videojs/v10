@@ -6,6 +6,7 @@ import { controlsFeature } from './features/controls';
 import { errorFeature } from './features/error';
 import { fullscreenFeature } from './features/fullscreen';
 import { liveFeature } from './features/live';
+import { metadataFeature } from './features/metadata';
 import { pipFeature } from './features/pip';
 import { playbackFeature } from './features/playback';
 import { playbackRateFeature } from './features/playback-rate';
@@ -29,6 +30,8 @@ export const selectError = createSelector(errorFeature);
 export const selectFullscreen = createSelector(fullscreenFeature);
 /** Select the live state (`liveEdgeStart`, `targetLiveWindow`). */
 export const selectLive = createSelector(liveFeature);
+/** Select resolved content metadata and its user-config writers. */
+export const selectMetadata = createSelector(metadataFeature);
 /** Select the PiP state (picture-in-picture active, availability). */
 export const selectPiP = createSelector(pipFeature);
 /** Select the playback state (paused, ended, play, pause, toggle). */

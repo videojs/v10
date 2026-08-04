@@ -247,6 +247,113 @@ describe('store', () => {
     });
   });
 
+  describe('config and derived state', () => {
+    const INTERNAL_VALUE = Symbol('internalValue');
+
+    interface TestConfig {
+      value: string | null;
+      fallback: string;
+    }
+
+    interface TestSourceState {
+      [INTERNAL_VALUE]: string | undefined;
+      setInternal(value: string | undefined): void;
+      setValue(value: string | null): void;
+    }
+
+    const responsiveSlice = defineSlice<MockMedia, TestConfig>()({
+      config: { value: null, fallback: 'fallback' },
+      state: ({ config, set }): TestSourceState => ({
+        [INTERNAL_VALUE]: undefined,
+        setInternal: (value) => set({ [INTERNAL_VALUE]: value }),
+        setValue: (value) => config.set({ value }),
+      }),
+      derived: {
+        resolved: ({ config, get }) => config.get().value ?? get()[INTERNAL_VALUE] ?? config.get().fallback,
+      },
+    });
+
+    it('overlays initial config and resets explicit undefined to the declared initial value', () => {
+      const store = createStore<MockMedia>()(responsiveSlice, { config: { value: 'initial' } });
+
+      expect(store.resolved).toBe('initial');
+      expect(store.$config.get()).toEqual({ value: 'initial', fallback: 'fallback' });
+
+      store.$config.set({ value: undefined });
+
+      expect(store.resolved).toBe('fallback');
+      expect(store.$config.get().value).toBeNull();
+    });
+
+    it('publishes source and derived changes atomically while keeping symbols internal', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+
+      expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
+      expect(Object.getOwnPropertySymbols(store)).toEqual([Symbol.for('@videojs/store')]);
+
+      store.setInternal('media');
+
+      expect(store.resolved).toBe('media');
+      expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
+    });
+
+    it('keeps lower-precedence source state live and notifies for hidden input changes', () => {
+      const store = createStore<MockMedia>()(responsiveSlice, { config: { value: 'user' } });
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      store.setInternal('latest media');
+      flush();
+
+      expect(store.resolved).toBe('user');
+      expect(listener).toHaveBeenCalledOnce();
+
+      store.setValue(null);
+      expect(store.resolved).toBe('latest media');
+    });
+
+    it('resets source state on detach while preserving config', () => {
+      const store = createStore<MockMedia>()(responsiveSlice, { config: { fallback: 'configured fallback' } });
+      const detach = store.attach(new MockMedia());
+
+      store.setInternal('media');
+      expect(store.resolved).toBe('media');
+
+      detach();
+
+      expect(store.resolved).toBe('configured fallback');
+      expect(store.$config.get().fallback).toBe('configured fallback');
+    });
+
+    it('does not commit config when a derived formula throws', () => {
+      interface ThrowingConfig {
+        value: number;
+      }
+
+      const throwingSlice = defineSlice<MockMedia, ThrowingConfig>()({
+        config: { value: 1 },
+        state: () => ({}),
+        derived: {
+          doubled: ({ config }) => {
+            const { value } = config.get();
+            if (value < 0) throw new Error('invalid value');
+            return value * 2;
+          },
+        },
+      });
+      const store = createStore<MockMedia>()(throwingSlice);
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      expect(() => store.$config.set({ value: -1 })).toThrow('invalid value');
+      flush();
+
+      expect(store.doubled).toBe(2);
+      expect(store.$config.get().value).toBe(1);
+      expect(listener).not.toHaveBeenCalled();
+    });
+  });
+
   describe('destroy', () => {
     it('cleans up everything', () => {
       const store = createStore<MockMedia>()(audioSlice);

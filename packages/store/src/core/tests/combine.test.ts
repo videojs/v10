@@ -64,4 +64,43 @@ describe('combine', () => {
 
     warn.mockRestore();
   });
+
+  it('warns on duplicate config keys and uses the later initial value', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const configuredSlice = defineSlice<MockTarget, { label: string }>();
+    const a = configuredSlice({ config: { label: 'first' }, state: () => ({}) });
+    const b = configuredSlice({ config: { label: 'second' }, state: () => ({}) });
+
+    const store = createStore<MockTarget>()(combine(a, b));
+
+    expect(store.$config.get().label).toBe('second');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('duplicate config key "label"'));
+    warn.mockRestore();
+  });
+
+  it('warns on state/derived overlap and publishes the derived value', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const overlapping = defineSlice<MockTarget>()({
+      state: () => ({ count: 1 }),
+      derived: { count: () => 2 },
+    });
+
+    const store = createStore<MockTarget>()(combine(overlapping));
+
+    expect(store.count).toBe(2);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('state and derived key "count" overlap'));
+    warn.mockRestore();
+  });
+
+  it('warns on duplicate derived keys and uses the later formula', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const a = slice({ state: () => ({}), derived: { label: () => 'first' } });
+    const b = slice({ state: () => ({}), derived: { label: () => 'second' } });
+
+    const store = createStore<MockTarget>()(combine(a, b));
+
+    expect(store.label).toBe('second');
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('duplicate derived key "label"'));
+    warn.mockRestore();
+  });
 });

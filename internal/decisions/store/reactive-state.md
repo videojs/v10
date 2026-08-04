@@ -20,6 +20,6 @@ An early proxy-based implementation reduced update ceremony but obscured mutatio
 
 ## Rationale
 
-Explicit updates make ownership and tests easier to follow. Frozen snapshots prevent accidental mutation, key-aware subscriptions avoid unrelated work, and computed values keep derivation lazy. Target-specific async behavior stays in slices or the target rather than a generic store queue.
+Explicit updates make ownership and tests easier to follow. Frozen snapshots prevent accidental mutation, key-aware subscriptions avoid unrelated work, and derived formulas are evaluated eagerly so source, config, and computed values publish as one atomic snapshot. Target-specific async behavior stays in slices or the target rather than a generic store queue.
 
 The current API and examples live in `packages/store/src/`, its tests, and `packages/store/README.md`.

@@ -6,6 +6,10 @@ import type { AnySlice, InferSliceState, StateContext } from './slice';
 
 const stateContext: StateContext<unknown> = {
   target: throwNoTargetError,
+  config: {
+    get: throwNoTargetError,
+    set: throwNoTargetError,
+  },
   signals: new AbortControllerRegistry(),
   get: throwNoTargetError,
   set: throwNoTargetError,
@@ -28,7 +32,7 @@ const stateContext: StateContext<unknown> = {
  */
 export function createSelector<S extends AnySlice>(slice: S): Selector<object, InferSliceState<S> | undefined> {
   const initialState = slice.state(stateContext);
-  const keys = Object.keys(initialState as object);
+  const keys = [...Object.keys(initialState as object), ...Object.keys(slice.derived ?? {})];
 
   const firstKey = keys[0];
 

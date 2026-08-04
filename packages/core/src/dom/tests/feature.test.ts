@@ -8,6 +8,10 @@ const stateContext = {
     throw new Error('Target is not available in this test.');
   },
   signals: undefined as unknown as StateContext<PlayerTarget>['signals'],
+  config: {
+    get: () => ({}),
+    set: () => {},
+  },
   get: () => ({}),
   set: () => {},
 } satisfies StateContext<PlayerTarget>;

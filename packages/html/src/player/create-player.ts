@@ -81,7 +81,8 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 ): CreatePlayerResult<PlayerStore<Features>>;
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<PlayerStore> {
-  const slice = combine<PlayerTarget, AnyPlayerFeature[]>(...config.features);
+  const slice = combine(...config.features);
+  const configKeys = Object.keys(slice.config ?? {});
 
   function create(): PlayerStore {
     return createStore<PlayerTarget>()(slice);
@@ -92,6 +93,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     mediaContext,
     containerContext,
     factory: create,
+    configKeys,
   });
 
   const ContainerMixin = createContainerMixin<PlayerStore>({

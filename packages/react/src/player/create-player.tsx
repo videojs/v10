@@ -12,11 +12,11 @@ import {
   type VideoPlayerStore,
 } from '@videojs/core/dom';
 import type { Media } from '@videojs/media/dom';
-import type { InferStoreState } from '@videojs/store';
+import type { ConfigPatch, InferStoreConfig, InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
 import { Container } from './container';
@@ -27,12 +27,12 @@ export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   displayName?: string;
 }
 
-export interface ProviderProps {
+export type ProviderProps<Config = object> = ConfigPatch<Config> & {
   children: ReactNode;
-}
+};
 
 export interface CreatePlayerResult<Store extends PlayerStore> {
-  Provider: FC<ProviderProps>;
+  Provider: FC<ProviderProps<InferStoreConfig<Store>>>;
   Container: typeof Container;
   usePlayer: UsePlayerHook<Store>;
   useMedia: () => Media | null;
@@ -70,13 +70,41 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 ): CreatePlayerResult<PlayerStore<Features>>;
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
-  function Provider({ children }: ProviderProps): ReactNode {
-    const [store, setStore] = useState(() => createStore<PlayerTarget>()(combine(...config.features)));
+  const slice = combine(...config.features);
+  const configKeys = Object.keys(slice.config ?? {});
+
+  function Provider(props: ProviderProps<any>): ReactNode {
+    const { children } = props;
+    const providerConfig = readProviderConfig(props, configKeys);
+    const [store, setStore] = useState(() => createStore<PlayerTarget>()(slice, { config: providerConfig }));
+    const syncedConfig = useRef({ store, values: providerConfig });
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
 
     useDestroy(store);
+
+    useLayoutEffect(() => {
+      const previous = syncedConfig.current;
+
+      // Replacement stores are seeded from this render's props during creation.
+      if (previous.store !== store) {
+        syncedConfig.current = { store, values: providerConfig };
+        return;
+      }
+
+      const patch: Record<string, unknown> = {};
+      let changed = false;
+
+      for (const key of configKeys) {
+        if (Object.is(previous.values[key], providerConfig[key])) continue;
+        patch[key] = providerConfig[key];
+        changed = true;
+      }
+
+      if (changed) store.$config.set(patch);
+      syncedConfig.current = { store, values: providerConfig };
+    });
 
     useEffect(() => {
       if (!media) return;
@@ -85,7 +113,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       // effect cleanup and re-setup (e.g., React <Activity> hide → reveal). The
       // useState initializer does not re-run in this case.
       if (store.destroyed) {
-        setStore(createStore<PlayerTarget>()(combine(...config.features)));
+        setStore(createStore<PlayerTarget>()(slice, { config: syncedConfig.current.values }));
         return;
       }
 
@@ -115,4 +143,8 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     usePlayer,
     useMedia,
   };
+}
+
+function readProviderConfig(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+  return Object.fromEntries(keys.map((key) => [key, props[key]]));
 }
