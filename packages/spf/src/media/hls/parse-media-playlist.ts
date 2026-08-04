@@ -317,13 +317,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
     }
   }
 
-  const totalDuration = currentTime;
-
-  // `duration` is the track's duration: Infinity while the playlist can still
-  // grow (unended live), finite once complete (VOD / ENDLIST). It uses the
-  // actual EXTINF sum, never the target duration.
   const complete = endList || playlistType === 'VOD';
-  const trackDuration = complete ? totalDuration : Number.POSITIVE_INFINITY;
 
   // Position this window on the timeline. PDT is primary: whenever the track
   // carries a wall-clock anchor (`startDate` — pre-stamped on the shell for a
@@ -340,6 +334,16 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
       : isResolvedTrack(previous)
         ? placeOnPreviousTimeline(previous, segments, mediaSequence, targetDuration)
         : segments;
+
+  // `duration` is the track's duration: Infinity while the playlist can still
+  // grow (unended live), finite once complete (VOD / ENDLIST). Paired with
+  // `startTime: 0` below, it spans the presentation origin to the last placed
+  // segment's end — so it's measured off `placed`, not the local EXTINF sum:
+  // for a window that has slid, the sum is the window's length, not its span.
+  // Never the target duration.
+  const lastPlaced = placed[placed.length - 1];
+  const placedEnd = lastPlaced ? lastPlaced.startTime + lastPlaced.duration : 0;
+  const trackDuration = complete ? placedEnd : Number.POSITIVE_INFINITY;
 
   // Wall-clock anchor: `startDate − startTime` for the first PDT-bearing
   // segment (constant along a linear timeline). Maps this track's origin to

@@ -502,6 +502,40 @@ segment6.m4s
       expect(getMediaPlaylistMetadata(result)?.endList).toBe(true);
     });
 
+    it('spans to the last segment when a slid window ends, not just the window length', () => {
+      const first = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:0
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:00.000Z
+#EXTINF:6.0,
+segment0.m4s
+#EXTINF:6.0,
+segment1.m4s
+#EXTINF:6.0,
+segment2.m4s`;
+      const previous = parseMediaPlaylist(first, unresolvedVideo);
+      expect(previous.duration).toBe(Number.POSITIVE_INFINITY);
+
+      // Window slid past segment0/1 and the stream ended. Placement is PDT-primary
+      // against the frozen anchor, so the surviving segments stay where they were.
+      const ended = `#EXTM3U
+#EXT-X-TARGETDURATION:6
+#EXT-X-MEDIA-SEQUENCE:2
+#EXT-X-PROGRAM-DATE-TIME:2026-01-01T00:00:12.000Z
+#EXTINF:6.0,
+segment2.m4s
+#EXTINF:6.0,
+segment3.m4s
+#EXT-X-ENDLIST`;
+      const result = parseMediaPlaylist(ended, previous);
+
+      expect(result.segments.map((s) => s.startTime)).toEqual([12, 18]);
+      // `startTime` is the presentation origin, so `duration` has to reach the last
+      // segment's end (24) — the 12s EXTINF sum is the window's length, not its span.
+      expect(result.startTime).toBe(0);
+      expect(result.duration).toBe(24);
+    });
+
     it('carries the timeline forward across reloads as the window slides', () => {
       const first = `#EXTM3U
 #EXT-X-TARGETDURATION:6
