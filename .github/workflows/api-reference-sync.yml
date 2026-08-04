@@ -84,6 +84,7 @@ jobs:
           fi
 
           git checkout "$MERGE_SHA"
+          pnpm install --frozen-lockfile
 
       - name: Classify changes
         id: classify
