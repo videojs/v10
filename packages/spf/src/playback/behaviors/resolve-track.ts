@@ -223,7 +223,13 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                     const relabeled = NON_FMP4_CONTAINER_MIMES.has(mediaTrack.mimeType)
                       ? applyContainerMimeType(patched, mediaTrack.type, mediaTrack.mimeType)
                       : patched;
-                    // Stream nature (live vs on-demand) — stable once parsed.
+                    // Stream nature (live vs on-demand), rewritten from whichever
+                    // track just parsed — every type's resolve and every live
+                    // reload takes this path. Idempotent in practice rather than
+                    // by construction: `PLAYLIST-TYPE` is a per-source constant
+                    // that a source's renditions agree on, so each write lands
+                    // the same value. Renditions that disagreed would make the
+                    // winner resolve-order-dependent.
                     return { ...relabeled, streamType: deriveStreamType(getMediaPlaylistMetadata(mediaTrack)) };
                   });
                   return mediaTrack;
