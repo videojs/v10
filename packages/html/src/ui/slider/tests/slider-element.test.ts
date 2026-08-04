@@ -1,7 +1,7 @@
-import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
-import { createStore, flush } from '@videojs/store';
+import { createStore } from '@videojs/store';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
@@ -14,7 +14,6 @@ import { SliderValueElement } from '../slider-value-element';
 
 // Unique tag names to avoid customElements.define collisions across tests.
 let tagCounter = 0;
-const testPlayerTarget = { media: {} as PlayerTarget['media'], container: null };
 
 function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
@@ -26,10 +25,7 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   return document.createElement(tag) as Element;
 }
 
-function createControlsStore(
-  requestControlsLock: MediaControlsState['requestControlsLock'],
-  attachedRequestControlsLock?: MediaControlsState['requestControlsLock']
-): AnyPlayerStore {
+function createControlsStore(requestControlsLock: MediaControlsState['requestControlsLock']): AnyPlayerStore {
   return createStore<unknown>()<MediaControlsState>({
     name: 'controls',
     state: () => ({
@@ -38,9 +34,6 @@ function createControlsStore(
       requestControlsLock,
       toggleControls: () => true,
     }),
-    attach({ set }) {
-      if (attachedRequestControlsLock) set({ requestControlsLock: attachedRequestControlsLock });
-    },
   }) as unknown as AnyPlayerStore;
 }
 
@@ -48,18 +41,6 @@ class TestPlayerProviderElement extends MediaElement {
   readonly releaseControlsLock = vi.fn();
   readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
   readonly store = createControlsStore(this.requestControlsLock);
-  readonly provider = new ContextProvider(this, {
-    context: playerContext,
-    initialValue: this.store,
-  });
-}
-
-class AttachableTestPlayerProviderElement extends MediaElement {
-  readonly initialReleaseControlsLock = vi.fn();
-  readonly initialRequestControlsLock = vi.fn(() => this.initialReleaseControlsLock);
-  readonly releaseControlsLock = vi.fn();
-  readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
-  readonly store = createControlsStore(this.initialRequestControlsLock, this.requestControlsLock);
   readonly provider = new ContextProvider(this, {
     context: playerContext,
     initialValue: this.store,
@@ -195,47 +176,6 @@ describe('SliderElement', () => {
     slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
 
     expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
-  });
-
-  it('transfers an active drag lock when the controls action changes', async () => {
-    const provider = createElement(AttachableTestPlayerProviderElement);
-    const slider = createElement(SliderElement);
-
-    provider.append(slider);
-    document.body.append(provider);
-    await slider.updateComplete;
-
-    slider.setPointerCapture = vi.fn();
-    slider.releasePointerCapture = vi.fn();
-    slider.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, pointerId: 1, clientX: 50 }));
-
-    expect(provider.initialRequestControlsLock).toHaveBeenCalledTimes(1);
-
-    const detach = provider.store.attach(testPlayerTarget);
-    flush();
-    await slider.updateComplete;
-
-    expect(provider.initialReleaseControlsLock).toHaveBeenCalledTimes(1);
-    expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
-
-    detach();
-    flush();
-    await slider.updateComplete;
-
-    expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
-    expect(provider.initialRequestControlsLock).toHaveBeenCalledTimes(2);
-
-    provider.store.attach(testPlayerTarget);
-    flush();
-    await slider.updateComplete;
-
-    expect(provider.initialReleaseControlsLock).toHaveBeenCalledTimes(2);
-    expect(provider.requestControlsLock).toHaveBeenCalledTimes(2);
-
-    slider.dispatchEvent(new PointerEvent('pointerup', { bubbles: true, pointerId: 1, clientX: 50 }));
-    slider.dispatchEvent(new PointerEvent('lostpointercapture', { bubbles: true, pointerId: 1 }));
-
-    expect(provider.releaseControlsLock).toHaveBeenCalledTimes(2);
   });
 
   it('supports vertical orientation', async () => {

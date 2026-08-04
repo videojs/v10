@@ -430,6 +430,61 @@ describe('controlsFeature', () => {
   });
 
   describe('controls visibility locks', () => {
+    it('keeps actions stable across attachment', () => {
+      const video = createMockVideo({ paused: false });
+      const store = createStore<PlayerTarget>()(controlsFeature);
+      const requestControlsLock = store.state.requestControlsLock;
+      const toggleControls = store.state.toggleControls;
+      const target = { media: video, container: createContainer() };
+
+      const detach = store.attach(target);
+      flush();
+
+      expect(store.state.requestControlsLock).toBe(requestControlsLock);
+      expect(store.state.toggleControls).toBe(toggleControls);
+
+      detach();
+      flush();
+
+      expect(store.state.requestControlsLock).toBe(requestControlsLock);
+      expect(store.state.toggleControls).toBe(toggleControls);
+
+      store.attach(target);
+      flush();
+
+      expect(store.state.requestControlsLock).toBe(requestControlsLock);
+      expect(store.state.toggleControls).toBe(toggleControls);
+    });
+
+    it('keeps a pre-attach lock active across reattachment', () => {
+      const video = createMockVideo({ paused: false });
+      const store = createStore<PlayerTarget>()(controlsFeature);
+      const target = { media: video, container: createContainer() };
+      const release = store.state.requestControlsLock();
+
+      const detach = store.attach(target);
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      detach();
+      flush();
+      store.attach(target);
+      flush();
+
+      vi.advanceTimersByTime(IDLE_DELAY * 2);
+      flush();
+      expect(store.state.controlsVisible).toBe(true);
+
+      release();
+      vi.advanceTimersByTime(IDLE_DELAY);
+      flush();
+
+      expect(store.state.controlsVisible).toBe(false);
+    });
+
     it('shows hidden controls and suspends the idle timeout while locked', () => {
       const video = createMockVideo({ paused: false });
       const { store } = createPlayerStore(video);

@@ -1,4 +1,4 @@
-import type { AnyPlayerStore, PlayerTarget } from '@videojs/core/dom';
+import type { AnyPlayerStore } from '@videojs/core/dom';
 import type { Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import type { MediaControlsState } from '@videojs/media';
@@ -21,7 +21,6 @@ import { MenuSeparatorElement } from '../menu-separator-element';
 import { MenuViewElement } from '../menu-view-element';
 
 let tagCounter = 0;
-const testPlayerTarget = { media: {} as PlayerTarget['media'], container: null };
 
 function uniqueTag(base: string): string {
   return `${base}-${tagCounter++}`;
@@ -40,8 +39,7 @@ function defineElement(tagName: string, Base: CustomElementConstructor): void {
 }
 
 function createControlsStore(
-  requestControlsLock: MediaControlsState['requestControlsLock'] = () => () => {},
-  attachedRequestControlsLock?: MediaControlsState['requestControlsLock']
+  requestControlsLock: MediaControlsState['requestControlsLock'] = () => () => {}
 ): AnyPlayerStore {
   return createStore<unknown>()<MediaControlsState>({
     name: 'controls',
@@ -58,9 +56,6 @@ function createControlsStore(
           return visible;
         },
       };
-    },
-    attach({ set }) {
-      if (attachedRequestControlsLock) set({ requestControlsLock: attachedRequestControlsLock });
     },
   }) as unknown as AnyPlayerStore;
 }
@@ -85,16 +80,6 @@ class TestPlayerProviderElement extends MediaElement {
     state.toggleControls();
     flush();
   }
-}
-
-class AttachableTestPlayerProviderElement extends MediaElement {
-  readonly initialReleaseControlsLock = vi.fn();
-  readonly initialRequestControlsLock = vi.fn(() => this.initialReleaseControlsLock);
-  readonly releaseControlsLock = vi.fn();
-  readonly requestControlsLock = vi.fn(() => this.releaseControlsLock);
-  readonly store = createControlsStore(this.initialRequestControlsLock, this.requestControlsLock);
-
-  readonly provider = new ContextProvider(this, { context: playerContext, initialValue: this.store });
 }
 
 defineElement('test-menu-player-provider', TestPlayerProviderElement);
@@ -801,46 +786,6 @@ describe('MenuElement', () => {
 
     await waitForAssertion(() => {
       expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
-    });
-  });
-
-  it('transfers an open menu lock when the controls action changes', async () => {
-    const provider = createElement(AttachableTestPlayerProviderElement);
-    const root = createElement(MenuElement);
-
-    root.open = true;
-    provider.append(root);
-    document.body.append(provider);
-    await root.updateComplete;
-
-    expect(provider.initialRequestControlsLock).toHaveBeenCalledTimes(1);
-
-    const detach = provider.store.attach(testPlayerTarget);
-    flush();
-    await root.updateComplete;
-
-    expect(provider.initialReleaseControlsLock).toHaveBeenCalledTimes(1);
-    expect(provider.requestControlsLock).toHaveBeenCalledTimes(1);
-
-    detach();
-    flush();
-    await root.updateComplete;
-
-    expect(provider.releaseControlsLock).toHaveBeenCalledTimes(1);
-    expect(provider.initialRequestControlsLock).toHaveBeenCalledTimes(2);
-
-    provider.store.attach(testPlayerTarget);
-    flush();
-    await root.updateComplete;
-
-    expect(provider.initialReleaseControlsLock).toHaveBeenCalledTimes(2);
-    expect(provider.requestControlsLock).toHaveBeenCalledTimes(2);
-
-    root.open = false;
-    await root.updateComplete;
-
-    await waitForAssertion(() => {
-      expect(provider.releaseControlsLock).toHaveBeenCalledTimes(2);
     });
   });
 });

@@ -60,32 +60,15 @@ export function useSlider<State extends SliderState = SliderState>(
   options: UseSliderOptions<State>
 ): UseSliderReturnValue<State> {
   const optionsRef = useLatestRef(options);
-  const controls = useOptionalPlayer(selectControls);
-  const controlsRef = useLatestRef(controls);
-  const controlsLockRef = useRef<{
-    request: () => () => void;
-    release: () => void;
-  } | null>(null);
-  const draggingRef = useRef(false);
+  const requestControlsLock = useOptionalPlayer(selectControls)?.requestControlsLock;
+  const releaseControlsLockRef = useRef<(() => void) | null>(null);
 
-  const syncControlsLock = useCallback(
-    (active: boolean, requestControlsLock = controlsRef.current?.requestControlsLock) => {
-      const nextRequestControlsLock = active ? requestControlsLock : undefined;
-      if (nextRequestControlsLock === controlsLockRef.current?.request) return;
+  const releaseControlsLock = useCallback(() => {
+    releaseControlsLockRef.current?.();
+    releaseControlsLockRef.current = null;
+  }, []);
 
-      controlsLockRef.current?.release();
-      controlsLockRef.current = nextRequestControlsLock
-        ? { request: nextRequestControlsLock, release: nextRequestControlsLock() }
-        : null;
-    },
-    []
-  );
-
-  useEffect(() => {
-    syncControlsLock(draggingRef.current, controls?.requestControlsLock);
-  }, [controls?.requestControlsLock, syncControlsLock]);
-
-  useEffect(() => () => syncControlsLock(false), [syncControlsLock]);
+  useEffect(() => releaseControlsLock, [releaseControlsLock]);
 
   const rootElementRef = useRef<HTMLElement | null>(null);
   const thumbElementRef = useRef<HTMLElement | null>(null);
@@ -107,13 +90,11 @@ export function useSlider<State extends SliderState = SliderState>(
       onValueChange: (percent) => optionsRef.current.onValueChange?.(percent),
       onValueCommit: (percent) => optionsRef.current.onValueCommit?.(percent),
       onDragStart: () => {
-        draggingRef.current = true;
-        syncControlsLock(true);
+        releaseControlsLockRef.current ??= requestControlsLock?.() ?? null;
         optionsRef.current.onDragStart?.();
       },
       onDragEnd: () => {
-        draggingRef.current = false;
-        syncControlsLock(false);
+        releaseControlsLock();
         optionsRef.current.onDragEnd?.();
       },
     };

@@ -9,24 +9,43 @@ import { isRemotePlaybackConnected, isRemotePlaybackConnecting } from '../../pre
 const IDLE_DELAY = 2000;
 const TAP_THRESHOLD = 250;
 const TOUCH_SETTLE_DELAY = 500;
+type RequestControlsLock = MediaControlsState['requestControlsLock'];
+type ToggleControls = MediaControlsState['toggleControls'];
+
+interface ControlsActions {
+  requestControlsLock: RequestControlsLock;
+  toggleControls: ToggleControls;
+  setDelegates(requestControlsLock: RequestControlsLock, toggleControls: ToggleControls): void;
+  reset(): void;
+}
+
+const controlsActionsByRequest = new WeakMap<RequestControlsLock, ControlsActions>();
 
 export const controlsFeature = definePlayerFeature({
   name: 'controls',
-  state: ({ get, set }): MediaControlsState => ({
-    userActive: true,
-    controlsVisible: true,
-    requestControlsLock() {
+  state: ({ get, set }): MediaControlsState => {
+    const fallbackRequestControlsLock = () => {
       // Fallback before attach — show controls, but there is no idle timer to suspend.
       set({ controlsVisible: true });
       return () => {};
-    },
-    toggleControls() {
+    };
+    const fallbackToggleControls = () => {
       // Fallback before attach — no idle timer, just flip state.
       const next = !get().userActive;
       set({ userActive: next, controlsVisible: next });
       return next as boolean;
-    },
-  }),
+    };
+    const actions = createControlsActions(fallbackRequestControlsLock, fallbackToggleControls);
+
+    controlsActionsByRequest.set(actions.requestControlsLock, actions);
+
+    return {
+      userActive: true,
+      controlsVisible: true,
+      requestControlsLock: actions.requestControlsLock,
+      toggleControls: actions.toggleControls,
+    };
+  },
 
   attach({ target, signal, get, set }) {
     const { media, container } = target;
@@ -97,18 +116,17 @@ export const controlsFeature = definePlayerFeature({
       };
     }
 
-    // Expose controls actions with access to the idle timer and lock count.
-    set({
-      requestControlsLock,
-      toggleControls() {
-        if (get().controlsVisible) {
-          setInactive();
-        } else {
-          setActive();
-        }
-        return get().controlsVisible;
-      },
-    });
+    function toggleControls(): boolean {
+      if (get().controlsVisible) {
+        setInactive();
+      } else {
+        setActive();
+      }
+      return get().controlsVisible;
+    }
+
+    const actions = controlsActionsByRequest.get(get().requestControlsLock)!;
+    actions.setDelegates(requestControlsLock, toggleControls);
 
     // Touch tap-to-toggle.
     //
@@ -229,10 +247,12 @@ export const controlsFeature = definePlayerFeature({
       listen(media.remote, 'disconnect', onCastChange, { signal });
     }
 
-    // Clean up timer and invalidate outstanding releases on detach.
+    // Restore fallback behavior on detach. Active lock tokens transfer to the
+    // fallback and will transfer again if the store is reattached.
     signal.addEventListener(
       'abort',
       () => {
+        actions.reset();
         controlsLockCount = 0;
         clearIdle();
       },
@@ -244,3 +264,50 @@ export const controlsFeature = definePlayerFeature({
     scheduleIdle();
   },
 });
+
+function createControlsActions(
+  fallbackRequestControlsLock: RequestControlsLock,
+  fallbackToggleControls: ToggleControls
+): ControlsActions {
+  let requestControlsLockDelegate = fallbackRequestControlsLock;
+  let toggleControlsDelegate = fallbackToggleControls;
+  const locks = new Set<{ release: () => void }>();
+
+  const requestControlsLock = () => {
+    const lock = { release: requestControlsLockDelegate() };
+    let released = false;
+
+    locks.add(lock);
+
+    return () => {
+      if (released) return;
+      released = true;
+      locks.delete(lock);
+      lock.release();
+    };
+  };
+
+  const toggleControls = () => toggleControlsDelegate();
+
+  const actions: ControlsActions = {
+    requestControlsLock,
+    toggleControls,
+    setDelegates(nextRequestControlsLock, nextToggleControls) {
+      if (nextRequestControlsLock !== requestControlsLockDelegate) {
+        requestControlsLockDelegate = nextRequestControlsLock;
+
+        for (const lock of locks) {
+          lock.release();
+          lock.release = nextRequestControlsLock();
+        }
+      }
+
+      toggleControlsDelegate = nextToggleControls;
+    },
+    reset() {
+      actions.setDelegates(fallbackRequestControlsLock, fallbackToggleControls);
+    },
+  };
+
+  return actions;
+}
