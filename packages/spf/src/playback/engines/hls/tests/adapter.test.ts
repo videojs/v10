@@ -15,6 +15,7 @@
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
 import { SimpleHlsMediaElement, SimpleHlsMediaMixin } from '../adapter';
 
@@ -517,6 +518,102 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.streamType).toBe('unknown');
       expect(media.targetLiveWindow).toBeNaN();
       expect(media.liveEdgeStart).toBeNaN();
+      media.destroy();
+    });
+  });
+  // ---------------------------------------------------------------------------
+  // Error surface — error / 'error' event
+  // (the MediaErrorCapability contract the player store's error feature consumes)
+  // ---------------------------------------------------------------------------
+  describe('error surface', () => {
+    class TestMedia extends SimpleHlsMediaMixin(EventTarget) {}
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('exposes no error before anything is reported', () => {
+      const media = new TestMedia();
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('surfaces a reported fatal condition as an ErrorLike and fires error', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: expect.any(String) });
+      expect(media.error?.message).not.toBe('');
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('surfaces the first fatal condition — the root cause, not the consequence', async () => {
+      const media = new TestMedia();
+      // A reporter states the cause before selection reports the consequence;
+      // sequence order is causal, so the first fatal is the actionable one.
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_AUDIO_TRACK);
+      media.destroy();
+    });
+
+    it('ignores non-fatal reports — they stay in the sequence only', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      // 2039 (manifest feature unsupported) is the degraded-but-playable tier;
+      // it must not reach the media surface.
+      media.engine.state.errors.set([{ code: 2039 }]);
+      await flush();
+
+      expect(media.error).toBeNull();
+      expect(fired).toHaveLength(0);
+      media.destroy();
+    });
+
+    it('fires once per distinct condition, not per re-report', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+      // A later append (a second reporter, a re-evaluation) leaves the first
+      // fatal in place; the surface must not re-fire for the same condition.
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }, { code: 2039 }]);
+      await flush();
+
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('clears when the sequence resets for a new source', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+      expect(media.error).not.toBeNull();
+
+      // collectErrors clears the slot on source change.
+      media.engine.state.errors.set(undefined);
+      await flush();
+
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('carries reporter context through as data', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK, data: { selectionKey: 'selectedVideoTrackId' } },
+      ]);
+      await flush();
+
+      expect(media.error?.data).toEqual({ selectionKey: 'selectedVideoTrackId' });
       media.destroy();
     });
   });

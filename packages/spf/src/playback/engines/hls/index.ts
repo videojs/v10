@@ -1,3 +1,7 @@
+// SVTA 2070 error vocabulary — the codes reported on `state.errors` and
+// surfaced through the adapter's `error`.
+export type { SvtaError } from '../../../media/errors';
+export { svtaCategory, svtaIndex } from '../../../media/errors';
 // HLS media-playlist metadata, including `playlistType` ('VOD' | 'EVENT'). Lets
 // consumers distinguish an EVENT / DVR source from sliding-window live directly
 // from the manifest, rather than inferring it from the seekable window size.
@@ -11,7 +15,12 @@ export {
   derivePerTypeStartMediaTime,
   deriveSharedMinStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
-export type { SimpleHlsMediaAPI, SimpleHlsMediaProps, SimpleHlsMediaStreamType } from './adapter';
+export type {
+  SimpleHlsMediaAPI,
+  SimpleHlsMediaError,
+  SimpleHlsMediaProps,
+  SimpleHlsMediaStreamType,
+} from './adapter';
 export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
 export type { SimpleHlsAudioOnlyMediaAPI, SimpleHlsAudioOnlyMediaProps } from './adapter-audio-only';
 export {
