@@ -130,6 +130,20 @@ export function hasCodecs(track: PartiallyResolvedTrack | ResolvedTrack | undefi
  * for mixed-container sources (e.g. muxed-TS video + raw-`.aac` audio) and races
  * concurrent per-type resolution. Same-type writes are disjoint and safe.
  * Idempotent — tracks already at `mimeType` are left as-is.
+ *
+ * **Assumes one container per type, which the HLS specs don't guarantee.** Apple's
+ * HLS Authoring Specification not only permits a mixed ladder, it produces one:
+ * §1.5 requires HEVC in fMP4, while §9.22 says a 192 kbit/s H.264 variant
+ * *packaged in a transport stream* SHOULD be provided for cellular — so a
+ * conformant HEVC ladder with that fallback is necessarily mixed. RFC 8216 is
+ * silent too (§6.2.4 constrains variant *content*, not container).
+ *
+ * Where that happens, resolving the TS variant first relabels the whole type,
+ * capability probing prunes all of it, and a source whose fMP4 variants were fine
+ * reports as unplayable. Accepted because the current target is CMAF-compliant
+ * single-container delivery (plus Apple's official fMP4 example); revisit by
+ * narrowing the relabel to the resolved track, or gating propagation on config,
+ * if mixed ladders come into scope.
  */
 export function applyContainerMimeType(presentation: Presentation, type: TrackType, mimeType: string): Presentation {
   return {
