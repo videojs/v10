@@ -1,11 +1,5 @@
 import { HlsJsMedia } from '../hls-js';
-import {
-  createMuxPosterURL,
-  createMuxStoryboardURL,
-  createMuxVideoURL,
-  type MuxSource,
-  parseMuxVideoURL,
-} from './utils';
+import { createMuxPosterURL, createMuxVideoURL, type MuxSource, parseMuxVideoURL } from './utils';
 
 export interface MuxMediaProps {
   src: string;
@@ -90,17 +84,5 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    */
   get contentPoster(): string {
     return createMuxPosterURL(this.source) ?? '';
-  }
-
-  /**
-   * Storyboard VTT URL for the current content, built from `source` and its
-   * `storyboard` params. Read-only.
-   *
-   * Empty when there is no playback ID, or when signed playback has no matching
-   * image token. Live streams have no storyboard, which this does not account
-   * for — `<mux-video>` drops the thumbnail track once the stream type is known.
-   */
-  get contentStoryboard(): string {
-    return createMuxStoryboardURL(this.source) ?? '';
   }
 }
