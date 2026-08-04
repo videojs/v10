@@ -34,6 +34,8 @@ Both clusters and patterns are extract-from-real-work — no speculative additio
 
 Existing features cite their file: `subtitles`, `video-abr`, `multi-language-audio`. Notion-cluster cross-references (e.g., "Notion cluster C") point at the SPF Epics Working Doc taxonomy.
 
+Some features are **cluster-crossing**: every cluster produces into them and none owns them, so they carry no cluster membership and appear in no Docs list. [errors](./errors.md) is the first — each cluster's features detect their own error conditions, while that doc owns the representation, the fatal-vs-non-fatal derivation, and the adapter boundary. Look for it from any cluster rather than under one.
+
 Unscoped feature candidates that previously appeared inline as bracketed names (e.g. `[ll-hls-support]`) have been pulled out — they're tracked separately as an unscoped backlog rather than as sibling-feature placeholders in cluster Docs lists. Documenting any of them routes through `/document-spf-feature`, which applies the decomposition rubric at invocation time and decides whether the item becomes a new doc, a phase of an existing doc, or absorption into another doc.
 
 ---
