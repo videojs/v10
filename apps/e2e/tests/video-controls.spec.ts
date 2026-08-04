@@ -231,7 +231,6 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await page.waitForTimeout(500);
       await expect(player.settingsSpeedItem).toBeVisible();
 
-      await player.settingsButton.hover();
       await page.waitForTimeout(700);
       await expect(player.settingsTooltip).not.toBeVisible();
     });

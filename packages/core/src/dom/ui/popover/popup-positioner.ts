@@ -52,7 +52,8 @@ export class PopupPositioner {
   #boundaryElement: Element | null = null;
   #abort: AbortController | null = null;
   #observer: ResizeObserver | null = null;
-  #triggerAnchor: InlineStyleValue | null = null;
+  #triggerAnchorName: string | null = null;
+  #triggerAnchorAdded = false;
   #popupAnchor: InlineStyleValue | null = null;
   #popupStyles = new Map<string, InlineStyleValue>();
   readonly #reposition = rafThrottle(() => this.#position());
@@ -185,14 +186,16 @@ export class PopupPositioner {
     if (!supportsAnchorPositioning()) return;
 
     const generatedName = `--${anchorName}`;
-    this.#triggerAnchor = this.#readStyle(trigger, 'anchor-name');
+    const triggerAnchor = this.#readStyle(trigger, 'anchor-name');
     this.#popupAnchor = this.#readStyle(popup, 'position-anchor');
 
-    const authoredNames = this.#triggerAnchor.value.trim();
+    const authoredNames = triggerAnchor.value.trim();
     const names = authoredNames && authoredNames !== 'none' ? authoredNames.split(',').map((name) => name.trim()) : [];
-    if (!names.includes(generatedName)) names.push(generatedName);
+    this.#triggerAnchorName = generatedName;
+    this.#triggerAnchorAdded = !names.includes(generatedName);
+    if (this.#triggerAnchorAdded) names.push(generatedName);
 
-    trigger.style.setProperty('anchor-name', names.join(', '));
+    trigger.style.setProperty('anchor-name', names.join(', '), triggerAnchor.priority);
     popup.style.setProperty('position-anchor', generatedName);
   }
 
@@ -200,9 +203,17 @@ export class PopupPositioner {
     const options = this.#options;
     if (!options?.trigger || !options.popup) return;
 
-    if (this.#triggerAnchor) this.#writeStyle(options.trigger, 'anchor-name', this.#triggerAnchor);
+    if (this.#triggerAnchorName && this.#triggerAnchorAdded) {
+      const current = this.#readStyle(options.trigger, 'anchor-name');
+      const names = current.value
+        .split(',')
+        .map((name) => name.trim())
+        .filter((name) => name && name !== this.#triggerAnchorName);
+      this.#writeStyle(options.trigger, 'anchor-name', { value: names.join(', '), priority: current.priority });
+    }
     if (this.#popupAnchor) this.#writeStyle(options.popup, 'position-anchor', this.#popupAnchor);
-    this.#triggerAnchor = null;
+    this.#triggerAnchorName = null;
+    this.#triggerAnchorAdded = false;
     this.#popupAnchor = null;
   }
 

@@ -97,7 +97,7 @@ describe('PopupPositioner', () => {
     expect(disconnect).toHaveBeenCalledOnce();
   });
 
-  it('preserves consumer-authored anchor styles', async () => {
+  it('preserves consumer-authored and active popup anchor styles', async () => {
     vi.resetModules();
     vi.doMock('@videojs/utils/dom', async (importOriginal) => {
       const original = (await importOriginal()) as Record<string, unknown>;
@@ -108,6 +108,7 @@ describe('PopupPositioner', () => {
 
     const trigger = document.createElement('button');
     const popup = document.createElement('div');
+    const secondPopup = document.createElement('div');
     trigger.style.setProperty('anchor-name', '--consumer');
     popup.style.setProperty('position-anchor', '--consumer-popup');
     mockRect(document.documentElement, 0, 0, 800, 600);
@@ -124,7 +125,21 @@ describe('PopupPositioner', () => {
     expect(trigger.style.getPropertyValue('anchor-name')).toBe('--consumer, --settings');
     expect(popup.style.getPropertyValue('position-anchor')).toBe('--settings');
 
+    const secondPositioner = new AnchorPopupPositioner();
+    secondPositioner.sync({
+      anchorName: 'tooltip',
+      position: { side: 'top', align: 'center' },
+      trigger,
+      popup: secondPopup,
+    });
+
+    expect(trigger.style.getPropertyValue('anchor-name')).toBe('--consumer, --settings, --tooltip');
+
     positioner.cleanup();
+
+    expect(trigger.style.getPropertyValue('anchor-name')).toBe('--consumer, --tooltip');
+
+    secondPositioner.cleanup();
 
     expect(trigger.style.getPropertyValue('anchor-name')).toBe('--consumer');
     expect(popup.style.getPropertyValue('position-anchor')).toBe('--consumer-popup');
