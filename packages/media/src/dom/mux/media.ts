@@ -65,6 +65,10 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
   set source(value: MuxSource | null) {
     const source = value ?? null;
+    // Changing anything takes a new object, so handing the same one back costs
+    // nothing.
+    if (source === this.#source) return;
+
     this.#source = source;
 
     // Hand the same source down with `src` resolved from the playback ID. The

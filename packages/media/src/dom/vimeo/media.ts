@@ -294,6 +294,10 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
   set source(value: VimeoSource | null) {
     const source = value ?? null;
+    // Changing anything takes a new object, so handing the same one back costs
+    // nothing.
+    if (source === this.#source) return;
+
     const src = source?.src ?? '';
     const srcChanged = this.#src !== src;
     // Embed options are read when the video is loaded, so a change to them needs

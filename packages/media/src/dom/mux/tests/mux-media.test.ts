@@ -287,7 +287,7 @@ describe('MuxMedia', () => {
     expect(onSourceChange).toHaveBeenCalledTimes(2);
   });
 
-  it('announces every source assignment', () => {
+  it('ignores the same source object', () => {
     const media = new MuxMedia();
     const source = { playbackId: 'abc123' };
     media.source = source;
@@ -295,6 +295,17 @@ describe('MuxMedia', () => {
     const onSourceChange = vi.fn();
     media.addEventListener('sourcechange', onSourceChange);
     media.source = source;
+
+    expect(onSourceChange).not.toHaveBeenCalled();
+  });
+
+  it('announces a new source object even when it is equal', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const onSourceChange = vi.fn();
+    media.addEventListener('sourcechange', onSourceChange);
+    media.source = { playbackId: 'abc123' };
 
     expect(onSourceChange).toHaveBeenCalledOnce();
   });
