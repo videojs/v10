@@ -91,6 +91,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #videoWidth = Number.NaN;
   #videoHeight = Number.NaN;
   #readyState = READY_STATE_HAVE_NOTHING;
+  #title = '';
   #error: ErrorLike | null = null;
   #isFullscreen = false;
   #isPictureInPicture = false;
@@ -313,6 +314,16 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.dispatchEvent(new Event('sourcechange'));
   }
 
+  /**
+   * Metadata Vimeo reports about the loaded video, keyed by what it is — `title`
+   * for now. Unlike a Mux source, none of it can be derived from `src`; the embed
+   * has to report it, so a key is absent until then. Read it again after
+   * `loadedmetadata`, and expect it empty across a source change.
+   */
+  get contentData(): Record<string, string> {
+    return { ...(this.#title && { title: this.#title }) };
+  }
+
   get buffered() {
     return this.#progress > 0 ? createTimeRanges(0, this.#progress) : EMPTY_TIME_RANGES;
   }
@@ -411,6 +422,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#progress = 0;
     this.#readyState = READY_STATE_HAVE_NOTHING;
     this.#seeking = false;
+    this.#title = '';
     this.#volume = 1;
     this.#error = null;
     this.#videoWidth = Number.NaN;
@@ -424,14 +436,16 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     const player = this.#player;
     if (player) {
       // Each value falls back to the current one so a single failure isn't fatal.
-      const [muted, volume, duration] = await Promise.all([
+      const [muted, volume, duration, title] = await Promise.all([
         player.getMuted().catch(() => this.#muted),
         player.getVolume().catch(() => this.#volume),
         player.getDuration().catch(() => this.#duration),
+        player.getVideoTitle().catch(() => this.#title),
       ]);
       this.#muted = muted;
       this.#volume = volume;
       this.#duration = duration;
+      this.#title = title;
     }
     for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
       this.dispatchEvent(new Event(type));

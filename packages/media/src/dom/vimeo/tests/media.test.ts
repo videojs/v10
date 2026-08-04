@@ -26,6 +26,7 @@ vi.mock('@vimeo/player', () => {
     getMuted = vi.fn(async () => false);
     getVolume = vi.fn(async () => 1);
     getDuration = vi.fn(async () => 60);
+    getVideoTitle = vi.fn(async () => 'Sample Video');
     getCurrentTime = vi.fn(async () => 0);
     getTextTracks = vi.fn(async () => [] as unknown[]);
     destroy = vi.fn(async () => {
@@ -83,6 +84,7 @@ async function attachAndLoad(media: VimeoMedia): Promise<{ iframe: HTMLIFrameEle
 
 interface MockPlayerLike {
   emit(event: string, data?: unknown): void;
+  getVideoTitle: ReturnType<typeof vi.fn>;
   play: ReturnType<typeof vi.fn>;
   pause: ReturnType<typeof vi.fn>;
   setVolume: ReturnType<typeof vi.fn>;
@@ -237,6 +239,43 @@ describe('VimeoMedia', () => {
     events.length = 0;
     player.emit('timeupdate', { seconds: 1, duration: 60 });
     expect(events).toEqual([]);
+  });
+
+  it('exposes the video title in contentData once the embed loads', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    // Nothing to report before the embed answers.
+    expect(media.contentData).toEqual({});
+
+    const player = media.engine as unknown as MockPlayerLike;
+    player.emit('loaded');
+    await waitForVimeoLoaded(media);
+
+    expect(media.contentData).toEqual({ title: 'Sample Video' });
+  });
+
+  it('clears contentData when the source changes', async () => {
+    const media = new VimeoMedia();
+    await attachAndLoad(media);
+
+    media.src = '12345';
+
+    expect(media.contentData).toEqual({});
+  });
+
+  it('omits the title when Vimeo reports none', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    const player = media.engine as unknown as MockPlayerLike;
+    player.getVideoTitle.mockResolvedValueOnce('');
+    player.emit('loaded');
+    await waitForVimeoLoaded(media);
+
+    expect(media.contentData).toEqual({});
   });
 
   it('updates state from player events', async () => {
