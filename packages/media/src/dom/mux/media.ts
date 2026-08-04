@@ -78,30 +78,22 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   }
 
   /**
-   * Poster image URL for the current content, built from `source` and its
-   * `poster` params. Read-only, and never applied on its own — assign it to
-   * `poster` to use it, or ignore it and set your own.
+   * Image URLs `source` describes rather than plays: `poster` from its `poster`
+   * params, `storyboard` from its `storyboard` params. A key is absent when the
+   * URL can't be built — no playback ID, or signed playback without a matching
+   * image token.
    *
-   * Empty when there is no playback ID, or when signed playback has no matching
-   * image token. Changes with `source`, so read it again after `sourcechange`.
-   *
-   * Set `source.poster` to change the image — a `width` for a small viewport,
-   * say, or a `time` to pick the frame.
+   * Read-only and re-derived on read, so read it again after `sourcechange`.
+   * Nothing here is applied for you, apart from the thumbnail track
+   * `<mux-video>` adds from `storyboard` (and drops for live streams).
    */
-  get contentPoster(): string {
-    return createMuxPosterURL(this.source) ?? '';
-  }
+  get contentData(): Record<string, string> {
+    const poster = createMuxPosterURL(this.source);
+    const storyboard = createMuxStoryboardURL(this.source);
 
-  /**
-   * Storyboard VTT URL for the current content, built from `source` and its
-   * `storyboard` params. Read-only — `<mux-video>` uses it to add the thumbnail
-   * track for you.
-   *
-   * Empty when there is no playback ID, or when signed playback has no matching
-   * image token. Live streams have no storyboard, which this does not account
-   * for — the track is dropped once the stream type is known.
-   */
-  get storyboard(): string {
-    return createMuxStoryboardURL(this.source) ?? '';
+    return {
+      ...(poster && { poster }),
+      ...(storyboard && { storyboard }),
+    };
   }
 }

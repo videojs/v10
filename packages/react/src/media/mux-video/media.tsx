@@ -72,7 +72,8 @@ function MuxStoryboard({ media }: { media: MuxMedia }) {
   );
 
   // The stream type is detected at runtime and live streams have no storyboard.
-  const getSnapshot = () => (media.streamType === StreamTypes.LIVE ? '' : media.storyboard);
+  // The '' fallback keeps the snapshot a string rather than sometimes undefined.
+  const getSnapshot = () => (media.streamType === StreamTypes.LIVE ? '' : (media.contentData.storyboard ?? ''));
   const src = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   if (!src) return null;

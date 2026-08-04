@@ -174,8 +174,8 @@ function parseMuxParamValue(value: string): string | number | boolean {
 }
 
 /**
- * Build the poster image URL a source describes. Reached through `MuxMedia`'s
- * `contentPoster`, which is the supported way to read it.
+ * Build the poster image URL a source describes. Read through `MuxMedia`'s
+ * `contentData`.
  *
  * @internal
  */
@@ -192,7 +192,12 @@ export function createMuxPosterURL(source?: MuxSource | null): string | undefine
   return `https://image.${customDomain}/${playbackId}/thumbnail.${ext}${createMuxQuery({ token, ...query })}`;
 }
 
-/** Build the storyboard (thumbnail sprite) VTT URL for a source. */
+/**
+ * Build the storyboard (thumbnail sprite) VTT URL a source describes. Read
+ * through `MuxMedia`'s `contentData`.
+ *
+ * @internal
+ */
 export function createMuxStoryboardURL(source?: MuxSource | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, storyboard, playback } = source;

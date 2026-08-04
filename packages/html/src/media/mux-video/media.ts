@@ -84,7 +84,7 @@ export class MuxVideo extends MuxVideoBase {
   // Keeps a storyboard track child in sync with the URL derived from `source`.
   #syncStoryboard() {
     // Live streams have no storyboard; skip until the type is known to be otherwise.
-    const src = this.host.streamType === StreamTypes.LIVE ? undefined : this.host.storyboard || undefined;
+    const src = this.host.streamType === StreamTypes.LIVE ? undefined : this.host.contentData.storyboard;
 
     let track = this.querySelector<HTMLTrackElement>('track[data-storyboard]');
 

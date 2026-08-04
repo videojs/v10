@@ -168,13 +168,16 @@ describe('MuxVideo', () => {
     expect(el.host.poster).toBe('');
   });
 
-  it('exposes the content poster on the element', () => {
+  it('exposes the content data on the element', () => {
     const el = createMuxVideo();
 
     el.setAttribute('src', 'https://stream.mux.com/abc123.m3u8');
     el.setAttribute('poster-time', '12');
 
-    expect(el.contentPoster).toBe('https://image.mux.com/abc123/thumbnail.webp?time=12');
+    expect(el.contentData).toEqual({
+      poster: 'https://image.mux.com/abc123/thumbnail.webp?time=12',
+      storyboard: 'https://image.mux.com/abc123/storyboard.vtt?format=webp',
+    });
   });
 
   it('reflects the poster-time attribute to source.poster.time', () => {

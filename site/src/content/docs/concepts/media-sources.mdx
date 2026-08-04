@@ -254,32 +254,34 @@ video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 }
 
 `MuxVideo` uses the storyboard itself, adding the thumbnail `<track>` for you so hover previews work without extra markup. Live streams have no storyboard, so the track is dropped once the stream type is known, and signed playback without a matching storyboard token adds none.
 
-The URL it uses is readable, and read-only — change `source.storyboard` to change it:
-
-```ts
-video.storyboard; // 'https://image.mux.com/PLAYBACK_ID/storyboard.vtt?format=webp'
-```
-
-`source.poster` is only data — nothing applies it to the media. Read the URL it describes from `contentPoster`, and use it wherever you need a still:
+`source.poster` gets no such treatment — it's only data, and nothing applies it to the media. Both URLs are readable from `contentData`, keyed by what each one describes:
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
-video.contentPoster; // 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=12'
+video.contentData;
+// {
+//   poster: 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=12',
+//   storyboard: 'https://image.mux.com/PLAYBACK_ID/storyboard.vtt?format=jpg',
+// }
 
-// Use it as the poster, if that's what you want it for.
-video.poster = video.contentPoster;
+// Use the still as the poster, if that's what you want it for.
+video.poster = video.contentData.poster ?? '';
 ```
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```ts
-media.contentPoster; // 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=12'
+media.contentData;
+// {
+//   poster: 'https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=12',
+//   storyboard: 'https://image.mux.com/PLAYBACK_ID/storyboard.vtt?format=jpg',
+// }
 ```
 </FrameworkCase>
 
-It's read-only and tracks `source`, so read it again after `sourcechange`. It's empty when there is no playback ID, and when signed playback has no matching image token. The name is `contentPoster` rather than `poster` because `poster` is already the media's own poster property — the storyboard has no such clash.
+It's read-only and derived from `source`, so read it again after `sourcechange`. A key is missing when its URL can't be built: no playback ID, or signed playback with no matching image token. Changing the URLs means changing the params they're built from.
 
-To change the image, change the params it's built from. `source.poster` takes the [full set of Mux image modifiers](https://www.mux.com/docs/guides/get-images-from-a-video), so a narrower still for a small viewport is a `width`:
+`source.poster` takes the [full set of Mux image modifiers](https://www.mux.com/docs/guides/get-images-from-a-video), so a narrower still for a small viewport is a `width`:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx

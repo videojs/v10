@@ -129,36 +129,40 @@ describe('MuxMedia', () => {
     expect(media.poster).toBe('');
   });
 
-  it('exposes the content poster derived from source', () => {
+  it('exposes the content poster and storyboard derived from source', () => {
     const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', poster: { time: 5, ext: 'jpg' } };
+    media.source = { playbackId: 'abc123', poster: { time: 5, ext: 'jpg' }, storyboard: { format: 'jpg' } };
 
-    expect(media.contentPoster).toBe('https://image.mux.com/abc123/thumbnail.jpg?time=5');
+    expect(media.contentData).toEqual({
+      poster: 'https://image.mux.com/abc123/thumbnail.jpg?time=5',
+      storyboard: 'https://image.mux.com/abc123/storyboard.vtt?format=jpg',
+    });
   });
 
-  it('tracks source changes in the content poster', () => {
+  it('tracks source changes in the content data', () => {
     const media = new MuxMedia();
     media.source = { playbackId: 'abc123' };
     media.source = { playbackId: 'xyz789' };
 
-    expect(media.contentPoster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+    expect(media.contentData.poster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+    expect(media.contentData.storyboard).toBe('https://image.mux.com/xyz789/storyboard.vtt?format=webp');
   });
 
-  it('has no content poster without a playback id', () => {
+  it('has no content data without a playback id', () => {
     const media = new MuxMedia();
 
-    expect(media.contentPoster).toBe('');
+    expect(media.contentData).toEqual({});
 
     media.src = 'https://example.com/custom.m3u8';
 
-    expect(media.contentPoster).toBe('');
+    expect(media.contentData).toEqual({});
   });
 
-  it('has no content poster for signed playback without an image token', () => {
+  it('has no content data for signed playback without image tokens', () => {
     const media = new MuxMedia();
     media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
 
-    expect(media.contentPoster).toBe('');
+    expect(media.contentData).toEqual({});
   });
 
   it('does not reload when only image params change', async () => {
@@ -251,24 +255,6 @@ describe('MuxMedia', () => {
     await flushLoad();
 
     expect(loadstart).toHaveBeenCalled();
-  });
-
-  it('exposes the storyboard derived from source', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', storyboard: { format: 'jpg' } };
-
-    expect(media.storyboard).toBe('https://image.mux.com/abc123/storyboard.vtt?format=jpg');
-  });
-
-  it('has no storyboard without a playback id', () => {
-    expect(new MuxMedia().storyboard).toBe('');
-  });
-
-  it('has no storyboard for signed playback without an image token', () => {
-    const media = new MuxMedia();
-    media.source = { playbackId: 'abc123', playback: { token: 'jwt' } };
-
-    expect(media.storyboard).toBe('');
   });
 
   it('fires sourcechange when source is set', () => {
