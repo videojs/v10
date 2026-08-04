@@ -34,6 +34,9 @@ jobs:
       - name: Install and build
         run: pnpm install && pnpm build:packages
 
+      - name: Test bundle size reporting
+        run: pnpm test:size
+
       - name: Measure bundle size
         run: node .github/scripts/bundle-size.js --json pr-size.json
 
@@ -50,7 +53,7 @@ jobs:
       - name: Checkout base
         uses: actions/checkout@v5
         with:
-          ref: ${{ github.base_ref }}
+          ref: ${{ github.event.pull_request.base.sha }}
 
       - name: Checkout PR scripts
         uses: actions/checkout@v5
@@ -65,8 +68,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v5
         with:
-          node-version-file: '.nvmrc'
+          node-version-file: '.bundle-size-pr/.nvmrc'
           cache: pnpm
+          cache-dependency-path: |
+            pnpm-lock.yaml
+            .bundle-size-pr/pnpm-lock.yaml
 
       - name: Cache turbo build setup
         uses: actions/cache@v5
@@ -81,6 +87,7 @@ jobs:
           pnpm install
 
           if [ -f .bundle-size-pr/.github/scripts/bundle-size.js ]; then
+            pnpm --dir .bundle-size-pr install --frozen-lockfile --ignore-scripts --filter video.js
             pnpm build:packages
             node .bundle-size-pr/.github/scripts/bundle-size.js --root . --json base-size.json
           else

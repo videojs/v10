@@ -41,6 +41,7 @@
     "test:e2e:sandbox": "pnpm --dir apps/e2e test:sandbox",
     "test:e2e:update": "pnpm --dir apps/e2e test:update",
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
+    "test:size": "node --test .github/scripts/tests/*.test.js",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
     "typecheck": "tsgo --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",

@@ -7,11 +7,13 @@
  * When --base is omitted, generates a local report showing current sizes.
  * When --base is provided, generates a comparison report with diffs.
  *
- * Reads JSON arrays of { name, size, type, category?, format, standaloneSize?,
- * lazySize?, totalSize? } entries produced by bundle-size.js.
+ * Reads JSON arrays of { name, size, type, category?, format, lazySize?,
+ * totalSize? } entries produced by bundle-size.js.
  */
 
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -34,31 +36,6 @@ function formatDelta(current, previous) {
   };
 }
 
-function statusIcon(current, previous) {
-  if (previous === undefined) return '🆕';
-  const diff = current - previous;
-  if (diff === 0) return '✅';
-  if (diff < 0) return '🔽';
-  if (previous === 0) return '🔴';
-  const pct = (diff / previous) * 100;
-  return pct > 10 ? '🔴' : '🔺';
-}
-
-function entryStatusIcon(current, previous) {
-  if (!previous) return '🆕';
-  const currentSize = comparisonSize(current);
-  const previousSize = comparisonSize(previous);
-  if (Math.abs(currentSize - previousSize) > 300) {
-    return statusIcon(currentSize, previousSize);
-  }
-  const currentLazy = comparisonLazySize(current);
-  const previousLazy = comparisonLazySize(previous);
-  if (currentLazy !== previousLazy) {
-    return statusIcon(currentLazy, previousLazy);
-  }
-  return statusIcon(currentLazy, previousLazy);
-}
-
 function lazySize(entry) {
   if (!entry) return 0;
   return (
@@ -79,19 +56,17 @@ function lazyDelta(current, previous) {
   return formatDelta(currentLazy, previousLazy).bytes;
 }
 
-function comparisonSize(entry) {
-  return entry?.standaloneSize ?? entry?.size ?? 0;
-}
+const HIGHLIGHT_THRESHOLD = 300;
 
-function comparisonLazySize(entry) {
-  return entry?.standaloneLazySize ?? lazySize(entry);
-}
-
-function comparisonLazyDelta(current, previous) {
-  const currentLazy = comparisonLazySize(current);
-  const previousLazy = comparisonLazySize(previous);
-  if (currentLazy === 0 && previousLazy === 0) return '—';
-  return formatDelta(currentLazy, previousLazy).bytes;
+function isHighlightedChange(current, previous) {
+  if (!previous) return true;
+  const totalDelta =
+    current.size + lazySize(current) - previous.size - lazySize(previous);
+  return (
+    Math.abs(current.size - previous.size) > HIGHLIGHT_THRESHOLD ||
+    Math.abs(lazySize(current) - lazySize(previous)) > HIGHLIGHT_THRESHOLD ||
+    Math.abs(totalDelta) > HIGHLIGHT_THRESHOLD
+  );
 }
 
 /** Preferred display order for packages. Unlisted packages sort to the end. */
@@ -196,11 +171,6 @@ function generateCategoryBreakdowns(entries, pkg) {
       }
     }
 
-    if (cat === 'ui') {
-      lines.push('');
-      lines.push('*Sizes are marginal over the root entry point.*');
-    }
-
     lines.push('</details>');
     lines.push('');
   }
@@ -233,24 +203,42 @@ function generateFlatBreakdown(entries, pkg) {
   return lines;
 }
 
+function generateComparisonTable(entries, removed, pkg, baseEntryMap) {
+  const lines = [
+    '| Path | Base initial | PR initial | Initial diff | Lazy diff |',
+    '|---|--:|--:|--:|--:|',
+  ];
+
+  for (const entry of entries) {
+    const el = entryLabel(entry.name, pkg);
+    const previousEntry = baseEntryMap[entry.name];
+    const prevInitial = previousEntry?.size;
+    const d = formatDelta(entry.size, prevInitial);
+    const baseSize = prevInitial !== undefined ? formatBytes(prevInitial) : '—';
+    const initialDelta = previousEntry ? `${d.bytes} (${d.pct})` : 'new';
+    lines.push(
+      `| ${el} | ${baseSize} | ${formatBytes(entry.size)} | ${initialDelta} | ${lazyDelta(entry, previousEntry)} |`,
+    );
+  }
+
+  for (const entry of removed) {
+    const el = entryLabel(entry.name, pkg);
+    lines.push(
+      `| ${el} | ${formatBytes(entry.size)} | — | removed | ${lazyDelta(undefined, entry)} |`,
+    );
+  }
+
+  lines.push('');
+  return lines;
+}
+
 // ---------------------------------------------------------------------------
 // Comparison report (CI — PR vs base)
 // ---------------------------------------------------------------------------
 
-function generateComparisonReport(current, base) {
+export function generateComparisonReport(current, base) {
   const currentMap = Object.fromEntries(current.map((e) => [e.name, e.size]));
   const baseEntryMap = Object.fromEntries(base.map((e) => [e.name, e]));
-
-  // Standalone size lookups — used to gate UI component diffs.
-  // UI marginal sizes shift when root content changes (brotli compression is
-  // non-linear), so we compare standalone sizes to decide IF a component
-  // actually changed, then display the marginal diff.
-  const baseStandaloneMap = Object.fromEntries(
-    base.map((e) => [e.name, e.standaloneSize ?? e.size]),
-  );
-  const currentStandaloneMap = Object.fromEntries(
-    current.map((e) => [e.name, e.standaloneSize ?? e.size]),
-  );
 
   const groups = groupByPackage(current);
 
@@ -286,26 +274,27 @@ function generateComparisonReport(current, base) {
     const baseEntries = baseGroups.get(pkg) ?? [];
     const pkgIcon = pkgIcons[pkg] ?? '📦';
 
-    // Entries with meaningful size changes (>300 B threshold).
-    // For UI components, gate on standalone size to filter out phantom diffs
-    // caused by brotli compression shifts when root content changes.
+    // Every byte is intentional here. Measurements are deterministic, so a
+    // reporting threshold would hide legitimate small improvements/regressions.
     const changed = entries.filter((e) => {
-      const prevStandalone = baseStandaloneMap[e.name];
-      // New entry — always surface
-      if (prevStandalone === undefined) return true;
-      const curStandalone = currentStandaloneMap[e.name];
-      const initialChanged = Math.abs(curStandalone - prevStandalone) > 300;
-      const currentLazy = comparisonLazySize(e);
       const previousEntry = baseEntryMap[e.name];
-      const previousLazy = comparisonLazySize(previousEntry);
-      const lazyChanged = Math.abs(currentLazy - previousLazy) > 300;
-      return initialChanged || lazyChanged;
+      if (!previousEntry) return true;
+      return (
+        e.size !== previousEntry.size ||
+        lazySize(e) !== lazySize(previousEntry)
+      );
     });
 
     // Entries that existed in base but are missing in PR (removed)
     const removed = baseEntries.filter((e) => currentMap[e.name] === undefined);
 
-    const hasChanges = changed.length > 0 || removed.length > 0;
+    const highlighted = changed.filter((entry) =>
+      isHighlightedChange(entry, baseEntryMap[entry.name]),
+    );
+    const small = changed.filter(
+      (entry) => !isHighlightedChange(entry, baseEntryMap[entry.name]),
+    );
+    const hasHighlightedChanges = highlighted.length > 0 || removed.length > 0;
 
     // Category breakdowns for packages with categories (html, react)
     const hasCategories = entries.some((e) => e.category);
@@ -315,36 +304,38 @@ function generateComparisonReport(current, base) {
         ? generateFlatBreakdown(entries, pkg)
         : [];
 
-    if (hasChanges) {
+    if (hasHighlightedChanges) {
       lines.push(`## ${pkgIcon} @videojs/${pkg}`);
       lines.push('');
-
-      lines.push('| Path | Base initial | PR initial | Diff | % | Lazy | |');
-      lines.push('|---|--:|--:|--:|--:|--:|:-:|');
-
-      for (const entry of changed) {
-        const el = entryLabel(entry.name, pkg);
-        const previousEntry = baseEntryMap[entry.name];
-        const prevInitial = previousEntry ? comparisonSize(previousEntry) : undefined;
-        const currentInitial = comparisonSize(entry);
-        const d = formatDelta(currentInitial, prevInitial);
-        const status = entryStatusIcon(entry, previousEntry);
-        const baseSize = prevInitial !== undefined ? formatBytes(prevInitial) : '—';
+      lines.push(
+        ...generateComparisonTable(
+          highlighted,
+          removed,
+          pkg,
+          baseEntryMap,
+        ),
+      );
+      if (small.length > 0) {
+        lines.push('<details>');
         lines.push(
-          `| ${el} | ${baseSize} | ${formatBytes(currentInitial)} | ${d.bytes} | ${d.pct} | ${comparisonLazyDelta(entry, previousEntry)} | ${status} |`,
+          `<summary>Small changes (${small.length}, ≤ ${HIGHLIGHT_THRESHOLD} B)</summary>`,
         );
+        lines.push('');
+        lines.push(...generateComparisonTable(small, [], pkg, baseEntryMap));
+        lines.push('</details>');
+        lines.push('');
       }
-
-      for (const entry of removed) {
-        const el = entryLabel(entry.name, pkg);
-        const previousInitial = comparisonSize(entry);
-        lines.push(
-          `| ${el} | ${formatBytes(previousInitial)} | — | −${formatBytes(previousInitial)} | −100% | ${comparisonLazyDelta(undefined, entry)} | 🗑️ |`,
-        );
-      }
-
-      lines.push('');
       lines.push(...breakdownLines);
+    } else if (small.length > 0) {
+      lines.push('<details>');
+      lines.push(
+        `<summary><b>${pkgIcon} @videojs/${pkg}</b> — ${small.length} small size ${small.length === 1 ? 'change' : 'changes'}</summary>`,
+      );
+      lines.push('');
+      lines.push(...generateComparisonTable(small, [], pkg, baseEntryMap));
+      lines.push(...breakdownLines);
+      lines.push('</details>');
+      lines.push('');
     } else {
       lines.push('<details>');
       lines.push(`<summary><b>${pkgIcon} @videojs/${pkg}</b> — no changes</summary>`);
@@ -362,16 +353,16 @@ function generateComparisonReport(current, base) {
   lines.push('<summary>ℹ️ How to interpret</summary>');
   lines.push('');
   lines.push(
-    'JS sizes are initial static graph totals (minified + brotli). Lazy dynamic chunks are shown separately when present.',
+    'Each entry is independently bundled, minified, and brotli-compressed. Initial size includes its static import graph; lazy dynamic chunks are reported separately.',
   );
   lines.push('');
-  lines.push('| Icon | Meaning |');
-  lines.push('|---|---|');
-  lines.push('| ✅ | No change |');
-  lines.push('| 🔺 | Increased ≤ 10% |');
-  lines.push('| 🔴 | Increased > 10% |');
-  lines.push('| 🔽 | Decreased |');
-  lines.push('| 🆕 | New (no baseline) |');
+  lines.push(
+    'Entries are not additive because their dependency graphs overlap. Preset rows represent realistic combined bundles.',
+  );
+  lines.push('');
+  lines.push(
+    `Changes of ${HIGHLIGHT_THRESHOLD} B or less across initial, lazy, and total size are collapsed, not discarded.`,
+  );
   lines.push('');
   lines.push('Run `pnpm size` locally to check current initial sizes.');
   lines.push('</details>');
@@ -564,4 +555,7 @@ function main() {
   }
 }
 
-main();
+const isMain =
+  process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
+if (isMain) main();
