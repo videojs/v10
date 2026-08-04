@@ -16,7 +16,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # ─── Job 0: Build API JSON at HEAD~1 and HEAD, diff them ─────────────
+  # ─── Job 0: Build API JSON before and after the merge, then diff them ─
   analyze:
     if: github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main'
     runs-on: ubuntu-latest
@@ -64,12 +64,13 @@ jobs:
           cp -r site/src/content/generated-component-reference/* /tmp/api-sync/after-components/ 2>/dev/null || true
           cp -r site/src/content/generated-util-reference/* /tmp/api-sync/after-utils/ 2>/dev/null || true
 
-      - name: Build API JSON at pull request base
+      - name: Build API JSON before the merge
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           MERGE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
         run: |
-          git checkout "$BASE_SHA"
+          # This repository uses squash merges, whose parent is the exact pre-merge main tip.
+          BEFORE_MERGE_SHA=$(git rev-parse "$MERGE_SHA^1")
+          git checkout "$BEFORE_MERGE_SHA"
 
           # If install or build fails (for example, the builder itself changed),
           # treat everything as new by leaving before dirs empty
@@ -79,7 +80,7 @@ jobs:
             cp -r site/src/content/generated-component-reference/* /tmp/api-sync/before-components/ 2>/dev/null || true
             cp -r site/src/content/generated-util-reference/* /tmp/api-sync/before-utils/ 2>/dev/null || true
           else
-            echo "::warning::Base build failed — treating all components/utils as new"
+            echo "::warning::Pre-merge build failed — treating all components/utils as new"
           fi
 
           git checkout "$MERGE_SHA"
@@ -282,7 +283,7 @@ jobs:
             ## Inputs
 
             The following files are at /tmp/api-sync/:
-            - `diff.patch` — unified diff of API JSON between HEAD~1 and HEAD
+            - `diff.patch` — unified diff of API JSON before and after the triggering PR was merged
             - `changed-components.txt` — filenames of changed component JSONs (one per line, may be empty)
             - `changed-utils.txt` — filenames of changed util JSONs (one per line, may be empty)
             - `after-components/` — current component JSON files
