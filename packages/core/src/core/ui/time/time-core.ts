@@ -64,6 +64,7 @@ export class TimeCore {
 
   #props: NonNullableObject<TimeProps> = { ...TimeCore.defaultProps };
   #media: MediaTimeState | null = null;
+  #formatLocale: string | string[] | undefined;
 
   constructor(props?: TimeProps) {
     if (props) this.setProps(props);
@@ -75,6 +76,11 @@ export class TimeCore {
 
   setMedia(media: MediaTimeState): void {
     this.#media = media;
+  }
+
+  /** @internal Platform adapters set the active i18n locale for digital time formatting. */
+  setFormatLocale(locale: string | string[] | undefined): void {
+    this.#formatLocale = locale;
   }
 
   #getSeconds(): number {
@@ -95,7 +101,8 @@ export class TimeCore {
   #getText(): string {
     const media = this.#media!;
     const seconds = this.#getSeconds();
-    return formatTime(Math.abs(seconds), media.duration);
+    const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
+    return formatTime(Math.abs(seconds), media.duration, options);
   }
 
   #getPhrase(): string {

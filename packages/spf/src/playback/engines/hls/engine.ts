@@ -9,6 +9,7 @@ import type { QualityConfig } from '../../../media/abr/quality-selection';
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
+import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { resolveVttSegment } from '../../../media/dom/text/resolve-vtt-segment';
 import {
   addSubtitlesTracksToMedia,
@@ -36,6 +37,8 @@ import {
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
+import { setupAirPlay } from '../../behaviors/dom/airplay';
+import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments, loadTextTrackSegments, loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
@@ -125,6 +128,32 @@ export interface SimpleHlsEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * One-shot command: start the current source at this position
+   * (presentation-timeline seconds). Written by consumers or by
+   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
+   * `applyStartPosition` once the element seeks. See
+   * `behaviors/dom/apply-start-position.ts`.
+   */
+  startPosition?: number;
+  /**
+   * Intent-level loading policy: initiate no new loading work while `true`.
+   * Written by `setupAirPlay` (the only behavior declaring the key) while a
+   * remote-playback session owns presentation; observed by the
+   * `loadXSegments` dispatchers (park in `'dormant'`) and by
+   * `setupMediaSource` (a pending rebuild waits). See
+   * `SegmentLoadingState['loadingSuspended']`.
+   */
+  loadingSuspended?: boolean;
+  /**
+   * Author intent for the AirPlay/remote-playback picker, written by the media
+   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
+   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying
+   * `<video>.disableRemotePlayback`, which stays programmatically managed
+   * (ManagedMediaSource / AirPlay).
+   */
+  disableRemotePlayback?: boolean;
 }
 
 /**
@@ -295,6 +324,7 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
   'userVideoTrackSelection',
   'userAudioTrackSelection',
   'userTextTrackSelection',
+  'disableRemotePlayback',
 ]);
 
 /**
@@ -333,6 +363,10 @@ export function createSimpleHlsEngine(
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
+    // Baked (not user-overridable): this engine composes `setupAirPlay`,
+    // whose native fallback `<source>` requires the MSE attachment to keep
+    // sibling source alternatives part of resource selection.
+    attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
@@ -408,8 +442,14 @@ export function createSimpleHlsEngine(
       setupVideoBufferActors,
       setupAudioBufferActors,
 
+      // AirPlay/MSE bridge (WebKit only; no-op elsewhere).
+      setupAirPlay,
+
       // Playback tracking
       trackCurrentTime,
+      // After trackCurrentTime: the one-shot currentTime seed must land after
+      // the mirror's attach-time sync (see apply-start-position.ts).
+      applyStartPosition,
       switchVideoTrack,
       switchAudioTrack,
       // Mid-stream audio-buffer flush on language switch is handled in

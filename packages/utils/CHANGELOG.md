@@ -1,5 +1,22 @@
 # Changelog
 
+## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.25...@videojs/utils@10.0.0-beta.26) (2026-08-02)
+
+
+### Features
+
+* **core:** add status announcer state updates ([#1659](https://github.com/videojs/v10/issues/1659)) ([a5e7339](https://github.com/videojs/v10/commit/a5e73393fef381af7e148178822d5c3d94739834))
+* **i18n:** convert to opaque keys ([#1848](https://github.com/videojs/v10/issues/1848)) ([a3e673b](https://github.com/videojs/v10/commit/a3e673bd6854e006f4ae36e3ebfbfd6c6120e197))
+* **packages:** add flip functionality to popovers/tooltips/menus ([#1857](https://github.com/videojs/v10/issues/1857)) ([be89470](https://github.com/videojs/v10/commit/be89470447e84bb654cd17be7f4d4f6cec767e4f))
+* **packages:** add mux media with src parsing, structured source, and storyboards ([#1850](https://github.com/videojs/v10/issues/1850)) ([409e7ef](https://github.com/videojs/v10/commit/409e7ef225c7abb79a49c8b1adcc8c6ed0242cf6))
+* **packages:** i18n ([#1708](https://github.com/videojs/v10/issues/1708)) ([028dadb](https://github.com/videojs/v10/commit/028dadb385eb4f879f80932a4002676dc11d5300))
+* **skin:** improved responsive design ([#1832](https://github.com/videojs/v10/issues/1832)) ([c8a9eec](https://github.com/videojs/v10/commit/c8a9eecaf89139bd80965f39052c1483b910d6bc))
+
+
+### Bug Fixes
+
+* **sandbox:** Fix broken scripts on sandbox build ([#1824](https://github.com/videojs/v10/issues/1824)) ([20f118e](https://github.com/videojs/v10/commit/20f118e95c6b2ce434ad6f03135442b2e3239e6a))
+
 ## [10.0.0-beta.25](https://github.com/videojs/v10/compare/@videojs/utils@10.0.0-beta.24...@videojs/utils@10.0.0-beta.25) (2026-07-07)
 
 

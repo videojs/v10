@@ -24,6 +24,7 @@ interface TextTrackSegmentLoadingState {
   currentTime?: number;
   preload?: string;
   loadActivated?: boolean;
+  loadingSuspended?: boolean;
 }
 
 interface TextTrackSegmentLoadingContext {
@@ -54,6 +55,7 @@ function makeState(initial: TextTrackSegmentLoadingState = {}): StateSignals<Tex
     currentTime: signal<number | undefined>(initial.currentTime),
     preload: signal<string | undefined>(initial.preload),
     loadActivated: signal<boolean | undefined>(initial.loadActivated),
+    loadingSuspended: signal<boolean | undefined>(initial.loadingSuspended),
   };
 }
 
@@ -625,6 +627,60 @@ describe('loadTextTrackSegments', () => {
       expect((resolveVttSegment as ReturnType<typeof vi.fn>).mock.calls.length).toBe(callsAfterInitial);
 
       cleanup();
+    });
+  });
+
+  // Text loading has no structural tie to the MediaSource — the observed
+  // 'dormant' policy gate is the only thing that stops it (v/a loaders die
+  // with the closed MediaSource besides).
+  describe('loadingSuspended (observed dormant gate)', () => {
+    it('does not dispatch while suspended, even with preload="auto"', async () => {
+      const send = vi.fn();
+      const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
+      const state = makeState({
+        preload: 'auto',
+        loadingSuspended: true,
+        selectedTextTrackId: 'text-1',
+        currentTime: 0,
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
+      });
+      const context = makeContext({ textTrackSegmentLoaderActor: fakeLoader });
+      const reactor = loadTextTrackSegments.setup({ state, context });
+
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(send).not.toHaveBeenCalledWith(expect.objectContaining({ type: 'load' }));
+
+      reactor.destroy();
+    });
+
+    it('parks while suspended and re-dispatches when the policy lifts', async () => {
+      // Fake loader captures the messages the dispatcher sends. Suspension
+      // is a policy 'dormant' — no stop message; queued work drains
+      // (text fetches are small and bounded), and the derive re-dispatches
+      // when the writer clears the slot.
+      const send = vi.fn();
+      const fakeLoader = { send } as unknown as TextTrackSegmentLoaderActor;
+      const state = makeState({
+        preload: 'auto',
+        selectedTextTrackId: 'text-1',
+        currentTime: 0,
+        presentation: createMockPresentation([{ id: 'text-1', segments: createMockSegments(5) }]),
+      });
+      const context = makeContext({ textTrackSegmentLoaderActor: fakeLoader });
+      const reactor = loadTextTrackSegments.setup({ state, context });
+
+      // preload:'auto' → 'full-range' → an initial load dispatch.
+      await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+      send.mockClear();
+
+      state.loadingSuspended.set(true);
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(send).not.toHaveBeenCalled();
+
+      state.loadingSuspended.set(false);
+      await vi.waitFor(() => expect(send).toHaveBeenCalledWith(expect.objectContaining({ type: 'load' })));
+
+      reactor.destroy();
     });
   });
 });

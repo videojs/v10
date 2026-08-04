@@ -1,0 +1,14 @@
+.html-i18n-source {
+  padding: 16px;
+}
+
+.html-i18n-source video-player,
+.html-i18n-source video-skin,
+.html-i18n-source video {
+  display: block;
+  width: 100%;
+}
+
+.html-i18n-source video-skin {
+  aspect-ratio: 16 / 9;
+}

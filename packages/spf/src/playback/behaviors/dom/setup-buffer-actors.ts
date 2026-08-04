@@ -59,6 +59,7 @@
  * (`loadVideoSegments`, `loadAudioSegments`, `endOfStream`,
  * `updateMediaSourceDuration`) only read these slots.
  */
+import { listen } from '@videojs/utils/dom';
 import { defineBehavior } from '../../../core/composition/create-composition';
 import type { Reactor } from '../../../core/reactors/create-machine-reactor';
 import { createMachineReactor } from '../../../core/reactors/create-machine-reactor';
@@ -195,13 +196,24 @@ function setupBufferActors<K extends SelectedTrackKey, A extends BufferActorKey,
           // selection unsets, or the behavior is destroyed. Destroy the
           // loader before its upstream buffer-actor so any in-flight
           // `appendBuffer` is aborted before the buffer-actor's own
-          // teardown.
-          return () => {
+          // teardown. Idempotent, so the sourceclose listener below shares it.
+          const disconnect = new AbortController();
+          const teardownActors = () => {
             segmentLoader.destroy();
             bufferActor.destroy();
             context[loaderKey].set(undefined);
             context[actorKey].set(undefined);
+            disconnect.abort();
           };
+
+          // Also tear down when the UA closes the MediaSource out from under
+          // us (notably an AirPlay handoff — see `setupAirPlay`). Must be a
+          // DOM listener, not reactive cleanup: already-queued append
+          // continuations outrun any effect flush, and only a synchronous
+          // abort keeps them off the dead SourceBuffer (InvalidStateError).
+          listen(mediaSource, 'sourceclose', teardownActors, { signal: disconnect.signal });
+
+          return teardownActors;
         },
       },
     },

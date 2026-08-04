@@ -21,8 +21,8 @@ export default {
     disable: 'Ondertiteling uitschakelen',
   },
   pip: {
-    enter: 'Picture-in-Picture',
-    exit: 'Picture-in-Picture uit',
+    enter: 'Beeld-in-beeld starten',
+    exit: 'Beeld-in-beeld stoppen',
   },
   live: {
     playing: 'Speelt live',

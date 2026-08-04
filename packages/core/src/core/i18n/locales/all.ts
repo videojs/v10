@@ -24,9 +24,11 @@ import he from './he';
 import hi from './hi';
 import hr from './hr';
 import hu from './hu';
+import id from './id';
 import it from './it';
 import ja from './ja';
 import ko from './ko';
+import lt from './lt';
 import lv from './lv';
 import mr from './mr';
 import nb from './nb';
@@ -79,9 +81,11 @@ export const all = {
   hi,
   hr,
   hu,
+  id,
   it,
   ja,
   ko,
+  lt,
   lv,
   mr,
   nb,

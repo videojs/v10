@@ -8,6 +8,7 @@ import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composi
 import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
+import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
@@ -19,6 +20,8 @@ import {
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
+import { setupAirPlay } from '../../behaviors/dom/airplay';
+import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
 import { endOfStream } from '../../behaviors/dom/end-of-stream';
 import { loadAudioSegments } from '../../behaviors/dom/load-segments';
 import { recoverEndStall } from '../../behaviors/dom/recover-end-stall';
@@ -83,6 +86,31 @@ export interface SimpleHlsAudioOnlyEngineState {
   failedCdns?: string[];
   currentTime?: number;
   loadActivated?: boolean;
+  /**
+   * One-shot command: start the current source at this position
+   * (presentation-timeline seconds). Written by consumers or by
+   * `setupAirPlay`'s session-end snapshot; consumed (cleared) by
+   * `applyStartPosition` once the element seeks. See
+   * `behaviors/dom/apply-start-position.ts`.
+   */
+  startPosition?: number;
+  /**
+   * Intent-level loading policy: initiate no new loading work while `true`.
+   * Written by `setupAirPlay` (the only behavior declaring the key) while a
+   * remote-playback session owns presentation; observed by `loadAudioSegments`
+   * (parks in `'dormant'`) and by `setupMediaSource` (a pending rebuild
+   * waits). See `SegmentLoadingState['loadingSuspended']`.
+   */
+  loadingSuspended?: boolean;
+  /**
+   * Author intent for the AirPlay/remote-playback picker, written by the media
+   * adapter's `disableRemotePlayback` IDL property. `true` is an explicit
+   * opt-out: `setupAirPlay` reads it at attach and sets nothing up, leaving the
+   * element's remote playback disabled. Distinct from the underlying media
+   * element's own `disableRemotePlayback`, which stays programmatically managed
+   * (ManagedMediaSource / AirPlay).
+   */
+  disableRemotePlayback?: boolean;
 }
 
 /**
@@ -141,11 +169,13 @@ export interface SimpleHlsAudioOnlyEngineConfig
 // ============================================================================
 
 // Materializes input slots no composed behavior produces — `userAudioTrackSelection`
-// (switchAudioTrack only reads it) — in addition to forwarding refs. `failedCdns`
-// is owned by `setupFailoverMonitor`, so it's already materialized and reachable
-// on the `onSignalsReady` refs without being listed here.
+// (switchAudioTrack only reads it) and `disableRemotePlayback` (setupAirPlay only
+// reads it) — in addition to forwarding refs. `failedCdns` is owned by
+// `setupFailoverMonitor`, so it's already materialized and reachable on the
+// `onSignalsReady` refs without being listed here.
 const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
   'userAudioTrackSelection',
+  'disableRemotePlayback',
 ]);
 
 /**
@@ -185,6 +215,12 @@ export function createHlsAudioOnlyEngine(
   const finalConfig = {
     ...config,
     deriveStartMediaTime,
+    // Baked (not user-overridable): this engine composes `setupAirPlay`,
+    // whose native fallback `<source>` requires the MSE attachment to keep
+    // sibling source alternatives part of resource selection. The helper's
+    // `video/mp4` source type is inert here — resource selection probes it
+    // with `canPlayType`, which answers `'maybe'` on an audio element too.
+    attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
@@ -240,8 +276,18 @@ export function createHlsAudioOnlyEngine(
 
       setupAudioBufferActors,
 
+      // AirPlay/MSE bridge (WebKit only; no-op elsewhere). Audio-only sources
+      // AirPlay to audio receivers (HomePod, AirPlay speakers) through the same
+      // native-HLS fallback `<source>`; `webkitCurrentPlaybackTargetIsWireless`
+      // and the picker are HTMLMediaElement-level, so an `<audio>` host is
+      // AirPlay-capable on the same terms as a `<video>` one.
+      setupAirPlay,
+
       // Playback tracking
       trackCurrentTime,
+      // After trackCurrentTime: the one-shot currentTime seed must land after
+      // the mirror's attach-time sync (see apply-start-position.ts).
+      applyStartPosition,
 
       // Segment loading — audio only.
       loadAudioSegments,

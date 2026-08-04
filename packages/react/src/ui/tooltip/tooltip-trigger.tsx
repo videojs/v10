@@ -1,7 +1,6 @@
 'use client';
 
 import type { TooltipState } from '@videojs/core';
-import { supportsAnchorPositioning } from '@videojs/utils/dom';
 import { forwardRef, useCallback } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
@@ -15,16 +14,13 @@ export const TooltipTrigger = forwardRef<HTMLButtonElement, TooltipTriggerProps>
   { render, className, style, ...elementProps },
   forwardedRef
 ) {
-  const { tooltip, state, stateAttrMap, anchorName } = useTooltipContext();
+  const { tooltip, state, stateAttrMap } = useTooltipContext();
 
   const triggerRef = useCallback(
     (el: HTMLButtonElement | null) => {
       tooltip.setTriggerElement(el);
-      if (el && supportsAnchorPositioning()) {
-        el.style.setProperty('anchor-name', `--${anchorName}`);
-      }
     },
-    [tooltip, anchorName]
+    [tooltip]
   );
 
   // Remap DOM focus events to React synthetic event names.

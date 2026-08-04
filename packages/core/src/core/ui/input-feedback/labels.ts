@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { Translator } from '../../i18n';
 import { exitText } from '../../i18n/text/fullscreen';
@@ -32,7 +33,7 @@ export function createInputIndicatorLabels(translator: Translator): InputIndicat
 }
 
 /** Adds the parameterized labels used by status announcements. */
-export function createStatusAnnouncerLabels(translator: Translator, locale = 'en'): StatusAnnouncerLabels {
+export function createStatusAnnouncerLabels(translator: Translator, locale = DEFAULT_LOCALE): StatusAnnouncerLabels {
   return {
     ...createInputIndicatorLabels(translator),
     volumeWithValue: (value) => translator(valueText, { value }),

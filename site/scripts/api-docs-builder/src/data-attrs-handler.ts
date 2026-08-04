@@ -1,25 +1,6 @@
 import * as ts from 'typescript';
 import type { DataAttrsExtraction } from './types.js';
-
-function unwrapObjectLiteral(node: ts.Expression): ts.ObjectLiteralExpression | undefined {
-  if (ts.isObjectLiteralExpression(node)) {
-    return node;
-  }
-
-  if (ts.isParenthesizedExpression(node)) {
-    return unwrapObjectLiteral(node.expression);
-  }
-
-  if (ts.isAsExpression(node)) {
-    return unwrapObjectLiteral(node.expression);
-  }
-
-  if (ts.isSatisfiesExpression(node)) {
-    return unwrapObjectLiteral(node.expression);
-  }
-
-  return undefined;
-}
+import { unwrapObjectLiteral } from './utils.js';
 
 function extractSatisfiesExpression(node: ts.Expression): ts.TypeNode | undefined {
   if (ts.isSatisfiesExpression(node)) return node.type;

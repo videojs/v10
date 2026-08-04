@@ -51,6 +51,7 @@ export const MediaReferenceSchema = z.object({
 
 export type HostPropertyDef = z.infer<typeof HostPropertyDefSchema>;
 export type MediaEventDef = z.infer<typeof MediaEventDefSchema>;
+export type MediaTargetTag = z.infer<typeof MediaTargetTagSchema>;
 export type MediaReference = z.infer<typeof MediaReferenceSchema>;
 export type HtmlMediaReference = MediaReference['platforms']['html'];
 export type ReactMediaReference = NonNullable<MediaReference['platforms']['react']>;

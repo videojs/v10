@@ -1,0 +1,102 @@
+---
+title: Translation phrases
+description: Semantic i18n keys, their English defaults, and the player UI that uses them
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Video.js uses opaque semantic keys so English copy can change without breaking translation packs. English defaults are defined in `packages/core/src/core/i18n/locales/en.ts`. Both HTML and React controls use the same keys.
+
+Locale packs and provider overrides use nested objects, so `buttons.play` is authored as `{ buttons: { play: '…' } }`. The dotted form is used by translators and the HTML `<media-text token>` attribute.
+
+## Playback controls
+
+| Key | English default | Used by |
+| --- | --- | --- |
+| `buttons.play` | Play | Play button and its tooltip |
+| `buttons.pause` | Pause | Play button and its tooltip |
+| `buttons.replay` | Replay | Play button and its tooltip |
+| `buttons.mute` | Mute | Mute button and its tooltip |
+| `buttons.unmute` | Unmute | Mute button and its tooltip |
+| `seek.forward` | Seek forward `{seconds}` seconds | Seek-forward button and its tooltip |
+| `seek.backward` | Seek backward `{seconds}` seconds | Seek-backward button and its tooltip |
+| `fullscreen.enter` | Enter fullscreen | Fullscreen button |
+| `fullscreen.exit` | Exit fullscreen | Fullscreen button |
+| `captions.enable` | Enable captions | Captions button and captions selection control |
+| `captions.disable` | Disable captions | Captions button and captions selection control |
+| `pip.enter` | Enter picture-in-picture | Picture-in-picture button |
+| `pip.exit` | Exit picture-in-picture | Picture-in-picture button |
+| `live.playing` | Playing live | Live button |
+| `live.seekToEdge` | Seek to live edge | Live button |
+| `live.badge` | Live | Live button badge |
+| `cast.start` | Start casting | Cast button |
+| `cast.stop` | Stop casting | Cast button |
+| `cast.connecting` | Connecting | Cast button |
+| `airplay.start` | Start AirPlay | AirPlay button |
+| `airplay.stop` | Stop AirPlay | AirPlay button |
+
+## Time and volume
+
+| Key | English default | Used by |
+| --- | --- | --- |
+| `slider.seek` | Seek | Time slider aria label |
+| `time.current` | Current time | Current-time display aria label |
+| `time.duration` | Duration | Duration display aria label |
+| `time.remaining` | Remaining | Remaining-time display aria label |
+| `time.remainingSuffix` | `{duration} remaining` | Remaining time display |
+| `time.showElapsed` | `{duration}. Show elapsed time.` | Toggleable time display aria label |
+| `time.showDuration` | `{duration}. Show duration.` | Toggleable time display aria label |
+| `time.showRemaining` | `{duration}. Show remaining time.` | Toggleable time display aria label |
+| `time.position` | `{current} of {duration}` | Time slider value text |
+| `playback.rate` | Playback rate `{rate}` | Playback-rate button and radio group |
+| `volume.mutedValue` | `{percent}, muted` | Muted volume slider value text |
+| `volume.muted` | Muted | Volume input feedback |
+| `volume.label` | Volume | Volume slider aria label |
+| `volume.value` | Volume `{value}` | Volume input feedback |
+
+## Playback feedback
+
+| Key | English default | Used by |
+| --- | --- | --- |
+| `status.captionsOn` | Captions on | Input feedback after enabling captions |
+| `status.captionsOff` | Captions off | Input feedback after disabling captions |
+| `status.paused` | Paused | Input feedback after pausing |
+| `status.playing` | Playing | Input feedback after starting playback |
+| `status.fullscreen` | Fullscreen | Input feedback after entering fullscreen |
+| `status.pip` | Picture in picture | Input feedback after entering picture-in-picture |
+| `status.exitPip` | Exit picture in picture | Input feedback after exiting picture-in-picture |
+
+## Errors
+
+| Key | English default | Used by |
+| --- | --- | --- |
+| `errors.aborted` | You stopped media playback before it finished. | Media error dialog for `MEDIA_ERR_ABORTED` |
+| `errors.network` | This media could not be loaded due to a network or server issue. | Media error dialog for `MEDIA_ERR_NETWORK` |
+| `errors.decode` | This media could not be played. It may be corrupted, or your browser may not support its format. | Media error dialog for `MEDIA_ERR_DECODE` |
+| `errors.source` | This media could not be loaded. It may be unavailable, or your browser may not support its format. | Media error dialog for `MEDIA_ERR_SRC_NOT_SUPPORTED` |
+| `errors.encrypted` | This media could not be played because it could not be decrypted. | Media error dialog for `MEDIA_ERR_ENCRYPTED` |
+| `errors.title` | Something went wrong. | Generic media error dialog title |
+| `errors.unexpected` | An unexpected error occurred. | Generic media error dialog fallback description |
+| `common.empty` | `''` | Empty description for a custom media error |
+| `common.ok` | OK | Error dialog confirmation button |
+
+## Settings and track menus
+
+| Key | English default | Used by |
+| --- | --- | --- |
+| `menu.settings` | Settings | Video settings menu trigger |
+| `menu.quality` | Quality | Quality menu |
+| `menu.audio` | Audio | Audio-track menu and fallback track label |
+| `menu.default` | Default | Reserved default-option label; no stock control currently emits it |
+| `menu.speed` | Speed | Playback-rate menu |
+| `menu.captions` | Captions | Captions menu |
+| `menu.playbackRate` | Playback rate | Playback-rate radio group |
+| `menu.back` | Back | Nested settings-menu back button |
+| `menu.off` | Off | Captions menu option |
+| `menu.auto` | Auto | Automatic-quality option |
+| `menu.autoWithLabel` | Auto (`{label}`) | Automatic-quality option with the active rendition |
+| `menu.subtitles` | Subtitles | Subtitles track option |
+
+## Related
+
+- <DocsLink slug="how-to/i18n-override-translations">Override translations</DocsLink>

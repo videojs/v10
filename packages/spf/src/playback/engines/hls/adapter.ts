@@ -11,11 +11,13 @@ import {
 export interface SimpleHlsMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
+  disableRemotePlayback: boolean;
 }
 
 export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
   src: '',
   preload: '',
+  disableRemotePlayback: false,
 };
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
@@ -48,6 +50,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #config: SimpleHlsEngineConfig;
     #signals!: SimpleHlsEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
+    #disableRemotePlayback: boolean = simpleHlsMediaDefaultProps.disableRemotePlayback;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -107,6 +110,25 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // value = '' resets the IDL mirror (so `get preload` reflects '') but does
       // not patch state — the engine keeps its current preload until an explicit
       // W3C value replaces it.
+    }
+
+    // -------------------------------------------------------------------------
+    // disableRemotePlayback — synchronous IDL attribute (WHATWG Remote Playback)
+    // Author intent for whether the AirPlay/remote picker is offered. Mirrors
+    // the DOM attribute name; the value flows to `state.disableRemotePlayback`,
+    // which `setupAirPlay` reads to honor an explicit opt-out. The underlying
+    // <video>'s own `disableRemotePlayback` stays programmatically managed
+    // (ManagedMediaSource needs it `true` to open; AirPlay flips it `false` once
+    // the source is open), so author intent and the effective flag stay distinct.
+    // -------------------------------------------------------------------------
+
+    get disableRemotePlayback(): boolean {
+      return this.#disableRemotePlayback;
+    }
+
+    set disableRemotePlayback(value: boolean) {
+      this.#disableRemotePlayback = value;
+      this.#signals.state.disableRemotePlayback.set(value);
     }
 
     // -------------------------------------------------------------------------

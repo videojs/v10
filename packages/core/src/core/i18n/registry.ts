@@ -1,3 +1,4 @@
+import { DEFAULT_LOCALE } from '@videojs/utils/i18n';
 import type { FlatTranslations, Locale, Translations } from './params';
 import { flattenTranslations } from './utils';
 
@@ -47,7 +48,7 @@ export function getCanonicalLocaleKey(locale: Locale): Locale {
 export function findLocaleKeys(locale: Locale): Locale[] {
   const base = getCanonicalLocaleKey(locale);
   if (!base) {
-    return ['en'];
+    return [DEFAULT_LOCALE];
   }
 
   const segments = base.split('-').filter(Boolean);
@@ -71,8 +72,8 @@ export function findLocaleKeys(locale: Locale): Locale[] {
       out.push(tag);
     }
   }
-  if (!seen.has('en')) {
-    out.push('en');
+  if (!seen.has(DEFAULT_LOCALE)) {
+    out.push(DEFAULT_LOCALE);
   }
 
   return out;

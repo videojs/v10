@@ -3,38 +3,29 @@
 import { type MenuState, PopoverCSSVars } from '@videojs/core';
 import {
   createMenuViewTransition,
-  getAnchorPositionStyle,
   getMenuViewportAttrs,
   getMenuViewportElement,
   getMenuViewTransitionAttrs,
-  getPopupPositionRect,
-  getPositionedSide,
-  getPositioningBoundaryRect,
   getRootPositionOptions,
-  isEventWithinElement,
   isMenuNavigationKey,
   observeMenuViewContent,
-  resolveOffsets,
-  resolvePositioningBoundary,
   syncMenuViewRoot,
   syncMenuViewTransition,
   type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
-import { supportsAnchorPositioning } from '@videojs/utils/dom';
-import type { CSSProperties } from 'react';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 
 import type { UIComponentProps } from '../../utils/types';
 import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
+import { usePopupPosition } from '../popover/use-popup-position';
 import { useMenuContext, useSubMenuContext } from './context';
 
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
-const POPOVER_RESET: CSSProperties = { position: 'fixed', inset: 'auto', margin: 0 };
 const menuPreventedNativeEvents = new WeakSet<Event>();
 
 function toUIKeyboardEvent(event: React.KeyboardEvent<HTMLDivElement>): UIKeyboardEvent {
@@ -231,11 +222,8 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     (element: HTMLDivElement | null) => {
       if (isSubmenu) return;
       menu.setContentElement(element);
-      if (element && supportsAnchorPositioning()) {
-        element.style.setProperty('position-anchor', `--${anchorName}`);
-      }
     },
-    [isSubmenu, menu, anchorName]
+    [isSubmenu, menu]
   );
 
   const rootComposedRef = useComposedRefs(forwardedRef, contentRef, internalRef);
@@ -245,14 +233,32 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     () => getRootPositionOptions(preferredSide, state.align),
     [preferredSide, state.align]
   );
+  const handlePosition = useCallback(
+    (side: NonNullable<MenuState['side']>) => {
+      setPositionedSide(side);
 
-  const anchorStyle = useMemo(() => {
-    if (isSubmenu || !positionOptions || !supportsAnchorPositioning()) return null;
-    const { positionAnchor: _, ...rest } = getAnchorPositionStyle(anchorName, positionOptions);
-    return rest as CSSProperties;
-  }, [isSubmenu, anchorName, positionOptions]);
+      const contentElement = internalRef.current;
+      if (!contentElement) return;
 
-  const [position, setPosition] = useState<CSSProperties | null>(null);
+      const availableWidth = contentElement.style.getPropertyValue(PopoverCSSVars.availableWidth);
+      syncMenuViewRoot(
+        contentElement,
+        activeSubMenuIdRef.current !== null,
+        availableWidth ? { availableWidth } : undefined
+      );
+    },
+    [setPositionedSide]
+  );
+  const positioningStyle = usePopupPosition({
+    open: state.open && !isSubmenu,
+    anchorName,
+    position: positionOptions,
+    trigger: menu.triggerElement,
+    popupRef: internalRef,
+    boundary,
+    container,
+    onSideChange: handlePosition,
+  });
 
   useLayoutEffect(() => {
     if (isSubmenu) return;
@@ -275,107 +281,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     parentContentElementRef.current = parentContentElement;
     syncMenuViewTransition(parentContentElement, menuViewElementRef.current, menuViewTransitionState);
   });
-
-  useLayoutEffect(() => {
-    if (isSubmenu) return;
-    if (!state.open) {
-      setPosition(null);
-      return;
-    }
-
-    if (!positionOptions) {
-      syncMenuViewRoot(internalRef.current, activeSubMenuIdRef.current !== null);
-      return;
-    }
-
-    const rootPositionOptions = positionOptions;
-
-    function measure(): void {
-      const triggerElement = menu.triggerElement;
-      const contentElement = internalRef.current;
-      if (!triggerElement || !contentElement) return;
-
-      const triggerRect = triggerElement.getBoundingClientRect();
-      const root = contentElement.getRootNode() as Document | ShadowRoot;
-      const boundaryElement = resolvePositioningBoundary(boundary, { container, root });
-      const anchorSupported = supportsAnchorPositioning();
-      let contentRect = getPopupPositionRect(contentElement, rootPositionOptions.side);
-      const boundaryRect = getPositioningBoundaryRect(boundaryElement);
-      const offsets = resolveOffsets(contentElement);
-      let side = getPositionedSide(triggerRect, contentRect, boundaryRect, rootPositionOptions, offsets);
-
-      let nextStyle = getAnchorPositionStyle(
-        anchorName,
-        { ...rootPositionOptions, side },
-        triggerRect,
-        anchorSupported ? undefined : contentRect,
-        boundaryRect,
-        offsets
-      );
-
-      const availableWidth = nextStyle[PopoverCSSVars.availableWidth];
-      syncMenuViewRoot(
-        contentElement,
-        activeSubMenuIdRef.current !== null,
-        availableWidth ? { availableWidth } : undefined
-      );
-
-      if (!anchorSupported) {
-        contentRect = getPopupPositionRect(contentElement, rootPositionOptions.side);
-        side = getPositionedSide(triggerRect, contentRect, boundaryRect, rootPositionOptions, offsets);
-        nextStyle = getAnchorPositionStyle(
-          anchorName,
-          { ...rootPositionOptions, side },
-          triggerRect,
-          contentRect,
-          boundaryRect,
-          offsets
-        );
-      }
-
-      const { positionAnchor: _, ...rootStyle } = nextStyle;
-
-      setPosition(rootStyle as CSSProperties);
-      setPositionedSide(side);
-    }
-
-    measure();
-
-    const triggerElement = menu.triggerElement;
-    const contentElement = internalRef.current;
-    const boundaryElement = contentElement
-      ? resolvePositioningBoundary(boundary, {
-          container,
-          root: contentElement.getRootNode() as Document | ShadowRoot,
-        })
-      : null;
-
-    let animationFrameId = 0;
-    function reposition(event?: Event): void {
-      if (event && isEventWithinElement(event, internalRef.current)) return;
-
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = requestAnimationFrame(measure);
-    }
-
-    reposition();
-
-    const resizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(() => reposition()) : null;
-
-    if (triggerElement && resizeObserver) resizeObserver.observe(triggerElement);
-    if (contentElement && resizeObserver) resizeObserver.observe(contentElement);
-    if (boundaryElement && resizeObserver) resizeObserver.observe(boundaryElement);
-
-    window.addEventListener('scroll', reposition, { capture: true, passive: true });
-    window.addEventListener('resize', reposition);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      resizeObserver?.disconnect();
-      window.removeEventListener('scroll', reposition, true);
-      window.removeEventListener('resize', reposition);
-    };
-  }, [isSubmenu, state.open, anchorName, positionOptions, menu, boundary, container, setPositionedSide]);
 
   // ─── Render ───────────────────────────────────────────────────────────────
 
@@ -411,8 +316,6 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   }
 
   if (!state.open) return null;
-
-  const positioningStyle = position ?? anchorStyle ?? POPOVER_RESET;
 
   return renderElement(
     'div',

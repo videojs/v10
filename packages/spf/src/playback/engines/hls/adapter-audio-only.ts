@@ -11,11 +11,13 @@ import {
 export interface SimpleHlsAudioOnlyMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
+  disableRemotePlayback: boolean;
 }
 
 export const simpleHlsAudioOnlyMediaDefaultProps: SimpleHlsAudioOnlyMediaProps = {
   src: '',
   preload: '',
+  disableRemotePlayback: false,
 };
 
 export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps {
@@ -31,8 +33,9 @@ export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps
  *
  * Parallel to `SimpleHlsMediaMixin` with one substantive difference: the
  * underlying engine is the audio-only variant (`createHlsAudioOnlyEngine`),
- * which omits video and text-track behaviors. The src / preload / play()
- * contract per the WHATWG HTML spec is identical to the default adapter.
+ * which omits video and text-track behaviors. The src / preload /
+ * disableRemotePlayback / play() contract per the WHATWG HTML spec is identical
+ * to the default adapter.
  *
  * Selecting this adapter is the variant decision: instantiating
  * `SimpleHlsAudioOnlyMediaElement` opts the consumer into audio-only
@@ -47,10 +50,11 @@ export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps
  */
 export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
-    #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
+    readonly #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
     #config: SimpleHlsAudioOnlyEngineConfig;
     #signals!: SimpleHlsAudioOnlyEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsAudioOnlyMediaDefaultProps.preload;
+    #disableRemotePlayback: boolean = simpleHlsAudioOnlyMediaDefaultProps.disableRemotePlayback;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -110,7 +114,32 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
 
     // -------------------------------------------------------------------------
+    // disableRemotePlayback — synchronous IDL attribute (WHATWG Remote Playback)
+    // Author intent for whether the AirPlay/remote picker is offered. Mirrors
+    // the DOM attribute name; the value flows to `state.disableRemotePlayback`,
+    // which `setupAirPlay` reads to honor an explicit opt-out. The underlying
+    // media element's own `disableRemotePlayback` stays programmatically managed
+    // (ManagedMediaSource needs it `true` to open; AirPlay flips it `false` once
+    // the source is open), so author intent and the effective flag stay distinct.
+    // -------------------------------------------------------------------------
+
+    get disableRemotePlayback(): boolean {
+      return this.#disableRemotePlayback;
+    }
+
+    set disableRemotePlayback(value: boolean) {
+      this.#disableRemotePlayback = value;
+      this.#signals.state.disableRemotePlayback.set(value);
+    }
+
+    // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
+    // Each assignment overwrites the engine's presentation state in place. The
+    // resolver FSM routes back through teardown → rebuild on the same engine,
+    // mirroring how the browser's load algorithm resets media state on src change
+    // — without recreating the engine or re-capturing its signals. Setting an
+    // empty src un-resolves the presentation, tearing the current source down to
+    // the engine's fresh-but-attached "no source" state.
     // -------------------------------------------------------------------------
 
     get src(): string {
@@ -118,23 +147,8 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
 
     set src(value: string) {
-      const prevMediaElement = this.#signals.context.mediaElement.get();
-
       this.#cancelPendingPlay();
-      this.#engine.destroy();
-      this.#engine = this.#createEngine();
-
-      if (this.#preload) {
-        this.#signals.state.preload.set(this.#preload);
-      }
-
-      if (prevMediaElement) {
-        this.#signals.context.mediaElement.set(prevMediaElement);
-      }
-
-      if (value) {
-        this.#signals.state.presentation.set({ url: value });
-      }
+      this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }
 
     // -------------------------------------------------------------------------

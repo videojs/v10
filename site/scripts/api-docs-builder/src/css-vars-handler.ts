@@ -1,26 +1,7 @@
 import * as ts from 'typescript';
 import { getJsDocComment } from './data-attrs-handler.js';
 import type { CSSVarsExtraction } from './types.js';
-
-function unwrapObjectLiteral(node: ts.Expression): ts.ObjectLiteralExpression | undefined {
-  if (ts.isObjectLiteralExpression(node)) {
-    return node;
-  }
-
-  if (ts.isParenthesizedExpression(node)) {
-    return unwrapObjectLiteral(node.expression);
-  }
-
-  if (ts.isAsExpression(node)) {
-    return unwrapObjectLiteral(node.expression);
-  }
-
-  if (ts.isSatisfiesExpression(node)) {
-    return unwrapObjectLiteral(node.expression);
-  }
-
-  return undefined;
-}
+import { unwrapObjectLiteral } from './utils.js';
 
 /**
  * Extract CSS custom properties from a css-vars file.

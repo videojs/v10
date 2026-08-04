@@ -37,7 +37,6 @@
   &[aria-disabled="true"] {
     cursor: not-allowed;
     opacity: 0.5;
-    filter: grayscale(1);
   }
 }
 

@@ -1,7 +1,7 @@
 {
   "name": "@videojs/utils",
   "type": "module",
-  "version": "10.0.0-beta.25",
+  "version": "10.0.0-beta.26",
   "description": "Utility functions and helpers for Video.js",
   "license": "Apache-2.0",
   "repository": {
@@ -26,6 +26,10 @@
     "./function": {
       "types": "./dist/function.d.ts",
       "default": "./dist/function.js"
+    },
+    "./i18n": {
+      "types": "./dist/i18n.d.ts",
+      "default": "./dist/i18n.js"
     },
     "./jwt": {
       "types": "./dist/jwt.d.ts",

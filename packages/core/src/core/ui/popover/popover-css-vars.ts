@@ -14,5 +14,3 @@ export const PopoverCSSVars = {
   /** Available height between the trigger and the boundary edge. */
   availableHeight: '--media-popover-available-height',
 } as const;
-
-export type PopoverCSSVarKey = (typeof PopoverCSSVars)[keyof typeof PopoverCSSVars];

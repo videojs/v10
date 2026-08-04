@@ -82,6 +82,19 @@ describe('Time.Value', () => {
     expect(time.getAttribute('aria-label')).toBe(`${formatTimeAsPhrase(300, { locale: 'fr' })}. Afficher restant.`);
   });
 
+  it('formats digital time with locale digits', () => {
+    const { Wrapper } = createPlayerWrapper(timeState);
+    render(
+      <Wrapper>
+        <I18nProvider locale="fa">
+          <Value data-testid="time" />
+        </I18nProvider>
+      </Wrapper>
+    );
+
+    expect(screen.getByTestId('time').textContent).toBe('۱:۳۰');
+  });
+
   it('toggles with Enter and Space', () => {
     setup({ toggle: true });
 

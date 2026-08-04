@@ -137,7 +137,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
               ),
             };
           },
-          formatValue: (value) => formatTime(value, duration),
+          formatValue: (value) => formatTime(value, duration, { locale }),
         }}
       >
         {renderElement(

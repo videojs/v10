@@ -1,0 +1,62 @@
+---
+title: GoogleCast
+frameworkTitle:
+  html: google-cast
+description: Options for the Google Cast component that configures the receiver and load request
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import DocsLinkCard from '@/components/docs/DocsLinkCard.astro';
+
+Adds Google Cast support to the player's media. It renders nothing — place it inside the player as a sibling of the media element, and pair it with a <DocsLink slug="reference/cast-button">CastButton</DocsLink>. See <DocsLink slug="concepts/cast">Google Cast</DocsLink> for how casting works.
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+import { GoogleCast } from '@videojs/react/media/google-cast';
+
+<GoogleCast />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<google-cast></google-cast>
+```
+
+Register the element by importing `@videojs/html/media/google-cast`.
+</FrameworkCase>
+
+## Options
+
+<FrameworkCase frameworks={["react"]}>
+| Prop | Type | Description |
+|---|---|---|
+| `receiver` | `string` | Cast receiver application ID. Defaults to Google's Default Media Receiver (`CC1AD845`) |
+| `src` | `string` | Source URL loaded on the receiver. Defaults to the source the browser is playing |
+| `contentType` | `string` | MIME type of the Cast source. When unset, the receiver infers it from the URL |
+| `streamType` | `'on-demand' \| 'live'` | Stream type reported to the receiver. Falls back to the player's stream type |
+| `customData` | `object` | Custom data sent to the receiver with each load request |
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+| Attribute | Property | Description |
+|---|---|---|
+| `receiver` | `receiver` | Cast receiver application ID. Defaults to Google's Default Media Receiver (`CC1AD845`) |
+| `src` | `src` | Source URL loaded on the receiver. Defaults to the source the browser is playing |
+| `content-type` | `contentType` | MIME type of the Cast source. When unset, the receiver infers it from the URL |
+| `stream-type` | `streamType` | Stream type reported to the receiver. Falls back to the player's stream type |
+| — | `customData` | Custom data sent to the receiver with each load request |
+
+`customData` takes an object, so it's a property only, with no matching attribute.
+</FrameworkCase>
+
+When the Cast `src` is an HLS playlist, Video.js detects the segment format and sets the receiver's `hlsSegmentFormat` and `hlsVideoSegmentFormat` load-request fields. The Default Media Receiver plays HLS natively, so no extra receiver setup is needed.
+
+## See also
+
+<DocsLinkCard slug="concepts/cast" description="How casting works">Google Cast</DocsLinkCard>
+<DocsLinkCard slug="reference/cast-button">CastButton component reference</DocsLinkCard>
+<DocsLinkCard slug="reference/feature-remote-playback">Remote Playback feature reference</DocsLinkCard>

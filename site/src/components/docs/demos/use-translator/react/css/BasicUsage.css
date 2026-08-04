@@ -1,0 +1,30 @@
+.react-use-translator-basic {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.react-use-translator-basic label,
+.react-use-translator-basic__output div {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.react-use-translator-basic select {
+  padding: 4px 8px;
+}
+
+.react-use-translator-basic__output {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+}
+
+.react-use-translator-basic__output dt {
+  color: #6b7280;
+}
+
+.react-use-translator-basic__output dd {
+  margin: 0;
+}

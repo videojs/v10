@@ -24,16 +24,19 @@ TypeScript Sources (core/html/media/react/store packages)
 
 ### Building
 
-The builder runs automatically before dev/build via npm scripts:
+The builder runs automatically before dev/build through the site's Turbo task:
 
 ```bash
 # Run manually
-pnpm api-docs
+pnpm -F site api-docs
 
 # Runs automatically on:
-pnpm dev      # via predev hook
-pnpm build    # via prebuild hook
+pnpm dev:site
+pnpm build:site
 ```
+
+The manual command also runs the required package builds. `api-docs:generate` is
+the internal generation task used by Turbo after those dependencies are ready.
 
 ### In MDX
 
@@ -52,8 +55,10 @@ site/scripts/api-docs-builder/
 ├── README.md                  # This file
 └── src/
     ├── index.ts               # CLI entry point
-    ├── pipeline.ts            # Testable pipeline functions (discovery, extraction, building)
+    ├── output.ts              # Shared validation, staged writing, and stale-file cleanup
+    ├── pipeline.ts            # Component discovery, extraction, and reference building
     ├── types.ts               # TypeScript interfaces
+    ├── typescript.ts          # Shared TypeScript program configuration
     ├── formatter.ts           # Type formatting utilities
     ├── utils.ts               # Utility functions (naming helpers)
     ├── core-handler.ts        # Extracts Props/State from core packages
@@ -68,6 +73,7 @@ site/scripts/api-docs-builder/
     └── tests/
         ├── e2e.test.ts        # ★ E2E spec — the living specification
         ├── formatter.test.ts  # Type abbreviation/formatting edge cases
+        ├── output.test.ts     # Validation and generated-file lifecycle
         └── fixtures/          # Mock monorepo for E2E tests
 
 site/src/
@@ -98,6 +104,12 @@ site/src/
 - `tsx`: TypeScript execution
 
 All dependencies are in `site/package.json` devDependencies.
+
+## Output safety
+
+Every collection is generated and schema-validated before output changes begin. The writer stages
+serialized files, rejects unsafe or duplicate filenames, and removes obsolete JSON after writing the
+current set. An unexpectedly empty collection fails generation instead of erasing existing output.
 
 ## Acknowledgements
 

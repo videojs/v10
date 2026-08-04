@@ -90,6 +90,8 @@ jobs:
       - name: Publish
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm -r publish --filter "./packages/*" --access public --provenance --no-git-checks
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
       - name: Update site/v10 branch
         if: ${{ steps.release.outputs.releases_created == 'true' }}

@@ -76,6 +76,7 @@ export type {
 } from './media/dom/mse/mediasource-setup';
 export {
   attachMediaSource,
+  attachMediaSourceAsSourceElement,
   createMediaSource,
   createSourceBuffer,
   isCodecSupported,

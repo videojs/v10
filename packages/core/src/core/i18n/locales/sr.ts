@@ -13,8 +13,8 @@ export default {
     backward: 'Premotaj unazad {seconds} sekundi',
   },
   fullscreen: {
-    enter: 'Pun ekran',
-    exit: 'Izađi iz punog ekrana',
+    enter: 'Režim celog ekrana',
+    exit: 'Izađi iz režima celog ekrana',
   },
   captions: {
     enable: 'Uključi titlove',
@@ -65,7 +65,7 @@ export default {
     captionsOff: 'Titlovi isključeni',
     paused: 'Pauzirano',
     playing: 'Reprodukuje se',
-    fullscreen: 'Pun ekran',
+    fullscreen: 'Režim celog ekrana',
     pip: 'Slika u slici',
     exitPip: 'Izađi iz slike u slici',
     seekedTo: 'Premotano na {time}',

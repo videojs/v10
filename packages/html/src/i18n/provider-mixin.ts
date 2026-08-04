@@ -1,5 +1,6 @@
 import {
   createTranslator,
+  DEFAULT_LOCALE,
   loadLocale as defaultLoader,
   type FlatTranslations,
   findLocaleKeys,
@@ -19,8 +20,6 @@ import type { I18nContext, I18nContextValue } from './context';
 import { getFallbackTranslator } from './controller';
 import { resolveProviderLocale } from './locale';
 import type { LocaleLoader, ReactiveElementMixinBase } from './types';
-
-const DEFAULT_LOCALE = 'en';
 
 export interface I18nProviderConfig {
   context: I18nContext;

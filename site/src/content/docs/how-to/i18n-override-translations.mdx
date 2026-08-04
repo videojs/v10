@@ -1,0 +1,183 @@
+---
+title: Override translations
+description: Patch individual i18n strings without replacing an entire locale pack
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+`registerI18n` **merges**. Each call adds or replaces translations for that locale tag without wiping prior registrations. Use this to tweak shipped packs or A/B test copy.
+
+Read <DocsLink slug="concepts/i18n">Internationalization</DocsLink> for the translation model and merge order, and <DocsLink slug="reference/translation-phrases">Translation keys</DocsLink> for the supported keys.
+
+## Override after a built-in pack
+
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import { registerI18n } from '@videojs/html/i18n';
+import '@videojs/html/i18n/locales/es/register';
+
+registerI18n('es', { buttons: { play: 'Comenzar' } }); // only `buttons.play` changes
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import { registerI18n } from '@videojs/react/i18n';
+import '@videojs/react/i18n/locales/es/register';
+
+registerI18n('es', { buttons: { play: 'Comenzar' } }); // only `buttons.play` changes
+```
+
+</FrameworkCase>
+
+Later registrations win for the same key. The rest of the `es` pack stays intact.
+
+<FrameworkCase frameworks={["react"]}>
+
+## React provider overrides
+
+Pass `translations` on <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> to scope overrides to one subtree. This layer sits **above** registry and lazy packs:
+
+```tsx
+import { I18nProvider } from '@videojs/react/i18n';
+import { Provider, VideoSkin, Video } from '@videojs/react/video';
+
+<Provider>
+  <I18nProvider locale="es" translations={{ buttons: { play: 'Comenzar' } }}>
+    <VideoSkin>
+      <Video src="..." playsInline />
+    </VideoSkin>
+  </I18nProvider>
+</Provider>
+```
+
+Nested providers inherit the parent locale when you only pass `translations`:
+
+```tsx
+<I18nProvider locale="de">
+  <I18nProvider translations={{ buttons: { play: 'Override' } }}>
+    {/* locale stays `de`; only `buttons.play` differs */}
+  </I18nProvider>
+</I18nProvider>
+```
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+## HTML translated text
+
+Use <DocsLink slug="reference/media-text">`<media-text>`</DocsLink> for static copy outside buttons:
+
+```html
+<media-i18n lang="es">
+  <media-text token="buttons.play">Play</media-text>
+</media-i18n>
+```
+
+The `token` is the lookup key and the text content is the English fallback. Override `buttons.play` in the registry or set `lang` on the provider to a locale where you patched it.
+
+</FrameworkCase>
+
+## Override component text
+
+Translation overrides change the built-in accessible labels, tooltips, and default visible text that use the same key. Set a component's text content or `children` when you only need to replace its visible content.
+
+<FrameworkCase frameworks={["html"]}>
+
+Set text content to replace a component's default visible text:
+
+```html
+<media-live-button>On air</media-live-button>
+```
+
+Use `<media-text>` when authored content should still follow the active locale:
+
+```html
+<media-live-button>
+  <media-text token="live.badge">On air</media-text>
+</media-live-button>
+```
+
+For content that changes with component state, add one `<media-text>` per state and show or hide them with the same state attributes used for icons:
+
+```html
+<media-play-button>
+  <media-text token="buttons.play" class="play-text">Play video</media-text>
+  <media-text token="buttons.pause" class="pause-text">Pause video</media-text>
+  <media-text token="buttons.replay" class="replay-text">Watch again</media-text>
+</media-play-button>
+```
+
+```css
+.play-text,
+.pause-text,
+.replay-text { display: none; }
+
+media-play-button[data-paused]:not([data-ended]) .play-text { display: inline; }
+media-play-button:not([data-paused]) .pause-text { display: inline; }
+media-play-button[data-ended] .replay-text { display: inline; }
+```
+
+This is the same state-attribute pattern used to switch icons. The `token` translates each fallback for the active locale.
+
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+
+Pass `children` to replace a component's default visible text:
+
+```tsx
+import { LiveButton } from '@videojs/react';
+
+<LiveButton>On air</LiveButton>
+```
+
+Authored React children are literal. Use `useTranslator` when custom children also need localization, or use a translation override when the same copy should apply to the component's built-in text surfaces.
+
+For content that changes with component state, switch `<span>` elements with the component's state attributes:
+
+```tsx
+import { PlayButton } from '@videojs/react';
+
+<PlayButton className="play-button">
+  <span className="play-text">Play video</span>
+  <span className="pause-text">Pause video</span>
+  <span className="replay-text">Watch again</span>
+</PlayButton>
+```
+
+```css
+.play-text,
+.pause-text,
+.replay-text { display: none; }
+
+.play-button[data-paused]:not([data-ended]) .play-text { display: inline; }
+.play-button:not([data-paused]) .pause-text { display: inline; }
+.play-button[data-ended] .replay-text { display: inline; }
+```
+
+</FrameworkCase>
+
+The component still derives its accessible name from media state unless you also set its label API. Keep custom visible text consistent with that name.
+
+## Parametric translations
+
+Keep required placeholders when overriding:
+
+```ts
+// ✅
+registerI18n('es', { seek: { forward: 'Adelantar {seconds} segundos' } });
+
+// ❌ The interpolated value is lost
+registerI18n('es', { seek: { forward: 'Adelantar' } });
+```
+
+## What's next?
+
+- <DocsLink slug="how-to/i18n-switch-locale">Switch locale dynamically</DocsLink>
+- <DocsLink slug="reference/get-i18n-translations">`getI18nTranslations`</DocsLink>: Inspect the merged map
