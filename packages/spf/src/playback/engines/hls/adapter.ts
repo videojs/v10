@@ -1,6 +1,7 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import { resolveLiveLatency } from '../../../media/hls/reload-policy';
 import {
   deriveStreamType,
@@ -44,6 +45,7 @@ export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
   readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
+  readonly error: SimpleHlsMediaError | null;
   readonly liveEdgeStart: number;
   readonly targetLiveWindow: number;
   attach(mediaElement: HTMLMediaElement): void;
@@ -71,6 +73,63 @@ function deriveTargetLiveWindow(
   return deriveStreamType(metadata) === 'live' ? 0 : Number.NaN;
 }
 
+// ============================================================================
+// Error surface
+// ============================================================================
+
+/**
+ * The error shape the media surface exposes — structurally compatible with
+ * `@videojs/media`'s `ErrorLike` (`{ code, message }`) without importing it.
+ * The dependency can't go that way: `@videojs/media` already depends on this
+ * package. (That inversion is itself a known follow-up; structural
+ * compatibility is the same approach `SimpleHlsMediaStreamType` takes.)
+ *
+ * `code` is the **SVTA code**, not a `MediaError.MEDIA_ERR_*` value. Consumers
+ * that map codes to copy currently only know 1–5, so an SVTA code falls through
+ * to showing `message`; an extensible code lookup above the engine is the
+ * follow-up that fixes it.
+ */
+export interface SimpleHlsMediaError {
+  readonly code: number;
+  readonly message: string;
+  /** Reporter context (which selection emptied, which track, …). */
+  readonly data?: unknown;
+}
+
+/**
+ * Which reported conditions this composition treats as **fatal** — the ones that
+ * reach `error` and fire `'error'`. Severity isn't part of an SVTA code
+ * (§Approach: "impact varies with player implementation"), and here it also
+ * varies by composition, so it's decided at this boundary rather than by the
+ * reporter.
+ *
+ * An allow-list, deliberately: only *verdicts* are here. The per-rendition causes
+ * `resolve-track` reports (unsupported format, unsupported DRM) stay in the
+ * sequence as context — one unplayable rendition doesn't fail the source, and
+ * promoting a cause would put a dialog over a mixed source that goes on to play.
+ * Composing the message from the verdict *plus* the causes present in the
+ * sequence is the follow-up that recovers cause-specific copy.
+ */
+const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+]);
+
+/**
+ * Fallback copy per code, used when a reporter supplied none. Visible to
+ * viewers today (consumers fall back to `message` for codes they can't map), so
+ * these are written for a person, not a log.
+ */
+const FATAL_SVTA_MESSAGES: Readonly<Record<number, string>> = {
+  [SVTA_NO_SUPPORTED_VIDEO_TRACK]: 'This video is in a format this browser can’t play.',
+  [SVTA_NO_SUPPORTED_AUDIO_TRACK]: 'This audio is in a format this browser can’t play.',
+};
+
+/** The first fatal condition in the sequence — the root cause, not its consequences. */
+function firstFatal(errors: readonly SvtaError[] | undefined): SvtaError | undefined {
+  return errors?.find((error) => FATAL_SVTA_CODES.has(error.code));
+}
+
 /**
  * Mixin that adds SPF playback engine behavior to any base class.
  *
@@ -82,6 +141,7 @@ function deriveTargetLiveWindow(
  *
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
  * @example
  * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -100,7 +160,9 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #streamType: SimpleHlsMediaStreamType = simpleHlsMediaDefaultProps.streamType;
     #isUserStreamType = false;
     #targetLiveWindow = Number.NaN;
+    #error: SimpleHlsMediaError | null = null;
     #stopLiveSync: () => void;
+    #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -122,6 +184,14 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
         this.#setDetectedStreamType(presentation?.streamType ?? 'unknown');
         this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
       });
+
+      // Promote the first fatal condition out of the engine's reported sequence
+      // onto the media surface. Clearing rides the same signal: `collectErrors`
+      // resets the slot per source, so a new source starts with no error without
+      // this needing its own source-change hook.
+      this.#stopErrorSync = effect(() => {
+        this.#setError(firstFatal(this.#signals.state.errors.get()));
+      });
     }
 
     /**
@@ -139,6 +209,16 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // (the MediaStreamTypeCapability + MediaLiveCapability contract the player
     // store's stream-type and live features consume)
     // -------------------------------------------------------------------------
+
+    /**
+     * The current fatal error, or `null`. Only *fatal* conditions appear here —
+     * the engine reports non-fatal ones too (they stay in `engine.state.errors`),
+     * and promoting them would tell a consumer playback had failed when it
+     * hadn't. Resets per source. Fires `'error'` when set.
+     */
+    get error(): SimpleHlsMediaError | null {
+      return this.#error;
+    }
 
     /**
      * The source's stream type — `'live'`, `'on-demand'`, or `'unknown'` until
@@ -204,6 +284,25 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       this.dispatchEvent?.(new Event('targetlivewindowchange'));
     }
 
+    #setError(reported: SvtaError | undefined): void {
+      if (!reported) {
+        // Cleared (new source). No event: `'error'` announces a failure, and
+        // consumers reset their own copy on source change.
+        this.#error = null;
+        return;
+      }
+      // Keyed on the code, not the object: a later append re-runs this effect
+      // with an equal-but-new array, and re-firing `'error'` for a condition
+      // already surfaced would look like a second failure.
+      if (this.#error?.code === reported.code) return;
+      this.#error = {
+        code: reported.code,
+        message: reported.message ?? FATAL_SVTA_MESSAGES[reported.code] ?? '',
+        ...(reported.data === undefined ? {} : { data: reported.data }),
+      };
+      this.dispatchEvent?.(new Event('error'));
+    }
+
     // -------------------------------------------------------------------------
     // Media element lifecycle
     // -------------------------------------------------------------------------
@@ -222,6 +321,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     destroy(): void {
       this.#cancelPendingPlay();
       this.#stopLiveSync();
+      this.#stopErrorSync();
       this.#engine.destroy();
     }
 

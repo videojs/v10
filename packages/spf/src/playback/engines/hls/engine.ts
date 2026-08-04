@@ -18,6 +18,7 @@ import {
   getShowingSubtitlesTrackFromMedia,
   removeAllSubtitlesTracksFromMedia,
 } from '../../../media/dom/text/text-track-slots';
+import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { mediaPlaylistReloadDelay, resolveLiveLatency } from '../../../media/hls/reload-policy';
 import type {
@@ -40,6 +41,7 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { collectErrors } from '../../behaviors/collect-errors';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
@@ -71,6 +73,7 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
+import { reportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
@@ -133,6 +136,14 @@ export interface SimpleHlsEngineState {
    * means all CDNs are eligible.
    */
   failedCdns?: string[];
+  /**
+   * Conditions reported during playback, in the order encountered — appended by
+   * whichever behavior detects one (`emitError`), owned and cleared per source by
+   * `collectErrors`. Carries no severity: which of these is fatal is decided
+   * above the engine, at the adapter. See
+   * `internal/design/spf/features/errors.md`.
+   */
+  errors?: SvtaError[];
   currentTime?: number;
   loadActivated?: boolean;
   /**
@@ -384,6 +395,7 @@ export function createSimpleHlsEngine(
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    reportTrackConditions: reportUnsupportedTrackConditions,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.
@@ -438,6 +450,11 @@ export function createSimpleHlsEngine(
       // `failedCdns` (tripped directly by track resolution on a failed
       // media-playlist fetch) and removes each CDN once its cooldown lapses.
       setupFailoverMonitor,
+
+      // Owns `errors` and its per-source lifecycle. Composed before the
+      // behaviors that report into it so the slot exists when they first run;
+      // reporting no-ops if it isn't composed at all.
+      collectErrors,
 
       // Resolve selected tracks (fetch media playlists). Composed before the
       // switch* slot owners; selection is reactive, so a resolve* re-fires once
