@@ -422,9 +422,6 @@ export const SEGMENT_TIME_EPSILON = 0.0001;
  *   `segments[0]`; the join key for merging successive reload snapshots.
  * - `playlistType` (`#EXT-X-PLAYLIST-TYPE`) — `VOD` / `EVENT` / undefined.
  * - `endList` (`#EXT-X-ENDLIST`) — playlist is complete; stop reloading.
- *
- * See [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md)
- * for how these map onto the protocol-neutral category model.
  */
 export interface MediaPlaylistMetadata {
   targetDuration: number;
@@ -461,8 +458,7 @@ export function getMediaPlaylistMetadata(ham: Ham): MediaPlaylistMetadata | unde
 /**
  * The source's semantic nature — live vs on-demand. A model concept
  * (consumer-facing), distinct from completeness / duration: a live stream that
- * has *ended* is still `'live'`. See
- * [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md).
+ * has *ended* is still `'live'`.
  */
 export type StreamType = 'live' | 'on-demand';
 

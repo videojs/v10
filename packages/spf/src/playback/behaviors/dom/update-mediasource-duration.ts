@@ -99,16 +99,10 @@ function updateMediaSourceDurationSetup({
           const mediaSource = context.mediaSource.get()!;
 
           // Live: write Infinity once the MediaSource is open and no buffer is
-          // mid-append. Unlike the finite VoD case, Infinity needn't *precede*
-          // the first append — Infinity ≥ any buffered range, so it overrides
-          // whatever finite live-edge value an append may have pinned. The
-          // wait-for-idle is required, not just nice: the MSE spec forbids
-          // setting `duration` while a SourceBuffer is `updating`, and a
-          // synchronous write that races an in-flight append throws (and would
-          // leave the stream pinned to a finite duration, stalling once the
-          // window slides past it). `waitForMediaSourceOpen` /
-          // `waitForSourceBuffersReady` resolve immediately when already
-          // open / idle, so the common case still writes promptly.
+          // mid-append (the MSE spec forbids setting `duration` while a
+          // SourceBuffer is `updating`, and racing an in-flight append throws).
+          // No `NaN` guard, unlike the VoD path below — Infinity must override
+          // whatever finite live-edge value an append may have pinned.
           if (presentation.duration === Number.POSITIVE_INFINITY) {
             if (mediaSource.duration === Number.POSITIVE_INFINITY) return;
             const controller = new AbortController();

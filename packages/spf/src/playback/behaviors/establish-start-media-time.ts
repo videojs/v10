@@ -26,8 +26,6 @@
  *   `internal/design/spf/presentation-timeline-model.md`.
  *
  * DOM-free reactor; sticky per source (`inactive → monitoring → established`).
- * Supersedes the reference branch's `anchor-presentation-timeline` (the
- * buffer-sourced anchor stack) — the anchor is now pure playlist arithmetic.
  */
 import type { Behavior } from '../../core/composition/create-composition';
 import { createMachineReactor, type Reactor } from '../../core/reactors/create-machine-reactor';

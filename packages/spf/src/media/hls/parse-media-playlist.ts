@@ -66,7 +66,7 @@ type ResolveTrack<T> = T extends PartiallyResolvedVideoTrack
  * local, i.e. from 0) onto the timeline established by the previous resolved
  * snapshot. Carries the timeline forward using the media-sequence overlap and
  * the previous window's *actual* segment durations — see
- * [live-presentation-modeling.md](../../../../internal/design/spf/live-presentation-modeling.md).
+ * `internal/design/spf/live-presentation-timeline-model.md`.
  *
  * - **Overlap** (`0 <= offset < previous.segments.length`): the new window's
  *   first segment is the same segment as `previous.segments[offset]`; anchor to
@@ -139,10 +139,11 @@ function placeOnPreviousTimeline(
  * afterwards then reads back as the anchor — idempotent). This is the **main
  * live path on every parse**: first resolves place against the pre-stamped
  * shell anchor, and reloads re-place from PDT so drift can't accumulate and a
- * long-stall turnover re-places with no overlap bridging (§8.1 bounds the
- * per-reload correction to ~one video frame). Falls back to the local base when
- * no segment carries PDT — there's nothing to anchor against (callers guard
- * this for reloads, where the local base would reset the timeline).
+ * long-stall turnover re-places with no overlap bridging (the HLS authoring
+ * spec's §8.1 EXTINF-accuracy rule bounds the per-reload correction to ~one
+ * video frame). Falls back to the local base when no segment carries PDT —
+ * there's nothing to anchor against (callers guard this for reloads, where the
+ * local base would reset the timeline).
  */
 function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
   const anchorSegment = segments.find((segment) => !isUndefined(segment.startDate));
@@ -159,7 +160,7 @@ function placeOnAnchor(segments: Segment[], anchor: number): Segment[] {
 }
 
 /**
- * Parse an HLS media playlist into a resolved track with segments.
+ * Parse HLS media playlist and resolve track with segments.
  *
  * `previous` is what was known about this track before this parse: the
  * partially-resolved track from the multivariant playlist on the first resolve,
@@ -367,13 +368,11 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   const detectedContainer = initSegmentUrl ? undefined : containerMimeFromSegment(placed[0]?.url);
   const mimeType = previous.type !== 'text' && detectedContainer ? detectedContainer : previous.mimeType;
 
-  // Generic resolution: type-specific fields already on `previous`; add the
-  // parsed properties (startTime, duration, segments, initialization, metadata).
+  // Generic resolution: All type-specific fields already on `previous` track
+  // Just add parsed properties (startTime, duration, segments, initialization, metadata)
   return {
     ...previous,
     mimeType,
-    // Track startTime ≡ 0 (the presentation-timeline origin); the sliding
-    // window edge is `segments[0].startTime`, derived — never stored here.
     startTime: 0,
     startDate,
     duration: trackDuration,

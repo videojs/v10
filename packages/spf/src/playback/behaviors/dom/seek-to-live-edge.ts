@@ -13,9 +13,8 @@
  * settled at parse time — the reference track's local placement *is* the
  * presentation timeline, and every other track's first parse is held until the
  * anchor is stamped (`resolve-track`'s gate + `establishStartMediaTime`) — so
- * any window derived from resolved segments is already final. No separate
- * anchor signal to wait on, unlike the old buffer-sourced model where the pin
- * could shift a window after the fact (see
+ * any window derived from resolved segments is already final, with no separate
+ * anchor signal to wait on (see
  * `internal/design/spf/live-presentation-timeline-model.md`).
  *
  * The two pieces split along the axis a future DVR / EVENT mode will care about:

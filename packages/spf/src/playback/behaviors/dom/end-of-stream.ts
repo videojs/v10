@@ -160,16 +160,11 @@ function deriveState(
 
     const track = findTrackById(presentation, initTrackId);
     if (!track || !isResolvedTrack(track)) return 'preconditions-unmet';
-    // Only a complete playlist has a true last segment. `Track.duration` is the
-    // parser's completeness signal — finite once `#EXT-X-ENDLIST` (or
-    // PLAYLIST-TYPE:VOD) is seen, `Infinity` while the playlist can still grow
-    // (live). For ongoing live the last segment is just the rolling edge, so
-    // end-of-stream must not fire — `endOfStream()` there would pin a finite
-    // (live-edge) duration and end the stream, only for the next reload's
-    // appends to reopen it and re-fire on a loop. A live stream that genuinely
-    // ends turns `Track.duration` finite, opening this guard. Independent of
-    // the currentTime slack below: this asks "is there an end at all," the
-    // slack asks "has the playhead effectively reached it."
+    // Only a complete playlist has a true last segment: firing on an ongoing
+    // live window would pin a finite (live-edge) duration and end the stream,
+    // only for the next reload's appends to reopen it and re-fire on a loop.
+    // Independent of the currentTime slack below — this asks "is there an end at
+    // all," the slack asks "has the playhead effectively reached it."
     if (!Number.isFinite(track.duration)) return 'preconditions-unmet';
     if (!isLastSegmentAppended(track.segments, appended)) return 'preconditions-unmet';
 

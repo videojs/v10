@@ -131,8 +131,8 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // The reactor's state transitions handle relevant presentation
             // changes (presentation-resolved ↔ presentation-unresolved);
             // within 'presentation-resolved' we peek (untracked read) so
-            // internal updates (the post-resolve write, the runner's own
-            // reload cycles) don't re-fire the effect.
+            // internal updates (segments added by sibling tasks, or by this
+            // behavior's own reload cycles) don't re-fire the effect.
             const presentation = peek(state.presentation);
             const trackId = state[selectedKey].get();
             if (!presentation || !trackId) return;
@@ -145,6 +145,9 @@ function setupTrackResolution<K extends SelectedTrackKey>({
             // Abort (selection/source change) settles quietly; a genuine resolve
             // failure rejects — swallowed for now (TODO: surface to state).
             const scheduled = runner.schedule(
+              // NOTE: This can/maybe will be pulled into a per-use case factory (e.g. something like createResolveTrackTask(track, context, config)),
+              // likely eventually passed down via config or a new "definitions" argument (CJP).
+              //
               // Re-runs (clones) on each reload, so the body re-reads the live
               // snapshot (via `trackId`) rather than capturing the gate-time
               // `track` — a reload carries the prior window's timeline forward.
