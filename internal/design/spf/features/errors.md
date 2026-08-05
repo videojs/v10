@@ -106,6 +106,28 @@ and 6–8 (runtime, retry-exhaustion, pipeline producers) are not.
   through unresolved carries the prior source's errors forward.
   `resolve-track` guards the same transition with a commit-time id
   check; doing likewise here is a follow-up.
+- **A type absent entirely is silent, which is wrong for a composition
+  that needs it.** `hasTracksOfType` correctly treats "no tracks of this
+  type" as legitimate — a video-only source must not report 2012 — but
+  the audio-only engine composes *only* audio, so a source with no audio
+  rendition is unplayable and reports nothing at all. Observed on a
+  muxed-audio MPEG-TS source (`hls-1` in the sandbox): no cause, since
+  `reportTrackConditions` runs per resolved track and none resolves; no
+  verdict, since the guard returns first; the element sits at
+  `readyState 0` with `error === null`. `track-switching` can't tell the
+  two apart — it's per-type and composition-agnostic, and per §Open
+  questions producers must not assert fatality — so the fix likely mirrors
+  the causes/verdicts split: report "this type has no renditions" as a
+  distinct non-fatal-by-default condition and let each adapter's
+  `FATAL_SVTA_CODES` decide, which the audio-only adapter's narrower set
+  already demonstrates. No existing code fits (1004/1005 and 2011/2012 all
+  presuppose renditions that *were* there), so this needs a code chosen
+  against the spec. A source with no tracks of **any** type is the same
+  gap, wider: every type takes the silent path.
+- **Manifest fetch/parse failure never reaches `errors`.**
+  `resolve-presentation` carries a `TODO(error-management)` and only
+  `console.error`s. Notably the path a 403 takes, so an expired signed or
+  DRM token produces no reported condition.
 
 ## Phases of complexity
 
