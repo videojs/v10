@@ -43,15 +43,22 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * container MSE can't accept, or encryption with no decryption pipeline. Both
  * mirror what `canPlayTrack` prunes on, so a reported cause always has a
  * corresponding exclusion.
+ *
+ * Both carry `trackType`, redundantly for the format codes (1004/1005 are
+ * already per type) but necessarily for 4008, which isn't: SVTA has one
+ * content-protection code for both. A consumer attributing causes to a
+ * per-type verdict needs to tell an encrypted audio rendition from an
+ * encrypted video one, so the tag goes on every condition rather than only
+ * where it's load-bearing.
  */
 export const reportUnsupportedTrackConditions: ReportTrackConditions = (track) => {
   const conditions: SvtaError[] = [];
   const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
   if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
-    conditions.push({ code: formatCode, data: { trackId: track.id, mimeType: track.mimeType } });
+    conditions.push({ code: formatCode, data: { trackType: track.type, trackId: track.id, mimeType: track.mimeType } });
   }
   if (getMediaPlaylistMetadata(track)?.encrypted) {
-    conditions.push({ code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackId: track.id } });
+    conditions.push({ code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: track.type, trackId: track.id } });
   }
   return conditions;
 };

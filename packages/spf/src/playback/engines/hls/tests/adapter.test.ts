@@ -15,7 +15,13 @@
  * Future: consider web-platform-tests (wpt) fixtures for deeper spec coverage.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK } from '../../../../media/errors';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_AUDIO_FORMAT,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_VIDEO_FORMAT,
+} from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
 import { SimpleHlsMediaElement, SimpleHlsMediaMixin } from '../adapter';
 
@@ -603,6 +609,115 @@ describe('SimpleHlsMediaElement', () => {
       await flush();
 
       expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('describes an all-encrypted source as protected, not as an unplayable format', async () => {
+      const media = new TestMedia();
+      // The verdict only says nothing was selectable. Every video rendition was
+      // pruned for the same reason, so that reason is the honest thing to say.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v2' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
+      expect(media.error?.message).toMatch(/protected/i);
+      media.destroy();
+    });
+
+    it('falls back to the verdict copy when the causes disagree', async () => {
+      const media = new TestMedia();
+      // One encrypted rendition and one MPEG-TS rendition: no single cause is
+      // true of the source, so neither should be presented as the explanation.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v2' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).not.toMatch(/protected/i);
+      expect(media.error?.message).toMatch(/format/i);
+      media.destroy();
+    });
+
+    it('ignores causes about a different track type', async () => {
+      const media = new TestMedia();
+      // Encrypted audio alongside MPEG-TS video. The video verdict must not
+      // inherit the audio track's explanation.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
+      expect(media.error?.message).not.toMatch(/protected/i);
+      media.destroy();
+    });
+
+    it('describes an all-encrypted audio track as protected audio', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toMatch(/audio is protected/i);
+      media.destroy();
+    });
+
+    it('keeps the verdict copy when a cause carries no track type', async () => {
+      const media = new TestMedia();
+      // An untagged cause can't be attributed to a type, so it can't claim to
+      // explain a per-type verdict.
+      media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_DRM_SYSTEM }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error?.message).not.toMatch(/protected/i);
+      media.destroy();
+    });
+
+    it('does not rewrite copy for a cause appended after the verdict surfaced', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_AUDIO_FORMAT, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+      const surfaced = media.error?.message;
+
+      // A rendition resolving later can't retroactively change an error a
+      // consumer has already shown.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_AUDIO_FORMAT, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a2' } },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toBe(surfaced);
+      expect(fired).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('prefers a message the reporter supplied over composed copy', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: 'Reporter knows best.' },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toBe('Reporter knows best.');
       media.destroy();
     });
 

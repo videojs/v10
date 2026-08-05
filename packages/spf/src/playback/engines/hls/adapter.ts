@@ -1,7 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  type SvtaError,
+} from '../../../media/errors';
 import { resolveLiveLatency } from '../../../media/hls/reload-policy';
 import {
   deriveStreamType,
@@ -107,8 +112,7 @@ export interface SimpleHlsMediaError {
  * `resolve-track` reports (unsupported format, unsupported DRM) stay in the
  * sequence as context — one unplayable rendition doesn't fail the source, and
  * promoting a cause would put a dialog over a mixed source that goes on to play.
- * Composing the message from the verdict *plus* the causes present in the
- * sequence is the follow-up that recovers cause-specific copy.
+ * They still shape the *copy*, though — see {@link resolveFatalMessage}.
  */
 const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -125,9 +129,62 @@ const FATAL_SVTA_MESSAGES: Readonly<Record<number, string>> = {
   [SVTA_NO_SUPPORTED_AUDIO_TRACK]: 'This audio is in a format this browser can’t play.',
 };
 
+/**
+ * Copy for a verdict whose causes all say the same thing. A verdict only reports
+ * that nothing was selectable; *why* lives in the causes, and where they agree
+ * the cause is the more truthful thing to tell a viewer — "protected" rather
+ * than "a format this browser can't play" for an encrypted source.
+ *
+ * Only conditions that change the story need an entry. An unsupported *format*
+ * cause says what {@link FATAL_SVTA_MESSAGES} already says, so it has none.
+ */
+const FATAL_SVTA_MESSAGES_BY_CAUSE: Readonly<Record<number, Readonly<Record<number, string>>>> = {
+  [SVTA_NO_SUPPORTED_VIDEO_TRACK]: {
+    [SVTA_UNSUPPORTED_DRM_SYSTEM]: 'This video is protected and can’t be played in this browser.',
+  },
+  [SVTA_NO_SUPPORTED_AUDIO_TRACK]: {
+    [SVTA_UNSUPPORTED_DRM_SYSTEM]: 'This audio is protected and can’t be played in this browser.',
+  },
+};
+
 /** The first fatal condition in the sequence — the root cause, not its consequences. */
 function firstFatal(errors: readonly SvtaError[] | undefined): SvtaError | undefined {
   return errors?.find((error) => FATAL_SVTA_CODES.has(error.code));
+}
+
+/** The `trackType` a reporter tagged a condition with, when it did. */
+function causeTrackType(error: SvtaError): string | undefined {
+  const data = error.data as { trackType?: unknown } | null | undefined;
+  return typeof data?.trackType === 'string' ? data.trackType : undefined;
+}
+
+/**
+ * Copy for `verdict`, preferring what its causes agree on.
+ *
+ * Agreement has to be unanimous among the causes for the verdict's own track
+ * type. A source with one encrypted rendition and one MPEG-TS rendition has no
+ * single explanation, and picking either would tell a viewer something that
+ * isn't true of the source as a whole — so a split falls back to the verdict's
+ * own copy. Same for causes about the *other* type: an all-encrypted audio
+ * track alongside an all-MPEG-TS video one must not make the video verdict read
+ * as a protection failure.
+ *
+ * Latching still wins over completeness. `#setError` keys on the code, so copy
+ * is composed from whatever the sequence held when the verdict first landed; a
+ * cause appended afterward doesn't rewrite an error already surfaced.
+ */
+function resolveFatalMessage(verdict: SvtaError, errors: readonly SvtaError[] | undefined): string {
+  const byCause = FATAL_SVTA_MESSAGES_BY_CAUSE[verdict.code];
+  const trackType = verdict.code === SVTA_NO_SUPPORTED_AUDIO_TRACK ? 'audio' : 'video';
+  const causes = errors?.filter((error) => !FATAL_SVTA_CODES.has(error.code) && causeTrackType(error) === trackType);
+
+  const first = causes?.[0];
+  if (byCause && first && causes?.every((cause) => cause.code === first.code)) {
+    const unanimous = byCause[first.code];
+    if (unanimous) return unanimous;
+  }
+
+  return FATAL_SVTA_MESSAGES[verdict.code] ?? '';
 }
 
 /**
@@ -190,7 +247,8 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // resets the slot per source, so a new source starts with no error without
       // this needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
-        this.#setError(firstFatal(this.#signals.state.errors.get()));
+        const errors = this.#signals.state.errors.get();
+        this.#setError(firstFatal(errors), errors);
       });
     }
 
@@ -284,7 +342,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       this.dispatchEvent?.(new Event('targetlivewindowchange'));
     }
 
-    #setError(reported: SvtaError | undefined): void {
+    #setError(reported: SvtaError | undefined, errors: readonly SvtaError[] | undefined): void {
       if (!reported) {
         // Cleared (new source). No event: `'error'` announces a failure, and
         // consumers reset their own copy on source change.
@@ -297,7 +355,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       if (this.#error?.code === reported.code) return;
       this.#error = {
         code: reported.code,
-        message: reported.message ?? FATAL_SVTA_MESSAGES[reported.code] ?? '',
+        message: reported.message ?? resolveFatalMessage(reported, errors),
         ...(reported.data === undefined ? {} : { data: reported.data }),
       };
       this.dispatchEvent?.(new Event('error'));
