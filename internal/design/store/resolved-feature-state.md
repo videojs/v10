@@ -68,7 +68,7 @@ provider: {
 
 Selected provider keys become React props and HTML properties and attributes. Their TypeScript value types come from the mapped action's parameter. Each adapter applies changes through its normal lifecycle by invoking that private action. Provider input flows one way: store actions do not rewrite props, properties, or attributes.
 
-React seeds a new store before the first render, then forwards only committed prop changes after render. HTML forwards reactive property changes and kebab-cases the corresponding attribute names. This prototype assumes string-valued HTML inputs; it deliberately does not add runtime type metadata for future arbitrary input types.
+React seeds a new store before the first render, then forwards only committed prop changes after render. HTML forwards reactive property changes and kebab-cases the corresponding attribute names.
 
 ## Example: content title
 
@@ -95,7 +95,7 @@ Media provides metadata through `contentData` and emits `contentdatachange` when
 
 The provider map is narrow and feature-owned, and ordinary store actions handle every user write. In exchange, each provider-backed value needs a private source key plus a private action, and the store needs explicit detach-persistence metadata.
 
-Adapters invoke actions one at a time. Subscriber notification is coalesced, but a later action throwing can leave earlier values applied. A generic config patch can validate and derive a multi-key update before committing it. This prototype does not add a separate batching abstraction.
+Adapters invoke actions one at a time, and the store derives a snapshot after each action. Subscriber notification is coalesced, so normal consumers observe the final values. The behavioral difference appears on failure: if a later action or derived formula throws, earlier actions remain applied. A generic config patch can derive a multi-key update before committing any of it. This prototype does not add a separate batching abstraction.
 
 ## Deliberate limits
 
