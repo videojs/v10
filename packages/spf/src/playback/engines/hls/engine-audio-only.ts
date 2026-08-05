@@ -46,7 +46,7 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
-import { reportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
+import { createReportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
 
 // ============================================================================
 // Audio-Only HLS Engine State & Context
@@ -149,6 +149,12 @@ export type SimpleHlsAudioOnlyEngineSignals = {
  */
 export interface SimpleHlsAudioOnlyEngineConfig
   extends ShareSignalsConfig<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+  /**
+   * What this player calls itself, used as the sentence subject in the reported
+   * conditions' viewer-facing copy. Defaults to the adapter's own
+   * `playerSoftwareName` static. See `playback/primitives/error-messages`.
+   */
+  playerSoftwareName?: string;
   preferredAudioLanguage?: string;
   /**
    * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks`
@@ -232,7 +238,7 @@ export function createHlsAudioOnlyEngine(
     // with `canPlayType`, which answers `'maybe'` on an audio element too.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
-    reportTrackConditions: reportUnsupportedTrackConditions,
+    reportTrackConditions: createReportUnsupportedTrackConditions(config.playerSoftwareName),
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     // Non-zero-PTS relocation (spike): pair the audio loader with the relocation steps

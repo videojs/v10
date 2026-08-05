@@ -25,6 +25,7 @@ import {
 } from '../../media/errors';
 import { NON_FMP4_CONTAINER_MIMES } from '../../media/hls/parse-media-playlist';
 import { getMediaPlaylistMetadata, type ResolvedTrack, type TrackType } from '../../media/types';
+import { causeMessage } from './error-messages';
 
 /**
  * Conditions worth reporting about a just-resolved track. Return an empty array
@@ -44,6 +45,14 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * mirror what `canPlayTrack` prunes on, so a reported cause always has a
  * corresponding exclusion.
  *
+ * Each condition carries viewer-facing `message` copy, composed here because
+ * this is the only place the rendition itself is in hand: the format codes cover
+ * every non-fMP4 container, so naming MPEG-TS rather than "some format" needs
+ * `track.mimeType`, which nothing downstream sees. A verdict built from these
+ * reuses the copy when its causes agree — see `resolveFatalMessage` in the
+ * adapter. `playerSoftwareName` becomes the sentence subject; see
+ * {@link causeMessage}.
+ *
  * Both carry `trackType`, redundantly for the format codes (1004/1005 are
  * already per type) but necessarily for 4008, which isn't: SVTA has one
  * content-protection code for both. A consumer attributing causes to a
@@ -51,14 +60,29 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * encrypted video one, so the tag goes on every condition rather than only
  * where it's load-bearing.
  */
-export const reportUnsupportedTrackConditions: ReportTrackConditions = (track) => {
-  const conditions: SvtaError[] = [];
-  const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
-  if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
-    conditions.push({ code: formatCode, data: { trackType: track.type, trackId: track.id, mimeType: track.mimeType } });
-  }
-  if (getMediaPlaylistMetadata(track)?.encrypted) {
-    conditions.push({ code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: track.type, trackId: track.id } });
-  }
-  return conditions;
-};
+export function createReportUnsupportedTrackConditions(playerSoftwareName?: string): ReportTrackConditions {
+  return (track) => {
+    const conditions: SvtaError[] = [];
+    const data = { trackType: track.type, trackId: track.id };
+
+    const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
+    if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
+      conditions.push({
+        code: formatCode,
+        message: causeMessage(formatCode, track, playerSoftwareName),
+        data: { ...data, mimeType: track.mimeType },
+      });
+    }
+    if (getMediaPlaylistMetadata(track)?.encrypted) {
+      conditions.push({
+        code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+        message: causeMessage(SVTA_UNSUPPORTED_DRM_SYSTEM, track, playerSoftwareName),
+        data,
+      });
+    }
+    return conditions;
+  };
+}
+
+/** {@link createReportUnsupportedTrackConditions} with the default player name. */
+export const reportUnsupportedTrackConditions: ReportTrackConditions = createReportUnsupportedTrackConditions();

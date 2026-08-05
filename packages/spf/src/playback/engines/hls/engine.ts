@@ -73,7 +73,7 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
-import { reportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
+import { createReportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
@@ -221,6 +221,20 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * codec).
    */
   canPlayTrack?: CanPlayTrack;
+  /**
+   * What this player calls itself, used as the sentence subject in the fatal
+   * error copy the adapter surfaces ("Mux Player can’t play MPEG-TS video.").
+   *
+   * Viewer-facing prose, so pass a display name — `'Mux Player'`, not the
+   * identifier-style value Mux Data's own `playerSoftwareName` carries
+   * (`'mux-video'`). Defaults to `DEFAULT_PLAYER_SOFTWARE_NAME`
+   * (`'This player'`), which keeps the copy grammatical when unset.
+   *
+   * Naming the player matters because the alternative was naming the browser,
+   * which was untrue: browsers play MPEG-TS and DRM fine — this engine is what
+   * can't. See `./error-messages`.
+   */
+  playerSoftwareName?: string;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;
@@ -395,7 +409,7 @@ export function createSimpleHlsEngine(
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
-    reportTrackConditions: reportUnsupportedTrackConditions,
+    reportTrackConditions: createReportUnsupportedTrackConditions(config.playerSoftwareName),
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.

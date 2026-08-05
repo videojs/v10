@@ -1,12 +1,7 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import {
-  SVTA_NO_SUPPORTED_AUDIO_TRACK,
-  SVTA_NO_SUPPORTED_VIDEO_TRACK,
-  SVTA_UNSUPPORTED_DRM_SYSTEM,
-  type SvtaError,
-} from '../../../media/errors';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import { resolveLiveLatency } from '../../../media/hls/reload-policy';
 import {
   deriveStreamType,
@@ -17,6 +12,7 @@ import {
   type StreamType,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
+import { DEFAULT_PLAYER_SOFTWARE_NAME } from '../../primitives/error-messages';
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
   createSimpleHlsEngine,
@@ -25,6 +21,7 @@ import {
   type SimpleHlsEngineSignals,
   type SimpleHlsEngineState,
 } from './engine';
+import { firstFatal, resolveFatalMessage, type SimpleHlsMediaError } from './error-surface';
 
 /**
  * The media-level stream type: the engine's detected {@link StreamType}
@@ -33,6 +30,8 @@ import {
  * cross-package dependency (spf sits below core).
  */
 export type SimpleHlsMediaStreamType = StreamType | 'unknown';
+
+export type { SimpleHlsMediaError } from './error-surface';
 
 export interface SimpleHlsMediaProps {
   src: string;
@@ -83,25 +82,6 @@ function deriveTargetLiveWindow(
 // ============================================================================
 
 /**
- * The error shape the media surface exposes — structurally compatible with
- * `@videojs/media`'s `ErrorLike` (`{ code, message }`) without importing it.
- * The dependency can't go that way: `@videojs/media` already depends on this
- * package. (That inversion is itself a known follow-up; structural
- * compatibility is the same approach `SimpleHlsMediaStreamType` takes.)
- *
- * `code` is the **SVTA code**, not a `MediaError.MEDIA_ERR_*` value. Consumers
- * that map codes to copy currently only know 1–5, so an SVTA code falls through
- * to showing `message`; an extensible code lookup above the engine is the
- * follow-up that fixes it.
- */
-export interface SimpleHlsMediaError {
-  readonly code: number;
-  readonly message: string;
-  /** Reporter context (which selection emptied, which track, …). */
-  readonly data?: unknown;
-}
-
-/**
  * Which reported conditions this composition treats as **fatal** — the ones that
  * reach `error` and fire `'error'`. Severity isn't part of an SVTA code
  * (§Approach: "impact varies with player implementation"), and here it also
@@ -118,74 +98,6 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_NO_SUPPORTED_AUDIO_TRACK,
 ]);
-
-/**
- * Fallback copy per code, used when a reporter supplied none. Visible to
- * viewers today (consumers fall back to `message` for codes they can't map), so
- * these are written for a person, not a log.
- */
-const FATAL_SVTA_MESSAGES: Readonly<Record<number, string>> = {
-  [SVTA_NO_SUPPORTED_VIDEO_TRACK]: 'This video is in a format this browser can’t play.',
-  [SVTA_NO_SUPPORTED_AUDIO_TRACK]: 'This audio is in a format this browser can’t play.',
-};
-
-/**
- * Copy for a verdict whose causes all say the same thing. A verdict only reports
- * that nothing was selectable; *why* lives in the causes, and where they agree
- * the cause is the more truthful thing to tell a viewer — "protected" rather
- * than "a format this browser can't play" for an encrypted source.
- *
- * Only conditions that change the story need an entry. An unsupported *format*
- * cause says what {@link FATAL_SVTA_MESSAGES} already says, so it has none.
- */
-const FATAL_SVTA_MESSAGES_BY_CAUSE: Readonly<Record<number, Readonly<Record<number, string>>>> = {
-  [SVTA_NO_SUPPORTED_VIDEO_TRACK]: {
-    [SVTA_UNSUPPORTED_DRM_SYSTEM]: 'This video is protected and can’t be played in this browser.',
-  },
-  [SVTA_NO_SUPPORTED_AUDIO_TRACK]: {
-    [SVTA_UNSUPPORTED_DRM_SYSTEM]: 'This audio is protected and can’t be played in this browser.',
-  },
-};
-
-/** The first fatal condition in the sequence — the root cause, not its consequences. */
-function firstFatal(errors: readonly SvtaError[] | undefined): SvtaError | undefined {
-  return errors?.find((error) => FATAL_SVTA_CODES.has(error.code));
-}
-
-/** The `trackType` a reporter tagged a condition with, when it did. */
-function causeTrackType(error: SvtaError): string | undefined {
-  const data = error.data as { trackType?: unknown } | null | undefined;
-  return typeof data?.trackType === 'string' ? data.trackType : undefined;
-}
-
-/**
- * Copy for `verdict`, preferring what its causes agree on.
- *
- * Agreement has to be unanimous among the causes for the verdict's own track
- * type. A source with one encrypted rendition and one MPEG-TS rendition has no
- * single explanation, and picking either would tell a viewer something that
- * isn't true of the source as a whole — so a split falls back to the verdict's
- * own copy. Same for causes about the *other* type: an all-encrypted audio
- * track alongside an all-MPEG-TS video one must not make the video verdict read
- * as a protection failure.
- *
- * Latching still wins over completeness. `#setError` keys on the code, so copy
- * is composed from whatever the sequence held when the verdict first landed; a
- * cause appended afterward doesn't rewrite an error already surfaced.
- */
-function resolveFatalMessage(verdict: SvtaError, errors: readonly SvtaError[] | undefined): string {
-  const byCause = FATAL_SVTA_MESSAGES_BY_CAUSE[verdict.code];
-  const trackType = verdict.code === SVTA_NO_SUPPORTED_AUDIO_TRACK ? 'audio' : 'video';
-  const causes = errors?.filter((error) => !FATAL_SVTA_CODES.has(error.code) && causeTrackType(error) === trackType);
-
-  const first = causes?.[0];
-  if (byCause && first && causes?.every((cause) => cause.code === first.code)) {
-    const unanimous = byCause[first.code];
-    if (unanimous) return unanimous;
-  }
-
-  return FATAL_SVTA_MESSAGES[verdict.code] ?? '';
-}
 
 /**
  * Mixin that adds SPF playback engine behavior to any base class.
@@ -209,6 +121,18 @@ function resolveFatalMessage(verdict: SvtaError, errors: readonly SvtaError[] | 
  */
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsMediaImpl extends BaseClass {
+    /**
+     * What this adapter calls itself, used as the default
+     * {@link SimpleHlsEngineConfig.playerSoftwareName} — so error copy names the
+     * engine that actually refused the source rather than an anonymous "player".
+     *
+     * A static so it travels with the class: a subclass can override it, and an
+     * explicit `config.playerSoftwareName` still wins over both.
+     */
+    static get playerSoftwareName(): string {
+      return 'simple-hls-video';
+    }
+
     readonly #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
     #config: SimpleHlsEngineConfig;
     #signals!: SimpleHlsEngineSignals;
@@ -248,7 +172,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // this needing its own source-change hook.
       this.#stopErrorSync = effect(() => {
         const errors = this.#signals.state.errors.get();
-        this.#setError(firstFatal(errors), errors);
+        this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
 
@@ -355,7 +279,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       if (this.#error?.code === reported.code) return;
       this.#error = {
         code: reported.code,
-        message: reported.message ?? resolveFatalMessage(reported, errors),
+        message: reported.message ?? resolveFatalMessage(reported, errors, this.#playerSoftwareName()),
         ...(reported.data === undefined ? {} : { data: reported.data }),
       };
       this.dispatchEvent?.(new Event('error'));
@@ -476,9 +400,21 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // Private
     // -------------------------------------------------------------------------
 
+    /**
+     * Explicit config wins, then this class's static, then the generic default.
+     * Read through `this.constructor` rather than the closure so a subclass
+     * overriding the static is honoured.
+     */
+    #playerSoftwareName(): string {
+      const own = (this.constructor as { playerSoftwareName?: string }).playerSoftwareName;
+      return this.#config?.playerSoftwareName ?? own ?? DEFAULT_PLAYER_SOFTWARE_NAME;
+    }
+
     #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return createSimpleHlsEngine({
         ...this.#config,
+        // After the spread, so an explicitly-undefined config key can't clobber it.
+        playerSoftwareName: this.#playerSoftwareName(),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
@@ -493,7 +429,11 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
   }
 
-  return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI>;
+  // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
+  // adding back to the type or callers can't read it.
+  return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI> & {
+    readonly playerSoftwareName: string;
+  };
 }
 
 /** Standalone SPF media adapter with no base class. */

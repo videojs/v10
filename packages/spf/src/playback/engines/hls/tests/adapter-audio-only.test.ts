@@ -7,7 +7,13 @@
  * not in adapter contract).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleHlsAudioOnlyMediaElement } from '../adapter-audio-only';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_AUDIO_FORMAT,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+} from '../../../../media/errors';
+import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter-audio-only';
 
 describe('SimpleHlsAudioOnlyMediaElement', () => {
   beforeEach(() => {
@@ -315,6 +321,89 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Error surface — parallels adapter.test.ts, with a narrower fatal policy
+  // ---------------------------------------------------------------------------
+  describe('error surface', () => {
+    class TestMedia extends SimpleHlsAudioOnlyMediaMixin(EventTarget) {}
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('exposes no error before anything is reported', () => {
+      const media = new TestMedia();
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('surfaces the audio verdict as an ErrorLike and fires error', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }]);
+      await flush();
+
+      expect(fired).toHaveLength(1);
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_AUDIO_TRACK, message: expect.any(String) });
+      expect(media.error?.message).not.toBe('');
+      media.destroy();
+    });
+
+    it('ignores the video verdict — this media has no video track to fail', async () => {
+      // The whole difference in fatal policy. An audio-only engine composes no
+      // video selection, so a video verdict can't be about anything here, and
+      // surfacing it would describe a track type this media doesn't have.
+      const media = new TestMedia();
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('reuses a unanimous cause’s stored copy', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        {
+          code: SVTA_UNSUPPORTED_AUDIO_FORMAT,
+          message: 'simple-hls-audio-only can’t play raw AAC audio.',
+          data: { trackType: 'audio', trackId: 'a1', mimeType: 'audio/aac' },
+        },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toBe('simple-hls-audio-only can’t play raw AAC audio.');
+      media.destroy();
+    });
+
+    it('names itself when composing copy, and never blames the browser', async () => {
+      expect(SimpleHlsAudioOnlyMediaElement.playerSoftwareName).toBe('simple-hls-audio-only');
+
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toMatch(/^simple-hls-audio-only /);
+      expect(media.error?.message).toMatch(/protected/i);
+      expect(media.error?.message).not.toMatch(/browser/i);
+      media.destroy();
+    });
+
+    it('stops promoting conditions after destroy', async () => {
+      const media = new TestMedia();
+      media.destroy();
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }]);
+      await flush();
+
+      expect(media.error).toBeNull();
     });
   });
 });
