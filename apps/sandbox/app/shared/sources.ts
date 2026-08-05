@@ -147,6 +147,16 @@ const SOURCE_MAP = {
     type: 'hls',
     subType: 'mp4',
   },
+  // One variant, CODECS="mp4a.40.2", `.ts` segments and no EXT-X-MAP. The audio
+  // counterpart of the MPEG-TS case, and the only source here that reaches the
+  // *audio* verdict (2012): the other TS assets mux audio into their video
+  // variants, so they expose no audio rendition to prune.
+  'hls-audio-only-ts': {
+    label: 'HLS - Audio only (MPEG-TS)',
+    url: 'https://stream.mux.com/3zd01ukbq5UaSPrfGnZ2eYBcMXuf3Uc5Rc5XINRcHA00g.m3u8',
+    type: 'hls',
+    subType: 'ts',
+  },
   // The same asset again, reached by plain URL and deliberately left unlicensed,
   // so any preset can be pointed at it. Video renditions carry #EXT-X-KEY for all
   // three key systems; the audio rendition is clear. An engine with no EME/license
