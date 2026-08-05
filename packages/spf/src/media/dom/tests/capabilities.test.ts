@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { MEDIA_PLAYLIST_METADATA_KEY } from '../../types';
 import { canPlayTrack } from '../capabilities';
 
 describe('canPlayTrack', () => {
@@ -53,5 +54,33 @@ describe('canPlayTrack', () => {
     expect(canPlayTrack({ mimeType: 'video/mp2t' })).toBe(false);
     expect(canPlayTrack({ mimeType: 'audio/aac' })).toBe(false);
     expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('asserts an encrypted rendition unplayable, whatever its codecs probe as', () => {
+    // No EME / license pipeline, so an encrypted rendition would append and fail
+    // to decode with nothing to explain it. Pruned before selection instead.
+    const spy = vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
+    const encrypted = {
+      mimeType: 'video/mp4',
+      codecs: ['avc1.640028'],
+      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { encrypted: true } },
+    };
+
+    expect(canPlayTrack(encrypted)).toBe(false);
+    expect(spy).not.toHaveBeenCalled();
+  });
+
+  it('leaves a clear rendition to the codec probe', () => {
+    // The other half of what makes a partially-encrypted source still play: only
+    // the encrypted renditions drop out.
+    const spy = vi.spyOn(MediaSource, 'isTypeSupported').mockReturnValue(true);
+    const clear = {
+      mimeType: 'video/mp4',
+      codecs: ['avc1.640029'],
+      metadata: { [MEDIA_PLAYLIST_METADATA_KEY]: { encrypted: false } },
+    };
+
+    expect(canPlayTrack(clear)).toBe(true);
+    expect(spy).toHaveBeenCalled();
   });
 });
