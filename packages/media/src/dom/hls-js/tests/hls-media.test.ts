@@ -244,34 +244,45 @@ describe('HlsJsMedia', () => {
       return { media, video };
     }
 
-    it('enables EME on the hls.js engine from `source.keySystems`', () => {
-      const { media } = setupMse({ keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } });
+    const drmEngine = { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } };
+
+    it('hands DRM options straight to the hls.js engine', () => {
+      const { media } = setupMse({ engine: drmEngine });
 
       expect(media.engine!.config.emeEnabled).toBe(true);
       expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
     });
 
-    it('leaves EME disabled without `source.keySystems`', () => {
+    it('leaves EME disabled for unprotected playback', () => {
       const { media } = setupMse({});
       expect(media.engine!.config.emeEnabled).toBe(false);
     });
 
-    it('reuses the engine for an equivalent key systems config', () => {
-      const { media } = setupMse({ keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } });
+    it('reuses the engine for an equivalent DRM config', () => {
+      const { media } = setupMse({ engine: drmEngine });
       const engine = media.engine;
 
       // Same license servers in a new object (e.g. an inline React prop).
-      media.source = { src: media.src, keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } };
+      media.source = {
+        src: media.src,
+        engine: { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } },
+      };
       media.load();
 
       expect(media.engine).toBe(engine);
     });
 
     it('recreates the engine when a license server changes', () => {
-      const { media } = setupMse({ keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } });
+      const { media } = setupMse({ engine: drmEngine });
       const engine = media.engine;
 
-      media.source = { src: media.src, keySystems: { widevine: { licenseUrl: 'https://other.test/widevine' } } };
+      media.source = {
+        src: media.src,
+        engine: {
+          emeEnabled: true,
+          drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' } },
+        },
+      };
       media.load();
 
       expect(media.engine).not.toBe(engine);
@@ -284,11 +295,11 @@ describe('HlsJsMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
-      media.source = { ...media.source, keySystems: { widevine: { licenseUrl: WIDEVINE_LICENSE } } };
+      media.source = { ...media.source, engine: drmEngine };
       media.load();
 
       expect(media.engine).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('source.keySystems'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('DRM playback requires the hls.js (MSE) engine'));
     });
   });
 

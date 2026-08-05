@@ -418,15 +418,17 @@ describe('MuxMedia', () => {
       expect(media.source).toEqual({ playbackId: 'abc123', drm: { token: DRM_TOKEN } });
     });
 
-    it('lets an explicit keySystems override the derived one', async () => {
+    it('lets an explicit engine.drmSystems override the derived one', async () => {
       const media = setupMse();
       media.source = {
         playbackId: 'abc123',
         drm: { token: DRM_TOKEN },
-        keySystems: { widevine: { licenseUrl: 'https://drm.example/license' } },
+        engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
       };
       await flushLoad();
 
+      // EME still switches on, but the caller's license servers stand.
+      expect(media.engine!.config.emeEnabled).toBe(true);
       expect(media.engine!.config.drmSystems).toEqual({
         'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' },
       });

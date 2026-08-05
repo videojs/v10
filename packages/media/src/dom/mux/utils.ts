@@ -1,7 +1,8 @@
 import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
-import type { DrmConfig, HlsSource } from '../hls-js';
+import type { DRMSystemsConfiguration } from 'hls.js';
+import type { HlsSource } from '../hls-js';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -199,10 +200,9 @@ export function createMuxPosterURL(source?: MuxSource | null): string | undefine
 }
 
 /**
- * Build the DRM license servers a source describes, ready for the HLS layer's
- * `source.keySystems`. Mux signs one license token per playback ID and serves
- * every system from a URL derived from it, so `drm.token` is all a caller
- * provides.
+ * Build the hls.js `drmSystems` a source describes, keyed by EME key system id.
+ * Mux signs one license token per playback ID and serves every system from a
+ * URL derived from it, so `drm.token` is all a caller provides.
  *
  * Returns `undefined` when no license token is present, or when the token is
  * not scoped to DRM — an unsigned license request is always rejected, so there
@@ -210,7 +210,7 @@ export function createMuxPosterURL(source?: MuxSource | null): string | undefine
  *
  * @internal
  */
-export function createMuxKeySystems(source?: MuxSource | null): DrmConfig | undefined {
+export function createMuxDrmSystems(source?: MuxSource | null): DRMSystemsConfiguration | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, drm } = source;
   const { token } = drm ?? {};
@@ -224,9 +224,9 @@ export function createMuxKeySystems(source?: MuxSource | null): DrmConfig | unde
   // Every system is configured unconditionally: which one a browser negotiates
   // is up to its CDM, and Mux serves all three from the same token.
   return {
-    fairplay: { licenseUrl: url('license/fairplay'), certificateUrl: url('appcert/fairplay') },
-    widevine: { licenseUrl: url('license/widevine') },
-    playready: { licenseUrl: url('license/playready') },
+    'com.apple.fps': { licenseUrl: url('license/fairplay'), serverCertificateUrl: url('appcert/fairplay') },
+    'com.widevine.alpha': { licenseUrl: url('license/widevine') },
+    'com.microsoft.playready': { licenseUrl: url('license/playready') },
   };
 }
 

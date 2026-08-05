@@ -1,6 +1,6 @@
 import { HlsJsMedia } from '../hls-js';
 import {
-  createMuxKeySystems,
+  createMuxDrmSystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
@@ -60,9 +60,10 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * params). A `playback.token` replaces all other params — signed URLs bake
    * them into the token. Engine options live under `engine`.
    *
-   * A `drm.token` derives the inherited `keySystems` — Mux's FairPlay,
-   * Widevine, and PlayReady license servers for this playback ID. Naming
-   * `keySystems` yourself overrides that, for content Mux does not license.
+   * A `drm.token` fills in the inherited `engine.drmSystems` with Mux's
+   * FairPlay, Widevine, and PlayReady license servers for this playback ID.
+   * Naming `engine.drmSystems` yourself overrides that, for content Mux does
+   * not license.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -76,13 +77,13 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
     this.#source = source;
 
-    // Hand the same source down with `src` and `keySystems` resolved from the
-    // playback ID. The base keeps `src` in step, decides whether playback has to
-    // reload, and dispatches `sourcechange`.
+    // Hand the same source down with `src` and the DRM license servers resolved
+    // from the playback ID. The base keeps `src` in step, decides whether
+    // playback has to reload, and dispatches `sourcechange`.
     super.source = source && {
       ...source,
       src: createMuxVideoURL(source) ?? source.src ?? '',
-      keySystems: source.keySystems ?? createMuxKeySystems(source),
+      engine: withMuxDrm(source),
     };
   }
 
@@ -105,4 +106,16 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
       ...(storyboard && { storyboard }),
     };
   }
+}
+
+/**
+ * Fold Mux's derived license servers into the engine config, switching EME on
+ * so hls.js listens for `encrypted`. Whatever the caller set under `engine`
+ * wins, key by key, so `drmSystems` of their own replaces the derived set.
+ */
+function withMuxDrm(source: MuxSource): MuxSource['engine'] {
+  const drmSystems = createMuxDrmSystems(source);
+  if (!drmSystems) return source.engine;
+
+  return { emeEnabled: true, drmSystems, ...source.engine };
 }
