@@ -5,13 +5,17 @@ date: 2026-08-04
 
 # Resolved player feature state
 
-This record defines how a player feature resolves one public value from inputs with different owners and lifetimes. Content metadata illustrates the pattern but does not define its boundary. Source, exports, and tests define the current API.
+This record defines how a player feature resolves one public value from inputs with different owners and lifetimes. Source, exports, and tests define the current API.
+
+## Media interaction
+
+Media can provide inputs to player features. A feature reads those values when media attaches, listens for media events, and writes changes to its internal state. The store clears media-owned state on detach without clearing user input.
 
 ## Consumer experience
 
-A selected feature may expose user inputs through its provider. Those inputs appear in React and HTML only when the player includes that feature.
+A selected feature can accept user input through its React or HTML provider.
 
-For example, a content-title feature may accept a user override:
+For example, `metadataFeature` accepts user input for its `contentTitle` state:
 
 ```tsx
 const Player = createPlayer({ features: [metadataFeature] });
@@ -29,35 +33,27 @@ Or a user may provide a fallback that media can override:
 </Player.Provider>
 ```
 
-HTML exposes the same inputs as `content-title` and `default-content-title`. Consumers read the resolved value through normal store or selector APIs. Feature-authored actions provide intentional imperative writes; the low-level `$config` controller exists for provider adapters, not as the recommended consumer API.
+HTML exposes the same inputs as `content-title` and `default-content-title`. Consumers read the resolved value through the store and update user input through feature actions such as `setContentTitle`.
 
 ## Decision
 
-A feature may separate its inputs into three layers:
+A feature can use three kinds of state:
 
-- `config` holds user-provided values for the provider/store lifetime and survives media detach.
-- `state` holds attachment-owned source values and feature actions. It resets when media detaches.
-- `derived` eagerly resolves public state from `config` and `state` before one frozen snapshot is published.
+- `config` stores user input for the provider lifetime.
+- `state` stores feature actions and values read from media. Media-owned values reset on detach.
+- `derived` calculates the public value from `config` and `state`.
 
-Features choose their own formula. A fallback-shaped value can use:
+Features choose their own formula. A value with fallbacks can use:
 
 ```ts
 providerOverride ?? attachedMediaValue ?? providerFallback ?? featureFallback
 ```
 
-Internal source values may use symbol keys. They follow the normal attachment update and reset path but do not appear in the public store. Lower-precedence inputs remain current beneath an override, so removing that override reveals the latest available value.
-
-Source, config, and derived values commit atomically. A formula failure commits and notifies nothing. An internal change that produces a shallowly equal public snapshot preserves its identity and does not notify subscribers.
+Only resolved values appear in the public store. Lower-priority values continue updating under an override, so removing the override reveals the latest value.
 
 ## Provider adapters
 
-Selected feature config keys drive both provider surfaces.
-
-- React seeds config during store creation so the first render and SSR agree, then applies actual prop changes after commit. Omitted, unchanged props do not overwrite imperative writes.
-- HTML declares non-reflecting reactive properties and kebab-case attributes. Initial values synchronize before context publication; later changes use the element update cycle.
-- Provider inputs flow one way. Store actions do not rewrite React props or HTML properties or attributes.
-
-Provider adapters must preserve the feature's declared config types. HTML attribute conversion is adapter-specific and must not be inferred solely from a nullable default.
+Selected config keys become React props and HTML properties and attributes. Each adapter applies changes through its normal lifecycle. Provider input flows one way: store actions do not rewrite props, properties, or attributes. Adapters must preserve the feature's declared value types.
 
 ## Example: content title
 
@@ -68,28 +64,22 @@ The metadata feature resolves `contentTitle` in this order:
 3. User `defaultContentTitle`
 4. Feature fallback `""`
 
-`setContentTitle` and `setDefaultContentTitle` write the two user-owned config values. Empty and whitespace-only strings are literal values; `null` falls through to the next tier. `contentTitle` remains independent from the existing `title` and `poster` concepts.
+`setContentTitle` and `setDefaultContentTitle` update the two user values. Empty strings stop the chain. `null` continues to the next value. `contentTitle` remains independent from the existing `title` and `poster` concepts.
 
-Media may implement the general, read-only content-data capability by exposing a defined `contentData` bag. `undefined` for the whole bag means the capability is unsupported. A defined bag, including `{}`, opts into content-data notifications. Individual keys may appear or disappear during one attachment, and `null` means a key has no current value.
-
-All content-data fields share the plain `contentdatachange` event. The metadata feature listens whenever `contentData !== undefined`, then re-reads `contentData.title` after each event. Native media does not donate its legacy `title`; DOM media hosts delegate `contentData` and forward its notification event.
+Media provides metadata through `contentData` and emits `contentdatachange` when it changes. An `undefined` bag means the media does not support content data; keys in a defined bag can appear or disappear. The metadata feature reads `contentData.title`, not the legacy media `title` property.
 
 ## Alternatives considered
 
-- **Publish every input as ordinary state** — exposes implementation ingredients to consumers and obscures which lifecycle owns each value.
-- **Keep user configuration in attachment state** — clears user intent when media detaches and couples provider lifetime to media lifetime.
-- **Put derived functions inside `state`** — keeps one object shape but makes feature inference substantially harder to read and maintain.
+- **Publish every input** — exposes private values and hides which lifecycle owns them.
+- **Keep user input in media state** — clears user input when media detaches.
+- **Put formulas inside `state`** — makes feature types harder to understand.
 
 ## Deliberate limits
 
-Features need not use every layer, and this design does not prescribe one precedence formula for unrelated state. The content-title example does not define title UI, legacy `title` mapping, poster behavior, vendor integrations, or the precedence rules of other features; those require their own contracts.
+Features do not need every kind of state or one shared precedence formula. This record does not define title UI, poster behavior, vendor integrations, or rules for other features.
 
 ## Sources of truth
 
-- Historical player composition: [`rfc/player-api.md`](../../../rfc/player-api.md)
-- Media capability rationale: [`internal/design/media/architecture.md`](../media/architecture.md)
-- Reactive snapshot decision: [`internal/decisions/store/reactive-state.md`](../../decisions/store/reactive-state.md)
-- Store config and derivation: [`packages/store/src/core/`](../../../packages/store/src/core/)
-- Metadata feature and tests: [`packages/core/src/dom/store/features/`](../../../packages/core/src/dom/store/features/)
-- Media contracts and host forwarding: [`packages/media/src/`](../../../packages/media/src/)
-- React and HTML providers: [`packages/react/src/player/`](../../../packages/react/src/player/), [`packages/html/src/player/`](../../../packages/html/src/player/)
+- Store rules: [`internal/decisions/store/reactive-state.md`](../../decisions/store/reactive-state.md), [`packages/store/src/core/`](../../../packages/store/src/core/)
+- Metadata and media behavior: [`packages/core/src/dom/store/features/`](../../../packages/core/src/dom/store/features/), [`packages/media/src/`](../../../packages/media/src/)
+- Provider adapters: [`packages/react/src/player/`](../../../packages/react/src/player/), [`packages/html/src/player/`](../../../packages/html/src/player/)

@@ -516,7 +516,7 @@ export interface MediaContentDataEvents {
   contentdatachange: EventLike;
 }
 
-/** Optional media-owned content metadata, independent from legacy media properties. */
+/** Optional media-owned content metadata. */
 export interface MediaContentDataCapability {
   readonly contentData: MediaContentData | undefined;
 }

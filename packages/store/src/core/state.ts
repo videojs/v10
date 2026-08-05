@@ -71,8 +71,8 @@ class StateContainer<T> implements WritableState<T> {
   }
 
   replace(next: T): void {
-    // Internal source/config inputs can change without changing the public
-    // snapshot. Preserve its identity and do not notify subscribers in that case.
+    // Example: media metadata can change under a user override while the
+    // resolved title stays the same. Preserve the public snapshot in that case.
     if (shallowEqual(this.#current, next)) return;
 
     this.#current = Object.freeze({ ...next });

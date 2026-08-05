@@ -44,7 +44,7 @@ export interface AttachContext<Target, State> {
 export interface StateContext<Target, Config = object> {
   /** Returns the current target. Throws if not attached. */
   target: () => Target;
-  /** Provider-lifetime configuration for feature-authored actions. */
+  /** User-defined, provider-lifetime configuration. */
   config: ConfigController<Config>;
   /**
    * Cancellation signals for async operations.
@@ -57,9 +57,9 @@ export interface StateContext<Target, Config = object> {
    *   (e.g., loading a new source cancels pending seeks).
    */
   signals: AbortControllerRegistry;
-  /** Read current slice source state. Safe to use inside action closures (not during `state()` init). */
+  /** Read slice state before derived values. Safe inside action closures, not during `state()` init. */
   get: () => Readonly<Record<PropertyKey, unknown>>;
-  /** Patch slice source state. Safe to use inside action closures (not during `state()` init). */
+  /** Patch slice state before derived values. Safe inside action closures, not during `state()` init. */
   set: (partial: Record<PropertyKey, unknown>) => void;
 }
 
@@ -69,7 +69,7 @@ export interface StateContext<Target, Config = object> {
 
 /** Read-only inputs available while an eager derived formula is evaluated. */
 export interface DerivedContext<State, Config> {
-  /** Returns the immutable source-state snapshot. */
+  /** Returns the immutable slice state before derived values. */
   get: () => Readonly<State>;
   /** Read-only access to the immutable provider configuration snapshot. */
   config: Pick<ConfigController<Config>, 'get'>;
@@ -90,7 +90,7 @@ export interface SliceConfig<Target, State, Config = object, Derived = object> {
   /** Initial provider-lifetime configuration. */
   config?: Config;
   state: (ctx: StateContext<Target, Config>) => State;
-  /** Eager formulas evaluated from source state and provider config before publication. */
+  /** Formulas evaluated from slice state and provider config before publication. */
   derived?: DerivedDefinition<State, Config, Derived>;
   attach?: (ctx: AttachContext<Target, State>) => void;
 }

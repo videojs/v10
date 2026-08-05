@@ -22,9 +22,12 @@ const definePlayerSlice = defineSlice<PlayerTarget>();
 
 /** Define a static player feature. */
 export function definePlayerFeature<State>(config: SliceConfig<PlayerTarget, State>): PlayerFeature<State>;
-/** Define a responsive player feature with provider-lifetime config. */
+/** Define a player feature with responsive user-facing config. */
 export function definePlayerFeature<Config>(): SliceFactory<PlayerTarget, Config>;
-/** Define the legacy factory-configured form used by static feature variants. */
+/**
+ * Define the legacy factory-configured form used by static feature variants.
+ * Currently used for orientation lock and scheduled for removal in #1942.
+ */
 export function definePlayerFeature<Config, State>(
   config: ConfigurablePlayerFeatureConfig<Config, State>,
   defaultConfig: Config

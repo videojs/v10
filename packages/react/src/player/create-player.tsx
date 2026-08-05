@@ -75,7 +75,8 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   function Provider(props: ProviderProps<any>): ReactNode {
     const { children } = props;
-    const providerConfig = readProviderConfig(props, configKeys);
+    // Only config declared by selected features belongs in the store.
+    const providerConfig = pickFeatureConfig(props, configKeys);
     const [store, setStore] = useState(() => createStore<PlayerTarget>()(slice, { config: providerConfig }));
     const syncedConfig = useRef({ store, values: providerConfig });
     const [popupGroup] = useState(() => createPopupGroup());
@@ -84,6 +85,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     useDestroy(store);
 
+    // Sync committed provider props to the existing store.
     useLayoutEffect(() => {
       const previous = syncedConfig.current;
 
@@ -145,6 +147,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   };
 }
 
-function readProviderConfig(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+function pickFeatureConfig(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
   return Object.fromEntries(keys.map((key) => [key, props[key]]));
 }
