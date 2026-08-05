@@ -60,6 +60,13 @@ describe('reportUnsupportedTrackConditions', () => {
 
   it('carries the rendition id as context so a cause can be traced to a track', () => {
     const [condition] = reportUnsupportedTrackConditions(track('video', { encrypted: true }));
-    expect(condition?.data).toEqual({ trackId: 'video-1' });
+    expect(condition?.data).toEqual({ trackType: 'video', trackId: 'video-1' });
+  });
+
+  it('tags the track type, which the DRM code cannot carry on its own', () => {
+    // 4008 is one code for both types, so a consumer attributing causes to a
+    // per-type verdict has only this tag to go on.
+    const [condition] = reportUnsupportedTrackConditions(track('audio', { encrypted: true }));
+    expect(condition?.data).toMatchObject({ trackType: 'audio' });
   });
 });
