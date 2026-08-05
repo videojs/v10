@@ -8,12 +8,12 @@ import { createRoot } from 'react-dom/client';
 
 const Player = createPlayer({ features: [metadataFeature] });
 
-type ContentDataTitleVideo = HTMLVideoElement & {
-  contentData?: { title: string | null };
+type ContentDataVideo = HTMLVideoElement & {
+  contentData: Record<string, string | null | undefined>;
 };
 
 function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefined }) {
-  const media = useRef<ContentDataTitleVideo | null>(null);
+  const media = useRef<ContentDataVideo | null>(null);
   const initialTitle = useRef(contentTitle);
 
   const configureMedia = useCallback((element: HTMLVideoElement | null) => {
@@ -22,21 +22,20 @@ function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefin
       return;
     }
 
-    if (initialTitle.current !== undefined) {
-      Object.defineProperty(element, 'contentData', {
-        configurable: true,
-        writable: true,
-        value: { title: initialTitle.current },
-      });
-    }
-    media.current = element as ContentDataTitleVideo;
+    Object.defineProperty(element, 'contentData', {
+      configurable: true,
+      writable: true,
+      value: initialTitle.current === undefined ? {} : { title: initialTitle.current },
+    });
+    media.current = element as ContentDataVideo;
   }, []);
 
   useLayoutEffect(() => {
-    if (!media.current || contentTitle === undefined || Object.is(media.current.contentData?.title, contentTitle)) {
-      return;
-    }
-    media.current.contentData = { ...media.current.contentData, title: contentTitle };
+    if (!media.current || Object.is(media.current.contentData.title, contentTitle)) return;
+    const contentData = { ...media.current.contentData };
+    if (contentTitle === undefined) delete contentData.title;
+    else contentData.title = contentTitle;
+    media.current.contentData = contentData;
     media.current.dispatchEvent(new Event('contentdatachange'));
   }, [contentTitle]);
 
@@ -57,7 +56,7 @@ function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }
 
   return (
     <div className="relative mt-6 overflow-hidden rounded-lg bg-black shadow-lg">
-      <MetadataVideo contentTitle={mediaTitle} key={mediaTitle === undefined ? 'unsupported' : 'supported'} />
+      <MetadataVideo contentTitle={mediaTitle} />
       <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-5 pb-12 pt-4">
         {contentTitle ? (
           <h2 className="text-xl font-semibold text-white drop-shadow">{contentTitle}</h2>
@@ -99,8 +98,8 @@ function App() {
       <p className="mt-2 text-zinc-600">
         Enable title sources and edit their values. The demo media donates its title through{' '}
         <code>contentData.title</code> and emits <code>contentdatachange</code>. An empty enabled input contributes the
-        literal empty string. A disabled user tier contributes <code>null</code>; disabled media is unsupported and
-        contributes <code>undefined</code>.
+        literal empty string. A disabled user tier contributes <code>null</code>; disabled media removes the title key
+        from its still-supported content-data bag.
       </p>
 
       <fieldset className="mt-6 grid gap-3 rounded-lg border border-zinc-300 bg-white p-4">

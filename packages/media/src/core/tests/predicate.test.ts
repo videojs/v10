@@ -2,20 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import {
   isMediaBufferCapable,
-  isMediaContentDataTitleCapable,
+  isMediaContentDataCapable,
   isMediaRemotePlaybackCapable,
   isMediaTextTrackCapable,
 } from '../predicate';
 
-describe('isMediaContentDataTitleCapable', () => {
+describe('isMediaContentDataCapable', () => {
   it('uses undefined as the unsupported sentinel', () => {
-    expect(isMediaContentDataTitleCapable({})).toBe(false);
-    expect(isMediaContentDataTitleCapable({ contentData: undefined })).toBe(false);
-    expect(isMediaContentDataTitleCapable({ contentData: {} })).toBe(false);
-    expect(isMediaContentDataTitleCapable({ contentData: { poster: 'poster.jpg' } })).toBe(false);
-    expect(isMediaContentDataTitleCapable({ contentData: { title: undefined } })).toBe(false);
-    expect(isMediaContentDataTitleCapable({ contentData: { title: null } })).toBe(true);
-    expect(isMediaContentDataTitleCapable({ contentData: { title: '' } })).toBe(true);
+    expect(isMediaContentDataCapable({})).toBe(false);
+    expect(isMediaContentDataCapable({ contentData: undefined })).toBe(false);
+    expect(isMediaContentDataCapable({ contentData: {} })).toBe(true);
+    expect(isMediaContentDataCapable({ contentData: { poster: 'poster.jpg' } })).toBe(true);
+    expect(isMediaContentDataCapable({ contentData: { title: undefined } })).toBe(true);
+    expect(isMediaContentDataCapable({ contentData: { title: null } })).toBe(true);
+    expect(isMediaContentDataCapable({ contentData: { title: '' } })).toBe(true);
   });
 });
 

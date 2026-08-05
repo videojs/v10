@@ -4,7 +4,7 @@ import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from './constants'
 import type {
   MediaAudioTrackCapability,
   MediaBufferCapability,
-  MediaContentDataTitleCapability,
+  MediaContentDataCapability,
   MediaErrorCapability,
   MediaLiveCapability,
   MediaPauseCapability,
@@ -111,10 +111,9 @@ export function isMediaStreamTypeCapable(value: unknown): value is MediaStreamTy
   return !isUndefined(media.streamType);
 }
 
-export function isMediaContentDataTitleCapable(value: unknown): value is MediaContentDataTitleCapability {
+export function isMediaContentDataCapable(value: unknown): value is MediaContentDataCapability {
   if (!isObject(value)) return false;
-  const { contentData } = value as { contentData?: Record<string, unknown> };
-  return isObject(contentData) && !isUndefined(contentData.title);
+  return !isUndefined((value as Record<string, unknown>).contentData);
 }
 
 export function isMediaLiveCapable(value: unknown): value is MediaLiveCapability {

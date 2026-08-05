@@ -18,7 +18,7 @@ class VolumeOverride implements MediaComponent {
   }
 }
 
-class ContentDataTitleOverride implements MediaComponent {
+class ContentDataOverride implements MediaComponent {
   get targetOverride() {
     return { contentData: { title: 'Component title' } };
   }
@@ -106,7 +106,7 @@ describe('HTMLMediaElementHost', () => {
 
       expect(host.contentData).toBeUndefined();
 
-      addMediaComponent(host, new ContentDataTitleOverride());
+      addMediaComponent(host, new ContentDataOverride());
 
       expect(host.contentData).toEqual({ title: 'Component title' });
       expect(host.title).toBe('Legacy title');

@@ -42,9 +42,9 @@ Provider config and media source updates produce one eager, atomic frozen snapsh
 
 ## Media contribution
 
-Media may implement the narrow, read-only content-data-title capability by exposing `contentData.title`. `undefined` means title is unsupported; `null` means supported without a current value. Capability support is fixed when media attaches, while capable media can move between `null` and string values during that attachment.
+Media may implement the general, read-only content-data capability by exposing a defined `contentData` bag. `undefined` for the whole bag means the capability is unsupported. A defined bag, including `{}`, opts into content-data notifications; individual keys may appear or disappear during one attachment, and `null` means a key has no current value.
 
-All content-data fields share the plain `contentdatachange` notification event. The title feature listens only when `contentData?.title !== undefined`, then re-reads that key after each event. Media with asynchronous title data advertises support with `{ title: null }` before the value arrives.
+All content-data fields share the plain `contentdatachange` notification event. The metadata feature listens whenever `contentData !== undefined`, then re-reads `contentData.title` after each event. This lets media expose other fields first and donate or remove a title later without reattaching.
 
 Native media does not donate its legacy `title`. DOM media hosts delegate `contentData` through the normal target/component override path and forward its notification event.
 
