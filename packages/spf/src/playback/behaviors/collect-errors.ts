@@ -50,8 +50,20 @@ export interface ErrorEmitterState {
  * notify; duplicates are kept, since a repeated condition is a real observation.
  * Writes go through `update` so concurrent reporters can't lose each other's
  * appends.
+ *
+ * Every emission is logged, deliberately *before* the owner check. A condition
+ * emitted with no `collectErrors` composed is dropped on the floor — that's the
+ * case where a log is the only evidence it happened at all, so gating the log on
+ * the same check would hide exactly what's worth seeing. Emissions that *are*
+ * collected still get logged, because reaching `state.errors` is no guarantee of
+ * reaching a person: only *verdicts* are promoted to the media surface, so every
+ * cause (and any non-fatal notice) is otherwise invisible outside a debugger.
+ *
+ * Ungated rather than `__DEV__`-only, matching the other reporting paths in this
+ * package (`resolve-presentation`, `track-switching`, the segment actors).
  */
 export function emitError(state: ErrorEmitterState, error: SvtaError): void {
+  console.error('[spf] reported condition', error);
   if (!state.errors) return;
   update(state.errors, (errors) => [...(errors ?? []), error]);
 }
