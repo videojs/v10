@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { signal } from '../../../core/signals/primitives';
 import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
 import type { MaybeResolvedPresentation, Presentation } from '../../../media/types';
@@ -59,6 +59,28 @@ describe('emitError', () => {
 
   it('no-ops when no owner is composed', () => {
     expect(() => emitError({}, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK })).not.toThrow();
+  });
+
+  it('logs every emission', () => {
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    const errors = signal<SvtaError[] | undefined>(undefined);
+    const reported = { code: SVTA_NO_SUPPORTED_VIDEO_TRACK, data: { trackType: 'video' } };
+
+    emitError({ errors }, reported);
+
+    expect(spy).toHaveBeenCalledWith(expect.stringContaining('[spf]'), reported);
+    spy.mockRestore();
+  });
+
+  it('logs even when no owner is composed — the only trace of a dropped emission', () => {
+    // The log sits before the owner check on purpose: without a collector this
+    // condition reaches nothing at all, so the log is the whole record of it.
+    const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    emitError({}, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK });
+
+    expect(spy).toHaveBeenCalledOnce();
+    spy.mockRestore();
   });
 });
 
