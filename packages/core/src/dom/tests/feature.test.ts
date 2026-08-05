@@ -1,6 +1,6 @@
 import { createSelector, type StateContext } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
-import { definePlayerFeature } from '../feature';
+import { assertType, describe, expect, it } from 'vitest';
+import { type ConfigurablePlayerFeatureConfig, definePlayerFeature } from '../feature';
 import type { PlayerTarget } from '../player';
 
 const stateContext = {
@@ -41,5 +41,18 @@ describe('definePlayerFeature', () => {
     expect(feature().state(stateContext).enabled).toBe(true);
     expect(feature({ enabled: false }).state(stateContext).enabled).toBe(false);
     expect(createSelector(feature).displayName).toBe('configurable');
+  });
+
+  it('keeps provider config out of the legacy feature-factory shape', () => {
+    type LegacyConfig = ConfigurablePlayerFeatureConfig<{ enabled: boolean }, { enabled: boolean }>;
+
+    assertType<LegacyConfig>({
+      state: (_ctx, config: { enabled: boolean }) => ({ enabled: config.enabled }),
+    });
+    assertType<LegacyConfig>({
+      state: (_ctx, config: { enabled: boolean }) => ({ enabled: config.enabled }),
+      // @ts-expect-error Legacy factory config is fixed when the feature is created.
+      config: { enabled: true },
+    });
   });
 });

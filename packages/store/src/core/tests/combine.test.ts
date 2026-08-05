@@ -1,7 +1,7 @@
-import { describe, expect, it, vi } from 'vitest';
+import { assertType, describe, expect, it, vi } from 'vitest';
 
 import { combine } from '../combine';
-import { defineSlice } from '../slice';
+import { defineSlice, type InferSliceTarget } from '../slice';
 import { createStore } from '../store';
 
 class MockTarget extends EventTarget {
@@ -32,6 +32,16 @@ describe('combine', () => {
 
     expect(attachA).toHaveBeenCalledOnce();
     expect(attachB).toHaveBeenCalledOnce();
+  });
+
+  it('requires a target that satisfies every slice', () => {
+    const needsNumber = defineSlice<{ value: number }>()({ state: () => ({}) });
+    const needsLabel = defineSlice<{ label: string }>()({ state: () => ({}) });
+    const combined = combine(needsNumber, needsLabel);
+
+    assertType<InferSliceTarget<typeof combined>>({ value: 1, label: 'ready' });
+    // @ts-expect-error A combined target must satisfy both slices.
+    assertType<InferSliceTarget<typeof combined>>({ value: 1 });
   });
 
   it('catches and reports attach errors via onError callback', () => {

@@ -13,7 +13,7 @@ export interface ConfigurablePlayerFeature<Config, State> extends PlayerFeature<
 }
 
 export interface ConfigurablePlayerFeatureConfig<Config, State>
-  extends Omit<SliceConfig<PlayerTarget, State>, 'attach' | 'state'> {
+  extends Omit<SliceConfig<PlayerTarget, State>, 'attach' | 'config' | 'derived' | 'state'> {
   state: (ctx: StateContext<PlayerTarget>, config: Config) => State;
   attach?: (ctx: AttachContext<PlayerTarget, State>, config: Config) => void;
 }

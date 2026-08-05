@@ -1,3 +1,4 @@
+import type { UnionToIntersection } from '@videojs/utils/types';
 import type {
   AnySlice,
   AttachContext,
@@ -10,6 +11,10 @@ import type {
   UnionSliceSourceState,
 } from './slice';
 
+type CombinedTarget<Slices extends readonly AnySlice[]> = Slices extends readonly []
+  ? unknown
+  : UnionToIntersection<InferSliceTarget<Slices[number]>>;
+
 /**
  * Combines multiple slices into a single slice.
  *
@@ -19,14 +24,14 @@ import type {
 export function combine<const Slices extends readonly AnySlice[]>(
   ...slices: Slices
 ): Slice<
-  InferSliceTarget<Slices[number]>,
+  CombinedTarget<Slices>,
   UnionSliceSourceState<Slices>,
   UnionSliceConfig<Slices>,
   UnionSliceDerivedState<Slices>
 > {
   type SourceState = UnionSliceSourceState<Slices>;
   type Config = UnionSliceConfig<Slices>;
-  type Target = InferSliceTarget<Slices[number]>;
+  type Target = CombinedTarget<Slices>;
 
   const configs = slices.map((slice) => slice.config ?? {});
   const derivedDefinitions = slices.map((slice) => slice.derived ?? {});
