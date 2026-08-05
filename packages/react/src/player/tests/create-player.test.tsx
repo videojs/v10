@@ -113,7 +113,7 @@ describe('createPlayer', () => {
       expect(store).not.toBe(originalStore);
     });
 
-    it('seeds current provider inputs when replacing a destroyed store', () => {
+    it('seeds current config inputs when replacing a destroyed store', () => {
       const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
       let store!: PlayerStore<[typeof metadataFeature]>;
       let setMedia!: (media: HTMLMediaElement | null) => void;
@@ -220,7 +220,7 @@ describe('createPlayer', () => {
       expect(container.querySelector('[data-testid="child"]')).toBeTruthy();
     });
 
-    it('seeds provider inputs for the first render and syncs only changed props after commit', () => {
+    it('seeds config inputs for the first render and syncs only changed props after commit', () => {
       const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
       let store!: PlayerStore<[typeof metadataFeature]>;
 
@@ -259,7 +259,7 @@ describe('createPlayer', () => {
       expect(store.contentTitle).toBe('Imperative fallback');
     });
 
-    it('seeds provider inputs during SSR', () => {
+    it('seeds config inputs during SSR', () => {
       const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
 
       function Consumer() {
@@ -275,7 +275,7 @@ describe('createPlayer', () => {
       ).toContain('SSR title');
     });
 
-    it('hydrates with the same initial provider inputs', async () => {
+    it('hydrates with the same initial config inputs', async () => {
       const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
 
       function Consumer() {
@@ -303,7 +303,7 @@ describe('createPlayer', () => {
       await new Promise((resolve) => setTimeout(resolve, 0));
     });
 
-    it('does not apply provider inputs from an abandoned render', () => {
+    it('does not apply config inputs from an abandoned render', () => {
       const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
       let store!: PlayerStore<[typeof metadataFeature]>;
 

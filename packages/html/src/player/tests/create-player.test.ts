@@ -108,7 +108,7 @@ describe('createPlayer', () => {
     expect(player.store.contentTitle).toBe('Imperative title');
   });
 
-  it('leaves provider attributes inert when their feature is absent', () => {
+  it('leaves config attributes inert when their feature is absent', () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
     const ProviderElement = ProviderMixin(MediaElement);
 

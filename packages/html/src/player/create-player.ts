@@ -2,7 +2,7 @@ import {
   type AnyPlayerFeature,
   type AudioFeatures,
   type AudioPlayerStore,
-  combinePlayerProviderDefinitions,
+  combinePlayerConfigDefinitions,
   type PlayerStore,
   type PlayerTarget,
   type VideoFeatures,
@@ -83,7 +83,7 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<PlayerStore> {
   const slice = combine(...config.features);
-  const provider = combinePlayerProviderDefinitions(config.features);
+  const configDefinition = combinePlayerConfigDefinitions(config.features);
 
   function create(): PlayerStore {
     return createStore<PlayerTarget>()(slice);
@@ -94,7 +94,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     mediaContext,
     containerContext,
     factory: create,
-    provider,
+    config: configDefinition,
   });
 
   const ContainerMixin = createContainerMixin<PlayerStore>({

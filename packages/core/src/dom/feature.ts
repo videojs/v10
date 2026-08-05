@@ -8,9 +8,9 @@ import {
 import { isUndefined } from '@videojs/utils/predicate';
 import type {
   AnyPlayerFeature,
+  PlayerConfigBinding,
+  PlayerConfigDefinition,
   PlayerFeature,
-  PlayerProviderBinding,
-  PlayerProviderDefinition,
   PlayerTarget,
 } from './player';
 
@@ -32,44 +32,44 @@ type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknow
   [Key in keyof Definitions]: ReturnType<Definitions[Key]>;
 };
 
-type StaticPlayerFeatureConfig<State, Derived, Provider extends PlayerProviderDefinition> = Omit<
+type StaticPlayerFeatureConfig<State, Derived, Config extends PlayerConfigDefinition> = Omit<
   SliceConfig<PlayerTarget, State, Derived>,
   'preserveOnDetach'
 > & {
-  provider?: Provider;
+  config?: Config;
 };
 
-/** Define a static player feature with derived state and optional provider inputs. */
+/** Define a static player feature with derived state and optional configuration inputs. */
 export function definePlayerFeature<
   State,
   const Definitions extends DerivedFunctions<State>,
-  const Provider extends PlayerProviderDefinition = Record<never, never>,
+  const Config extends PlayerConfigDefinition = Record<never, never>,
 >(
-  config: Omit<StaticPlayerFeatureConfig<State, DerivedValues<Definitions>, Provider>, 'derived'> & {
+  definition: Omit<StaticPlayerFeatureConfig<State, DerivedValues<Definitions>, Config>, 'derived'> & {
     derived: Definitions;
   }
-): PlayerFeature<State, DerivedValues<Definitions>, Provider>;
-/** Define a static player feature with optional provider inputs. */
-export function definePlayerFeature<State, const Provider extends PlayerProviderDefinition = Record<never, never>>(
-  config: Omit<StaticPlayerFeatureConfig<State, object, Provider>, 'derived'> & { derived?: never }
-): PlayerFeature<State, object, Provider>;
+): PlayerFeature<State, DerivedValues<Definitions>, Config>;
+/** Define a static player feature with optional configuration inputs. */
+export function definePlayerFeature<State, const Config extends PlayerConfigDefinition = Record<never, never>>(
+  definition: Omit<StaticPlayerFeatureConfig<State, object, Config>, 'derived'> & { derived?: never }
+): PlayerFeature<State, object, Config>;
 /**
  * Define the legacy factory-configured form used by static feature variants.
  * Currently used for orientation lock and scheduled for removal in #1942.
  */
 export function definePlayerFeature<Config, State>(
-  config: ConfigurablePlayerFeatureConfig<Config, State>,
+  definition: ConfigurablePlayerFeatureConfig<Config, State>,
   defaultConfig: Config
 ): ConfigurablePlayerFeature<Config, State>;
 export function definePlayerFeature<Config, State>(
-  config:
-    | StaticPlayerFeatureConfig<State, object, PlayerProviderDefinition>
+  definition:
+    | StaticPlayerFeatureConfig<State, object, PlayerConfigDefinition>
     | ConfigurablePlayerFeatureConfig<Config, State>,
   defaultConfig?: Config
 ): PlayerFeature<State> | ConfigurablePlayerFeature<Config, State> {
   if (arguments.length === 1) {
-    const feature = config as StaticPlayerFeatureConfig<State, object, PlayerProviderDefinition>;
-    const preserved = Object.values(feature.provider ?? {}).map((binding) => binding.state);
+    const feature = definition as StaticPlayerFeatureConfig<State, object, PlayerConfigDefinition>;
+    const preserved = Object.values(feature.config ?? {}).map((binding) => binding.state);
 
     return {
       ...feature,
@@ -77,7 +77,7 @@ export function definePlayerFeature<Config, State>(
     } as PlayerFeature<State>;
   }
 
-  const { name, state, attach } = config as ConfigurablePlayerFeatureConfig<Config, State>;
+  const { name, state, attach } = definition as ConfigurablePlayerFeatureConfig<Config, State>;
 
   const forConfig = (featureConfig: Config): PlayerFeature<State> =>
     definePlayerSlice({
@@ -97,16 +97,16 @@ export function definePlayerFeature<Config, State>(
   return feature;
 }
 
-/** Merge the provider declarations from the selected player features. */
-export function combinePlayerProviderDefinitions(features: readonly AnyPlayerFeature[]): PlayerProviderDefinition {
-  const definitions = features.map((feature) => feature.provider ?? {});
+/** Merge the configuration declarations from the selected player features. */
+export function combinePlayerConfigDefinitions(features: readonly AnyPlayerFeature[]): PlayerConfigDefinition {
+  const definitions = features.map((feature) => feature.config ?? {});
 
   if (__DEV__) {
     const seen = new Set<string>();
     for (const definition of definitions) {
       for (const key of Object.keys(definition)) {
         if (seen.has(key)) {
-          console.warn(`[vjs-core] duplicate provider key "${key}" — later feature overwrites earlier one`);
+          console.warn(`[vjs-core] duplicate config key "${key}" — later feature overwrites earlier one`);
         }
         seen.add(key);
       }
@@ -116,11 +116,11 @@ export function combinePlayerProviderDefinitions(features: readonly AnyPlayerFea
   return Object.assign({}, ...definitions);
 }
 
-/** Forward one provider input through its feature-owned private action. */
-export function setPlayerProviderValue(store: object, binding: PlayerProviderBinding, value: unknown): void {
+/** Forward one configuration input through its feature-owned private action. */
+export function setPlayerConfigValue(store: object, binding: PlayerConfigBinding, value: unknown): void {
   const action = (store as Record<PropertyKey, unknown>)[binding.action];
   if (typeof action !== 'function') {
-    throw new TypeError(`Missing provider action "${String(binding.action)}"`);
+    throw new TypeError(`Missing config action "${String(binding.action)}"`);
   }
   action(value);
 }

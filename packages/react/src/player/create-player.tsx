@@ -5,13 +5,13 @@ import {
   type AnyPlayerStore,
   type AudioFeatures,
   type AudioPlayerStore,
-  combinePlayerProviderDefinitions,
+  combinePlayerConfigDefinitions,
   createPopupGroup,
-  type InferPlayerProviderConfig,
-  type PlayerProviderDefinition,
+  type InferPlayerConfig,
+  type PlayerConfigDefinition,
   type PlayerStore,
   type PlayerTarget,
-  setPlayerProviderValue,
+  setPlayerConfigValue,
   type VideoFeatures,
   type VideoPlayerStore,
 } from '@videojs/core/dom';
@@ -38,7 +38,7 @@ export type ProviderProps<Config = object> = {
 };
 
 export interface CreatePlayerResult<Store extends PlayerStore> {
-  Provider: FC<ProviderProps<InferPlayerProviderConfig<Store>>>;
+  Provider: FC<ProviderProps<InferPlayerConfig<Store>>>;
   Container: typeof Container;
   usePlayer: UsePlayerHook<Store>;
   useMedia: () => Media | null;
@@ -77,43 +77,43 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
   const slice = combine(...config.features);
-  const provider = combinePlayerProviderDefinitions(config.features);
-  const providerKeys = Object.keys(provider);
+  const configDefinition = combinePlayerConfigDefinitions(config.features);
+  const configKeys = Object.keys(configDefinition);
 
   function createConfiguredStore(values: Record<string, unknown>) {
     const store = createStore<PlayerTarget>()(slice);
-    applyProviderValues(store, provider, values);
+    applyConfigValues(store, configDefinition, values);
     return store;
   }
 
   function Provider(props: ProviderProps<any>): ReactNode {
     const { children } = props;
     // Only inputs declared by selected features are forwarded to store actions.
-    const providerValues = pickProviderValues(props, providerKeys);
-    const [store, setStore] = useState(() => createConfiguredStore(providerValues));
-    const syncedValues = useRef({ store, values: providerValues });
+    const configValues = pickConfigValues(props, configKeys);
+    const [store, setStore] = useState(() => createConfiguredStore(configValues));
+    const syncedValues = useRef({ store, values: configValues });
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
 
     useDestroy(store);
 
-    // Sync committed provider props to the existing store.
+    // Sync committed configuration props to the existing store.
     useLayoutEffect(() => {
       const previous = syncedValues.current;
 
       // Replacement stores are seeded from this render's props during creation.
       if (previous.store !== store) {
-        syncedValues.current = { store, values: providerValues };
+        syncedValues.current = { store, values: configValues };
         return;
       }
 
-      for (const key of providerKeys) {
-        if (Object.is(previous.values[key], providerValues[key])) continue;
-        setPlayerProviderValue(store, provider[key]!, providerValues[key]);
+      for (const key of configKeys) {
+        if (Object.is(previous.values[key], configValues[key])) continue;
+        setPlayerConfigValue(store, configDefinition[key]!, configValues[key]);
       }
 
-      syncedValues.current = { store, values: providerValues };
+      syncedValues.current = { store, values: configValues };
     });
 
     useEffect(() => {
@@ -155,12 +155,12 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   };
 }
 
-function pickProviderValues(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+function pickConfigValues(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
   return Object.fromEntries(keys.map((key) => [key, props[key]]));
 }
 
-function applyProviderValues(store: object, provider: PlayerProviderDefinition, values: Record<string, unknown>): void {
-  for (const key of Object.keys(provider)) {
-    setPlayerProviderValue(store, provider[key]!, values[key]);
+function applyConfigValues(store: object, definition: PlayerConfigDefinition, values: Record<string, unknown>): void {
+  for (const key of Object.keys(definition)) {
+    setPlayerConfigValue(store, definition[key]!, values[key]);
   }
 }

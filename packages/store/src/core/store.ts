@@ -96,7 +96,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
     }
 
     // Private symbol-backed source actions remain available to feature-owned
-    // provider adapters without becoming part of the public state snapshot.
+    // configuration adapters without becoming part of the public state snapshot.
     for (const key of Object.getOwnPropertySymbols(sourceState as object)) {
       if (typeof sourceState[key as keyof SourceState] !== 'function') continue;
       Object.defineProperty(store, key, {

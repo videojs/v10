@@ -27,52 +27,52 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export interface PlayerProviderBinding<
+export interface PlayerConfigBinding<
   StateKey extends PropertyKey = PropertyKey,
   ActionKey extends PropertyKey = PropertyKey,
 > {
   /** User-owned source-state key preserved when media detaches. */
   state: StateKey;
-  /** Private source-state action that receives provider updates. */
+  /** Private source-state action that receives configuration updates. */
   action: ActionKey;
 }
 
-export type PlayerProviderDefinition = Record<string, PlayerProviderBinding>;
+export type PlayerConfigDefinition = Record<string, PlayerConfigBinding>;
 
 export type PlayerFeature<
   State,
   Derived = object,
-  Provider extends PlayerProviderDefinition = Record<never, never>,
+  Config extends PlayerConfigDefinition = Record<never, never>,
 > = Slice<PlayerTarget, State, Derived> & {
-  provider?: Provider;
+  config?: Config;
 };
 
-export type AnyPlayerFeature = AnySlice<PlayerTarget> & { provider?: PlayerProviderDefinition };
+export type AnyPlayerFeature = AnySlice<PlayerTarget> & { config?: PlayerConfigDefinition };
 
 type ActionInput<Action> = Action extends (value: infer Value) => unknown ? Value : never;
 
-export type InferPlayerFeatureProviderConfig<Feature extends AnyPlayerFeature> = Feature extends {
-  provider?: infer Provider extends PlayerProviderDefinition;
+export type InferPlayerFeatureConfig<Feature extends AnyPlayerFeature> = Feature extends {
+  config?: infer Config extends PlayerConfigDefinition;
 }
   ? {
-      [Key in keyof Provider]: Provider[Key]['action'] extends keyof InferSliceSourceState<Feature>
-        ? ActionInput<InferSliceSourceState<Feature>[Provider[Key]['action']]>
+      [Key in keyof Config]: Config[Key]['action'] extends keyof InferSliceSourceState<Feature>
+        ? ActionInput<InferSliceSourceState<Feature>[Config[Key]['action']]>
         : never;
     }
   : object;
 
-export type UnionPlayerProviderConfig<Features extends readonly AnyPlayerFeature[]> = Features extends readonly []
+export type UnionPlayerConfig<Features extends readonly AnyPlayerFeature[]> = Features extends readonly []
   ? object
-  : Simplify<UnionToIntersection<InferPlayerFeatureProviderConfig<Features[number]>>>;
+  : Simplify<UnionToIntersection<InferPlayerFeatureConfig<Features[number]>>>;
 
-declare const PLAYER_PROVIDER_CONFIG: unique symbol;
+declare const PLAYER_CONFIG: unique symbol;
 
 export type PlayerStore<Features extends AnyPlayerFeature[] = []> = Store<PlayerTarget, UnionSliceState<Features>> & {
-  readonly [PLAYER_PROVIDER_CONFIG]?: UnionPlayerProviderConfig<Features>;
+  readonly [PLAYER_CONFIG]?: UnionPlayerConfig<Features>;
 };
 
-export type InferPlayerProviderConfig<Store> = Store extends {
-  readonly [PLAYER_PROVIDER_CONFIG]?: infer Config;
+export type InferPlayerConfig<Store> = Store extends {
+  readonly [PLAYER_CONFIG]?: infer Config;
 }
   ? Config
   : object;

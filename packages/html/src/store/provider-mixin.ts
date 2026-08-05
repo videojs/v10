@@ -1,10 +1,10 @@
 import {
   createPopupGroup,
   type MediaContainer,
-  type PlayerProviderDefinition,
+  type PlayerConfigDefinition,
   type PlayerStore,
   type PlayerTarget,
-  setPlayerProviderValue,
+  setPlayerConfigValue,
 } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
@@ -20,7 +20,7 @@ export interface ProviderMixinConfig<Store extends PlayerStore> {
   mediaContext: MediaContext;
   containerContext: ContainerContext;
   factory: () => Store;
-  provider: PlayerProviderDefinition;
+  config: PlayerConfigDefinition;
 }
 
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
@@ -38,21 +38,21 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
  * As a fallback for plain `<video>`/`<audio>` that can't consume context,
  * the provider queries its subtree after a microtask.
  *
- * @param config - Provider configuration with contexts and store factory.
+ * @param options - Provider options with contexts, store factory, and feature configuration.
  */
 export function createProviderMixin<Store extends PlayerStore>(
-  config: ProviderMixinConfig<Store>
+  options: ProviderMixinConfig<Store>
 ): ProviderMixin<Store> {
-  const providerKeys = Object.keys(config.provider);
+  const configKeys = Object.keys(options.config);
 
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass {
       static properties = {
         ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,
-        ...Object.fromEntries(providerKeys.map((key) => [key, { type: String, attribute: kebabCase(key) }])),
+        ...Object.fromEntries(configKeys.map((key) => [key, { type: String, attribute: kebabCase(key) }])),
       };
 
-      #store: Store | null = config.factory();
+      #store: Store | null = options.factory();
       #configuredStore: Store | null = null;
       #detach: (() => void) | null = null;
       #media: Media | null = null;
@@ -79,17 +79,17 @@ export function createProviderMixin<Store extends PlayerStore>(
       };
 
       #playerProvider = new ContextProvider(this, {
-        context: config.playerContext,
+        context: options.playerContext,
         initialValue: this.store,
       });
 
       #mediaProvider = new ContextProvider(this, {
-        context: config.mediaContext,
+        context: options.mediaContext,
         initialValue: { media: this.#media, setMedia: this.#setMedia },
       });
 
       #containerProvider = new ContextProvider(this, {
-        context: config.containerContext,
+        context: options.containerContext,
         initialValue: {
           container: this.#container,
           setContainer: this.#setContainer,
@@ -99,7 +99,7 @@ export function createProviderMixin<Store extends PlayerStore>(
 
       get store(): Store {
         if (isNull(this.#store)) {
-          this.#store = config.factory();
+          this.#store = options.factory();
         }
 
         return this.#store;
@@ -134,11 +134,11 @@ export function createProviderMixin<Store extends PlayerStore>(
       protected override willUpdate(changed: PropertyValues): void {
         super.willUpdate(changed);
 
-        // Provider inputs flow one way: only actual reactive property changes
+        // Configuration flows one way: only actual reactive property changes
         // write to the store. Store-side writers do not reflect back here.
-        for (const key of providerKeys) {
+        for (const key of configKeys) {
           if (!changed.has(key)) continue;
-          setPlayerProviderValue(this.store, config.provider[key]!, (this as unknown as Record<string, unknown>)[key]);
+          setPlayerConfigValue(this.store, options.config[key]!, (this as unknown as Record<string, unknown>)[key]);
         }
       }
 
@@ -174,8 +174,8 @@ export function createProviderMixin<Store extends PlayerStore>(
         const store = this.store;
         if (this.#configuredStore === store) return;
 
-        for (const key of providerKeys) {
-          setPlayerProviderValue(store, config.provider[key]!, (this as unknown as Record<string, unknown>)[key]);
+        for (const key of configKeys) {
+          setPlayerConfigValue(store, options.config[key]!, (this as unknown as Record<string, unknown>)[key]);
         }
         this.#configuredStore = store;
       }

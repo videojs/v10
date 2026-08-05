@@ -55,7 +55,7 @@ describe('createPlayer', () => {
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
   });
 
-  it('infers provider properties from selected features', () => {
+  it('infers config properties from selected features', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
     const MetadataProvider = withMetadata.ProviderMixin(MediaElement);

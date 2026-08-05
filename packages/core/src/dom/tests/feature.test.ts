@@ -2,9 +2,9 @@ import { createSelector, createStore, type StateContext } from '@videojs/store';
 import { assertType, describe, expect, it } from 'vitest';
 import {
   type ConfigurablePlayerFeatureConfig,
-  combinePlayerProviderDefinitions,
+  combinePlayerConfigDefinitions,
   definePlayerFeature,
-  setPlayerProviderValue,
+  setPlayerConfigValue,
 } from '../feature';
 import type { PlayerTarget } from '../player';
 
@@ -28,7 +28,7 @@ describe('definePlayerFeature', () => {
     expect(feature.state(stateContext).enabled).toBe(true);
   });
 
-  it('routes provider inputs through private actions and derives detach persistence', () => {
+  it('routes config inputs through private actions and derives detach persistence', () => {
     const USER_LABEL = Symbol('userLabel');
     const SET_USER_LABEL = Symbol('setUserLabel');
 
@@ -38,7 +38,7 @@ describe('definePlayerFeature', () => {
     }
 
     const feature = definePlayerFeature({
-      provider: {
+      config: {
         label: {
           state: USER_LABEL,
           action: SET_USER_LABEL,
@@ -54,10 +54,10 @@ describe('definePlayerFeature', () => {
     });
 
     expect(feature.preserveOnDetach).toEqual([USER_LABEL]);
-    expect(combinePlayerProviderDefinitions([feature])).toEqual(feature.provider);
+    expect(combinePlayerConfigDefinitions([feature])).toEqual(feature.config);
 
     const store = createStore<PlayerTarget>()(feature);
-    setPlayerProviderValue(store, feature.provider!.label, 'provided');
+    setPlayerConfigValue(store, feature.config!.label, 'provided');
     const detach = store.attach({} as PlayerTarget);
     detach();
 
@@ -80,7 +80,7 @@ describe('definePlayerFeature', () => {
     expect(createSelector(feature).displayName).toBe('configurable');
   });
 
-  it('keeps provider config out of the legacy feature-factory shape', () => {
+  it('keeps static config declarations out of the legacy feature-factory shape', () => {
     type LegacyConfig = ConfigurablePlayerFeatureConfig<{ enabled: boolean }, { enabled: boolean }>;
 
     assertType<LegacyConfig>({

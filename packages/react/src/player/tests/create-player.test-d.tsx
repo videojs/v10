@@ -47,7 +47,7 @@ describe('createPlayer', () => {
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
   });
 
-  it('infers provider config from selected features', () => {
+  it('infers config props from selected features', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
 

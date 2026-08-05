@@ -24,7 +24,7 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'> {
  */
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',
-  provider: {
+  config: {
     contentTitle: {
       state: USER_CONTENT_TITLE,
       action: SET_USER_CONTENT_TITLE,
