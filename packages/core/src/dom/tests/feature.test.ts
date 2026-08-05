@@ -1,6 +1,11 @@
-import { createSelector, type StateContext } from '@videojs/store';
+import { createSelector, createStore, type StateContext } from '@videojs/store';
 import { assertType, describe, expect, it } from 'vitest';
-import { type ConfigurablePlayerFeatureConfig, definePlayerFeature } from '../feature';
+import {
+  type ConfigurablePlayerFeatureConfig,
+  combinePlayerProviderDefinitions,
+  definePlayerFeature,
+  setPlayerProviderValue,
+} from '../feature';
 import type { PlayerTarget } from '../player';
 
 const stateContext = {
@@ -8,10 +13,6 @@ const stateContext = {
     throw new Error('Target is not available in this test.');
   },
   signals: undefined as unknown as StateContext<PlayerTarget>['signals'],
-  config: {
-    get: () => ({}),
-    set: () => {},
-  },
   get: () => ({}),
   set: () => {},
 } satisfies StateContext<PlayerTarget>;
@@ -25,6 +26,42 @@ describe('definePlayerFeature', () => {
 
     expect(feature.name).toBe('plain');
     expect(feature.state(stateContext).enabled).toBe(true);
+  });
+
+  it('routes provider inputs through private actions and derives detach persistence', () => {
+    const USER_LABEL = Symbol('userLabel');
+    const SET_USER_LABEL = Symbol('setUserLabel');
+
+    interface SourceState {
+      [USER_LABEL]: string | undefined;
+      [SET_USER_LABEL](value: string | undefined): void;
+    }
+
+    const feature = definePlayerFeature({
+      provider: {
+        label: {
+          state: USER_LABEL,
+          action: SET_USER_LABEL,
+        },
+      },
+      state: ({ set }): SourceState => ({
+        [USER_LABEL]: undefined,
+        [SET_USER_LABEL]: (value) => set({ [USER_LABEL]: value }),
+      }),
+      derived: {
+        label: ({ get }) => get()[USER_LABEL] ?? 'fallback',
+      },
+    });
+
+    expect(feature.preserveOnDetach).toEqual([USER_LABEL]);
+    expect(combinePlayerProviderDefinitions([feature])).toEqual(feature.provider);
+
+    const store = createStore<PlayerTarget>()(feature);
+    setPlayerProviderValue(store, feature.provider!.label, 'provided');
+    const detach = store.attach({} as PlayerTarget);
+    detach();
+
+    expect(store.label).toBe('provided');
   });
 
   it('defines a configurable player feature', () => {

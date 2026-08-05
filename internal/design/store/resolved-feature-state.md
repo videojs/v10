@@ -1,11 +1,11 @@
 ---
-status: implemented
+status: draft
 date: 2026-08-04
 ---
 
 # Resolved player feature state
 
-This record defines how a player feature resolves one public value from inputs with different owners and lifetimes. Source, exports, and tests define the current API.
+This record describes a provider-action prototype for resolving one public value from inputs with different owners and lifetimes. Source and tests define the prototype's current behavior.
 
 ## Media interaction
 
@@ -35,13 +35,13 @@ Or a user may provide a fallback that media can override:
 
 HTML exposes the same inputs as `content-title` and `default-content-title`. Consumers read the resolved value through the store and update user input through feature actions such as `setContentTitle`.
 
-## Decision
+## Proposed design
 
 A feature can use three kinds of state:
 
-- `config` stores user input for the provider lifetime.
-- `state` stores feature actions and values read from media. Media-owned values reset on detach.
-- `derived` calculates the public value from `config` and `state`.
+- Provider-owned and media-owned inputs live in private, symbol-keyed source `state`.
+- A feature's `provider` map connects each user-facing input to its private state key and private action.
+- `derived` calculates the public value from source state.
 
 Features choose their own formula. A value with fallbacks can use:
 
@@ -51,9 +51,24 @@ providerOverride ?? attachedMediaValue ?? providerFallback ?? featureFallback
 
 Only resolved values appear in the public store. Lower-priority values continue updating under an override, so removing the override reveals the latest value.
 
+The provider declaration also identifies lifecycle ownership:
+
+```ts
+provider: {
+  contentTitle: {
+    state: USER_CONTENT_TITLE,
+    action: SET_USER_CONTENT_TITLE,
+  },
+}
+```
+
+`definePlayerFeature` derives the store's detach-persistence keys from this map. Detach restores ordinary source state to its initial values while preserving the mapped provider-owned keys. Media state therefore resets, while provider and imperative user values survive.
+
 ## Provider adapters
 
-Selected config keys become React props and HTML properties and attributes. Each adapter applies changes through its normal lifecycle. Provider input flows one way: store actions do not rewrite props, properties, or attributes. Adapters must preserve the feature's declared value types.
+Selected provider keys become React props and HTML properties and attributes. Their TypeScript value types come from the mapped action's parameter. Each adapter applies changes through its normal lifecycle by invoking that private action. Provider input flows one way: store actions do not rewrite props, properties, or attributes.
+
+React seeds a new store before the first render, then forwards only committed prop changes after render. HTML forwards reactive property changes and kebab-cases the corresponding attribute names. This prototype assumes string-valued HTML inputs; it deliberately does not add runtime type metadata for future arbitrary input types.
 
 ## Example: content title
 
@@ -72,7 +87,15 @@ Media provides metadata through `contentData` and emits `contentdatachange` when
 
 - **Publish every input** — exposes private values and hides which lifecycle owns them.
 - **Keep user input in media state** — clears user input when media detaches.
+- **A generic store config namespace** — gives provider values a separate lifetime automatically and permits atomic patches, but adds config snapshots, controllers, generics, and a second input API throughout the store.
+- **Replay provider props after detach** — cannot preserve imperative user writes and risks restoring stale props.
 - **Put formulas inside `state`** — makes feature types harder to understand.
+
+## Tradeoffs
+
+The provider map is narrow and feature-owned, and ordinary store actions handle every user write. In exchange, each provider-backed value needs a private source key plus a private action, and the store needs explicit detach-persistence metadata.
+
+Adapters invoke actions one at a time. Subscriber notification is coalesced, but a later action throwing can leave earlier values applied. A generic config patch can validate and derive a multi-key update before committing it. This prototype does not add a separate batching abstraction.
 
 ## Deliberate limits
 

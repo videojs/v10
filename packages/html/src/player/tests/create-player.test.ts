@@ -64,7 +64,7 @@ describe('createPlayer', () => {
     expect(result.ContainerMixin).toBeInstanceOf(Function);
   });
 
-  it('maps selected feature config to kebab-cased reactive properties and attributes', async () => {
+  it('maps selected feature inputs to kebab-cased reactive properties and attributes', async () => {
     const { ProviderMixin } = createPlayer({ features: [metadataFeature] });
     const ProviderElement = ProviderMixin(MediaElement);
     const tagName = 'test-metadata-provider';
@@ -108,7 +108,7 @@ describe('createPlayer', () => {
     expect(player.store.contentTitle).toBe('Imperative title');
   });
 
-  it('leaves config attributes inert when their feature is absent', () => {
+  it('leaves provider attributes inert when their feature is absent', () => {
     const { ProviderMixin } = createPlayer({ features: backgroundFeatures });
     const ProviderElement = ProviderMixin(MediaElement);
 

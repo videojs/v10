@@ -6,10 +6,6 @@ import type { AnySlice, InferSliceState, StateContext } from './slice';
 
 const stateContext: StateContext<unknown> = {
   target: throwNoTargetError,
-  config: {
-    get: throwNoTargetError,
-    set: throwNoTargetError,
-  },
   signals: new AbortControllerRegistry(),
   get: throwNoTargetError,
   set: throwNoTargetError,

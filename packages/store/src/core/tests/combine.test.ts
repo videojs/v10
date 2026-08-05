@@ -75,17 +75,21 @@ describe('combine', () => {
     warn.mockRestore();
   });
 
-  it('warns on duplicate config keys and uses the later initial value', () => {
-    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
-    const configuredSlice = defineSlice<MockTarget, { label: string }>();
-    const a = configuredSlice({ config: { label: 'first' }, state: () => ({}) });
-    const b = configuredSlice({ config: { label: 'second' }, state: () => ({}) });
-
+  it('combines keys preserved on detach', () => {
+    const a = slice({
+      preserveOnDetach: ['label'],
+      state: ({ set }) => ({ label: 'initial', setLabel: (label: string) => set({ label }) }),
+    });
+    const b = slice({ state: ({ set }) => ({ count: 0, setCount: (count: number) => set({ count }) }) });
     const store = createStore<MockTarget>()(combine(a, b));
+    const detach = store.attach(new MockTarget());
 
-    expect(store.$config.get().label).toBe('second');
-    expect(warn).toHaveBeenCalledWith(expect.stringContaining('duplicate config key "label"'));
-    warn.mockRestore();
+    store.setLabel('configured');
+    store.setCount(1);
+    detach();
+
+    expect(store.label).toBe('configured');
+    expect(store.count).toBe(0);
   });
 
   it('warns on state/derived overlap and publishes the derived value', () => {

@@ -247,49 +247,57 @@ describe('store', () => {
     });
   });
 
-  describe('config and derived state', () => {
+  describe('persistent and derived state', () => {
     const INTERNAL_VALUE = Symbol('internalValue');
-
-    interface TestConfig {
-      value: string | null;
-      fallback: string;
-    }
+    const USER_VALUE = Symbol('userValue');
+    const SET_USER_VALUE = Symbol('setUserValue');
 
     interface TestSourceState {
       [INTERNAL_VALUE]: string | undefined;
+      [USER_VALUE]: string | null | undefined;
+      [SET_USER_VALUE](value: string | null | undefined): void;
       setInternal(value: string | undefined): void;
       setValue(value: string | null): void;
     }
 
-    const responsiveSlice = defineSlice<MockMedia, TestConfig>()({
-      config: { value: null, fallback: 'fallback' },
-      state: ({ config, set }): TestSourceState => ({
-        [INTERNAL_VALUE]: undefined,
-        setInternal: (value) => set({ [INTERNAL_VALUE]: value }),
-        setValue: (value) => config.set({ value }),
-      }),
+    const responsiveSlice = defineSlice<MockMedia>()({
+      preserveOnDetach: [USER_VALUE],
+      state: ({ set }): TestSourceState => {
+        const setUserValue = (value: string | null | undefined) => set({ [USER_VALUE]: value });
+
+        return {
+          [INTERNAL_VALUE]: undefined,
+          [USER_VALUE]: undefined,
+          [SET_USER_VALUE]: setUserValue,
+          setInternal: (value) => set({ [INTERNAL_VALUE]: value }),
+          setValue: setUserValue,
+        };
+      },
       derived: {
-        resolved: ({ config, get }) => config.get().value ?? get()[INTERNAL_VALUE] ?? config.get().fallback,
+        resolved: ({ get }) => get()[USER_VALUE] ?? get()[INTERNAL_VALUE] ?? 'fallback',
       },
     });
 
-    it('overlays initial config and resets explicit undefined to the declared initial value', () => {
-      const store = createStore<MockMedia>()(responsiveSlice, { config: { value: 'initial' } });
+    it('makes private symbol actions available without publishing their state', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+      const setUserValue = (store as unknown as Record<PropertyKey, unknown>)[SET_USER_VALUE];
 
+      expect(setUserValue).toBeInstanceOf(Function);
+      expect(INTERNAL_VALUE in store).toBe(false);
+      expect(USER_VALUE in store).toBe(false);
+      expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
+
+      (setUserValue as (value: string | undefined) => void)('initial');
       expect(store.resolved).toBe('initial');
-      expect(store.$config.get()).toEqual({ value: 'initial', fallback: 'fallback' });
 
-      store.$config.set({ value: undefined });
-
+      (setUserValue as (value: string | undefined) => void)(undefined);
       expect(store.resolved).toBe('fallback');
-      expect(store.$config.get().value).toBeNull();
     });
 
     it('publishes source and derived changes atomically while keeping symbols internal', () => {
       const store = createStore<MockMedia>()(responsiveSlice);
 
       expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
-      expect(Object.getOwnPropertySymbols(store)).toEqual([Symbol.for('@videojs/store')]);
 
       store.setInternal('media');
 
@@ -298,7 +306,9 @@ describe('store', () => {
     });
 
     it('keeps lower-precedence source state live without publishing an unchanged public snapshot', () => {
-      const store = createStore<MockMedia>()(responsiveSlice, { config: { value: 'user' } });
+      const store = createStore<MockMedia>()(responsiveSlice);
+      store.setValue('user');
+      flush();
       const listener = vi.fn();
       store.subscribe(listener);
       const publicSnapshot = store.state;
@@ -317,30 +327,31 @@ describe('store', () => {
       expect(listener).toHaveBeenCalledOnce();
     });
 
-    it('resets source state on detach while preserving config', () => {
-      const store = createStore<MockMedia>()(responsiveSlice, { config: { fallback: 'configured fallback' } });
+    it('resets attachment state on detach while preserving declared source keys', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+      store.setValue('user');
       const detach = store.attach(new MockMedia());
 
       store.setInternal('media');
-      expect(store.resolved).toBe('media');
+      expect(store.resolved).toBe('user');
 
       detach();
 
-      expect(store.resolved).toBe('configured fallback');
-      expect(store.$config.get().fallback).toBe('configured fallback');
+      expect(store.resolved).toBe('user');
+
+      store.setValue(null);
+      expect(store.resolved).toBe('fallback');
     });
 
-    it('does not commit config when a derived formula throws', () => {
-      interface ThrowingConfig {
-        value: number;
-      }
-
-      const throwingSlice = defineSlice<MockMedia, ThrowingConfig>()({
-        config: { value: 1 },
-        state: () => ({}),
+    it('does not commit source state when a derived formula throws', () => {
+      const throwingSlice = defineSlice<MockMedia>()({
+        state: ({ set }) => ({
+          value: 1,
+          setValue: (value: number) => set({ value }),
+        }),
         derived: {
-          doubled: ({ config }) => {
-            const { value } = config.get();
+          doubled: ({ get }) => {
+            const { value } = get();
             if (value < 0) throw new Error('invalid value');
             return value * 2;
           },
@@ -350,11 +361,11 @@ describe('store', () => {
       const listener = vi.fn();
       store.subscribe(listener);
 
-      expect(() => store.$config.set({ value: -1 })).toThrow('invalid value');
+      expect(() => store.setValue(-1)).toThrow('invalid value');
       flush();
 
       expect(store.doubled).toBe(2);
-      expect(store.$config.get().value).toBe(1);
+      expect(store.state.value).toBe(1);
       expect(listener).not.toHaveBeenCalled();
     });
   });

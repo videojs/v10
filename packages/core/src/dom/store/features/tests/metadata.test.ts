@@ -61,9 +61,9 @@ describe('metadataFeature', () => {
   });
 
   it('treats empty and whitespace-only strings as literal values', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature, {
-      config: { contentTitle: '', defaultContentTitle: 'fallback' },
-    });
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setDefaultContentTitle('fallback');
+    store.setContentTitle('');
 
     expect(store.contentTitle).toBe('');
 
@@ -72,9 +72,8 @@ describe('metadataFeature', () => {
   });
 
   it('subscribes to content data before an asynchronous title arrives', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature, {
-      config: { defaultContentTitle: 'fallback' },
-    });
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setDefaultContentTitle('fallback');
     const media = new ContentDataMedia({});
     const addEventListener = vi.spyOn(media, 'addEventListener');
 
@@ -110,9 +109,8 @@ describe('metadataFeature', () => {
   });
 
   it('does not listen to unsupported media', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature, {
-      config: { defaultContentTitle: 'fallback' },
-    });
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setDefaultContentTitle('fallback');
     const unsupported = new ContentDataMedia(undefined);
     const addEventListener = vi.spyOn(unsupported, 'addEventListener');
 
@@ -122,16 +120,14 @@ describe('metadataFeature', () => {
     expect(addEventListener).not.toHaveBeenCalledWith('contentdatachange', expect.anything());
   });
 
-  it('resets media metadata on detach while preserving provider config', () => {
-    const store = createStore<PlayerTarget>()(metadataFeature, {
-      config: { defaultContentTitle: 'fallback' },
-    });
+  it('resets media metadata on detach while preserving provider-owned state', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setDefaultContentTitle('fallback');
     const detach = store.attach(target(new ContentDataMedia({ title: 'media' })));
 
     detach();
 
     expect(store.contentTitle).toBe('fallback');
-    expect(store.$config.get().defaultContentTitle).toBe('fallback');
   });
 
   it('selects only resolved metadata and public writers', () => {

@@ -1,4 +1,11 @@
-import { createPopupGroup, type MediaContainer, type PlayerStore, type PlayerTarget } from '@videojs/core/dom';
+import {
+  createPopupGroup,
+  type MediaContainer,
+  type PlayerProviderDefinition,
+  type PlayerStore,
+  type PlayerTarget,
+  setPlayerProviderValue,
+} from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
@@ -13,7 +20,7 @@ export interface ProviderMixinConfig<Store extends PlayerStore> {
   mediaContext: MediaContext;
   containerContext: ContainerContext;
   factory: () => Store;
-  configKeys: readonly string[];
+  provider: PlayerProviderDefinition;
 }
 
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
@@ -36,11 +43,13 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
 export function createProviderMixin<Store extends PlayerStore>(
   config: ProviderMixinConfig<Store>
 ): ProviderMixin<Store> {
+  const providerKeys = Object.keys(config.provider);
+
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass {
       static properties = {
         ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,
-        ...Object.fromEntries(config.configKeys.map((key) => [key, { type: String, attribute: kebabCase(key) }])),
+        ...Object.fromEntries(providerKeys.map((key) => [key, { type: String, attribute: kebabCase(key) }])),
       };
 
       #store: Store | null = config.factory();
@@ -125,18 +134,12 @@ export function createProviderMixin<Store extends PlayerStore>(
       protected override willUpdate(changed: PropertyValues): void {
         super.willUpdate(changed);
 
-        // Provider config flows one way: only actual reactive property changes
+        // Provider inputs flow one way: only actual reactive property changes
         // write to the store. Store-side writers do not reflect back here.
-        const patch: Record<string, unknown> = {};
-        let hasConfigChange = false;
-
-        for (const key of config.configKeys) {
+        for (const key of providerKeys) {
           if (!changed.has(key)) continue;
-          patch[key] = (this as unknown as Record<string, unknown>)[key];
-          hasConfigChange = true;
+          setPlayerProviderValue(this.store, config.provider[key]!, (this as unknown as Record<string, unknown>)[key]);
         }
-
-        if (hasConfigChange) this.store.$config.set(patch);
       }
 
       #tryAttach(): void {
@@ -171,10 +174,9 @@ export function createProviderMixin<Store extends PlayerStore>(
         const store = this.store;
         if (this.#configuredStore === store) return;
 
-        const patch = Object.fromEntries(
-          config.configKeys.map((key) => [key, (this as unknown as Record<string, unknown>)[key]])
-        );
-        store.$config.set(patch);
+        for (const key of providerKeys) {
+          setPlayerProviderValue(store, config.provider[key]!, (this as unknown as Record<string, unknown>)[key]);
+        }
         this.#configuredStore = store;
       }
 

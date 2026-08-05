@@ -6,7 +6,6 @@ import type {
   InferSliceTarget,
   Slice,
   StateContext,
-  UnionSliceConfig,
   UnionSliceDerivedState,
   UnionSliceSourceState,
 } from './slice';
@@ -23,28 +22,18 @@ type CombinedTarget<Slices extends readonly AnySlice[]> = Slices extends readonl
  */
 export function combine<const Slices extends readonly AnySlice[]>(
   ...slices: Slices
-): Slice<
-  CombinedTarget<Slices>,
-  UnionSliceSourceState<Slices>,
-  UnionSliceConfig<Slices>,
-  UnionSliceDerivedState<Slices>
-> {
+): Slice<CombinedTarget<Slices>, UnionSliceSourceState<Slices>, UnionSliceDerivedState<Slices>> {
   type SourceState = UnionSliceSourceState<Slices>;
-  type Config = UnionSliceConfig<Slices>;
   type Target = CombinedTarget<Slices>;
 
-  const configs = slices.map((slice) => slice.config ?? {});
   const derivedDefinitions = slices.map((slice) => slice.derived ?? {});
 
   if (__DEV__) {
-    warnDuplicates('config', configs);
     warnDuplicates('derived', derivedDefinitions);
   }
 
   return {
-    config: Object.assign({}, ...configs) as Config,
-
-    state: (ctx: StateContext<Target, Config>) => {
+    state: (ctx: StateContext<Target>) => {
       const states = slices.map((slice) => slice.state(ctx));
 
       if (__DEV__) {
@@ -54,6 +43,8 @@ export function combine<const Slices extends readonly AnySlice[]>(
 
       return Object.assign({}, ...states) as SourceState;
     },
+
+    preserveOnDetach: Array.from(new Set(slices.flatMap((slice) => slice.preserveOnDetach ?? []))),
 
     derived: Object.assign({}, ...derivedDefinitions) as any,
 

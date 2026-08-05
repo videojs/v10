@@ -5,14 +5,18 @@ import {
   type AnyPlayerStore,
   type AudioFeatures,
   type AudioPlayerStore,
+  combinePlayerProviderDefinitions,
   createPopupGroup,
+  type InferPlayerProviderConfig,
+  type PlayerProviderDefinition,
   type PlayerStore,
   type PlayerTarget,
+  setPlayerProviderValue,
   type VideoFeatures,
   type VideoPlayerStore,
 } from '@videojs/core/dom';
 import type { Media } from '@videojs/media/dom';
-import type { ConfigPatch, InferStoreConfig, InferStoreState } from '@videojs/store';
+import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
 import type { FC, ReactNode } from 'react';
@@ -27,12 +31,14 @@ export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   displayName?: string;
 }
 
-export type ProviderProps<Config = object> = ConfigPatch<Config> & {
+export type ProviderProps<Config = object> = {
+  [Key in keyof Config]?: Config[Key] | undefined;
+} & {
   children: ReactNode;
 };
 
 export interface CreatePlayerResult<Store extends PlayerStore> {
-  Provider: FC<ProviderProps<InferStoreConfig<Store>>>;
+  Provider: FC<ProviderProps<InferPlayerProviderConfig<Store>>>;
   Container: typeof Container;
   usePlayer: UsePlayerHook<Store>;
   useMedia: () => Media | null;
@@ -71,14 +77,21 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
   const slice = combine(...config.features);
-  const configKeys = Object.keys(slice.config ?? {});
+  const provider = combinePlayerProviderDefinitions(config.features);
+  const providerKeys = Object.keys(provider);
+
+  function createConfiguredStore(values: Record<string, unknown>) {
+    const store = createStore<PlayerTarget>()(slice);
+    applyProviderValues(store, provider, values);
+    return store;
+  }
 
   function Provider(props: ProviderProps<any>): ReactNode {
     const { children } = props;
-    // Only config declared by selected features belongs in the store.
-    const providerConfig = pickFeatureConfig(props, configKeys);
-    const [store, setStore] = useState(() => createStore<PlayerTarget>()(slice, { config: providerConfig }));
-    const syncedConfig = useRef({ store, values: providerConfig });
+    // Only inputs declared by selected features are forwarded to store actions.
+    const providerValues = pickProviderValues(props, providerKeys);
+    const [store, setStore] = useState(() => createConfiguredStore(providerValues));
+    const syncedValues = useRef({ store, values: providerValues });
     const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
@@ -87,25 +100,20 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
     // Sync committed provider props to the existing store.
     useLayoutEffect(() => {
-      const previous = syncedConfig.current;
+      const previous = syncedValues.current;
 
       // Replacement stores are seeded from this render's props during creation.
       if (previous.store !== store) {
-        syncedConfig.current = { store, values: providerConfig };
+        syncedValues.current = { store, values: providerValues };
         return;
       }
 
-      const patch: Record<string, unknown> = {};
-      let changed = false;
-
-      for (const key of configKeys) {
-        if (Object.is(previous.values[key], providerConfig[key])) continue;
-        patch[key] = providerConfig[key];
-        changed = true;
+      for (const key of providerKeys) {
+        if (Object.is(previous.values[key], providerValues[key])) continue;
+        setPlayerProviderValue(store, provider[key]!, providerValues[key]);
       }
 
-      if (changed) store.$config.set(patch);
-      syncedConfig.current = { store, values: providerConfig };
+      syncedValues.current = { store, values: providerValues };
     });
 
     useEffect(() => {
@@ -115,7 +123,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       // effect cleanup and re-setup (e.g., React <Activity> hide → reveal). The
       // useState initializer does not re-run in this case.
       if (store.destroyed) {
-        setStore(createStore<PlayerTarget>()(slice, { config: syncedConfig.current.values }));
+        setStore(createConfiguredStore(syncedValues.current.values));
         return;
       }
 
@@ -147,6 +155,12 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   };
 }
 
-function pickFeatureConfig(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+function pickProviderValues(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
   return Object.fromEntries(keys.map((key) => [key, props[key]]));
+}
+
+function applyProviderValues(store: object, provider: PlayerProviderDefinition, values: Record<string, unknown>): void {
+  for (const key of Object.keys(provider)) {
+    setPlayerProviderValue(store, provider[key]!, values[key]);
+  }
 }

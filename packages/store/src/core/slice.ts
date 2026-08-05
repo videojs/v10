@@ -3,21 +3,6 @@ import type { AbortControllerRegistry } from './abort-controller-registry';
 import type { UnknownState } from './state';
 
 // ----------------------------------------
-// Config
-// ----------------------------------------
-
-/** A shallow config update. Explicit `undefined` restores a key's declared initial value. */
-export type ConfigPatch<Config> = {
-  [Key in keyof Config]?: Config[Key] | undefined;
-};
-
-/** Read and patch the provider-lifetime configuration declared by selected slices. */
-export interface ConfigController<Config> {
-  get: () => Readonly<Config>;
-  set: (partial: ConfigPatch<Config>) => void;
-}
-
-// ----------------------------------------
 // Attach
 // ----------------------------------------
 
@@ -41,11 +26,9 @@ export interface AttachContext<Target, State> {
 // State Context
 // ----------------------------------------
 
-export interface StateContext<Target, Config = object> {
+export interface StateContext<Target> {
   /** Returns the current target. Throws if not attached. */
   target: () => Target;
-  /** User-defined, provider-lifetime configuration. */
-  config: ConfigController<Config>;
   /**
    * Cancellation signals for async operations.
    *
@@ -68,78 +51,72 @@ export interface StateContext<Target, Config = object> {
 // ----------------------------------------
 
 /** Read-only inputs available while an eager derived formula is evaluated. */
-export interface DerivedContext<State, Config> {
+export interface DerivedContext<State> {
   /** Returns the immutable slice state before derived values. */
   get: () => Readonly<State>;
-  /** Read-only access to the immutable provider configuration snapshot. */
-  config: Pick<ConfigController<Config>, 'get'>;
 }
 
 /** Formula map used to produce public derived state. */
-export type DerivedDefinition<State, Config, Derived> = {
-  [Key in keyof Derived]: (ctx: DerivedContext<State, Config>) => Derived[Key];
+export type DerivedDefinition<State, Derived> = {
+  [Key in keyof Derived]: (ctx: DerivedContext<State>) => Derived[Key];
 };
 
 // ----------------------------------------
 // Slice
 // ----------------------------------------
 
-export interface SliceConfig<Target, State, Config = object, Derived = object> {
+export interface SliceConfig<Target, State, Derived = object> {
   /** Debug label. Used as `displayName` on selectors created from this slice. */
   name?: string;
-  /** Initial provider-lifetime configuration. */
-  config?: Config;
-  state: (ctx: StateContext<Target, Config>) => State;
-  /** Formulas evaluated from slice state and provider config before publication. */
-  derived?: DerivedDefinition<State, Config, Derived>;
+  state: (ctx: StateContext<Target>) => State;
+  /** Source-state keys whose current values survive detach. */
+  preserveOnDetach?: readonly PropertyKey[];
+  /** Formulas evaluated from slice state before publication. */
+  derived?: DerivedDefinition<State, Derived>;
   attach?: (ctx: AttachContext<Target, State>) => void;
 }
 
-export type Slice<Target, State, Config = object, Derived = object> = SliceConfig<Target, State, Config, Derived>;
+export type Slice<Target, State, Derived = object> = SliceConfig<Target, State, Derived>;
 
-export type AnySlice<Target = any> = Slice<Target, any, any, object>;
+export type AnySlice<Target = any> = Slice<Target, any, object>;
 
 // ----------------------------------------
 // Factory
 // ----------------------------------------
 
-type DerivedFunctions<State, Config> = Record<string, (ctx: DerivedContext<State, Config>) => unknown>;
+type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => unknown>;
 
 type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknown>> = {
   [Key in keyof Definitions]: ReturnType<Definitions[Key]>;
 };
 
-export interface SliceFactory<Target, Config = object> {
-  <State, const Definitions extends DerivedFunctions<State, Config>>(
-    config: Omit<SliceConfig<Target, State, Config, DerivedValues<Definitions>>, 'derived'> & {
+export interface SliceFactory<Target> {
+  <State, const Definitions extends DerivedFunctions<State>>(
+    config: Omit<SliceConfig<Target, State, DerivedValues<Definitions>>, 'derived'> & {
       derived: Definitions;
     }
-  ): Slice<Target, State, Config, DerivedValues<Definitions>>;
-  <State>(
-    config: Omit<SliceConfig<Target, State, Config>, 'derived'> & { derived?: never }
-  ): Slice<Target, State, Config>;
+  ): Slice<Target, State, DerivedValues<Definitions>>;
+  <State>(config: Omit<SliceConfig<Target, State>, 'derived'> & { derived?: never }): Slice<Target, State>;
 }
 
-export function defineSlice<Target, Config = object>(): SliceFactory<Target, Config> {
-  return ((config: SliceConfig<Target, unknown, Config, unknown>) => config) as SliceFactory<Target, Config>;
+export function defineSlice<Target>(): SliceFactory<Target> {
+  return ((config: SliceConfig<Target, unknown, unknown>) => config) as SliceFactory<Target>;
 }
 
 // ----------------------------------------
 // Inference
 // ----------------------------------------
 
-export type InferSliceTarget<S> = S extends Slice<infer Target, any, any, any> ? Target : never;
+export type InferSliceTarget<S> = S extends Slice<infer Target, any, any> ? Target : never;
 
-export type InferSliceSourceState<S> = S extends Slice<any, infer State, any, any> ? State : never;
+export type InferSliceSourceState<S> = S extends Slice<any, infer State, any> ? State : never;
 
-export type InferSliceConfig<S> = S extends Slice<any, any, infer Config, any> ? Config : never;
-
-export type InferSliceDerivedState<S> = S extends Slice<any, any, any, infer Derived> ? Derived : never;
+export type InferSliceDerivedState<S> = S extends Slice<any, any, infer Derived> ? Derived : never;
 
 export type PublicSourceState<State> = Pick<State, Extract<keyof State, string>>;
 
 export type InferSliceState<S> =
-  S extends Slice<any, infer State, any, infer Derived> ? Simplify<PublicSourceState<State> & Derived> : never;
+  S extends Slice<any, infer State, infer Derived> ? Simplify<PublicSourceState<State> & Derived> : never;
 
 type IntersectSlices<Slices extends readonly AnySlice[], Value> = Slices extends readonly []
   ? object
@@ -148,11 +125,6 @@ type IntersectSlices<Slices extends readonly AnySlice[], Value> = Slices extends
 export type UnionSliceSourceState<Slices extends readonly AnySlice[]> = IntersectSlices<
   Slices,
   InferSliceSourceState<Slices[number]>
->;
-
-export type UnionSliceConfig<Slices extends readonly AnySlice[]> = IntersectSlices<
-  Slices,
-  InferSliceConfig<Slices[number]>
 >;
 
 export type UnionSliceDerivedState<Slices extends readonly AnySlice[]> = IntersectSlices<
