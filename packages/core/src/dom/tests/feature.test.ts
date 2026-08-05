@@ -2,7 +2,7 @@ import { createSelector, createStore, type StateContext } from '@videojs/store';
 import { assertType, describe, expect, it } from 'vitest';
 import {
   type ConfigurablePlayerFeatureConfig,
-  combinePlayerConfigDefinitions,
+  combinePlayerFeatureConfigs,
   definePlayerFeature,
   setPlayerConfigValue,
 } from '../feature';
@@ -40,8 +40,8 @@ describe('definePlayerFeature', () => {
     const feature = definePlayerFeature({
       config: {
         label: {
-          state: USER_LABEL,
           action: SET_USER_LABEL,
+          preserve: USER_LABEL,
         },
       },
       state: ({ set }): SourceState => ({
@@ -54,7 +54,7 @@ describe('definePlayerFeature', () => {
     });
 
     expect(feature.preserveOnDetach).toEqual([USER_LABEL]);
-    expect(combinePlayerConfigDefinitions([feature])).toEqual(feature.config);
+    expect(combinePlayerFeatureConfigs([feature])).toEqual(feature.config);
 
     const store = createStore<PlayerTarget>()(feature);
     setPlayerConfigValue(store, feature.config!.label, 'provided');

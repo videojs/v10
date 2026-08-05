@@ -26,12 +26,12 @@ export const metadataFeature = definePlayerFeature({
   name: 'metadata',
   config: {
     contentTitle: {
-      state: USER_CONTENT_TITLE,
       action: SET_USER_CONTENT_TITLE,
+      preserve: USER_CONTENT_TITLE,
     },
     defaultContentTitle: {
-      state: USER_DEFAULT_CONTENT_TITLE,
       action: SET_USER_DEFAULT_CONTENT_TITLE,
+      preserve: USER_DEFAULT_CONTENT_TITLE,
     },
   },
   state: ({ set }): MetadataSourceState => {

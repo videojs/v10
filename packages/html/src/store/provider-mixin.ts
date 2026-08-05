@@ -1,7 +1,7 @@
 import {
   createPopupGroup,
   type MediaContainer,
-  type PlayerConfigDefinition,
+  type PlayerFeatureConfig,
   type PlayerStore,
   type PlayerTarget,
   setPlayerConfigValue,
@@ -20,7 +20,7 @@ export interface ProviderMixinConfig<Store extends PlayerStore> {
   mediaContext: MediaContext;
   containerContext: ContainerContext;
   factory: () => Store;
-  config: PlayerConfigDefinition;
+  config: PlayerFeatureConfig;
 }
 
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(

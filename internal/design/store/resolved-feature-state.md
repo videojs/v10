@@ -56,13 +56,13 @@ The config declaration also identifies lifecycle ownership:
 ```ts
 config: {
   contentTitle: {
-    state: USER_CONTENT_TITLE,
     action: SET_USER_CONTENT_TITLE,
+    preserve: USER_CONTENT_TITLE,
   },
 }
 ```
 
-The feature-level `config` object is routing metadata, not a second place that stores values. `definePlayerFeature` derives the store's detach-persistence keys from this map. Detach restores ordinary source state to its initial values while preserving the mapped user-owned keys. Media state therefore resets, while provider and imperative user values survive.
+The feature-level `config` object is routing metadata, not a second place that stores values. `action` receives configuration updates, while `preserve` identifies the user-owned source-state key whose value survives detach. `definePlayerFeature` derives the store's detach-persistence keys from this map. Detach restores ordinary source state to its initial values while preserving the mapped user-owned keys. Media state therefore resets, while provider and imperative user values survive.
 
 ## Provider adapters
 

@@ -27,32 +27,30 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export interface PlayerConfigBinding<
-  StateKey extends PropertyKey = PropertyKey,
-  ActionKey extends PropertyKey = PropertyKey,
-> {
-  /** User-owned source-state key preserved when media detaches. */
-  state: StateKey;
-  /** Private source-state action that receives configuration updates. */
-  action: ActionKey;
-}
+export type PlayerFeatureConfig = Record<
+  string,
+  {
+    /** Private source-state action that receives configuration updates. */
+    action: PropertyKey;
+    /** User-owned source-state key preserved when media detaches. */
+    preserve: PropertyKey;
+  }
+>;
 
-export type PlayerConfigDefinition = Record<string, PlayerConfigBinding>;
-
-export type PlayerFeature<
+export type PlayerFeature<State, Derived = object, Config extends PlayerFeatureConfig = Record<never, never>> = Slice<
+  PlayerTarget,
   State,
-  Derived = object,
-  Config extends PlayerConfigDefinition = Record<never, never>,
-> = Slice<PlayerTarget, State, Derived> & {
+  Derived
+> & {
   config?: Config;
 };
 
-export type AnyPlayerFeature = AnySlice<PlayerTarget> & { config?: PlayerConfigDefinition };
+export type AnyPlayerFeature = AnySlice<PlayerTarget> & { config?: PlayerFeatureConfig };
 
 type ActionInput<Action> = Action extends (value: infer Value) => unknown ? Value : never;
 
 export type InferPlayerFeatureConfig<Feature extends AnyPlayerFeature> = Feature extends {
-  config?: infer Config extends PlayerConfigDefinition;
+  config?: infer Config extends PlayerFeatureConfig;
 }
   ? {
       [Key in keyof Config]: Config[Key]['action'] extends keyof InferSliceSourceState<Feature>

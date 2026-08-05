@@ -6,13 +6,7 @@ import {
   type StateContext,
 } from '@videojs/store';
 import { isUndefined } from '@videojs/utils/predicate';
-import type {
-  AnyPlayerFeature,
-  PlayerConfigBinding,
-  PlayerConfigDefinition,
-  PlayerFeature,
-  PlayerTarget,
-} from './player';
+import type { AnyPlayerFeature, PlayerFeature, PlayerFeatureConfig, PlayerTarget } from './player';
 
 export interface ConfigurablePlayerFeature<Config, State> extends PlayerFeature<State> {
   (config?: Config): PlayerFeature<State>;
@@ -32,7 +26,7 @@ type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknow
   [Key in keyof Definitions]: ReturnType<Definitions[Key]>;
 };
 
-type StaticPlayerFeatureConfig<State, Derived, Config extends PlayerConfigDefinition> = Omit<
+type StaticPlayerFeatureConfig<State, Derived, Config extends PlayerFeatureConfig> = Omit<
   SliceConfig<PlayerTarget, State, Derived>,
   'preserveOnDetach'
 > & {
@@ -43,14 +37,14 @@ type StaticPlayerFeatureConfig<State, Derived, Config extends PlayerConfigDefini
 export function definePlayerFeature<
   State,
   const Definitions extends DerivedFunctions<State>,
-  const Config extends PlayerConfigDefinition = Record<never, never>,
+  const Config extends PlayerFeatureConfig = Record<never, never>,
 >(
   definition: Omit<StaticPlayerFeatureConfig<State, DerivedValues<Definitions>, Config>, 'derived'> & {
     derived: Definitions;
   }
 ): PlayerFeature<State, DerivedValues<Definitions>, Config>;
 /** Define a static player feature with optional configuration inputs. */
-export function definePlayerFeature<State, const Config extends PlayerConfigDefinition = Record<never, never>>(
+export function definePlayerFeature<State, const Config extends PlayerFeatureConfig = Record<never, never>>(
   definition: Omit<StaticPlayerFeatureConfig<State, object, Config>, 'derived'> & { derived?: never }
 ): PlayerFeature<State, object, Config>;
 /**
@@ -63,13 +57,13 @@ export function definePlayerFeature<Config, State>(
 ): ConfigurablePlayerFeature<Config, State>;
 export function definePlayerFeature<Config, State>(
   definition:
-    | StaticPlayerFeatureConfig<State, object, PlayerConfigDefinition>
+    | StaticPlayerFeatureConfig<State, object, PlayerFeatureConfig>
     | ConfigurablePlayerFeatureConfig<Config, State>,
   defaultConfig?: Config
 ): PlayerFeature<State> | ConfigurablePlayerFeature<Config, State> {
   if (arguments.length === 1) {
-    const feature = definition as StaticPlayerFeatureConfig<State, object, PlayerConfigDefinition>;
-    const preserved = Object.values(feature.config ?? {}).map((binding) => binding.state);
+    const feature = definition as StaticPlayerFeatureConfig<State, object, PlayerFeatureConfig>;
+    const preserved = Object.values(feature.config ?? {}).map((entry) => entry.preserve);
 
     return {
       ...feature,
@@ -98,7 +92,7 @@ export function definePlayerFeature<Config, State>(
 }
 
 /** Merge the configuration declarations from the selected player features. */
-export function combinePlayerConfigDefinitions(features: readonly AnyPlayerFeature[]): PlayerConfigDefinition {
+export function combinePlayerFeatureConfigs(features: readonly AnyPlayerFeature[]): PlayerFeatureConfig {
   const definitions = features.map((feature) => feature.config ?? {});
 
   if (__DEV__) {
@@ -117,10 +111,10 @@ export function combinePlayerConfigDefinitions(features: readonly AnyPlayerFeatu
 }
 
 /** Forward one configuration input through its feature-owned private action. */
-export function setPlayerConfigValue(store: object, binding: PlayerConfigBinding, value: unknown): void {
-  const action = (store as Record<PropertyKey, unknown>)[binding.action];
+export function setPlayerConfigValue(store: object, entry: PlayerFeatureConfig[string], value: unknown): void {
+  const action = (store as Record<PropertyKey, unknown>)[entry.action];
   if (typeof action !== 'function') {
-    throw new TypeError(`Missing config action "${String(binding.action)}"`);
+    throw new TypeError(`Missing config action "${String(entry.action)}"`);
   }
   action(value);
 }

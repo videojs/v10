@@ -5,10 +5,10 @@ import {
   type AnyPlayerStore,
   type AudioFeatures,
   type AudioPlayerStore,
-  combinePlayerConfigDefinitions,
+  combinePlayerFeatureConfigs,
   createPopupGroup,
   type InferPlayerConfig,
-  type PlayerConfigDefinition,
+  type PlayerFeatureConfig,
   type PlayerStore,
   type PlayerTarget,
   setPlayerConfigValue,
@@ -77,12 +77,12 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<AnyPlayerStore> {
   const slice = combine(...config.features);
-  const configDefinition = combinePlayerConfigDefinitions(config.features);
-  const configKeys = Object.keys(configDefinition);
+  const featureConfig = combinePlayerFeatureConfigs(config.features);
+  const configKeys = Object.keys(featureConfig);
 
   function createConfiguredStore(values: Record<string, unknown>) {
     const store = createStore<PlayerTarget>()(slice);
-    applyConfigValues(store, configDefinition, values);
+    applyConfigValues(store, featureConfig, values);
     return store;
   }
 
@@ -110,7 +110,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
       for (const key of configKeys) {
         if (Object.is(previous.values[key], configValues[key])) continue;
-        setPlayerConfigValue(store, configDefinition[key]!, configValues[key]);
+        setPlayerConfigValue(store, featureConfig[key]!, configValues[key]);
       }
 
       syncedValues.current = { store, values: configValues };
@@ -159,8 +159,8 @@ function pickConfigValues(props: Record<string, unknown>, keys: readonly string[
   return Object.fromEntries(keys.map((key) => [key, props[key]]));
 }
 
-function applyConfigValues(store: object, definition: PlayerConfigDefinition, values: Record<string, unknown>): void {
-  for (const key of Object.keys(definition)) {
-    setPlayerConfigValue(store, definition[key]!, values[key]);
+function applyConfigValues(store: object, config: PlayerFeatureConfig, values: Record<string, unknown>): void {
+  for (const key of Object.keys(config)) {
+    setPlayerConfigValue(store, config[key]!, values[key]);
   }
 }
