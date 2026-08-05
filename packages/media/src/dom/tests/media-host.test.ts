@@ -18,9 +18,9 @@ class VolumeOverride implements MediaComponent {
   }
 }
 
-class ContentTitleOverride implements MediaComponent {
+class ContentDataTitleOverride implements MediaComponent {
   get targetOverride() {
-    return { contentTitle: 'Component title' };
+    return { contentData: { title: 'Component title' } };
   }
 }
 
@@ -95,20 +95,20 @@ describe('HTMLMediaElementHost', () => {
       const host = new HTMLAudioElementHost();
       expect(host.paused).toBe(true);
       expect(host.muted).toBe(false);
-      expect(host.contentTitle).toBeUndefined();
+      expect(host.contentData).toBeUndefined();
     });
 
-    it('reads content title independently from the legacy title property', () => {
+    it('reads content data independently from the legacy title property', () => {
       const host = new HTMLAudioElementHost();
       const audio = document.createElement('audio');
       audio.title = 'Legacy title';
       host.attach(audio);
 
-      expect(host.contentTitle).toBeUndefined();
+      expect(host.contentData).toBeUndefined();
 
-      addMediaComponent(host, new ContentTitleOverride());
+      addMediaComponent(host, new ContentDataTitleOverride());
 
-      expect(host.contentTitle).toBe('Component title');
+      expect(host.contentData).toEqual({ title: 'Component title' });
       expect(host.title).toBe('Legacy title');
     });
 
@@ -218,19 +218,21 @@ describe('HTMLMediaElementHost', () => {
     });
   });
 
-  it('forwards contenttitlechange from the attached media target', () => {
+  it('forwards contentdatachange from the attached media target', () => {
     const host = new HTMLAudioElementHost();
-    const audio = document.createElement('audio') as HTMLAudioElement & { contentTitle: string | null };
-    audio.contentTitle = null;
+    const audio = document.createElement('audio') as HTMLAudioElement & {
+      contentData: Record<string, string | null>;
+    };
+    audio.contentData = { title: null };
     const listener = vi.fn();
 
     host.attach(audio);
-    host.addEventListener('contenttitlechange', listener);
+    host.addEventListener('contentdatachange', listener);
 
-    audio.contentTitle = 'Media title';
-    audio.dispatchEvent(new Event('contenttitlechange'));
+    audio.contentData = { title: 'Media title' };
+    audio.dispatchEvent(new Event('contentdatachange'));
 
     expect(listener).toHaveBeenCalledOnce();
-    expect(host.contentTitle).toBe('Media title');
+    expect(host.contentData).toEqual({ title: 'Media title' });
   });
 });

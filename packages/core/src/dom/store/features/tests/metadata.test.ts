@@ -1,4 +1,4 @@
-import type { MediaContentValue } from '@videojs/media';
+import type { MediaContentData, MediaContentValue } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { describe, expect, it, vi } from 'vitest';
 import type { PlayerTarget } from '../../../player';
@@ -6,15 +6,18 @@ import { selectMetadata } from '../../selectors';
 import { metadataFeature } from '../metadata';
 import { audioFeatures, backgroundFeatures, liveAudioFeatures, liveVideoFeatures, videoFeatures } from '../presets';
 
-class ContentTitleMedia extends EventTarget {
-  constructor(public contentTitle: MediaContentValue) {
+class ContentDataMedia extends EventTarget {
+  contentData: MediaContentData;
+
+  constructor(contentTitle: MediaContentValue) {
     super();
+    this.contentData = contentTitle === undefined ? {} : { title: contentTitle };
   }
 
-  setContentTitle(value: string | null): void {
-    if (Object.is(this.contentTitle, value)) return;
-    this.contentTitle = value;
-    this.dispatchEvent(new Event('contenttitlechange'));
+  setContentTitle(value: MediaContentValue): void {
+    if (Object.is(this.contentData.title, value)) return;
+    this.contentData = value === undefined ? {} : { title: value };
+    this.dispatchEvent(new Event('contentdatachange'));
   }
 }
 
@@ -40,7 +43,7 @@ describe('metadataFeature', () => {
     store.setDefaultContentTitle('fallback');
     expect(store.contentTitle).toBe('fallback');
 
-    const media = new ContentTitleMedia('media');
+    const media = new ContentDataMedia('media');
     store.attach(target(media));
     expect(store.contentTitle).toBe('media');
 
@@ -65,17 +68,17 @@ describe('metadataFeature', () => {
     expect(store.contentTitle).toBe('   ');
   });
 
-  it('supports a capable media reporting null and synchronizes its change event', () => {
+  it('subscribes to empty content data before an asynchronous title arrives', () => {
     const store = createStore<PlayerTarget>()(metadataFeature, {
       config: { defaultContentTitle: 'fallback' },
     });
-    const media = new ContentTitleMedia(null);
+    const media = new ContentDataMedia(null);
     const addEventListener = vi.spyOn(media, 'addEventListener');
 
     store.attach(target(media));
 
     expect(store.contentTitle).toBe('fallback');
-    expect(addEventListener).toHaveBeenCalledWith('contenttitlechange', expect.any(Function), expect.anything());
+    expect(addEventListener).toHaveBeenCalledWith('contentdatachange', expect.any(Function), expect.anything());
 
     media.setContentTitle('loaded title');
     expect(store.contentTitle).toBe('loaded title');
@@ -91,14 +94,14 @@ describe('metadataFeature', () => {
     store.attach(target(unsupported));
 
     expect(store.contentTitle).toBe('fallback');
-    expect(addEventListener).not.toHaveBeenCalledWith('contenttitlechange', expect.anything());
+    expect(addEventListener).not.toHaveBeenCalledWith('contentdatachange', expect.anything());
   });
 
   it('resets media metadata on detach while preserving provider config', () => {
     const store = createStore<PlayerTarget>()(metadataFeature, {
       config: { defaultContentTitle: 'fallback' },
     });
-    const detach = store.attach(target(new ContentTitleMedia('media')));
+    const detach = store.attach(target(new ContentDataMedia('media')));
 
     detach();
 

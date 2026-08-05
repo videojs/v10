@@ -505,17 +505,20 @@ export interface MediaPosterCapability {
 // Content metadata
 // ----------------------------------------
 
-/** A media-owned content value. `undefined` means the capability is unsupported. */
+/** A media-owned content value. `undefined` means that key is unsupported. */
 export type MediaContentValue = string | null | undefined;
 
-/** Events emitted by a media implementation that donates content title metadata. */
-export interface MediaContentTitleEvents {
-  contenttitlechange: EventLike;
+/** Standardized content metadata reported by a media implementation. */
+export type MediaContentData = Readonly<Record<string, MediaContentValue>>;
+
+/** Events emitted when a media implementation's content data changes. */
+export interface MediaContentDataEvents {
+  contentdatachange: EventLike;
 }
 
 /** Optional media-owned title metadata, independent from the legacy `title` property. */
-export interface MediaContentTitleCapability {
-  readonly contentTitle: MediaContentValue;
+export interface MediaContentDataTitleCapability {
+  readonly contentData: MediaContentData | undefined;
 }
 
 // ----------------------------------------
@@ -557,7 +560,7 @@ export interface MediaFullEvents
     TextTrackListEvents,
     MediaStreamTypeEvents,
     MediaLiveEvents,
-    MediaContentTitleEvents {}
+    MediaContentDataEvents {}
 
 export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = MediaFullEvents>
   extends Media<Events>,
@@ -572,7 +575,7 @@ export interface MediaFull<Events extends { [K in keyof Events]: EventLike } = M
     MediaTextTrackCapability,
     MediaStreamTypeCapability,
     MediaLiveCapability,
-    MediaContentTitleCapability,
+    MediaContentDataTitleCapability,
     MediaRemotePlaybackCapability,
     MediaControlsCapability,
     MediaAutoplayCapability {}
@@ -611,7 +614,7 @@ export interface MediaTargetLike
     MediaAutoplayCapability,
     Partial<MediaLiveCapability>,
     Partial<MediaStreamTypeCapability>,
-    Partial<MediaContentTitleCapability> {
+    Partial<MediaContentDataTitleCapability> {
   title: string;
 }
 

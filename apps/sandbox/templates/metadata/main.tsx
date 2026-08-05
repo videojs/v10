@@ -8,10 +8,12 @@ import { createRoot } from 'react-dom/client';
 
 const Player = createPlayer({ features: [metadataFeature] });
 
-type ContentTitleVideo = HTMLVideoElement & { contentTitle?: string | null };
+type ContentDataTitleVideo = HTMLVideoElement & {
+  contentData?: { title: string | null };
+};
 
 function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefined }) {
-  const media = useRef<ContentTitleVideo | null>(null);
+  const media = useRef<ContentDataTitleVideo | null>(null);
   const initialTitle = useRef(contentTitle);
 
   const configureMedia = useCallback((element: HTMLVideoElement | null) => {
@@ -21,19 +23,21 @@ function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefin
     }
 
     if (initialTitle.current !== undefined) {
-      Object.defineProperty(element, 'contentTitle', {
+      Object.defineProperty(element, 'contentData', {
         configurable: true,
         writable: true,
-        value: initialTitle.current,
+        value: { title: initialTitle.current },
       });
     }
-    media.current = element as ContentTitleVideo;
+    media.current = element as ContentDataTitleVideo;
   }, []);
 
   useLayoutEffect(() => {
-    if (!media.current || contentTitle === undefined || Object.is(media.current.contentTitle, contentTitle)) return;
-    media.current.contentTitle = contentTitle;
-    media.current.dispatchEvent(new Event('contenttitlechange'));
+    if (!media.current || contentTitle === undefined || Object.is(media.current.contentData?.title, contentTitle)) {
+      return;
+    }
+    media.current.contentData = { ...media.current.contentData, title: contentTitle };
+    media.current.dispatchEvent(new Event('contentdatachange'));
   }, [contentTitle]);
 
   return (
@@ -93,9 +97,10 @@ function App() {
     <main className="mx-auto max-w-3xl p-8">
       <h1 className="text-2xl font-semibold">Content metadata precedence</h1>
       <p className="mt-2 text-zinc-600">
-        Enable title sources and edit their values. An empty enabled input contributes the literal empty string. A
-        disabled user tier contributes <code>null</code>; disabled media is unsupported and contributes{' '}
-        <code>undefined</code>.
+        Enable title sources and edit their values. The demo media donates its title through{' '}
+        <code>contentData.title</code> and emits <code>contentdatachange</code>. An empty enabled input contributes the
+        literal empty string. A disabled user tier contributes <code>null</code>; disabled media is unsupported and
+        contributes <code>undefined</code>.
       </p>
 
       <fieldset className="mt-6 grid gap-3 rounded-lg border border-zinc-300 bg-white p-4">

@@ -2,17 +2,20 @@ import { describe, expect, it } from 'vitest';
 import { EMPTY_REMOTE, EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../constants';
 import {
   isMediaBufferCapable,
-  isMediaContentTitleCapable,
+  isMediaContentDataTitleCapable,
   isMediaRemotePlaybackCapable,
   isMediaTextTrackCapable,
 } from '../predicate';
 
-describe('isMediaContentTitleCapable', () => {
+describe('isMediaContentDataTitleCapable', () => {
   it('uses undefined as the unsupported sentinel', () => {
-    expect(isMediaContentTitleCapable({})).toBe(false);
-    expect(isMediaContentTitleCapable({ contentTitle: undefined })).toBe(false);
-    expect(isMediaContentTitleCapable({ contentTitle: null })).toBe(true);
-    expect(isMediaContentTitleCapable({ contentTitle: '' })).toBe(true);
+    expect(isMediaContentDataTitleCapable({})).toBe(false);
+    expect(isMediaContentDataTitleCapable({ contentData: undefined })).toBe(false);
+    expect(isMediaContentDataTitleCapable({ contentData: {} })).toBe(false);
+    expect(isMediaContentDataTitleCapable({ contentData: { poster: 'poster.jpg' } })).toBe(false);
+    expect(isMediaContentDataTitleCapable({ contentData: { title: undefined } })).toBe(false);
+    expect(isMediaContentDataTitleCapable({ contentData: { title: null } })).toBe(true);
+    expect(isMediaContentDataTitleCapable({ contentData: { title: '' } })).toBe(true);
   });
 });
 

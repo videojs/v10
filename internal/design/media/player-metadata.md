@@ -32,7 +32,7 @@ Consumers read the resolved `contentTitle` through the normal store or selector 
 The resolved title uses this precedence:
 
 1. User `contentTitle`
-2. Attached media `contentTitle`
+2. Attached media `contentData.title`
 3. User `defaultContentTitle`
 4. Feature fallback `""`
 
@@ -42,9 +42,11 @@ Provider config and media source updates produce one eager, atomic frozen snapsh
 
 ## Media contribution
 
-Media may implement the narrow, read-only content-title capability and emit `contenttitlechange`. `undefined` means unsupported; `null` means supported without a current value. Capability support is fixed when media attaches, while capable media can move between `null` and string values during that attachment.
+Media may implement the narrow, read-only content-data-title capability by exposing `contentData.title`. `undefined` means title is unsupported; `null` means supported without a current value. Capability support is fixed when media attaches, while capable media can move between `null` and string values during that attachment.
 
-Native media does not donate its legacy `title`. DOM media hosts delegate an explicit content-title capability through the normal target/component override path and forward its notification event.
+All content-data fields share the plain `contentdatachange` notification event. The title feature listens only when `contentData?.title !== undefined`, then re-reads that key after each event. Media with asynchronous title data advertises support with `{ title: null }` before the value arrives.
+
+Native media does not donate its legacy `title`. DOM media hosts delegate `contentData` through the normal target/component override path and forward its notification event.
 
 ## Provider adapters
 
@@ -56,7 +58,7 @@ Feature config keys drive both platform provider surfaces.
 
 ## Deliberate limits
 
-This feature contains only content title and its user default. It does not add title UI, map legacy `title`, change poster behavior, or fetch metadata from Mux. Content poster, MuxVideo donation, responsive orientation configuration, and user-facing guides remain separate work.
+This feature contains only content title and its user default. It does not add title UI, map legacy `title`, change poster behavior, or fetch vendor metadata. Content poster, media integrations, responsive orientation configuration, and user-facing guides remain separate work.
 
 ## Sources of truth
 

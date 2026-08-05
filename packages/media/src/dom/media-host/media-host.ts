@@ -145,8 +145,8 @@ export class HTMLMediaElementHost<Target extends HTMLMediaTargetLike, Events ext
     return getMediaProp(this, 'targetLiveWindow') ?? Number.NaN;
   }
 
-  get contentTitle() {
-    return getMediaProp(this, 'contentTitle');
+  get contentData() {
+    return getMediaProp(this, 'contentData');
   }
 
   get title() {

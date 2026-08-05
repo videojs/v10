@@ -1,5 +1,5 @@
 import type { MediaContentValue, MediaMetadataState } from '@videojs/media';
-import { isMediaContentTitleCapable } from '@videojs/media';
+import { isMediaContentDataTitleCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 
@@ -42,10 +42,10 @@ export const metadataFeature = definePlayerFeature<MetadataConfig>()({
   attach({ target, signal, set }) {
     const { media } = target;
 
-    if (!isMediaContentTitleCapable(media)) return;
+    if (!isMediaContentDataTitleCapable(media)) return;
 
-    const sync = () => set({ [MEDIA_CONTENT_TITLE]: media.contentTitle });
+    const sync = () => set({ [MEDIA_CONTENT_TITLE]: media.contentData?.title });
     sync();
-    listen(media, 'contenttitlechange', sync, { signal });
+    listen(media, 'contentdatachange', sync, { signal });
   },
 });
