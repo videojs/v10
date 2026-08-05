@@ -70,7 +70,7 @@ export interface SliceConfig<Target, State, Derived = object> {
   name?: string;
   state: (ctx: StateContext<Target>) => State;
   /** Source-state keys whose current values survive detach. */
-  preserveOnDetach?: readonly PropertyKey[];
+  preserve?: readonly PropertyKey[];
   /** Formulas evaluated from slice state before publication. */
   derived?: DerivedDefinition<State, Derived>;
   attach?: (ctx: AttachContext<Target, State>) => void;

@@ -261,7 +261,7 @@ describe('store', () => {
     }
 
     const responsiveSlice = defineSlice<MockMedia>()({
-      preserveOnDetach: [USER_VALUE],
+      preserve: [USER_VALUE],
       state: ({ set }): TestSourceState => {
         const setUserValue = (value: string | null | undefined) => set({ [USER_VALUE]: value });
 

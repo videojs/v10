@@ -203,7 +203,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       target = null;
 
       const resetState = { ...initialSourceState } as SourceState;
-      for (const key of slice.preserveOnDetach ?? []) {
+      for (const key of slice.preserve ?? []) {
         (resetState as Record<PropertyKey, unknown>)[key] = (sourceState as Record<PropertyKey, unknown>)[key];
       }
       setSource(resetState);

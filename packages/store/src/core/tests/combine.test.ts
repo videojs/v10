@@ -77,7 +77,7 @@ describe('combine', () => {
 
   it('combines keys preserved on detach', () => {
     const a = slice({
-      preserveOnDetach: ['label'],
+      preserve: ['label'],
       state: ({ set }) => ({ label: 'initial', setLabel: (label: string) => set({ label }) }),
     });
     const b = slice({ state: ({ set }) => ({ count: 0, setCount: (count: number) => set({ count }) }) });

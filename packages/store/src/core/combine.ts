@@ -44,7 +44,7 @@ export function combine<const Slices extends readonly AnySlice[]>(
       return Object.assign({}, ...states) as SourceState;
     },
 
-    preserveOnDetach: Array.from(new Set(slices.flatMap((slice) => slice.preserveOnDetach ?? []))),
+    preserve: Array.from(new Set(slices.flatMap((slice) => slice.preserve ?? []))),
 
     derived: Object.assign({}, ...derivedDefinitions) as any,
 

@@ -53,7 +53,7 @@ describe('definePlayerFeature', () => {
       },
     });
 
-    expect(feature.preserveOnDetach).toEqual([USER_LABEL]);
+    expect(feature.preserve).toEqual([USER_LABEL]);
     expect(combinePlayerFeatureConfigs([feature])).toEqual(feature.config);
 
     const store = createStore<PlayerTarget>()(feature);

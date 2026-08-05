@@ -13,7 +13,7 @@ export interface ConfigurablePlayerFeature<Config, State> extends PlayerFeature<
 }
 
 export interface ConfigurablePlayerFeatureConfig<Config, State>
-  extends Omit<SliceConfig<PlayerTarget, State>, 'attach' | 'derived' | 'preserveOnDetach' | 'state'> {
+  extends Omit<SliceConfig<PlayerTarget, State>, 'attach' | 'derived' | 'preserve' | 'state'> {
   state: (ctx: StateContext<PlayerTarget>, config: Config) => State;
   attach?: (ctx: AttachContext<PlayerTarget, State>, config: Config) => void;
 }
@@ -28,7 +28,7 @@ type DerivedValues<Definitions extends Record<string, (...args: any[]) => unknow
 
 type StaticPlayerFeatureConfig<State, Derived, Config extends PlayerFeatureConfig> = Omit<
   SliceConfig<PlayerTarget, State, Derived>,
-  'preserveOnDetach'
+  'preserve'
 > & {
   config?: Config;
 };
@@ -67,7 +67,7 @@ export function definePlayerFeature<Config, State>(
 
     return {
       ...feature,
-      ...(preserved.length > 0 ? { preserveOnDetach: preserved } : {}),
+      ...(preserved.length > 0 ? { preserve: preserved } : {}),
     } as PlayerFeature<State>;
   }
 
