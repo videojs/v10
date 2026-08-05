@@ -355,6 +355,17 @@ const PAGES: PageDef[] = [
     media: 'simple-hls-video',
     resource: 'hlsFmp4',
   },
+  // A source the SPF engine cannot play: MPEG-TS segments, with no fMP4
+  // rendition to fall back to. Deliberately absent from `fixtures/media.ts`'s
+  // page arrays — the parameterized playback suites would all fail on it. Only
+  // `spf-unsupported-source.spec.ts` uses it.
+  {
+    name: 'HTML Simple HLS Video TS',
+    path: 'html-simple-hls-video-ts',
+    framework: 'html',
+    media: 'simple-hls-video',
+    resource: 'hlsTs',
+  },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },
   {
     name: 'HTML Native HLS Video',
