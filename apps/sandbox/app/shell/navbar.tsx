@@ -39,6 +39,19 @@ type NavbarProps = {
   sources: Record<SourceId, SandboxSource>;
 };
 
+/**
+ * What the selected media will do with a source, when that's a failure worth
+ * labelling. Simple HLS is the SPF engine: no TS transmux pipeline and no EME, so
+ * it rejects MPEG-TS on format and DRM on protection. Derived from the pair —
+ * both sources play fine under other media, so this can't live on the source.
+ */
+function expectedOutcomeNote(source: { subType?: string; drm?: boolean }, isSimpleHls: boolean): string | undefined {
+  if (!isSimpleHls) return undefined;
+  if (source.drm) return 'expects protected error';
+  if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
+  return undefined;
+}
+
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];
 
 const PLATFORM_LABELS: Record<Platform, string> = {
@@ -146,11 +159,16 @@ export function Navbar({
               // The empty-src entry carries no media, so it's offered wherever
               // the preset can render one rather than being filtered by format.
               if (sources[id].type === 'none') return true;
-              if (isSimpleHls) return sources[id].subType === 'mp4';
+              // Any HLS source, including formats Simple HLS can't play — reaching
+              // those failures on purpose is how the error paths get smoke-tested.
+              if (isSimpleHls) return sources[id].type === 'hls';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })
-            .map((id) => ({ value: id, label: sources[id].label }))}
+            .map((id) => {
+              const note = expectedOutcomeNote(sources[id], isSimpleHls);
+              return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
+            })}
           disabled={isBackgroundVideo || isVimeoVideo || isYouTubeVideo}
         />
       </div>

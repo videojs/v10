@@ -12,6 +12,7 @@ import {
   MP4_SOURCE_IDS,
   MUX_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
+  SIMPLE_HLS_SOURCE_IDS,
   SOURCES,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
@@ -78,7 +79,9 @@ export function App() {
           ? MUX_SOURCE_IDS
           : structuredSource && preset === 'hlsjs-video'
             ? HLSJS_SOURCE_IDS
-            : NON_DASH_SOURCE_IDS;
+            : preset.startsWith('simple-hls-')
+              ? SIMPLE_HLS_SOURCE_IDS
+              : NON_DASH_SOURCE_IDS;
 
   // Keep the URL in sync with all state.
   useEffect(() => {

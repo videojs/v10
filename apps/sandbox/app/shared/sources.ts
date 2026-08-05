@@ -147,6 +147,19 @@ const SOURCE_MAP = {
     type: 'hls',
     subType: 'mp4',
   },
+  // The same asset again, reached by plain URL and deliberately left unlicensed,
+  // so any preset can be pointed at it. Video renditions carry #EXT-X-KEY for all
+  // three key systems; the audio rendition is clear. An engine with no EME/license
+  // pipeline prunes the video renditions and reports the source as protected,
+  // which is the point: it is here to be refused, not played.
+  'hls-drm-unlicensed': {
+    label: 'HLS - DRM protected (no license)',
+    url: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
+  },
   'mp4-1': {
     label: 'MP4 - Dancing Dude',
     url: 'https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4/highest.mp4',
@@ -184,9 +197,20 @@ export const SOURCES: Record<SourceId, SandboxSource> = SOURCE_MAP;
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isDrmSource(id));
 /** hls.js-backed presets add the DRM asset that names its license servers outright. */
-export const HLSJS_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && id !== 'mux-drm');
+export const HLSJS_SOURCE_IDS = SOURCE_IDS.filter(
+  (id) => SOURCES[id].type !== 'dash' && id !== 'mux-drm' && id !== 'hls-drm-unlicensed'
+);
 /** Mux presets add the DRM asset licensed by a Mux token, which only they can read. */
-export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
+export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && id !== 'hls-drm-unlicensed');
+/**
+ * Simple HLS is the SPF engine, which has no EME and so can license neither DRM
+ * asset. It still gets the unlicensed one: refusing a protected source visibly is
+ * the behavior worth reaching here, unlike the licensable assets that would only
+ * fail obscurely.
+ */
+export const SIMPLE_HLS_SOURCE_IDS = SOURCE_IDS.filter(
+  (id) => SOURCES[id].type !== 'dash' && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
+);
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 export const DEFAULT_SOURCE: SourceId = 'hls-1';
