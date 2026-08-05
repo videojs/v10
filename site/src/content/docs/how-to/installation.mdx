@@ -41,7 +41,7 @@ If you run it without flags, it will allow you to interactively configure your p
 ```bash
 npx @videojs/cli docs how-to/installation \
   --framework <html|react> \
-  --preset <video|audio|background-video> \
+  --preset <video|audio|live-video|live-audio|background-video> \
   --skin <default|minimal|none> \
   --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video> \
   --source-url <url> \
@@ -50,11 +50,11 @@ npx @videojs/cli docs how-to/installation \
 
 Here's what the flags mean:
 - *Framework*: Pick whether you're working in React or if you'd like to use HTML custom elements. (More to come!)
-- *Preset*: Pick a pre-built player. The default presets work well for general website playback.
+- *Preset*: Pick a pre-built player. The default presets work well for general website playback; the live presets add a Live button and drop the on-demand time displays.
 - *Skin*: Pick what your player looks like
-- *Media*: Pick what kind of media you have
+- *Media*: Pick what kind of media you have. The live presets accept streaming media only — `hls`, `dash`, or `mux-video` for `live-video`, and `mux-audio` for `live-audio`.
 - *Source URL*: Define where your media comes from (or omit for a sample URL)
-- *Install method*: How do you want to install your package? (CDN is HTML-only)
+- *Install method*: How do you want to install your package? (CDN is HTML-only, and a few media types have no CDN build — Vimeo, for one.)
 
 If you're an agent, interview your user and offer to run the CLI for them, or offer them a precomposed CLI command. 
 </div>
@@ -87,7 +87,7 @@ Video.js aims to provide idiomatic development experiences in your favorite JS a
 
 ## Choose your use case
 
-The default presets work well for general website playback. More pre-built players to come.
+The default presets work well for general website playback. The live presets suit streams: they add a Live button and drop the duration and current-time displays that on-demand playback relies on. More pre-built players to come.
 
 <ContentWidth margins="lg">
   <UseCasePicker client:idle />

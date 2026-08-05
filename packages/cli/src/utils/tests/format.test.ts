@@ -58,4 +58,47 @@ describe('formatInstallationCode', () => {
     expect(result).not.toContain('<video-skin>');
     expect(result).not.toContain("'@videojs/html/video/skin'");
   });
+
+  it('formats the HTML live-video preset', () => {
+    const result = formatInstallationCode({ ...baseHTML, useCase: 'live-video', renderer: 'hls' });
+    expect(result).toContain('<live-video-player>');
+    expect(result).toContain("import '@videojs/html/live-video/skin'");
+  });
+
+  it('formats the React live-audio preset', () => {
+    const result = formatInstallationCode({
+      ...baseReact,
+      useCase: 'live-audio',
+      skin: 'audio',
+      renderer: 'mux-audio',
+    });
+    expect(result).toContain('liveAudioFeatures');
+    expect(result).toContain('<LiveAudioSkin>');
+  });
+
+  it('formats the live-audio CDN install', () => {
+    const result = formatInstallationCode({
+      ...baseHTML,
+      useCase: 'live-audio',
+      skin: 'audio',
+      renderer: 'mux-audio',
+      installMethod: 'cdn',
+    });
+    expect(result).toContain('cdn/live-audio.js');
+    expect(result).not.toContain('## JavaScript imports');
+  });
+
+  // `handleDocs` gates CDN before formatting, so reaching here with an
+  // unpublished preset means that gate was bypassed.
+  it('throws when asked to format CDN for a preset with no CDN bundle', () => {
+    expect(() =>
+      formatInstallationCode({
+        ...baseHTML,
+        useCase: 'made-up-preset' as never,
+        skin: 'video',
+        renderer: 'hls',
+        installMethod: 'cdn',
+      })
+    ).toThrow('no CDN build');
+  });
 });

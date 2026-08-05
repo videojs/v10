@@ -161,6 +161,30 @@ describe('detectRenderer', () => {
     it('returns null for .mp4 with default-audio use case', () => {
       expect(detectRenderer('https://example.com/video.mp4', 'default-audio')).toBeNull();
     });
+
+    it('detects .m3u8 as HLS for live-video', () => {
+      expect(detectRenderer('https://example.com/stream.m3u8', 'live-video')).toEqual({
+        renderer: 'hls',
+        label: 'HLS',
+      });
+    });
+
+    it('resolves a Mux host to mux-audio for live-audio', () => {
+      expect(detectRenderer('https://stream.mux.com/abc123.m3u8', 'live-audio')).toEqual({
+        renderer: 'mux-audio',
+        label: 'Mux',
+      });
+    });
+
+    // The live presets take streaming sources only, so a progressive file has no
+    // valid renderer to detect.
+    it('returns null for .mp4 with live-video use case', () => {
+      expect(detectRenderer('https://example.com/video.mp4', 'live-video')).toBeNull();
+    });
+
+    it('returns null for .m3u8 with live-audio use case (no HLS audio renderer)', () => {
+      expect(detectRenderer('https://example.com/stream.m3u8', 'live-audio')).toBeNull();
+    });
   });
 });
 
@@ -212,5 +236,19 @@ describe('isRendererValidForUseCase', () => {
   it('mux-audio is valid for default-audio but not default-video', () => {
     expect(isRendererValidForUseCase('mux-audio', 'default-audio')).toBe(true);
     expect(isRendererValidForUseCase('mux-audio', 'default-video')).toBe(false);
+  });
+
+  it('live-video accepts streaming renderers but not progressive files or Vimeo', () => {
+    expect(isRendererValidForUseCase('hls', 'live-video')).toBe(true);
+    expect(isRendererValidForUseCase('dash', 'live-video')).toBe(true);
+    expect(isRendererValidForUseCase('mux-video', 'live-video')).toBe(true);
+    expect(isRendererValidForUseCase('html5-video', 'live-video')).toBe(false);
+    expect(isRendererValidForUseCase('vimeo', 'live-video')).toBe(false);
+  });
+
+  it('live-audio accepts only mux-audio', () => {
+    expect(isRendererValidForUseCase('mux-audio', 'live-audio')).toBe(true);
+    expect(isRendererValidForUseCase('html5-audio', 'live-audio')).toBe(false);
+    expect(isRendererValidForUseCase('hls', 'live-audio')).toBe(false);
   });
 });

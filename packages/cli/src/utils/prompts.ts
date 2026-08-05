@@ -1,16 +1,25 @@
 import * as p from '@clack/prompts';
 import cdnMedia from '@/content/cdn-media.json';
-import { rendererSupportsCdn } from '@/utils/installation/cdn-code';
+import { type CdnUnsupportedReason, getCdnUnsupportedReason } from '@/utils/installation/cdn-code';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { detectRenderer } from '@/utils/installation/detect-renderer';
 import { buildOptions } from '@/utils/installation/renderer-options';
-import type { InstallMethod, Renderer, Skin, UseCase } from '@/utils/installation/types';
+import { type InstallMethod, isAudioUseCase, type Renderer, type Skin, type UseCase } from '@/utils/installation/types';
 import type { Framework } from './config.js';
 
 const CDN_MEDIA_SUBPATHS = cdnMedia.map((entry) => entry.id);
 
-export function supportsCdnInstall(renderer: Renderer): boolean {
-  return rendererSupportsCdn(renderer, CDN_MEDIA_SUBPATHS);
+/**
+ * Why a configuration has no CDN install, or null when it has one. Mirrors the
+ * install page's gating: the preset/skin needs a CDN bundle, and a media
+ * renderer needs one too.
+ */
+export function cdnUnsupportedReason(useCase: UseCase, skin: Skin, renderer: Renderer): CdnUnsupportedReason | null {
+  return getCdnUnsupportedReason(useCase, skin, renderer, CDN_MEDIA_SUBPATHS);
+}
+
+export function supportsCdnInstall(useCase: UseCase, skin: Skin, renderer: Renderer): boolean {
+  return cdnUnsupportedReason(useCase, skin, renderer) === null;
 }
 
 export async function promptFramework(): Promise<Framework> {
@@ -29,6 +38,8 @@ export async function promptFramework(): Promise<Framework> {
 const PRESET_OPTIONS: Array<{ value: UseCase; label: string }> = [
   { value: 'default-video', label: 'Video' },
   { value: 'default-audio', label: 'Audio' },
+  { value: 'live-video', label: 'Live Video' },
+  { value: 'live-audio', label: 'Live Audio' },
   { value: 'background-video', label: 'Background Video' },
 ];
 
@@ -45,7 +56,7 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
   if (useCase === 'background-video') {
     return [{ value: 'video', label: 'Default' }];
   }
-  const isAudio = useCase === 'default-audio';
+  const isAudio = isAudioUseCase(useCase);
   return [
     { value: isAudio ? 'audio' : 'video', label: 'Default' },
     { value: isAudio ? 'minimal-audio' : 'minimal-video', label: 'Minimal' },
@@ -55,6 +66,8 @@ function skinOptionsForUseCase(useCase: UseCase): Array<{ value: Skin; label: st
 
 function installMethodOptions(
   framework: Framework,
+  useCase: UseCase,
+  skin: Skin,
   renderer: Renderer
 ): Array<{ value: InstallMethod; label: string }> {
   const options: Array<{ value: InstallMethod; label: string }> = [
@@ -63,9 +76,9 @@ function installMethodOptions(
     { value: 'yarn', label: 'yarn' },
     { value: 'bun', label: 'bun' },
   ];
-  // CDN is HTML-only, and only when the renderer ships a CDN build — matching
-  // the install page, which hides the CDN tab for renderers without one.
-  if (framework === 'html' && supportsCdnInstall(renderer)) {
+  // CDN is HTML-only, and only when both the preset and the renderer ship a CDN
+  // build — matching the install page, which hides the CDN tab otherwise.
+  if (framework === 'html' && supportsCdnInstall(useCase, skin, renderer)) {
     options.unshift({ value: 'cdn', label: 'CDN' });
   }
   return options;
@@ -81,7 +94,7 @@ export interface PartialInstallFlags {
 }
 
 export function mapRawSkin(skinFlag: string, useCase: UseCase): Skin {
-  const isAudio = useCase === 'default-audio';
+  const isAudio = isAudioUseCase(useCase);
   const map: Record<string, Skin> = {
     default: isAudio ? 'audio' : 'video',
     minimal: isAudio ? 'minimal-audio' : 'minimal-video',
@@ -162,7 +175,7 @@ export async function promptInstallOptions(
     (await (async () => {
       const value = await p.select({
         message: 'Install method',
-        options: installMethodOptions(framework, media),
+        options: installMethodOptions(framework, useCase, skin, media),
       });
       if (p.isCancel(value)) process.exit(0);
       return value;

@@ -1,17 +1,18 @@
 import * as p from '@clack/prompts';
+import { getPresetLabel } from '@/utils/installation/cdn-code';
 import { validateInstallationOptions } from '@/utils/installation/codegen';
 import { RENDERER_LABELS } from '@/utils/installation/renderer-options';
-import type { InstallMethod, Renderer, UseCase } from '@/utils/installation/types';
+import { type InstallMethod, type Renderer, type UseCase, VALID_RENDERERS } from '@/utils/installation/types';
 import type { Framework } from '../utils/config.js';
 import { getConfigValue } from '../utils/config.js';
 import { docExistsInAnyFramework, readBundledDoc, readLlmsTxt } from '../utils/docs.js';
 import { formatInstallationCode } from '../utils/format.js';
 import {
+  cdnUnsupportedReason,
   mapRawSkin,
   type PartialInstallFlags,
   promptFramework,
   promptInstallOptions,
-  supportsCdnInstall,
 } from '../utils/prompts.js';
 import { replaceMarker, stripOmitMarkers } from '../utils/replace.js';
 
@@ -45,15 +46,21 @@ async function resolveFramework(flags: ParsedFlags): Promise<Framework> {
   return promptFramework();
 }
 
+const PRESET_FLAGS: Record<string, UseCase> = {
+  video: 'default-video',
+  audio: 'default-audio',
+  'live-video': 'live-video',
+  'live-audio': 'live-audio',
+  'background-video': 'background-video',
+};
+
 function mapPresetToUseCase(preset: string): UseCase {
-  const map: Record<string, UseCase> = {
-    video: 'default-video',
-    audio: 'default-audio',
-    'background-video': 'background-video',
-  };
-  const result = map[preset];
+  const result = PRESET_FLAGS[preset];
   if (!result) {
-    console.error(`Invalid preset: "${preset}". Must be "video", "audio", or "background-video".`);
+    const valid = Object.keys(PRESET_FLAGS)
+      .map((name) => `"${name}"`)
+      .join(', ');
+    console.error(`Invalid preset: "${preset}". Valid options: ${valid}`);
     process.exit(1);
   }
   return result;
@@ -67,6 +74,24 @@ function validateMedia(media: string): Renderer {
     process.exit(1);
   }
   return media as Renderer;
+}
+
+function presetFlagFor(useCase: UseCase): string {
+  return Object.keys(PRESET_FLAGS).find((flag) => PRESET_FLAGS[flag] === useCase) ?? useCase;
+}
+
+// The interactive prompt only offers renderers valid for the chosen preset, and
+// the install page's dropdown does the same. Enforce it on the flag path too so
+// `--preset live-audio --media html5-video` can't generate a "live" player
+// pointed at a progressive file.
+function validateMediaForUseCase(renderer: Renderer, useCase: UseCase): void {
+  const valid = VALID_RENDERERS[useCase];
+  if (!valid.includes(renderer)) {
+    console.error(
+      `Invalid media type "${renderer}" for the "${presetFlagFor(useCase)}" preset. Valid options: ${valid.join(', ')}`
+    );
+    process.exit(1);
+  }
 }
 
 function validateInstallMethod(method: string, framework: Framework): InstallMethod {
@@ -112,11 +137,14 @@ const DOCS_HELP = `Usage: @videojs/cli docs <slug> [--framework <html|react>]
        @videojs/cli docs --list [--framework <html|react>]
 
 Installation flags (for docs how-to/installation):
-  --preset <video|audio|background-video>
+  --preset <video|audio|live-video|live-audio|background-video>
   --skin <default|minimal|none>
   --source-url <url>
   --media <html5-video|html5-audio|hls|dash|mux-video|mux-audio|vimeo|background-video>
-  --install-method <cdn|npm|pnpm|yarn|bun>`;
+  --install-method <cdn|npm|pnpm|yarn|bun>
+
+The live presets accept streaming media only: hls, dash, or mux-video for
+live-video, and mux-audio for live-audio.`;
 
 export async function handleDocs(flags: ParsedFlags, positionals: string[]): Promise<void> {
   if (flags.help) {
@@ -178,20 +206,29 @@ export async function handleDocs(flags: ParsedFlags, positionals: string[]): Pro
       p.outro('');
     }
 
+    // Only ever fires for a `--media` flag; prompted values come from the
+    // per-preset option list and are valid by construction.
+    validateMediaForUseCase(opts.renderer, opts.useCase);
+
     const validation = validateInstallationOptions(opts);
     if (!validation.valid) {
       console.error(`Error: ${validation.reason}`);
       process.exit(1);
     }
 
-    // The interactive prompt hides CDN for renderers without a CDN build; guard
-    // the non-interactive flag path so a `--install-method cdn` request for one
-    // can't emit a broken snippet.
-    if (opts.installMethod === 'cdn' && !supportsCdnInstall(opts.renderer)) {
-      console.error(
-        `Error: ${RENDERER_LABELS[opts.renderer]} has no CDN build. Install it with npm, pnpm, yarn, or bun.`
-      );
-      process.exit(1);
+    // The interactive prompt hides CDN when either the preset or the renderer
+    // lacks a CDN build; guard the non-interactive flag path so a
+    // `--install-method cdn` request for one can't emit a broken snippet.
+    if (opts.installMethod === 'cdn') {
+      const reason = cdnUnsupportedReason(opts.useCase, opts.skin, opts.renderer);
+      if (reason !== null) {
+        const subject =
+          reason === 'preset'
+            ? `The ${getPresetLabel(opts.useCase, opts.skin)} player`
+            : RENDERER_LABELS[opts.renderer];
+        console.error(`Error: ${subject} has no CDN build. Install it with npm, pnpm, yarn, or bun.`);
+        process.exit(1);
+      }
     }
 
     const generated = formatInstallationCode(opts);

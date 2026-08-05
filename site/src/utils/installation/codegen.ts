@@ -1,8 +1,10 @@
-import { VJS10_DEMO_DASH, VJS10_DEMO_VIDEO, VJS10_DEMO_VIMEO } from '@/consts';
+import { VJS10_DEMO_DASH, VJS10_DEMO_LIVE, VJS10_DEMO_VIDEO, VJS10_DEMO_VIMEO } from '@/consts';
 import { generateCdnCode } from '@/utils/installation/cdn-code';
 import {
   getMediaSubpath,
+  getPresetGroup,
   type InstallMethod,
+  isAudioUseCase,
   type Renderer,
   type Skin,
   type UseCase,
@@ -31,7 +33,16 @@ export function validateInstallationOptions(opts: InstallationOptions): Validati
 // Shared helpers
 // ---------------------------------------------------------------------------
 
-function getDefaultSourceUrl(renderer: Renderer): string {
+function getDefaultSourceUrl(renderer: Renderer, useCase: UseCase): string {
+  // Live presets need a live source or the generated player never reaches the
+  // live edge. Only the HLS-family renderers have a live sample to point at —
+  // DASH and the progressive renderers fall through to their on-demand samples
+  // below, since we don't host a live .mpd and a file can't be live at all.
+  const playsLiveSample = renderer === 'hls' || renderer === 'mux-video' || renderer === 'mux-audio';
+  if (isLiveUseCase(useCase) && playsLiveSample) {
+    return VJS10_DEMO_LIVE.hls;
+  }
+
   const map: Record<Renderer, string> = {
     'html5-video': VJS10_DEMO_VIDEO.mp4,
     // Pre-existing quirk: the audio default points at a video .mp4. Fixing it
@@ -48,8 +59,12 @@ function getDefaultSourceUrl(renderer: Renderer): string {
   return map[renderer];
 }
 
-function resolveSourceUrl(sourceUrl: string, renderer: Renderer): string {
-  return sourceUrl.trim() || getDefaultSourceUrl(renderer);
+function resolveSourceUrl(sourceUrl: string, renderer: Renderer, useCase: UseCase): string {
+  return sourceUrl.trim() || getDefaultSourceUrl(renderer, useCase);
+}
+
+function isLiveUseCase(useCase: UseCase): boolean {
+  return useCase === 'live-video' || useCase === 'live-audio';
 }
 
 // Whether the rendered media element takes the `playsinline` attribute. Vimeo
@@ -64,14 +79,9 @@ function isVideoLikeRenderer(renderer: Renderer): boolean {
   );
 }
 
-function getGroupFromUseCase(useCase: UseCase): string {
-  return useCase === 'default-audio' ? 'audio' : 'video';
-}
-
-function getSkinImportParts(skin: Exclude<Skin, 'none'>): { group: string; skinFile: string } {
-  if (skin === 'minimal-video') return { group: 'video', skinFile: 'minimal-skin' };
-  if (skin === 'minimal-audio') return { group: 'audio', skinFile: 'minimal-skin' };
-  return { group: skin, skinFile: 'skin' };
+/** Skin module basename within a preset group: `skin` or `minimal-skin`. */
+function getSkinFile(skin: Exclude<Skin, 'none'>): 'skin' | 'minimal-skin' {
+  return skin === 'minimal-video' || skin === 'minimal-audio' ? 'minimal-skin' : 'skin';
 }
 
 // ---------------------------------------------------------------------------
@@ -81,8 +91,10 @@ function getSkinImportParts(skin: Exclude<Skin, 'none'>): { group: string; skinF
 export function generateHTMLInstallCode(
   opts: Pick<InstallationOptions, 'useCase' | 'skin' | 'renderer'>,
   cdnMediaSubpaths: readonly string[]
-): Record<'cdn' | 'npm' | 'pnpm' | 'yarn' | 'bun', string> {
+): { cdn: string | null } & Record<'npm' | 'pnpm' | 'yarn' | 'bun', string> {
   return {
+    // null when this preset/skin combination ships no CDN bundle — callers must
+    // fall back to a package manager.
     cdn: generateCdnCode(opts.useCase, opts.skin, opts.renderer, cdnMediaSubpaths),
     npm: 'npm install @videojs/html',
     pnpm: 'pnpm add @videojs/html',
@@ -122,32 +134,27 @@ function getRendererTag(renderer: Renderer): string {
   return map[renderer];
 }
 
+// Tag prefix for a use case. Matches the preset subpath group except for
+// background video, whose elements are `background-video-*` while its subpath is
+// `background`.
+function getTagPrefix(useCase: UseCase): string {
+  return useCase === 'background-video' ? 'background-video' : getPresetGroup(useCase);
+}
+
 function getProviderTag(useCase: UseCase): string {
-  const map: Record<UseCase, string> = {
-    'default-video': 'video-player',
-    'default-audio': 'audio-player',
-    'background-video': 'background-video-player',
-  };
-  return map[useCase];
+  return `${getTagPrefix(useCase)}-player`;
 }
 
 function getSkinTag(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
-  if (useCase === 'background-video') {
-    return 'background-video-skin';
-  }
-  const map: Record<Exclude<Skin, 'none'>, string> = {
-    video: 'video-skin',
-    audio: 'audio-skin',
-    'minimal-video': 'video-minimal-skin',
-    'minimal-audio': 'audio-minimal-skin',
-  };
-  return map[skin];
+  const prefix = getTagPrefix(useCase);
+  if (useCase === 'background-video') return `${prefix}-skin`;
+  return getSkinFile(skin) === 'minimal-skin' ? `${prefix}-minimal-skin` : `${prefix}-skin`;
 }
 
 function generateHTMLMarkup(useCase: UseCase, skin: Skin, renderer: Renderer, url: string): string {
   const providerTag = getProviderTag(useCase);
   const tag = getRendererTag(renderer);
-  const src = resolveSourceUrl(url, renderer);
+  const src = resolveSourceUrl(url, renderer, useCase);
   const playsInline = isVideoLikeRenderer(renderer) ? ' playsinline' : '';
 
   const mediaComment = `  <!--
@@ -199,15 +206,14 @@ function generateHTMLJSImports(useCase: UseCase, skin: Skin, renderer: Renderer)
 import '@videojs/html/background/skin';
 import '@videojs/html/background/video';${mediaImport}`;
   }
-  const group = skin === 'none' ? getGroupFromUseCase(useCase) : getSkinImportParts(skin).group;
+  const group = getPresetGroup(useCase);
   const mediaSubpath = getMediaSubpath(renderer);
   const mediaImport = mediaSubpath ? `\nimport '@videojs/html/media/${mediaSubpath}';` : '';
   if (skin === 'none') {
     return `import '@videojs/html/${group}/player';${mediaImport}`;
   }
-  const { skinFile } = getSkinImportParts(skin);
   return `import '@videojs/html/${group}/player';
-import '@videojs/html/${group}/${skinFile}';${mediaImport}`;
+import '@videojs/html/${group}/${getSkinFile(skin)}';${mediaImport}`;
 }
 
 export function generateHTMLUsageCode(
@@ -236,20 +242,21 @@ function getRendererComponent(renderer: Renderer): string {
   return map[renderer];
 }
 
-function getSkinComponent(skin: Exclude<Skin, 'none'>): string {
-  const map: Record<Exclude<Skin, 'none'>, string> = {
-    video: 'VideoSkin',
-    audio: 'AudioSkin',
-    'minimal-video': 'MinimalVideoSkin',
-    'minimal-audio': 'MinimalAudioSkin',
-  };
-  return map[skin];
+function getSkinComponent(useCase: UseCase, skin: Exclude<Skin, 'none'>): string {
+  if (useCase === 'background-video') return 'BackgroundVideoSkin';
+  const base = isAudioUseCase(useCase) ? 'Audio' : 'Video';
+  // The live skins are exported as `LiveVideoSkin` / `MinimalLiveVideoSkin` —
+  // `Minimal` leads, `Live` sits inside the noun.
+  const name = isLiveUseCase(useCase) ? `Live${base}Skin` : `${base}Skin`;
+  return getSkinFile(skin) === 'minimal-skin' ? `Minimal${name}` : name;
 }
 
 function getUseCaseFeatures(useCase: UseCase): string {
   const map: Record<UseCase, string> = {
     'default-video': 'videoFeatures',
+    'live-video': 'liveVideoFeatures',
     'default-audio': 'audioFeatures',
+    'live-audio': 'liveAudioFeatures',
     'background-video': 'backgroundFeatures',
   };
   return map[useCase];
@@ -268,11 +275,7 @@ export function generateReactCreateCode(
 
   const isBackgroundVideo = useCase === 'background-video';
   const isNoSkin = skin === 'none';
-  const group = isBackgroundVideo
-    ? 'background'
-    : isNoSkin
-      ? getGroupFromUseCase(useCase)
-      : getSkinImportParts(skin).group;
+  const group = getPresetGroup(useCase);
 
   const rendererProps = isVideoLikeRenderer(renderer) ? 'src={src} playsInline' : 'src={src}';
   const rendererJsx = `<${rendererComponent} ${rendererProps} />`;
@@ -283,9 +286,9 @@ export function generateReactCreateCode(
   let skinComponent: string | null = null;
 
   if (isBackgroundVideo) {
-    skinComponent = 'BackgroundVideoSkin';
-    skinCssImport = '@videojs/react/background/skin.css';
-    presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/background';`;
+    skinComponent = getSkinComponent(useCase, 'video');
+    skinCssImport = `@videojs/react/${group}/skin.css`;
+    presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
   } else if (isNoSkin) {
     if (isPresetRenderer(renderer)) {
       presetImport = `import { ${rendererComponent} } from '@videojs/react/${group}';`;
@@ -294,9 +297,8 @@ export function generateReactCreateCode(
       mediaImport = `import { ${rendererComponent} } from '@videojs/react/media/${getMediaSubpath(renderer) ?? renderer}';`;
     }
   } else {
-    const { skinFile } = getSkinImportParts(skin);
-    skinComponent = getSkinComponent(skin);
-    skinCssImport = `@videojs/react/${group}/${skinFile}.css`;
+    skinComponent = getSkinComponent(useCase, skin);
+    skinCssImport = `@videojs/react/${group}/${getSkinFile(skin)}.css`;
     if (isPresetRenderer(renderer)) {
       presetImport = `import { ${skinComponent}, ${rendererComponent} } from '@videojs/react/${group}';`;
     } else {
@@ -346,9 +348,9 @@ ${playerJsx}
 // ---------------------------------------------------------------------------
 
 export function generateReactUsageCode(
-  opts: Pick<InstallationOptions, 'renderer' | 'sourceUrl'>
+  opts: Pick<InstallationOptions, 'useCase' | 'renderer' | 'sourceUrl'>
 ): Record<'App.tsx', string> {
-  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer);
+  const source = resolveSourceUrl(opts.sourceUrl, opts.renderer, opts.useCase);
 
   return {
     'App.tsx': `import { MyPlayer } from '../components/player';

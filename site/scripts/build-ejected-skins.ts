@@ -26,6 +26,16 @@ const PREFIX = '\x1b[35m[ejected-skins]\x1b[0m';
 const HTML_CDN_BASE = 'https://cdn.jsdelivr.net/npm/@videojs/html/cdn';
 const DEMO_VIDEO_SRC = 'https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4';
 const DEMO_POSTER_SRC = 'https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp';
+// Live skins need a live source, or their Live button renders in a permanently
+// "behind live" state. A live presentation is HLS, and a bare `<video>` only
+// plays HLS in Safari — so live snippets use a media element plus its CDN media
+// script, mirroring the install guide's defaults for the live presets
+// (`hlsjs-video` for live video, `mux-audio` for live audio).
+const DEMO_LIVE_SRC = 'https://stream.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM.m3u8';
+const DEMO_LIVE_POSTER_SRC = 'https://image.mux.com/v69RSHhFelSm4701snP22dYz2jICy4E4FUyk02rW4gxRM/thumbnail.webp';
+const LIVE_MEDIA_SUBPATH: Record<MediaType, string> = { video: 'hlsjs-video', audio: 'mux-audio' };
+const LIVE_MEDIA_TAG: Record<MediaType, string> = { video: 'hlsjs-video', audio: 'mux-audio' };
+const LIVE_MEDIA_COMPONENT: Record<MediaType, string> = { video: 'HlsJsVideo', audio: 'MuxAudio' };
 const log = {
   info: (...args: unknown[]) => console.log(PREFIX, ...args),
   warn: (...args: unknown[]) => console.warn(PREFIX, '\x1b[33mwarn:\x1b[0m', ...args),
@@ -70,6 +80,21 @@ type MediaType = 'video' | 'audio';
 
 function getSkinMediaType(skin: SkinDef): MediaType {
   return skin.id.includes('audio') ? 'audio' : 'video';
+}
+
+/**
+ * Whether the skin belongs to a live preset. Live skins share the media element
+ * and icon set of their non-live counterpart but use the `live-video` /
+ * `live-audio` package subpaths, tags, and feature sets.
+ */
+function isLiveSkin(skin: Pick<SkinDef, 'id'>): boolean {
+  return skin.id.includes('live-');
+}
+
+/** Package subpath / tag prefix for a skin: `video`, `audio`, `live-video`, or `live-audio`. */
+function getSkinGroup(skin: SkinDef): string {
+  const mediaType = getSkinMediaType(skin);
+  return isLiveSkin(skin) ? `live-${mediaType}` : mediaType;
 }
 
 interface EjectedSkinEntry {
@@ -557,6 +582,42 @@ const SKINS: SkinDef[] = [
     css: 'packages/html/src/define/audio/minimal-skin.css',
     iconSet: 'minimal',
   },
+  {
+    id: 'default-live-video',
+    name: 'Default Live Video',
+    platform: 'html',
+    style: 'css',
+    template: 'packages/html/src/define/live-video/skin.ts',
+    css: 'packages/html/src/define/live-video/skin.css',
+    iconSet: 'default',
+  },
+  {
+    id: 'default-live-audio',
+    name: 'Default Live Audio',
+    platform: 'html',
+    style: 'css',
+    template: 'packages/html/src/define/live-audio/skin.ts',
+    css: 'packages/html/src/define/live-audio/skin.css',
+    iconSet: 'default',
+  },
+  {
+    id: 'minimal-live-video',
+    name: 'Minimal Live Video',
+    platform: 'html',
+    style: 'css',
+    template: 'packages/html/src/define/live-video/minimal-skin.ts',
+    css: 'packages/html/src/define/live-video/minimal-skin.css',
+    iconSet: 'minimal',
+  },
+  {
+    id: 'minimal-live-audio',
+    name: 'Minimal Live Audio',
+    platform: 'html',
+    style: 'css',
+    template: 'packages/html/src/define/live-audio/minimal-skin.ts',
+    css: 'packages/html/src/define/live-audio/minimal-skin.css',
+    iconSet: 'minimal',
+  },
 
   // HTML Tailwind
   {
@@ -589,6 +650,38 @@ const SKINS: SkinDef[] = [
     platform: 'html',
     style: 'tailwind',
     template: 'packages/html/src/define/audio/minimal-skin.tailwind.ts',
+    iconSet: 'minimal',
+  },
+  {
+    id: 'default-live-video-tailwind',
+    name: 'Default Live Video (Tailwind)',
+    platform: 'html',
+    style: 'tailwind',
+    template: 'packages/html/src/define/live-video/skin.tailwind.ts',
+    iconSet: 'default',
+  },
+  {
+    id: 'default-live-audio-tailwind',
+    name: 'Default Live Audio (Tailwind)',
+    platform: 'html',
+    style: 'tailwind',
+    template: 'packages/html/src/define/live-audio/skin.tailwind.ts',
+    iconSet: 'default',
+  },
+  {
+    id: 'minimal-live-video-tailwind',
+    name: 'Minimal Live Video (Tailwind)',
+    platform: 'html',
+    style: 'tailwind',
+    template: 'packages/html/src/define/live-video/minimal-skin.tailwind.ts',
+    iconSet: 'minimal',
+  },
+  {
+    id: 'minimal-live-audio-tailwind',
+    name: 'Minimal Live Audio (Tailwind)',
+    platform: 'html',
+    style: 'tailwind',
+    template: 'packages/html/src/define/live-audio/minimal-skin.tailwind.ts',
     iconSet: 'minimal',
   },
 
@@ -625,6 +718,38 @@ const SKINS: SkinDef[] = [
     source: 'packages/react/src/presets/audio/minimal-skin.tsx',
     css: 'packages/react/src/presets/audio/minimal-skin.css',
   },
+  {
+    id: 'default-live-video-react',
+    name: 'Default Live Video (React)',
+    platform: 'react',
+    style: 'css',
+    source: 'packages/react/src/presets/live-video/skin.tsx',
+    css: 'packages/react/src/presets/live-video/skin.css',
+  },
+  {
+    id: 'default-live-audio-react',
+    name: 'Default Live Audio (React)',
+    platform: 'react',
+    style: 'css',
+    source: 'packages/react/src/presets/live-audio/skin.tsx',
+    css: 'packages/react/src/presets/live-audio/skin.css',
+  },
+  {
+    id: 'minimal-live-video-react',
+    name: 'Minimal Live Video (React)',
+    platform: 'react',
+    style: 'css',
+    source: 'packages/react/src/presets/live-video/minimal-skin.tsx',
+    css: 'packages/react/src/presets/live-video/minimal-skin.css',
+  },
+  {
+    id: 'minimal-live-audio-react',
+    name: 'Minimal Live Audio (React)',
+    platform: 'react',
+    style: 'css',
+    source: 'packages/react/src/presets/live-audio/minimal-skin.tsx',
+    css: 'packages/react/src/presets/live-audio/minimal-skin.css',
+  },
 
   // React Tailwind
   {
@@ -655,6 +780,34 @@ const SKINS: SkinDef[] = [
     style: 'tailwind',
     source: 'packages/react/src/presets/audio/minimal-skin.tailwind.tsx',
   },
+  {
+    id: 'default-live-video-react-tailwind',
+    name: 'Default Live Video (React + Tailwind)',
+    platform: 'react',
+    style: 'tailwind',
+    source: 'packages/react/src/presets/live-video/skin.tailwind.tsx',
+  },
+  {
+    id: 'default-live-audio-react-tailwind',
+    name: 'Default Live Audio (React + Tailwind)',
+    platform: 'react',
+    style: 'tailwind',
+    source: 'packages/react/src/presets/live-audio/skin.tailwind.tsx',
+  },
+  {
+    id: 'minimal-live-video-react-tailwind',
+    name: 'Minimal Live Video (React + Tailwind)',
+    platform: 'react',
+    style: 'tailwind',
+    source: 'packages/react/src/presets/live-video/minimal-skin.tailwind.tsx',
+  },
+  {
+    id: 'minimal-live-audio-react-tailwind',
+    name: 'Minimal Live Audio (React + Tailwind)',
+    platform: 'react',
+    style: 'tailwind',
+    source: 'packages/react/src/presets/live-audio/minimal-skin.tailwind.tsx',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -669,22 +822,28 @@ function resolveCss(cssPath: string): string {
 
 function getHtmlSkinCdnFileName(skin: HtmlSkinDef): string {
   const isMinimal = skin.id.includes('minimal');
-  const prefix = skin.id.includes('video') ? 'video' : 'audio';
+  const prefix = getSkinGroup(skin);
 
   return isMinimal ? `${prefix}-minimal-ui` : `${prefix}-ui`;
 }
 
 function prependHtmlSkinScripts(html: string, skin: HtmlSkinDef): string {
   const cdnFileName = getHtmlSkinCdnFileName(skin);
-  const scriptTag = `<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`;
+  const scriptTags = [`<script type="module" src="${HTML_CDN_BASE}/${cdnFileName}.js"></script>`];
+  // Live snippets use a media element rather than a bare `<video>`, so they need
+  // that media's CDN bundle alongside the UI bundle.
+  if (isLiveSkin(skin)) {
+    const subpath = LIVE_MEDIA_SUBPATH[getSkinMediaType(skin)];
+    scriptTags.push(`<script type="module" src="${HTML_CDN_BASE}/media/${subpath}.js"></script>`);
+  }
   const cssLink = `<link rel="stylesheet" href="./player.css">`;
-  const playerTag = getSkinMediaType(skin) === 'audio' ? 'audio-player' : 'video-player';
+  const playerTag = `${getSkinGroup(skin)}-player`;
   const indented = html
     .split('\n')
     .map((l) => (l.length > 0 ? `  ${l}` : l))
     .join('\n');
 
-  return `${scriptTag}\n${cssLink}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
+  return `${scriptTags.join('\n')}\n${cssLink}\n\n<${playerTag}>\n${indented}\n</${playerTag}>`;
 }
 
 // ---------------------------------------------------------------------------
@@ -804,10 +963,11 @@ function createRenderMediaIcon(iconSet: 'default' | 'minimal') {
  * `<slot name="poster">` with concrete elements so the ejected HTML is
  * self-contained.
  */
-function replaceSlots(html: string, mediaType: MediaType): string {
-  const tag = mediaType === 'audio' ? 'audio' : 'video';
+function replaceSlots(html: string, mediaType: MediaType, isLive: boolean): string {
+  const tag = isLive ? LIVE_MEDIA_TAG[mediaType] : mediaType === 'audio' ? 'audio' : 'video';
   const playsInline = mediaType === 'video' ? ' playsinline' : '';
-  const mediaElement = `<${tag} src="${DEMO_VIDEO_SRC}"${playsInline}></${tag}>`;
+  const src = isLive ? DEMO_LIVE_SRC : DEMO_VIDEO_SRC;
+  const mediaElement = `<${tag} src="${src}"${playsInline}></${tag}>`;
 
   // Replace the deprecated comment + slot="media" + default slot block with the
   // media element, preserving the original indentation.
@@ -817,7 +977,10 @@ function replaceSlots(html: string, mediaType: MediaType): string {
   );
 
   // Replace the poster slot with an <img> element.
-  html = html.replace(/<slot name="poster"><\/slot>/, `<img src="${DEMO_POSTER_SRC}" />`);
+  html = html.replace(
+    /<slot name="poster"><\/slot>/,
+    `<img src="${isLive ? DEMO_LIVE_POSTER_SRC : DEMO_POSTER_SRC}" />`
+  );
 
   return html;
 }
@@ -841,7 +1004,7 @@ async function processHtmlSkin(skin: HtmlSkinDef): Promise<string> {
   context.renderIcon = createRenderMediaIcon(skin.iconSet);
 
   let html = evaluateTemplate(templateBody, context);
-  html = replaceSlots(html, getSkinMediaType(skin));
+  html = replaceSlots(html, getSkinMediaType(skin), isLiveSkin(skin));
 
   return prependHtmlSkinScripts(html, skin);
 }
@@ -1393,12 +1556,18 @@ function destructureSkinProps(source: string): string {
  * into VideoPlayer/AudioPlayer wrapped in `Player.Provider`, and removes the
  * separate Skin export.
  */
-function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: string; component: string } {
+function flattenSkinIntoPlayer(
+  source: string,
+  mediaType: MediaType,
+  isLive: boolean
+): { player: string; component: string } {
   const isVideo = mediaType === 'video';
-  const mediaTag = isVideo ? 'Video' : 'Audio';
-  const features = isVideo ? 'videoFeatures' : 'audioFeatures';
-  const playerName = isVideo ? 'VideoPlayer' : 'AudioPlayer';
-  const subpath = isVideo ? 'video' : 'audio';
+  // Live snippets play an HLS source, so they take a media component from
+  // `@videojs/react/media/*` rather than the preset's bare `Video` / `Audio`.
+  const mediaTag = isLive ? LIVE_MEDIA_COMPONENT[mediaType] : isVideo ? 'Video' : 'Audio';
+  const features = isLive ? (isVideo ? 'liveVideoFeatures' : 'liveAudioFeatures') : `${mediaType}Features`;
+  const playerName = `${isLive ? 'Live' : ''}${isVideo ? 'VideoPlayer' : 'AudioPlayer'}`;
+  const subpath = isLive ? `live-${mediaType}` : mediaType;
   const playsInline = isVideo ? ' playsInline' : '';
 
   const player = [
@@ -1409,8 +1578,10 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
     '',
   ].join('\n');
 
-  // 1. Add Video/Audio import, CSS import, and Player import from ./player
-  const mediaImport = `import { ${mediaTag} } from '@videojs/react/${subpath}';`;
+  // 1. Add media, CSS, and Player imports
+  const mediaImport = isLive
+    ? `import { ${mediaTag} } from '@videojs/react/media/${LIVE_MEDIA_SUBPATH[mediaType]}';`
+    : `import { ${mediaTag} } from '@videojs/react/${subpath}';`;
   const cssImport = "import './player.css';";
   const playerImport = "import { Player } from './player';";
   source = source.replace(
@@ -1445,7 +1616,8 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
       }
 
       const hasPoster = destructuredRest.includes('poster');
-      const posterExample = hasPoster ? `\n *   poster="${DEMO_POSTER_SRC}"` : '';
+      const posterSrc = isLive ? DEMO_LIVE_POSTER_SRC : DEMO_POSTER_SRC;
+      const posterExample = hasPoster ? `\n *   poster="${posterSrc}"` : '';
 
       // @example JSDoc and the function signature
       const header = [
@@ -1453,7 +1625,7 @@ function flattenSkinIntoPlayer(source: string, mediaType: MediaType): { player: 
         ' * @example',
         ' * ```tsx',
         ` * <${playerName}`,
-        ` *   src="${DEMO_VIDEO_SRC}"${posterExample}`,
+        ` *   src="${isLive ? DEMO_LIVE_SRC : DEMO_VIDEO_SRC}"${posterExample}`,
         ' * />',
         ' * ```',
         ' */',
@@ -1520,8 +1692,9 @@ async function processReactSkin(
 
   // 11. Flatten skin into player (split into player.ts + Player.tsx, wrap in Player.Provider)
   const mediaType = getSkinMediaType(skin);
-  const { player, component } = flattenSkinIntoPlayer(tsx, mediaType);
-  const componentFile = mediaType === 'video' ? 'VideoPlayer' : 'AudioPlayer';
+  const isLive = isLiveSkin(skin);
+  const { player, component } = flattenSkinIntoPlayer(tsx, mediaType, isLive);
+  const componentFile = `${isLive ? 'Live' : ''}${mediaType === 'video' ? 'VideoPlayer' : 'AudioPlayer'}`;
 
   return {
     tsx: {

@@ -24,6 +24,11 @@ function formatHTMLInstallation(opts: InstallationOptions): string {
 
   sections.push('## Install Video.js\n');
   if (opts.installMethod === 'cdn') {
+    // `handleDocs` rejects CDN for combinations without a bundle before getting
+    // here, so a null means that gate was bypassed.
+    if (install.cdn === null) {
+      throw new Error('This preset and skin combination has no CDN build');
+    }
     sections.push(`\`\`\`html\n${install.cdn}\n\`\`\``);
   } else {
     sections.push(`\`\`\`bash\n${install[opts.installMethod]}\n\`\`\``);

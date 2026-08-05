@@ -15,6 +15,7 @@
  * 8. i18n locales — tag lists match locale files and generated stubs
  * 9. Agent context — portable skill metadata, compatibility imports, and budgets
  * 10. Internal records — organized design docs, frontmatter, and lifecycle status
+ * 11. CDN preset bundles — the install page's gating set matches published bundles
  */
 import { existsSync, readdirSync, readFileSync, realpathSync } from 'node:fs';
 import { dirname, join, resolve, sep } from 'node:path';
@@ -818,6 +819,60 @@ function checkInternalRecords() {
   return { ok: warnings.length === 0, warnings };
 }
 
+// ── Check 11: CDN preset bundles ─────────────────────────────────────────────
+
+function parseStringArrayLiteral(source, pattern) {
+  const match = source.match(pattern);
+  if (!match) return undefined;
+  return [...match[1].matchAll(/'([^']+)'/g)].map((m) => m[1]);
+}
+
+/**
+ * The install page gates its CDN tab on a hand-written set of preset bundle
+ * names, because a name that isn't published would otherwise emit a script tag
+ * that 404s at runtime. Keep that set a subset of what the CDN config actually
+ * builds, and keep every configured preset backed by an entry file.
+ */
+function checkCdnPresetBundles() {
+  const warnings = [];
+  const configPath = join(PACKAGES_DIR, 'html/tsdown.cdn.config.ts');
+  const sitePath = join(ROOT, 'site/src/utils/installation/cdn-code.ts');
+
+  if (!existsSync(configPath) || !existsSync(sitePath)) {
+    return { ok: true, warnings: [] };
+  }
+
+  const presets = parseStringArrayLiteral(readText(configPath), /const presets = \[([\s\S]*?)\];/);
+  if (presets === undefined) {
+    warnings.push('Could not parse presets from packages/html/tsdown.cdn.config.ts');
+    return { ok: false, warnings };
+  }
+
+  const gated = parseStringArrayLiteral(readText(sitePath), /const CDN_PRESET_BUNDLES = new Set\(\[([\s\S]*?)\]\)/);
+  if (gated === undefined) {
+    warnings.push('Could not parse CDN_PRESET_BUNDLES from site/src/utils/installation/cdn-code.ts');
+    return { ok: false, warnings };
+  }
+
+  // Subset only: the config also publishes the `-ui` bundles that the ejected
+  // skin snippets load, which the install page never offers.
+  for (const name of gated) {
+    if (!presets.includes(name)) {
+      warnings.push(
+        `CDN_PRESET_BUNDLES has "${name}" but packages/html/tsdown.cdn.config.ts does not publish it — the install page would emit a 404 script tag`
+      );
+    }
+  }
+
+  for (const name of presets) {
+    if (!existsSync(join(PACKAGES_DIR, `html/src/cdn/${name}.ts`))) {
+      warnings.push(`CDN preset "${name}" has no packages/html/src/cdn/${name}.ts entry`);
+    }
+  }
+
+  return { ok: warnings.length === 0, warnings };
+}
+
 // ── Main ────────────────────────────────────────────────────────────────────
 
 const checks = [
@@ -831,6 +886,7 @@ const checks = [
   { name: 'i18n locales', fn: checkI18nLocales },
   { name: 'Agent context', fn: checkAgentContext },
   { name: 'Internal records', fn: checkInternalRecords },
+  { name: 'CDN preset bundles', fn: checkCdnPresetBundles },
 ];
 
 let failed = 0;

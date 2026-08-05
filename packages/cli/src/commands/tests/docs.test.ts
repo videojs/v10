@@ -151,6 +151,7 @@ describe('handleDocs', () => {
         ExitError
       );
       expect(errors()).toContain('Invalid preset: "livestream"');
+      expect(errors()).toContain('"live-video"');
     });
 
     it('errors with invalid skin', async () => {
@@ -158,6 +159,42 @@ describe('handleDocs', () => {
         handleDocs({ framework: 'html', preset: 'video', skin: 'custom' }, ['how-to/installation'])
       ).rejects.toThrow(ExitError);
       expect(errors()).toContain('Invalid skin: "custom"');
+    });
+
+    it('errors when the media type is not valid for the preset', async () => {
+      await expect(
+        handleDocs(
+          {
+            framework: 'html',
+            preset: 'live-audio',
+            skin: 'default',
+            media: 'html5-video',
+            'source-url': '',
+            'install-method': 'npm',
+          },
+          ['how-to/installation']
+        )
+      ).rejects.toThrow(ExitError);
+      expect(errors()).toContain('Invalid media type "html5-video" for the "live-audio" preset');
+      expect(errors()).toContain('mux-audio');
+    });
+
+    it('names the preset flag, not the internal use case, in the mismatch error', async () => {
+      await expect(
+        handleDocs(
+          {
+            framework: 'html',
+            preset: 'video',
+            skin: 'default',
+            media: 'mux-audio',
+            'source-url': '',
+            'install-method': 'npm',
+          },
+          ['how-to/installation']
+        )
+      ).rejects.toThrow(ExitError);
+      expect(errors()).toContain('for the "video" preset');
+      expect(errors()).not.toContain('default-video');
     });
 
     it('errors with invalid install method for framework', async () => {
@@ -300,6 +337,53 @@ describe('handleDocs', () => {
         ).rejects.toThrow(ExitError);
         expect(errors()).toContain('no CDN build');
       });
+
+      it('generates the live-video preset', async () => {
+        await handleDocs(htmlFlags({ preset: 'live-video', media: 'hls' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<live-video-player>');
+        expect(out).toContain('<live-video-skin>');
+        expect(out).toContain("import '@videojs/html/live-video/player'");
+        expect(out).toContain("import '@videojs/html/media/hlsjs-video'");
+      });
+
+      it('generates the live-audio preset', async () => {
+        await handleDocs(htmlFlags({ preset: 'live-audio', media: 'mux-audio' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('<live-audio-player>');
+        expect(out).toContain('<live-audio-skin>');
+        expect(out).toContain("import '@videojs/html/live-audio/player'");
+      });
+
+      it('generates the minimal live-video skin', async () => {
+        await handleDocs(htmlFlags({ preset: 'live-video', skin: 'minimal', media: 'hls' }), ['how-to/installation']);
+        expect(output()).toContain('<live-video-minimal-skin>');
+      });
+
+      it('generates a CDN script for the live-video preset', async () => {
+        await handleDocs(htmlFlags({ preset: 'live-video', media: 'hls', 'install-method': 'cdn' }), [
+          'how-to/installation',
+        ]);
+        const out = output();
+        expect(out).toContain('cdn/live-video.js');
+        expect(out).toContain('media/hlsjs-video.js');
+      });
+
+      it('generates a CDN script for live-audio', async () => {
+        await handleDocs(htmlFlags({ preset: 'live-audio', media: 'mux-audio', 'install-method': 'cdn' }), [
+          'how-to/installation',
+        ]);
+        const out = output();
+        expect(out).toContain('cdn/live-audio.js');
+        expect(out).toContain('media/mux-audio.js');
+      });
+
+      it('generates a CDN script for a headless live-video player', async () => {
+        await handleDocs(htmlFlags({ preset: 'live-video', skin: 'none', media: 'hls', 'install-method': 'cdn' }), [
+          'how-to/installation',
+        ]);
+        expect(output()).toContain('cdn/live-video-headless.js');
+      });
     });
 
     describe('React framework', () => {
@@ -316,6 +400,21 @@ describe('handleDocs', () => {
       it('generates HLS media variant', async () => {
         await handleDocs(reactFlags({ media: 'hls' }), ['how-to/installation']);
         expect(output()).toContain('hls');
+      });
+
+      it('generates the live-video preset with live features and skin', async () => {
+        await handleDocs(reactFlags({ preset: 'live-video', media: 'hls' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('liveVideoFeatures');
+        expect(out).toContain('<LiveVideoSkin>');
+        expect(out).toContain("import '@videojs/react/live-video/skin.css'");
+      });
+
+      it('generates the live-audio preset with live features and skin', async () => {
+        await handleDocs(reactFlags({ preset: 'live-audio', media: 'mux-audio' }), ['how-to/installation']);
+        const out = output();
+        expect(out).toContain('liveAudioFeatures');
+        expect(out).toContain('<LiveAudioSkin>');
       });
     });
   });
