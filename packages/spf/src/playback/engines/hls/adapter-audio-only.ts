@@ -1,5 +1,8 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
+import { effect } from '../../../core/signals/effect';
+import { SVTA_NO_SUPPORTED_AUDIO_TRACK, type SvtaError } from '../../../media/errors';
+import { DEFAULT_PLAYER_SOFTWARE_NAME } from '../../primitives/error-messages';
 import {
   createHlsAudioOnlyEngine,
   type SimpleHlsAudioOnlyEngineConfig,
@@ -7,6 +10,7 @@ import {
   type SimpleHlsAudioOnlyEngineSignals,
   type SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
+import { firstFatal, resolveFatalMessage, type SimpleHlsMediaError } from './error-surface';
 
 export interface SimpleHlsAudioOnlyMediaProps {
   src: string;
@@ -22,6 +26,7 @@ export const simpleHlsAudioOnlyMediaDefaultProps: SimpleHlsAudioOnlyMediaProps =
 
 export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps {
   readonly engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
+  readonly error: SimpleHlsMediaError | null;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -29,7 +34,17 @@ export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps
 }
 
 /**
+ * Which reported conditions this composition treats as fatal. Only the audio
+ * verdict: an audio-only engine composes no video selection, so
+ * `SVTA_NO_SUPPORTED_VIDEO_TRACK` is never reported and surfacing it would
+ * describe a track type this media doesn't have.
+ */
+const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED_AUDIO_TRACK]);
+
+/**
  * Mixin that adds SPF audio-only HLS playback to any base class.
+ *
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
  * Parallel to `SimpleHlsMediaMixin` with one substantive difference: the
  * underlying engine is the audio-only variant (`createHlsAudioOnlyEngine`),
@@ -50,11 +65,23 @@ export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps
  */
 export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
+    /**
+     * What this adapter calls itself, used as the default
+     * {@link SimpleHlsAudioOnlyEngineConfig.playerSoftwareName} so reported
+     * conditions name the engine that refused the source. A subclass can
+     * override it; an explicit `config.playerSoftwareName` wins over both.
+     */
+    static get playerSoftwareName(): string {
+      return 'simple-hls-audio-only';
+    }
+
     readonly #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
     #config: SimpleHlsAudioOnlyEngineConfig;
     #signals!: SimpleHlsAudioOnlyEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsAudioOnlyMediaDefaultProps.preload;
     #disableRemotePlayback: boolean = simpleHlsAudioOnlyMediaDefaultProps.disableRemotePlayback;
+    #error: SimpleHlsMediaError | null = null;
+    #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -65,6 +92,43 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
       const { config } = args?.[0] ?? {};
       this.#config = config;
       this.#engine = this.#createEngine();
+
+      // Promote the first fatal condition out of the engine's reported sequence
+      // onto the media surface. Clearing rides the same signal: `collectErrors`
+      // resets the slot per source, so a new source starts with no error without
+      // this needing its own source-change hook.
+      this.#stopErrorSync = effect(() => {
+        const errors = this.#signals.state.errors.get();
+        this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
+      });
+    }
+
+    /**
+     * The current fatal error, or `null`. Only *fatal* conditions appear here —
+     * the engine reports non-fatal ones too, which stay in `engine.state.errors`.
+     * Resets per source. Fires `'error'` when set.
+     */
+    get error(): SimpleHlsMediaError | null {
+      return this.#error;
+    }
+
+    #setError(reported: SvtaError | undefined, errors: readonly SvtaError[] | undefined): void {
+      if (!reported) {
+        // Cleared (new source). No event: `'error'` announces a failure, and
+        // consumers reset their own copy on source change.
+        this.#error = null;
+        return;
+      }
+      // Keyed on the code, not the object: a later append re-runs this effect
+      // with an equal-but-new array, and re-firing `'error'` for a condition
+      // already surfaced would look like a second failure.
+      if (this.#error?.code === reported.code) return;
+      this.#error = {
+        code: reported.code,
+        message: reported.message ?? resolveFatalMessage(reported, errors, this.#playerSoftwareName()),
+        ...(reported.data === undefined ? {} : { data: reported.data }),
+      };
+      this.dispatchEvent?.(new Event('error'));
     }
 
     /**
@@ -94,6 +158,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
 
     destroy(): void {
       this.#cancelPendingPlay();
+      this.#stopErrorSync();
       this.#engine.destroy();
     }
 
@@ -182,9 +247,17 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     // Private
     // -------------------------------------------------------------------------
 
+    /** Explicit config wins, then this class's static, then the generic default. */
+    #playerSoftwareName(): string {
+      const own = (this.constructor as { playerSoftwareName?: string }).playerSoftwareName;
+      return this.#config?.playerSoftwareName ?? own ?? DEFAULT_PLAYER_SOFTWARE_NAME;
+    }
+
     #createEngine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
       return createHlsAudioOnlyEngine({
         ...this.#config,
+        // After the spread, so an explicitly-undefined config key can't clobber it.
+        playerSoftwareName: this.#playerSoftwareName(),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
@@ -199,7 +272,11 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
   }
 
-  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI>;
+  // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
+  // adding back to the type or callers can't read it.
+  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI> & {
+    readonly playerSoftwareName: string;
+  };
 }
 
 /** Standalone SPF audio-only media adapter with no base class. */

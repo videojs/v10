@@ -21,6 +21,7 @@ import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
+  type SvtaError,
 } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
 import { SimpleHlsMediaElement, SimpleHlsMediaMixin } from '../adapter';
@@ -668,7 +669,9 @@ describe('SimpleHlsMediaElement', () => {
       ]);
       await flush();
 
-      expect(media.error?.message).toMatch(/audio is protected/i);
+      // Asserted on claim rather than phrasing: protected, and about audio.
+      expect(media.error?.message).toMatch(/protected/i);
+      expect(media.error?.message).toMatch(/audio/i);
       media.destroy();
     });
 
@@ -729,6 +732,133 @@ describe('SimpleHlsMediaElement', () => {
       await flush();
 
       expect(media.error?.data).toEqual({ selectionKey: 'selectedVideoTrackId' });
+      media.destroy();
+    });
+
+    it('never blames the browser — the engine is what can’t play these', async () => {
+      // The whole point of the copy: browsers play MPEG-TS (Safari, natively)
+      // and DRM (EME). Saying "this browser can't" is false and sends a viewer
+      // to a different browser that behaves identically.
+      const cases: SvtaError[][] = [
+        [{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }],
+        [{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }],
+        [
+          { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+        ],
+        [
+          { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' } },
+          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+        ],
+      ];
+
+      for (const errors of cases) {
+        const media = new TestMedia();
+        media.engine.state.errors.set(errors);
+        await flush();
+
+        expect(media.error?.message).not.toMatch(/browser/i);
+        media.destroy();
+      }
+    });
+
+    it('reuses the reporter’s stored copy when every cause said the same thing', async () => {
+      // The reporter names the container because only it has the rendition's
+      // mimeType. The adapter's job is to carry that through, not re-derive it.
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        {
+          code: SVTA_UNSUPPORTED_VIDEO_FORMAT,
+          message: 'This player can’t play MPEG-TS video.',
+          data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' },
+        },
+        {
+          code: SVTA_UNSUPPORTED_VIDEO_FORMAT,
+          message: 'This player can’t play MPEG-TS video.',
+          data: { trackType: 'video', trackId: 'v2', mimeType: 'video/mp2t' },
+        },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toBe('This player can’t play MPEG-TS video.');
+      media.destroy();
+    });
+
+    it('discards stored copy the causes disagree on, even under one code', async () => {
+      // 1004/1005 covers every non-fMP4 container, so unanimity on the code is
+      // not unanimity on what to call it. Comparing messages catches what
+      // comparing codes would wrongly accept.
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        {
+          code: SVTA_UNSUPPORTED_AUDIO_FORMAT,
+          message: 'This player can’t play MPEG-TS audio.',
+          data: { trackType: 'audio', trackId: 'a1', mimeType: 'video/mp2t' },
+        },
+        {
+          code: SVTA_UNSUPPORTED_AUDIO_FORMAT,
+          message: 'This player can’t play raw AAC audio.',
+          data: { trackType: 'audio', trackId: 'a2', mimeType: 'audio/aac' },
+        },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).not.toMatch(/MPEG-TS|raw AAC/);
+      expect(media.error?.message).toMatch(/format/i);
+      media.destroy();
+    });
+
+    it('composes from the code when a cause carries no stored copy', async () => {
+      // A composition can supply its own reporter and omit copy. The code and
+      // track type still support the generic form, which beats the verdict's.
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.message).toMatch(/protected/i);
+      media.destroy();
+    });
+
+    it('names the adapter itself by default, so copy says which engine refused', async () => {
+      expect(SimpleHlsMediaElement.playerSoftwareName).toBe('simple-hls-video');
+
+      const media = new TestMedia();
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error?.message).toMatch(/^simple-hls-video /);
+      media.destroy();
+    });
+
+    it('lets an explicit config name win over the adapter’s static', async () => {
+      const media = new (class extends SimpleHlsMediaMixin(EventTarget) {})({
+        config: { playerSoftwareName: 'Mux Player' },
+      });
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error?.message).toMatch(/^Mux Player /);
+      media.destroy();
+    });
+
+    it('honours a subclass overriding the static', async () => {
+      // Read through `this.constructor`, not the mixin closure, so a host that
+      // renames the engine gets its name in the copy without touching config.
+      class Renamed extends SimpleHlsMediaMixin(EventTarget) {
+        static override get playerSoftwareName(): string {
+          return 'Acme Player';
+        }
+      }
+      const media = new Renamed();
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error?.message).toMatch(/^Acme Player /);
       media.destroy();
     });
   });
