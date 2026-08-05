@@ -46,7 +46,10 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
-import { createReportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
+import {
+  type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditions,
+} from '../../primitives/report-track-conditions';
 
 // ============================================================================
 // Audio-Only HLS Engine State & Context
@@ -149,12 +152,6 @@ export type SimpleHlsAudioOnlyEngineSignals = {
  */
 export interface SimpleHlsAudioOnlyEngineConfig
   extends ShareSignalsConfig<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
-  /**
-   * What this player calls itself, used as the sentence subject in the reported
-   * conditions' viewer-facing copy. Defaults to the adapter's own
-   * `playerSoftwareName` static. See `playback/primitives/error-messages`.
-   */
-  playerSoftwareName?: string;
   preferredAudioLanguage?: string;
   /**
    * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks`
@@ -164,6 +161,22 @@ export interface SimpleHlsAudioOnlyEngineConfig
    * be inert for audio-only playback.
    */
   canPlayTrack?: CanPlayTrack;
+  /**
+   * Conditions reported about each rendition as it resolves — the *causes* behind
+   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
+   * and encryption; supply your own to report a different set (a provider that
+   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /**
+   * Sentence subject for the viewer-facing copy on reported conditions
+   * ("Mux Player can’t play MPEG-TS video."). Spread through to `resolve-track`,
+   * which composes the copy where the rendition is in hand. Defaults to the
+   * adapter's own `playerSoftwareName` static; see
+   * `playback/primitives/error-messages`.
+   */
+  playerSoftwareName?: string;
   resolveDuration?: PresentationDurationResolver;
   parsePresentation?: ParsePresentation;
   forwardBuffer?: Partial<ForwardBufferConfig>;
@@ -238,7 +251,7 @@ export function createHlsAudioOnlyEngine(
     // with `canPlayType`, which answers `'maybe'` on an audio element too.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
-    reportTrackConditions: createReportUnsupportedTrackConditions(config.playerSoftwareName),
+    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     // Non-zero-PTS relocation (spike): pair the audio loader with the relocation steps

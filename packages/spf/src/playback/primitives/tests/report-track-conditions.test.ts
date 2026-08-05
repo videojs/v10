@@ -6,7 +6,7 @@ import {
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
 } from '../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack, type TrackType } from '../../../media/types';
-import { createReportUnsupportedTrackConditions, reportUnsupportedTrackConditions } from '../report-track-conditions';
+import { reportUnsupportedTrackConditions } from '../report-track-conditions';
 
 const track = (type: TrackType, opts: { mimeType?: string; encrypted?: boolean } = {}): ResolvedTrack =>
   ({
@@ -72,7 +72,7 @@ describe('reportUnsupportedTrackConditions', () => {
 
   describe('viewer-facing copy', () => {
     const message = (t: ResolvedTrack, name?: string) =>
-      createReportUnsupportedTrackConditions(name)(t).map((error) => error.message);
+      reportUnsupportedTrackConditions(t, { playerSoftwareName: name }).map((error) => error.message);
 
     it('names the actual container, which only this reporter can', () => {
       // The mimeType exists here and nowhere downstream, so this is the only
@@ -91,7 +91,7 @@ describe('reportUnsupportedTrackConditions', () => {
       expect(message(track('audio', { encrypted: true }))).toEqual(['This player can’t play DRM-protected audio.']);
     });
 
-    it('names the configured player software as the subject', () => {
+    it('names a caller-supplied player software as the subject', () => {
       expect(message(track('video', { mimeType: 'video/mp2t' }), 'Mux Player')).toEqual([
         'Mux Player can’t play MPEG-TS video.',
       ]);

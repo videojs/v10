@@ -31,7 +31,19 @@ import { causeMessage } from './error-messages';
  * Conditions worth reporting about a just-resolved track. Return an empty array
  * (or omit the seam) to report nothing.
  */
-export type ReportTrackConditions = (track: ResolvedTrack) => readonly SvtaError[];
+export type ReportUnsupportedTrackConditions = (
+  track: ResolvedTrack,
+  options?: ReportUnsupportedTrackConditionsOptions
+) => readonly SvtaError[];
+
+/** Per-call options for a {@link ReportUnsupportedTrackConditions} implementation. */
+export interface ReportUnsupportedTrackConditionsOptions {
+  /**
+   * Sentence subject for the viewer-facing copy composed here. Defaults to
+   * `DEFAULT_PLAYER_SOFTWARE_NAME`; see {@link causeMessage}.
+   */
+  playerSoftwareName?: string;
+}
 
 /** Unsupported-format code per type; text has none — absent captions aren't a failure. */
 const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
@@ -50,8 +62,7 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * every non-fMP4 container, so naming MPEG-TS rather than "some format" needs
  * `track.mimeType`, which nothing downstream sees. A verdict built from these
  * reuses the copy when its causes agree — see `resolveFatalMessage` in the
- * adapter. `playerSoftwareName` becomes the sentence subject; see
- * {@link causeMessage}.
+ * adapter.
  *
  * Both carry `trackType`, redundantly for the format codes (1004/1005 are
  * already per type) but necessarily for 4008, which isn't: SVTA has one
@@ -59,30 +70,32 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * per-type verdict needs to tell an encrypted audio rendition from an
  * encrypted video one, so the tag goes on every condition rather than only
  * where it's load-bearing.
+ *
+ * `options` is optional so a caller with nothing to say can omit it. The seam's
+ * call site in `resolve-track` threads `playerSoftwareName` from engine config,
+ * which the adapter defaults to its own static.
  */
-export function createReportUnsupportedTrackConditions(playerSoftwareName?: string): ReportTrackConditions {
-  return (track) => {
-    const conditions: SvtaError[] = [];
-    const data = { trackType: track.type, trackId: track.id };
+export function reportUnsupportedTrackConditions(
+  track: ResolvedTrack,
+  options?: ReportUnsupportedTrackConditionsOptions
+): readonly SvtaError[] {
+  const conditions: SvtaError[] = [];
+  const data = { trackType: track.type, trackId: track.id };
 
-    const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
-    if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
-      conditions.push({
-        code: formatCode,
-        message: causeMessage(formatCode, track, playerSoftwareName),
-        data: { ...data, mimeType: track.mimeType },
-      });
-    }
-    if (getMediaPlaylistMetadata(track)?.encrypted) {
-      conditions.push({
-        code: SVTA_UNSUPPORTED_DRM_SYSTEM,
-        message: causeMessage(SVTA_UNSUPPORTED_DRM_SYSTEM, track, playerSoftwareName),
-        data,
-      });
-    }
-    return conditions;
-  };
+  const formatCode = UNSUPPORTED_FORMAT_CODE[track.type];
+  if (formatCode !== undefined && NON_FMP4_CONTAINER_MIMES.has(track.mimeType)) {
+    conditions.push({
+      code: formatCode,
+      message: causeMessage(formatCode, track, options?.playerSoftwareName),
+      data: { ...data, mimeType: track.mimeType },
+    });
+  }
+  if (getMediaPlaylistMetadata(track)?.encrypted) {
+    conditions.push({
+      code: SVTA_UNSUPPORTED_DRM_SYSTEM,
+      message: causeMessage(SVTA_UNSUPPORTED_DRM_SYSTEM, track, options?.playerSoftwareName),
+      data,
+    });
+  }
+  return conditions;
 }
-
-/** {@link createReportUnsupportedTrackConditions} with the default player name. */
-export const reportUnsupportedTrackConditions: ReportTrackConditions = createReportUnsupportedTrackConditions();

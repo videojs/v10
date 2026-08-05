@@ -11,7 +11,7 @@ import { applyContainerMimeType, findTrack, updateTrackInPresentation } from '..
 import { fetchResolvableText as defaultFetchResolvableText, type FetchText } from '../../network/fetch';
 import { failoverFetch } from '../primitives/failover-fetch';
 import type { GateFirstParse } from '../primitives/gate-first-parse';
-import type { ReportTrackConditions } from '../primitives/report-track-conditions';
+import type { ReportUnsupportedTrackConditions } from '../primitives/report-track-conditions';
 import { AUDIO_TYPE_CONFIG, TEXT_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 import { type ErrorEmitterState, emitError } from './collect-errors';
 
@@ -71,7 +71,9 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
    * Report conditions found in the parsed playlist (see
    * `primitives/report-track-conditions`); absent → report nothing.
    */
-  reportTrackConditions?: ReportTrackConditions;
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /** Sentence subject for the reported conditions' viewer-facing copy. */
+  playerSoftwareName?: string;
 }
 
 /**
@@ -86,7 +88,9 @@ interface ResolveTrackConfig {
   /** Live media-playlist re-run policy; absent → resolve once. */
   reschedule?: Reschedule<ResolvedTrack>;
   /** Playlist-derived condition reporting (see `primitives/report-track-conditions`). */
-  reportTrackConditions?: ReportTrackConditions;
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /** Sentence subject for the reported conditions' viewer-facing copy. */
+  playerSoftwareName?: string;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
@@ -97,7 +101,8 @@ function setupTrackResolution<K extends SelectedTrackKey>({
     fetchResolvableText = defaultFetchResolvableText,
     gateFirstParse,
     reschedule,
-    reportTrackConditions,
+    reportUnsupportedTrackConditions,
+    playerSoftwareName,
   },
 }: {
   // Widened with the optional `errors` slot: reporting writes through it without
@@ -219,8 +224,10 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // committing it. Causes only — one unplayable rendition doesn't
                   // make the source unplayable, so the verdict stays with
                   // track-switching's empty-candidate branch.
-                  if (reportTrackConditions) {
-                    for (const condition of reportTrackConditions(mediaTrack as ResolvedTrack)) {
+                  if (reportUnsupportedTrackConditions) {
+                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack, {
+                      playerSoftwareName,
+                    })) {
                       emitError(state, condition);
                     }
                   }
