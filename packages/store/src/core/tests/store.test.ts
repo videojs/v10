@@ -297,19 +297,24 @@ describe('store', () => {
       expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
     });
 
-    it('keeps lower-precedence source state live and notifies for hidden input changes', () => {
+    it('keeps lower-precedence source state live without publishing an unchanged public snapshot', () => {
       const store = createStore<MockMedia>()(responsiveSlice, { config: { value: 'user' } });
       const listener = vi.fn();
       store.subscribe(listener);
+      const publicSnapshot = store.state;
 
       store.setInternal('latest media');
       flush();
 
       expect(store.resolved).toBe('user');
-      expect(listener).toHaveBeenCalledOnce();
+      expect(store.state).toBe(publicSnapshot);
+      expect(listener).not.toHaveBeenCalled();
 
       store.setValue(null);
+      flush();
+
       expect(store.resolved).toBe('latest media');
+      expect(listener).toHaveBeenCalledOnce();
     });
 
     it('resets source state on detach while preserving config', () => {
@@ -375,6 +380,42 @@ describe('store', () => {
   });
 
   describe('error handling', () => {
+    it('reports event-driven derived errors without committing the update', () => {
+      const onError = vi.fn();
+      const listener = vi.fn();
+      const invalidValueError = new Error('invalid value');
+      const slice = defineSlice<MockMedia>()({
+        state: () => ({ value: 1 }),
+        derived: {
+          doubled: ({ get }) => {
+            const { value } = get();
+            if (value < 0) throw invalidValueError;
+            return value * 2;
+          },
+        },
+        attach({ target, signal, set }) {
+          const sync = () => set({ value: target.volume });
+          target.addEventListener('volumechange', sync);
+          signal.addEventListener('abort', () => target.removeEventListener('volumechange', sync));
+        },
+      });
+      const store = createStore<MockMedia>()(slice, { onError });
+      const media = new MockMedia();
+      store.attach(media);
+      store.subscribe(listener);
+      const snapshot = store.state;
+
+      media.volume = -1;
+      media.dispatchEvent(new Event('volumechange'));
+      flush();
+
+      expect(onError).toHaveBeenCalledOnce();
+      expect(onError).toHaveBeenCalledWith({ store, error: invalidValueError });
+      expect(store.state).toBe(snapshot);
+      expect(store.state).toMatchObject({ value: 1, doubled: 2 });
+      expect(listener).not.toHaveBeenCalled();
+    });
+
     it('calls onError for action errors', () => {
       const onError = vi.fn();
 

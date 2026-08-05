@@ -125,6 +125,8 @@ export function createProviderMixin<Store extends PlayerStore>(
       protected override willUpdate(changed: PropertyValues): void {
         super.willUpdate(changed);
 
+        // Provider config flows one way: only actual reactive property changes
+        // write to the store. Store-side writers do not reflect back here.
         const patch: Record<string, unknown> = {};
         let hasConfigChange = false;
 

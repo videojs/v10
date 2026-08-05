@@ -161,7 +161,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       // Derive before committing so a thrown formula leaves every snapshot unchanged.
       const nextDerived = derive(patched.next, configState);
       sourceState = patched.next;
-      state.replace(publish(sourceState, nextDerived), true);
+      state.replace(publish(sourceState, nextDerived));
     }
 
     function setConfig(partial: ConfigPatch<Config>): void {
@@ -171,7 +171,7 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
       // Derive before committing so a thrown formula leaves every snapshot unchanged.
       const nextDerived = derive(sourceState, patched.next);
       configState = patched.next;
-      state.replace(publish(sourceState, nextDerived), true);
+      state.replace(publish(sourceState, nextDerived));
     }
 
     function attach(newTarget: Target): () => void {
@@ -185,7 +185,15 @@ export function createStore<Target = unknown>(): StoreFactory<Target> {
         target: newTarget,
         signal: signals.base,
         get: () => sourceState,
-        set: setSource,
+        // Attach itself has an error boundary, but event listeners keep this
+        // context after attach returns and must report update errors too.
+        set: (partial) => {
+          try {
+            setSource(partial);
+          } catch (error) {
+            reportError(error);
+          }
+        },
         reportError,
         store: {
           get state() {

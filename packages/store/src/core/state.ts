@@ -15,7 +15,7 @@ export interface State<T> {
 
 export interface WritableState<T> extends State<T> {
   patch: (partial: Partial<T>) => void;
-  replace: (next: T, forceNotify?: boolean) => void;
+  replace: (next: T) => void;
 }
 
 let isFlushScheduled = false;
@@ -65,13 +65,15 @@ class StateContainer<T> implements WritableState<T> {
     }
 
     if (changed) {
-      this.replace(next);
+      this.#current = Object.freeze(next);
+      this.#markPending();
     }
   }
 
-  replace(next: T, forceNotify = false): void {
-    const changed = forceNotify || !shallowEqual(this.#current, next);
-    if (!changed) return;
+  replace(next: T): void {
+    // Internal source/config inputs can change without changing the public
+    // snapshot. Preserve its identity and do not notify subscribers in that case.
+    if (shallowEqual(this.#current, next)) return;
 
     this.#current = Object.freeze({ ...next });
     this.#markPending();
