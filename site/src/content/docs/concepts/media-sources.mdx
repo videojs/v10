@@ -243,7 +243,7 @@ video.source = {
 ```
 </FrameworkCase>
 
-Only the hls.js (MSE) engine plays DRM-protected media, so native HLS playback ignores `keySystems` and warns in development. `certificateUrl` points at the server (application) certificate FairPlay requires; Widevine and PlayReady ignore it. Read the negotiated system back from the element's `drmType`, which updates on `drmtypechange`. Anything hls.js exposes but Video.js doesn't normalize — a custom `requestMediaKeySystemAccessFunc`, say — still goes under `engine`, and wins over what `keySystems` derives.
+Only the hls.js (MSE) engine plays DRM-protected media, so native HLS playback ignores `keySystems` and warns in development. `certificateUrl` points at the server (application) certificate FairPlay requires; Widevine and PlayReady ignore it. Which system a browser ends up using is its own choice — name every one you have a license server for. Anything hls.js exposes but Video.js doesn't normalize — a custom `requestMediaKeySystemAccessFunc`, say — still goes under `engine`, and wins over what `keySystems` derives.
 
 ## Mux sources name a playback ID
 

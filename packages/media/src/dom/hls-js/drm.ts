@@ -21,8 +21,6 @@ export type DrmConfig = { [Type in DrmType]?: DrmSystemConfig | undefined };
 export interface HlsJsMediaDrmProps {
   /** License servers per DRM system, or `null` when playback is not DRM-protected. */
   drm: DrmConfig | null;
-  /** DRM system negotiated for the current session, or `null` before a key system is selected. */
-  readonly drmType: DrmType | null;
 }
 
 const DRM_TYPES = ['fairplay', 'widevine', 'playready'] as const;
@@ -40,18 +38,6 @@ const KEY_SYSTEMS = {
 const HARDWARE_ROBUSTNESS = 'HW_SECURE_ALL';
 
 /**
- * Map an EME key system id to its common name. Matches on substrings because
- * key systems are versioned (`com.apple.fps.1_0`) and vendor-prefixed
- * (`com.widevine.alpha.experiment`).
- */
-export function toDrmType(keySystem: string): DrmType | undefined {
-  if (keySystem.includes('fps')) return 'fairplay';
-  if (keySystem.includes('playready')) return 'playready';
-  if (keySystem.includes('widevine')) return 'widevine';
-  return undefined;
-}
-
-/**
  * Value-based identity for a DRM config. Lets callers compare configs cheaply
  * so a new object literal holding the same license servers (e.g. an inline
  * React prop) does not force an engine reload.
@@ -66,8 +52,7 @@ export function toDrmConfigKey(drm?: DrmConfig | null): string {
 }
 
 /**
- * Configures hls.js EME playback from a `DrmConfig` of license servers, and
- * reports the key system that was ultimately negotiated through `drmType`.
+ * Configures hls.js EME playback from a `DrmConfig` of license servers.
  *
  * - Enables `emeEnabled` and maps each configured system to its EME key system
  *   id, only when DRM is actually configured, so `source.engine` stays
@@ -76,13 +61,10 @@ export function toDrmConfigKey(drm?: DrmConfig | null): string {
  *   robustness the browser offers.
  * - Defers to matching options in `source.engine` (`drmSystems`,
  *   `requestMediaKeySystemAccessFunc`), which remain a full escape hatch.
- *
- * @fires drmtypechange - Fired when the negotiated DRM system changes. Read `drmType` for the new value.
  */
 export function HlsJsMediaDrmMixin<Base extends Constructor<HlsEngineHost>>(BaseClass: Base) {
   class HlsJsMediaDrm extends (BaseClass as Constructor<HlsEngineHost>) {
     #drm: DrmConfig | null = null;
-    #drmType: DrmType | null = null;
     #applied = false;
 
     constructor(...args: any[]) {
@@ -94,8 +76,6 @@ export function HlsJsMediaDrmMixin<Base extends Constructor<HlsEngineHost>>(Base
       this.#apply();
 
       this.engine?.on(Hls.Events.MANIFEST_LOADING, () => this.#apply());
-      this.engine?.on(Hls.Events.MEDIA_DETACHED, () => this.#reset());
-      this.engine?.on(Hls.Events.DESTROYING, () => this.#reset());
 
       if (__DEV__) {
         this.engine?.on(Hls.Events.ERROR, (_event, data) => {
@@ -116,20 +96,14 @@ export function HlsJsMediaDrmMixin<Base extends Constructor<HlsEngineHost>>(Base
       this.#apply();
     }
 
-    get drmType(): DrmType | null {
-      return this.#drmType;
-    }
-
     #requestKeySystemAccess: MediaKeyFunc = (keySystem, supportedConfigurations) => {
-      const drmType = toDrmType(keySystem);
+      // Matched loosely: key systems are versioned (`com.apple.fps.1_0`) and
+      // vendor-prefixed (`com.widevine.alpha.experiment`) in the wild.
+      const configurations = keySystem.includes('widevine')
+        ? withHardwareRobustness(supportedConfigurations)
+        : supportedConfigurations;
 
-      const configurations =
-        drmType === 'widevine' ? withHardwareRobustness(supportedConfigurations) : supportedConfigurations;
-
-      return navigator.requestMediaKeySystemAccess(keySystem, configurations).then((access) => {
-        this.#setDrmType(drmType ?? null);
-        return access;
-      });
+      return navigator.requestMediaKeySystemAccess(keySystem, configurations);
     };
 
     #apply(): void {
@@ -159,17 +133,6 @@ export function HlsJsMediaDrmMixin<Base extends Constructor<HlsEngineHost>>(Base
       engine.config.requestMediaKeySystemAccessFunc =
         userConfig.requestMediaKeySystemAccessFunc ?? Hls.DefaultConfig.requestMediaKeySystemAccessFunc;
       this.#applied = false;
-      this.#setDrmType(null);
-    }
-
-    #reset(): void {
-      this.#setDrmType(null);
-    }
-
-    #setDrmType(value: DrmType | null): void {
-      if (this.#drmType === value) return;
-      this.#drmType = value;
-      this.dispatchEvent(new Event('drmtypechange'));
     }
 
     #toDrmSystems(): DRMSystemsConfiguration | null {

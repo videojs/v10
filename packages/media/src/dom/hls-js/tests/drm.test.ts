@@ -2,7 +2,7 @@ import Hls from 'hls.js';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { HTMLVideoElementHost } from '../../video-host';
-import { HlsJsMediaDrmMixin, toDrmConfigKey, toDrmType } from '../drm';
+import { HlsJsMediaDrmMixin, toDrmConfigKey } from '../drm';
 
 class FakeHost extends HTMLVideoElementHost {
   engine: Hls | null;
@@ -100,20 +100,15 @@ describe('HlsJsMediaDrmMixin', () => {
     expect(engine.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE.licenseUrl } });
   });
 
-  it('restores the user hls.js config when DRM is cleared', async () => {
-    stubKeySystemAccess();
+  it('restores the user hls.js config when DRM is cleared', () => {
     const engine = createEngine();
     const host = new HlsJsMediaDrm({ engine, drm: { widevine: WIDEVINE } });
-
-    await engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, []);
-    expect(host.drmType).toBe('widevine');
 
     host.drm = null;
 
     expect(engine.config.emeEnabled).toBe(false);
     expect(engine.config.drmSystems).toEqual({});
     expect(engine.config.requestMediaKeySystemAccessFunc).toBe(Hls.DefaultConfig.requestMediaKeySystemAccessFunc);
-    expect(host.drmType).toBeNull();
   });
 
   it('re-applies on MANIFEST_LOADING', () => {
@@ -178,55 +173,22 @@ describe('HlsJsMediaDrmMixin', () => {
       expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', configurations);
     });
 
-    it('reports the negotiated system and fires drmtypechange', async () => {
-      stubKeySystemAccess();
-      const engine = createEngine();
-      const host = new HlsJsMediaDrm({ engine, drm: { fairplay: FAIRPLAY } });
-
-      const handler = vi.fn();
-      host.addEventListener('drmtypechange', handler);
-
-      expect(host.drmType).toBeNull();
-
-      await engine.config.requestMediaKeySystemAccessFunc!('com.apple.fps.1_0' as any, []);
-
-      expect(host.drmType).toBe('fairplay');
-      expect(handler).toHaveBeenCalledOnce();
-    });
-
-    it('does not report a system when access is denied', async () => {
+    it('propagates a denied request', async () => {
       const requestMediaKeySystemAccess = stubKeySystemAccess();
       requestMediaKeySystemAccess.mockRejectedValueOnce(new Error('unsupported'));
 
       const engine = createEngine();
-      const host = new HlsJsMediaDrm({ engine, drm: { widevine: WIDEVINE } });
+      new HlsJsMediaDrm({ engine, drm: { widevine: WIDEVINE } });
 
       await expect(engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, [])).rejects.toThrow(
         'unsupported'
       );
-      expect(host.drmType).toBeNull();
-    });
-
-    it('clears the negotiated system on MEDIA_DETACHED and DESTROYING', async () => {
-      stubKeySystemAccess();
-
-      for (const event of [Hls.Events.MEDIA_DETACHED, Hls.Events.DESTROYING]) {
-        const engine = createEngine();
-        const host = new HlsJsMediaDrm({ engine, drm: { widevine: WIDEVINE } });
-
-        await engine.config.requestMediaKeySystemAccessFunc!('com.widevine.alpha' as any, []);
-        expect(host.drmType).toBe('widevine');
-
-        (engine as any).emit(event);
-        expect(host.drmType).toBeNull();
-      }
     });
   });
 
   it('is inert without an engine', () => {
     const host = new HlsJsMediaDrm({ engine: null, drm: { widevine: WIDEVINE } });
     expect(host.drm).toEqual({ widevine: WIDEVINE });
-    expect(host.drmType).toBeNull();
   });
 
   it('warns in dev when FairPlay has no certificate URL', () => {
@@ -236,16 +198,6 @@ describe('HlsJsMediaDrmMixin', () => {
     new HlsJsMediaDrm({ engine, drm: { fairplay: { licenseUrl: FAIRPLAY.licenseUrl } } });
 
     expect(warn).toHaveBeenCalledWith(expect.stringContaining('certificateUrl'));
-  });
-});
-
-describe('toDrmType', () => {
-  it('maps versioned and prefixed key systems to their common name', () => {
-    expect(toDrmType('com.apple.fps')).toBe('fairplay');
-    expect(toDrmType('com.apple.fps.1_0')).toBe('fairplay');
-    expect(toDrmType('com.widevine.alpha')).toBe('widevine');
-    expect(toDrmType('com.microsoft.playready.recommendation')).toBe('playready');
-    expect(toDrmType('org.w3.clearkey')).toBeUndefined();
   });
 });
 

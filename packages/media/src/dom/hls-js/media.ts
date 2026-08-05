@@ -75,7 +75,6 @@ class HlsMediaEvent extends Event {}
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
- * @fires drmtypechange - Fired when the negotiated DRM system changes. Read `drmType` for the new value.
  */
 export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #delegate: HlsJsOnlyMedia | NativeHlsMedia | null = null;
@@ -144,15 +143,6 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   /** Selectable audio variants, populated only while the hls.js (MSE) engine is active; otherwise `undefined`. */
   get audioRenditions() {
     return this.#delegate instanceof HlsJsOnlyMedia ? this.#delegate.audioRenditions : undefined;
-  }
-
-  /**
-   * DRM system negotiated for the current session (`'fairplay'` /
-   * `'widevine'` / `'playready'`). `null` until a key system is selected, and
-   * for unprotected or natively played media.
-   */
-  get drmType() {
-    return this.#delegate instanceof HlsJsOnlyMedia ? this.#delegate.drmType : null;
   }
 
   /**

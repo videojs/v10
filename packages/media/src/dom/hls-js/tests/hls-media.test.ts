@@ -249,7 +249,6 @@ describe('HlsJsMedia', () => {
 
       expect(media.engine!.config.emeEnabled).toBe(true);
       expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
-      expect(media.drmType).toBeNull();
     });
 
     it('leaves EME disabled without `source.keySystems`', () => {
@@ -281,7 +280,7 @@ describe('HlsJsMedia', () => {
       });
     });
 
-    it('warns and reports no DRM system for native playback', () => {
+    it('warns and builds no engine for native playback', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
@@ -289,7 +288,6 @@ describe('HlsJsMedia', () => {
       media.load();
 
       expect(media.engine).toBeNull();
-      expect(media.drmType).toBeNull();
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('source.keySystems'));
     });
   });
