@@ -10,6 +10,11 @@ export interface SandboxSource {
   live?: boolean;
   /** DRM protected, so only a preset that can license it should offer it. */
   drm?: boolean;
+  /**
+   * Ready-made poster image URL, for a source with no Mux playback ID to derive
+   * one from. Takes precedence over the derived URL.
+   */
+  poster?: string;
   /** Structured source, for what a plain `url` cannot express. Takes precedence. */
   source?: MuxSource;
 }
@@ -108,6 +113,7 @@ const SOURCE_MAP = {
     type: 'hls',
     subType: 'mp4',
     drm: true,
+    poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
     source: {
       src: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
       engine: {
@@ -214,6 +220,9 @@ function imageQuery(id: SourceId, kind: 'poster' | 'storyboard', params?: string
 }
 
 export function getPosterSrc(source: SourceId): string | undefined {
+  const { poster } = SOURCES[source];
+  if (poster) return poster;
+
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/thumbnail.jpg${imageQuery(source, 'poster')}` : undefined;
 }
