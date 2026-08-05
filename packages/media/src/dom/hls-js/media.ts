@@ -277,7 +277,10 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       this.#engineDestroy();
       this.#prevEngineConfigKey = this.#engineConfigKey();
 
-      const { type, preferPlayback, keySystems, engine } = this.source ?? {};
+      // Read the stored source, not the `source` getter: subclasses override the
+      // getter to return what was assigned to them, while the fields below come
+      // from what they resolved and handed down (Mux derives `keySystems` here).
+      const { type, preferPlayback, keySystems, engine } = this.#source ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
 
@@ -332,7 +335,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
    * whenever the object identity did.
    */
   #engineConfigKey() {
-    const { type, preferPlayback, keySystems, engine } = this.source ?? {};
+    const { type, preferPlayback, keySystems, engine } = this.#source ?? {};
     return {
       engine,
       preferPlayback,

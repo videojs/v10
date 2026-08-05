@@ -1,6 +1,13 @@
 import { describe, expect, it, vi } from 'vitest';
-import { HlsJsMedia } from '../../hls-js';
+import { Hls, HlsJsMedia } from '../../hls-js';
 import { MuxMedia } from '..';
+
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
+// like a real JWT, so it survives a query string untouched.
+function fakeJwt(payload: Record<string, unknown>): string {
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
+}
 
 // `source` and `src` request a load on a microtask, so give it a chance to run.
 function flushLoad() {
@@ -361,5 +368,96 @@ describe('MuxMedia', () => {
 
     expect(onSourceChange).not.toHaveBeenCalled();
     expect(media.source).toEqual({ playbackId: 'abc123', poster: { time: 5 } });
+  });
+
+  describe('drm', () => {
+    const DRM_TOKEN = fakeJwt({ aud: 'd' });
+    const PLAYBACK_TOKEN = fakeJwt({ aud: 'v' });
+
+    function setupMse() {
+      vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+      const media = new MuxMedia();
+      media.attach(document.createElement('video'));
+      return media;
+    }
+
+    it('configures the hls.js engine from a DRM token', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', playback: { token: PLAYBACK_TOKEN }, drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.apple.fps': {
+          licenseUrl: `https://license.mux.com/license/fairplay/abc123?token=${DRM_TOKEN}`,
+          serverCertificateUrl: `https://license.mux.com/appcert/fairplay/abc123?token=${DRM_TOKEN}`,
+        },
+        'com.widevine.alpha': { licenseUrl: `https://license.mux.com/license/widevine/abc123?token=${DRM_TOKEN}` },
+        'com.microsoft.playready': {
+          licenseUrl: `https://license.mux.com/license/playready/abc123?token=${DRM_TOKEN}`,
+        },
+      });
+    });
+
+    it('leaves EME alone without a DRM token', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123' };
+      await flushLoad();
+
+      expect(media.engine!.config.emeEnabled).toBe(false);
+    });
+
+    it('keeps the Mux token out of the source handed to the engine', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      // `drm` stays Mux's own authoring input; only the derived license servers
+      // reach the HLS layer.
+      expect(media.source).toEqual({ playbackId: 'abc123', drm: { token: DRM_TOKEN } });
+    });
+
+    it('lets an explicit keySystems override the derived one', async () => {
+      const media = setupMse();
+      media.source = {
+        playbackId: 'abc123',
+        drm: { token: DRM_TOKEN },
+        keySystems: { widevine: { licenseUrl: 'https://drm.example/license' } },
+      };
+      await flushLoad();
+
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' },
+      });
+    });
+
+    it('does not reload for an equivalent DRM token', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      const loadstart = vi.fn();
+      media.addEventListener('loadstart', loadstart);
+
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      expect(loadstart).not.toHaveBeenCalled();
+    });
+
+    it('reloads when the DRM token changes', async () => {
+      const media = setupMse();
+      media.source = { playbackId: 'abc123', drm: { token: DRM_TOKEN } };
+      await flushLoad();
+
+      const loadstart = vi.fn();
+      media.addEventListener('loadstart', loadstart);
+
+      media.source = { playbackId: 'abc123', drm: { token: fakeJwt({ aud: 'd', exp: 1 }) } };
+      await flushLoad();
+
+      expect(loadstart).toHaveBeenCalled();
+    });
   });
 });

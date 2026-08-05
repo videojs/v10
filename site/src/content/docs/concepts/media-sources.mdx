@@ -292,6 +292,37 @@ video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 }
 
 `MuxVideo` uses the storyboard itself, adding the thumbnail `<track>` for you so hover previews work without extra markup. Live streams have no storyboard, so the track is dropped once the stream type is known, and signed playback without a matching storyboard token adds none.
 
+### DRM protected sources
+
+Mux signs one license token per playback ID and serves FairPlay, Widevine, and PlayReady from URLs derived from it, so `source.drm` takes that token and nothing else. It fills in the `keySystems` above for you:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<MuxVideo
+  source={{
+    playbackId,
+    playback: { token: playbackToken },
+    drm: { token: drmToken },
+  }}
+  playsInline
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = {
+  playbackId,
+  playback: { token: playbackToken },
+  drm: { token: drmToken },
+};
+```
+</FrameworkCase>
+
+DRM playback is always signed, so a `playback.token` belongs alongside it — and `poster.token` / `storyboard.token` for the images. Each is scoped to a different audience, so they are four separate tokens rather than one reused four times. Sign them on your server; see [Mux's DRM guide](https://www.mux.com/docs/guides/protect-videos-with-drm) for how.
+
+A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. Naming `keySystems` yourself takes precedence, for content Mux doesn't license.
+
 `source.poster` gets no such treatment — it's only data, and nothing applies it to the media. Both URLs are readable from `contentData`, keyed by what each one describes:
 
 <FrameworkCase frameworks={["html"]}>

@@ -1,5 +1,6 @@
 import { HlsJsMedia } from '../hls-js';
 import {
+  createMuxKeySystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
@@ -58,6 +59,10 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * custom domain, and `playback` params (appended as `snake_case` query
    * params). A `playback.token` replaces all other params — signed URLs bake
    * them into the token. Engine options live under `engine`.
+   *
+   * A `drm.token` derives the inherited `keySystems` — Mux's FairPlay,
+   * Widevine, and PlayReady license servers for this playback ID. Naming
+   * `keySystems` yourself overrides that, for content Mux does not license.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -71,10 +76,14 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
     this.#source = source;
 
-    // Hand the same source down with `src` resolved from the playback ID. The
-    // base keeps `src` in step, decides whether playback has to reload, and
-    // dispatches `sourcechange`.
-    super.source = source && { ...source, src: createMuxVideoURL(source) ?? source.src ?? '' };
+    // Hand the same source down with `src` and `keySystems` resolved from the
+    // playback ID. The base keeps `src` in step, decides whether playback has to
+    // reload, and dispatches `sourcechange`.
+    super.source = source && {
+      ...source,
+      src: createMuxVideoURL(source) ?? source.src ?? '',
+      keySystems: source.keySystems ?? createMuxKeySystems(source),
+    };
   }
 
   /**

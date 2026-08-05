@@ -5,5 +5,7 @@ import { SOURCES, type SourceId } from './sources';
 const MUX_PLAYBACK_ID = /^https:\/\/stream\.[^/]+\/([\w-]+?)(?:\.m3u8|\/[\w-]+\.mp4)/;
 
 export function getMuxAssetId(source: SourceId): string | undefined {
-  return SOURCES[source].url.match(MUX_PLAYBACK_ID)?.[1];
+  // A structured source names the playback ID outright; a plain URL hides it.
+  const { source: muxSource, url } = SOURCES[source];
+  return muxSource?.playbackId ?? url?.match(MUX_PLAYBACK_ID)?.[1];
 }

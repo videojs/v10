@@ -45,7 +45,7 @@ function App() {
           className="aspect-video max-w-4xl mx-auto"
         >
           <SimpleHlsVideo
-            src={SOURCES[source].url}
+            src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

@@ -32,7 +32,7 @@ function App() {
       <VideoProvider>
         <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <DashVideo
-            src={SOURCES[source].url}
+            src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

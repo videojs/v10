@@ -87,7 +87,7 @@ function rebuildAdapter(): void {
   adapter = new BackgroundVideoMediaElement({ config: { maxResolution: currentMaxResolution } });
   // src before attach: the engine starts resolving the presentation before
   // play() (called inside attach) runs, so no teardown races the play promise.
-  adapter.src = SOURCES[currentSourceId].url;
+  adapter.src = SOURCES[currentSourceId].url ?? '';
   adapter.attach(video);
 
   (window as any).adapter = adapter;
@@ -124,7 +124,7 @@ loadBtn.addEventListener('click', () => {
   // Reassign src to cycle the presentation through
   // `unresolved → resolved`. That re-fires the picker, which reads the
   // current `maxResolution` via the adapter's closure.
-  adapter.src = SOURCES[currentSourceId].url;
+  adapter.src = SOURCES[currentSourceId].url ?? '';
 });
 
 // ── Diagnostic strip + rendition picker ──────────────────────────────────────

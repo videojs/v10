@@ -1,7 +1,7 @@
 import type { SKINS } from '@app/constants';
 import { SANDBOX_LOCALE_OPTION_GROUPS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import { PRELOAD_VALUES, type PreloadValue } from '@app/shared/sandbox-listener';
-import type { SourceId } from '@app/shared/sources';
+import type { SandboxSource, SourceId } from '@app/shared/sources';
 import type { Platform, Preset, Skin, Styling } from '@app/types';
 import { useEffect, useId, useRef, useState } from 'react';
 
@@ -35,7 +35,7 @@ type NavbarProps = {
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
-  sources: Record<SourceId, { label: string; url: string; type: string; subType?: string }>;
+  sources: Record<SourceId, SandboxSource>;
 };
 
 const SKIN_OPTIONS: readonly Skin[] = ['default', 'minimal'] satisfies readonly (typeof SKINS)[number][];

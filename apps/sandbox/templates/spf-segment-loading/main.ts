@@ -65,7 +65,7 @@ const HARNESS_PRESETS: Preset[] = [
 const PRESETS: Preset[] = [
   ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls').map((id) => {
     const source = SOURCES[id];
-    const preset: Preset = { label: source.label, url: source.url };
+    const preset: Preset = { label: source.label, url: source.url ?? '' };
     if ('subType' in source && source.subType === 'ts') preset.unsupported = 'TS — unsupported';
     return preset;
   }),

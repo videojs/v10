@@ -45,7 +45,7 @@ function App() {
           className="w-full aspect-video max-w-4xl mx-auto"
         >
           <NativeHlsVideo
-            src={SOURCES[source].url}
+            src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

@@ -34,7 +34,7 @@ function App() {
       <AudioProvider>
         <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
           <MuxAudio
-            src={SOURCES[source].url}
+            src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

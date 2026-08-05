@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  createMuxKeySystems,
   createMuxPosterURL,
   createMuxQuery,
   createMuxStoryboardURL,
@@ -7,9 +8,10 @@ import {
   parseMuxVideoURL,
 } from '../utils';
 
-// Header `{"alg":"HS256"}`, body sets `aud`, empty signature.
+// Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
+// like a real JWT, so it survives a query string untouched.
 function fakeJwt(payload: Record<string, unknown>): string {
-  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_');
+  const encode = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   return `${encode({ alg: 'HS256' })}.${encode(payload)}.`;
 }
 
@@ -260,5 +262,41 @@ describe('createMuxStoryboardURL', () => {
 
   it('returns undefined for signed playback without a storyboard token', () => {
     expect(createMuxStoryboardURL({ playbackId: 'abc123', playback: { token: 'jwt' } })).toBeUndefined();
+  });
+});
+
+describe('createMuxKeySystems', () => {
+  const token = fakeJwt({ aud: 'd' });
+
+  it('derives every Mux license server from the DRM token', () => {
+    expect(createMuxKeySystems({ playbackId: 'abc123', drm: { token } })).toEqual({
+      fairplay: {
+        licenseUrl: `https://license.mux.com/license/fairplay/abc123?token=${token}`,
+        certificateUrl: `https://license.mux.com/appcert/fairplay/abc123?token=${token}`,
+      },
+      widevine: { licenseUrl: `https://license.mux.com/license/widevine/abc123?token=${token}` },
+      playready: { licenseUrl: `https://license.mux.com/license/playready/abc123?token=${token}` },
+    });
+  });
+
+  it('uses the custom domain', () => {
+    const keySystems = createMuxKeySystems({ playbackId: 'abc123', customDomain: 'example.com', drm: { token } });
+
+    expect(keySystems?.widevine?.licenseUrl).toBe(`https://license.example.com/license/widevine/abc123?token=${token}`);
+  });
+
+  it('returns undefined without a playbackId', () => {
+    expect(createMuxKeySystems()).toBeUndefined();
+    expect(createMuxKeySystems({ playbackId: '', drm: { token } })).toBeUndefined();
+  });
+
+  it('returns undefined without a DRM token', () => {
+    expect(createMuxKeySystems({ playbackId: 'abc123' })).toBeUndefined();
+    expect(createMuxKeySystems({ playbackId: 'abc123', drm: {} })).toBeUndefined();
+  });
+
+  it('returns undefined for a token with the wrong audience', () => {
+    // A playback token where a license token belongs: every license request would be rejected.
+    expect(createMuxKeySystems({ playbackId: 'abc123', drm: { token: fakeJwt({ aud: 'v' }) } })).toBeUndefined();
   });
 });

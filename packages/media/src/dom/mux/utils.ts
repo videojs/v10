@@ -1,7 +1,7 @@
 import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
-import type { HlsSource } from '../hls-js';
+import type { DrmConfig, HlsSource } from '../hls-js';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -79,6 +79,12 @@ export interface MuxStoryboardParams {
 }
 
 export interface MuxDrmParams {
+  /**
+   * DRM license token: a JWT signed for the playback ID with the DRM (`d`)
+   * audience. Mux derives every license server URL from it, so it is the only
+   * thing a caller supplies. DRM playback is always signed, so a matching
+   * `playback.token` is required alongside it.
+   */
   token?: string | undefined;
 }
 
@@ -190,6 +196,38 @@ export function createMuxPosterURL(source?: MuxSource | null): string | undefine
   if (!token && playback?.token) return undefined;
 
   return `https://image.${customDomain}/${playbackId}/thumbnail.${ext}${createMuxQuery({ token, ...query })}`;
+}
+
+/**
+ * Build the DRM license servers a source describes, ready for the HLS layer's
+ * `source.keySystems`. Mux signs one license token per playback ID and serves
+ * every system from a URL derived from it, so `drm.token` is all a caller
+ * provides.
+ *
+ * Returns `undefined` when no license token is present, or when the token is
+ * not scoped to DRM — an unsigned license request is always rejected, so there
+ * is nothing useful to configure.
+ *
+ * @internal
+ */
+export function createMuxKeySystems(source?: MuxSource | null): DrmConfig | undefined {
+  if (!source?.playbackId) return undefined;
+  const { playbackId, customDomain = MUX_VIDEO_DOMAIN, drm } = source;
+  const { token } = drm ?? {};
+
+  // License tokens must carry the DRM (`d`) audience.
+  if (!token || parseJwt<MuxJWT>(token)?.aud !== 'd') return undefined;
+
+  const query = createMuxQuery({ token });
+  const url = (path: string) => `https://license.${customDomain}/${path}/${playbackId}${query}`;
+
+  // Every system is configured unconditionally: which one a browser negotiates
+  // is up to its CDM, and Mux serves all three from the same token.
+  return {
+    fairplay: { licenseUrl: url('license/fairplay'), certificateUrl: url('appcert/fairplay') },
+    widevine: { licenseUrl: url('license/widevine') },
+    playready: { licenseUrl: url('license/playready') },
+  };
 }
 
 /**

@@ -7,7 +7,9 @@ import {
   DEFAULT_AUDIO_SOURCE,
   DEFAULT_DASH_SOURCE,
   DEFAULT_SOURCE,
+  isDrmSource,
   MP4_SOURCE_IDS,
+  MUX_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
   SOURCES,
 } from '@app/shared/sources';
@@ -60,6 +62,9 @@ export function App() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const pagePath = getPagePath(platform, preset);
+
+  // `MuxVideo` is the only preset that turns a Mux DRM token into license URLs.
+  const supportsDrm = preset === 'mux-video';
 
   // Keep the URL in sync with all state.
   useEffect(() => {
@@ -127,6 +132,13 @@ export function App() {
     }
   }, [preset, source]);
 
+  // Constrain source away from DRM for presets that cannot license it
+  useEffect(() => {
+    if (!supportsDrm && isDrmSource(source)) {
+      setSource(DEFAULT_SOURCE);
+    }
+  }, [supportsDrm, source]);
+
   // CDN, background video, and vimeo video do not have a Tailwind skin variant.
   useEffect(() => {
     if ((platform === 'cdn' || preset === 'background-video' || preset === 'vimeo-video') && styling === 'tailwind') {
@@ -135,7 +147,13 @@ export function App() {
   }, [platform, preset, styling]);
 
   const availableSources =
-    preset === 'audio' ? MP4_SOURCE_IDS : preset === 'dash-video' ? DASH_SOURCE_IDS : NON_DASH_SOURCE_IDS;
+    preset === 'audio'
+      ? MP4_SOURCE_IDS
+      : preset === 'dash-video'
+        ? DASH_SOURCE_IDS
+        : supportsDrm
+          ? MUX_SOURCE_IDS
+          : NON_DASH_SOURCE_IDS;
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
