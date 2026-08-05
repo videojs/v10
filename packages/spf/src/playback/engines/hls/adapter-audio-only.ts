@@ -66,10 +66,9 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
 export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
     /**
-     * What this adapter calls itself, used as the default
-     * {@link SimpleHlsAudioOnlyEngineConfig.playerSoftwareName} so reported
-     * conditions name the engine that refused the source. A subclass can
-     * override it; an explicit `config.playerSoftwareName` wins over both.
+     * What this adapter calls itself, used as the sentence subject when this
+     * adapter composes error copy, so it names the engine that refused the
+     * source. A subclass can override it and the copy follows.
      */
     static get playerSoftwareName(): string {
       return 'simple-hls-audio-only';
@@ -256,7 +255,8 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     #createEngine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
       return createHlsAudioOnlyEngine({
         ...this.#config,
-        // After the spread, so an explicitly-undefined config key can't clobber it.
+        // After the spread, so an explicitly-undefined config key can't clobber
+        // it. Reaches `resolve-track`, which composes each cause's copy.
         playerSoftwareName: this.#playerSoftwareName(),
         onSignalsReady: (signals) => {
           this.#signals = signals;

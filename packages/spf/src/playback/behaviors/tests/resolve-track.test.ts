@@ -815,22 +815,16 @@ http://example.com/segment1.m4s
 
   it('reports nothing for a playable rendition', async () => {
     const state = setup();
-    const reactor = resolveVideoTrack.setup({
-      state,
-      config: { reportTrackConditions: reportUnsupportedTrackConditions },
-    });
+    const reactor = resolveVideoTrack.setup({ state, config: { reportUnsupportedTrackConditions } });
     await flush();
 
     expect(state.errors.get()).toBeUndefined();
     reactor.destroy();
   });
 
-  it('reports unsupported DRM through the seam when the playlist is encrypted', async () => {
+  it('reports unsupported DRM when the playlist is encrypted', async () => {
     const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
-    const reactor = resolveVideoTrack.setup({
-      state,
-      config: { reportTrackConditions: reportUnsupportedTrackConditions },
-    });
+    const reactor = resolveVideoTrack.setup({ state, config: { reportUnsupportedTrackConditions } });
     await flush();
 
     expect(state.errors.get()?.map((error) => error.code)).toEqual([SVTA_UNSUPPORTED_DRM_SYSTEM]);
@@ -843,6 +837,20 @@ http://example.com/segment1.m4s
     await flush();
 
     expect(state.errors.get()).toBeUndefined();
+    reactor.destroy();
+  });
+
+  it('names the configured player software in the copy it composes', async () => {
+    // The whole reason the option is threaded here: this is the only place the
+    // rendition — and so its container — is in hand.
+    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
+    const reactor = resolveVideoTrack.setup({
+      state,
+      config: { reportUnsupportedTrackConditions, playerSoftwareName: 'Mux Player' },
+    });
+    await flush();
+
+    expect(state.errors.get()?.[0]?.message).toBe('Mux Player can’t play DRM-protected video.');
     reactor.destroy();
   });
 });

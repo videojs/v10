@@ -338,6 +338,58 @@ describe('createSimpleHlsEngine', () => {
     engine.destroy();
   });
 
+  it('reports playlist conditions through an overridden reporter', async () => {
+    // Same default-with-override shape as `canPlayTrack` / `resolveTextTrackSegment`.
+    // A composition that ships no MPEG-TS, or wants a different vocabulary, replaces
+    // the reporter rather than living with the built-in checks.
+    const reportUnsupportedTrackConditions = () => [{ code: 99001, message: 'custom' }];
+    const engine = createSimpleHlsEngine({ reportUnsupportedTrackConditions });
+
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () =>
+        new Response(`#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:4.0,
+0.m4s
+#EXT-X-ENDLIST`)
+    );
+
+    engine.state.presentation.set({
+      id: 'pres-report',
+      url: 'https://example.com/master.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'v',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'vs',
+              type: 'video',
+              tracks: [
+                {
+                  type: 'video',
+                  id: 'v1',
+                  codecs: ['avc1.640028'],
+                  url: 'https://example.com/v1.m3u8',
+                  bandwidth: 1_000_000,
+                  mimeType: 'video/mp4',
+                } as PartiallyResolvedVideoTrack,
+              ],
+            },
+          ],
+        },
+      ],
+    } as Presentation);
+
+    await vi.waitFor(() => {
+      expect(engine.state.errors.get()?.map((error) => error.code)).toEqual([99001]);
+    });
+
+    engine.destroy();
+  });
+
   it('makes no video pick when no rendition is decodable', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     const engine = createSimpleHlsEngine({ canPlayTrack: () => false });

@@ -73,7 +73,10 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack, switchTextTrack, switchVideoTrack } from '../../behaviors/track-switching';
 import { relocatingTextPipelines, relocationPipelinesFor } from '../../primitives/relocation-pipelines';
-import { createReportUnsupportedTrackConditions } from '../../primitives/report-track-conditions';
+import {
+  type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditions,
+} from '../../primitives/report-track-conditions';
 import type { TextTrackSegmentResolver } from '../../primitives/text-segment-load-pipeline';
 
 // ============================================================================
@@ -222,17 +225,19 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    */
   canPlayTrack?: CanPlayTrack;
   /**
-   * What this player calls itself, used as the sentence subject in the fatal
-   * error copy the adapter surfaces ("Mux Player can’t play MPEG-TS video.").
-   *
-   * Viewer-facing prose, so pass a display name — `'Mux Player'`, not the
-   * identifier-style value Mux Data's own `playerSoftwareName` carries
-   * (`'mux-video'`). Defaults to `DEFAULT_PLAYER_SOFTWARE_NAME`
-   * (`'This player'`), which keeps the copy grammatical when unset.
-   *
-   * Naming the player matters because the alternative was naming the browser,
-   * which was untrue: browsers play MPEG-TS and DRM fine — this engine is what
-   * can't. See `./error-messages`.
+   * Conditions reported about each rendition as it resolves — the *causes* behind
+   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
+   * and encryption; supply your own to report a different set (a provider that
+   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
+  /**
+   * Sentence subject for the viewer-facing copy on reported conditions
+   * ("Mux Player can’t play MPEG-TS video."). Spread through to `resolve-track`,
+   * which composes the copy where the rendition is in hand. Defaults to the
+   * adapter's own `playerSoftwareName` static; see
+   * `playback/primitives/error-messages`.
    */
   playerSoftwareName?: string;
   preferredAudioLanguage?: string;
@@ -409,7 +414,7 @@ export function createSimpleHlsEngine(
     // sibling source alternatives part of resource selection.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
-    reportTrackConditions: createReportUnsupportedTrackConditions(config.playerSoftwareName),
+    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
     resolveTextTrackSegment: config.resolveTextTrackSegment ?? resolveVttSegment,
     // Non-zero-PTS relocation (spike): the text pipeline rebases cues onto the
     // relocated 0-based timeline. Remove `textMessagePipelines` to drop text relocation.

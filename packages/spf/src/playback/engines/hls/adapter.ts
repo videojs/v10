@@ -122,12 +122,13 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsMediaImpl extends BaseClass {
     /**
-     * What this adapter calls itself, used as the default
-     * {@link SimpleHlsEngineConfig.playerSoftwareName} — so error copy names the
-     * engine that actually refused the source rather than an anonymous "player".
+     * What this adapter calls itself, used as the sentence subject when this
+     * adapter composes error copy — so it names the engine that actually refused
+     * the source rather than an anonymous "player".
      *
-     * A static so it travels with the class: a subclass can override it, and an
-     * explicit `config.playerSoftwareName` still wins over both.
+     * A static so it travels with the class: a subclass can override it and the
+     * copy follows. Only reached for copy composed *here* (a verdict); a cause's
+     * own copy is composed by the reporter, which has no name threaded to it yet.
      */
     static get playerSoftwareName(): string {
       return 'simple-hls-video';
@@ -413,7 +414,8 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return createSimpleHlsEngine({
         ...this.#config,
-        // After the spread, so an explicitly-undefined config key can't clobber it.
+        // After the spread, so an explicitly-undefined config key can't clobber
+        // it. Reaches `resolve-track`, which composes each cause's copy.
         playerSoftwareName: this.#playerSoftwareName(),
         onSignalsReady: (signals) => {
           this.#signals = signals;
