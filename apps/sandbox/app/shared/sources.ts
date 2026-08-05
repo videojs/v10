@@ -224,12 +224,12 @@ export function getPosterSrc(source: SourceId): string | undefined {
   if (poster) return poster;
 
   const id = getMuxAssetId(source);
-  return id ? `https://image.mux.com/${id}/thumbnail.jpg${imageQuery(source, 'poster')}` : undefined;
+  return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster')}` : undefined;
 }
 
 export function getPlaceholderSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
-  return id ? `https://image.mux.com/${id}/thumbnail.jpg${imageQuery(source, 'poster', 'width=20')}` : undefined;
+  return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster', 'width=20')}` : undefined;
 }
 
 export function getStoryboardSrc(source: SourceId): string | undefined {
