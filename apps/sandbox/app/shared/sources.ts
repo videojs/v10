@@ -14,6 +14,25 @@ export interface SandboxSource {
   source?: MuxSource;
 }
 
+// The two DRM sources below are the same Mux asset reached two ways, so the
+// tokens are shared rather than repeated. DRM playback is always signed, and
+// each URL carries its own audience-scoped token: `playback` for the manifest,
+// `drm` for the license request, `thumbnail` / `storyboard` for the images.
+//
+// Read-only tokens for a throwaway demo asset, signed to expire in 2038 so the
+// sandbox keeps working. They grant nothing beyond playing this one video.
+const DRM_PLAYBACK_ID = 'FefhWnSMzDqz5z9yxssihdRx8dV6srhYJ8301uQBhRak';
+
+const DRM_TOKENS = {
+  playback:
+    'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InYiLCJleHAiOjIxNDc0ODM2NDd9.jXIpJZPB7diM5M6jMVRQ6dELY5YnONzC8jJClm7CT1nm-q25F5PiCvHcdLGqerjN1V_7T9cjhSX02p1i0UiABaKX2Wa4HCf6H6ZSKbY3MiCiRJHnfZzr_cVHCuBRXJlMzXesK_VzgP4kVrVi9-Sj8fGaeQmt4mB0sgtGGM7LpGV1IJdv_9aWnqQpQK7IeWi9ivNwa9Vw-PeppfOFdyQbqYJScIAY-_k6fzGaQucONyIolFGJZuBcan3nDRvCUpSFi0vPO87jf5Zbp6kn-HeARmUTYDPBLoeVSjttxYhoeDQYtNeqbuJ3Tj6S1_9TsE_SNSNZm3lxHoJCz5Wp_YcusQ',
+  drm: 'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6ImQiLCJleHAiOjIxNDc0ODM2NDd9.y7WKwBu0n87GaluPBJEMul4mxh-UlOFG_zClbEj3aZ23fXYmSfrpw-H2P3iFKtYt0DKiL-ta-J7EWiA74s77DTH2R70F86tvEFD0NQZ197qqClWtigOKkrpL1_o5RMXqjRf0lLAfwL6IFqm_Vhzf7mQTG99FRXKIU8S1q-zAEglWCYy1uZxQPivnSZxtK4IZZWmhHG6ot-VP_QkACc9cH8DIOpdYavjdXsPAxs3Ejx9ZUBQSqkjE7zyd11HhQvNzm9V_YxHJz5QgayOeWLEmwaKycFycHrR-INdVQwFAoK3EHF-tZngQpINuYoUHN5dPwzC8VJoFneLmdNAVuzbLkw',
+  thumbnail:
+    'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InQiLCJleHAiOjIxNDc0ODM2NDd9.gzoiMPjqjRSS8F1PjrvaOX4a0J9m-L1Egx3DIQVWbTWr89T21cSMJI5mPKs89umv0f7tvZjHjIaUY6L1wmdGR3FwVBLj5nvWx1DPWayJvqZbIv-2DoSCbTdui5tsPvgxtAAfmX_GGvb1UB4apGY6njapHmzMT__oTHTKvAM8e4waJGswtv9cr6V3TE8ysSqdS3_Cbme5e69S3IULjLHl21JSrHK-ABY7IzNxLOoT8lbyh77P3NMw-jF2joRVQK6hZJnAMY99_k8K2hRmGEQRMw-NTtOeM1gWQar6-Ksb7ZOZidshCHHqI69iF_ricl-Csb_c4O3ai3BZLviM7ZXRVg',
+  storyboard:
+    'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InMiLCJleHAiOjIxNDc0ODM2NDd9.Eh5a51KEYRbwWIvX7M3Z-9hMwmydt2XC9kq0m-oCmnSegnN0l-GOQoUvzFMOOCKJHbfVRTuLkEvoCjCgo1JEmTHKRDo7u_V5JDZbQf6xKjtJXlTEibNEi_wD3M_3DiuYYv3R5sNol97j-yGbJQ8_16HTv7muJhr7qI8S9sKr_zJgp_E0PyFBm6plaigWcDBMcXfcvK4I9IwTKBehlXw2sVy6eUarhmS_wtA6sNXJk8f2RG2fUnt6jq8HWQlpkrXTqJCDcQ69dwDzl_TOdDWWLN3dNBlmGyEjEZyHJD2podRdddV4Yu78_bq7ImCH05JpJqY_caX9seXS6uJh38HuIA',
+} as const;
+
 const SOURCE_MAP = {
   'hls-1': {
     label: 'HLS - Big Buck Bunny',
@@ -65,34 +84,47 @@ const SOURCE_MAP = {
     type: 'hls',
     subType: 'mp4',
   },
-  'hls-drm': {
-    // Structured rather than a URL: DRM playback is always signed, and every URL
-    // this asset needs carries its own audience-scoped token. `drm` is the one
-    // `MuxVideo` turns into FairPlay / Widevine / PlayReady license servers.
-    //
-    // Read-only tokens for a throwaway demo asset, signed to expire in 2038 so
-    // the sandbox keeps working. They grant nothing beyond playing this video.
-    label: 'HLS - DRM protected',
+  'mux-drm': {
+    // Mux-flavoured DRM: `drm.token` is all `MuxVideo` needs, because it derives
+    // every license server URL from the playback ID. Only the Mux presets can
+    // play it — nothing else knows how to read a Mux DRM token.
+    label: 'HLS - DRM protected (Mux token)',
     type: 'hls',
     subType: 'mp4',
     drm: true,
     source: {
-      playbackId: 'FefhWnSMzDqz5z9yxssihdRx8dV6srhYJ8301uQBhRak',
-      playback: {
-        token:
-          'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InYiLCJleHAiOjIxNDc0ODM2NDd9.jXIpJZPB7diM5M6jMVRQ6dELY5YnONzC8jJClm7CT1nm-q25F5PiCvHcdLGqerjN1V_7T9cjhSX02p1i0UiABaKX2Wa4HCf6H6ZSKbY3MiCiRJHnfZzr_cVHCuBRXJlMzXesK_VzgP4kVrVi9-Sj8fGaeQmt4mB0sgtGGM7LpGV1IJdv_9aWnqQpQK7IeWi9ivNwa9Vw-PeppfOFdyQbqYJScIAY-_k6fzGaQucONyIolFGJZuBcan3nDRvCUpSFi0vPO87jf5Zbp6kn-HeARmUTYDPBLoeVSjttxYhoeDQYtNeqbuJ3Tj6S1_9TsE_SNSNZm3lxHoJCz5Wp_YcusQ',
-      },
-      drm: {
-        token:
-          'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6ImQiLCJleHAiOjIxNDc0ODM2NDd9.y7WKwBu0n87GaluPBJEMul4mxh-UlOFG_zClbEj3aZ23fXYmSfrpw-H2P3iFKtYt0DKiL-ta-J7EWiA74s77DTH2R70F86tvEFD0NQZ197qqClWtigOKkrpL1_o5RMXqjRf0lLAfwL6IFqm_Vhzf7mQTG99FRXKIU8S1q-zAEglWCYy1uZxQPivnSZxtK4IZZWmhHG6ot-VP_QkACc9cH8DIOpdYavjdXsPAxs3Ejx9ZUBQSqkjE7zyd11HhQvNzm9V_YxHJz5QgayOeWLEmwaKycFycHrR-INdVQwFAoK3EHF-tZngQpINuYoUHN5dPwzC8VJoFneLmdNAVuzbLkw',
-      },
-      poster: {
-        token:
-          'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InQiLCJleHAiOjIxNDc0ODM2NDd9.gzoiMPjqjRSS8F1PjrvaOX4a0J9m-L1Egx3DIQVWbTWr89T21cSMJI5mPKs89umv0f7tvZjHjIaUY6L1wmdGR3FwVBLj5nvWx1DPWayJvqZbIv-2DoSCbTdui5tsPvgxtAAfmX_GGvb1UB4apGY6njapHmzMT__oTHTKvAM8e4waJGswtv9cr6V3TE8ysSqdS3_Cbme5e69S3IULjLHl21JSrHK-ABY7IzNxLOoT8lbyh77P3NMw-jF2joRVQK6hZJnAMY99_k8K2hRmGEQRMw-NTtOeM1gWQar6-Ksb7ZOZidshCHHqI69iF_ricl-Csb_c4O3ai3BZLviM7ZXRVg',
-      },
-      storyboard: {
-        token:
-          'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InMiLCJleHAiOjIxNDc0ODM2NDd9.Eh5a51KEYRbwWIvX7M3Z-9hMwmydt2XC9kq0m-oCmnSegnN0l-GOQoUvzFMOOCKJHbfVRTuLkEvoCjCgo1JEmTHKRDo7u_V5JDZbQf6xKjtJXlTEibNEi_wD3M_3DiuYYv3R5sNol97j-yGbJQ8_16HTv7muJhr7qI8S9sKr_zJgp_E0PyFBm6plaigWcDBMcXfcvK4I9IwTKBehlXw2sVy6eUarhmS_wtA6sNXJk8f2RG2fUnt6jq8HWQlpkrXTqJCDcQ69dwDzl_TOdDWWLN3dNBlmGyEjEZyHJD2podRdddV4Yu78_bq7ImCH05JpJqY_caX9seXS6uJh38HuIA',
+      playbackId: DRM_PLAYBACK_ID,
+      playback: { token: DRM_TOKENS.playback },
+      drm: { token: DRM_TOKENS.drm },
+      poster: { token: DRM_TOKENS.thumbnail },
+      storyboard: { token: DRM_TOKENS.storyboard },
+    },
+  },
+  'hls-drm': {
+    // The same asset, licensed the generic way: hls.js's own `drmSystems`, keyed
+    // by EME key system id and naming each license server outright. Works on any
+    // hls.js-backed element, and shows what `source.engine` still reaches.
+    label: 'HLS - DRM protected (engine config)',
+    type: 'hls',
+    subType: 'mp4',
+    drm: true,
+    source: {
+      src: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
+      engine: {
+        // hls.js only listens for `encrypted` when EME is switched on.
+        emeEnabled: true,
+        drmSystems: {
+          'com.apple.fps': {
+            licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+            serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+          },
+          'com.widevine.alpha': {
+            licenseUrl: `https://license.mux.com/license/widevine/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+          },
+          'com.microsoft.playready': {
+            licenseUrl: `https://license.mux.com/license/playready/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+          },
+        },
       },
     },
   },
@@ -145,7 +177,9 @@ export const SOURCES: Record<SourceId, SandboxSource> = SOURCE_MAP;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isDrmSource(id));
-/** Mux presets add the DRM asset: they are the only ones that can derive its license URLs. */
+/** hls.js-backed presets add the DRM asset that names its license servers outright. */
+export const HLSJS_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && id !== 'mux-drm');
+/** Mux presets add the DRM asset licensed by a Mux token, which only they can read. */
 export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash');
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');

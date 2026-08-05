@@ -12,7 +12,6 @@ import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
-import type { MuxSource } from '@videojs/media/dom/mux';
 import { GoogleCast } from '@videojs/react/media/google-cast';
 import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
@@ -36,9 +35,9 @@ function App() {
   const preload = usePreload();
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
-  // A source carrying signed tokens has no room in a plain `src`. Its
+  // A source carrying signed tokens has no room in a plain `src`. A Mux
   // `drm.token` becomes the FairPlay / Widevine / PlayReady license servers.
-  const { source: muxSource, url } = SOURCES[source] as { source?: MuxSource; url: string };
+  const { source: muxSource, url } = SOURCES[source];
 
   return (
     <SandboxI18nProvider>
@@ -53,7 +52,7 @@ function App() {
         >
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
-            {...(muxSource ? { source: muxSource } : { src: url })}
+            {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

@@ -34,6 +34,9 @@ function App() {
   const preload = usePreload();
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
+  // A source carrying DRM license servers has no room in a plain `src`.
+  const { source: hlsSource, url } = SOURCES[source];
+
   return (
     <SandboxI18nProvider>
       <Provider>
@@ -45,7 +48,7 @@ function App() {
           className="aspect-video max-w-4xl mx-auto"
         >
           <HlsJsVideo
-            src={SOURCES[source].url ?? ''}
+            {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

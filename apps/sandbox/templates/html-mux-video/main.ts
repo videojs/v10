@@ -15,7 +15,6 @@ import {
   onSourceChange,
 } from '@app/shared/sandbox-listener';
 import { getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
-import type { MuxSource } from '@videojs/media/dom/mux';
 
 const html = String.raw;
 
@@ -36,7 +35,7 @@ async function render() {
 
   // A source carrying signed tokens has no room in the `src` attribute, so it is
   // assigned as an object below instead.
-  const { source, url } = SOURCES[state.source] as { source?: MuxSource; url: string };
+  const { source, url } = SOURCES[state.source];
   const srcAttr = source ? '' : ` src="${url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
@@ -52,7 +51,7 @@ async function render() {
     </${playerTag}>
   `);
 
-  // `source.drm.token` becomes the FairPlay / Widevine / PlayReady license
+  // A Mux `source.drm.token` becomes the FairPlay / Widevine / PlayReady license
   // servers; the playback, poster, and storyboard tokens sign the rest.
   if (source) {
     document.querySelector('mux-video')!.source = source;
