@@ -1,11 +1,11 @@
 ---
-status: draft
+status: implemented
 date: 2026-08-04
 ---
 
 # Resolved player feature state
 
-This record describes a config-action prototype for resolving one public value from inputs with different owners and lifetimes. Source and tests define the prototype's current behavior.
+This record defines how a player feature resolves one public value from inputs with different owners and lifetimes. Source and tests define the current behavior.
 
 ## Media interaction
 
@@ -35,7 +35,7 @@ Or a user may provide a fallback that media can override:
 
 HTML exposes the same inputs as `content-title` and `default-content-title`. Consumers read the resolved value through the store and update user input through feature actions such as `setContentTitle`.
 
-## Proposed design
+## Decision
 
 A feature can use three kinds of state:
 
@@ -95,7 +95,7 @@ Media provides metadata through `contentData` and emits `contentdatachange` when
 
 The config map is narrow and feature-owned, and ordinary store actions handle every user write. In exchange, each configurable value needs a private source key plus a private action, and the store needs explicit detach-persistence metadata.
 
-Adapters invoke actions one at a time, and the store derives a snapshot after each action. Subscriber notification is coalesced, so normal consumers observe the final values. The behavioral difference appears on failure: if a later action or derived formula throws, earlier actions remain applied. A generic store-config patch can derive a multi-key update before committing any of it. This prototype does not add a separate batching abstraction.
+Adapters invoke actions one at a time, and the store derives a snapshot after each action. Subscriber notification is coalesced, so normal consumers observe the final values. The behavioral difference appears on failure: if a later action or derived formula throws, earlier actions remain applied. A generic store-config patch can derive a multi-key update before committing any of it. This design does not add a separate batching abstraction.
 
 ## Deliberate limits
 

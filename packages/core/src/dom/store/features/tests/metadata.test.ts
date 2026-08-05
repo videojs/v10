@@ -120,7 +120,7 @@ describe('metadataFeature', () => {
     expect(addEventListener).not.toHaveBeenCalledWith('contentdatachange', expect.anything());
   });
 
-  it('resets media metadata on detach while preserving provider-owned state', () => {
+  it('resets media metadata on detach while preserving user-owned state', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
     store.setDefaultContentTitle('fallback');
     const detach = store.attach(target(new ContentDataMedia({ title: 'media' })));

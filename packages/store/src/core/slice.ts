@@ -109,7 +109,8 @@ export function defineSlice<Target>(): SliceFactory<Target> {
 
 export type InferSliceTarget<S> = S extends Slice<infer Target, any, any> ? Target : never;
 
-export type InferSliceSourceState<S> = S extends Slice<any, infer State, any> ? State : never;
+/** Infer from the state factory so intersections with feature metadata preserve exact source state. */
+export type InferSliceSourceState<S> = S extends { state: (...args: any[]) => infer State } ? State : never;
 
 export type InferSliceDerivedState<S> = S extends Slice<any, any, infer Derived> ? Derived : never;
 
