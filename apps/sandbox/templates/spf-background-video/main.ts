@@ -34,10 +34,12 @@ const diagContext = document.getElementById('diag-context') as HTMLSpanElement;
 
 // ── Source picker ─────────────────────────────────────────────────────────────
 // The SPF MSE pipeline appends fMP4/CMAF segments directly (no MPEG-TS
-// transmuxing), so only fMP4 HLS sources play — exclude `.ts` and live.
+// transmuxing), so only fMP4 HLS sources play — exclude `.ts` and live. A source
+// with no plain `url` needs a structured source this demo has no way to hand
+// over (DRM, for one), so it is out too.
 const HLS_SOURCE_IDS = (Object.keys(SOURCES) as Array<keyof typeof SOURCES>).filter((id) => {
-  const source = SOURCES[id] as { type: string; subType?: string; live?: boolean };
-  return source.type === 'hls' && source.subType === 'mp4' && !source.live;
+  const source = SOURCES[id];
+  return source.type === 'hls' && source.subType === 'mp4' && !source.live && Boolean(source.url);
 });
 const DEFAULT_ID = (HLS_SOURCE_IDS[0] ?? 'hls-1') as keyof typeof SOURCES;
 

@@ -63,10 +63,12 @@ const HARNESS_PRESETS: Preset[] = [
 // but flagged unsupported (disabled in the picker) rather than silently dropped.
 // Unsupported presets sort to the end (stable sort preserves registry order otherwise).
 const PRESETS: Preset[] = [
-  ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls').map((id) => {
+  // A source with no plain `url` needs a structured source this harness has no
+  // way to hand over — DRM, for one, which SPF cannot play anyway.
+  ...SOURCE_IDS.filter((id) => SOURCES[id].type === 'hls' && SOURCES[id].url).map((id) => {
     const source = SOURCES[id];
     const preset: Preset = { label: source.label, url: source.url ?? '' };
-    if ('subType' in source && source.subType === 'ts') preset.unsupported = 'TS — unsupported';
+    if (source.subType === 'ts') preset.unsupported = 'TS — unsupported';
     return preset;
   }),
   ...HARNESS_PRESETS,
