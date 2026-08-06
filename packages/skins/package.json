@@ -28,14 +28,21 @@
   "scripts": {
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
+    "check:canonical": "node --import tsx ./scripts/check-canonical-imports.ts",
     "dev": "pnpm run build:watch",
+    "test": "pnpm run check:canonical && pnpm run test:types && vitest run",
+    "test:types": "tsgo --project ./tsconfig.canonical.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
-    "tsdown": "^0.22.14"
+    "@videojs/core": "workspace:*",
+    "tsx": "^4.23.1",
+    "tsdown": "^0.22.14",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.10"
   },
   "keywords": [
     "media",
