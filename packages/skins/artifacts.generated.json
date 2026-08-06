@@ -2,6 +2,26 @@
   "version": 1,
   "artifacts": [
     {
+      "id": "button-tooltip",
+      "kind": "component",
+      "entry": "./canonical/components/buttons/button-tooltip.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/buttons/button-tooltip.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core"],
+        "symbols": {
+          "components": ["Tooltip"],
+          "icons": []
+        }
+      }
+    },
+    {
       "id": "default-video-controls",
       "kind": "component",
       "entry": "./canonical/skins/default/video-controls.skin.tsx",
@@ -33,7 +53,7 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["tooltip"],
+        "artifacts": ["button-tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
           "components": ["FullscreenButton"],
@@ -53,7 +73,7 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["tooltip"],
+        "artifacts": ["button-tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
           "components": ["PlayButton"],
@@ -73,7 +93,7 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["tooltip"],
+        "artifacts": ["button-tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
           "components": ["SeekButton", "Text"],
@@ -97,26 +117,6 @@
         "packages": ["@videojs/core"],
         "symbols": {
           "components": ["Slider", "TimeSlider"],
-          "icons": []
-        }
-      }
-    },
-    {
-      "id": "tooltip",
-      "kind": "component",
-      "entry": "./canonical/components/overlays/tooltip.skin.tsx",
-      "files": [
-        {
-          "path": "./canonical/components/overlays/tooltip.skin.tsx",
-          "role": "entry"
-        }
-      ],
-      "resources": {},
-      "dependencies": {
-        "artifacts": [],
-        "packages": ["@videojs/core"],
-        "symbols": {
-          "components": ["Tooltip"],
           "icons": []
         }
       }

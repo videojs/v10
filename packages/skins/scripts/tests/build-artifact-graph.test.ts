@@ -9,6 +9,16 @@ describe('buildSkinArtifactGraph', () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.graph.artifacts).toMatchObject([
       {
+        id: 'button-tooltip',
+        dependencies: {
+          artifacts: [],
+          packages: ['@videojs/core'],
+          symbols: {
+            components: ['Tooltip'],
+          },
+        },
+      },
+      {
         id: 'default-video-controls',
         dependencies: {
           artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
@@ -22,7 +32,7 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'fullscreen-button',
         dependencies: {
-          artifacts: ['tooltip'],
+          artifacts: ['button-tooltip'],
           packages: ['@videojs/core', '@videojs/icons'],
           symbols: {
             components: ['FullscreenButton'],
@@ -33,7 +43,7 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'play-button',
         dependencies: {
-          artifacts: ['tooltip'],
+          artifacts: ['button-tooltip'],
           packages: ['@videojs/core', '@videojs/icons'],
           symbols: {
             components: ['PlayButton'],
@@ -44,7 +54,7 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'seek-button',
         dependencies: {
-          artifacts: ['tooltip'],
+          artifacts: ['button-tooltip'],
           packages: ['@videojs/core', '@videojs/icons'],
           symbols: {
             components: ['SeekButton', 'Text'],
@@ -63,16 +73,6 @@ describe('buildSkinArtifactGraph', () => {
         },
       },
       {
-        id: 'tooltip',
-        dependencies: {
-          artifacts: [],
-          packages: ['@videojs/core'],
-          symbols: {
-            components: ['Tooltip'],
-          },
-        },
-      },
-      {
         id: 'volume-slider',
         dependencies: {
           artifacts: [],
@@ -86,14 +86,14 @@ describe('buildSkinArtifactGraph', () => {
 
     expect(resolveArtifactClosure(result.graph, 'default-video-controls')).toMatchObject({
       artifactIds: [
-        'tooltip',
+        'button-tooltip',
         'fullscreen-button',
         'play-button',
         'seek-button',
         'time-slider',
         'default-video-controls',
       ],
-      artifacts: ['tooltip', 'fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
+      artifacts: ['button-tooltip', 'fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
       packages: ['@videojs/core', '@videojs/icons'],
       symbols: {
         components: [

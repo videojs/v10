@@ -34,9 +34,9 @@ export const skinArtifacts = [
     entry: './canonical/components/sliders/time-slider.skin.tsx',
   }),
   defineArtifact({
-    id: 'tooltip',
+    id: 'button-tooltip',
     kind: 'component',
-    entry: './canonical/components/overlays/tooltip.skin.tsx',
+    entry: './canonical/components/buttons/button-tooltip.skin.tsx',
   }),
   defineArtifact({
     id: 'volume-slider',
