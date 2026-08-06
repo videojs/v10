@@ -12,9 +12,10 @@ describe('buildSkinArtifactGraph', () => {
         dependencies: {
           artifacts: [],
           packages: ['@videojs/core', '@videojs/icons'],
-          components: ['PlayButton', 'Tooltip'],
-          icons: ['PauseIcon', 'PlayIcon', 'RestartIcon'],
-          elements: [],
+          symbols: {
+            components: ['PlayButton', 'Tooltip'],
+            icons: ['PauseIcon', 'PlayIcon', 'RestartIcon'],
+          },
         },
       },
       {
@@ -22,9 +23,9 @@ describe('buildSkinArtifactGraph', () => {
         dependencies: {
           artifacts: [],
           packages: ['@videojs/core'],
-          components: ['Slider', 'TimeSlider'],
-          icons: [],
-          elements: [],
+          symbols: {
+            components: ['Slider', 'TimeSlider'],
+          },
         },
       },
       {
@@ -32,9 +33,9 @@ describe('buildSkinArtifactGraph', () => {
         dependencies: {
           artifacts: [],
           packages: ['@videojs/core'],
-          components: ['VolumeSlider'],
-          icons: [],
-          elements: [],
+          symbols: {
+            components: ['VolumeSlider'],
+          },
         },
       },
     ]);

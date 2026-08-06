@@ -6,6 +6,7 @@ export default defineConfig({
   entry: {
     index: './src/index.ts',
     ast: './src/ast.ts',
+    artifacts: './src/artifacts.ts',
     'bundlers/vite': './src/bundlers/vite.ts',
   },
   platform: 'node',
