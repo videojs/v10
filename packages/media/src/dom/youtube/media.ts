@@ -5,13 +5,14 @@
 // Source: https://github.com/muxinc/media-elements
 // License: MIT
 
+import { createPublicPromise, type PublicPromise } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNumber, isUndefined } from '@videojs/utils/predicate';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
 import type { TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
-import { createPublicPromise, createTimeRange, type PublicPromise } from '../utils';
+import { createTimeRange } from '../utils';
 import {
   loadYouTubeApi,
   STATE_BUFFERING,

@@ -4,9 +4,18 @@ export interface PublicPromise<T> extends Promise<T> {
 }
 
 /**
- * A promise that can be settled from outside the executor. Embed hosts use one
- * as a load barrier: calls that need a loaded player await it, and whichever
- * event finishes the load resolves it.
+ * A promise that can be settled from outside its executor.
+ *
+ * Useful as a barrier that one piece of code waits on and another settles — for
+ * example an in-flight load that callers await until whichever event finishes it
+ * resolves.
+ *
+ * @example
+ * ```ts
+ * const ready = createPublicPromise<void>();
+ * element.addEventListener('load', () => ready.resolve(), { once: true });
+ * await ready;
+ * ```
  */
 export function createPublicPromise<T>(): PublicPromise<T> {
   let resolve!: (value: T) => void;
