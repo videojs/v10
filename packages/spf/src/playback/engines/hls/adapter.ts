@@ -1,7 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { SVTA_NO_SUPPORTED_AUDIO_TRACK, SVTA_NO_SUPPORTED_VIDEO_TRACK, type SvtaError } from '../../../media/errors';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
+  type SvtaError,
+} from '../../../media/errors';
 import { resolveLiveLatency } from '../../../media/hls/reload-policy';
 import {
   deriveStreamType,
@@ -12,7 +17,11 @@ import {
   type StreamType,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
-import { DEFAULT_PLAYER_SOFTWARE_NAME } from '../../primitives/error-messages';
+import {
+  DEFAULT_PLAYER_SOFTWARE_NAME,
+  NOTICE_MESSAGES,
+  unsupportedPlaybackFeature,
+} from '../../primitives/error-messages';
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
   createSimpleHlsEngine,
@@ -21,7 +30,7 @@ import {
   type SimpleHlsEngineSignals,
   type SimpleHlsEngineState,
 } from './engine';
-import { firstFatal, resolveFatalMessage, type SimpleHlsMediaError } from './error-surface';
+import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
 
 /**
  * The media-level stream type: the engine's detected {@link StreamType}
@@ -92,7 +101,6 @@ function deriveTargetLiveWindow(
  * `resolve-track` reports (unsupported format, unsupported DRM) stay in the
  * sequence as context — one unplayable rendition doesn't fail the source, and
  * promoting a cause would put a dialog over a mixed source that goes on to play.
- * They still shape the *copy*, though — see {@link resolveFatalMessage}.
  */
 const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
@@ -134,6 +142,20 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       return 'simple-hls-video';
     }
 
+    /**
+     * A complete sentence naming the Media to reach for when this one can't play
+     * a source — `Import from "/media/mux/hls-js" instead.` Appended to the copy
+     * this adapter surfaces, and to the notices it logs.
+     *
+     * Empty here: `simple-hls-video` has no better-equipped sibling to point at.
+     * A Media that does (a Mux Video built on this engine, whose hls.js-backed
+     * counterpart plays MPEG-TS and DRM) overrides this static, and its copy gains
+     * the second sentence with no other change.
+     */
+    static get alternativeMediaSuggestion(): string | undefined {
+      return undefined;
+    }
+
     readonly #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
     #config: SimpleHlsEngineConfig;
     #signals!: SimpleHlsEngineSignals;
@@ -143,6 +165,15 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #isUserStreamType = false;
     #targetLiveWindow = Number.NaN;
     #error: SimpleHlsMediaError | null = null;
+    /**
+     * The *reported* condition currently surfaced, which is what the re-fire
+     * latch keys on. Not `#error.code`: that's the code this adapter chose to
+     * surface, and a later cause can change the choice for a condition already
+     * announced.
+     */
+    #reportedCode: number | null = null;
+    /** Notices already logged for the current source; cleared when it unloads. */
+    #noticed = new Set<string>();
     #stopLiveSync: () => void;
     #stopErrorSync: () => void;
 
@@ -165,6 +196,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
         const presentation = this.#signals.state.presentation.get();
         this.#setDetectedStreamType(presentation?.streamType ?? 'unknown');
         this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
+        this.#reportDeliveryNotices(presentation);
       });
 
       // Promote the first fatal condition out of the engine's reported sequence
@@ -272,15 +304,33 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
         // Cleared (new source). No event: `'error'` announces a failure, and
         // consumers reset their own copy on source change.
         this.#error = null;
+        this.#reportedCode = null;
         return;
       }
       // Keyed on the code, not the object: a later append re-runs this effect
       // with an equal-but-new array, and re-firing `'error'` for a condition
       // already surfaced would look like a second failure.
-      if (this.#error?.code === reported.code) return;
+      if (this.#reportedCode === reported.code) return;
+      this.#reportedCode = reported.code;
+
+      // A verdict says a type emptied; the causes say whether anything could
+      // have played it. When they include something this engine simply doesn't
+      // implement, that's the more useful thing to tell a consumer, so it
+      // replaces the verdict's code on the surface.
+      const unsupported = hasUnsupportedFeatureCause(errors);
+      if (unsupported) {
+        // The only place this engine explains itself in prose, and it's a
+        // console: the viewer-facing sentence is the consumer's to localize from
+        // the code. Conditions ride along structured so the specifics stay
+        // inspectable.
+        console.error(this.#withSuggestion(unsupportedPlaybackFeature(this.#playerSoftwareName())), {
+          conditions: errors,
+        });
+      }
+
       this.#error = {
-        code: reported.code,
-        message: reported.message ?? resolveFatalMessage(reported, errors, this.#playerSoftwareName()),
+        code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
+        message: reported.message ?? '',
         ...(reported.data === undefined ? {} : { data: reported.data }),
       };
       this.dispatchEvent?.(new Event('error'));
@@ -411,6 +461,50 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       return this.#config?.playerSoftwareName ?? own ?? DEFAULT_PLAYER_SOFTWARE_NAME;
     }
 
+    /** This class's static, if it set one. */
+    #alternativeMediaSuggestion(): string | undefined {
+      return (this.constructor as { alternativeMediaSuggestion?: string }).alternativeMediaSuggestion;
+    }
+
+    /** `message`, plus the alternative-Media sentence when this class names one. */
+    #withSuggestion(message: string): string {
+      const suggestion = this.#alternativeMediaSuggestion()?.trim();
+      return suggestion ? `${message} ${suggestion}` : message;
+    }
+
+    /**
+     * Log what this engine is delivering differently from what the playlist asked
+     * for. Neither condition stops playback, so neither is an error — they go to
+     * the console rather than the error surface.
+     *
+     * Once per source, not per parse: a live playlist reloads every target
+     * duration, and the timeline track re-parses on each one. Keyed on the notice
+     * rather than latched with a boolean so the two are independent, and cleared
+     * when the presentation unresolves so the next source starts quiet.
+     */
+    #reportDeliveryNotices(presentation: MaybeResolvedPresentation | undefined): void {
+      if (!isResolvedPresentation(presentation)) {
+        this.#noticed.clear();
+        return;
+      }
+
+      const trackId = liveTrackId(this.#signals.state);
+      const track = trackId ? findTrackById(presentation, trackId) : undefined;
+      if (!track || !isResolvedTrack(track)) return;
+      const metadata = getMediaPlaylistMetadata(track);
+      if (!metadata) return;
+
+      const name = this.#playerSoftwareName();
+      if (metadata.lowLatency && !this.#noticed.has('lowLatency')) {
+        this.#noticed.add('lowLatency');
+        console.warn(this.#withSuggestion(NOTICE_MESSAGES.lowLatencyUnsupported(name)));
+      }
+      if (metadata.playlistType === 'EVENT' && !this.#noticed.has('dvr')) {
+        this.#noticed.add('dvr');
+        console.warn(this.#withSuggestion(NOTICE_MESSAGES.dvrExperimental(name)));
+      }
+    }
+
     #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return createSimpleHlsEngine({
         ...this.#config,
@@ -435,6 +529,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   // adding back to the type or callers can't read it.
   return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI> & {
     readonly playerSoftwareName: string;
+    readonly alternativeMediaSuggestion: string | undefined;
   };
 }
 

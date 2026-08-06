@@ -20,6 +20,7 @@ import {
   SVTA_NO_SUPPORTED_VIDEO_TRACK,
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   SVTA_UNSUPPORTED_VIDEO_FORMAT,
   type SvtaError,
 } from '../../../../media/errors';
@@ -529,6 +530,117 @@ describe('SimpleHlsMediaElement', () => {
     });
   });
   // ---------------------------------------------------------------------------
+  // Delivery notices — console-only, non-fatal, once per source
+  // ---------------------------------------------------------------------------
+  describe('delivery notices', () => {
+    class TestMedia extends SimpleHlsMediaMixin(EventTarget) {}
+
+    // Without this, `vi.spyOn` on an already-mocked `console.warn` accumulates
+    // calls across tests and the per-source counts read high.
+    afterEach(() => {
+      vi.restoreAllMocks();
+    });
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    /** Unrelated behaviors warn as well, so count only the delivery notices. */
+    const noticesMatching = (spy: { mock: { calls: unknown[][] } }, pattern: RegExp) =>
+      spy.mock.calls.map((call) => String(call[0])).filter((text) => pattern.test(text));
+
+    const livePresentation = (metadata: Record<string, unknown>) =>
+      ({
+        id: 'pres-1',
+        url: 'https://example.com/master.m3u8',
+        startTime: 0,
+        selectionSets: [
+          {
+            id: 'v',
+            type: 'video',
+            switchingSets: [
+              {
+                id: 'vs',
+                type: 'video',
+                tracks: [
+                  {
+                    type: 'video',
+                    id: 'v1',
+                    url: 'https://example.com/v1.m3u8',
+                    bandwidth: 1000,
+                    mimeType: 'video/mp4',
+                    codecs: ['avc1.4d401f'],
+                    startTime: 0,
+                    duration: 10,
+                    segments: [],
+                    metadata: {
+                      [MEDIA_PLAYLIST_METADATA_KEY]: {
+                        targetDuration: 4,
+                        mediaSequence: 0,
+                        endList: false,
+                        ...metadata,
+                      },
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        ],
+      }) as unknown as Presentation;
+
+    it('warns that LL-HLS falls back to standard live', async () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const media = new TestMedia();
+      media.engine.state.selectedVideoTrackId.set('v1');
+      media.engine.state.presentation.set(livePresentation({ lowLatency: true }));
+      await flush();
+
+      const notices = noticesMatching(spy, /Low-Latency HLS/);
+      expect(notices).toHaveLength(1);
+      expect(notices[0]).toMatch(/standard live/i);
+      media.destroy();
+    });
+
+    it('warns that DVR/EVENT support is experimental', async () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const media = new TestMedia();
+      media.engine.state.selectedVideoTrackId.set('v1');
+      media.engine.state.presentation.set(livePresentation({ playlistType: 'EVENT' }));
+      await flush();
+
+      expect(noticesMatching(spy, /experimental/i)).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('warns once per source, not once per parse', async () => {
+      // A live playlist reloads every target duration and the track re-parses each
+      // time; a per-parse warning would repeat forever.
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const media = new TestMedia();
+      media.engine.state.selectedVideoTrackId.set('v1');
+
+      media.engine.state.presentation.set(livePresentation({ lowLatency: true }));
+      await flush();
+      // Same source, fresh presentation object — exactly what a reload produces.
+      media.engine.state.presentation.set(livePresentation({ lowLatency: true }));
+      await flush();
+
+      expect(noticesMatching(spy, /Low-Latency HLS/)).toHaveLength(1);
+      media.destroy();
+    });
+
+    it('says nothing for a plain live source', async () => {
+      const spy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const media = new TestMedia();
+      media.engine.state.selectedVideoTrackId.set('v1');
+      media.engine.state.presentation.set(livePresentation({}));
+      await flush();
+
+      expect(noticesMatching(spy, /Low-Latency HLS|experimental/i)).toEqual([]);
+      media.destroy();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
   // Error surface — error / 'error' event
   // (the MediaErrorCapability contract the player store's error feature consumes)
   // ---------------------------------------------------------------------------
@@ -551,8 +663,9 @@ describe('SimpleHlsMediaElement', () => {
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 
-      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: expect.any(String) });
-      expect(media.error?.message).not.toBe('');
+      // No message: viewer-facing copy is the consumer's to localize from the
+      // code, so the engine ships none.
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: '' });
       expect(fired).toHaveLength(1);
       media.destroy();
     });
@@ -613,80 +726,78 @@ describe('SimpleHlsMediaElement', () => {
       media.destroy();
     });
 
-    it('describes an all-encrypted source as protected, not as an unplayable format', async () => {
+    it('surfaces the unsupported-playback-feature code when a container cause explains the verdict', async () => {
       const media = new TestMedia();
-      // The verdict only says nothing was selectable. Every video rendition was
-      // pruned for the same reason, so that reason is the honest thing to say.
+      // The verdict alone only says nothing was selectable. The cause says why
+      // it can't be fixed here — no retry, CDN, or rendition helps — which is a
+      // different thing to tell a viewer, so it gets its own code.
       media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v2' } },
+        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' } },
         { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
       ]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      media.destroy();
+    });
+
+    it('surfaces the same code for an encrypted source', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      // One code for both: the viewer's situation is identical either way, and
+      // the specifics stay on `engine.state.errors` for a developer.
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      media.destroy();
+    });
+
+    it('surfaces it for a cause on a different track type than the verdict', async () => {
+      const media = new TestMedia();
+      // Encrypted audio empties audio while video is MPEG-TS. Attributing causes
+      // per type would miss this; the source is unplayable either way.
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      media.destroy();
+    });
+
+    it('keeps the verdict code when nothing unsupported explains it', async () => {
+      const media = new TestMedia();
+      // A type can empty for reasons that are not "we don't implement this" —
+      // that stays a plain verdict.
+      media.engine.state.errors.set([{ code: 2039 }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 
       expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
-      expect(media.error?.message).toMatch(/protected/i);
       media.destroy();
     });
 
-    it('falls back to the verdict copy when the causes disagree', async () => {
-      const media = new TestMedia();
-      // One encrypted rendition and one MPEG-TS rendition: no single cause is
-      // true of the source, so neither should be presented as the explanation.
-      media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
-        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v2' } },
-        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
-      ]);
-      await flush();
+    it('carries no viewer-facing message on either code', async () => {
+      for (const errors of [
+        [{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }],
+        [
+          { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
+          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+        ],
+      ] satisfies SvtaError[][]) {
+        const media = new TestMedia();
+        media.engine.state.errors.set(errors);
+        await flush();
 
-      expect(media.error?.message).not.toMatch(/protected/i);
-      expect(media.error?.message).toMatch(/format/i);
-      media.destroy();
+        expect(media.error?.message).toBe('');
+        media.destroy();
+      }
     });
 
-    it('ignores causes about a different track type', async () => {
-      const media = new TestMedia();
-      // Encrypted audio alongside MPEG-TS video. The video verdict must not
-      // inherit the audio track's explanation.
-      media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
-        { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1' } },
-        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
-      ]);
-      await flush();
-
-      expect(media.error?.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
-      expect(media.error?.message).not.toMatch(/protected/i);
-      media.destroy();
-    });
-
-    it('describes an all-encrypted audio track as protected audio', async () => {
-      const media = new TestMedia();
-      media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
-        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
-      ]);
-      await flush();
-
-      // Asserted on claim rather than phrasing: protected, and about audio.
-      expect(media.error?.message).toMatch(/protected/i);
-      expect(media.error?.message).toMatch(/audio/i);
-      media.destroy();
-    });
-
-    it('keeps the verdict copy when a cause carries no track type', async () => {
-      const media = new TestMedia();
-      // An untagged cause can't be attributed to a type, so it can't claim to
-      // explain a per-type verdict.
-      media.engine.state.errors.set([{ code: SVTA_UNSUPPORTED_DRM_SYSTEM }, { code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
-      await flush();
-
-      expect(media.error?.message).not.toMatch(/protected/i);
-      media.destroy();
-    });
-
-    it('does not rewrite copy for a cause appended after the verdict surfaced', async () => {
+    it('does not re-fire when a cause is appended after the verdict surfaced', async () => {
       const media = new TestMedia();
       const fired: Event[] = [];
       media.addEventListener('error', (event) => fired.push(event));
@@ -696,7 +807,7 @@ describe('SimpleHlsMediaElement', () => {
         { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
       ]);
       await flush();
-      const surfaced = media.error?.message;
+      const surfaced = media.error?.code;
 
       // A rendition resolving later can't retroactively change an error a
       // consumer has already shown.
@@ -707,17 +818,14 @@ describe('SimpleHlsMediaElement', () => {
       ]);
       await flush();
 
-      expect(media.error?.message).toBe(surfaced);
+      expect(media.error?.code).toBe(surfaced);
       expect(fired).toHaveLength(1);
       media.destroy();
     });
 
-    it('prefers a message the reporter supplied over composed copy', async () => {
+    it('prefers a message the reporter supplied', async () => {
       const media = new TestMedia();
-      media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
-        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: 'Reporter knows best.' },
-      ]);
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK, message: 'Reporter knows best.' }]);
       await flush();
 
       expect(media.error?.message).toBe('Reporter knows best.');
@@ -734,131 +842,111 @@ describe('SimpleHlsMediaElement', () => {
       expect(media.error?.data).toEqual({ selectionKey: 'selectedVideoTrackId' });
       media.destroy();
     });
+  });
 
-    it('never blames the browser — the engine is what can’t play these', async () => {
-      // The whole point of the copy: browsers play MPEG-TS (Safari, natively)
-      // and DRM (EME). Saying "this browser can't" is false and sends a viewer
-      // to a different browser that behaves identically.
-      const cases: SvtaError[][] = [
-        [{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }],
-        [{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }],
-        [
-          { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
-          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
-        ],
-        [
-          { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' } },
-          { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
-        ],
-      ];
+  // ---------------------------------------------------------------------------
+  // Unsupported-playback-feature log — the developer half of the same event
+  // ---------------------------------------------------------------------------
+  describe('unsupported-playback-feature log', () => {
+    class TestMedia extends SimpleHlsMediaMixin(EventTarget) {}
 
-      for (const errors of cases) {
-        const media = new TestMedia();
-        media.engine.state.errors.set(errors);
-        await flush();
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
-        expect(media.error?.message).not.toMatch(/browser/i);
-        media.destroy();
-      }
+    afterEach(() => {
+      vi.restoreAllMocks();
     });
 
-    it('reuses the reporter’s stored copy when every cause said the same thing', async () => {
-      // The reporter names the container because only it has the rendition's
-      // mimeType. The adapter's job is to carry that through, not re-derive it.
-      const media = new TestMedia();
-      media.engine.state.errors.set([
-        {
-          code: SVTA_UNSUPPORTED_VIDEO_FORMAT,
-          message: 'This player can’t play MPEG-TS video.',
-          data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' },
-        },
-        {
-          code: SVTA_UNSUPPORTED_VIDEO_FORMAT,
-          message: 'This player can’t play MPEG-TS video.',
-          data: { trackType: 'video', trackId: 'v2', mimeType: 'video/mp2t' },
-        },
-        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
-      ]);
-      await flush();
+    const unsupportedSource: SvtaError[] = [
+      { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' } },
+      { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
+    ];
 
-      expect(media.error?.message).toBe('This player can’t play MPEG-TS video.');
-      media.destroy();
-    });
-
-    it('discards stored copy the causes disagree on, even under one code', async () => {
-      // 1004/1005 covers every non-fMP4 container, so unanimity on the code is
-      // not unanimity on what to call it. Comparing messages catches what
-      // comparing codes would wrongly accept.
-      const media = new TestMedia();
-      media.engine.state.errors.set([
-        {
-          code: SVTA_UNSUPPORTED_AUDIO_FORMAT,
-          message: 'This player can’t play MPEG-TS audio.',
-          data: { trackType: 'audio', trackId: 'a1', mimeType: 'video/mp2t' },
-        },
-        {
-          code: SVTA_UNSUPPORTED_AUDIO_FORMAT,
-          message: 'This player can’t play raw AAC audio.',
-          data: { trackType: 'audio', trackId: 'a2', mimeType: 'audio/aac' },
-        },
-        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
-      ]);
-      await flush();
-
-      expect(media.error?.message).not.toMatch(/MPEG-TS|raw AAC/);
-      expect(media.error?.message).toMatch(/format/i);
-      media.destroy();
-    });
-
-    it('composes from the code when a cause carries no stored copy', async () => {
-      // A composition can supply its own reporter and omit copy. The code and
-      // track type still support the generic form, which beats the verdict's.
-      const media = new TestMedia();
-      media.engine.state.errors.set([
-        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'video', trackId: 'v1' } },
-        { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
-      ]);
-      await flush();
-
-      expect(media.error?.message).toMatch(/protected/i);
-      media.destroy();
-    });
-
-    it('names the adapter itself by default, so copy says which engine refused', async () => {
+    it('logs once, naming the engine that refused the source', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       expect(SimpleHlsMediaElement.playerSoftwareName).toBe('simple-hls-video');
 
+      const media = new TestMedia();
+      media.engine.state.errors.set(unsupportedSource);
+      await flush();
+
+      const logged = spy.mock.calls
+        .map((call) => String(call[0]))
+        .filter((text) => /can’t play this source/.test(text));
+      expect(logged).toHaveLength(1);
+      expect(logged[0]).toMatch(/^simple-hls-video /);
+      media.destroy();
+    });
+
+    it('logs the reported conditions alongside it, so specifics stay inspectable', async () => {
+      // One string, full detail: the container lives in structured data rather
+      // than in a sentence the engine would have to localize.
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const media = new TestMedia();
+      media.engine.state.errors.set(unsupportedSource);
+      await flush();
+
+      const call = spy.mock.calls.find((entry) => /can’t play this source/.test(String(entry[0])));
+      expect(call?.[1]).toEqual({ conditions: unsupportedSource });
+      media.destroy();
+    });
+
+    it('says nothing for a verdict with no unsupported cause', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const media = new TestMedia();
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 
-      expect(media.error?.message).toMatch(/^simple-hls-video /);
+      expect(spy.mock.calls.filter((call) => /can’t play this source/.test(String(call[0])))).toEqual([]);
       media.destroy();
     });
 
     it('lets an explicit config name win over the adapter’s static', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       const media = new (class extends SimpleHlsMediaMixin(EventTarget) {})({
         config: { playerSoftwareName: 'Mux Player' },
       });
-      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      media.engine.state.errors.set(unsupportedSource);
       await flush();
 
-      expect(media.error?.message).toMatch(/^Mux Player /);
+      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => /can’t play this source/.test(text))).toMatch(
+        /^Mux Player /
+      );
       media.destroy();
     });
 
     it('honours a subclass overriding the static', async () => {
       // Read through `this.constructor`, not the mixin closure, so a host that
-      // renames the engine gets its name in the copy without touching config.
+      // renames the engine gets its name in the log without touching config.
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
       class Renamed extends SimpleHlsMediaMixin(EventTarget) {
         static override get playerSoftwareName(): string {
           return 'Acme Player';
         }
       }
       const media = new Renamed();
-      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      media.engine.state.errors.set(unsupportedSource);
       await flush();
 
-      expect(media.error?.message).toMatch(/^Acme Player /);
+      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => /can’t play this source/.test(text))).toMatch(
+        /^Acme Player /
+      );
+      media.destroy();
+    });
+
+    it('appends the alternative-Media suggestion when the class names one', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      class Suggesting extends SimpleHlsMediaMixin(EventTarget) {
+        static override get alternativeMediaSuggestion(): string {
+          return 'Import from "/media/mux/hls-js" instead.';
+        }
+      }
+      const media = new Suggesting();
+      media.engine.state.errors.set(unsupportedSource);
+      await flush();
+
+      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => /can’t play this source/.test(text))).toMatch(
+        /Import from "\/media\/mux\/hls-js" instead\.$/
+      );
       media.destroy();
     });
   });

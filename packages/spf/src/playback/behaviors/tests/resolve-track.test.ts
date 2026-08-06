@@ -839,18 +839,4 @@ http://example.com/segment1.m4s
     expect(state.errors.get()).toBeUndefined();
     reactor.destroy();
   });
-
-  it('names the configured player software in the copy it composes', async () => {
-    // The whole reason the option is threaded here: this is the only place the
-    // rendition — and so its container — is in hand.
-    const state = setup('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k"');
-    const reactor = resolveVideoTrack.setup({
-      state,
-      config: { reportUnsupportedTrackConditions, playerSoftwareName: 'Mux Player' },
-    });
-    await flush();
-
-    expect(state.errors.get()?.[0]?.message).toBe('Mux Player can’t play DRM-protected video.');
-    reactor.destroy();
-  });
 });

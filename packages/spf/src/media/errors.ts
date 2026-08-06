@@ -65,6 +65,28 @@ export const SVTA_NO_SUPPORTED_VIDEO_TRACK = 2011;
 export const SVTA_NO_SUPPORTED_AUDIO_TRACK = 2012;
 
 /**
+ * SVTA 99 [Custom] 001 — this engine has no pipeline for something the source
+ * requires, so the source is unplayable *here* rather than broken.
+ *
+ * Custom rather than standard because the standard codes available describe
+ * either narrower or wider things. The causes (1004/1005 unsupported format,
+ * 4008 unsupported DRM) say what one rendition hit; the verdicts (2011/2012 no
+ * supported track) say a type emptied without saying why it's unfixable. And
+ * 2039 "Manifest feature unsupported" covers features that are unsupported but
+ * still *playable* — LL-HLS degrading to standard live is a 2039 — so
+ * overloading it for a fatal condition would make it useless for the notices it
+ * belongs on.
+ *
+ * Index `001`: the spec defines only `99000` (Unknown) for the custom category
+ * and leaves the rest to the publisher, so this is the first code we define.
+ *
+ * Five digits, and deliberately not special-cased anywhere: {@link svtaCategory}
+ * and {@link svtaIndex} decompose it correctly by arithmetic alone, because
+ * every standard category is below `8000` and custom starts at `99000`.
+ */
+export const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
+
+/**
  * The error's domain — `code / 1000`, per the spec's "divide by one thousand to
  * obtain the error category". Works uniformly across the four-digit native form
  * and the five-digit form embedding an external standard: `"03404"` is

@@ -204,6 +204,10 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
   let playlistType: 'VOD' | 'EVENT' | undefined;
   let endList = false;
   let holdBack: number | undefined;
+  // Low-Latency HLS delivery. Any of the partial-segment tags is enough: the
+  // parser ignores parts and the loader fetches whole segments, so this records
+  // that the publisher configured LL-HLS, not that we honour it.
+  let lowLatency = false;
   // Any EXT-X-KEY with a real METHOD makes the rendition encrypted. Sticky: a
   // clear lead (METHOD=NONE first, a real key later) still counts, since we can
   // only report whether decryption is needed at all.
@@ -254,6 +258,16 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         const parsed = Number.parseFloat(value);
         if (Number.isFinite(parsed) && parsed > 0) holdBack = parsed;
       }
+      // Advertised for clients playing partial segments — its presence is an
+      // LL-HLS signal even though the value stays deliberately unread.
+      if (serverControl.get('PART-HOLD-BACK') !== undefined) lowLatency = true;
+      continue;
+    }
+
+    // Partial segments: noted, then skipped. `#EXT-X-PART` lines would otherwise
+    // fall through as unrecognized `#EXT` tags, so LL-HLS delivery went unnoticed.
+    if (trimmed.startsWith('#EXT-X-PART-INF') || trimmed.startsWith('#EXT-X-PART:')) {
+      lowLatency = true;
       continue;
     }
 
@@ -399,6 +413,7 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
         targetDuration,
         mediaSequence,
         playlistType,
+        lowLatency,
         endList,
         holdBack,
         encrypted,

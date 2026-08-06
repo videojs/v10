@@ -72,8 +72,6 @@ interface TrackResolutionConfig<K extends SelectedTrackKey> {
    * `primitives/report-track-conditions`); absent → report nothing.
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
-  /** Sentence subject for the reported conditions' viewer-facing copy. */
-  playerSoftwareName?: string;
 }
 
 /**
@@ -89,8 +87,6 @@ interface ResolveTrackConfig {
   reschedule?: Reschedule<ResolvedTrack>;
   /** Playlist-derived condition reporting (see `primitives/report-track-conditions`). */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
-  /** Sentence subject for the reported conditions' viewer-facing copy. */
-  playerSoftwareName?: string;
 }
 
 function setupTrackResolution<K extends SelectedTrackKey>({
@@ -102,7 +98,6 @@ function setupTrackResolution<K extends SelectedTrackKey>({
     gateFirstParse,
     reschedule,
     reportUnsupportedTrackConditions,
-    playerSoftwareName,
   },
 }: {
   // Widened with the optional `errors` slot: reporting writes through it without
@@ -225,9 +220,7 @@ function setupTrackResolution<K extends SelectedTrackKey>({
                   // make the source unplayable, so the verdict stays with
                   // track-switching's empty-candidate branch.
                   if (reportUnsupportedTrackConditions) {
-                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack, {
-                      playerSoftwareName,
-                    })) {
+                    for (const condition of reportUnsupportedTrackConditions(mediaTrack as ResolvedTrack)) {
                       emitError(state, condition);
                     }
                   }
