@@ -2,9 +2,9 @@ import { Controls, Tooltip } from '@videojs/core/components';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button.skin';
 import { PlayButton } from '../../components/buttons/play-button.skin';
 import { SeekButton } from '../../components/buttons/seek-button.skin';
+import { VolumePopover } from '../../components/controls/volume-popover.skin';
 import { Time } from '../../components/displays/time.skin';
 import { TimeSlider } from '../../components/sliders/time-slider.skin';
-import { VolumeControl } from '../../components/volume/volume-control.skin';
 
 const SEEK_SECONDS = 10;
 
@@ -23,7 +23,7 @@ export function DefaultVideoControls() {
         </Time>
 
         <Controls.Group>
-          <VolumeControl />
+          <VolumePopover />
           <FullscreenButton />
         </Controls.Group>
       </Tooltip.Provider>

@@ -49,8 +49,8 @@ export const skinArtifacts = [
     entry: './canonical/components/sliders/volume-slider.skin.tsx',
   }),
   defineArtifact({
-    id: 'volume-control',
+    id: 'volume-popover',
     kind: 'component',
-    entry: './canonical/components/volume/volume-control.skin.tsx',
+    entry: './canonical/components/controls/volume-popover.skin.tsx',
   }),
 ] as const satisfies readonly SkinArtifactDefinition[];

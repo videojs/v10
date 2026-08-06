@@ -11,7 +11,7 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'default-video-controls',
         dependencies: {
-          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time', 'time-slider', 'volume-control'],
+          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time', 'time-slider', 'volume-popover'],
           packages: ['@videojs/core'],
           symbols: {
             components: ['Controls', 'Tooltip'],
@@ -85,7 +85,7 @@ describe('buildSkinArtifactGraph', () => {
         },
       },
       {
-        id: 'volume-control',
+        id: 'volume-popover',
         dependencies: {
           artifacts: ['mute-button', 'volume-slider'],
           packages: ['@videojs/core'],
@@ -115,7 +115,7 @@ describe('buildSkinArtifactGraph', () => {
         'time-slider',
         'mute-button',
         'volume-slider',
-        'volume-control',
+        'volume-popover',
         'default-video-controls',
       ],
       artifacts: [
@@ -126,7 +126,7 @@ describe('buildSkinArtifactGraph', () => {
         'time-slider',
         'mute-button',
         'volume-slider',
-        'volume-control',
+        'volume-popover',
       ],
       packages: ['@videojs/core', '@videojs/icons'],
       symbols: {

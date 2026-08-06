@@ -13,7 +13,7 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time", "time-slider", "volume-control"],
+        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time", "time-slider", "volume-popover"],
         "packages": ["@videojs/core"],
         "symbols": {
           "components": ["Controls", "Tooltip"],
@@ -142,12 +142,12 @@
       }
     },
     {
-      "id": "volume-control",
+      "id": "volume-popover",
       "kind": "component",
-      "entry": "./canonical/components/volume/volume-control.skin.tsx",
+      "entry": "./canonical/components/controls/volume-popover.skin.tsx",
       "files": [
         {
-          "path": "./canonical/components/volume/volume-control.skin.tsx",
+          "path": "./canonical/components/controls/volume-popover.skin.tsx",
           "role": "entry"
         }
       ],
