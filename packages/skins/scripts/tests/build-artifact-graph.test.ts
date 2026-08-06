@@ -22,10 +22,10 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'fullscreen-button',
         dependencies: {
-          artifacts: [],
+          artifacts: ['tooltip'],
           packages: ['@videojs/core', '@videojs/icons'],
           symbols: {
-            components: ['FullscreenButton', 'Tooltip'],
+            components: ['FullscreenButton'],
             icons: ['FullscreenEnterIcon', 'FullscreenExitIcon'],
           },
         },
@@ -33,10 +33,10 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'play-button',
         dependencies: {
-          artifacts: [],
+          artifacts: ['tooltip'],
           packages: ['@videojs/core', '@videojs/icons'],
           symbols: {
-            components: ['PlayButton', 'Tooltip'],
+            components: ['PlayButton'],
             icons: ['PauseIcon', 'PlayIcon', 'RestartIcon'],
           },
         },
@@ -44,10 +44,10 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'seek-button',
         dependencies: {
-          artifacts: [],
+          artifacts: ['tooltip'],
           packages: ['@videojs/core', '@videojs/icons'],
           symbols: {
-            components: ['SeekButton', 'Text', 'Tooltip'],
+            components: ['SeekButton', 'Text'],
             icons: ['SeekIcon'],
           },
         },
@@ -59,6 +59,16 @@ describe('buildSkinArtifactGraph', () => {
           packages: ['@videojs/core'],
           symbols: {
             components: ['Slider', 'TimeSlider'],
+          },
+        },
+      },
+      {
+        id: 'tooltip',
+        dependencies: {
+          artifacts: [],
+          packages: ['@videojs/core'],
+          symbols: {
+            components: ['Tooltip'],
           },
         },
       },
@@ -75,8 +85,15 @@ describe('buildSkinArtifactGraph', () => {
     ]);
 
     expect(resolveArtifactClosure(result.graph, 'default-video-controls')).toMatchObject({
-      artifactIds: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider', 'default-video-controls'],
-      artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
+      artifactIds: [
+        'tooltip',
+        'fullscreen-button',
+        'play-button',
+        'seek-button',
+        'time-slider',
+        'default-video-controls',
+      ],
+      artifacts: ['tooltip', 'fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
       packages: ['@videojs/core', '@videojs/icons'],
       symbols: {
         components: [

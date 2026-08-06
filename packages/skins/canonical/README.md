@@ -16,6 +16,7 @@ The current canonical paths are:
 - `components/buttons/fullscreen-button.skin.tsx`
 - `components/buttons/play-button.skin.tsx`
 - `components/buttons/seek-button.skin.tsx`
+- `components/overlays/tooltip.skin.tsx`
 - `components/sliders/volume-slider.skin.tsx`
 - `components/sliders/time-slider.skin.tsx`
 

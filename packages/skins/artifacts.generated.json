@@ -33,10 +33,10 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": [],
+        "artifacts": ["tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
-          "components": ["FullscreenButton", "Tooltip"],
+          "components": ["FullscreenButton"],
           "icons": ["FullscreenEnterIcon", "FullscreenExitIcon"]
         }
       }
@@ -53,10 +53,10 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": [],
+        "artifacts": ["tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
-          "components": ["PlayButton", "Tooltip"],
+          "components": ["PlayButton"],
           "icons": ["PauseIcon", "PlayIcon", "RestartIcon"]
         }
       }
@@ -73,10 +73,10 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": [],
+        "artifacts": ["tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
-          "components": ["SeekButton", "Text", "Tooltip"],
+          "components": ["SeekButton", "Text"],
           "icons": ["SeekIcon"]
         }
       }
@@ -97,6 +97,26 @@
         "packages": ["@videojs/core"],
         "symbols": {
           "components": ["Slider", "TimeSlider"],
+          "icons": []
+        }
+      }
+    },
+    {
+      "id": "tooltip",
+      "kind": "component",
+      "entry": "./canonical/components/overlays/tooltip.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/overlays/tooltip.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core"],
+        "symbols": {
+          "components": ["Tooltip"],
           "icons": []
         }
       }
