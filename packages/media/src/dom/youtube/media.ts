@@ -340,6 +340,9 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   async play() {
     await this.#loadComplete;
+    // The embed still holds the stopped video, so playing it would resume a
+    // source that was cleared.
+    if (!this.#src) return;
     this.#player?.playVideo();
   }
 
@@ -643,8 +646,10 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     player.addEventListener('onStateChange', ({ data: state }) => {
       if (this.#isStale(attachId)) return;
       // Subsequent loads (`cueVideoById`/`loadVideoById`) never re-fire
-      // `onReady`, so any post-load state transition completes the load.
-      if (!this.#loaded && state !== STATE_UNSTARTED) this.#onLoaded();
+      // `onReady`, so any post-load state transition completes the load. With no
+      // src there is no load to complete, and `stopVideo()` reports a transition
+      // of its own — completing on that would put the cleared state right back.
+      if (this.#src && !this.#loaded && state !== STATE_UNSTARTED) this.#onLoaded();
 
       if (state === STATE_PLAYING || state === STATE_BUFFERING) {
         if (!this.#playFired) {

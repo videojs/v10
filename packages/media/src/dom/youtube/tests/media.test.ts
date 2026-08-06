@@ -381,6 +381,7 @@ describe('YouTubeMedia', () => {
 
   it('forwards play() and pause() to the player', async () => {
     const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
     const { player } = await attachAndLoad(media);
 
     await media.play();
@@ -393,6 +394,7 @@ describe('YouTubeMedia', () => {
 
   it('replays on ended when loop is set', async () => {
     const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
     media.loop = true;
     const { player } = await attachAndLoad(media);
 
@@ -705,6 +707,37 @@ describe('YouTubeMedia source', () => {
     expect(media.currentTime).toBe(0);
     expect(media.paused).toBe(true);
     await expect(media.play()).resolves.toBeUndefined();
+    media.detach();
+  });
+
+  it('does not let a cleared source come back through a state change', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
+    const { player } = await attachAndLoad(media);
+    player.emit('onStateChange', STATE.PLAYING);
+
+    media.source = null;
+    await Promise.resolve();
+    // `stopVideo()` reports a transition of its own.
+    player.emit('onStateChange', STATE.ENDED);
+
+    expect(media.duration).toBeNaN();
+    expect(media.readyState).toBe(0);
+    expect(media.currentTime).toBe(0);
+    media.detach();
+  });
+
+  it('does not play a source that was cleared', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
+    const { player } = await attachAndLoad(media);
+
+    media.source = null;
+    await Promise.resolve();
+    player.playVideo.mockClear();
+    await media.play();
+
+    expect(player.playVideo).not.toHaveBeenCalled();
     media.detach();
   });
 
