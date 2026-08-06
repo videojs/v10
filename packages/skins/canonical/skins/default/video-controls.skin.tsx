@@ -17,9 +17,11 @@ export function DefaultVideoControls() {
           <SeekButton seconds={SEEK_SECONDS} />
         </Controls.Group>
 
-        <Time>
+        <Controls.Group>
+          <Time type="current" />
           <TimeSlider />
-        </Time>
+          <Time type="remaining" toggle />
+        </Controls.Group>
 
         <Controls.Group>
           <FullscreenButton />
