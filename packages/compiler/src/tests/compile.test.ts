@@ -83,6 +83,31 @@ describe('compile (transformImports — function rule)', () => {
     });
     expect(code).toContain(`import { NewName as OldName } from "dst"`);
   });
+
+  it('preserves a default binding while rewriting named imports', async () => {
+    const source = `import DefaultWidget, { NamedWidget } from '@fixture/widgets';\nconst _ = [DefaultWidget, NamedWidget];`;
+    const { code } = await compileJsx(source, {
+      imports: {
+        '@fixture/widgets': (name) => ({ source: `./widgets/${name.toLowerCase()}`, name }),
+      },
+    });
+
+    expect(code).toMatch(/import DefaultWidget from ['"]@fixture\/widgets['"]/);
+    expect(code).toContain(`import { NamedWidget } from "./widgets/namedwidget"`);
+  });
+
+  it('preserves clause and specifier type-only modifiers', async () => {
+    const source = `import type { TypeOnly } from '@fixture/types';\nimport { type NamedType, Value } from '@fixture/mixed';\ntype Result = [TypeOnly, NamedType, typeof Value];`;
+    const { code } = await compileJsx(source, {
+      imports: {
+        '@fixture/types': (name) => ({ source: './types', name }),
+        '@fixture/mixed': (name) => ({ source: './mixed', name }),
+      },
+    });
+
+    expect(code).toContain(`import type { TypeOnly } from "./types"`);
+    expect(code).toContain(`import { type NamedType, Value } from "./mixed"`);
+  });
 });
 
 describe('replace', () => {
