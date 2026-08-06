@@ -92,18 +92,29 @@ function rewriteImportStatement(
     const resolvedSource =
       options.configDir && target.source.startsWith('.') ? resolveRelative(target.source, options) : target.source;
     const propertyName = target.name === localName ? undefined : factory.createIdentifier(target.name);
-    const spec = factory.createImportSpecifier(false, propertyName, factory.createIdentifier(localName));
+    const spec = factory.createImportSpecifier(element.isTypeOnly, propertyName, factory.createIdentifier(localName));
     const bucket = buckets.get(resolvedSource);
     if (bucket) bucket.specs.push(spec);
     else buckets.set(resolvedSource, { resolvedSource, specs: [spec] });
   }
 
   const out: ts.ImportDeclaration[] = [];
+  if (clause.name) {
+    out.push(
+      factory.updateImportDeclaration(
+        stmt,
+        stmt.modifiers,
+        factory.createImportClause(clause.isTypeOnly, clause.name, undefined),
+        stmt.moduleSpecifier,
+        stmt.attributes
+      )
+    );
+  }
   for (const { resolvedSource, specs } of buckets.values()) {
     out.push(
       factory.createImportDeclaration(
         undefined,
-        factory.createImportClause(false, undefined, factory.createNamedImports(specs)),
+        factory.createImportClause(clause.isTypeOnly, undefined, factory.createNamedImports(specs)),
         factory.createStringLiteral(resolvedSource)
       )
     );

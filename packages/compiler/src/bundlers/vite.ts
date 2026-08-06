@@ -17,8 +17,8 @@ type ViteHookContext<Hook> = Hook extends (this: infer Context, ...args: never[]
     : never;
 
 type ViteTransformContext = ViteHookContext<NonNullable<Plugin['transform']>>;
-type VitePluginWarning = ViteTransformContext extends { warn: (...args: infer WarningParameters) => unknown }
-  ? WarningParameters[0]
+type VitePluginDiagnostic = ViteTransformContext extends { error: (...args: infer ErrorParameters) => unknown }
+  ? ErrorParameters[0]
   : string;
 
 export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin {
@@ -53,9 +53,10 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       if (exclude.some((ext) => id.endsWith(ext))) return null;
 
       const { config, configDir } = await getConfig();
-      const result = await compile(code, { filename: id, config, configDir });
+      const result = await compile(code, { filename: id, config, configDir, outputFile: id });
       for (const diagnostic of result.diagnostics) {
-        if (diagnostic.level === 'warning') this.warn(viteWarningFromDiagnostic(diagnostic));
+        if (diagnostic.level === 'warning') this.warn(viteLogFromDiagnostic(diagnostic));
+        else this.error(viteLogFromDiagnostic(diagnostic));
       }
 
       const imports = result.assets
@@ -75,7 +76,7 @@ function cssVirtualId(id: string, fileName: string, index: number): string {
   return `virtual:@videojs/compiler/css/${encodeURIComponent(id)}/${index}/${encodeURIComponent(fileName)}`;
 }
 
-function viteWarningFromDiagnostic(diagnostic: CompilerDiagnostic): VitePluginWarning {
+function viteLogFromDiagnostic(diagnostic: CompilerDiagnostic): VitePluginDiagnostic {
   if (!diagnostic.file || !diagnostic.line) return diagnostic.message;
   return {
     message: diagnostic.message,
