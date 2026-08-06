@@ -1,8 +1,7 @@
-import { Controls, Tooltip } from '@videojs/core/components';
+import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/core/components';
 import { FullscreenButton } from '../../components/buttons/fullscreen-button.skin';
 import { PlayButton } from '../../components/buttons/play-button.skin';
 import { SeekButton } from '../../components/buttons/seek-button.skin';
-import { Time } from '../../components/displays/time.skin';
 import { TimeSlider } from '../../components/sliders/time-slider.skin';
 
 const SEEK_SECONDS = 10;
@@ -18,9 +17,9 @@ export function DefaultVideoControls() {
         </Controls.Group>
 
         <Controls.Group>
-          <Time type="current" />
+          <TimePrimitive.Value type="current" />
           <TimeSlider />
-          <Time type="remaining" toggle />
+          <TimePrimitive.Value type="remaining" toggle />
         </Controls.Group>
 
         <Controls.Group>

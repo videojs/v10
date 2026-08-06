@@ -1,15 +1,14 @@
+import type { SeekButtonProps } from '@videojs/core';
 import { SeekButton as SeekButtonPrimitive, Text, Tooltip } from '@videojs/core/components';
 import { SeekIcon } from '@videojs/icons/components';
 
-export interface SeekButtonProps {
-  seconds?: number | undefined;
-}
+export function SeekButton(props: SeekButtonProps = {}) {
+  const seconds = props.seconds ?? 10;
 
-export function SeekButton({ seconds = 10 }: SeekButtonProps = {}) {
   return (
     <Tooltip.Root side="top">
       <Tooltip.Trigger>
-        <SeekButtonPrimitive seconds={seconds}>
+        <SeekButtonPrimitive {...props} seconds={seconds}>
           <SeekIcon />
           <Text>{Math.abs(seconds)}</Text>
         </SeekButtonPrimitive>

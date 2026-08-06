@@ -11,10 +11,10 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'default-video-controls',
         dependencies: {
-          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time', 'time-slider'],
+          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
           packages: ['@videojs/core'],
           symbols: {
-            components: ['Controls', 'Tooltip'],
+            components: ['Controls', 'Time', 'Tooltip'],
             icons: [],
           },
         },
@@ -53,16 +53,6 @@ describe('buildSkinArtifactGraph', () => {
         },
       },
       {
-        id: 'time',
-        dependencies: {
-          artifacts: [],
-          packages: ['@videojs/core'],
-          symbols: {
-            components: ['Time'],
-          },
-        },
-      },
-      {
         id: 'time-slider',
         dependencies: {
           artifacts: [],
@@ -85,8 +75,8 @@ describe('buildSkinArtifactGraph', () => {
     ]);
 
     expect(resolveArtifactClosure(result.graph, 'default-video-controls')).toMatchObject({
-      artifactIds: ['fullscreen-button', 'play-button', 'seek-button', 'time', 'time-slider', 'default-video-controls'],
-      artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time', 'time-slider'],
+      artifactIds: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider', 'default-video-controls'],
+      artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider'],
       packages: ['@videojs/core', '@videojs/icons'],
       symbols: {
         components: [
