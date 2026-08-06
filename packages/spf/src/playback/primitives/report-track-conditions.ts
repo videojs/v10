@@ -50,11 +50,12 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * than being flattened into an English sentence here.
  *
  * Both carry `trackType`, redundantly for the format codes (1004/1005 are
- * already per type) but necessarily for 4008, which isn't: SVTA has one
- * content-protection code for both. A consumer attributing causes to a
- * per-type verdict needs to tell an encrypted audio rendition from an
- * encrypted video one, so the tag goes on every condition rather than only
- * where it's load-bearing.
+ * already per type) but not for 4008, which isn't per type — SVTA has one
+ * content-protection code for both. Nothing branches on the tag: it's diagnostic
+ * context, reaching a developer through the logged sequence and `error.data`,
+ * which is why it goes on every condition rather than only where the code can't
+ * carry it. `trackId` alongside it is what distinguishes two renditions of the
+ * same type.
  */
 export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly SvtaError[] {
   const conditions: SvtaError[] = [];
