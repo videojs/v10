@@ -34,16 +34,6 @@
       "development": "./dist/dev/components.js",
       "default": "./dist/default/components.js"
     },
-    "./jsx-runtime": {
-      "types": "./dist/dev/jsx-runtime.d.ts",
-      "development": "./dist/dev/jsx-runtime.js",
-      "default": "./dist/default/jsx-runtime.js"
-    },
-    "./jsx-dev-runtime": {
-      "types": "./dist/dev/jsx-dev-runtime.d.ts",
-      "development": "./dist/dev/jsx-dev-runtime.js",
-      "default": "./dist/default/jsx-dev-runtime.js"
-    },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",
       "development": "./dist/dev/i18n.js",
@@ -81,6 +71,7 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
+    "@videojs/jsx": "workspace:*",
     "@videojs/media": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"

@@ -1,3 +1,4 @@
+import { createPublicPromise, type PublicPromise } from '@videojs/utils/function';
 import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
@@ -5,6 +6,7 @@ import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 
 import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
+import { createTimeRange, serializeEmbedParams } from '../utils';
 
 export type { default as VimeoPlayerApi } from '@vimeo/player';
 
@@ -357,12 +359,12 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   get buffered() {
-    return this.#progress > 0 ? createTimeRanges(0, this.#progress) : EMPTY_TIME_RANGES;
+    return this.#progress > 0 ? createTimeRange(0, this.#progress) : EMPTY_TIME_RANGES;
   }
 
   get seekable() {
     return this.#duration > 0 && Number.isFinite(this.#duration)
-      ? createTimeRanges(0, this.#duration)
+      ? createTimeRange(0, this.#duration)
       : EMPTY_TIME_RANGES;
   }
 
@@ -649,9 +651,9 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
     delete params.h;
-    return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serialize(params)}`;
+    return `${EMBED_EVENT_BASE}/${parsed.id}/embed${hashPath}?${serializeEmbedParams(params)}`;
   }
-  return `${EMBED_VIDEO_BASE}/${parsed.id}?${serialize(params)}`;
+  return `${EMBED_VIDEO_BASE}/${parsed.id}?${serializeEmbedParams(params)}`;
 }
 
 const EMBED_VIDEO_BASE = 'https://player.vimeo.com/video';
@@ -662,42 +664,10 @@ const READY_STATE_HAVE_NOTHING = 0;
 const READY_STATE_HAVE_METADATA = 1;
 const READY_STATE_HAVE_FUTURE_DATA = 3;
 
-function createTimeRanges(start: number, end: number) {
-  return { length: 1, start: () => start, end: () => end };
-}
-
 function toLoadVideoOptions(src: string, engine?: VimeoEngineConfig) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return null;
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
   const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
   return { url, ...engine } as LoadVideoOptions;
-}
-
-function serialize(props: Record<string, unknown>) {
-  const params = new URLSearchParams();
-  for (const key in props) {
-    const val = props[key];
-    if (val === true || val === '') params.set(key, '1');
-    else if (val === false) params.set(key, '0');
-    else if (val != null) params.set(key, String(val));
-  }
-  return params.toString();
-}
-
-interface PublicPromise<T> extends Promise<T> {
-  resolve: (value: T) => void;
-  reject: (reason?: unknown) => void;
-}
-
-function createPublicPromise<T>(): PublicPromise<T> {
-  let resolve!: (value: T) => void;
-  let reject!: (reason?: unknown) => void;
-  const promise = new Promise<T>((res, rej) => {
-    resolve = res;
-    reject = rej;
-  }) as PublicPromise<T>;
-  promise.resolve = resolve;
-  promise.reject = reject;
-  return promise;
 }

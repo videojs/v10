@@ -1,4 +1,4 @@
-import type { PlayerStore } from '@videojs/core/dom';
+import type { InferPlayerConfig, PlayerStore } from '@videojs/core/dom';
 import type { Constructor } from '@videojs/utils/types';
 import type { MediaElement } from '@/ui/media-element';
 
@@ -6,9 +6,14 @@ import type { MediaElement } from '@/ui/media-element';
 // PlayerProvider
 // ----------------------------------------
 
-export interface PlayerProvider<Store extends PlayerStore> extends MediaElement {
-  readonly store: Store;
-}
+type ProviderProperties<Store extends PlayerStore> = {
+  -readonly [Key in keyof InferPlayerConfig<Store>]?: InferPlayerConfig<Store>[Key] | undefined;
+};
+
+export type PlayerProvider<Store extends PlayerStore> = MediaElement &
+  ProviderProperties<Store> & {
+    readonly store: Store;
+  };
 
 export interface PlayerProviderConstructor<Store extends PlayerStore> extends Constructor<PlayerProvider<Store>> {}
 

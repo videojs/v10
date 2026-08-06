@@ -1,4 +1,4 @@
-import { defineComponent } from '../manifest';
+import { defineComponent } from '@videojs/jsx';
 
 export default defineComponent({
   name: 'Text',

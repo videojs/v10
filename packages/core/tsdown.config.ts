@@ -19,8 +19,6 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   entry: {
     index: './src/core/index.ts',
     components: './src/core/ui/components.generated.ts',
-    'jsx-runtime': './src/jsx-runtime.ts',
-    'jsx-dev-runtime': './src/jsx-dev-runtime.ts',
     i18n: './src/core/i18n/index.ts',
     ...localeEntries,
     dom: './src/dom/index.ts',

@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
-
-import { createComponent, jsx, VIDEOJS_NODE } from '../../../jsx-runtime';
+import { createComponent, jsx, VIDEOJS_NODE } from '../jsx-runtime';
 import { defineComponent } from '../manifest';
 
 describe('createComponent', () => {

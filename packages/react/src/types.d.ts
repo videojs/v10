@@ -16,3 +16,9 @@ declare module 'react-dom' {
     key?: null | string
   ): ReactPortal;
 }
+
+declare module 'react-dom/server' {
+  import type { ReactNode } from 'react';
+
+  export function renderToString(children: ReactNode): string;
+}

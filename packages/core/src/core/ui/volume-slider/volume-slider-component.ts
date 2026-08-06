@@ -1,4 +1,4 @@
-import { defineComponent } from '../manifest';
+import { defineComponent } from '@videojs/jsx';
 import type { SliderValueProps } from '../slider/slider-component';
 import type { VolumeSliderProps } from './volume-slider-core';
 import { VolumeSliderDataAttrs } from './volume-slider-data-attrs';

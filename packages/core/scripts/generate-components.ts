@@ -153,7 +153,7 @@ export async function generateComponents(
   config: ComponentsConfig,
   options: GenerateComponentsOptions = {}
 ): Promise<GenerateComponentsResult> {
-  const { components, output, runtimeImport = '@videojs/core/jsx-runtime' } = config;
+  const { components, output, runtimeImport = '@videojs/jsx' } = config;
   const cwd = options.cwd ?? process.cwd();
   const outputAbsolute = isAbsolute(output) ? output : resolve(cwd, output);
 
