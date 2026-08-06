@@ -1,4 +1,5 @@
 import { noop } from '@videojs/utils/function';
+import { shallowEqual } from '@videojs/utils/object';
 
 export type StateChange = () => void;
 
@@ -109,18 +110,6 @@ class StateContainer<T> implements WritableState<T> {
     pendingContainers.add(this);
     scheduleFlush();
   }
-}
-
-function shallowEqual<T>(a: T, b: T): boolean {
-  const aKeys = Reflect.ownKeys(a as object);
-  const bKeys = Reflect.ownKeys(b as object);
-  if (aKeys.length !== bKeys.length) return false;
-
-  for (const key of aKeys) {
-    if (!hasOwnProp.call(b, key) || !Object.is(a[key as keyof T], b[key as keyof T])) return false;
-  }
-
-  return true;
 }
 
 export function createState<T>(initial: T): WritableState<T> {

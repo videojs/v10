@@ -19,6 +19,7 @@ import type { Media } from '@videojs/media/dom';
 import type { InferStoreState } from '@videojs/store';
 import { combine, createStore } from '@videojs/store';
 import { useStore } from '@videojs/store/react';
+import { pick } from '@videojs/utils/object';
 import type { FC, ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
@@ -89,7 +90,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   function Provider(props: ProviderProps<any>): ReactNode {
     const { children } = props;
     // Only inputs declared by selected features are forwarded to store actions.
-    const configValues = pickConfigValues(props, configKeys);
+    const configValues = pick(props, configKeys);
     const [store, setStore] = useState(() => createConfiguredStore(configValues));
     const syncedValues = useRef({ store, values: configValues });
     const [popupGroup] = useState(() => createPopupGroup());
@@ -153,10 +154,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     usePlayer,
     useMedia,
   };
-}
-
-function pickConfigValues(props: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
-  return Object.fromEntries(keys.map((key) => [key, props[key]]));
 }
 
 function applyConfigValues(store: object, config: PlayerFeatureConfig, values: Record<string, unknown>): void {

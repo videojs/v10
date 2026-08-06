@@ -8,6 +8,7 @@ import type {
   InferSliceDerivedState,
   InferSliceSourceState,
   InferSliceState,
+  Slice,
   StateContext,
 } from './slice';
 import type { StateChange, State as StateContainer, SubscribeOptions, UnknownState, WritableState } from './state';
@@ -23,7 +24,7 @@ export interface StoreFactory<Target> {
     slice: S,
     options?: StoreOptions<Target, InferSliceState<S>>
   ): Store<Target, InferSliceState<S>>;
-  <State>(slice: import('./slice').Slice<Target, State>, options?: StoreOptions<Target, State>): Store<Target, State>;
+  <State>(slice: Slice<Target, State>, options?: StoreOptions<Target, State>): Store<Target, State>;
 }
 
 export function createStore<Target = unknown>(): StoreFactory<Target> {
