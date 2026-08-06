@@ -270,8 +270,6 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
   }
 
-  // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
-  // adding back to the type or callers can't read it.
   return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI>;
 }
 
