@@ -51,7 +51,7 @@ userOverride ?? attachedMediaValue ?? userFallback ?? featureFallback
 
 Only resolved values appear in the public store. Lower-priority values continue updating under an override, so removing the override reveals the latest value.
 
-The config declaration also identifies lifecycle ownership:
+The config declaration also identifies lifecycle ownership. Authors check the map against the feature's source state:
 
 ```ts
 config: {
@@ -59,10 +59,10 @@ config: {
     action: SET_USER_CONTENT_TITLE,
     preserve: USER_CONTENT_TITLE,
   },
-}
+} satisfies PlayerFeatureConfig<MetadataSourceState>
 ```
 
-The feature-level `config` object is routing metadata, not a second place that stores values. `action` receives configuration updates, while `preserve` identifies the user-owned source-state key whose value survives detach. `definePlayerFeature` derives the store's detach-persistence keys from this map. Detach restores ordinary source state to its initial values while preserving the mapped user-owned keys. Media state therefore resets, while provider and imperative user values survive.
+The feature-level `config` object is routing metadata, not a second place that stores values. `action` must name a private source-state action that accepts `string | null | undefined`; `null` and `undefined` clear an absent input. `preserve` must name a source-state key whose value survives detach. `definePlayerFeature` derives the store's detach-persistence keys from this map. Detach restores ordinary source state to its initial values while preserving the mapped user-owned keys. Media state therefore resets, while provider and imperative user values survive.
 
 ## Provider adapters
 

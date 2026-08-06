@@ -27,13 +27,38 @@ export interface PlayerTarget {
   container: MediaContainer | null;
 }
 
-export type PlayerFeatureConfig = Record<
+type ConfigValue = string | null | undefined;
+
+type ActionInput<Action> = Action extends (...args: infer Arguments) => unknown
+  ? Arguments extends [infer Value]
+    ? Value
+    : never
+  : never;
+
+type ConfigActionKey<State> = [State] extends [never]
+  ? PropertyKey
+  : {
+      [Key in keyof State]-?: [ActionInput<State[Key]>] extends [ConfigValue]
+        ? [ConfigValue] extends [ActionInput<State[Key]>]
+          ? Key
+          : never
+        : never;
+    }[keyof State];
+
+type ConfigStateKey<State> = [State] extends [never] ? PropertyKey : keyof State;
+
+/**
+ * Maps provider inputs to feature-owned state actions and detach-persistent keys.
+ * Pass the feature's source-state type when declaring a config map so both keys
+ * are checked and each action accepts nullable text, including absent input.
+ */
+export type PlayerFeatureConfig<State = never> = Record<
   string,
   {
-    /** Private source-state action that receives configuration updates. */
-    action: PropertyKey;
+    /** Private source-state action that accepts `string | null | undefined`. */
+    action: ConfigActionKey<State>;
     /** User-owned source-state key preserved when media detaches. */
-    preserve: PropertyKey;
+    preserve: ConfigStateKey<State>;
   }
 >;
 
@@ -46,8 +71,6 @@ export type PlayerFeature<State, Derived = object, Config extends PlayerFeatureC
 };
 
 export type AnyPlayerFeature = AnySlice<PlayerTarget> & { config?: PlayerFeatureConfig };
-
-type ActionInput<Action> = Action extends (value: infer Value) => unknown ? Value : never;
 
 export type InferPlayerFeatureConfig<Feature extends AnyPlayerFeature> = Feature extends {
   config?: infer Config extends PlayerFeatureConfig;

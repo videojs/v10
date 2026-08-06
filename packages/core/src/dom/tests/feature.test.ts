@@ -6,7 +6,7 @@ import {
   definePlayerFeature,
   setPlayerConfigValue,
 } from '../feature';
-import type { PlayerTarget } from '../player';
+import type { PlayerFeatureConfig, PlayerTarget } from '../player';
 
 const stateContext = {
   target: () => {
@@ -33,8 +33,8 @@ describe('definePlayerFeature', () => {
     const SET_USER_LABEL = Symbol('setUserLabel');
 
     interface SourceState {
-      [USER_LABEL]: string | undefined;
-      [SET_USER_LABEL](value: string | undefined): void;
+      [USER_LABEL]: string | null | undefined;
+      [SET_USER_LABEL](value: string | null | undefined): void;
     }
 
     const feature = definePlayerFeature({
@@ -43,7 +43,7 @@ describe('definePlayerFeature', () => {
           action: SET_USER_LABEL,
           preserve: USER_LABEL,
         },
-      },
+      } satisfies PlayerFeatureConfig<SourceState>,
       state: ({ set }): SourceState => ({
         [USER_LABEL]: undefined,
         [SET_USER_LABEL]: (value) => set({ [USER_LABEL]: value }),
@@ -62,6 +62,36 @@ describe('definePlayerFeature', () => {
     detach();
 
     expect(store.label).toBe('provided');
+
+    const UNKNOWN = Symbol('unknown');
+
+    assertType<PlayerFeatureConfig<SourceState>>({
+      label: {
+        // @ts-expect-error Config actions must exist in the feature's source state.
+        action: UNKNOWN,
+        preserve: USER_LABEL,
+      },
+    });
+    assertType<PlayerFeatureConfig<SourceState>>({
+      label: {
+        action: SET_USER_LABEL,
+        // @ts-expect-error Preserved keys must exist in the feature's source state.
+        preserve: UNKNOWN,
+      },
+    });
+
+    interface RequiredLabelState {
+      [USER_LABEL]: string;
+      [SET_USER_LABEL](value: string): void;
+    }
+
+    assertType<PlayerFeatureConfig<RequiredLabelState>>({
+      label: {
+        // @ts-expect-error Config actions must accept null and undefined when the input is absent.
+        action: SET_USER_LABEL,
+        preserve: USER_LABEL,
+      },
+    });
   });
 
   it('defines a configurable player feature', () => {

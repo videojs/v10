@@ -2,6 +2,7 @@ import type { MediaContentValue, MediaMetadataState } from '@videojs/media';
 import { isMediaContentDataCapable } from '@videojs/media';
 import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
+import type { PlayerFeatureConfig } from '../../player';
 
 const MEDIA_CONTENT_TITLE = Symbol('vjs.contentTitle.media');
 const USER_CONTENT_TITLE = Symbol('vjs.contentTitle.user');
@@ -33,7 +34,7 @@ export const metadataFeature = definePlayerFeature({
       action: SET_USER_DEFAULT_CONTENT_TITLE,
       preserve: USER_DEFAULT_CONTENT_TITLE,
     },
-  },
+  } satisfies PlayerFeatureConfig<MetadataSourceState>,
   state: ({ set }): MetadataSourceState => {
     const setUserContentTitle = (value: MediaContentValue) => set({ [USER_CONTENT_TITLE]: value });
     const setUserDefaultContentTitle = (value: MediaContentValue) => set({ [USER_DEFAULT_CONTENT_TITLE]: value });
