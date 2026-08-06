@@ -71,18 +71,45 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/jsx": "workspace:*",
     "@videojs/media": "workspace:*",
     "@videojs/store": "workspace:*",
     "@videojs/utils": "workspace:*"
   },
   "devDependencies": {
+    "@videojs/jsx": "workspace:*",
     "jsdom": "^26.1.0",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "exports": {
+      ".": {
+        "types": "./dist/dev/index.d.ts",
+        "development": "./dist/dev/index.js",
+        "default": "./dist/default/index.js"
+      },
+      "./dom": {
+        "types": "./dist/dev/dom.d.ts",
+        "development": "./dist/dev/dom.js",
+        "default": "./dist/default/dom.js"
+      },
+      "./i18n": {
+        "types": "./dist/dev/i18n.d.ts",
+        "development": "./dist/dev/i18n.js",
+        "default": "./dist/default/i18n.js"
+      },
+      "./i18n/locales/*": {
+        "types": "./dist/dev/i18n/locales/*.d.ts",
+        "development": "./dist/dev/i18n/locales/*.js",
+        "default": "./dist/default/i18n/locales/*.js"
+      },
+      "./i18n/text/*": {
+        "types": "./dist/dev/i18n/text/*.d.ts",
+        "development": "./dist/dev/i18n/text/*.js",
+        "default": "./dist/default/i18n/text/*.js"
+      }
+    }
   }
 }

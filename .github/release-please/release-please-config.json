@@ -18,7 +18,6 @@
         "@videojs/element",
         "@videojs/html",
         "@videojs/icons",
-        "@videojs/jsx",
         "@videojs/media",
         "@videojs/react",
         "@videojs/skins",
@@ -61,12 +60,6 @@
     },
     "packages/icons": {
       "component": "@videojs/icons",
-      "prerelease": true,
-      "prerelease-type": "beta",
-      "versioning": "prerelease"
-    },
-    "packages/jsx": {
-      "component": "@videojs/jsx",
       "prerelease": true,
       "prerelease-type": "beta",
       "versioning": "prerelease"

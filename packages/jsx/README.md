@@ -1,10 +1,6 @@
 # @videojs/jsx
 
-[![package-badge]][package]
-
-> **⚠️ Beta** The canonical source contract is still evolving with the Video.js eject pipeline.
-
-A target-neutral JSX authoring runtime for Video.js source UI. It creates inert component nodes that `@videojs/compiler` can lower to React, HTML, and other source-owned targets without putting framework markup in canonical source.
+A private, target-neutral JSX authoring runtime for Video.js source UI. It creates inert component nodes that `@videojs/compiler` can lower to React, HTML, and other source-owned targets without putting framework markup in canonical source.
 
 This package is not a browser renderer. Calling a canonical component directly throws because components are intended to be interpreted by the compiler.
 
@@ -44,7 +40,5 @@ If you need help with Video.js v10 or want to discuss the source-owned UI pipeli
 
 [Apache-2.0](./LICENSE)
 
-[package]: https://www.npmjs.com/package/@videojs/jsx
-[package-badge]: https://img.shields.io/npm/v/@videojs/jsx?label=@videojs/jsx
 [discord]: https://discord.gg/JBqHh485uF
 [gh-discussions]: https://github.com/videojs/v10/discussions
