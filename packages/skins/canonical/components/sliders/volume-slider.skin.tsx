@@ -1,12 +1,9 @@
+import type { VolumeSliderProps } from '@videojs/core';
 import { VolumeSlider as VolumeSliderPrimitive } from '@videojs/core/components';
 
-export interface VolumeSliderProps {
-  orientation?: 'horizontal' | 'vertical' | undefined;
-}
-
-export function VolumeSlider({ orientation = 'horizontal' }: VolumeSliderProps = {}) {
+export function VolumeSlider(props: VolumeSliderProps = {}) {
   return (
-    <VolumeSliderPrimitive.Root orientation={orientation} thumbAlignment="edge">
+    <VolumeSliderPrimitive.Root thumbAlignment="edge" {...props}>
       <VolumeSliderPrimitive.Track>
         <VolumeSliderPrimitive.Fill />
       </VolumeSliderPrimitive.Track>
