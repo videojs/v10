@@ -1,6 +1,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { formatCompilerDiagnostic, serializeArtifactGraph } from '@videojs/compiler';
+import { formatCompilerDiagnostic } from '@videojs/compiler';
+import { serializeArtifactGraph } from '@videojs/compiler/artifacts';
 import { buildSkinArtifactGraph, skinsRoot } from './build-artifact-graph';
 
 const outputFile = resolve(skinsRoot, 'artifacts.generated.json');

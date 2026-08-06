@@ -1,22 +1,3 @@
-export {
-  ARTIFACT_GRAPH_VERSION,
-  type ArtifactClosure,
-  type ArtifactDefinition,
-  type ArtifactDependencies,
-  type ArtifactFile,
-  type ArtifactGraph,
-  type ArtifactGraphNode,
-  type ArtifactImportKind,
-  type ArtifactKind,
-  type ArtifactMetadata,
-  type ArtifactMetadataValue,
-  type BuildArtifactGraphOptions,
-  type BuildArtifactGraphResult,
-  buildArtifactGraph,
-  defineArtifact,
-  resolveArtifactClosure,
-  serializeArtifactGraph,
-} from './artifacts';
 export { type CompileOptions, type CompileResult, CompilerError, compile } from './compile';
 export {
   type CompilerAsset,

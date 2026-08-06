@@ -11,13 +11,13 @@
           "role": "entry"
         }
       ],
-      "styles": [],
+      "resources": {},
       "dependencies": {
         "artifacts": [],
         "packages": ["@videojs/core"],
-        "components": ["Slider", "TimeSlider"],
-        "icons": [],
-        "elements": []
+        "symbols": {
+          "components": ["Slider", "TimeSlider"]
+        }
       }
     },
     {
@@ -30,13 +30,13 @@
           "role": "entry"
         }
       ],
-      "styles": [],
+      "resources": {},
       "dependencies": {
         "artifacts": [],
         "packages": ["@videojs/core"],
-        "components": ["VolumeSlider"],
-        "icons": [],
-        "elements": []
+        "symbols": {
+          "components": ["VolumeSlider"]
+        }
       }
     }
   ]

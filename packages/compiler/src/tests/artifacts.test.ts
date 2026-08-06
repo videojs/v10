@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, expectTypeOf, it } from 'vitest';
 import {
   type ArtifactDefinition,
   buildArtifactGraph,
@@ -27,10 +27,10 @@ function options(rootDir: string) {
   return {
     rootDir,
     dependencyModules: {
-      '@videojs/core/components': 'component' as const,
-      '@videojs/icons/components': 'icon' as const,
+      '@example/behaviors': 'behaviors',
+      '@example/graphics': 'graphics',
     },
-    isArtifactEntry: (fileName: string) => fileName.endsWith('.skin.tsx'),
+    isArtifactEntry: (fileName: string) => fileName.endsWith('.item.tsx'),
   };
 }
 
@@ -41,76 +41,85 @@ afterEach(() => {
 describe('artifact graph', () => {
   it('infers exact dependencies and resolves deterministic multi-file closure', async () => {
     const root = setup({
-      'components/play-button.skin.tsx': `
-        import { PlayButton as PlayButtonPrimitive, SeekButton } from '@videojs/core/components';
-        import { PauseIcon, PlayIcon as StartIcon } from '@videojs/icons/components';
+      'controls/action.item.tsx': `
+        import { Button as ButtonPrimitive, UnusedButton } from '@example/behaviors';
+        import { PauseIcon, PlayIcon as StartIcon } from '@example/graphics';
         import type { Config } from '@example/types/config';
-        import { label } from './play-button-label';
-        import './play-button.css';
-        export function PlayButton(_props: Config) {
-          return <PlayButtonPrimitive>{label}<StartIcon /></PlayButtonPrimitive>;
+        import { label } from './action-label';
+        import './action.css';
+        export function Action(_props: Config) {
+          return <ButtonPrimitive>{label}<StartIcon /></ButtonPrimitive>;
         }
       `,
-      'components/play-button-label.ts': `export const label = 'Play';`,
-      'components/play-button.css': `.play-button { display: block; }`,
-      'skins/video.skin.tsx': `
-        import { PlayButton } from '../components/play-button.skin';
-        export function VideoSkin() { return <PlayButton />; }
+      'controls/action-label.ts': `export const label = 'Run';`,
+      'controls/action.css': `.action { display: block; }`,
+      'compositions/player.item.tsx': `
+        import { Action } from '../controls/action.item';
+        export function Player() { return <Action />; }
       `,
     });
     const definitions = [
-      defineArtifact({ id: 'video', kind: 'skin', entry: './skins/video.skin.tsx', styles: ['controls'] }),
       defineArtifact({
-        id: 'play-button',
-        kind: 'component',
-        entry: './components/play-button.skin.tsx',
-        styles: ['tooltip', 'button'],
+        id: 'player',
+        kind: 'composition',
+        entry: './compositions/player.item.tsx',
+        resources: { styles: ['controls'] },
+      }),
+      defineArtifact({
+        id: 'action',
+        kind: 'control',
+        entry: './controls/action.item.tsx',
+        resources: { styles: ['tooltip', 'button'] },
         metadata: { order: 1, category: 'button' },
       }),
     ] as const;
+
+    expectTypeOf(definitions[0].kind).toEqualTypeOf<'composition'>();
 
     const result = await buildArtifactGraph(definitions, options(root));
 
     expect(result.diagnostics).toEqual([]);
     expect(result.graph.artifacts).toMatchObject([
       {
-        id: 'play-button',
+        id: 'action',
         files: [
-          { path: './components/play-button-label.ts', role: 'source' },
-          { path: './components/play-button.css', role: 'source' },
-          { path: './components/play-button.skin.tsx', role: 'entry' },
+          { path: './controls/action-label.ts', role: 'source' },
+          { path: './controls/action.css', role: 'source' },
+          { path: './controls/action.item.tsx', role: 'entry' },
         ],
-        styles: ['button', 'tooltip'],
+        resources: { styles: ['button', 'tooltip'] },
         dependencies: {
           artifacts: [],
-          packages: ['@example/types', '@videojs/core', '@videojs/icons'],
-          components: ['PlayButton'],
-          icons: ['PlayIcon'],
-          elements: [],
+          packages: ['@example/behaviors', '@example/graphics', '@example/types'],
+          symbols: {
+            behaviors: ['Button'],
+            graphics: ['PlayIcon'],
+          },
         },
         metadata: { category: 'button', order: 1 },
       },
       {
-        id: 'video',
-        files: [{ path: './skins/video.skin.tsx', role: 'entry' }],
-        dependencies: { artifacts: ['play-button'] },
+        id: 'player',
+        files: [{ path: './compositions/player.item.tsx', role: 'entry' }],
+        dependencies: { artifacts: ['action'] },
       },
     ]);
 
-    expect(resolveArtifactClosure(result.graph, 'video')).toEqual({
-      artifactIds: ['play-button', 'video'],
+    expect(resolveArtifactClosure(result.graph, 'player')).toEqual({
+      artifactIds: ['action', 'player'],
       files: [
-        { path: './components/play-button-label.ts', role: 'source' },
-        { path: './components/play-button.css', role: 'source' },
-        { path: './components/play-button.skin.tsx', role: 'entry' },
-        { path: './skins/video.skin.tsx', role: 'entry' },
+        { path: './compositions/player.item.tsx', role: 'entry' },
+        { path: './controls/action-label.ts', role: 'source' },
+        { path: './controls/action.css', role: 'source' },
+        { path: './controls/action.item.tsx', role: 'entry' },
       ],
-      styles: ['button', 'controls', 'tooltip'],
-      artifacts: ['play-button'],
-      packages: ['@example/types', '@videojs/core', '@videojs/icons'],
-      components: ['PlayButton'],
-      icons: ['PlayIcon'],
-      elements: [],
+      resources: { styles: ['button', 'controls', 'tooltip'] },
+      artifacts: ['action'],
+      packages: ['@example/behaviors', '@example/graphics', '@example/types'],
+      symbols: {
+        behaviors: ['Button'],
+        graphics: ['PlayIcon'],
+      },
     });
   });
 
@@ -120,12 +129,12 @@ describe('artifact graph', () => {
       'b.ts': 'export const b = true;',
     });
     const first: ArtifactDefinition[] = [
-      { id: 'b', kind: 'utility', entry: './b.ts', metadata: { z: true, a: false } },
-      { id: 'a', kind: 'utility', entry: './a.ts' },
+      { id: 'b', kind: 'module', entry: './b.ts', metadata: { z: true, a: false } },
+      { id: 'a', kind: 'module', entry: './a.ts' },
     ];
     const second: ArtifactDefinition[] = [
-      { id: 'a', kind: 'utility', entry: './a.ts' },
-      { id: 'b', kind: 'utility', entry: './b.ts', metadata: { a: false, z: true } },
+      { id: 'a', kind: 'module', entry: './a.ts' },
+      { id: 'b', kind: 'module', entry: './b.ts', metadata: { a: false, z: true } },
     ];
 
     const a = await buildArtifactGraph(first, { rootDir: root });
@@ -136,18 +145,18 @@ describe('artifact graph', () => {
 
   it('reports duplicate definitions, unresolved imports, and unregistered entries', async () => {
     const root = setup({
-      'entry.skin.tsx': `
+      'entry.item.tsx': `
         import './missing';
-        import './orphan.skin';
+        import './orphan.item';
       `,
-      'orphan.skin.tsx': 'export const orphan = true;',
+      'orphan.item.tsx': 'export const orphan = true;',
       'duplicate.ts': 'export const duplicate = true;',
     });
     const definitions: ArtifactDefinition[] = [
-      { id: 'entry', kind: 'component', entry: './entry.skin.tsx' },
-      { id: 'entry', kind: 'component', entry: './duplicate.ts' },
-      { id: 'duplicate-entry', kind: 'utility', entry: './entry.skin.tsx' },
-      { id: 'outside', kind: 'utility', entry: '../outside.ts' },
+      { id: 'entry', kind: 'module', entry: './entry.item.tsx' },
+      { id: 'entry', kind: 'module', entry: './duplicate.ts' },
+      { id: 'duplicate-entry', kind: 'module', entry: './entry.item.tsx' },
+      { id: 'outside', kind: 'module', entry: '../outside.ts' },
     ];
 
     const result = await buildArtifactGraph(definitions, options(root));
@@ -163,19 +172,19 @@ describe('artifact graph', () => {
 
   it('reports artifact cycles and imports whose exact dependency cannot be inferred', async () => {
     const root = setup({
-      'a.skin.tsx': `
-        import * as Components from '@videojs/core/components';
-        import { B } from './b.skin';
-        export function A() { return <Components.Text><B /></Components.Text>; }
+      'a.item.tsx': `
+        import * as Behaviors from '@example/behaviors';
+        import { B } from './b.item';
+        export function A() { return <Behaviors.Text><B /></Behaviors.Text>; }
       `,
-      'b.skin.tsx': `
-        import { A } from './a.skin';
+      'b.item.tsx': `
+        import { A } from './a.item';
         export function B() { return <A />; }
       `,
     });
     const definitions: ArtifactDefinition[] = [
-      { id: 'a', kind: 'component', entry: './a.skin.tsx' },
-      { id: 'b', kind: 'component', entry: './b.skin.tsx' },
+      { id: 'a', kind: 'module', entry: './a.item.tsx' },
+      { id: 'b', kind: 'module', entry: './b.item.tsx' },
     ];
 
     const result = await buildArtifactGraph(definitions, options(root));

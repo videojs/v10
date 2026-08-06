@@ -12,9 +12,9 @@ describe('buildSkinArtifactGraph', () => {
         dependencies: {
           artifacts: [],
           packages: ['@videojs/core'],
-          components: ['Slider', 'TimeSlider'],
-          icons: [],
-          elements: [],
+          symbols: {
+            components: ['Slider', 'TimeSlider'],
+          },
         },
       },
       {
@@ -22,9 +22,9 @@ describe('buildSkinArtifactGraph', () => {
         dependencies: {
           artifacts: [],
           packages: ['@videojs/core'],
-          components: ['VolumeSlider'],
-          icons: [],
-          elements: [],
+          symbols: {
+            components: ['VolumeSlider'],
+          },
         },
       },
     ]);

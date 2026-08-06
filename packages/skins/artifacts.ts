@@ -1,4 +1,11 @@
-import { defineArtifact } from '@videojs/compiler';
+import { type ArtifactDefinition, defineArtifact } from '@videojs/compiler/artifacts';
+
+export type SkinArtifactKind = 'component' | 'skin' | 'preset' | 'utility' | 'theme';
+export type SkinArtifactResourceKind = 'styles';
+export type SkinArtifactSymbolKind = 'components' | 'icons' | 'elements';
+export type SkinArtifactDefinition = Omit<ArtifactDefinition<SkinArtifactKind>, 'resources'> & {
+  resources?: Readonly<Partial<Record<SkinArtifactResourceKind, readonly string[]>>> | undefined;
+};
 
 export const skinArtifacts = [
   defineArtifact({
@@ -11,4 +18,4 @@ export const skinArtifacts = [
     kind: 'component',
     entry: './canonical/components/sliders/volume-slider.skin.tsx',
   }),
-] as const;
+] as const satisfies readonly SkinArtifactDefinition[];

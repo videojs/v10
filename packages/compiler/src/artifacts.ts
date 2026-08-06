@@ -6,8 +6,6 @@ import { DiagnosticError } from './diagnostics';
 
 export const ARTIFACT_GRAPH_VERSION = 1 as const;
 
-export type ArtifactKind = 'component' | 'skin' | 'preset' | 'utility' | 'theme';
-export type ArtifactImportKind = 'component' | 'icon' | 'element';
 export type ArtifactMetadataValue =
   | string
   | number
@@ -17,17 +15,26 @@ export type ArtifactMetadataValue =
   | { readonly [key: string]: ArtifactMetadataValue };
 export type ArtifactMetadata = Readonly<Record<string, ArtifactMetadataValue>>;
 
-export interface ArtifactDefinition<Metadata extends ArtifactMetadata = ArtifactMetadata> {
+/** Opaque resource groups whose names and meaning are owned by the artifact consumer. */
+export type ArtifactResources = Readonly<Record<string, readonly string[]>>;
+
+/** Named imports grouped by the consumer-provided `dependencyModules` classification. */
+export type ArtifactSymbols = Readonly<Record<string, readonly string[]>>;
+
+export interface ArtifactDefinition<
+  Kind extends string = string,
+  Metadata extends ArtifactMetadata = ArtifactMetadata,
+> {
   id: string;
-  kind: ArtifactKind;
+  kind: Kind;
   entry: string;
-  styles?: readonly string[] | undefined;
+  resources?: ArtifactResources | undefined;
   metadata?: Metadata | undefined;
 }
 
 export interface BuildArtifactGraphOptions {
   rootDir: string;
-  dependencyModules?: Readonly<Record<string, ArtifactImportKind>> | undefined;
+  dependencyModules?: Readonly<Record<string, string>> | undefined;
   isArtifactEntry?: ((fileName: string) => boolean) | undefined;
 }
 
@@ -39,17 +46,15 @@ export interface ArtifactFile {
 export interface ArtifactDependencies {
   artifacts: readonly string[];
   packages: readonly string[];
-  components: readonly string[];
-  icons: readonly string[];
-  elements: readonly string[];
+  symbols: ArtifactSymbols;
 }
 
 export interface ArtifactGraphNode {
   id: string;
-  kind: ArtifactKind;
+  kind: string;
   entry: string;
   files: readonly ArtifactFile[];
-  styles: readonly string[];
+  resources: ArtifactResources;
   dependencies: ArtifactDependencies;
   metadata?: ArtifactMetadata | undefined;
 }
@@ -67,7 +72,7 @@ export interface BuildArtifactGraphResult {
 export interface ArtifactClosure extends ArtifactDependencies {
   artifactIds: readonly string[];
   files: readonly ArtifactFile[];
-  styles: readonly string[];
+  resources: ArtifactResources;
 }
 
 interface NormalizedArtifactDefinition {
@@ -86,9 +91,7 @@ interface ModuleReference {
 interface MutableDependencies {
   artifacts: Set<string>;
   packages: Set<string>;
-  components: Set<string>;
-  icons: Set<string>;
-  elements: Set<string>;
+  symbols: Map<string, Set<string>>;
 }
 
 /** Preserve literal artifact metadata while checking the authored contract. */
@@ -107,7 +110,7 @@ export async function buildArtifactGraph(
   const nodes: ArtifactGraphNode[] = [];
 
   for (const artifact of normalized) {
-    const dependencies = createMutableDependencies();
+    const dependencies = createMutableDependencies(Object.values(options.dependencyModules ?? {}));
     const files = new Set<string>();
     const visited = new Set<string>();
 
@@ -137,7 +140,7 @@ export async function buildArtifactGraph(
       kind: artifact.definition.kind,
       entry: artifact.entryPath,
       files: artifactFiles,
-      styles: sortedUnique(artifact.definition.styles ?? []),
+      resources: normalizeGroups(artifact.definition.resources ?? {}),
       dependencies: freezeDependencies(dependencies),
       ...(artifact.definition.metadata ? { metadata: sortMetadata(artifact.definition.metadata) } : {}),
     });
@@ -163,11 +166,9 @@ export function resolveArtifactClosure(graph: ArtifactGraph, artifactId: string)
   const artifactIds: string[] = [];
   const visited = new Set<string>();
   const files = new Map<string, ArtifactFile>();
-  const styles = new Set<string>();
+  const resources = new Map<string, Set<string>>();
   const packages = new Set<string>();
-  const components = new Set<string>();
-  const icons = new Set<string>();
-  const elements = new Set<string>();
+  const symbols = new Map<string, Set<string>>();
 
   const visit = (id: string): void => {
     if (visited.has(id)) return;
@@ -187,11 +188,9 @@ export function resolveArtifactClosure(graph: ArtifactGraph, artifactId: string)
       const previous = files.get(file.path);
       if (!previous || file.role === 'entry') files.set(file.path, file);
     }
-    for (const style of artifact.styles) styles.add(style);
+    mergeGroups(resources, artifact.resources);
     for (const dependency of artifact.dependencies.packages) packages.add(dependency);
-    for (const dependency of artifact.dependencies.components) components.add(dependency);
-    for (const dependency of artifact.dependencies.icons) icons.add(dependency);
-    for (const dependency of artifact.dependencies.elements) elements.add(dependency);
+    mergeGroups(symbols, artifact.dependencies.symbols);
   };
 
   visit(artifactId);
@@ -199,12 +198,10 @@ export function resolveArtifactClosure(graph: ArtifactGraph, artifactId: string)
   return {
     artifactIds,
     files: [...files.values()].sort((a, b) => compareStrings(a.path, b.path)),
-    styles: sortedUnique(styles),
+    resources: freezeGroups(resources),
     artifacts: artifactIds.filter((id) => id !== artifactId),
     packages: sortedUnique(packages),
-    components: sortedUnique(components),
-    icons: sortedUnique(icons),
-    elements: sortedUnique(elements),
+    symbols: freezeGroups(symbols),
   };
 }
 
@@ -295,8 +292,8 @@ async function visitArtifactFile(context: {
   for (const reference of collectModuleReferences(sourceFile)) {
     if (!reference.source.startsWith('.')) {
       dependencies.packages.add(packageName(reference.source));
-      const importKind = options.dependencyModules?.[reference.source];
-      if (!importKind) continue;
+      const symbolKind = options.dependencyModules?.[reference.source];
+      if (symbolKind === undefined) continue;
 
       if (reference.ambiguous) {
         diagnostics.push(
@@ -304,17 +301,12 @@ async function visitArtifactFile(context: {
             sourceFile,
             reference.node,
             'artifact-dependency-ambiguous',
-            `Artifact \`${artifact.definition.id}\` must use named imports from \`${reference.source}\` so ${importKind} dependencies can be inferred.`
+            `Artifact \`${artifact.definition.id}\` must use named imports from \`${reference.source}\` so ${symbolKind} dependencies can be inferred.`
           )
         );
       }
 
-      const target =
-        importKind === 'component'
-          ? dependencies.components
-          : importKind === 'icon'
-            ? dependencies.icons
-            : dependencies.elements;
+      const target = getOrCreateGroup(dependencies.symbols, symbolKind);
       for (const name of reference.names) target.add(name);
       continue;
     }
@@ -504,13 +496,11 @@ function diagnoseArtifactCycles(nodes: readonly ArtifactGraphNode[], diagnostics
   for (const node of nodes) visit(node.id);
 }
 
-function createMutableDependencies(): MutableDependencies {
+function createMutableDependencies(symbolKinds: Iterable<string> = []): MutableDependencies {
   return {
     artifacts: new Set(),
     packages: new Set(),
-    components: new Set(),
-    icons: new Set(),
-    elements: new Set(),
+    symbols: createMutableGroups(symbolKinds),
   };
 }
 
@@ -518,10 +508,44 @@ function freezeDependencies(dependencies: MutableDependencies): ArtifactDependen
   return {
     artifacts: sortedUnique(dependencies.artifacts),
     packages: sortedUnique(dependencies.packages),
-    components: sortedUnique(dependencies.components),
-    icons: sortedUnique(dependencies.icons),
-    elements: sortedUnique(dependencies.elements),
+    symbols: freezeGroups(dependencies.symbols),
   };
+}
+
+function createMutableGroups(keys: Iterable<string> = []): Map<string, Set<string>> {
+  const groups = new Map<string, Set<string>>();
+  for (const key of keys) getOrCreateGroup(groups, key);
+  return groups;
+}
+
+function getOrCreateGroup(groups: Map<string, Set<string>>, key: string): Set<string> {
+  let values = groups.get(key);
+  if (!values) {
+    values = new Set();
+    groups.set(key, values);
+  }
+  return values;
+}
+
+function mergeGroups(target: Map<string, Set<string>>, source: Readonly<Record<string, readonly string[]>>): void {
+  for (const [key, values] of Object.entries(source)) {
+    const group = getOrCreateGroup(target, key);
+    for (const value of values) group.add(value);
+  }
+}
+
+function normalizeGroups(groups: Readonly<Record<string, readonly string[]>>): Record<string, string[]> {
+  return Object.fromEntries(
+    Object.entries(groups)
+      .sort(([a], [b]) => compareStrings(a, b))
+      .map(([key, values]) => [key, sortedUnique(values)])
+  );
+}
+
+function freezeGroups(groups: ReadonlyMap<string, Set<string>>): Record<string, string[]> {
+  return Object.fromEntries(
+    [...groups.entries()].sort(([a], [b]) => compareStrings(a, b)).map(([key, values]) => [key, sortedUnique(values)])
+  );
 }
 
 function packageName(source: string): string {
