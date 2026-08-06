@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
-import type { JsxElementLike, Matcher } from '../matchers';
+import { findJsxAttribute, isJsxElementLike } from '../../utils/jsx';
+import type { Matcher } from '../matchers';
 
 export interface AddPropImportRef {
   source: string;
@@ -41,13 +42,12 @@ export function addProp(opts: AddPropOptions, ctx: AddImportContext = {}): ts.Tr
 
     const visit = (node: ts.Node): ts.Node => {
       const out = ts.visitEachChild(node, visit, context);
-      if (!ts.isJsxElement(out) && !ts.isJsxSelfClosingElement(out)) return out;
-      if (!opts.match(out as JsxElementLike)) return out;
+      if (!isJsxElementLike(out)) return out;
+      if (!opts.match(out)) return out;
 
       const attrs = ts.isJsxElement(out) ? out.openingElement.attributes : out.attributes;
-      const existingIdx = attrs.properties.findIndex(
-        (p) => ts.isJsxAttribute(p) && ts.isIdentifier(p.name) && p.name.text === opts.prop
-      );
+      const existing = findJsxAttribute(attrs, opts.prop);
+      const existingIdx = existing ? attrs.properties.indexOf(existing) : -1;
       if (existingIdx !== -1 && !opts.overwrite) return out;
 
       if (isImportRef(opts.value)) needsImport = opts.value;

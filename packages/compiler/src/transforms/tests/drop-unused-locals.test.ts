@@ -27,6 +27,16 @@ describe('dropUnusedLocals', () => {
     expect(code).toContain('const x =');
   });
 
+  it('keeps property access because it may invoke a getter', async () => {
+    const code = await wrap(`const x = [theme.dynamic];\nfunction App(){ return <Foo/>; }`);
+    expect(code).toContain('const x =');
+  });
+
+  it('does not treat intrinsic JSX tag names as local references', async () => {
+    const code = await wrap(`const div = ['root'];\nfunction App(){ return <div/>; }`);
+    expect(code).not.toContain('const div');
+  });
+
   it('keeps exported declarations untouched', async () => {
     const code = await wrap(`export const x = ['a', 'b'];\nfunction App(){ return <Foo/>; }`);
     expect(code).toContain('export const x');

@@ -1,7 +1,8 @@
 import ts from 'typescript';
 import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
 import type { ImportRef } from '../../transforms/imports';
-import type { JsxElementLike, Matcher } from '../matchers';
+import { isJsxElementLike } from '../../utils/jsx';
+import type { Matcher } from '../matchers';
 
 export interface WrapOptions {
   match: Matcher;
@@ -20,7 +21,7 @@ export function wrap(opts: WrapOptions, ctx: AddImportContext = {}): ts.Transfor
       let didWrap = false;
 
       const visit = (node: ts.Node): ts.Node => {
-        if ((ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) && opts.match(node as JsxElementLike)) {
+        if (isJsxElementLike(node) && opts.match(node)) {
           didWrap = true;
           const tag = factory.createIdentifier(opts.with.name);
           const inner = ts.visitEachChild(node, visit, transformContext) as ts.JsxChild;

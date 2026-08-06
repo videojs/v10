@@ -23,6 +23,16 @@ export interface CompilerDiagnostic {
   plugin?: string | undefined;
 }
 
+export interface CompilerSourceMap {
+  version: 3;
+  file: string | null;
+  sourceRoot?: string;
+  sources: Array<string | null>;
+  sourcesContent?: Array<string | null | undefined>;
+  names: string[];
+  mappings: string;
+}
+
 export interface CompilerContext {
   filename: string;
   configDir: string;
@@ -40,6 +50,11 @@ export type CompilerPluginEnforce = 'pre' | 'post';
 
 export interface CompilerPlugin {
   name: string;
+  /**
+   * `pre` runs before configured import rewrites. Normal plugins run after
+   * import rewrites and before target transforms. `post` runs after target
+   * transforms and before compiler cleanup.
+   */
   enforce?: CompilerPluginEnforce | undefined;
   setup?(context: CompilerContext): CompilerPipelineStep | Promise<CompilerPipelineStep>;
 }

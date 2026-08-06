@@ -1,5 +1,6 @@
 import ts from 'typescript';
-import type { JsxElementLike, Matcher } from './tag';
+import { isJsxElementLike } from '../../utils/jsx';
+import type { Matcher } from './tag';
 
 export interface HasChildOptions {
   /** When `true`, search all descendants (not just direct children). Default: `false`. */
@@ -35,8 +36,8 @@ function findIn(children: readonly ts.JsxChild[], match: Matcher, deep: boolean)
       if (deep && findIn(child.children, match, deep)) return true;
       continue;
     }
-    if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child)) {
-      if (match(child as JsxElementLike)) return true;
+    if (isJsxElementLike(child)) {
+      if (match(child)) return true;
       if (deep && ts.isJsxElement(child) && findIn(child.children, match, deep)) return true;
     }
   }

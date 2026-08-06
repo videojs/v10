@@ -10,9 +10,12 @@ export {
   type CompilerPlugin,
   type CompilerPluginEnforce,
   type CompilerProjectConfig,
+  type CompilerSourceMap,
   type CompilerTarget,
   type CompilerTransform,
   defineConfig,
+  type JsxTargetOptions,
+  jsx,
 } from './config';
 export {
   compilerDiagnosticToJsonEvent,
@@ -37,32 +40,6 @@ export {
   shouldUseColor,
   withDiagnosticSource,
 } from './diagnostics';
-export {
-  type AddPropImportRef,
-  type AddPropOptions,
-  accessPath,
-  addProp,
-  anyTag,
-  byTag,
-  type ChildAsPropOptions,
-  childAsProp,
-  hasChild,
-  type JsxChildReplacement,
-  type JsxElementLike,
-  type JsxTargetOptions,
-  jsx,
-  jsxExpression,
-  type Matcher,
-  propertyAccess,
-  type ReplaceJsxChildOptions,
-  type ReplaceOptions,
-  readStringAttribute,
-  replace,
-  replaceJsxChild,
-  tagName,
-  type WrapOptions,
-  wrap,
-} from './jsx';
 export {
   CONFIG_FILENAMES,
   findConfig,
@@ -110,15 +87,4 @@ export {
   type ValueHelpers,
   type ValueReference,
 } from './transform';
-export {
-  type AddImportContext,
-  type AddImportRef,
-  addNamedImport,
-  dropUnusedImports,
-  dropUnusedLocals,
-  type ImportRef,
-  type ImportRewriteOptions,
-  type ImportRule,
-  resolveRelative,
-  transformImports,
-} from './transforms';
+export type { ImportRule } from './transforms';

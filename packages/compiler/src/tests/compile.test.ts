@@ -1,5 +1,6 @@
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { compile } from '..';
+import { type CompilerPlugin, type CompilerTransform, compile } from '..';
 import {
   accessPath,
   addProp,
@@ -42,6 +43,65 @@ describe('compile (no transforms)', () => {
     expect(code).toContain('Foo');
     expect(code).toContain('bar');
     expect(collapse(code)).toContain(collapse(`return<Foo/>;`));
+  });
+
+  it('preserves the authored source and returns an identity source map', async () => {
+    const source = `export const view = <Foo />;\n`;
+    const result = await compileJsx(source);
+
+    expect(result.code).toBe(source);
+    expect(result.map).toMatchObject({
+      version: 3,
+      sourcesContent: [source],
+      mappings: expect.any(String),
+    });
+  });
+});
+
+describe('compile pipeline phases', () => {
+  it('maps transformed output back to the authored source', async () => {
+    const source = `import { Widget } from 'old';\nexport const view = <Widget/>;\n`;
+    const result = await compile(source, {
+      filename: '/src/input.tsx',
+      outputFile: '/dist/input.tsx',
+      config: { target: jsx({ imports: { old: 'new' } }) },
+    });
+
+    expect(result.code).toContain('from "new"');
+    expect(result.map).toMatchObject({
+      version: 3,
+      file: 'input.tsx',
+      sourcesContent: [source],
+      mappings: expect.stringMatching(/\S/),
+    });
+  });
+
+  it('runs pre, import, normal, target, and post phases in order', async () => {
+    const applied: string[] = [];
+    const observe =
+      (name: string): CompilerTransform =>
+      () =>
+      (sourceFile) => {
+        const importSource = sourceFile.statements.find(ts.isImportDeclaration)?.moduleSpecifier;
+        applied.push(`${name}:${ts.isStringLiteral(importSource) ? importSource.text : 'missing'}`);
+        return sourceFile;
+      };
+    const plugin = (name: string, enforce?: 'pre' | 'post'): CompilerPlugin => ({
+      name,
+      ...(enforce ? { enforce } : {}),
+      setup() {
+        return { transform: observe(name) };
+      },
+    });
+
+    await compile(`import { Widget } from 'old';\nexport const view = <Widget/>;`, {
+      config: {
+        plugins: [plugin('normal'), plugin('post', 'post'), plugin('pre', 'pre')],
+        target: jsx({ imports: { old: 'new' }, transforms: [observe('target')] }),
+      },
+    });
+
+    expect(applied).toEqual(['pre:old', 'normal:new', 'target:new', 'post:new']);
   });
 });
 
@@ -201,6 +261,30 @@ describe('addProp', () => {
     });
     expect(collapse(code)).toContain(collapse(`<Action render={<Button/>}/>`));
     expect(code).toContain(`import { Button } from "./button"`);
+  });
+
+  it('promotes an existing type-only binding when a runtime import is required', async () => {
+    const source = `import type { Button } from './button';
+function App(){ return <Action/>; }`;
+    const { code } = await compileJsx(source, {
+      transforms: [addProp({ match: byTag('Action'), prop: 'render', value: { source: './button', name: 'Button' } })],
+    });
+
+    expect(code).toContain(`import { Button } from "./button"`);
+    expect(code).not.toContain('import type { Button }');
+  });
+
+  it('rejects an import whose required local name is already bound to another export', async () => {
+    const source = `import { Other as Button } from './button';
+function App(){ return <Action/>; }`;
+
+    await expect(
+      compileJsx(source, {
+        transforms: [
+          addProp({ match: byTag('Action'), prop: 'render', value: { source: './button', name: 'Button' } }),
+        ],
+      })
+    ).rejects.toThrow('the local binding "Button" is already declared');
   });
 
   it('emits a bare reference when kind is "ref"', async () => {

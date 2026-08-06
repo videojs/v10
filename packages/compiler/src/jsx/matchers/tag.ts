@@ -1,7 +1,7 @@
 import ts from 'typescript';
+import type { JsxElementLike } from '../../utils/jsx';
 
-/** A JSX element that helpers can transform: either an open/close pair or self-closing. */
-export type JsxElementLike = ts.JsxElement | ts.JsxSelfClosingElement;
+export type { JsxElementLike } from '../../utils/jsx';
 
 /** Predicate over a JSX element. Single shape across `replace`, `wrap`, `childAsProp`, `addProp`. */
 export type Matcher = (node: JsxElementLike) => boolean;

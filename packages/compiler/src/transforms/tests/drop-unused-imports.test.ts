@@ -7,6 +7,27 @@ const wrap = async (source: string): Promise<string> =>
   (await compile(source, { config: { target: jsx({ transforms: [dropUnusedImports()] }) } })).code;
 
 describe('dropUnusedImports', () => {
+  it('preserves module evaluation when all value bindings become unused', async () => {
+    const code = await wrap(`import { register } from './register';
+function App(){ return <div/>; }`);
+    expect(code).toMatch(/import ['"]\.\/register['"]/);
+    expect(code).not.toContain('{ register }');
+  });
+
+  it('drops imports that were type-only and are no longer referenced', async () => {
+    const code = await wrap(`import type { Options } from './types';
+function App(){ return <div/>; }`);
+    expect(code).not.toContain('./types');
+  });
+
+  it('preserves evaluation separately when only type bindings remain', async () => {
+    const code = await wrap(`import { register, type Options } from './register';
+export type Config = Options;
+function App(){ return <div/>; }`);
+    expect(code).toMatch(/import ['"]\.\/register['"]/);
+    expect(code).toMatch(/import \{ type Options \} from ['"]\.\/register['"]/);
+  });
+
   it('does not count intrinsic JSX tag names as import references', async () => {
     const code = await wrap(`import { button } from './tokens';
 function App(){ return <button type="button"/>; }`);

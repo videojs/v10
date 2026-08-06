@@ -4,6 +4,13 @@ import type { JsxElementLike } from './jsx';
 import { tagName } from './jsx';
 import { addNamedImport } from './transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from './transforms/imports';
+import {
+  hasJsxAttribute,
+  hasJsxSpreadAttribute,
+  isJsxElementLike as isJsxNodeLike,
+  singleJsxElementChild,
+} from './utils/jsx';
+import { insertStatementsAfterImports } from './utils/source-file';
 
 export interface ImportReference {
   readonly source: string;
@@ -699,7 +706,7 @@ function editJsxElement(options: JsxElementEditOptions): CompilerTransform {
   return (context) => {
     const visit = (node: ts.Node): ts.Node => {
       const next = ts.visitEachChild(node, visit, context);
-      if (!isJsxElementLike(next)) return next;
+      if (!isJsxNodeLike(next)) return next;
       const elementContext: JsxElementContext = { element: next, factory: context.factory, tagName: tagName(next) };
       if (!options.when(next, elementContext)) return next;
       return options.transform(next, elementContext) ?? next;
@@ -715,7 +722,7 @@ function editJsxProp(options: JsxPropEditOptions): CompilerTransform {
 
     const visit = (node: ts.Node): ts.Node => {
       const next = ts.visitEachChild(node, visit, context);
-      if (!isJsxElementLike(next)) return next;
+      if (!isJsxNodeLike(next)) return next;
 
       const attrs = ts.isJsxElement(next) ? next.openingElement.attributes : next.attributes;
       let changed = false;
@@ -870,16 +877,7 @@ function editModuleStatements(position: 'prepend' | 'append', statements: Statem
         return factory.updateSourceFile(sourceFile, [...sourceFile.statements, ...nextStatements]);
       }
 
-      let insertIndex = 0;
-      for (let i = 0; i < sourceFile.statements.length; i++) {
-        if (ts.isImportDeclaration(sourceFile.statements[i]!)) insertIndex = i + 1;
-      }
-
-      return factory.updateSourceFile(sourceFile, [
-        ...sourceFile.statements.slice(0, insertIndex),
-        ...nextStatements,
-        ...sourceFile.statements.slice(insertIndex),
-      ]);
+      return insertStatementsAfterImports(sourceFile, nextStatements, factory);
     };
   };
 }
@@ -941,9 +939,9 @@ function liftSingleChildToProp(
 ): JsxElementLike | undefined {
   if (!ts.isJsxElement(element)) return undefined;
   const opening = element.openingElement;
-  if (hasProp(opening.attributes, prop)) return undefined;
+  if (hasJsxAttribute(opening.attributes, prop)) return undefined;
 
-  const child = singleElementChild(element.children);
+  const child = singleJsxElementChild(element.children);
   if (!child) return undefined;
 
   const nextAttrs = factory.createJsxAttributes([
@@ -961,7 +959,7 @@ function addJsxProp(
   factory: ts.NodeFactory
 ): JsxElementLike | undefined {
   const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
-  if (hasProp(attrs, name)) return undefined;
+  if (hasJsxAttribute(attrs, name)) return undefined;
 
   const nextAttrs = factory.createJsxAttributes([...attrs.properties, createJsxProp(name, value, factory)]);
 
@@ -990,7 +988,7 @@ function addJsxPropsSpread(
   const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
   const expression = valueFromReference(value);
 
-  if (typeof value === 'string' && hasPropsSpread(attrs, value)) return undefined;
+  if (typeof value === 'string' && hasJsxSpreadAttribute(attrs, value)) return undefined;
 
   const nextAttrs = factory.createJsxAttributes([...attrs.properties, factory.createJsxSpreadAttribute(expression)]);
 
@@ -1159,35 +1157,6 @@ function createJsxProps(spec: JsxPropsSpec, factory: ts.NodeFactory): (ts.JsxAtt
   return Object.entries(spec).map(([name, value]) => createJsxProp(name, value, factory));
 }
 
-function singleElementChild(
-  children: readonly ts.JsxChild[]
-): ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxFragment | null {
-  let found: ts.JsxElement | ts.JsxSelfClosingElement | ts.JsxFragment | null = null;
-  for (const child of children) {
-    if (ts.isJsxText(child) && child.containsOnlyTriviaWhiteSpaces) continue;
-    if (ts.isJsxElement(child) || ts.isJsxSelfClosingElement(child) || ts.isJsxFragment(child)) {
-      if (found) return null;
-      found = child;
-      continue;
-    }
-    return null;
-  }
-  return found;
-}
-
-function hasProp(attrs: ts.JsxAttributes, name: string): boolean {
-  return attrs.properties.some(
-    (property) => ts.isJsxAttribute(property) && ts.isIdentifier(property.name) && property.name.text === name
-  );
-}
-
-function hasPropsSpread(attrs: ts.JsxAttributes, name: string): boolean {
-  return attrs.properties.some(
-    (property) =>
-      ts.isJsxSpreadAttribute(property) && ts.isIdentifier(property.expression) && property.expression.text === name
-  );
-}
-
 function heritageTypeName(type: ts.ExpressionWithTypeArguments): string | undefined {
   const expression = type.expression;
   if (ts.isIdentifier(expression)) return expression.text;
@@ -1209,8 +1178,8 @@ function readPropValue(prop: ts.JsxAttribute): ts.Expression | undefined {
 }
 
 function readJsxElement(value: unknown, context: unknown): JsxElementLike | undefined {
-  if (isJsxElementLike(value)) return value;
-  if (isObject(context) && isJsxElementLike(context.element)) return context.element;
+  if (isNode(value) && isJsxNodeLike(value)) return value;
+  if (isObject(context) && isNode(context.element) && isJsxNodeLike(context.element)) return context.element;
   return undefined;
 }
 
@@ -1248,10 +1217,6 @@ function readFunctionDeclaration(value: unknown, context: unknown): ts.FunctionD
     return context.function as ts.FunctionDeclaration;
   }
   return undefined;
-}
-
-function isJsxElementLike(value: unknown): value is JsxElementLike {
-  return Boolean(isNode(value) && (ts.isJsxElement(value) || ts.isJsxSelfClosingElement(value)));
 }
 
 function isJsxProp(value: unknown): value is ts.JsxAttribute {
