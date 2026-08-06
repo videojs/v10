@@ -2,6 +2,46 @@
   "version": 1,
   "artifacts": [
     {
+      "id": "core-video-controls",
+      "kind": "component",
+      "entry": "./canonical/compositions/core-video-controls.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/compositions/core-video-controls.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time-controls", "time-slider"],
+        "packages": ["@videojs/core"],
+        "symbols": {
+          "components": ["Controls", "Tooltip"],
+          "icons": []
+        }
+      }
+    },
+    {
+      "id": "fullscreen-button",
+      "kind": "component",
+      "entry": "./canonical/components/buttons/fullscreen-button.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/buttons/fullscreen-button.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core", "@videojs/icons"],
+        "symbols": {
+          "components": ["FullscreenButton", "Tooltip"],
+          "icons": ["FullscreenEnterIcon", "FullscreenExitIcon"]
+        }
+      }
+    },
+    {
       "id": "play-button",
       "kind": "component",
       "entry": "./canonical/components/buttons/play-button.skin.tsx",
@@ -18,6 +58,46 @@
         "symbols": {
           "components": ["PlayButton", "Tooltip"],
           "icons": ["PauseIcon", "PlayIcon", "RestartIcon"]
+        }
+      }
+    },
+    {
+      "id": "seek-button",
+      "kind": "component",
+      "entry": "./canonical/components/buttons/seek-button.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/buttons/seek-button.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core", "@videojs/icons"],
+        "symbols": {
+          "components": ["SeekButton", "Text", "Tooltip"],
+          "icons": ["SeekIcon"]
+        }
+      }
+    },
+    {
+      "id": "time-controls",
+      "kind": "component",
+      "entry": "./canonical/components/time/time-controls.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/time/time-controls.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core"],
+        "symbols": {
+          "components": ["Time"],
+          "icons": []
         }
       }
     },

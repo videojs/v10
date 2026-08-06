@@ -1,3 +1,4 @@
+import { resolveArtifactClosure } from '@videojs/compiler/artifacts';
 import { describe, expect, it } from 'vitest';
 import { buildSkinArtifactGraph } from '../build-artifact-graph';
 
@@ -8,6 +9,28 @@ describe('buildSkinArtifactGraph', () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.graph.artifacts).toMatchObject([
       {
+        id: 'core-video-controls',
+        dependencies: {
+          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-controls', 'time-slider'],
+          packages: ['@videojs/core'],
+          symbols: {
+            components: ['Controls', 'Tooltip'],
+            icons: [],
+          },
+        },
+      },
+      {
+        id: 'fullscreen-button',
+        dependencies: {
+          artifacts: [],
+          packages: ['@videojs/core', '@videojs/icons'],
+          symbols: {
+            components: ['FullscreenButton', 'Tooltip'],
+            icons: ['FullscreenEnterIcon', 'FullscreenExitIcon'],
+          },
+        },
+      },
+      {
         id: 'play-button',
         dependencies: {
           artifacts: [],
@@ -15,6 +38,27 @@ describe('buildSkinArtifactGraph', () => {
           symbols: {
             components: ['PlayButton', 'Tooltip'],
             icons: ['PauseIcon', 'PlayIcon', 'RestartIcon'],
+          },
+        },
+      },
+      {
+        id: 'seek-button',
+        dependencies: {
+          artifacts: [],
+          packages: ['@videojs/core', '@videojs/icons'],
+          symbols: {
+            components: ['SeekButton', 'Text', 'Tooltip'],
+            icons: ['SeekIcon'],
+          },
+        },
+      },
+      {
+        id: 'time-controls',
+        dependencies: {
+          artifacts: [],
+          packages: ['@videojs/core'],
+          symbols: {
+            components: ['Time'],
           },
         },
       },
@@ -39,5 +83,32 @@ describe('buildSkinArtifactGraph', () => {
         },
       },
     ]);
+
+    expect(resolveArtifactClosure(result.graph, 'core-video-controls')).toMatchObject({
+      artifactIds: [
+        'fullscreen-button',
+        'play-button',
+        'seek-button',
+        'time-controls',
+        'time-slider',
+        'core-video-controls',
+      ],
+      artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-controls', 'time-slider'],
+      packages: ['@videojs/core', '@videojs/icons'],
+      symbols: {
+        components: [
+          'Controls',
+          'FullscreenButton',
+          'PlayButton',
+          'SeekButton',
+          'Slider',
+          'Text',
+          'Time',
+          'TimeSlider',
+          'Tooltip',
+        ],
+        icons: ['FullscreenEnterIcon', 'FullscreenExitIcon', 'PauseIcon', 'PlayIcon', 'RestartIcon', 'SeekIcon'],
+      },
+    });
   });
 });

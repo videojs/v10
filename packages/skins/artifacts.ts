@@ -9,9 +9,29 @@ export type SkinArtifactDefinition = Omit<ArtifactDefinition<SkinArtifactKind>, 
 
 export const skinArtifacts = [
   defineArtifact({
+    id: 'core-video-controls',
+    kind: 'component',
+    entry: './canonical/compositions/core-video-controls.skin.tsx',
+  }),
+  defineArtifact({
+    id: 'fullscreen-button',
+    kind: 'component',
+    entry: './canonical/components/buttons/fullscreen-button.skin.tsx',
+  }),
+  defineArtifact({
     id: 'play-button',
     kind: 'component',
     entry: './canonical/components/buttons/play-button.skin.tsx',
+  }),
+  defineArtifact({
+    id: 'seek-button',
+    kind: 'component',
+    entry: './canonical/components/buttons/seek-button.skin.tsx',
+  }),
+  defineArtifact({
+    id: 'time-controls',
+    kind: 'component',
+    entry: './canonical/components/time/time-controls.skin.tsx',
   }),
   defineArtifact({
     id: 'time-slider',
