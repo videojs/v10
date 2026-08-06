@@ -6,15 +6,15 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   type SvtaError,
 } from '../../../media/errors';
-import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
 import {
   createHlsAudioOnlyEngine,
   type SimpleHlsAudioOnlyEngineConfig,
   type SimpleHlsAudioOnlyEngineContext,
   type SimpleHlsAudioOnlyEngineSignals,
   type SimpleHlsAudioOnlyEngineState,
-} from './engine-audio-only';
-import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
+} from '../../engines/hls/engine-audio-only';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
+import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from '../simple-hls/error-surface';
 
 export interface SimpleHlsAudioOnlyMediaProps {
   src: string;

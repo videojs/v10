@@ -6,6 +6,6 @@
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "exactOptionalPropertyTypes": false
   },
-  "references": [{ "path": "../utils" }],
+  "references": [{ "path": "../utils" }, { "path": "../media" }],
   "include": ["src/**/*.ts"]
 }

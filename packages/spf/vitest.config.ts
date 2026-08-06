@@ -87,6 +87,22 @@ export default defineConfig({
       {
         extends: true,
         test: {
+          // The Medias over the engines. Browser-bound like the engines they
+          // drive: they construct a real composition, which reaches MediaSource.
+          name: 'playback-adapters',
+          include: ['src/playback/adapters/**/*.test.ts'],
+          browser: {
+            enabled: true,
+            headless: true,
+            provider: playwright(),
+            screenshotFailures: false,
+            instances: [{ browser: 'chromium' }],
+          },
+        },
+      },
+      {
+        extends: true,
+        test: {
           name: 'types',
           include: [],
           typecheck: {

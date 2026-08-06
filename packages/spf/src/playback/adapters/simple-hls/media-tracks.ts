@@ -1,5 +1,14 @@
-import { type Composition, computed, effect, untrack } from '@videojs/spf';
-import type { SimpleHlsEngineContext, SimpleHlsEngineState } from '@videojs/spf/hls';
+import type {
+  AudioTrackLike,
+  MediaAudioTrackCapability,
+  MediaVideoRenditionCapability,
+  MediaVideoTrackCapability,
+  VideoRenditionLike,
+} from '@videojs/media';
+import type { Constructor } from '@videojs/utils/types';
+import type { Composition } from '../../../core/composition/create-composition';
+import { effect } from '../../../core/signals/effect';
+import { computed, untrack } from '../../../core/signals/primitives';
 import {
   type AudioTrack,
   dedupedAudioTracks,
@@ -12,15 +21,8 @@ import {
   toUserAudioTrackSelection,
   toUserVideoTrackSelection,
   type VideoTrack,
-} from '@videojs/spf/media-tracks';
-import type { Constructor } from '@videojs/utils/types';
-import type {
-  AudioTrackLike,
-  MediaAudioTrackCapability,
-  MediaVideoRenditionCapability,
-  MediaVideoTrackCapability,
-  VideoRenditionLike,
-} from '../../core/types';
+} from '../../../media/media-tracks';
+import type { SimpleHlsEngineContext, SimpleHlsEngineState } from '../../engines/hls/engine';
 
 // Translate a DOM rendition/track into the SPF dedupe-key shape
 const toVideoKey = (rendition: VideoRenditionLike) => ({

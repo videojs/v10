@@ -1,3 +1,4 @@
+import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
@@ -14,31 +15,30 @@ import {
   isResolvedPresentation,
   isResolvedTrack,
   type MaybeResolvedPresentation,
-  type StreamType,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
-import {
-  DVR_EXPERIMENTAL_MESSAGE,
-  LOW_LATENCY_UNSUPPORTED_MESSAGE,
-  UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE,
-} from '../../primitives/error-messages';
-import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
   createSimpleHlsEngine,
   type SimpleHlsEngineConfig,
   type SimpleHlsEngineContext,
   type SimpleHlsEngineSignals,
   type SimpleHlsEngineState,
-} from './engine';
+} from '../../engines/hls/engine';
+import {
+  DVR_EXPERIMENTAL_MESSAGE,
+  LOW_LATENCY_UNSUPPORTED_MESSAGE,
+  UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE,
+} from '../../primitives/error-messages';
+import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
 
 /**
- * The media-level stream type: the engine's detected {@link StreamType}
- * (`'live'` / `'on-demand'`) widened with `'unknown'` for "no playlist parsed
- * yet." String-compatible with `@videojs/core`'s `MediaStreamType` without a
- * cross-package dependency (spf sits below core).
+ * The media-level stream type: the engine's detected stream type (`'live'` /
+ * `'on-demand'`) plus `'unknown'` for "no playlist parsed yet." `@videojs/media`'s
+ * {@link MediaStreamType} itself, kept under its own name because that is what
+ * this adapter's `streamType` property is documented against.
  */
-export type SimpleHlsMediaStreamType = StreamType | 'unknown';
+export type SimpleHlsMediaStreamType = MediaStreamType;
 
 export type { SimpleHlsMediaError } from './error-surface';
 
@@ -53,7 +53,7 @@ export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
   src: '',
   preload: '',
   disableRemotePlayback: false,
-  streamType: 'unknown',
+  streamType: MediaStreamTypes.UNKNOWN,
 };
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
@@ -131,8 +131,9 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   class SimpleHlsMediaImpl extends BaseClass {
     /**
      * A complete sentence naming the Media to reach for when this one can't play
-     * a source — `Import from "/media/mux/hls-js" instead.` Appended to the copy
-     * this adapter surfaces, and to the notices it logs.
+     * a source — `Import <mux-video> from "@videojs/html/media/mux-video"
+     * instead.` Appended to the copy this adapter surfaces, and to the notices it
+     * logs.
      *
      * Empty here: `simple-hls-video` has no better-equipped sibling to point at.
      * A Media that does (a Mux Video built on this engine, whose hls.js-backed
@@ -181,7 +182,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       // `timeupdate`/`progress`), so a sliding window needs no event churn.
       this.#stopLiveSync = effect(() => {
         const presentation = this.#signals.state.presentation.get();
-        this.#setDetectedStreamType(presentation?.streamType ?? 'unknown');
+        this.#setDetectedStreamType(presentation?.streamType ?? MediaStreamTypes.UNKNOWN);
         this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
         this.#reportDeliveryNotices(presentation);
       });
@@ -233,9 +234,9 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
 
     set streamType(value: SimpleHlsMediaStreamType) {
-      if (value === 'unknown') {
+      if (value === MediaStreamTypes.UNKNOWN) {
         this.#isUserStreamType = false;
-        this.#updateStreamType(this.#signals.state.presentation.get()?.streamType ?? 'unknown');
+        this.#updateStreamType(this.#signals.state.presentation.get()?.streamType ?? MediaStreamTypes.UNKNOWN);
         return;
       }
       this.#isUserStreamType = true;
