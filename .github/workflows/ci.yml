@@ -89,6 +89,7 @@ jobs:
           - '@videojs/compiler'
           - '@videojs/core'
           - '@videojs/media'
+          - '@videojs/skins'
           - '@videojs/store'
           - '@videojs/utils'
           - '@videojs/element'
