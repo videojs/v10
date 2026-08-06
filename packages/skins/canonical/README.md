@@ -18,6 +18,7 @@ The current canonical paths are:
 - `components/buttons/play-button.skin.tsx`
 - `components/buttons/seek-button.skin.tsx`
 - `components/controls/volume-popover.skin.tsx`
+- `components/overlays/tooltip.skin.tsx`
 - `components/sliders/volume-slider.skin.tsx`
 - `components/sliders/time-slider.skin.tsx`
 
