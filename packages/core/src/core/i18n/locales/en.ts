@@ -79,6 +79,7 @@ export default {
     decode: 'This media could not be played. It may be corrupted, or your browser may not support its format.',
     source: 'This media could not be loaded. It may be unavailable, or your browser may not support its format.',
     encrypted: 'This media could not be played because it could not be decrypted.',
+    unplayable: 'This media is unsupported by the player.',
     title: 'Something went wrong.',
     unexpected: 'An unexpected error occurred.',
   },

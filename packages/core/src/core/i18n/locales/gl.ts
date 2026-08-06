@@ -81,6 +81,7 @@ export default {
     source:
       'Non foi posíbel cargar o medio por mor dun fallo de rede ou do servidor ou porque o formato non é compatíbel.',
     encrypted: 'O medio está cifrado e non temos as chaves para descifralo.',
+    unplayable: 'O reprodutor non admite este medio.',
     title: 'Algo saíu mal.',
     unexpected: 'Produciuse un erro. Por favor, ténteo de novo.',
   },

@@ -79,6 +79,7 @@ export default {
     decode: 'Phát media đã bị hủy do một sai lỗi hoặc media sử dụng những tính năng trình duyệt không hỗ trợ.',
     source: 'Video không tải được, mạng hay server có lỗi hoặc định dạng không được hỗ trợ.',
     encrypted: 'Media đã được mã hóa và chúng tôi không có khóa để giải mã.',
+    unplayable: 'Trình phát không hỗ trợ nội dung này.',
     title: 'Đã xảy ra lỗi.',
     unexpected: 'Đã xảy ra lỗi. Vui lòng thử lại.',
   },

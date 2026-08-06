@@ -81,6 +81,7 @@ export default {
     source:
       "No s'ha pogut carregar el contingut, ja sigui perquè el servidor o la xarxa han fallat o perquè el format no està suportat.",
     encrypted: 'El contingut està xifrat i no disposem de les claus per desxifrar-lo.',
+    unplayable: 'El reproductor no admet aquest mitjà.',
     title: 'Alguna cosa ha anat malament.',
     unexpected: "S'ha produït un error. Torneu-ho a intentar.",
   },

@@ -79,6 +79,7 @@ export default {
     decode: 'Šios medijos nepavyko atkurti. Ji gali būti sugadinta arba naršyklė nepalaiko jos formato.',
     source: 'Šios medijos nepavyko įkelti. Ji gali būti nepasiekiama arba naršyklė nepalaiko jos formato.',
     encrypted: 'Šios medijos nepavyko atkurti, nes nepavyko jos iššifruoti.',
+    unplayable: 'Leistuvė nepalaiko šios medijos.',
     title: 'Kažkas nutiko ne taip.',
     unexpected: 'Įvyko nenumatyta klaida.',
   },

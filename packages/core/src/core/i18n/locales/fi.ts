@@ -80,6 +80,7 @@ export default {
       'Videon toisto keskeytyi, koska videotiedosto on vioittunut tai käyttää toimintoja, joita selaimesi ei tue.',
     source: 'Videon lataus ei onnistunut joko palvelin- tai verkkovirheestä tai väärästä formaatista johtuen.',
     encrypted: 'Media on salattu eikä siihen ole purkuavaimia.',
+    unplayable: 'Soitin ei tue tätä mediaa.',
     title: 'Jotain meni pieleen.',
     unexpected: 'Tapahtui virhe. Yritä uudelleen.',
   },

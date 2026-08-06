@@ -81,6 +81,7 @@ export default {
     source:
       'Media ezin izan da kargatu, zerbitzariak edo sareak huts egin duelako edo formatu horretako media erabili ezin delako.',
     encrypted: 'Media zifratuta dago eta ez ditugu beharrezko gakoak.',
+    unplayable: 'Erreproduzitzaileak ez du media hau onartzen.',
     title: 'Zerbait gaizki joan da.',
     unexpected: 'Errore bat gertatu da. Saiatu berriro.',
   },

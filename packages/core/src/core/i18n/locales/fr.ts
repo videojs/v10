@@ -81,6 +81,7 @@ export default {
     source:
       "Cette vidéo n'a pas pu être chargée, soit parce que le serveur ou le réseau a échoué ou parce que le format n'est pas reconnu.",
     encrypted: "Le média est chiffré et nous n'avons pas les clés pour le déchiffrer.",
+    unplayable: "Ce média n'est pas pris en charge par le lecteur.",
     title: 'Une erreur s’est produite.',
     unexpected: 'Une erreur s’est produite. Veuillez réessayer.',
   },

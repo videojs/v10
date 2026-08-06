@@ -79,6 +79,7 @@ export default {
     decode: '由於影片檔案損毀或是該影片使用了您的瀏覽器不支援的功能，已終止播放媒體。',
     source: '因格式不支援、伺服器或網路的問題無法載入媒體。',
     encrypted: '媒體已加密，無法解密。',
+    unplayable: '播放器不支援此媒體。',
     title: '發生問題。',
     unexpected: '發生錯誤，請重試。',
   },

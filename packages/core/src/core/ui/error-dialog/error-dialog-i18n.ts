@@ -10,11 +10,33 @@ import {
   sourceText,
   titleText,
   unexpectedText,
+  unplayableText,
 } from '../../i18n/text/errors';
+
+/**
+ * SVTA 99 [Custom] 001 — an engine reporting that it has no pipeline for
+ * something the source requires. Not a `MediaError.MEDIA_ERR_*` value: engines
+ * that report SVTA codes surface them on `error.code` directly.
+ *
+ * The literal rather than an import. `@videojs/spf` defines this as
+ * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its meaning, but core doesn't
+ * depend on spf, and reaching it through `@videojs/media` would pull an engine
+ * entry point into a barrel that has no other reason to load one. Same trade
+ * `SimpleHlsMediaStreamType` makes in the other direction — compatibility by
+ * value, stated in a comment, instead of a dependency edge neither package
+ * wants.
+ */
+const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
 
 export type MediaErrorTranslationKey = Extract<
   keyof TranslationParams,
-  'errors.aborted' | 'errors.network' | 'errors.decode' | 'errors.source' | 'errors.encrypted' | 'common.empty'
+  | 'errors.aborted'
+  | 'errors.network'
+  | 'errors.decode'
+  | 'errors.source'
+  | 'errors.encrypted'
+  | 'errors.unplayable'
+  | 'common.empty'
 >;
 
 const MEDIA_ERROR_TRANSLATIONS: Record<number, Text | undefined> = {
@@ -24,6 +46,10 @@ const MEDIA_ERROR_TRANSLATIONS: Record<number, Text | undefined> = {
   [MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED]: sourceText,
   [MediaError.MEDIA_ERR_ENCRYPTED]: encryptedText,
   [MediaError.MEDIA_ERR_CUSTOM]: emptyText,
+  // Distinct copy from `errors.source`: that one tells a viewer the media may be
+  // unavailable or unsupported by their *browser*, which is wrong here. The
+  // browser is fine; this player can't play the source.
+  [SVTA_UNSUPPORTED_PLAYBACK_FEATURE]: unplayableText,
 };
 
 const STANDARD_CODE_UA_MESSAGES: Partial<Record<number, readonly string[]>> = {

@@ -81,6 +81,7 @@ export default {
     source:
       'Súbor sa nepodarilo načítať pre chybu servera, sieťového pripojenia, alebo je formát súboru nepodporovaný.',
     encrypted: 'Súbor je zašifrovaný a nie je k dispozícii kľúč na rozšifrovanie.',
+    unplayable: 'Toto médium prehrávač nepodporuje.',
     title: 'Niečo sa pokazilo.',
     unexpected: 'Vyskytla sa chyba. Skúste to znova.',
   },

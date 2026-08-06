@@ -81,6 +81,7 @@ export default {
     source:
       'Multimedijske datoteke ni bilo mogoče naložiti zaradi napake na strežniku oziroma omrežju ali ker ta oblika ni podprta.',
     encrypted: 'Datoteka je šifrirana in predvajalnik nima ključev za njeno dešifriranje.',
+    unplayable: 'Predvajalnik ne podpira tega medija.',
     title: 'Nekaj je šlo narobe.',
     unexpected: 'Prišlo je do napake. Poskusite znova.',
   },
