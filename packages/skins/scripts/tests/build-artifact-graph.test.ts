@@ -11,10 +11,10 @@ describe('buildSkinArtifactGraph', () => {
       {
         id: 'default-video-controls',
         dependencies: {
-          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time', 'time-slider', 'volume-popover'],
+          artifacts: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider', 'volume-popover'],
           packages: ['@videojs/core'],
           symbols: {
-            components: ['Controls', 'Tooltip'],
+            components: ['Controls', 'Time', 'Tooltip'],
             icons: [],
           },
         },
@@ -64,16 +64,6 @@ describe('buildSkinArtifactGraph', () => {
         },
       },
       {
-        id: 'time',
-        dependencies: {
-          artifacts: [],
-          packages: ['@videojs/core'],
-          symbols: {
-            components: ['Time'],
-          },
-        },
-      },
-      {
         id: 'time-slider',
         dependencies: {
           artifacts: [],
@@ -111,7 +101,6 @@ describe('buildSkinArtifactGraph', () => {
         'fullscreen-button',
         'play-button',
         'seek-button',
-        'time',
         'time-slider',
         'mute-button',
         'volume-slider',
@@ -122,7 +111,6 @@ describe('buildSkinArtifactGraph', () => {
         'fullscreen-button',
         'play-button',
         'seek-button',
-        'time',
         'time-slider',
         'mute-button',
         'volume-slider',

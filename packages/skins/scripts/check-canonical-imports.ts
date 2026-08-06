@@ -7,6 +7,7 @@ import ts from 'typescript';
 const DEFAULT_CANONICAL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../canonical');
 
 export const CANONICAL_PACKAGE_IMPORTS: ReadonlySet<string> = new Set([
+  '@videojs/core',
   '@videojs/core/components',
   '@videojs/icons/components',
   '@videojs/jsx',

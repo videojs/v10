@@ -34,11 +34,6 @@ export const skinArtifacts = [
     entry: './canonical/components/buttons/seek-button.skin.tsx',
   }),
   defineArtifact({
-    id: 'time',
-    kind: 'component',
-    entry: './canonical/components/displays/time.skin.tsx',
-  }),
-  defineArtifact({
     id: 'time-slider',
     kind: 'component',
     entry: './canonical/components/sliders/time-slider.skin.tsx',

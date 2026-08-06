@@ -13,10 +13,10 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time", "time-slider", "volume-popover"],
+        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time-slider", "volume-popover"],
         "packages": ["@videojs/core"],
         "symbols": {
-          "components": ["Controls", "Tooltip"],
+          "components": ["Controls", "Time", "Tooltip"],
           "icons": []
         }
       }
@@ -98,26 +98,6 @@
         "symbols": {
           "components": ["SeekButton", "Text", "Tooltip"],
           "icons": ["SeekIcon"]
-        }
-      }
-    },
-    {
-      "id": "time",
-      "kind": "component",
-      "entry": "./canonical/components/displays/time.skin.tsx",
-      "files": [
-        {
-          "path": "./canonical/components/displays/time.skin.tsx",
-          "role": "entry"
-        }
-      ],
-      "resources": {},
-      "dependencies": {
-        "artifacts": [],
-        "packages": ["@videojs/core"],
-        "symbols": {
-          "components": ["Time"],
-          "icons": []
         }
       }
     },
