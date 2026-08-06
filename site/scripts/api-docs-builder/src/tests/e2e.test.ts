@@ -51,6 +51,9 @@
  *   volume.ts    — Complex feature. Exercises: numeric state, type alias
  *                  (MediaFeatureAvailability), methods with params + returns,
  *                  interface-level JSDoc → feature description.
+ *   metadata.ts  — Resolved feature. Exercises: `@state` tag naming the
+ *                  published interface when state() annotates private
+ *                  source state.
  *   presets.ts   — Feature bundles. Exercises: plural *Features naming
  *                  (filtered out of feature discovery), array resolution
  *                  for preset feature lists.
@@ -763,6 +766,7 @@ describe('Util pipeline (end-to-end)', () => {
 //   - Filtering: plural *Features (feature bundles) are excluded
 //   - State extraction: interface properties → state record
 //   - Action extraction: interface methods → actions record
+//   - Published state: `@state <Interface>` overrides the state() annotation
 //   - JSDoc: member descriptions flow through, interface-level JSDoc
 //     becomes the feature description
 //   - Type aliases: expanded in the output (MediaFeatureAvailability →
@@ -783,6 +787,7 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers features from the features index', () => {
       const names = results.map((r) => r.name);
+      expect(names).toContain('metadata');
       expect(names).toContain('orientationLock');
       expect(names).toContain('playback');
       expect(names).toContain('volume');
@@ -800,7 +805,7 @@ describe('Feature pipeline (end-to-end)', () => {
     });
 
     it('produces one result per feature', () => {
-      expect(results.length).toBe(3);
+      expect(results.length).toBe(4);
     });
   });
 
@@ -810,6 +815,35 @@ describe('Feature pipeline (end-to-end)', () => {
 
       expect(ref.state).toEqual({});
       expect(ref.actions).toEqual({});
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // METADATA FEATURE (published state differs from source state)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // state() annotates MetadataSourceState (symbol-keyed private inputs).
+  // `@state MediaMetadataState` names the interface the store publishes.
+
+  describe('metadata (@state override)', () => {
+    it('reads the interface named by @state instead of the state() annotation', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(ref.description).toBe('Resolved content metadata exposed by the player store.');
+      expect(ref.state.contentTitle).toMatchObject({
+        type: 'string',
+        description: 'The resolved content title.',
+      });
+      expect(ref.actions.setContentTitle).toMatchObject({
+        description: 'Set or clear the user title override.',
+      });
+    });
+
+    it('omits private source state', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(Object.keys(ref.state)).toEqual(['contentTitle']);
+      expect(Object.keys(ref.actions)).toEqual(['setContentTitle']);
     });
   });
 

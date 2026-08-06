@@ -12,15 +12,22 @@
  *   - Feature files: *.ts in the features directory (excluding index, presets, feature.parts)
  *   - Feature exports: const matching *Feature (singular, not *Features)
  *   - State type: explicit return type annotation on the state() arrow function
+ *   - Published state override: `@state <InterfaceName>` on the feature export
  *   - Silent features: state() returns an empty object
  *   - State interfaces: exported from packages/media/src/core/state.ts
+ *
+ * A feature that resolves several inputs keeps them in private source state and
+ * publishes the resolved value through `derived`, so its state() annotation
+ * describes internals rather than the store surface. Those features name their
+ * published interface with `@state` on the feature export, which wins over the
+ * state() annotation.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
 import type { FeatureActionDef, FeatureReference, FeatureStateDef } from './types.js';
 import { createTypeScriptProgram } from './typescript.js';
-import { getJSDocDescription } from './utils.js';
+import { getJSDocDescription, getJSDocTagValue } from './utils.js';
 
 const SKIP_FILES = new Set(['index.ts', 'presets.ts', 'feature.parts.ts']);
 
@@ -51,6 +58,8 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
       if (!ts.isVariableStatement(node)) return;
       if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
 
+      const publishedStateTypeName = getJSDocTagValue(node, 'state');
+
       for (const decl of node.declarationList.declarations) {
         if (!ts.isIdentifier(decl.name)) continue;
         const varName = decl.name.text;
@@ -80,6 +89,9 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
             }
           }
         }
+
+        // The published interface wins: source state is an implementation detail.
+        if (publishedStateTypeName) stateTypeName = publishedStateTypeName;
 
         if (name && (stateTypeName || silent)) {
           sources.push({ filePath, name, stateTypeName });

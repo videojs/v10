@@ -22,6 +22,12 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'> {
 /**
  * Resolves user, media, and fallback content-title metadata into player state.
  * Included in the standard audio, video, and live presets.
+ *
+ * `MetadataSourceState` holds the per-owner inputs; the store surface is
+ * `MediaMetadataState`, named here so the docs builder reads the published
+ * shape instead of the private one.
+ *
+ * @state MediaMetadataState
  */
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',

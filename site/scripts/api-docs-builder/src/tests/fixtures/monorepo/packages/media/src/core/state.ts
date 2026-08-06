@@ -53,3 +53,11 @@ export interface MediaVolumeState {
   /** Toggle mute state. Returns the new muted value. */
   toggleMuted(): boolean;
 }
+
+/** Resolved content metadata exposed by the player store. */
+export interface MediaMetadataState {
+  /** The resolved content title. */
+  contentTitle: string;
+  /** Set or clear the user title override. */
+  setContentTitle(value: string | null): void;
+}
