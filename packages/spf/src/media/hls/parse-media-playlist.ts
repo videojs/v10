@@ -249,8 +249,9 @@ export function parseMediaPlaylist<T extends PartiallyResolvedTrack>(
       continue;
     }
 
-    // #EXT-X-SERVER-CONTROL — only HOLD-BACK is read; see MediaPlaylistMetadata
-    // on why PART-HOLD-BACK is deliberately left out until LL-HLS.
+    // #EXT-X-SERVER-CONTROL — HOLD-BACK supplies the latency target. PART-HOLD-BACK
+    // is read for its presence only, as an LL-HLS signal; see MediaPlaylistMetadata
+    // on why its value stays out of `holdBack` until LL-HLS support lands.
     const serverControl = matchTag(trimmed, 'EXT-X-SERVER-CONTROL');
     if (serverControl) {
       const value = serverControl.get('HOLD-BACK');
