@@ -219,6 +219,45 @@ describe('buildYouTubeIframeSrc', () => {
     expect(src).toContain('cc_load_policy=1');
   });
 
+  it('serializes the documented player parameters', () => {
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
+      source: {
+        engine: {
+          cc_lang_pref: 'fr',
+          color: 'white',
+          disablekb: 1,
+          end: 90,
+          fs: 0,
+          hl: 'fr-ca',
+          origin: 'https://example.com',
+          playlist: 'aqz-KE-bpKQ',
+          widget_referrer: 'https://widgets.example.com',
+        },
+      },
+    });
+    expect(src).toContain('cc_lang_pref=fr');
+    expect(src).toContain('color=white');
+    expect(src).toContain('disablekb=1');
+    expect(src).toContain('end=90');
+    expect(src).toContain('fs=0');
+    expect(src).toContain('hl=fr-ca');
+    expect(src).toContain(`origin=${encodeURIComponent('https://example.com')}`);
+    expect(src).toContain('playlist=aqz-KE-bpKQ');
+    expect(src).toContain(`widget_referrer=${encodeURIComponent('https://widgets.example.com')}`);
+  });
+
+  it('lets engine options override the defaults the host sets', () => {
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', { source: { engine: { rel: 1, iv_load_policy: 1 } } });
+    expect(src).toContain('rel=1');
+    expect(src).toContain('iv_load_policy=1');
+  });
+
+  it('omits parameters YouTube has deprecated', () => {
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ');
+    expect(src).not.toContain('modestbranding');
+    expect(src).not.toContain('showinfo');
+  });
+
   it('embeds start time from the t param', () => {
     expect(buildYouTubeIframeSrc('https://youtu.be/aqz-KE-bpKQ?t=2m51s')).toContain('start=171');
   });

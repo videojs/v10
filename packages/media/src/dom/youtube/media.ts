@@ -17,8 +17,54 @@ import { MediaPlayedRangesMixin } from '../media-played-ranges';
  * YouTube engine options. Player parameters are YouTube's engine configuration,
  * so they are serialized verbatim onto the embed URL
  * (https://developers.google.com/youtube/player_parameters).
+ *
+ * Parameters YouTube has deprecated (`modestbranding`, `showinfo`, `autohide`,
+ * `theme`, and `listType: 'search'`) are deliberately absent. The index
+ * signature still carries anything not listed here, including whatever YouTube
+ * adds next.
  */
 export interface YouTubeEngineConfig extends Record<string, unknown> {
+  /** Play the initial video as soon as the player loads. Defaults to `0`. */
+  autoplay?: 0 | 1;
+  /** ISO 639-1 language to display captions in. Pair with `cc_load_policy`. */
+  cc_lang_pref?: string;
+  /** Show closed captions by default, even if the viewer has turned them off. */
+  cc_load_policy?: 1;
+  /** Progress-bar highlight color. Defaults to `'red'`. */
+  color?: 'red' | 'white';
+  /** Display the player controls. Defaults to `1`. */
+  controls?: 0 | 1;
+  /** Stop responding to keyboard controls. Defaults to `0`. */
+  disablekb?: 0 | 1;
+  /** Allow the player to be driven through the IFrame Player API. Defaults to `0`. */
+  enablejsapi?: 0 | 1;
+  /** Stop playback this many seconds from the start of the video. */
+  end?: number;
+  /** Display the fullscreen button. Defaults to `1`. */
+  fs?: 0 | 1;
+  /** Player interface language: an ISO 639-1 code or full locale (`fr`, `fr-ca`). */
+  hl?: string;
+  /** Show video annotations (`1`) or hide them (`3`). Defaults to `1`. */
+  iv_load_policy?: 1 | 3;
+  /** Playlist id (prefixed with `PL`) or channel name, depending on `listType`. */
+  list?: string;
+  /** What `list` refers to. */
+  listType?: 'playlist' | 'user_uploads';
+  /** Repeat playback. Looping a single video also needs `playlist` set to the same id. */
+  loop?: 0 | 1;
+  /** Embedding domain. Set it whenever `enablejsapi` is `1`. */
+  origin?: string;
+  /** Comma-separated video ids to play after the one named by the URL path. */
+  playlist?: string;
+  /** Play inline rather than fullscreen on iOS. */
+  playsinline?: 0 | 1;
+  /** Draw related videos from the same channel (`0`) or anywhere (`1`). Defaults to `1`. */
+  rel?: 0 | 1;
+  /** Begin playback this many seconds from the start of the video. */
+  start?: number;
+  /** Embedding URL reported to YouTube Analytics for widget-hosted players. */
+  widget_referrer?: string;
+  /** `referrerpolicy` for the embed iframe. Not a YouTube player parameter. */
   referrerPolicy?: ReferrerPolicy;
 }
 
@@ -782,10 +828,8 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
     preload: props.preload ?? youtubeMediaDefaultProps.preload,
     // https://developers.google.com/youtube/player_parameters#Parameters
     enablejsapi: 1,
-    showinfo: 0,
     rel: 0,
     iv_load_policy: 3,
-    modestbranding: 1,
     start: parsed.startTime,
     // YouTube-specific knobs (`cc_load_policy`, `hl`, `color`, …) flow through here.
     ...(props.source?.engine ?? undefined),
