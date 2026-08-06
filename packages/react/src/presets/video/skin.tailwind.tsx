@@ -10,8 +10,7 @@ import {
   badge,
   bufferingIndicator,
   button,
-  buttonGroupEnd,
-  buttonGroupStart,
+  buttonGroup,
   controls,
   error,
   icon,
@@ -468,7 +467,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       >
         <Tooltip.Provider>
           <div className={primaryControls}>
-            <div className={buttonGroupStart}>
+            <div className={buttonGroup}>
               <Tooltip.Root side="top">
                 <Tooltip.Trigger
                   render={
@@ -494,21 +493,24 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
                 <TimeSlider.Track render={<SliderTrack />}>
                   <TimeSlider.Fill render={<SliderFill />} />
                   <TimeSlider.Buffer render={<SliderBuffer />} />
+                  <TimeSlider.Segments className={slider.segments} />
                 </TimeSlider.Track>
                 <TimeSlider.Thumb render={<SliderThumb />} />
-                <div className={thumbnail.root}>
-                  <Slider.Thumbnail className={thumbnail.image} />
-                  <TimeSlider.Value type="pointer" className={thumbnail.time} />
-                  <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
-                </div>
                 <TimeSlider.Preview className={slider.preview}>
-                  <TimeSlider.Value type="pointer" className={slider.value} />
+                  <div className={cn(thumbnail.root, slider.thumbnail)}>
+                    <Slider.Thumbnail className={thumbnail.image} />
+                    <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
+                  </div>
+                  <div className={slider.value}>
+                    <Slider.Chapter className={slider.chapter} />
+                    <TimeSlider.Value type="pointer" />
+                  </div>
                 </TimeSlider.Preview>
               </TimeSlider.Root>
               <Time.Value toggle type="remaining" className={time.duration} />
             </div>
 
-            <div className={cn(buttonGroupEnd, menu.settingsGroup)}>
+            <div className={cn(buttonGroup, menu.settingsGroup)}>
               <Tooltip.Root side="top">
                 <Tooltip.Trigger
                   render={
@@ -529,7 +531,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
           </div>
 
           <div className={secondaryControls}>
-            <div className={buttonGroupEnd}>
+            <div className={buttonGroup}>
               <Tooltip.Root side="top">
                 <Tooltip.Trigger
                   render={

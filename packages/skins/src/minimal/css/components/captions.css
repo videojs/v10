@@ -8,7 +8,7 @@
   --media-caption-track-y: calc(var(--spacing) * -2);
 
   &:has(.media-controls[data-visible]) {
-    --media-caption-track-y: calc(var(--spacing) * -20);
+    --media-caption-track-y: calc(var(--spacing) * -18);
   }
 
   @container media-root (width > 42rem) {

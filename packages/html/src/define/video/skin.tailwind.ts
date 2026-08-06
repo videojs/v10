@@ -4,8 +4,7 @@ import {
   badge,
   bufferingIndicator,
   button,
-  buttonGroupEnd,
-  buttonGroupStart,
+  buttonGroup,
   controls,
   error,
   icon,
@@ -62,7 +61,7 @@ function getTemplateHTML() {
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${primaryControls}">
-            <div class="${buttonGroupStart}">
+            <div class="${buttonGroup}">
                 <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
                   ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                   ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
@@ -95,22 +94,25 @@ function getTemplateHTML() {
                 <media-slider-track class="${slider.track}">
                   <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                   <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
+                  <media-time-slider-segments class="${slider.segments}"></media-time-slider-segments>
                 </media-slider-track>
                 <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
 
-                <div class="${thumbnail.root}">
-                  <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
-                  <media-slider-value type="pointer" class="${cn(time.current, thumbnail.time)}"></media-slider-value>
-                  ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
-                </div>
                 <media-slider-preview class="${slider.preview}">
-                  <media-slider-value type="pointer" class="${cn(slider.value, time.current)}"></media-slider-value>
+                  <div class="${cn(thumbnail.root, slider.thumbnail)}">
+                    <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
+                    ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
+                  </div>
+                  <div class="${slider.value}">
+                    <media-slider-chapter class="${slider.chapter}"></media-slider-chapter>
+                    <media-slider-value type="pointer"></media-slider-value>
+                  </div>
                 </media-slider-preview>
               </media-time-slider>
               <media-time toggle type="remaining" class="${time.duration}"></media-time>
             </div>
 
-            <div class="${cn(buttonGroupEnd, menu.settingsGroup)}">
+            <div class="${cn(buttonGroup, menu.settingsGroup)}">
               <media-captions-button commandfor="captions-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.captions.button)}">
                 ${renderIcon('captions-off', { class: cn(icon, iconState.captions.off) })}
                 ${renderIcon('captions-on', { class: cn(icon, iconState.captions.on) })}
@@ -245,7 +247,7 @@ function getTemplateHTML() {
           </div>
 
           <div class="${secondaryControls}">
-            <div class="${buttonGroupEnd}">
+            <div class="${buttonGroup}">
               <media-cast-button commandfor="cast-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.cast.button)}">
                 ${renderIcon('cast-enter', { class: cn(icon, iconState.cast.enter) })}
                 ${renderIcon('cast-exit', { class: cn(icon, iconState.cast.exit) })}

@@ -72,17 +72,19 @@ function getTemplateHTML() {
                 <media-slider-track class="media-slider__track">
                   <media-slider-fill class="media-slider__fill"></media-slider-fill>
                   <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
+                  <media-time-slider-segments class="media-slider__segments"></media-time-slider-segments>
                 </media-slider-track>
                 <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
 
-                <div class="media-surface media-thumbnail media-slider__thumbnail">
-                  <media-slider-thumbnail class="media-thumbnail__image"></media-slider-thumbnail>
-                  <media-slider-value type="pointer" class="media-time media-thumbnail__time"></media-slider-value>
-                  ${renderIcon('spinner', { class: 'media-thumbnail__spinner media-icon' })}
-                </div>
-
                 <media-slider-preview class="media-slider__preview">
-                  <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
+                  <div class="media-surface media-thumbnail media-slider__thumbnail">
+                    <media-slider-thumbnail class="media-thumbnail__image"></media-slider-thumbnail>
+                    ${renderIcon('spinner', { class: 'media-thumbnail__spinner media-icon' })}
+                  </div>
+                  <div class="media-slider__value">
+                    <media-slider-chapter class="media-slider__chapter"></media-slider-chapter>
+                    <media-slider-value type="pointer" class="media-time"></media-slider-value>
+                  </div>
                 </media-slider-preview>
               </media-time-slider>
               <media-time toggle type="remaining" class="media-time"></media-time>

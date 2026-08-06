@@ -3,6 +3,12 @@
    ========================================================================== */
 
 .media-default-skin .media-slider {
+  --track-scale-default: 1;
+  --track-scale-with-segments: 1.75;
+  --track-scale: var(--track-scale-default);
+  --track-size: calc(var(--spacing) * var(--track-scale));
+  --track-radius: calc(var(--track-size) / 2);
+
   position: relative;
   display: flex;
   flex: 1;
@@ -10,7 +16,6 @@
   justify-content: center;
   cursor: pointer;
   outline: none;
-  border-radius: calc(infinity * 1px);
 
   &[data-orientation="horizontal"] {
     width: var(--slider-width, 100%);
@@ -18,6 +23,7 @@
     height: var(--slider-height, calc(var(--spacing) * 8));
   }
   &[data-orientation="vertical"] {
+    flex-direction: column;
     width: var(--slider-width, calc(var(--spacing) * 8));
     height: var(--slider-height, calc(var(--spacing) * 20));
   }
@@ -25,18 +31,160 @@
   /* Track */
   & .media-slider__track {
     position: relative;
-    overflow: hidden;
-    user-select: none;
-    border-radius: inherit;
-    isolation: isolate;
+    display: grid;
+    flex: 1;
+    border-radius: var(--track-radius);
+    clip-path: var(--media-slider-clip-path, none);
+
+    /* Track layers */
+    & > * {
+      grid-area: 1 / 1;
+      min-height: 0;
+      pointer-events: none;
+      border-radius: inherit;
+    }
 
     &[data-orientation="horizontal"] {
-      width: 100%;
-      height: calc(var(--spacing) * 1);
+      height: var(--track-size);
     }
     &[data-orientation="vertical"] {
-      width: calc(var(--spacing) * 1);
+      align-items: end;
+      width: var(--track-size);
       height: 100%;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    & .media-slider__buffer,
+    & .media-slider__fill,
+    & .media-slider__segments [data-slot="slider-segment"] {
+      transition-timing-function: ease-out;
+      transition-duration: 0.2s;
+    }
+  }
+
+  /* Buffer */
+  & .media-slider__buffer {
+    background-color: oklch(from currentColor l c h / 0.2);
+
+    &[data-orientation="horizontal"] {
+      width: var(--media-slider-buffer);
+      transition-property: clip-path, width;
+    }
+    &[data-orientation="vertical"] {
+      height: var(--media-slider-buffer);
+      transition-property: clip-path, height;
+    }
+  }
+
+  /* Fill */
+  & .media-slider__fill {
+    background-color: currentColor;
+    transition-property: clip-path;
+
+    &[data-orientation="horizontal"] {
+      width: var(--media-slider-fill);
+    }
+    &[data-orientation="vertical"] {
+      height: var(--media-slider-fill);
+    }
+  }
+
+  /* Segments */
+  & .media-slider__segments {
+    --gap: calc(var(--spacing) * 1);
+    --clip-path-shift: calc(-1 * var(--gap));
+    --size: calc(100% + var(--gap));
+    max-width: none;
+    overflow: visible;
+
+    & [data-slot="slider-segment"] {
+      --size: calc(var(--spacing) * var(--track-scale-default));
+    }
+
+    &[data-orientation="horizontal"] {
+      width: var(--size);
+      height: 100%;
+
+      & [data-slot="slider-segments-clip-path"] {
+        translate: var(--clip-path-shift) 0;
+      }
+
+      & [data-slot="slider-segment"] {
+        rx: calc(var(--size) / 2);
+        width: calc(var(--media-slider-segment-size) - var(--gap));
+        x: calc(var(--media-slider-segment-offset) + var(--gap));
+        height: var(--size);
+        transition-property: height, rx, y;
+      }
+    }
+
+    &[data-orientation="vertical"] {
+      width: 100%;
+      height: var(--size);
+
+      & [data-slot="slider-segments-clip-path"] {
+        translate: 0 var(--clip-path-shift);
+      }
+
+      & [data-slot="slider-segment"] {
+        height: calc(var(--media-slider-segment-size) - var(--gap));
+        ry: calc(var(--size) / 2);
+        y: calc(100% - var(--media-slider-segment-offset) - var(--media-slider-segment-size) + var(--gap));
+        width: var(--size);
+        transition-property: width, ry, x;
+      }
+    }
+  }
+
+  &:has([data-segments]) {
+    --track-scale: var(--track-scale-with-segments);
+    --segment-inset: calc(var(--spacing) * ((var(--track-scale-with-segments) - var(--track-scale-default)) / 2));
+
+    & [data-slot="slider-segment"][data-highlighted] {
+      --size: var(--track-size);
+    }
+
+    &[data-orientation="horizontal"] {
+      /* Fix clipped radius issue (fills have larger height but are cut off, so the radius looks weird so we clip a new radius) */
+      & .media-slider__buffer,
+      & .media-slider__fill {
+        clip-path: inset(var(--segment-inset) 0 round var(--track-radius));
+      }
+
+      & [data-slot="slider-segment"]:not([data-highlighted]) {
+        y: var(--segment-inset);
+      }
+      & [data-slot="slider-segment"][data-highlighted] {
+        y: 0;
+      }
+    }
+
+    &[data-orientation="vertical"] {
+      /* Fix clipped radius issue (fills have larger height but are cut off, so the radius looks weird so we clip a new radius) */
+      & .media-slider__buffer,
+      & .media-slider__fill {
+        clip-path: inset(0 var(--segment-inset) round var(--track-radius));
+      }
+
+      & [data-slot="slider-segment"]:not([data-highlighted]) {
+        x: var(--segment-inset);
+      }
+      & [data-slot="slider-segment"][data-highlighted] {
+        x: 0;
+      }
+    }
+
+    /**
+     * This is not ideal but we expand the clip whenever any segment is highlighted.
+     * The reason we do this is so if the end of the fill is within the highlighted segment, it's full height.
+     * Pixel-peepers like myself may notice (and be annoyed by) the radius mismatch when it's not inside the highlighted segment though.
+     */
+    &:has([data-slot="slider-segment"][data-highlighted]) {
+      & .media-slider__buffer,
+      & .media-slider__fill {
+        clip-path: inset(0 0 round var(--track-radius));
+      }
     }
   }
 
@@ -108,27 +256,49 @@
 
   /* Preview */
   & .media-slider__preview {
-    & .media-slider__value,
-    &::before {
+    --max-width: calc(var(--spacing) * 48);
+    --padding: calc(var(--spacing) * -4.5);
+
+    & .media-slider__thumbnail,
+    & .media-slider__value {
+      position: absolute;
+      left: 50%;
+      max-width: var(--max-width);
       opacity: 0;
-      scale: 0.5;
+      filter: blur(8px);
+      transform-origin: bottom;
+      scale: 0.8;
+      translate: -50% calc(var(--spacing) * 2);
       transition-timing-function: ease-out;
-      transition-duration: 200ms;
-      transition-property: opacity, scale;
+      transition-duration: 150ms;
+      transition-property: scale, opacity, filter;
+    }
+
+    & .media-slider__thumbnail {
+      --thumbnail-max-width: var(--max-width);
+      bottom: calc(100% + (var(--spacing) * 9));
     }
 
     & .media-slider__value {
-      position: absolute;
-      bottom: calc(var(--spacing) * 9);
+      bottom: calc(100% + (var(--spacing) * 10.5));
+      display: flex;
+      flex-direction: column;
+      align-items: center;
       text-shadow: 0 1px 0 var(--media-current-shadow-color);
-      filter: blur(8px);
-      translate: -50% calc(var(--spacing) * 2);
-      transition-property: filter, opacity, scale, translate;
+
+      & .media-slider__chapter {
+        min-width: 0;
+        max-width: var(--max-width);
+        padding-inline: calc(var(--spacing) * 3);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
     }
 
     &::before {
       display: block;
-      min-width: calc(var(--spacing) * 1);
+      width: calc(var(--spacing) * 1);
       height: calc(var(--spacing) * 1);
       content: "";
       background-color: currentColor;
@@ -136,63 +306,22 @@
       box-shadow:
         0 0 0 1px var(--media-current-shadow-color, oklch(0 0 0 / 0.15)),
         0 1px 2px 0 oklch(0 0 0 / 0.35);
+      opacity: 0;
+      scale: 0.5;
+      transition-timing-function: ease-out;
+      transition-duration: 200ms;
+      transition-property: opacity, scale;
     }
 
     &[data-pointing] .media-slider__value,
+    &[data-pointing] .media-slider__thumbnail,
     &[data-pointing]:not([data-dragging])::before {
       opacity: 1;
       scale: 1;
     }
-    &[data-pointing] .media-slider__value {
+    &[data-pointing] .media-slider__value,
+    &[data-pointing] .media-slider__thumbnail {
       filter: blur(0);
-      translate: -50% 0;
-    }
-  }
-
-  /* Shared track fills */
-  & .media-slider__buffer,
-  & .media-slider__fill {
-    position: absolute;
-    pointer-events: none;
-    border-radius: inherit;
-
-    &[data-orientation="horizontal"],
-    &[data-orientation="horizontal"] {
-      inset-block: 0;
-      left: 0;
-    }
-    &[data-orientation="vertical"],
-    &[data-orientation="vertical"] {
-      inset-inline: 0;
-      bottom: 0;
-    }
-  }
-
-  /* Buffer */
-  & .media-slider__buffer {
-    background-color: oklch(from currentColor l c h / 0.2);
-    transition-timing-function: ease-out;
-    transition-duration: 0.25s;
-
-    &[data-orientation="horizontal"] {
-      width: var(--media-slider-buffer);
-      transition-property: width;
-    }
-    &[data-orientation="vertical"] {
-      height: var(--media-slider-buffer);
-      transition-property: height;
-    }
-  }
-
-  /* Fill */
-  & .media-slider__fill {
-    background-color: currentColor;
-
-    &[data-orientation="horizontal"] {
-      width: var(--media-slider-fill);
-    }
-    &[data-orientation="vertical"] {
-      height: var(--media-slider-fill);
     }
   }
 

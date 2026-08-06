@@ -8,13 +8,7 @@
   --media-caption-track-y: calc(var(--spacing) * -2);
 
   &:has(.media-controls[data-visible]) {
-    --media-caption-track-y: calc(var(--spacing) * -22);
-  }
-
-  @container media-root (width > 42rem) {
-    &:has(.media-controls[data-visible]) > * {
-      --media-caption-track-y: calc(var(--spacing) * -14);
-    }
+    --media-caption-track-y: calc(var(--spacing) * -14);
   }
 }
 

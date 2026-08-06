@@ -2,8 +2,7 @@ import { captionsText } from '@videojs/core/i18n/text/menu';
 import {
   bufferingIndicator,
   button,
-  buttonGroupEnd,
-  buttonGroupStart,
+  buttonGroup,
   controls,
   error,
   icon,
@@ -248,7 +247,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
       >
         <Tooltip.Provider>
           <div className={primaryControls}>
-            <div className={buttonGroupStart}>
+            <div className={buttonGroup}>
               <Tooltip.Root side="top">
                 <Tooltip.Trigger
                   render={
@@ -270,7 +269,7 @@ export function LiveVideoSkinTailwind(props: LiveVideoSkinProps): ReactNode {
 
             <div className={spacer} aria-hidden="true" />
 
-            <div className={buttonGroupEnd}>
+            <div className={buttonGroup}>
               <VolumePopover />
 
               <CaptionsTrigger />
