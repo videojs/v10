@@ -996,6 +996,65 @@ s6.m4s`;
   });
 });
 
+describe('parseMediaPlaylist (LL-HLS detection)', () => {
+  const shell: PartiallyResolvedVideoTrack = {
+    id: 'v-1',
+    type: 'video',
+    url: 'https://example.com/v.m3u8',
+    bandwidth: 1000,
+    codecs: ['avc1.4d401f'],
+    mimeType: 'video/mp4',
+  };
+
+  const playlist = (extra: string) => `#EXTM3U
+#EXT-X-TARGETDURATION:4
+${extra}
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:4.0,
+0.m4s
+`;
+
+  it('reports no low latency for a plain live playlist', () => {
+    const track = parseMediaPlaylist(playlist('#EXT-X-MEDIA-SEQUENCE:0'), shell);
+    expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(false);
+  });
+
+  it('detects EXT-X-PART-INF', () => {
+    const track = parseMediaPlaylist(playlist('#EXT-X-PART-INF:PART-TARGET=1.0'), shell);
+    expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(true);
+  });
+
+  it('detects PART-HOLD-BACK on EXT-X-SERVER-CONTROL, without reading its value', () => {
+    // Deliberately unread: it only applies to clients playing partial segments.
+    // Its presence is still the server advertising LL-HLS.
+    const track = parseMediaPlaylist(
+      playlist('#EXT-X-SERVER-CONTROL:CAN-BLOCK-RELOAD=YES,PART-HOLD-BACK=2.171,HOLD-BACK=6'),
+      shell
+    );
+    const metadata = getMediaPlaylistMetadata(track);
+    expect(metadata?.lowLatency).toBe(true);
+    expect(metadata?.holdBack).toBe(6);
+  });
+
+  it('detects EXT-X-PART lines without mistaking them for segments', () => {
+    const track = parseMediaPlaylist(
+      `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:4.0,
+0.m4s
+#EXT-X-PART:DURATION=1.0,URI="1.0.m4s"
+#EXT-X-PART:DURATION=1.0,URI="1.1.m4s"
+`,
+      shell
+    );
+
+    expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(true);
+    // Parts are not segments — only the complete one is parsed.
+    expect(track.segments).toHaveLength(1);
+  });
+});
+
 describe('parseMediaPlaylist (encryption detection)', () => {
   const withKey = (keyLines: string) => `#EXTM3U
 #EXT-X-TARGETDURATION:4

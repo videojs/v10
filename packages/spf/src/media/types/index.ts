@@ -464,6 +464,18 @@ export interface MediaPlaylistMetadata {
    * playhead ahead of the last complete segment. Add it with LL-HLS support.
    */
   holdBack?: number;
+  /**
+   * Whether the server is delivering this rendition as Low-Latency HLS — any of
+   * `#EXT-X-PART`, `#EXT-X-PART-INF`, or `EXT-X-SERVER-CONTROL`'s
+   * `PART-HOLD-BACK`.
+   *
+   * Detection only, and deliberately so: partial segments are ignored by the
+   * parser and the loader fetches whole segments, so an LL-HLS playlist plays as
+   * standard live at standard latency. Recording the fact is what lets a
+   * composition *say* that rather than silently under-delivering the latency the
+   * publisher configured.
+   */
+  lowLatency?: boolean;
 }
 
 /** Key under `Ham.metadata` where {@link MediaPlaylistMetadata} is stored. */

@@ -1,38 +1,17 @@
 /**
- * Baseline viewer-facing copy for the conditions this engine reports.
+ * Developer-facing copy for what this engine reports.
  *
- * All of it in one place, composed at two different points because that's where
- * the facts are. A **cause** is composed by the reporter, which has the
- * rendition in hand and can therefore name the actual container. A **verdict**
- * is composed at the adapter, which knows only that a type's candidates emptied
- * — so it either reuses a cause's copy (where they agree) or says the generic
- * thing, because nothing more specific is available to it.
+ * Everything here reaches a **console**, never a viewer. Viewer-facing copy for
+ * a fatal condition is the presentation layer's to compose: the engine reports a
+ * code, and a consumer maps that code to localized text it owns. An engine that
+ * ships English sentences can't be localized and decides presentation from below
+ * the presentation layer, so it doesn't.
  *
- * Two rules the previous copy broke:
- *
- * - **Name the player, not the browser.** The browser can play both things this
- *   engine refuses — Safari plays MPEG-TS natively, and EME plays DRM. "This
- *   browser can't play it" was false, and it sent a viewer off to try a
- *   different browser that would behave identically.
- * - **Say what specifically isn't supported.** A verdict only reports that
- *   nothing was selectable. Where the causes agree, they can name the container
- *   or the protection, which is the difference between copy a viewer can act on
- *   and copy that only says "no".
- *
- * Baseline, not final: this is unlocalized English shipped from inside the
- * engine. Replacing it with an extensible code lookup above the engine — which
- * fixes localization and this layering at once — is a tracked follow-up in
- * `internal/design/spf/features/errors.md`.
+ * That leaves two audiences and two registers. A developer needs to know *what
+ * specifically* the engine refused and *which* engine refused it — enough to
+ * pick a differently-equipped Media. A viewer needs a sentence in their own
+ * language, which they get from the i18n key the code maps to.
  */
-import {
-  SVTA_NO_SUPPORTED_AUDIO_TRACK,
-  SVTA_NO_SUPPORTED_VIDEO_TRACK,
-  SVTA_UNSUPPORTED_AUDIO_FORMAT,
-  SVTA_UNSUPPORTED_DRM_SYSTEM,
-  SVTA_UNSUPPORTED_VIDEO_FORMAT,
-} from '../../media/errors';
-import { MPEG_TS_MIME, RAW_AAC_MIME } from '../../media/hls/parse-media-playlist';
-import type { TrackType } from '../../media/types';
 
 /**
  * Subject used when the composition hasn't said what it's called. Phrased to
@@ -44,67 +23,38 @@ import type { TrackType } from '../../media/types';
  */
 export const DEFAULT_PLAYER_SOFTWARE_NAME = 'This player';
 
-/** Viewer-facing noun per track type, as it reads mid-sentence. */
-const TRACK_NOUNS: Readonly<Record<TrackType, string>> = {
-  video: 'video',
-  audio: 'audio',
-  text: 'subtitles',
-};
+/**
+ * The single sentence the engine says about a fatal
+ * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE`.
+ *
+ * Logged, never surfaced: the viewer gets the localized copy that consumers map
+ * the code to, and this is the developer's half of the same event. Which is why
+ * one string is enough — the specifics (which container, which rendition,
+ * whether it was DRM) stay structured on the reported conditions and get logged
+ * alongside it, where they're inspectable instead of flattened into prose.
+ */
+export const unsupportedPlaybackFeature = (playerSoftwareName: string) =>
+  `${playerSoftwareName} can’t play this source: it needs a playback feature this engine doesn’t implement.`;
 
 /**
- * Viewer-facing names for the containers `canPlayTrack` refuses, keyed by the
- * MIME the parser assigns.
- *
- * Deliberately not derived from the MIME string: `video/mp2t` reads as "MPEG-TS"
- * to a person, and `audio/aac` here means specifically *raw ADTS* AAC — AAC in
- * fMP4 plays fine, so calling it plain "AAC" would tell a viewer their audio
- * codec is unsupported when it isn't.
+ * Copy for conditions that don't stop playback but do mean the viewer is getting
+ * something other than what the publisher configured. Developer-facing in
+ * practice — they reach the console, not the error dialog, because nothing here
+ * is a failure the viewer can act on.
  */
-const CONTAINER_LABELS: Readonly<Record<string, string>> = {
-  [MPEG_TS_MIME]: 'MPEG-TS',
-  [RAW_AAC_MIME]: 'raw AAC',
-};
-
-/**
- * Copy for a per-rendition cause.
- *
- * `mimeType` is what buys the specificity: the format codes cover every non-fMP4
- * container, not just MPEG-TS, so the container is named only when it's
- * recognized and drops to the generic phrasing otherwise. A caller with no MIME
- * in hand — the adapter, reconstructing copy for a cause the reporter left bare
- * — gets that generic form, which is correct rather than merely degraded.
- *
- * Returns `undefined` for codes with no viewer-facing copy, so a caller can tell
- * "nothing to say here" from "say this".
- */
-export function causeMessage(
-  code: number,
-  track: { type: TrackType; mimeType?: string },
-  playerSoftwareName: string = DEFAULT_PLAYER_SOFTWARE_NAME
-): string | undefined {
-  const noun = TRACK_NOUNS[track.type];
-
-  if (code === SVTA_UNSUPPORTED_VIDEO_FORMAT || code === SVTA_UNSUPPORTED_AUDIO_FORMAT) {
-    const container = track.mimeType === undefined ? undefined : CONTAINER_LABELS[track.mimeType];
-    return container
-      ? `${playerSoftwareName} can’t play ${container} ${noun}.`
-      : `${playerSoftwareName} can’t play this ${noun}’s format.`;
-  }
-
-  if (code === SVTA_UNSUPPORTED_DRM_SYSTEM) {
-    return `${playerSoftwareName} can’t play DRM-protected ${noun}.`;
-  }
-
-  return undefined;
-}
-
-/**
- * Copy for a verdict on its own — no causes, or causes that don't agree. Stays
- * generic because that's the honest ceiling: a type whose renditions were
- * refused for *different* reasons has no single explanation, and naming either
- * would describe the source wrongly.
- */
-export const VERDICT_MESSAGES: Readonly<Record<number, (playerSoftwareName: string) => string>> = {
-  [SVTA_NO_SUPPORTED_VIDEO_TRACK]: (name) => `${name} can’t play this video’s format.`,
-  [SVTA_NO_SUPPORTED_AUDIO_TRACK]: (name) => `${name} can’t play this audio’s format.`,
-};
+export const NOTICE_MESSAGES = {
+  /**
+   * LL-HLS delivery, played as standard live. The parser ignores partial segments
+   * and the loader fetches whole ones, so latency lands wherever `HOLD-BACK` puts
+   * it — the stream plays, just not at the latency it was published for.
+   */
+  lowLatencyUnsupported: (playerSoftwareName: string) =>
+    `${playerSoftwareName} doesn’t support Low-Latency HLS. This stream will play as standard live, at higher latency.`,
+  /**
+   * `#EXT-X-PLAYLIST-TYPE:EVENT` — a growing window, which is how DVR is
+   * delivered. It plays, but the seekable-range and live-edge handling for it is
+   * newer and less exercised than sliding-window live.
+   */
+  dvrExperimental: (playerSoftwareName: string) =>
+    `${playerSoftwareName}'s DVR support for EVENT playlists is experimental.`,
+} as const;

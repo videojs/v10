@@ -1,8 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
-import { SVTA_NO_SUPPORTED_AUDIO_TRACK, type SvtaError } from '../../../media/errors';
-import { DEFAULT_PLAYER_SOFTWARE_NAME } from '../../primitives/error-messages';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
+  type SvtaError,
+} from '../../../media/errors';
+import { DEFAULT_PLAYER_SOFTWARE_NAME, unsupportedPlaybackFeature } from '../../primitives/error-messages';
 import {
   createHlsAudioOnlyEngine,
   type SimpleHlsAudioOnlyEngineConfig,
@@ -10,7 +14,7 @@ import {
   type SimpleHlsAudioOnlyEngineSignals,
   type SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
-import { firstFatal, resolveFatalMessage, type SimpleHlsMediaError } from './error-surface';
+import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
 
 export interface SimpleHlsAudioOnlyMediaProps {
   src: string;
@@ -80,6 +84,8 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsAudioOnlyMediaDefaultProps.preload;
     #disableRemotePlayback: boolean = simpleHlsAudioOnlyMediaDefaultProps.disableRemotePlayback;
     #error: SimpleHlsMediaError | null = null;
+    /** Reported condition currently surfaced — see the video adapter's note. */
+    #reportedCode: number | null = null;
     #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -116,15 +122,25 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
         // Cleared (new source). No event: `'error'` announces a failure, and
         // consumers reset their own copy on source change.
         this.#error = null;
+        this.#reportedCode = null;
         return;
       }
       // Keyed on the code, not the object: a later append re-runs this effect
       // with an equal-but-new array, and re-firing `'error'` for a condition
       // already surfaced would look like a second failure.
-      if (this.#error?.code === reported.code) return;
+      if (this.#reportedCode === reported.code) return;
+      this.#reportedCode = reported.code;
+
+      // See the video adapter: a cause this engine can't implement is what the
+      // consumer needs, so it replaces the verdict's code on the surface.
+      const unsupported = hasUnsupportedFeatureCause(errors);
+      if (unsupported) {
+        console.error(unsupportedPlaybackFeature(this.#playerSoftwareName()), { conditions: errors });
+      }
+
       this.#error = {
-        code: reported.code,
-        message: reported.message ?? resolveFatalMessage(reported, errors, this.#playerSoftwareName()),
+        code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
+        message: reported.message ?? '',
         ...(reported.data === undefined ? {} : { data: reported.data }),
       };
       this.dispatchEvent?.(new Event('error'));
