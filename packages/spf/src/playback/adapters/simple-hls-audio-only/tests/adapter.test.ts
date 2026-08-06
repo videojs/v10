@@ -15,7 +15,7 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
 } from '../../../../media/errors';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
-import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter-audio-only';
+import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter';
 
 describe('SimpleHlsAudioOnlyMediaElement', () => {
   beforeEach(() => {

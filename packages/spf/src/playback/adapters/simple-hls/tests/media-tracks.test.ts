@@ -1,7 +1,8 @@
-import { effect, signal } from '@videojs/spf';
+import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
+import { MediaTracksMixin } from '@videojs/media/media-tracks';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { MediaTracksMixin } from '../../../core/media-tracks';
-import { HTMLVideoElementHost } from '../../video-host';
+import { effect } from '../../../../core/signals/effect';
+import { signal } from '../../../../core/signals/primitives';
 import { SimpleHlsMediaMediaTracksMixin } from '../media-tracks';
 
 // The projection only touches these five engine-state signals; a fake engine

@@ -10,6 +10,7 @@
  * See `internal/design/spf/features/errors.md` for the causes-vs-verdicts split
  * this rests on.
  */
+import type { ErrorLike } from '@videojs/media';
 import {
   SVTA_UNSUPPORTED_AUDIO_FORMAT,
   SVTA_UNSUPPORTED_DRM_SYSTEM,
@@ -18,20 +19,15 @@ import {
 } from '../../../media/errors';
 
 /**
- * The error shape a media surface exposes — structurally compatible with
- * `@videojs/media`'s `ErrorLike` (`{ code, message }`) without importing it.
- * The dependency can't go that way: `@videojs/media` already depends on this
- * package. (That inversion is itself a known follow-up; structural
- * compatibility is the same approach `SimpleHlsMediaStreamType` takes.)
+ * The error shape a media surface exposes: `@videojs/media`'s {@link ErrorLike}
+ * plus the reporter context the engine carries alongside a condition.
  *
  * `code` is the **SVTA code**, not a `MediaError.MEDIA_ERR_*` value. Consumers
  * that map codes to copy currently only know 1–5, so an SVTA code falls through
  * to showing `message`; an extensible code lookup above the engine is the
  * follow-up that fixes it.
  */
-export interface SimpleHlsMediaError {
-  readonly code: number;
-  readonly message: string;
+export interface SimpleHlsMediaError extends ErrorLike {
   /** Reporter context (which selection emptied, which track, …). */
   readonly data?: unknown;
 }

@@ -1,5 +1,5 @@
-import { SimpleHlsAudioOnlyMediaMixin } from '@videojs/spf/hls';
-import { HTMLAudioElementHost } from '../audio-host';
+import { HTMLAudioElementHost } from '@videojs/media/dom/audio-host';
+import { SimpleHlsAudioOnlyMediaMixin } from './adapter';
 
 const SimpleHlsAudioOnlyMediaBase = SimpleHlsAudioOnlyMediaMixin(HTMLAudioElementHost);
 

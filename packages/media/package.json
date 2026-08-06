@@ -31,6 +31,11 @@
       "types": "./dist/dev/dom/*/index.d.ts",
       "development": "./dist/dev/dom/*/index.js",
       "default": "./dist/default/dom/*/index.js"
+    },
+    "./media-tracks": {
+      "types": "./dist/dev/media-tracks.d.ts",
+      "development": "./dist/dev/media-tracks.js",
+      "default": "./dist/default/media-tracks.js"
     }
   },
   "main": "dist/default/index.js",
@@ -48,7 +53,6 @@
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
-    "@videojs/spf": "workspace:*",
     "@videojs/utils": "workspace:*",
     "@vimeo/player": "^2.30.3",
     "dashjs": "^5.2.0",

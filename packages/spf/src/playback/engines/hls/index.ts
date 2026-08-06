@@ -15,19 +15,10 @@ export {
   derivePerTypeStartMediaTime,
   deriveSharedMinStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
-export type {
-  SimpleHlsMediaAPI,
-  SimpleHlsMediaError,
-  SimpleHlsMediaProps,
-  SimpleHlsMediaStreamType,
-} from './adapter';
-export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
-export type { SimpleHlsAudioOnlyMediaAPI, SimpleHlsAudioOnlyMediaProps } from './adapter-audio-only';
-export {
-  SimpleHlsAudioOnlyMediaElement,
-  SimpleHlsAudioOnlyMediaMixin,
-  simpleHlsAudioOnlyMediaDefaultProps,
-} from './adapter-audio-only';
+// The Medias over these engines are not here: they live behind
+// `@videojs/spf/simple-hls` and `@videojs/spf/simple-hls-audio-only` so that
+// driving an engine directly doesn't pull a Media (and `@videojs/media`) in with
+// it — and so this entry stays the engine's own size budget.
 export type {
   SimpleHlsEngineConfig,
   SimpleHlsEngineContext,

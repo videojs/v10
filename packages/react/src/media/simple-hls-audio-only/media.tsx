@@ -1,8 +1,7 @@
 'use client';
 
-import { SimpleHlsAudioOnlyMedia } from '@videojs/media/dom/simple-hls-audio-only';
-import type { SimpleHlsAudioOnlyMediaProps } from '@videojs/spf/hls';
-import { simpleHlsAudioOnlyMediaDefaultProps } from '@videojs/spf/hls';
+import type { SimpleHlsAudioOnlyMediaProps } from '@videojs/spf/simple-hls-audio-only';
+import { SimpleHlsAudioOnlyMedia, simpleHlsAudioOnlyMediaDefaultProps } from '@videojs/spf/simple-hls-audio-only';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
