@@ -1,7 +1,7 @@
-/** @jsxImportSource ../../.. */
+/** @jsxImportSource @videojs/jsx */
 
+import { Slot } from '@videojs/jsx';
 import { describe, it } from 'vitest';
-import { Slot } from '../../../jsx-runtime';
 import {
   Controls,
   FullscreenButton,

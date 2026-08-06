@@ -6,10 +6,7 @@ import ts from 'typescript';
 
 const DEFAULT_CANONICAL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '../canonical');
 
-export const CANONICAL_PACKAGE_IMPORTS: ReadonlySet<string> = new Set([
-  '@videojs/core/components',
-  '@videojs/core/jsx-runtime',
-]);
+export const CANONICAL_PACKAGE_IMPORTS: ReadonlySet<string> = new Set(['@videojs/core/components', '@videojs/jsx']);
 
 export interface CanonicalImportViolation {
   file: string;

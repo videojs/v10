@@ -54,11 +54,11 @@ describe('generateComponents', () => {
   it('uses an explicit runtime import when configured', async () => {
     const { dir, output, pattern } = setup();
     const result = await generateComponents(
-      { components: [pattern], output, runtimeImport: '../../jsx-runtime' },
+      { components: [pattern], output, runtimeImport: '@videojs/jsx' },
       { cwd: dir }
     );
 
-    expect(result.source).toContain("import { createComponent } from '../../jsx-runtime';");
+    expect(result.source).toContain("import { createComponent } from '@videojs/jsx';");
   });
 
   it('fails check mode when generated output is stale', async () => {

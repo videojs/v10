@@ -26,6 +26,7 @@ export default {
         'html',
         'i18n',
         'icons',
+        'jsx',
         'media',
         'packages',
         'plan',

@@ -29,7 +29,7 @@ describe('checkCanonicalImports', () => {
     const root = setup({
       'components/control.tsx': `
         import { Controls } from '@videojs/core/components';
-        import type { ComponentNode } from '@videojs/core/jsx-runtime';
+        import type { ComponentNode } from '@videojs/jsx';
         export { helper } from './helper';
         export const value: ComponentNode | typeof Controls = Controls;
       `,

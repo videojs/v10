@@ -2,17 +2,14 @@ import {
   type ComponentDefinition,
   type ComponentManifest,
   type ComponentRecord,
+  type EmptyProps,
   hasParts,
   type InferProps,
-} from './core/ui/manifest';
+} from './manifest';
+
+export type { EmptyProps } from './manifest';
 
 export const VIDEOJS_NODE = Symbol.for('@videojs/node');
-
-declare const EMPTY_PROPS_SYMBOL: unique symbol;
-
-export type EmptyProps = {
-  readonly [EMPTY_PROPS_SYMBOL]?: never;
-};
 
 export type ComponentType = Component<never> | typeof Fragment;
 
@@ -64,7 +61,7 @@ export type CreateComponentResult<M> =
 
 function createRuntimeComponentPart<Props extends object>(name: string, part: string | null): Component<Props> {
   const component = (_props: BaseProps & Props): ComponentNode => {
-    throw new Error(`@videojs/core: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
+    throw new Error(`@videojs/jsx: <${name}${part ? `.${part}` : ''}> can only be evaluated by the compiler.`);
   };
 
   Object.assign(component, { $$component: { name, part } });

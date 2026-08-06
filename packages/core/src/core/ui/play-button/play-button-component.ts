@@ -1,4 +1,4 @@
-import { defineComponent } from '../manifest';
+import { defineComponent } from '@videojs/jsx';
 import type { PlayButtonProps } from './play-button-core';
 import { PlayButtonDataAttrs } from './play-button-data-attrs';
 

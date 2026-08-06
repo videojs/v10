@@ -1,9 +1,9 @@
 {
-  "extends": "../../../../../../tsconfig.base.json",
+  "extends": "../../../../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "jsxImportSource": "@videojs/jsx",
-    "lib": ["ES2022", "WebWorker"],
+    "jsxImportSource": "..",
+    "lib": ["ES2022"],
     "noEmit": true,
     "isolatedDeclarations": false,
     "composite": false,

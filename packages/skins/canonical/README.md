@@ -4,7 +4,7 @@ This directory contains target-neutral, authored source for source-owned Video.j
 
 Canonical source:
 
-- Uses constrained JSX from `@videojs/core`.
+- Uses constrained JSX from `@videojs/jsx`.
 - Imports Video.js primitives only through stable package exports.
 - Keeps independently installable components in role-based directories.
 - Contains semantic structure without React- or HTML-specific markup.
