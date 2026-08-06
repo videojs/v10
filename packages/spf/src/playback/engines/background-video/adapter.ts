@@ -72,19 +72,6 @@ export interface BackgroundVideoMediaAPI extends BackgroundVideoMediaProps {
  */
 export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class BackgroundVideoMediaImpl extends BaseClass {
-    /**
-     * What this adapter calls itself, mirroring the SPF HLS adapters so every
-     * engine can be named by whatever needs to name it.
-     *
-     * Nothing consumes it here yet: this engine composes no condition reporter
-     * and the adapter exposes no `error`, so there's no copy to be the subject
-     * of. It's declared for parity, and becomes load-bearing if this engine ever
-     * reports conditions.
-     */
-    static get playerSoftwareName(): string {
-      return 'background-video';
-    }
-
     #engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
     #config: BackgroundVideoEngineConfig;
     #signals!: BackgroundVideoEngineSignals;
@@ -282,9 +269,7 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return BackgroundVideoMediaImpl as unknown as MixinReturn<Base, BackgroundVideoMediaAPI> & {
-    readonly playerSoftwareName: string;
-  };
+  return BackgroundVideoMediaImpl as unknown as MixinReturn<Base, BackgroundVideoMediaAPI> & {};
 }
 
 /** Standalone SPF background-video adapter with no base class. */

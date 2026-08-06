@@ -14,6 +14,7 @@ import {
   SVTA_UNSUPPORTED_DRM_SYSTEM,
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
 } from '../../../../media/errors';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
 import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter-audio-only';
 
 describe('SimpleHlsAudioOnlyMediaElement', () => {
@@ -378,10 +379,8 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       media.destroy();
     });
 
-    it('logs the refusal, naming itself', async () => {
+    it('logs the refusal', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      expect(SimpleHlsAudioOnlyMediaElement.playerSoftwareName).toBe('simple-hls-audio-only');
-
       const media = new TestMedia();
       media.engine.state.errors.set([
         { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
@@ -391,9 +390,8 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
 
       const logged = spy.mock.calls
         .map((call) => String(call[0]))
-        .filter((text) => /can’t play this source/.test(text));
+        .filter((text) => text.startsWith(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE));
       expect(logged).toHaveLength(1);
-      expect(logged[0]).toMatch(/^simple-hls-audio-only /);
       vi.restoreAllMocks();
       media.destroy();
     });
