@@ -6,6 +6,7 @@
 // License: MIT
 
 import { loadScript } from '@videojs/utils/dom';
+import { deepEqual } from '@videojs/utils/object';
 import { isNumber, isUndefined } from '@videojs/utils/predicate';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 import { MediaError } from '../../core/media-error';
@@ -13,15 +14,24 @@ import type { MediaPreloadType, TextTrackListLike, Video } from '../../core/type
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 /**
- * Public YouTube embed configuration. Serialized onto the iframe URL as
- * player parameters (https://developers.google.com/youtube/player_parameters).
+ * YouTube engine options. Player parameters are YouTube's engine configuration,
+ * so they are serialized verbatim onto the embed URL
+ * (https://developers.google.com/youtube/player_parameters).
  */
-export interface YouTubeConfig extends Record<string, unknown> {
+export interface YouTubeEngineConfig extends Record<string, unknown> {
   referrerPolicy?: ReferrerPolicy;
 }
 
-/** Parsed pieces of a YouTube source URL. */
+/** Structured YouTube source: which source to play, plus how to play it. */
 export interface YouTubeSource {
+  /** YouTube URL or id. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** YouTube's own player parameters, passed through untouched. */
+  engine?: YouTubeEngineConfig | undefined;
+}
+
+/** Parsed pieces of a YouTube source URL. */
+export interface ParsedYouTubeSource {
   /** 11-character video id (null for playlist-only sources). */
   id: string | null;
   /** `'video'` for single videos, `'playlist'` for playlist sources. */
@@ -44,7 +54,7 @@ export interface YouTubeMediaProps {
   playsInline: boolean;
   preload: MediaPreloadType;
   poster: string;
-  config: YouTubeConfig;
+  source: YouTubeSource | null;
 }
 
 export const youtubeMediaDefaultProps: YouTubeMediaProps = {
@@ -57,7 +67,7 @@ export const youtubeMediaDefaultProps: YouTubeMediaProps = {
   playsInline: true,
   preload: 'metadata',
   poster: '',
-  config: {},
+  source: null,
 };
 
 /**
@@ -126,7 +136,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   #playsInline = youtubeMediaDefaultProps.playsInline;
   #preload = youtubeMediaDefaultProps.preload;
   #poster = youtubeMediaDefaultProps.poster;
-  #config = youtubeMediaDefaultProps.config;
+  #source: YouTubeSource | null = youtubeMediaDefaultProps.source;
 
   #paused = true;
   #ended = false;
@@ -166,7 +176,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       const initialSrc = buildYouTubeIframeSrc(this.#src, this.#snapshotProps());
       if (initialSrc) target.src = initialSrc;
     }
-    this.#loadComplete = createPublicPromise<void>();
+    this.#beginLoad();
     this.dispatchEvent(new Event('loadstart'));
     void this.#createPlayer(target);
   }
@@ -198,10 +208,14 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   get src() {
     return this.#src;
   }
+  /** YouTube URL or id. Setting it re-derives `source`, carrying its player parameters over. */
   set src(value) {
-    if (this.#src === value) return;
-    this.#src = value;
-    void this.load();
+    const { engine } = this.#source ?? {};
+    const next: YouTubeSource = { ...(engine && { engine }), ...(value && { src: value }) };
+
+    // Everything happens in the `source` setter, so there is one path for storing
+    // it, deciding on a load, and dispatching `sourcechange`.
+    this.source = Object.keys(next).length > 0 ? next : null;
   }
 
   get currentSrc() {
@@ -221,7 +235,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       return;
     }
     this.#resetState();
-    this.#loadComplete = createPublicPromise<void>();
+    const load = this.#beginLoad();
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseYouTubeSource(this.#src);
@@ -229,7 +243,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       this.#error = new MediaError(`Unrecognized YouTube source: ${this.#src}`, MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
       this.dispatchEvent(new Event('error'));
       // Unblock callers awaiting load so play()/fullscreen don't hang.
-      this.#loadComplete.resolve();
+      load.resolve();
       return;
     }
     if (parsed.kind === 'playlist' && parsed.listId) {
@@ -242,6 +256,17 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       if (this.#autoplay) this.#player.loadVideoById(options);
       else this.#player.cueVideoById(options);
     }
+  }
+
+  /**
+   * Take over as the current load, returning its barrier. Settling the outgoing
+   * one is what keeps a superseded load from stranding callers that are already
+   * waiting; every exit from `load()` settles the barrier it was handed.
+   */
+  #beginLoad(): PublicPromise<void> {
+    this.#loadComplete.resolve();
+    this.#loadComplete = createPublicPromise<void>();
+    return this.#loadComplete;
   }
 
   get paused() {
@@ -356,11 +381,33 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     this.#poster = value;
   }
 
-  get config() {
-    return this.#config as Record<string, unknown>;
+  /**
+   * Structured source: the YouTube URL or ID in `src`, plus player parameters
+   * under `engine`. Replacing it re-derives `src`; assigning an equivalent source
+   * is a no-op.
+   */
+  get source(): YouTubeSource | null {
+    return this.#source;
   }
-  set config(value) {
-    this.#config = value as YouTubeConfig;
+  set source(value: YouTubeSource | null) {
+    const source = value ?? null;
+    // Changing anything takes a new object, so handing the same one back costs
+    // nothing.
+    if (source === this.#source) return;
+
+    const src = source?.src ?? '';
+    const srcChanged = this.#src !== src;
+    // Player parameters are read when the embed is built, so a change to them
+    // needs a reload of its own even though the URL is the same.
+    const engineChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
+
+    this.#source = source;
+    this.#src = src;
+
+    if (srcChanged || engineChanged) void this.load();
+
+    // Assigning is always a source change, so it is always announced.
+    this.dispatchEvent(new Event('sourcechange'));
   }
 
   get buffered() {
@@ -388,7 +435,10 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   // The iframe API exposes no fullscreen controls, so fullscreen targets the iframe itself.
   async requestFullscreen() {
-    await this.#target?.requestFullscreen?.();
+    // Nothing entered fullscreen if there is no element to request it on, so the
+    // flag must not claim otherwise.
+    if (!this.#target?.requestFullscreen) return;
+    await this.#target.requestFullscreen();
     this.#isFullscreen = true;
   }
 
@@ -406,22 +456,41 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     try {
       api = await loadYouTubeApi();
     } catch {
+      // A failed API load belongs to the attach that started it; a newer one must
+      // not be marked failed or have its load unblocked.
+      if (this.#isStale(attachId)) return;
       this.#error = new MediaError('Failed to load the YouTube iframe API', MediaError.MEDIA_ERR_NETWORK);
       this.dispatchEvent(new Event('error'));
       // Unblock callers awaiting load so play()/fullscreen don't hang.
       this.#loadComplete.resolve();
       return;
     }
-    if (attachId !== this.#attachId || this.#target !== target) return;
+    if (this.#isStale(attachId) || this.#target !== target) return;
     const player = new api.Player(target, {
       events: {
-        onReady: () => this.#onPlayerReady(),
-        onError: (event) => this.#onError(event.data),
+        onReady: () => {
+          if (this.#isStale(attachId)) return;
+          this.#onPlayerReady();
+        },
+        onError: (event) => {
+          if (this.#isStale(attachId)) return;
+          this.#onError(event.data);
+        },
       },
     });
     this.#player = player;
-    this.#bindPlayerEvents(player);
+    this.#bindPlayerEvents(player, attachId);
     this.#setupTextTracks(player);
+  }
+
+  /**
+   * Whether a callback belongs to a superseded attach. `destroy()` does not stop
+   * the iframe API from invoking callbacks it already scheduled, so anything a
+   * player reports has to be matched against the attach that created it before
+   * it is allowed to touch state.
+   */
+  #isStale(attachId: number) {
+    return attachId !== this.#attachId;
   }
 
   /** Defer a player call until `loadComplete` resolves, swallowing failures. */
@@ -447,7 +516,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       controls: this.#controls,
       playsInline: this.#playsInline,
       preload: this.#preload || youtubeMediaDefaultProps.preload,
-      config: this.#config,
+      source: this.#source,
     };
   }
 
@@ -511,10 +580,11 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     this.#loadComplete.resolve();
   }
 
-  #bindPlayerEvents(player: YouTubePlayerApi) {
+  #bindPlayerEvents(player: YouTubePlayerApi, attachId: number) {
     const emit = (type: string) => this.dispatchEvent(new Event(type));
 
     player.addEventListener('onStateChange', ({ data: state }) => {
+      if (this.#isStale(attachId)) return;
       // Subsequent loads (`cueVideoById`/`loadVideoById`) never re-fire
       // `onReady`, so any post-load state transition completes the load.
       if (!this.#loaded && state !== STATE_UNSTARTED) this.#onLoaded();
@@ -559,11 +629,13 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     });
 
     player.addEventListener('onPlaybackRateChange', () => {
+      if (this.#isStale(attachId)) return;
       this.#playbackRate = player.getPlaybackRate();
       emit('ratechange');
     });
 
     player.addEventListener('onVolumeChange', () => {
+      if (this.#isStale(attachId)) return;
       this.#volume = player.getVolume() / 100;
       this.#muted = player.isMuted();
       emit('volumechange');
@@ -674,7 +746,7 @@ export function parseYouTubeVideoId(src: string) {
  * without the `-nocookie` host), playlist URLs via the `list` parameter, and
  * start times via the `t` parameter.
  */
-export function parseYouTubeSource(src: string): YouTubeSource | null {
+export function parseYouTubeSource(src: string): ParsedYouTubeSource | null {
   if (!src) return null;
   if (/^[\w-]{11}$/.test(src)) {
     return { id: src, kind: 'video', listId: null, startTime: null, noCookie: false };
@@ -716,7 +788,7 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
     modestbranding: 1,
     start: parsed.startTime,
     // YouTube-specific knobs (`cc_load_policy`, `hl`, `color`, …) flow through here.
-    ...(props.config ?? undefined),
+    ...(props.source?.engine ?? undefined),
   };
   if (parsed.kind === 'playlist' && parsed.listId) {
     return `${embedBase}?${serialize({ listType: 'playlist', list: parsed.listId, ...params })}`;

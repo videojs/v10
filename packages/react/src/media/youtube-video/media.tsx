@@ -22,7 +22,8 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
   const attachRef = useAttachIframe(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const [initialSrc] = useState(() =>
-    buildYouTubeIframeSrc(props.src ?? '', { ...youtubeMediaDefaultProps, ...props })
+    // `source.src` is the only other way to name a video, so honor it when `src` is absent.
+    buildYouTubeIframeSrc(props.src || props.source?.src || '', { ...youtubeMediaDefaultProps, ...props })
   );
   const iframeProps = useSyncProps<YouTubeMediaProps, Record<string, unknown>>(media, props, youtubeMediaDefaultProps);
 
@@ -36,7 +37,7 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
       frameBorder={0}
       width="100%"
       height="100%"
-      referrerPolicy={props.config?.referrerPolicy}
+      referrerPolicy={props.source?.engine?.referrerPolicy}
       {...iframeProps}
       ref={composedRef}
     >

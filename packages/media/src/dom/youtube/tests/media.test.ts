@@ -213,8 +213,8 @@ describe('buildYouTubeIframeSrc', () => {
     expect(src).not.toContain('controls=0');
   });
 
-  it('forwards preload and YouTube-specific config knobs', () => {
-    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', { preload: 'auto', config: { cc_load_policy: 1 } });
+  it('forwards preload and YouTube-specific engine knobs', () => {
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', { preload: 'auto', source: { engine: { cc_load_policy: 1 } } });
     expect(src).toContain('preload=auto');
     expect(src).toContain('cc_load_policy=1');
   });
@@ -533,5 +533,111 @@ describe('YouTubeMedia', () => {
     await Promise.resolve();
 
     expect(media.engine).toBe(null);
+  });
+
+  it('ignores ready and state callbacks from a superseded player', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+    const { player: stale } = await attachAndLoad(media);
+
+    media.detach();
+    const { player: current } = await attachAndLoad(media);
+    expect(current).not.toBe(stale);
+
+    const playSpy = vi.fn();
+    media.addEventListener('play', playSpy);
+
+    // The iframe API keeps invoking callbacks it already scheduled for the
+    // destroyed player; none of them may touch the new session's state.
+    stale.ready();
+    stale.emit('onStateChange', STATE.PLAYING);
+    stale.getVolume.mockReturnValue(10);
+    stale.emit('onVolumeChange');
+
+    expect(playSpy).not.toHaveBeenCalled();
+    expect(media.paused).toBe(true);
+    expect(media.volume).toBe(1);
+    media.detach();
+  });
+
+  it('unblocks waiters from a superseded load when a reload starts first', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+    const { player } = await attachAndLoad(media);
+
+    // Start a second load and wait on its barrier without ever completing it.
+    media.src = 'https://youtu.be/dQw4w9WgXcQ';
+    const pending = media.play();
+
+    // A third load takes over; the waiter above must not be stranded on the
+    // barrier it already captured.
+    media.src = 'https://youtu.be/9bZkp7q19f0';
+
+    await expect(pending).resolves.toBeUndefined();
+    expect(player.cueVideoById).toHaveBeenLastCalledWith({ videoId: '9bZkp7q19f0' });
+    media.detach();
+  });
+
+  it('does not report fullscreen when there is no element to request it on', async () => {
+    const media = new YouTubeMedia();
+
+    await media.requestFullscreen();
+
+    expect(media.isFullscreen).toBe(false);
+  });
+});
+
+describe('YouTubeMedia source', () => {
+  it('derives src from a structured source and announces the change', async () => {
+    const media = new YouTubeMedia();
+    const sourceChange = vi.fn();
+    media.addEventListener('sourcechange', sourceChange);
+
+    media.source = { src: 'https://www.youtube.com/watch?v=aqz-KE-bpKQ' };
+
+    expect(media.src).toBe('https://www.youtube.com/watch?v=aqz-KE-bpKQ');
+    expect(sourceChange).toHaveBeenCalledTimes(1);
+  });
+
+  it('re-derives source from src, carrying engine options over', () => {
+    const media = new YouTubeMedia();
+    media.source = { src: 'aqz-KE-bpKQ', engine: { cc_load_policy: 1 } };
+
+    media.src = 'dQw4w9WgXcQ';
+
+    expect(media.source).toEqual({ engine: { cc_load_policy: 1 }, src: 'dQw4w9WgXcQ' });
+  });
+
+  it('reloads when only engine options change', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
+    const { player } = await attachAndLoad(media);
+    player.cueVideoById.mockClear();
+
+    media.source = { src: 'aqz-KE-bpKQ', engine: { cc_load_policy: 1 } };
+    await Promise.resolve();
+
+    expect(player.cueVideoById).toHaveBeenCalledWith({ videoId: 'aqz-KE-bpKQ' });
+    media.detach();
+  });
+
+  it('serializes engine options onto the initial iframe src', () => {
+    const media = new YouTubeMedia();
+    media.source = { src: 'aqz-KE-bpKQ', engine: { hl: 'fr' } };
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    expect(iframe.src).toContain('hl=fr');
+    media.detach();
+  });
+
+  it('clears src when the source is set to null', () => {
+    const media = new YouTubeMedia();
+    media.source = { src: 'aqz-KE-bpKQ' };
+
+    media.source = null;
+
+    expect(media.src).toBe('');
+    expect(media.source).toBe(null);
   });
 });
