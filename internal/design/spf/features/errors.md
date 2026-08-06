@@ -346,8 +346,10 @@ limitations*).
     unsupported cause, and the alternative-Media sentence appended when
     the class names one
 - **E2E:**
-  - `apps/e2e/tests/spf-unsupported-source.spec.ts` (Chromium, WebKit,
-    Firefox) — a real MPEG-TS Mux source through the whole chain: 99001
+  - `apps/e2e/tests/spf-unsupported-source.spec.ts` (Chromium and WebKit —
+    the two the CI matrix and `test:all` run; a `vite-firefox` project
+    exists but nothing invokes it) — a real MPEG-TS Mux source through
+    the whole chain: 99001
     surfaces on the element with an empty `message`; 1004 still precedes
     2011 in the engine's own sequence; the dialog opens with the
     `errors.unplayable` translation rather than the generic fallback; a
@@ -525,7 +527,7 @@ Kept for traceability.
   per-source" question. The adapter fires no event on *clear*, which
   raised whether a stale dialog could strand: it doesn't. The inner media
   element's native `emptied` is re-dispatched by the host, so
-  `errorFeature`'s reset path fires (E2E-verified across three browsers).
+  `errorFeature`'s reset path fires (E2E-verified on Chromium and WebKit).
 - **Adapter surface shape** → folded into each adapter rather than a
   `SimpleHlsMediaErrorsMixin` sibling, since the fatal derivation needs the
   same engine signals the adapter already holds. With two adapters wanting
