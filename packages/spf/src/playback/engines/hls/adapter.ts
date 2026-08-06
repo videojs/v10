@@ -18,9 +18,9 @@ import {
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
 import {
-  DEFAULT_PLAYER_SOFTWARE_NAME,
-  NOTICE_MESSAGES,
-  unsupportedPlaybackFeature,
+  DVR_EXPERIMENTAL_MESSAGE,
+  LOW_LATENCY_UNSUPPORTED_MESSAGE,
+  UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE,
 } from '../../primitives/error-messages';
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
@@ -129,19 +129,6 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
  */
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsMediaImpl extends BaseClass {
-    /**
-     * What this adapter calls itself, used as the sentence subject when this
-     * adapter composes error copy — so it names the engine that actually refused
-     * the source rather than an anonymous "player".
-     *
-     * A static so it travels with the class: a subclass can override it and the
-     * copy follows. Only reached for copy composed *here* (a verdict); a cause's
-     * own copy is composed by the reporter, which has no name threaded to it yet.
-     */
-    static get playerSoftwareName(): string {
-      return 'simple-hls-video';
-    }
-
     /**
      * A complete sentence naming the Media to reach for when this one can't play
      * a source — `Import from "/media/mux/hls-js" instead.` Appended to the copy
@@ -323,9 +310,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
         // console: the viewer-facing sentence is the consumer's to localize from
         // the code. Conditions ride along structured so the specifics stay
         // inspectable.
-        console.error(this.#withSuggestion(unsupportedPlaybackFeature(this.#playerSoftwareName())), {
-          conditions: errors,
-        });
+        console.error(this.#withSuggestion(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE), { conditions: errors });
       }
 
       this.#error = {
@@ -451,16 +436,6 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // Private
     // -------------------------------------------------------------------------
 
-    /**
-     * Explicit config wins, then this class's static, then the generic default.
-     * Read through `this.constructor` rather than the closure so a subclass
-     * overriding the static is honoured.
-     */
-    #playerSoftwareName(): string {
-      const own = (this.constructor as { playerSoftwareName?: string }).playerSoftwareName;
-      return this.#config?.playerSoftwareName ?? own ?? DEFAULT_PLAYER_SOFTWARE_NAME;
-    }
-
     /** This class's static, if it set one. */
     #alternativeMediaSuggestion(): string | undefined {
       return (this.constructor as { alternativeMediaSuggestion?: string }).alternativeMediaSuggestion;
@@ -494,23 +469,19 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       const metadata = getMediaPlaylistMetadata(track);
       if (!metadata) return;
 
-      const name = this.#playerSoftwareName();
       if (metadata.lowLatency && !this.#noticed.has('lowLatency')) {
         this.#noticed.add('lowLatency');
-        console.warn(this.#withSuggestion(NOTICE_MESSAGES.lowLatencyUnsupported(name)));
+        console.warn(this.#withSuggestion(LOW_LATENCY_UNSUPPORTED_MESSAGE));
       }
       if (metadata.playlistType === 'EVENT' && !this.#noticed.has('dvr')) {
         this.#noticed.add('dvr');
-        console.warn(this.#withSuggestion(NOTICE_MESSAGES.dvrExperimental(name)));
+        console.warn(this.#withSuggestion(DVR_EXPERIMENTAL_MESSAGE));
       }
     }
 
     #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return createSimpleHlsEngine({
         ...this.#config,
-        // After the spread, so an explicitly-undefined config key can't clobber
-        // it. Reaches `resolve-track`, which composes each cause's copy.
-        playerSoftwareName: this.#playerSoftwareName(),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
@@ -528,7 +499,6 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
   return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI> & {
-    readonly playerSoftwareName: string;
     readonly alternativeMediaSuggestion: string | undefined;
   };
 }

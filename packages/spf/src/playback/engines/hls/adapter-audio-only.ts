@@ -6,7 +6,7 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
   type SvtaError,
 } from '../../../media/errors';
-import { DEFAULT_PLAYER_SOFTWARE_NAME, unsupportedPlaybackFeature } from '../../primitives/error-messages';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
 import {
   createHlsAudioOnlyEngine,
   type SimpleHlsAudioOnlyEngineConfig,
@@ -69,15 +69,6 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  */
 export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
-    /**
-     * What this adapter calls itself, used as the sentence subject when this
-     * adapter composes error copy, so it names the engine that refused the
-     * source. A subclass can override it and the copy follows.
-     */
-    static get playerSoftwareName(): string {
-      return 'simple-hls-audio-only';
-    }
-
     readonly #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
     #config: SimpleHlsAudioOnlyEngineConfig;
     #signals!: SimpleHlsAudioOnlyEngineSignals;
@@ -135,7 +126,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
       // consumer needs, so it replaces the verdict's code on the surface.
       const unsupported = hasUnsupportedFeatureCause(errors);
       if (unsupported) {
-        console.error(unsupportedPlaybackFeature(this.#playerSoftwareName()), { conditions: errors });
+        console.error(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE, { conditions: errors });
       }
 
       this.#error = {
@@ -262,18 +253,9 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     // Private
     // -------------------------------------------------------------------------
 
-    /** Explicit config wins, then this class's static, then the generic default. */
-    #playerSoftwareName(): string {
-      const own = (this.constructor as { playerSoftwareName?: string }).playerSoftwareName;
-      return this.#config?.playerSoftwareName ?? own ?? DEFAULT_PLAYER_SOFTWARE_NAME;
-    }
-
     #createEngine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
       return createHlsAudioOnlyEngine({
         ...this.#config,
-        // After the spread, so an explicitly-undefined config key can't clobber
-        // it. Reaches `resolve-track`, which composes each cause's copy.
-        playerSoftwareName: this.#playerSoftwareName(),
         onSignalsReady: (signals) => {
           this.#signals = signals;
         },
@@ -290,9 +272,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI> & {
-    readonly playerSoftwareName: string;
-  };
+  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI>;
 }
 
 /** Standalone SPF audio-only media adapter with no base class. */

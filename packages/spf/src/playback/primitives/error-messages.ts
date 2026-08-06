@@ -3,58 +3,37 @@
  *
  * Everything here reaches a **console**, never a viewer. Viewer-facing copy for
  * a fatal condition is the presentation layer's to compose: the engine reports a
- * code, and a consumer maps that code to localized text it owns. An engine that
- * ships English sentences can't be localized and decides presentation from below
- * the presentation layer, so it doesn't.
+ * code, and a consumer maps that code to localized text it owns.
  *
- * That leaves two audiences and two registers. A developer needs to know *what
- * specifically* the engine refused and *which* engine refused it — enough to
- * pick a differently-equipped Media. A viewer needs a sentence in their own
- * language, which they get from the i18n key the code maps to.
+ * Plain string constants, one export each. Nothing is parameterized — a message
+ * that names the engine has to be built at the call site from state the engine
+ * carries around solely to say it, which is a lot of plumbing for a console
+ * prefix. Separate exports rather than one object so a composition that logs
+ * neither notice doesn't carry their bytes.
  */
 
 /**
- * Subject used when the composition hasn't said what it's called. Phrased to
- * read as the sentence subject it becomes, so an unconfigured engine still
- * produces a grammatical sentence.
+ * Logged when a fatal `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` is surfaced.
  *
- * Whatever a composition passes instead appears verbatim, so it has to read as
- * prose ("Mux Player"), not as an identifier ("mux-video").
+ * The developer's half of that event; the viewer gets the localized copy the
+ * code maps to. One sentence is enough because the specifics — which container,
+ * which rendition, whether it was DRM — stay structured on the reported
+ * conditions logged beside it.
  */
-export const DEFAULT_PLAYER_SOFTWARE_NAME = 'This player';
+export const UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE =
+  'Can’t play this source: it requires an unsupported playback feature.';
 
 /**
- * The single sentence the engine says about a fatal
- * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE`.
- *
- * Logged, never surfaced: the viewer gets the localized copy that consumers map
- * the code to, and this is the developer's half of the same event. Which is why
- * one string is enough — the specifics (which container, which rendition,
- * whether it was DRM) stay structured on the reported conditions and get logged
- * alongside it, where they're inspectable instead of flattened into prose.
+ * LL-HLS delivery, played as standard live. The parser ignores partial segments
+ * and the loader fetches whole ones, so latency lands wherever `HOLD-BACK` puts
+ * it — the stream plays, just not at the latency it was published for.
  */
-export const unsupportedPlaybackFeature = (playerSoftwareName: string) =>
-  `${playerSoftwareName} can’t play this source: it needs a playback feature this engine doesn’t implement.`;
+export const LOW_LATENCY_UNSUPPORTED_MESSAGE =
+  'Low-Latency HLS is unsupported; playing as standard live at higher latency.';
 
 /**
- * Copy for conditions that don't stop playback but do mean the viewer is getting
- * something other than what the publisher configured. Developer-facing in
- * practice — they reach the console, not the error dialog, because nothing here
- * is a failure the viewer can act on.
+ * `#EXT-X-PLAYLIST-TYPE:EVENT` — a growing window, which is how DVR is
+ * delivered. It plays, but the seekable-range and live-edge handling for it is
+ * newer and less exercised than sliding-window live.
  */
-export const NOTICE_MESSAGES = {
-  /**
-   * LL-HLS delivery, played as standard live. The parser ignores partial segments
-   * and the loader fetches whole ones, so latency lands wherever `HOLD-BACK` puts
-   * it — the stream plays, just not at the latency it was published for.
-   */
-  lowLatencyUnsupported: (playerSoftwareName: string) =>
-    `${playerSoftwareName} doesn’t support Low-Latency HLS. This stream will play as standard live, at higher latency.`,
-  /**
-   * `#EXT-X-PLAYLIST-TYPE:EVENT` — a growing window, which is how DVR is
-   * delivered. It plays, but the seekable-range and live-edge handling for it is
-   * newer and less exercised than sliding-window live.
-   */
-  dvrExperimental: (playerSoftwareName: string) =>
-    `${playerSoftwareName}'s DVR support for EVENT playlists is experimental.`,
-} as const;
+export const DVR_EXPERIMENTAL_MESSAGE = 'DVR support for EVENT playlists is experimental.';

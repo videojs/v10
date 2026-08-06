@@ -232,14 +232,6 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
    * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
    */
   reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
-  /**
-   * Sentence subject for the viewer-facing copy on reported conditions
-   * ("Mux Player can’t play MPEG-TS video."). Spread through to `resolve-track`,
-   * which composes the copy where the rendition is in hand. Defaults to the
-   * adapter's own `playerSoftwareName` static; see
-   * `playback/primitives/error-messages`.
-   */
-  playerSoftwareName?: string;
   preferredAudioLanguage?: string;
   preferredSubtitleLanguage?: string;
   includeForcedTracks?: boolean;

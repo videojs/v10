@@ -25,6 +25,7 @@ import {
   type SvtaError,
 } from '../../../../media/errors';
 import { MEDIA_PLAYLIST_METADATA_KEY, type Presentation } from '../../../../media/types';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
 import { SimpleHlsMediaElement, SimpleHlsMediaMixin } from '../adapter';
 
 describe('SimpleHlsMediaElement', () => {
@@ -856,24 +857,20 @@ describe('SimpleHlsMediaElement', () => {
       vi.restoreAllMocks();
     });
 
+    const MESSAGE = UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE;
+
     const unsupportedSource: SvtaError[] = [
       { code: SVTA_UNSUPPORTED_VIDEO_FORMAT, data: { trackType: 'video', trackId: 'v1', mimeType: 'video/mp2t' } },
       { code: SVTA_NO_SUPPORTED_VIDEO_TRACK },
     ];
 
-    it('logs once, naming the engine that refused the source', async () => {
+    it('logs the message once', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      expect(SimpleHlsMediaElement.playerSoftwareName).toBe('simple-hls-video');
-
       const media = new TestMedia();
       media.engine.state.errors.set(unsupportedSource);
       await flush();
 
-      const logged = spy.mock.calls
-        .map((call) => String(call[0]))
-        .filter((text) => /can’t play this source/.test(text));
-      expect(logged).toHaveLength(1);
-      expect(logged[0]).toMatch(/^simple-hls-video /);
+      expect(spy.mock.calls.map((call) => String(call[0])).filter((text) => text.startsWith(MESSAGE))).toHaveLength(1);
       media.destroy();
     });
 
@@ -885,7 +882,7 @@ describe('SimpleHlsMediaElement', () => {
       media.engine.state.errors.set(unsupportedSource);
       await flush();
 
-      const call = spy.mock.calls.find((entry) => /can’t play this source/.test(String(entry[0])));
+      const call = spy.mock.calls.find((entry) => String(entry[0]).startsWith(MESSAGE));
       expect(call?.[1]).toEqual({ conditions: unsupportedSource });
       media.destroy();
     });
@@ -896,40 +893,7 @@ describe('SimpleHlsMediaElement', () => {
       media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
       await flush();
 
-      expect(spy.mock.calls.filter((call) => /can’t play this source/.test(String(call[0])))).toEqual([]);
-      media.destroy();
-    });
-
-    it('lets an explicit config name win over the adapter’s static', async () => {
-      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      const media = new (class extends SimpleHlsMediaMixin(EventTarget) {})({
-        config: { playerSoftwareName: 'Mux Player' },
-      });
-      media.engine.state.errors.set(unsupportedSource);
-      await flush();
-
-      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => /can’t play this source/.test(text))).toMatch(
-        /^Mux Player /
-      );
-      media.destroy();
-    });
-
-    it('honours a subclass overriding the static', async () => {
-      // Read through `this.constructor`, not the mixin closure, so a host that
-      // renames the engine gets its name in the log without touching config.
-      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      class Renamed extends SimpleHlsMediaMixin(EventTarget) {
-        static override get playerSoftwareName(): string {
-          return 'Acme Player';
-        }
-      }
-      const media = new Renamed();
-      media.engine.state.errors.set(unsupportedSource);
-      await flush();
-
-      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => /can’t play this source/.test(text))).toMatch(
-        /^Acme Player /
-      );
+      expect(spy.mock.calls.filter((call) => String(call[0]).startsWith(MESSAGE))).toEqual([]);
       media.destroy();
     });
 
@@ -944,7 +908,7 @@ describe('SimpleHlsMediaElement', () => {
       media.engine.state.errors.set(unsupportedSource);
       await flush();
 
-      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => /can’t play this source/.test(text))).toMatch(
+      expect(spy.mock.calls.map((call) => String(call[0])).find((text) => text.startsWith(MESSAGE))).toMatch(
         /Import from "\/media\/mux\/hls-js" instead\.$/
       );
       media.destroy();
