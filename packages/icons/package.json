@@ -67,13 +67,13 @@
     "test": "pnpm run build && vitest run"
   },
   "dependencies": {
-    "@videojs/jsx": "workspace:*",
     "svgo": "^4.0.2"
   },
   "devDependencies": {
     "@svgr/core": "^8.1.0",
     "@svgr/plugin-jsx": "^8.1.0",
     "@types/react": "^19.2.17",
+    "@videojs/jsx": "workspace:*",
     "@videojs/utils": "workspace:*",
     "react": "^19.2.8",
     "tsx": "^4.23.1",

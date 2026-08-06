@@ -335,9 +335,6 @@ importers:
 
   packages/icons:
     dependencies:
-      '@videojs/jsx':
-        specifier: workspace:*
-        version: link:../jsx
       svgo:
         specifier: ^4.0.2
         version: 4.0.2
@@ -351,6 +348,9 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@videojs/jsx':
+        specifier: workspace:*
+        version: link:../jsx
       '@videojs/utils':
         specifier: workspace:*
         version: link:../utils
