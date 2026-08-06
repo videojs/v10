@@ -21,7 +21,7 @@
  * conditions logged beside it.
  */
 export const UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE =
-  'Can’t play this source: it requires an unsupported playback feature.';
+  "Can't play this source: it requires an unsupported playback feature.";
 
 /**
  * LL-HLS delivery, played as standard live. The parser ignores partial segments
