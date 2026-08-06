@@ -1,15 +1,15 @@
 import { PlayButton as PlayButtonPrimitive } from '@videojs/core/components';
 import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/icons/components';
-import { Tooltip } from '../overlays/tooltip.skin';
+import { ButtonTooltip } from './button-tooltip.skin';
 
 export function PlayButton() {
   return (
-    <Tooltip>
+    <ButtonTooltip>
       <PlayButtonPrimitive>
         <RestartIcon />
         <PlayIcon />
         <PauseIcon />
       </PlayButtonPrimitive>
-    </Tooltip>
+    </ButtonTooltip>
   );
 }
