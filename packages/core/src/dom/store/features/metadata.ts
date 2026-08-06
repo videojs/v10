@@ -32,10 +32,12 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'> {
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',
   config: {
+    /** The title to display. Takes precedence over the media's title. */
     contentTitle: {
       action: SET_USER_CONTENT_TITLE,
       state: USER_CONTENT_TITLE,
     },
+    /** Fallback used when neither the user nor the media supplies a title. */
     defaultContentTitle: {
       action: SET_USER_DEFAULT_CONTENT_TITLE,
       state: USER_DEFAULT_CONTENT_TITLE,

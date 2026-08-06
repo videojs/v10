@@ -19,15 +19,10 @@ The metadata feature is included by the `videoFeatures`, `audioFeatures`, `liveV
 
 <FeatureReference feature="metadata" />
 
-### Configuration
+### Set the title
 
 <FrameworkCase frameworks={["react"]}>
-Selecting the feature adds two props to <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>. They are typed and forwarded only while the feature is selected; a player built without it has neither prop.
-
-| Prop | Type | Default | Description |
-|---|---|---|---|
-| `contentTitle` | `string \| null \| undefined` | `undefined` | The title to display. Takes precedence over the media's title. |
-| `defaultContentTitle` | `string \| null \| undefined` | `undefined` | Fallback used when neither you nor the media supplies a title. |
+Both inputs are props on <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>. A player built without the metadata feature has neither prop, and neither is forwarded.
 
 ```tsx title="Player.tsx"
 import { createPlayer } from '@videojs/react';
@@ -48,14 +43,7 @@ function App({ episode }: { episode: { title: string | null } }) {
 </FrameworkCase>
 
 <FrameworkCase frameworks={["html"]}>
-Selecting the feature adds two attributes — and their matching properties — to the provider element. They exist only while the feature is selected; a player built without it observes neither attribute.
-
-| Attribute | Property | Type | Description |
-|---|---|---|---|
-| `content-title` | `contentTitle` | `string \| null \| undefined` | The title to display. Takes precedence over the media's title. |
-| `default-content-title` | `defaultContentTitle` | `string \| null \| undefined` | Fallback used when neither you nor the media supplies a title. |
-
-Both start unset, so neither tier contributes until you set one.
+Both inputs are attributes on the provider element, each with a matching property. A player built without the metadata feature observes neither attribute.
 
 ```html
 <video-player content-title="The Pilot" default-content-title="Untitled episode">

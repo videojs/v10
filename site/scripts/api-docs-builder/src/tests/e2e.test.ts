@@ -51,9 +51,10 @@
  *   volume.ts    — Complex feature. Exercises: numeric state, type alias
  *                  (MediaFeatureAvailability), methods with params + returns,
  *                  interface-level JSDoc → feature description.
- *   metadata.ts  — Resolved feature. Exercises: `@state` tag naming the
- *                  published interface when state() annotates private
- *                  source state.
+ *   metadata.ts  — Resolved + configured feature. Exercises: `@state` tag
+ *                  naming the published interface when state() annotates
+ *                  private source state, and `config` inputs typed from the
+ *                  symbol-keyed private actions they forward to.
  *   presets.ts   — Feature bundles. Exercises: plural *Features naming
  *                  (filtered out of feature discovery), array resolution
  *                  for preset feature lists.
@@ -767,6 +768,8 @@ describe('Util pipeline (end-to-end)', () => {
 //   - State extraction: interface properties → state record
 //   - Action extraction: interface methods → actions record
 //   - Published state: `@state <Interface>` overrides the state() annotation
+//   - Config: `config` inputs → provider props, typed from their private
+//     action, defaulted from the state() initializer, described by JSDoc
 //   - JSDoc: member descriptions flow through, interface-level JSDoc
 //     becomes the feature description
 //   - Type aliases: expanded in the output (MediaFeatureAvailability →
@@ -816,14 +819,19 @@ describe('Feature pipeline (end-to-end)', () => {
       expect(ref.state).toEqual({});
       expect(ref.actions).toEqual({});
     });
+
+    it('has no configuration', () => {
+      expect(findFeature('orientationLock')!.reference.config).toEqual({});
+    });
   });
 
   // ─────────────────────────────────────────────────────────────────
-  // METADATA FEATURE (published state differs from source state)
+  // METADATA FEATURE (published state + configuration)
   // ─────────────────────────────────────────────────────────────────
   //
   // state() annotates MetadataSourceState (symbol-keyed private inputs).
   // `@state MediaMetadataState` names the interface the store publishes.
+  // `config` maps two provider inputs onto private actions and state keys.
 
   describe('metadata (@state override)', () => {
     it('reads the interface named by @state instead of the state() annotation', () => {
@@ -843,7 +851,50 @@ describe('Feature pipeline (end-to-end)', () => {
       const ref = findFeature('metadata')!.reference;
 
       expect(Object.keys(ref.state)).toEqual(['contentTitle']);
-      expect(Object.keys(ref.actions)).toEqual(['setContentTitle']);
+      expect(Object.keys(ref.actions)).toEqual(['setContentTitle', 'setDefaultContentTitle']);
+    });
+  });
+
+  describe('metadata (configuration)', () => {
+    it('emits one input per config key, in declaration order', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(Object.keys(config)).toEqual(['contentTitle', 'defaultContentTitle']);
+    });
+
+    it('types each input from the private action it forwards to', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // MediaContentValue = string | null | undefined
+      for (const input of Object.values(config)) {
+        expect(input.type).toContain('string');
+        expect(input.type).toContain('null');
+        expect(input.type).toContain('undefined');
+      }
+    });
+
+    it('reads the initial value from the state() initializer', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(config.contentTitle!.default).toBe('undefined');
+      expect(config.defaultContentTitle!.default).toBe('undefined');
+    });
+
+    it('carries JSDoc from the config entry', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      expect(config.contentTitle!.description).toBe("The title to display. Takes precedence over the media's title.");
+      expect(config.defaultContentTitle!.description).toBe(
+        'Fallback used when neither the user nor the media supplies a title.'
+      );
+    });
+
+    it('leaves state and actions untouched by config extraction', () => {
+      const volume = findFeature('volume')!.reference;
+
+      expect(volume.config).toEqual({});
+      expect(Object.keys(volume.state)).toContain('volume');
+      expect(Object.keys(volume.actions)).toContain('setVolume');
     });
   });
 

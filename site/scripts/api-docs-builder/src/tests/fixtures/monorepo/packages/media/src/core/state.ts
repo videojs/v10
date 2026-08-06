@@ -54,10 +54,15 @@ export interface MediaVolumeState {
   toggleMuted(): boolean;
 }
 
+/** A media-owned content value. `undefined` means the key is absent; `null` means it has no current value. */
+export type MediaContentValue = string | null | undefined;
+
 /** Resolved content metadata exposed by the player store. */
 export interface MediaMetadataState {
   /** The resolved content title. */
   contentTitle: string;
   /** Set or clear the user title override. */
   setContentTitle(value: string | null): void;
+  /** Set or clear the fallback used when neither the user nor media supplies a title. */
+  setDefaultContentTitle(value: string | null): void;
 }
