@@ -267,9 +267,7 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
     }
   }
 
-  // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
-  // adding back to the type or callers can't read it.
-  return BackgroundVideoMediaImpl as unknown as MixinReturn<Base, BackgroundVideoMediaAPI> & {};
+  return BackgroundVideoMediaImpl as unknown as MixinReturn<Base, BackgroundVideoMediaAPI>;
 }
 
 /** Standalone SPF background-video adapter with no base class. */
