@@ -122,7 +122,7 @@ test.describe('SPF unsupported-source errors', () => {
     expect(codes.indexOf(SVTA_UNSUPPORTED_VIDEO_FORMAT)).toBeLessThan(codes.indexOf(SVTA_NO_SUPPORTED_VIDEO_TRACK));
   });
 
-  test('the verdict opens the error dialog with the player’s unplayable copy', async ({ page }) => {
+  test("the verdict opens the error dialog with the player's unplayable copy", async ({ page }) => {
     await page.goto(TS_PAGE);
 
     const errorDialog = page.locator(SELECTORS.errorDialog).first();
