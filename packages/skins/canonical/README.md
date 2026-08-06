@@ -16,4 +16,4 @@ The initial component paths are:
 - `components/sliders/volume-slider.skin.tsx`
 - `components/sliders/time-slider.skin.tsx`
 
-PlayButton source waits for the named canonical icon export owned by #1956. Artifact entries, styles, complete Skin compositions, and generated target output are separate stack boundaries.
+PlayButton source waits for the named canonical icon export owned by #1956. Artifact entries are authored in `../artifacts.ts`; styles, complete Skin compositions, and generated target output remain separate stack boundaries.

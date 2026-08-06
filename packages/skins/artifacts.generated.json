@@ -1,0 +1,43 @@
+{
+  "version": 1,
+  "artifacts": [
+    {
+      "id": "time-slider",
+      "kind": "component",
+      "entry": "./canonical/components/sliders/time-slider.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/sliders/time-slider.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "styles": [],
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core"],
+        "components": ["Slider", "TimeSlider"],
+        "icons": [],
+        "elements": []
+      }
+    },
+    {
+      "id": "volume-slider",
+      "kind": "component",
+      "entry": "./canonical/components/sliders/volume-slider.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/sliders/volume-slider.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "styles": [],
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core"],
+        "components": ["VolumeSlider"],
+        "icons": [],
+        "elements": []
+      }
+    }
+  ]
+}

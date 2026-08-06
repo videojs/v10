@@ -8,6 +8,8 @@ The package is private (`"private": true` in `package.json`) and is not publishe
 
 ## Structure
 
+- `artifacts.ts` — authored stable product boundaries for canonical source.
+- `artifacts.generated.json` — deterministic inferred dependency graph used for drift validation.
 - `canonical/` — isolated target-neutral Skin source; not part of the current packaged build.
 - `src/default/` — default skin tokens and CSS.
 - `src/minimal/` — minimal skin tokens and CSS.
