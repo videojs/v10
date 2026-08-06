@@ -173,9 +173,9 @@ describe('artifact graph', () => {
   it('reports artifact cycles and imports whose exact dependency cannot be inferred', async () => {
     const root = setup({
       'a.item.tsx': `
-        import * as Behaviors from '@example/behaviors';
+        import * as behaviors from '@example/behaviors';
         import { B } from './b.item';
-        export function A() { return <Behaviors.Text><B /></Behaviors.Text>; }
+        export function A() { return <behaviors.Text><B /></behaviors.Text>; }
       `,
       'b.item.tsx': `
         import { A } from './a.item';
@@ -193,6 +193,24 @@ describe('artifact graph', () => {
       'artifact-dependency-cycle',
       'artifact-dependency-ambiguous',
     ]);
+  });
+
+  it('does not infer runtime symbols from type-only re-exports', async () => {
+    const root = setup({
+      'entry.ts': `
+        export type { Button } from '@example/behaviors';
+        export type * from '@example/graphics';
+      `,
+    });
+
+    const result = await buildArtifactGraph([{ id: 'entry', kind: 'module', entry: './entry.ts' }], options(root));
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.graph.artifacts[0]?.dependencies).toEqual({
+      artifacts: [],
+      packages: ['@example/behaviors', '@example/graphics'],
+      symbols: { behaviors: [], graphics: [] },
+    });
   });
 
   it('rejects closure requests for unknown artifacts', () => {

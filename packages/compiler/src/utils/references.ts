@@ -87,13 +87,13 @@ function isNamedDeclaration(node: ts.Node): node is ts.NamedDeclaration {
   );
 }
 
-function collectJsxTagRoot(name: ts.JsxTagNameExpression, referenced: Set<string>): void {
+function collectJsxTagRoot(name: ts.JsxTagNameExpression, referenced: Set<string>, isMemberExpression = false): void {
   if (ts.isIdentifier(name)) {
-    if (isComponentIdentifier(name.text)) referenced.add(name.text);
+    if (isMemberExpression || isComponentIdentifier(name.text)) referenced.add(name.text);
     return;
   }
   if (ts.isPropertyAccessExpression(name)) {
-    collectJsxTagRoot(name.expression as ts.JsxTagNameExpression, referenced);
+    collectJsxTagRoot(name.expression as ts.JsxTagNameExpression, referenced, true);
   }
 }
 

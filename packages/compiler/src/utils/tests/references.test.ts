@@ -7,11 +7,12 @@ describe('collectReferencedIdentifiers', () => {
     const sourceFile = ts.createSourceFile(
       'input.tsx',
       `import { unused } from './fixture';
+import * as icons from './icons';
 interface Options { label: Label; theme: Theme.Options }
 const classes = ['root'];
 const config = { label: classes };
 function View({ value: local }: Props) {
-  return <><Menu.Trigger data-label={classes}/><div/></>;
+  return <><Menu.Trigger data-label={classes}/><icons.Play/><div/></>;
 }`,
       ts.ScriptTarget.Latest,
       true,
@@ -20,6 +21,6 @@ function View({ value: local }: Props) {
 
     const referenced = collectReferencedIdentifiers(sourceFile);
 
-    expect(referenced).toEqual(new Set(['Label', 'Theme', 'classes', 'Props', 'Menu']));
+    expect(referenced).toEqual(new Set(['Label', 'Theme', 'classes', 'Props', 'Menu', 'icons']));
   });
 });

@@ -45,7 +45,7 @@ export function collectModuleReferences(sourceFile: ts.SourceFile): ModuleRefere
       ts.isStringLiteralLike(statement.moduleSpecifier)
     ) {
       const names =
-        statement.exportClause && ts.isNamedExports(statement.exportClause)
+        !statement.isTypeOnly && statement.exportClause && ts.isNamedExports(statement.exportClause)
           ? statement.exportClause.elements
               .filter((element) => !element.isTypeOnly)
               .map((element) => element.propertyName?.text ?? element.name.text)
@@ -54,7 +54,7 @@ export function collectModuleReferences(sourceFile: ts.SourceFile): ModuleRefere
         source: statement.moduleSpecifier.text,
         node: statement.moduleSpecifier,
         names,
-        ambiguous: !statement.exportClause || ts.isNamespaceExport(statement.exportClause),
+        ambiguous: !statement.isTypeOnly && (!statement.exportClause || ts.isNamespaceExport(statement.exportClause)),
       });
     }
   }
