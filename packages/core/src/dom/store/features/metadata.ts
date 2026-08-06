@@ -4,11 +4,11 @@ import { listen } from '@videojs/utils/dom';
 import { definePlayerFeature } from '../../feature';
 import type { PlayerFeatureConfig } from '../../player';
 
-const MEDIA_CONTENT_TITLE = Symbol('@videojs/metadata/media-content-title');
-const USER_CONTENT_TITLE = Symbol('@videojs/metadata/user-content-title');
-const USER_DEFAULT_CONTENT_TITLE = Symbol('@videojs/metadata/user-default-content-title');
-const SET_USER_CONTENT_TITLE = Symbol('@videojs/metadata/set-user-content-title');
-const SET_USER_DEFAULT_CONTENT_TITLE = Symbol('@videojs/metadata/set-user-default-content-title');
+const MEDIA_CONTENT_TITLE = Symbol('@videojs/media-content-title');
+const USER_CONTENT_TITLE = Symbol('@videojs/user-content-title');
+const USER_DEFAULT_CONTENT_TITLE = Symbol('@videojs/user-default-content-title');
+const SET_USER_CONTENT_TITLE = Symbol('@videojs/set-user-content-title');
+const SET_USER_DEFAULT_CONTENT_TITLE = Symbol('@videojs/set-user-default-content-title');
 const DEFAULT_CONTENT_TITLE = '';
 
 interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'> {
