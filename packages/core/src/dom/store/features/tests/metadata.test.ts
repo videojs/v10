@@ -141,26 +141,26 @@ describe('metadataFeature', () => {
   it('resolves the content poster through the same order as the title', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
 
-    expect(store.contentPoster).toBe('');
+    expect(store.poster).toBe('');
 
-    store.setDefaultContentPoster('fallback.jpg');
-    expect(store.contentPoster).toBe('fallback.jpg');
+    store.setDefaultPoster('fallback.jpg');
+    expect(store.poster).toBe('fallback.jpg');
 
     const media = new ContentDataMedia({ poster: 'media.jpg' });
     store.attach(target(media));
-    expect(store.contentPoster).toBe('media.jpg');
+    expect(store.poster).toBe('media.jpg');
 
-    store.setContentPoster('user.jpg');
-    expect(store.contentPoster).toBe('user.jpg');
+    store.setPoster('user.jpg');
+    expect(store.poster).toBe('user.jpg');
 
     media.setContentPoster('latest-media.jpg');
-    expect(store.contentPoster).toBe('user.jpg');
+    expect(store.poster).toBe('user.jpg');
 
-    store.setContentPoster(null);
-    expect(store.contentPoster).toBe('latest-media.jpg');
+    store.setPoster(null);
+    expect(store.poster).toBe('latest-media.jpg');
 
     media.setContentPoster(undefined);
-    expect(store.contentPoster).toBe('fallback.jpg');
+    expect(store.poster).toBe('fallback.jpg');
   });
 
   it('resolves title and poster independently from one bag', () => {
@@ -169,23 +169,23 @@ describe('metadataFeature', () => {
     store.attach(target(media));
 
     expect(store.contentTitle).toBe('media title');
-    expect(store.contentPoster).toBe('');
+    expect(store.poster).toBe('');
 
     media.setContentPoster('media.jpg');
 
     expect(store.contentTitle).toBe('media title');
-    expect(store.contentPoster).toBe('media.jpg');
+    expect(store.poster).toBe('media.jpg');
   });
 
   it('resets both media-owned values on detach while preserving user-owned state', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
-    store.setDefaultContentPoster('fallback.jpg');
+    store.setDefaultPoster('fallback.jpg');
     const detach = store.attach(target(new ContentDataMedia({ title: 'media', poster: 'media.jpg' })));
 
     detach();
 
     expect(store.contentTitle).toBe('');
-    expect(store.contentPoster).toBe('fallback.jpg');
+    expect(store.poster).toBe('fallback.jpg');
   });
 
   it('selects only resolved metadata and public writers', () => {
@@ -193,13 +193,13 @@ describe('metadataFeature', () => {
 
     expect(selectMetadata(store.state)).toEqual({
       contentTitle: '',
-      contentPoster: '',
+      poster: '',
       setContentTitle: store.setContentTitle,
       setDefaultContentTitle: store.setDefaultContentTitle,
-      setContentPoster: store.setContentPoster,
-      setDefaultContentPoster: store.setDefaultContentPoster,
+      setPoster: store.setPoster,
+      setDefaultPoster: store.setDefaultPoster,
     });
     expect(store.state).not.toHaveProperty('defaultContentTitle');
-    expect(store.state).not.toHaveProperty('defaultContentPoster');
+    expect(store.state).not.toHaveProperty('defaultPoster');
   });
 });

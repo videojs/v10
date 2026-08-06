@@ -9,18 +9,18 @@ const USER_CONTENT_TITLE = Symbol('@videojs/user-content-title');
 const USER_DEFAULT_CONTENT_TITLE = Symbol('@videojs/user-default-content-title');
 const DEFAULT_CONTENT_TITLE = '';
 
-const MEDIA_CONTENT_POSTER = Symbol('@videojs/media-content-poster');
-const USER_CONTENT_POSTER = Symbol('@videojs/user-content-poster');
-const USER_DEFAULT_CONTENT_POSTER = Symbol('@videojs/user-default-content-poster');
-const DEFAULT_CONTENT_POSTER = '';
+const MEDIA_POSTER = Symbol('@videojs/media-poster');
+const USER_POSTER = Symbol('@videojs/user-poster');
+const USER_DEFAULT_POSTER = Symbol('@videojs/user-default-poster');
+const DEFAULT_POSTER = '';
 
-interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle' | 'contentPoster'> {
+interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle' | 'poster'> {
   [MEDIA_CONTENT_TITLE]: MediaContentValue;
   [USER_CONTENT_TITLE]: MediaContentValue;
   [USER_DEFAULT_CONTENT_TITLE]: MediaContentValue;
-  [MEDIA_CONTENT_POSTER]: MediaContentValue;
-  [USER_CONTENT_POSTER]: MediaContentValue;
-  [USER_DEFAULT_CONTENT_POSTER]: MediaContentValue;
+  [MEDIA_POSTER]: MediaContentValue;
+  [USER_POSTER]: MediaContentValue;
+  [USER_DEFAULT_POSTER]: MediaContentValue;
 }
 
 /**
@@ -38,26 +38,26 @@ export const metadataFeature = definePlayerFeature({
       action: 'setDefaultContentTitle',
       state: USER_DEFAULT_CONTENT_TITLE,
     },
-    contentPoster: {
-      action: 'setContentPoster',
-      state: USER_CONTENT_POSTER,
+    poster: {
+      action: 'setPoster',
+      state: USER_POSTER,
     },
-    defaultContentPoster: {
-      action: 'setDefaultContentPoster',
-      state: USER_DEFAULT_CONTENT_POSTER,
+    defaultPoster: {
+      action: 'setDefaultPoster',
+      state: USER_DEFAULT_POSTER,
     },
   } satisfies PlayerFeatureConfig<MetadataSourceState>,
   state: ({ set }): MetadataSourceState => ({
     [MEDIA_CONTENT_TITLE]: undefined,
     [USER_CONTENT_TITLE]: undefined,
     [USER_DEFAULT_CONTENT_TITLE]: undefined,
-    [MEDIA_CONTENT_POSTER]: undefined,
-    [USER_CONTENT_POSTER]: undefined,
-    [USER_DEFAULT_CONTENT_POSTER]: undefined,
+    [MEDIA_POSTER]: undefined,
+    [USER_POSTER]: undefined,
+    [USER_DEFAULT_POSTER]: undefined,
     setContentTitle: (value) => set({ [USER_CONTENT_TITLE]: value }),
     setDefaultContentTitle: (value) => set({ [USER_DEFAULT_CONTENT_TITLE]: value }),
-    setContentPoster: (value) => set({ [USER_CONTENT_POSTER]: value }),
-    setDefaultContentPoster: (value) => set({ [USER_DEFAULT_CONTENT_POSTER]: value }),
+    setPoster: (value) => set({ [USER_POSTER]: value }),
+    setDefaultPoster: (value) => set({ [USER_DEFAULT_POSTER]: value }),
   }),
   derived: {
     contentTitle: ({ get }) =>
@@ -65,11 +65,7 @@ export const metadataFeature = definePlayerFeature({
       get()[MEDIA_CONTENT_TITLE] ??
       get()[USER_DEFAULT_CONTENT_TITLE] ??
       DEFAULT_CONTENT_TITLE,
-    contentPoster: ({ get }) =>
-      get()[USER_CONTENT_POSTER] ??
-      get()[MEDIA_CONTENT_POSTER] ??
-      get()[USER_DEFAULT_CONTENT_POSTER] ??
-      DEFAULT_CONTENT_POSTER,
+    poster: ({ get }) => get()[USER_POSTER] ?? get()[MEDIA_POSTER] ?? get()[USER_DEFAULT_POSTER] ?? DEFAULT_POSTER,
   },
   attach({ target, signal, set }) {
     const { media } = target;
@@ -79,7 +75,7 @@ export const metadataFeature = definePlayerFeature({
     const sync = () =>
       set({
         [MEDIA_CONTENT_TITLE]: media.contentData?.title,
-        [MEDIA_CONTENT_POSTER]: media.contentData?.poster,
+        [MEDIA_POSTER]: media.contentData?.poster,
       });
     sync();
     listen(media, 'contentdatachange', sync, { signal });
