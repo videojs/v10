@@ -79,6 +79,7 @@ export default {
     decode: 'Reprodukcija videa je zaustavljenja zbog greške u formatu ili zbog verzije vašeg pretraživača.',
     source: 'Video se ne može reproducirati zbog servera, greške u mreži ili je format ne podržan.',
     encrypted: 'Medij je šifriran i nema ključeva za dešifriranje.',
+    unplayable: 'Plejer ne podržava ovaj medij.',
     title: 'Nešto je pošlo po krivu.',
     unexpected: 'Došlo je do greške. Pokušajte ponovo.',
   },

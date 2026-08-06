@@ -9,6 +9,7 @@ import type { BackBufferConfig } from '../../../media/buffer/back-buffer';
 import type { ForwardBufferConfig } from '../../../media/buffer/forward-buffer';
 import { canPlayTrack } from '../../../media/dom/capabilities';
 import { attachMediaSourceAsSourceElement } from '../../../media/dom/mse/mediasource-setup';
+import type { SvtaError } from '../../../media/errors';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import type { AudioTrack, CanPlayTrack, MaybeResolvedPresentation, MediaContainerData } from '../../../media/types';
 import type { GetCdnId } from '../../../media/utils/cdn';
@@ -19,6 +20,7 @@ import {
   calculatePresentationDuration,
   type PresentationDurationResolver,
 } from '../../behaviors/calculate-presentation-duration';
+import { collectErrors } from '../../behaviors/collect-errors';
 import { deriveCdnPriority } from '../../behaviors/derive-cdn-priority';
 import { setupAirPlay } from '../../behaviors/dom/airplay';
 import { applyStartPosition } from '../../behaviors/dom/apply-start-position';
@@ -44,6 +46,10 @@ import { type FailoverMonitorConfig, setupFailoverMonitor } from '../../behavior
 import { syncPreload } from '../../behaviors/sync-preload';
 import { switchAudioTrack } from '../../behaviors/track-switching';
 import { relocationPipelinesFor } from '../../primitives/relocation-pipelines';
+import {
+  type ReportUnsupportedTrackConditions,
+  reportUnsupportedTrackConditions,
+} from '../../primitives/report-track-conditions';
 
 // ============================================================================
 // Audio-Only HLS Engine State & Context
@@ -84,6 +90,13 @@ export interface SimpleHlsAudioOnlyEngineState {
    * scope falls to the next CDN. Empty / absent means all CDNs are eligible.
    */
   failedCdns?: string[];
+  /**
+   * Conditions reported during playback, in order — appended by whichever
+   * behavior detects one, owned and cleared per source by `collectErrors`.
+   * Severity is decided above the engine. Audio-only makes an all-audio-pruned
+   * source unrecoverable: there's no video fallback to fall back to.
+   */
+  errors?: SvtaError[];
   currentTime?: number;
   loadActivated?: boolean;
   /**
@@ -148,6 +161,14 @@ export interface SimpleHlsAudioOnlyEngineConfig
    * be inert for audio-only playback.
    */
   canPlayTrack?: CanPlayTrack;
+  /**
+   * Conditions reported about each rendition as it resolves — the *causes* behind
+   * a later verdict, and the copy a verdict reuses when they agree. Defaults to
+   * {@link reportUnsupportedTrackConditions}, which reports non-fMP4 containers
+   * and encryption; supply your own to report a different set (a provider that
+   * never ships MPEG-TS can drop that check) or `() => []` to report nothing.
+   */
+  reportUnsupportedTrackConditions?: ReportUnsupportedTrackConditions;
   resolveDuration?: PresentationDurationResolver;
   parsePresentation?: ParsePresentation;
   forwardBuffer?: Partial<ForwardBufferConfig>;
@@ -222,6 +243,7 @@ export function createHlsAudioOnlyEngine(
     // with `canPlayType`, which answers `'maybe'` on an audio element too.
     attachMediaSource: attachMediaSourceAsSourceElement,
     canPlayTrack: config.canPlayTrack ?? canPlayTrack,
+    reportUnsupportedTrackConditions: config.reportUnsupportedTrackConditions ?? reportUnsupportedTrackConditions,
     resolveDuration: config.resolveDuration ?? getResolvedSelectedTrackDuration,
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     // Non-zero-PTS relocation (spike): pair the audio loader with the relocation steps
@@ -251,6 +273,9 @@ export function createHlsAudioOnlyEngine(
       // track resolution on a failed media-playlist fetch) and removes each CDN
       // once its cooldown lapses.
       setupFailoverMonitor,
+
+      // Owns `errors` and its per-source lifecycle; reporters append into it.
+      collectErrors,
 
       // Audio track selection — slot owner with filter reactivity.
       // Mid-stream flush on language switch is handled in segment-loader's

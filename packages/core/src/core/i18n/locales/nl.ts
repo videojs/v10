@@ -81,6 +81,7 @@ export default {
     source:
       'De media kon niet worden geladen, doordat de server of het netwerk faalde of doordat het formaat niet wordt ondersteund.',
     encrypted: 'De media is gecodeerd en we hebben niet de sleutels om het te decoderen.',
+    unplayable: 'Deze media wordt niet ondersteund door de speler.',
     title: 'Er is iets misgegaan.',
     unexpected: 'Er is een fout opgetreden. Probeer het opnieuw.',
   },

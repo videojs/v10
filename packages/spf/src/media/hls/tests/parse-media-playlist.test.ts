@@ -6,6 +6,8 @@ import {
   type PartiallyResolvedVideoTrack,
 } from '../../types';
 import { parseMediaPlaylist } from '../parse-media-playlist';
+import drmCmafAudio from './fixtures/drm-cmaf-audio.m3u8?raw';
+import drmCmafVideo from './fixtures/drm-cmaf-video.m3u8?raw';
 import liveCmafAudio from './fixtures/live-cmaf-audio.m3u8?raw';
 import liveCmafVideo from './fixtures/live-cmaf-video.m3u8?raw';
 import liveTsVideo1 from './fixtures/live-ts-video-1.m3u8?raw';
@@ -990,6 +992,176 @@ s6.m4s`;
       const r = parseMediaPlaylist(noPdt, { ...shell, startDate: anchor });
       expect(r.segments.map((s) => s.startTime)).toEqual([0, 2]);
       expect(r.startDate).toBeUndefined();
+    });
+  });
+});
+
+describe('parseMediaPlaylist (LL-HLS detection)', () => {
+  const shell: PartiallyResolvedVideoTrack = {
+    id: 'v-1',
+    type: 'video',
+    url: 'https://example.com/v.m3u8',
+    bandwidth: 1000,
+    codecs: ['avc1.4d401f'],
+    mimeType: 'video/mp4',
+  };
+
+  const playlist = (extra: string) => `#EXTM3U
+#EXT-X-TARGETDURATION:4
+${extra}
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:4.0,
+0.m4s
+`;
+
+  it('reports no low latency for a plain live playlist', () => {
+    const track = parseMediaPlaylist(playlist('#EXT-X-MEDIA-SEQUENCE:0'), shell);
+    expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(false);
+  });
+
+  it('detects EXT-X-PART-INF', () => {
+    const track = parseMediaPlaylist(playlist('#EXT-X-PART-INF:PART-TARGET=1.0'), shell);
+    expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(true);
+  });
+
+  it('detects PART-HOLD-BACK on EXT-X-SERVER-CONTROL, without reading its value', () => {
+    // Deliberately unread: it only applies to clients playing partial segments.
+    // Its presence is still the server advertising LL-HLS.
+    const track = parseMediaPlaylist(
+      playlist('#EXT-X-SERVER-CONTROL:CAN-BLOCK-RELOAD=YES,PART-HOLD-BACK=2.171,HOLD-BACK=6'),
+      shell
+    );
+    const metadata = getMediaPlaylistMetadata(track);
+    expect(metadata?.lowLatency).toBe(true);
+    expect(metadata?.holdBack).toBe(6);
+  });
+
+  it('detects EXT-X-PART lines without mistaking them for segments', () => {
+    const track = parseMediaPlaylist(
+      `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+#EXTINF:4.0,
+0.m4s
+#EXT-X-PART:DURATION=1.0,URI="1.0.m4s"
+#EXT-X-PART:DURATION=1.0,URI="1.1.m4s"
+`,
+      shell
+    );
+
+    expect(getMediaPlaylistMetadata(track)?.lowLatency).toBe(true);
+    // Parts are not segments — only the complete one is parsed.
+    expect(track.segments).toHaveLength(1);
+  });
+});
+
+describe('parseMediaPlaylist (encryption detection)', () => {
+  const withKey = (keyLines: string) => `#EXTM3U
+#EXT-X-TARGETDURATION:4
+#EXT-X-MAP:URI="init.mp4"
+${keyLines}
+#EXTINF:4.0,
+0.m4s
+#EXT-X-ENDLIST
+`;
+
+  const unresolved: PartiallyResolvedVideoTrack = {
+    id: 'v-1',
+    type: 'video',
+    url: 'https://example.com/v.m3u8',
+    bandwidth: 1000,
+    codecs: ['avc1.4d401f'],
+    mimeType: 'video/mp4',
+  };
+
+  it('reports no encryption when the playlist has no EXT-X-KEY', () => {
+    const track = parseMediaPlaylist(withKey(''), unresolved);
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(false);
+  });
+
+  it('reports no encryption for METHOD=NONE', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=NONE'), unresolved);
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(false);
+  });
+
+  it('reports encryption for a real METHOD', () => {
+    const track = parseMediaPlaylist(
+      withKey('#EXT-X-KEY:METHOD=SAMPLE-AES,URI="skd://k",KEYFORMAT="com.apple.streamingkeydelivery"'),
+      unresolved
+    );
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(true);
+  });
+
+  it('reports encryption for a clear lead — METHOD=NONE followed by a real key', () => {
+    // Conservative by design: the opening segments are playable, but we can only
+    // report whether decryption is needed at all, so this reads as encrypted.
+    const track = parseMediaPlaylist(
+      withKey('#EXT-X-KEY:METHOD=NONE\n#EXT-X-KEY:METHOD=AES-128,URI="k.bin"'),
+      unresolved
+    );
+    expect(getMediaPlaylistMetadata(track)?.encrypted).toBe(true);
+  });
+
+  it('does not treat EXT-X-KEY as a segment tag', () => {
+    const track = parseMediaPlaylist(withKey('#EXT-X-KEY:METHOD=AES-128,URI="k.bin"'), unresolved);
+    expect(track.segments).toHaveLength(1);
+  });
+
+  // Snapshots of a real Mux DRM asset (playback policy `drm`), truncated to four
+  // segments with the signed CDN URLs replaced by relative names. The synthetic
+  // cases above pin the rule; these pin it against what Mux actually emits —
+  // three sibling EXT-X-KEY lines, one per key system, all METHOD=SAMPLE-AES.
+  describe('real Mux DRM snapshots (fixtures)', () => {
+    const videoShell: PartiallyResolvedVideoTrack = {
+      type: 'video',
+      id: 'video-0',
+      url: 'https://example.com/video/playlist.m3u8',
+      bandwidth: 7264400,
+      width: 2048,
+      height: 914,
+      codecs: ['avc1.64002a'],
+      mimeType: 'video/mp4',
+    };
+    const audioShell: PartiallyResolvedAudioTrack = {
+      type: 'audio',
+      id: 'audio-hi-0',
+      url: 'https://example.com/audio/playlist.m3u8',
+      groupId: 'audio-hi-0',
+      name: 'Default',
+      language: 'und',
+      codecs: ['mp4a.40.2'],
+      mimeType: 'audio/mp4',
+      bandwidth: 0,
+      sampleRate: 48000,
+      channels: 2,
+    };
+
+    it('reads a Mux DRM video rendition as encrypted', () => {
+      const video = parseMediaPlaylist(drmCmafVideo, videoShell);
+
+      expect(getMediaPlaylistMetadata(video)?.encrypted).toBe(true);
+    });
+
+    it('reads the sibling audio rendition as clear — Mux encrypts video only', () => {
+      // The asymmetry that makes a Mux DRM source a *partially* encrypted one
+      // rather than a wholly unplayable one: the audio playlist carries no
+      // EXT-X-KEY at all, so audio survives the pruning that drops every video
+      // rendition. Anything reasoning about a DRM source per-type depends on it.
+      const audio = parseMediaPlaylist(drmCmafAudio, audioShell);
+
+      expect(getMediaPlaylistMetadata(audio)?.encrypted).toBe(false);
+    });
+
+    it('parses the rest of an encrypted playlist normally', () => {
+      // Three EXT-X-KEY lines carrying base64 PSSH/PlayReady payloads and an
+      // skd:// URI sit between TARGETDURATION and EXT-X-MAP. None of them are
+      // segments, and none derail the tags around them.
+      const video = parseMediaPlaylist(drmCmafVideo, videoShell);
+
+      expect(video.segments).toHaveLength(4);
+      expect(video.initialization?.url).toContain('18446744073709551615.m4s');
+      expect(video.mimeType).toBe('video/mp4');
+      expect(video.duration).toBe(16);
     });
   });
 });

@@ -179,7 +179,10 @@ Things this feature probably forces decisions on, not just additions:
   territory.
 - **Retry-exhaustion error surfacing.** State-error slot vs callback
   vs both. Customer use case drives this; lean: both (state slot for
-  reactive consumers + callback for one-shot notification).
+  reactive consumers + callback for one-shot notification). The
+  surfacing mechanism itself is owned by [errors](./errors.md) — this
+  feature emits its exhaustion verdict into that surface (its phase 7)
+  rather than defining one.
 - **Composition with DRM license-fetch.** When `drm-support` lands,
   license fetches gain retry/backoff via this feature. Per-site
   config naturally applies. Token-refresh hook may converge with

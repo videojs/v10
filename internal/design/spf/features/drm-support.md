@@ -35,8 +35,16 @@ Milestone: GA. Prior art: [videojs-contrib-eme](https://github.com/videojs/video
 ## Status
 
 - **Composition:** not implemented in `createSimpleHlsEngine`. No
-  DRM-related code in `packages/spf/src/` today. `#EXT-X-KEY` and
-  `#EXT-X-SESSION-KEY` tags are not recognized by `parseMediaPlaylist`.
+  decryption pipeline: nothing sets up MediaKeys, negotiates a session,
+  or requests a license. What exists is the *refusal* —
+  `parseMediaPlaylist` recognizes `#EXT-X-KEY` well enough to flag a
+  rendition `encrypted`, `canPlayTrack` prunes those renditions, and a
+  fully-encrypted type reports `SVTA_UNSUPPORTED_DRM_SYSTEM` ("this
+  video is protected") rather than a generic unsupported-format error.
+  `#EXT-X-SESSION-KEY` is still unrecognized, which matters: Mux emits
+  no session-key tag in the multivariant playlist, so encryption is
+  undiscoverable until a media playlist is fetched — hence pruning at
+  resolve time rather than at manifest parse.
 - **Definition depth:** coarse — scope identified from GitHub issue
   + prior art; SPF touchpoints sketched at the cluster level; no
   implementation. The three sub-issues each carry per-key-system

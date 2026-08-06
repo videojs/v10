@@ -1,5 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
+import { effect } from '../../../core/signals/effect';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
+  type SvtaError,
+} from '../../../media/errors';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
 import {
   createHlsAudioOnlyEngine,
   type SimpleHlsAudioOnlyEngineConfig,
@@ -7,6 +14,7 @@ import {
   type SimpleHlsAudioOnlyEngineSignals,
   type SimpleHlsAudioOnlyEngineState,
 } from './engine-audio-only';
+import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
 
 export interface SimpleHlsAudioOnlyMediaProps {
   src: string;
@@ -22,6 +30,7 @@ export const simpleHlsAudioOnlyMediaDefaultProps: SimpleHlsAudioOnlyMediaProps =
 
 export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps {
   readonly engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
+  readonly error: SimpleHlsMediaError | null;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -29,7 +38,17 @@ export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps
 }
 
 /**
+ * Which reported conditions this composition treats as fatal. Only the audio
+ * verdict: an audio-only engine composes no video selection, so
+ * `SVTA_NO_SUPPORTED_VIDEO_TRACK` is never reported and surfacing it would
+ * describe a track type this media doesn't have.
+ */
+const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED_AUDIO_TRACK]);
+
+/**
  * Mixin that adds SPF audio-only HLS playback to any base class.
+ *
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
  * Parallel to `SimpleHlsMediaMixin` with one substantive difference: the
  * underlying engine is the audio-only variant (`createHlsAudioOnlyEngine`),
@@ -55,6 +74,10 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     #signals!: SimpleHlsAudioOnlyEngineSignals;
     #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsAudioOnlyMediaDefaultProps.preload;
     #disableRemotePlayback: boolean = simpleHlsAudioOnlyMediaDefaultProps.disableRemotePlayback;
+    #error: SimpleHlsMediaError | null = null;
+    /** Reported condition currently surfaced — see the video adapter's note. */
+    #reportedCode: number | null = null;
+    #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -65,6 +88,53 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
       const { config } = args?.[0] ?? {};
       this.#config = config;
       this.#engine = this.#createEngine();
+
+      // Promote the first fatal condition out of the engine's reported sequence
+      // onto the media surface. Clearing rides the same signal: `collectErrors`
+      // resets the slot per source, so a new source starts with no error without
+      // this needing its own source-change hook.
+      this.#stopErrorSync = effect(() => {
+        const errors = this.#signals.state.errors.get();
+        this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
+      });
+    }
+
+    /**
+     * The current fatal error, or `null`. Only *fatal* conditions appear here —
+     * the engine reports non-fatal ones too, which stay in `engine.state.errors`.
+     * Resets per source. Fires `'error'` when set.
+     */
+    get error(): SimpleHlsMediaError | null {
+      return this.#error;
+    }
+
+    #setError(reported: SvtaError | undefined, errors: readonly SvtaError[] | undefined): void {
+      if (!reported) {
+        // Cleared (new source). No event: `'error'` announces a failure, and
+        // consumers reset their own copy on source change.
+        this.#error = null;
+        this.#reportedCode = null;
+        return;
+      }
+      // Keyed on the code, not the object: a later append re-runs this effect
+      // with an equal-but-new array, and re-firing `'error'` for a condition
+      // already surfaced would look like a second failure.
+      if (this.#reportedCode === reported.code) return;
+      this.#reportedCode = reported.code;
+
+      // See the video adapter: a cause this engine can't implement is what the
+      // consumer needs, so it replaces the verdict's code on the surface.
+      const unsupported = hasUnsupportedFeatureCause(errors);
+      if (unsupported) {
+        console.error(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE, { conditions: errors });
+      }
+
+      this.#error = {
+        code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
+        message: reported.message ?? '',
+        ...(reported.data === undefined ? {} : { data: reported.data }),
+      };
+      this.dispatchEvent?.(new Event('error'));
     }
 
     /**
@@ -94,6 +164,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
 
     destroy(): void {
       this.#cancelPendingPlay();
+      this.#stopErrorSync();
       this.#engine.destroy();
     }
 

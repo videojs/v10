@@ -81,6 +81,7 @@ export default {
     source:
       'Seda meediumifaili ei õnnestunud laadida, kuna serveris või võrgus esines tõrge või kuna vormingut ei toetata.',
     encrypted: 'See meediumifail on krüpteeritud ja meil pole dekrüpteerimiseks vajalikku võtit.',
+    unplayable: 'Pleier ei toeta seda meediat.',
     title: 'Midagi läks valesti.',
     unexpected: 'Esines viga. Palun proovige uuesti.',
   },

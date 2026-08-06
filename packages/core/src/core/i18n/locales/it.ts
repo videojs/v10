@@ -81,6 +81,7 @@ export default {
     source:
       'Il contenuto multimediale non può essere caricato a causa di un errore nel server o nella rete o perché il formato non viene supportato.',
     encrypted: 'Il contenuto multimediale è criptato e non disponiamo delle chiavi per decifrarlo.',
+    unplayable: 'Questo contenuto multimediale non è supportato dal lettore.',
     title: 'Qualcosa è andato storto.',
     unexpected: 'Si è verificato un errore. Riprova.',
   },

@@ -79,6 +79,7 @@ export default {
     decode: 'Atskaņošana tika pārtraukta tīkla kļūmes dēļ vai pārlūkprogrammas iespēju trūkuma dēļ.',
     source: 'Neizdevās ielādēt multividi, iespējams severa, vai tīkla kļūmes dēļ, vai neatbalstīta formāta dēļ.',
     encrypted: 'Multividi nevar atskaņot, jo tas ir kriptēts un nav pieejama dekriptēšanas atslēga.',
+    unplayable: 'Atskaņotājs neatbalsta šo multividi.',
     title: 'Kaut kas nogāja greizi.',
     unexpected: 'Radās kļūda. Lūdzu, mēģiniet vēlreiz.',
   },

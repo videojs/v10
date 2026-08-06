@@ -1,6 +1,12 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
 import { effect } from '../../../core/signals/effect';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
+  type SvtaError,
+} from '../../../media/errors';
 import { resolveLiveLatency } from '../../../media/hls/reload-policy';
 import {
   deriveStreamType,
@@ -11,6 +17,11 @@ import {
   type StreamType,
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
+import {
+  DVR_EXPERIMENTAL_MESSAGE,
+  LOW_LATENCY_UNSUPPORTED_MESSAGE,
+  UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE,
+} from '../../primitives/error-messages';
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
   createSimpleHlsEngine,
@@ -19,6 +30,7 @@ import {
   type SimpleHlsEngineSignals,
   type SimpleHlsEngineState,
 } from './engine';
+import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
 
 /**
  * The media-level stream type: the engine's detected {@link StreamType}
@@ -27,6 +39,8 @@ import {
  * cross-package dependency (spf sits below core).
  */
 export type SimpleHlsMediaStreamType = StreamType | 'unknown';
+
+export type { SimpleHlsMediaError } from './error-surface';
 
 export interface SimpleHlsMediaProps {
   src: string;
@@ -44,6 +58,7 @@ export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
 
 export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
   readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
+  readonly error: SimpleHlsMediaError | null;
   readonly liveEdgeStart: number;
   readonly targetLiveWindow: number;
   attach(mediaElement: HTMLMediaElement): void;
@@ -71,6 +86,27 @@ function deriveTargetLiveWindow(
   return deriveStreamType(metadata) === 'live' ? 0 : Number.NaN;
 }
 
+// ============================================================================
+// Error surface
+// ============================================================================
+
+/**
+ * Which reported conditions this composition treats as **fatal** — the ones that
+ * reach `error` and fire `'error'`. Severity isn't part of an SVTA code
+ * (§Approach: "impact varies with player implementation"), and here it also
+ * varies by composition, so it's decided at this boundary rather than by the
+ * reporter.
+ *
+ * An allow-list, deliberately: only *verdicts* are here. The per-rendition causes
+ * `resolve-track` reports (unsupported format, unsupported DRM) stay in the
+ * sequence as context — one unplayable rendition doesn't fail the source, and
+ * promoting a cause would put a dialog over a mixed source that goes on to play.
+ */
+const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+]);
+
 /**
  * Mixin that adds SPF playback engine behavior to any base class.
  *
@@ -82,6 +118,7 @@ function deriveTargetLiveWindow(
  *
  * @fires streamtypechange - Fired when the detected stream type changes. Read `streamType` for the new value.
  * @fires targetlivewindowchange - Fired when the target live window changes. Read `targetLiveWindow` for the new value.
+ * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
  * @example
  * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -92,6 +129,20 @@ function deriveTargetLiveWindow(
  */
 export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsMediaImpl extends BaseClass {
+    /**
+     * A complete sentence naming the Media to reach for when this one can't play
+     * a source — `Import from "/media/mux/hls-js" instead.` Appended to the copy
+     * this adapter surfaces, and to the notices it logs.
+     *
+     * Empty here: `simple-hls-video` has no better-equipped sibling to point at.
+     * A Media that does (a Mux Video built on this engine, whose hls.js-backed
+     * counterpart plays MPEG-TS and DRM) overrides this static, and its copy gains
+     * the second sentence with no other change.
+     */
+    static get alternativeMediaSuggestion(): string | undefined {
+      return undefined;
+    }
+
     readonly #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
     #config: SimpleHlsEngineConfig;
     #signals!: SimpleHlsEngineSignals;
@@ -100,7 +151,18 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     #streamType: SimpleHlsMediaStreamType = simpleHlsMediaDefaultProps.streamType;
     #isUserStreamType = false;
     #targetLiveWindow = Number.NaN;
+    #error: SimpleHlsMediaError | null = null;
+    /**
+     * The *reported* condition currently surfaced, which is what the re-fire
+     * latch keys on. Not `#error.code`: that's the code this adapter chose to
+     * surface, and a later cause can change the choice for a condition already
+     * announced.
+     */
+    #reportedCode: number | null = null;
+    /** Notices already logged for the current source; cleared when it unloads. */
+    #noticed = new Set<string>();
     #stopLiveSync: () => void;
+    #stopErrorSync: () => void;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
     #loadstartListener: (() => void) | null = null;
@@ -121,6 +183,16 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
         const presentation = this.#signals.state.presentation.get();
         this.#setDetectedStreamType(presentation?.streamType ?? 'unknown');
         this.#setTargetLiveWindow(deriveTargetLiveWindow(presentation, liveTrackId(this.#signals.state)));
+        this.#reportDeliveryNotices(presentation);
+      });
+
+      // Promote the first fatal condition out of the engine's reported sequence
+      // onto the media surface. Clearing rides the same signal: `collectErrors`
+      // resets the slot per source, so a new source starts with no error without
+      // this needing its own source-change hook.
+      this.#stopErrorSync = effect(() => {
+        const errors = this.#signals.state.errors.get();
+        this.#setError(firstFatal(errors, FATAL_SVTA_CODES), errors);
       });
     }
 
@@ -139,6 +211,16 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // (the MediaStreamTypeCapability + MediaLiveCapability contract the player
     // store's stream-type and live features consume)
     // -------------------------------------------------------------------------
+
+    /**
+     * The current fatal error, or `null`. Only *fatal* conditions appear here —
+     * the engine reports non-fatal ones too (they stay in `engine.state.errors`),
+     * and promoting them would tell a consumer playback had failed when it
+     * hadn't. Resets per source. Fires `'error'` when set.
+     */
+    get error(): SimpleHlsMediaError | null {
+      return this.#error;
+    }
 
     /**
      * The source's stream type — `'live'`, `'on-demand'`, or `'unknown'` until
@@ -204,6 +286,41 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       this.dispatchEvent?.(new Event('targetlivewindowchange'));
     }
 
+    #setError(reported: SvtaError | undefined, errors: readonly SvtaError[] | undefined): void {
+      if (!reported) {
+        // Cleared (new source). No event: `'error'` announces a failure, and
+        // consumers reset their own copy on source change.
+        this.#error = null;
+        this.#reportedCode = null;
+        return;
+      }
+      // Keyed on the code, not the object: a later append re-runs this effect
+      // with an equal-but-new array, and re-firing `'error'` for a condition
+      // already surfaced would look like a second failure.
+      if (this.#reportedCode === reported.code) return;
+      this.#reportedCode = reported.code;
+
+      // A verdict says a type emptied; the causes say whether anything could
+      // have played it. When they include something this engine simply doesn't
+      // implement, that's the more useful thing to tell a consumer, so it
+      // replaces the verdict's code on the surface.
+      const unsupported = hasUnsupportedFeatureCause(errors);
+      if (unsupported) {
+        // The only place this engine explains itself in prose, and it's a
+        // console: the viewer-facing sentence is the consumer's to localize from
+        // the code. Conditions ride along structured so the specifics stay
+        // inspectable.
+        console.error(this.#withSuggestion(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE), { conditions: errors });
+      }
+
+      this.#error = {
+        code: unsupported ? SVTA_UNSUPPORTED_PLAYBACK_FEATURE : reported.code,
+        message: reported.message ?? '',
+        ...(reported.data === undefined ? {} : { data: reported.data }),
+      };
+      this.dispatchEvent?.(new Event('error'));
+    }
+
     // -------------------------------------------------------------------------
     // Media element lifecycle
     // -------------------------------------------------------------------------
@@ -222,6 +339,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     destroy(): void {
       this.#cancelPendingPlay();
       this.#stopLiveSync();
+      this.#stopErrorSync();
       this.#engine.destroy();
     }
 
@@ -318,6 +436,49 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // Private
     // -------------------------------------------------------------------------
 
+    /** This class's static, if it set one. */
+    #alternativeMediaSuggestion(): string | undefined {
+      return (this.constructor as { alternativeMediaSuggestion?: string }).alternativeMediaSuggestion;
+    }
+
+    /** `message`, plus the alternative-Media sentence when this class names one. */
+    #withSuggestion(message: string): string {
+      const suggestion = this.#alternativeMediaSuggestion()?.trim();
+      return suggestion ? `${message} ${suggestion}` : message;
+    }
+
+    /**
+     * Log what this engine is delivering differently from what the playlist asked
+     * for. Neither condition stops playback, so neither is an error — they go to
+     * the console rather than the error surface.
+     *
+     * Once per source, not per parse: a live playlist reloads every target
+     * duration, and the timeline track re-parses on each one. Keyed on the notice
+     * rather than latched with a boolean so the two are independent, and cleared
+     * when the presentation unresolves so the next source starts quiet.
+     */
+    #reportDeliveryNotices(presentation: MaybeResolvedPresentation | undefined): void {
+      if (!isResolvedPresentation(presentation)) {
+        this.#noticed.clear();
+        return;
+      }
+
+      const trackId = liveTrackId(this.#signals.state);
+      const track = trackId ? findTrackById(presentation, trackId) : undefined;
+      if (!track || !isResolvedTrack(track)) return;
+      const metadata = getMediaPlaylistMetadata(track);
+      if (!metadata) return;
+
+      if (metadata.lowLatency && !this.#noticed.has('lowLatency')) {
+        this.#noticed.add('lowLatency');
+        console.warn(this.#withSuggestion(LOW_LATENCY_UNSUPPORTED_MESSAGE));
+      }
+      if (metadata.playlistType === 'EVENT' && !this.#noticed.has('dvr')) {
+        this.#noticed.add('dvr');
+        console.warn(this.#withSuggestion(DVR_EXPERIMENTAL_MESSAGE));
+      }
+    }
+
     #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
       return createSimpleHlsEngine({
         ...this.#config,
@@ -335,7 +496,11 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
   }
 
-  return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI>;
+  // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
+  // adding back to the type or callers can't read it.
+  return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI> & {
+    readonly alternativeMediaSuggestion: string | undefined;
+  };
 }
 
 /** Standalone SPF media adapter with no base class. */

@@ -81,6 +81,7 @@ export default {
     source:
       'Videoen kunne ikke indlæses, enten fordi serveren eller netværket fejlede, eller fordi formatet ikke er understøttet.',
     encrypted: 'Mediet er krypteret, og der er ingen nøgler til at dekryptere det.',
+    unplayable: 'Denne mediefil understøttes ikke af afspilleren.',
     title: 'Noget gik galt.',
     unexpected: 'Der opstod en fejl. Prøv igen.',
   },

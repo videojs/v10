@@ -79,6 +79,7 @@ export default {
     decode: 'A lejátszás adatsérülés miatt leállt, vagy a videó egyes tulajdonságait a böngészője nem támogatja.',
     source: 'A videó nem tölthető be hálózati vagy kiszolgálói hiba miatt, vagy a formátuma nem támogatott.',
     encrypted: 'A média titkosítva van és nincsenek kulcsok a visszafejtéshez.',
+    unplayable: 'A lejátszó nem támogatja ezt a médiát.',
     title: 'Valami hiba történt.',
     unexpected: 'Hiba történt. Kérjük, próbálja újra.',
   },

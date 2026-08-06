@@ -81,6 +81,7 @@ export default {
     source:
       'Lo mèdia a pas pogut èsser cargat, siá perque lo servidor o lo ret a fracassat siá perque lo format es pas compatible.',
     encrypted: 'Lo mèdia es chifrat e avèm pas las claus per lo deschifrar.',
+    unplayable: 'Aqueste mèdia es pas pres en carga pel lector.',
     title: "Quaucarèn s'es mal passat.",
     unexpected: "Una error s'es produsida. Provatz d'un autre còp.",
   },

@@ -188,9 +188,8 @@ Things this feature probably forces decisions on, not just additions:
   engine references segments via URI; if a back-seek targets a
   segment URI that 404s, the fetch fails. Whether this falls under
   this feature's scope (recover gracefully — surface a "history
-  expired" error to the consumer) or under
-  `[unsupported-case-error-mapping]` (generic fetch-failure mapping)
-  is an open boundary.
+  expired" error to the consumer) or under [errors](./errors.md)
+  (generic fetch-failure mapping) is an open boundary.
 - **DVR + LL-HLS composition.** Both are cluster A extensions on the
   same reload loop. Composition order: LL-HLS replaces the standard
   reload-loop behavior with its variant; DVR replaces the back-buffer
@@ -219,7 +218,7 @@ Things this feature probably forces decisions on, not just additions:
   producer needs to read the playlist's current first-segment, not
   a constant `0`.
 - **Server-side retention error handling.** Segment 404 on back-seek
-  fetch. Scope of this feature vs `[unsupported-case-error-mapping]`.
+  fetch. Scope of this feature vs [errors](./errors.md).
 - **`PLAYLIST-TYPE:VOD` semantics.** When a media playlist arrives
   with `PLAYLIST-TYPE:VOD` from the start (fully-resolved at first
   fetch, no reload needed), the engine should recognize this and
@@ -272,9 +271,10 @@ Things this feature probably forces decisions on, not just additions:
   event streams typically have PTS far from zero (recording starts
   at wall-clock time, not at PTS 0). `currentTime` / `seekable`
   semantics require non-zero-PTS support to be correct.
-- **`[unsupported-case-error-mapping]`** *(candidate)* — server-
-  side retention 404 errors on back-seek fall under this candidate's
-  scope for consumer-facing mapping.
+- **[errors](./errors.md)** — server-side retention 404 errors on
+  back-seek fall under that feature's scope for consumer-facing
+  mapping. Its phase 5 also covers DVR-as-degraded-but-playable
+  (SVTA 2039) while this feature is partially implemented.
 
 ## See also
 

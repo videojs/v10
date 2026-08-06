@@ -51,6 +51,7 @@ export interface TranslationParams {
   'errors.decode': never;
   'errors.source': never;
   'errors.encrypted': never;
+  'errors.unplayable': never;
   'errors.title': never;
   'errors.unexpected': never;
   'common.empty': never;

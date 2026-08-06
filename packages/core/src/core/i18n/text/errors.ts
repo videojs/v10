@@ -28,6 +28,11 @@ export const encryptedText = {
   text: 'This media could not be played because it could not be decrypted.',
 } as const satisfies Text;
 
+export const unplayableText = {
+  key: `${prefix}unplayable`,
+  text: 'This media is unsupported by the player.',
+} as const satisfies Text;
+
 export const titleText = {
   key: `${prefix}title`,
   text: 'Something went wrong.',

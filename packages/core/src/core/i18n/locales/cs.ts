@@ -79,6 +79,7 @@ export default {
     decode: 'Váš prohlížeč nepodporuje tento formát videa.',
     source: 'Video nemohlo být načteno, buď kvůli chybě serveru, sítě nebo proto, že daný formát není podporován.',
     encrypted: 'Chyba při dešifrování videa.',
+    unplayable: 'Toto médium přehrávač nepodporuje.',
     title: 'Něco se pokazilo.',
     unexpected: 'Došlo k chybě. Zkuste to prosím znovu.',
   },

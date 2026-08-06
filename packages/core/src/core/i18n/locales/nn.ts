@@ -81,6 +81,7 @@ export default {
     source:
       'Videoen kunne ikkje lastas ned, på grunn av ein nettverksfeil eller serverfeil, eller av di formatet ikkje er stoda.',
     encrypted: 'Mediefila er kryptert og vi manglar nyklar for å dekryptere ho.',
+    unplayable: 'Denne mediefila er ikkje støtta av spelaren.',
     title: 'Noko gjekk gale.',
     unexpected: 'Det oppstod ein feil. Ver venleg prøv igjen.',
   },

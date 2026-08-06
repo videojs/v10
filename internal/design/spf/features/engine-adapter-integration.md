@@ -57,7 +57,9 @@ the mixin.
 - **Curated state / error introspection** — consumers can read
   `signals.state.*.get()` directly, but there's no adapter-level
   "current playback state" / "current error" shape that doesn't
-  require knowing the engine's signal map.
+  require knowing the engine's signal map. The error half is owned by
+  [errors](./errors.md) (its phase 4 adds the `error` / `MediaError`
+  surface, mirroring the `hls-js` and `native-hls` error mixins).
 
 ## Implementation surface
 

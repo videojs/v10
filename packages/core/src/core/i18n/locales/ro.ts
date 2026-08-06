@@ -81,6 +81,7 @@ export default {
     source:
       'Conținutul media nu a putut fi încărcat, fie pentru că serverul sau rețeaua a eșuat, fie pentru că formatul nu este acceptat.',
     encrypted: 'Conținutul media este criptat și nu avem cheile pentru decriptare.',
+    unplayable: 'Acest fișier media nu este acceptat de player.',
     title: 'Ceva a mers greșit.',
     unexpected: 'A apărut o eroare. Vă rugăm să încercați din nou.',
   },

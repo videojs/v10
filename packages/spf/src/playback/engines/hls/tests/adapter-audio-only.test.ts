@@ -7,7 +7,15 @@
  * not in adapter contract).
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { SimpleHlsAudioOnlyMediaElement } from '../adapter-audio-only';
+import {
+  SVTA_NO_SUPPORTED_AUDIO_TRACK,
+  SVTA_NO_SUPPORTED_VIDEO_TRACK,
+  SVTA_UNSUPPORTED_AUDIO_FORMAT,
+  SVTA_UNSUPPORTED_DRM_SYSTEM,
+  SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
+} from '../../../../media/errors';
+import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
+import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter-audio-only';
 
 describe('SimpleHlsAudioOnlyMediaElement', () => {
   beforeEach(() => {
@@ -315,6 +323,87 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
+    });
+  });
+
+  // ---------------------------------------------------------------------------
+  // Error surface — parallels adapter.test.ts, with a narrower fatal policy
+  // ---------------------------------------------------------------------------
+  describe('error surface', () => {
+    class TestMedia extends SimpleHlsAudioOnlyMediaMixin(EventTarget) {}
+
+    const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
+
+    it('exposes no error before anything is reported', () => {
+      const media = new TestMedia();
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('surfaces the audio verdict as an ErrorLike and fires error', async () => {
+      const media = new TestMedia();
+      const fired: Event[] = [];
+      media.addEventListener('error', (event) => fired.push(event));
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }]);
+      await flush();
+
+      expect(fired).toHaveLength(1);
+      // No message: the consumer localizes from the code.
+      expect(media.error).toEqual({ code: SVTA_NO_SUPPORTED_AUDIO_TRACK, message: '' });
+      media.destroy();
+    });
+
+    it('ignores the video verdict — this media has no video track to fail', async () => {
+      // The whole difference in fatal policy. An audio-only engine composes no
+      // video selection, so a video verdict can't be about anything here, and
+      // surfacing it would describe a track type this media doesn't have.
+      const media = new TestMedia();
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_VIDEO_TRACK }]);
+      await flush();
+
+      expect(media.error).toBeNull();
+      media.destroy();
+    });
+
+    it('surfaces the unsupported-playback-feature code when a cause explains the verdict', async () => {
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_AUDIO_FORMAT, data: { trackType: 'audio', trackId: 'a1', mimeType: 'audio/aac' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(media.error?.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+      expect(media.error?.message).toBe('');
+      media.destroy();
+    });
+
+    it('logs the refusal', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const media = new TestMedia();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      const logged = spy.mock.calls
+        .map((call) => String(call[0]))
+        .filter((text) => text.startsWith(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE));
+      expect(logged).toHaveLength(1);
+      vi.restoreAllMocks();
+      media.destroy();
+    });
+
+    it('stops promoting conditions after destroy', async () => {
+      const media = new TestMedia();
+      media.destroy();
+
+      media.engine.state.errors.set([{ code: SVTA_NO_SUPPORTED_AUDIO_TRACK }]);
+      await flush();
+
+      expect(media.error).toBeNull();
     });
   });
 });

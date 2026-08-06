@@ -39,7 +39,7 @@ DRM, and the unsupported-case error mapping.
   #18 (multivariant CODECS),
   #19 (key-system)](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4).
 - **Foundational** for cluster D — `[hevc-variant-selection]`,
-  `[5.1-surround-selection]`, `[unsupported-case-error-mapping]`, and
+  `[5.1-surround-selection]`, [errors](./errors.md), and
   [drm-support](./drm-support.md) (GitHub issue #1411) all consume
   probing output.
 
@@ -57,7 +57,7 @@ layer onto specific phases per the
 | Media-playlist / segment-level capability checking | Per-segment CODECS verification + container detection at the media-playlist level. Catches mismatches the multivariant didn't declare | Not implemented. Tier 1; largely defensive, rare for well-formed manifests |
 | Key-system capability probing | `requestMediaKeySystemAccess` for each candidate key system (Widevine, PlayReady, FairPlay, FairPlay-AirPlay). Returns supported configurations. **DRM-adjacent boundary:** this feature owns Tier 1 probing only; EME setup, license fetch, key delivery live under [drm-support](./drm-support.md) (GitHub issue #1411) | Not implemented. Async — a slot-writer behavior, *not* the synchronous config-predicate route codec filtering took (see resolved open question) |
 | Cross-codec transition (`changeType()`) probing | Probe whether `SourceBuffer.changeType()` is available, plus pair-wise support for specific codec transitions (AVC ↔ HEVC, AAC stereo ↔ AC-3 5.1, etc.). Browser support is fragile and pair-specific | Not implemented. Consumers decide whether to attempt mid-stream switches based on this probe; the `changeType()` call itself lives in those consumer features |
-| Unsupported-case error surfacing | When no candidate survives filtering, surface a clear state rather than failing late in `createSourceBuffer` | Not implemented. A speculative per-type `noPlayable{Video,Audio}Tracks` flag was prototyped and **removed** (no consumer — write-only state + derivation stored as a slot). Today, when constraints prune a type that *has* tracks to empty, the behavior clears the selection (no pick) and `console.error`s as a placeholder; the late `createSourceBuffer` check is the backstop. Deferred in full to `[unsupported-case-error-mapping]`, which will replace the `console.error` with a surfaced shape (likely a derived `computed`, not a stored slot) once a consumer exists |
+| Unsupported-case error surfacing | When no candidate survives filtering, surface a clear state rather than failing late in `createSourceBuffer` | Implemented, but **owned by [errors](./errors.md)** rather than here — this feature is the producer. A speculative per-type `noPlayable{Video,Audio}Tracks` flag was prototyped here and **removed** (no consumer — write-only state + derivation stored as a slot); the shape that landed is an append-only sequence with severity derived at the adapter. When constraints prune a type that *has* tracks to empty, the behavior clears the selection (no pick) and reports the verdict; the late `createSourceBuffer` check remains the backstop |
 | Tier 2: customer probing overrides | Config-driven biases: "force AVC even when HEVC supported," "prefer hardware-backed DRM," "exclude codec X." Layered on top of Tier 1's spec-compliant filtering | Not implemented. The `canPlayTrack` config injection point is the natural seam (override the default probe) |
 
 ## What's in scope vs out of scope
@@ -67,8 +67,8 @@ layer onto specific phases per the
 - Browser-API wrappers (`isTypeSupported`, `canPlayType`,
   `requestMediaKeySystemAccess`, `changeType()` availability)
 - Filter-writer behavior + the filtered-candidate-set slot pattern
-- Error-surfacing primitive (used by both this feature and
-  `[unsupported-case-error-mapping]`)
+- Error-surfacing primitive — **owned by [errors](./errors.md)**; this
+  feature is a producer into it
 
 **Out of scope (separate Media-src candidate features):**
 - **[hevc-variant-selection](./hevc-variant-selection.md)** —
@@ -84,8 +84,8 @@ layer onto specific phases per the
   keys.
 - **Multi-language-audio Tier 2 mid-stream codec switch** —
   *consumer* of `changeType()` probing.
-- **`[unsupported-case-error-mapping]`** — sister feature; maps the
-  error-surfacing primitive to consumer-facing codes / messages.
+- **[errors](./errors.md)** — sister feature; owns the error-surfacing
+  primitive and the mapping to consumer-facing codes / messages.
 
 **Out of scope (different architectural layer):**
 - Adapter / consumer-side error display
@@ -173,15 +173,16 @@ layer onto specific phases per the
   empty (codec filtering *or* CDN-failover cooldown). It was deleted: nothing
   consumed it (write-only state), and it stored a derivation in a slot an
   effect wrote rather than a `computed`. Today an emptied type that *had* tracks
-  clears the selection (no pick) and `console.error`s as a placeholder; the late
+  clears the selection (no pick) and reports a verdict onto
+  [errors](./errors.md)'s sequence; the late
   `createSourceBuffer` check is the backstop, and a track with no declared
   `CODECS` (optional per spec) is unprobeable and passes through. The
   *had-candidates-vs-never-had-candidates* distinction a bare "candidate set is
   empty" check can't make (a video-only source's absent audio is empty but not
   an error) is **already** made — the clear/error is gated on a non-zero
-  pre-constraint track count for the type. When a consumer materializes,
-  `[unsupported-case-error-mapping]` replaces the `console.error` with the
-  surfaced shape (likely a `computed`).
+  pre-constraint track count for the type. The surfaced shape landed as an
+  append-only slot with severity derived above the engine, not the `computed`
+  this note anticipated.
 - **Container-detection scope → non-fMP4 detection (TS + raw AAC), per-track-type,
   marked unplayable.** The media-playlist parser relabels a resolved non-fMP4
   rendition (no `#EXT-X-MAP` + a recognized extension: `.ts` → `video/mp2t`,
@@ -203,20 +204,19 @@ layer onto specific phases per the
 
 ## Open questions
 
-- **Surfacing "nothing playable" as a (fatal) error.** The pre-pass can prune a
-  type to empty — every rendition undecodable (fatal: the source can't play at
-  all) or, transiently, every CDN cooled down (recoverable). Today both clear
-  the selection (no pick) and `console.error` — *uniformly*, without yet
-  distinguishing fatal from recoverable; the late `createSourceBuffer` check
-  remains the backstop. `[unsupported-case-error-mapping]` will want this
-  surfaced. Open: a derived
-  `computed` read by that consumer (preferred — see the removed `noPlayable*`
-  note under "Resolved"), or a dedicated **behavior** if surfacing needs to own
-  emit/clear, the fatal-vs-recoverable classification, and the
-  had-vs-never-had-candidates gating? Lean `computed` unless that
-  lifecycle/coordination forces a behavior. Whatever lands must distinguish
-  fatal (no decodable rendition) from recoverable (failover cooldown) so the
-  consumer doesn't fire a terminal error on a transient condition.
+- **Terminal vs transient, for an emptied type.** The surfacing half is settled:
+  [errors](./errors.md) owns it, and a type pruned to empty now reports a verdict
+  onto an append-only slot with severity derived at the adapter — not the
+  `computed` this doc leaned toward. What that resolution did *not* do is honor
+  this question's original requirement. The pre-pass empties a type either
+  because every rendition is undecodable (terminal) or because every CDN is
+  transiently cooled down (recoverable), and `track-switching` reports the same
+  verdict for both — deliberately, since reading a constraint's state would
+  couple it to every constraint that could ever prune. So a failover cooldown
+  can still surface a fatal error for a condition that would recover. The
+  residual question is tracked under
+  [multi-cdn-failover](./multi-cdn-failover.md), which owns the cooldown, rather
+  than here.
 - **Sharing the constraint pre-pass with user-selection logic.** Constraints
   (`excludeUnplayableTracks`, `excludeFailedCdns`) live *inside*
   `track-switching`'s pre-pass, invisible outside it. A hard constraint already
@@ -251,9 +251,9 @@ layer onto specific phases per the
   consumer.
 - **[drm-support](./drm-support.md)** (GitHub issue #1411) — owns EME +
   license; consumes key-system probing.
-- **`[unsupported-case-error-mapping]`** *(candidate)* — sister;
-  consumer-facing error mapping on top of this feature's error
-  primitive.
+- **[errors](./errors.md)** — sister; owns the error-surfacing
+  primitive this feature produces into, plus the consumer-facing
+  mapping on top of it.
 - **[container-support](./container-support.md)** — standalone
   feature (cluster-less) for *playing* non-fMP4 containers. The
   detection half landed here: MPEG-TS (`.ts` → `video/mp2t`) and raw
