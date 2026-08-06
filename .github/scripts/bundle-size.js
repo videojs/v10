@@ -40,6 +40,7 @@ const ROOT =
 const PACKAGES_DIR = join(ROOT, 'packages');
 
 const SKIP_PACKAGES = new Set([
+  'compiler',
   'react-native',
   'skins',
   'icons',
