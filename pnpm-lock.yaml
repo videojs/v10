@@ -229,6 +229,9 @@ importers:
 
   packages/compiler:
     dependencies:
+      '@videojs/utils':
+        specifier: workspace:*
+        version: link:../utils
       kleur:
         specifier: ^4.1.5
         version: 4.1.5
