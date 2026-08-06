@@ -152,14 +152,14 @@ export interface MediaMetadataState {
   contentTitle: string;
   /** The resolved content poster URL. Independent of the media's own `poster`. */
   contentPoster: string;
-  /** Set or clear the user title override. */
-  setContentTitle(value: string | null): void;
-  /** Set or clear the fallback used when neither the user nor media supplies a title. */
-  setDefaultContentTitle(value: string | null): void;
-  /** Set or clear the user poster override. */
-  setContentPoster(value: string | null): void;
-  /** Set or clear the fallback used when neither the user nor media supplies a poster. */
-  setDefaultContentPoster(value: string | null): void;
+  /** Set the user title override, or clear it with `null` or `undefined`. */
+  setContentTitle(value: string | null | undefined): void;
+  /** Set the fallback used when neither the user nor media supplies a title, or clear it. */
+  setDefaultContentTitle(value: string | null | undefined): void;
+  /** Set the user poster override, or clear it with `null` or `undefined`. */
+  setContentPoster(value: string | null | undefined): void;
+  /** Set the fallback used when neither the user nor media supplies a poster, or clear it. */
+  setDefaultContentPoster(value: string | null | undefined): void;
 }
 
 export interface MediaLiveState {
