@@ -129,6 +129,13 @@ describe('buildSkinArtifactGraph', () => {
         'volume-popover',
       ],
       packages: ['@videojs/core', '@videojs/icons'],
+      resources: {
+        styles: [
+          './canonical/styles/base.css',
+          './canonical/styles/tailwind.css',
+          './canonical/styles/themes/default.css',
+        ],
+      },
       symbols: {
         components: [
           'Controls',

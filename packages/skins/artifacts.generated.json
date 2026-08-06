@@ -9,9 +9,19 @@
         {
           "path": "./canonical/components/buttons/button-tooltip.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/popup.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": [],
         "packages": ["@videojs/core"],
@@ -29,9 +39,23 @@
         {
           "path": "./canonical/skins/default/video-controls.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/popup.tailwind.ts",
+          "role": "source"
+        },
+        {
+          "path": "./canonical/styles/skins/default-video-controls.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": ["fullscreen-button", "play-button", "seek-button", "time-slider", "volume-popover"],
         "packages": ["@videojs/core"],
@@ -49,9 +73,19 @@
         {
           "path": "./canonical/components/buttons/fullscreen-button.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/button.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": ["button-tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
@@ -69,9 +103,19 @@
         {
           "path": "./canonical/components/buttons/mute-button.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/button.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": [],
         "packages": ["@videojs/core", "@videojs/icons"],
@@ -89,9 +133,19 @@
         {
           "path": "./canonical/components/buttons/play-button.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/button.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": ["button-tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
@@ -109,9 +163,19 @@
         {
           "path": "./canonical/components/buttons/seek-button.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/button.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": ["button-tooltip"],
         "packages": ["@videojs/core", "@videojs/icons"],
@@ -129,9 +193,23 @@
         {
           "path": "./canonical/components/sliders/time-slider.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/popup.tailwind.ts",
+          "role": "source"
+        },
+        {
+          "path": "./canonical/styles/components/slider.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": [],
         "packages": ["@videojs/core", "@videojs/icons"],
@@ -149,9 +227,19 @@
         {
           "path": "./canonical/components/controls/volume-popover.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/popup.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": ["mute-button", "volume-slider"],
         "packages": ["@videojs/core"],
@@ -169,9 +257,23 @@
         {
           "path": "./canonical/components/sliders/volume-slider.skin.tsx",
           "role": "entry"
+        },
+        {
+          "path": "./canonical/styles/components/popup.tailwind.ts",
+          "role": "source"
+        },
+        {
+          "path": "./canonical/styles/components/slider.tailwind.ts",
+          "role": "source"
         }
       ],
-      "resources": {},
+      "resources": {
+        "styles": [
+          "./canonical/styles/base.css",
+          "./canonical/styles/tailwind.css",
+          "./canonical/styles/themes/default.css"
+        ]
+      },
       "dependencies": {
         "artifacts": [],
         "packages": ["@videojs/core"],
