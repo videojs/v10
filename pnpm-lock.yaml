@@ -251,9 +251,6 @@ importers:
 
   packages/core:
     dependencies:
-      '@videojs/jsx':
-        specifier: workspace:*
-        version: link:../jsx
       '@videojs/media':
         specifier: workspace:*
         version: link:../media
@@ -264,6 +261,9 @@ importers:
         specifier: workspace:*
         version: link:../utils
     devDependencies:
+      '@videojs/jsx':
+        specifier: workspace:*
+        version: link:../jsx
       jsdom:
         specifier: ^26.1.0
         version: 26.1.0(supports-color@7.2.0)

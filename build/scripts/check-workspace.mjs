@@ -227,10 +227,10 @@ function checkReleasePleaseConfig() {
   const linkedVersions = config.plugins.find((p) => p.type === 'linked-versions');
   const components = new Set(linkedVersions?.components ?? []);
 
-  // Every package with a version field should be registered.
+  // Every publishable package with a version field should be registered.
   for (const dir of getPackageDirs()) {
     const pkg = readPackageJson(dir);
-    if (!pkg.version) continue;
+    if (pkg.private || !pkg.version) continue;
 
     const pkgPath = `packages/${dir}`;
     if (!configPackages.has(pkgPath)) {
