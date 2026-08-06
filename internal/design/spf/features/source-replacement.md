@@ -147,7 +147,7 @@ semantics — every replaced source runs through the same parser.
     `state.presentation` with source B, verify B resolves and the
     captured identities differ from the new ones (proving teardown
     cascade ran)
-  - `packages/spf/src/playback/engines/hls/tests/adapter.test.ts` →
+  - `packages/spf/src/playback/adapters/simple-hls/tests/adapter.test.ts` →
     `"reuses the same engine instance when src changes"` /
     `"does not destroy the engine when src changes"` /
     `"keeps the attached media element across src changes"`

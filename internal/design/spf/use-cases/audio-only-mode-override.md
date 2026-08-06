@@ -291,21 +291,21 @@ parallel to the existing `simple-hls-video` pair.
 
 | Export | File | Purpose |
 |---|---|---|
-| `SimpleHlsAudioOnlyMediaElement` | `adapter-audio-only.ts` | Standalone adapter, no base class |
-| `SimpleHlsAudioOnlyMediaMixin` | `adapter-audio-only.ts` | Mixin for adapters with a custom base |
-| `SimpleHlsAudioOnlyMediaProps` / `…API` | `adapter-audio-only.ts` | Adapter API surface — same WHATWG src/preload/play contract as `SimpleHlsMediaElement` |
-| `simpleHlsAudioOnlyMediaDefaultProps` | `adapter-audio-only.ts` | Default-prop constants |
+| `SimpleHlsAudioOnlyMediaElement` | `simple-hls-audio-only/adapter.ts` | Standalone adapter, no base class |
+| `SimpleHlsAudioOnlyMediaMixin` | `simple-hls-audio-only/adapter.ts` | Mixin for adapters with a custom base |
+| `SimpleHlsAudioOnlyMediaProps` / `…API` | `simple-hls-audio-only/adapter.ts` | Adapter API surface — same WHATWG src/preload/play contract as `SimpleHlsMediaElement` |
+| `simpleHlsAudioOnlyMediaDefaultProps` | `simple-hls-audio-only/adapter.ts` | Default-prop constants |
 
 Public re-export: `@videojs/spf/hls` — all of the above ship via
 `packages/spf/src/playback/engines/hls/index.ts`.
 
-**Core — media wrapper** (`packages/media/src/dom/simple-hls-audio-only/`):
+**Media** (`packages/spf/src/playback/adapters/simple-hls-audio-only/`):
 
 | Export | File | Purpose |
 |---|---|---|
 | `SimpleHlsAudioOnlyMedia` | `index.ts` | Applies `SimpleHlsAudioOnlyMediaMixin` to `HTMLAudioElementHost` (audio host, not video — symmetric with `mux-audio`) |
 
-Public re-export: `@videojs/media/dom/simple-hls-audio-only`.
+Public re-export: `@videojs/spf/simple-hls-audio-only`.
 
 **HTML — custom element** (`packages/html/src/media/simple-hls-audio-only/`):
 
@@ -359,7 +359,7 @@ configuration drives end-of-stream correctly with no per-type changes.
     `TYPE=SUBTITLES` rendition
   - `"cleans up on destroy"` — `engine.destroy()` does not throw
 
-- `adapter-audio-only.test.ts` — 28 tests covering the WHATWG
+- `simple-hls-audio-only/tests/adapter.test.ts` — 28 tests covering the WHATWG
   `src`/`preload`/`play()`/`attach`/`detach`/`destroy` contract on
   `SimpleHlsAudioOnlyMediaElement`. Mirrors `adapter.test.ts` semantically
   (the variant differs in composition, not in adapter contract).
@@ -412,10 +412,10 @@ configuration drives end-of-stream correctly with no per-type changes.
 - [SPF Epics Working Doc](https://www.notion.so/35f97a7f89d08123a13fecab1ca1cac4) — Notion epic #4b
 - [`packages/spf/docs/hls-engine.md`](../../../../packages/spf/docs/hls-engine.md) — current HLS engine composition walkthrough; the variant subtracts from this baseline
 - [`packages/spf/src/playback/engines/hls/engine-audio-only.ts`](../../../../packages/spf/src/playback/engines/hls/engine-audio-only.ts) — Phase 1 engine factory
-- [`packages/spf/src/playback/engines/hls/adapter-audio-only.ts`](../../../../packages/spf/src/playback/engines/hls/adapter-audio-only.ts) — Phase 1 adapter
+- [`packages/spf/src/playback/adapters/simple-hls-audio-only/adapter.ts`](../../../../packages/spf/src/playback/adapters/simple-hls-audio-only/adapter.ts) — Phase 1 adapter
 - [`packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/engine-audio-only.test.ts) — Phase 1 engine integration tests
-- [`packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts`](../../../../packages/spf/src/playback/engines/hls/tests/adapter-audio-only.test.ts) — Phase 1 adapter tests
-- [`packages/media/src/dom/simple-hls-audio-only/media.ts`](../../../../packages/media/src/dom/simple-hls-audio-only/media.ts) — Phase 1 media wrapper
+- [`packages/spf/src/playback/adapters/simple-hls-audio-only/tests/adapter.test.ts`](../../../../packages/spf/src/playback/adapters/simple-hls-audio-only/tests/adapter.test.ts) — Phase 1 adapter tests
+- [`packages/spf/src/playback/adapters/simple-hls-audio-only/media.ts`](../../../../packages/spf/src/playback/adapters/simple-hls-audio-only/media.ts) — Phase 1 media wrapper
 - [`packages/html/src/media/simple-hls-audio-only/media.ts`](../../../../packages/html/src/media/simple-hls-audio-only/media.ts) — Phase 1 HTML custom element
 - [`packages/react/src/media/simple-hls-audio-only/media.tsx`](../../../../packages/react/src/media/simple-hls-audio-only/media.tsx) — Phase 1 React component
 - [`apps/sandbox/templates/html-simple-hls-audio-only/`](../../../../apps/sandbox/templates/html-simple-hls-audio-only/) — Phase 1 HTML sandbox demo template
