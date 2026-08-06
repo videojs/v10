@@ -136,6 +136,7 @@ export interface YouTubePlayerApi {
   cueVideoById(options: { videoId: string; startSeconds?: number }): void;
   loadPlaylist(options: { list: string; listType?: string }): void;
   cuePlaylist(options: { list: string; listType?: string }): void;
+  stopVideo(): void;
   getOption(module: string, option: string): unknown;
   setOption(module: string, option: string, value: unknown): void;
   addEventListener(type: string, listener: (event: { data: number }) => void): void;
@@ -270,14 +271,28 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   /** Reload the current source via the iframe API; deferred until the player is ready. */
   async load() {
-    if (!this.#src) return;
     if (!this.#player || !this.#playerReady) {
       // `cueVideoById`/`loadVideoById` fail before `onReady`; replay the load then.
+      // A cleared src replays too, so the barrier below always gets settled.
       this.#pendingLoad = !!this.#target;
       return;
     }
-    this.#resetState();
     const load = this.#beginLoad();
+    // Reset before bailing on an empty src: a cleared source has nothing to load,
+    // but what we report about the old video still has to go.
+    this.#resetState();
+    if (!this.#src) {
+      // The embed has to stop too. Left running it keeps playing, and the poll
+      // writes the state just cleared straight back.
+      load.resolve();
+      this.#stopPolling();
+      try {
+        this.#player.stopVideo();
+      } catch {
+        // The iframe API throws if the player was destroyed mid-flight.
+      }
+      return;
+    }
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
     const parsed = parseYouTubeSource(this.#src);

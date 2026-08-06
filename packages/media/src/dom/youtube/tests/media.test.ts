@@ -46,6 +46,7 @@ class MockPlayer {
   cueVideoById = vi.fn();
   loadPlaylist = vi.fn();
   cuePlaylist = vi.fn();
+  stopVideo = vi.fn();
   getOption = vi.fn(() => []);
   setOption = vi.fn();
   destroy = vi.fn();
@@ -686,5 +687,42 @@ describe('YouTubeMedia source', () => {
 
     expect(media.src).toBe('');
     expect(media.source).toBe(null);
+  });
+
+  it('stops the embed and resets state when the source is cleared', async () => {
+    const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
+    const { player } = await attachAndLoad(media);
+    player.emit('onStateChange', STATE.PLAYING);
+    expect(media.duration).toBe(60);
+
+    media.source = null;
+    await Promise.resolve();
+
+    // Left running, the embed keeps playing and the poll writes state back.
+    expect(player.stopVideo).toHaveBeenCalled();
+    expect(media.duration).toBeNaN();
+    expect(media.currentTime).toBe(0);
+    expect(media.paused).toBe(true);
+    await expect(media.play()).resolves.toBeUndefined();
+    media.detach();
+  });
+
+  it('unblocks pending play() when the source is cleared before the player is ready', async () => {
+    const media = new YouTubeMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+    const player = await waitForEngine(media);
+
+    // Setting src while the player is still loading defers the load, so the
+    // clear below is what the replay on ready has to cope with. Nothing else
+    // settles the barrier `attach()` opened.
+    media.src = 'aqz-KE-bpKQ';
+    media.source = null;
+    const pending = media.play();
+    player.ready();
+
+    await expect(pending).resolves.toBeUndefined();
+    media.detach();
   });
 });
