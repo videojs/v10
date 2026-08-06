@@ -86,6 +86,85 @@ describe('formatCompilerDiagnosticJsonLine', () => {
 });
 
 describe('CompilerError diagnostics', () => {
+  it('rejects syntax-invalid TSX before transforms run', async () => {
+    try {
+      await compile(`export function App( { return <Foo/> }`, {
+        filename: '/workspace/broken.tsx',
+      });
+      throw new Error('Expected compile to fail');
+    } catch (error) {
+      expect(error).toBeInstanceOf(CompilerError);
+      expect((error as CompilerError).diagnostics[0]).toMatchObject({
+        level: 'error',
+        code: expect.stringMatching(/^TS\d+$/),
+        file: '/workspace/broken.tsx',
+        line: 1,
+        plugin: 'typescript',
+      });
+    }
+  });
+
+  it('attributes reported and thrown failures to their plugin', async () => {
+    const reported = await compile(`export const value = 1;`, {
+      filename: '/workspace/input.tsx',
+      config: {
+        plugins: [
+          {
+            name: 'fixture-report',
+            setup(context) {
+              context.report({ level: 'warning', code: 'fixture-warning', message: 'Check this' });
+              return {};
+            },
+          },
+        ],
+      },
+    });
+    expect(reported.diagnostics[0]?.plugin).toBe('fixture-report');
+
+    const failingPlugin = {
+      name: 'fixture-transform',
+      setup() {
+        return {
+          transform: () => () => {
+            throw new Error('Transform failed');
+          },
+        };
+      },
+    };
+    await expect(
+      compile(`export const value = 1;`, {
+        filename: '/workspace/input.tsx',
+        config: { plugins: [failingPlugin] },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: [expect.objectContaining({ message: 'Transform failed', plugin: 'fixture-transform' })],
+    });
+  });
+
+  it('attributes finish failures even when the plugin has no transform', async () => {
+    await expect(
+      compile(`export const value = 1;`, {
+        filename: '/workspace/input.tsx',
+        config: {
+          plugins: [
+            {
+              name: 'fixture-finish',
+              setup() {
+                return {
+                  finish() {
+                    throw new Error('Finish failed');
+                  },
+                };
+              },
+            },
+          ],
+        },
+      })
+    ).rejects.toMatchObject({
+      diagnostics: [expect.objectContaining({ message: 'Finish failed', plugin: 'fixture-finish' })],
+    });
+  });
+
   it('preserves source ranges thrown from transforms', async () => {
     const transform = (): ts.TransformerFactory<ts.SourceFile> => () => (sourceFile) => {
       throw new DiagnosticError('Fixture transform failed', {

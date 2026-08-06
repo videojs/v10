@@ -1,5 +1,6 @@
 import { dirname, relative, resolve, sep } from 'node:path';
 import ts from 'typescript';
+import { getImportSource } from '../utils/import-declaration';
 
 /**
  * Per-identifier rewrite target. `source` may be either a bare specifier
@@ -60,9 +61,8 @@ function rewriteImportStatement(
   factory: ts.NodeFactory
 ): ts.Statement[] | null {
   if (!ts.isImportDeclaration(stmt)) return null;
-  if (!ts.isStringLiteral(stmt.moduleSpecifier)) return null;
-
-  const originalSource = stmt.moduleSpecifier.text;
+  const originalSource = getImportSource(stmt);
+  if (originalSource === undefined) return null;
   const rule = rules[originalSource];
   if (rule === undefined) return null;
 

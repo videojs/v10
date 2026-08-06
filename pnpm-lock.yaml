@@ -233,7 +233,7 @@ importers:
         specifier: ^4.1.5
         version: 4.1.5
       typescript:
-        specifier: ^6.0.2
+        specifier: 6.0.2
         version: 6.0.2
     devDependencies:
       tsdown:

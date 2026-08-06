@@ -1,4 +1,5 @@
 import ts from 'typescript';
+import { collectReferencedIdentifiers } from '../utils/references';
 
 /**
  * Remove top-level `const x = <expr>;` declarations whose name isn't
@@ -53,51 +54,11 @@ export function dropUnusedLocals(): ts.TransformerFactory<ts.SourceFile> {
   };
 }
 
-/** Walk every non-declaration position in the source, collecting referenced identifier names. */
-function collectReferencedIdentifiers(sourceFile: ts.SourceFile): Set<string> {
-  const used = new Set<string>();
-
-  const visit = (node: ts.Node, declaring: boolean): void => {
-    if (ts.isImportDeclaration(node)) return;
-
-    // Variable declarators: their name is a declaration, but the initializer
-    // is a normal expression that may reference *other* identifiers.
-    if (ts.isVariableDeclaration(node)) {
-      if (node.initializer) visit(node.initializer, false);
-      return;
-    }
-
-    if (ts.isIdentifier(node) && !declaring) {
-      used.add(node.text);
-    }
-
-    if (ts.isJsxOpeningElement(node) || ts.isJsxSelfClosingElement(node) || ts.isJsxClosingElement(node)) {
-      collectFromTagName(node.tagName, used);
-    }
-
-    ts.forEachChild(node, (c) => visit(c, declaring));
-  };
-
-  ts.forEachChild(sourceFile, (c) => visit(c, false));
-  return used;
-}
-
-function collectFromTagName(name: ts.JsxTagNameExpression, into: Set<string>): void {
-  if (ts.isIdentifier(name)) {
-    into.add(name.text);
-    return;
-  }
-  if (ts.isPropertyAccessExpression(name)) {
-    collectFromTagName(name.expression as ts.JsxTagNameExpression, into);
-  }
-}
-
 /**
  * Conservative pattern check: drop only class-list-shaped `const X = [<parts>]`
- * where every item is a string literal, identifier, dotted access, or nested
- * array of the same, and at least one item is clearly class-like (a string
- * literal or dotted token access). Skipping generic identifier arrays keeps
- * import-reference sentinels and other materialized bindings intact.
+ * where every item is a string literal, identifier, or nested array of the
+ * same, and at least one item is a string literal. Property access is not
+ * considered pure because evaluating it can invoke a getter.
  */
 function isPureExpression(node: ts.Expression): boolean {
   return ts.isArrayLiteralExpression(node) && node.elements.every(isPureArrayItem) && hasClassLikeItem(node);
@@ -106,7 +67,6 @@ function isPureExpression(node: ts.Expression): boolean {
 function isPureArrayItem(node: ts.Expression): boolean {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return true;
   if (ts.isIdentifier(node)) return true;
-  if (ts.isPropertyAccessExpression(node)) return isPureArrayItem(node.expression);
   if (ts.isParenthesizedExpression(node)) return isPureArrayItem(node.expression);
   if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) return isPureArrayItem(node.expression);
   if (ts.isArrayLiteralExpression(node)) {
@@ -119,7 +79,6 @@ function hasClassLikeItem(node: ts.ArrayLiteralExpression): boolean {
   return node.elements.some((item) => {
     if (ts.isSpreadElement(item)) return false;
     if (ts.isStringLiteral(item) || ts.isNoSubstitutionTemplateLiteral(item)) return true;
-    if (ts.isPropertyAccessExpression(item)) return true;
     if (ts.isParenthesizedExpression(item)) return hasClassLikeExpression(item.expression);
     if (ts.isAsExpression(item) || ts.isTypeAssertionExpression(item)) return hasClassLikeExpression(item.expression);
     if (ts.isArrayLiteralExpression(item)) return hasClassLikeItem(item);
@@ -129,7 +88,6 @@ function hasClassLikeItem(node: ts.ArrayLiteralExpression): boolean {
 
 function hasClassLikeExpression(node: ts.Expression): boolean {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return true;
-  if (ts.isPropertyAccessExpression(node)) return true;
   if (ts.isParenthesizedExpression(node)) return hasClassLikeExpression(node.expression);
   if (ts.isAsExpression(node) || ts.isTypeAssertionExpression(node)) return hasClassLikeExpression(node.expression);
   return ts.isArrayLiteralExpression(node) && hasClassLikeItem(node);
