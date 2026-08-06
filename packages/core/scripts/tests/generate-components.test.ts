@@ -3,7 +3,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
-import { generateComponents } from '../generate-components';
+import { generateComponents, normalizeImportPath } from '../generate-components';
 
 const STUB = 'const defineComponent: any = (manifest?: any) => manifest ?? {};';
 
@@ -30,6 +30,11 @@ function setup(): { dir: string; output: string; pattern: string } {
 }
 
 describe('generateComponents', () => {
+  it('normalizes generated import paths for ESM', () => {
+    expect(normalizeImportPath('controls\\play-button-component.ts')).toBe('./controls/play-button-component');
+    expect(normalizeImportPath('..\\shared\\text-component.tsx')).toBe('../shared/text-component');
+  });
+
   it('emits deterministic component exports and metadata from manifests', async () => {
     const { dir, output, pattern } = setup();
     const first = await generateComponents({ components: [pattern], output }, { cwd: dir });

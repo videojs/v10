@@ -22,6 +22,13 @@ export default defineConfig({
           setupFiles: ['src/dom/tests/setup.ts'],
         },
       },
+      {
+        extends: true,
+        test: {
+          name: 'core/scripts',
+          include: ['scripts/**/*.test.ts'],
+        },
+      },
     ],
   },
 });
