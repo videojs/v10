@@ -5,6 +5,7 @@ export * from './error';
 export * as features from './feature.parts';
 export * from './fullscreen';
 export * from './live';
+export * from './metadata';
 export * from './orientation-lock';
 export * from './pip';
 export * from './playback';

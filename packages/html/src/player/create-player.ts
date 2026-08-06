@@ -1,11 +1,12 @@
-import type {
-  AnyPlayerFeature,
-  AudioFeatures,
-  AudioPlayerStore,
-  PlayerStore,
-  PlayerTarget,
-  VideoFeatures,
-  VideoPlayerStore,
+import {
+  type AnyPlayerFeature,
+  type AudioFeatures,
+  type AudioPlayerStore,
+  combinePlayerFeatureConfigs,
+  type PlayerStore,
+  type PlayerTarget,
+  type VideoFeatures,
+  type VideoPlayerStore,
 } from '@videojs/core/dom';
 import { combine, createStore } from '@videojs/store';
 
@@ -81,7 +82,8 @@ export function createPlayer<const Features extends AnyPlayerFeature[]>(
 ): CreatePlayerResult<PlayerStore<Features>>;
 
 export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): CreatePlayerResult<PlayerStore> {
-  const slice = combine<PlayerTarget, AnyPlayerFeature[]>(...config.features);
+  const slice = combine(...config.features);
+  const featureConfig = combinePlayerFeatureConfigs(config.features);
 
   function create(): PlayerStore {
     return createStore<PlayerTarget>()(slice);
@@ -92,6 +94,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     mediaContext,
     containerContext,
     factory: create,
+    config: featureConfig,
   });
 
   const ContainerMixin = createContainerMixin<PlayerStore>({

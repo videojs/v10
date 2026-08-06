@@ -20,6 +20,7 @@ Skip a record for ordinary implementation detail, inventories, status logs, or i
 | `media/` | Media model architecture |
 | `site/` | Documentation-site decisions |
 | `spf/` | Streaming framework architecture, conventions, feature registry, and use-case compositions |
+| `store/` | Player-feature state ownership, configuration, and derivation |
 | `ui/` | Component and interaction designs |
 
 Put new records in an area directory. Add a new area only when at least two durable records are likely; otherwise use the nearest existing area.
