@@ -105,6 +105,24 @@ function buildIconMap(icons: { name: string; content: string }[]): string {
   return `export const icons = {\n${entries},\n};\n`;
 }
 
+function buildCanonicalComponents(icons: { varName: string }[]): string {
+  const components = icons.map(({ varName }) => {
+    const name = `${iconBases(varName).pascal}Icon`;
+    return `export const ${name} = createComponent({ name: '${name}' });`;
+  });
+
+  return [`import { createComponent } from '@videojs/core/jsx-runtime';`, ``, ...components, ``].join('\n');
+}
+
+function buildCanonicalComponentTypes(icons: { varName: string }[]): string {
+  const components = icons.map(({ varName }) => {
+    const name = `${iconBases(varName).pascal}Icon`;
+    return `export declare const ${name}: Component<EmptyProps>;`;
+  });
+
+  return [`import type { Component, EmptyProps } from '@videojs/core/jsx-runtime';`, ``, ...components, ``].join('\n');
+}
+
 function buildElementIndex(sets: string[]): string {
   const loaders = sets
     .map(
@@ -312,6 +330,11 @@ async function buildIconSet(setName: string): Promise<void> {
     varName: file.replace('.svg', ''),
     content: readFileSync(join(ASSETS_DIR, setName, file), 'utf8'),
   }));
+
+  const componentsDir = join(DIST_DIR, 'components', setName);
+  ensureDir(componentsDir);
+  writeFileSync(join(componentsDir, 'index.js'), buildCanonicalComponents(icons));
+  writeFileSync(join(componentsDir, 'index.d.ts'), buildCanonicalComponentTypes(icons));
 
   // Build react and html per-icon modules
   for (const framework of FRAMEWORKS) {

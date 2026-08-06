@@ -2,6 +2,25 @@
   "version": 1,
   "artifacts": [
     {
+      "id": "play-button",
+      "kind": "component",
+      "entry": "./canonical/components/buttons/play-button.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/buttons/play-button.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "styles": [],
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core", "@videojs/icons"],
+        "components": ["PlayButton", "Tooltip"],
+        "icons": ["PauseIcon", "PlayIcon", "RestartIcon"],
+        "elements": []
+      }
+    },
+    {
       "id": "time-slider",
       "kind": "component",
       "entry": "./canonical/components/sliders/time-slider.skin.tsx",

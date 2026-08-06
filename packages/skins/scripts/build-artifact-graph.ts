@@ -10,6 +10,7 @@ export function buildSkinArtifactGraph(): Promise<BuildArtifactGraphResult> {
     rootDir: skinsRoot,
     dependencyModules: {
       '@videojs/core/components': 'component',
+      '@videojs/icons/components': 'icon',
     },
     isArtifactEntry: (fileName) => fileName.endsWith('.skin.tsx'),
   });

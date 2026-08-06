@@ -14,6 +14,14 @@
     "./dist/element/**/*.js"
   ],
   "exports": {
+    "./components": {
+      "types": "./dist/components/default/index.d.ts",
+      "default": "./dist/components/default/index.js"
+    },
+    "./components/*": {
+      "types": "./dist/components/*/index.d.ts",
+      "default": "./dist/components/*/index.js"
+    },
     "./react": {
       "types": "./dist/react/default/index.d.ts",
       "default": "./dist/react/default/index.js"
@@ -55,9 +63,11 @@
     "build:watch": "pnpm run build -- --watch",
     "dev": "pnpm run build:watch",
     "clean": "rimraf dist",
-    "format": "node --import tsx scripts/format.ts"
+    "format": "node --import tsx scripts/format.ts",
+    "test": "pnpm run build && vitest run"
   },
   "dependencies": {
+    "@videojs/core": "workspace:*",
     "svgo": "^4.0.2"
   },
   "devDependencies": {
@@ -66,7 +76,8 @@
     "@types/react": "^19.2.17",
     "@videojs/utils": "workspace:*",
     "react": "^19.2.8",
-    "tsx": "^4.23.1"
+    "tsx": "^4.23.1",
+    "vitest": "^4.1.10"
   },
   "publishConfig": {
     "access": "public"

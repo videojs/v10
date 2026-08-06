@@ -9,6 +9,7 @@ const DEFAULT_CANONICAL_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), 
 export const CANONICAL_PACKAGE_IMPORTS: ReadonlySet<string> = new Set([
   '@videojs/core/components',
   '@videojs/core/jsx-runtime',
+  '@videojs/icons/components',
 ]);
 
 export interface CanonicalImportViolation {

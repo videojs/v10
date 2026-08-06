@@ -16,4 +16,4 @@ The initial component paths are:
 - `components/sliders/volume-slider.skin.tsx`
 - `components/sliders/time-slider.skin.tsx`
 
-PlayButton source waits for the named canonical icon export owned by #1956. Artifact entries are authored in `../artifacts.ts`; styles, complete Skin compositions, and generated target output remain separate stack boundaries.
+Canonical components import icon roles from `@videojs/icons/components`; target lowering replaces that compiler-only source contract with local named React exports or exact HTML registrations. Artifact entries are authored in `../artifacts.ts`; styles, complete Skin compositions, and generated target output remain separate stack boundaries.
