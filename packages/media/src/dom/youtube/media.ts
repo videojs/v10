@@ -14,26 +14,24 @@ import type { MediaPreloadType, TextTrackListLike, Video } from '../../core/type
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 
 /**
- * YouTube engine options. Player parameters are YouTube's engine configuration,
- * so they are serialized verbatim onto the embed URL
- * (https://developers.google.com/youtube/player_parameters).
+ * YouTube engine options, spelled exactly as YouTube spells them
+ * (https://developers.google.com/youtube/player_parameters). They are serialized
+ * onto the embed URL verbatim, so what you write here is what the player reads.
  *
- * Parameters YouTube has deprecated (`modestbranding`, `showinfo`, `autohide`,
- * `theme`, and `listType: 'search'`) are deliberately absent. The index
- * signature still carries anything not listed here, including whatever YouTube
- * adds next.
+ * Parameters the host owns are deliberately absent: `autoplay`, `controls`, and
+ * `playsinline` come from the props of the same name, so configuring them here
+ * would give two ways to say one thing. Parameters YouTube has deprecated
+ * (`modestbranding`, `showinfo`, `autohide`, `theme`, and `listType: 'search'`)
+ * are absent too. The index signature still carries anything not listed here, so
+ * undocumented knobs and whatever YouTube adds next keep working.
  */
 export interface YouTubeEngineConfig extends Record<string, unknown> {
-  /** Play the initial video as soon as the player loads. Defaults to `0`. */
-  autoplay?: 0 | 1;
   /** ISO 639-1 language to display captions in. Pair with `cc_load_policy`. */
   cc_lang_pref?: string;
   /** Show closed captions by default, even if the viewer has turned them off. */
   cc_load_policy?: 1;
   /** Progress-bar highlight color. Defaults to `'red'`. */
   color?: 'red' | 'white';
-  /** Display the player controls. Defaults to `1`. */
-  controls?: 0 | 1;
   /** Stop responding to keyboard controls. Defaults to `0`. */
   disablekb?: 0 | 1;
   /** Allow the player to be driven through the IFrame Player API. Defaults to `0`. */
@@ -56,8 +54,6 @@ export interface YouTubeEngineConfig extends Record<string, unknown> {
   origin?: string;
   /** Comma-separated video ids to play after the one named by the URL path. */
   playlist?: string;
-  /** Play inline rather than fullscreen on iOS. */
-  playsinline?: 0 | 1;
   /** Draw related videos from the same channel (`0`) or anywhere (`1`). Defaults to `1`. */
   rel?: 0 | 1;
   /** Begin playback this many seconds from the start of the video. */

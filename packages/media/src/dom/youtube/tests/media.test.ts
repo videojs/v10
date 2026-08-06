@@ -219,7 +219,7 @@ describe('buildYouTubeIframeSrc', () => {
     expect(src).toContain('cc_load_policy=1');
   });
 
-  it('serializes the documented player parameters', () => {
+  it('serializes engine options verbatim', () => {
     const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
       source: {
         engine: {
@@ -244,6 +244,14 @@ describe('buildYouTubeIframeSrc', () => {
     expect(src).toContain(`origin=${encodeURIComponent('https://example.com')}`);
     expect(src).toContain('playlist=aqz-KE-bpKQ');
     expect(src).toContain(`widget_referrer=${encodeURIComponent('https://widgets.example.com')}`);
+  });
+
+  it('carries undeclared engine options through', () => {
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
+      // Undocumented knobs and whatever YouTube adds next stay usable.
+      source: { engine: { some_future_param: 'x' } },
+    });
+    expect(src).toContain('some_future_param=x');
   });
 
   it('lets engine options override the defaults the host sets', () => {
