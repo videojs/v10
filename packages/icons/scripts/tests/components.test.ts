@@ -11,7 +11,7 @@ describe('canonical icon components', () => {
       readFile(resolve(componentsRoot, set, 'index.d.ts'), 'utf8'),
     ]);
 
-    expect(source).toContain(`import { createComponent } from '@videojs/core/jsx-runtime';`);
+    expect(source).toContain(`import { createComponent } from '@videojs/jsx';`);
     expect(source).toContain(`export const PlayIcon = createComponent({ name: 'PlayIcon' });`);
     expect(source).toContain(`export const PauseIcon = createComponent({ name: 'PauseIcon' });`);
     expect(source).toContain(`export const RestartIcon = createComponent({ name: 'RestartIcon' });`);
