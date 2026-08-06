@@ -6,5 +6,5 @@
     "declarationDir": "types"
   },
   "references": [{ "path": "../utils" }, { "path": "../store" }, { "path": "../media" }],
-  "include": ["src/core/**/*.ts"]
+  "include": ["src/*.ts", "src/core/**/*.ts"]
 }

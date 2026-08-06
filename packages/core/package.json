@@ -29,6 +29,21 @@
       "development": "./dist/dev/dom.js",
       "default": "./dist/default/dom.js"
     },
+    "./components": {
+      "types": "./dist/dev/components.d.ts",
+      "development": "./dist/dev/components.js",
+      "default": "./dist/default/components.js"
+    },
+    "./jsx-runtime": {
+      "types": "./dist/dev/jsx-runtime.d.ts",
+      "development": "./dist/dev/jsx-runtime.js",
+      "default": "./dist/default/jsx-runtime.js"
+    },
+    "./jsx-dev-runtime": {
+      "types": "./dist/dev/jsx-dev-runtime.d.ts",
+      "development": "./dist/dev/jsx-dev-runtime.js",
+      "default": "./dist/default/jsx-dev-runtime.js"
+    },
     "./i18n": {
       "types": "./dist/dev/i18n.d.ts",
       "development": "./dist/dev/i18n.js",
@@ -52,13 +67,16 @@
     "dist"
   ],
   "scripts": {
+    "generate:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js",
+    "check:components": "node --import tsx ./scripts/generate-components.ts --config components.config.js --check",
     "generate:locales": "node --import tsx ./scripts/generate-i18n-locales.ts",
     "generate:i18n-types": "node --import tsx ./scripts/generate-i18n-types.ts",
-    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types",
+    "prebuild": "pnpm run generate:locales && pnpm run generate:i18n-types && pnpm run generate:components",
     "build": "tsdown",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
+    "test": "pnpm run check:components && pnpm run test:types && vitest run",
+    "test:types": "tsgo --project ./src/core/ui/tests/tsconfig.json",
     "test:watch": "vitest",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
@@ -70,6 +88,7 @@
   "devDependencies": {
     "jsdom": "^26.1.0",
     "tsdown": "^0.22.14",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
