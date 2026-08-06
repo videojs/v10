@@ -17,17 +17,23 @@ import { PlayerPage } from '../page-objects/player';
  * PRD's exact legacy-format scenario. The engine derives `video/mp2t` from the
  * segment extension (no `EXT-X-MAP`), `canPlayTrack` prunes every video
  * rendition as unplayable, and `track-switching` reports the verdict for a
- * type that has renditions but none selectable.
+ * type that has renditions but none selectable. The adapter then substitutes
+ * the unsupported-playback-feature code, because a cause it has no pipeline
+ * for is more useful to a consumer than "a type emptied".
  *
- * Assertions are split deliberately: the SVTA code is the engine's contract
- * and is asserted exactly, while dialog copy is matched loosely. That copy is
- * a known-imperfect surface — an SVTA code has no `MediaError` translation, so
- * the dialog shows the engine's own unlocalized `message` verbatim. Pinning
- * the exact string here would make this spec fail on the localization work
- * that fixes it.
+ * Assertions are split deliberately. The code the adapter surfaces is the
+ * engine's contract and is asserted exactly — as is the empty `message`, whose
+ * emptiness is load-bearing: `resolveErrorDialogDescription` prefers a
+ * non-empty message over the translation a code resolves to, so engine prose
+ * here would silently displace the localized copy. Dialog copy is asserted
+ * against the player's own `errors.unplayable` translation, which is where
+ * viewer-facing wording lives now that the engine reports a code instead.
  *
  * @see internal/design/spf/features/errors.md
  */
+
+/** SVTA 99 [Custom] 001 — the engine has no pipeline for what the source needs. */
+const SVTA_UNSUPPORTED_PLAYBACK_FEATURE = 99001;
 
 /** SVTA 2 [Playback] 011 — a source with video renditions, none of them playable. */
 const SVTA_NO_SUPPORTED_VIDEO_TRACK = 2011;
@@ -37,6 +43,9 @@ const SVTA_UNSUPPORTED_VIDEO_FORMAT = 1004;
 
 /** The generic copy the dialog falls back to when nothing better resolved. */
 const UNEXPECTED_COPY = 'An unexpected error occurred.';
+
+/** `errors.unplayable` — what the surfaced code resolves to in the default locale. */
+const UNPLAYABLE_COPY = 'This media is unsupported by the player.';
 
 const TS_PAGE = '/pages/html-simple-hls-video-ts.html';
 const FMP4_PAGE = '/pages/html-simple-hls-video-fmp4.html';
@@ -77,16 +86,25 @@ async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
 }
 
 test.describe('SPF unsupported-source errors', () => {
-  test('an MPEG-TS source with no fMP4 rendition surfaces a fatal no-playable-video verdict', async ({ page }) => {
+  test('an MPEG-TS source with no fMP4 rendition surfaces a fatal unsupported-playback-feature error', async ({
+    page,
+  }) => {
     await page.goto(TS_PAGE);
 
     const error = await waitForSurfacedError(page);
 
-    // The verdict, not one of its causes: a single unplayable rendition
-    // doesn't fail a source, so only the "nothing left to select" outcome is
-    // fatal enough to reach the media surface.
-    expect(error.code).toBe(SVTA_NO_SUPPORTED_VIDEO_TRACK);
-    expect(error.message).not.toBe('');
+    // Only a *verdict* is fatal enough to reach this surface — a single
+    // unplayable rendition doesn't fail a source. But the code that lands here
+    // isn't the verdict's: the sequence also holds a cause this engine has no
+    // pipeline for (1004, an MPEG-TS container), and the adapter substitutes
+    // the unsupported-playback-feature code because "we don't implement this"
+    // is what a consumer can act on. Both original codes stay in the
+    // sequence — see the next test.
+    expect(error.code).toBe(SVTA_UNSUPPORTED_PLAYBACK_FEATURE);
+    // Deliberately empty. Viewer-facing copy is the consumer's to localize from
+    // the code, and a message here would take precedence over the player's
+    // `errors.unplayable` translation in the dialog.
+    expect(error.message).toBe('');
   });
 
   test('the reported sequence keeps the per-rendition cause behind the verdict', async ({ page }) => {
@@ -104,18 +122,19 @@ test.describe('SPF unsupported-source errors', () => {
     expect(codes.indexOf(SVTA_UNSUPPORTED_VIDEO_FORMAT)).toBeLessThan(codes.indexOf(SVTA_NO_SUPPORTED_VIDEO_TRACK));
   });
 
-  test('the verdict opens the error dialog with engine-supplied copy', async ({ page }) => {
+  test('the verdict opens the error dialog with the player’s unplayable copy', async ({ page }) => {
     await page.goto(TS_PAGE);
 
     const errorDialog = page.locator(SELECTORS.errorDialog).first();
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 20_000 });
 
-    // Loose on wording, strict on provenance: the copy has to come from the
-    // engine's message rather than the store's generic fallback, which is what
-    // proves the code and message travelled the whole chain.
+    // Strict on provenance: the copy has to be the translation the surfaced code
+    // resolves to, not the store's generic fallback. Distinguishing the two is
+    // what proves the code travelled the whole chain — engine → adapter `error`
+    // → the store's error feature → `resolveErrorDialogDescription`.
     const description = page.locator('media-alert-dialog-description').first();
     await expect(description).not.toHaveText(UNEXPECTED_COPY);
-    await expect(description).toContainText(/format this browser/i);
+    await expect(description).toContainText(UNPLAYABLE_COPY);
   });
 
   test('changing to a playable source clears the error and dismisses the dialog', async ({ page }) => {
