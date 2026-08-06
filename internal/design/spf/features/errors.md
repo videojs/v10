@@ -247,7 +247,7 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | Export | File | Status |
 |---|---|---|
 | `emitError(state, error)` | `playback/behaviors/collect-errors.ts` | The write seam. Lives with the slot it writes; no-ops when no owner is composed, so a reporter needn't know whether collection is composed. `ErrorEmitterState` is the optional-slot contract |
-| `reportUnsupportedTrackConditions` | `playback/primitives/report-track-conditions.ts` | The default `ReportUnsupportedTrackConditions` implementation — reports MPEG-TS container (1004/1005) and encryption (4008), each tagged with `trackType` and `trackId`. Injected, so a composition that never ships TS can drop the check |
+| `reportUnsupportedTrackConditions` | `playback/primitives/report-track-conditions.ts` | The default `ReportUnsupportedTrackConditions` implementation — reports MPEG-TS container (1004/1005) and encryption (4008), each tagged with `trackType` and `trackId`. Scoped to the capability-pruned types (video, audio): text runs no `canPlayTrack` pre-pass, so a cause reported against it could never be matched by an exclusion or followed by a verdict. Injected, so a composition that never ships TS can drop the check |
 | `canPlayTrack` | `media/dom/capabilities.ts` | Prunes non-fMP4 containers and encrypted renditions, so every reported cause has a corresponding exclusion |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted` | `media/hls/parse-media-playlist.ts` | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency` | `media/hls/parse-media-playlist.ts` | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped |
@@ -312,9 +312,9 @@ limitations*).
     destroy
   - `packages/spf/src/playback/primitives/tests/report-track-conditions.test.ts`
     — nothing for a playable fMP4 rendition; 1004 for MPEG-TS; 1005 for
-    raw AAC; 4008 for encrypted; both causes for encrypted MPEG-TS; no
-    format code for text; `trackType` tagged (the DRM code can't carry
-    it)
+    raw AAC; 4008 for encrypted; both causes for encrypted MPEG-TS;
+    neither cause for text, format or DRM; `trackType` tagged (the DRM
+    code can't carry it)
   - `packages/spf/src/playback/behaviors/tests/track-switching.test.ts`
     → 2011 when capability prunes every video rendition; **emits
     regardless of which constraint emptied the set** (all-CDN cooldown

@@ -58,6 +58,14 @@ describe('reportUnsupportedTrackConditions', () => {
     expect(reportUnsupportedTrackConditions(track('text', { mimeType: 'video/mp2t' }))).toEqual([]);
   });
 
+  it('reports no DRM cause for text either, which nothing prunes', () => {
+    // Text skips the `excludeUnplayableTracks` pre-pass (an MSE probe is the wrong
+    // question for WebVTT), so a cause here would have no matching exclusion and
+    // no verdict could follow it. It would still count toward the adapter's
+    // sequence-wide unsupported-feature check, recoding an unrelated verdict.
+    expect(reportUnsupportedTrackConditions(track('text', { encrypted: true }))).toEqual([]);
+  });
+
   it('carries the rendition id as context so a cause can be traced to a track', () => {
     const [condition] = reportUnsupportedTrackConditions(track('video', { encrypted: true }));
     expect(condition?.data).toEqual({ trackType: 'video', trackId: 'video-1' });

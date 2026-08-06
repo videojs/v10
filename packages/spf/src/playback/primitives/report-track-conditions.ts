@@ -39,6 +39,21 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
 };
 
 /**
+ * The types a reported cause can legitimately describe: the ones whose candidates
+ * `canPlayTrack` actually prunes, via `track-switching`'s `excludeUnplayableTracks`
+ * pre-pass.
+ *
+ * Text is outside it by design — its switching chain runs failed-CDN constraints
+ * alone, because an MSE codec probe is the wrong question for a WebVTT rendition
+ * (see `track-switching.ts`). So nothing prunes a text rendition, no verdict can
+ * follow from one, and a cause reported against it would be an orphan: the
+ * adapter's unsupported-feature substitution scans the sequence as a whole, so a
+ * lone encrypted subtitle would otherwise recode an unrelated verdict — an
+ * all-CDN cooldown among them — as "this engine can't play the source".
+ */
+const CAPABILITY_PRUNED_TYPES: ReadonlySet<TrackType> = new Set<TrackType>(['video', 'audio']);
+
+/**
  * The default: report what makes a rendition unplayable *to this engine* — a
  * container MSE can't accept, or encryption with no decryption pipeline. Both
  * mirror what `canPlayTrack` prunes on, so a reported cause always has a
@@ -58,6 +73,8 @@ const UNSUPPORTED_FORMAT_CODE: Partial<Record<TrackType, number>> = {
  * same type.
  */
 export function reportUnsupportedTrackConditions(track: ResolvedTrack): readonly SvtaError[] {
+  if (!CAPABILITY_PRUNED_TYPES.has(track.type)) return [];
+
   const conditions: SvtaError[] = [];
   const data = { trackType: track.type, trackId: track.id };
 
