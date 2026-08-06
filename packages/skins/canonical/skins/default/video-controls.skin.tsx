@@ -1,13 +1,13 @@
 import { Controls, Tooltip } from '@videojs/core/components';
-import { FullscreenButton } from '../components/buttons/fullscreen-button.skin';
-import { PlayButton } from '../components/buttons/play-button.skin';
-import { SeekButton } from '../components/buttons/seek-button.skin';
-import { TimeSlider } from '../components/sliders/time-slider.skin';
-import { TimeControls } from '../components/time/time-controls.skin';
+import { FullscreenButton } from '../../components/buttons/fullscreen-button.skin';
+import { PlayButton } from '../../components/buttons/play-button.skin';
+import { SeekButton } from '../../components/buttons/seek-button.skin';
+import { Time } from '../../components/displays/time.skin';
+import { TimeSlider } from '../../components/sliders/time-slider.skin';
 
 const SEEK_SECONDS = 10;
 
-export function CoreVideoControls() {
+export function DefaultVideoControls() {
   return (
     <Controls.Root>
       <Tooltip.Provider>
@@ -17,9 +17,9 @@ export function CoreVideoControls() {
           <SeekButton seconds={SEEK_SECONDS} />
         </Controls.Group>
 
-        <TimeControls>
+        <Time>
           <TimeSlider />
-        </TimeControls>
+        </Time>
 
         <Controls.Group>
           <FullscreenButton />

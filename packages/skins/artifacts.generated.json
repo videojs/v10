@@ -2,18 +2,18 @@
   "version": 1,
   "artifacts": [
     {
-      "id": "core-video-controls",
+      "id": "default-video-controls",
       "kind": "component",
-      "entry": "./canonical/compositions/core-video-controls.skin.tsx",
+      "entry": "./canonical/skins/default/video-controls.skin.tsx",
       "files": [
         {
-          "path": "./canonical/compositions/core-video-controls.skin.tsx",
+          "path": "./canonical/skins/default/video-controls.skin.tsx",
           "role": "entry"
         }
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time-controls", "time-slider"],
+        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time", "time-slider"],
         "packages": ["@videojs/core"],
         "symbols": {
           "components": ["Controls", "Tooltip"],
@@ -82,12 +82,12 @@
       }
     },
     {
-      "id": "time-controls",
+      "id": "time",
       "kind": "component",
-      "entry": "./canonical/components/time/time-controls.skin.tsx",
+      "entry": "./canonical/components/displays/time.skin.tsx",
       "files": [
         {
-          "path": "./canonical/components/time/time-controls.skin.tsx",
+          "path": "./canonical/components/displays/time.skin.tsx",
           "role": "entry"
         }
       ],
