@@ -40,15 +40,36 @@ type NavbarProps = {
 };
 
 /**
- * What the selected media will do with a source, when that's a failure worth
- * labelling. Simple HLS is the SPF engine: no TS transmux pipeline and no EME, so
- * it rejects MPEG-TS on format and DRM on protection. Derived from the pair —
- * both sources play fine under other media, so this can't live on the source.
+ * What the selected media will do with a source, when that's worth labelling for
+ * someone smoke-testing. Simple HLS is the SPF engine: no TS transmux pipeline
+ * and no EME, so it refuses MPEG-TS on format and encrypted renditions on
+ * protection. Derived from the pair rather than stored on the source, since every
+ * source here plays fine under some other media.
+ *
+ * Keyed on the *preset*, not a single is-Simple-HLS flag, because the two
+ * variants answer differently and a note promising the wrong outcome is worse
+ * than none — a reviewer would file the difference as a bug:
+ *
+ * - **DRM.** Mux encrypts video renditions and leaves audio clear. The audio-only
+ *   engine resolves only the audio rendition, so it never fetches an encrypted
+ *   playlist and plays the source instead of refusing it.
+ * - **MPEG-TS.** Under audio-only, which specific failure depends on whether the
+ *   source carries an audio rendition of its own or muxes audio into its video
+ *   renditions — an absent type reports nothing and stalls silently rather than
+ *   surfacing a verdict (see `internal/design/spf/features/errors.md`). Both mean
+ *   nothing plays, so the note stops at that rather than naming a verdict that
+ *   only appears for one of them.
  */
-function expectedOutcomeNote(source: { subType?: string; drm?: boolean }, isSimpleHls: boolean): string | undefined {
-  if (!isSimpleHls) return undefined;
-  if (source.drm) return 'expects protected error';
-  if (source.subType && source.subType !== 'mp4') return 'expects unsupported-format error';
+function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
+  if (!preset.startsWith('simple-hls-')) return undefined;
+  const audioOnlyPreset = preset === 'simple-hls-audio-only';
+
+  if (source.drm) {
+    return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
+  }
+  if (source.subType && source.subType !== 'mp4') {
+    return audioOnlyPreset ? 'expects no playback' : 'expects unsupported-format error';
+  }
   return undefined;
 }
 
@@ -166,7 +187,7 @@ export function Navbar({
               return true;
             })
             .map((id) => {
-              const note = expectedOutcomeNote(sources[id], isSimpleHls);
+              const note = expectedOutcomeNote(sources[id], preset);
               return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
             })}
           disabled={isBackgroundVideo || isVimeoVideo || isYouTubeVideo}
