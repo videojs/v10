@@ -1,8 +1,8 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import type { PlayerStore } from '@videojs/core/dom';
+import { metadataFeature, type PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
-import type { ReactNode } from 'react';
-import { StrictMode, useState } from 'react';
+import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
+import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider, useLocale } from '../../i18n';
 import { useContainer, usePlayerContext } from '../context';
@@ -113,6 +113,32 @@ describe('createPlayer', () => {
       expect(store).not.toBe(originalStore);
     });
 
+    it('seeds current config inputs when replacing a destroyed store', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
+      let store!: PlayerStore<[typeof metadataFeature]>;
+      let setMedia!: (media: HTMLMediaElement | null) => void;
+
+      function Consumer() {
+        store = usePlayer();
+        setMedia = usePlayerContext().setMedia;
+        return null;
+      }
+
+      render(
+        <Provider contentTitle="Replacement title">
+          <Consumer />
+        </Provider>
+      );
+
+      const destroyedStore = store;
+      destroyedStore.destroy();
+
+      act(() => setMedia(document.createElement('video')));
+
+      expect(store).not.toBe(destroyedStore);
+      expect(store.contentTitle).toBe('Replacement title');
+    });
+
     it('survives React StrictMode without StoreError', () => {
       const { Provider, usePlayer } = createPlayer({ features: [mockSlice] });
 
@@ -192,6 +218,135 @@ describe('createPlayer', () => {
       );
 
       expect(container.querySelector('[data-testid="child"]')).toBeTruthy();
+    });
+
+    it('seeds config inputs for the first render and syncs only changed props after commit', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
+      let store!: PlayerStore<[typeof metadataFeature]>;
+
+      function Consumer() {
+        store = usePlayer();
+        return <span>{store.contentTitle}</span>;
+      }
+
+      const { rerender } = render(
+        <Provider contentTitle="Initial title">
+          <Consumer />
+        </Provider>
+      );
+
+      expect(screen.getByText('Initial title')).toBeTruthy();
+
+      act(() => store.setDefaultContentTitle('Imperative fallback'));
+      rerender(
+        <Provider contentTitle="Initial title">
+          <Consumer />
+        </Provider>
+      );
+
+      rerender(
+        <Provider contentTitle="Updated title">
+          <Consumer />
+        </Provider>
+      );
+      expect(store.contentTitle).toBe('Updated title');
+
+      rerender(
+        <Provider>
+          <Consumer />
+        </Provider>
+      );
+      expect(store.contentTitle).toBe('Imperative fallback');
+    });
+
+    it('seeds config inputs during SSR', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
+
+      function Consumer() {
+        return <span>{usePlayer((state) => state.contentTitle)}</span>;
+      }
+
+      expect(
+        renderToString(
+          <Provider contentTitle="SSR title">
+            <Consumer />
+          </Provider>
+        )
+      ).toContain('SSR title');
+    });
+
+    it('hydrates with the same initial config inputs', async () => {
+      const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
+
+      function Consumer() {
+        return <span>{usePlayer((state) => state.contentTitle)}</span>;
+      }
+
+      const container = document.createElement('div');
+      container.innerHTML = renderToString(
+        <Provider contentTitle="Hydrated title">
+          <Consumer />
+        </Provider>
+      );
+
+      const view = render(
+        <Provider contentTitle="Hydrated title">
+          <Consumer />
+        </Provider>,
+        { container, hydrate: true }
+      );
+
+      await act(async () => {});
+
+      expect(container.textContent).toBe('Hydrated title');
+      view.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+
+    it('does not apply config inputs from an abandoned render', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [metadataFeature] });
+      let store!: PlayerStore<[typeof metadataFeature]>;
+
+      class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
+        state = { failed: false };
+
+        static getDerivedStateFromError() {
+          return { failed: true };
+        }
+
+        override componentDidCatch(_error: Error, _info: ErrorInfo) {}
+
+        override render() {
+          return this.state.failed ? null : this.props.children;
+        }
+      }
+
+      function Consumer({ fail = false }: { fail?: boolean }) {
+        store = usePlayer();
+        if (fail) throw new Error('abandon render');
+        return null;
+      }
+
+      const consoleError = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const { rerender } = render(
+        <Boundary>
+          <Provider contentTitle="Committed title">
+            <Consumer />
+          </Provider>
+        </Boundary>
+      );
+      const committedStore = store;
+
+      rerender(
+        <Boundary>
+          <Provider contentTitle="Abandoned title">
+            <Consumer fail />
+          </Provider>
+        </Boundary>
+      );
+
+      expect(committedStore.contentTitle).toBe('Committed title');
+      consoleError.mockRestore();
     });
 
     it('does not derive a locale without an I18nProvider', async () => {

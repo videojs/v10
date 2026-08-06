@@ -3,6 +3,7 @@ import {
   audioFeatures,
   definePlayerFeature,
   features,
+  metadataFeature,
   type PlayerStore,
   type PlayerTarget,
   type VideoPlayerStore,
@@ -44,6 +45,20 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: [customFeature] });
 
     assertType<CreatePlayerResult<PlayerStore<[Slice<PlayerTarget, CustomState>]>>>(result);
+  });
+
+  it('infers config props from selected features', () => {
+    const withMetadata = createPlayer({ features: [metadataFeature] });
+    const withoutMetadata = createPlayer({ features: [features.playback] });
+
+    <withMetadata.Provider contentTitle="Title" defaultContentTitle={null}>
+      <div />
+    </withMetadata.Provider>;
+
+    // @ts-expect-error metadata props are absent when the feature is absent.
+    <withoutMetadata.Provider contentTitle="Title">
+      <div />
+    </withoutMetadata.Provider>;
   });
 
   it('accepts the orientation lock feature alias with and without config', () => {

@@ -15,6 +15,7 @@ export interface State<T> {
 
 export interface WritableState<T> extends State<T> {
   patch: (partial: Partial<T>) => void;
+  replace: (next: T) => void;
 }
 
 let isFlushScheduled = false;
@@ -52,7 +53,7 @@ class StateContainer<T> implements WritableState<T> {
 
     let changed = false;
 
-    for (const key in partial) {
+    for (const key of Reflect.ownKeys(partial as object) as (keyof T)[]) {
       if (!hasOwnProp.call(partial, key)) continue;
 
       const value = partial[key];
@@ -67,6 +68,15 @@ class StateContainer<T> implements WritableState<T> {
       this.#current = Object.freeze(next);
       this.#markPending();
     }
+  }
+
+  replace(next: T): void {
+    // Example: media metadata can change under a user override while the
+    // resolved title stays the same. Preserve the public snapshot in that case.
+    if (shallowEqual(this.#current, next)) return;
+
+    this.#current = Object.freeze({ ...next });
+    this.#markPending();
   }
 
   subscribe(callback: StateChange, options?: SubscribeOptions): () => void {
@@ -99,6 +109,18 @@ class StateContainer<T> implements WritableState<T> {
     pendingContainers.add(this);
     scheduleFlush();
   }
+}
+
+function shallowEqual<T>(a: T, b: T): boolean {
+  const aKeys = Reflect.ownKeys(a as object);
+  const bKeys = Reflect.ownKeys(b as object);
+  if (aKeys.length !== bKeys.length) return false;
+
+  for (const key of aKeys) {
+    if (!hasOwnProp.call(b, key) || !Object.is(a[key as keyof T], b[key as keyof T])) return false;
+  }
+
+  return true;
 }
 
 export function createState<T>(initial: T): WritableState<T> {

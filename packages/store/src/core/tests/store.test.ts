@@ -247,6 +247,129 @@ describe('store', () => {
     });
   });
 
+  describe('persistent and derived state', () => {
+    const INTERNAL_VALUE = Symbol('internalValue');
+    const USER_VALUE = Symbol('userValue');
+    const SET_USER_VALUE = Symbol('setUserValue');
+
+    interface TestSourceState {
+      [INTERNAL_VALUE]: string | undefined;
+      [USER_VALUE]: string | null | undefined;
+      [SET_USER_VALUE](value: string | null | undefined): void;
+      setInternal(value: string | undefined): void;
+      setValue(value: string | null): void;
+    }
+
+    const responsiveSlice = defineSlice<MockMedia>()({
+      preserve: [USER_VALUE],
+      state: ({ set }): TestSourceState => {
+        const setUserValue = (value: string | null | undefined) => set({ [USER_VALUE]: value });
+
+        return {
+          [INTERNAL_VALUE]: undefined,
+          [USER_VALUE]: undefined,
+          [SET_USER_VALUE]: setUserValue,
+          setInternal: (value) => set({ [INTERNAL_VALUE]: value }),
+          setValue: setUserValue,
+        };
+      },
+      derived: {
+        resolved: ({ get }) => get()[USER_VALUE] ?? get()[INTERNAL_VALUE] ?? 'fallback',
+      },
+    });
+
+    it('makes private symbol actions available without publishing their state', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+      const setUserValue = (store as unknown as Record<PropertyKey, unknown>)[SET_USER_VALUE];
+
+      expect(setUserValue).toBeInstanceOf(Function);
+      expect(INTERNAL_VALUE in store).toBe(false);
+      expect(USER_VALUE in store).toBe(false);
+      expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
+
+      (setUserValue as (value: string | undefined) => void)('initial');
+      expect(store.resolved).toBe('initial');
+
+      (setUserValue as (value: string | undefined) => void)(undefined);
+      expect(store.resolved).toBe('fallback');
+    });
+
+    it('publishes source and derived changes atomically while keeping symbols internal', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+
+      expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
+
+      store.setInternal('media');
+
+      expect(store.resolved).toBe('media');
+      expect(Object.getOwnPropertySymbols(store.state)).toEqual([]);
+    });
+
+    it('keeps lower-precedence source state live without publishing an unchanged public snapshot', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+      store.setValue('user');
+      flush();
+      const listener = vi.fn();
+      store.subscribe(listener);
+      const publicSnapshot = store.state;
+
+      store.setInternal('latest media');
+      flush();
+
+      expect(store.resolved).toBe('user');
+      expect(store.state).toBe(publicSnapshot);
+      expect(listener).not.toHaveBeenCalled();
+
+      store.setValue(null);
+      flush();
+
+      expect(store.resolved).toBe('latest media');
+      expect(listener).toHaveBeenCalledOnce();
+    });
+
+    it('resets attachment state on detach while preserving declared source keys', () => {
+      const store = createStore<MockMedia>()(responsiveSlice);
+      store.setValue('user');
+      const detach = store.attach(new MockMedia());
+
+      store.setInternal('media');
+      expect(store.resolved).toBe('user');
+
+      detach();
+
+      expect(store.resolved).toBe('user');
+
+      store.setValue(null);
+      expect(store.resolved).toBe('fallback');
+    });
+
+    it('does not commit source state when a derived formula throws', () => {
+      const throwingSlice = defineSlice<MockMedia>()({
+        state: ({ set }) => ({
+          value: 1,
+          setValue: (value: number) => set({ value }),
+        }),
+        derived: {
+          doubled: ({ get }) => {
+            const { value } = get();
+            if (value < 0) throw new Error('invalid value');
+            return value * 2;
+          },
+        },
+      });
+      const store = createStore<MockMedia>()(throwingSlice);
+      const listener = vi.fn();
+      store.subscribe(listener);
+
+      expect(() => store.setValue(-1)).toThrow('invalid value');
+      flush();
+
+      expect(store.doubled).toBe(2);
+      expect(store.state.value).toBe(1);
+      expect(listener).not.toHaveBeenCalled();
+    });
+  });
+
   describe('destroy', () => {
     it('cleans up everything', () => {
       const store = createStore<MockMedia>()(audioSlice);
@@ -268,6 +391,42 @@ describe('store', () => {
   });
 
   describe('error handling', () => {
+    it('reports event-driven derived errors without committing the update', () => {
+      const onError = vi.fn();
+      const listener = vi.fn();
+      const invalidValueError = new Error('invalid value');
+      const slice = defineSlice<MockMedia>()({
+        state: () => ({ value: 1 }),
+        derived: {
+          doubled: ({ get }) => {
+            const { value } = get();
+            if (value < 0) throw invalidValueError;
+            return value * 2;
+          },
+        },
+        attach({ target, signal, set }) {
+          const sync = () => set({ value: target.volume });
+          target.addEventListener('volumechange', sync);
+          signal.addEventListener('abort', () => target.removeEventListener('volumechange', sync));
+        },
+      });
+      const store = createStore<MockMedia>()(slice, { onError });
+      const media = new MockMedia();
+      store.attach(media);
+      store.subscribe(listener);
+      const snapshot = store.state;
+
+      media.volume = -1;
+      media.dispatchEvent(new Event('volumechange'));
+      flush();
+
+      expect(onError).toHaveBeenCalledOnce();
+      expect(onError).toHaveBeenCalledWith({ store, error: invalidValueError });
+      expect(store.state).toBe(snapshot);
+      expect(store.state).toMatchObject({ value: 1, doubled: 2 });
+      expect(listener).not.toHaveBeenCalled();
+    });
+
     it('calls onError for action errors', () => {
       const onError = vi.fn();
 
