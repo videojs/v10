@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
 import type { ImportRef } from '../../transforms/imports';
+import { isJsxElementLike } from '../../utils/jsx';
 import type { JsxElementLike, Matcher } from '../matchers';
 
 export interface ReplaceOptions {
@@ -28,9 +29,9 @@ export function replace(opts: ReplaceOptions, ctx: AddImportContext = {}): ts.Tr
       let didReplace = false;
 
       const visit = (node: ts.Node): ts.Node => {
-        if ((ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) && opts.match(node as JsxElementLike)) {
+        if (isJsxElementLike(node) && opts.match(node)) {
           didReplace = true;
-          return buildReplacement(node as JsxElementLike, opts, factory);
+          return buildReplacement(node, opts, factory);
         }
         return ts.visitEachChild(node, visit, transformContext);
       };
