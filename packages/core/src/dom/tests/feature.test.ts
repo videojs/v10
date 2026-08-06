@@ -41,7 +41,7 @@ describe('definePlayerFeature', () => {
       config: {
         label: {
           action: SET_USER_LABEL,
-          preserve: USER_LABEL,
+          state: USER_LABEL,
         },
       } satisfies PlayerFeatureConfig<SourceState>,
       state: ({ set }): SourceState => ({
@@ -69,14 +69,14 @@ describe('definePlayerFeature', () => {
       label: {
         // @ts-expect-error Config actions must exist in the feature's source state.
         action: UNKNOWN,
-        preserve: USER_LABEL,
+        state: USER_LABEL,
       },
     });
     assertType<PlayerFeatureConfig<SourceState>>({
       label: {
         action: SET_USER_LABEL,
-        // @ts-expect-error Preserved keys must exist in the feature's source state.
-        preserve: UNKNOWN,
+        // @ts-expect-error Config state must exist in the feature's source state.
+        state: UNKNOWN,
       },
     });
 
@@ -89,7 +89,7 @@ describe('definePlayerFeature', () => {
       label: {
         // @ts-expect-error Config actions must accept null and undefined when the input is absent.
         action: SET_USER_LABEL,
-        preserve: USER_LABEL,
+        state: USER_LABEL,
       },
     });
   });

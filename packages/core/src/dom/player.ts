@@ -57,8 +57,8 @@ export type PlayerFeatureConfig<State = never> = Record<
   {
     /** Private source-state action that accepts `string | null | undefined`. */
     action: ConfigActionKey<State>;
-    /** User-owned source-state key preserved when media detaches. */
-    preserve: ConfigStateKey<State>;
+    /** Provider-owned source-state key whose value survives media detach. */
+    state: ConfigStateKey<State>;
   }
 >;
 

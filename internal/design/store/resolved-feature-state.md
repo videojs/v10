@@ -57,12 +57,12 @@ The config declaration also identifies lifecycle ownership. Authors check the ma
 config: {
   contentTitle: {
     action: SET_USER_CONTENT_TITLE,
-    preserve: USER_CONTENT_TITLE,
+    state: USER_CONTENT_TITLE,
   },
 } satisfies PlayerFeatureConfig<MetadataSourceState>
 ```
 
-The feature-level `config` object is routing metadata, not a second place that stores values. `action` must name a private source-state action that accepts `string | null | undefined`; `null` and `undefined` clear an absent input. `preserve` must name a source-state key whose value survives detach. `definePlayerFeature` derives the store's detach-persistence keys from this map. Detach restores ordinary source state to its initial values while preserving the mapped user-owned keys. Media state therefore resets, while provider and imperative user values survive.
+The feature-level `config` object is routing metadata, not a second place that stores values. `action` must name a private source-state action that accepts `string | null | undefined`; `null` and `undefined` clear an absent input. `state` names the provider-owned source-state key, and `definePlayerFeature` uses it to derive the store's detach-persistence keys. Detach restores ordinary source state to its initial values while preserving the mapped provider-owned keys. Media state therefore resets, while provider and imperative user values survive.
 
 ## Provider adapters
 

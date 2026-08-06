@@ -63,7 +63,7 @@ export function definePlayerFeature<Config, State>(
 ): PlayerFeature<State> | ConfigurablePlayerFeature<Config, State> {
   if (arguments.length === 1) {
     const feature = definition as StaticPlayerFeatureConfig<State, object, PlayerFeatureConfig>;
-    const preserved = Object.values(feature.config ?? {}).map((entry) => entry.preserve);
+    const preserved = Object.values(feature.config ?? {}).map((entry) => entry.state);
 
     return {
       ...feature,
