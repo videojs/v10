@@ -80,6 +80,7 @@ export default {
       'A reprodução foi interrompida devido à um problema de mídia corrompida ou porque a mídia utiliza funções que seu navegador não suporta.',
     source: 'A mídia não pode ser carregada, por uma falha de rede ou servidor ou o formato não é suportado.',
     encrypted: 'A mídia está criptografada e não temos as chaves para descriptografar.',
+    unplayable: 'Esta mídia não é suportada pelo reprodutor.',
     title: 'Algo deu errado.',
     unexpected: 'Ocorreu um erro. Tente novamente.',
   },

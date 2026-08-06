@@ -81,6 +81,7 @@ export default {
     source:
       'Materiał wideo nie może zostać załadowany, ponieważ wystąpił problem z serwerem lub siecią albo format materiału wideo nie jest obsługiwany',
     encrypted: 'Materiał jest zaszyfrowany, a nie mamy kluczy do jego odszyfrowania.',
+    unplayable: 'Ten materiał nie jest obsługiwany przez odtwarzacz.',
     title: 'Coś poszło nie tak.',
     unexpected: 'Wystąpił błąd. Spróbuj ponownie.',
   },

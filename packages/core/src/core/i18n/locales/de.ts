@@ -81,6 +81,7 @@ export default {
     source:
       'Das Video konnte nicht geladen werden, da entweder ein Server- oder Netzwerkfehler auftrat oder das Format nicht unterstützt wird.',
     encrypted: 'Die Entschlüsselungsschlüssel für den verschlüsselten Medieninhalt sind nicht verfügbar.',
+    unplayable: 'Dieses Medium wird vom Player nicht unterstützt.',
     title: 'Etwas ist schiefgelaufen.',
     unexpected: 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.',
   },

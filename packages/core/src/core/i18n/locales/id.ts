@@ -79,6 +79,7 @@ export default {
     decode: 'Media tidak dapat diputar. Media mungkin rusak atau formatnya tidak didukung oleh peramban Anda.',
     source: 'Media tidak dapat dimuat. Media mungkin tidak tersedia atau formatnya tidak didukung oleh peramban Anda.',
     encrypted: 'Media tidak dapat diputar karena tidak dapat didekripsi.',
+    unplayable: 'Media ini tidak didukung oleh pemutar.',
     title: 'Terjadi kesalahan.',
     unexpected: 'Terjadi kesalahan yang tidak terduga.',
   },

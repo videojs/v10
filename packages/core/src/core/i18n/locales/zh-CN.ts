@@ -79,6 +79,7 @@ export default {
     decode: '由于视频文件损坏或是该视频使用了你的浏览器不支持的功能，播放终止。',
     source: '视频因格式不支持或者服务器或网络的问题无法加载。',
     encrypted: '视频已加密，无法解密。',
+    unplayable: '播放器不支持此媒体。',
     title: '出现问题。',
     unexpected: '发生错误，请重试。',
   },

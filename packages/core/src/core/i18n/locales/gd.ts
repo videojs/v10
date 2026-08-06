@@ -81,6 +81,7 @@ export default {
     source:
       'Cha b’ urrainn dhuinn am meadhan a luchdadh – dh’fhaoidte gun do dh’fhàillig leis an fhrithealaiche no an lìonra no nach cuir sinn taic ris an fhòrmat.',
     encrypted: 'Tha am meadhan crioptaichte ’s chan eil iuchair dì-chrioptachaidh againn dha.',
+    unplayable: 'Cha toir an cluicheadair taic dhan mheadhan seo.',
     title: 'Chaidh rudeigin ceàrr.',
     unexpected: 'Thachair mearachd. Feuch ris a-rithist.',
   },

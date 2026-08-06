@@ -81,6 +81,7 @@ export default {
     source:
       'No se ha podido cargar el vídeo debido a un fallo de red o del servidor o porque el formato es incompatible.',
     encrypted: 'El material audiovisual está cifrado y no tenemos las claves para descifrarlo.',
+    unplayable: 'El reproductor no admite este medio.',
     title: 'Algo ha salido mal.',
     unexpected: 'Se ha producido un error. Inténtalo de nuevo.',
   },

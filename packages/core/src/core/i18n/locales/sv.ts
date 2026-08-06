@@ -81,6 +81,7 @@ export default {
     source:
       'Det gick inte att ladda videon, antingen på grund av ett server- eller nätverksfel, eller för att formatet inte stöds.',
     encrypted: 'Mediat är krypterat och vi har inte nycklarna för att dekryptera det.',
+    unplayable: 'Det här mediet stöds inte av spelaren.',
     title: 'Något gick fel.',
     unexpected: 'Ett fel uppstod. Försök igen.',
   },

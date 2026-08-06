@@ -80,6 +80,7 @@ export default {
       'Media faylının korlanması səbəbilə və ya media faylın brauzerinizin dəstəkləmədiyi funksiyalardan istifadə etdiyinə görə medianın oxudulması dayandırılıb.',
     source: 'Yükləmə xətası.',
     encrypted: 'Media faylı şifrələnib və onun şifrəsini açmaq üçün açarlar yoxdur.',
+    unplayable: 'Bu media pleyer tərəfindən dəstəklənmir.',
     title: 'Bir şey yanlış getdi.',
     unexpected: 'Xəta baş verdi. Yenidən cəhd edin.',
   },

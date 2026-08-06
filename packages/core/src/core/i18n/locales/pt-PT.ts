@@ -81,6 +81,7 @@ export default {
     source:
       'O vídeo não pode ser carregado, ou porque houve um problema na rede ou no servidor, ou porque o formato do vídeo não é compatível.',
     encrypted: 'O vídeo está encriptado e não há uma chave para o desencriptar.',
+    unplayable: 'Este conteúdo multimédia não é suportado pelo reprodutor.',
     title: 'Algo correu mal.',
     unexpected: 'Ocorreu um erro. Por favor tente novamente.',
   },

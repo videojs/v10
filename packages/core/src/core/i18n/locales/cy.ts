@@ -81,6 +81,7 @@ export default {
     source:
       "Ni lwythodd y fideo, oherwydd methiant gweinydd neu rwydwaith, neu achos nid yw'r system yn cefnogi'r fformat.",
     encrypted: "Mae'r fideo wedi ei amgryptio ac nid oes allweddion gennym.",
+    unplayable: "Nid yw'r chwaraewr yn cefnogi'r cyfrwng hwn.",
     title: "Aeth rhywbeth o'i le.",
     unexpected: 'Digwyddodd gwall. Ceisiwch eto.',
   },

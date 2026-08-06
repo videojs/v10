@@ -80,6 +80,7 @@ export default {
       'Medya oynatma, bir bozulma sorunu nedeniyle veya medya, tarayıcınızın desteklemediği özellikleri kullandığı için durduruldu.',
     source: 'Sunucu veya ağ hatasından ya da biçim desteklenmediğinden medya yüklenemedi.',
     encrypted: 'Medya, şifrelenmiş bir kaynaktan geliyor ve oynatmak için gerekli anahtar bulunamadı.',
+    unplayable: 'Bu medya oynatıcı tarafından desteklenmiyor.',
     title: 'Bir şeyler ters gitti.',
     unexpected: 'Bir hata oluştu. Lütfen tekrar deneyin.',
   },
