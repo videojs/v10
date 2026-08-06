@@ -1,0 +1,16 @@
+import { Popover } from '@videojs/core/components';
+import { MuteButton } from '../buttons/mute-button.skin';
+import { VolumeSlider } from '../sliders/volume-slider.skin';
+
+export function VolumeControl() {
+  return (
+    <Popover.Root openOnHover delay={200} closeDelay={100} side="top">
+      <Popover.Trigger>
+        <MuteButton />
+      </Popover.Trigger>
+      <Popover.Popup>
+        <VolumeSlider orientation="vertical" />
+      </Popover.Popup>
+    </Popover.Root>
+  );
+}

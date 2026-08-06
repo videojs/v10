@@ -13,7 +13,14 @@
       ],
       "resources": {},
       "dependencies": {
-        "artifacts": ["fullscreen-button", "play-button", "seek-button", "time-controls", "time-slider"],
+        "artifacts": [
+          "fullscreen-button",
+          "play-button",
+          "seek-button",
+          "time-controls",
+          "time-slider",
+          "volume-control"
+        ],
         "packages": ["@videojs/core"],
         "symbols": {
           "components": ["Controls", "Tooltip"],
@@ -38,6 +45,26 @@
         "symbols": {
           "components": ["FullscreenButton", "Tooltip"],
           "icons": ["FullscreenEnterIcon", "FullscreenExitIcon"]
+        }
+      }
+    },
+    {
+      "id": "mute-button",
+      "kind": "component",
+      "entry": "./canonical/components/buttons/mute-button.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/buttons/mute-button.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": [],
+        "packages": ["@videojs/core", "@videojs/icons"],
+        "symbols": {
+          "components": ["MuteButton"],
+          "icons": ["VolumeHighIcon", "VolumeLowIcon", "VolumeOffIcon"]
         }
       }
     },
@@ -114,9 +141,29 @@
       "resources": {},
       "dependencies": {
         "artifacts": [],
-        "packages": ["@videojs/core"],
+        "packages": ["@videojs/core", "@videojs/icons"],
         "symbols": {
           "components": ["Slider", "TimeSlider"],
+          "icons": ["SpinnerIcon"]
+        }
+      }
+    },
+    {
+      "id": "volume-control",
+      "kind": "component",
+      "entry": "./canonical/components/volume/volume-control.skin.tsx",
+      "files": [
+        {
+          "path": "./canonical/components/volume/volume-control.skin.tsx",
+          "role": "entry"
+        }
+      ],
+      "resources": {},
+      "dependencies": {
+        "artifacts": ["mute-button", "volume-slider"],
+        "packages": ["@videojs/core"],
+        "symbols": {
+          "components": ["Popover"],
           "icons": []
         }
       }

@@ -14,10 +14,12 @@ The current canonical paths are:
 
 - `compositions/core-video-controls.skin.tsx`
 - `components/buttons/fullscreen-button.skin.tsx`
+- `components/buttons/mute-button.skin.tsx`
 - `components/buttons/play-button.skin.tsx`
 - `components/buttons/seek-button.skin.tsx`
 - `components/time/time-controls.skin.tsx`
 - `components/sliders/volume-slider.skin.tsx`
 - `components/sliders/time-slider.skin.tsx`
+- `components/volume/volume-control.skin.tsx`
 
 Canonical components import icon roles from `@videojs/icons/components`; target lowering replaces that compiler-only source contract with local named React exports or exact HTML registrations. Artifact entries are authored in `../artifacts.ts`; styles, complete Skin compositions, and generated target output remain separate stack boundaries.

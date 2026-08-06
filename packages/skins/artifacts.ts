@@ -19,6 +19,11 @@ export const skinArtifacts = [
     entry: './canonical/components/buttons/fullscreen-button.skin.tsx',
   }),
   defineArtifact({
+    id: 'mute-button',
+    kind: 'component',
+    entry: './canonical/components/buttons/mute-button.skin.tsx',
+  }),
+  defineArtifact({
     id: 'play-button',
     kind: 'component',
     entry: './canonical/components/buttons/play-button.skin.tsx',
@@ -42,5 +47,10 @@ export const skinArtifacts = [
     id: 'volume-slider',
     kind: 'component',
     entry: './canonical/components/sliders/volume-slider.skin.tsx',
+  }),
+  defineArtifact({
+    id: 'volume-control',
+    kind: 'component',
+    entry: './canonical/components/volume/volume-control.skin.tsx',
   }),
 ] as const satisfies readonly SkinArtifactDefinition[];

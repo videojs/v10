@@ -1,4 +1,5 @@
 import { Slider, TimeSlider as TimeSliderPrimitive } from '@videojs/core/components';
+import { SpinnerIcon } from '@videojs/icons/components';
 
 export function TimeSlider() {
   return (
@@ -11,6 +12,7 @@ export function TimeSlider() {
       <Slider.Thumbnail.Root>
         <Slider.Thumbnail.Image />
         <TimeSliderPrimitive.Value type="pointer" />
+        <SpinnerIcon />
       </Slider.Thumbnail.Root>
       <TimeSliderPrimitive.Preview>
         <TimeSliderPrimitive.Value type="pointer" />
