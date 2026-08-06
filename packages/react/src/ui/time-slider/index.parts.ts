@@ -13,3 +13,4 @@ export {
   type ValueProps,
 } from '../slider/index.parts';
 export { TimeSliderRoot as Root, type TimeSliderRootProps as RootProps } from './time-slider-root';
+export { TimeSliderSegments as Segments, type TimeSliderSegmentsProps as SegmentsProps } from './time-slider-segments';

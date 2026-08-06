@@ -1,6 +1,6 @@
 'use client';
 
-import { SliderCore, SliderDataAttrs } from '@videojs/core';
+import { SliderCore, SliderCSSVars, SliderDataAttrs } from '@videojs/core';
 import { getSliderCSSVars } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import type { ForwardedRef } from 'react';
@@ -8,6 +8,7 @@ import { forwardRef, useState } from 'react';
 import { useTranslator } from '../../i18n/context';
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
+import { useSafeId } from '../../utils/use-safe-id';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from './context';
 
@@ -43,6 +44,8 @@ export const SliderRoot = forwardRef(function SliderRoot(
   } = componentProps;
 
   const [core] = useState(() => new SliderCore());
+  const [trackClipPath, setTrackClipPath] = useState<string>();
+  const id = useSafeId('slider');
   const translator = useTranslator();
   core.setProps({ label, min, max, step, largeStep, orientation, disabled, thumbAlignment });
 
@@ -76,11 +79,15 @@ export const SliderRoot = forwardRef(function SliderRoot(
   return (
     <SliderProvider
       value={{
+        id,
+        min: core.props.min,
+        max: core.props.max,
         state,
         pointerValue: core.valueFromPercent(state.pointerPercent),
         thumbRef: sliderThumbRef,
         thumbProps,
         stateAttrMap: SliderDataAttrs,
+        setTrackClipPath,
         getAttrs: (sliderState) => {
           const attrs = core.getAttrs(sliderState);
           return { ...attrs, 'aria-label': translateText(attrs['aria-label'], translator) };
@@ -95,7 +102,17 @@ export const SliderRoot = forwardRef(function SliderRoot(
           state,
           stateAttrMap: SliderDataAttrs,
           ref: [forwardedRef, rootRef],
-          props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
+          props: [
+            {
+              style: {
+                ...cssVars,
+                ...(trackClipPath && { [SliderCSSVars.clipPath]: trackClipPath }),
+                ...rootStyle,
+              },
+            },
+            rootProps,
+            elementProps,
+          ],
         }
       )}
     </SliderProvider>

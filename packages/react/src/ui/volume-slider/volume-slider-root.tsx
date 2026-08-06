@@ -1,6 +1,6 @@
 'use client';
 
-import { VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
+import { SliderCSSVars, VolumeSliderCore, VolumeSliderDataAttrs } from '@videojs/core';
 import { createWheelStep, getSliderCSSVars, logMissingFeature, selectVolume } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { listen } from '@videojs/utils/dom';
@@ -11,6 +11,7 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { renderElement } from '../../utils/use-render';
+import { useSafeId } from '../../utils/use-safe-id';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/context';
 
@@ -48,8 +49,10 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
     const translator = useTranslator();
     const locale = useLocale();
+    const id = useSafeId('volume-slider');
 
     const [core] = useState(() => new VolumeSliderCore());
+    const [trackClipPath, setTrackClipPath] = useState<string>();
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
     core.setFormatLocale(locale);
 
@@ -112,11 +115,15 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     return (
       <SliderProvider
         value={{
+          id,
+          min: core.props.min,
+          max: core.props.max,
           state,
           pointerValue: core.valueFromPercent(state.pointerPercent),
           thumbRef,
           thumbProps,
           stateAttrMap: VolumeSliderDataAttrs,
+          setTrackClipPath,
           getAttrs: (sliderState) => {
             const attrs = core.getAttrs(sliderState as VolumeSliderCore.State);
             return {
@@ -139,7 +146,17 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
             state,
             stateAttrMap: VolumeSliderDataAttrs,
             ref: [forwardedRef, rootRef, wheelRef],
-            props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
+            props: [
+              {
+                style: {
+                  ...cssVars,
+                  ...(trackClipPath && { [SliderCSSVars.clipPath]: trackClipPath }),
+                  ...rootStyle,
+                },
+              },
+              rootProps,
+              elementProps,
+            ],
           }
         )}
       </SliderProvider>

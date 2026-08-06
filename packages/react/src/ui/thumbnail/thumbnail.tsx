@@ -7,7 +7,7 @@ import {
   type ThumbnailFetchPriority,
   type ThumbnailImage,
 } from '@videojs/core';
-import { createThumbnail, selectTextTrack } from '@videojs/core/dom';
+import { createTextTrackSelector, createThumbnail } from '@videojs/core/dom';
 import type { CSSProperties } from 'react';
 import { forwardRef, useMemo, useRef, useState } from 'react';
 
@@ -15,6 +15,8 @@ import { useOptionalPlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useDestroy } from '../../utils/use-destroy';
 import { renderElement } from '../../utils/use-render';
+
+const selectThumbnailTrack = createTextTrackSelector('metadata', 'thumbnails');
 
 export interface ThumbnailProps extends UIComponentProps<'div', ThumbnailCore.State>, ThumbnailCore.Props {
   /** Pre-parsed thumbnail images — bypasses the automatic `<track>` detection. */
@@ -37,7 +39,7 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   const [core] = useState(() => new ThumbnailCore());
   const divRef = useRef<HTMLDivElement>(null);
   const imgRef = useRef<HTMLImageElement>(null);
-  const textTrack = useOptionalPlayer(selectTextTrack);
+  const textTrack = useOptionalPlayer(selectThumbnailTrack);
 
   // Force re-render when the handle's state changes (img load/error, resize).
   const [, setRenderToken] = useState(0);
@@ -55,8 +57,8 @@ export const Thumbnail = forwardRef<HTMLDivElement, ThumbnailProps>(function Thu
   // Resolve thumbnails: external prop takes priority over auto <track> path.
   const thumbnails = useMemo(() => {
     if (externalThumbnails && externalThumbnails.length > 0) return externalThumbnails;
-    return textTrack && textTrack.thumbnailCues.length > 0
-      ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
+    return textTrack && textTrack.cues.length > 0
+      ? mapCuesToThumbnails(textTrack.cues, textTrack.src ?? undefined)
       : [];
   }, [externalThumbnails, textTrack]);
 

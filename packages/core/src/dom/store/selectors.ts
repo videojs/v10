@@ -1,4 +1,5 @@
-import { createSelector } from '@videojs/store';
+import type { MediaTextCue, MediaTextTrack, MediaTextTrackState } from '@videojs/media';
+import { createSelector, type Selector } from '@videojs/store';
 
 import { audioTrackFeature } from './features/audio-track';
 import { bufferFeature } from './features/buffer';
@@ -48,6 +49,75 @@ export const selectSource = createSelector(sourceFeature);
 export const selectStreamType = createSelector(streamTypeFeature);
 /** Select the text track state (chapters cues, thumbnail cues). */
 export const selectTextTrack = createSelector(textTrackFeature);
+
+/** A selected text track with the cue and source data needed by its consumer. */
+export interface MediaTextTrackDetails<Kind extends string = TextTrackKind> extends MediaTextTrack<Kind> {
+  cues: MediaTextCue[];
+  src: string | null;
+}
+
+/**
+ * Find a text track matching a kind and optional label.
+ *
+ * Chapters are limited to the first chapters track because that is the track
+ * represented by `chaptersCues`. Thumbnail metadata tracks expose their cues
+ * and source so relative storyboard URLs can be resolved.
+ *
+ * @public
+ * @param state - Text track feature state, or `undefined` when the feature is not configured.
+ * @param kind - Text track kind to match.
+ * @param label - Optional label to distinguish tracks with the same kind.
+ */
+export function getTextTrack<Kind extends string>(
+  state: MediaTextTrackState | undefined,
+  kind: Kind,
+  label?: string
+): MediaTextTrackDetails<Kind> | undefined {
+  if (!state) return undefined;
+
+  const tracks = state.textTrackList.filter((track) => track.kind === kind);
+  const candidates = kind === 'chapters' ? tracks.slice(0, 1) : tracks;
+  const track = candidates.find((track) => label === undefined || track.label === label);
+  if (!track) return undefined;
+
+  let cues: MediaTextCue[] = [];
+  let src: string | null = null;
+
+  switch (track.kind) {
+    case 'chapters':
+      cues = state.chaptersCues;
+      break;
+    case 'metadata':
+      if (track.label === 'thumbnails') {
+        cues = state.thumbnailCues;
+        src = state.thumbnailTrackSrc;
+      }
+      break;
+  }
+
+  return {
+    ...track,
+    kind,
+    cues,
+    src,
+  };
+}
+
+/**
+ * Create a player-state selector for the first text track matching a kind and
+ * optional label.
+ *
+ * @param kind - Text track kind to match.
+ * @param label - Optional label to distinguish tracks with the same kind.
+ */
+export function createTextTrackSelector<Kind extends string>(
+  kind: Kind,
+  label?: string
+): Selector<object, MediaTextTrackDetails<Kind> | undefined> {
+  return Object.assign((state: object) => getTextTrack(selectTextTrack(state), kind, label), {
+    displayName: `textTrack:${kind}${label === undefined ? '' : `:${label}`}`,
+  });
+}
 /** Select the time state (currentTime, duration, seek). */
 export const selectTime = createSelector(timeFeature);
 /** Select the volume state (volume, muted, setVolume, setMuted). */

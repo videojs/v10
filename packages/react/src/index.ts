@@ -75,6 +75,7 @@ export {
   createPlayer,
   type ProviderProps,
 } from './player/create-player';
+export { useTextTrack } from './player/use-text-track';
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
 export { AlertDialog, type AlertDialogContextValue, useAlertDialogContext } from './ui/alert-dialog';
@@ -134,6 +135,7 @@ export { Slider } from './ui/slider';
 export type { SliderBufferProps } from './ui/slider/slider-buffer';
 export type { SliderFillProps } from './ui/slider/slider-fill';
 export type { SliderRootProps } from './ui/slider/slider-root';
+export type { SliderSegmentsProps } from './ui/slider/slider-segments';
 export type { SliderThumbProps } from './ui/slider/slider-thumb';
 export type { SliderThumbnailProps } from './ui/slider/slider-thumbnail';
 export type { SliderTrackProps } from './ui/slider/slider-track';
@@ -145,6 +147,7 @@ export type { StatusIndicatorValueProps } from './ui/status-indicator/status-ind
 export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
+export type { TimeSliderSegmentsProps } from './ui/time-slider/time-slider-segments';
 export { Tooltip, type TooltipContent, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeIndicator } from './ui/volume-indicator';
 export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';

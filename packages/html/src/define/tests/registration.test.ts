@@ -77,6 +77,9 @@ describe('composite define registration', () => {
       // All sub-elements registered (first composite to claim them)
       expect(batch).toContain('media-slider-buffer');
       expect(batch).toContain('media-slider-fill');
+      expect(batch).toContain('media-slider-segments');
+      expect(batch).toContain('media-slider-chapter');
+      expect(batch).toContain('media-time-slider-segments');
       expect(batch).toContain('media-slider-thumb');
       expect(batch).toContain('media-slider-track');
       expect(batch).toContain('media-slider-value');
@@ -160,7 +163,10 @@ describe('composite define registration', () => {
         'media-volume-slider',
         // Slider sub-elements
         'media-slider-buffer',
+        'media-slider-chapter',
         'media-slider-fill',
+        'media-slider-segments',
+        'media-time-slider-segments',
         'media-slider-thumb',
         'media-slider-track',
         'media-slider-value',

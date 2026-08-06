@@ -1,4 +1,4 @@
-import { SliderCore, SliderDataAttrs } from '@videojs/core';
+import { SliderCore, SliderCSSVars, SliderDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -11,6 +11,7 @@ import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
+import { generateId } from '@videojs/utils/string';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
@@ -45,12 +46,17 @@ export class SliderElement extends MediaElement {
 
   readonly #core = new SliderCore();
   readonly #controlsState = new PlayerController(this, playerContext, selectControls);
+  readonly #id = `slider-${generateId()}`;
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #provider = new ContextProvider(this, { context: sliderContext });
 
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
   #releaseControlsLock: (() => void) | null = null;
+  readonly #setTrackClipPath = (value: string | undefined): void => {
+    if (value) this.style.setProperty(SliderCSSVars.clipPath, value);
+    else this.style.removeProperty(SliderCSSVars.clipPath);
+  };
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -132,6 +138,9 @@ export class SliderElement extends MediaElement {
 
     // Provide context to child elements (thumb, value, track, etc.).
     this.#provider.setValue({
+      id: this.#id,
+      min: this.#core.props.min,
+      max: this.#core.props.max,
       state,
       stateAttrMap: SliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
@@ -140,6 +149,7 @@ export class SliderElement extends MediaElement {
         return { ...attrs, 'aria-label': translateText(attrs['aria-label'], this.#i18n.value) };
       })(),
       thumbProps: this.#slider.thumbProps,
+      setTrackClipPath: this.#setTrackClipPath,
     });
   }
 }

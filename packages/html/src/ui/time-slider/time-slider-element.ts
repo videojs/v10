@@ -1,4 +1,4 @@
-import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { SliderCSSVars, TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
@@ -15,6 +15,7 @@ import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import { applyStyles, isRTL } from '@videojs/utils/dom';
+import { generateId } from '@videojs/utils/string';
 import { formatTime } from '@videojs/utils/time';
 
 import { i18nContext } from '../../i18n/context';
@@ -49,6 +50,7 @@ export class TimeSliderElement extends MediaElement {
 
   readonly #core = new TimeSliderCore();
   readonly #controlsState = new PlayerController(this, playerContext, selectControls);
+  readonly #id = `time-slider-${generateId()}`;
   readonly #provider = new ContextProvider(this, { context: sliderContext });
   readonly #timeState = new PlayerController(this, playerContext, selectTime);
   readonly #bufferState = new PlayerController(this, playerContext, selectBuffer);
@@ -58,6 +60,10 @@ export class TimeSliderElement extends MediaElement {
   #slider: SliderApi | null = null;
   #disconnect: AbortController | null = null;
   #releaseControlsLock: (() => void) | null = null;
+  readonly #setTrackClipPath = (value: string | undefined): void => {
+    if (value) this.style.setProperty(SliderCSSVars.clipPath, value);
+    else this.style.removeProperty(SliderCSSVars.clipPath);
+  };
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -172,6 +178,9 @@ export class TimeSliderElement extends MediaElement {
 
     // Provide context to child elements with base slider data attrs.
     this.#provider.setValue({
+      id: this.#id,
+      min: 0,
+      max: state.duration,
       state,
       stateAttrMap: TimeSliderDataAttrs,
       pointerValue: this.#core.valueFromPercent(state.pointerPercent),
@@ -185,6 +194,7 @@ export class TimeSliderElement extends MediaElement {
         ),
       },
       thumbProps: this.#slider.thumbProps,
+      setTrackClipPath: this.#setTrackClipPath,
       formatValue: (value) => formatTime(value, state.duration, { locale: this.#i18n.locale }),
     });
   }

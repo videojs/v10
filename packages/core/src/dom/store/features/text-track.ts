@@ -100,11 +100,7 @@ export const textTrackFeature = definePlayerFeature({
         ? (Array.from(thumbnailTrack.cues) as unknown as MediaTextCue[])
         : [];
 
-      let thumbnailTrackSrc: string | null = null;
-      if (thumbnailTrack) {
-        const el = findTrackElement(media, thumbnailTrack);
-        thumbnailTrackSrc = el?.src ?? null;
-      }
+      const thumbnailTrackSrc = thumbnailTrack ? (findTrackElement(media, thumbnailTrack)?.src ?? null) : null;
 
       // Listen for <track> load events on tracks that don't have cues yet.
       // `addtrack` fires before cues are parsed — we need the `load` event

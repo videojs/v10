@@ -6,11 +6,13 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider } from '../../../i18n';
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../../slider/slider-buffer';
+import { SliderChapter } from '../../slider/slider-chapter';
 import { SliderFill } from '../../slider/slider-fill';
 import { SliderThumb } from '../../slider/slider-thumb';
 import { SliderTrack } from '../../slider/slider-track';
 import { SliderValue } from '../../slider/slider-value';
 import { TimeSliderRoot } from '../time-slider-root';
+import { TimeSliderSegments } from '../time-slider-segments';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
@@ -68,6 +70,19 @@ const { mockSliderApi, mockTimeState, mockBufferState, mockPlaybackState, captur
   };
 });
 
+const mockTextTrackState = vi.hoisted(() => ({
+  chaptersCues: [
+    { startTime: 0, endTime: 30, text: 'Introduction' },
+    { startTime: 30, endTime: 120, text: 'Main' },
+  ],
+  thumbnailCues: [],
+  thumbnailTrackSrc: null,
+  textTrackList: [{ kind: 'chapters', label: 'Chapters', language: 'en', mode: 'hidden' }],
+  subtitlesShowing: false,
+  toggleSubtitles: vi.fn(),
+  selectSubtitlesTrack: vi.fn(),
+}));
+
 // --- Module mocks ---
 
 vi.mock('@videojs/core/dom', async (importOriginal) => {
@@ -86,7 +101,7 @@ vi.mock('@videojs/store/react', () => ({
       // fall through
     }
     try {
-      return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState });
+      return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState, ...mockTextTrackState });
     } catch {
       return undefined;
     }
@@ -183,6 +198,61 @@ describe('TimeSlider compound', () => {
     expect(container.querySelector('[data-testid="buffer"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="thumb"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="value"]')).toBeTruthy();
+  });
+
+  it('renders chapter segments from text track cues', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <TimeSliderSegments data-testid="segments" />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    const rects = container.querySelectorAll('[data-testid="segments"] rect');
+    expect(rects).toHaveLength(2);
+    expect(rects[0]?.getAttribute('style')).toContain('--media-slider-segment-size: 25%');
+    expect(rects[0]?.getAttribute('style')).toContain('--media-slider-segment-offset: 0%');
+    expect(rects[1]?.getAttribute('style')).toContain('--media-slider-segment-size: 75%');
+    expect(rects[1]?.getAttribute('style')).toContain('--media-slider-segment-offset: 25%');
+    expect(rects[0]?.hasAttribute('data-highlighted')).toBe(false);
+  });
+
+  it('uses a unique clip path for each slider', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot data-testid="first-root">
+          <TimeSliderSegments />
+        </TimeSliderRoot>
+        <TimeSliderRoot data-testid="second-root">
+          <TimeSliderSegments />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    const clipPaths = container.querySelectorAll('clipPath');
+    const firstRoot = container.querySelector('[data-testid="first-root"]') as HTMLElement;
+    const secondRoot = container.querySelector('[data-testid="second-root"]') as HTMLElement;
+
+    expect(clipPaths).toHaveLength(2);
+    expect(clipPaths[0]?.id).not.toBe(clipPaths[1]?.id);
+    expect(firstRoot.style.getPropertyValue('--media-slider-clip-path')).toBe(`url("#${clipPaths[0]?.id}")`);
+    expect(secondRoot.style.getPropertyValue('--media-slider-clip-path')).toBe(`url("#${clipPaths[1]?.id}")`);
+  });
+
+  it('renders the chapter at the pointer position', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <SliderChapter data-testid="chapter" />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    expect(container.querySelector('[data-testid="chapter"]')?.textContent).toBe('Introduction');
   });
 
   it('thumb receives ARIA attributes from TimeSliderCore', () => {
