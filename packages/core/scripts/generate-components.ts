@@ -88,9 +88,13 @@ function parseComponentName(manifestPath: string): string {
 }
 
 function manifestPathToImport(manifestPath: string, outputFile: string): string {
-  let path = relative(dirname(outputFile), manifestPath);
-  if (!path.startsWith('.')) path = `./${path}`;
-  return path.replace(/\.[cm]?tsx?$/, '');
+  return normalizeImportPath(relative(dirname(outputFile), manifestPath));
+}
+
+export function normalizeImportPath(path: string): string {
+  let normalized = path.replaceAll('\\', '/');
+  if (!normalized.startsWith('.')) normalized = `./${normalized}`;
+  return normalized.replace(/\.[cm]?tsx?$/, '');
 }
 
 function fileStem(filePath: string): string {
