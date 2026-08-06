@@ -1,8 +1,13 @@
+/**
+ * The Mux source: playback identity, the params that modify it, and the URLs
+ * derived from both. Engine-neutral on purpose — every Mux Media needs it, and
+ * they don't share an engine. Nothing here may reach for a specific one
+ * (hls.js's license-server shaping lives in `../drm.ts`), because
+ * `@videojs/spf` imports this module for its own Mux Media.
+ */
 import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
-import type { DRMSystemsConfiguration } from 'hls.js';
-import type { HlsSource } from '../hls-js';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -90,11 +95,16 @@ export interface MuxDrmParams {
 }
 
 /**
- * Structured Mux source. `playbackId` and `customDomain` identify the stream and
- * derive `src`; the inherited `engine` carries HLS engine options, and the
- * inherited `src` is a fallback for playing a non-Mux URL.
+ * What identifies a Mux stream and modifies it, independent of what plays it.
+ * `playbackId` and `customDomain` identify the stream and derive the URL; `src`
+ * is a fallback for playing a non-Mux URL.
+ *
+ * Each Mux Media extends this with whatever its own engine takes — see
+ * `MuxSource` for the hls.js-backed one.
  */
-export interface MuxSource extends HlsSource {
+export interface MuxSourceBase {
+  /** Manifest URL. Derived from `playbackId` when there is one. */
+  src?: string | undefined;
   playbackId?: string | undefined;
   customDomain?: string | undefined;
   playback?: MuxPlaybackParams | undefined;
@@ -122,7 +132,7 @@ export function createMuxQuery(params: Record<string, unknown> = {}): string {
 }
 
 /** Build the Mux HLS stream URL for a source. */
-export function createMuxVideoURL(source?: MuxSource | null): string | undefined {
+export function createMuxVideoURL(source?: MuxSourceBase | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, playback } = source;
 
@@ -139,10 +149,10 @@ export function createMuxVideoURL(source?: MuxSource | null): string | undefined
 
 /**
  * Parse a Mux stream URL (`https://stream.<domain>/<playback-id>.m3u8?...`)
- * into a `MuxSource`, mapping `snake_case` query params back to camelCase
+ * into a `MuxSourceBase`, mapping `snake_case` query params back to camelCase
  * playback params. Returns `undefined` for non-Mux URLs.
  */
-export function parseMuxVideoURL(src: string): MuxSource | undefined {
+export function parseMuxVideoURL(src: string): MuxSourceBase | undefined {
   if (!src) return undefined;
 
   let url: URL;
@@ -156,7 +166,7 @@ export function parseMuxVideoURL(src: string): MuxSource | undefined {
   const [, playbackId] = url.pathname.match(/^\/([^/]+)\.m3u8$/) ?? [];
   if (!domain || !playbackId) return undefined;
 
-  const source: MuxSource = { playbackId };
+  const source: MuxSourceBase = { playbackId };
   if (domain !== MUX_VIDEO_DOMAIN) source.customDomain = domain;
 
   const playback: MuxPlaybackParams = {};
@@ -186,7 +196,7 @@ function parseMuxParamValue(value: string): string | number | boolean {
  *
  * @internal
  */
-export function createMuxPosterURL(source?: MuxSource | null): string | undefined {
+export function createMuxPosterURL(source?: MuxSourceBase | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, poster, playback } = source;
   const { ext = 'webp', token, ...query } = poster ?? {};
@@ -200,43 +210,12 @@ export function createMuxPosterURL(source?: MuxSource | null): string | undefine
 }
 
 /**
- * Build the hls.js `drmSystems` a source describes, keyed by EME key system id.
- * Mux signs one license token per playback ID and serves every system from a
- * URL derived from it, so `drm.token` is all a caller provides.
- *
- * Returns `undefined` when no license token is present, or when the token is
- * not scoped to DRM — an unsigned license request is always rejected, so there
- * is nothing useful to configure.
- *
- * @internal
- */
-export function createMuxDrmSystems(source?: MuxSource | null): DRMSystemsConfiguration | undefined {
-  if (!source?.playbackId) return undefined;
-  const { playbackId, customDomain = MUX_VIDEO_DOMAIN, drm } = source;
-  const { token } = drm ?? {};
-
-  // License tokens must carry the DRM (`d`) audience.
-  if (!token || parseJwt<MuxJWT>(token)?.aud !== 'd') return undefined;
-
-  const query = createMuxQuery({ token });
-  const url = (path: string) => `https://license.${customDomain}/${path}/${playbackId}${query}`;
-
-  // Every system is configured unconditionally: which one a browser negotiates
-  // is up to its CDM, and Mux serves all three from the same token.
-  return {
-    'com.apple.fps': { licenseUrl: url('license/fairplay'), serverCertificateUrl: url('appcert/fairplay') },
-    'com.widevine.alpha': { licenseUrl: url('license/widevine') },
-    'com.microsoft.playready': { licenseUrl: url('license/playready') },
-  };
-}
-
-/**
  * Build the storyboard (thumbnail sprite) VTT URL a source describes. Read
  * through `MuxMedia`'s `contentData`.
  *
  * @internal
  */
-export function createMuxStoryboardURL(source?: MuxSource | null): string | undefined {
+export function createMuxStoryboardURL(source?: MuxSourceBase | null): string | undefined {
   if (!source?.playbackId) return undefined;
   const { playbackId, customDomain = MUX_VIDEO_DOMAIN, storyboard, playback } = source;
   const { token, ...query } = storyboard ?? {};

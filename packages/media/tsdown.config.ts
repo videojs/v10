@@ -20,6 +20,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/vimeo/index': './src/dom/vimeo/index.ts',
     'dom/youtube/index': './src/dom/youtube/index.ts',
     'dom/mux/index': './src/dom/mux/index.ts',
+    'dom/mux/source/index': './src/dom/mux/source/index.ts',
     'dom/google-cast/index': './src/dom/google-cast/index.ts',
   },
   define: {

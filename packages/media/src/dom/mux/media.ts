@@ -1,12 +1,19 @@
-import { HlsJsMedia } from '../hls-js';
+import { HlsJsMedia, type HlsSource } from '../hls-js';
+import { createMuxDrmSystems } from './drm';
 import {
-  createMuxDrmSystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
-  type MuxSource,
+  type MuxSourceBase,
   parseMuxVideoURL,
-} from './utils';
+} from './source';
+
+/**
+ * Structured Mux source for the hls.js-backed Media: Mux identity and params
+ * from {@link MuxSourceBase}, plus everything hls.js takes — `type`,
+ * `preferPlayback`, and its own `engine` config.
+ */
+export interface MuxSource extends HlsSource, MuxSourceBase {}
 
 export interface MuxMediaProps {
   src: string;
