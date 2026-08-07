@@ -22,12 +22,13 @@ You’ll need the following installed:
 - [Node.js](https://nodejs.org/en/download) (≥ 22.19.0)
 - [Git](https://git-scm.com/downloads)
 - [PNPM](https://pnpm.io/installation) (≥ 10.17.0)
-- [Volta](https://docs.volta.sh/guide) or [NVM](https://github.com/nvm-sh/nvm) (we recommend Volta for automatic Node management)
+- [mise](https://mise.jdx.dev), or [NVM](https://github.com/nvm-sh/nvm)
 - [Claude Code](https://docs.anthropic.com/en/docs/claude-code) (optional, for AI-assisted development)
 
 > [!TIP]
 > PNPM will automatically use the correct Node version when running scripts.
 > If you prefer NVM: after installing it, simply run `nvm use` in the repo root.
+> If you prefer mise: see [Using mise](#-using-mise-optional) — it manages pnpm for you too.
 
 ### ⬇️ Fork & Clone
 
@@ -72,6 +73,20 @@ pnpm build:packages
 > experience.
 > If imports like `react` are not resolving, set your TS version to the workspace one:
 > `CMD/CTRL + Shift + P` → `TypeScript: Select TypeScript Version` → _Use Workspace Version_.
+
+### 🧰 Using mise (optional)
+
+[mise](https://mise.jdx.dev) is an alternative to Volta/NVM that manages **both** Node and pnpm from the checked-in [`mise.toml`](./mise.toml).
+
+```sh
+mise trust        # once per clone; mise only reads configs you've trusted
+mise install      # provisions Node (from .nvmrc) and pnpm
+mise run setup    # pnpm install + pnpm build:packages
+```
+
+`mise.toml` also puts the workspace's `node_modules/.bin` on `PATH`, so `biome`, `turbo`, and `tsgo` can be run directly rather than through `pnpm exec`.
+
+Everything else stays as documented below: use the `pnpm` scripts, not mise tasks. Personal additions, such as extra tools, environment variables, belong in a gitignored `mise.local.toml` or `.env.local` and not in the shared config.
 
 ### 🏗 Building & Development
 
