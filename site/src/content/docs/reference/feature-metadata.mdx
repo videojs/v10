@@ -1,0 +1,102 @@
+---
+title: Metadata
+description: Resolved content title for the player store
+---
+
+import FeatureReference from "@/components/docs/api-reference/FeatureReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+
+Resolves the title of the playing content into a single `contentTitle` value your UI can render.
+
+Three sources can supply a title, and each keeps its own value: the one you set, the one the media reports, and the fallback you supply. The feature publishes the first one that has a value, in that order, and an empty string when none does. Because the tiers are independent, clearing the title you set reveals the media's title rather than the empty string.
+
+An empty string is a value, not an absence — set it and `contentTitle` becomes `''`. Pass `null` to clear a tier instead.
+
+The media tier comes from media that reports a `contentData.title` and emits `contentdatachange`. Not every source does, and a source that reports other content data doesn't necessarily report a title — when none arrives, the media tier simply never contributes and the resolved title is whatever you set. Detaching the media clears its title; the values you set survive, so they still apply to the next source.
+
+The metadata feature is included by the `videoFeatures`, `audioFeatures`, `liveVideoFeatures`, and `liveAudioFeatures` bundles; apps that build a custom bundle can compose it in directly.
+
+<FeatureReference feature="metadata" />
+
+### Set the title
+
+<FrameworkCase frameworks={["react"]}>
+Both inputs are props on <DocsLink slug="reference/player-provider">`Player.Provider`</DocsLink>. A player built without the metadata feature has neither prop, and neither is forwarded.
+
+```tsx title="Player.tsx"
+import { createPlayer } from '@videojs/react';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function App({ episode }: { episode: { title: string | null } }) {
+  return (
+    <Player.Provider contentTitle={episode.title} defaultContentTitle="Untitled episode">
+      <Player.Container>
+        <video src="episode.mp4" />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Both inputs are attributes on the provider element, each with a matching property. A player built without the metadata feature observes neither attribute.
+
+```html
+<video-player content-title="The Pilot" default-content-title="Untitled episode">
+  <media-container>
+    <video src="episode.mp4"></video>
+  </media-container>
+</video-player>
+```
+
+Removing an attribute clears that tier. Setting the property does not write the attribute back, so read the property — not the attribute — for the current value.
+
+```ts title="title-controls.ts"
+const player = document.querySelector('video-player')!;
+
+player.contentTitle = 'The Pilot';
+player.removeAttribute('content-title'); // falls back to the media, then the default
+```
+</FrameworkCase>
+
+Configuration is one way: writing `setContentTitle` or `setDefaultContentTitle` on the store updates the same tiers, but never writes back to the prop or attribute. Pick one or the other for a given title.
+
+### Selector
+
+<FrameworkCase frameworks={["react"]}>
+Pass `selectMetadata` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to metadata state. Returns `undefined` if the metadata feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+Pass `selectMetadata` to <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> to subscribe to metadata state. Returns `undefined` if the metadata feature is not configured.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="ContentTitle.tsx"
+import { selectMetadata, usePlayer } from '@videojs/react';
+
+function ContentTitle() {
+  const metadata = usePlayer(selectMetadata);
+  if (!metadata?.contentTitle) return null;
+
+  return <h2 className="content-title">{metadata.contentTitle}</h2>;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="content-title.ts"
+import { createPlayer, MediaElement, selectMetadata } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+
+class ContentTitle extends MediaElement {
+  readonly #metadata = new PlayerController(this, context, selectMetadata);
+}
+```
+</FrameworkCase>

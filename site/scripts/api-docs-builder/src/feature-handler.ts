@@ -14,20 +14,59 @@
  *   - State type: explicit return type annotation on the state() arrow function
  *   - Silent features: state() returns an empty object
  *   - State interfaces: exported from packages/media/src/core/state.ts
+ *
+ * Most features annotate state() with an interface from media/state.ts, which is
+ * also the shape the store publishes. A feature that resolves several inputs
+ * instead keeps them in private, symbol-keyed source state and publishes the
+ * resolved value through `derived`, so its annotation names an interface that
+ * lives in the feature's own file and describes internals.
+ *
+ * When the annotated name isn't in media/state.ts, the published shape is
+ * derived from the feature itself: every non-symbol property of the source
+ * state (inherited members included, with their JSDoc) plus every `derived`
+ * key. Symbol-keyed members are private by construction, so nothing needs to
+ * mark them — TypeScript names them `__@SYMBOL@id`, which is how they're
+ * recognized. No annotation, and nothing for a feature author to remember.
  */
 import * as fs from 'node:fs';
 import * as path from 'node:path';
 import * as ts from 'typescript';
-import type { FeatureActionDef, FeatureReference, FeatureStateDef } from './types.js';
+import type { FeatureActionDef, FeatureConfigDef, FeatureReference, FeatureStateDef } from './types.js';
 import { createTypeScriptProgram } from './typescript.js';
-import { getJSDocDescription } from './utils.js';
+import { getJSDocDescription, log, unwrapObjectLiteral } from './utils.js';
+
+/** TypeScript's name prefix for a member keyed by a unique symbol. */
+const SYMBOL_MEMBER_PREFIX = '__@';
 
 const SKIP_FILES = new Set(['index.ts', 'presets.ts', 'feature.parts.ts']);
 
 interface FeatureSource {
   filePath: string;
   name: string;
+  /** The state() annotation. Names a media/state.ts interface, or a local one. */
   stateTypeName?: string;
+  /** `derived` keys, which publish resolved values alongside the source state. */
+  derivedKeys: DerivedKeySource[];
+  config: FeatureConfigSource[];
+  /** JSDoc on the feature export, used when the shape is derived locally. */
+  description?: string;
+}
+
+interface DerivedKeySource {
+  name: string;
+  description?: string;
+}
+
+/**
+ * One `config` entry, resolved to the private source-state keys it drives.
+ * `actionKey` types the input; `stateKey` supplies its initial value.
+ */
+interface FeatureConfigSource {
+  name: string;
+  actionKey: string;
+  stateKey: string;
+  description?: string;
+  defaultValue?: string;
 }
 
 export interface FeatureResult {
@@ -51,6 +90,8 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
       if (!ts.isVariableStatement(node)) return;
       if (!node.modifiers?.some((m) => m.kind === ts.SyntaxKind.ExportKeyword)) return;
 
+      const exportDescription = getJSDocDescription(node);
+
       for (const decl of node.declarationList.declarations) {
         if (!ts.isIdentifier(decl.name)) continue;
         const varName = decl.name.text;
@@ -62,6 +103,9 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
 
         let name: string | undefined;
         let stateTypeName: string | undefined;
+        let stateFunction: ts.Expression | undefined;
+        let derivedKeys: DerivedKeySource[] = [];
+        let config: FeatureConfigSource[] = [];
         let silent = false;
 
         for (const prop of arg.properties) {
@@ -71,8 +115,17 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
             name = prop.initializer.text;
           }
 
+          if (prop.name.text === 'config') {
+            config = parseConfigEntries(prop.initializer, name ?? varName);
+          }
+
+          if (prop.name.text === 'derived') {
+            derivedKeys = parseDerivedKeys(prop.initializer);
+          }
+
           if (prop.name.text === 'state') {
             const fn = prop.initializer;
+            stateFunction = fn;
             if ((ts.isArrowFunction(fn) || ts.isFunctionExpression(fn)) && fn.type && ts.isTypeReferenceNode(fn.type)) {
               stateTypeName = fn.type.typeName.getText(sourceFile);
             } else if (isEmptyState(fn)) {
@@ -81,14 +134,156 @@ function discoverFeatureSources(featuresDir: string): FeatureSource[] {
           }
         }
 
+        if (config.length > 0 && stateFunction) {
+          const initialValues = parseStateInitialValues(stateFunction, sourceFile);
+          for (const entry of config) {
+            entry.defaultValue = initialValues.get(entry.stateKey);
+          }
+        }
+
         if (name && (stateTypeName || silent)) {
-          sources.push({ filePath, name, stateTypeName });
+          sources.push({ filePath, name, stateTypeName, derivedKeys, config, description: exportDescription });
         }
       }
     });
   }
 
   return sources;
+}
+
+/** Read the `derived` map, whose keys are published alongside the source state. */
+function parseDerivedKeys(node: ts.Expression): DerivedKeySource[] {
+  const literal = unwrapObjectLiteral(node);
+  if (!literal) return [];
+
+  const keys: DerivedKeySource[] = [];
+
+  for (const prop of literal.properties) {
+    if (!ts.isPropertyAssignment(prop) && !ts.isMethodDeclaration(prop)) continue;
+    if (!ts.isIdentifier(prop.name)) continue;
+
+    const key: DerivedKeySource = { name: prop.name.text };
+    const description = getJSDocDescription(prop);
+    if (description) key.description = description;
+
+    keys.push(key);
+  }
+
+  return keys;
+}
+
+/**
+ * Read the `config` map: `{ contentTitle: { action: SET_X, state: USER_X } }`.
+ *
+ * Both values must be identifiers bound to private symbols. An entry naming
+ * anything else is dropped — and warned about, because a silently missing
+ * input reads to a docs reader as "this feature has no such setting".
+ */
+function parseConfigEntries(node: ts.Expression, featureName: string): FeatureConfigSource[] {
+  const literal = unwrapObjectLiteral(node);
+  if (!literal) return [];
+
+  const entries: FeatureConfigSource[] = [];
+
+  for (const prop of literal.properties) {
+    if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
+
+    const entryLiteral = unwrapObjectLiteral(prop.initializer);
+    if (!entryLiteral) continue;
+
+    let actionKey: string | undefined;
+    let stateKey: string | undefined;
+
+    for (const member of entryLiteral.properties) {
+      if (!ts.isPropertyAssignment(member) || !ts.isIdentifier(member.name)) continue;
+      if (!ts.isIdentifier(member.initializer)) continue;
+
+      if (member.name.text === 'action') actionKey = member.initializer.text;
+      if (member.name.text === 'state') stateKey = member.initializer.text;
+    }
+
+    if (!actionKey || !stateKey) {
+      log.warn(
+        `feature "${featureName}": config input "${prop.name.text}" has a non-identifier action or state — omitted from the reference.`
+      );
+      continue;
+    }
+
+    const entry: FeatureConfigSource = { name: prop.name.text, actionKey, stateKey };
+    const description = getJSDocDescription(prop);
+    if (description) entry.description = description;
+
+    entries.push(entry);
+  }
+
+  return entries;
+}
+
+/**
+ * Map each computed key in the state() object literal to the value it starts at.
+ *
+ * A named constant is resolved to its literal so the docs show the value rather
+ * than a private identifier; anything else falls back to the written text.
+ */
+function parseStateInitialValues(node: ts.Expression, sourceFile: ts.SourceFile): Map<string, string> {
+  const values = new Map<string, string>();
+  if (!ts.isArrowFunction(node) && !ts.isFunctionExpression(node)) return values;
+
+  const body = ts.isBlock(node.body) ? findReturnedObjectLiteral(node.body) : unwrapObjectLiteral(node.body);
+  if (!body) return values;
+
+  const constants = collectLiteralConstants(sourceFile);
+
+  for (const prop of body.properties) {
+    if (!ts.isPropertyAssignment(prop)) continue;
+    if (!ts.isComputedPropertyName(prop.name) || !ts.isIdentifier(prop.name.expression)) continue;
+
+    const initializer = prop.initializer;
+    const resolved = ts.isIdentifier(initializer) ? constants.get(initializer.text) : undefined;
+
+    values.set(prop.name.expression.text, resolved ?? initializer.getText(sourceFile));
+  }
+
+  return values;
+}
+
+/** Map file-level `const NAME = <literal>` declarations to their literal text. */
+function collectLiteralConstants(sourceFile: ts.SourceFile): Map<string, string> {
+  const constants = new Map<string, string>();
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (!ts.isVariableStatement(node)) return;
+    if (!(node.declarationList.flags & ts.NodeFlags.Const)) return;
+
+    for (const decl of node.declarationList.declarations) {
+      if (!ts.isIdentifier(decl.name) || !decl.initializer) continue;
+      if (!isLiteralInitializer(decl.initializer)) continue;
+
+      constants.set(decl.name.text, decl.initializer.getText(sourceFile));
+    }
+  });
+
+  return constants;
+}
+
+function isLiteralInitializer(node: ts.Expression): boolean {
+  return (
+    ts.isStringLiteral(node) ||
+    ts.isNoSubstitutionTemplateLiteral(node) ||
+    ts.isNumericLiteral(node) ||
+    node.kind === ts.SyntaxKind.TrueKeyword ||
+    node.kind === ts.SyntaxKind.FalseKeyword ||
+    node.kind === ts.SyntaxKind.NullKeyword
+  );
+}
+
+function findReturnedObjectLiteral(block: ts.Block): ts.ObjectLiteralExpression | undefined {
+  for (const statement of block.statements) {
+    if (ts.isReturnStatement(statement) && statement.expression) {
+      return unwrapObjectLiteral(statement.expression);
+    }
+  }
+  return undefined;
 }
 
 function isEmptyState(node: ts.Expression): boolean {
@@ -171,6 +366,150 @@ function extractInterfaceMembers(
   return { state, actions };
 }
 
+// ─── Derived Publication ──────────────────────────────────────────
+
+/**
+ * Derive the published shape from the feature itself, for features whose
+ * state() annotation names a private interface rather than a media/state.ts one.
+ *
+ * Every non-symbol property of the source-state type is public — inherited
+ * members included, which is how a `MediaMetadataState`-style base contributes
+ * its members and their JSDoc. Symbol-keyed members are private by
+ * construction. `derived` keys are published on top, typed from what their
+ * function returns.
+ */
+function extractPublishedShape(
+  sourceStateDecl: ts.InterfaceDeclaration,
+  derivedKeys: readonly DerivedKeySource[],
+  derivedLiteral: ts.ObjectLiteralExpression | undefined,
+  checker: ts.TypeChecker
+): { state: Record<string, FeatureStateDef>; actions: Record<string, FeatureActionDef> } {
+  const state: Record<string, FeatureStateDef> = {};
+  const actions: Record<string, FeatureActionDef> = {};
+
+  const declaredType = checker.getTypeAtLocation(sourceStateDecl);
+
+  for (const property of checker.getPropertiesOfType(declaredType)) {
+    const name = property.escapedName as string;
+    if (name.startsWith(SYMBOL_MEMBER_PREFIX)) continue;
+
+    const type = checker.getTypeOfSymbolAtLocation(property, sourceStateDecl);
+    const description = ts.displayPartsToString(property.getDocumentationComment(checker)) || undefined;
+    const callSignature = checker.getSignaturesOfType(type, ts.SignatureKind.Call)[0];
+
+    if (callSignature) {
+      const params = callSignature
+        .getParameters()
+        .map((p) => `${p.name}: ${formatCheckerType(checker.getTypeOfSymbolAtLocation(p, sourceStateDecl), checker)}`)
+        .join(', ');
+      const returnType = formatCheckerType(callSignature.getReturnType(), checker);
+
+      const def: FeatureActionDef = { type: `(${params}) => ${returnType}` };
+      if (description) def.description = description;
+      actions[name] = def;
+    } else {
+      const def: FeatureStateDef = { type: formatCheckerType(type, checker) };
+      if (description) def.description = description;
+      state[name] = def;
+    }
+  }
+
+  for (const key of derivedKeys) {
+    const def: FeatureStateDef = { type: derivedValueType(key.name, derivedLiteral, checker) };
+    if (key.description) def.description = key.description;
+    state[key.name] = def;
+  }
+
+  return { state, actions };
+}
+
+function derivedValueType(
+  name: string,
+  derivedLiteral: ts.ObjectLiteralExpression | undefined,
+  checker: ts.TypeChecker
+): string {
+  const property = derivedLiteral?.properties.find((p) => p.name && ts.isIdentifier(p.name) && p.name.text === name);
+  if (!property) return 'unknown';
+
+  const value = ts.isPropertyAssignment(property) ? property.initializer : property;
+  const signature = checker.getSignaturesOfType(checker.getTypeAtLocation(value), ts.SignatureKind.Call)[0];
+  if (!signature) return 'unknown';
+
+  return formatCheckerType(signature.getReturnType(), checker);
+}
+
+// ─── Configuration Extraction ─────────────────────────────────────
+
+/**
+ * Type each config input from the private action it forwards to.
+ *
+ * The action is declared in the feature's own source-state interface under a
+ * computed symbol key, so the member is matched by the identifier inside the
+ * brackets rather than by name. An input whose action can't be found is still
+ * emitted — the prop exists either way — with its type left unresolved, and
+ * warned about so an unresolved type isn't mistaken for a deliberate one.
+ */
+function extractFeatureConfig(
+  entries: readonly FeatureConfigSource[],
+  sourceStateDecl: ts.InterfaceDeclaration | undefined,
+  checker: ts.TypeChecker,
+  featureName: string
+): Record<string, FeatureConfigDef> {
+  const config: Record<string, FeatureConfigDef> = {};
+
+  for (const entry of entries) {
+    const type = configInputType(entry.actionKey, sourceStateDecl, checker);
+
+    if (type === UNRESOLVED_TYPE) {
+      log.warn(
+        `feature "${featureName}": config input "${entry.name}" points at action "${entry.actionKey}", which has no matching source-state member — type left as "${UNRESOLVED_TYPE}".`
+      );
+    }
+
+    const def: FeatureConfigDef = { type };
+    if (entry.defaultValue) def.default = entry.defaultValue;
+    if (entry.description) def.description = entry.description;
+
+    config[entry.name] = def;
+  }
+
+  return config;
+}
+
+const UNRESOLVED_TYPE = 'unknown';
+
+function configInputType(
+  actionKey: string,
+  sourceStateDecl: ts.InterfaceDeclaration | undefined,
+  checker: ts.TypeChecker
+): string {
+  const member = sourceStateDecl && findComputedMember(sourceStateDecl, actionKey);
+  if (!member) return UNRESOLVED_TYPE;
+
+  const parameter = actionParameter(member);
+  if (!parameter?.type) return UNRESOLVED_TYPE;
+
+  return formatCheckerType(checker.getTypeFromTypeNode(parameter.type), checker);
+}
+
+function findComputedMember(decl: ts.InterfaceDeclaration, identifier: string): ts.TypeElement | undefined {
+  return decl.members.find((member) => {
+    const name = member.name;
+    return name && ts.isComputedPropertyName(name) && ts.isIdentifier(name.expression)
+      ? name.expression.text === identifier
+      : false;
+  });
+}
+
+/** Config actions are written as method signatures or as function-typed properties. */
+function actionParameter(member: ts.TypeElement): ts.ParameterDeclaration | undefined {
+  if (ts.isMethodSignature(member)) return member.parameters[0];
+  if (ts.isPropertySignature(member) && member.type && ts.isFunctionTypeNode(member.type)) {
+    return member.type.parameters[0];
+  }
+  return undefined;
+}
+
 // ─── Pipeline ─────────────────────────────────────────────────────
 
 export function generateFeatureReferences(monorepoRoot: string): FeatureResult[] {
@@ -182,8 +521,10 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
   const sources = discoverFeatureSources(featuresDir);
   if (sources.length === 0) return [];
 
-  // Create a TS program with the state file for the checker
-  const program = createTypeScriptProgram(monorepoRoot, [stateFilePath]);
+  // The state file supplies published interfaces. A feature's own file is only
+  // needed when it declares config inputs or publishes through `derived`.
+  const localFiles = sources.filter(needsOwnSourceFile).map((source) => source.filePath);
+  const program = createTypeScriptProgram(monorepoRoot, [stateFilePath, ...new Set(localFiles)]);
   const checker = program.getTypeChecker();
   const stateSourceFile = program.getSourceFile(stateFilePath);
   if (!stateSourceFile) return [];
@@ -198,35 +539,122 @@ export function generateFeatureReferences(monorepoRoot: string): FeatureResult[]
 
   const results: FeatureResult[] = [];
   for (const source of sources) {
-    if (!source.stateTypeName) {
-      const ref: FeatureReference = {
-        name: source.name,
-        slug: source.name,
-        state: {},
-        actions: {},
-      };
+    const sourceStateDecl = findSourceStateDecl(program, source);
+    const config = extractFeatureConfig(source.config, sourceStateDecl, checker, source.name);
 
-      results.push({ name: source.name, slug: source.name, reference: ref });
-      continue;
-    }
-
-    const interfaceDecl = interfaces.get(source.stateTypeName);
-    if (!interfaceDecl) continue;
-
-    const description = getJSDocDescription(interfaceDecl);
-    const { state, actions } = extractInterfaceMembers(interfaceDecl, checker, stateSourceFile);
+    const published = resolvePublishedShape(source, interfaces, sourceStateDecl, program, checker, stateSourceFile);
+    if (!published) continue;
 
     const ref: FeatureReference = {
       name: source.name,
       slug: source.name,
-      state,
-      actions,
+      state: published.state,
+      actions: published.actions,
+      config,
     };
 
-    if (description) ref.description = description;
+    if (published.description) ref.description = published.description;
 
     results.push({ name: source.name, slug: source.name, reference: ref });
   }
 
   return results;
+}
+
+/**
+ * A feature file joins the program only when the checker has to read it: to
+ * type a config input's private action, or to derive a published shape the
+ * state file doesn't hold.
+ */
+function needsOwnSourceFile(source: FeatureSource): boolean {
+  return source.config.length > 0 || source.derivedKeys.length > 0;
+}
+
+interface PublishedShape {
+  state: Record<string, FeatureStateDef>;
+  actions: Record<string, FeatureActionDef>;
+  description?: string;
+}
+
+/**
+ * Prefer the media/state.ts interface the annotation names. When it isn't there,
+ * the annotation describes private source state, so derive the published shape
+ * from the feature itself.
+ */
+function resolvePublishedShape(
+  source: FeatureSource,
+  interfaces: ReadonlyMap<string, ts.InterfaceDeclaration>,
+  sourceStateDecl: ts.InterfaceDeclaration | undefined,
+  program: ts.Program,
+  checker: ts.TypeChecker,
+  stateSourceFile: ts.SourceFile
+): PublishedShape | undefined {
+  if (!source.stateTypeName) return { state: {}, actions: {} };
+
+  const interfaceDecl = interfaces.get(source.stateTypeName);
+  if (interfaceDecl) {
+    return {
+      ...extractInterfaceMembers(interfaceDecl, checker, stateSourceFile),
+      description: getJSDocDescription(interfaceDecl),
+    };
+  }
+
+  if (!sourceStateDecl) {
+    log.warn(
+      `feature "${source.name}": state() names "${source.stateTypeName}", which is neither in media/state.ts nor declared in the feature file — no reference generated.`
+    );
+    return undefined;
+  }
+
+  const featureSourceFile = program.getSourceFile(source.filePath);
+  return {
+    ...extractPublishedShape(
+      sourceStateDecl,
+      source.derivedKeys,
+      featureSourceFile && findDerivedLiteral(featureSourceFile),
+      checker
+    ),
+    // No published interface to borrow from, so the feature documents itself.
+    description: source.description,
+  };
+}
+
+/** Locate the interface the feature's state() function annotates, in its own file. */
+function findSourceStateDecl(program: ts.Program, source: FeatureSource): ts.InterfaceDeclaration | undefined {
+  if (!source.stateTypeName) return undefined;
+
+  const featureSourceFile = program.getSourceFile(source.filePath);
+  if (!featureSourceFile) return undefined;
+
+  let found: ts.InterfaceDeclaration | undefined;
+  ts.forEachChild(featureSourceFile, (node) => {
+    if (ts.isInterfaceDeclaration(node) && node.name.text === source.stateTypeName) {
+      found = node;
+    }
+  });
+
+  return found;
+}
+
+/** Locate the `derived` object literal in a feature file, for typing its values. */
+function findDerivedLiteral(sourceFile: ts.SourceFile): ts.ObjectLiteralExpression | undefined {
+  let found: ts.ObjectLiteralExpression | undefined;
+
+  ts.forEachChild(sourceFile, (node) => {
+    if (!ts.isVariableStatement(node)) return;
+
+    for (const decl of node.declarationList.declarations) {
+      if (!decl.initializer || !ts.isCallExpression(decl.initializer)) continue;
+      const arg = decl.initializer.arguments[0];
+      if (!arg || !ts.isObjectLiteralExpression(arg)) continue;
+
+      for (const prop of arg.properties) {
+        if (!ts.isPropertyAssignment(prop) || !ts.isIdentifier(prop.name)) continue;
+        if (prop.name.text !== 'derived') continue;
+        found = unwrapObjectLiteral(prop.initializer);
+      }
+    }
+  });
+
+  return found;
 }

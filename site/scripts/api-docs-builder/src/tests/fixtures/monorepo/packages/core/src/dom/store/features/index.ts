@@ -7,6 +7,8 @@
  */
 
 export * as features from './feature.parts';
+export * from './caption-style';
+export * from './metadata';
 export * from './orientation-lock';
 export * from './playback';
 export * from './presets';

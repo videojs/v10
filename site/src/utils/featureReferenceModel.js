@@ -6,8 +6,12 @@
  *
  * Structure:
  *   ## API Reference (H2)
+ *   ### Configuration (H3) — if feature declares provider inputs
  *   ### State (H3) — if feature has state properties
  *   ### Actions (H3) — if feature has action methods
+ *
+ * Configuration leads, mirroring props-before-state in componentReferenceModel:
+ * inputs first, then what the store publishes back.
  */
 
 function hasEntries(value) {
@@ -18,6 +22,10 @@ export function createFeatureReferenceModel(name, ref) {
   if (!ref) return null;
 
   const sections = [];
+
+  if (hasEntries(ref.config)) {
+    sections.push({ key: 'config', title: 'Configuration', id: 'configuration', depth: 3 });
+  }
 
   if (hasEntries(ref.state)) {
     sections.push({ key: 'state', title: 'State', id: 'state', depth: 3 });
