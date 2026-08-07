@@ -36,8 +36,19 @@ function setFullscreenElement(value: Element | null) {
   });
 }
 
+// Stores keep document-level fullscreen listeners until destroyed, so an
+// undestroyed store from an earlier test reacts to later dispatches.
+const stores: { destroy(): void }[] = [];
+
+function createOrientationStore() {
+  const store = createStore<PlayerTarget>()(orientationLockFeature);
+  stores.push(store);
+  return store;
+}
+
 describe('orientationLockFeature', () => {
   afterEach(() => {
+    for (const store of stores.splice(0)) store.destroy();
     setFullscreenElement(null);
     vi.unstubAllGlobals();
   });
@@ -47,7 +58,7 @@ describe('orientationLockFeature', () => {
     const video = createMockVideo();
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature);
+    const store = createOrientationStore();
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -63,7 +74,8 @@ describe('orientationLockFeature', () => {
     const video = createMockVideo();
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature({ type: 'portrait' }));
+    const store = createOrientationStore();
+    store.setOrientationLockType('portrait');
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -74,12 +86,95 @@ describe('orientationLockFeature', () => {
     });
   });
 
+  it('re-locks when the configured type changes during fullscreen', async () => {
+    const orientation = stubOrientation();
+    const video = createMockVideo();
+    const container = document.createElement('div');
+
+    const store = createOrientationStore();
+    store.attach({ media: video, container });
+
+    setFullscreenElement(container);
+    document.dispatchEvent(new Event('fullscreenchange'));
+
+    await vi.waitFor(() => {
+      expect(orientation.lock).toHaveBeenCalledWith('landscape');
+    });
+
+    store.setOrientationLockType('portrait');
+
+    await vi.waitFor(() => {
+      expect(orientation.lock).toHaveBeenCalledWith('portrait');
+    });
+
+    expect(orientation.unlock).not.toHaveBeenCalled();
+  });
+
+  it('restores the default type when configuration is cleared', async () => {
+    const orientation = stubOrientation();
+    const video = createMockVideo();
+    const container = document.createElement('div');
+
+    const store = createOrientationStore();
+    store.setOrientationLockType('portrait');
+    expect(store.orientationLockType).toBe('portrait');
+
+    store.setOrientationLockType(undefined);
+    expect(store.orientationLockType).toBe('landscape');
+
+    store.attach({ media: video, container });
+    setFullscreenElement(container);
+    document.dispatchEvent(new Event('fullscreenchange'));
+
+    await vi.waitFor(() => {
+      expect(orientation.lock).toHaveBeenCalledWith('landscape');
+    });
+  });
+
+  it('preserves the configured type across detach', () => {
+    const video = createMockVideo();
+    const container = document.createElement('div');
+
+    const store = createOrientationStore();
+    store.setOrientationLockType('portrait');
+
+    const detach = store.attach({ media: video, container });
+    detach();
+
+    expect(store.orientationLockType).toBe('portrait');
+  });
+
+  it('stops responding to configuration changes after detach', async () => {
+    const orientation = stubOrientation();
+    const video = createMockVideo();
+    const container = document.createElement('div');
+
+    const store = createOrientationStore();
+    const detach = store.attach({ media: video, container });
+
+    setFullscreenElement(container);
+    document.dispatchEvent(new Event('fullscreenchange'));
+
+    await vi.waitFor(() => {
+      expect(orientation.lock).toHaveBeenCalled();
+    });
+
+    await Promise.resolve();
+    detach();
+    orientation.lock.mockClear();
+
+    store.setOrientationLockType('portrait');
+    await Promise.resolve();
+
+    expect(orientation.lock).not.toHaveBeenCalled();
+  });
+
   it('unlocks when fullscreen exits', async () => {
     const orientation = stubOrientation();
     const video = createMockVideo();
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature);
+    const store = createOrientationStore();
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -103,7 +198,7 @@ describe('orientationLockFeature', () => {
     const video = createMockVideo();
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature);
+    const store = createOrientationStore();
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -126,7 +221,7 @@ describe('orientationLockFeature', () => {
     video.webkitPresentationMode = 'inline';
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature);
+    const store = createOrientationStore();
     store.attach({ media: video, container });
 
     video.webkitPresentationMode = 'fullscreen';
@@ -150,7 +245,7 @@ describe('orientationLockFeature', () => {
     const video = createMockVideo();
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature);
+    const store = createOrientationStore();
     store.attach({ media: video, container });
 
     setFullscreenElement(container);
@@ -169,7 +264,7 @@ describe('orientationLockFeature', () => {
     const video = createMockVideo();
     const container = document.createElement('div');
 
-    const store = createStore<PlayerTarget>()(orientationLockFeature);
+    const store = createOrientationStore();
     store.attach({ media: video, container });
 
     setFullscreenElement(container);

@@ -1,7 +1,8 @@
-import { isFunction } from '@videojs/utils/predicate';
+import { isFunction, isNull } from '@videojs/utils/predicate';
 
 export interface ScreenOrientationLock {
-  lock(): Promise<void>;
+  /** Requests `type`, replacing a lock already held for a different type. */
+  lock(type: ScreenOrientationLockType): Promise<void>;
   unlock(): void;
 }
 
@@ -15,20 +16,16 @@ export type ScreenOrientationLockType =
   | 'portrait-primary'
   | 'portrait-secondary';
 
-export interface ScreenOrientationLockConfig {
-  type?: ScreenOrientationLockType | undefined;
-}
-
 interface ScreenOrientation {
   lock?: ((type: ScreenOrientationLockType) => Promise<void>) | undefined;
   unlock?: (() => void) | undefined;
 }
 
-export function createScreenOrientationLock({
-  type = 'landscape',
-}: ScreenOrientationLockConfig = {}): ScreenOrientationLock {
+export function createScreenOrientationLock(): ScreenOrientationLock {
   let locked = false;
-  let desired = false;
+  // Last requested type, or null once released. Compared after the async lock
+  // request settles so a superseded request commits nothing.
+  let desired: ScreenOrientationLockType | null = null;
 
   const releaseOrientation = () => {
     const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
@@ -42,9 +39,9 @@ export function createScreenOrientationLock({
   };
 
   return {
-    async lock() {
-      if (locked) return;
-      desired = true;
+    async lock(type) {
+      if (locked && desired === type) return;
+      desired = type;
 
       const orientation = globalThis.screen?.orientation as ScreenOrientation | undefined;
       const lock = orientation?.lock;
@@ -57,15 +54,15 @@ export function createScreenOrientationLock({
         return;
       }
 
-      if (desired) {
+      if (desired === type) {
         locked = true;
-      } else {
+      } else if (isNull(desired)) {
         releaseOrientation();
       }
     },
 
     unlock() {
-      desired = false;
+      desired = null;
 
       if (!locked) return;
 

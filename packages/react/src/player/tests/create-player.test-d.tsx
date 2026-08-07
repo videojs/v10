@@ -61,14 +61,29 @@ describe('createPlayer', () => {
     </withoutMetadata.Provider>;
   });
 
-  it('accepts the orientation lock feature alias with and without config', () => {
-    const configuredOrientationLock = features.orientationLock({ type: 'portrait' });
+  it('exposes orientation lock configuration as a provider prop', () => {
+    const withOrientationLock = createPlayer({ features: [features.orientationLock] });
+    const withoutOrientationLock = createPlayer({ features: [features.playback] });
 
-    const defaultResult = createPlayer({ features: [features.orientationLock] });
-    const configuredResult = createPlayer({ features: [configuredOrientationLock] });
+    assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(withOrientationLock);
 
-    assertType<CreatePlayerResult<PlayerStore<[typeof features.orientationLock]>>>(defaultResult);
-    assertType<CreatePlayerResult<PlayerStore<[typeof configuredOrientationLock]>>>(configuredResult);
+    <withOrientationLock.Provider orientationLockType="portrait">
+      <div />
+    </withOrientationLock.Provider>;
+
+    <withOrientationLock.Provider orientationLockType={null}>
+      <div />
+    </withOrientationLock.Provider>;
+
+    // @ts-expect-error orientation lock props reject values outside the enum.
+    <withOrientationLock.Provider orientationLockType="sideways">
+      <div />
+    </withOrientationLock.Provider>;
+
+    // @ts-expect-error orientation lock props are absent when the feature is absent.
+    <withoutOrientationLock.Provider orientationLockType="portrait">
+      <div />
+    </withoutOrientationLock.Provider>;
   });
 
   it('resolves extended video features to generic PlayerStore', () => {

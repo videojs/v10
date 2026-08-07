@@ -1,5 +1,5 @@
 import { act, render, renderHook, screen, waitFor } from '@testing-library/react';
-import { metadataFeature, type PlayerStore } from '@videojs/core/dom';
+import { features, metadataFeature, type PlayerStore } from '@videojs/core/dom';
 import { defineSlice } from '@videojs/store';
 import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 'react';
 import { renderToString } from 'react-dom/server';
@@ -257,6 +257,39 @@ describe('createPlayer', () => {
         </Provider>
       );
       expect(store.contentTitle).toBe('Imperative fallback');
+    });
+
+    it('applies orientation lock configuration through props', () => {
+      const { Provider, usePlayer } = createPlayer({ features: [features.orientationLock] });
+
+      let store!: PlayerStore<[typeof features.orientationLock]>;
+
+      function Consumer() {
+        store = usePlayer();
+        return <span>{store.orientationLockType}</span>;
+      }
+
+      const { rerender } = render(
+        <Provider orientationLockType="portrait">
+          <Consumer />
+        </Provider>
+      );
+
+      expect(screen.getByText('portrait')).toBeTruthy();
+
+      rerender(
+        <Provider orientationLockType="natural">
+          <Consumer />
+        </Provider>
+      );
+      expect(store.orientationLockType).toBe('natural');
+
+      rerender(
+        <Provider>
+          <Consumer />
+        </Provider>
+      );
+      expect(store.orientationLockType).toBe('landscape');
     });
 
     it('seeds config inputs during SSR', () => {

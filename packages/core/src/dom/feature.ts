@@ -1,24 +1,5 @@
-import {
-  type AttachContext,
-  type DerivedContext,
-  defineSlice,
-  type SliceConfig,
-  type StateContext,
-} from '@videojs/store';
-import { isUndefined } from '@videojs/utils/predicate';
+import type { DerivedContext, SliceConfig } from '@videojs/store';
 import type { AnyPlayerFeature, PlayerFeature, PlayerFeatureConfig, PlayerTarget } from './player';
-
-export interface ConfigurablePlayerFeature<Config, State> extends PlayerFeature<State> {
-  (config?: Config): PlayerFeature<State>;
-}
-
-export interface ConfigurablePlayerFeatureConfig<Config, State>
-  extends Omit<SliceConfig<PlayerTarget, State>, 'attach' | 'derived' | 'preserve' | 'state'> {
-  state: (ctx: StateContext<PlayerTarget>, config: Config) => State;
-  attach?: (ctx: AttachContext<PlayerTarget, State>, config: Config) => void;
-}
-
-const definePlayerSlice = defineSlice<PlayerTarget>();
 
 type DerivedFunctions<State> = Record<string, (ctx: DerivedContext<State>) => unknown>;
 
@@ -47,48 +28,15 @@ export function definePlayerFeature<
 export function definePlayerFeature<State, const Config extends PlayerFeatureConfig = Record<never, never>>(
   definition: Omit<StaticPlayerFeatureConfig<State, object, Config>, 'derived'> & { derived?: never }
 ): PlayerFeature<State, object, Config>;
-/**
- * Define the legacy factory-configured form used by static feature variants.
- * Currently used for orientation lock and scheduled for removal in #1942.
- */
-export function definePlayerFeature<Config, State>(
-  definition: ConfigurablePlayerFeatureConfig<Config, State>,
-  defaultConfig: Config
-): ConfigurablePlayerFeature<Config, State>;
-export function definePlayerFeature<Config, State>(
-  definition:
-    | StaticPlayerFeatureConfig<State, object, PlayerFeatureConfig>
-    | ConfigurablePlayerFeatureConfig<Config, State>,
-  defaultConfig?: Config
-): PlayerFeature<State> | ConfigurablePlayerFeature<Config, State> {
-  if (arguments.length === 1) {
-    const feature = definition as StaticPlayerFeatureConfig<State, object, PlayerFeatureConfig>;
-    const preserved = Object.values(feature.config ?? {}).map((entry) => entry.state);
+export function definePlayerFeature<State>(
+  definition: StaticPlayerFeatureConfig<State, object, PlayerFeatureConfig>
+): PlayerFeature<State> {
+  const preserved = Object.values(definition.config ?? {}).map((entry) => entry.state);
 
-    return {
-      ...feature,
-      ...(preserved.length > 0 ? { preserve: preserved } : {}),
-    } as PlayerFeature<State>;
-  }
-
-  const { name, state, attach } = definition as ConfigurablePlayerFeatureConfig<Config, State>;
-
-  const forConfig = (featureConfig: Config): PlayerFeature<State> =>
-    definePlayerSlice({
-      ...(isUndefined(name) ? {} : { name }),
-      state: (ctx) => state(ctx, featureConfig),
-      ...(attach ? { attach: (ctx) => attach(ctx, featureConfig) } : {}),
-    });
-
-  const defaultFeature = forConfig(defaultConfig as Config);
-  const feature = ((featureConfig?: Config) =>
-    isUndefined(featureConfig) ? defaultFeature : forConfig(featureConfig)) as ConfigurablePlayerFeature<Config, State>;
-
-  feature.state = defaultFeature.state;
-  if (defaultFeature.attach) feature.attach = defaultFeature.attach;
-  if (!isUndefined(name)) Object.defineProperty(feature, 'name', { value: name });
-
-  return feature;
+  return {
+    ...definition,
+    ...(preserved.length > 0 ? { preserve: preserved } : {}),
+  } as PlayerFeature<State>;
 }
 
 /** Merge the configuration declarations from the selected player features. */
