@@ -106,9 +106,9 @@ const SOURCE_MAP = {
     },
   },
   'hls-drm': {
-    // The same asset, licensed the generic way: hls.js's own `drmSystems`, keyed
-    // by EME key system id and naming each license server outright. Works on any
-    // hls.js-backed element, and shows what `source.hlsJs` still reaches.
+    // The same asset, licensed the generic way: each engine's own configuration,
+    // naming the license servers outright. Works on any hls.js-backed element,
+    // and shows what the per-engine source options still reach.
     label: 'HLS - DRM protected (engine config)',
     type: 'hls',
     subType: 'mp4',
@@ -130,6 +130,14 @@ const SOURCE_MAP = {
           'com.microsoft.playready': {
             licenseUrl: `https://license.mux.com/license/playready/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
           },
+        },
+      },
+      // Safari negotiates FairPlay itself when it plays the manifest, and never
+      // sees the hls.js configuration above, so the native path is named too.
+      nativeHls: {
+        drm: {
+          licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+          serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
         },
       },
     },

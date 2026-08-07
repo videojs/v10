@@ -1,6 +1,11 @@
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Hls, HlsJsMedia } from '../../hls-js';
-import { MuxMedia } from '..';
+import { MuxMedia, type MuxSource } from '..';
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
+});
 
 // Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,
 // like a real JWT, so it survives a query string untouched.
@@ -382,6 +387,36 @@ describe('MuxMedia', () => {
       return media;
     }
 
+    /** A CDM that grants access, so key exchange gets as far as the certificate. */
+    function stubNativeKeySystem() {
+      const session = { addEventListener() {}, generateRequest: async () => {}, close: async () => {} };
+      const mediaKeys = { createSession: () => session, setServerCertificate: async () => true };
+
+      vi.stubGlobal('navigator', {
+        ...navigator,
+        requestMediaKeySystemAccess: async () => ({ createMediaKeys: async () => mediaKeys }),
+      });
+
+      const fetchMock = vi.fn(async () => ({ ok: true, arrayBuffer: async () => new ArrayBuffer(4) }) as Response);
+      vi.stubGlobal('fetch', fetchMock);
+      return fetchMock;
+    }
+
+    async function setupNative(source: MuxSource) {
+      const media = new MuxMedia();
+      const video = document.createElement('video');
+      video.setMediaKeys = async () => {};
+      media.attach(video);
+      media.source = { playbackId: 'abc123', preferPlayback: 'native', ...source };
+      await flushLoad();
+      return { media, video };
+    }
+
+    /** jsdom has no `MediaEncryptedEvent`; only these two fields are read. */
+    function fireEncrypted(video: HTMLVideoElement) {
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
+    }
+
     it('configures the hls.js engine from a DRM token', async () => {
       const media = setupMse();
       media.source = { playbackId: 'abc123', playback: { token: PLAYBACK_TOKEN }, drm: { token: DRM_TOKEN } };
@@ -416,6 +451,36 @@ describe('MuxMedia', () => {
       // `drm` stays Mux's own authoring input; only the derived license servers
       // reach the HLS layer.
       expect(media.source).toEqual({ playbackId: 'abc123', drm: { token: DRM_TOKEN } });
+    });
+
+    it('configures native FairPlay from the same DRM token', async () => {
+      const fetchMock = stubNativeKeySystem();
+      const { video } = await setupNative({ drm: { token: DRM_TOKEN }, playback: { token: PLAYBACK_TOKEN } });
+
+      fireEncrypted(video);
+      await flushLoad();
+
+      // Which engine plays is decided later, so one token configures both paths:
+      // the native one reaches Mux's servers rather than failing for want of them.
+      expect(fetchMock).toHaveBeenCalledWith(
+        `https://license.mux.com/appcert/fairplay/abc123?token=${DRM_TOKEN}`,
+        expect.anything()
+      );
+    });
+
+    it('lets an explicit nativeHls.drm override the derived one', async () => {
+      const fetchMock = stubNativeKeySystem();
+      const { video } = await setupNative({
+        drm: { token: DRM_TOKEN },
+        nativeHls: { drm: { licenseUrl: 'https://drm.example/fairplay' } },
+      });
+
+      fireEncrypted(video);
+      await flushLoad();
+
+      // The caller named no certificate URL, so nothing is fetched — least of all
+      // from the servers the token would have derived.
+      expect(fetchMock).not.toHaveBeenCalled();
     });
 
     it('lets an explicit hlsJs.drmSystems override the derived one', async () => {

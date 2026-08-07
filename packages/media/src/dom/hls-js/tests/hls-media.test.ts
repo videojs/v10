@@ -8,6 +8,7 @@ import { ContentTypes, Hls, HlsJsMedia, type HlsSource } from '../index';
 afterEach(() => {
   document.body.innerHTML = '';
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function fireDurationChange(video: HTMLVideoElement, duration: number) {
@@ -229,6 +230,7 @@ describe('HlsJsMedia', () => {
 
   describe('drm', () => {
     const WIDEVINE_LICENSE = 'https://license.test/widevine';
+    const FAIRPLAY_LICENSE = 'https://license.test/fairplay';
 
     function setupMse(source: HlsSource) {
       vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
@@ -291,7 +293,7 @@ describe('HlsJsMedia', () => {
       });
     });
 
-    it('warns and builds no engine for native playback', () => {
+    it('warns when native playback is taken and only hls.js DRM is configured', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
@@ -299,7 +301,64 @@ describe('HlsJsMedia', () => {
       media.load();
 
       expect(media.engine).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('DRM playback requires the hls.js (MSE) engine'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.nativeHls.drm`'));
+    });
+
+    it('hands `nativeHls` to the native delegate', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));
+      vi.stubGlobal('navigator', { ...navigator, requestMediaKeySystemAccess });
+
+      const { media, video } = setup();
+      media.source = {
+        ...media.source,
+        hlsJs: drmEngine,
+        nativeHls: { drm: { licenseUrl: FAIRPLAY_LICENSE } },
+      };
+      media.load();
+
+      // jsdom has no `MediaEncryptedEvent`; only these two fields are read.
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
+      await Promise.resolve();
+
+      expect(media.engine).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+      expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', expect.any(Array));
+    });
+
+    it('recreates the native delegate when `nativeHls` changes', () => {
+      const { media, video } = setup();
+      media.source = { ...media.source, nativeHls: { drm: { licenseUrl: FAIRPLAY_LICENSE } } };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.source = { ...media.source, nativeHls: { drm: { licenseUrl: 'https://other.test/fairplay' } } };
+      media.load();
+
+      // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
+      expect(handler).toHaveBeenCalledTimes(2);
+    });
+
+    it('leaves the native delegate alone for a structurally equal `nativeHls`', () => {
+      const { media, video } = setup();
+      const nativeHls = { drm: { licenseUrl: FAIRPLAY_LICENSE } };
+
+      media.source = { ...media.source, nativeHls: { ...nativeHls } };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.source = { ...media.source, nativeHls: { ...nativeHls } };
+      media.load();
+
+      expect(handler).not.toHaveBeenCalled();
     });
   });
 

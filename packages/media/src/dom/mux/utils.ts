@@ -3,6 +3,7 @@ import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
 import type { DRMSystemsConfiguration } from 'hls.js';
 import type { HlsSource } from '../hls-js';
+import type { NativeHlsDrmConfig } from '../native-hls';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -91,8 +92,8 @@ export interface MuxDrmParams {
 
 /**
  * Structured Mux source. `playbackId` and `customDomain` identify the stream and
- * derive `src`; the inherited `hlsJs` carries HLS engine options, and the
- * inherited `src` is a fallback for playing a non-Mux URL.
+ * derive `src`; the inherited `hlsJs` and `nativeHls` carry engine options, and
+ * the inherited `src` is a fallback for playing a non-Mux URL.
  */
 export interface MuxSource extends HlsSource {
   playbackId?: string | undefined;
@@ -228,6 +229,21 @@ export function createMuxDrmSystems(source?: MuxSource | null): DRMSystemsConfig
     'com.widevine.alpha': { licenseUrl: url('license/widevine') },
     'com.microsoft.playready': { licenseUrl: url('license/playready') },
   };
+}
+
+/**
+ * Build the FairPlay configuration native HLS takes. Safari negotiates keys
+ * itself when the browser plays the manifest, so the same license token that
+ * fills `drmSystems` describes the native path too — it just reaches a
+ * different engine, and only FairPlay is on offer there.
+ *
+ * @internal
+ */
+export function createMuxDrmConfig(source?: MuxSource | null): NativeHlsDrmConfig | undefined {
+  const fairplay = createMuxDrmSystems(source)?.['com.apple.fps'];
+  if (!fairplay) return undefined;
+
+  return { licenseUrl: fairplay.licenseUrl, serverCertificateUrl: fairplay.serverCertificateUrl };
 }
 
 /**
