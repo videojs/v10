@@ -8,7 +8,7 @@ import {
   hasJsxAttribute,
   hasJsxSpreadAttribute,
   isJsxElementLike as isJsxNodeLike,
-  singleJsxElementChild,
+  singleJsxChildExpression,
 } from './utils/jsx';
 import { insertStatementsAfterImports } from './utils/source-file';
 
@@ -941,7 +941,7 @@ function liftSingleChildToProp(
   const opening = element.openingElement;
   if (hasJsxAttribute(opening.attributes, prop)) return undefined;
 
-  const child = singleJsxElementChild(element.children);
+  const child = singleJsxChildExpression(element.children);
   if (!child) return undefined;
 
   const nextAttrs = factory.createJsxAttributes([

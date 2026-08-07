@@ -437,6 +437,9 @@ importers:
       '@types/react':
         specifier: ^19.2.17
         version: 19.2.17
+      '@videojs/compiler':
+        specifier: workspace:*
+        version: link:../compiler
       '@videojs/icons':
         specifier: workspace:*
         version: link:../icons

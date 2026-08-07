@@ -46,6 +46,27 @@ export function singleJsxElementChild(children: readonly ts.JsxChild[]): JsxElem
   return found;
 }
 
+/** Return one meaningful JSX child as an expression, including an expression container. */
+export function singleJsxChildExpression(children: readonly ts.JsxChild[]): ts.Expression | null {
+  let found: ts.Expression | null = null;
+
+  for (const child of children) {
+    if (ts.isJsxText(child) && child.containsOnlyTriviaWhiteSpaces) continue;
+
+    const expression = ts.isJsxExpression(child) ? child.expression : child;
+    if (
+      !expression ||
+      (!isJsxElementLike(expression) && !ts.isJsxFragment(expression) && !ts.isExpression(expression))
+    ) {
+      return null;
+    }
+    if (found) return null;
+    found = expression;
+  }
+
+  return found;
+}
+
 export function jsxExpression(factory: ts.NodeFactory, expression: ts.Expression): ts.JsxExpression {
   return factory.createJsxExpression(undefined, expression);
 }

@@ -7,6 +7,7 @@ import {
   isJsxElementLike,
   propertyAccess,
   readStringAttribute,
+  singleJsxChildExpression,
   singleJsxElementChild,
 } from '../jsx';
 
@@ -22,6 +23,31 @@ describe('JSX attribute utilities', () => {
     expect(readStringAttribute(attributes, 'empty')).toBe('');
     expect(readStringAttribute(attributes, 'dynamic')).toBeNull();
     expect(readStringAttribute(attributes, 'missing')).toBeUndefined();
+  });
+});
+
+describe('singleJsxChildExpression', () => {
+  it('returns element and expression children surrounded by whitespace', () => {
+    const element = firstJsxElement(`<Root>\n  <Child />\n</Root>`) as ts.JsxElement;
+    const expression = firstJsxElement(`<Root>\n  {child}\n</Root>`) as ts.JsxElement;
+
+    expect(singleJsxChildExpression(element.children)).toMatchObject({
+      kind: ts.SyntaxKind.JsxSelfClosingElement,
+    });
+    expect(singleJsxChildExpression(expression.children)).toMatchObject({
+      kind: ts.SyntaxKind.Identifier,
+      text: 'child',
+    });
+  });
+
+  it('rejects text, empty expressions, and multiple children', () => {
+    const text = firstJsxElement(`<Root>text</Root>`) as ts.JsxElement;
+    const empty = firstJsxElement(`<Root>{/* comment */}</Root>`) as ts.JsxElement;
+    const multiple = firstJsxElement(`<Root>{one}{two}</Root>`) as ts.JsxElement;
+
+    expect(singleJsxChildExpression(text.children)).toBeNull();
+    expect(singleJsxChildExpression(empty.children)).toBeNull();
+    expect(singleJsxChildExpression(multiple.children)).toBeNull();
   });
 });
 

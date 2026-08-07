@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { hasJsxAttribute, singleJsxElementChild } from '../../utils/jsx';
+import { hasJsxAttribute, singleJsxChildExpression } from '../../utils/jsx';
 import type { JsxElementLike, Matcher } from '../matchers';
 
 export interface ChildAsPropOptions {
@@ -8,7 +8,7 @@ export interface ChildAsPropOptions {
 }
 
 /**
- * For elements matching `match`, lift the single JSX-element child into the
+ * For elements matching `match`, lift the single JSX element or expression child into the
  * named prop (turning the element into a self-closing form):
  *
  *   <Parent.Trigger><Child/></Parent.Trigger>
@@ -17,7 +17,7 @@ export interface ChildAsPropOptions {
  * Skips no-op cases:
  *   - element is already self-closing
  *   - prop is already set
- *   - children are zero, multiple, or text-only (no single JSX-element child)
+ *   - children are zero, multiple, or text-only
  */
 export function childAsProp(opts: ChildAsPropOptions): ts.TransformerFactory<ts.SourceFile> {
   return (context) => {
@@ -29,16 +29,13 @@ export function childAsProp(opts: ChildAsPropOptions): ts.TransformerFactory<ts.
       const opening = out.openingElement;
       if (hasJsxAttribute(opening.attributes, opts.prop)) return out;
 
-      const elementChild = singleJsxElementChild(out.children);
-      if (!elementChild) return out;
+      const child = singleJsxChildExpression(out.children);
+      if (!child) return out;
 
       const factory = context.factory;
       const newAttrs = factory.createJsxAttributes([
         ...opening.attributes.properties,
-        factory.createJsxAttribute(
-          factory.createIdentifier(opts.prop),
-          factory.createJsxExpression(undefined, elementChild)
-        ),
+        factory.createJsxAttribute(factory.createIdentifier(opts.prop), factory.createJsxExpression(undefined, child)),
       ]);
 
       return factory.createJsxSelfClosingElement(opening.tagName, opening.typeArguments, newAttrs);

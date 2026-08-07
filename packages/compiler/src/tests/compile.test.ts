@@ -209,6 +209,14 @@ describe('childAsProp', () => {
     expect(collapse(code)).toContain(collapse(`<T render={<B/>}/>`));
   });
 
+  it('lifts a single JSX expression child into the named prop', async () => {
+    const source = `function App({ child }){ return <T>{child}</T>; }`;
+    const { code } = await compileJsx(source, {
+      transforms: [childAsProp({ match: byTag('T'), prop: 'render' })],
+    });
+    expect(collapse(code)).toContain(collapse(`<T render={child}/>`));
+  });
+
   it('skips when prop is already set', async () => {
     const source = `function App(){ return <T render={<X/>}><B/></T>; }`;
     const { code } = await compileJsx(source, {
