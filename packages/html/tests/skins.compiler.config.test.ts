@@ -15,11 +15,23 @@ describe('htmlSourceConfig', () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain('<media-time-slider class={slider.root}');
     expect(result.code).toContain('<media-slider-track class={slider.track}>');
+    expect(result.code).toContain('<media-slider-fill class={cn(slider.fillBase, slider.fill)}/>');
     expect(result.code).toContain('<media-slider-thumbnail class={thumbnail.image}/>');
     expect(result.code).toContain('<media-icon class="size-media-icon drop-shadow-media-icon" name="spinner"/>');
     expect(result.code).not.toContain('className=');
     expect(result.code).not.toContain('@videojs/core/components');
     expect(result.code).not.toContain('@videojs/icons/components');
+  });
+
+  it('unwraps the React-only tooltip trigger part', async () => {
+    const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.skin.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await compile(source, { filename, config: htmlSourceConfig });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('<media-tooltip {...props}>');
+    expect(result.code).toContain('{children}');
+    expect(result.code).not.toContain('<TooltipPrimitive.Trigger>');
   });
 });
 
@@ -49,6 +61,7 @@ describe('resolveHtmlElementImports', () => {
       '@videojs/html/ui/time',
       '@videojs/html/ui/time-slider',
       '@videojs/html/ui/tooltip',
+      '@videojs/html/ui/tooltip-group',
       '@videojs/html/ui/volume-slider',
     ]);
   });

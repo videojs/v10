@@ -1,4 +1,5 @@
 import { type CompilerTransform, defineConfig, transform } from '@videojs/compiler';
+import { byTag, replaceJsxChild } from '@videojs/compiler/ast';
 import ts from 'typescript';
 
 const componentTags = {
@@ -46,32 +47,44 @@ const iconNames = {
   VolumeOffIcon: 'volume-off',
 } as const;
 
-const elementModules: Readonly<Record<string, string>> = {
-  Controls: '@videojs/html/ui/controls',
-  FullscreenButton: '@videojs/html/ui/fullscreen-button',
-  MuteButton: '@videojs/html/ui/mute-button',
-  PlayButton: '@videojs/html/ui/play-button',
-  Popover: '@videojs/html/ui/popover',
-  SeekButton: '@videojs/html/ui/seek-button',
-  Slider: '@videojs/html/ui/slider',
-  Time: '@videojs/html/ui/time',
-  TimeSlider: '@videojs/html/ui/time-slider',
-  Tooltip: '@videojs/html/ui/tooltip',
-  VolumeSlider: '@videojs/html/ui/volume-slider',
+const elementModules: Readonly<Record<string, readonly string[]>> = {
+  Controls: ['@videojs/html/ui/controls'],
+  FullscreenButton: ['@videojs/html/ui/fullscreen-button'],
+  MuteButton: ['@videojs/html/ui/mute-button'],
+  PlayButton: ['@videojs/html/ui/play-button'],
+  Popover: ['@videojs/html/ui/popover'],
+  SeekButton: ['@videojs/html/ui/seek-button'],
+  Slider: ['@videojs/html/ui/slider'],
+  Time: ['@videojs/html/ui/time'],
+  TimeSlider: ['@videojs/html/ui/time-slider'],
+  Tooltip: ['@videojs/html/ui/tooltip', '@videojs/html/ui/tooltip-group'],
+  VolumeSlider: ['@videojs/html/ui/volume-slider'],
 };
 
 const htmlSourceConfig = defineConfig({
   plugins: [
     transform(
-      (code) => [
-        ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
-        ...Object.entries(iconNames).flatMap(([source, name]) => [
-          code.jsx.element(source).addProp('name', name),
-          code.jsx.element(source).replace('media-icon'),
-        ]),
-        renameClassNameToClass(),
-        removeCanonicalImports(),
-      ],
+      (code) => {
+        const cn = code.import('@videojs/utils/style', 'cn');
+
+        return [
+          ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
+          ...Object.entries(iconNames).flatMap(([source, name]) => [
+            code.jsx.element(source).addProp('name', name),
+            code.jsx.element(source).replace('media-icon'),
+          ]),
+          replaceJsxChild({
+            match: byTag('TooltipPrimitive.Trigger'),
+            replace: (element) => (ts.isJsxElement(element) ? element.children : undefined),
+          }),
+          code.jsx
+            .props('className')
+            .where(code.value.isArray())
+            .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
+          renameClassNameToClass(),
+          removeCanonicalImports(),
+        ];
+      },
       { name: '@videojs/html:source-ui' }
     ),
   ],
@@ -85,8 +98,7 @@ export function resolveHtmlElementImports(componentSymbols: readonly string[]): 
 
   for (const symbol of symbols) {
     if (symbol === 'Slider' && (symbols.has('TimeSlider') || symbols.has('VolumeSlider'))) continue;
-    const source = elementModules[symbol];
-    if (source) imports.add(source);
+    for (const source of elementModules[symbol] ?? []) imports.add(source);
   }
 
   return [...imports].sort();
