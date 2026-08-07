@@ -263,7 +263,7 @@ Video.js adds one thing on top: for Widevine it asks for a hardware-backed CDM f
 
 ### Native HLS negotiates FairPlay itself
 
-When the browser plays the manifest — <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink>, or any HLS element that takes the native path — there is no hls.js instance, and Safari never sees the configuration above. Name the license servers under `nativeHls` instead. FairPlay is the only system reachable this way:
+When the browser plays the manifest — <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink>, or any HLS element that takes the native path — there is no hls.js instance, and Safari never sees the configuration above. Name the license servers under `nativeHls.drmSystems` instead. It takes the same shape as the hls.js one, keyed by key system, but only the `com.apple.fps` entry is read: FairPlay is the only system reachable this way.
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -271,9 +271,11 @@ When the browser plays the manifest — <DocsLink slug="reference/native-hls-vid
   source={{
     src: 'https://example.com/protected.m3u8',
     nativeHls: {
-      drm: {
-        licenseUrl: 'https://license.example.com/fairplay',
-        serverCertificateUrl: 'https://license.example.com/fairplay-cert',
+      drmSystems: {
+        'com.apple.fps': {
+          licenseUrl: 'https://license.example.com/fairplay',
+          serverCertificateUrl: 'https://license.example.com/fairplay-cert',
+        },
       },
     },
   }}
@@ -289,9 +291,11 @@ const video = document.querySelector('native-hls-video');
 video.source = {
   src: 'https://example.com/protected.m3u8',
   nativeHls: {
-    drm: {
-      licenseUrl: 'https://license.example.com/fairplay',
-      serverCertificateUrl: 'https://license.example.com/fairplay-cert',
+    drmSystems: {
+      'com.apple.fps': {
+        licenseUrl: 'https://license.example.com/fairplay',
+        serverCertificateUrl: 'https://license.example.com/fairplay-cert',
+      },
     },
   },
 };
@@ -300,19 +304,25 @@ video.source = {
 
 Video.js POSTs the CDM's license request to `licenseUrl` and hands the response back, so any FairPlay server that speaks the standard SPC/CKC exchange works as-is.
 
-Both halves can sit on one source, which is what the namespaces are for. `HlsJsVideo` reads only the one belonging to the engine it ends up using:
+Both halves can sit on one source, which is what the namespaces are for. `HlsJsVideo` reads only the one belonging to the engine it ends up using — and since the shapes match, one `drmSystems` object describes both:
 
 <FrameworkCase frameworks={["html"]}>
 ```ts
+const drmSystems = {
+  'com.apple.fps': { licenseUrl, serverCertificateUrl },
+  'com.widevine.alpha': { licenseUrl: widevineLicenseUrl },
+  'com.microsoft.playready': { licenseUrl: playreadyLicenseUrl },
+};
+
 video.source = {
   src: 'https://example.com/protected.m3u8',
-  hlsJs: { emeEnabled: true, drmSystems: { /* Widevine, PlayReady, FairPlay */ } },
-  nativeHls: { drm: { licenseUrl, serverCertificateUrl } },
+  hlsJs: { emeEnabled: true, drmSystems },
+  nativeHls: { drmSystems },
 };
 ```
 </FrameworkCase>
 
-Taking the native path with EME configured for hls.js and nothing under `nativeHls` warns in development — protected media would otherwise stall with no explanation. Encrypted media that reaches the native path with no `nativeHls.drm` at all fails with a `MEDIA_ERR_ENCRYPTED` error rather than hanging.
+Taking the native path with EME configured for hls.js and no FairPlay server under `nativeHls` warns in development — protected media would otherwise stall with no explanation. Encrypted media that reaches the native path with no `nativeHls.drmSystems['com.apple.fps']` fails with a `MEDIA_ERR_ENCRYPTED` error rather than hanging.
 
 ## Mux sources name a playback ID
 
@@ -363,7 +373,7 @@ video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 }
 
 ### Mux signs DRM with a token
 
-Mux serves FairPlay, Widevine, and PlayReady from URLs derived from a single license token, so `source.drm` takes that token and nothing else. It fills in both halves above for you — `hlsJs.drmSystems` with EME switched on, and `nativeHls.drm` with the FairPlay server — so protected media plays whichever path the browser takes:
+Mux serves FairPlay, Widevine, and PlayReady from URLs derived from a single license token, so `source.drm` takes that token and nothing else. It fills in both halves above for you — `hlsJs.drmSystems` with EME switched on, and `nativeHls.drmSystems` — so protected media plays whichever path the browser takes:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -390,7 +400,7 @@ video.source = {
 
 DRM playback is always signed, so a `playback.token` belongs alongside it — and `poster.token` / `storyboard.token` for the images. Each is scoped to a different audience, so they are four separate tokens rather than one reused four times. Sign them on your server; see [Mux's DRM guide](https://www.mux.com/docs/guides/protect-videos-with-drm) for how.
 
-A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. Naming `hlsJs.drmSystems` or `nativeHls.drm` yourself takes precedence, for content Mux doesn't license.
+A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. Naming `hlsJs.drmSystems` or `nativeHls.drmSystems` yourself takes precedence, for content Mux doesn't license.
 
 `source.poster` gets no such treatment — it's only data, and nothing applies it to the media. Both URLs are readable from `contentData`, keyed by what each one describes:
 

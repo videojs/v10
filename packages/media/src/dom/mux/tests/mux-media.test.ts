@@ -468,11 +468,11 @@ describe('MuxMedia', () => {
       );
     });
 
-    it('lets an explicit nativeHls.drm override the derived one', async () => {
+    it('lets an explicit nativeHls.drmSystems override the derived one', async () => {
       const fetchMock = stubNativeKeySystem();
       const { video } = await setupNative({
         drm: { token: DRM_TOKEN },
-        nativeHls: { drm: { licenseUrl: 'https://drm.example/fairplay' } },
+        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://drm.example/fairplay' } } },
       });
 
       fireEncrypted(video);

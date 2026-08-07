@@ -3,7 +3,7 @@ import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
 
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
-import { type NativeHlsConfig, NativeHlsMedia } from '../native-hls';
+import { FAIRPLAY_KEY_SYSTEM, type NativeHlsConfig, NativeHlsMedia } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsOnlyMedia } from './hls-js-only';
 
@@ -62,7 +62,8 @@ export interface HlsSource {
   /**
    * Options for the browser's own HLS playback, used whenever the native path
    * is the one taken. DRM lives here too: Safari negotiates FairPlay itself and
-   * never sees the hls.js configuration.
+   * never sees the hls.js configuration. `nativeHls.drmSystems` takes the same
+   * shape as the hls.js one, so both paths can share a single object.
    */
   nativeHls?: NativeHlsConfig | undefined;
 }
@@ -309,9 +310,9 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
    * set here forward.
    */
   #createNativeDelegate(nativeHls: NativeHlsConfig | undefined, hlsJs: Partial<HlsJsConfig> | undefined) {
-    if (__DEV__ && hlsJs?.emeEnabled && !nativeHls?.drm) {
+    if (__DEV__ && hlsJs?.emeEnabled && !nativeHls?.drmSystems?.[FAIRPLAY_KEY_SYSTEM]) {
       console.warn(
-        '[vjs-drm] Native HLS playback reads `source.nativeHls.drm` rather than the hls.js `drmSystems`, and none is configured. DRM-protected media will not play.'
+        `[vjs-drm] Native HLS playback reads \`source.nativeHls.drmSystems\` rather than the hls.js one, and no \`${FAIRPLAY_KEY_SYSTEM}\` license server is configured there. DRM-protected media will not play.`
       );
     }
 

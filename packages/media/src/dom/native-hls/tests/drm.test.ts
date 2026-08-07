@@ -139,10 +139,14 @@ function stubFetch() {
   });
 }
 
+/**
+ * Only FairPlay is typed, since it is the only system Safari negotiates, but an
+ * hls.js `drmSystems` naming the rest can be shared with a native source — so
+ * the helper takes what reaches the mixin at runtime.
+ */
 function setup(
-  drm: { licenseUrl: string; serverCertificateUrl?: string } | null = {
-    licenseUrl: LICENSE_URL,
-    serverCertificateUrl: CERTIFICATE_URL,
+  drmSystems: Record<string, { licenseUrl: string; serverCertificateUrl?: string }> | null = {
+    'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL },
   }
 ) {
   const video = document.createElement('video');
@@ -150,7 +154,7 @@ function setup(
 
   const media = new NativeHlsMedia();
   media.attach(video);
-  media.source = { src: 'https://example.test/protected.m3u8', ...(drm && { nativeHls: { drm } }) };
+  media.source = { src: 'https://example.test/protected.m3u8', ...(drmSystems && { nativeHls: { drmSystems } }) };
 
   const errors = vi.fn();
   media.addEventListener('error', errors);
@@ -186,7 +190,9 @@ describe('NativeHlsMediaDrmMixin', () => {
     media.src = 'https://example.test/other.m3u8';
 
     expect(media.source).toEqual({
-      nativeHls: { drm: { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
+      nativeHls: {
+        drmSystems: { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
+      },
       src: 'https://example.test/other.m3u8',
     });
   });
@@ -241,6 +247,17 @@ describe('NativeHlsMediaDrmMixin', () => {
     expect(media.error).toBeInstanceOf(MediaError);
     expect(media.error!.code).toBe(MediaError.MEDIA_ERR_ENCRYPTED);
     expect(media.error!.context).toBe(NativeHlsDrmErrors.MISSING_CONFIGURATION);
+  });
+
+  it('fails when only key systems native playback cannot negotiate are configured', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    stubKeySystem();
+    const { media, video } = setup({ 'com.widevine.alpha': { licenseUrl: 'https://license.test/widevine' } });
+
+    fireKeyRequest(video);
+
+    expect(media.error!.context).toBe(NativeHlsDrmErrors.MISSING_CONFIGURATION);
+    expect(warn).toHaveBeenCalledWith(expect.stringContaining('com.apple.fps'));
   });
 
   it('ignores initialization data it cannot act on', async () => {

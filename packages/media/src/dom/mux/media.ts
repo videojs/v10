@@ -1,6 +1,5 @@
 import { HlsJsMedia } from '../hls-js';
 import {
-  createMuxDrmConfig,
   createMuxDrmSystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
@@ -62,11 +61,10 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * params). A `playback.token` replaces all other params — signed URLs bake
    * them into the token. Engine options live under `hlsJs` and `nativeHls`.
    *
-   * A `drm.token` fills in both: the inherited `hlsJs.drmSystems` with Mux's
-   * FairPlay, Widevine, and PlayReady license servers for this playback ID, and
-   * `nativeHls.drm` with the FairPlay half, so protected media plays whichever
-   * path the browser takes. Naming either yourself overrides that, for content
-   * Mux does not license.
+   * A `drm.token` fills in both: `hlsJs.drmSystems` and `nativeHls.drmSystems`
+   * get Mux's FairPlay, Widevine, and PlayReady license servers for this
+   * playback ID, so protected media plays whichever path the browser takes.
+   * Naming either yourself overrides that, for content Mux does not license.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -116,6 +114,10 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
  * EME on so hls.js listens for `encrypted`. Which engine ends up playing is
  * decided later, and a signed Mux source should play either way.
  *
+ * The same `drmSystems` object serves both: native HLS takes the hls.js shape
+ * and reads the FairPlay entry out of it, ignoring the systems only MSE can
+ * negotiate.
+ *
  * Whatever the caller set wins, key by key, so license servers of their own
  * replace the derived ones.
  */
@@ -123,10 +125,8 @@ function withMuxDrm(source: MuxSource): Pick<MuxSource, 'hlsJs' | 'nativeHls'> {
   const drmSystems = createMuxDrmSystems(source);
   if (!drmSystems) return { hlsJs: source.hlsJs, nativeHls: source.nativeHls };
 
-  const drm = createMuxDrmConfig(source);
-
   return {
     hlsJs: { emeEnabled: true, drmSystems, ...source.hlsJs },
-    nativeHls: { ...(drm && { drm }), ...source.nativeHls },
+    nativeHls: { drmSystems, ...source.nativeHls },
   };
 }
