@@ -172,10 +172,12 @@
   },
   "devDependencies": {
     "@testing-library/dom": "^10.4.1",
+    "@videojs/compiler": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "happy-dom": "^20.11.1",
     "tsdown": "^0.22.14",
+    "typescript": "^6.0.2",
     "vitest": "^4.1.10"
   },
   "publishConfig": {
