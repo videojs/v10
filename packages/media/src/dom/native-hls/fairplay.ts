@@ -43,7 +43,7 @@ export type NativeHlsDrmSystemsConfig = Partial<Record<typeof FAIRPLAY_KEY_SYSTE
  * message is prose meant for a person; this is the part to branch on.
  */
 export const NativeHlsDrmErrors = {
-  /** The content is encrypted but `source.nativeHls.drmSystems` is missing something required. */
+  /** The content is encrypted but `source.engine.nativeHls.drmSystems` is missing something required. */
   MISSING_CONFIGURATION: 'drmMissingConfiguration',
   /** No FairPlay CDM here, or it refused the requested configuration. */
   UNSUPPORTED_KEY_SYSTEM: 'drmUnsupportedKeySystem',

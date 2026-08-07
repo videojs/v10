@@ -215,7 +215,10 @@ describe('buildYouTubeIframeSrc', () => {
   });
 
   it('forwards preload and YouTube-specific knobs', () => {
-    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', { preload: 'auto', source: { youtube: { cc_load_policy: 1 } } });
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
+      preload: 'auto',
+      source: { engine: { youtube: { cc_load_policy: 1 } } },
+    });
     expect(src).toContain('preload=auto');
     expect(src).toContain('cc_load_policy=1');
   });
@@ -223,16 +226,18 @@ describe('buildYouTubeIframeSrc', () => {
   it('serializes YouTube player parameters verbatim', () => {
     const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
       source: {
-        youtube: {
-          cc_lang_pref: 'fr',
-          color: 'white',
-          disablekb: 1,
-          end: 90,
-          fs: 0,
-          hl: 'fr-ca',
-          origin: 'https://example.com',
-          playlist: 'aqz-KE-bpKQ',
-          widget_referrer: 'https://widgets.example.com',
+        engine: {
+          youtube: {
+            cc_lang_pref: 'fr',
+            color: 'white',
+            disablekb: 1,
+            end: 90,
+            fs: 0,
+            hl: 'fr-ca',
+            origin: 'https://example.com',
+            playlist: 'aqz-KE-bpKQ',
+            widget_referrer: 'https://widgets.example.com',
+          },
         },
       },
     });
@@ -250,13 +255,15 @@ describe('buildYouTubeIframeSrc', () => {
   it('carries undeclared YouTube player parameters through', () => {
     const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
       // Undocumented knobs and whatever YouTube adds next stay usable.
-      source: { youtube: { some_future_param: 'x' } },
+      source: { engine: { youtube: { some_future_param: 'x' } } },
     });
     expect(src).toContain('some_future_param=x');
   });
 
   it('lets YouTube player parameters override the defaults the host sets', () => {
-    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', { source: { youtube: { rel: 1, iv_load_policy: 1 } } });
+    const src = buildYouTubeIframeSrc('aqz-KE-bpKQ', {
+      source: { engine: { youtube: { rel: 1, iv_load_policy: 1 } } },
+    });
     expect(src).toContain('rel=1');
     expect(src).toContain('iv_load_policy=1');
   });
@@ -651,11 +658,11 @@ describe('YouTubeMedia source', () => {
 
   it('re-derives source from src, carrying YouTube player parameters over', () => {
     const media = new YouTubeMedia();
-    media.source = { src: 'aqz-KE-bpKQ', youtube: { cc_load_policy: 1 } };
+    media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { cc_load_policy: 1 } } };
 
     media.src = 'dQw4w9WgXcQ';
 
-    expect(media.source).toEqual({ youtube: { cc_load_policy: 1 }, src: 'dQw4w9WgXcQ' });
+    expect(media.source).toEqual({ engine: { youtube: { cc_load_policy: 1 } }, src: 'dQw4w9WgXcQ' });
   });
 
   it('reloads when only YouTube player parameters change', async () => {
@@ -664,7 +671,7 @@ describe('YouTubeMedia source', () => {
     const { player } = await attachAndLoad(media);
     player.cueVideoById.mockClear();
 
-    media.source = { src: 'aqz-KE-bpKQ', youtube: { cc_load_policy: 1 } };
+    media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { cc_load_policy: 1 } } };
     await Promise.resolve();
 
     expect(player.cueVideoById).toHaveBeenCalledWith({ videoId: 'aqz-KE-bpKQ' });
@@ -673,7 +680,7 @@ describe('YouTubeMedia source', () => {
 
   it('serializes YouTube player parameters onto the initial iframe src', () => {
     const media = new YouTubeMedia();
-    media.source = { src: 'aqz-KE-bpKQ', youtube: { hl: 'fr' } };
+    media.source = { src: 'aqz-KE-bpKQ', engine: { youtube: { hl: 'fr' } } };
     const iframe = createIframe();
     media.attach(iframe);
 

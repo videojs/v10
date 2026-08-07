@@ -75,7 +75,7 @@ describe('DashMedia', () => {
     it('forwards dash.js settings to the dash.js player', () => {
       const { media, engine } = setup();
 
-      media.source = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
 
       expect(engine.updateSettings).toHaveBeenCalledWith({ streaming: { abandonLoadTimeout: 1000 } });
     });
@@ -94,7 +94,7 @@ describe('DashMedia', () => {
 
     it('leaves the engine alone for a structurally equal source', () => {
       const { media, engine } = setup();
-      const source: DashSource = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 1000 } } };
+      const source: DashSource = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       media.source = source;
 
       const sourcechange = vi.fn();
@@ -103,7 +103,7 @@ describe('DashMedia', () => {
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
-      media.source = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
 
       // Assigning is always announced, but nothing reaches dash.js, so an inline
       // React prop cannot disturb what is already playing.
@@ -116,10 +116,10 @@ describe('DashMedia', () => {
 
     it('does not re-attach the manifest when only dash.js settings change', () => {
       const { media, engine } = setup();
-      media.source = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.attachSource.mockClear();
 
-      media.source = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 2000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 2000 } } } };
 
       expect(engine.attachSource).not.toHaveBeenCalled();
       expect(engine.updateSettings).toHaveBeenLastCalledWith({ streaming: { abandonLoadTimeout: 2000 } });
@@ -129,12 +129,12 @@ describe('DashMedia', () => {
       const { media, engine } = setup();
       media.source = {
         src: MANIFEST,
-        dashJs: { streaming: { abandonLoadTimeout: 1000, cacheInitSegments: true } },
+        engine: { dashJs: { streaming: { abandonLoadTimeout: 1000, cacheInitSegments: true } } },
       };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
-      media.source = { src: MANIFEST, dashJs: { streaming: { cacheInitSegments: true } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { cacheInitSegments: true } } } };
 
       expect(engine.resetSettings).toHaveBeenCalledOnce();
       expect(engine.resetSettings.mock.invocationCallOrder[0]!).toBeLessThan(
@@ -145,7 +145,7 @@ describe('DashMedia', () => {
 
     it('resets settings when dash.js settings are removed entirely', () => {
       const { media, engine } = setup();
-      media.source = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
@@ -171,7 +171,7 @@ describe('DashMedia', () => {
   describe('src', () => {
     it('preserves source dash.js settings across a src change', () => {
       const { media, engine } = setup();
-      media.source = { src: MANIFEST, dashJs: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
@@ -179,7 +179,7 @@ describe('DashMedia', () => {
 
       expect(media.source).toEqual({
         src: 'https://example.com/other.mpd',
-        dashJs: { streaming: { abandonLoadTimeout: 1000 } },
+        engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } },
       });
       expect(engine.attachSource).toHaveBeenLastCalledWith('https://example.com/other.mpd');
       // Carried-over options are already applied to the live player.

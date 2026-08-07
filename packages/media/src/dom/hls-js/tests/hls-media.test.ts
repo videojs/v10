@@ -137,7 +137,11 @@ describe('HlsJsMedia', () => {
       media.addEventListener('streamtypechange', handler);
 
       // New hls.js option values must recreate the engine to take effect.
-      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } };
+      media.source = {
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+        engine: { hlsJs: { maxBufferLength: 60 } },
+      };
       media.load();
 
       // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
@@ -151,7 +155,7 @@ describe('HlsJsMedia', () => {
       const source = {
         type: ContentTypes.M3U8,
         preferPlayback: 'native',
-        hlsJs: { maxBufferLength: 60 },
+        engine: { hlsJs: { maxBufferLength: 60 } },
       } as const;
 
       media.source = { ...source };
@@ -220,11 +224,11 @@ describe('HlsJsMedia', () => {
     it('replaces the source rather than merging it', () => {
       const { media } = setup();
 
-      media.source = { hlsJs: { maxBufferLength: 60 } };
+      media.source = { engine: { hlsJs: { maxBufferLength: 60 } } };
 
       // A new source object signals a fresh start: options set in `setup()` are
       // dropped rather than merged.
-      expect(media.source).toEqual({ hlsJs: { maxBufferLength: 60 } });
+      expect(media.source).toEqual({ engine: { hlsJs: { maxBufferLength: 60 } } });
     });
   });
 
@@ -249,7 +253,7 @@ describe('HlsJsMedia', () => {
     const drmEngine = { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } };
 
     it('hands DRM options straight to the hls.js engine', () => {
-      const { media } = setupMse({ hlsJs: drmEngine });
+      const { media } = setupMse({ engine: { hlsJs: drmEngine } });
 
       expect(media.engine!.config.emeEnabled).toBe(true);
       expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
@@ -261,13 +265,15 @@ describe('HlsJsMedia', () => {
     });
 
     it('reuses the engine for an equivalent DRM config', () => {
-      const { media } = setupMse({ hlsJs: drmEngine });
+      const { media } = setupMse({ engine: { hlsJs: drmEngine } });
       const engine = media.engine;
 
       // Same license servers in a new object (e.g. an inline React prop).
       media.source = {
         src: media.src,
-        hlsJs: { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } },
+        engine: {
+          hlsJs: { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } },
+        },
       };
       media.load();
 
@@ -275,14 +281,16 @@ describe('HlsJsMedia', () => {
     });
 
     it('recreates the engine when a license server changes', () => {
-      const { media } = setupMse({ hlsJs: drmEngine });
+      const { media } = setupMse({ engine: { hlsJs: drmEngine } });
       const engine = media.engine;
 
       media.source = {
         src: media.src,
-        hlsJs: {
-          emeEnabled: true,
-          drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' } },
+        engine: {
+          hlsJs: {
+            emeEnabled: true,
+            drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' } },
+          },
         },
       };
       media.load();
@@ -297,11 +305,11 @@ describe('HlsJsMedia', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
-      media.source = { ...media.source, hlsJs: drmEngine };
+      media.source = { ...media.source, engine: { hlsJs: drmEngine } };
       media.load();
 
       expect(media.engine).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.nativeHls.drmSystems`'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.engine.nativeHls.drmSystems`'));
     });
 
     it('hands `nativeHls` to the native delegate', async () => {
@@ -312,8 +320,10 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
       media.source = {
         ...media.source,
-        hlsJs: drmEngine,
-        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } },
+        engine: {
+          hlsJs: drmEngine,
+          nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } },
+        },
       };
       media.load();
 
@@ -330,7 +340,7 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
       media.source = {
         ...media.source,
-        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } },
+        engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } } },
       };
       media.load();
 
@@ -342,7 +352,7 @@ describe('HlsJsMedia', () => {
 
       media.source = {
         ...media.source,
-        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://other.test/fairplay' } } },
+        engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://other.test/fairplay' } } } },
       };
       media.load();
 
@@ -354,14 +364,14 @@ describe('HlsJsMedia', () => {
       const { media, video } = setup();
       const nativeHls = { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } };
 
-      media.source = { ...media.source, nativeHls: { ...nativeHls } };
+      media.source = { ...media.source, engine: { nativeHls: { ...nativeHls } } };
       media.load();
 
       fireDurationChange(video, Infinity);
       const handler = vi.fn();
       media.addEventListener('streamtypechange', handler);
 
-      media.source = { ...media.source, nativeHls: { ...nativeHls } };
+      media.source = { ...media.source, engine: { nativeHls: { ...nativeHls } } };
       media.load();
 
       expect(handler).not.toHaveBeenCalled();
@@ -496,9 +506,9 @@ describe('HlsJsMedia', () => {
       expect(media.streamType).toBe('live');
 
       handler.mockClear();
-      // `engine.debug` is part of `HlsJsMedia`'s engine key — toggling it
+      // `engine.hlsJs.debug` is part of `HlsJsMedia`'s engine key — toggling it
       // recreates the native delegate without switching playback engines.
-      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', hlsJs: { debug: true } };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { hlsJs: { debug: true } } };
       media.load();
 
       // Teardown: a single `live` → `unknown`, then the new delegate re-detects
@@ -520,7 +530,7 @@ describe('HlsJsMedia', () => {
       });
 
       // Recreates the native delegate; duration would otherwise sync-detect as `on-demand`.
-      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', hlsJs: { debug: true } };
+      media.source = { type: ContentTypes.M3U8, preferPlayback: 'native', engine: { hlsJs: { debug: true } } };
       media.load();
 
       expect(seen).not.toContain('on-demand');

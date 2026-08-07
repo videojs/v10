@@ -134,14 +134,16 @@ const SOURCE_MAP = {
     poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
     source: {
       src: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
-      hlsJs: {
-        // hls.js only listens for `encrypted` when EME is switched on.
-        emeEnabled: true,
-        drmSystems: DRM_SYSTEMS,
+      engine: {
+        hlsJs: {
+          // hls.js only listens for `encrypted` when EME is switched on.
+          emeEnabled: true,
+          drmSystems: DRM_SYSTEMS,
+        },
+        // Safari negotiates FairPlay itself when it plays the manifest, and never
+        // sees the hls.js configuration above, so the native path is named too.
+        nativeHls: { drmSystems: DRM_SYSTEMS },
       },
-      // Safari negotiates FairPlay itself when it plays the manifest, and never
-      // sees the hls.js configuration above, so the native path is named too.
-      nativeHls: { drmSystems: DRM_SYSTEMS },
     },
   },
   'hls-live': {

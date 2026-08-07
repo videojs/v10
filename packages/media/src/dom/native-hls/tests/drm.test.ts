@@ -154,7 +154,10 @@ function setup(
 
   const media = new NativeHlsMedia();
   media.attach(video);
-  media.source = { src: 'https://example.test/protected.m3u8', ...(drmSystems && { nativeHls: { drmSystems } }) };
+  media.source = {
+    src: 'https://example.test/protected.m3u8',
+    ...(drmSystems && { engine: { nativeHls: { drmSystems } } }),
+  };
 
   const errors = vi.fn();
   media.addEventListener('error', errors);
@@ -184,14 +187,16 @@ afterEach(() => {
 });
 
 describe('NativeHlsMediaDrmMixin', () => {
-  it('carries `source.nativeHls` across an `src` assignment', () => {
+  it('carries `source.engine` across an `src` assignment', () => {
     const { media } = setup();
 
     media.src = 'https://example.test/other.m3u8';
 
     expect(media.source).toEqual({
-      nativeHls: {
-        drmSystems: { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
+      engine: {
+        nativeHls: {
+          drmSystems: { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
+        },
       },
       src: 'https://example.test/other.m3u8',
     });

@@ -33,8 +33,9 @@ async function render() {
   const playerTag = live ? 'live-video-player' : 'video-player';
 
   // A source carrying DRM license servers has no room in the `src` attribute, so
-  // it is assigned as an object below instead. Only `nativeHls` is read here —
-  // the same object also names the hls.js servers, which this element ignores.
+  // it is assigned as an object below instead. Only `engine.nativeHls` is read
+  // here — the same object also names the hls.js servers, which this element
+  // ignores.
   const { source, url } = SOURCES[state.source];
   const srcAttr = source ? '' : ` src="${url}"`;
 
