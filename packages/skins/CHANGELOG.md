@@ -1,5 +1,33 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.26...@videojs/skins@10.0.0-beta.27) (2026-08-07)
+
+
+### Features
+
+* **compiler:** add artifact dependency graph ([#1990](https://github.com/videojs/v10/issues/1990)) ([91394ca](https://github.com/videojs/v10/commit/91394cad83f3cb24fa190a1cafe241ca0f52edf6))
+* **packages:** add canonical skin source boundary ([#1989](https://github.com/videojs/v10/issues/1989)) ([12c5a90](https://github.com/videojs/v10/commit/12c5a90e83cfcfe69ed9d18b4fb49307e682d407))
+* **skin:** add canonical default video controls ([#1992](https://github.com/videojs/v10/issues/1992)) ([feb86c8](https://github.com/videojs/v10/commit/feb86c8d0facf48051585c9bddcf335695477bc2))
+* **skin:** add canonical PlayButton source ([#1991](https://github.com/videojs/v10/issues/1991)) ([de5f2bb](https://github.com/videojs/v10/commit/de5f2bbcc153ac0da0b9969f693ee732a8e6f196))
+* **skin:** add canonical volume controls ([#1993](https://github.com/videojs/v10/issues/1993)) ([2aff94c](https://github.com/videojs/v10/commit/2aff94c7a073cebb2b3c4e06131e3b4cf8963051))
+* **skin:** add registry catalog adapter ([#2008](https://github.com/videojs/v10/issues/2008)) ([650d4c2](https://github.com/videojs/v10/commit/650d4c23021ea1b92277d853e3ab8d1d329c8d53))
+* **skin:** setup basic tailwind styles for new skin system ([#2005](https://github.com/videojs/v10/issues/2005)) ([48c8dff](https://github.com/videojs/v10/commit/48c8dff3b9a7f93c725ad16cfd7c5e7f38579125))
+
+
+### Bug Fixes
+
+* **packages:** keep live edge indicator colored ([#1921](https://github.com/videojs/v10/issues/1921)) ([0e04454](https://github.com/videojs/v10/commit/0e04454518067ac54912602c862652e627184c8e))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.27
+  * devDependencies
+    * @videojs/core bumped to 10.0.0-beta.27
+    * @videojs/icons bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/skins@10.0.0-beta.25...@videojs/skins@10.0.0-beta.26) (2026-08-02)
 
 
