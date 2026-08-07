@@ -13,7 +13,7 @@ Three sources can supply a title, and each keeps its own value: the one you set,
 
 An empty string is a value, not an absence — set it and `contentTitle` becomes `''`. Pass `null` to clear a tier instead.
 
-The media tier comes from media that reports a `contentData.title` and emits `contentdatachange`. Plain `<video>` and `<audio>` report no content data, so with them the resolved title is whatever you configure. Detaching the media clears its title; the values you set survive, so they still apply to the next source.
+The media tier comes from media that reports a `contentData.title` and emits `contentdatachange`. Not every source does, and a source that reports other content data doesn't necessarily report a title — when none arrives, the media tier simply never contributes and the resolved title is whatever you set. Detaching the media clears its title; the values you set survive, so they still apply to the next source.
 
 The metadata feature is included by the `videoFeatures`, `audioFeatures`, `liveVideoFeatures`, and `liveAudioFeatures` bundles; apps that build a custom bundle can compose it in directly.
 

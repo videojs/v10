@@ -1,15 +1,52 @@
 /**
  * Mock definePlayerFeature — identity function matching the real signature.
  * The builder only needs the TypeScript types to resolve; it never runs this.
+ *
+ * `PlayerFeatureConfig` mirrors the real constraint in
+ * packages/core/src/dom/player.ts rather than loosening it. These fixtures are
+ * inside site/tsconfig.json's program, so `astro check` rejects a fixture
+ * config that production would reject — a loose mock would let the suite pass
+ * on a shape the real API forbids.
  */
+
+type ConfigValue = string | null | undefined;
+
+type ActionInput<Action> = Action extends (...args: infer Arguments) => unknown
+  ? Arguments extends [infer Value]
+    ? Value
+    : never
+  : never;
+
+/** State keys whose action accepts exactly `string | null | undefined`. */
+type ConfigActionKey<State> = [State] extends [never]
+  ? PropertyKey
+  : {
+      [Key in keyof State]-?: [ActionInput<State[Key]>] extends [ConfigValue]
+        ? [ConfigValue] extends [ActionInput<State[Key]>]
+          ? Key
+          : never
+        : never;
+    }[keyof State];
+
+type ConfigStateKey<State> = [State] extends [never] ? PropertyKey : keyof State;
+
 export type PlayerFeatureConfig<State = never> = Record<
   string,
-  { action: keyof State | PropertyKey; state: keyof State | PropertyKey }
+  {
+    action: ConfigActionKey<State>;
+    state: ConfigStateKey<State>;
+  }
 >;
 
-export const definePlayerFeature = <State>(config: {
+/**
+ * `Config` is a generic constrained to the unparameterized `PlayerFeatureConfig`,
+ * matching the real overload. That keeps the parameter permissive (its keys are
+ * `PropertyKey`) and leaves the narrowing to the author's own
+ * `satisfies PlayerFeatureConfig<SourceState>` clause, exactly as in production.
+ */
+export const definePlayerFeature = <State, Config extends PlayerFeatureConfig = Record<never, never>>(config: {
   name?: string;
-  config?: PlayerFeatureConfig<any>;
+  config?: Config;
   state: (ctx: any) => State;
   derived?: Record<string, (ctx: any) => unknown>;
   attach?: (ctx: any) => void;

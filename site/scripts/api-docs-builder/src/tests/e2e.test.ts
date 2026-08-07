@@ -96,7 +96,7 @@
  *                   without CustomMediaElement. API reference manually maintained.
  */
 import * as path from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { type FeatureResult, generateFeatureReferences } from '../feature-handler';
 import { generateMediaElementReferences, type MediaElementResult } from '../media-element-handler';
 import { generateComponentReferences } from '../pipeline';
@@ -790,6 +790,7 @@ describe('Feature pipeline (end-to-end)', () => {
   describe('Discovery', () => {
     it('discovers features from the features index', () => {
       const names = results.map((r) => r.name);
+      expect(names).toContain('captionStyle');
       expect(names).toContain('metadata');
       expect(names).toContain('orientationLock');
       expect(names).toContain('playback');
@@ -808,7 +809,7 @@ describe('Feature pipeline (end-to-end)', () => {
     });
 
     it('produces one result per feature', () => {
-      expect(results.length).toBe(4);
+      expect(results.length).toBe(5);
     });
   });
 
@@ -833,25 +834,41 @@ describe('Feature pipeline (end-to-end)', () => {
   // `@state MediaMetadataState` names the interface the store publishes.
   // `config` maps two provider inputs onto private actions and state keys.
 
-  describe('metadata (@state override)', () => {
-    it('reads the interface named by @state instead of the state() annotation', () => {
+  describe('metadata (published shape derived from the feature)', () => {
+    it('publishes derived keys with their inferred type and JSDoc', () => {
       const ref = findFeature('metadata')!.reference;
 
-      expect(ref.description).toBe('Resolved content metadata exposed by the player store.');
-      expect(ref.state.contentTitle).toMatchObject({
+      expect(ref.state.contentTitle).toEqual({
         type: 'string',
         description: 'The resolved content title.',
       });
+    });
+
+    it('publishes inherited source-state members, carrying their JSDoc across files', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      // Declared on MediaMetadataState in media/state.ts, reached through
+      // `MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'>`.
       expect(ref.actions.setContentTitle).toMatchObject({
         description: 'Set or clear the user title override.',
       });
+      expect(ref.actions.setDefaultContentTitle).toMatchObject({
+        description: 'Set or clear the fallback used when neither the user nor media supplies a title.',
+      });
     });
 
-    it('omits private source state', () => {
+    it('omits symbol-keyed source state as private', () => {
       const ref = findFeature('metadata')!.reference;
 
       expect(Object.keys(ref.state)).toEqual(['contentTitle']);
       expect(Object.keys(ref.actions)).toEqual(['setContentTitle', 'setDefaultContentTitle']);
+      expect(JSON.stringify(ref)).not.toContain('__@');
+    });
+
+    it('describes itself from the feature export JSDoc', () => {
+      const ref = findFeature('metadata')!.reference;
+
+      expect(ref.description).toBe('Resolves user, media, and fallback content-title metadata into player state.');
     });
   });
 
@@ -877,7 +894,14 @@ describe('Feature pipeline (end-to-end)', () => {
       const config = findFeature('metadata')!.reference.config;
 
       expect(config.contentTitle!.default).toBe('undefined');
-      expect(config.defaultContentTitle!.default).toBe('undefined');
+    });
+
+    it('resolves a named-constant initializer to its literal, not its identifier', () => {
+      const config = findFeature('metadata')!.reference.config;
+
+      // state() initializes this key to FALLBACK_CONTENT_TITLE; printing that
+      // private identifier into public docs would be meaningless to a reader.
+      expect(config.defaultContentTitle!.default).toBe("'Untitled'");
     });
 
     it('carries JSDoc from the config entry', () => {
@@ -895,6 +919,50 @@ describe('Feature pipeline (end-to-end)', () => {
       expect(volume.config).toEqual({});
       expect(Object.keys(volume.state)).toContain('volume');
       expect(Object.keys(volume.actions)).toContain('setVolume');
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────
+  // CAPTION STYLE FEATURE (config degrade paths)
+  // ─────────────────────────────────────────────────────────────────
+  //
+  // Both failures below produce output that looks fine and is wrong, so the
+  // warning is part of the contract, not a nicety.
+
+  describe('captionStyle (config degrade paths)', () => {
+    function generateWithWarnings(): { results: FeatureResult[]; warnings: string[] } {
+      const warnings: string[] = [];
+      const spy = vi.spyOn(console, 'warn').mockImplementation((...args: unknown[]) => {
+        warnings.push(args.map(String).join(' '));
+      });
+
+      try {
+        return { results: generateFeatureReferences(FIXTURE_ROOT), warnings };
+      } finally {
+        spy.mockRestore();
+      }
+    }
+
+    it('falls back to an unresolved type when the action has no source-state member', () => {
+      const { results: fresh, warnings } = generateWithWarnings();
+      const config = fresh.find((r) => r.name === 'captionStyle')!.reference.config;
+
+      expect(config.fontFamily!.type).toBe('unknown');
+      expect(warnings.some((w) => w.includes('fontFamily') && w.includes('MISSING_ACTION'))).toBe(true);
+    });
+
+    it('drops an input whose action is not a plain identifier, and says so', () => {
+      const { results: fresh, warnings } = generateWithWarnings();
+      const config = fresh.find((r) => r.name === 'captionStyle')!.reference.config;
+
+      expect(config.fontSize).toBeUndefined();
+      expect(warnings.some((w) => w.includes('fontSize') && w.includes('non-identifier'))).toBe(true);
+    });
+
+    it('still publishes the feature state around the broken inputs', () => {
+      const ref = findFeature('captionStyle')!.reference;
+
+      expect(ref.state.fontFamily).toMatchObject({ type: 'string' });
     });
   });
 

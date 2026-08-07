@@ -1,10 +1,12 @@
 /**
  * Mock metadata feature — mirrors the real one's shape.
  *
- * Exercises: `@state` override (the state() annotation names private source
- * state, so the published interface comes from the tag), `config` inputs typed
- * from symbol-keyed private actions, initial values read from state(), config
- * JSDoc → input description, and `satisfies` around the config map.
+ * Exercises: published shape derived from the feature itself (non-symbol
+ * members of the source state, inherited members and their JSDoc included,
+ * plus `derived` keys), symbol-keyed members excluded as private, `config`
+ * inputs typed from those private actions, initial values read from state()
+ * including a named constant resolved to its literal, config JSDoc → input
+ * description, and `satisfies` around the config map.
  */
 import type { MediaContentValue, MediaMetadataState } from '../../../../../media/src/core/state';
 import { definePlayerFeature, type PlayerFeatureConfig } from '../../feature';
@@ -15,6 +17,9 @@ const USER_DEFAULT_CONTENT_TITLE = Symbol('user-default-content-title');
 const SET_USER_CONTENT_TITLE = Symbol('set-user-content-title');
 const SET_USER_DEFAULT_CONTENT_TITLE = Symbol('set-user-default-content-title');
 
+/** A named constant default, to prove it is resolved rather than printed by name. */
+const FALLBACK_CONTENT_TITLE = 'Untitled';
+
 interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'> {
   [MEDIA_CONTENT_TITLE]: MediaContentValue;
   [USER_CONTENT_TITLE]: MediaContentValue;
@@ -23,11 +28,7 @@ interface MetadataSourceState extends Omit<MediaMetadataState, 'contentTitle'> {
   [SET_USER_DEFAULT_CONTENT_TITLE](value: MediaContentValue): void;
 }
 
-/**
- * Resolves user, media, and fallback content-title metadata into player state.
- *
- * @state MediaMetadataState
- */
+/** Resolves user, media, and fallback content-title metadata into player state. */
 export const metadataFeature = definePlayerFeature({
   name: 'metadata',
   config: {
@@ -45,13 +46,14 @@ export const metadataFeature = definePlayerFeature({
   state: (): MetadataSourceState => ({
     [MEDIA_CONTENT_TITLE]: undefined,
     [USER_CONTENT_TITLE]: undefined,
-    [USER_DEFAULT_CONTENT_TITLE]: undefined,
+    [USER_DEFAULT_CONTENT_TITLE]: FALLBACK_CONTENT_TITLE,
     [SET_USER_CONTENT_TITLE]: () => {},
     [SET_USER_DEFAULT_CONTENT_TITLE]: () => {},
     setContentTitle: () => {},
     setDefaultContentTitle: () => {},
   }),
   derived: {
-    contentTitle: () => '',
+    /** The resolved content title. */
+    contentTitle: (): string => FALLBACK_CONTENT_TITLE,
   },
 });
