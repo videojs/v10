@@ -15,7 +15,7 @@
     --media-slider-thumb-size: 0.75rem;
     --media-slider-track-background: oklch(1 0 0 / 0.2);
     --media-slider-track-size: 0.25rem;
-    --media-surface-backdrop-filter: blur(12px);
+    --media-surface-backdrop-blur: 12px;
     --media-surface-background: oklch(0.2 0 0 / 0.72);
     --media-surface-border: oklch(1 0 0 / 0.16);
   }

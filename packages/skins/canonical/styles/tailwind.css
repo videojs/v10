@@ -3,6 +3,7 @@
 @import "./themes/default.css";
 
 @source "../**/*.skin.tsx";
+@source "./**/*.tailwind.ts";
 
 @theme inline {
   --color-media-controls: var(--media-controls-color);
@@ -22,5 +23,5 @@
   --radius-media-surface: var(--media-radius-surface);
   --shadow-media-surface: 0 0 0 1px var(--media-surface-border), 0 2px 8px var(--media-shadow-color);
   --drop-shadow-media-icon: 0 1px 0 var(--media-shadow-color);
-  --backdrop-blur-media-surface: var(--media-surface-backdrop-filter);
+  --blur-media-surface: var(--media-surface-backdrop-blur);
 }
