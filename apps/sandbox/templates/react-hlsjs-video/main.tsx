@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { Chapters } from '@app/shared/react/chapters';
 import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
@@ -11,7 +12,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { isLiveSource, SOURCES } from '@app/shared/sources';
+import { getChaptersSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { useMemo } from 'react';
@@ -27,6 +28,7 @@ function App() {
   const styling = useMemo(readStyling, []);
   const poster = usePoster();
   const storyboard = useStoryboard();
+  const chapters = getChaptersSrc(source);
   const live = isLiveSource(source);
   const autoplay = useAutoplay();
   const muted = useMuted();
@@ -56,6 +58,7 @@ function App() {
             playsInline
             crossOrigin="anonymous"
           >
+            <Chapters src={chapters} />
             <Storyboard src={storyboard} />
           </HlsJsVideo>
         </VideoSkinComponent>

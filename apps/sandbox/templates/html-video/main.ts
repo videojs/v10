@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { renderChapters } from '@app/shared/html/chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import '@videojs/html/video/player';
@@ -12,7 +13,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
+import { getChaptersSrc, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -27,12 +28,14 @@ async function render() {
 
   const storyboard = getStoryboardSrc(state.source);
   const poster = getPosterSrc(state.source);
+  const chapters = getChaptersSrc(state.source);
   const mediaAttrs = renderMediaAttrs(state);
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <video-player>
       <${tag} class="aspect-video max-w-4xl mx-auto">
         <video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+          ${renderChapters(chapters)}
           ${renderStoryboard(storyboard)}
         </video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

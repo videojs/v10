@@ -96,18 +96,19 @@ function getTemplateHTML() {
               <media-slider-track class="${slider.track}">
                 <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
                 <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
+                <media-time-slider-segments class="${slider.segments}"></media-time-slider-segments>
               </media-slider-track>
               <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
 
-              <div class="${thumbnail.root}">
-                <div class="${thumbnail.imageWrapper}">
-                  <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
-                </div>
-                <media-slider-value type="pointer" class="${cn(time.current, thumbnail.time)}"></media-slider-value>
-                ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
-              </div>
               <media-slider-preview class="${slider.preview}">
-                <media-slider-value type="pointer" class="${cn(slider.value, time.current)}"></media-slider-value>
+                <div class="${cn(thumbnail.root, slider.thumbnail)}">
+                  <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
+                  ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
+                </div>
+                <div class="${slider.value}">
+                  <media-slider-chapter class="${slider.chapter}"></media-slider-chapter>
+                  <media-slider-value type="pointer"></media-slider-value>
+                </div>
               </media-slider-preview>
             </media-time-slider>
           </div>

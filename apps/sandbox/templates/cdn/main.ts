@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { renderChapters } from '@app/shared/html/chapters';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { CSS_SKIN_TAGS, LIVE_VIDEO_CSS_SKIN_TAGS } from '@app/shared/html/skin-tags';
 import { renderStoryboard } from '@app/shared/html/storyboard';
@@ -15,7 +16,14 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { BACKGROUND_VIDEO_SRC, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import {
+  BACKGROUND_VIDEO_SRC,
+  getChaptersSrc,
+  getPosterSrc,
+  getStoryboardSrc,
+  isLiveSource,
+  SOURCES,
+} from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
 import { getI18nTranslations } from '@videojs/html/cdn/i18n';
 
@@ -252,6 +260,7 @@ async function render() {
   const source = SOURCES[state.source];
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
+  const chapters = isVideoPreset(preset) ? getChaptersSrc(state.source) : undefined;
 
   const sourceAttr = preset === 'background-video' ? `src="${BACKGROUND_VIDEO_SRC}"` : `src="${source.url}"`;
   const mediaAttrs = renderMediaAttrs(state);
@@ -295,6 +304,7 @@ async function render() {
   const skin = html`
     <${skinTag} class="aspect-video max-w-4xl mx-auto">
       <${mediaTag} ${sourceAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+        ${renderChapters(chapters)}
         ${renderStoryboard(storyboard)}
       </${mediaTag}>
       ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

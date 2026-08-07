@@ -17,6 +17,8 @@ export interface SandboxSource {
   poster?: string;
   /** Structured source, for what a plain `url` cannot express. Takes precedence. */
   source?: MuxSource;
+  /** URL for chapters vtt. */
+  chapters?: string;
 }
 
 // The two DRM sources below are the same Mux asset reached two ways, so the
@@ -74,6 +76,13 @@ const SOURCE_MAP = {
     url: 'https://stream.mux.com/vth873zxidmhBVVRWBKcPTxnSQ302QqUm.m3u8',
     type: 'hls',
     subType: 'mp4',
+  },
+  'hls-7': {
+    label: 'HLS - Dahlback Golf RSI',
+    url: 'https://stream.mux.com/yH00b01Lj2z023hUQdEf6EpURPROSsvE1qWPnR8ShnbnI8.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+    chapters: new URL('./chapters-en.vtt?no-inline', import.meta.url).href,
   },
   'hls-multi-audio': {
     label: 'HLS - Multi-language audio',
@@ -273,4 +282,9 @@ export function getStoryboardSrc(source: SourceId): string | undefined {
   if (isLiveSource(source)) return undefined;
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/storyboard.vtt${imageQuery(source, 'storyboard')}` : undefined;
+}
+
+export function getChaptersSrc(source: SourceId): string | undefined {
+  const item = SOURCES[source];
+  return 'chapters' in item ? item.chapters : undefined;
 }

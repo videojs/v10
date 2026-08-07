@@ -2,8 +2,7 @@ import { renderIcon } from '@videojs/icons/render';
 import {
   bufferingIndicator,
   button,
-  buttonGroupEnd,
-  buttonGroupStart,
+  buttonGroup,
   controls,
   error,
   icon,
@@ -56,7 +55,7 @@ function getTemplateHTML() {
       <media-controls data-controls="" class="${controls}">
         <media-tooltip-group>
           <div class="${primaryControls}">
-            <div class="${buttonGroupStart}">
+            <div class="${buttonGroup}">
               <media-play-button commandfor="play-tooltip" class="${cn(button.base, button.subtle, button.icon, iconState.play.button)}">
                 ${renderIcon('restart', { class: cn(icon, iconState.play.restart) })}
                 ${renderIcon('play', { class: cn(icon, iconState.play.play) })}
@@ -72,7 +71,7 @@ function getTemplateHTML() {
 
             <div class="${spacer}" aria-hidden="true"></div>
 
-            <div class="${buttonGroupEnd}">
+            <div class="${buttonGroup}">
               <media-mute-button commandfor="live-video-volume-popover" class="${cn(button.base, button.subtle, button.icon, iconState.mute.button)}">
                 ${renderIcon('volume-off', { class: cn(icon, iconState.mute.volumeOff) })}
                 ${renderIcon('volume-low', { class: cn(icon, iconState.mute.volumeLow) })}
