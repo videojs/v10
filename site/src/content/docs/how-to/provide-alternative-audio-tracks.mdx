@@ -1,0 +1,158 @@
+---
+title: 'Provide alternative audio tracks'
+description: 'Read alternate audio tracks from a stream and let users switch language or commentary.'
+category: 'capability'
+components: ['AudioTrackRadioGroup', 'Menu']
+api: ['audioTrackFeature', 'useAudioTrackOptions']
+keywords: ['audio tracks', 'alternate audio', 'audio language selection', 'multi audio']
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/audio-track-radio-group/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/audio-track-radio-group/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/audio-track-radio-group/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/audio-track-radio-group/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/audio-track-radio-group/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/audio-track-radio-group/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/audio-track-radio-group/html/css/BasicUsage.ts?raw';
+
+Read the alternate audio tracks a stream offers — languages, commentary, described audio — and let users switch between them.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Render an audio track menu only when the stream offers a choice. The menu options come ready-made from player state.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-audio-track">audio track feature</DocsLink> mirrors the media element's `audioTracks` into player state:
+
+- `audioTrackList` holds each track's `id`, `kind`, `label`, `language`, and whether it's `enabled`.
+- `selectAudioTrack(id)` enables one track and disables the rest — exactly one audio track plays at a time.
+
+<FrameworkCase frameworks={["react"]}>
+
+`useAudioTrackOptions` turns this state into menu options with labels, the selected value, and `availability`, as shown in the demo.
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+<DocsLink slug="reference/audio-track-radio-group">`<media-audio-track-radio-group>`</DocsLink> turns this state into a ready-made radio menu, as shown in the demo.
+
+</FrameworkCase>
+
+Tracks come from the source: alternate audio renditions in an HLS or DASH manifest appear in `audioTrackList` through the streaming media elements.
+
+## Availability and constraints
+
+- Audio track availability is `'unavailable'` until the media exposes more than a default track. Render the menu conditionally; the demo's availability check does this.
+- Track labels and languages come from the manifest. Streams with unlabeled tracks produce menus of indistinguishable entries — fix the manifest, not the UI.
+- Switching audio tracks is seamless with streaming engines, but the new track's segments must download first; a brief delay is normal.
+
+## Common variations
+
+### Switch tracks programmatically
+
+Select by language from app logic — for example, matching the app's locale:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
+import { videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function UseAppLanguage({ language }: { language: string }) {
+  const store = Player.usePlayer();
+  const tracks = Player.usePlayer((s) => s.audioTrackList);
+
+  const match = tracks.find((track) => track.language === language);
+
+  return (
+    <button type="button" disabled={!match} onClick={() => match?.id && store.selectAudioTrack(match.id)}>
+      Listen in {language}
+    </button>
+  );
+}
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <HlsJsVideo src="https://your-stream.example.com/multi-audio.m3u8" muted playsInline />
+        <UseAppLanguage language="es" />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Access the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink>, find the track in `audioTrackList` by `language`, and pass its `id` to `selectAudioTrack`.
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### The audio menu doesn't render
+
+The media exposes no selectable audio tracks. Confirm the manifest declares alternate audio and plays through a streaming media element such as <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>.
+
+### Track names show as blank or duplicates
+
+The manifest doesn't label its audio renditions. Add `NAME` and `LANGUAGE` attributes to the manifest's audio renditions.
+
+### Switching tracks restarts audio noticeably late
+
+The engine must fetch segments for the new track. This is inherent to segmented streaming; shorter segment durations reduce the gap.
+
+## Related components
+
+- <DocsLink slug="reference/audio-track-radio-group">Audio track radio group</DocsLink>
+- <DocsLink slug="reference/menu">Menu</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-audio-track">Audio track feature</DocsLink>
+- <DocsLink slug="reference/use-audio-track-options">useAudioTrackOptions</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/show-captions-and-subtitles">Show captions and subtitles</DocsLink>
+- <DocsLink slug="how-to/load-different-file-formats">Load different file formats</DocsLink>

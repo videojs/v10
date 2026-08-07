@@ -1,0 +1,43 @@
+.media-container {
+  position: relative;
+}
+
+.media-container video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.source-switcher {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.control-button {
+  padding-block: 8px;
+  padding-inline: 16px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.control-button[data-active] {
+  font-weight: bold;
+  background: white;
+}
+
+.load-state {
+  padding-block: 8px;
+  padding-inline: 16px;
+  font-size: 14px;
+  color: white;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}

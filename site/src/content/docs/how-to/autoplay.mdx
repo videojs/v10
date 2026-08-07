@@ -1,0 +1,213 @@
+---
+title: 'Autoplay'
+description: 'Start playback automatically and handle browser autoplay restrictions.'
+category: 'capability'
+components: ['Video', 'PlayButton', 'MuteButton']
+api: ['playbackFeature', 'volumeFeature']
+keywords: ['autoplay video', 'muted autoplay', 'autoplay failure', 'playsinline']
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/autoplay/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/autoplay/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/autoplay/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/autoplay/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/autoplay/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/autoplay/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/autoplay/html/css/BasicUsage.ts?raw';
+
+Start playback automatically when the media is ready.
+
+For the best chance of autoplay succeeding, start playback muted and enable inline playback. Autoplay is a request, not a guarantee: browsers can block it based on audio state, prior interaction with your site, browser settings, and platform policy.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Set autoplay, muted, and inline playback on the media element, and keep a manual play control available for when autoplay is blocked.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+<FrameworkCase frameworks={["react"]}>
+
+The `autoPlay`, `muted`, and `playsInline` props on <DocsLink slug="reference/create-player">`Video`</DocsLink> pass through to the underlying media element, which requests playback as soon as it has enough data.
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+The `autoplay`, `muted`, and `playsinline` attributes are native `<video>` attributes. The media element requests playback as soon as it has enough data.
+
+</FrameworkCase>
+
+The <DocsLink slug="reference/feature-playback">playback feature</DocsLink> reflects the result in player state. When autoplay succeeds, `paused` becomes `false` and `started` becomes `true`. When the browser blocks autoplay, the player stays `paused: true` with `started: false`, and the <DocsLink slug="reference/play-button">Play button</DocsLink> renders its play state. There is no separate autoplay failure event: a blocked autoplay looks like media that never started.
+
+Calling `play()` from player state returns the native promise from the media element. When the browser blocks playback, that promise rejects with a `NotAllowedError`.
+
+## Availability and constraints
+
+- Autoplay can fail. Browsers decide per page load based on audio state, whether the user has interacted with your site before, browser settings, and platform policy.
+- Muted autoplay is broadly allowed. Unmuted autoplay is blocked on first visit in most browsers; do not rely on it.
+- Without inline playback, iPhone Safari opens the video in fullscreen when playback starts.
+- Low-power mode and data-saver settings can block even muted autoplay. This is why the recommended approach keeps a manual play control.
+- Programmatic volume control is unavailable on some platforms. The <DocsLink slug="reference/feature-volume">volume feature</DocsLink> exposes this as `volumeAvailability: 'available' | 'unavailable'`; iOS Safari reports `'unavailable'`.
+
+## Common variations
+
+### Background video
+
+Background video autoplays, loops, stays muted, and omits interactive controls. Use the `BackgroundVideo` media element instead of configuring these behaviors yourself: it applies them by default.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { BackgroundVideo } from '@videojs/react/media/background-video';
+
+export default function Hero() {
+  return <BackgroundVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" />;
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<background-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"></background-video>
+<script type="module">
+  import '@videojs/html/media/background-video';
+</script>
+```
+
+</FrameworkCase>
+
+See <DocsLink slug="reference/background-video">BackgroundVideo</DocsLink> for opt-out attributes and sizing.
+
+### Autoplay with sound
+
+Do not rely on unmuted autoplay for a user's first visit. Start playback from an explicit user action instead.
+
+<FrameworkCase frameworks={["react"]}>
+
+Call `play()` from the player store returned by <DocsLink slug="reference/use-player">`Player.usePlayer`</DocsLink>:
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function StartPlaybackButton() {
+  const store = Player.usePlayer();
+
+  return (
+    <button type="button" onClick={() => store.play()}>
+      Play video
+    </button>
+  );
+}
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" playsInline />
+        <StartPlaybackButton />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Call `play()` on the media element from a click handler:
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" playsinline></video>
+  </media-container>
+</video-player>
+<button type="button" id="start">Play video</button>
+<script type="module">
+  import '@videojs/html/video/player';
+
+  document.querySelector('#start').addEventListener('click', () => {
+    document.querySelector('video').play();
+  });
+</script>
+```
+
+</FrameworkCase>
+
+Because playback starts from a user gesture, the browser allows it unmuted.
+
+## Troubleshooting
+
+### Playback does not start
+
+Confirm that:
+
+- The media is muted.
+- Inline playback is enabled.
+- The source loads (check the network panel).
+- A manual play control is available as a fallback.
+
+If autoplay is blocked, the player stays paused and the Play button remains in its play state; there is no error state to handle.
+
+### The video opens fullscreen on iPhone
+
+Enable inline playback on the media element (`playsInline` in React, `playsinline` in HTML).
+
+### The video starts without sound
+
+Expected with muted autoplay. Let the user unmute through a <DocsLink slug="reference/mute-button">Mute button</DocsLink> or <DocsLink slug="reference/volume-slider">Volume slider</DocsLink> rather than unmuting programmatically; programmatic volume changes are unavailable on some platforms.
+
+## Related components
+
+- <DocsLink slug="reference/play-button">Play button</DocsLink>
+- <DocsLink slug="reference/mute-button">Mute button</DocsLink>
+- <DocsLink slug="reference/background-video">BackgroundVideo</DocsLink>
+- <DocsLink slug="reference/controls">Controls</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-playback">Playback feature</DocsLink>
+- <DocsLink slug="reference/feature-volume">Volume feature</DocsLink>
+- <DocsLink slug="reference/use-player">Player.usePlayer</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="concepts/features">Features</DocsLink>
+- <DocsLink slug="concepts/browser-support">Browser support</DocsLink>

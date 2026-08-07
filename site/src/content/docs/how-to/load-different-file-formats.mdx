@@ -1,0 +1,157 @@
+---
+title: 'Load different file formats'
+description: 'Choose the right media element for your format, control preloading, and switch sources.'
+category: 'capability'
+components: ['Video', 'HlsJsVideo', 'DashVideo']
+api: ['sourceFeature']
+keywords: ['video source', 'hls playback', 'dash playback', 'preload video', 'change video source']
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/sources-and-loading/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/sources-and-loading/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/sources-and-loading/react/css/BasicUsage.css?raw';
+
+Load media into the player: choose the media element that matches your format, control how much loads up front, and switch sources without rebuilding the player.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Match the media element to the source format:
+
+| Format | Media element |
+| --- | --- |
+| Progressive MP4 or WebM | <DocsLink slug="reference/create-player">Video</DocsLink> |
+| HLS (`.m3u8`) | <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink> |
+| DASH (`.mpd`) | <DocsLink slug="reference/dash-video">DashVideo</DocsLink> |
+| Mux video | <DocsLink slug="reference/mux-video">MuxVideo</DocsLink> |
+
+Switch sources through the `loadSource` action; the player keeps its features, UI, and state wiring across the change.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+  </media-container>
+</video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+</script>
+```
+
+For HLS, use the `<hlsjs-video>` media element in place of `<video>`:
+
+```html
+<video-player>
+  <media-container>
+    <hlsjs-video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" muted playsinline></hlsjs-video>
+  </media-container>
+</video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/media/hlsjs-video';
+</script>
+```
+
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-source">source feature</DocsLink> tracks loading in player state:
+
+- `source` is the media's current source URL, or `null` before one is set.
+- `canPlay` becomes `true` when the media has enough data to play through.
+- `loadSource(src)` sets the new source, resets the media, and cancels in-flight operations (such as a pending seek) from the previous source.
+
+Media elements wrap a native `<video>` and add format support on top: `HlsJsVideo` loads hls.js, `DashVideo` loads dash.js. Native media attributes (`preload`, `muted`, `crossOrigin`, and the rest) pass through to the underlying element. Media elements default `preload` to `metadata`: dimensions and duration load up front, media data loads on play.
+
+## Availability and constraints
+
+- Browsers don't play HLS or DASH through a plain `<video>` element, with one exception: Safari plays HLS natively. Use the streaming media elements rather than relying on native support.
+- Streaming engines load only when used. hls.js and dash.js are not in your bundle unless you import their media elements.
+- `preload` is a hint, not a command. Browsers may load less than requested (data saver, low battery) or ignore `none`.
+- Loading a new source resets playback state; playback starts again per your autoplay configuration or an explicit `play()`.
+- Cross-origin media needs CORS headers, and `crossOrigin` on the media element when you use tracks or canvas processing with it. See <DocsLink slug="concepts/security">Security</DocsLink>.
+
+## Common variations
+
+### Minimize preloading
+
+For pages with many players (or bandwidth-sensitive pages), load nothing until the user plays:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+<Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" preload="none" poster="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp" />
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video
+  src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
+  preload="none"
+  poster="https://image.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/thumbnail.webp"
+></video>
+```
+
+</FrameworkCase>
+
+Pair `preload="none"` with a `poster` so the player isn't blank before playback. See <DocsLink slug="reference/poster">Poster</DocsLink>.
+
+### Native HLS
+
+On platforms where you only target Safari (or iOS WebViews, where every browser uses the system media stack), <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink> plays HLS without shipping hls.js.
+
+## Troubleshooting
+
+### The video never becomes ready
+
+`canPlay` stays `false` when the source can't load. Check the network panel for the media request: a 403 or CORS failure on the media URL is the usual cause.
+
+### HLS plays in Safari but not Chrome
+
+The source is an `.m3u8` playing through a plain `<video>` element via Safari's native HLS support. Use <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink> so every browser can play it.
+
+### Switching sources doesn't start playback
+
+Loading a source doesn't imply playing it. Keep `autoplay` configured on the media element, or call `play()` after `loadSource`.
+
+## Related components
+
+- <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>
+- <DocsLink slug="reference/dash-video">DashVideo</DocsLink>
+- <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>
+- <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink>
+- <DocsLink slug="reference/poster">Poster</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-source">Source feature</DocsLink>
+- <DocsLink slug="reference/use-player">Player.usePlayer</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/autoplay">Autoplay</DocsLink>
+- <DocsLink slug="how-to/show-captions-and-subtitles">Show captions and subtitles</DocsLink>

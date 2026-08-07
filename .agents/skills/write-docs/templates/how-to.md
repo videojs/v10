@@ -2,8 +2,9 @@
 
 Use for step-by-step guides that achieve a specific outcome.
 
-> **Use sparingly.** Most documentation should be concept pages. Only use how-to guides
-> when the reader needs multi-step instructions to build something specific.
+> If the subject is one thing the player can do (autoplay, captions, quality),
+> use `capability-guide.md` instead. Use this step-by-step shape when the reader
+> builds something specific across capabilities.
 
 ## Frontmatter
 

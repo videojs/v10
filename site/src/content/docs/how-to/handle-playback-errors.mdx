@@ -1,0 +1,160 @@
+---
+title: 'Handle playback errors'
+description: 'Surface playback errors to users and recover by reloading the source.'
+category: 'capability'
+components: ['ErrorDialog']
+api: ['errorFeature', 'sourceFeature']
+keywords: ['video error handling', 'media error', 'playback failed', 'retry video', 'error dialog']
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Surface playback errors to users instead of leaving a dead player, and give them a way to retry.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Render an `ErrorDialog` inside the player container. It reads error state, presents the failure, and dismisses cleanly. The prebuilt skins include one.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { createPlayer, ErrorDialog } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+
+        <ErrorDialog.Root>
+          <ErrorDialog.Popup className="media-error">
+            <ErrorDialog.Title />
+            <ErrorDialog.Description />
+            <ErrorDialog.Close>Dismiss</ErrorDialog.Close>
+          </ErrorDialog.Popup>
+        </ErrorDialog.Root>
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+    <media-error-dialog></media-error-dialog>
+  </media-container>
+</video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/ui/error-dialog';
+</script>
+```
+
+</FrameworkCase>
+
+## How it works
+
+The <DocsLink slug="reference/feature-error">error feature</DocsLink> mirrors the media element's error into player state:
+
+- `error` holds the media's `MediaError` — `code`, `message` — or `null` when there is none.
+- `dismissError()` clears the error from player state (the media element keeps its own error until a new load).
+- Loading a new source resets `error` to `null` automatically.
+
+Recovery is a reload: `loadSource(src)` from the <DocsLink slug="reference/feature-source">source feature</DocsLink> resets the media and tries again. For transient network failures, retrying the same URL is often enough.
+
+## Availability and constraints
+
+- A media error is terminal for the current load: playback won't resume without loading a source again.
+- `MediaError.code` distinguishes broad classes — aborted, network, decode, and source-not-supported — not root causes. Check the network panel for the real story (404, CORS, codec).
+- Streaming engines retry segment-level network failures internally before surfacing a fatal error; a surfaced error means retries were exhausted.
+- Errors before any UI renders (bad URL at mount) still land in state; make sure your error surface renders regardless of playback state.
+
+## Common variations
+
+### Retry button
+
+Reload the current source from the error UI:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function RetryButton() {
+  const store = Player.usePlayer();
+  const state = Player.usePlayer((s) => ({ error: s.error, source: s.source }));
+
+  if (!state.error || !state.source) return null;
+
+  return (
+    <button type="button" onClick={() => store.loadSource(state.source)}>
+      Try again
+    </button>
+  );
+}
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+        <RetryButton />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+Access the player store through the <DocsLink slug="reference/player-controller">player controller</DocsLink>: when `error` is set, call `loadSource` with the current `source` to retry.
+
+</FrameworkCase>
+
+### Report errors to monitoring
+
+Subscribe to error state and forward it to your error tracker with the source URL and `error.code`; media errors are invisible in JavaScript error monitoring unless you send them.
+
+## Troubleshooting
+
+### The player is black and silent with no error
+
+Not every dead player is a media error — autoplay blocking and an unset source produce no error. Check `error`, `source`, and `paused` in player state to tell them apart.
+
+### Error code says the source isn't supported
+
+The browser can't play the format through this media element. HLS in a plain video element outside Safari is the classic case; use the matching streaming media element. See <DocsLink slug="how-to/load-different-file-formats">Load different file formats</DocsLink>.
+
+### Retry loops forever
+
+Retrying can't fix a permanent failure (404, revoked token, unsupported codec). Cap retries and show a terminal message with the error surface.
+
+## Related components
+
+- <DocsLink slug="reference/buffering-indicator">Buffering indicator</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-error">Error feature</DocsLink>
+- <DocsLink slug="reference/feature-source">Source feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/load-different-file-formats">Load different file formats</DocsLink>
+- <DocsLink slug="how-to/autoplay">Autoplay</DocsLink>

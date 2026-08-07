@@ -1,0 +1,162 @@
+---
+title: 'Cast to AirPlay and Chromecast'
+description: 'Send playback to AirPlay and Google Cast devices, with availability detection and connection state.'
+category: 'capability'
+components: ['CastButton', 'AirPlayButton']
+api: ['remotePlaybackFeature']
+keywords: ['airplay', 'chromecast', 'google cast', 'remote playback', 'cast video']
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/cast-button/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/cast-button/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/cast-button/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/cast-button/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/cast-button/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/cast-button/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/cast-button/html/css/BasicUsage.ts?raw';
+
+Send playback to a remote device — an Apple TV over AirPlay, or a Chromecast over Google Cast — while the browser stays in control.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Add a <DocsLink slug="reference/cast-button">CastButton</DocsLink> and an <DocsLink slug="reference/airplay-button">AirPlayButton</DocsLink>. Each renders only when its route is available: Cast in Chromium browsers with a device on the network, AirPlay in Safari. The prebuilt skins include both.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+The demo casts because it uses a streaming media element: Video.js streaming media elements (HLS and DASH) have Google Cast built in. See <DocsLink slug="concepts/cast">Google Cast</DocsLink> for receiver configuration and the full Cast model.
+
+## How it works
+
+The <DocsLink slug="reference/feature-remote-playback">remote playback feature</DocsLink> tracks both routes in one state shape:
+
+- `remotePlaybackAvailability` is `'available'` when a remote device can be reached, `'unavailable'` when the API exists but no device is reachable, and `'unsupported'` when the browser has no remote playback route.
+- `remotePlaybackState` is `'disconnected'`, `'connecting'`, or `'connected'`.
+- `toggleRemotePlayback()` opens the browser's device picker, or disconnects an active session.
+
+Under the hood the feature drives WebKit's AirPlay APIs in Safari and the W3C Remote Playback API elsewhere; your code reads one state shape either way.
+
+While connected, playback actions — play, pause, seek, volume — proxy to the remote device, and player state keeps reflecting the remote session. Local playback is suspended.
+
+The Google Cast SDK loads lazily: it's injected only when a Cast-capable media element loads in a Chromium browser. Browsers that can't cast never pay for it.
+
+## Availability and constraints
+
+- Remote playback is inherently asynchronous and can fail mid-session: devices go offline, networks drop. React to `remotePlaybackState` rather than assuming a request succeeds.
+- Google Cast works only in Chromium-based browsers; elsewhere its route reports `'unsupported'`.
+- AirPlay works only in Safari; availability requires an AirPlay device reachable on the network.
+- The remote device fetches the media directly, so the source URL must be reachable from the device — localhost or VPN-only URLs won't cast. Cast receivers also require CORS headers on media and tracks.
+- Progressive MP4 casts through the default receiver; HLS and DASH cast through the built-in Google Cast integration of the streaming media elements.
+- Set `disableRemotePlayback` on the media element to opt out entirely.
+
+## Common variations
+
+### AirPlay button
+
+<FrameworkCase frameworks={["react"]}>
+
+`AirPlayButton` exposes availability and connection state to its render prop:
+
+```tsx
+import { AirPlayButton, createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+export default function App() {
+  return (
+    <Player.Provider>
+      <Player.Container>
+        <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+        <AirPlayButton
+          render={(props, state) => (
+            <button {...props}>{state.state === 'connected' ? 'Stop AirPlay' : 'AirPlay'}</button>
+          )}
+        />
+      </Player.Container>
+    </Player.Provider>
+  );
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<video-player>
+  <media-container>
+    <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+    <media-airplay-button></media-airplay-button>
+  </media-container>
+</video-player>
+<script type="module">
+  import '@videojs/html/video/player';
+  import '@videojs/html/ui/airplay-button';
+</script>
+```
+
+</FrameworkCase>
+
+### Custom Cast receiver
+
+Pass Cast options through the media element's `config` under the `googleCast` key — receiver application ID, load request customization, and more. See <DocsLink slug="concepts/cast">Google Cast</DocsLink>.
+
+## Troubleshooting
+
+### The cast button doesn't render
+
+No route is available in this browser: Cast requires Chromium, AirPlay requires Safari, and both need a device reachable on the network. On other browsers `remotePlaybackAvailability` stays `'unsupported'`.
+
+### Casting starts but the device shows an error
+
+The receiver can't fetch the media. Confirm the source URL is publicly reachable from the device and served with CORS headers, including caption tracks.
+
+### The UI freezes on "connecting"
+
+The session didn't complete — the user dismissed the picker or the device dropped. `remotePlaybackState` returns to `'disconnected'`; drive your UI from that state.
+
+## Related components
+
+- <DocsLink slug="reference/cast-button">Cast button</DocsLink>
+- <DocsLink slug="reference/airplay-button">AirPlay button</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-remote-playback">Remote playback feature</DocsLink>
+- <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/load-different-file-formats">Load different file formats</DocsLink>
+- <DocsLink slug="concepts/cast">Google Cast</DocsLink>

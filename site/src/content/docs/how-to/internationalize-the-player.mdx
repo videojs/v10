@@ -1,0 +1,174 @@
+---
+title: 'Internationalize the player'
+description: 'Translate player labels and announcements: shipped locale packs, locale detection, and custom translations.'
+category: 'capability'
+api: ['I18nProvider', 'registerI18n', 'useTranslator']
+keywords: ['video player translation', 'i18n', 'locale', 'translated labels', 'player language']
+---
+
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+
+Translate every player label, tooltip, and screen-reader announcement. The player ships translations for more than 50 locales and loads them on demand.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Wrap the player in the i18n provider. It resolves the locale from your page's `lang` attribute (or an explicit override), lazy-loads the matching locale pack, and every component label follows.
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { createPlayer } from '@videojs/react';
+import { I18nProvider } from '@videojs/react/i18n';
+import { Video, videoFeatures } from '@videojs/react/video';
+
+const Player = createPlayer({ features: videoFeatures });
+
+export default function App() {
+  return (
+    <I18nProvider locale="ja">
+      <Player.Provider>
+        <Player.Container>
+          <Video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsInline />
+        </Player.Container>
+      </Player.Provider>
+    </I18nProvider>
+  );
+}
+```
+
+Omit `locale` to follow the nearest ancestor `lang` attribute (usually `<html lang>`).
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<media-i18n lang="ja">
+  <video-player>
+    <media-container>
+      <video src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4" muted playsinline></video>
+    </media-container>
+  </video-player>
+</media-i18n>
+<script type="module">
+  import '@videojs/html/i18n';
+  import '@videojs/html/video/player';
+</script>
+```
+
+Omit the `lang` attribute on `<media-i18n>` to follow the nearest ancestor `lang` (usually `<html lang>`).
+
+</FrameworkCase>
+
+## How it works
+
+- Component labels are text descriptors — a translation key plus its English default — so everything renders in English with no setup and switches language when a translator is present.
+- The provider resolves the locale: explicit `locale` (React) or `lang` (HTML) first, then the nearest ancestor `lang` attribute, then `'en'`. It re-resolves when the page's `lang` changes.
+- Locale packs load lazily through `loadLocale`; the provider does this for the resolved locale automatically. Packs register into a shared registry (`registerI18n`), merged along a fallback chain — `es-419` falls back to `es`, then `en`.
+- `registerI18n(locale, translations)` merges partial translation objects, so overriding a handful of strings is the same call as registering a full locale.
+- When no shipped pack matches the locale, the provider can fall back to the browser's on-device Translation API to machine-translate the English catalogue, with placeholders preserved.
+
+Translate your own UI with the same machinery:
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+import { useTranslator } from '@videojs/react/i18n';
+
+function StartButton() {
+  const t = useTranslator();
+  return <button type="button">{t('buttons.play')}</button>;
+}
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```html
+<media-text token="buttons.play">Play</media-text>
+```
+
+The element's text content is the English default; the `token` selects the translation.
+
+</FrameworkCase>
+
+## Availability and constraints
+
+- English is built in; every other locale is a lazy-loaded pack. Server rendering needs an explicit `locale` (React) since there's no DOM to resolve from.
+- Translation keys are namespaced strings (`buttons.play`, `errors.network`, `menu.quality`); the full key list is generated from the English catalogue and typed, so typos fail in TypeScript.
+- Some strings interpolate parameters (`volume.value` takes `{value}`); custom translations must keep the placeholders.
+- The Browser Translation API fallback downloads an on-device model on first use and is best-effort; ship a real pack for languages you support officially.
+
+## Common variations
+
+### Override specific strings
+
+<FrameworkCase frameworks={["react"]}>
+
+```tsx
+<I18nProvider locale="ja" translations={{ buttons: { play: '再生', pause: '一時停止' } }}>
+  {/* player */}
+</I18nProvider>
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```js
+import { registerI18n } from '@videojs/core/i18n';
+
+registerI18n('ja', { buttons: { play: '再生', pause: '一時停止' } });
+```
+
+</FrameworkCase>
+
+### Register a pack with the bundle
+
+Skip lazy loading by registering a locale at startup with a side-effect import:
+
+<FrameworkCase frameworks={["react"]}>
+
+```ts
+import '@videojs/react/i18n/locales/ja/register';
+```
+
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+
+```ts
+import '@videojs/html/i18n/locales/ja/register';
+```
+
+</FrameworkCase>
+
+## Troubleshooting
+
+### Labels stay in English
+
+No provider is mounted, or the locale never resolved: check the `locale`/`lang` value and that it matches a shipped pack (regional tags fall back — `pt-BR` works; a bare unknown tag falls through to English).
+
+### Some strings are translated, others aren't
+
+A partial override or partial pack: missing keys fall back through the locale chain to English. Fill in the missing keys with `registerI18n`.
+
+### Translations flash in after load
+
+The lazy pack loads after first paint. Register the pack with the bundle (the `/register` side-effect import) for locales you always ship.
+
+## Related components
+
+- <DocsLink slug="reference/tooltip">Tooltip</DocsLink>
+- <DocsLink slug="reference/menu">Menu</DocsLink>
+
+## Related API
+
+Reference pages for the i18n APIs (`I18nProvider`, `registerI18n`, `useTranslator`, `loadLocale`) aren't published yet; the exports live in `@videojs/react/i18n`, `@videojs/html/i18n`, and `@videojs/core/i18n`.
+
+## Related guides
+
+- <DocsLink slug="how-to/show-captions-and-subtitles">Show captions and subtitles</DocsLink>
+- <DocsLink slug="how-to/provide-alternative-audio-tracks">Provide alternative audio tracks</DocsLink>
+- <DocsLink slug="concepts/accessibility">Accessibility</DocsLink>

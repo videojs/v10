@@ -1,0 +1,90 @@
+---
+title: 'Show a poster before playback'
+description: 'Show artwork before playback starts.'
+category: 'capability'
+components: ['Poster']
+api: ['sourceFeature']
+keywords: ['video poster', 'poster image', 'preview image', 'cover image']
+---
+
+import Demo from '@/components/docs/demos/Demo.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+import CustomUiNote from '@/components/docs/CustomUiNote.astro';
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import StyleCase from '@/components/docs/StyleCase.astro';
+
+{/* React demos */}
+import BasicUsageDemoReact from '@/components/docs/demos/poster/react/css/BasicUsage';
+import basicUsageReactTsx from '@/components/docs/demos/poster/react/css/BasicUsage.tsx?raw';
+import basicUsageReactCss from '@/components/docs/demos/poster/react/css/BasicUsage.css?raw';
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from '@/components/docs/demos/poster/html/css/BasicUsage.astro';
+import basicUsageHtml from '@/components/docs/demos/poster/html/css/BasicUsage.html?raw';
+import basicUsageHtmlCss from '@/components/docs/demos/poster/html/css/BasicUsage.css?raw';
+import basicUsageHtmlTs from '@/components/docs/demos/poster/html/css/BasicUsage.ts?raw';
+
+Show artwork before playback starts.
+
+<CustomUiNote />
+
+## Recommended approach
+
+Use the <DocsLink slug="reference/poster">Poster</DocsLink> component for initial artwork. It layers over the media and gets out of the way when playback starts.
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+      { title: "App.css", code: basicUsageReactCss, lang: "css" },
+    ]}>
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo files={[
+      { title: "index.html", code: basicUsageHtml, lang: "html" },
+      { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+      { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+    ]}>
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+## How it works
+
+Poster is a player component, not the native `poster` attribute, so you can style it, transition it, and compose it with other UI. It reads playback state to know when to hide.
+
+## Availability and constraints
+
+Pair `preload="none"` with a poster so the player isn't a black box before playback. See <DocsLink slug="how-to/load-different-file-formats">Load different file formats</DocsLink>.
+
+## Common variations
+
+### Poster from the media service
+
+Video platforms generate poster images for you — for Mux, a thumbnail URL per asset — so you rarely need to create these by hand.
+
+## Troubleshooting
+
+### The poster never hides
+
+Poster reads playback state; confirm playback actually started (see <DocsLink slug="how-to/autoplay">Autoplay</DocsLink> for why it might not have).
+
+## Related components
+
+- <DocsLink slug="reference/poster">Poster</DocsLink>
+
+## Related API
+
+- <DocsLink slug="reference/feature-source">Source feature</DocsLink>
+
+## Related guides
+
+- <DocsLink slug="how-to/show-timeline-thumbnail-previews">Show timeline thumbnail previews</DocsLink>
+- <DocsLink slug="how-to/load-different-file-formats">Load different file formats</DocsLink>
+- <DocsLink slug="how-to/autoplay">Autoplay</DocsLink>

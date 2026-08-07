@@ -1,0 +1,35 @@
+.video-player {
+  position: relative;
+}
+
+.video-player video {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+}
+
+.media-captions-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding-block: 8px;
+  padding-inline: 20px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-captions-button .active {
+  display: none;
+}
+.media-captions-button .inactive {
+  display: none;
+}
+.media-captions-button[data-active] .active {
+  display: inline;
+}
+.media-captions-button:not([data-active]) .inactive {
+  display: inline;
+}
