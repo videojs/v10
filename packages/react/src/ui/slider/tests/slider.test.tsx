@@ -6,6 +6,7 @@ import { createPlayerWrapper } from '../../../testing/mocks';
 import { SliderBuffer } from '../slider-buffer';
 import { SliderFill } from '../slider-fill';
 import { SliderRoot } from '../slider-root';
+import { SliderSegments } from '../slider-segments';
 import { SliderThumb } from '../slider-thumb';
 import { SliderTrack } from '../slider-track';
 import { SliderValue } from '../slider-value';
@@ -171,6 +172,68 @@ describe('SliderTrack', () => {
     );
 
     expect(ref.current).toBeInstanceOf(HTMLDivElement);
+  });
+});
+
+describe('SliderSegments', () => {
+  it('renders ranges from the slider value domain', () => {
+    const { container } = render(
+      <SliderRoot min={20} max={100}>
+        <SliderSegments
+          data-testid="segments"
+          data-segments="custom"
+          segments={[
+            { start: 20, end: 40 },
+            { start: 40, end: 100 },
+          ]}
+        />
+      </SliderRoot>
+    );
+
+    const element = container.querySelector('[data-testid="segments"]');
+    const clipPath = element?.querySelector('[data-slot="slider-segments-clip-path"]');
+    const rects = element?.querySelectorAll('[data-slot="slider-segment"]') ?? [];
+    expect(element?.getAttribute('data-segments')).toBe('custom');
+    expect(clipPath).toBeTruthy();
+    expect(rects).toHaveLength(2);
+    expect(rects[0]?.getAttribute('style')).toContain('--media-slider-segment-size: 25%');
+    expect(rects[0]?.getAttribute('style')).toContain('--media-slider-segment-offset: 0%');
+    expect(rects[1]?.getAttribute('style')).toContain('--media-slider-segment-size: 75%');
+    expect(rects[1]?.getAttribute('style')).toContain('--media-slider-segment-offset: 25%');
+    expect(rects[0]?.hasAttribute('data-highlighted')).toBe(false);
+    expect(rects[1]?.hasAttribute('data-highlighted')).toBe(false);
+  });
+
+  it('uses the slider orientation and clip path ID', () => {
+    const { container } = render(
+      <SliderRoot orientation="vertical" data-testid="root">
+        <SliderSegments data-testid="segments" segments={[{ start: 0, end: 25 }]} />
+      </SliderRoot>
+    );
+
+    const root = container.querySelector('[data-testid="root"]') as HTMLElement;
+    const segments = container.querySelector('[data-testid="segments"]');
+    const clipPath = segments?.querySelector('clipPath');
+
+    expect(segments?.getAttribute('data-orientation')).toBe('vertical');
+    expect(root.style.getPropertyValue('--media-slider-clip-path')).toBe(`url("#${clipPath?.id}")`);
+  });
+
+  it('only sets the track clip path while rendering ranges', () => {
+    const { container, rerender } = render(<SliderRoot data-testid="root" />);
+    const root = container.querySelector('[data-testid="root"]') as HTMLElement;
+
+    expect(root.style.getPropertyValue('--media-slider-clip-path')).toBe('');
+
+    rerender(
+      <SliderRoot data-testid="root">
+        <SliderSegments segments={[{ start: 0, end: 25 }]} />
+      </SliderRoot>
+    );
+    expect(root.style.getPropertyValue('--media-slider-clip-path')).not.toBe('');
+
+    rerender(<SliderRoot data-testid="root" />);
+    expect(root.style.getPropertyValue('--media-slider-clip-path')).toBe('');
   });
 });
 

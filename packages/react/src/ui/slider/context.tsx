@@ -6,12 +6,16 @@ import type { ProviderProps, RefCallback } from 'react';
 import { createContext, useContext } from 'react';
 
 export interface SliderContextValue {
+  id: string;
+  min: number;
+  max: number;
   state: SliderState;
   /** Pointer position converted to the value domain (not 0–100 percent). */
   pointerValue: number;
   thumbRef: RefCallback<HTMLElement>;
   thumbProps: SliderThumbProps;
   stateAttrMap: StateAttrMap<SliderState>;
+  setTrackClipPath: (value: string | undefined) => void;
   getAttrs: (state: SliderState) => object;
   formatValue?: ((value: number, type: 'current' | 'pointer') => string) | undefined;
 }

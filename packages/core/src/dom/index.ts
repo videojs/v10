@@ -27,6 +27,7 @@ export * from './ui/popover/popup-positioner';
 export * from './ui/slider';
 export * from './ui/slider-css-vars';
 export * from './ui/slider-focus';
+export * from './ui/slider-segments';
 export * from './ui/status-announcer';
 export * from './ui/thumbnail';
 export * from './ui/tooltip/tooltip';

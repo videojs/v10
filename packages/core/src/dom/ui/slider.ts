@@ -88,12 +88,13 @@ export function createSlider(options: SliderOptions): SliderApi {
   const abort = new AbortController();
   const changeThrottleMs = options.changeThrottle ?? 0;
 
-  let isDragging = false,
-    cachedRTL = false,
-    cachedRect: DOMRect | null = null,
-    capturedPointerId: number | null = null,
-    lastDragPercent = 0,
-    committedOnRelease = false;
+  let isDragging = false;
+  let cachedRTL = false;
+  let cachedRect: DOMRect | null = null;
+  let capturedPointerId: number | null = null;
+  let lastDragPercent = 0;
+  let committedOnRelease = false;
+  let pointingOnRelease = false;
 
   const throttledChange =
     changeThrottleMs > 0
@@ -132,11 +133,12 @@ export function createSlider(options: SliderOptions): SliderApi {
       }
 
       isDragging = false;
-      input.patch({ dragging: false, pointing: false });
+      input.patch({ dragging: false, pointing: pointingOnRelease });
       options.onDragEnd?.();
     }
 
     committedOnRelease = false;
+    pointingOnRelease = false;
     cleanup();
   }
 
@@ -166,6 +168,7 @@ export function createSlider(options: SliderOptions): SliderApi {
       cachedRect = el.getBoundingClientRect();
       cachedRTL = options.isRTL();
       committedOnRelease = false;
+      pointingOnRelease = false;
 
       releaseCapture();
       capturedPointerId = event.pointerId;
@@ -230,6 +233,12 @@ export function createSlider(options: SliderOptions): SliderApi {
       options.onValueChange?.(percent);
       options.onValueCommit?.(percent);
       committedOnRelease = true;
+      pointingOnRelease =
+        event.pointerType === 'mouse' &&
+        event.clientX >= cachedRect!.left &&
+        event.clientX <= cachedRect!.right &&
+        event.clientY >= cachedRect!.top &&
+        event.clientY <= cachedRect!.bottom;
     },
 
     onPointerLeave() {

@@ -6,4 +6,6 @@ export const SliderCSSVars = {
   pointer: '--media-slider-pointer',
   /** Buffer level percentage (0–100). */
   buffer: '--media-slider-buffer',
+  /** URL of the SVG clip path applied to the slider track. */
+  clipPath: '--media-slider-clip-path',
 } as const;

@@ -287,6 +287,36 @@ describe('createSlider', () => {
 
       expect(onDragEnd).toHaveBeenCalled();
       expect(slider.input.current.dragging).toBe(false);
+      expect(slider.input.current.pointing).toBe(true);
+
+      slider.destroy();
+    });
+
+    it('clears pointing when the pointer is released outside the slider', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50, clientY: 10 }));
+      firePointerUp(slider, { clientX: 250, clientY: 10 });
+      fireLostPointerCapture(slider);
+      flush();
+
+      expect(slider.input.current.dragging).toBe(false);
+      expect(slider.input.current.pointing).toBe(false);
+
+      slider.destroy();
+    });
+
+    it('clears pointing after a touch release inside the slider', () => {
+      const el = createMockElement({ left: 0, width: 200 });
+      const slider = createSlider(createOptions({ getElement: () => el }));
+
+      slider.rootProps.onPointerDown(pointerEvent({ clientX: 50, clientY: 10, pointerType: 'touch' }));
+      firePointerUp(slider, { clientX: 100, clientY: 10, pointerType: 'touch' });
+      fireLostPointerCapture(slider);
+      flush();
+
+      expect(slider.input.current.dragging).toBe(false);
       expect(slider.input.current.pointing).toBe(false);
 
       slider.destroy();

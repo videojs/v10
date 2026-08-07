@@ -1,6 +1,6 @@
 'use client';
 
-import { TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
+import { SliderCSSVars, TimeSliderCore, TimeSliderDataAttrs } from '@videojs/core';
 import { getTimeSliderCSSVars, logMissingFeature, selectBuffer, selectPlayback, selectTime } from '@videojs/core/dom';
 import { translateText } from '@videojs/core/i18n';
 import { formatTime } from '@videojs/utils/time';
@@ -11,6 +11,7 @@ import { usePlayer } from '../../player/context';
 import type { UIComponentProps } from '../../utils/types';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { renderElement } from '../../utils/use-render';
+import { useSafeId } from '../../utils/use-safe-id';
 import { useSlider } from '../hooks/use-slider';
 import { SliderProvider } from '../slider/context';
 
@@ -45,8 +46,10 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     const playback = usePlayer(selectPlayback);
     const translator = useTranslator();
     const locale = useLocale();
+    const id = useSafeId('time-slider');
 
     const [core] = useState(() => new TimeSliderCore());
+    const [trackClipPath, setTrackClipPath] = useState<string>();
     core.setProps({
       label,
       step,
@@ -120,11 +123,15 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
     return (
       <SliderProvider
         value={{
+          id,
+          min: 0,
+          max: duration,
           state,
           pointerValue: core.valueFromPercent(state.pointerPercent),
           thumbRef,
           thumbProps,
           stateAttrMap: TimeSliderDataAttrs,
+          setTrackClipPath,
           getAttrs: (sliderState) => {
             const attrs = core.getAttrs(sliderState as TimeSliderCore.State);
             return {
@@ -147,7 +154,17 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
             state,
             stateAttrMap: TimeSliderDataAttrs,
             ref: [forwardedRef, rootRef],
-            props: [{ style: { ...cssVars, ...rootStyle } }, rootProps, elementProps],
+            props: [
+              {
+                style: {
+                  ...cssVars,
+                  ...(trackClipPath && { [SliderCSSVars.clipPath]: trackClipPath }),
+                  ...rootStyle,
+                },
+              },
+              rootProps,
+              elementProps,
+            ],
           }
         )}
       </SliderProvider>

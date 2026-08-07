@@ -1,3 +1,4 @@
+import { findTimelineEntry } from '../utils/find-timeline-entry';
 import type {
   ThumbnailConstraints,
   ThumbnailCrossOrigin,
@@ -29,25 +30,7 @@ export interface ThumbnailState {
 
 export class ThumbnailCore {
   findActiveThumbnail(thumbnails: ThumbnailImage[], time: number): ThumbnailImage | undefined {
-    if (thumbnails.length === 0) return undefined;
-
-    let low = 0;
-    let high = thumbnails.length - 1;
-    let result: ThumbnailImage | undefined;
-
-    while (low <= high) {
-      const mid = (low + high) >>> 1;
-      const image = thumbnails[mid]!;
-
-      if (time >= image.startTime) {
-        result = image;
-        low = mid + 1;
-      } else {
-        high = mid - 1;
-      }
-    }
-
-    return result;
+    return findTimelineEntry(thumbnails, time);
   }
 
   /**

@@ -1,6 +1,8 @@
+import type { MediaTextCue } from '@videojs/media';
 import { createStore } from '@videojs/store';
 import { describe, expect, it } from 'vitest';
 import type { PlayerTarget } from '../../../player';
+import { getTextTrack } from '../../selectors';
 import { textTrackFeature } from '../text-track';
 
 /**
@@ -31,7 +33,7 @@ function mockTextTracks(video: HTMLVideoElement, tracks: TextTrack[]): void {
 function createMockTrack(
   kind: TextTrackKind,
   mode: TextTrackMode = 'disabled',
-  options: { id?: string; label?: string; language?: string } = {}
+  options: { id?: string; label?: string; language?: string; cues?: MediaTextCue[] } = {}
 ): TextTrack {
   return {
     id: options.id ?? '',
@@ -39,6 +41,7 @@ function createMockTrack(
     mode,
     label: options.label ?? '',
     language: options.language ?? '',
+    cues: options.cues ?? null,
   } as TextTrack;
 }
 
@@ -177,10 +180,40 @@ describe('textTrackFeature', () => {
       store.attach({ media: video, container: null });
 
       expect(store.state.textTrackList).toEqual([
-        { id: 'subtitles-en', kind: 'subtitles', label: 'English', language: 'en', mode: 'showing' },
-        { id: 'captions-en', kind: 'captions', label: 'CC', language: 'en', mode: 'disabled' },
-        { id: 'metadata-thumbnails', kind: 'metadata', label: '', language: '', mode: 'showing' },
+        {
+          id: 'subtitles-en',
+          kind: 'subtitles',
+          label: 'English',
+          language: 'en',
+          mode: 'showing',
+        },
+        {
+          id: 'captions-en',
+          kind: 'captions',
+          label: 'CC',
+          language: 'en',
+          mode: 'disabled',
+        },
+        {
+          id: 'metadata-thumbnails',
+          kind: 'metadata',
+          label: '',
+          language: '',
+          mode: 'showing',
+        },
       ]);
+    });
+
+    it('exposes parsed chapter cues through getTextTrack()', () => {
+      const video = createVideo();
+      const cue = { startTime: 0, endTime: 10, text: 'Introduction' };
+      mockTextTracks(video, [createMockTrack('chapters', 'hidden', { cues: [cue] })]);
+
+      const store = createStore<PlayerTarget>()(textTrackFeature);
+      store.attach({ media: video, container: null });
+
+      expect(getTextTrack(store.state, 'chapters')?.cues).toEqual([cue]);
+      expect(store.state.chaptersCues).toEqual([cue]);
     });
 
     it('toggleSubtitles() enables and disables caption/subtitle tracks', () => {

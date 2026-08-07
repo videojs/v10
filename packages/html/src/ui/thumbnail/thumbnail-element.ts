@@ -5,10 +5,9 @@ import {
   type ThumbnailImage,
   type ThumbnailResizeResult,
 } from '@videojs/core';
-import type { ThumbnailApi } from '@videojs/core/dom';
-import { applyElementProps, applyStateDataAttrs, createThumbnail, selectTextTrack } from '@videojs/core/dom';
+import type { MediaTextTrackDetails, ThumbnailApi } from '@videojs/core/dom';
+import { applyElementProps, applyStateDataAttrs, createTextTrackSelector, createThumbnail } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
-import type { MediaTextTrackState } from '@videojs/media';
 
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
@@ -22,6 +21,8 @@ const SHADOW_CSS = `\
 img {
   display: block;
 }`;
+
+const selectThumbnailTrack = createTextTrackSelector('metadata', 'thumbnails');
 
 export class ThumbnailElement extends MediaElement {
   static readonly tagName = 'media-thumbnail';
@@ -40,11 +41,11 @@ export class ThumbnailElement extends MediaElement {
 
   readonly #core = new ThumbnailCore();
   readonly #img = document.createElement('img');
-  readonly #textTracks = new PlayerController(this, playerContext, selectTextTrack);
+  readonly #textTrack = new PlayerController(this, playerContext, selectThumbnailTrack);
 
   #thumbnails: ThumbnailImage[] = [];
   #externalThumbnails: ThumbnailImage[] | undefined;
-  #lastTextTrack: MediaTextTrackState | undefined;
+  #lastTextTrack: MediaTextTrackDetails<'metadata'> | undefined;
   #api: ThumbnailApi | null = null;
 
   constructor() {
@@ -103,14 +104,12 @@ export class ThumbnailElement extends MediaElement {
     if (this.#externalThumbnails) {
       this.#thumbnails = this.#externalThumbnails;
     } else {
-      const textTrack = this.#textTracks.value;
+      const textTrack = this.#textTrack.value;
 
       if (textTrack !== this.#lastTextTrack) {
         this.#lastTextTrack = textTrack;
         this.#thumbnails =
-          textTrack && textTrack.thumbnailCues.length > 0
-            ? mapCuesToThumbnails(textTrack.thumbnailCues, textTrack.thumbnailTrackSrc ?? undefined)
-            : [];
+          textTrack && textTrack.cues.length > 0 ? mapCuesToThumbnails(textTrack.cues, textTrack.src ?? undefined) : [];
       }
     }
 

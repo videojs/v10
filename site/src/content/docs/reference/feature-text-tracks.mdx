@@ -11,7 +11,7 @@ Manages subtitles, captions, chapters, and thumbnail tracks.
 
 <FeatureReference feature="textTrack" />
 
-### Selector
+## Selecting text track state
 
 <FrameworkCase frameworks={["react"]}>
 Pass `selectTextTrack` to <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> to subscribe to text track state. Returns `undefined` if the text tracks feature is not configured.
@@ -47,6 +47,44 @@ const { PlayerController, context } = createPlayer({ features: videoFeatures });
 
 class CaptionsButton extends MediaElement {
   readonly #textTracks = new PlayerController(this, context, selectTextTrack);
+}
+```
+</FrameworkCase>
+
+## Selecting one text track
+
+Use a track kind and, when needed, a label to select one track with normalized `cues` and `src` details.
+
+<FrameworkCase frameworks={["react"]}>
+```tsx title="chapters.tsx"
+import { useTextTrack } from '@videojs/react';
+
+function useChapters() {
+  const chapters = useTextTrack('chapters');
+
+  return chapters?.cues.map((cue) => ({
+    startTime: cue.startTime,
+    endTime: cue.endTime,
+    title: cue.text,
+  })) ?? [];
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts title="chapters.ts"
+import { createPlayer, createTextTrackSelector, MediaElement } from '@videojs/html';
+import { videoFeatures } from '@videojs/html/video';
+
+const { PlayerController, context } = createPlayer({ features: videoFeatures });
+const selectChapters = createTextTrackSelector('chapters');
+
+class Chapters extends MediaElement {
+  readonly #chapters = new PlayerController(this, context, selectChapters);
+
+  get cues() {
+    return this.#chapters.value?.cues ?? [];
+  }
 }
 ```
 </FrameworkCase>

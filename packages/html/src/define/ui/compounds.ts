@@ -19,9 +19,11 @@ import { MenuViewElement } from '../../ui/menu/menu-view-element';
 import { SeekIndicatorElement } from '../../ui/seek-indicator/seek-indicator-element';
 import { SeekIndicatorValueElement } from '../../ui/seek-indicator/seek-indicator-value-element';
 import { SliderBufferElement } from '../../ui/slider/slider-buffer-element';
+import { SliderChapterElement } from '../../ui/slider/slider-chapter-element';
 import { SliderElement } from '../../ui/slider/slider-element';
 import { SliderFillElement } from '../../ui/slider/slider-fill-element';
 import { SliderPreviewElement } from '../../ui/slider/slider-preview-element';
+import { SliderSegmentsElement } from '../../ui/slider/slider-segments-element';
 import { SliderThumbElement } from '../../ui/slider/slider-thumb-element';
 import { SliderThumbnailElement } from '../../ui/slider/slider-thumbnail-element';
 import { SliderTrackElement } from '../../ui/slider/slider-track-element';
@@ -33,6 +35,7 @@ import { TimeElement } from '../../ui/time/time-element';
 import { TimeGroupElement } from '../../ui/time/time-group-element';
 import { TimeSeparatorElement } from '../../ui/time/time-separator-element';
 import { TimeSliderElement } from '../../ui/time-slider/time-slider-element';
+import { TimeSliderSegmentsElement } from '../../ui/time-slider/time-slider-segments-element';
 import { TooltipElement } from '../../ui/tooltip/tooltip-element';
 import { TooltipGroupElement } from '../../ui/tooltip/tooltip-group-element';
 import { TooltipLabelElement } from '../../ui/tooltip/tooltip-label-element';
@@ -89,6 +92,7 @@ export function defineInputIndicators(): void {
 export function defineSliderParts(): void {
   safeDefine(SliderFillElement);
   safeDefine(SliderPreviewElement);
+  safeDefine(SliderSegmentsElement);
   safeDefine(SliderThumbElement);
   safeDefine(SliderTrackElement);
   safeDefine(SliderValueElement);
@@ -108,6 +112,8 @@ export function defineTime(): void {
 export function defineTimeSlider(): void {
   safeDefine(TimeSliderElement);
   defineSliderParts();
+  safeDefine(SliderChapterElement);
+  safeDefine(TimeSliderSegmentsElement);
   safeDefine(SliderBufferElement);
   safeDefine(SliderThumbnailElement);
 }
@@ -128,6 +134,8 @@ export function defineSliders(): void {
   safeDefine(TimeSliderElement);
   safeDefine(VolumeSliderElement);
   defineSliderParts();
+  safeDefine(SliderChapterElement);
+  safeDefine(TimeSliderSegmentsElement);
   safeDefine(SliderBufferElement);
   safeDefine(SliderThumbnailElement);
 }
