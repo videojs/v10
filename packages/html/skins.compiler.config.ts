@@ -1,5 +1,5 @@
 import { type CompilerTransform, defineConfig, transform } from '@videojs/compiler';
-import { byTag, replaceJsxChild } from '@videojs/compiler/ast';
+import { tagName } from '@videojs/compiler/ast';
 import ts from 'typescript';
 
 const componentTags = {
@@ -8,9 +8,7 @@ const componentTags = {
   FullscreenButtonPrimitive: 'media-fullscreen-button',
   MuteButtonPrimitive: 'media-mute-button',
   PlayButtonPrimitive: 'media-play-button',
-  'Popover.Root': 'media-popover',
-  'Popover.Popup': 'div',
-  'Popover.Trigger': 'button',
+  'Popover.Popup': 'media-popover',
   SeekButtonPrimitive: 'media-seek-button',
   'Slider.Thumbnail.Root': 'div',
   'Slider.Thumbnail.Image': 'media-slider-thumbnail',
@@ -24,8 +22,7 @@ const componentTags = {
   'TimeSliderPrimitive.Preview': 'media-slider-preview',
   'TimeSliderPrimitive.Value': 'media-slider-value',
   'Tooltip.Provider': 'media-tooltip-group',
-  'TooltipPrimitive.Root': 'media-tooltip',
-  'TooltipPrimitive.Popup': 'div',
+  'TooltipPrimitive.Popup': 'media-tooltip',
   'TooltipPrimitive.Label': 'media-tooltip-label',
   'TooltipPrimitive.Shortcut': 'media-tooltip-shortcut',
   'VolumeSliderPrimitive.Root': 'media-volume-slider',
@@ -66,21 +63,21 @@ const htmlSourceConfig = defineConfig({
     transform(
       (code) => {
         const cn = code.import('@videojs/utils/style', 'cn');
+        const TooltipProps = code.type.named(code.import('@videojs/core', 'TooltipProps', { type: true }));
 
         return [
+          flattenPopupCompound('Popover.Root', 'Popover.Trigger', 'Popover.Popup'),
+          flattenPopupCompound('TooltipPrimitive.Root', 'TooltipPrimitive.Trigger', 'TooltipPrimitive.Popup'),
           ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
           ...Object.entries(iconNames).flatMap(([source, name]) => [
             code.jsx.element(source).addProp('name', name),
             code.jsx.element(source).replace('media-icon'),
           ]),
-          replaceJsxChild({
-            match: byTag('TooltipPrimitive.Trigger'),
-            replace: (element) => (ts.isJsxElement(element) ? element.children : undefined),
-          }),
           code.jsx
             .props('className')
             .where(code.value.isArray())
             .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
+          replaceCanonicalTooltipProps(TooltipProps),
           renameClassNameToClass(),
           removeCanonicalImports(),
         ];
@@ -119,6 +116,94 @@ function removeCanonicalImports(): CompilerTransform {
           )
       )
     );
+}
+
+function flattenPopupCompound(rootTag: string, triggerTag: string, popupTag: string): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+
+    const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
+      const next = ts.visitEachChild(node, visit, context);
+      if (!ts.isJsxElement(next) || tagName(next) !== rootTag) return next;
+
+      let foundPopup = false;
+      const children = next.children.flatMap((child): readonly ts.JsxChild[] => {
+        if (!ts.isJsxElement(child)) return [child];
+        if (tagName(child) === triggerTag) return child.children;
+        if (tagName(child) !== popupTag) return [child];
+
+        foundPopup = true;
+        const attributes = factory.updateJsxAttributes(child.openingElement.attributes, [
+          ...next.openingElement.attributes.properties,
+          ...child.openingElement.attributes.properties,
+        ]);
+
+        return [
+          factory.updateJsxElement(
+            child,
+            factory.updateJsxOpeningElement(
+              child.openingElement,
+              child.openingElement.tagName,
+              child.openingElement.typeArguments,
+              attributes
+            ),
+            child.children,
+            child.closingElement
+          ),
+        ];
+      });
+
+      if (!foundPopup) return next;
+      return factory.createJsxFragment(
+        factory.createJsxOpeningFragment(),
+        children,
+        factory.createJsxJsxClosingFragment()
+      );
+    };
+
+    return (sourceFile) => ts.visitNode(sourceFile, visit) as ts.SourceFile;
+  };
+}
+
+function replaceCanonicalTooltipProps(tooltipProps: ts.TypeNode): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+    const replacement = factory.createIntersectionTypeNode([
+      tooltipProps,
+      factory.createTypeLiteralNode([
+        factory.createPropertySignature(
+          undefined,
+          'children',
+          factory.createToken(ts.SyntaxKind.QuestionToken),
+          factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
+        ),
+      ]),
+    ]);
+
+    const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
+      if (isCanonicalTooltipProps(node)) return replacement;
+      return ts.visitEachChild(node, visit, context);
+    };
+
+    return (sourceFile) => ts.visitNode(sourceFile, visit) as ts.SourceFile;
+  };
+}
+
+function isCanonicalTooltipProps(node: ts.Node): node is ts.IndexedAccessTypeNode {
+  if (!ts.isIndexedAccessTypeNode(node) || !ts.isTypeReferenceNode(node.objectType)) return false;
+  if (!ts.isIdentifier(node.objectType.typeName) || node.objectType.typeName.text !== 'Parameters') return false;
+  if (node.objectType.typeArguments?.length !== 1) return false;
+
+  const parameter = node.objectType.typeArguments[0];
+  if (!ts.isTypeQueryNode(parameter) || !ts.isQualifiedName(parameter.exprName)) return false;
+  if (!ts.isIdentifier(parameter.exprName.left) || parameter.exprName.left.text !== 'TooltipPrimitive') return false;
+  if (parameter.exprName.right.text !== 'Root') return false;
+
+  return (
+    ts.isLiteralTypeNode(node.indexType) &&
+    ts.isNumericLiteral(node.indexType.literal) &&
+    node.indexType.literal.text === '0'
+  );
 }
 
 function renameClassNameToClass(): CompilerTransform {

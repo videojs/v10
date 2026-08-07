@@ -23,15 +23,32 @@ describe('htmlSourceConfig', () => {
     expect(result.code).not.toContain('@videojs/icons/components');
   });
 
-  it('unwraps the React-only tooltip trigger part', async () => {
+  it('lowers tooltip composition around sibling trigger and popup elements', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.skin.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, { filename, config: htmlSourceConfig });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('<media-tooltip {...props}>');
+    expect(result.code).toContain('import type { TooltipProps }');
+    expect(result.code).toContain('from "@videojs/core"');
     expect(result.code).toContain('{children}');
+    expect(result.code).toContain('<media-tooltip {...props} class={tooltip.popup}>');
+    expect(result.code).not.toContain('typeof TooltipPrimitive.Root');
     expect(result.code).not.toContain('<TooltipPrimitive.Trigger>');
+  });
+
+  it('lowers popover composition without nesting the button trigger', async () => {
+    const filename = resolve(canonicalRoot, 'components/controls/volume-popover.skin.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await compile(source, { filename, config: htmlSourceConfig });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('<MuteButton />');
+    expect(result.code).toContain(
+      '<media-popover openOnHover delay={200} closeDelay={100} side="top" class={volumePopover}>'
+    );
+    expect(result.code).not.toContain('<Popover.Trigger>');
+    expect(result.code).not.toContain('<button>');
   });
 });
 
