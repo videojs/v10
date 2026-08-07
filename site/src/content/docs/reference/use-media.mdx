@@ -4,6 +4,7 @@ description: Hook to access the media object from within a Player.Provider
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
+import Aside from "@/components/Aside.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
 import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
@@ -13,6 +14,10 @@ import basicUsageReactTsx from "@/components/docs/demos/use-media/react/css/Basi
 import basicUsageReactCss from "@/components/docs/demos/use-media/react/css/BasicUsage.css?raw";
 
 `Player.useMedia` (from <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>) returns the current `Media` object (or `null` if no media has been registered yet). `Media` is a runtime-agnostic playback interface — any instance that conforms to it, including an `HTMLVideoElement`, can be the media. It exposes capabilities like `play()` and event subscription rather than assuming a native element. It must be called within a `Player.Provider`. The media object becomes available after a `<Video>` or `<Audio>` component mounts inside the provider tree. To attach a custom media element instead of the built-in components, see <DocsLink slug="reference/use-media-attach">`useMediaAttach`</DocsLink>.
+
+<Aside type="note">
+Because `Media` is a runtime-agnostic interface, the returned object is not guaranteed to be a `CanvasImageSource` -- with a custom media element it is a wrapper around the real element, not the `<video>` itself. If you need the underlying element for `drawImage`, WebGL textures, or frame sampling, keep your own ref on the `<Video>` component, which forwards to the underlying `HTMLVideoElement`.
+</Aside>
 
 ## Examples
 
