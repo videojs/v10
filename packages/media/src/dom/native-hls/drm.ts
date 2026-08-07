@@ -21,12 +21,15 @@ import { createFairPlayWebKit } from './fairplay-webkit';
  * source, and somewhere to put an error the media element never reports.
  */
 export type NativeHlsDrmHost = NativeMediaHost & {
-  readonly source: { nativeHls?: { drmSystems?: NativeHlsDrmSystemsConfig | undefined } | undefined } | null;
+  readonly source: {
+    engine?: { nativeHls?: { drmSystems?: NativeHlsDrmSystemsConfig | undefined } | undefined } | undefined;
+  } | null;
   setError(error: MediaError): void;
 };
 
 /**
- * Play DRM-protected HLS natively, configured by `source.nativeHls.drmSystems`.
+ * Play DRM-protected HLS natively, configured by
+ * `source.engine.nativeHls.drmSystems`.
  *
  * Native HLS has no JS engine to hand key exchange to, so this mixin does it
  * against the media element directly: it answers the element's key requests by
@@ -102,7 +105,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       if (fromWebKit !== this.#useWebKit) return;
 
       const media = this.target as HTMLVideoElement | null;
-      const drmSystems = this.source?.nativeHls?.drmSystems;
+      const drmSystems = this.source?.engine?.nativeHls?.drmSystems;
       const config = drmSystems?.[FAIRPLAY_KEY_SYSTEM];
       if (!media) return;
 
@@ -112,7 +115,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
           // shape, so a config naming only the systems MSE reaches is an easy
           // mistake to make and looks configured from the outside.
           console.warn(
-            `[vjs-drm] Native HLS negotiates FairPlay only, and \`source.nativeHls.drmSystems\` names no \`${FAIRPLAY_KEY_SYSTEM}\` license server.`
+            `[vjs-drm] Native HLS negotiates FairPlay only, and \`source.engine.nativeHls.drmSystems\` names no \`${FAIRPLAY_KEY_SYSTEM}\` license server.`
           );
         }
 

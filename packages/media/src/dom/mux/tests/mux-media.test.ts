@@ -211,8 +211,8 @@ describe('MuxMedia', () => {
   it('does not reload for an equivalent nested engine option', async () => {
     const media = new MuxMedia();
     media.attach(document.createElement('video'));
-    const engine = { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } };
-    media.source = { playbackId: 'abc123', preferPlayback: 'native', hlsJs: engine };
+    const hlsJs = { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs } };
     await flushLoad();
 
     const loadstart = vi.fn();
@@ -223,7 +223,7 @@ describe('MuxMedia', () => {
     media.source = {
       playbackId: 'abc123',
       preferPlayback: 'native',
-      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+      engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } } },
       poster: { time: 5 },
     };
     await flushLoad();
@@ -237,7 +237,7 @@ describe('MuxMedia', () => {
     media.source = {
       playbackId: 'abc123',
       preferPlayback: 'native',
-      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+      engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } } },
     };
     await flushLoad();
 
@@ -247,7 +247,7 @@ describe('MuxMedia', () => {
     media.source = {
       playbackId: 'abc123',
       preferPlayback: 'native',
-      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/other' } } },
+      engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/other' } } } },
     };
     await flushLoad();
 
@@ -263,7 +263,7 @@ describe('MuxMedia', () => {
     const loadstart = vi.fn();
     media.addEventListener('loadstart', loadstart);
 
-    media.source = { playbackId: 'abc123', preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs: { maxBufferLength: 60 } } };
     await flushLoad();
 
     expect(loadstart).toHaveBeenCalled();
@@ -472,7 +472,7 @@ describe('MuxMedia', () => {
       const fetchMock = stubNativeKeySystem();
       const { video } = await setupNative({
         drm: { token: DRM_TOKEN },
-        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://drm.example/fairplay' } } },
+        engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://drm.example/fairplay' } } } },
       });
 
       fireEncrypted(video);
@@ -488,7 +488,7 @@ describe('MuxMedia', () => {
       media.source = {
         playbackId: 'abc123',
         drm: { token: DRM_TOKEN },
-        hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+        engine: { hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } } },
       };
       await flushLoad();
 

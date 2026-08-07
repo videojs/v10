@@ -67,9 +67,9 @@ export function App() {
   const pagePath = getPagePath(platform, preset);
 
   // `MuxVideo` is the only preset that turns a Mux DRM token into license URLs;
-  // the HLS presets take license servers through `source.hlsJs` (hls.js) and
-  // `source.nativeHls` (the browser). The CDN sandbox builds elements from
-  // attributes alone, so neither reaches it.
+  // the HLS presets take license servers through `source.engine.hlsJs` (hls.js)
+  // and `source.engine.nativeHls` (the browser). The CDN sandbox builds elements
+  // from attributes alone, so neither reaches it.
   const structuredSource = platform !== 'cdn';
   const hlsPreset = preset === 'hlsjs-video' || preset === 'native-hls-video';
   const availableSources =

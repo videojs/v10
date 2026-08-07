@@ -21,13 +21,20 @@ export interface NativeHlsMediaProps {
 /**
  * Structured native HLS source: which source to play, plus how to play it.
  *
- * Playback options sit under `nativeHls` rather than at the top level. Native
- * HLS is one of two paths `HlsJsVideo` can take, and namespacing by engine lets
- * a single source describe both without either reading the other's options.
+ * Playback options sit under `engine`, keyed by engine, rather than at the top
+ * level. Native HLS is one of two paths `HlsJsVideo` can take, and namespacing
+ * by engine lets a single source describe both without either reading the
+ * other's options.
  */
 export interface NativeHlsSource {
   /** Manifest URL. Mirrors the host's `src` property. */
   src?: string | undefined;
+  /** Playback options, keyed by the engine that reads them. */
+  engine?: NativeHlsEngineConfig | undefined;
+}
+
+/** The engines a native HLS source can configure. */
+export interface NativeHlsEngineConfig {
   /** Options for the browser's own HLS playback. */
   nativeHls?: NativeHlsConfig | undefined;
 }
@@ -67,7 +74,7 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 
   /**
    * Media source URL. Assigning it replaces the identity half of `source` and
-   * leaves `nativeHls` intact, so changing the URL never disturbs key exchange.
+   * leaves `engine` intact, so changing the URL never disturbs key exchange.
    */
   get src() {
     return this.#src;
@@ -76,9 +83,9 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   set src(src: string) {
     // `src` says which source to play; everything else says how to play it, so
     // it carries over.
-    const { nativeHls } = this.#source ?? {};
+    const { engine } = this.#source ?? {};
     const next: NativeHlsSource = {
-      ...(nativeHls && { nativeHls }),
+      ...(engine && { engine }),
       ...(src && { src }),
     };
 
@@ -88,8 +95,8 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   }
 
   /**
-   * Structured source: what to play (`src`) plus how to play it (`nativeHls`).
-   * Assigning it derives `src`.
+   * Structured source: what to play (`src`) plus how to play it
+   * (`engine.nativeHls`). Assigning it derives `src`.
    *
    * Unlike `HlsJsMedia`, this does not announce a `sourcechange`. It is also
    * the delegate `HlsJsMedia` plays native sources through, and every event it

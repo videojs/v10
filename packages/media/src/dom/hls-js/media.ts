@@ -55,6 +55,15 @@ export interface HlsSource {
    */
   preferPlayback?: PlaybackType | undefined;
   /**
+   * Playback options, keyed by the engine that reads them. Only one of the two
+   * engines below ends up playing, and each reads only its own key.
+   */
+  engine?: HlsEngineConfig | undefined;
+}
+
+/** The engines an HLS source can configure. */
+export interface HlsEngineConfig {
+  /**
    * hls.js's own configuration, passed through untouched. DRM-protected MSE
    * playback is configured here, through `emeEnabled` and `drmSystems`.
    */
@@ -163,12 +172,11 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   set src(src: string) {
     // `src` says which source to play; every other field says how to play it, so
     // they carry over.
-    const { type, preferPlayback, hlsJs, nativeHls } = this.#source ?? {};
+    const { type, preferPlayback, engine } = this.#source ?? {};
     const next: HlsSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
-      ...(hlsJs && { hlsJs }),
-      ...(nativeHls && { nativeHls }),
+      ...(engine && { engine }),
       ...(src && { src }),
     };
 
@@ -179,7 +187,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   /**
    * Structured source: what to play (`src`, an optional `type`) plus how to play
-   * it (`preferPlayback`, `hlsJs`, `nativeHls`). Assigning it derives `src`.
+   * it (`preferPlayback`, `engine`). Assigning it derives `src`.
    *
    * Sources are compared structurally, so reassigning an equivalent object — an
    * inline React prop, for instance — is a no-op. Only a change to the engine
@@ -275,7 +283,8 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       // Read the stored source, not the `source` getter: subclasses override the
       // getter to return what was assigned to them, while the fields below come
       // from what they resolved and handed down (Mux fills in the DRM options).
-      const { type, preferPlayback, hlsJs, nativeHls } = this.#source ?? {};
+      const { type, preferPlayback, engine } = this.#source ?? {};
+      const { hlsJs, nativeHls } = engine ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
 
@@ -312,12 +321,12 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #createNativeDelegate(nativeHls: NativeHlsConfig | undefined, hlsJs: Partial<HlsJsConfig> | undefined) {
     if (__DEV__ && hlsJs?.emeEnabled && !nativeHls?.drmSystems?.[FAIRPLAY_KEY_SYSTEM]) {
       console.warn(
-        `[vjs-drm] Native HLS playback reads \`source.nativeHls.drmSystems\` rather than the hls.js one, and no \`${FAIRPLAY_KEY_SYSTEM}\` license server is configured there. DRM-protected media will not play.`
+        `[vjs-drm] Native HLS playback reads \`source.engine.nativeHls.drmSystems\` rather than the hls.js one, and no \`${FAIRPLAY_KEY_SYSTEM}\` license server is configured there. DRM-protected media will not play.`
       );
     }
 
     const media = new NativeHlsMedia();
-    if (nativeHls) media.source = { nativeHls };
+    if (nativeHls) media.source = { engine: { nativeHls } };
     return media;
   }
 
@@ -343,8 +352,8 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
    * the object identity did.
    */
   #engineConfigKey() {
-    const { type, preferPlayback, hlsJs, nativeHls } = this.#source ?? {};
-    return { hlsJs, nativeHls, preferPlayback, contentType: type ?? inferContentType(this.src) };
+    const { type, preferPlayback, engine } = this.#source ?? {};
+    return { engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
   }
 
   #engineDestroy() {

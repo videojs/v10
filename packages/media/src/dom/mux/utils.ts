@@ -91,8 +91,8 @@ export interface MuxDrmParams {
 
 /**
  * Structured Mux source. `playbackId` and `customDomain` identify the stream and
- * derive `src`; the inherited `hlsJs` and `nativeHls` carry engine options, and
- * the inherited `src` is a fallback for playing a non-Mux URL.
+ * derive `src`; the inherited `engine` carries engine options, and the inherited
+ * `src` is a fallback for playing a non-Mux URL.
  */
 export interface MuxSource extends HlsSource {
   playbackId?: string | undefined;

@@ -35,8 +35,8 @@ function App() {
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
   // A source carrying DRM license servers has no room in a plain `src`. Only
-  // `nativeHls` is read here — the same object also names the hls.js servers,
-  // which this element ignores.
+  // `engine.nativeHls` is read here — the same object also names the hls.js
+  // servers, which this element ignores.
   const { source: hlsSource, url } = SOURCES[source];
 
   return (
