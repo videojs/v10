@@ -37,7 +37,10 @@ export interface HlsMediaProps {
 /**
  * Structured HLS source: which source to play, plus how to play it.
  *
- * `preferPlayback` and `engine` are both read when the engine is constructed, so
+ * Engine options are namespaced by engine, so an element with more than one
+ * playback path to choose from keeps their configurations apart.
+ *
+ * `preferPlayback` and `hlsJs` are both read when the engine is constructed, so
  * changing either recreates it.
  */
 export interface HlsSource {
@@ -54,7 +57,7 @@ export interface HlsSource {
    * hls.js's own configuration, passed through untouched. DRM-protected
    * playback is configured here, through `emeEnabled` and `drmSystems`.
    */
-  engine?: Partial<HlsJsConfig> | undefined;
+  hlsJs?: Partial<HlsJsConfig> | undefined;
 }
 
 export const hlsMediaDefaultProps: HlsMediaProps = {
@@ -142,7 +145,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   /**
    * Media source URL. Assigning it replaces the identity half of `source` and
-   * leaves `type` and `engine` intact, so changing the URL never disturbs engine
+   * leaves `type` and `hlsJs` intact, so changing the URL never disturbs engine
    * configuration.
    */
   get src() {
@@ -152,11 +155,11 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   set src(src: string) {
     // `src` says which source to play; every other field says how to play it, so
     // they carry over.
-    const { type, preferPlayback, engine } = this.#source ?? {};
+    const { type, preferPlayback, hlsJs } = this.#source ?? {};
     const next: HlsSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
-      ...(engine && { engine }),
+      ...(hlsJs && { hlsJs }),
       ...(src && { src }),
     };
 
@@ -167,10 +170,10 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   /**
    * Structured source: what to play (`src`, an optional `type`) plus how to play
-   * it (`preferPlayback`, `engine`). Assigning it derives `src`.
+   * it (`preferPlayback`, `hlsJs`). Assigning it derives `src`.
    *
    * Sources are compared structurally, so reassigning an equivalent object — an
-   * inline React prop, for instance — is a no-op. Only a change under `engine`
+   * inline React prop, for instance — is a no-op. Only a change under `hlsJs`
    * (or a change to the resolved content type) recreates the playback engine.
    */
   get source(): HlsSource | null {
@@ -262,16 +265,16 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
       // Read the stored source, not the `source` getter: subclasses override the
       // getter to return what was assigned to them, while the fields below come
-      // from what they resolved and handed down (Mux fills in `engine` here).
-      const { type, preferPlayback, engine } = this.#source ?? {};
+      // from what they resolved and handed down (Mux fills in `hlsJs` here).
+      const { type, preferPlayback, hlsJs } = this.#source ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
 
-      if (__DEV__ && !useMse && engine?.emeEnabled) {
+      if (__DEV__ && !useMse && hlsJs?.emeEnabled) {
         console.warn('[vjs-drm] DRM playback requires the hls.js (MSE) engine; native HLS playback ignores it.');
       }
 
-      this.#delegate = useMse ? new HlsJsOnlyMedia({ config: { ...engine } }) : new NativeHlsMedia();
+      this.#delegate = useMse ? new HlsJsOnlyMedia({ config: { ...hlsJs } }) : new NativeHlsMedia();
 
       bridgeEvents(this.#delegate, this);
 
@@ -311,13 +314,13 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
   /**
    * Every value the engine is constructed from. Compared structurally, so an
-   * equivalent `source.engine` never triggers a rebuild — including nested
+   * equivalent `source.hlsJs` never triggers a rebuild — including nested
    * options like `drmSystems`, which a flat comparison would see as changed
    * whenever the object identity did.
    */
   #engineConfigKey() {
-    const { type, preferPlayback, engine } = this.#source ?? {};
-    return { engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
+    const { type, preferPlayback, hlsJs } = this.#source ?? {};
+    return { hlsJs, preferPlayback, contentType: type ?? inferContentType(this.src) };
   }
 
   #engineDestroy() {

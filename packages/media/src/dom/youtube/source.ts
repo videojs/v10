@@ -57,7 +57,7 @@ export interface YouTubeSource {
   /** YouTube URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
   /** YouTube's own player parameters, passed through untouched. */
-  engine?: YouTubeEngineConfig | undefined;
+  youtube?: YouTubeEngineConfig | undefined;
 }
 
 /** Parsed pieces of a YouTube source URL. */
@@ -125,7 +125,7 @@ export function buildYouTubeIframeSrc(src: string, props: Partial<YouTubeMediaPr
     iv_load_policy: 3,
     start: parsed.startTime,
     // YouTube-specific knobs (`cc_load_policy`, `hl`, `color`, …) flow through here.
-    ...(props.source?.engine ?? undefined),
+    ...(props.source?.youtube ?? undefined),
   };
   if (parsed.kind === 'playlist' && parsed.listId) {
     return `${embedBase}?${serializeEmbedParams({ listType: 'playlist', list: parsed.listId, ...params })}`;

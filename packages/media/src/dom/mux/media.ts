@@ -43,11 +43,11 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     // params a Mux URL does not carry, such as `poster`.
     if (super.src === value) return;
 
-    const { type, preferPlayback, engine } = this.#source ?? {};
+    const { type, preferPlayback, hlsJs } = this.#source ?? {};
     const source: MuxSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
-      ...(engine && { engine }),
+      ...(hlsJs && { hlsJs }),
       ...(parseMuxVideoURL(value) ?? (value ? { src: value } : null)),
     };
 
@@ -58,11 +58,11 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * Structured Mux source. Setting it derives `src` from the playback ID,
    * custom domain, and `playback` params (appended as `snake_case` query
    * params). A `playback.token` replaces all other params — signed URLs bake
-   * them into the token. Engine options live under `engine`.
+   * them into the token. Engine options live under `hlsJs`.
    *
-   * A `drm.token` fills in the inherited `engine.drmSystems` with Mux's
+   * A `drm.token` fills in the inherited `hlsJs.drmSystems` with Mux's
    * FairPlay, Widevine, and PlayReady license servers for this playback ID.
-   * Naming `engine.drmSystems` yourself overrides that, for content Mux does
+   * Naming `hlsJs.drmSystems` yourself overrides that, for content Mux does
    * not license.
    */
   get source(): MuxSource | null {
@@ -83,7 +83,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     super.source = source && {
       ...source,
       src: createMuxVideoURL(source) ?? source.src ?? '',
-      engine: withMuxDrm(source),
+      hlsJs: withMuxDrm(source),
     };
   }
 
@@ -110,12 +110,12 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
 /**
  * Fold Mux's derived license servers into the engine config, switching EME on
- * so hls.js listens for `encrypted`. Whatever the caller set under `engine`
+ * so hls.js listens for `encrypted`. Whatever the caller set under `hlsJs`
  * wins, key by key, so `drmSystems` of their own replaces the derived set.
  */
-function withMuxDrm(source: MuxSource): MuxSource['engine'] {
+function withMuxDrm(source: MuxSource): MuxSource['hlsJs'] {
   const drmSystems = createMuxDrmSystems(source);
-  if (!drmSystems) return source.engine;
+  if (!drmSystems) return source.hlsJs;
 
-  return { emeEnabled: true, drmSystems, ...source.engine };
+  return { emeEnabled: true, drmSystems, ...source.hlsJs };
 }

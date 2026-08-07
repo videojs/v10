@@ -23,7 +23,7 @@ export interface VimeoSource {
   /** Vimeo URL or id. Mirrors the host's `src` property. */
   src?: string | undefined;
   /** Vimeo's own embed parameters, passed through untouched. */
-  engine?: VimeoEngineConfig | undefined;
+  vimeo?: VimeoEngineConfig | undefined;
 }
 
 /** Parsed pieces of a Vimeo source URL. */
@@ -154,8 +154,8 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
   /** Vimeo URL or id. Setting it re-derives `source`, carrying its embed options over. */
   set src(value) {
-    const { engine } = this.#source ?? {};
-    const next: VimeoSource = { ...(engine && { engine }), ...(value && { src: value }) };
+    const { vimeo } = this.#source ?? {};
+    const next: VimeoSource = { ...(vimeo && { vimeo }), ...(value && { src: value }) };
 
     // Everything happens in the `source` setter, so there is one path for storing
     // it, deciding on a load, and dispatching `sourcechange`.
@@ -186,7 +186,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     }
     this.dispatchEvent(new Event('emptied'));
     this.dispatchEvent(new Event('loadstart'));
-    const loadOptions = toLoadVideoOptions(this.#src, this.#source?.engine);
+    const loadOptions = toLoadVideoOptions(this.#src, this.#source?.vimeo);
     // An unparsable src never reaches the player, so no `loaded` will ever settle
     // this load.
     if (!loadOptions) {
@@ -321,7 +321,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   /**
    * Structured source: the Vimeo URL or ID in `src`, plus embed options under
-   * `engine`. Replacing it re-derives `src`; assigning an equivalent source is
+   * `vimeo`. Replacing it re-derives `src`; assigning an equivalent source is
    * a no-op.
    */
   get source(): VimeoSource | null {
@@ -337,7 +337,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     const srcChanged = this.#src !== src;
     // Embed options are read when the video is loaded, so a change to them needs
     // a reload of its own even though the URL is the same.
-    const engineChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
+    const engineChanged = !deepEqual(this.#source?.vimeo ?? null, source?.vimeo ?? null);
 
     this.#source = source;
     this.#src = src;
@@ -646,7 +646,7 @@ export function buildVimeoIframeSrc(src: string, props: Partial<VimeoMediaProps>
     transparent: false,
     h: parsed.hash,
     // Vimeo-specific knobs (`autopause`, `byline`, `dnt`, …) flow through here.
-    ...(props.source?.engine ?? undefined),
+    ...(props.source?.vimeo ?? undefined),
   };
   if (parsed.kind === 'event') {
     const hashPath = parsed.hash ? `/${parsed.hash}` : '';
@@ -664,10 +664,10 @@ const READY_STATE_HAVE_NOTHING = 0;
 const READY_STATE_HAVE_METADATA = 1;
 const READY_STATE_HAVE_FUTURE_DATA = 3;
 
-function toLoadVideoOptions(src: string, engine?: VimeoEngineConfig) {
+function toLoadVideoOptions(src: string, vimeo?: VimeoEngineConfig) {
   const parsed = parseVimeoSource(src);
   if (!parsed) return null;
   const base = parsed.kind === 'event' ? `${EMBED_EVENT_BASE}/${parsed.id}/embed` : `${EMBED_VIDEO_BASE}/${parsed.id}`;
   const url = `${base}${parsed.hash ? `?h=${parsed.hash}` : ''}` as VimeoUrl;
-  return { url, ...engine } as LoadVideoOptions;
+  return { url, ...vimeo } as LoadVideoOptions;
 }
