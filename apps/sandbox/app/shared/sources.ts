@@ -214,8 +214,12 @@ export const SOURCES: Record<SourceId, SandboxSource> = SOURCE_MAP;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isDrmSource(id));
-/** hls.js-backed presets add the DRM asset that names its license servers outright. */
-export const HLSJS_SOURCE_IDS = SOURCE_IDS.filter(
+/**
+ * HLS presets add the DRM asset that names its license servers outright. Both
+ * hls.js and native HLS read it, each from its own half of the source — which
+ * half depends on the path the browser ends up taking.
+ */
+export const HLS_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && id !== 'mux-drm' && id !== 'hls-drm-unlicensed'
 );
 /** Mux presets add the DRM asset licensed by a Mux token, which only they can read. */

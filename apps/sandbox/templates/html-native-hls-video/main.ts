@@ -32,16 +32,26 @@ async function render() {
   const mediaAttrs = renderMediaAttrs(state);
   const playerTag = live ? 'live-video-player' : 'video-player';
 
+  // A source carrying DRM license servers has no room in the `src` attribute, so
+  // it is assigned as an object below instead. Only `nativeHls` is read here —
+  // the same object also names the hls.js servers, which this element ignores.
+  const { source, url } = SOURCES[state.source];
+  const srcAttr = source ? '' : ` src="${url}"`;
+
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
-        <native-hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+        <native-hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}
         </native-hls-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>
   `);
+
+  if (source) {
+    document.querySelector('native-hls-video')!.source = source;
+  }
 }
 
 render();
