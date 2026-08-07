@@ -508,15 +508,43 @@ export interface MediaPosterCapability {
 /** A media-owned content value. `undefined` means the key is absent; `null` means it has no current value. */
 export type MediaContentValue = string | null | undefined;
 
-/** Standardized content metadata reported by a media implementation. */
-export type MediaContentData = Readonly<Record<string, MediaContentValue>>;
+/**
+ * Standardized content metadata reported by a media implementation. The named
+ * keys are the shared vocabulary player features read; a media may report keys
+ * of its own alongside them.
+ *
+ * Report a key only for a value the media can vouch for. Omit it otherwise —
+ * an empty string is a deliberate blank that stops a feature's fallback chain,
+ * so reporting `''` for "not loaded yet" suppresses the author's fallback.
+ */
+export interface MediaContentData {
+  /** Title of the content. */
+  readonly title?: MediaContentValue;
+  /** URL of a still image representing the content. */
+  readonly poster?: MediaContentValue;
+  /** URL of a WebVTT storyboard describing thumbnail sprites for the content. */
+  readonly storyboard?: MediaContentValue;
+  readonly [key: string]: MediaContentValue;
+}
 
 /** Events emitted when a media implementation's content data changes. */
 export interface MediaContentDataEvents {
   contentdatachange: EventLike;
 }
 
-/** Optional media-owned content metadata. */
+/**
+ * Optional media-owned content metadata.
+ *
+ * `undefined` means the media does not support content data at all. A defined
+ * bag — including an empty one — means it does, and its keys may come and go
+ * as a source loads or is replaced.
+ *
+ * Implementations dispatch `contentdatachange` when the bag changes, and only
+ * then; an assignment that leaves every key and value alone stays quiet. They
+ * are also expected to clear content data when the source is replaced. Nothing
+ * enforces that second half, so a media that skips it reports stale metadata
+ * across a source change.
+ */
 export interface MediaContentDataCapability {
   readonly contentData: MediaContentData | undefined;
 }

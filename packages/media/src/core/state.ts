@@ -141,10 +141,16 @@ export interface MediaStreamTypeState {
 export interface MediaMetadataState {
   /** The resolved content title. */
   contentTitle: string;
-  /** Set or clear the user title override. */
-  setContentTitle(value: string | null): void;
-  /** Set or clear the fallback used when neither the user nor media supplies a title. */
-  setDefaultContentTitle(value: string | null): void;
+  /** The resolved poster URL. Independent of the media element's own `poster`. */
+  poster: string;
+  /** Set the user title override, or clear it with `null` or `undefined`. */
+  setContentTitle(value: string | null | undefined): void;
+  /** Set the fallback used when neither the user nor media supplies a title, or clear it. */
+  setDefaultContentTitle(value: string | null | undefined): void;
+  /** Set the user poster override, or clear it with `null` or `undefined`. */
+  setPoster(value: string | null | undefined): void;
+  /** Set the fallback used when neither the user nor media supplies a poster, or clear it. */
+  setDefaultPoster(value: string | null | undefined): void;
 }
 
 export interface MediaLiveState {

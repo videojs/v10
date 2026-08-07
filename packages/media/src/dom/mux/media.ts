@@ -1,3 +1,5 @@
+import { shallowEqual } from '@videojs/utils/object';
+import type { MediaContentData } from '../../core/types';
 import { HlsJsMedia } from '../hls-js';
 import {
   createMuxDrmSystems,
@@ -20,9 +22,11 @@ export const muxMediaDefaultProps: MuxMediaProps = {
 
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the new value.
+ * @fires contentdatachange - Fired when the derived `contentData` changes. Read `contentData` for the new value.
  */
 export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
   #source: MuxSource | null = muxMediaDefaultProps.source;
+  #contentData: MediaContentData = {};
 
   /**
    * Media source URL. Setting a Mux stream URL
@@ -77,6 +81,11 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 
     this.#source = source;
 
+    // Refresh the bag before the base announces `sourcechange`, because
+    // listeners read `contentData` from that event. Announcing its own change
+    // waits until after, so `src` is in step by the time either event fires.
+    const contentDataChanged = this.#refreshContentData();
+
     // Hand the same source down with `src` and the DRM license servers resolved
     // from the playback ID. The base keeps `src` in step, decides whether
     // playback has to reload, and dispatches `sourcechange`.
@@ -85,6 +94,8 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
       src: createMuxVideoURL(source) ?? source.src ?? '',
       engine: withMuxDrm(source),
     };
+
+    if (contentDataChanged) this.dispatchEvent(new Event('contentdatachange'));
   }
 
   /**
@@ -93,18 +104,29 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * URL can't be built — no playback ID, or signed playback without a matching
    * image token.
    *
-   * Read-only and re-derived on read, so read it again after `sourcechange`.
-   * Nothing here is applied for you, apart from the thumbnail track
+   * Derived from `source` and nothing else. The same object is handed back
+   * until one of those URLs changes, and `contentdatachange` announces it when
+   * it does. Nothing here is applied for you, apart from the thumbnail track
    * `<mux-video>` adds from `storyboard` (and drops for live streams).
    */
-  get contentData(): Record<string, string> {
-    const poster = createMuxPosterURL(this.source);
-    const storyboard = createMuxStoryboardURL(this.source);
+  get contentData(): MediaContentData {
+    return this.#contentData;
+  }
 
-    return {
+  /** Rebuild the derived bag, reporting whether anything about it changed. */
+  #refreshContentData(): boolean {
+    const poster = createMuxPosterURL(this.#source);
+    const storyboard = createMuxStoryboardURL(this.#source);
+
+    const next: MediaContentData = {
       ...(poster && { poster }),
       ...(storyboard && { storyboard }),
     };
+
+    if (shallowEqual(this.#contentData, next)) return false;
+
+    this.#contentData = next;
+    return true;
   }
 }
 

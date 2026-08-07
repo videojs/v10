@@ -266,6 +266,61 @@ describe('VimeoMedia', () => {
     expect(media.contentData).toEqual({});
   });
 
+  it('dispatches `contentdatachange` when the title arrives and when it is cleared', async () => {
+    const media = new VimeoMedia();
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    // Attaching reports nothing, so there is nothing to announce yet.
+    expect(handler).not.toHaveBeenCalled();
+
+    const player = media.engine as unknown as MockPlayerLike;
+    player.emit('loaded');
+    await waitForVimeoLoaded(media);
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData).toEqual({ title: 'Sample Video' });
+
+    media.src = '12345';
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(media.contentData).toEqual({});
+  });
+
+  it('dedupes `contentdatachange` when the embed reports the same title again', async () => {
+    const media = new VimeoMedia();
+    const { player } = await attachAndLoad(media);
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    // A second `loaded` for the same video re-reads the same title.
+    player.emit('loaded');
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(handler).not.toHaveBeenCalled();
+    expect(media.contentData).toEqual({ title: 'Sample Video' });
+  });
+
+  it('reports a blank title as an absent key rather than an empty string', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    const player = media.engine as unknown as MockPlayerLike;
+    player.getVideoTitle.mockResolvedValueOnce('');
+    player.emit('loaded');
+    await waitForVimeoLoaded(media);
+
+    // An empty string would read as a deliberate blank and stop a consumer's
+    // fallback chain, and Vimeo cannot tell that apart from a failed read.
+    expect(media.contentData).toEqual({});
+    expect('title' in media.contentData).toBe(false);
+  });
+
   it('clears state reported about the old video when the source is cleared', async () => {
     const media = new VimeoMedia();
     media.src = '76979871';

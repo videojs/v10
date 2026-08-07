@@ -15,10 +15,18 @@ class ContentDataMedia extends EventTarget {
   }
 
   setContentTitle(value: MediaContentValue): void {
-    if (!this.contentData || Object.is(this.contentData.title, value)) return;
+    this.#setKey('title', value);
+  }
+
+  setContentPoster(value: MediaContentValue): void {
+    this.#setKey('poster', value);
+  }
+
+  #setKey(key: 'title' | 'poster', value: MediaContentValue): void {
+    if (!this.contentData || Object.is(this.contentData[key], value)) return;
     const contentData = { ...this.contentData };
-    if (value === undefined) delete contentData.title;
-    else contentData.title = value;
+    if (value === undefined) delete contentData[key];
+    else contentData[key] = value;
     this.contentData = contentData;
     this.dispatchEvent(new Event('contentdatachange'));
   }
@@ -130,14 +138,68 @@ describe('metadataFeature', () => {
     expect(store.contentTitle).toBe('fallback');
   });
 
+  it('resolves the content poster through the same order as the title', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+
+    expect(store.poster).toBe('');
+
+    store.setDefaultPoster('fallback.jpg');
+    expect(store.poster).toBe('fallback.jpg');
+
+    const media = new ContentDataMedia({ poster: 'media.jpg' });
+    store.attach(target(media));
+    expect(store.poster).toBe('media.jpg');
+
+    store.setPoster('user.jpg');
+    expect(store.poster).toBe('user.jpg');
+
+    media.setContentPoster('latest-media.jpg');
+    expect(store.poster).toBe('user.jpg');
+
+    store.setPoster(null);
+    expect(store.poster).toBe('latest-media.jpg');
+
+    media.setContentPoster(undefined);
+    expect(store.poster).toBe('fallback.jpg');
+  });
+
+  it('resolves title and poster independently from one bag', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    const media = new ContentDataMedia({ title: 'media title' });
+    store.attach(target(media));
+
+    expect(store.contentTitle).toBe('media title');
+    expect(store.poster).toBe('');
+
+    media.setContentPoster('media.jpg');
+
+    expect(store.contentTitle).toBe('media title');
+    expect(store.poster).toBe('media.jpg');
+  });
+
+  it('resets both media-owned values on detach while preserving user-owned state', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setDefaultPoster('fallback.jpg');
+    const detach = store.attach(target(new ContentDataMedia({ title: 'media', poster: 'media.jpg' })));
+
+    detach();
+
+    expect(store.contentTitle).toBe('');
+    expect(store.poster).toBe('fallback.jpg');
+  });
+
   it('selects only resolved metadata and public writers', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
 
     expect(selectMetadata(store.state)).toEqual({
       contentTitle: '',
+      poster: '',
       setContentTitle: store.setContentTitle,
       setDefaultContentTitle: store.setDefaultContentTitle,
+      setPoster: store.setPoster,
+      setDefaultPoster: store.setDefaultPoster,
     });
     expect(store.state).not.toHaveProperty('defaultContentTitle');
+    expect(store.state).not.toHaveProperty('defaultPoster');
   });
 });

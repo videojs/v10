@@ -172,6 +172,72 @@ describe('MuxMedia', () => {
     expect(media.contentData).toEqual({});
   });
 
+  it('dispatches `contentdatachange` when the derived urls change', () => {
+    const media = new MuxMedia();
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp');
+
+    media.source = { playbackId: 'xyz789' };
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(media.contentData.poster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+  });
+
+  it('dedupes `contentdatachange` when a source change leaves the urls alone', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    // A new object, so `sourcechange` still fires, but nothing the images are
+    // built from moved.
+    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('clears the content data and announces it when the source is dropped', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    media.source = null;
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData).toEqual({});
+  });
+
+  it('has the content data in step when `sourcechange` fires', () => {
+    const media = new MuxMedia();
+    const seen: (string | null | undefined)[] = [];
+    media.addEventListener('sourcechange', () => seen.push(media.contentData.poster));
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(seen).toEqual(['https://image.mux.com/abc123/thumbnail.webp']);
+  });
+
+  it('hands back the same content data object until it changes', () => {
+    const media = new MuxMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const first = media.contentData;
+
+    expect(media.contentData).toBe(first);
+
+    media.source = { playbackId: 'xyz789' };
+
+    expect(media.contentData).not.toBe(first);
+  });
+
   it('does not reload when only image params change', async () => {
     const media = new MuxMedia();
     media.attach(document.createElement('video'));

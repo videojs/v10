@@ -4,7 +4,7 @@ import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
 
-import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
+import type { ErrorLike, MediaContentData, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
 import { createTimeRange, serializeEmbedParams } from '../utils';
 
@@ -65,6 +65,7 @@ const VimeoMediaBase = MediaPlayedRangesMixin(EventTarget);
 
 /**
  * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ * @fires contentdatachange - Fired when the embed reports a title and when that title is cleared. Read `contentData` for the new value.
  */
 export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #target: HTMLIFrameElement | null = null;
@@ -99,6 +100,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   #videoHeight = Number.NaN;
   #readyState = READY_STATE_HAVE_NOTHING;
   #title = '';
+  #contentData: MediaContentData = {};
   #error: ErrorLike | null = null;
   #isFullscreen = false;
   #isPictureInPicture = false;
@@ -351,11 +353,25 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   /**
    * Metadata Vimeo reports about the loaded video, keyed by what it is — `title`
    * for now. Unlike a Mux source, none of it can be derived from `src`; the embed
-   * has to report it, so a key is absent until then. Read it again after
-   * `loadedmetadata`, and expect it empty across a source change.
+   * has to report it, so the key is absent until then and empties again across a
+   * source change. `contentdatachange` announces both.
    */
-  get contentData(): Record<string, string> {
-    return { ...(this.#title && { title: this.#title }) };
+  get contentData(): MediaContentData {
+    return this.#contentData;
+  }
+
+  /**
+   * Store the title the embed reported, announcing the content-data change it
+   * causes. Vimeo cannot tell "no title yet" from "the title is blank" — a
+   * failed read falls back to the current value — and a blank would read as a
+   * deliberate one, stopping a consumer's fallback chain. So an empty title is
+   * reported as an absent key rather than an empty string.
+   */
+  #setTitle(value: string) {
+    if (this.#title === value) return;
+    this.#title = value;
+    this.#contentData = value ? { title: value } : {};
+    this.dispatchEvent(new Event('contentdatachange'));
   }
 
   get buffered() {
@@ -456,7 +472,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#progress = 0;
     this.#readyState = READY_STATE_HAVE_NOTHING;
     this.#seeking = false;
-    this.#title = '';
+    this.#setTitle('');
     this.#volume = 1;
     this.#error = null;
     this.#videoWidth = Number.NaN;
@@ -484,7 +500,7 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       this.#muted = muted;
       this.#volume = volume;
       this.#duration = duration;
-      this.#title = title;
+      this.#setTitle(title);
     }
     for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
       this.dispatchEvent(new Event(type));
