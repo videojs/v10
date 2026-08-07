@@ -1,0 +1,80 @@
+---
+title: Autoplay
+description: Autoplay a video with Video.js, detect when the browser blocks it, and handle it gracefully.
+---
+
+import FrameworkCase from '@/components/docs/FrameworkCase.astro';
+import DocsLink from '@/components/docs/DocsLink.astro';
+
+Autoplaying a video isn't guaranteed. This guide will walk you through what you can do to improve your chances that a video will autoplay, as well as what to do when the browser blocks it.
+
+## Increase your chance of autoplay working
+
+There are a few things you can do to improve your chances of autoplay working:
+- Your video is muted with the `muted` attribute
+- The user has interacted with the page with a click or a tap
+- In desktop Chrome, the user's [Media Engagement Index](https://developers.google.com/web/updates/2017/09/autoplay-policy-changes#mei) threshold has been crossed. Chrome keeps track of how often a user consumes media on a site and if a user has played a lot of media on this site then Chrome will probably allow autoplay.
+- In mobile Chrome, the user has added the site to their home screen
+- In mobile Safari, the device is not in power-saving mode
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Video autoplay muted playsInline>
+```
+</FrameworkCase>
+<FrameworkCase frameworks={["html"]}>
+```html
+<video autoplay muted playsinline>
+```
+</FrameworkCase>
+
+## Call `play()` yourself
+
+With the `autoplay` attribute, the browser plays your video or quietly does nothing. However, if you call `play()` instead, you can do more. Because `play()` returns a promise that rejects when the browser blocks playback, you can do things like retyring muted, logging the outcome, or showing a "click to play" overlay.
+
+Drop the `autoplay` attribute from your media when you call `play()`. Combining the declarative attribute with a manual `play()` call leads to duplicate attempts and inconsistent state.
+
+<FrameworkCase frameworks={["react"]}>
+Reach for the `play` action with <DocsLink slug="reference/use-player">`usePlayer`</DocsLink>.
+
+```jsx
+const play = usePlayer(s => s.play);
+
+useEffect(() => {
+  play().catch((error) => {
+    if (error.name === 'NotAllowedError') {
+      // the browser blocked playback; retry muted or offer the user a button
+    } else {
+      // something else went wrong
+    }
+  });
+}, [play])
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```js
+const player = document.querySelector('video-player');
+player.store.state.play()..catch((error) => {
+  if (error.name === 'NotAllowedError') {
+    // the browser blocked playback; retry muted or offer the user a button
+  } else {
+    // something else went wrong
+  }
+});
+```
+</FrameworkCase>
+
+A rejected `play()` promise is a [`DOMException`](https://developer.mozilla.org/en-US/docs/Web/API/DOMException) whose `name` tells you what happened:
+
+| `name` | What happened |
+| --- | --- |
+| `NotAllowedError` | The autoplay policy blocked playback. Not a fatal error. Retry muted or offer your user a button. |
+| `NotSupportedError` | The source isn't a format the browser can play. |
+| `AbortError` | Another call interrupted playback. Not every browser uses this. |
+
+## What happens when playback is blocked
+
+When even muted autoplay fails, playback won't start until the viewer asks for it with a click.
+
+If you're using our components, they'll handle blocked playback gracefully: the poster and controls will stay up, so the play button is there for the viewer to press. If you're building your own UI components, you'll have to handle showing that kind of button yourself.
