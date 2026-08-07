@@ -66,8 +66,8 @@
       },
       "metadata": {
         "registry": {
-          "description": "Source-owned core controls for a Video.js video player.",
-          "title": "Default Video Controls"
+          "description": "A video control bar with play, seek, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.",
+          "title": "Core Video Controls"
         }
       }
     },
@@ -102,7 +102,7 @@
       },
       "metadata": {
         "registry": {
-          "description": "A source-owned Video.js fullscreen button with a shared button tooltip.",
+          "description": "A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.",
           "title": "Fullscreen Button"
         }
       }
@@ -168,7 +168,7 @@
       },
       "metadata": {
         "registry": {
-          "description": "A source-owned Video.js play button with play, pause, and replay states.",
+          "description": "A three-state button that plays, pauses, or restarts media with matching icons and an accessible tooltip.",
           "title": "Play Button"
         }
       }
@@ -204,7 +204,7 @@
       },
       "metadata": {
         "registry": {
-          "description": "A source-owned Video.js button for seeking backward or forward.",
+          "description": "A button that skips playback forward or backward by a configurable number of seconds, with a direction-aware icon and accessible tooltip.",
           "title": "Seek Button"
         }
       }
@@ -244,7 +244,7 @@
       },
       "metadata": {
         "registry": {
-          "description": "A source-owned Video.js timeline with seek preview and thumbnails.",
+          "description": "A playback timeline for seeking, with current and buffered progress plus time and thumbnail previews.",
           "title": "Time Slider"
         }
       }
@@ -280,8 +280,8 @@
       },
       "metadata": {
         "registry": {
-          "description": "Source-owned Video.js mute and volume controls in a popover.",
-          "title": "Volume Popover"
+          "description": "A mute toggle with a vertical slider for adjusting playback volume in a popover.",
+          "title": "Volume Control"
         }
       }
     },
@@ -320,7 +320,7 @@
       },
       "metadata": {
         "registry": {
-          "description": "A source-owned Video.js volume slider.",
+          "description": "A horizontal or vertical slider for adjusting playback volume by dragging, using the keyboard, or scrolling.",
           "title": "Volume Slider"
         }
       }

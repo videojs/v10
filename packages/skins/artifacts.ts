@@ -25,8 +25,9 @@ export const skinArtifacts = [
     resources: coreStyleResources,
     metadata: {
       registry: {
-        title: 'Default Video Controls',
-        description: 'Source-owned core controls for a Video.js video player.',
+        title: 'Core Video Controls',
+        description:
+          'A video control bar with play, seek, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.',
       },
     },
   }),
@@ -38,7 +39,7 @@ export const skinArtifacts = [
     metadata: {
       registry: {
         title: 'Fullscreen Button',
-        description: 'A source-owned Video.js fullscreen button with a shared button tooltip.',
+        description: 'A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.',
       },
     },
   }),
@@ -56,7 +57,8 @@ export const skinArtifacts = [
     metadata: {
       registry: {
         title: 'Play Button',
-        description: 'A source-owned Video.js play button with play, pause, and replay states.',
+        description:
+          'A three-state button that plays, pauses, or restarts media with matching icons and an accessible tooltip.',
       },
     },
   }),
@@ -68,7 +70,8 @@ export const skinArtifacts = [
     metadata: {
       registry: {
         title: 'Seek Button',
-        description: 'A source-owned Video.js button for seeking backward or forward.',
+        description:
+          'A button that skips playback forward or backward by a configurable number of seconds, with a direction-aware icon and accessible tooltip.',
       },
     },
   }),
@@ -80,7 +83,8 @@ export const skinArtifacts = [
     metadata: {
       registry: {
         title: 'Time Slider',
-        description: 'A source-owned Video.js timeline with seek preview and thumbnails.',
+        description:
+          'A playback timeline for seeking, with current and buffered progress plus time and thumbnail previews.',
       },
     },
   }),
@@ -98,7 +102,8 @@ export const skinArtifacts = [
     metadata: {
       registry: {
         title: 'Volume Slider',
-        description: 'A source-owned Video.js volume slider.',
+        description:
+          'A horizontal or vertical slider for adjusting playback volume by dragging, using the keyboard, or scrolling.',
       },
     },
   }),
@@ -109,8 +114,8 @@ export const skinArtifacts = [
     resources: coreStyleResources,
     metadata: {
       registry: {
-        title: 'Volume Popover',
-        description: 'Source-owned Video.js mute and volume controls in a popover.',
+        title: 'Volume Control',
+        description: 'A mute toggle with a vertical slider for adjusting playback volume in a popover.',
       },
     },
   }),
