@@ -175,6 +175,7 @@
     "@videojs/compiler": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
+    "esbuild": "^0.28.1",
     "happy-dom": "^20.11.1",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",

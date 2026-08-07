@@ -10,9 +10,9 @@ const icon = 'size-media-icon drop-shadow-media-icon';
 
 export const button = {
   base,
-  fullscreen: [base, 'group/fullscreen'],
-  mute: [base, 'group/mute'],
-  play: [base, 'group/play'],
+  fullscreen: [...base, 'group/fullscreen'],
+  mute: [...base, 'group/mute'],
+  play: [...base, 'group/play'],
   seek: base,
 };
 

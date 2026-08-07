@@ -1,6 +1,14 @@
 import { type CompilerTransform, defineConfig, transform } from '@videojs/compiler';
 import { tagName } from '@videojs/compiler/ast';
+import { tailwind } from '@videojs/compiler/tailwind';
 import ts from 'typescript';
+
+export type SkinSourceStyle = 'css' | 'tailwind';
+
+export interface CreateHtmlSkinSourceConfigOptions {
+  style: SkinSourceStyle;
+  tailwindInput?: string | undefined;
+}
 
 const componentTags = {
   'Controls.Root': 'media-controls',
@@ -58,34 +66,56 @@ const elementModules: Readonly<Record<string, readonly string[]>> = {
   VolumeSlider: ['@videojs/html/ui/volume-slider'],
 };
 
-const htmlSourceConfig = defineConfig({
-  plugins: [
-    transform(
-      (code) => {
-        const cn = code.import('@videojs/utils/style', 'cn');
-        const TooltipProps = code.type.named(code.import('@videojs/core', 'TooltipProps', { type: true }));
+export function createHtmlSkinSourceConfig({ style, tailwindInput }: CreateHtmlSkinSourceConfigOptions) {
+  return defineConfig({
+    plugins: [
+      tailwind(
+        style === 'tailwind'
+          ? { mode: 'inline' }
+          : {
+              mode: 'extract',
+              input: requiredTailwindInput(tailwindInput),
+              output: 'styles.css',
+              resolve: {
+                element: ({ defaultName }) => ({ className: `vjs-${defaultName}` }),
+              },
+              vars: {
+                hoist: { rootSelector: '.vjs-skin' },
+                properties: { mode: 'inline' },
+              },
+            }
+      ),
+      transform(
+        (code) => {
+          const cn = code.import('@videojs/utils/style', 'cn');
+          const TooltipProps = code.type.named(code.import('@videojs/core', 'TooltipProps', { type: true }));
 
-        return [
-          flattenPopupCompound('Popover.Root', 'Popover.Trigger', 'Popover.Popup'),
-          flattenPopupCompound('TooltipPrimitive.Root', 'TooltipPrimitive.Trigger', 'TooltipPrimitive.Popup'),
-          ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
-          ...Object.entries(iconNames).flatMap(([source, name]) => [
-            code.jsx.element(source).addProp('name', name),
-            code.jsx.element(source).replace('media-icon'),
-          ]),
-          code.jsx
-            .props('className')
-            .where(code.value.isArray())
-            .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
-          replaceCanonicalTooltipProps(TooltipProps),
-          renameClassNameToClass(),
-          removeCanonicalImports(),
-        ];
-      },
-      { name: '@videojs/html:source-ui' }
-    ),
-  ],
-});
+          return [
+            flattenPopupCompound('Popover.Root', 'Popover.Trigger', 'Popover.Popup'),
+            flattenPopupCompound('TooltipPrimitive.Root', 'TooltipPrimitive.Trigger', 'TooltipPrimitive.Popup'),
+            ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
+            ...Object.entries(iconNames).flatMap(([source, name]) => [
+              code.jsx.element(source).addProp('name', name),
+              code.jsx.element(source).replace('media-icon'),
+            ]),
+            code.jsx.props('className').replace(({ value }) => code.value.call(cn, [value])),
+            replaceCanonicalTooltipProps(TooltipProps),
+            renameClassNameToClass(),
+            removeCanonicalImports(),
+          ];
+        },
+        { name: '@videojs/html:source-ui' }
+      ),
+    ],
+  });
+}
+
+function requiredTailwindInput(input: string | undefined): string {
+  if (!input) throw new Error('HTML vanilla CSS source generation requires a Tailwind input file.');
+  return input;
+}
+
+const htmlSourceConfig = createHtmlSkinSourceConfig({ style: 'tailwind' });
 
 export default htmlSourceConfig;
 
@@ -102,7 +132,7 @@ export function resolveHtmlElementImports(componentSymbols: readonly string[]): 
 }
 
 function removeCanonicalImports(): CompilerTransform {
-  const canonicalSources = new Set(['@videojs/core/components', '@videojs/icons/components']);
+  const canonicalSources = new Set(['@videojs/core/components', '@videojs/icons/components', '@videojs/jsx']);
 
   return (context) => (sourceFile) =>
     context.factory.updateSourceFile(
@@ -182,6 +212,9 @@ function replaceCanonicalTooltipProps(tooltipProps: ts.TypeNode): CompilerTransf
 
     const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
       if (isCanonicalTooltipProps(node)) return replacement;
+      if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && node.typeName.text === 'ReactElement') {
+        return factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+      }
       return ts.visitEachChild(node, visit, context);
     };
 

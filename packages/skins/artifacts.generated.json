@@ -24,7 +24,7 @@
       },
       "dependencies": {
         "artifacts": [],
-        "packages": ["@videojs/core"],
+        "packages": ["@videojs/core", "@videojs/jsx"],
         "symbols": {
           "components": ["Tooltip"],
           "icons": []

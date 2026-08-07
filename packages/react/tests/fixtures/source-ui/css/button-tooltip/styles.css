@@ -1,0 +1,39 @@
+@import '../styles/base.css';
+@import '../styles/themes/default.css';
+
+.vjs-skin {
+  --font-weight-semibold: 600;
+  --spacing: 0.25rem;
+}
+
+.vjs-tooltip-popup {
+  -webkit-backdrop-filter: blur(var(--media-surface-backdrop-blur));
+  backdrop-filter: blur(var(--media-surface-backdrop-blur));
+  background-color: var(--media-surface-background);
+  border-radius: var(--media-radius-pill);
+  border-style: solid;
+  border-width: 0px;
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 1px var(--media-surface-border),
+    0 2px 8px var(--media-shadow-color);
+  color: var(--media-controls-color);
+  margin: calc(var(--spacing) * 0);
+  padding-block: 0.35rem;
+  padding-inline: calc(var(--spacing) * 2.5);
+  white-space: nowrap;
+}
+
+.vjs-tooltip-popup[data-open] {
+  align-items: center;
+  display: flex;
+  gap: calc(var(--spacing) * 1);
+}
+
+.vjs-tooltip-shortcut {
+  font-size: 0.75em;
+  font-weight: var(--font-weight-semibold);
+}

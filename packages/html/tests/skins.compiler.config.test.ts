@@ -13,14 +13,15 @@ describe('htmlSourceConfig', () => {
     const result = await compile(source, { filename, config: htmlSourceConfig });
 
     expect(result.diagnostics).toEqual([]);
-    expect(result.code).toContain('<media-time-slider class={slider.root}');
-    expect(result.code).toContain('<media-slider-track class={slider.track}>');
-    expect(result.code).toContain('<media-slider-fill class={cn(slider.fillBase, slider.fill)}/>');
-    expect(result.code).toContain('<media-slider-thumbnail class={thumbnail.image}/>');
-    expect(result.code).toContain('<media-icon class="size-media-icon drop-shadow-media-icon" name="spinner"/>');
+    expect(result.code).toContain('<media-time-slider class={cn("group/slider relative flex');
+    expect(result.code).toContain('<media-slider-track class={cn("relative h-media-slider-track');
+    expect(result.code).toContain('<media-slider-fill class={cn("absolute inset-y-0');
+    expect(result.code).toContain('<media-slider-thumbnail class={cn("block max-h-28 max-w-48")}/>');
+    expect(result.code).toContain('<media-icon class={cn("size-media-icon drop-shadow-media-icon")} name="spinner"/>');
     expect(result.code).not.toContain('className=');
     expect(result.code).not.toContain('@videojs/core/components');
     expect(result.code).not.toContain('@videojs/icons/components');
+    expect(result.code).not.toContain('@videojs/jsx');
   });
 
   it('lowers tooltip composition around sibling trigger and popup elements', async () => {
@@ -32,7 +33,10 @@ describe('htmlSourceConfig', () => {
     expect(result.code).toContain('import type { TooltipProps }');
     expect(result.code).toContain('from "@videojs/core"');
     expect(result.code).toContain('{children}');
-    expect(result.code).toContain('<media-tooltip {...props} class={tooltip.popup}>');
+    expect(result.code).toContain('<media-tooltip {...props} class={cn("bg-media-surface');
+    expect(result.code).toContain('children: unknown');
+    expect(result.code).not.toContain('ReactElement');
+    expect(result.code).not.toContain('@videojs/jsx');
     expect(result.code).not.toContain('typeof TooltipPrimitive.Root');
     expect(result.code).not.toContain('<TooltipPrimitive.Trigger>');
   });
@@ -45,7 +49,7 @@ describe('htmlSourceConfig', () => {
     expect(result.diagnostics).toEqual([]);
     expect(result.code).toContain('<MuteButton />');
     expect(result.code).toContain(
-      '<media-popover openOnHover delay={200} closeDelay={100} side="top" class={volumePopover}>'
+      '<media-popover openOnHover delay={200} closeDelay={100} side="top" class={cn("bg-media-surface'
     );
     expect(result.code).not.toContain('<Popover.Trigger>');
     expect(result.code).not.toContain('<button>');

@@ -97,6 +97,15 @@
   },
   "overrides": [
     {
+      "includes": ["packages/{html,react}/tests/fixtures/source-ui/**"],
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      }
+    },
+    {
       "includes": ["site/src/**", "!site/src/utils/twMerge.ts"],
       "linter": {
         "rules": {

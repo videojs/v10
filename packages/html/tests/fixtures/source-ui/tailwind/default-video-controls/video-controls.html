@@ -1,0 +1,148 @@
+<media-controls
+  class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface vjs-skin vjs-theme-default flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding font-media text-media leading-none text-media-controls"
+>
+  <media-tooltip-group>
+    <media-controls-group class="flex items-center gap-media-controls-gap">
+      <media-play-button
+        class="grid size-media-control shrink-0 place-items-center rounded-media-pill border-0 bg-transparent p-0 text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group/play"
+      >
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-data-ended/play:block group-data-ended/play:opacity-100"
+          name="restart"
+        ></media-icon>
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-not-data-ended/play:group-data-paused/play:block group-not-data-ended/play:group-data-paused/play:opacity-100 group-not-data-ended/play:group-not-data-started/play:block group-not-data-ended/play:group-not-data-started/play:opacity-100"
+          name="play"
+        ></media-icon>
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:block group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100"
+          name="pause"
+        ></media-icon>
+      </media-play-button>
+      <media-tooltip
+        class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface m-0 whitespace-nowrap rounded-media-pill border-0 px-2.5 py-[0.35rem] data-open:flex data-open:items-center data-open:gap-1"
+      >
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="text-[0.75em] font-semibold"></media-tooltip-shortcut>
+      </media-tooltip>
+      <media-seek-button
+        class="grid size-media-control shrink-0 place-items-center rounded-media-pill border-0 bg-transparent p-0 text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        seconds="-10"
+      >
+        <media-icon class="size-media-icon drop-shadow-media-icon -scale-x-100" name="seek"></media-icon>
+        <span class="tabular-nums">10</span>
+      </media-seek-button>
+      <media-tooltip
+        class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface m-0 whitespace-nowrap rounded-media-pill border-0 px-2.5 py-[0.35rem] data-open:flex data-open:items-center data-open:gap-1"
+      >
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="text-[0.75em] font-semibold"></media-tooltip-shortcut>
+      </media-tooltip>
+      <media-seek-button
+        class="grid size-media-control shrink-0 place-items-center rounded-media-pill border-0 bg-transparent p-0 text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+        seconds="10"
+      >
+        <media-icon class="size-media-icon drop-shadow-media-icon" name="seek"></media-icon>
+        <span class="tabular-nums">10</span>
+      </media-seek-button>
+      <media-tooltip
+        class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface m-0 whitespace-nowrap rounded-media-pill border-0 px-2.5 py-[0.35rem] data-open:flex data-open:items-center data-open:gap-1"
+      >
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="text-[0.75em] font-semibold"></media-tooltip-shortcut>
+      </media-tooltip>
+    </media-controls-group>
+    <media-controls-group class="flex flex-1 items-center gap-media-controls-gap">
+      <media-time class="tabular-nums" type="current"></media-time>
+      <media-time-slider
+        class="group/slider relative flex min-h-media-control min-w-20 flex-1 cursor-pointer items-center justify-center outline-none data-[orientation=vertical]:h-20 data-[orientation=vertical]:w-media-control data-[orientation=vertical]:min-w-0"
+        thumb-alignment="edge"
+      >
+        <media-slider-track
+          class="relative h-media-slider-track w-full overflow-hidden rounded-media-pill bg-media-slider-track data-[orientation=vertical]:h-full data-[orientation=vertical]:w-media-slider-track"
+        >
+          <media-slider-fill
+            class="absolute inset-y-0 left-0 rounded-[inherit] data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto w-(--media-slider-fill) bg-current data-[orientation=vertical]:h-(--media-slider-fill)"
+          ></media-slider-fill>
+          <media-slider-buffer
+            class="absolute inset-y-0 left-0 rounded-[inherit] data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto w-(--media-slider-buffer) bg-media-slider-buffer data-[orientation=vertical]:h-(--media-slider-buffer)"
+          ></media-slider-buffer>
+        </media-slider-track>
+        <media-slider-thumb
+          class="absolute top-1/2 left-(--media-slider-fill) size-media-slider-thumb -translate-x-1/2 -translate-y-1/2 rounded-media-pill bg-current data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2"
+        ></media-slider-thumb>
+        <div
+          class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface absolute bottom-[calc(100%+0.75rem)] overflow-hidden rounded-media-surface"
+        >
+          <media-slider-thumbnail class="block max-h-28 max-w-48"></media-slider-thumbnail>
+          <media-slider-value class="tabular-nums" type="pointer"></media-slider-value>
+          <media-icon class="size-media-icon drop-shadow-media-icon" name="spinner"></media-icon>
+        </div>
+        <media-slider-preview class="relative">
+          <media-slider-value class="tabular-nums" type="pointer"></media-slider-value>
+        </media-slider-preview>
+      </media-time-slider>
+      <media-time class="tabular-nums" type="remaining" toggle></media-time>
+    </media-controls-group>
+    <media-controls-group class="flex items-center gap-media-controls-gap">
+      <media-mute-button
+        class="grid size-media-control shrink-0 place-items-center rounded-media-pill border-0 bg-transparent p-0 text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group/mute"
+      >
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-data-muted/mute:block group-data-muted/mute:opacity-100"
+          name="volume-off"
+        ></media-icon>
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-not-data-muted/mute:group-data-[volume-level=low]/mute:block group-not-data-muted/mute:group-data-[volume-level=low]/mute:opacity-100"
+          name="volume-low"
+        ></media-icon>
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:opacity-100"
+          name="volume-high"
+        ></media-icon>
+      </media-mute-button>
+      <media-popover
+        open-on-hover
+        delay="200"
+        close-delay="100"
+        side="top"
+        class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface m-0 rounded-media-pill border-0 py-3"
+      >
+        <media-volume-slider
+          class="group/slider relative flex min-h-media-control min-w-20 flex-1 cursor-pointer items-center justify-center outline-none data-[orientation=vertical]:h-20 data-[orientation=vertical]:w-media-control data-[orientation=vertical]:min-w-0"
+          thumb-alignment="edge"
+          orientation="vertical"
+        >
+          <media-slider-track
+            class="relative h-media-slider-track w-full overflow-hidden rounded-media-pill bg-media-slider-track data-[orientation=vertical]:h-full data-[orientation=vertical]:w-media-slider-track"
+          >
+            <media-slider-fill
+              class="absolute inset-y-0 left-0 rounded-[inherit] data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto w-(--media-slider-fill) bg-current data-[orientation=vertical]:h-(--media-slider-fill)"
+            ></media-slider-fill>
+          </media-slider-track>
+          <media-slider-thumb
+            class="absolute top-1/2 left-(--media-slider-fill) size-media-slider-thumb -translate-x-1/2 -translate-y-1/2 rounded-media-pill bg-current data-[orientation=vertical]:top-[calc(100%-var(--media-slider-fill))] data-[orientation=vertical]:left-1/2"
+          ></media-slider-thumb>
+        </media-volume-slider>
+      </media-popover>
+      <media-fullscreen-button
+        class="grid size-media-control shrink-0 place-items-center rounded-media-pill border-0 bg-transparent p-0 text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-50 group/fullscreen"
+      >
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-not-data-fullscreen/fullscreen:block group-not-data-fullscreen/fullscreen:opacity-100"
+          name="fullscreen-enter"
+        ></media-icon>
+        <media-icon
+          class="size-media-icon drop-shadow-media-icon hidden opacity-0 group-data-fullscreen/fullscreen:block group-data-fullscreen/fullscreen:opacity-100"
+          name="fullscreen-exit"
+        ></media-icon>
+      </media-fullscreen-button>
+      <media-tooltip
+        class="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface m-0 whitespace-nowrap rounded-media-pill border-0 px-2.5 py-[0.35rem] data-open:flex data-open:items-center data-open:gap-1"
+      >
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="text-[0.75em] font-semibold"></media-tooltip-shortcut>
+      </media-tooltip>
+    </media-controls-group>
+  </media-tooltip-group>
+</media-controls>

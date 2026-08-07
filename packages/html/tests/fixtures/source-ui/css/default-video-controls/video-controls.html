@@ -1,0 +1,73 @@
+<media-controls class="vjs-video-controls vjs-skin vjs-theme-default">
+  <media-tooltip-group>
+    <media-controls-group class="vjs-controls-group-base">
+      <media-play-button class="vjs-button-play">
+        <media-icon class="vjs-button-icon-restart" name="restart"></media-icon>
+        <media-icon class="vjs-button-icon-play" name="play"></media-icon>
+        <media-icon class="vjs-button-icon-pause" name="pause"></media-icon>
+      </media-play-button>
+      <media-tooltip class="vjs-tooltip-popup">
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="vjs-tooltip-shortcut"></media-tooltip-shortcut>
+      </media-tooltip>
+      <media-seek-button class="vjs-button-seek" seconds="-10">
+        <media-icon class="vjs-button-icon-seek-backward" name="seek"></media-icon>
+        <span class="vjs-seek-label">10</span>
+      </media-seek-button>
+      <media-tooltip class="vjs-tooltip-popup">
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="vjs-tooltip-shortcut"></media-tooltip-shortcut>
+      </media-tooltip>
+      <media-seek-button class="vjs-button-seek" seconds="10">
+        <media-icon class="vjs-button-icon-base" name="seek"></media-icon>
+        <span class="vjs-seek-label">10</span>
+      </media-seek-button>
+      <media-tooltip class="vjs-tooltip-popup">
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="vjs-tooltip-shortcut"></media-tooltip-shortcut>
+      </media-tooltip>
+    </media-controls-group>
+    <media-controls-group class="vjs-controls-group-time">
+      <media-time class="vjs-time" type="current"></media-time>
+      <media-time-slider class="vjs-slider-root" thumb-alignment="edge">
+        <media-slider-track class="vjs-slider-track">
+          <media-slider-fill class="vjs-slider-fill"></media-slider-fill>
+          <media-slider-buffer class="vjs-slider-buffer"></media-slider-buffer>
+        </media-slider-track>
+        <media-slider-thumb class="vjs-slider-thumb"></media-slider-thumb>
+        <div class="vjs-thumbnail-root">
+          <media-slider-thumbnail class="vjs-thumbnail-image"></media-slider-thumbnail>
+          <media-slider-value class="vjs-slider-value" type="pointer"></media-slider-value>
+          <media-icon class="vjs-spinner-icon" name="spinner"></media-icon>
+        </div>
+        <media-slider-preview class="vjs-slider-preview">
+          <media-slider-value class="vjs-slider-value" type="pointer"></media-slider-value>
+        </media-slider-preview>
+      </media-time-slider>
+      <media-time class="vjs-time" type="remaining" toggle></media-time>
+    </media-controls-group>
+    <media-controls-group class="vjs-controls-group-base">
+      <media-mute-button class="vjs-button-mute">
+        <media-icon class="vjs-button-icon-volume-off" name="volume-off"></media-icon>
+        <media-icon class="vjs-button-icon-volume-low" name="volume-low"></media-icon>
+        <media-icon class="vjs-button-icon-volume-high" name="volume-high"></media-icon>
+      </media-mute-button>
+      <media-popover open-on-hover delay="200" close-delay="100" side="top" class="vjs-volume-popover">
+        <media-volume-slider class="vjs-slider-root" thumb-alignment="edge" orientation="vertical">
+          <media-slider-track class="vjs-slider-track">
+            <media-slider-fill class="vjs-slider-fill"></media-slider-fill>
+          </media-slider-track>
+          <media-slider-thumb class="vjs-slider-thumb"></media-slider-thumb>
+        </media-volume-slider>
+      </media-popover>
+      <media-fullscreen-button class="vjs-button-fullscreen">
+        <media-icon class="vjs-button-icon-fullscreen-enter" name="fullscreen-enter"></media-icon>
+        <media-icon class="vjs-button-icon-fullscreen-exit" name="fullscreen-exit"></media-icon>
+      </media-fullscreen-button>
+      <media-tooltip class="vjs-tooltip-popup">
+        <media-tooltip-label></media-tooltip-label>
+        <media-tooltip-shortcut class="vjs-tooltip-shortcut"></media-tooltip-shortcut>
+      </media-tooltip>
+    </media-controls-group>
+  </media-tooltip-group>
+</media-controls>

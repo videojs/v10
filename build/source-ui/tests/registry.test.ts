@@ -22,23 +22,30 @@ describe('createRegistryCatalog', () => {
 
       assert.deepEqual(
         catalog.items.map((item) => item.name),
-        [
-          `${target.framework}/${target.style}/default-video-controls`,
-          `${target.framework}/${target.style}/fullscreen-button`,
-          `${target.framework}/${target.style}/play-button`,
-          `${target.framework}/${target.style}/seek-button`,
-          `${target.framework}/${target.style}/time-slider`,
-          `${target.framework}/${target.style}/volume-popover`,
-          `${target.framework}/${target.style}/volume-slider`,
-        ]
+        target.framework === 'html'
+          ? [`${target.framework}/${target.style}/default-video-controls`]
+          : [
+              `${target.framework}/${target.style}/default-video-controls`,
+              `${target.framework}/${target.style}/fullscreen-button`,
+              `${target.framework}/${target.style}/play-button`,
+              `${target.framework}/${target.style}/seek-button`,
+              `${target.framework}/${target.style}/time-slider`,
+              `${target.framework}/${target.style}/volume-popover`,
+              `${target.framework}/${target.style}/volume-slider`,
+            ]
       );
-      assert.deepEqual(catalog.items[0]?.registryDependencies, [
-        `videojs/v10/${target.framework}/${target.style}/fullscreen-button#eject/11-registry-catalog`,
-        `videojs/v10/${target.framework}/${target.style}/play-button#eject/11-registry-catalog`,
-        `videojs/v10/${target.framework}/${target.style}/seek-button#eject/11-registry-catalog`,
-        `videojs/v10/${target.framework}/${target.style}/time-slider#eject/11-registry-catalog`,
-        `videojs/v10/${target.framework}/${target.style}/volume-popover#eject/11-registry-catalog`,
-      ]);
+      assert.deepEqual(
+        catalog.items[0]?.registryDependencies,
+        target.framework === 'react'
+          ? [
+              `videojs/v10/${target.framework}/${target.style}/fullscreen-button#eject/11-registry-catalog`,
+              `videojs/v10/${target.framework}/${target.style}/play-button#eject/11-registry-catalog`,
+              `videojs/v10/${target.framework}/${target.style}/seek-button#eject/11-registry-catalog`,
+              `videojs/v10/${target.framework}/${target.style}/time-slider#eject/11-registry-catalog`,
+              `videojs/v10/${target.framework}/${target.style}/volume-popover#eject/11-registry-catalog`,
+            ]
+          : undefined
+      );
       assert.deepEqual(catalog.items[0]?.meta, {
         framework: target.framework,
         style: target.style,
@@ -55,7 +62,14 @@ describe('createRegistryCatalog', () => {
     );
     const catalog = createRegistryCatalog(graph, {
       target: { framework: 'react', style: 'css' },
-      output,
+      output: {
+        ...output,
+        dependencies: {
+          ...output.dependencies,
+          'button-tooltip': ['@videojs/utils'],
+          'play-button': ['@videojs/react'],
+        },
+      },
     });
 
     assert.equal(
@@ -71,13 +85,38 @@ describe('createRegistryCatalog', () => {
         path: 'registry/react/button-tooltip.tsx',
         type: 'registry:component',
         target: '@ui/videojs/button-tooltip.tsx',
+        content: '// button-tooltip',
       },
       {
         path: 'registry/react/play-button.tsx',
         type: 'registry:component',
         target: '@ui/videojs/play-button.tsx',
+        content: '// play-button',
       },
     ]);
+    assert.deepEqual(catalog.items.find((item) => item.name.endsWith('/play-button'))?.dependencies, [
+      '@videojs/react',
+      '@videojs/utils',
+    ]);
+  });
+
+  it('publishes only complete Skin and preset blocks for HTML', async () => {
+    const { graph } = await buildSkinArtifactGraph();
+    const output = outputManifest(
+      graph.artifacts.map((artifact) => artifact.id),
+      'html'
+    );
+    const catalog = createRegistryCatalog(graph, {
+      target: { framework: 'html', style: 'tailwind' },
+      output,
+    });
+
+    assert.deepEqual(
+      catalog.items.map((item) => item.name),
+      ['html/tailwind/default-video-controls']
+    );
+    assert.equal(catalog.items[0]?.type, 'registry:block');
+    assert.equal(catalog.items[0]?.registryDependencies, undefined);
   });
 });
 
@@ -92,10 +131,13 @@ function outputManifest(artifactIds: readonly string[], framework: 'html' | 'rea
             path: `registry/${framework}/${id}.${extension}`,
             type: 'registry:component' as const,
             target: `@ui/videojs/${id}.${extension}`,
+            content: `// ${id}`,
           },
         ],
       ])
     ),
-    dependencies: [framework === 'react' ? '@videojs/react' : '@videojs/html'],
+    dependencies: Object.fromEntries(
+      artifactIds.map((id) => [id, [framework === 'react' ? '@videojs/react' : '@videojs/html']])
+    ),
   };
 }

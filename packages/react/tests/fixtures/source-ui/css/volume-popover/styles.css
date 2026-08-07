@@ -1,0 +1,25 @@
+@import '../styles/base.css';
+@import '../styles/themes/default.css';
+
+.vjs-skin {
+  --spacing: 0.25rem;
+}
+
+.vjs-volume-popover {
+  -webkit-backdrop-filter: blur(var(--media-surface-backdrop-blur));
+  backdrop-filter: blur(var(--media-surface-backdrop-blur));
+  background-color: var(--media-surface-background);
+  border-radius: var(--media-radius-pill);
+  border-style: solid;
+  border-width: 0px;
+  box-shadow:
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 #0000,
+    0 0 0 1px var(--media-surface-border),
+    0 2px 8px var(--media-shadow-color);
+  color: var(--media-controls-color);
+  margin: calc(var(--spacing) * 0);
+  padding-block: calc(var(--spacing) * 3);
+}

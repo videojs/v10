@@ -1,0 +1,22 @@
+@layer videojs.theme {
+  .vjs-theme-default {
+    --media-controls-color: oklch(1 0 0);
+    --media-controls-gap: 0.25rem;
+    --media-controls-padding: 0.25rem;
+    --media-control-size: 2.25rem;
+    --media-control-hover-background: oklch(1 0 0 / 0.12);
+    --media-font-family: ui-sans-serif, system-ui, sans-serif;
+    --media-font-size: 0.875rem;
+    --media-icon-size: 1.125rem;
+    --media-radius-pill: 9999px;
+    --media-radius-surface: 0.5rem;
+    --media-shadow-color: oklch(0 0 0 / 0.35);
+    --media-slider-buffer-background: oklch(1 0 0 / 0.3);
+    --media-slider-thumb-size: 0.75rem;
+    --media-slider-track-background: oklch(1 0 0 / 0.2);
+    --media-slider-track-size: 0.25rem;
+    --media-surface-backdrop-blur: 12px;
+    --media-surface-background: oklch(0.2 0 0 / 0.72);
+    --media-surface-border: oklch(1 0 0 / 0.16);
+  }
+}

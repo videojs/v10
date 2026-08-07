@@ -19,11 +19,12 @@ export interface RegistryOutputFile {
   path: string;
   type: RegistryFileType;
   target?: string | undefined;
+  content: string;
 }
 
 export interface RegistryOutputManifest {
   artifacts: Readonly<Record<string, readonly RegistryOutputFile[]>>;
-  dependencies?: readonly string[] | undefined;
+  dependencies?: Readonly<Record<string, readonly string[]>> | undefined;
 }
 
 export interface RegistryCatalogItem {
@@ -60,7 +61,9 @@ export function createRegistryCatalog(
   { target, output, ref, repository = 'videojs/v10' }: CreateRegistryCatalogOptions
 ): RegistryCatalog {
   const artifacts = new Map(graph.artifacts.map((artifact) => [artifact.id, artifact]));
-  const published = graph.artifacts.filter(hasRegistryMetadata);
+  const published = graph.artifacts.filter(
+    (artifact) => hasRegistryMetadata(artifact) && isPublishedForTarget(artifact, target)
+  );
   const publishedIds = new Set(published.map((artifact) => artifact.id));
 
   return {
@@ -68,7 +71,7 @@ export function createRegistryCatalog(
     name: 'videojs',
     homepage: 'https://videojs.org',
     items: published.map((artifact) => {
-      const { included, dependencies } = partitionDependencies(artifact, artifacts, publishedIds);
+      const { included, dependencies } = partitionDependencies(artifact, artifacts, publishedIds, target.framework);
       const files = uniqueFiles(
         included.flatMap((id) => {
           const artifactFiles = output.artifacts[id];
@@ -77,6 +80,7 @@ export function createRegistryCatalog(
         })
       );
       const registry = artifact.metadata.registry;
+      const packageDependencies = [...new Set(included.flatMap((id) => output.dependencies?.[id] ?? []))].sort();
 
       return {
         name: itemName(target, artifact.id),
@@ -84,7 +88,7 @@ export function createRegistryCatalog(
         title: `${registry.title} (${frameworkTitle(target.framework)}, ${styleTitle(target.style)})`,
         description: `${registry.description} ${frameworkTitle(target.framework)} source with ${styleDescription(target.style)}.`,
         files,
-        ...(output.dependencies?.length ? { dependencies: [...output.dependencies].sort() } : {}),
+        ...(packageDependencies.length ? { dependencies: packageDependencies } : {}),
         ...(dependencies.length
           ? {
               registryDependencies: dependencies.map(
@@ -102,6 +106,11 @@ export function createRegistryCatalog(
   };
 }
 
+function isPublishedForTarget(artifact: ArtifactGraphNode, target: RegistryTarget): boolean {
+  if (target.framework !== 'html') return true;
+  return artifact.kind === 'skin' || artifact.kind === 'preset';
+}
+
 function hasRegistryMetadata(
   artifact: ArtifactGraphNode
 ): artifact is ArtifactGraphNode & { metadata: { registry: RegistryMetadata } } {
@@ -117,8 +126,10 @@ function hasRegistryMetadata(
 function partitionDependencies(
   root: ArtifactGraphNode,
   artifacts: ReadonlyMap<string, ArtifactGraphNode>,
-  publishedIds: ReadonlySet<string>
+  publishedIds: ReadonlySet<string>,
+  framework: RegistryFramework
 ): { included: string[]; dependencies: string[] } {
+  if (framework === 'html') return { included: [root.id], dependencies: [] };
   const included = new Set<string>();
   const dependencies = new Set<string>();
 
@@ -140,7 +151,15 @@ function partitionDependencies(
 }
 
 function uniqueFiles(files: readonly RegistryOutputFile[]): RegistryOutputFile[] {
-  const unique = new Map(files.map((file) => [`${file.path}\0${file.target ?? ''}`, file]));
+  const unique = new Map<string, RegistryOutputFile>();
+  for (const file of files) {
+    const key = `${file.path}\0${file.target ?? ''}`;
+    const existing = unique.get(key);
+    if (existing && existing.content !== file.content) {
+      throw new Error(`Registry output collision: ${file.path}`);
+    }
+    unique.set(key, file);
+  }
   return [...unique.values()].sort((a, b) => a.path.localeCompare(b.path));
 }
 

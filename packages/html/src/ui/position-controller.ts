@@ -5,6 +5,8 @@ export type PositionControllerHost = ReactiveControllerHost & HTMLElement;
 
 export type PositionControllerOptions = Omit<PopupPositionerOptions, 'popup'>;
 
+let popupId = 0;
+
 /** Connects a popup element to the shared positioning lifecycle. */
 export class PositionController implements ReactiveController {
   readonly #host: PositionControllerHost;
@@ -21,8 +23,16 @@ export class PositionController implements ReactiveController {
     if (trigger) {
       return root.getElementById(trigger);
     }
-    if (!this.#host.id) return null;
-    return root.querySelector<HTMLElement>(`[commandfor="${this.#host.id}"]`);
+    if (this.#host.id) {
+      return root.querySelector<HTMLElement>(`[commandfor="${this.#host.id}"]`);
+    }
+
+    const adjacent = this.#host.previousElementSibling;
+    if (!(adjacent instanceof HTMLElement)) return null;
+
+    this.#host.id = nextPopupId(root);
+    adjacent.setAttribute('commandfor', this.#host.id);
+    return adjacent;
   }
 
   sync(options: PositionControllerOptions): void {
@@ -40,4 +50,11 @@ export class PositionController implements ReactiveController {
   hostDestroyed(): void {
     this.cleanup();
   }
+}
+
+function nextPopupId(root: Document | ShadowRoot): string {
+  let id: string;
+  do id = `vjs-popup-${++popupId}`;
+  while (root.getElementById(id));
+  return id;
 }
