@@ -1,5 +1,43 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.26...@videojs/core@10.0.0-beta.27) (2026-08-07)
+
+
+### ⚠ BREAKING CHANGES
+
+* **core:** centralize popup positioning ([#1904](https://github.com/videojs/v10/issues/1904))
+
+### Features
+
+* **core:** add core jsx system ([#1986](https://github.com/videojs/v10/issues/1986)) ([d8ff01d](https://github.com/videojs/v10/commit/d8ff01dfce4effec184180ba3a1c985c95eb6e87))
+* **i18n:** add Lithuanian locale pack ([#1917](https://github.com/videojs/v10/issues/1917)) ([aa14c87](https://github.com/videojs/v10/commit/aa14c879aed88e3e95fef8a27067cab77c5c11ff))
+* **packages:** resolve feature state from user and media values ([#1946](https://github.com/videojs/v10/issues/1946)) ([4751abb](https://github.com/videojs/v10/commit/4751abb75bd6febf5ccbccdd9061379c8f384430))
+* **spf:** surface unsupported-source errors ([#1936](https://github.com/videojs/v10/issues/1936)) ([fe47f85](https://github.com/videojs/v10/commit/fe47f85b7bf79a02403206095604683d661db3c1))
+* **utils:** extract getAnchorNames and addAnchorName ([#1935](https://github.com/videojs/v10/issues/1935)) ([d5f0cb6](https://github.com/videojs/v10/commit/d5f0cb6b92bfeeec828095a7d970e0b9610eb29d))
+
+
+### Bug Fixes
+
+* **i18n:** improve locale translations ([#1914](https://github.com/videojs/v10/issues/1914)) ([12cc939](https://github.com/videojs/v10/commit/12cc939f58f4ad2db7218374d96c5aa690ca49e5))
+* **packages:** add settings tooltip ([#1915](https://github.com/videojs/v10/issues/1915)) ([96d2e05](https://github.com/videojs/v10/commit/96d2e05147cd973900bb88b5ac5abf8e93fdbe8d))
+* **packages:** keep controls visible during active interactions ([#1900](https://github.com/videojs/v10/issues/1900)) ([35616db](https://github.com/videojs/v10/commit/35616db5a38d193f1fc114da4af68a79f08093f1))
+* **packages:** preserve shared popup anchors ([#1933](https://github.com/videojs/v10/issues/1933)) ([cd98428](https://github.com/videojs/v10/commit/cd9842869118bef284c063368710c00e8560f9de))
+* **packages:** stabilize popup positioning ([#1931](https://github.com/videojs/v10/issues/1931)) ([1fbccf0](https://github.com/videojs/v10/commit/1fbccf062f34f0cc8a5eb162a10991180363b052))
+
+
+### Code Refactoring
+
+* **core:** centralize popup positioning ([#1904](https://github.com/videojs/v10/issues/1904)) ([d27eda2](https://github.com/videojs/v10/commit/d27eda2a25bd90841d24da0a3fee67d7d3d586c7))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/media bumped to 10.0.0-beta.27
+    * @videojs/store bumped to 10.0.0-beta.27
+    * @videojs/utils bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/core@10.0.0-beta.25...@videojs/core@10.0.0-beta.26) (2026-08-02)
 
 

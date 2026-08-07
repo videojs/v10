@@ -1,5 +1,25 @@
 # Changelog
 
+## [10.0.0-beta.27](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.26...@videojs/spf@10.0.0-beta.27) (2026-08-07)
+
+
+### Features
+
+* **spf:** live hls playback on the presentation-timeline model ([#1884](https://github.com/videojs/v10/issues/1884)) ([0ebb073](https://github.com/videojs/v10/commit/0ebb073b87cbceb5459b7a32dc09ed5026647d37))
+* **spf:** surface unsupported-source errors ([#1936](https://github.com/videojs/v10/issues/1936)) ([fe47f85](https://github.com/videojs/v10/commit/fe47f85b7bf79a02403206095604683d661db3c1))
+
+
+### Bug Fixes
+
+* link to CML in SPF ([#1814](https://github.com/videojs/v10/issues/1814)) ([33aeafe](https://github.com/videojs/v10/commit/33aeafe80fba941397f71b49c489b4ecaffe81fa))
+
+
+### Dependencies
+
+* The following workspace dependencies were updated
+  * dependencies
+    * @videojs/utils bumped to 10.0.0-beta.27
+
 ## [10.0.0-beta.26](https://github.com/videojs/v10/compare/@videojs/spf@10.0.0-beta.25...@videojs/spf@10.0.0-beta.26) (2026-08-02)
 
 
