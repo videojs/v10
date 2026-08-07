@@ -13,7 +13,7 @@ export interface DashSource {
    * dash.js's own settings, passed through untouched. Replacing them resets any
    * previously applied settings.
    */
-  engine?: dashjs.MediaPlayerSettingClass | undefined;
+  dashJs?: dashjs.MediaPlayerSettingClass | undefined;
 }
 
 export interface DashMediaProps {
@@ -77,8 +77,8 @@ export class DashMedia
 
   /** MPD URL. Setting it re-derives `source`, carrying its settings over. */
   set src(value) {
-    const { engine } = this.#source ?? {};
-    const next: DashSource = { ...(engine && { engine }), ...(value && { src: value }) };
+    const { dashJs } = this.#source ?? {};
+    const next: DashSource = { ...(dashJs && { dashJs }), ...(value && { src: value }) };
 
     // Everything happens in the `source` setter, so there is one path for
     // storing it, telling the engine, and dispatching `sourcechange`.
@@ -86,10 +86,10 @@ export class DashMedia
   }
 
   /**
-   * Structured source: the MPD URL in `src`, plus dash.js settings in `engine`.
+   * Structured source: the MPD URL in `src`, plus dash.js settings in `dashJs`.
    * Replacing it re-derives `src`.
    *
-   * dash.js takes settings on a live player, so changing `engine` re-applies
+   * dash.js takes settings on a live player, so changing `dashJs` re-applies
    * them in place instead of recreating the engine.
    */
   get source(): DashSource | null {
@@ -107,23 +107,23 @@ export class DashMedia
     // Assigning is always a source change, so it is always announced. Only the
     // engine calls are guarded, so re-assigning an equivalent source — an inline
     // React prop, say — never disturbs what is already playing.
-    const configChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
+    const configChanged = !deepEqual(this.#source?.dashJs ?? null, source?.dashJs ?? null);
     const srcChanged = this.#src !== src;
 
     this.#source = source;
     this.#src = src;
 
-    if (configChanged) this.#applyEngineConfig(source?.engine);
+    if (configChanged) this.#applyEngineConfig(source?.dashJs);
     if (srcChanged) this.#engine.attachSource(src);
 
     this.dispatchEvent(new Event('sourcechange'));
   }
 
-  // `engine` is replaced, not merged, but dash.js merges every
+  // `dashJs` is replaced, not merged, but dash.js merges every
   // `updateSettings()` call into the current settings — reset first so dropping
   // a key clears it instead of leaving the previous value behind.
-  #applyEngineConfig(engine?: dashjs.MediaPlayerSettingClass) {
+  #applyEngineConfig(settings?: dashjs.MediaPlayerSettingClass) {
     this.#engine.resetSettings();
-    if (engine) this.#engine.updateSettings(engine);
+    if (settings) this.#engine.updateSettings(settings);
   }
 }

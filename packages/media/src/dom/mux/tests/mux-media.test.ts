@@ -207,7 +207,7 @@ describe('MuxMedia', () => {
     const media = new MuxMedia();
     media.attach(document.createElement('video'));
     const engine = { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } };
-    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', hlsJs: engine };
     await flushLoad();
 
     const loadstart = vi.fn();
@@ -218,7 +218,7 @@ describe('MuxMedia', () => {
     media.source = {
       playbackId: 'abc123',
       preferPlayback: 'native',
-      engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
       poster: { time: 5 },
     };
     await flushLoad();
@@ -232,7 +232,7 @@ describe('MuxMedia', () => {
     media.source = {
       playbackId: 'abc123',
       preferPlayback: 'native',
-      engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
     };
     await flushLoad();
 
@@ -242,7 +242,7 @@ describe('MuxMedia', () => {
     media.source = {
       playbackId: 'abc123',
       preferPlayback: 'native',
-      engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/other' } } },
+      hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/other' } } },
     };
     await flushLoad();
 
@@ -258,7 +258,7 @@ describe('MuxMedia', () => {
     const loadstart = vi.fn();
     media.addEventListener('loadstart', loadstart);
 
-    media.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { maxBufferLength: 60 } };
+    media.source = { playbackId: 'abc123', preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } };
     await flushLoad();
 
     expect(loadstart).toHaveBeenCalled();
@@ -418,12 +418,12 @@ describe('MuxMedia', () => {
       expect(media.source).toEqual({ playbackId: 'abc123', drm: { token: DRM_TOKEN } });
     });
 
-    it('lets an explicit engine.drmSystems override the derived one', async () => {
+    it('lets an explicit hlsJs.drmSystems override the derived one', async () => {
       const media = setupMse();
       media.source = {
         playbackId: 'abc123',
         drm: { token: DRM_TOKEN },
-        engine: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
+        hlsJs: { drmSystems: { 'com.widevine.alpha': { licenseUrl: 'https://drm.example/license' } } },
       };
       await flushLoad();
 

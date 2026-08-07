@@ -108,7 +108,7 @@ const SOURCE_MAP = {
   'hls-drm': {
     // The same asset, licensed the generic way: hls.js's own `drmSystems`, keyed
     // by EME key system id and naming each license server outright. Works on any
-    // hls.js-backed element, and shows what `source.engine` still reaches.
+    // hls.js-backed element, and shows what `source.hlsJs` still reaches.
     label: 'HLS - DRM protected (engine config)',
     type: 'hls',
     subType: 'mp4',
@@ -116,7 +116,7 @@ const SOURCE_MAP = {
     poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
     source: {
       src: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
-      engine: {
+      hlsJs: {
         // hls.js only listens for `encrypted` when EME is switched on.
         emeEnabled: true,
         drmSystems: {
