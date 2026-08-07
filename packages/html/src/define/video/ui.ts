@@ -24,6 +24,7 @@ import { PosterElement } from '../../ui/poster/poster-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
 import { TextElement } from '../../ui/text/text-element';
+import { TitleElement } from '../../ui/title/title-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -74,3 +75,4 @@ safeDefine(PosterElement);
 safeDefine(QualityRadioGroupElement);
 safeDefine(SeekButtonElement);
 safeDefine(TextElement);
+safeDefine(TitleElement);

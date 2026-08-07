@@ -21,6 +21,7 @@ import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
+import { TitleElement } from '../../ui/title/title-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -71,3 +72,4 @@ safeDefine(PopoverElement);
 safeDefine(PosterElement);
 safeDefine(QualityRadioGroupElement);
 safeDefine(SeekButtonElement);
+safeDefine(TitleElement);

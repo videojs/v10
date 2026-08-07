@@ -148,6 +148,7 @@ export { TimeElement } from './ui/time/time-element';
 export { TimeGroupElement } from './ui/time/time-group-element';
 export { TimeSeparatorElement } from './ui/time/time-separator-element';
 export { TimeSliderElement } from './ui/time-slider/time-slider-element';
+export { TitleElement } from './ui/title/title-element';
 export { tooltipGroupContext } from './ui/tooltip/context';
 export { TooltipElement } from './ui/tooltip/tooltip-element';
 export { TooltipGroupElement } from './ui/tooltip/tooltip-group-element';

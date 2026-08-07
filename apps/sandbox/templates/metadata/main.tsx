@@ -1,7 +1,7 @@
 import '@app/styles.css';
 
 import { SOURCES } from '@app/shared/sources';
-import { createPlayer, metadataFeature } from '@videojs/react';
+import { createPlayer, metadataFeature, Title } from '@videojs/react';
 import { Video } from '@videojs/react/video';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -58,11 +58,13 @@ function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }
     <div className="relative mt-6 overflow-hidden rounded-lg bg-black shadow-lg">
       <MetadataVideo contentTitle={mediaTitle} />
       <div className="pointer-events-none absolute inset-x-0 top-0 bg-gradient-to-b from-black/80 to-transparent px-5 pb-12 pt-4">
-        {contentTitle ? (
-          <h2 className="text-xl font-semibold text-white drop-shadow">{contentTitle}</h2>
-        ) : (
-          <span className="text-sm text-white/70">No content title is defined</span>
-        )}
+        {/*
+          This player has no controls or playback feature, so the title stays
+          visible for as long as one resolves. Styling keys off `data-visible`
+          rather than the value so the component owns the decision.
+        */}
+        <Title className="block text-xl font-semibold text-white opacity-0 drop-shadow transition-opacity data-[visible]:opacity-100" />
+        {!contentTitle && <span className="text-sm text-white/70">No content title is defined</span>}
       </div>
     </div>
   );
