@@ -33,7 +33,7 @@
     },
     {
       "id": "default-video-controls",
-      "kind": "component",
+      "kind": "skin",
       "entry": "./canonical/skins/default/video-controls.skin.tsx",
       "files": [
         {
@@ -62,6 +62,12 @@
         "symbols": {
           "components": ["Controls", "Time", "Tooltip"],
           "icons": []
+        }
+      },
+      "metadata": {
+        "registry": {
+          "description": "Source-owned core controls for a Video.js video player.",
+          "title": "Default Video Controls"
         }
       }
     },
@@ -92,6 +98,12 @@
         "symbols": {
           "components": ["FullscreenButton"],
           "icons": ["FullscreenEnterIcon", "FullscreenExitIcon"]
+        }
+      },
+      "metadata": {
+        "registry": {
+          "description": "A source-owned Video.js fullscreen button with a shared button tooltip.",
+          "title": "Fullscreen Button"
         }
       }
     },
@@ -153,6 +165,12 @@
           "components": ["PlayButton"],
           "icons": ["PauseIcon", "PlayIcon", "RestartIcon"]
         }
+      },
+      "metadata": {
+        "registry": {
+          "description": "A source-owned Video.js play button with play, pause, and replay states.",
+          "title": "Play Button"
+        }
       }
     },
     {
@@ -182,6 +200,12 @@
         "symbols": {
           "components": ["SeekButton", "Text"],
           "icons": ["SeekIcon"]
+        }
+      },
+      "metadata": {
+        "registry": {
+          "description": "A source-owned Video.js button for seeking backward or forward.",
+          "title": "Seek Button"
         }
       }
     },
@@ -217,6 +241,12 @@
           "components": ["Slider", "TimeSlider"],
           "icons": ["SpinnerIcon"]
         }
+      },
+      "metadata": {
+        "registry": {
+          "description": "A source-owned Video.js timeline with seek preview and thumbnails.",
+          "title": "Time Slider"
+        }
       }
     },
     {
@@ -246,6 +276,12 @@
         "symbols": {
           "components": ["Popover"],
           "icons": []
+        }
+      },
+      "metadata": {
+        "registry": {
+          "description": "Source-owned Video.js mute and volume controls in a popover.",
+          "title": "Volume Popover"
         }
       }
     },
@@ -280,6 +316,12 @@
         "symbols": {
           "components": ["VolumeSlider"],
           "icons": []
+        }
+      },
+      "metadata": {
+        "registry": {
+          "description": "A source-owned Video.js volume slider.",
+          "title": "Volume Slider"
         }
       }
     }
