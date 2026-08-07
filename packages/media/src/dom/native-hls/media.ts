@@ -2,7 +2,7 @@ import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaDrmMixin } from './drm';
 import { NativeHlsMediaErrorsMixin } from './errors';
-import type { NativeHlsDrmConfig } from './fairplay';
+import type { NativeHlsDrmSystemsConfig } from './fairplay';
 import { NativeHlsMediaLiveMixin } from './live';
 import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
@@ -38,10 +38,11 @@ export interface NativeHlsSource {
  */
 export interface NativeHlsConfig {
   /**
-   * FairPlay Streaming configuration for protected content. Safari negotiates
-   * keys itself; this names the servers it negotiates with.
+   * License servers for protected content, keyed by key system id, in the same
+   * shape hls.js takes. Safari negotiates keys itself; this names the servers
+   * it negotiates with, so only the `com.apple.fps` entry is read.
    */
-  drm?: NativeHlsDrmConfig | undefined;
+  drmSystems?: NativeHlsDrmSystemsConfig | undefined;
 }
 
 export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {

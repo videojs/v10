@@ -38,6 +38,24 @@ const DRM_TOKENS = {
     'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InMiLCJleHAiOjIxNDc0ODM2NDd9.Eh5a51KEYRbwWIvX7M3Z-9hMwmydt2XC9kq0m-oCmnSegnN0l-GOQoUvzFMOOCKJHbfVRTuLkEvoCjCgo1JEmTHKRDo7u_V5JDZbQf6xKjtJXlTEibNEi_wD3M_3DiuYYv3R5sNol97j-yGbJQ8_16HTv7muJhr7qI8S9sKr_zJgp_E0PyFBm6plaigWcDBMcXfcvK4I9IwTKBehlXw2sVy6eUarhmS_wtA6sNXJk8f2RG2fUnt6jq8HWQlpkrXTqJCDcQ69dwDzl_TOdDWWLN3dNBlmGyEjEZyHJD2podRdddV4Yu78_bq7ImCH05JpJqY_caX9seXS6uJh38HuIA',
 } as const;
 
+/**
+ * License servers for the DRM asset below, named outright rather than derived
+ * from a Mux token. Both engines take the same shape, so one object configures
+ * either — native HLS reads the FairPlay entry and ignores the rest.
+ */
+const DRM_SYSTEMS = {
+  'com.apple.fps': {
+    licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+    serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+  },
+  'com.widevine.alpha': {
+    licenseUrl: `https://license.mux.com/license/widevine/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+  },
+  'com.microsoft.playready': {
+    licenseUrl: `https://license.mux.com/license/playready/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+  },
+} as const;
+
 const SOURCE_MAP = {
   'hls-1': {
     label: 'HLS - Big Buck Bunny',
@@ -119,27 +137,11 @@ const SOURCE_MAP = {
       hlsJs: {
         // hls.js only listens for `encrypted` when EME is switched on.
         emeEnabled: true,
-        drmSystems: {
-          'com.apple.fps': {
-            licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-            serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          },
-          'com.widevine.alpha': {
-            licenseUrl: `https://license.mux.com/license/widevine/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          },
-          'com.microsoft.playready': {
-            licenseUrl: `https://license.mux.com/license/playready/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          },
-        },
+        drmSystems: DRM_SYSTEMS,
       },
       // Safari negotiates FairPlay itself when it plays the manifest, and never
       // sees the hls.js configuration above, so the native path is named too.
-      nativeHls: {
-        drm: {
-          licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-        },
-      },
+      nativeHls: { drmSystems: DRM_SYSTEMS },
     },
   },
   'hls-live': {

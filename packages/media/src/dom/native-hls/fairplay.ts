@@ -13,14 +13,10 @@ export const FAIRPLAY_INIT_DATA_TYPE = 'skd';
 export const FAIRPLAY_CONTENT_TYPE = 'application/vnd.apple.mpegurl';
 
 /**
- * FairPlay Streaming configuration for native HLS playback.
- *
- * Native HLS leaves key exchange to Safari's own CDM, which negotiates
- * FairPlay and nothing else — Widevine and PlayReady need the hls.js (MSE)
- * engine. The fields mirror the `com.apple.fps` entry of hls.js's `drmSystems`
- * so one source description covers both engines.
+ * License servers for one key system. The fields mirror hls.js's
+ * `DRMSystemConfiguration`, minus the parts only an MSE engine can act on.
  */
-export interface NativeHlsDrmConfig {
+export interface NativeHlsDrmSystemConfig {
   /** License server the SPC is POSTed to; answers with the CKC. */
   licenseUrl: string;
   /**
@@ -31,11 +27,23 @@ export interface NativeHlsDrmConfig {
 }
 
 /**
+ * DRM configuration for native HLS playback, keyed by key system id — the same
+ * shape as the hls.js `drmSystems` configuration, so one object can describe
+ * both engines.
+ *
+ * Only `com.apple.fps` is typed: key exchange is left to Safari's own CDM,
+ * which negotiates FairPlay and nothing else. An hls.js `drmSystems` naming
+ * Widevine or PlayReady can still be shared with this; the systems only MSE
+ * reaches are ignored.
+ */
+export type NativeHlsDrmSystemsConfig = Partial<Record<typeof FAIRPLAY_KEY_SYSTEM, NativeHlsDrmSystemConfig>>;
+
+/**
  * `context` values carried by the `MediaError`s key exchange produces. The
  * message is prose meant for a person; this is the part to branch on.
  */
 export const NativeHlsDrmErrors = {
-  /** The content is encrypted but `source.nativeHls.drm` is missing something required. */
+  /** The content is encrypted but `source.nativeHls.drmSystems` is missing something required. */
   MISSING_CONFIGURATION: 'drmMissingConfiguration',
   /** No FairPlay CDM here, or it refused the requested configuration. */
   UNSUPPORTED_KEY_SYSTEM: 'drmUnsupportedKeySystem',
@@ -87,7 +95,7 @@ export interface FairPlayKeySystem {
 export interface FairPlayContext {
   /** The element the CDM is bound to. */
   media: HTMLMediaElement;
-  config: NativeHlsDrmConfig;
+  config: NativeHlsDrmSystemConfig;
   /** Aborted when the source is replaced or the media detaches. */
   signal: AbortSignal;
   /** Surface an error on the media host. Non-fatal ones are announced only. */

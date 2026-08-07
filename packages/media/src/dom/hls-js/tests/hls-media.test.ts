@@ -301,7 +301,7 @@ describe('HlsJsMedia', () => {
       media.load();
 
       expect(media.engine).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.nativeHls.drm`'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.nativeHls.drmSystems`'));
     });
 
     it('hands `nativeHls` to the native delegate', async () => {
@@ -313,7 +313,7 @@ describe('HlsJsMedia', () => {
       media.source = {
         ...media.source,
         hlsJs: drmEngine,
-        nativeHls: { drm: { licenseUrl: FAIRPLAY_LICENSE } },
+        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } },
       };
       media.load();
 
@@ -328,7 +328,10 @@ describe('HlsJsMedia', () => {
 
     it('recreates the native delegate when `nativeHls` changes', () => {
       const { media, video } = setup();
-      media.source = { ...media.source, nativeHls: { drm: { licenseUrl: FAIRPLAY_LICENSE } } };
+      media.source = {
+        ...media.source,
+        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } },
+      };
       media.load();
 
       fireDurationChange(video, Infinity);
@@ -337,7 +340,10 @@ describe('HlsJsMedia', () => {
       const handler = vi.fn();
       media.addEventListener('streamtypechange', handler);
 
-      media.source = { ...media.source, nativeHls: { drm: { licenseUrl: 'https://other.test/fairplay' } } };
+      media.source = {
+        ...media.source,
+        nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: 'https://other.test/fairplay' } } },
+      };
       media.load();
 
       // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
@@ -346,7 +352,7 @@ describe('HlsJsMedia', () => {
 
     it('leaves the native delegate alone for a structurally equal `nativeHls`', () => {
       const { media, video } = setup();
-      const nativeHls = { drm: { licenseUrl: FAIRPLAY_LICENSE } };
+      const nativeHls = { drmSystems: { 'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE } } };
 
       media.source = { ...media.source, nativeHls: { ...nativeHls } };
       media.load();
