@@ -20,6 +20,9 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
     #sourceEl: HTMLSourceElement | null = null;
     #disconnect: AbortController | null = null;
 
+    /** Author's `disableRemotePlayback` intent, set by `HlsJsMedia` before hls.js overwrites it. */
+    authorDisableRemotePlayback = false;
+
     constructor(...args: any[]) {
       super(...args);
 
@@ -37,10 +40,11 @@ export function HlsJsMediaAirPlayMixin<Base extends Constructor<HlsEngineHost>>(
       const target = this.target;
       if (!target || !isWebKitAirPlayCapable(target)) return;
 
-      // Counter the `disableRemotePlayback = true` that other code paths may
-      // set for MSE; AirPlay requires the picker to be available on this
-      // element.
-      target.disableRemotePlayback = false;
+      // Counter the `disableRemotePlayback = true` hls.js sets for MMS; AirPlay
+      // requires the picker on this element.
+      if (!this.authorDisableRemotePlayback) {
+        target.disableRemotePlayback = false;
+      }
       this.#attachSource(target);
       this.#setupLoadControl(target);
     }

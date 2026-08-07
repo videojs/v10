@@ -273,6 +273,13 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
       this.#delegate = useMse ? new HlsJsOnlyMedia({ config: { ...engine } }) : new NativeHlsMedia();
 
+      // The AirPlay bridge lives on the delegate; read the author's current
+      // intent now, before the delegate attaches and hls.js forces the flag on
+      // for MMS. Reading here (not once at `attach`) picks up a later write.
+      if (this.#delegate instanceof HlsJsOnlyMedia) {
+        this.#delegate.authorDisableRemotePlayback = this.#mediaElement?.disableRemotePlayback ?? false;
+      }
+
       bridgeEvents(this.#delegate, this);
 
       // Apply user `streamType` before `attach()` so native delegates do not run

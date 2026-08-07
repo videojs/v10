@@ -91,6 +91,33 @@ describe('HlsJsMediaAirPlayMixin', () => {
     expect(video.disableRemotePlayback).toBe(false);
   });
 
+  it('preserves disableRemotePlayback when the author explicitly disabled it', () => {
+    const engine = createEngine();
+    const host = new AirPlayHost(engine);
+    const video = createVideo();
+    video.disableRemotePlayback = true;
+    host.target = video;
+    // HlsJsMedia captured the author's intent before hls.js ran.
+    (host as unknown as { authorDisableRemotePlayback: boolean }).authorDisableRemotePlayback = true;
+
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+    expect(video.disableRemotePlayback).toBe(true);
+  });
+
+  it('enables AirPlay when disableRemotePlayback was set programmatically (no author intent)', () => {
+    const engine = createEngine();
+    const host = new AirPlayHost(engine);
+    const video = createVideo();
+    // hls.js sets this directly on the element; no author intent was captured.
+    video.disableRemotePlayback = true;
+    host.target = video;
+
+    (engine as any).emit(Hls.Events.MEDIA_ATTACHED);
+
+    expect(video.disableRemotePlayback).toBe(false);
+  });
+
   it('updates the <source> src on MANIFEST_LOADING', () => {
     const engine = createEngine('https://example.com/old.m3u8');
     const host = new AirPlayHost(engine);
