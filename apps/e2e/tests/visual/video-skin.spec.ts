@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { SOURCE_VIDEO_PAGES } from '../../fixtures/media';
 import { DATA_ATTRS, SELECTORS } from '../../fixtures/selectors';
 import { PlayerPage } from '../../page-objects/player';
 
@@ -45,6 +46,21 @@ for (const { name, path } of VISUAL_PAGES) {
       await expect(player.thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 10_000 });
 
       await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase()}-storyboard.png`);
+    });
+  });
+}
+
+for (const { name, path } of SOURCE_VIDEO_PAGES) {
+  test.describe(`Visual — Source-Owned Core Controls (${name})`, () => {
+    test.skip(({ browserName }) => browserName !== 'chromium', 'One shared Chromium baseline covers source output');
+
+    test('default paused state', async ({ page }) => {
+      const player = new PlayerPage(page);
+      await page.goto(path);
+      await player.waitForMediaReady();
+      await player.showControls();
+
+      await expect(player.playerRoot).toHaveScreenshot(`video-${name.toLowerCase().replaceAll(' ', '-')}-default.png`);
     });
   });
 }

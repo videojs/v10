@@ -12,7 +12,7 @@
 
 /** Toolbar: HTML wraps controls in `<media-controls>`, React in `<div class="media-controls">`. */
 function withinControls(selector: string): string {
-  return `media-controls ${selector}, .media-controls ${selector}`;
+  return `media-controls ${selector}, .media-controls ${selector}, .vjs-skin ${selector}`;
 }
 
 function unchecked(selector: string): string {
@@ -34,20 +34,22 @@ const playbackRateOptions = [
 export const SELECTORS = {
   // Player containers
   // HTML: <video-player>, React: wrapper div around VideoSkin
-  videoPlayer: 'video-player, .media-default-skin--video, .media-minimal-skin--video',
+  videoPlayer: 'video-player, .media-default-skin--video, .media-minimal-skin--video, [data-source-ui-player]',
   audioPlayer: 'audio-player, .media-default-skin--audio, .media-minimal-skin--audio',
   // The visible container with dimensions — used for screenshots
-  container: '.media-default-skin, .media-minimal-skin',
+  container: '.media-default-skin, .media-minimal-skin, [data-source-ui-player]',
 
   // Controls bar
-  controls: 'media-controls, .media-controls',
+  controls: 'media-controls, .media-controls, .vjs-skin',
 
   // Buttons
-  playButton: 'media-play-button, .media-button--play',
-  seekBackward: 'media-seek-button[data-direction="backward"], .media-button--seek[data-direction="backward"]',
-  seekForward: 'media-seek-button[data-direction="forward"], .media-button--seek[data-direction="forward"]',
-  muteButton: 'media-mute-button, .media-button--mute',
-  fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen',
+  playButton: 'media-play-button, .media-button--play, .vjs-skin button[class~="group/play"]',
+  seekBackward:
+    'media-seek-button[data-direction="backward"], .media-button--seek[data-direction="backward"], .vjs-skin button[data-direction="backward"]',
+  seekForward:
+    'media-seek-button[data-direction="forward"], .media-button--seek[data-direction="forward"], .vjs-skin button[data-direction="forward"]',
+  muteButton: 'media-mute-button, .media-button--mute, .vjs-skin button[class~="group/mute"]',
+  fullscreenButton: 'media-fullscreen-button, .media-button--fullscreen, .vjs-skin button[class~="group/fullscreen"]',
   pipButton: 'media-pip-button, .media-button--pip',
   captionsButton: 'media-captions-button, .media-button--captions',
   playbackRateButton: [
@@ -68,25 +70,28 @@ export const SELECTORS = {
 
   // Sliders
   // HTML: <media-time-slider>, React: horizontal .media-slider inside .media-time-controls
-  timeSlider: 'media-time-slider, .media-time-controls .media-slider',
-  volumeSlider: 'media-volume-slider, .media-popover--volume .media-slider',
+  timeSlider: 'media-time-slider, .media-time-controls .media-slider, .vjs-skin [role="slider"][aria-label="Seek"]',
+  volumeSlider:
+    'media-volume-slider, .media-popover--volume .media-slider, .vjs-skin [role="slider"][aria-label="Volume"]',
   sliderThumb: 'media-slider-thumb, .media-slider__thumb',
 
   // Display elements
   // HTML uses attribute `type`, React uses `data-type`
-  currentTime: 'media-time[type="current"], [data-type="current"].media-time',
+  currentTime: 'media-time[type="current"], [data-type="current"].media-time, .vjs-skin [data-type="current"]',
   duration: [
     'media-time[type="duration"]',
     'media-time[type="remaining"]',
     '[data-type="duration"].media-time',
     '[data-type="remaining"].media-time',
+    '.vjs-skin [data-type="duration"]',
+    '.vjs-skin [data-type="remaining"]',
   ].join(', '),
   poster: 'media-poster, img[data-loaded]',
   bufferingIndicator: 'media-buffering-indicator, .media-buffering-indicator',
-  thumbnail: 'media-slider-thumbnail, .media-thumbnail__image',
+  thumbnail: 'media-slider-thumbnail, .media-thumbnail__image, .vjs-skin div:has(> img[aria-hidden="true"])',
 
-  tooltip: 'media-tooltip, .media-tooltip',
-  popover: 'media-popover, .media-popover',
+  tooltip: 'media-tooltip, .media-tooltip, .vjs-skin [popover="manual"][role="presentation"]',
+  popover: 'media-popover, .media-popover, .vjs-skin [role="dialog"]',
   errorDialog: 'media-error-dialog, .media-error',
 
   // Media element — matches all renderer custom elements and native media

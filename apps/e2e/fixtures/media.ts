@@ -114,6 +114,41 @@ export const EJECTED_VIDEO_PAGES = [
 ] as const satisfies readonly PageEntry[];
 
 // ---------------------------------------------------------------------------
+// Source-owned core controls installed from generated registry output
+// ---------------------------------------------------------------------------
+
+export const SOURCE_VIDEO_PAGES = [
+  {
+    name: 'Source React Tailwind Video MP4',
+    path: '/pages/source-react-tailwind-video-mp4.html',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+  },
+  {
+    name: 'Source React CSS Video MP4',
+    path: '/pages/source-react-css-video-mp4.html',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+  },
+  {
+    name: 'Source HTML Tailwind Video MP4',
+    path: '/pages/source-html-tailwind-video-mp4.html',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+  },
+  {
+    name: 'Source HTML CSS Video MP4',
+    path: '/pages/source-html-css-video-mp4.html',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+  },
+] as const satisfies readonly PageEntry[];
+
+// ---------------------------------------------------------------------------
 // CDN bundle pages (generated → src/pages/)
 // ---------------------------------------------------------------------------
 

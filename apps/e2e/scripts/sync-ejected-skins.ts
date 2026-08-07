@@ -5,11 +5,12 @@
  * Run after `pnpm -F site ejected-skins` and before e2e tests.
  */
 
-import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const EJECTED_SKINS_JSON = resolve(import.meta.dirname, '../../../site/src/content/ejected-skins.json');
 const OUT_DIR = resolve(import.meta.dirname, '../apps/vite/src/_generated');
+const SOURCE_REGISTRY_DIR = resolve(import.meta.dirname, '../../../registry');
 
 interface EjectedSkinEntry {
   id: string;
@@ -41,3 +42,19 @@ if (reactVideo.css) {
 }
 
 console.log('Synced ejected React video skin to apps/e2e/apps/vite/src/_generated/');
+
+const sourceUiDir = resolve(OUT_DIR, 'source-ui');
+rmSync(sourceUiDir, { recursive: true, force: true });
+
+for (const [name, path] of [
+  ['react-tailwind', 'react/tailwind'],
+  ['react-css', 'react/css'],
+  ['html-tailwind', 'html/tailwind'],
+  ['html-css', 'html/css'],
+] as const) {
+  cpSync(resolve(SOURCE_REGISTRY_DIR, path, 'components/videojs'), resolve(sourceUiDir, name, 'components/videojs'), {
+    recursive: true,
+  });
+}
+
+console.log('Synced generated source-owned controls to apps/e2e/apps/vite/src/_generated/source-ui/.');

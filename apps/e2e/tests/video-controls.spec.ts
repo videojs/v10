@@ -1,5 +1,5 @@
 import { expect, type Page, test } from '@playwright/test';
-import { ALL_VIDEO_PAGES, type PageEntry, VIDEO_PAGES } from '../fixtures/media';
+import { ALL_VIDEO_PAGES, type PageEntry, SOURCE_VIDEO_PAGES, VIDEO_PAGES } from '../fixtures/media';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
@@ -341,5 +341,102 @@ for (const { name, path } of UI_VIDEO_PAGES) {
       await player.pipButton.click();
       await expect(player.pipButton).not.toHaveAttribute(DATA_ATTRS.pip);
     });
+  });
+}
+
+for (const { name, path } of SOURCE_VIDEO_PAGES) {
+  test.describe(`Source-Owned Core Controls — ${name}`, () => {
+    let player: PlayerPage;
+
+    test.beforeEach(async ({ page }) => {
+      await mockPresentation(page);
+      player = new PlayerPage(page);
+      await page.goto(path);
+      await player.waitForMediaReady();
+    });
+
+    test('renders the complete milestone control set with accessible names', async () => {
+      await expect(player.controls).toBeAttached();
+      await expect(player.playButton).toHaveAccessibleName('Play');
+      await expect(player.seekBackward).toHaveAccessibleName(/Seek backward 10 seconds/);
+      await expect(player.seekForward).toHaveAccessibleName(/Seek forward 10 seconds/);
+      await expect(player.currentTime).not.toHaveText('');
+      await expect(player.duration).not.toHaveText('');
+      await expect(player.page.getByRole('slider', { name: 'Seek' }).first()).toBeAttached();
+      await expect(player.muteButton).toHaveAccessibleName(/Mute|Unmute/);
+      await expect(player.fullscreenButton).toHaveAccessibleName(/Enter fullscreen|Exit fullscreen/);
+    });
+
+    test('plays, pauses, and seeks in both directions', async ({ page }) => {
+      await player.play();
+      await player.pause();
+      await player.seekForward.click();
+
+      const afterForward = await page.locator(SELECTORS.media).evaluate((media) => {
+        const actual = media.querySelector?.('video') ?? media;
+        return (actual as HTMLMediaElement).currentTime;
+      });
+      expect(afterForward).toBeGreaterThan(0);
+
+      await player.seekBackward.click();
+      await expect
+        .poll(() =>
+          page.locator(SELECTORS.media).evaluate((media) => {
+            const actual = media.querySelector?.('video') ?? media;
+            return (actual as HTMLMediaElement).currentTime;
+          })
+        )
+        .toBeLessThan(afterForward);
+    });
+
+    test('supports volume, fullscreen, tooltips, and thumbnail preview', async ({ page }) => {
+      await player.showControls();
+      await player.muteButton.hover();
+      await expect(player.volumeSlider).toBeVisible();
+
+      const sliderBox = await player.volumeSlider.boundingBox();
+      if (!sliderBox) throw new Error('Volume slider not visible');
+      await page.mouse.click(sliderBox.x + sliderBox.width / 2, sliderBox.y + sliderBox.height * 0.75);
+      await expect.poll(() => getMediaVolume(page)).toBeLessThan(0.5);
+
+      await player.playButton.focus();
+      await expect(player.playTooltip).toBeVisible();
+
+      await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.availability, 'available');
+      await player.fullscreenButton.click();
+      await expect(player.fullscreenButton).toHaveAttribute(DATA_ATTRS.fullscreen, '');
+      await player.fullscreenButton.click();
+      await expect(player.fullscreenButton).not.toHaveAttribute(DATA_ATTRS.fullscreen);
+
+      await player.hoverTimeSlider(50);
+      await expect(player.thumbnail).toBeAttached({ timeout: 10_000 });
+      await expect(player.thumbnail).not.toHaveAttribute(DATA_ATTRS.loading, { timeout: 10_000 });
+    });
+  });
+}
+
+for (const style of ['tailwind', 'css'] as const) {
+  test(`Source-Owned HTML ${style} keeps generated identities unique across players`, async ({ page }) => {
+    await page.goto(`/pages/source-html-${style}-video-mp4.html?multiple`);
+    await expect(page.locator('[data-source-ui-player]')).toHaveCount(2);
+
+    const ids = await page
+      .locator('[data-source-ui-player] [id]')
+      .evaluateAll((elements) => elements.map((element) => element.id).filter(Boolean));
+
+    expect(ids.length).toBeGreaterThan(0);
+    expect(new Set(ids).size).toBe(ids.length);
+
+    const references = await page
+      .locator('[data-source-ui-player] [commandfor], [data-source-ui-player] [aria-controls]')
+      .evaluateAll((elements) =>
+        elements
+          .flatMap((element) => [element.getAttribute('commandfor'), element.getAttribute('aria-controls')])
+          .filter(Boolean)
+      );
+
+    for (const reference of references) {
+      await expect(page.locator(`#${reference}`)).toHaveCount(1);
+    }
   });
 }

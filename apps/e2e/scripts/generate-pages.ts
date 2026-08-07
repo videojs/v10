@@ -124,7 +124,15 @@ interface PageDef {
   framework: 'html' | 'react';
   media: string;
   resource: string;
-  category?: 'cdn' | 'ejected-html' | 'ejected-react' | 'captions';
+  category?:
+    | 'cdn'
+    | 'ejected-html'
+    | 'ejected-react'
+    | 'captions'
+    | 'source-react-tailwind'
+    | 'source-react-css'
+    | 'source-html-tailwind'
+    | 'source-html-css';
 }
 
 // ---------------------------------------------------------------------------
@@ -340,6 +348,93 @@ createRoot(document.getElementById('root')!).render(<App />);
 `;
 }
 
+function sourceReactPage(resource: string, style: 'tailwind' | 'css'): string {
+  return `import { Container, createPlayer } from '@videojs/react';
+import { Video, videoFeatures } from '@videojs/react/video';
+import { createRoot } from 'react-dom/client';
+import { DefaultVideoControls } from '../_generated/source-ui/react-${style}/components/videojs/default-video-controls/video-controls';
+import { MEDIA } from '../resources';
+
+const Player = createPlayer({ features: videoFeatures });
+
+function App() {
+  return (
+    <Player.Provider>
+      <Container
+        data-source-ui-player
+        style={{
+          alignItems: 'flex-end',
+          aspectRatio: '16/9',
+          background: '#111',
+          display: 'flex',
+          maxWidth: 800,
+          overflow: 'hidden',
+          padding: 12,
+          position: 'relative',
+        }}
+      >
+        <Video
+          src={MEDIA.${resource}.url}
+          playsInline
+          crossOrigin="anonymous"
+          style={{ height: '100%', inset: 0, objectFit: 'cover', position: 'absolute', width: '100%' }}
+        >
+          <track kind="metadata" label="thumbnails" src={MEDIA.${resource}.storyboard} default />
+        </Video>
+        <div style={{ position: 'relative', width: '100%', zIndex: 1 }}>
+          <DefaultVideoControls />
+        </div>
+      </Container>
+    </Player.Provider>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
+`;
+}
+
+function sourceHtmlPage(resource: string, style: 'tailwind' | 'css'): string {
+  const sourceDir = `../_generated/source-ui/html-${style}/components/videojs`;
+  const styleImport =
+    style === 'tailwind'
+      ? `import '${sourceDir}/styles/tailwind.css';`
+      : `import '${sourceDir}/default-video-controls/styles.css';`;
+
+  return `import '@videojs/html/video/player';
+import '${sourceDir}/default-video-controls/elements';
+import '${sourceDir}/default-video-controls/icons';
+${styleImport}
+import controls from '${sourceDir}/default-video-controls/video-controls.html?raw';
+import { MEDIA } from '../resources';
+
+const html = String.raw;
+
+function playerMarkup() {
+  return html\`
+    <video-player>
+      <media-container
+        data-source-ui-player
+        style="align-items: flex-end; aspect-ratio: 16/9; background: #111; display: flex; max-width: 800px; overflow: hidden; padding: 12px; position: relative"
+      >
+        <video
+          src="\${MEDIA.${resource}.url}"
+          playsinline
+          crossorigin="anonymous"
+          style="height: 100%; inset: 0; object-fit: cover; position: absolute; width: 100%"
+        >
+          <track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />
+        </video>
+        <div style="position: relative; width: 100%; z-index: 1">\${controls}</div>
+      </media-container>
+    </video-player>
+  \`;
+}
+
+const playerCount = new URLSearchParams(location.search).has('multiple') ? 2 : 1;
+document.getElementById('root')!.innerHTML = Array.from({ length: playerCount }, playerMarkup).join('');
+`;
+}
+
 // ---------------------------------------------------------------------------
 // Page definitions (drive generation from here)
 // ---------------------------------------------------------------------------
@@ -425,6 +520,40 @@ const PAGES: PageDef[] = [
     resource: 'mp4',
     category: 'ejected-react',
   },
+
+  // Source-owned core video controls installed from the generated registry
+  {
+    name: 'Source React Tailwind Video MP4',
+    path: 'source-react-tailwind-video-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-react-tailwind',
+  },
+  {
+    name: 'Source React CSS Video MP4',
+    path: 'source-react-css-video-mp4',
+    framework: 'react',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-react-css',
+  },
+  {
+    name: 'Source HTML Tailwind Video MP4',
+    path: 'source-html-tailwind-video-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-html-tailwind',
+  },
+  {
+    name: 'Source HTML CSS Video MP4',
+    path: 'source-html-css-video-mp4',
+    framework: 'html',
+    media: 'video',
+    resource: 'mp4',
+    category: 'source-html-css',
+  },
 ];
 
 // ---------------------------------------------------------------------------
@@ -463,6 +592,10 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
     ts = ejectedHtmlPage();
   } else if (page.category === 'ejected-react') {
     ts = ejectedReactPage(page.resource);
+  } else if (page.category === 'source-react-tailwind' || page.category === 'source-react-css') {
+    ts = sourceReactPage(page.resource, page.category === 'source-react-tailwind' ? 'tailwind' : 'css');
+  } else if (page.category === 'source-html-tailwind' || page.category === 'source-html-css') {
+    ts = sourceHtmlPage(page.resource, page.category === 'source-html-tailwind' ? 'tailwind' : 'css');
   } else if (page.framework === 'react') {
     ts = config.isAudio ? reactAudioPage(page.media, page.resource) : reactVideoPage(page.media, page.resource, config);
   } else {
@@ -484,6 +617,7 @@ function generateIndexHtml(pages: PageDef[]): string {
   const cdn = pages.filter((p) => p.category === 'cdn');
   const ejected = pages.filter((p) => p.category?.startsWith('ejected'));
   const captions = pages.filter((p) => p.category === 'captions');
+  const sourceOwned = pages.filter((p) => p.category?.startsWith('source-'));
 
   function list(entries: PageDef[]): string {
     return entries.map((p) => `        <li><a href="/pages/${p.path}.html">${p.name}</a></li>`).join('\n');
@@ -513,6 +647,10 @@ ${list(reactAudio)}
       <h2>Ejected Skins</h2>
       <ul>
 ${list(ejected)}
+      </ul>
+      <h2>Source-Owned Core Controls</h2>
+      <ul>
+${list(sourceOwned)}
       </ul>
       <h2>CDN Bundles</h2>
       <ul>
