@@ -1,6 +1,8 @@
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
+import { NativeHlsMediaDrmMixin } from './drm';
 import { NativeHlsMediaErrorsMixin } from './errors';
+import type { NativeHlsDrmConfig } from './fairplay';
 import { NativeHlsMediaLiveMixin } from './live';
 import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
@@ -11,18 +13,47 @@ export const StreamTypes = MediaStreamTypes;
 
 export interface NativeHlsMediaProps {
   src: string;
+  source: NativeHlsSource | null;
   preload: PreloadType;
   streamType: StreamType;
 }
 
+/**
+ * Structured native HLS source: which source to play, plus how to play it.
+ *
+ * Playback options sit under `nativeHls` rather than at the top level. Native
+ * HLS is one of two paths `HlsJsVideo` can take, and namespacing by engine lets
+ * a single source describe both without either reading the other's options.
+ */
+export interface NativeHlsSource {
+  /** Manifest URL. Mirrors the host's `src` property. */
+  src?: string | undefined;
+  /** Options for the browser's own HLS playback. */
+  nativeHls?: NativeHlsConfig | undefined;
+}
+
+/**
+ * Native HLS playback options. There is no JS engine to configure here — the
+ * browser plays the manifest itself — so this is what Video.js does around it.
+ */
+export interface NativeHlsConfig {
+  /**
+   * FairPlay Streaming configuration for protected content. Safari negotiates
+   * keys itself; this names the servers it negotiates with.
+   */
+  drm?: NativeHlsDrmConfig | undefined;
+}
+
 export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
   src: '',
+  source: null,
   preload: 'metadata',
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
 class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsMediaProps, 'streamType'> {
   #src = nativeHlsMediaDefaultProps.src;
+  #source: NativeHlsSource | null = nativeHlsMediaDefaultProps.source;
   #preload = nativeHlsMediaDefaultProps.preload;
 
   /**
@@ -33,13 +64,49 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
     return null;
   }
 
+  /**
+   * Media source URL. Assigning it replaces the identity half of `source` and
+   * leaves `nativeHls` intact, so changing the URL never disturbs key exchange.
+   */
   get src() {
     return this.#src;
   }
 
   set src(src: string) {
-    this.#src = src;
-    if (this.target) this.target.src = src;
+    // `src` says which source to play; everything else says how to play it, so
+    // it carries over.
+    const { nativeHls } = this.#source ?? {};
+    const next: NativeHlsSource = {
+      ...(nativeHls && { nativeHls }),
+      ...(src && { src }),
+    };
+
+    // Everything happens in the `source` setter, so there is one path for
+    // storing it and loading.
+    this.source = Object.keys(next).length > 0 ? next : null;
+  }
+
+  /**
+   * Structured source: what to play (`src`) plus how to play it (`nativeHls`).
+   * Assigning it derives `src`.
+   *
+   * Unlike `HlsJsMedia`, this does not announce a `sourcechange`. It is also
+   * the delegate `HlsJsMedia` plays native sources through, and every event it
+   * dispatches is re-dispatched there — which already announces its own.
+   */
+  get source(): NativeHlsSource | null {
+    return this.#source;
+  }
+
+  set source(value: NativeHlsSource | null) {
+    const source = value ?? null;
+    // Changing anything takes a new object, so handing the same one back costs
+    // nothing.
+    if (source === this.#source) return;
+
+    this.#source = source;
+    this.#src = source?.src ?? '';
+    if (this.target) this.target.src = this.#src;
   }
 
   /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
@@ -61,5 +128,5 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
 }
 
 export class NativeHlsMedia extends NativeHlsMediaLiveMixin(
-  NativeHlsMediaStreamTypeMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase))
+  NativeHlsMediaStreamTypeMixin(NativeHlsMediaDrmMixin(NativeHlsMediaErrorsMixin(NativeHlsMediaBase)))
 ) {}

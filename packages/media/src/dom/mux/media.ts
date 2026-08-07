@@ -1,5 +1,5 @@
 import { HlsJsMedia, type HlsSource } from '../hls-js';
-import { createMuxDrmSystems } from './drm';
+import { createMuxDrmConfig, createMuxDrmSystems } from './drm';
 import {
   createMuxPosterURL,
   createMuxStoryboardURL,
@@ -11,7 +11,7 @@ import {
 /**
  * Structured Mux source for the hls.js-backed Media: Mux identity and params
  * from {@link MuxSourceBase}, plus everything hls.js takes — `type`,
- * `preferPlayback`, and its own `hlsJs` config.
+ * `preferPlayback`, and its own `hlsJs` and `nativeHls` config.
  */
 export interface MuxSource extends HlsSource, MuxSourceBase {}
 
@@ -50,11 +50,12 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     // params a Mux URL does not carry, such as `poster`.
     if (super.src === value) return;
 
-    const { type, preferPlayback, hlsJs } = this.#source ?? {};
+    const { type, preferPlayback, hlsJs, nativeHls } = this.#source ?? {};
     const source: MuxSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
       ...(hlsJs && { hlsJs }),
+      ...(nativeHls && { nativeHls }),
       ...(parseMuxVideoURL(value) ?? (value ? { src: value } : null)),
     };
 
@@ -65,12 +66,13 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * Structured Mux source. Setting it derives `src` from the playback ID,
    * custom domain, and `playback` params (appended as `snake_case` query
    * params). A `playback.token` replaces all other params — signed URLs bake
-   * them into the token. Engine options live under `hlsJs`.
+   * them into the token. Engine options live under `hlsJs` and `nativeHls`.
    *
-   * A `drm.token` fills in the inherited `hlsJs.drmSystems` with Mux's
-   * FairPlay, Widevine, and PlayReady license servers for this playback ID.
-   * Naming `hlsJs.drmSystems` yourself overrides that, for content Mux does
-   * not license.
+   * A `drm.token` fills in both: the inherited `hlsJs.drmSystems` with Mux's
+   * FairPlay, Widevine, and PlayReady license servers for this playback ID, and
+   * `nativeHls.drm` with the FairPlay half, so protected media plays whichever
+   * path the browser takes. Naming either yourself overrides that, for content
+   * Mux does not license.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -90,7 +92,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     super.source = source && {
       ...source,
       src: createMuxVideoURL(source) ?? source.src ?? '',
-      hlsJs: withMuxDrm(source),
+      ...withMuxDrm(source),
     };
   }
 
@@ -116,13 +118,21 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 }
 
 /**
- * Fold Mux's derived license servers into the engine config, switching EME on
- * so hls.js listens for `encrypted`. Whatever the caller set under `hlsJs`
- * wins, key by key, so `drmSystems` of their own replaces the derived set.
+ * Fold Mux's derived license servers into both engine configurations, switching
+ * EME on so hls.js listens for `encrypted`. Which engine ends up playing is
+ * decided later, and a signed Mux source should play either way.
+ *
+ * Whatever the caller set wins, key by key, so license servers of their own
+ * replace the derived ones.
  */
-function withMuxDrm(source: MuxSource): MuxSource['hlsJs'] {
+function withMuxDrm(source: MuxSource): Pick<MuxSource, 'hlsJs' | 'nativeHls'> {
   const drmSystems = createMuxDrmSystems(source);
-  if (!drmSystems) return source.hlsJs;
+  if (!drmSystems) return { hlsJs: source.hlsJs, nativeHls: source.nativeHls };
 
-  return { emeEnabled: true, drmSystems, ...source.hlsJs };
+  const drm = createMuxDrmConfig(source);
+
+  return {
+    hlsJs: { emeEnabled: true, drmSystems, ...source.hlsJs },
+    nativeHls: { ...(drm && { drm }), ...source.nativeHls },
+  };
 }

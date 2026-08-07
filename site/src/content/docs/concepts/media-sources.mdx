@@ -138,11 +138,12 @@ Engine options are **namespaced by engine**. Each key holds that engine's own co
 | Key | Elements that read it | It holds |
 |---|---|---|
 | `hlsJs` | <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/mux-audio">MuxAudio</DocsLink> | an [hls.js config](https://github.com/video-dev/hls.js/blob/master/docs/API.md#fine-tuning) |
+| `nativeHls` | <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink>, and the three above whenever the browser plays the manifest | options for the browser's own HLS support |
 | `dashJs` | <DocsLink slug="reference/dash-video">DashVideo</DocsLink> | [dash.js settings](https://cdn.dashjs.org/latest/jsdoc/module-Settings.html) |
 | `vimeo` | `VimeoVideo` | [Vimeo embed parameters](https://developer.vimeo.com/player/sdk/embed) |
 | `youtube` | `YouTubeVideo` | [YouTube player parameters](https://developer.chrome.com/docs/youtube/iframe_api_reference#Parameters) |
 
-Naming the engine rather than using one generic key keeps configurations apart where an element has more than one engine to choose from, and leaves room for options that come to mean the same thing across all of them.
+Naming the engine rather than using one generic key matters where an element has more than one to choose from. `HlsJsVideo` plays through hls.js or through the browser depending on the platform and `preferPlayback`, and only one of them runs — so a single source can describe both paths without either engine reading the other's options.
 
 hls.js reads its options when the engine is constructed, so changing them tears down the engine and builds a new one:
 
@@ -214,7 +215,9 @@ It's a preference, not a demand — Video.js falls back to whichever path can ac
 
 ## DRM protected sources
 
-DRM is engine configuration like any other, so it goes under the engine that performs key exchange. For hls.js that's `emeEnabled` and `drmSystems`, keyed by EME key system id:
+DRM is engine configuration like any other, so it goes under whichever engine performs key exchange.
+
+For hls.js that's `emeEnabled` and `drmSystems`, keyed by EME key system id:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -256,9 +259,60 @@ video.source = {
 
 Name every system you hold a license server for — which one gets used is the browser's choice. `serverCertificateUrl` is the server (application) certificate FairPlay requires; Widevine and PlayReady ignore it.
 
-Only the hls.js (MSE) engine plays DRM-protected media, so native HLS playback ignores all of this and warns in development.
-
 Video.js adds one thing on top: for Widevine it asks for a hardware-backed CDM first, falling back to whatever robustness the browser offers, so content restricted to L1 devices plays where it can. Supplying your own `requestMediaKeySystemAccessFunc` replaces that entirely.
+
+### Native HLS negotiates FairPlay itself
+
+When the browser plays the manifest — <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink>, or any HLS element that takes the native path — there is no hls.js instance, and Safari never sees the configuration above. Name the license servers under `nativeHls` instead. FairPlay is the only system reachable this way:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<NativeHlsVideo
+  source={{
+    src: 'https://example.com/protected.m3u8',
+    nativeHls: {
+      drm: {
+        licenseUrl: 'https://license.example.com/fairplay',
+        serverCertificateUrl: 'https://license.example.com/fairplay-cert',
+      },
+    },
+  }}
+  playsInline
+/>
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+const video = document.querySelector('native-hls-video');
+
+video.source = {
+  src: 'https://example.com/protected.m3u8',
+  nativeHls: {
+    drm: {
+      licenseUrl: 'https://license.example.com/fairplay',
+      serverCertificateUrl: 'https://license.example.com/fairplay-cert',
+    },
+  },
+};
+```
+</FrameworkCase>
+
+Video.js POSTs the CDM's license request to `licenseUrl` and hands the response back, so any FairPlay server that speaks the standard SPC/CKC exchange works as-is.
+
+Both halves can sit on one source, which is what the namespaces are for. `HlsJsVideo` reads only the one belonging to the engine it ends up using:
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = {
+  src: 'https://example.com/protected.m3u8',
+  hlsJs: { emeEnabled: true, drmSystems: { /* Widevine, PlayReady, FairPlay */ } },
+  nativeHls: { drm: { licenseUrl, serverCertificateUrl } },
+};
+```
+</FrameworkCase>
+
+Taking the native path with EME configured for hls.js and nothing under `nativeHls` warns in development — protected media would otherwise stall with no explanation. Encrypted media that reaches the native path with no `nativeHls.drm` at all fails with a `MEDIA_ERR_ENCRYPTED` error rather than hanging.
 
 ## Mux sources name a playback ID
 
@@ -309,7 +363,7 @@ video.source = { playbackId, storyboard: { format: 'jpg' }, poster: { time: 12 }
 
 ### Mux signs DRM with a token
 
-Mux serves FairPlay, Widevine, and PlayReady from URLs derived from a single license token, so `source.drm` takes that token and nothing else. It fills in the `hlsJs.drmSystems` above for you, EME included:
+Mux serves FairPlay, Widevine, and PlayReady from URLs derived from a single license token, so `source.drm` takes that token and nothing else. It fills in both halves above for you — `hlsJs.drmSystems` with EME switched on, and `nativeHls.drm` with the FairPlay server — so protected media plays whichever path the browser takes:
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
@@ -336,7 +390,7 @@ video.source = {
 
 DRM playback is always signed, so a `playback.token` belongs alongside it — and `poster.token` / `storyboard.token` for the images. Each is scoped to a different audience, so they are four separate tokens rather than one reused four times. Sign them on your server; see [Mux's DRM guide](https://www.mux.com/docs/guides/protect-videos-with-drm) for how.
 
-A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. Naming `hlsJs.drmSystems` yourself takes precedence, for content Mux doesn't license.
+A `drm.token` that isn't scoped to DRM is ignored rather than sent, since the license request would be rejected. Naming `hlsJs.drmSystems` or `nativeHls.drm` yourself takes precedence, for content Mux doesn't license.
 
 `source.poster` gets no such treatment — it's only data, and nothing applies it to the media. Both URLs are readable from `contentData`, keyed by what each one describes:
 
@@ -391,10 +445,7 @@ It survives a `src` change, so swapping the source keeps the frame you asked for
 
 ## Elements without engine options
 
-Two elements take `src` and the usual media attributes, but expose no `source`:
-
-- <DocsLink slug="reference/native-hls-video">NativeHlsVideo</DocsLink> hands playback to the browser, so there is no engine to configure.
-- <DocsLink slug="reference/simple-hls-video">SimpleHlsVideo</DocsLink> and <DocsLink slug="reference/simple-hls-audio-only">SimpleHlsAudioOnly</DocsLink> run on our own playback engine, which does not accept configuration from the element yet.
+<DocsLink slug="reference/simple-hls-video">SimpleHlsVideo</DocsLink> and <DocsLink slug="reference/simple-hls-audio-only">SimpleHlsAudioOnly</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
 
 ## Migrate from `config`
 
@@ -432,7 +483,7 @@ video.source = { src, preferPlayback: 'native', hlsJs: { maxBufferLength: 60 } }
 ```
 </FrameworkCase>
 
-`<native-hls-video>`, `<simple-hls-video>`, and `<simple-hls-audio-only>` accepted a `config` that nothing read. Remove it — those elements never applied it.
+`<simple-hls-video>` and `<simple-hls-audio-only>` accepted a `config` that nothing read. Remove it — those elements never applied it.
 
 ## See also
 
