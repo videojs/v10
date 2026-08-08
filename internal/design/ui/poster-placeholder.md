@@ -1,9 +1,11 @@
 ---
-status: implemented
+status: superseded
 date: 2026-05-28
 ---
 
 # Poster placeholder
+
+Superseded by [Placeholder](placeholder.md), which moves this behavior onto its own component. The record below is retained for the rationale it carried.
 
 Poster placeholders provide a low-resolution or first-frame visual while the final poster loads. Current props, attributes, and CSS names belong to source and API reference.
 

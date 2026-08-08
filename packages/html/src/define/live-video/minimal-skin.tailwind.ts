@@ -11,6 +11,7 @@ import {
   inputFeedback,
   menu,
   overlay,
+  placeholder,
   popup,
   poster,
   root,
@@ -31,6 +32,8 @@ function getTemplateHTML() {
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
+
+      <media-placeholder class="${placeholder}"></media-placeholder>
 
       <media-poster class="${poster(true)}">
         <slot name="poster"></slot>

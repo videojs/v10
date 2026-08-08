@@ -1,0 +1,29 @@
+/* ==========================================================================
+   Poster placeholder
+   ========================================================================== */
+
+/*
+ * The component sets `background-image` and nothing else, so the same rules
+ * cover both platforms — `media-placeholder` in the shadow DOM, the class in
+ * React. It sits behind the poster, which paints over it as it loads.
+ */
+.media-minimal-skin media-placeholder,
+.media-minimal-skin .media-placeholder {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: var(--media-object-position, center);
+  background-size: var(--media-object-fit, contain);
+  filter: blur(var(--media-placeholder-blur, 20px));
+  transition: opacity 0.25s;
+}
+.media-minimal-skin media-placeholder:not([data-visible]),
+.media-minimal-skin .media-placeholder:not([data-visible]) {
+  opacity: 0;
+}
+
+.media-minimal-skin:fullscreen media-placeholder,
+.media-minimal-skin:fullscreen .media-placeholder {
+  background-size: contain;
+}

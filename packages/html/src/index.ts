@@ -121,6 +121,7 @@ export { MenuSeparatorElement } from './ui/menu/menu-separator-element';
 export { MenuViewElement } from './ui/menu/menu-view-element';
 export { MuteButtonElement } from './ui/mute-button/mute-button-element';
 export { PiPButtonElement } from './ui/pip-button/pip-button-element';
+export { PlaceholderElement } from './ui/placeholder/placeholder-element';
 export { PlayButtonElement } from './ui/play-button/play-button-element';
 export { PlaybackRateButtonElement } from './ui/playback-rate-button/playback-rate-button-element';
 export { PlaybackRateRadioGroupElement } from './ui/playback-rate-radio-group/playback-rate-radio-group-element';

@@ -11,6 +11,7 @@ import {
   inputFeedback,
   menu,
   overlay,
+  placeholder,
   popup,
   poster,
   root,
@@ -19,7 +20,7 @@ import {
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -57,6 +58,7 @@ import { LiveButton } from '@/ui/live-button';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
+import { Placeholder } from '@/ui/placeholder';
 import { PlayButton } from '@/ui/play-button';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
@@ -201,15 +203,13 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, placeholder, style, ...rest } = props;
-
-  const containerStyle = placeholder
-    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
-    : style;
+  const { children, className, poster: posterProp, style, ...rest } = props;
 
   return (
-    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(root(false), className)} style={style} {...rest}>
       {children}
+
+      <Placeholder className={placeholder} />
 
       {posterProp && (
         <Poster

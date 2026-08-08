@@ -11,6 +11,4 @@ export type BaseSkinProps<T = unknown> = PropsWithChildren<
 
 export type BaseVideoSkinProps<T = unknown> = BaseSkinProps<T> & {
   poster?: string | RenderProp<Poster.State> | undefined;
-  /** Low-resolution placeholder shown behind the poster while it loads (blur-up effect). */
-  placeholder?: string | undefined;
 };

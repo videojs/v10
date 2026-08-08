@@ -40,6 +40,8 @@ export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/pip-button/pip-button-core';
 export * from './ui/pip-button/pip-button-data-attrs';
+export * from './ui/placeholder/placeholder-core';
+export * from './ui/placeholder/placeholder-data-attrs';
 export * from './ui/play-button/play-button-core';
 export * from './ui/play-button/play-button-data-attrs';
 export * from './ui/playback-rate-button/playback-rate-button-core';
