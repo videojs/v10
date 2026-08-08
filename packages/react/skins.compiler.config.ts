@@ -35,10 +35,7 @@ export function createReactSkinSourceConfig({ style, tailwindInput }: CreateReac
               resolve: {
                 element: ({ defaultName }) => ({ className: `vjs-${defaultName}` }),
               },
-              vars: {
-                hoist: { rootSelector: '.vjs-skin' },
-                properties: { mode: 'inline' },
-              },
+              emit: { themeSelector: '.vjs-skin' },
             }
       ),
       transform(

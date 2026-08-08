@@ -30,5 +30,7 @@ describe('renderSkinSource', () => {
     expect(output.html).not.toContain('grid size-media-control');
     expect(output.css).toContain('.vjs-video-controls {');
     expect(output.css).toContain('.vjs-button-play {');
+    expect(output.css.match(/tailwindcss v/g)).toHaveLength(1);
+    expect(output.css.match(/@layer properties/g)).toHaveLength(1);
   });
 });

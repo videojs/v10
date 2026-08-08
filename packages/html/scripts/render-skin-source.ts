@@ -3,7 +3,11 @@ import { dirname } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { compile } from '@videojs/compiler';
 import { build, type Plugin } from 'esbuild';
+import { transform } from 'lightningcss';
 import { createHtmlSkinSourceConfig, type SkinSourceStyle } from '../skins.compiler.config.ts';
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 export interface RenderSkinSourceOptions {
   style?: SkinSourceStyle | undefined;
@@ -45,13 +49,22 @@ export async function renderSkinSourceOutput(
   );
   if (!render) throw new Error(`HTML source rendering found no component export in \`${entryFile}\`.`);
 
+  const css = [...styles.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([, source]) => source)
+    .join('\n\n');
+
   return {
     html: String(render({})).trim(),
-    css: [...styles.entries()]
-      .sort(([a], [b]) => a.localeCompare(b))
-      .map(([, source]) => source)
-      .join('\n\n'),
+    css: consolidateCss(css),
   };
+}
+
+function consolidateCss(css: string): string {
+  if (!css) return '';
+  const license = css.match(/\/\*!.*?tailwindcss.*?\*\//s)?.[0];
+  const output = decoder.decode(transform({ filename: 'styles.css', code: encoder.encode(css) }).code).trim();
+  return license && !output.includes(license) ? `${license}\n${output}` : output;
 }
 
 function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styles: Map<string, string>): Plugin {

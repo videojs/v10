@@ -18,16 +18,15 @@ import {
   type TokenEnv,
 } from '../styles';
 import { cssAssets } from './css/assets';
-import { type CompiledRule, type HoistOptions, type RegisteredPropertiesOptions, renderCss } from './css/render';
+import { lowerCss } from './css/lower';
 import { type DesignSystem, loadDesignSystem } from './design-system';
+import { addStyleRecipe, createStyleProgram, finalizeStyleProgram, type MutableStyleProgram } from './program';
 import {
   normalizeResolveElementResult,
   type ResolveClassList,
   type ResolveElement,
   type ResolveElementResult,
-  type ResolveRule,
 } from './selectors';
-import { analyzeUtility, type UtilityCss } from './utility-css';
 
 /** Styling mode for Tailwind-backed className handling. */
 export type TailwindMode =
@@ -50,8 +49,6 @@ export interface TailwindResolveOptions {
   tokenModule?: ResolveTokenModule | undefined;
   /** Resolve the semantic CSS class name and optional output chunk for an extracted element. */
   element?: ResolveElement | undefined;
-  /** Rewrite a composed selector before CSS emission. */
-  rule?: ResolveRule | undefined;
   /** Rewrite the final static class list written back to JSX. */
   classList?: ResolveClassList | undefined;
 }
@@ -63,15 +60,8 @@ export interface TailwindEmitOptions {
   configDir?: string;
   /** CSS emission layout. Defaults to merged output. */
   mode?: 'merged' | 'split';
-}
-
-export interface TailwindVarsOptions {
-  /** Hoist uniform custom property declarations to a root selector, or disable explicitly. */
-  hoist?: false | HoistOptions | undefined;
-  /** Inline matching custom properties into values that reference them. */
-  inline?: true | RegExp | undefined;
-  /** Handle registered @property variables such as Tailwind's --tw-* vars. */
-  properties?: RegisteredPropertiesOptions | undefined;
+  /** Selector for referenced Tailwind theme variables. Defaults to `:root`. */
+  themeSelector?: string | undefined;
 }
 
 export interface TailwindOptions {
@@ -87,17 +77,14 @@ export interface TailwindOptions {
   resolve?: TailwindResolveOptions | undefined;
   /** CSS asset emission options for extract mode. */
   emit?: TailwindEmitOptions | undefined;
-  /** CSS custom property handling options for extract mode. */
-  vars?: TailwindVarsOptions | undefined;
 }
 
 interface TailwindState {
   mode: TailwindMode;
   design?: DesignSystem | undefined;
   env: TokenEnv;
-  rules: CompiledRule[];
+  program: MutableStyleProgram;
   signatures: Map<string, string>;
-  scaffoldClassReplacements: Map<string, string>;
 }
 
 interface TailwindClassNameResolution {
@@ -132,9 +119,8 @@ async function createTailwindState(options: TailwindOptions, compiler: CompilerC
     mode,
     ...(mode === 'extract' ? { design: await resolveDesignSystem(options, compiler) } : {}),
     env: buildTokenEnv(compiler.filename, options.resolve?.tokenModule),
-    rules: [],
+    program: createStyleProgram(),
     signatures: new Map(),
-    scaffoldClassReplacements: new Map(),
   };
 }
 
@@ -310,18 +296,21 @@ function extractStaticClassName(
     ruleUtilities: string[] = [];
 
   for (const utility of utilities) {
-    const css = analyzeUtility(utility, state.design);
-
-    if (css && css.declarations.length > 0) {
+    if (state.design.recognizesCandidate(utility)) {
       ruleUtilities.push(utility);
-      state.rules.push(buildCompiledRule(derived.className, css, segments, chunk));
       continue;
     }
 
     if (!preserved.includes(utility)) preserved.push(utility);
   }
 
-  registerScaffoldClassReplacements(state.scaffoldClassReplacements, utilities, derived.className, element);
+  registerScaffoldClassReplacements(
+    state.program.scaffoldClassReplacementsByChunk,
+    utilities,
+    derived.className,
+    chunk,
+    element
+  );
 
   if (ruleUtilities.length > 0 && !explicitSelector) {
     const signature = [...ruleUtilities].sort().join(' ');
@@ -333,7 +322,16 @@ function extractStaticClassName(
     }
   }
 
-  const classes = removeReplacedScaffoldClasses([derived.className, ...preserved], state.scaffoldClassReplacements);
+  if (ruleUtilities.length > 0) {
+    addStyleRecipe(state.program, {
+      className: derived.className,
+      candidates: ruleUtilities,
+      segments,
+      ...(chunk === undefined ? {} : { chunk }),
+    });
+  }
+
+  const classes = removeReplacedScaffoldClasses([derived.className, ...preserved]);
 
   const resolvedClasses =
     options.resolve?.classList?.({
@@ -369,19 +367,12 @@ function tokenImportIsUnused(statement: ts.ImportDeclaration, sourceFile: ts.Sou
 }
 
 async function renderTailwindAssets(options: TailwindOptions, state: TailwindState, compiler: CompilerContext) {
-  if (state.mode !== 'extract' || state.rules.length === 0 || !state.design) return [];
-  const vars = options.vars;
+  if (state.mode !== 'extract' || state.program.recipes.size === 0 || !state.design) return [];
 
-  const rendered = await renderCss({
-    rules: state.rules,
+  const rendered = await lowerCss({
+    design: state.design,
+    program: finalizeStyleProgram(state.program),
     ...(options.emit ?? {}),
-    ...(vars?.hoist !== undefined ? { hoist: vars.hoist } : {}),
-    ...(vars?.inline !== undefined ? { inlineVars: vars.inline } : {}),
-    ...(vars?.properties ? { properties: vars.properties } : {}),
-    ...(options.resolve?.rule ? { resolveRule: options.resolve.rule } : {}),
-    scaffoldClassReplacements: state.scaffoldClassReplacements,
-    resolveThemeVar: (name) => state.design!.resolveThemeVar(name),
-    ...(vars?.hoist ? { themeSelector: vars.hoist.rootSelector } : {}),
   });
 
   return cssAssets(compiler, options.output, rendered);
@@ -396,21 +387,20 @@ async function resolveDesignSystem(options: TailwindOptions, context: CompilerCo
   return loadDesignSystem(input);
 }
 
-function buildCompiledRule(
-  className: string,
-  utility: UtilityCss,
-  segments: readonly StyleSegment[],
-  chunk: string | undefined
-): CompiledRule {
-  return chunk === undefined ? { className, utility, segments } : { className, utility, segments, chunk };
-}
-
 function registerScaffoldClassReplacements(
-  replacements: Map<string, string>,
+  replacementsByChunk: Map<string, Map<string, string>>,
   utilities: readonly string[],
   className: string,
+  chunk: string | undefined,
   element: ts.Node
 ): void {
+  const chunkKey = chunk ?? '';
+  let replacements = replacementsByChunk.get(chunkKey);
+  if (!replacements) {
+    replacements = new Map();
+    replacementsByChunk.set(chunkKey, replacements);
+  }
+
   for (const utility of utilities) {
     if (!isTailwindScaffoldClass(utility)) continue;
     const previous = replacements.get(utility);
@@ -422,11 +412,8 @@ function registerScaffoldClassReplacements(
   }
 }
 
-function removeReplacedScaffoldClasses(
-  classes: readonly string[],
-  replacements: ReadonlyMap<string, string>
-): readonly string[] {
-  return classes.filter((className) => !replacements.has(className));
+function removeReplacedScaffoldClasses(classes: readonly string[]): readonly string[] {
+  return classes.filter((className) => !isTailwindScaffoldClass(className));
 }
 
 function isTailwindScaffoldClass(className: string): boolean {
@@ -459,7 +446,7 @@ function scaffoldClassReplacementConflictError(
       `.\n` +
       `  first replacement: .${first}\n` +
       `  next replacement: .${next}\n` +
-      `Use a named marker such as \`group/${next}\` or customize \`resolve.rule\` and \`resolve.classList\`.`,
+      `Use a named marker such as \`group/${next}\` to disambiguate the relationship.`,
     { ...diagnosticLocationFromNode(element), diagnosticCode: 'style-scaffold-class-replacement-collision' }
   );
 }

@@ -1,24 +1,23 @@
 import { existsSync, readFileSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { __unstable__loadDesignSystem } from 'tailwindcss';
+import { __unstable__loadDesignSystem, compile } from 'tailwindcss';
+
+const VIRTUAL_REFERENCE = './__videojs-compiler-tailwind-reference.css';
 
 /**
  * A loaded Tailwind v4 design system. Wraps Tailwind's
- * `__unstable__loadDesignSystem` return value with a small surface focused on
- * what `analyzeUtility` needs:
- *
- *   - `compileUtility(name)` — compile a single utility class to CSS, or
- *     `null` if Tailwind doesn't recognize it.
- *
- * Internally caches per-utility output so repeated lookups (the same utility
- * referenced on many JSX elements) don't re-walk Tailwind's pipeline.
+ * Tailwind's design-system and compiler APIs behind the operations style
+ * lowering needs. Candidate recognition is intentionally separate from CSS
+ * generation: emitted CSS always comes from one complete candidate build.
  */
 export interface DesignSystem {
   /** The path the design system was loaded from, for diagnostics. */
   readonly cssPath: string;
-  /** Compile a single utility class to CSS. Returns `null` for unknown candidates. */
-  compileUtility(utility: string): string | null;
+  /** Return whether Tailwind recognizes a candidate. */
+  recognizesCandidate(candidate: string): boolean;
+  /** Compile a complete candidate set with Tailwind's ordering and support rules. */
+  compileCandidates(candidates: readonly string[]): Promise<string>;
   /**
    * Resolve a `@theme` variable (e.g. `--spacing`, `--color-white`) to its
    * value, or `undefined` if the theme doesn't define it. Used to emit a
@@ -36,31 +35,40 @@ export interface DesignSystem {
 export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   const absolute = resolve(cssPath);
   const raw = readFileSync(absolute, 'utf8');
+  const base = dirname(absolute);
+  const loadStylesheet = async (id: string, importerBase: string) => {
+    if (id === VIRTUAL_REFERENCE) {
+      return { path: absolute, base, content: raw };
+    }
 
-  const ds = await __unstable__loadDesignSystem(raw, {
-    base: dirname(absolute),
-    loadStylesheet: async (id, base) => {
-      const resolved = resolveStylesheet(id, base);
-      return {
-        path: resolved,
-        base: dirname(resolved),
-        content: readFileSync(resolved, 'utf8'),
-      };
-    },
-  });
+    const resolved = resolveStylesheet(id, importerBase);
+    return {
+      path: resolved,
+      base: dirname(resolved),
+      content: readFileSync(resolved, 'utf8'),
+    };
+  };
 
-  const cache = new Map<string, string | null>();
+  const ds = await __unstable__loadDesignSystem(raw, { base, loadStylesheet });
+
+  const candidateCache = new Map<string, boolean>();
   const themeCache = new Map<string, string | undefined>();
 
   return {
     cssPath: absolute,
-    compileUtility(utility: string): string | null {
-      const cached = cache.get(utility);
+    recognizesCandidate(candidate: string): boolean {
+      const cached = candidateCache.get(candidate);
       if (cached !== undefined) return cached;
-      const [css] = ds.candidatesToCss([utility]);
-      const value = css ?? null;
-      cache.set(utility, value);
-      return value;
+      const recognized = ds.candidatesToCss([candidate])[0] != null;
+      candidateCache.set(candidate, recognized);
+      return recognized;
+    },
+    async compileCandidates(candidates: readonly string[]): Promise<string> {
+      const compiler = await compile(`@reference "${VIRTUAL_REFERENCE}";\n@tailwind utilities;`, {
+        base,
+        loadStylesheet,
+      });
+      return compiler.build([...new Set(candidates)]);
     },
     resolveThemeVar(name: string): string | undefined {
       if (themeCache.has(name)) return themeCache.get(name);

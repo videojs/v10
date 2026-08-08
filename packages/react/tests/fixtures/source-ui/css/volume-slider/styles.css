@@ -5,67 +5,105 @@
   --spacing: 0.25rem;
 }
 
-.vjs-slider-fill {
-  background-color: currentcolor;
-  border-radius: inherit;
-  inset-block: calc(var(--spacing) * 0);
-  left: calc(var(--spacing) * 0);
-  position: absolute;
-  width: var(--media-slider-fill);
-}
-
-.vjs-slider-fill[data-orientation='vertical'] {
-  bottom: calc(var(--spacing) * 0);
-  height: var(--media-slider-fill);
-  inset-inline: calc(var(--spacing) * 0);
-  top: auto;
-  width: auto;
-}
+/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
+@layer properties;
 
 .vjs-slider-root {
-  align-items: center;
+  min-height: var(--media-control-size);
+  min-width: calc(var(--spacing, 0.25rem) * 20);
   cursor: pointer;
-  display: flex;
+  --tw-outline-style: none;
+  outline-style: none;
   flex: 1;
   justify-content: center;
-  min-height: var(--media-control-size);
-  min-width: calc(var(--spacing) * 20);
-  outline-style: none;
+  align-items: center;
+  display: flex;
   position: relative;
 }
 
 .vjs-slider-root[data-orientation='vertical'] {
-  height: calc(var(--spacing) * 20);
-  min-width: calc(var(--spacing) * 0);
+  height: calc(var(--spacing, 0.25rem) * 20);
   width: var(--media-control-size);
-}
-
-.vjs-slider-thumb {
-  background-color: currentcolor;
-  border-radius: var(--media-radius-pill);
-  height: var(--media-slider-thumb-size);
-  left: var(--media-slider-fill);
-  position: absolute;
-  top: calc(1 / 2 * 100%);
-  translate: calc(calc(1 / 2 * 100%) * -1) calc(calc(1 / 2 * 100%) * -1);
-  width: var(--media-slider-thumb-size);
-}
-
-.vjs-slider-thumb[data-orientation='vertical'] {
-  left: calc(1 / 2 * 100%);
-  top: calc(100% - var(--media-slider-fill));
+  min-width: calc(var(--spacing, 0.25rem) * 0);
 }
 
 .vjs-slider-track {
-  background-color: var(--media-slider-track-background);
-  border-radius: var(--media-radius-pill);
   height: var(--media-slider-track-size);
-  overflow: hidden;
-  position: relative;
+  border-radius: var(--media-radius-pill);
+  background-color: var(--media-slider-track-background);
   width: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
 .vjs-slider-track[data-orientation='vertical'] {
   height: 100%;
   width: var(--media-slider-track-size);
+}
+
+.vjs-slider-fill {
+  inset-block: calc(var(--spacing, 0.25rem) * 0);
+  left: calc(var(--spacing, 0.25rem) * 0);
+  width: var(--media-slider-fill);
+  border-radius: inherit;
+  background-color: currentColor;
+  position: absolute;
+}
+
+.vjs-slider-fill[data-orientation='vertical'] {
+  inset-inline: calc(var(--spacing, 0.25rem) * 0);
+  top: auto;
+  bottom: calc(var(--spacing, 0.25rem) * 0);
+  height: var(--media-slider-fill);
+  width: auto;
+}
+
+.vjs-slider-thumb {
+  top: 50%;
+  left: var(--media-slider-fill);
+  width: var(--media-slider-thumb-size);
+  height: var(--media-slider-thumb-size);
+  --tw-translate-x: calc(calc(1 / 2 * 100%) * -1);
+  --tw-translate-y: calc(calc(1 / 2 * 100%) * -1);
+  translate: var(--tw-translate-x) var(--tw-translate-y);
+  border-radius: var(--media-radius-pill);
+  background-color: currentColor;
+  position: absolute;
+}
+
+.vjs-slider-thumb[data-orientation='vertical'] {
+  top: calc(100% - var(--media-slider-fill));
+  left: 50%;
+}
+
+@property --tw-translate-x {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tw-translate-y {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+
+@property --tw-translate-z {
+  syntax: '*';
+  inherits: false;
+  initial-value: 0;
+}
+
+@layer properties {
+  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or
+    ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+    *,
+    :before,
+    :after,
+    ::backdrop {
+      --tw-translate-x: 0;
+      --tw-translate-y: 0;
+      --tw-translate-z: 0;
+    }
+  }
 }

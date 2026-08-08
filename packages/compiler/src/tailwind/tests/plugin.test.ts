@@ -204,6 +204,16 @@ describe('tailwindPlugin — mode: extract', () => {
     );
   });
 
+  it('rewrites named peer relationships to semantic classes', async () => {
+    const source = `function App(){ return <><Toggle className="peer/item"/><Panel className="hidden peer-checked/item:block"/></>; }`;
+    const { assets, code } = await compileTailwind(source, { mode: 'extract', design });
+    expect(code).toContain('<Toggle className="toggle"/>');
+    expect(code).toContain('<Panel className="panel"/>');
+    expect(collapse(assets[0]!.source)).toContain(
+      collapse('.panel:is(:where(.toggle):checked ~ *) { display: block; }')
+    );
+  });
+
   it('lets resolve.classList customize final static class lists', async () => {
     const source = `function App(){ return <PlayButton className="flex legacy-marker"/>; }`;
     const { code } = await compile(source, {
@@ -491,7 +501,7 @@ function App(){ return <ChevronIcon className={menu.chevron}/>; }`;
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     const css = assets[0]!.source;
-    expect(collapse(css)).toContain(collapse('.foo{display:flex;opacity:50%;}'));
+    expect(collapse(css)).toContain(collapse('.foo{opacity:.5;display:flex;}'));
   });
 
   it('resolves imported tokens before extraction', async () => {
@@ -510,7 +520,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
       plugins: [tailwindPlugin({ design, mode: 'extract' })],
     });
     expect(code).toContain('"button"');
-    expect(collapse(assets[0]!.source)).toContain(collapse('.button{display:flex;gap:calc(var(--spacing) * 2);}'));
+    expect(collapse(assets[0]!.source)).toContain(collapse('.button{gap:calc(var(--spacing,.25rem)*2);display:flex;}'));
   });
 
   it('resolves imported tokens with explicit extensions before extraction', async () => {
@@ -556,7 +566,7 @@ function App(){ return <Foo className={styles.button}/>; }`;
     });
 
     expect(code).toContain('"button"');
-    expect(collapse(assets[0]!.source)).toContain(collapse('.button{display:flex;gap:calc(var(--spacing) * 2);}'));
+    expect(collapse(assets[0]!.source)).toContain(collapse('.button{gap:calc(var(--spacing,.25rem)*2);display:flex;}'));
   });
 
   it('assigns split chunks with resolve.element', async () => {
@@ -610,7 +620,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     expect(code).toContain('"icon-button"');
     const css = assets[0]!.source;
     expect(collapse(css)).toContain(
-      collapse('.icon-button{display:flex;height:calc(var(--spacing) * 4);width:calc(var(--spacing) * 4);}')
+      collapse('.icon-button{height:calc(var(--spacing,.25rem)*4);width:calc(var(--spacing,.25rem)*4);display:flex;}')
     );
   });
 
@@ -633,7 +643,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     });
     const css = assets[0]!.source;
     expect(collapse(css)).toContain(collapse('.play-button{display:flex;}'));
-    expect(collapse(css)).toContain(collapse('.play-icon{opacity:50%;}'));
+    expect(collapse(css)).toContain(collapse('.play-icon{opacity:.5;}'));
     expect(collapse(code)).toContain(collapse(`<PlayButton className="play-button">`));
     expect(collapse(code)).toContain(collapse(`<PlayIcon className="play-icon"/>`));
   });
@@ -660,34 +670,116 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     const { assets } = await compileTailwind(source, {
       mode: 'extract',
       design,
-      vars: { hoist: { rootSelector: '[data-skin="x"]' } },
+      emit: { themeSelector: '[data-skin="x"]' },
     });
     const css = assets[0]!.source;
     expect(css).toMatch(/\[data-skin="x"\]\s*{[^}]*--spacing:/);
   });
 
-  it('forwards the `properties` option (inline) so --tw-content resolves', async () => {
-    // `after:absolute` emits `content: var(--tw-content)` with no setter.
-    const source = `function App(){ return <Foo className="after:absolute"/>; }`;
+  it('preserves Tailwind registered-property support', async () => {
+    const source = `function App(){ return <Foo className="after:absolute before:content-['x']"/>; }`;
     const { assets } = await compileTailwind(source, {
       mode: 'extract',
       design,
-      vars: { properties: { mode: 'inline' } },
     });
     const css = assets[0]!.source;
-    expect(css).not.toMatch(/var\(--tw-content\)/);
-    expect(collapse(css)).toContain(collapse('content: "";'));
+    expect(css).toContain('@property --tw-content');
+    expect(css).toContain('var(--tw-content)');
+    expect(css).toContain('--tw-content:');
   });
 
-  it('forwards the `vars.inline` option', async () => {
-    const source = `function App(){ return <Foo className="shadow-sm"/>; }`;
+  it('preserves cross-rule custom-property setters and consumers', async () => {
+    const source = `function App(){ return <Foo className="ring-red-500 hover:ring-2"/>; }`;
     const { assets } = await compileTailwind(source, {
       mode: 'extract',
       design,
-      vars: { inline: true },
     });
     const css = assets[0]!.source;
-    expect(css).not.toMatch(/--tw-shadow:/);
-    expect(css).not.toMatch(/var\(--tw-shadow[),]/);
+    expect(css).toContain('--tw-ring-color:');
+    expect(css).toContain('var(--tw-ring-color, currentcolor)');
+    expect(css).toContain('@property --tw-ring-color');
+  });
+
+  it('preserves Tailwind precedence when utilities overlap', async () => {
+    const source = `function App(){ return <Foo className="flex block"/>; }`;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    expect(collapse(assets[0]!.source)).toContain(collapse('.foo { display: flex; }'));
+  });
+
+  it('removes only exact duplicate declarations after recipe merging', async () => {
+    const source = `function App(){ return <Foo className="-translate-x-1/2 -translate-y-1/2"/>; }`;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    const css = assets[0]!.source;
+    expect(css).toContain('--tw-translate-x:');
+    expect(css).toContain('--tw-translate-y:');
+    expect(css.match(/\btranslate:/g)).toHaveLength(1);
+  });
+
+  it('materializes shared utilities independently for each semantic target', async () => {
+    const source = `function App(){ return <><First className="grid p-2"/><Second className="grid gap-2"/></>; }`;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    const css = collapse(assets[0]!.source);
+    expect(css).toContain(collapse('.first { padding: calc(var(--spacing, .25rem) * 2); display: grid; }'));
+    expect(css).toContain(collapse('.second { gap: calc(var(--spacing, .25rem) * 2); display: grid; }'));
+    expect(css).not.toMatch(/\.first,.second|\.second,.first/);
+  });
+
+  it('does not combine unrelated semantic targets with identical recipes', async () => {
+    const source = `function App(){ return <><First className="grid"/><Second className="grid"/></>; }`;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    const css = collapse(assets[0]!.source);
+    expect(css).toContain(collapse('.first { display: grid; }'));
+    expect(css).toContain(collapse('.second { display: grid; }'));
+    expect(css).not.toMatch(/\.first,.second|\.second,.first/);
+  });
+
+  it('preserves animation keyframes from the complete Tailwind build', async () => {
+    const source = `function App(){ return <Spinner className="animate-spin"/>; }`;
+    const { assets } = await compileTailwind(source, { mode: 'extract', design });
+    const css = assets[0]!.source;
+    expect(css).toContain('.spinner');
+    expect(css).toContain('@keyframes spin');
+  });
+
+  it('emits shared Tailwind support once for split output', async () => {
+    const source = `function App(){ return <><First className="animate-spin"/><Second className="animate-spin"/></>; }`;
+    const { assets } = await compileTailwind(source, {
+      mode: 'extract',
+      design,
+      emit: { mode: 'split' },
+      resolve: {
+        element({ componentName, defaultName }) {
+          return { className: defaultName, chunk: componentName?.toLowerCase() ?? 'default' };
+        },
+      },
+    });
+    const index = assets.find((asset) => asset.fileName === 'input.css')!.source;
+    const chunks = assets.filter((asset) => asset.fileName !== 'input.css');
+    expect(index.match(/@keyframes spin/g)).toHaveLength(1);
+    expect(chunks).toHaveLength(2);
+    for (const chunk of chunks) {
+      expect(chunk.source).toContain('animation:');
+      expect(chunk.source).not.toContain('@keyframes spin');
+    }
+  });
+
+  it('scopes repeated scaffold marker names to their output chunk', async () => {
+    const source = `function App(){ return <><AButton className="group/item"><AIcon className="hidden group-data-active/item:block"/></AButton><BButton className="group/item"><BIcon className="hidden group-data-active/item:block"/></BButton></>; }`;
+    const { assets } = await compileTailwind(source, {
+      mode: 'extract',
+      design,
+      emit: { mode: 'split' },
+      resolve: {
+        element({ componentName, defaultName }) {
+          return { className: defaultName, chunk: componentName?.startsWith('a-') ? 'a' : 'b' };
+        },
+      },
+    });
+    const a = collapse(assets.find((asset) => asset.fileName === 'a.css')!.source);
+    const b = collapse(assets.find((asset) => asset.fileName === 'b.css')!.source);
+    expect(a).toContain(collapse('.a-icon:is(:where(.a-button)[data-active] *) { display: block; }'));
+    expect(b).toContain(collapse('.b-icon:is(:where(.b-button)[data-active] *) { display: block; }'));
+    expect(a).not.toContain('.b-button');
+    expect(b).not.toContain('.a-button');
   });
 });

@@ -79,10 +79,7 @@ export function createHtmlSkinSourceConfig({ style, tailwindInput }: CreateHtmlS
               resolve: {
                 element: ({ defaultName }) => ({ className: `vjs-${defaultName}` }),
               },
-              vars: {
-                hoist: { rootSelector: '.vjs-skin' },
-                properties: { mode: 'inline' },
-              },
+              emit: { themeSelector: '.vjs-skin' },
             }
       ),
       transform(

@@ -1,6 +1,6 @@
 import { basename, dirname, extname, join } from 'node:path';
 import type { CompilerAsset, CompilerContext } from '../../config';
-import type { RenderedCss } from './render';
+import type { RenderedCss } from './lower';
 
 export function cssAssets(
   context: CompilerContext,

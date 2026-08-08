@@ -165,10 +165,7 @@ export function Fixture({ active }: { active: boolean }) {
           tailwind({
             mode: 'extract',
             input: cssPath,
-            vars: {
-              hoist: { rootSelector: '.media-test-skin' },
-              properties: { mode: 'inline', variables: [{ match: /^--tw-content$/ }] },
-            },
+            emit: { themeSelector: '.media-test-skin' },
           }),
         ],
       },
@@ -192,8 +189,8 @@ export function Fixture({ active }: { active: boolean }) {
 
     const css = result.assets[0]!.source;
     expect(css).not.toMatch(/\.media-test-skin\s*{[^}]*--media-border-radius/);
-    expect(css).not.toContain('--tw-content');
-    expect(css).not.toContain('var(--tw-content)');
+    expect(css).toContain('--tw-content');
+    expect(css).toContain('var(--tw-content)');
     expect(css).toMatchInlineSnapshot(`
       ".media-test-skin {
         --default-transition-duration: 150ms;
@@ -201,115 +198,11 @@ export function Fixture({ active }: { active: boolean }) {
         --spacing: 0.25rem;
       }
 
-      .media-test-skin {
-        --media-popover-side-offset: 0.5rem;
-      }
-
-      .button {
-        align-items: center;
-        display: flex;
-        position: relative;
-      }
-
-      .button:after {
-        content: "";
-        position: absolute;
-      }
-
-      .button:before {
-        content: 'x';
-        position: absolute;
-      }
-
-      .button:disabled {
-        opacity: 50%;
-      }
-
-      .button:focus-visible {
-        outline-color: currentcolor;
-      }
-
-      .button[aria-expanded="true"] {
-        background-color: color-mix(in oklab, currentcolor 10%, transparent);
-      }
-
-      .button[data-availability="unsupported"] {
-        display: none;
-      }
-
-      .controls {
-        display: flex;
-        flex-wrap: wrap;
-      }
+      /*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
+      @layer properties;
 
       .fixture-root {
-        --media-controls-transition-duration: 100ms;
-        color: var(--media-color-primary, oklch(1 0 0));
-        padding: calc(var(--spacing) * 4);
         width: 100%;
-      }
-
-      .fixture-root video {
-        display: block;
-      }
-
-      .fixture-root:fullscreen {
-        --media-border-radius: 0;
-      }
-
-      .icon {
-        display: none;
-        opacity: 0%;
-      }
-
-      .icon:is(:where(.button):not([data-paused]) *) {
-        opacity: 0%;
-      }
-
-      .icon:is(:where(.button)[data-paused] *) {
-        display: block;
-        opacity: 100%;
-      }
-
-      .thumbnail {
-        left: var(--media-slider-pointer);
-        position: absolute;
-      }
-
-      .thumbnail:has([role="img"]:not([data-hidden])) {
-        opacity: 100%;
-      }
-
-      @container media-root (width >= 42rem) {
-        .controls {
-          flex-wrap: nowrap;
-        }
-      }
-
-      @media (pointer: fine) {
-        .controls {
-          transition-duration: var(--tw-duration, var(--default-transition-duration));
-          transition-property: scale,filter,opacity;
-          transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));
-        }
-      }
-
-      @media (prefers-contrast: more) {
-        .controls {
-          --media-surface-background-color: oklch(0 0 0);
-        }
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .controls {
-          --media-controls-transition-duration: 50ms;
-        }
-      }
-
-      @media (prefers-reduced-transparency:reduce) {
-        .controls {
-          --media-surface-background-color: oklch(0 0 0);
-        }
       }
 
       @media (width >= 40rem) {
@@ -339,6 +232,135 @@ export function Fixture({ active }: { active: boolean }) {
       @media (width >= 96rem) {
         .fixture-root {
           max-width: 96rem;
+        }
+      }
+
+      .fixture-root {
+        padding: calc(var(--spacing, .25rem) * 4);
+        color: var(--media-color-primary, oklch(100% 0 0));
+        --media-controls-transition-duration: .1s;
+      }
+
+      .fixture-root video {
+        display: block;
+      }
+
+      .fixture-root:fullscreen {
+        --media-border-radius: 0;
+      }
+
+      .controls {
+        --media-popover-side-offset: .5rem;
+        flex-wrap: wrap;
+        display: flex;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .controls {
+          --media-controls-transition-duration: 50ms;
+        }
+      }
+
+      @media (prefers-contrast: more) {
+        .controls {
+          --media-surface-background-color: oklch(0% 0 0);
+        }
+      }
+
+      @container media-root (width >= 42rem) {
+        .controls {
+          flex-wrap: nowrap;
+        }
+      }
+
+      @media (pointer: fine) {
+        .controls {
+          transition-property: scale, filter, opacity;
+          transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));
+          transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));
+        }
+      }
+
+      @media (prefers-reduced-transparency: reduce) {
+        .controls {
+          --media-surface-background-color: oklch(0% 0 0);
+        }
+      }
+
+      .button {
+        align-items: center;
+        display: flex;
+        position: relative;
+      }
+
+      .button:before {
+        content: var(--tw-content);
+        --tw-content: "x";
+        content: var(--tw-content);
+        position: absolute;
+      }
+
+      .button:after {
+        content: var(--tw-content);
+        position: absolute;
+      }
+
+      .button:focus-visible {
+        outline-color: currentColor;
+      }
+
+      .button:disabled {
+        opacity: .5;
+      }
+
+      .button[aria-expanded="true"] {
+        background-color: currentColor;
+      }
+
+      @supports (color: color-mix(in lab, red, red)) {
+        .button[aria-expanded="true"] {
+          background-color: color-mix(in oklab, currentcolor 10.0%, transparent);
+        }
+      }
+
+      .button[data-availability="unsupported"] {
+        display: none;
+      }
+
+      .icon {
+        opacity: 0;
+        display: none;
+      }
+
+      .icon:is(:where(.button):not([data-paused]) *) {
+        opacity: 0;
+      }
+
+      .icon:is(:where(.button)[data-paused] *) {
+        opacity: 1;
+        display: block;
+      }
+
+      .thumbnail {
+        left: var(--media-slider-pointer);
+        position: absolute;
+      }
+
+      .thumbnail:has([role="img"]:not([data-hidden])) {
+        opacity: 1;
+      }
+
+      @property --tw-content {
+        syntax: "*";
+        inherits: false;
+        initial-value: "";
+      }
+
+      @layer properties {
+        @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
+          *, :before, :after, ::backdrop {
+            --tw-content: "";
+          }
         }
       }"
     `);

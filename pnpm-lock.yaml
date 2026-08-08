@@ -338,6 +338,9 @@ importers:
       happy-dom:
         specifier: ^20.11.1
         version: 20.11.1
+      lightningcss:
+        specifier: ^1.32.0
+        version: 1.32.0
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(@typescript/native-preview@7.0.0-dev.20260421.2)(@volar/typescript@2.4.28)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)
