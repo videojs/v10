@@ -28,7 +28,6 @@ import {
   thumbnail,
   time,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
-import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
@@ -88,7 +87,6 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { isRenderProp } from '@/utils/use-render';
 import type { MinimalVideoSkinProps } from './minimal-skin';
 
 const SEEK_TIME = 10;
@@ -422,7 +420,7 @@ function SettingsMenu(): ReactNode {
 /* ------------------------------------------ Skin ------------------------------------------- */
 
 export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, style, ...rest } = props;
+  const { children, className, style, ...rest } = props;
 
   return (
     <Container className={cn(root(false), className)} style={style} {...rest}>
@@ -430,13 +428,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
 
       <Placeholder className={placeholder} />
 
-      {posterProp && (
-        <Poster
-          src={isString(posterProp) ? posterProp : undefined}
-          render={isRenderProp(posterProp) ? posterProp : undefined}
-          className={poster(false)}
-        />
-      )}
+      <Poster className={poster(false)} />
 
       <BufferingIndicator
         render={(props) => (

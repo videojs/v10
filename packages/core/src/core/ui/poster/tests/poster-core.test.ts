@@ -1,81 +1,32 @@
-import type { MediaPlaybackState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { PosterCore } from '../poster-core';
-
-function createMediaState(overrides: Partial<MediaPlaybackState> = {}): MediaPlaybackState {
-  return {
-    paused: true,
-    ended: false,
-    started: false,
-    waiting: false,
-    play: vi.fn(async () => {}),
-    pause: vi.fn(),
-    togglePaused: vi.fn(() => true),
-    ...overrides,
-  };
-}
 
 describe('PosterCore', () => {
   describe('getState', () => {
-    it('returns visible: true when playback has not started', () => {
-      const core = new PosterCore();
-      const media = createMediaState({ started: false });
-
-      core.setMedia(media);
-      const state = core.getState();
-
-      expect(state.visible).toBe(true);
-    });
-
-    it('returns visible: false when playback has started', () => {
-      const core = new PosterCore();
-      const media = createMediaState({ started: true });
-
-      core.setMedia(media);
-      const state = core.getState();
-
-      expect(state.visible).toBe(false);
-    });
-
-    it('returns only primitive values (no methods)', () => {
-      const core = new PosterCore();
-      const media = createMediaState();
-
-      core.setMedia(media);
-      const state = core.getState();
-
-      expect(state).toEqual({ visible: true });
-
-      const functionKeys = Object.entries(state).filter(([, value]) => typeof value === 'function');
-      expect(functionKeys).toHaveLength(0);
-    });
-
-    it('visibility is independent of paused state', () => {
+    it('is visible before playback starts and hidden after', () => {
       const core = new PosterCore();
 
-      // Started but paused - should not be visible
-      core.setMedia(createMediaState({ started: true, paused: true }));
-      expect(core.getState().visible).toBe(false);
-
-      // Started and playing - should not be visible
-      core.setMedia(createMediaState({ started: true, paused: false }));
-      expect(core.getState().visible).toBe(false);
-
-      // Not started and paused - should be visible
-      core.setMedia(createMediaState({ started: false, paused: true }));
+      core.setMedia({ started: false, poster: 'poster.jpg' });
       expect(core.getState().visible).toBe(true);
+
+      core.setMedia({ started: true, poster: 'poster.jpg' });
+      expect(core.getState().visible).toBe(false);
     });
 
-    it('visibility is independent of ended state', () => {
+    it('passes the resolved URL through untouched', () => {
       const core = new PosterCore();
 
-      // Started and ended - should not be visible (started takes precedence)
-      core.setMedia(createMediaState({ started: true, ended: true }));
-      expect(core.getState().visible).toBe(false);
+      core.setMedia({ started: false, poster: 'poster.jpg' });
 
-      // Not started and ended (edge case) - should be visible
-      core.setMedia(createMediaState({ started: false, ended: true }));
-      expect(core.getState().visible).toBe(true);
+      expect(core.getState()).toEqual({ visible: true, src: 'poster.jpg' });
+    });
+
+    it('reports an empty src when nothing supplied a poster', () => {
+      const core = new PosterCore();
+
+      core.setMedia({ started: false, poster: '' });
+
+      expect(core.getState().src).toBe('');
     });
   });
 });

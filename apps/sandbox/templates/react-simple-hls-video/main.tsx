@@ -36,14 +36,8 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Provider>
-        <VideoSkinComponent
-          poster={poster}
-          skin={skin}
-          styling={styling}
-          live={live}
-          className="aspect-video max-w-4xl mx-auto"
-        >
+      <Provider poster={poster}>
+        <VideoSkinComponent skin={skin} styling={styling} live={live} className="aspect-video max-w-4xl mx-auto">
           <SimpleHlsVideo
             src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
