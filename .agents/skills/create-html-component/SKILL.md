@@ -12,10 +12,11 @@ Read the relevant core contract, nearest HTML element and tests, definition entr
 1. Define the state owner, rendered semantics, properties and attributes, events, optional parts, styling contract, and consumer opt-outs.
 2. Put runtime-neutral state and actions in `packages/core/src/core/ui/`; put reusable DOM interaction in `packages/core/src/dom/ui/`; keep the element an adapter.
 3. Match the nearest `MediaElement` or `MediaButtonElement` pattern. Send properties down and semantic events up; use controllers or context only across a real ownership boundary.
-4. Add markup for semantics, focus, content, or parts consumers must place, omit, or replace. Leave purely visual structure to skins, CSS, or pseudo-elements.
-5. Expose discrete state through mapped `data-*` attributes and dynamic layout values through stable CSS custom properties. Define each token's owner, units, and fallback.
-6. Keep the element class free of registration side effects. Register it with `safeDefine` under `packages/html/src/define/ui/`, update `HTMLElementTagNameMap`, and preserve narrow import and `sideEffects` boundaries.
-7. Clean up subscriptions, observers, listeners, locks, and async work across disconnect and destroy. Add focused core and HTML tests; verify interaction in a browser when semantics, focus, or pointer behavior changes.
+4. Let `ReactiveElement` own rendered DOM updates: derive changes from reactive properties and controller state, then apply them through its update lifecycle. Avoid out-of-band mutations so scheduling, `updateComplete`, tests, and integrations remain authoritative.
+5. Add markup for semantics, focus, content, or parts consumers must place, omit, or replace. Leave purely visual structure to skins, CSS, or pseudo-elements.
+6. Expose discrete state through mapped `data-*` attributes and dynamic layout values through stable CSS custom properties. Define each token's owner, units, and fallback.
+7. Keep the element class free of registration side effects. Register it with `safeDefine` under `packages/html/src/define/ui/`, update `HTMLElementTagNameMap`, and preserve narrow import and `sideEffects` boundaries.
+8. Clean up subscriptions, observers, listeners, locks, and async work across disconnect and destroy. Add focused core and HTML tests; verify interaction in a browser when semantics, focus, or pointer behavior changes.
 
 Check `packages/html/package.json` and `packages/html/tsdown.config.ts` when adding an entrypoint or registration module. Run the narrow package tests and build; build changed exported types before repository typechecking.
 
