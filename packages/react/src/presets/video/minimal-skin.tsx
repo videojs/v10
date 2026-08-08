@@ -8,7 +8,7 @@ import {
 } from '@videojs/core/i18n/text/menu';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
-import { type ComponentProps, type CSSProperties, forwardRef, type ReactNode } from 'react';
+import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
 import {
   AirPlayEnterIcon,
@@ -51,6 +51,7 @@ import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
+import { Placeholder } from '@/ui/placeholder';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
@@ -358,19 +359,13 @@ function SettingsMenu(): ReactNode {
 }
 
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, poster, placeholder, style, ...rest } = props;
-
-  const containerStyle = placeholder
-    ? ({ '--media-poster-placeholder': `url(${placeholder})`, ...style } as CSSProperties)
-    : style;
+  const { children, className, poster, style, ...rest } = props;
 
   return (
-    <Container
-      className={cn('media-minimal-skin media-minimal-skin--video', className)}
-      style={containerStyle}
-      {...rest}
-    >
+    <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} style={style} {...rest}>
       {children}
+
+      <Placeholder className="media-placeholder" />
 
       {poster && (
         <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />

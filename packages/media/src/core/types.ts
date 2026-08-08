@@ -522,6 +522,8 @@ export interface MediaContentData {
   readonly title?: MediaContentValue;
   /** URL of a still image representing the content. */
   readonly poster?: MediaContentValue;
+  /** URL of a low-resolution stand-in painted behind the poster while it loads. */
+  readonly placeholder?: MediaContentValue;
   /** URL of a WebVTT storyboard describing thumbnail sprites for the content. */
   readonly storyboard?: MediaContentValue;
   readonly [key: string]: MediaContentValue;

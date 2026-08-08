@@ -1,0 +1,140 @@
+---
+title: Placeholder
+frameworkTitle:
+  html: media-placeholder
+description: Paints a low-resolution stand-in behind the poster while the poster loads
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/placeholder/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/placeholder/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/placeholder/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/placeholder/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/placeholder/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/placeholder/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/placeholder/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Placeholder />
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-placeholder></media-placeholder>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+A placeholder is a tiny copy of your poster — twenty pixels wide is plenty. It arrives in a few kilobytes, so viewers see something the moment the page paints instead of an empty box. Blur it in CSS and the full poster fades in over the top. That effect is usually called blur-up.
+
+Set the URL on the player, not on this component:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<Player.Provider placeholder="tiny.jpg" />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```html
+<video-player placeholder="tiny.jpg"></video-player>
+```
+</FrameworkCase>
+
+The component reads the resolved value and sets it as its `background-image`. It renders one empty element and adds nothing inside it.
+
+Render it before the <DocsLink slug="reference/poster">poster</DocsLink> so the poster paints on top. The two share a visibility rule: both show before playback starts and hide once it does. There is no handoff between them — the poster is simply painted over the placeholder as it loads, and wherever the poster does not reach, such as the bars left by `object-fit: contain`, the placeholder keeps showing through.
+
+## Styling
+
+| Attribute | Values | Description |
+|-----------|--------|-------------|
+| `data-visible` | Present / absent | Present before playback starts |
+
+The component sets `background-image` and nothing else. Size it, position it, and blur it yourself:
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-placeholder {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px);
+}
+
+media-placeholder:not([data-visible]) {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<div>` with the same data attribute. Add a `className` and use it as the selector:
+
+```css
+.media-placeholder {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: blur(20px);
+}
+
+.media-placeholder:not([data-visible]) {
+  opacity: 0;
+}
+```
+</FrameworkCase>
+
+The packaged skins already carry these rules. Their blur radius comes from `--media-placeholder-blur`, which defaults to `20px`.
+
+## Accessibility
+
+The placeholder is decorative. It has no accessible name and screen readers skip it — a blurred copy of the poster carries nothing the poster does not. Describe the image on the <DocsLink slug="reference/poster">poster</DocsLink> instead.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Placeholder" />

@@ -39,8 +39,8 @@ async function render() {
   const srcAttr = source ? '' : ` src="${url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
-    <${playerTag}>
-      <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
+    <${playerTag}${placeholder ? ` placeholder="${placeholder}"` : ''}>
+      <${tag} class="aspect-video max-w-4xl mx-auto">
         <!-- The storyboard track is derived automatically from the Mux src. -->
         <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
         <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->

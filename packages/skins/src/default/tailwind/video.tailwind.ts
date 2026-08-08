@@ -82,19 +82,6 @@ export const root = (isShadowDOM: boolean) =>
           '[&_video::-webkit-media-text-track-container]:font-[inherit]',
         ]
       : [],
-    // Poster placeholder (blur-up) — React path only; HTML path uses media-poster::before
-    !isShadowDOM
-      ? [
-          'before:absolute before:inset-0 before:pointer-events-none',
-          'before:[background-image:var(--media-poster-placeholder,none)]',
-          'before:bg-no-repeat',
-          'before:[background-position:var(--media-object-position,center)]',
-          'before:[background-size:var(--media-object-fit,contain)]',
-          'before:opacity-0 before:[filter:blur(var(--media-poster-placeholder-blur,20px))]',
-          'before:transition-opacity before:duration-250',
-          'has-[img[data-visible]:not([data-loaded])]:before:opacity-100',
-        ]
-      : [],
     // Fullscreen
     '[&:fullscreen]:[--media-border-radius:0]',
     {
@@ -269,6 +256,7 @@ export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
 export { overlay } from './components/overlay';
+export { placeholder } from './components/placeholder';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';

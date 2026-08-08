@@ -22,7 +22,11 @@ class ContentDataMedia extends EventTarget {
     this.#setKey('poster', value);
   }
 
-  #setKey(key: 'title' | 'poster', value: MediaContentValue): void {
+  setContentPlaceholder(value: MediaContentValue): void {
+    this.#setKey('placeholder', value);
+  }
+
+  #setKey(key: 'title' | 'poster' | 'placeholder', value: MediaContentValue): void {
     if (!this.contentData || Object.is(this.contentData[key], value)) return;
     const contentData = { ...this.contentData };
     if (value === undefined) delete contentData[key];
@@ -177,6 +181,43 @@ describe('metadataFeature', () => {
     expect(store.poster).toBe('media.jpg');
   });
 
+  it('resolves the placeholder through the same order as the poster', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+
+    expect(store.placeholder).toBe('');
+
+    store.setDefaultPlaceholder('fallback-tiny.jpg');
+    expect(store.placeholder).toBe('fallback-tiny.jpg');
+
+    const media = new ContentDataMedia({ placeholder: 'media-tiny.jpg' });
+    store.attach(target(media));
+    expect(store.placeholder).toBe('media-tiny.jpg');
+
+    store.setPlaceholder('user-tiny.jpg');
+    expect(store.placeholder).toBe('user-tiny.jpg');
+
+    media.setContentPlaceholder('latest-media-tiny.jpg');
+    expect(store.placeholder).toBe('user-tiny.jpg');
+
+    store.setPlaceholder(null);
+    expect(store.placeholder).toBe('latest-media-tiny.jpg');
+
+    media.setContentPlaceholder(undefined);
+    expect(store.placeholder).toBe('fallback-tiny.jpg');
+  });
+
+  it('resolves the placeholder independently of the poster', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setPoster('user.jpg');
+
+    expect(store.placeholder).toBe('');
+
+    store.setPlaceholder('tiny.jpg');
+
+    expect(store.poster).toBe('user.jpg');
+    expect(store.placeholder).toBe('tiny.jpg');
+  });
+
   it('resets both media-owned values on detach while preserving user-owned state', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
     store.setDefaultPoster('fallback.jpg');
@@ -194,12 +235,16 @@ describe('metadataFeature', () => {
     expect(selectMetadata(store.state)).toEqual({
       contentTitle: '',
       poster: '',
+      placeholder: '',
       setContentTitle: store.setContentTitle,
       setDefaultContentTitle: store.setDefaultContentTitle,
       setPoster: store.setPoster,
       setDefaultPoster: store.setDefaultPoster,
+      setPlaceholder: store.setPlaceholder,
+      setDefaultPlaceholder: store.setDefaultPlaceholder,
     });
     expect(store.state).not.toHaveProperty('defaultContentTitle');
     expect(store.state).not.toHaveProperty('defaultPoster');
+    expect(store.state).not.toHaveProperty('defaultPlaceholder');
   });
 });

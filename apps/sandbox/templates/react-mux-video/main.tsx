@@ -41,10 +41,9 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Provider>
+      <Provider placeholder={placeholder}>
         <VideoSkinComponent
           poster={poster}
-          placeholder={placeholder}
           skin={skin}
           styling={styling}
           live={live}
