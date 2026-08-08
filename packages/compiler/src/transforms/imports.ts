@@ -15,11 +15,12 @@ export interface ImportRef {
 
 /**
  * Rewrite rule for a given source module.
+ * - `false`: remove the import because the target intentionally replaces its runtime contract.
  * - `string`: rewrite the module specifier; identifier names pass through.
  * - function: per-identifier full power. Receives the imported name; returns
  *   the target `{ source, name }`.
  */
-export type ImportRule = string | ((name: string) => ImportRef);
+export type ImportRule = false | string | ((name: string) => ImportRef);
 
 export interface ImportRewriteOptions {
   /** Map: original module specifier → rewrite rule. */
@@ -65,6 +66,7 @@ function rewriteImportStatement(
   if (originalSource === undefined) return null;
   const rule = rules[originalSource];
   if (rule === undefined) return null;
+  if (rule === false) return [];
 
   const clause = stmt.importClause;
   const resolvedBareTarget = (target: string): string =>

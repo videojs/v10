@@ -10,6 +10,7 @@ import { styles } from './tokens';
 
 export interface TemplateProps {
   children?: unknown;
+  metadata?: string;
 }
 
 export function Template({ children, className }: TemplateProps) {
@@ -48,10 +49,15 @@ export function Template({ children, className }: TemplateProps) {
                 .where(code.value.isArray())
                 .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
               code.interface('TemplateProps').extends(BaseTemplateProps),
+              code.interface('TemplateProps').replaceExtends('BaseTemplateProps', 'Template.RootProps'),
               code
                 .interface(/Props$/)
                 .property('children')
                 .setType(() => code.type.union(code.type.named(ReactNode), code.type.undefined())),
+              code
+                .interface('TemplateProps')
+                .property('metadata')
+                .setType(() => code.type.unknown()),
               code.function('Template').addProps(['backdrop', { name: 'rest', spread: true }]),
             ];
           }),
@@ -65,8 +71,9 @@ export function Template({ children, className }: TemplateProps) {
     expect(result.code).toContain('from "@fixture/predicate"');
     expect(result.code).toContain('from "@fixture/style"');
     expect(result.code).toContain('import type { ReactNode } from "react"');
-    expect(compact(result.code)).toContain(compact('interface TemplateProps extends BaseTemplateProps'));
+    expect(compact(result.code)).toContain(compact('interface TemplateProps extends Template.RootProps'));
     expect(compact(result.code)).toContain(compact('children?: ReactNode | undefined;'));
+    expect(compact(result.code)).toContain(compact('metadata?: unknown;'));
     expect(compact(result.code)).toContain(
       compact('function Template({ children, className, backdrop, ...rest }: TemplateProps)')
     );
@@ -97,6 +104,47 @@ export function Template({ children, className }: TemplateProps) {
 
     expect(result.code).toContain('import Button from "@fixture/renderers"');
     expect(compact(result.code)).toContain(compact('<Action render={<Button />} />'));
+  });
+
+  it('composes JSX wrapper removal, prop forwarding, and prop renaming', async () => {
+    const source = `export function Template() {
+  return <Popover.Root open delay={200}><Popover.Trigger><Button className="trigger" /></Popover.Trigger><Popover.Popup className="popup" side="top" /></Popover.Root>;
+}`;
+
+    const result = await compile(source, {
+      config: {
+        plugins: [
+          transform((code) => [
+            code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
+            code.jsx.element('Popover.Trigger').unwrap(),
+            code.jsx.props('className').rename('class'),
+          ]),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(compact(result.code)).toContain(compact('<Button class="trigger" />'));
+    expect(compact(result.code)).toContain(compact('<Popover.Popup open delay={200} class="popup" side="top" />'));
+    expect(result.code).not.toContain('Popover.Root');
+    expect(result.code).not.toContain('Popover.Trigger');
+    expect(result.code).not.toContain('className');
+  });
+
+  it('rejects ambiguous JSX prop forwarding targets', async () => {
+    const source = `export function Template() {
+  return <Popover.Root open><Popover.Popup /><Popover.Popup /></Popover.Root>;
+}`;
+
+    await expect(
+      compile(source, {
+        config: {
+          plugins: [
+            transform((code) => [code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' })]),
+          ],
+        },
+      })
+    ).rejects.toThrow('expected exactly one direct child');
   });
 
   it('adds module constants and function-scope statements', async () => {

@@ -1,0 +1,46 @@
+@import './styles/base.css';
+@import './styles/themes/default.css';
+@import './styles/support.css';
+
+.media-controls-group-primary {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  display: flex;
+}
+
+.media-controls-group-time {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  flex: 1;
+  display: flex;
+}
+
+.media-time {
+  --tw-numeric-spacing: tabular-nums;
+  font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,)
+    var(--tw-numeric-fraction,);
+}
+
+.media-video-controls {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  border-radius: var(--media-radius-pill);
+  background-color: var(--media-surface-background);
+  padding: var(--media-controls-padding);
+  font-family: var(--media-font-family);
+  font-size: var(--media-font-size);
+  --tw-leading: 1;
+  color: var(--media-controls-color);
+  --tw-shadow:
+    0 0 0 1px var(--tw-shadow-color, var(--media-surface-border)),
+    0 2px 8px var(--tw-shadow-color, var(--media-shadow-color));
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+    var(--tw-shadow);
+  --tw-backdrop-blur: blur(var(--media-surface-backdrop-blur));
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,)
+    var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,)
+    var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  line-height: 1;
+  display: flex;
+}

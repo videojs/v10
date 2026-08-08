@@ -8,6 +8,8 @@ export default defineConfig({
     ast: './src/ast.ts',
     artifacts: './src/artifacts/index.ts',
     'bundlers/vite': './src/bundlers/vite.ts',
+    'styles/index': './src/styles/index.ts',
+    'tailwind/index': './src/tailwind/index.ts',
   },
   platform: 'node',
   // The package is ESM, so `.js`/`.d.ts` match its checked-in export map.

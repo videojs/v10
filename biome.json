@@ -97,6 +97,15 @@
   },
   "overrides": [
     {
+      "includes": ["packages/{html,react}/src/__generated__/skins/**"],
+      "formatter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false
+      }
+    },
+    {
       "includes": ["site/src/**", "!site/src/utils/twMerge.ts"],
       "linter": {
         "rules": {

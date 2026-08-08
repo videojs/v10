@@ -27,6 +27,8 @@ export {
   replace,
   replaceJsxChild,
   tagName,
+  type UnwrapOptions,
+  unwrap,
   type WrapOptions,
   wrap,
 } from './jsx';
@@ -43,3 +45,8 @@ export {
   resolveRelative,
   transformImports,
 } from './transforms';
+export {
+  collectModuleSpecifiers,
+  type RewriteModuleSpecifiersOptions,
+  rewriteModuleSpecifiers,
+} from './utils/module-specifiers';

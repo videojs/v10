@@ -3,37 +3,11 @@ import { join } from 'node:path';
 
 const isWatch = process.argv.includes('--watch');
 
-import { transform } from '@svgr/core';
-import { transform as esbuildTransform } from 'esbuild';
-import { optimize } from 'svgo';
-
 import { iconBases } from './icon-bases.js';
-import {
-  ASSETS_DIR,
-  createSvgoConfig,
-  DIST_DIR,
-  getIconSets,
-  getSvgFiles,
-  PRESET_DEFAULT_OVERRIDES,
-  REMOVE_ATTRS_PLUGIN,
-  replaceColors,
-} from './shared.js';
+import { ASSETS_DIR, DIST_DIR, getIconSets, getSvgFiles } from './shared.js';
+import { buildHtmlExport, buildReactComponent, optimizeSvg } from './source.js';
 
 const FRAMEWORKS = ['react', 'html'] as const;
-
-const SVGO_CONFIG = createSvgoConfig([
-  {
-    name: 'preset-default',
-    params: { overrides: PRESET_DEFAULT_OVERRIDES },
-  },
-  REMOVE_ATTRS_PLUGIN,
-  {
-    name: 'addAttributesToSVGElement',
-    params: {
-      attributes: [{ 'aria-hidden': 'true' }],
-    },
-  },
-]);
 
 function ensureDir(path: string): void {
   if (!existsSync(path)) mkdirSync(path, { recursive: true });
@@ -41,30 +15,6 @@ function ensureDir(path: string): void {
 
 function cleanDist(): void {
   if (existsSync(DIST_DIR)) rmSync(DIST_DIR, { recursive: true, force: true });
-}
-
-function optimizeSvg(svgContent: string): string {
-  return replaceColors(optimize(svgContent, SVGO_CONFIG).data);
-}
-
-async function buildReactComponent(svgContent: string, componentName: string): Promise<{ js: string; tsx: string }> {
-  const optimized = optimizeSvg(svgContent);
-
-  const transformOpts: Parameters<typeof transform>[1] = {
-    plugins: ['@svgr/plugin-jsx'],
-    jsxRuntime: 'automatic',
-  };
-
-  const tsxCode = await transform(optimized, { ...transformOpts, typescript: true }, { componentName });
-  const jsxCode = await transform(optimized, transformOpts, { componentName });
-
-  const { code } = await esbuildTransform(jsxCode, { loader: 'jsx', jsx: 'automatic' });
-
-  return { js: code, tsx: tsxCode };
-}
-
-function buildHtmlExport(svgContent: string, varName: string): string {
-  return `export const ${varName} = \`${optimizeSvg(svgContent)}\`;\n`;
 }
 
 function buildRenderModule(icons: { name: string; content: string }[]): string {

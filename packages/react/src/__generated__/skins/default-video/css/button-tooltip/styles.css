@@ -1,0 +1,37 @@
+@import '../styles/base.css';
+@import '../styles/themes/default.css';
+@import '../styles/support.css';
+
+.media-tooltip-popup {
+  border-radius: var(--media-radius-pill);
+  border-style: var(--tw-border-style);
+  background-color: var(--media-surface-background);
+  white-space: nowrap;
+  color: var(--media-controls-color);
+  --tw-shadow:
+    0 0 0 1px var(--tw-shadow-color, var(--media-surface-border)),
+    0 2px 8px var(--tw-shadow-color, var(--media-shadow-color));
+  box-shadow:
+    var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow),
+    var(--tw-shadow);
+  --tw-backdrop-blur: blur(var(--media-surface-backdrop-blur));
+  backdrop-filter: var(--tw-backdrop-blur,) var(--tw-backdrop-brightness,) var(--tw-backdrop-contrast,)
+    var(--tw-backdrop-grayscale,) var(--tw-backdrop-hue-rotate,) var(--tw-backdrop-invert,) var(--tw-backdrop-opacity,)
+    var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
+  border-width: 0;
+  margin: 0;
+  padding-block: 0.35rem;
+  padding-inline: 0.625rem;
+}
+
+.media-tooltip-popup[data-open] {
+  align-items: center;
+  gap: 0.25rem;
+  display: flex;
+}
+
+.media-tooltip-shortcut {
+  --tw-font-weight: 600;
+  font-size: 0.75em;
+  font-weight: 600;
+}

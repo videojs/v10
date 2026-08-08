@@ -6,8 +6,8 @@ export function TimeSlider() {
   return (
     <TimeSliderPrimitive.Root className={slider.root} thumbAlignment="edge">
       <TimeSliderPrimitive.Track className={slider.track}>
-        <TimeSliderPrimitive.Fill className={[slider.fillBase, slider.fill]} />
-        <TimeSliderPrimitive.Buffer className={[slider.fillBase, slider.buffer]} />
+        <TimeSliderPrimitive.Fill className={slider.fill} />
+        <TimeSliderPrimitive.Buffer className={slider.buffer} />
       </TimeSliderPrimitive.Track>
       <TimeSliderPrimitive.Thumb className={slider.thumb} />
       <Slider.Thumbnail.Root className={thumbnail.root}>

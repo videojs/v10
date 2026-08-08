@@ -12,7 +12,7 @@ describe('buildSkinArtifactGraph', () => {
         id: 'button-tooltip',
         dependencies: {
           artifacts: [],
-          packages: ['@videojs/core'],
+          packages: ['@videojs/core', '@videojs/jsx'],
           symbols: {
             components: ['Tooltip'],
           },
@@ -128,7 +128,7 @@ describe('buildSkinArtifactGraph', () => {
         'volume-slider',
         'volume-popover',
       ],
-      packages: ['@videojs/core', '@videojs/icons'],
+      packages: ['@videojs/core', '@videojs/icons', '@videojs/jsx'],
       resources: {
         styles: [
           './canonical/styles/base.css',

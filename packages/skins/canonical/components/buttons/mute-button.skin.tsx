@@ -1,13 +1,13 @@
 import { MuteButton as MuteButtonPrimitive } from '@videojs/core/components';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/icons/components';
-import { button, buttonIcon } from '../../styles/components/button.tailwind';
+import { muteButton, muteButtonIcon } from '../../styles/components/button.tailwind';
 
 export function MuteButton() {
   return (
-    <MuteButtonPrimitive className={button.mute}>
-      <VolumeOffIcon className={buttonIcon.volumeOff} />
-      <VolumeLowIcon className={buttonIcon.volumeLow} />
-      <VolumeHighIcon className={buttonIcon.volumeHigh} />
+    <MuteButtonPrimitive className={muteButton}>
+      <VolumeOffIcon className={muteButtonIcon.volumeOff} />
+      <VolumeLowIcon className={muteButtonIcon.volumeLow} />
+      <VolumeHighIcon className={muteButtonIcon.volumeHigh} />
     </MuteButtonPrimitive>
   );
 }

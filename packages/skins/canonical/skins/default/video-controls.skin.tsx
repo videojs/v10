@@ -12,7 +12,7 @@ export function DefaultVideoControls() {
   return (
     <Controls.Root className={videoControls}>
       <Tooltip.Provider>
-        <Controls.Group className={controlsGroup.base}>
+        <Controls.Group className={controlsGroup.primary}>
           <PlayButton />
           <SeekButton seconds={-SEEK_SECONDS} />
           <SeekButton seconds={SEEK_SECONDS} />
@@ -24,7 +24,7 @@ export function DefaultVideoControls() {
           <TimePrimitive.Value className={time} type="remaining" toggle />
         </Controls.Group>
 
-        <Controls.Group className={controlsGroup.base}>
+        <Controls.Group className={controlsGroup.primary}>
           <VolumePopover />
           <FullscreenButton />
         </Controls.Group>

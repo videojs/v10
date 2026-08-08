@@ -20,6 +20,46 @@ afterEach(() => {
 });
 
 describe('PopoverElement', () => {
+  it('assigns safe identity to an adjacent source-owned trigger', async () => {
+    const firstTrigger = document.createElement('button');
+    const firstPopover = createPopover();
+    const secondTrigger = document.createElement('button');
+    const secondPopover = createPopover();
+
+    document.body.append(firstTrigger, firstPopover, secondTrigger, secondPopover);
+    await Promise.all([firstPopover.updateComplete, secondPopover.updateComplete]);
+
+    expect(firstPopover.id).toMatch(/^vjs-popup-/);
+    expect(secondPopover.id).toMatch(/^vjs-popup-/);
+    expect(firstPopover.id).not.toBe(secondPopover.id);
+    expect(firstTrigger.getAttribute('commandfor')).toBe(firstPopover.id);
+    expect(secondTrigger.getAttribute('commandfor')).toBe(secondPopover.id);
+  });
+
+  it('does not claim an adjacent trigger that already targets another popup', async () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const trigger = document.createElement('button');
+    const popover = createPopover();
+    trigger.setAttribute('commandfor', 'other-popup');
+
+    document.body.append(trigger, popover);
+    await popover.updateComplete;
+
+    expect(trigger.getAttribute('commandfor')).toBe('other-popup');
+    expect(popover.id).toBe('');
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('already targets `other-popup`'));
+  });
+
+  it('warns when an implicit trigger is not adjacent', async () => {
+    const warning = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const popover = createPopover();
+
+    document.body.append(popover);
+    await popover.updateComplete;
+
+    expect(warning).toHaveBeenCalledWith(expect.stringContaining('No trigger was found'));
+  });
+
   it('exposes the positioned side on the popup', async () => {
     const trigger = document.createElement('button');
     const popover = createPopover();

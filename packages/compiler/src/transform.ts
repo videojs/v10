@@ -1,7 +1,7 @@
 import ts from 'typescript';
 import type { CompilerContext, CompilerPipelineStep, CompilerPlugin, CompilerTransform } from './config';
 import type { JsxElementLike } from './jsx';
-import { tagName } from './jsx';
+import { tagName, unwrap as unwrapJsxElement } from './jsx';
 import { addNamedImport } from './transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from './transforms/imports';
 import {
@@ -81,6 +81,7 @@ export interface CreateHelpers {
   type: {
     named(value: string | ImportReference): ts.TypeReferenceNode;
     union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
+    unknown(): ts.KeywordTypeNode;
     undefined(): ts.KeywordTypeNode;
   };
 }
@@ -100,6 +101,7 @@ export interface EditHelpers {
   interface: {
     declaration(options: InterfaceDeclarationEditOptions): CompilerTransform;
     extends(value: string | ImportReference): InterfaceDeclarationEdit;
+    replaceExtends(from: string | RegExp, to: string | ImportReference): InterfaceDeclarationEdit;
     property(options: InterfacePropertyEditOptions): CompilerTransform;
     setType(type: (context: InterfacePropertyContext) => ts.TypeNode): InterfacePropertyEdit;
   };
@@ -143,11 +145,18 @@ export interface JsxElementSelection {
   childToProp(prop: string): CompilerTransform;
   replace(replacement: string | ImportReference | JsxElementReplacement): CompilerTransform;
   spreadProps(value: ValueReference): CompilerTransform;
+  unwrap(options?: JsxElementUnwrapOptions): CompilerTransform;
+}
+
+export interface JsxElementUnwrapOptions {
+  /** Forward wrapper props to exactly one matching direct child. */
+  forwardPropsTo?: string | RegExp | undefined;
 }
 
 export type JsxElementReplacement = (context: JsxElementContext) => ts.Node | undefined;
 
 export interface JsxPropsSelection {
+  rename(name: string): CompilerTransform;
   replace(transform: (context: JsxPropContext) => ts.Expression | undefined): CompilerTransform;
   where(predicate: MatchPredicate): JsxPropsSelection;
 }
@@ -155,12 +164,14 @@ export interface JsxPropsSelection {
 export interface TypeHelpers {
   named(value: string | ImportReference): ts.TypeReferenceNode;
   union(...types: readonly ts.TypeNode[]): ts.UnionTypeNode;
+  unknown(): ts.KeywordTypeNode;
   undefined(): ts.KeywordTypeNode;
 }
 
 export interface InterfaceSelection {
   extends(value: string | ImportReference): CompilerTransform;
   property(name: string): InterfacePropertySelection;
+  replaceExtends(from: string | RegExp, to: string | ImportReference): CompilerTransform;
 }
 
 export interface InterfacePropertySelection {
@@ -423,6 +434,11 @@ function createJsxElementSelection(tag: string | RegExp, match: MatchHelpers, ed
       return edit.jsx.element({ when, transform });
     },
     spreadProps: (value) => edit.jsx.element({ when, transform: edit.jsx.addPropsSpread(value) }),
+    unwrap: (options = {}) =>
+      unwrapJsxElement({
+        match: when,
+        ...(options.forwardPropsTo ? { forwardPropsTo: match.jsx.tag(options.forwardPropsTo) } : {}),
+      }),
   };
 }
 
@@ -434,8 +450,48 @@ function createJsxPropsSelection(
 ): JsxPropsSelection {
   const when = match.all(match.jsx.prop(name), ...predicates);
   return {
+    rename: (nextName) => renameJsxProps(when, nextName),
     replace: (transform) => edit.jsx.prop({ when, transform }),
     where: (predicate) => createJsxPropsSelection(name, match, edit, [...predicates, predicate]),
+  };
+}
+
+function renameJsxProps(when: MatchPredicate, name: string): CompilerTransform {
+  return (context) => {
+    const factory = context.factory;
+
+    const visit = (node: ts.Node): ts.Node => {
+      const next = ts.visitEachChild(node, visit, context);
+      if (!isJsxNodeLike(next)) return next;
+
+      const attrs = ts.isJsxElement(next) ? next.openingElement.attributes : next.attributes;
+      let changed = false;
+      const properties = attrs.properties.map((property) => {
+        if (!ts.isJsxAttribute(property)) return property;
+        if (!when(property, { element: next, prop: property, factory })) return property;
+        changed = true;
+        return factory.updateJsxAttribute(property, factory.createIdentifier(name), property.initializer);
+      });
+      if (!changed) return next;
+
+      const nextAttrs = factory.updateJsxAttributes(attrs, properties);
+      if (ts.isJsxElement(next)) {
+        return factory.updateJsxElement(
+          next,
+          factory.updateJsxOpeningElement(
+            next.openingElement,
+            next.openingElement.tagName,
+            next.openingElement.typeArguments,
+            nextAttrs
+          ),
+          next.children,
+          next.closingElement
+        );
+      }
+      return factory.updateJsxSelfClosingElement(next, next.tagName, next.typeArguments, nextAttrs);
+    };
+
+    return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);
   };
 }
 
@@ -450,6 +506,8 @@ function createInterfaceSelection(name: string | RegExp, match: MatchHelpers, ed
           transform: edit.interface.setType(type),
         }),
     }),
+    replaceExtends: (from, to) =>
+      edit.interface.declaration({ when, transform: edit.interface.replaceExtends(from, to) }),
   };
 }
 
@@ -615,6 +673,9 @@ function createCreateHelpers(): CreateHelpers {
       union(...types) {
         return ts.factory.createUnionTypeNode([...types]);
       },
+      unknown() {
+        return ts.factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
+      },
       undefined() {
         return ts.factory.createKeywordTypeNode(ts.SyntaxKind.UndefinedKeyword);
       },
@@ -658,6 +719,8 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
       declaration: editInterfaceDeclaration,
       extends: (value) => (interfaceContext) =>
         addInterfaceExtends(interfaceContext.interface, value, interfaceContext.factory),
+      replaceExtends: (from, to) => (interfaceContext) =>
+        replaceInterfaceExtends(interfaceContext.interface, from, to, interfaceContext.factory),
       property: editInterfaceProperty,
       setType: (type) => (propertyContext) => {
         const factory = propertyContext.factory;
@@ -700,6 +763,10 @@ function jsxTagNameFromReference(value: string | ImportReference): ts.JsxTagName
     current = ts.factory.createPropertyAccessExpression(current, ts.factory.createIdentifier(part));
   }
   return current as ts.JsxTagNameExpression;
+}
+
+function expressionFromReference(value: string | ImportReference): ts.Expression {
+  return jsxTagNameFromReference(value) as ts.Expression;
 }
 
 function editJsxElement(options: JsxElementEditOptions): CompilerTransform {
@@ -1037,6 +1104,38 @@ function addInterfaceExtends(
   );
 }
 
+function replaceInterfaceExtends(
+  declaration: ts.InterfaceDeclaration,
+  from: string | RegExp,
+  to: string | ImportReference,
+  factory: ts.NodeFactory
+): ts.InterfaceDeclaration | undefined {
+  if (!declaration.heritageClauses) return undefined;
+
+  let changed = false;
+  const heritageClauses = declaration.heritageClauses.map((clause) => {
+    if (clause.token !== ts.SyntaxKind.ExtendsKeyword) return clause;
+    const types = clause.types.map((type) => {
+      const name = heritageTypeName(type);
+      const matches = name !== undefined && (typeof from === 'string' ? name === from : from.test(name));
+      if (!matches) return type;
+      changed = true;
+      return factory.updateExpressionWithTypeArguments(type, expressionFromReference(to), type.typeArguments);
+    });
+    return factory.updateHeritageClause(clause, types);
+  });
+
+  if (!changed) return undefined;
+  return factory.updateInterfaceDeclaration(
+    declaration,
+    declaration.modifiers,
+    declaration.name,
+    declaration.typeParameters,
+    heritageClauses,
+    declaration.members
+  );
+}
+
 function addFunctionProps(
   declaration: ts.FunctionDeclaration,
   parameterIndex: number,
@@ -1158,10 +1257,14 @@ function createJsxProps(spec: JsxPropsSpec, factory: ts.NodeFactory): (ts.JsxAtt
 }
 
 function heritageTypeName(type: ts.ExpressionWithTypeArguments): string | undefined {
-  const expression = type.expression;
+  return expressionName(type.expression);
+}
+
+function expressionName(expression: ts.Expression): string | undefined {
   if (ts.isIdentifier(expression)) return expression.text;
-  if (ts.isPropertyAccessExpression(expression)) return expression.name.text;
-  return undefined;
+  if (!ts.isPropertyAccessExpression(expression)) return undefined;
+  const left = expressionName(expression.expression);
+  return left ? `${left}.${expression.name.text}` : undefined;
 }
 
 function bindingElementName(element: ts.BindingElement): string | undefined {
