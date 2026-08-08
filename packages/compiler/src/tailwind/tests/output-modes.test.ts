@@ -201,6 +201,84 @@ export function Fixture({ active }: { active: boolean }) {
       /*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
       @layer properties;
 
+      .button {
+        align-items: center;
+        display: flex;
+        position: relative;
+      }
+
+      .button:before {
+        content: var(--tw-content);
+        --tw-content: "x";
+        content: var(--tw-content);
+        position: absolute;
+      }
+
+      .button:after {
+        content: var(--tw-content);
+        position: absolute;
+      }
+
+      .button:focus-visible {
+        outline-color: currentColor;
+      }
+
+      .button:disabled {
+        opacity: .5;
+      }
+
+      .button[aria-expanded="true"] {
+        background-color: currentColor;
+      }
+
+      @supports (color: color-mix(in lab, red, red)) {
+        .button[aria-expanded="true"] {
+          background-color: color-mix(in oklab, currentcolor 10.0%, transparent);
+        }
+      }
+
+      .button[data-availability="unsupported"] {
+        display: none;
+      }
+
+      .controls {
+        --media-popover-side-offset: .5rem;
+        flex-wrap: wrap;
+        display: flex;
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .controls {
+          --media-controls-transition-duration: 50ms;
+        }
+      }
+
+      @media (prefers-contrast: more) {
+        .controls {
+          --media-surface-background-color: oklch(0% 0 0);
+        }
+      }
+
+      @container media-root (width >= 42rem) {
+        .controls {
+          flex-wrap: nowrap;
+        }
+      }
+
+      @media (pointer: fine) {
+        .controls {
+          transition-property: scale, filter, opacity;
+          transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));
+          transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));
+        }
+      }
+
+      @media (prefers-reduced-transparency: reduce) {
+        .controls {
+          --media-surface-background-color: oklch(0% 0 0);
+        }
+      }
+
       .fixture-root {
         width: 100%;
       }
@@ -247,84 +325,6 @@ export function Fixture({ active }: { active: boolean }) {
 
       .fixture-root:fullscreen {
         --media-border-radius: 0;
-      }
-
-      .controls {
-        --media-popover-side-offset: .5rem;
-        flex-wrap: wrap;
-        display: flex;
-      }
-
-      @media (prefers-reduced-motion: reduce) {
-        .controls {
-          --media-controls-transition-duration: 50ms;
-        }
-      }
-
-      @media (prefers-contrast: more) {
-        .controls {
-          --media-surface-background-color: oklch(0% 0 0);
-        }
-      }
-
-      @container media-root (width >= 42rem) {
-        .controls {
-          flex-wrap: nowrap;
-        }
-      }
-
-      @media (pointer: fine) {
-        .controls {
-          transition-property: scale, filter, opacity;
-          transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));
-          transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));
-        }
-      }
-
-      @media (prefers-reduced-transparency: reduce) {
-        .controls {
-          --media-surface-background-color: oklch(0% 0 0);
-        }
-      }
-
-      .button {
-        align-items: center;
-        display: flex;
-        position: relative;
-      }
-
-      .button:before {
-        content: var(--tw-content);
-        --tw-content: "x";
-        content: var(--tw-content);
-        position: absolute;
-      }
-
-      .button:after {
-        content: var(--tw-content);
-        position: absolute;
-      }
-
-      .button:focus-visible {
-        outline-color: currentColor;
-      }
-
-      .button:disabled {
-        opacity: .5;
-      }
-
-      .button[aria-expanded="true"] {
-        background-color: currentColor;
-      }
-
-      @supports (color: color-mix(in lab, red, red)) {
-        .button[aria-expanded="true"] {
-          background-color: color-mix(in oklab, currentcolor 10.0%, transparent);
-        }
-      }
-
-      .button[data-availability="unsupported"] {
-        display: none;
       }
 
       .icon {

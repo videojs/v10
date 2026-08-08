@@ -17,7 +17,6 @@ export const button = {
 };
 
 export const buttonIcon = {
-  base: icon,
   fullscreenEnter: [
     icon,
     'hidden opacity-0 group-not-data-fullscreen/fullscreen:block group-not-data-fullscreen/fullscreen:opacity-100',
@@ -40,6 +39,7 @@ export const buttonIcon = {
   ],
   restart: [icon, 'hidden opacity-0 group-data-ended/play:block group-data-ended/play:opacity-100'],
   seekBackward: [icon, '-scale-x-100'],
+  seekForward: icon,
   volumeHigh: [
     icon,
     'hidden opacity-0 group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block',

@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { basename, dirname, extname, posix, relative, resolve, sep } from 'node:path';
+import { basename, dirname, extname, posix, relative, resolve } from 'node:path';
+import { type DeclarationBlock, type Rule, transform } from 'lightningcss';
 import { format } from 'prettier';
 import {
   type ArtifactGraph,
@@ -8,10 +9,17 @@ import {
   resolveArtifactClosure,
 } from '../../packages/compiler/src/artifacts/index.ts';
 import { compile } from '../../packages/compiler/src/index.ts';
+import { cloneCssAst, withoutNullValues } from '../../packages/compiler/src/tailwind/css/ast.ts';
+import { createStyleClassRegistry, type StyleClassRegistry } from '../../packages/compiler/src/tailwind/index.ts';
+import {
+  collectModuleSpecifiers,
+  rewriteModuleSpecifiers,
+} from '../../packages/compiler/src/utils/module-specifiers.ts';
 import { renderSkinSourceOutput } from '../../packages/html/scripts/render-skin-source.ts';
 import { resolveHtmlElementImports } from '../../packages/html/skins.compiler.config.ts';
 import { createHtmlIconsSource, createReactIconsSource } from '../../packages/icons/scripts/source.ts';
 import { createReactSkinSourceConfig } from '../../packages/react/skins.compiler.config.ts';
+import { toPosixPath } from './path.ts';
 
 export type SourceFramework = 'html' | 'react';
 export type SourceStyle = 'css' | 'tailwind';
@@ -48,7 +56,15 @@ interface ArtifactOutputContext {
   entryFile: string;
 }
 
-/** Lower canonical artifacts to framework-owned source files without applying registry policy. */
+interface EmittedArtifact {
+  files: SourceOutputFile[];
+  supportCss?: string | undefined;
+}
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+/** Emit canonical artifacts as framework-owned source files without applying registry policy. */
 export async function createSourceOutput(
   graph: ArtifactGraph,
   options: CreateSourceOutputOptions
@@ -62,9 +78,12 @@ export async function createSourceOutput(
   );
   const artifacts: Record<string, SourceOutputFile[]> = {};
   const dependencies: Record<string, string[]> = {};
+  const supportSources: string[] = [];
+  const styleRegistry =
+    options.target.framework === 'react' && options.target.style === 'css' ? createStyleClassRegistry() : undefined;
 
   for (const context of [...contexts.values()].sort((a, b) => a.artifact.id.localeCompare(b.artifact.id))) {
-    const files = await emitArtifact(context, {
+    const emitted = await emitArtifact(context, {
       rootDir,
       target: options.target,
       iconSet: options.iconSet ?? 'default',
@@ -72,9 +91,20 @@ export async function createSourceOutput(
       targetRoot,
       graph,
       entryArtifacts,
+      styleRegistry,
     });
+    const files = emitted.files;
+    if (emitted.supportCss) supportSources.push(emitted.supportCss);
     artifacts[context.artifact.id] = files;
     dependencies[context.artifact.id] = collectPackageDependencies(files);
+  }
+
+  if (options.target.framework === 'react' && options.target.style === 'css' && supportSources.length > 0) {
+    const support = consolidateSupportCss(supportSources);
+    for (const files of Object.values(artifacts)) {
+      files.push(outputFile({ ...options, outputRoot }, posix.join(targetRoot, 'styles/support.css'), support));
+      files.sort((a, b) => a.path.localeCompare(b.path));
+    }
   }
 
   return { artifacts, dependencies };
@@ -90,14 +120,16 @@ async function emitArtifact(
     targetRoot: string;
     graph: ArtifactGraph;
     entryArtifacts: ReadonlyMap<string, ArtifactOutputContext>;
+    styleRegistry?: StyleClassRegistry | undefined;
   }
-): Promise<SourceOutputFile[]> {
+): Promise<EmittedArtifact> {
   const { artifact } = context;
   const outputFiles: SourceOutputFile[] = [];
   const inputFile = absoluteGraphPath(options.rootDir, artifact.entry);
   const tailwindInput = tailwindResource(artifact, options.rootDir);
   let entrySource: string;
   let extractedCss = '';
+  let supportCss: string | undefined;
 
   if (options.target.framework === 'html') {
     const rendered = await renderSkinSourceOutput(inputFile, {
@@ -117,15 +149,17 @@ async function emitArtifact(
       config: createReactSkinSourceConfig({
         style: options.target.style,
         ...(options.target.style === 'css' ? { tailwindInput } : {}),
+        ...(options.styleRegistry ? { styleRegistry: options.styleRegistry } : {}),
       }),
       configDir: resolve(options.rootDir, context.artifactDir),
       outputFile: resolve(options.rootDir, context.entryFile),
     });
     if (result.diagnostics.some((diagnostic) => diagnostic.level === 'error')) {
-      throw new Error(`Artifact \`${artifact.id}\` failed React lowering.`);
+      throw new Error(`Artifact \`${artifact.id}\` failed React source emission.`);
     }
     entrySource = rewriteRelativeImports(result.code, inputFile, context, options);
-    extractedCss = result.assets.map((asset) => asset.source).join('\n\n');
+    extractedCss = result.assets.find((asset) => !asset.fileName.endsWith('.support.css'))?.source ?? '';
+    supportCss = result.assets.find((asset) => asset.fileName.endsWith('.support.css'))?.source;
   }
 
   const closure = resolveArtifactClosure(options.graph, artifact.id);
@@ -157,7 +191,10 @@ async function emitArtifact(
   if (styleFiles.entryImport) entrySource = `import '${styleFiles.entryImport}';\n${entrySource}`;
   outputFiles.push(outputFile(options, context.entryFile, entrySource));
 
-  return outputFiles.sort((a, b) => a.path.localeCompare(b.path));
+  return {
+    files: outputFiles.sort((a, b) => a.path.localeCompare(b.path)),
+    ...(supportCss ? { supportCss } : {}),
+  };
 }
 
 function createArtifactContexts(
@@ -192,15 +229,8 @@ async function emitStyleFiles(
 
     const inputFile = absoluteGraphPath(options.rootDir, resource);
     const source = await readFile(inputFile, 'utf8');
-    const target = posix.join(options.targetRoot, stripCanonicalPrefix(normalizePath(resource)));
-    const content = isTailwindInput
-      ? source
-          .replace(/^@source .*;\s*$/gm, '')
-          .replace(
-            '@import "./themes/default.css";',
-            '@import "./themes/default.css";\n\n@source "../**/*.{ts,tsx,html}";'
-          )
-      : source;
+    const target = posix.join(options.targetRoot, stripCanonicalPrefix(toPosixPath(resource)));
+    const content = isTailwindInput ? rewriteTailwindInput(source, inputFile) : source;
     files.push(outputFile(options, target, content));
   }
 
@@ -215,6 +245,7 @@ async function emitStyleFiles(
   const content = [
     `@import '../styles/base.css';`,
     `@import '../styles/themes/default.css';`,
+    ...(options.target.framework === 'react' ? [`@import '../styles/support.css';`] : []),
     ``,
     extractedCss.trim(),
     ``,
@@ -226,6 +257,59 @@ async function emitStyleFiles(
   };
 }
 
+function rewriteTailwindInput(source: string, inputFile: string): string {
+  const marker = '@import "./themes/default.css";';
+  if (!source.includes(marker)) {
+    throw new Error(`Tailwind source entry \`${inputFile}\` is missing the expected theme import marker.`);
+  }
+  return source.replace(/^@source .*;\s*$/gm, '').replace(marker, `${marker}\n\n@source "../**/*.{ts,tsx,html}";`);
+}
+
+function consolidateSupportCss(sources: readonly string[]): string {
+  const result = transform({
+    filename: 'support.css',
+    code: encoder.encode(sources.join('\n')),
+    visitor: {
+      StyleSheet(stylesheet) {
+        const rules: Rule[] = [];
+        const seen = new Set<string>();
+        let theme: Extract<Rule, { type: 'style' }> | undefined;
+
+        for (const rule of stylesheet.rules) {
+          if (isMediaSkinRule(rule)) {
+            if (!theme) theme = cloneCssAst(rule);
+            else appendDeclarations(theme.value.declarations, rule.value.declarations);
+            continue;
+          }
+
+          const key = JSON.stringify(rule);
+          if (seen.has(key)) continue;
+          seen.add(key);
+          rules.push(cloneCssAst(rule));
+        }
+
+        return withoutNullValues({
+          ...stylesheet,
+          rules: theme ? [theme, ...rules] : rules,
+          licenseComments: [...new Set(stylesheet.licenseComments)],
+        });
+      },
+    },
+  });
+  return decoder.decode(result.code).trim();
+}
+
+function isMediaSkinRule(rule: Rule): rule is Extract<Rule, { type: 'style' }> {
+  if (rule.type !== 'style' || rule.value.selectors.length !== 1) return false;
+  const selector = rule.value.selectors[0];
+  return selector?.length === 1 && selector[0]?.type === 'class' && selector[0].name === 'media-skin';
+}
+
+function appendDeclarations(target: DeclarationBlock, source: DeclarationBlock): void {
+  target.declarations.push(...source.declarations.map(cloneCssAst));
+  target.importantDeclarations.push(...source.importantDeclarations.map(cloneCssAst));
+}
+
 function rewriteRelativeImports(
   source: string,
   inputFile: string,
@@ -235,19 +319,29 @@ function rewriteRelativeImports(
     entryArtifacts: ReadonlyMap<string, ArtifactOutputContext>;
   }
 ): string {
-  return source.replace(/((?:\bfrom\s*|\bimport\s*)['"])([^'"]+)(['"])/g, (match, prefix, specifier, suffix) => {
-    if (!specifier.startsWith('.')) return match;
-    const importedFile = resolveSourceFile(inputFile, specifier);
-    const dependency = options.entryArtifacts.get(importedFile);
-    if (!existsSync(importedFile)) return match;
-    if (!dependency) {
-      throw new Error(
-        `Artifact \`${context.artifact.id}\` cannot map relative import \`${specifier}\` from \`${normalizePath(
-          relative(options.rootDir, inputFile)
-        )}\`.`
-      );
-    }
-    return `${prefix}${relativeModulePath(dirname(context.entryFile), withoutTypeScriptExtension(dependency.entryFile))}${suffix}`;
+  const synthesized = new Set(['./icons']);
+  return rewriteModuleSpecifiers(source, {
+    filename: context.entryFile,
+    resolve(specifier) {
+      if (!specifier.startsWith('.') || synthesized.has(specifier)) return specifier;
+      const importedFile = resolveSourceFile(inputFile, specifier);
+      const dependency = options.entryArtifacts.get(importedFile);
+      if (!existsSync(importedFile)) {
+        throw new Error(
+          `Artifact \`${context.artifact.id}\` has unresolved relative import \`${specifier}\` from \`${toPosixPath(
+            relative(options.rootDir, inputFile)
+          )}\`.`
+        );
+      }
+      if (!dependency) {
+        throw new Error(
+          `Artifact \`${context.artifact.id}\` cannot map relative import \`${specifier}\` from \`${toPosixPath(
+            relative(options.rootDir, inputFile)
+          )}\`.`
+        );
+      }
+      return relativeModulePath(dirname(context.entryFile), withoutTypeScriptExtension(dependency.entryFile));
+    },
   });
 }
 
@@ -267,9 +361,8 @@ function outputFile(
 function collectPackageDependencies(files: readonly SourceOutputFile[]): string[] {
   const packages = new Set<string>();
   for (const file of files) {
-    if (file.kind === 'style') continue;
-    for (const match of file.content.matchAll(/(?:\bfrom\s*|\bimport\s*)['"]([^'"]+)['"]/g)) {
-      const specifier = match[1];
+    if (file.kind === 'style' || !/\.[cm]?[jt]sx?$/.test(file.target)) continue;
+    for (const specifier of collectModuleSpecifiers(file.content, file.target)) {
       if (specifier && !specifier.startsWith('.')) packages.add(packageName(specifier));
     }
   }
@@ -310,12 +403,8 @@ function withoutTypeScriptExtension(path: string): string {
 }
 
 function relativeModulePath(from: string, to: string): string {
-  const path = posix.relative(normalizePath(from), normalizePath(to));
+  const path = posix.relative(toPosixPath(from), toPosixPath(to));
   return path.startsWith('.') ? path : `./${path}`;
-}
-
-function normalizePath(path: string): string {
-  return path.split(sep).join('/');
 }
 
 function packageName(specifier: string): string {

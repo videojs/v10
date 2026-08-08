@@ -1,8 +1,8 @@
 @layer videojs.base {
-  .vjs-skin,
-  .vjs-skin *,
-  .vjs-skin *::before,
-  .vjs-skin *::after {
+  .media-skin,
+  .media-skin *,
+  .media-skin *::before,
+  .media-skin *::after {
     box-sizing: border-box;
   }
 }

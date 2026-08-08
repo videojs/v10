@@ -8,6 +8,7 @@ import { clearTokenModuleCache } from '../../styles';
 import type { DesignSystem } from '../design-system';
 import { loadDesignSystem } from '../design-system';
 import { tailwind } from '../plugin';
+import { createStyleClassRegistry, createStyleProgram } from '../program';
 
 const MINIMAL_CSS = `
 @import "tailwindcss";
@@ -139,6 +140,136 @@ function App(){ return <Foo className={['flex', styles.unknown]}/>; }`;
 });
 
 describe('tailwindPlugin — mode: extract', () => {
+  it('collects multiple source modules into one externally emitted StyleProgram', async () => {
+    const program = createStyleProgram({ design, output: 'styles.css', themeSelector: '.media-skin' });
+    const first = await compileTailwind(`function Play(){ return <PlayButton className="flex"/>; }`, {
+      mode: 'extract',
+      program,
+    });
+    const second = await compileTailwind(`function Menu(){ return <MenuItem className="grid"/>; }`, {
+      mode: 'extract',
+      program,
+    });
+
+    expect(first.assets).toEqual([]);
+    expect(second.assets).toEqual([]);
+    const emitted = await program.emit();
+    expect(emitted.files).toHaveLength(1);
+    expect(collapse(emitted.files[0]!.source)).toContain(collapse('.play-button{display:flex;}'));
+    expect(collapse(emitted.files[0]!.source)).toContain(collapse('.menu-item{display:grid;}'));
+  });
+
+  it('detects semantic class collisions across collected source modules', async () => {
+    const program = createStyleProgram({ design, output: 'styles.css' });
+    const options = {
+      mode: 'extract' as const,
+      program,
+      resolve: { element: () => 'media-control' },
+    };
+    await compileTailwind(`function Play(){ return <PlayButton className="flex"/>; }`, options);
+
+    await expect(compileTailwind(`function Menu(){ return <MenuItem className="grid"/>; }`, options)).rejects.toThrow(
+      /class name 'media-control' is assigned incompatible utility recipes/
+    );
+  });
+
+  it('detects semantic class collisions across independently emitted programs', async () => {
+    const registry = createStyleClassRegistry();
+    await compileTailwind(`function Play(){ return <PlayButton className="flex"/>; }`, {
+      mode: 'extract',
+      design,
+      registry,
+      resolve: { element: () => 'media-control' },
+    });
+
+    await expect(
+      compileTailwind(`function Menu(){ return <MenuItem className="grid"/>; }`, {
+        mode: 'extract',
+        design,
+        registry,
+        resolve: { element: () => 'media-control' },
+      })
+    ).rejects.toThrow(/class name 'media-control' has incompatible recipes across emitted stylesheets/);
+  });
+
+  it('lets a caller-owned StyleProgram own all CSS emission options', async () => {
+    const program = createStyleProgram({ design, output: 'styles.css' });
+    await expect(
+      compileTailwind(`function Play(){ return <PlayButton className="flex"/>; }`, {
+        mode: 'extract',
+        program,
+        output: 'other.css',
+      })
+    ).rejects.toThrow(/caller-owned StyleProgram also owns/);
+  });
+
+  it('only emits a StyleProgram once', async () => {
+    const program = createStyleProgram({ design, output: 'styles.css' });
+    await compileTailwind(`function Play(){ return <PlayButton className="flex"/>; }`, {
+      mode: 'extract',
+      program,
+    });
+    await program.emit();
+
+    await expect(program.emit()).rejects.toThrow(/can only be called once/);
+  });
+
+  it('rejects Tailwind rules with multiple candidate anchors', async () => {
+    const ambiguousDesign: DesignSystem = {
+      cssPath: 'fixture.css',
+      recognizesCandidate: () => true,
+      compileCandidates: async () => '.flex, .grid { display: block; }',
+      resolveThemeVar: () => undefined,
+    };
+
+    await expect(
+      compileTailwind(`function App(){ return <Thing className="flex grid"/>; }`, {
+        mode: 'extract',
+        design: ambiguousDesign,
+      })
+    ).rejects.toThrow(/multiple utility anchors/);
+  });
+
+  it('rejects support CSS interleaved between candidate rules', async () => {
+    const interleavedDesign: DesignSystem = {
+      cssPath: 'fixture.css',
+      recognizesCandidate: () => true,
+      compileCandidates: async () =>
+        '.flex { display: flex; } @property --fixture { syntax: "*"; inherits: false; } .grid { display: grid; }',
+      resolveThemeVar: () => undefined,
+    };
+
+    await expect(
+      compileTailwind(`function App(){ return <Thing className="flex grid"/>; }`, {
+        mode: 'extract',
+        design: interleavedDesign,
+      })
+    ).rejects.toThrow(/interleaved support CSS/);
+  });
+
+  it('discovers theme variables structurally without matching strings or comments', async () => {
+    const requested: string[] = [];
+    const variableDesign: DesignSystem = {
+      cssPath: 'fixture.css',
+      recognizesCandidate: () => true,
+      compileCandidates: async () =>
+        '.fixture { content: "--not-a-variable"; color: var(--actual-theme-variable); /* --not-a-reference */ }',
+      resolveThemeVar(name) {
+        requested.push(name);
+        return name === '--actual-theme-variable' ? 'red' : undefined;
+      },
+    };
+
+    const { assets } = await compileTailwind(`function App(){ return <Thing className="fixture"/>; }`, {
+      mode: 'extract',
+      design: variableDesign,
+    });
+
+    expect(requested).toEqual(['--actual-theme-variable']);
+    expect(assets[0]!.source).toContain('--actual-theme-variable: red');
+    expect(assets[0]!.source).not.toMatch(/--not-a-variable\s*:/);
+  });
+
   it('replaces static utilities with component class names', async () => {
     const source = `function App(){ return <PlayButton className="flex items-center"/>; }`;
     const { code } = await compile(source, {
@@ -265,7 +396,7 @@ describe('tailwindPlugin — mode: extract', () => {
         target: 'jsx',
         plugins: [tailwindPlugin({ design, mode: 'extract' })],
       })
-    ).rejects.toThrow(/class name 'seek-icon' is derived from elements with different styles/);
+    ).rejects.toThrow(/class name 'seek-icon' is assigned incompatible utility recipes/);
   });
 
   it('allows selector-owned class merges', async () => {
@@ -278,7 +409,7 @@ describe('tailwindPlugin — mode: extract', () => {
           mode: 'extract',
           resolve: {
             element() {
-              return 'media-button';
+              return { className: 'media-button', merge: true };
             },
           },
         }),
@@ -664,7 +795,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
   });
 
   it('emits referenced theme variables in extracted CSS', async () => {
-    // `p-4` lowers to `padding: calc(var(--spacing) * 4)` — the output must
+    // `p-4` emits `padding: calc(var(--spacing) * 4)` — the output must
     // define `--spacing` so it resolves without a separate Tailwind theme.
     const source = `function App(){ return <Foo className="p-4"/>; }`;
     const { assets } = await compileTailwind(source, {
@@ -763,7 +894,7 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     }
   });
 
-  it('scopes repeated scaffold marker names to their output chunk', async () => {
+  it('scopes repeated relationship marker names to their output chunk', async () => {
     const source = `function App(){ return <><AButton className="group/item"><AIcon className="hidden group-data-active/item:block"/></AButton><BButton className="group/item"><BIcon className="hidden group-data-active/item:block"/></BButton></>; }`;
     const { assets } = await compileTailwind(source, {
       mode: 'extract',

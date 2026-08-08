@@ -8,7 +8,7 @@ import { TimeSlider } from '../time-slider/time-slider';
 const SEEK_SECONDS = 10;
 export function DefaultVideoControls() {
   return (
-    <Controls.Root className="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface vjs-skin vjs-theme-default flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding font-media text-media leading-none text-media-controls">
+    <Controls.Root className="bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface media-skin media-theme-default flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding font-media text-media leading-none text-media-controls">
       <Tooltip.Provider>
         <Controls.Group className="flex items-center gap-media-controls-gap">
           <PlayButton />

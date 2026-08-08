@@ -8,21 +8,21 @@ import { TimeSlider } from '../time-slider/time-slider';
 const SEEK_SECONDS = 10;
 export function DefaultVideoControls() {
   return (
-    <Controls.Root className="vjs-video-controls vjs-skin vjs-theme-default">
+    <Controls.Root className="media-video-controls media-skin media-theme-default">
       <Tooltip.Provider>
-        <Controls.Group className="vjs-controls-group-base">
+        <Controls.Group className="media-controls-group-primary">
           <PlayButton />
           <SeekButton seconds={-SEEK_SECONDS} />
           <SeekButton seconds={SEEK_SECONDS} />
         </Controls.Group>
 
-        <Controls.Group className="vjs-controls-group-time">
-          <TimePrimitive.Value className="vjs-time" type="current" />
+        <Controls.Group className="media-controls-group-time">
+          <TimePrimitive.Value className="media-time" type="current" />
           <TimeSlider />
-          <TimePrimitive.Value className="vjs-time" type="remaining" toggle />
+          <TimePrimitive.Value className="media-time" type="remaining" toggle />
         </Controls.Group>
 
-        <Controls.Group className="vjs-controls-group-base">
+        <Controls.Group className="media-controls-group-primary">
           <VolumePopover />
           <FullscreenButton />
         </Controls.Group>

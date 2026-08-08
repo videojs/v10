@@ -1,5 +1,6 @@
 import { type CompilerTransform, defineConfig, transform } from '@videojs/compiler';
 import { tagName } from '@videojs/compiler/ast';
+import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { tailwind } from '@videojs/compiler/tailwind';
 import ts from 'typescript';
 
@@ -8,6 +9,7 @@ export type SkinSourceStyle = 'css' | 'tailwind';
 export interface CreateHtmlSkinSourceConfigOptions {
   style: SkinSourceStyle;
   tailwindInput?: string | undefined;
+  styleProgram?: StyleProgram | undefined;
 }
 
 const componentTags = {
@@ -66,7 +68,7 @@ const elementModules: Readonly<Record<string, readonly string[]>> = {
   VolumeSlider: ['@videojs/html/ui/volume-slider'],
 };
 
-export function createHtmlSkinSourceConfig({ style, tailwindInput }: CreateHtmlSkinSourceConfigOptions) {
+export function createHtmlSkinSourceConfig({ style, tailwindInput, styleProgram }: CreateHtmlSkinSourceConfigOptions) {
   return defineConfig({
     plugins: [
       tailwind(
@@ -74,12 +76,13 @@ export function createHtmlSkinSourceConfig({ style, tailwindInput }: CreateHtmlS
           ? { mode: 'inline' }
           : {
               mode: 'extract',
-              input: requiredTailwindInput(tailwindInput),
-              output: 'styles.css',
+              ...(styleProgram
+                ? { program: styleProgram }
+                : { input: requiredTailwindInput(tailwindInput), output: 'styles.css' }),
               resolve: {
-                element: ({ defaultName }) => ({ className: `vjs-${defaultName}` }),
+                element: ({ defaultName }) => ({ className: `media-${defaultName}` }),
               },
-              emit: { themeSelector: '.vjs-skin' },
+              ...(styleProgram ? {} : { emit: { themeSelector: '.media-skin' } }),
             }
       ),
       transform(

@@ -1,5 +1,5 @@
 @layer videojs.theme {
-  .vjs-theme-default {
+  .media-theme-default {
     --media-controls-color: oklch(1 0 0);
     --media-controls-gap: 0.25rem;
     --media-controls-padding: 0.25rem;

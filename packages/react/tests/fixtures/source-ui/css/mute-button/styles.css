@@ -1,14 +1,60 @@
 @import '../styles/base.css';
 @import '../styles/themes/default.css';
+@import '../styles/support.css';
 
-.vjs-skin {
-  --spacing: 0.25rem;
+.media-button-icon-volume-high {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  --tw-drop-shadow-size: drop-shadow(0 1px 0 var(--tw-drop-shadow-color, var(--media-shadow-color)));
+  --tw-drop-shadow: drop-shadow(0 1px 0 var(--media-shadow-color));
+  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,)
+    var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  display: none;
 }
 
-/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
-@layer properties;
+.media-button-icon-volume-high:is(:where(.media-button-mute):not([data-muted]) *):is(
+    :where(.media-button-mute):not([data-volume-level='low']) *
+  ) {
+  opacity: 1;
+  display: block;
+}
 
-.vjs-button-mute {
+.media-button-icon-volume-low {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  --tw-drop-shadow-size: drop-shadow(0 1px 0 var(--tw-drop-shadow-color, var(--media-shadow-color)));
+  --tw-drop-shadow: drop-shadow(0 1px 0 var(--media-shadow-color));
+  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,)
+    var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  display: none;
+}
+
+.media-button-icon-volume-low:is(:where(.media-button-mute):not([data-muted]) *):is(
+    :where(.media-button-mute)[data-volume-level='low'] *
+  ) {
+  opacity: 1;
+  display: block;
+}
+
+.media-button-icon-volume-off {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  --tw-drop-shadow-size: drop-shadow(0 1px 0 var(--tw-drop-shadow-color, var(--media-shadow-color)));
+  --tw-drop-shadow: drop-shadow(0 1px 0 var(--media-shadow-color));
+  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,)
+    var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
+  display: none;
+}
+
+.media-button-icon-volume-off:is(:where(.media-button-mute)[data-muted] *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-button-mute {
   width: var(--media-control-size);
   height: var(--media-control-size);
   cursor: pointer;
@@ -28,178 +74,22 @@
 }
 
 @media (hover: hover) {
-  .vjs-button-mute:hover {
+  .media-button-mute:hover {
     background-color: var(--media-control-hover-background);
   }
 }
 
-.vjs-button-mute:focus-visible {
+.media-button-mute:focus-visible {
   background-color: var(--media-control-hover-background);
   outline-offset: 2px;
   outline-color: currentColor;
 }
 
-.vjs-button-mute[aria-disabled='true'] {
+.media-button-mute[aria-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.vjs-button-mute[aria-expanded='true'] {
+.media-button-mute[aria-expanded='true'] {
   background-color: var(--media-control-hover-background);
-}
-
-.vjs-button-icon-volume-off {
-  width: var(--media-icon-size);
-  height: var(--media-icon-size);
-  opacity: 0;
-  --tw-drop-shadow-size: drop-shadow(0 1px 0 var(--tw-drop-shadow-color, var(--media-shadow-color)));
-  --tw-drop-shadow: drop-shadow(0 1px 0 var(--media-shadow-color));
-  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,)
-    var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
-  display: none;
-}
-
-.vjs-button-icon-volume-off:is(:where(.vjs-button-mute)[data-muted] *) {
-  opacity: 1;
-  display: block;
-}
-
-.vjs-button-icon-volume-low {
-  width: var(--media-icon-size);
-  height: var(--media-icon-size);
-  opacity: 0;
-  --tw-drop-shadow-size: drop-shadow(0 1px 0 var(--tw-drop-shadow-color, var(--media-shadow-color)));
-  --tw-drop-shadow: drop-shadow(0 1px 0 var(--media-shadow-color));
-  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,)
-    var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
-  display: none;
-}
-
-.vjs-button-icon-volume-low:is(:where(.vjs-button-mute):not([data-muted]) *):is(
-    :where(.vjs-button-mute)[data-volume-level='low'] *
-  ) {
-  opacity: 1;
-  display: block;
-}
-
-.vjs-button-icon-volume-high {
-  width: var(--media-icon-size);
-  height: var(--media-icon-size);
-  opacity: 0;
-  --tw-drop-shadow-size: drop-shadow(0 1px 0 var(--tw-drop-shadow-color, var(--media-shadow-color)));
-  --tw-drop-shadow: drop-shadow(0 1px 0 var(--media-shadow-color));
-  filter: var(--tw-blur,) var(--tw-brightness,) var(--tw-contrast,) var(--tw-grayscale,) var(--tw-hue-rotate,)
-    var(--tw-invert,) var(--tw-saturate,) var(--tw-sepia,) var(--tw-drop-shadow,);
-  display: none;
-}
-
-.vjs-button-icon-volume-high:is(:where(.vjs-button-mute):not([data-muted]) *):is(
-    :where(.vjs-button-mute):not([data-volume-level='low']) *
-  ) {
-  opacity: 1;
-  display: block;
-}
-
-@property --tw-border-style {
-  syntax: '*';
-  inherits: false;
-  initial-value: solid;
-}
-
-@property --tw-outline-style {
-  syntax: '*';
-  inherits: false;
-  initial-value: solid;
-}
-
-@property --tw-blur {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-brightness {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-contrast {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-grayscale {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-hue-rotate {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-invert {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-opacity {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-saturate {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-sepia {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-drop-shadow {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-drop-shadow-color {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-drop-shadow-alpha {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-
-@property --tw-drop-shadow-size {
-  syntax: '*';
-  inherits: false;
-}
-
-@layer properties {
-  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or
-    ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-    *,
-    :before,
-    :after,
-    ::backdrop {
-      --tw-border-style: solid;
-      --tw-outline-style: solid;
-      --tw-blur: initial;
-      --tw-brightness: initial;
-      --tw-contrast: initial;
-      --tw-grayscale: initial;
-      --tw-hue-rotate: initial;
-      --tw-invert: initial;
-      --tw-opacity: initial;
-      --tw-saturate: initial;
-      --tw-sepia: initial;
-      --tw-drop-shadow: initial;
-      --tw-drop-shadow-color: initial;
-      --tw-drop-shadow-alpha: 100%;
-      --tw-drop-shadow-size: initial;
-    }
-  }
 }

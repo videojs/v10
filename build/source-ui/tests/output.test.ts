@@ -29,7 +29,7 @@ describe('createSourceOutput', () => {
     );
     assert.match(entry?.content ?? '', /^import '\.\.\/styles\/tailwind\.css';/);
     assert.match(entry?.content ?? '', /from "@videojs\/react"/);
-    assert.match(entry?.content ?? '', /from '\.\.\/button-tooltip\/button-tooltip'/);
+    assert.match(entry?.content ?? '', /from ["']\.\.\/button-tooltip\/button-tooltip["']/);
     assert.match(entry?.content ?? '', /grid size-media-control/);
     assert.doesNotMatch(entry?.content ?? '', /button\.tailwind|button\.play|@videojs\/core\/components/);
     assert.match(icons?.content ?? '', /export const PlayIcon/);
@@ -62,14 +62,19 @@ describe('createSourceOutput', () => {
     const files = output.artifacts['play-button'] ?? [];
     const entry = files.find((file) => file.target.endsWith('/play-button.tsx'));
     const styles = files.find((file) => file.target.endsWith('/play-button/styles.css'));
+    const support = files.find((file) => file.target.endsWith('/styles/support.css'));
 
     assert.match(entry?.content ?? '', /^import '\.\/styles\.css';/);
-    assert.match(entry?.content ?? '', /className="vjs-button-play"/);
+    assert.match(entry?.content ?? '', /className="media-button-play"/);
     assert.doesNotMatch(entry?.content ?? '', /grid|size-media-control|button\.tailwind/);
-    assert.match(styles?.content ?? '', /\.vjs-button-play\s*\{/);
-    assert.match(styles?.content ?? '', /\.vjs-button-icon-play/);
+    assert.match(styles?.content ?? '', /@import '\.\.\/styles\/support\.css';/);
+    assert.match(styles?.content ?? '', /\.media-button-play\s*\{/);
+    assert.match(styles?.content ?? '', /\.media-button-icon-play/);
     assert.match(styles?.content ?? '', /\[data-paused\]/);
-    assert.doesNotMatch(styles?.content ?? '', /\.grid|\.size-media-control|group-data-/);
+    assert.doesNotMatch(styles?.content ?? '', /\.grid|\.size-media-control|group-data-|@property|tailwindcss v/);
+    assert.match(support?.content ?? '', /\.media-skin\s*\{/);
+    assert.equal(support?.content.match(/tailwindcss v/g)?.length, 1);
+    assert.equal(support?.content.match(/@layer properties\s*\{/g)?.length, 1);
     assert.equal(
       files.some((file) => file.target.endsWith('/tailwind.css') || file.target.endsWith('.tailwind.ts')),
       false
@@ -82,11 +87,11 @@ describe('createSourceOutput', () => {
     const entry = files.find((file) => file.target.endsWith('/video-controls.html'));
     const styles = files.find((file) => file.target.endsWith('/default-video-controls/styles.css'));
 
-    assert.match(entry?.content ?? '', /class="vjs-video-controls vjs-skin vjs-theme-default"/);
-    assert.match(entry?.content ?? '', /class="vjs-button-play"/);
+    assert.match(entry?.content ?? '', /class="media-video-controls media-skin media-theme-default"/);
+    assert.match(entry?.content ?? '', /class="media-button-play"/);
     assert.doesNotMatch(entry?.content ?? '', /grid|size-media-control|group\/play/);
-    assert.match(styles?.content ?? '', /\.vjs-video-controls\s*\{/);
-    assert.match(styles?.content ?? '', /\.vjs-slider-root\s*\{/);
+    assert.match(styles?.content ?? '', /\.media-video-controls\s*\{/);
+    assert.match(styles?.content ?? '', /\.media-slider-root\s*\{/);
     assert.doesNotMatch(styles?.content ?? '', /\.flex|\.grid|group-data-/);
   });
 

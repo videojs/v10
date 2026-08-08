@@ -1,14 +1,8 @@
 @import '../styles/base.css';
 @import '../styles/themes/default.css';
+@import '../styles/support.css';
 
-.vjs-skin {
-  --spacing: 0.25rem;
-}
-
-/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
-@layer properties;
-
-.vjs-button-fullscreen {
+.media-button-fullscreen {
   width: var(--media-control-size);
   height: var(--media-control-size);
   cursor: pointer;
@@ -28,27 +22,27 @@
 }
 
 @media (hover: hover) {
-  .vjs-button-fullscreen:hover {
+  .media-button-fullscreen:hover {
     background-color: var(--media-control-hover-background);
   }
 }
 
-.vjs-button-fullscreen:focus-visible {
+.media-button-fullscreen:focus-visible {
   background-color: var(--media-control-hover-background);
   outline-offset: 2px;
   outline-color: currentColor;
 }
 
-.vjs-button-fullscreen[aria-disabled='true'] {
+.media-button-fullscreen[aria-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.5;
 }
 
-.vjs-button-fullscreen[aria-expanded='true'] {
+.media-button-fullscreen[aria-expanded='true'] {
   background-color: var(--media-control-hover-background);
 }
 
-.vjs-button-icon-fullscreen-enter {
+.media-button-icon-fullscreen-enter {
   width: var(--media-icon-size);
   height: var(--media-icon-size);
   opacity: 0;
@@ -59,12 +53,12 @@
   display: none;
 }
 
-.vjs-button-icon-fullscreen-enter:is(:where(.vjs-button-fullscreen):not([data-fullscreen]) *) {
+.media-button-icon-fullscreen-enter:is(:where(.media-button-fullscreen):not([data-fullscreen]) *) {
   opacity: 1;
   display: block;
 }
 
-.vjs-button-icon-fullscreen-exit {
+.media-button-icon-fullscreen-exit {
   width: var(--media-icon-size);
   height: var(--media-icon-size);
   opacity: 0;
@@ -75,111 +69,7 @@
   display: none;
 }
 
-.vjs-button-icon-fullscreen-exit:is(:where(.vjs-button-fullscreen)[data-fullscreen] *) {
+.media-button-icon-fullscreen-exit:is(:where(.media-button-fullscreen)[data-fullscreen] *) {
   opacity: 1;
   display: block;
-}
-
-@property --tw-border-style {
-  syntax: '*';
-  inherits: false;
-  initial-value: solid;
-}
-
-@property --tw-outline-style {
-  syntax: '*';
-  inherits: false;
-  initial-value: solid;
-}
-
-@property --tw-blur {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-brightness {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-contrast {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-grayscale {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-hue-rotate {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-invert {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-opacity {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-saturate {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-sepia {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-drop-shadow {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-drop-shadow-color {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-drop-shadow-alpha {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-
-@property --tw-drop-shadow-size {
-  syntax: '*';
-  inherits: false;
-}
-
-@layer properties {
-  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or
-    ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-    *,
-    :before,
-    :after,
-    ::backdrop {
-      --tw-border-style: solid;
-      --tw-outline-style: solid;
-      --tw-blur: initial;
-      --tw-brightness: initial;
-      --tw-contrast: initial;
-      --tw-grayscale: initial;
-      --tw-hue-rotate: initial;
-      --tw-invert: initial;
-      --tw-opacity: initial;
-      --tw-saturate: initial;
-      --tw-sepia: initial;
-      --tw-drop-shadow: initial;
-      --tw-drop-shadow-color: initial;
-      --tw-drop-shadow-alpha: 100%;
-      --tw-drop-shadow-size: initial;
-    }
-  }
 }

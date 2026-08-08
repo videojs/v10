@@ -1,11 +1,12 @@
 import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, posix, relative, resolve, sep } from 'node:path';
+import { dirname, posix, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format } from 'prettier';
 import { resolveArtifactClosure } from '../../packages/compiler/src/artifacts/index.ts';
 import { buildSkinArtifactGraph, skinsRoot } from '../../packages/skins/scripts/build-artifact-graph.ts';
 import { createSourceOutput, type SourceTarget } from './output.ts';
+import { toPosixPath } from './path.ts';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootArtifactId = 'default-video-controls';
@@ -125,14 +126,10 @@ async function walkFiles(rootDir: string, currentDir = rootDir): Promise<string[
     entries.map(async (entry) => {
       const path = resolve(currentDir, entry.name);
       if (entry.isDirectory()) return walkFiles(rootDir, path);
-      return [normalizePath(relative(rootDir, path))];
+      return [toPosixPath(relative(rootDir, path))];
     })
   );
   return files.flat();
-}
-
-function normalizePath(path: string): string {
-  return path.split(sep).join('/');
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -1,4 +1,4 @@
-import { isAbsolute, resolve as resolvePath } from 'node:path';
+import { basename, extname, isAbsolute, resolve as resolvePath } from 'node:path';
 import ts from 'typescript';
 import type { CompilerContext, CompilerPlugin } from '../config';
 import { diagnosticLocationFromNode } from '../diagnostics';
@@ -7,7 +7,6 @@ import {
   buildTokenEnv,
   collectExtractUtilities,
   type DeriveClassNameOptions,
-  DiagnosticError,
   deriveClassName,
   type ResolveTokenModule,
   readStyleAttribute,
@@ -17,10 +16,17 @@ import {
   type StyleSegment,
   type TokenEnv,
 } from '../styles';
-import { cssAssets } from './css/assets';
-import { lowerCss } from './css/lower';
 import { type DesignSystem, loadDesignSystem } from './design-system';
-import { addStyleRecipe, createStyleProgram, finalizeStyleProgram, type MutableStyleProgram } from './program';
+import {
+  addStyleRecipe,
+  createStyleProgram,
+  designForStyleProgram,
+  registerGroupPeerBinding,
+  type StyleClassRegistry,
+  type StyleProgram,
+  type StyleProgramCssOptions,
+  type StyleRecipeOrigin,
+} from './program';
 import {
   normalizeResolveElementResult,
   type ResolveClassList,
@@ -53,16 +59,7 @@ export interface TailwindResolveOptions {
   classList?: ResolveClassList | undefined;
 }
 
-export interface TailwindEmitOptions {
-  /** Base CSS files to prepend to emitted output. */
-  base?: readonly string[];
-  /** Directory used to resolve relative base CSS paths. */
-  configDir?: string;
-  /** CSS emission layout. Defaults to merged output. */
-  mode?: 'merged' | 'split';
-  /** Selector for referenced Tailwind theme variables. Defaults to `:root`. */
-  themeSelector?: string | undefined;
-}
+export interface TailwindEmitOptions extends StyleProgramCssOptions {}
 
 export interface TailwindOptions {
   /** Styling mode. Defaults to `'preserve'`. */
@@ -73,6 +70,10 @@ export interface TailwindOptions {
   input?: string | undefined;
   /** CSS asset name for `'extract'`. Defaults to the compiled source basename with `.css`. */
   output?: string | undefined;
+  /** Existing style program to collect into. The caller owns `program.emit()`. */
+  program?: StyleProgram | undefined;
+  /** Validate semantic classes against other independently emitted programs. */
+  registry?: StyleClassRegistry | undefined;
   /** Resolution hooks for token modules, generated class names, and CSS chunks. */
   resolve?: TailwindResolveOptions | undefined;
   /** CSS asset emission options for extract mode. */
@@ -83,14 +84,20 @@ interface TailwindState {
   mode: TailwindMode;
   design?: DesignSystem | undefined;
   env: TokenEnv;
-  program: MutableStyleProgram;
-  signatures: Map<string, string>;
+  program?: StyleProgram | undefined;
+  ownsProgram: boolean;
 }
 
 interface TailwindClassNameResolution {
   info: StyleAttributeSegmentsInfo;
   utilities: readonly string[];
   passThrough: readonly ts.Expression[];
+}
+
+interface ExtractedElementStyle {
+  className: string;
+  chunk?: string | undefined;
+  merge?: boolean | undefined;
 }
 
 export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
@@ -103,10 +110,21 @@ export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
 
       return {
         transform: createTailwindTransform(options, state),
-        async finish() {
-          const assets = await renderTailwindAssets(options, state, compiler);
-          for (const asset of assets) compiler.addAsset(asset);
-        },
+        ...(state.ownsProgram && state.program
+          ? {
+              async finish() {
+                const result = await state.program!.emit();
+                for (const file of result.files) {
+                  compiler.addAsset({
+                    type: 'css',
+                    fileName: file.fileName,
+                    source: file.source,
+                    sourceFile: compiler.filename,
+                  });
+                }
+              },
+            }
+          : {}),
       };
     },
   };
@@ -114,13 +132,36 @@ export function tailwind(options: TailwindOptions = {}): CompilerPlugin {
 
 async function createTailwindState(options: TailwindOptions, compiler: CompilerContext): Promise<TailwindState> {
   const mode = options.mode ?? 'preserve';
+  const externalProgram = mode === 'extract' ? options.program : undefined;
+  if (externalProgram && (options.design || options.input || options.output || options.registry || options.emit)) {
+    throw new Error(
+      '@videojs/compiler: a caller-owned StyleProgram also owns `design`, `output`, `registry`, and CSS emission options'
+    );
+  }
+  const design =
+    mode === 'extract'
+      ? externalProgram
+        ? designForStyleProgram(externalProgram)
+        : await resolveDesignSystem(options, compiler)
+      : undefined;
+  const program =
+    mode === 'extract'
+      ? (externalProgram ??
+        createStyleProgram({
+          design: design!,
+          output: options.output ?? defaultCssFileName(compiler),
+          configDir: compiler.configDir,
+          ...(options.registry ? { registry: options.registry } : {}),
+          ...(options.emit ?? {}),
+        }))
+      : undefined;
 
   return {
     mode,
-    ...(mode === 'extract' ? { design: await resolveDesignSystem(options, compiler) } : {}),
+    ...(design ? { design } : {}),
     env: buildTokenEnv(compiler.filename, options.resolve?.tokenModule),
-    program: createStyleProgram(),
-    signatures: new Map(),
+    ...(program ? { program } : {}),
+    ownsProgram: Boolean(program && !externalProgram),
   };
 }
 
@@ -275,72 +316,69 @@ function extractStaticClassName(
   state: TailwindState
 ): string {
   if (!state.design) throw new Error('@videojs/compiler: tailwind extract mode requires `design` or `input`');
+  if (!state.program) throw new Error('@videojs/compiler: missing StyleProgram in Tailwind extract mode');
 
-  let elementResolution: ResolveElementResult | undefined;
+  const target = resolveExtractedElementStyle(element, segments, options, state.env);
+  const { candidates, preserved } = partitionUtilities(utilities, state.design);
+  const origin = styleRecipeOrigin(element);
+  registerGroupPeerBindings(state.program, utilities, target.className, target.chunk, origin);
 
-  const naming: DeriveClassNameOptions = {
-    element,
-    segments,
-    resolveName(context) {
-      elementResolution = normalizeResolveElementResult(options.resolve?.element?.(context));
-      if (elementResolution) return elementResolution.className;
-      return context.defaultName;
-    },
-    ...(state.env.hasSource ? { tokenNamespaces: state.env.namespaces, tokenRoots: state.env.roots } : {}),
-  };
-
-  const derived = deriveClassName(naming),
-    chunk = elementResolution?.chunk,
-    explicitSelector = Boolean(elementResolution),
-    preserved: string[] = [],
-    ruleUtilities: string[] = [];
-
-  for (const utility of utilities) {
-    if (state.design.recognizesCandidate(utility)) {
-      ruleUtilities.push(utility);
-      continue;
-    }
-
-    if (!preserved.includes(utility)) preserved.push(utility);
-  }
-
-  registerScaffoldClassReplacements(
-    state.program.scaffoldClassReplacementsByChunk,
-    utilities,
-    derived.className,
-    chunk,
-    element
-  );
-
-  if (ruleUtilities.length > 0 && !explicitSelector) {
-    const signature = [...ruleUtilities].sort().join(' ');
-    const previous = state.signatures.get(derived.className);
-    if (previous === undefined) {
-      state.signatures.set(derived.className, signature);
-    } else if (previous !== signature) {
-      throw collisionError(element, derived.className, previous, signature);
-    }
-  }
-
-  if (ruleUtilities.length > 0) {
+  if (candidates.length > 0) {
     addStyleRecipe(state.program, {
-      className: derived.className,
-      candidates: ruleUtilities,
-      segments,
-      ...(chunk === undefined ? {} : { chunk }),
+      className: target.className,
+      candidates,
+      merge: target.merge,
+      origin,
+      ...(target.chunk === undefined ? {} : { chunk: target.chunk }),
     });
   }
 
-  const classes = removeReplacedScaffoldClasses([derived.className, ...preserved]);
-
+  const classes = removeRelationshipMarkers([target.className, ...preserved]);
   const resolvedClasses =
     options.resolve?.classList?.({
       classes,
-      className: derived.className,
+      className: target.className,
       segments,
     }) ?? classes;
 
   return resolvedClasses.join(' ');
+}
+
+function resolveExtractedElementStyle(
+  element: ts.JsxElement | ts.JsxSelfClosingElement,
+  segments: readonly StyleSegment[],
+  options: TailwindOptions,
+  env: TokenEnv
+): ExtractedElementStyle {
+  let resolution: ResolveElementResult | undefined;
+  const naming: DeriveClassNameOptions = {
+    element,
+    segments,
+    resolveName(context) {
+      resolution = normalizeResolveElementResult(options.resolve?.element?.(context));
+      return resolution?.className ?? context.defaultName;
+    },
+    ...(env.hasSource ? { tokenNamespaces: env.namespaces, tokenRoots: env.roots } : {}),
+  };
+  const derived = deriveClassName(naming);
+  return {
+    className: derived.className,
+    ...(resolution?.chunk === undefined ? {} : { chunk: resolution.chunk }),
+    ...(resolution?.merge === undefined ? {} : { merge: resolution.merge }),
+  };
+}
+
+function partitionUtilities(
+  utilities: readonly string[],
+  design: DesignSystem
+): { candidates: string[]; preserved: string[] } {
+  const candidates: string[] = [];
+  const preserved: string[] = [];
+  for (const utility of utilities) {
+    const target = design.recognizesCandidate(utility) ? candidates : preserved;
+    if (!target.includes(utility)) target.push(utility);
+  }
+  return { candidates, preserved };
 }
 
 function tokenImportIsUnused(statement: ts.ImportDeclaration, sourceFile: ts.SourceFile): boolean {
@@ -366,18 +404,6 @@ function tokenImportIsUnused(statement: ts.ImportDeclaration, sourceFile: ts.Sou
   return !referenced;
 }
 
-async function renderTailwindAssets(options: TailwindOptions, state: TailwindState, compiler: CompilerContext) {
-  if (state.mode !== 'extract' || state.program.recipes.size === 0 || !state.design) return [];
-
-  const rendered = await lowerCss({
-    design: state.design,
-    program: finalizeStyleProgram(state.program),
-    ...(options.emit ?? {}),
-  });
-
-  return cssAssets(compiler, options.output, rendered);
-}
-
 async function resolveDesignSystem(options: TailwindOptions, context: CompilerContext): Promise<DesignSystem> {
   if (options.design) return options.design;
   if (!options.input) {
@@ -387,66 +413,38 @@ async function resolveDesignSystem(options: TailwindOptions, context: CompilerCo
   return loadDesignSystem(input);
 }
 
-function registerScaffoldClassReplacements(
-  replacementsByChunk: Map<string, Map<string, string>>,
+function registerGroupPeerBindings(
+  program: StyleProgram,
   utilities: readonly string[],
   className: string,
   chunk: string | undefined,
-  element: ts.Node
+  origin: StyleRecipeOrigin
 ): void {
-  const chunkKey = chunk ?? '';
-  let replacements = replacementsByChunk.get(chunkKey);
-  if (!replacements) {
-    replacements = new Map();
-    replacementsByChunk.set(chunkKey, replacements);
-  }
-
   for (const utility of utilities) {
-    if (!isTailwindScaffoldClass(utility)) continue;
-    const previous = replacements.get(utility);
-    if (!previous) {
-      replacements.set(utility, className);
-      continue;
-    }
-    if (previous !== className) throw scaffoldClassReplacementConflictError(element, utility, previous, className);
+    if (!isGroupPeerMarker(utility)) continue;
+    registerGroupPeerBinding(program, { marker: utility, className, chunk, origin });
   }
 }
 
-function removeReplacedScaffoldClasses(classes: readonly string[]): readonly string[] {
-  return classes.filter((className) => !isTailwindScaffoldClass(className));
+function removeRelationshipMarkers(classes: readonly string[]): readonly string[] {
+  return classes.filter((className) => !isGroupPeerMarker(className));
 }
 
-function isTailwindScaffoldClass(className: string): boolean {
+function isGroupPeerMarker(className: string): boolean {
   return (
     className === 'group' || className === 'peer' || className.startsWith('group/') || className.startsWith('peer/')
   );
 }
 
-function collisionError(element: ts.Node, className: string, first: string, next: string): DiagnosticError {
-  const tag = tagName(element as Parameters<typeof tagName>[0]);
-  return new DiagnosticError(
-    `style extraction: class name '${className}' is derived from elements with different styles` +
-      `.\n` +
-      `  <${tag}> resolves to: ${next}\n` +
-      `  an earlier element resolved to: ${first}\n` +
-      `Merging these would put conflicting declarations in a single '.${className}' rule. ` +
-      `Disambiguate with a distinct token, a distinct component, or \`resolve.element\`.`,
-    { ...diagnosticLocationFromNode(element), diagnosticCode: 'style-class-collision' }
-  );
+function styleRecipeOrigin(element: ts.Node): StyleRecipeOrigin {
+  return {
+    description: `<${tagName(element as Parameters<typeof tagName>[0])}>`,
+    ...diagnosticLocationFromNode(element),
+  };
 }
 
-function scaffoldClassReplacementConflictError(
-  element: ts.Node,
-  scaffoldClass: string,
-  first: string,
-  next: string
-): DiagnosticError {
-  return new DiagnosticError(
-    `style extraction: Tailwind scaffold class '${scaffoldClass}' maps to multiple generated classes` +
-      `.\n` +
-      `  first replacement: .${first}\n` +
-      `  next replacement: .${next}\n` +
-      `Use a named marker such as \`group/${next}\` to disambiguate the relationship.`,
-    { ...diagnosticLocationFromNode(element), diagnosticCode: 'style-scaffold-class-replacement-collision' }
-  );
+function defaultCssFileName(context: CompilerContext): string {
+  const file = basename(context.outputFile ?? context.filename);
+  const extension = extname(file);
+  return `${extension ? file.slice(0, -extension.length) : file}.css`;
 }

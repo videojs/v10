@@ -5,10 +5,10 @@ import { ButtonTooltip } from '../button-tooltip/button-tooltip';
 export function PlayButton() {
   return (
     <ButtonTooltip>
-      <PlayButtonPrimitive className="vjs-button-play">
-        <RestartIcon className="vjs-button-icon-restart" />
-        <PlayIcon className="vjs-button-icon-play" />
-        <PauseIcon className="vjs-button-icon-pause" />
+      <PlayButtonPrimitive className="media-button-play">
+        <RestartIcon className="media-button-icon-restart" />
+        <PlayIcon className="media-button-icon-play" />
+        <PauseIcon className="media-button-icon-pause" />
       </PlayButtonPrimitive>
     </ButtonTooltip>
   );

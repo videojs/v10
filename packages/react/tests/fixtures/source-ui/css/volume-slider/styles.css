@@ -1,14 +1,25 @@
 @import '../styles/base.css';
 @import '../styles/themes/default.css';
+@import '../styles/support.css';
 
-.vjs-skin {
-  --spacing: 0.25rem;
+.media-slider-fill {
+  inset-block: calc(var(--spacing, 0.25rem) * 0);
+  left: calc(var(--spacing, 0.25rem) * 0);
+  width: var(--media-slider-fill);
+  border-radius: inherit;
+  background-color: currentColor;
+  position: absolute;
 }
 
-/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
-@layer properties;
+.media-slider-fill[data-orientation='vertical'] {
+  inset-inline: calc(var(--spacing, 0.25rem) * 0);
+  top: auto;
+  bottom: calc(var(--spacing, 0.25rem) * 0);
+  height: var(--media-slider-fill);
+  width: auto;
+}
 
-.vjs-slider-root {
+.media-slider-root {
   min-height: var(--media-control-size);
   min-width: calc(var(--spacing, 0.25rem) * 20);
   cursor: pointer;
@@ -21,44 +32,13 @@
   position: relative;
 }
 
-.vjs-slider-root[data-orientation='vertical'] {
+.media-slider-root[data-orientation='vertical'] {
   height: calc(var(--spacing, 0.25rem) * 20);
   width: var(--media-control-size);
   min-width: calc(var(--spacing, 0.25rem) * 0);
 }
 
-.vjs-slider-track {
-  height: var(--media-slider-track-size);
-  border-radius: var(--media-radius-pill);
-  background-color: var(--media-slider-track-background);
-  width: 100%;
-  position: relative;
-  overflow: hidden;
-}
-
-.vjs-slider-track[data-orientation='vertical'] {
-  height: 100%;
-  width: var(--media-slider-track-size);
-}
-
-.vjs-slider-fill {
-  inset-block: calc(var(--spacing, 0.25rem) * 0);
-  left: calc(var(--spacing, 0.25rem) * 0);
-  width: var(--media-slider-fill);
-  border-radius: inherit;
-  background-color: currentColor;
-  position: absolute;
-}
-
-.vjs-slider-fill[data-orientation='vertical'] {
-  inset-inline: calc(var(--spacing, 0.25rem) * 0);
-  top: auto;
-  bottom: calc(var(--spacing, 0.25rem) * 0);
-  height: var(--media-slider-fill);
-  width: auto;
-}
-
-.vjs-slider-thumb {
+.media-slider-thumb {
   top: 50%;
   left: var(--media-slider-fill);
   width: var(--media-slider-thumb-size);
@@ -71,39 +51,21 @@
   position: absolute;
 }
 
-.vjs-slider-thumb[data-orientation='vertical'] {
+.media-slider-thumb[data-orientation='vertical'] {
   top: calc(100% - var(--media-slider-fill));
   left: 50%;
 }
 
-@property --tw-translate-x {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
+.media-slider-track {
+  height: var(--media-slider-track-size);
+  border-radius: var(--media-radius-pill);
+  background-color: var(--media-slider-track-background);
+  width: 100%;
+  position: relative;
+  overflow: hidden;
 }
 
-@property --tw-translate-y {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
-}
-
-@property --tw-translate-z {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0;
-}
-
-@layer properties {
-  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or
-    ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-    *,
-    :before,
-    :after,
-    ::backdrop {
-      --tw-translate-x: 0;
-      --tw-translate-y: 0;
-      --tw-translate-z: 0;
-    }
-  }
+.media-slider-track[data-orientation='vertical'] {
+  height: 100%;
+  width: var(--media-slider-track-size);
 }

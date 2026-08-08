@@ -20,7 +20,7 @@ async function compileCanonical(relativePath: string) {
 }
 
 describe('reactSourceConfig', () => {
-  it('lowers canonical button composition to public React imports', async () => {
+  it('emits canonical button composition with public React imports', async () => {
     const result = await compileCanonical('components/buttons/seek-button.skin.tsx');
 
     expect(result.diagnostics).toEqual([]);
@@ -33,7 +33,7 @@ describe('reactSourceConfig', () => {
     expect(result.code).not.toContain('@videojs/icons/components');
   });
 
-  it('lowers button tooltip children to the React render prop', async () => {
+  it('emits button tooltip children as the React render prop', async () => {
     const result = await compileCanonical('components/buttons/button-tooltip.skin.tsx');
 
     expect(result.diagnostics).toEqual([]);
@@ -44,7 +44,7 @@ describe('reactSourceConfig', () => {
     expect(result.code).not.toContain('<TooltipPrimitive.Trigger>{children}</TooltipPrimitive.Trigger>');
   });
 
-  it('lowers target-owned thumbnail markup and class values', async () => {
+  it('emits target-owned thumbnail markup and class values', async () => {
     const result = await compileCanonical('components/sliders/time-slider.skin.tsx');
 
     expect(result.diagnostics).toEqual([]);
@@ -76,8 +76,8 @@ describe('reactSourceConfig', () => {
       outputFile: resolve(generatedRoot, relativePath),
     });
 
-    expect(result.code).toContain('className="vjs-button-play"');
+    expect(result.code).toContain('className="media-button-play"');
     expect(result.code).not.toContain('grid size-media-control');
-    expect(result.assets[0]?.source).toContain('.vjs-button-play {');
+    expect(result.assets[0]?.source).toContain('.media-button-play {');
   });
 });

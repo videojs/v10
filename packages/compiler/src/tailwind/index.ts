@@ -1,4 +1,3 @@
-export type { RenderedCss } from './css/lower';
 export { type DesignSystem, loadDesignSystem } from './design-system';
 export {
   type TailwindEmitOptions,
@@ -7,6 +6,16 @@ export {
   type TailwindResolveOptions,
   tailwind,
 } from './plugin';
+export {
+  type CreateStyleProgramOptions,
+  createStyleClassRegistry,
+  createStyleProgram,
+  type StyleClassRegistry,
+  type StyleEmitResult,
+  type StyleOutputFile,
+  type StyleProgram,
+  type StyleProgramCssOptions,
+} from './program';
 export type {
   ResolveClassList,
   ResolveClassListContext,

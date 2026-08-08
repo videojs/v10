@@ -1,11 +1,14 @@
 import type { Selector, SelectorComponent, SelectorList } from 'lightningcss';
 import type { NameContext, StyleSegment } from '../styles';
+import { cloneCssAst } from './css/ast';
 
 export type { Selector, SelectorComponent, SelectorList } from 'lightningcss';
 
 export interface ResolveElementResult {
   className: string;
   chunk?: string | undefined;
+  /** Intentionally combine a different recipe into an existing class in the same chunk. */
+  merge?: boolean | undefined;
 }
 
 export interface ResolveElementContext extends NameContext {}
@@ -48,7 +51,7 @@ function cloneSelector(selector: Selector): Selector {
 }
 
 function cloneSelectorComponent(component: SelectorComponent): SelectorComponent {
-  return JSON.parse(JSON.stringify(component)) as SelectorComponent;
+  return cloneCssAst(component);
 }
 
 function mapSelectorList(

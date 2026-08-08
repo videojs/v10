@@ -1,15 +1,20 @@
 import { defineConfig, jsx, transform } from '@videojs/compiler';
 import { anyTag, childAsProp } from '@videojs/compiler/ast';
-import { tailwind } from '@videojs/compiler/tailwind';
+import { type StyleClassRegistry, tailwind } from '@videojs/compiler/tailwind';
 
 export type SkinSourceStyle = 'css' | 'tailwind';
 
 export interface CreateReactSkinSourceConfigOptions {
   style: SkinSourceStyle;
   tailwindInput?: string | undefined;
+  styleRegistry?: StyleClassRegistry | undefined;
 }
 
-export function createReactSkinSourceConfig({ style, tailwindInput }: CreateReactSkinSourceConfigOptions) {
+export function createReactSkinSourceConfig({
+  style,
+  tailwindInput,
+  styleRegistry,
+}: CreateReactSkinSourceConfigOptions) {
   return defineConfig({
     target: jsx({
       imports: {
@@ -32,10 +37,11 @@ export function createReactSkinSourceConfig({ style, tailwindInput }: CreateReac
               mode: 'extract',
               input: requiredTailwindInput(tailwindInput),
               output: 'styles.css',
+              ...(styleRegistry ? { registry: styleRegistry } : {}),
               resolve: {
-                element: ({ defaultName }) => ({ className: `vjs-${defaultName}` }),
+                element: ({ defaultName }) => ({ className: `media-${defaultName}` }),
               },
-              emit: { themeSelector: '.vjs-skin' },
+              emit: { support: 'separate', themeSelector: '.media-skin' },
             }
       ),
       transform(

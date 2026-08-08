@@ -1,13 +1,10 @@
 import { readFile } from 'node:fs/promises';
-import { dirname } from 'node:path';
+import { basename, dirname } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { compile } from '@videojs/compiler';
+import { createStyleProgram, loadDesignSystem, type StyleProgram } from '@videojs/compiler/tailwind';
 import { build, type Plugin } from 'esbuild';
-import { transform } from 'lightningcss';
 import { createHtmlSkinSourceConfig, type SkinSourceStyle } from '../skins.compiler.config.ts';
-
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
 
 export interface RenderSkinSourceOptions {
   style?: SkinSourceStyle | undefined;
@@ -28,7 +25,15 @@ export async function renderSkinSourceOutput(
   entryFile: string,
   options: RenderSkinSourceOptions = {}
 ): Promise<RenderedSkinSource> {
-  const styles = new Map<string, string>();
+  const style = options.style ?? 'tailwind';
+  const styleProgram =
+    style === 'css'
+      ? createStyleProgram({
+          design: await loadDesignSystem(requiredTailwindInput(options.tailwindInput)),
+          output: 'styles.css',
+          themeSelector: '.media-skin',
+        })
+      : undefined;
   const result = await build({
     entryPoints: [entryFile],
     bundle: true,
@@ -37,37 +42,57 @@ export async function renderSkinSourceOutput(
     write: false,
     jsx: 'automatic',
     jsxImportSource: 'source-ui-html',
-    plugins: [canonicalHtmlPlugin(options, styles)],
+    plugins: [canonicalHtmlPlugin({ ...options, style }, styleProgram)],
   });
   const code = result.outputFiles[0]?.text;
   if (!code) throw new Error(`HTML source rendering produced no output for \`${entryFile}\`.`);
 
   const module = { exports: {} as Record<string, unknown> };
   runInNewContext(code, { module, exports: module.exports });
-  const render = Object.values(module.exports).find(
-    (value): value is (props: Record<string, never>) => unknown => typeof value === 'function'
-  );
-  if (!render) throw new Error(`HTML source rendering found no component export in \`${entryFile}\`.`);
+  const render = selectSkinRender(module.exports, entryFile);
 
-  const css = [...styles.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([, source]) => source)
-    .join('\n\n');
+  const emittedStyles = styleProgram ? await styleProgram.emit() : { files: [] };
+  if (emittedStyles.files.length > 1) {
+    throw new Error('HTML source rendering expects one merged CSS output file.');
+  }
 
   return {
     html: String(render({})).trim(),
-    css: consolidateCss(css),
+    css: emittedStyles.files[0]?.source ?? '',
   };
 }
 
-function consolidateCss(css: string): string {
-  if (!css) return '';
-  const license = css.match(/\/\*!.*?tailwindcss.*?\*\//s)?.[0];
-  const output = decoder.decode(transform({ filename: 'styles.css', code: encoder.encode(css) }).code).trim();
-  return license && !output.includes(license) ? `${license}\n${output}` : output;
+function selectSkinRender(
+  exports: Readonly<Record<string, unknown>>,
+  entryFile: string
+): (props: Record<string, never>) => unknown {
+  if (typeof exports.default === 'function') {
+    return exports.default as (props: Record<string, never>) => unknown;
+  }
+
+  const conventionalName = basename(entryFile)
+    .replace(/\.skin\.[^.]+$/, '')
+    .replace(/(^|-)(\w)/g, (_, _dash, letter) => letter.toUpperCase());
+  const conventional = Object.entries(exports).filter(
+    ([name, value]) => typeof value === 'function' && (name === conventionalName || name.endsWith(conventionalName))
+  );
+  if (conventional.length === 1) {
+    return conventional[0]![1] as (props: Record<string, never>) => unknown;
+  }
+
+  const functions = Object.entries(exports).filter(
+    (entry): entry is [string, (props: Record<string, never>) => unknown] => typeof entry[1] === 'function'
+  );
+  if (functions.length === 1) return functions[0]![1];
+
+  const available = functions.map(([name]) => name).join(', ') || '(none)';
+  throw new Error(
+    `HTML source rendering could not select the Skin component export in \`${entryFile}\`. ` +
+      `Export it as default or with a name ending in \`${conventionalName}\`. Function exports: ${available}.`
+  );
 }
 
-function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styles: Map<string, string>): Plugin {
+function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styleProgram: StyleProgram | undefined): Plugin {
   return {
     name: 'videojs-source-html',
     setup(build) {
@@ -90,13 +115,21 @@ function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styles: Map<strin
           config: createHtmlSkinSourceConfig({
             style: options.style ?? 'tailwind',
             ...(options.tailwindInput ? { tailwindInput: options.tailwindInput } : {}),
+            ...(styleProgram ? { styleProgram } : {}),
           }),
         });
-        for (const asset of result.assets) styles.set(path, asset.source);
+        if (result.assets.length > 0) {
+          throw new Error(`HTML source module \`${path}\` emitted CSS before the shared StyleProgram.`);
+        }
         return { contents: result.code, loader: 'tsx', resolveDir: dirname(path) };
       });
     },
   };
+}
+
+function requiredTailwindInput(input: string | undefined): string {
+  if (!input) throw new Error('HTML vanilla CSS source generation requires a Tailwind input file.');
+  return input;
 }
 
 const classNamesRuntime = `

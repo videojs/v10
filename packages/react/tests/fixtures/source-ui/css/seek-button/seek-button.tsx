@@ -7,9 +7,9 @@ export function SeekButton(props: SeekButtonProps = {}) {
   const seconds = props.seconds ?? 10;
   return (
     <ButtonTooltip>
-      <SeekButtonPrimitive className="vjs-button-seek" {...props} seconds={seconds}>
-        <SeekIcon className={seconds < 0 ? 'vjs-button-icon-seek-backward' : 'vjs-button-icon-base'} />
-        <span className="vjs-seek-label">{Math.abs(seconds)}</span>
+      <SeekButtonPrimitive className="media-button-seek" {...props} seconds={seconds}>
+        <SeekIcon className={seconds < 0 ? 'media-button-icon-seek-backward' : 'media-button-icon-seek-forward'} />
+        <span className="media-seek-label">{Math.abs(seconds)}</span>
       </SeekButtonPrimitive>
     </ButtonTooltip>
   );

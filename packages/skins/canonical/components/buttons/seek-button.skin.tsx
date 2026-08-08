@@ -10,7 +10,7 @@ export function SeekButton(props: SeekButtonProps = {}) {
   return (
     <ButtonTooltip>
       <SeekButtonPrimitive className={button.seek} {...props} seconds={seconds}>
-        <SeekIcon className={seconds < 0 ? buttonIcon.seekBackward : buttonIcon.base} />
+        <SeekIcon className={seconds < 0 ? buttonIcon.seekBackward : buttonIcon.seekForward} />
         <Text className={seekLabel}>{Math.abs(seconds)}</Text>
       </SeekButtonPrimitive>
     </ButtonTooltip>

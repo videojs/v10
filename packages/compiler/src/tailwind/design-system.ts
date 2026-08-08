@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { __unstable__loadDesignSystem, compile } from 'tailwindcss';
@@ -7,8 +7,8 @@ const VIRTUAL_REFERENCE = './__videojs-compiler-tailwind-reference.css';
 
 /**
  * A loaded Tailwind v4 design system. Wraps Tailwind's
- * Tailwind's design-system and compiler APIs behind the operations style
- * lowering needs. Candidate recognition is intentionally separate from CSS
+ * design-system and compiler APIs behind the operations style extraction and
+ * emission need. Candidate recognition is intentionally separate from CSS
  * generation: emitted CSS always comes from one complete candidate build.
  */
 export interface DesignSystem {
@@ -59,7 +59,8 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
     recognizesCandidate(candidate: string): boolean {
       const cached = candidateCache.get(candidate);
       if (cached !== undefined) return cached;
-      const recognized = ds.candidatesToCss([candidate])[0] != null;
+      const css = ds.candidatesToCss([candidate])[0];
+      const recognized = typeof css === 'string' && css.trim().length > 0;
       candidateCache.set(candidate, recognized);
       return recognized;
     },
@@ -126,6 +127,7 @@ function walkUpForPackage(id: string, start: string): string | null {
  * back to `index.css`.
  */
 function resolveBareEntry(pkgDir: string): string {
+  if (statSync(pkgDir).isFile()) return pkgDir;
   const pkgJson = resolve(pkgDir, 'package.json');
   if (existsSync(pkgJson)) {
     try {
@@ -144,11 +146,11 @@ function resolveBareEntry(pkgDir: string): string {
       }
       if (pkg.style) return resolve(pkgDir, pkg.style);
       if (pkg.main?.endsWith('.css')) return resolve(pkgDir, pkg.main);
-    } catch {
-      // fall through
+    } catch (error) {
+      throw new Error(`Cannot read stylesheet package manifest '${pkgJson}'.`, { cause: error });
     }
   }
   const fallback = resolve(pkgDir, 'index.css');
   if (existsSync(fallback)) return fallback;
-  return pkgDir;
+  throw new Error(`Stylesheet package '${pkgDir}' has no CSS entry.`);
 }

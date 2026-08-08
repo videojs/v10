@@ -23,4 +23,4 @@ The current canonical paths are:
 - `components/sliders/volume-slider.skin.tsx`
 - `components/sliders/time-slider.skin.tsx`
 
-Canonical components import icon roles from `@videojs/icons/components`; target lowering replaces that compiler-only source contract with local named React exports or exact HTML registrations. The Tailwind v4 input in `styles/tailwind.css` maps semantic utilities to scoped media variables, so Tailwind source can be preserved or lowered into vanilla CSS from the same authored utilities. Artifact entries are authored in `../artifacts.ts`; generated target output remains a separate stack boundary.
+Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only source contract with local named React exports or exact HTML registrations. The Tailwind v4 input in `styles/tailwind.css` maps semantic utilities to scoped media variables, so Tailwind source can be preserved or extracted into vanilla CSS from the same authored utilities. Artifact entries are authored in `../artifacts.ts`; generated target output remains a separate stack boundary.

@@ -1,10 +1,27 @@
 @import '../styles/base.css';
 @import '../styles/themes/default.css';
+@import '../styles/support.css';
 
-/*! tailwindcss v4.2.1 | MIT License | https://tailwindcss.com */
-@layer properties;
+.media-controls-group-primary {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  display: flex;
+}
 
-.vjs-video-controls {
+.media-controls-group-time {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  flex: 1;
+  display: flex;
+}
+
+.media-time {
+  --tw-numeric-spacing: tabular-nums;
+  font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,)
+    var(--tw-numeric-fraction,);
+}
+
+.media-video-controls {
   align-items: center;
   gap: var(--media-controls-gap);
   border-radius: var(--media-radius-pill);
@@ -26,217 +43,4 @@
     var(--tw-backdrop-saturate,) var(--tw-backdrop-sepia,);
   line-height: 1;
   display: flex;
-}
-
-.vjs-controls-group-base {
-  align-items: center;
-  gap: var(--media-controls-gap);
-  display: flex;
-}
-
-.vjs-controls-group-time {
-  align-items: center;
-  gap: var(--media-controls-gap);
-  flex: 1;
-  display: flex;
-}
-
-.vjs-time {
-  --tw-numeric-spacing: tabular-nums;
-  font-variant-numeric: var(--tw-ordinal,) var(--tw-slashed-zero,) var(--tw-numeric-figure,) var(--tw-numeric-spacing,)
-    var(--tw-numeric-fraction,);
-}
-
-@property --tw-leading {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-ordinal {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-slashed-zero {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-numeric-figure {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-numeric-spacing {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-numeric-fraction {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-
-@property --tw-shadow-color {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-shadow-alpha {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-
-@property --tw-inset-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-
-@property --tw-inset-shadow-color {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-inset-shadow-alpha {
-  syntax: '<percentage>';
-  inherits: false;
-  initial-value: 100%;
-}
-
-@property --tw-ring-color {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-ring-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-
-@property --tw-inset-ring-color {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-inset-ring-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-
-@property --tw-ring-inset {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-ring-offset-width {
-  syntax: '<length>';
-  inherits: false;
-  initial-value: 0;
-}
-
-@property --tw-ring-offset-color {
-  syntax: '*';
-  inherits: false;
-  initial-value: #fff;
-}
-
-@property --tw-ring-offset-shadow {
-  syntax: '*';
-  inherits: false;
-  initial-value: 0 0 #0000;
-}
-
-@property --tw-backdrop-blur {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-brightness {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-contrast {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-grayscale {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-hue-rotate {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-invert {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-opacity {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-saturate {
-  syntax: '*';
-  inherits: false;
-}
-
-@property --tw-backdrop-sepia {
-  syntax: '*';
-  inherits: false;
-}
-
-@layer properties {
-  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or
-    ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {
-    *,
-    :before,
-    :after,
-    ::backdrop {
-      --tw-leading: initial;
-      --tw-ordinal: initial;
-      --tw-slashed-zero: initial;
-      --tw-numeric-figure: initial;
-      --tw-numeric-spacing: initial;
-      --tw-numeric-fraction: initial;
-      --tw-shadow: 0 0 #0000;
-      --tw-shadow-color: initial;
-      --tw-shadow-alpha: 100%;
-      --tw-inset-shadow: 0 0 #0000;
-      --tw-inset-shadow-color: initial;
-      --tw-inset-shadow-alpha: 100%;
-      --tw-ring-color: initial;
-      --tw-ring-shadow: 0 0 #0000;
-      --tw-inset-ring-color: initial;
-      --tw-inset-ring-shadow: 0 0 #0000;
-      --tw-ring-inset: initial;
-      --tw-ring-offset-width: 0px;
-      --tw-ring-offset-color: #fff;
-      --tw-ring-offset-shadow: 0 0 #0000;
-      --tw-backdrop-blur: initial;
-      --tw-backdrop-brightness: initial;
-      --tw-backdrop-contrast: initial;
-      --tw-backdrop-grayscale: initial;
-      --tw-backdrop-hue-rotate: initial;
-      --tw-backdrop-invert: initial;
-      --tw-backdrop-opacity: initial;
-      --tw-backdrop-saturate: initial;
-      --tw-backdrop-sepia: initial;
-    }
-  }
 }

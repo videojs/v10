@@ -7,7 +7,7 @@ import htmlSourceConfig, { resolveHtmlElementImports } from '../skins.compiler.c
 const canonicalRoot = resolve(import.meta.dirname, '../../skins/canonical');
 
 describe('htmlSourceConfig', () => {
-  it('lowers TimeSlider to idiomatic light-DOM element names', async () => {
+  it('emits TimeSlider with idiomatic light-DOM element names', async () => {
     const filename = resolve(canonicalRoot, 'components/sliders/time-slider.skin.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, { filename, config: htmlSourceConfig });
@@ -24,7 +24,7 @@ describe('htmlSourceConfig', () => {
     expect(result.code).not.toContain('@videojs/jsx');
   });
 
-  it('lowers tooltip composition around sibling trigger and popup elements', async () => {
+  it('emits tooltip composition around sibling trigger and popup elements', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.skin.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, { filename, config: htmlSourceConfig });
@@ -41,7 +41,7 @@ describe('htmlSourceConfig', () => {
     expect(result.code).not.toContain('<TooltipPrimitive.Trigger>');
   });
 
-  it('lowers popover composition without nesting the button trigger', async () => {
+  it('emits popover composition without nesting the button trigger', async () => {
     const filename = resolve(canonicalRoot, 'components/controls/volume-popover.skin.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, { filename, config: htmlSourceConfig });

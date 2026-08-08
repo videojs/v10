@@ -8,9 +8,9 @@ export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
   return (
     <TooltipPrimitive.Root {...props}>
       <TooltipPrimitive.Trigger render={children} />
-      <TooltipPrimitive.Popup className="vjs-tooltip-popup">
+      <TooltipPrimitive.Popup className="media-tooltip-popup">
         <TooltipPrimitive.Label />
-        <TooltipPrimitive.Shortcut className="vjs-tooltip-shortcut" />
+        <TooltipPrimitive.Shortcut className="media-tooltip-shortcut" />
       </TooltipPrimitive.Popup>
     </TooltipPrimitive.Root>
   );

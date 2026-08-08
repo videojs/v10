@@ -26,11 +26,11 @@ describe('renderSkinSource', () => {
       tailwindInput: resolve(canonicalRoot, 'styles/tailwind.css'),
     });
 
-    expect(output.html).toContain('class="vjs-video-controls vjs-skin vjs-theme-default"');
+    expect(output.html).toContain('class="media-video-controls media-skin media-theme-default"');
     expect(output.html).not.toContain('grid size-media-control');
-    expect(output.css).toContain('.vjs-video-controls {');
-    expect(output.css).toContain('.vjs-button-play {');
+    expect(output.css).toContain('.media-video-controls {');
+    expect(output.css).toContain('.media-button-play {');
     expect(output.css.match(/tailwindcss v/g)).toHaveLength(1);
-    expect(output.css.match(/@layer properties/g)).toHaveLength(1);
+    expect(output.css.match(/@layer properties\s*\{/g)).toHaveLength(1);
   });
 });
