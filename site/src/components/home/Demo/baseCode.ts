@@ -30,8 +30,8 @@ const Player = createPlayer({ features: videoFeatures });
 
 export function VideoPlayer() {
   return (
-    <Player.Provider>
-      <${skinComponent} poster="${VJS10_DEMO_VIDEO.poster}">
+    <Player.Provider poster="${VJS10_DEMO_VIDEO.poster}">
+      <${skinComponent}>
         <Video src="${VJS10_DEMO_VIDEO.mp4}" playsInline />
       </${skinComponent}>
     </Player.Provider>

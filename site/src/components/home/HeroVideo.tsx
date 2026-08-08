@@ -22,7 +22,7 @@ export default function HeroVideo({
   const SkinComponent = $skin === 'default' ? VideoSkin : MinimalVideoSkin;
 
   return (
-    <Player.Provider>
+    <Player.Provider poster={poster}>
       <SkinComponent
         className={className}
         style={
@@ -32,7 +32,6 @@ export default function HeroVideo({
             ...style,
           } as React.CSSProperties
         }
-        poster={poster}
       >
         <HlsJsVideo src={VJS10_DEMO_VIDEO.hls} playsInline crossOrigin="anonymous">
           <track
