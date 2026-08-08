@@ -1,11 +1,13 @@
 ---
 name: document-spf-feature
-description: Document an SPF feature under internal/design/spf/features. Use for capability scope, status, evidence, constraints, or relationships.
+description: Create or update an SPF feature record only when the user explicitly requests it. Use for capability scope, status, evidence, constraints, or relationships under internal/design/spf/features.
 ---
 
 # Document an SPF feature
 
 Read `references/workflow.md` completely before acting; it contains the detailed registry, decomposition, evidence, cascade, and validation workflow.
+
+Confirm that the user explicitly requested creation or revision of the entry. Do not create adjacent feature, use-case, design, or decision records discovered during the workflow; surface them as candidates instead.
 
 Registry entries guide planning but do not override code. Read `internal/design/spf/features/clusters.md`, a strong neighboring entry, relevant implementation/tests, and linked records.
 

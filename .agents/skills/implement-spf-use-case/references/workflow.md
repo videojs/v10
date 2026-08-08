@@ -559,6 +559,10 @@ Cumulative audit after all chunks:
 Doc updates for **both** the use-case doc and its constituent feature
 docs (cascade):
 
+Update only records that already exist. If implementation reveals a
+missing record, report it as a candidate and create it only when the user
+explicitly requests it.
+
 **Use-case doc updates:**
 
 - Frontmatter `status` — `implemented` once all phases land;
@@ -737,8 +741,8 @@ isn't; building a factory twice; silent doc drift).
   scope** → `/change-spf-behavior`.
 - **You want to split or merge behaviors** → `/change-spf-behavior`'s
   decomposition check.
-- **You want to write an architectural design doc** → `design` skill.
-- **You want to write an RFC** → `rfc` skill.
+- **The user requests a durable record** → treat it as a separate explicit
+  task. Do not create it from this workflow.
 
 ## How the failure-mode catalog grows
 

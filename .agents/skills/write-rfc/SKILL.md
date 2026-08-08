@@ -5,7 +5,7 @@ description: Draft or revise a Video.js RFC. Use for public APIs, product direct
 
 # RFC
 
-Read `rfc/README.md` for the current lifecycle and format. Use an internal design or decision record when the author owns the choice and no wider agreement is needed.
+Read `rfc/README.md` for the current lifecycle and format. If the user explicitly asks for an internal record instead, use a design or decision record when the author owns the choice and no wider agreement is needed.
 
 ## Workflow
 
@@ -17,7 +17,7 @@ Read `rfc/README.md` for the current lifecycle and format. Use an internal desig
 6. Define how success will be evaluated and what happens after acceptance.
 7. Keep status `draft` until the repository's approval process changes it.
 
-Make public API and DX tradeoffs explicit when central. Keep implementation detail in a later design record or plan.
+Make public API and DX tradeoffs explicit when central. Keep implementation detail in code, or in a later design record or plan only when the user explicitly requests one.
 
 ## Example
 

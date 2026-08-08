@@ -974,8 +974,8 @@ design decisions.
   `/change-spf-behavior`.
 - **You want to split or merge behaviors** → `/change-spf-behavior`'s
   decomposition check.
-- **You want to write an architectural design doc** → `design` skill.
-- **You want to write an RFC** → `rfc` skill.
+- **The user requests a durable record** → treat it as a separate explicit
+  task. Do not create it from this workflow.
 
 ## How the failure-mode catalog grows
 

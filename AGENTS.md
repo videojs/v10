@@ -60,17 +60,20 @@ Use the narrowest relevant test/build while iterating. Before handoff, run check
 
 ## Design records
 
-- `internal/design/`: architecture or feature decisions owned by the author.
-- `internal/decisions/`: short records of a single tactical choice.
+- Create or expand a record under `internal/design/` or `internal/decisions/` only when the user explicitly asks for one. Do not infer that implementation, review, or planning work needs a record.
+- `internal/design/`: compact architecture or feature rationale that cannot be inferred from code and tests.
+- `internal/decisions/`: compact rationale for one tactical choice that cannot be inferred from code and tests.
 - `rfc/`: proposals needing wider approval, especially public API or hard-to-reverse changes.
-- `.agents/plans/`: temporary implementation notes; delete before merge or extract durable rationale into a record.
+- `.agents/plans/`: temporary implementation notes; delete before merge. Extract rationale into a durable record only when explicitly requested.
 
 ## Skills and agent documentation
 
 Checked-in skills are direct children of `.agents/skills/`. `pnpm install` exposes that canonical catalog through generated `.claude/skills/` and `.opencode/skills/` directory aliases. Load only the specialized workflow needed after inspecting relevant project sources.
 
 - API: `design-api`, `review-api`
-- UI: `build-ui-component`, `review-ui-component`, `implement-accessible-ui`, `review-accessibility`
+- UI implementation: `create-html-component`, `create-react-component`, `implement-ui-transition`, `implement-accessible-ui`
+- UI review: `review-html-component`, `review-react-component`, `review-accessibility`
+- UI design: `write-html-component-design`, `write-react-component-design`, `review-html-component-design`, `review-react-component-design`
 - Docs and records: `write-docs`, `review-docs`, `write-api-reference`, `write-design-doc`, `write-rfc`
 - Site styling: `migrate-css-to-tailwind`, `review-tailwind-migration`
 - Delivery: `investigate-issue`, `create-issue`, `review-branch`, `commit-pr`

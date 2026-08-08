@@ -43,7 +43,7 @@ Single-agent checklist for fast API reviews without forking.
 ## Packaging
 
 - [ ] ESM-first?
-- [ ] `sideEffects: false`?
+- [ ] `sideEffects` accurately marks only modules with observable execution effects?
 - [ ] Shallow subpaths (`pkg/react` not `pkg/react/hooks/store`)?
 - [ ] Peer deps correct (not bundled)?
 - [ ] Tree-shakeable exports?
