@@ -177,6 +177,7 @@
     "@videojs/skins": "workspace:*",
     "happy-dom": "^20.11.1",
     "lightningcss": "^1.32.0",
+    "prettier": "^3.8.1",
     "rolldown": "~1.1.5",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",

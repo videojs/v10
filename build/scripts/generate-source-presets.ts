@@ -1,16 +1,18 @@
 import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
-import { dirname, posix, relative, resolve } from 'node:path';
+import { dirname, posix, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { format } from 'prettier';
-import { resolveArtifactClosure } from '../../packages/compiler/src/artifacts/index.ts';
+import { createHtmlSourceOutput } from '../../packages/html/scripts/source-presets/output.ts';
+import { createReactSourceOutput } from '../../packages/react/scripts/source-presets/output.ts';
 import { buildSkinArtifactGraph, skinsRoot } from '../../packages/skins/scripts/build-artifact-graph.ts';
-import { createSourceOutput, type SourceTarget } from './output.ts';
-import { toPosixPath } from './path.ts';
+import {
+  createDefaultVideoSourcePreset,
+  defaultVideoSourcePreset,
+} from '../../packages/skins/scripts/source-presets/default-video.ts';
+import type { SourceOutputManifest, SourceTarget } from '../../packages/skins/scripts/source-presets/output.ts';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
-const rootArtifactId = 'default-video-controls';
-const presetSlug = 'default-video';
 const targets = [
   { framework: 'react', style: 'tailwind' },
   { framework: 'react', style: 'css' },
@@ -26,7 +28,7 @@ export interface GenerateSourcePresetOptions {
 export async function generateSourcePresets(options: GenerateSourcePresetOptions = {}): Promise<void> {
   const rootDir = resolve(options.rootDir ?? repositoryRoot);
   const expected = await createSourcePresetFiles();
-  const existing = await generatedSkinPaths(rootDir);
+  const existing = await generatedSkinPaths(rootDir, defaultVideoSourcePreset.slug);
 
   if (options.check) {
     const differences = await generatedDifferences(rootDir, expected, existing);
@@ -55,41 +57,50 @@ export async function createSourcePresetFiles(): Promise<ReadonlyMap<string, str
     throw new Error('Cannot generate source presets from an invalid artifact graph.');
   }
 
-  const closure = resolveArtifactClosure(graph, rootArtifactId);
-  const reactArtifactIds = [...closure.artifactIds];
+  const preset = createDefaultVideoSourcePreset(graph);
   const files = new Map<string, string>();
 
   for (const target of targets) {
-    const output = await createSourceOutput(graph, {
+    const artifactIds = target.framework === 'html' ? [preset.rootArtifactId] : preset.artifactIds;
+    const options = {
       rootDir: skinsRoot,
-      target,
+      style: target.style,
       targetRoot: '',
-      rootArtifactId,
-    });
-    const artifactIds = target.framework === 'html' ? [rootArtifactId] : reactArtifactIds;
-
-    for (const artifactId of artifactIds) {
-      const artifactFiles = output.artifacts[artifactId];
-      if (!artifactFiles) throw new Error(`Source output is missing artifact \`${artifactId}\`.`);
-
-      for (const file of artifactFiles) {
-        const path = posix.join(
-          'packages',
-          target.framework,
-          'src/__generated__/skins',
-          presetSlug,
-          target.style,
-          file.target
-        );
-        const content = await formatSourceFile(path, file.content);
-        const previous = files.get(path);
-        if (previous !== undefined && previous !== content) throw new Error(`Generated output collision: ${path}`);
-        files.set(path, content);
-      }
-    }
+      rootArtifactId: preset.rootArtifactId,
+      artifactIds,
+    } as const;
+    const output =
+      target.framework === 'html'
+        ? await createHtmlSourceOutput(graph, options)
+        : await createReactSourceOutput(graph, options);
+    await addTargetFiles(files, output, target, preset.slug);
   }
 
   return files;
+}
+
+async function addTargetFiles(
+  files: Map<string, string>,
+  output: SourceOutputManifest,
+  target: SourceTarget,
+  presetSlug: string
+): Promise<void> {
+  for (const artifactFiles of Object.values(output.artifacts)) {
+    for (const file of artifactFiles) {
+      const path = posix.join(
+        'packages',
+        target.framework,
+        'src/__generated__/skins',
+        presetSlug,
+        target.style,
+        file.target
+      );
+      const content = await formatSourceFile(path, file.content);
+      const previous = files.get(path);
+      if (previous !== undefined && previous !== content) throw new Error(`Generated output collision: ${path}`);
+      files.set(path, content);
+    }
+  }
 }
 
 async function formatSourceFile(path: string, content: string): Promise<string> {
@@ -116,7 +127,7 @@ async function generatedDifferences(
   return [...new Set(differences)].sort();
 }
 
-async function generatedSkinPaths(rootDir: string): Promise<string[]> {
+async function generatedSkinPaths(rootDir: string, presetSlug: string): Promise<string[]> {
   const roots = targets.map(({ framework, style }) =>
     posix.join('packages', framework, 'src/__generated__/skins', presetSlug, style)
   );
@@ -142,6 +153,10 @@ async function walkFiles(rootDir: string, currentDir = rootDir): Promise<string[
     })
   );
   return files.flat();
+}
+
+function toPosixPath(path: string): string {
+  return path.split(sep).join('/');
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

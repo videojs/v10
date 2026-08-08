@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { buildSkinArtifactGraph } from '../../../packages/skins/scripts/build-artifact-graph.ts';
-import { createRegistryCatalog, type RegistryOutputManifest, type RegistryTarget } from '../registry.ts';
+import { createRegistryCatalog, type RegistryOutputManifest, type RegistryTarget } from '../source-presets.ts';
 
 const targets = [
   { framework: 'react', style: 'tailwind' },

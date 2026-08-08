@@ -48,7 +48,7 @@ The plugin has three modes:
 - `StyleProgram` owns all recipes, candidates, chunks, and relationship bindings for one CSS output program.
 - Tailwind determines candidate meaning, rule precedence, theme values, keyframes, and support rules.
 - Lightning CSS structurally reads and rewrites selectors, discovers custom-property references, and serializes browser-ready CSS.
-- Source-output generation assigns emitted files to artifacts and shares global support CSS where its output layout requires that.
+- `packages/skins/scripts/source-presets` owns preset planning and target-neutral traversal; HTML and React scripts own emission, while root build scripts only write/check files and apply registry policy.
 - Tailwind input controls whether Tailwind theme variables remain configurable or are substituted into generated declarations. Canonical source presets use `theme(inline)` while preserving Video.js `--media-*` variables as the runtime customization surface.
 
 The compiler does not infer component ownership from utilities. Component ownership is established when the JSX transform records a recipe for the semantic class selected by the target configuration.

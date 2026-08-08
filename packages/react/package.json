@@ -134,6 +134,7 @@
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "jsdom": "^26.1.0",
+    "lightningcss": "^1.32.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tsdown": "^0.22.14",

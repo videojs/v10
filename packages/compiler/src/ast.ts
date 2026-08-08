@@ -45,3 +45,8 @@ export {
   resolveRelative,
   transformImports,
 } from './transforms';
+export {
+  collectModuleSpecifiers,
+  type RewriteModuleSpecifiersOptions,
+  rewriteModuleSpecifiers,
+} from './utils/module-specifiers';
