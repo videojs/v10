@@ -16,7 +16,7 @@ export interface RenderedSkinSource {
   css: string;
 }
 
-/** Render one canonical Skin artifact entry to static light-DOM HTML. */
+/** Render one canonical Skin entry to static light-DOM HTML. */
 export async function renderSkinSource(entryFile: string, options: RenderSkinSourceOptions = {}): Promise<string> {
   return (await renderSkinSourceOutput(entryFile, options)).html;
 }
@@ -31,6 +31,7 @@ export async function renderSkinSourceOutput(
       ? createStyleProgram({
           design: await loadDesignSystem(requiredTailwindInput(options.tailwindInput)),
           output: 'styles.css',
+          tailwindVariables: 'inline',
           themeSelector: '.media-skin',
         })
       : undefined;
@@ -74,7 +75,7 @@ function selectSkinRender(
   }
 
   const conventionalName = basename(entryFile)
-    .replace(/\.skin\.[^.]+$/, '')
+    .replace(/(?:\.skin)?\.[^.]+$/, '')
     .replace(/(^|-)(\w)/g, (_, _dash, letter) => letter.toUpperCase());
   const conventional = Object.entries(exports).filter(
     ([name, value]) => typeof value === 'function' && (name === conventionalName || name.endsWith(conventionalName))
@@ -106,7 +107,7 @@ function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styleProgram: Sty
     async load(id) {
       if (id === '\0videojs-source-html:jsx-runtime') return { code: jsxRuntime, moduleType: 'js' };
       if (id === '\0videojs-source-html:style') return { code: classNamesRuntime, moduleType: 'js' };
-      if (!id.endsWith('.skin.tsx')) return null;
+      if (!id.endsWith('.skin.tsx') && basename(id) !== 'skin.tsx') return null;
 
       const source = await readFile(id, 'utf8');
       const result = await compile(source, {

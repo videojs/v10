@@ -155,6 +155,8 @@
   },
   "scripts": {
     "build": "tsdown",
+    "generate:registry": "node --import tsx ./scripts/registry/generate.ts",
+    "check:registry": "node --import tsx ./scripts/registry/generate.ts --check",
     "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",

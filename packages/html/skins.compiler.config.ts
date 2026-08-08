@@ -87,7 +87,7 @@ export function createHtmlSkinSourceConfig({ style, tailwindInput, styleProgram 
               resolve: {
                 element: ({ defaultName }) => ({ className: `media-${defaultName}` }),
               },
-              ...(styleProgram ? {} : { emit: { themeSelector: '.media-skin' } }),
+              ...(styleProgram ? {} : { emit: { tailwindVariables: 'inline', themeSelector: '.media-skin' } }),
             }
       ),
       transform(

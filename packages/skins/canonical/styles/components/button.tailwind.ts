@@ -8,7 +8,6 @@ const buttonStyles = [
 
 const buttonIconStyles = 'size-media-icon drop-shadow-media-icon';
 
-export const button = buttonStyles;
 export const fullscreenButton = [...buttonStyles, 'group/fullscreen'];
 export const muteButton = [...buttonStyles, 'group/mute'];
 export const playButton = [...buttonStyles, 'group/play'];

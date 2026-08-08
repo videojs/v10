@@ -20,6 +20,8 @@ export interface StyleProgramCssOptions {
   themeSelector?: string | undefined;
   /** Place global Tailwind support and theme CSS in a sibling support file. */
   support?: 'inline' | 'separate' | undefined;
+  /** Resolve Tailwind's private `--tw-*` variables into direct declarations. */
+  tailwindVariables?: 'preserve' | 'inline' | undefined;
 }
 
 export interface CreateStyleProgramOptions extends StyleProgramCssOptions {
@@ -152,6 +154,7 @@ export function createStyleProgram(options: CreateStyleProgramOptions): StylePro
       ...(options.mode ? { mode: options.mode } : {}),
       ...(options.themeSelector ? { themeSelector: options.themeSelector } : {}),
       ...(options.support ? { support: options.support } : {}),
+      ...(options.tailwindVariables ? { tailwindVariables: options.tailwindVariables } : {}),
     },
     chunks: new Map(),
     candidates: [],
@@ -303,7 +306,7 @@ function registerStyleClass(
     `style extraction: class name '${className}' has incompatible recipes across emitted stylesheets.\n` +
       `  first (${previous.origin.description}): ${previous.candidates}\n` +
       `  next (${signature.origin.description}): ${signature.candidates}\n` +
-      `A public semantic class must have the same recipe in every independently emitted artifact.`,
+      `A public semantic class must have the same recipe in every independently emitted stylesheet.`,
     { ...signature.origin, diagnosticCode: 'style-class-contract-collision' }
   );
 }
@@ -335,7 +338,7 @@ function emittedStyleFiles(output: string, emitted: EmittedProgramCss): StyleOut
     const supportOutput = `${extension ? output.slice(0, -extension.length) : output}.support.css`;
     return [
       { kind: 'styles', fileName: output, source: emitted.css },
-      { kind: 'support', fileName: supportOutput, source: emitted.support },
+      ...(emitted.support ? [{ kind: 'support' as const, fileName: supportOutput, source: emitted.support }] : []),
     ];
   }
 

@@ -109,6 +109,8 @@
   },
   "scripts": {
     "build": "tsdown",
+    "generate:registry": "node --import tsx ./scripts/registry/generate.ts",
+    "check:registry": "node --import tsx ./scripts/registry/generate.ts --check",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm build:watch",
     "test": "vitest run",

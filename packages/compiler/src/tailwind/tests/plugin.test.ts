@@ -819,6 +819,31 @@ function App(){ return <PlayButton className={iconButton}/>; }`;
     expect(css).toContain('--tw-content:');
   });
 
+  it('inlines private Tailwind variables for reviewable vanilla CSS', async () => {
+    const source = `function App(){ return <Foo className="border-0 outline-2 -translate-x-1/2 -translate-y-1/2 drop-shadow-sm"/>; }`;
+    const { assets } = await compileTailwind(source, {
+      mode: 'extract',
+      design,
+      emit: { tailwindVariables: 'inline' },
+    });
+    const css = assets[0]!.source;
+    expect(css).not.toContain('--tw-');
+    expect(css).toContain('border-style: solid');
+    expect(css).toContain('translate:');
+    expect(css).toMatch(/filter:\s+drop-shadow\(/);
+  });
+
+  it('rejects cross-rule Tailwind variable state that cannot be safely inlined', async () => {
+    const source = `function App(){ return <Foo className="ring-red-500 hover:ring-2"/>; }`;
+    await expect(
+      compileTailwind(source, {
+        mode: 'extract',
+        design,
+        emit: { tailwindVariables: 'inline' },
+      })
+    ).rejects.toThrow(/cannot resolve Tailwind variable/);
+  });
+
   it('preserves cross-rule custom-property setters and consumers', async () => {
     const source = `function App(){ return <Foo className="ring-red-500 hover:ring-2"/>; }`;
     const { assets } = await compileTailwind(source, {

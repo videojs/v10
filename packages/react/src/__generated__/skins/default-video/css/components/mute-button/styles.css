@@ -1,0 +1,85 @@
+@import '../../styles/base.css';
+@import '../../styles/themes/default.css';
+
+.media-mute-button {
+  width: var(--media-control-size);
+  height: var(--media-control-size);
+  cursor: pointer;
+  border-radius: var(--media-radius-pill);
+  border-style: solid;
+  color: inherit;
+  outline-style: solid;
+  outline-offset: calc(2px * -1);
+  background-color: #0000;
+  border-width: 0;
+  outline-width: 2px;
+  outline-color: #0000;
+  flex-shrink: 0;
+  place-items: center;
+  padding: 0;
+  display: grid;
+}
+
+@media (hover: hover) {
+  .media-mute-button:hover {
+    background-color: var(--media-control-hover-background);
+  }
+}
+
+.media-mute-button:focus-visible {
+  background-color: var(--media-control-hover-background);
+  outline-offset: 2px;
+  outline-color: currentColor;
+}
+
+.media-mute-button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.media-mute-button[aria-expanded='true'] {
+  background-color: var(--media-control-hover-background);
+}
+
+.media-mute-button-icon-volume-high {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+  display: none;
+}
+
+.media-mute-button-icon-volume-high:is(:where(.media-mute-button):not([data-muted]) *):is(
+    :where(.media-mute-button):not([data-volume-level='low']) *
+  ) {
+  opacity: 1;
+  display: block;
+}
+
+.media-mute-button-icon-volume-low {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+  display: none;
+}
+
+.media-mute-button-icon-volume-low:is(:where(.media-mute-button):not([data-muted]) *):is(
+    :where(.media-mute-button)[data-volume-level='low'] *
+  ) {
+  opacity: 1;
+  display: block;
+}
+
+.media-mute-button-icon-volume-off {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+  display: none;
+}
+
+.media-mute-button-icon-volume-off:is(:where(.media-mute-button)[data-muted] *) {
+  opacity: 1;
+  display: block;
+}

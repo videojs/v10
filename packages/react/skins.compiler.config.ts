@@ -43,7 +43,7 @@ export function createReactSkinSourceConfig({
               resolve: {
                 element: ({ defaultName }) => ({ className: `media-${defaultName}` }),
               },
-              emit: { support: 'separate', themeSelector: '.media-skin' },
+              emit: { support: 'separate', tailwindVariables: 'inline', themeSelector: '.media-skin' },
             }
       ),
       transform(

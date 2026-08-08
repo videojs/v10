@@ -1,0 +1,68 @@
+@import '../../styles/base.css';
+@import '../../styles/themes/default.css';
+
+.media-fullscreen-button {
+  width: var(--media-control-size);
+  height: var(--media-control-size);
+  cursor: pointer;
+  border-radius: var(--media-radius-pill);
+  border-style: solid;
+  color: inherit;
+  outline-style: solid;
+  outline-offset: calc(2px * -1);
+  background-color: #0000;
+  border-width: 0;
+  outline-width: 2px;
+  outline-color: #0000;
+  flex-shrink: 0;
+  place-items: center;
+  padding: 0;
+  display: grid;
+}
+
+@media (hover: hover) {
+  .media-fullscreen-button:hover {
+    background-color: var(--media-control-hover-background);
+  }
+}
+
+.media-fullscreen-button:focus-visible {
+  background-color: var(--media-control-hover-background);
+  outline-offset: 2px;
+  outline-color: currentColor;
+}
+
+.media-fullscreen-button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.media-fullscreen-button[aria-expanded='true'] {
+  background-color: var(--media-control-hover-background);
+}
+
+.media-fullscreen-button-icon-enter {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+  display: none;
+}
+
+.media-fullscreen-button-icon-enter:is(:where(.media-fullscreen-button):not([data-fullscreen]) *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-fullscreen-button-icon-exit {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  opacity: 0;
+  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+  display: none;
+}
+
+.media-fullscreen-button-icon-exit:is(:where(.media-fullscreen-button)[data-fullscreen] *) {
+  opacity: 1;
+  display: block;
+}

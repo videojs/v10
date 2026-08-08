@@ -378,6 +378,9 @@ importers:
       react:
         specifier: ^19.2.8
         version: 19.2.8
+      rolldown:
+        specifier: ~1.1.5
+        version: 1.1.5
       tsx:
         specifier: ^4.23.1
         version: 4.23.1
@@ -504,6 +507,9 @@ importers:
       '@videojs/jsx':
         specifier: workspace:*
         version: link:../jsx
+      prettier:
+        specifier: ^3.8.1
+        version: 3.8.1
       tsdown:
         specifier: ^0.22.14
         version: 0.22.14(@typescript/native-preview@7.0.0-dev.20260421.2)(@volar/typescript@2.4.28)(tsx@4.23.1)(typescript@6.0.2)(unrun@0.2.39)
