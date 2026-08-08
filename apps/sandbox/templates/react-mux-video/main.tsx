@@ -41,14 +41,8 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Provider placeholder={placeholder}>
-        <VideoSkinComponent
-          poster={poster}
-          skin={skin}
-          styling={styling}
-          live={live}
-          className="aspect-video max-w-4xl mx-auto"
-        >
+      <Provider poster={poster} placeholder={placeholder}>
+        <VideoSkinComponent skin={skin} styling={styling} live={live} className="aspect-video max-w-4xl mx-auto">
           {/* The storyboard track is derived automatically from the Mux src. */}
           <MuxVideo
             {...(muxSource ? { source: muxSource } : { src: url ?? '' })}

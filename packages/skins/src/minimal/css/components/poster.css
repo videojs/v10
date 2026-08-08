@@ -2,8 +2,12 @@
    Poster Image
    ========================================================================== */
 
+/*
+ * `media-poster` positions an image; React's `.media-poster` is the image, so
+ * it does both jobs itself.
+ */
 .media-minimal-skin media-poster,
-.media-minimal-skin > img {
+.media-minimal-skin .media-poster {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -12,28 +16,49 @@
   transition: opacity 0.25s;
 }
 .media-minimal-skin media-poster:not([data-visible]),
-.media-minimal-skin > img:not([data-visible]),
-.media-minimal-skin > img[data-visible]:not([data-loaded]) {
+.media-minimal-skin .media-poster:not([data-visible]) {
   opacity: 0;
 }
+
+/*
+ * Three ways an image reaches `media-poster`: the one it owns, reachable only
+ * as a shadow part; one slotted through this skin; and one an ejected skin
+ * inlines where the slot used to be.
+ */
+.media-minimal-skin media-poster::part(img),
+.media-minimal-skin media-poster ::slotted(img),
+.media-minimal-skin media-poster img,
+.media-minimal-skin .media-poster {
+  object-fit: var(--media-object-fit, contain);
+  object-position: var(--media-object-position, center);
+  border-radius: var(--media-video-border-radius);
+}
+.media-minimal-skin media-poster::part(img),
 .media-minimal-skin media-poster ::slotted(img),
 .media-minimal-skin media-poster img {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: var(--media-object-fit, contain);
-  object-position: var(--media-object-position, center);
-  border-radius: var(--media-video-border-radius);
-}
-.media-minimal-skin > img {
-  object-fit: var(--media-object-fit, contain);
-  object-position: var(--media-object-position, center);
-  border-radius: inherit;
 }
 
+/*
+ * Hold the image the component owns back until it loads, so the placeholder
+ * behind it shows first. An image you supplied reports nothing and is left
+ * alone.
+ */
+.media-minimal-skin media-poster::part(img),
+.media-minimal-skin .media-poster {
+  transition: opacity 0.25s;
+}
+.media-minimal-skin media-poster:not([data-loaded])::part(img),
+.media-minimal-skin .media-poster[data-visible]:not([data-loaded]) {
+  opacity: 0;
+}
+
+.media-minimal-skin:fullscreen media-poster::part(img),
 .media-minimal-skin:fullscreen media-poster ::slotted(img),
 .media-minimal-skin:fullscreen media-poster img,
-.media-minimal-skin:fullscreen > img {
+.media-minimal-skin:fullscreen .media-poster {
   object-fit: contain;
 }
