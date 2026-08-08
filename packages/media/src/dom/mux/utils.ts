@@ -91,8 +91,8 @@ export interface MuxDrmParams {
 
 /**
  * Structured Mux source. `playbackId` and `customDomain` identify the stream and
- * derive `src`; the inherited `engine` carries HLS engine options, and the
- * inherited `src` is a fallback for playing a non-Mux URL.
+ * derive `src`; the inherited `engine` carries engine options, and the inherited
+ * `src` is a fallback for playing a non-Mux URL.
  */
 export interface MuxSource extends HlsSource {
   playbackId?: string | undefined;
@@ -200,9 +200,13 @@ export function createMuxPosterURL(source?: MuxSource | null): string | undefine
 }
 
 /**
- * Build the hls.js `drmSystems` a source describes, keyed by EME key system id.
- * Mux signs one license token per playback ID and serves every system from a
- * URL derived from it, so `drm.token` is all a caller provides.
+ * Build the `drmSystems` a source describes, keyed by EME key system id. Mux
+ * signs one license token per playback ID and serves every system from a URL
+ * derived from it, so `drm.token` is all a caller provides.
+ *
+ * Both engines take this shape, so the result configures either: hls.js
+ * negotiates whichever system the browser offers, and native HLS reads the
+ * FairPlay entry.
  *
  * Returns `undefined` when no license token is present, or when the token is
  * not scoped to DRM — an unsigned license request is always rejected, so there

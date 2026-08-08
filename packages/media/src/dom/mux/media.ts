@@ -60,10 +60,11 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * params). A `playback.token` replaces all other params — signed URLs bake
    * them into the token. Engine options live under `engine`.
    *
-   * A `drm.token` fills in the inherited `engine.drmSystems` with Mux's
-   * FairPlay, Widevine, and PlayReady license servers for this playback ID.
-   * Naming `engine.drmSystems` yourself overrides that, for content Mux does
-   * not license.
+   * A `drm.token` fills in both: `engine.hlsJs.drmSystems` and
+   * `engine.nativeHls.drmSystems` get Mux's FairPlay, Widevine, and PlayReady
+   * license servers for this playback ID, so protected media plays whichever
+   * path the browser takes. Naming either yourself overrides that, for content
+   * Mux does not license.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -83,7 +84,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     super.source = source && {
       ...source,
       src: createMuxVideoURL(source) ?? source.src ?? '',
-      engine: withMuxDrm(source),
+      ...withMuxDrm(source),
     };
   }
 
@@ -109,13 +110,25 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 }
 
 /**
- * Fold Mux's derived license servers into the engine config, switching EME on
- * so hls.js listens for `encrypted`. Whatever the caller set under `engine`
- * wins, key by key, so `drmSystems` of their own replaces the derived set.
+ * Fold Mux's derived license servers into both engine configurations, switching
+ * EME on so hls.js listens for `encrypted`. Which engine ends up playing is
+ * decided later, and a signed Mux source should play either way.
+ *
+ * The same `drmSystems` object serves both: native HLS takes the hls.js shape
+ * and reads the FairPlay entry out of it, ignoring the systems only MSE can
+ * negotiate.
+ *
+ * Whatever the caller set wins, key by key, so license servers of their own
+ * replace the derived ones.
  */
-function withMuxDrm(source: MuxSource): MuxSource['engine'] {
+function withMuxDrm(source: MuxSource): Pick<MuxSource, 'engine'> {
   const drmSystems = createMuxDrmSystems(source);
-  if (!drmSystems) return source.engine;
+  if (!drmSystems) return { engine: source.engine };
 
-  return { emeEnabled: true, drmSystems, ...source.engine };
+  return {
+    engine: {
+      hlsJs: { emeEnabled: true, drmSystems, ...source.engine?.hlsJs },
+      nativeHls: { drmSystems, ...source.engine?.nativeHls },
+    },
+  };
 }

@@ -37,7 +37,7 @@ export const VimeoVideo = forwardRef<HTMLIFrameElement, VimeoVideoProps>(functio
       frameBorder={0}
       width="100%"
       height="100%"
-      referrerPolicy={props.source?.engine?.referrerPolicy}
+      referrerPolicy={props.source?.engine?.vimeo?.referrerPolicy}
       {...iframeProps}
       ref={composedRef}
     >

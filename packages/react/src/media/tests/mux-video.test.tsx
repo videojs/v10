@@ -67,9 +67,11 @@ describe('MuxVideo', () => {
   });
 
   it('forwards engine options from the source prop to the media', () => {
-    const { media } = renderWithMedia(<MuxVideo source={{ playbackId: 'abc123', engine: { maxBufferLength: 60 } }} />);
+    const { media } = renderWithMedia(
+      <MuxVideo source={{ playbackId: 'abc123', engine: { hlsJs: { maxBufferLength: 60 } } }} />
+    );
 
-    expect(media.source?.engine).toEqual({ maxBufferLength: 60 });
+    expect(media.source?.engine?.hlsJs).toEqual({ maxBufferLength: 60 });
   });
 
   it('adds a storyboard track inferred from the source prop', () => {

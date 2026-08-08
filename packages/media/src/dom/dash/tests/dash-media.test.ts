@@ -72,10 +72,10 @@ describe('DashMedia', () => {
   });
 
   describe('source', () => {
-    it('forwards engine settings to the dash.js player', () => {
+    it('forwards dash.js settings to the dash.js player', () => {
       const { media, engine } = setup();
 
-      media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
 
       expect(engine.updateSettings).toHaveBeenCalledWith({ streaming: { abandonLoadTimeout: 1000 } });
     });
@@ -94,7 +94,7 @@ describe('DashMedia', () => {
 
     it('leaves the engine alone for a structurally equal source', () => {
       const { media, engine } = setup();
-      const source: DashSource = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
+      const source: DashSource = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       media.source = source;
 
       const sourcechange = vi.fn();
@@ -103,7 +103,7 @@ describe('DashMedia', () => {
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
-      media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
 
       // Assigning is always announced, but nothing reaches dash.js, so an inline
       // React prop cannot disturb what is already playing.
@@ -114,27 +114,27 @@ describe('DashMedia', () => {
       expect(media.source).toEqual(source);
     });
 
-    it('does not re-attach the manifest when only engine options change', () => {
+    it('does not re-attach the manifest when only dash.js settings change', () => {
       const { media, engine } = setup();
-      media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.attachSource.mockClear();
 
-      media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 2000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 2000 } } } };
 
       expect(engine.attachSource).not.toHaveBeenCalled();
       expect(engine.updateSettings).toHaveBeenLastCalledWith({ streaming: { abandonLoadTimeout: 2000 } });
     });
 
-    it('resets settings instead of merging when an engine option is dropped', () => {
+    it('resets settings instead of merging when a dash.js setting is dropped', () => {
       const { media, engine } = setup();
       media.source = {
         src: MANIFEST,
-        engine: { streaming: { abandonLoadTimeout: 1000, cacheInitSegments: true } },
+        engine: { dashJs: { streaming: { abandonLoadTimeout: 1000, cacheInitSegments: true } } },
       };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
-      media.source = { src: MANIFEST, engine: { streaming: { cacheInitSegments: true } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { cacheInitSegments: true } } } };
 
       expect(engine.resetSettings).toHaveBeenCalledOnce();
       expect(engine.resetSettings.mock.invocationCallOrder[0]!).toBeLessThan(
@@ -143,9 +143,9 @@ describe('DashMedia', () => {
       expect(engine.updateSettings).toHaveBeenCalledExactlyOnceWith({ streaming: { cacheInitSegments: true } });
     });
 
-    it('resets settings when engine options are removed entirely', () => {
+    it('resets settings when dash.js settings are removed entirely', () => {
       const { media, engine } = setup();
-      media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
@@ -169,9 +169,9 @@ describe('DashMedia', () => {
   });
 
   describe('src', () => {
-    it('preserves source engine options across a src change', () => {
+    it('preserves source dash.js settings across a src change', () => {
       const { media, engine } = setup();
-      media.source = { src: MANIFEST, engine: { streaming: { abandonLoadTimeout: 1000 } } };
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
       engine.updateSettings.mockClear();
       engine.resetSettings.mockClear();
 
@@ -179,7 +179,7 @@ describe('DashMedia', () => {
 
       expect(media.source).toEqual({
         src: 'https://example.com/other.mpd',
-        engine: { streaming: { abandonLoadTimeout: 1000 } },
+        engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } },
       });
       expect(engine.attachSource).toHaveBeenLastCalledWith('https://example.com/other.mpd');
       // Carried-over options are already applied to the live player.
