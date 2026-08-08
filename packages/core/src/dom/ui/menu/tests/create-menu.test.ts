@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
 import { createPopupGroup } from '../../popover/popup-group';
-import { completeMenuItemSelection, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
+import { createTransition } from '../../transition';
+import { completeMenuItemSelection, createMenu, getRootPositionOptions, isMenuNavigationKey } from '../create-menu';
 import { cleanupElement, createItemElement, createTestMenu } from './create-menu-helpers';
 
 // ---------------------------------------------------------------------------
@@ -64,6 +65,26 @@ describe('createMenu', () => {
   // -------------------------------------------------------------------------
 
   describe('open/close', () => {
+    it('separates requested and committed open state', () => {
+      const onOpenChange = vi.fn();
+      const menu = createMenu({
+        transition: createTransition(),
+        onOpenChange,
+        closeOnEscape: () => true,
+        closeOnOutsideClick: () => true,
+      });
+
+      menu.open();
+
+      expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+      expect(menu.input.current.active).toBe(false);
+
+      menu.syncOpen(true);
+
+      expect(menu.input.current.active).toBe(true);
+      menu.destroy();
+    });
+
     it('opens and calls onOpenChange', () => {
       const { menu, onOpenChange } = createTestMenu();
 
@@ -291,21 +312,6 @@ describe('createMenu', () => {
 
       expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
     });
-
-    it('pops the parent menu when selection happens in a submenu', () => {
-      const { menu } = createTestMenu();
-      const { menu: parentMenu, onOpenChange: parentOpenChange } = createTestMenu();
-
-      parentMenu.open();
-      parentOpenChange.mockClear();
-      parentMenu.push('quality-menu', 'quality-trigger');
-
-      completeMenuItemSelection(menu, parentMenu);
-
-      expect(parentMenu.navigationInput.current.stack).toEqual([]);
-      expect(parentMenu.navigationInput.current.direction).toBe('back');
-      expect(parentOpenChange).not.toHaveBeenCalled();
-    });
   });
 
   // -------------------------------------------------------------------------
@@ -347,15 +353,15 @@ describe('createMenu', () => {
       expect(element.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(true);
     });
 
-    it('swallows left and right keys while the menu is open', () => {
+    it('lets left and right keys bubble for optional navigation bindings', () => {
       const { menu } = createTestMenu();
       menu.open();
 
       const event = makeKeyEvent('ArrowRight');
       menu.triggerProps.onKeyDown(event);
 
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(event.stopPropagation).toHaveBeenCalled();
+      expect(event.preventDefault).not.toHaveBeenCalled();
+      expect(event.stopPropagation).not.toHaveBeenCalled();
     });
 
     it('lets Escape bubble while the menu is open', () => {
@@ -738,42 +744,6 @@ describe('createMenu', () => {
       const { menu } = createTestMenu();
 
       expect(() => menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'))).not.toThrow();
-    });
-  });
-
-  // -------------------------------------------------------------------------
-  // Submenu navigation
-  // -------------------------------------------------------------------------
-
-  describe('submenu navigation', () => {
-    it('pushes and pops submenu entries', () => {
-      const { menu } = createTestMenu();
-
-      menu.push('quality-menu', 'quality-trigger');
-      menu.pop();
-
-      expect(menu.navigationInput.current).toEqual({ stack: [], direction: 'back' });
-    });
-
-    it('ignores duplicate pushes for the active submenu', () => {
-      const { menu } = createTestMenu();
-
-      menu.push('quality-menu', 'quality-trigger');
-      menu.push('quality-menu', 'quality-trigger');
-      menu.pop();
-
-      expect(menu.navigationInput.current.stack).toEqual([]);
-    });
-
-    it('does not emit a navigation update when popping at root', () => {
-      const { menu } = createTestMenu();
-      const listener = vi.fn();
-      const cleanup = menu.navigationInput.subscribe(listener);
-
-      menu.pop();
-
-      expect(listener).not.toHaveBeenCalled();
-      cleanup();
     });
   });
 

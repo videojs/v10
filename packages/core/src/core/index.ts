@@ -36,6 +36,7 @@ export * from './ui/menu/menu-core';
 export * from './ui/menu/menu-css-vars';
 export * from './ui/menu/menu-data-attrs';
 export * from './ui/menu/menu-item-data-attrs';
+export * from './ui/menu/menu-transition';
 export * from './ui/mute-button/mute-button-core';
 export * from './ui/mute-button/mute-button-data-attrs';
 export * from './ui/pip-button/pip-button-core';

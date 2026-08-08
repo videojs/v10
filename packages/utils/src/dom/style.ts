@@ -43,6 +43,25 @@ export function applyStyles(element: HTMLElement, styles: Record<string, string 
   }
 }
 
+/** Applies inline styles for one synchronous operation, then restores the previous declarations. */
+export function withTemporaryStyles<T>(element: HTMLElement, styles: Record<string, string>, callback: () => T): T {
+  const snapshot = Object.keys(styles).map((property) => ({
+    property,
+    value: element.style.getPropertyValue(property),
+    priority: element.style.getPropertyPriority(property),
+  }));
+
+  try {
+    for (const [property, value] of Object.entries(styles)) element.style.setProperty(property, value);
+    return callback();
+  } finally {
+    for (const { property, value, priority } of snapshot) {
+      if (value) element.style.setProperty(property, value, priority);
+      else element.style.removeProperty(property);
+    }
+  }
+}
+
 export function resolveCSSLength(el: Element, value: string): number {
   const trimmed = value.trim();
 

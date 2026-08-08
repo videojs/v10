@@ -25,7 +25,7 @@ function unchecked(selector: string): string {
 const menu = '[role="menu"]';
 const item = '[role="menuitem"]';
 const option = '[role="menuitemradio"]';
-const activeMenu = `${menu}[data-menu-view-state="active"]`;
+const activeMenu = `${menu}[data-view-state="active"]`;
 const playbackRateOptions = [
   `#playback-rate-menu ${option}`,
   withinControls(`.media-menu--playback-rate ${option}`),

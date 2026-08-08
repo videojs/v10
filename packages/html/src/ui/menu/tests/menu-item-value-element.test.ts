@@ -14,6 +14,7 @@ import { MediaI18nProviderElement } from '../../../i18n/provider-element';
 import { playerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { MenuItemElement } from '../menu-item-element';
+import type { MenuItemSettingType } from '../menu-item-type';
 import { MenuItemValueElement } from '../menu-item-value-element';
 
 function defineElement(tagName: string, Base: CustomElementConstructor): void {
@@ -142,7 +143,7 @@ defineElement('test-menu-item-value-player', TestPlayerProviderElement);
 
 function setup(
   store: AnyPlayerStore,
-  type: MenuItemElement['type'],
+  type: MenuItemSettingType,
   locale?: string | undefined
 ): {
   menuItem: MenuItemElement;
@@ -155,7 +156,7 @@ function setup(
 
   if (locale) i18n.setAttribute('lang', locale);
   provider.setStore(store);
-  menuItem.type = type;
+  menuItem.setAttribute('type', type);
   menuItem.commandfor = 'settings-submenu';
   menuItem.append(value);
   provider.append(menuItem);
@@ -320,7 +321,7 @@ describe('MenuItemValueElement', () => {
       expect(value.textContent).toBe('1.5×');
     });
 
-    menuItem.type = null;
+    menuItem.removeAttribute('type');
     await menuItem.updateComplete;
 
     await waitForAssertion(() => {

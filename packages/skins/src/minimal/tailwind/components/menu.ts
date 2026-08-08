@@ -11,7 +11,7 @@ const panelBase = cn(
 const rootView = cn(
   panelBase,
   'group/menu-root-view',
-  'data-[menu-view-state=inactive]:-translate-x-full data-[menu-view-state=inactive]:blur'
+  'data-[view-state=inactive]:-translate-x-full data-[view-state=inactive]:blur'
 );
 
 const submenuPanel = cn(
@@ -62,13 +62,13 @@ const group = cn(
   'supports-[top:anchor(top)]:before:transition-[inset]',
   'supports-[top:anchor(top)]:before:duration-100',
   'supports-[top:anchor(top)]:before:ease-in-out',
-  'group-data-[menu-view-state=inactive]/menu-root-view:before:hidden'
+  'group-data-[view-state=inactive]/menu-root-view:before:hidden'
 );
 
 const menuHostShell = cn(
   popup.popover,
   menuTokens,
-  'min-w-max max-w-(--media-popover-available-width,none) max-h-[min(var(--media-popover-available-height,var(--menu-max-height)),var(--menu-max-height))]',
+  'min-w-max max-w-(--media-menu-available-width,none) max-h-[min(var(--media-menu-available-height,var(--menu-max-height)),var(--menu-max-height))]',
   'bg-(--media-popover-background-color) [backdrop-filter:var(--media-popover-backdrop-filter)]',
   'shadow-[0_0_0_1px_var(--media-popover-border-color),0_4px_6px_-1px_oklch(0_0_0/0.1),0_2px_4px_-2px_oklch(0_0_0/0.1)]',
   'box-border rounded-(--menu-border-radius) p-(--menu-padding) overscroll-none'
@@ -85,7 +85,7 @@ export const menu = {
     // Don't transition width and height on open/close.
     'data-starting-style:[--media-popup-transition:var(--media-popup-base-transition)]',
     'data-ending-style:[--media-popup-transition:var(--media-popup-base-transition)]',
-    'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
+    'min-w-48! w-(--media-menu-width) max-w-(--media-menu-available-width) h-(--media-menu-height)',
     'overflow-hidden!'
   ),
   group,

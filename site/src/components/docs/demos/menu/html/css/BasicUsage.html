@@ -14,8 +14,8 @@
         </hlsjs-video>
         <div class="menu-bar">
             <button type="button" commandfor="settings-menu" class="settings-trigger">Settings</button>
+            <media-menu-transition-root>
             <media-menu id="settings-menu" side="top" align="end" class="menu">
-                <media-menu-view class="menu-panel">
                     <media-menu-item commandfor="quality-menu" type="quality" class="menu-item">
                         <span>Quality</span>
                         <span class="menu-value">
@@ -45,13 +45,12 @@
                         </span>
                     </media-menu-item>
                     <media-menu-item class="menu-item">Copy link</media-menu-item>
-                </media-menu-view>
-
+                <media-menu-transition-view>
                 <media-menu id="quality-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Quality
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-quality-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -65,12 +64,14 @@
                         </template>
                     </media-quality-radio-group>
                 </media-menu>
+                </media-menu-transition-view>
 
+                <media-menu-transition-view>
                 <media-menu id="audio-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Audio
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-audio-track-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -80,12 +81,14 @@
                         </template>
                     </media-audio-track-radio-group>
                 </media-menu>
+                </media-menu-transition-view>
 
+                <media-menu-transition-view>
                 <media-menu id="speed-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Speed
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-playback-rate-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -95,12 +98,14 @@
                         </template>
                     </media-playback-rate-radio-group>
                 </media-menu>
+                </media-menu-transition-view>
 
+                <media-menu-transition-view>
                 <media-menu id="captions-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Captions
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-captions-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -110,7 +115,9 @@
                         </template>
                     </media-captions-radio-group>
                 </media-menu>
+                </media-menu-transition-view>
             </media-menu>
+            </media-menu-transition-root>
         </div>
     </media-container>
 </video-player>

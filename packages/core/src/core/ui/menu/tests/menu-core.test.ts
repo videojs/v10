@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
 import { MenuCore, type MenuInput } from '../menu-core';
+import { MenuDataAttrs } from '../menu-data-attrs';
+import { MenuTransitionDataAttrs } from '../menu-transition';
 
 function createInput(overrides: Partial<MenuInput> = {}): MenuInput {
   return {
@@ -11,6 +13,11 @@ function createInput(overrides: Partial<MenuInput> = {}): MenuInput {
 }
 
 describe('MenuCore', () => {
+  it('owns the submenu styling attribute independently of transitions', () => {
+    expect(MenuDataAttrs.isSubmenu).toBe('data-submenu');
+    expect(MenuTransitionDataAttrs).not.toHaveProperty('submenu');
+  });
+
   describe('defaultProps', () => {
     it('has expected defaults', () => {
       expect(MenuCore.defaultProps).toEqual({
@@ -75,21 +82,11 @@ describe('MenuCore', () => {
       expect(state.align).toBe('end');
     });
 
-    it('reflects isSubmenu from props', () => {
+    it('identifies a submenu and omits root positioning state', () => {
       const core = new MenuCore({ isSubmenu: true });
       core.setInput(createInput());
-      const state = core.getState();
 
-      expect(state.isSubmenu).toBe(true);
-    });
-
-    it('omits root positioning for submenus', () => {
-      const core = new MenuCore({ side: 'right', align: 'end', isSubmenu: true });
-      core.setInput(createInput());
-      const state = core.getState();
-
-      expect(state.side).toBeUndefined();
-      expect(state.align).toBeUndefined();
+      expect(core.getState()).toMatchObject({ isSubmenu: true, side: undefined, align: undefined });
     });
   });
 
@@ -135,7 +132,7 @@ describe('MenuCore', () => {
   });
 
   describe('getContentAttrs', () => {
-    it('returns menu ARIA attrs with popover for root menu', () => {
+    it('returns menu ARIA attrs with popover', () => {
       const core = new MenuCore();
       core.setInput(createInput());
       const state = core.getState();
@@ -146,15 +143,12 @@ describe('MenuCore', () => {
       expect(attrs.popover).toBe('manual');
     });
 
-    it('omits popover attr for submenus', () => {
+    it('omits popover behavior for a submenu', () => {
       const core = new MenuCore({ isSubmenu: true });
       core.setInput(createInput());
-      const state = core.getState();
-      const attrs = core.getContentAttrs(state);
+      const attrs = core.getContentAttrs(core.getState());
 
-      expect(attrs.role).toBe('menu');
-      expect(attrs.tabIndex).toBe(-1);
-      expect('popover' in attrs).toBe(false);
+      expect(attrs).not.toHaveProperty('popover');
     });
   });
 
@@ -177,7 +171,6 @@ describe('MenuCore', () => {
 
       expect(state.side).toBe('left');
       expect(state.align).toBe('start');
-      expect(state.isSubmenu).toBe(false);
     });
   });
 

@@ -14,6 +14,9 @@ import { FullscreenButtonElement } from '../../ui/fullscreen-button/fullscreen-b
 import { GestureElement } from '../../ui/gesture/gesture-element';
 import { HotkeyElement } from '../../ui/hotkey/hotkey-element';
 import { LiveButtonElement } from '../../ui/live-button/live-button-element';
+import { MenuItemValueElement } from '../../ui/menu/menu-item-value-element';
+import { MenuTransitionRootElement } from '../../ui/menu/menu-transition-root-element';
+import { MenuTransitionViewElement } from '../../ui/menu/menu-transition-view-element';
 import { MuteButtonElement } from '../../ui/mute-button/mute-button-element';
 import { PiPButtonElement } from '../../ui/pip-button/pip-button-element';
 import { PlayButtonElement } from '../../ui/play-button/play-button-element';
@@ -51,6 +54,9 @@ defineInputIndicators();
 defineSliders();
 defineTime();
 defineMenu();
+safeDefine(MenuItemValueElement);
+safeDefine(MenuTransitionRootElement);
+safeDefine(MenuTransitionViewElement);
 defineTooltip();
 
 // Standalone elements.

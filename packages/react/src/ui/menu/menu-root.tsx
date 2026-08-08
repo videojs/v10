@@ -10,14 +10,14 @@ import {
 } from '@videojs/core/dom';
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import { useOptionalContainer, useOptionalPlayer, useOptionalPopupGroup } from '../../player/context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';
 import { useOptionalControlsContext } from '../controls/context';
 import { usePositionedState } from '../hooks/use-positioned-state';
-import { MenuContextProvider, SubMenuContextProvider, useOptionalMenuContext } from './context';
+import { MenuContextProvider } from './context';
 
 export interface MenuRootProps extends MenuCore.Props {
   /** Boundary used to constrain the root menu popup size. */
@@ -38,19 +38,17 @@ export function MenuRoot({
   children,
   ...coreProps
 }: MenuRootProps): ReactNode {
-  // Detect if we are nested inside a parent Menu.Content — if so, operate as
-  // a submenu: no popover positioning, Trigger acts as a parent item.
-  const parentMenu = useOptionalMenuContext();
   const controls = useOptionalControlsContext();
   const controlsState = useOptionalPlayer(selectControls);
   const container = useOptionalContainer();
   const popupGroup = useOptionalPopupGroup();
-  const isSubmenu = parentMenu !== null;
-  const { side, align, closeOnEscape, closeOnOutsideClick } = coreProps;
+  const { side, align, closeOnEscape, closeOnOutsideClick, isSubmenu } = coreProps;
 
-  const [core] = useState(() => new MenuCore({ ...coreProps, isSubmenu }));
+  const [core] = useState(() => new MenuCore(coreProps));
 
   const isControlled = controlledOpen !== undefined;
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(defaultOpen);
+  const resolvedOpen = controlledOpen ?? uncontrolledOpen;
 
   const onOpenChangeRef = useLatestRef(onOpenChangeProp);
   const onOpenChangeCompleteRef = useLatestRef(onOpenChangeCompleteProp);
@@ -63,6 +61,7 @@ export function MenuRoot({
     const instance = createMenu({
       transition: createTransition(),
       onOpenChange(nextOpen, details) {
+        if (!isControlled) setUncontrolledOpen(nextOpen);
         onOpenChangeRef.current?.(nextOpen, details);
       },
       onOpenChangeComplete(nextOpen) {
@@ -73,29 +72,16 @@ export function MenuRoot({
       group: () => (isSubmenuRef.current ? undefined : popupGroupRef.current),
     });
 
-    if (!isControlled && defaultOpen) {
-      instance.open();
-    }
-
     return instance;
   });
 
   const anchorName = useSafeId();
   const contentId = useSafeId('menu');
 
-  // Sync controlled open prop → internal state.
-  useEffect(() => {
-    if (controlledOpen === undefined) return;
-
-    const { active: inputOpen } = menu.input.current;
-    if (controlledOpen === inputOpen) return;
-
-    if (controlledOpen) {
-      menu.open('click');
-    } else {
-      menu.close('click');
-    }
-  }, [controlledOpen, menu]);
+  // State changes are committed only after controlled/uncontrolled resolution.
+  useLayoutEffect(() => {
+    menu.syncOpen(resolvedOpen);
+  }, [menu, resolvedOpen]);
 
   useEffect(() => {
     if (isSubmenu || controls?.state.visible !== false) return;
@@ -120,13 +106,6 @@ export function MenuRoot({
   }, [core, input, side, align, closeOnEscape, closeOnOutsideClick, isSubmenu]);
   const { state, preferredSide, setPositionedSide } = usePositionedState(preferredState);
 
-  // Subscribe to navigation state — used by Content/Trigger when this is a root menu.
-  const navigationInput = useSnapshot(menu.navigationInput);
-  const topEntry = navigationInput.stack[navigationInput.stack.length - 1];
-  const activeSubMenuId = topEntry?.menuId ?? null;
-  const activeSubMenuTriggerId = topEntry?.triggerId ?? null;
-  const navigationDirection = navigationInput.direction;
-
   const contextValue = useMemo(
     () => ({
       core,
@@ -139,42 +118,9 @@ export function MenuRoot({
       anchorName,
       boundary,
       container,
-      activeSubMenuId,
-      activeSubMenuTriggerId,
-      navigationDirection,
-      push: menu.push,
-      pop: menu.pop,
     }),
-    [
-      core,
-      menu,
-      state,
-      preferredSide,
-      setPositionedSide,
-      contentId,
-      anchorName,
-      boundary,
-      container,
-      activeSubMenuId,
-      activeSubMenuTriggerId,
-      navigationDirection,
-    ]
+    [core, menu, state, preferredSide, setPositionedSide, contentId, anchorName, boundary, container]
   );
-
-  const subMenuContextValue = useMemo(
-    () => (parentMenu ? { subMenuId: contentId, parentMenu } : null),
-    [contentId, parentMenu]
-  );
-
-  // When acting as a submenu, expose its content ID and the parent menu context
-  // through SubMenuContext so Trigger can register/push and Content can show/hide.
-  if (subMenuContextValue) {
-    return (
-      <MenuContextProvider value={contextValue}>
-        <SubMenuContextProvider value={subMenuContextValue}>{children}</SubMenuContextProvider>
-      </MenuContextProvider>
-    );
-  }
 
   return <MenuContextProvider value={contextValue}>{children}</MenuContextProvider>;
 }

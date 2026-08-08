@@ -19,7 +19,7 @@ export interface MenuProps {
   closeOnEscape?: boolean | undefined;
   /** Close the menu when clicking outside. Root menus only. */
   closeOnOutsideClick?: boolean | undefined;
-  /** True when this menu instance is nested inside a parent menu's content. */
+  /** Whether this menu is bound as a submenu. */
   isSubmenu?: boolean | undefined;
 }
 
@@ -32,7 +32,7 @@ export interface MenuState extends TransitionFlags {
   /** Preferred side of the trigger for the menu. Root menus only. */
   side: PopoverSide | undefined;
   align: PopoverAlign | undefined;
-  /** Whether this menu is nested inside another menu's content. */
+  /** Whether this menu is bound as a submenu. */
   isSubmenu: boolean;
 }
 
@@ -70,7 +70,6 @@ export class MenuCore {
   getState(): MenuState {
     const input = this.#input!;
     const isSubmenu = this.#props.isSubmenu;
-
     return {
       open: input.active,
       status: input.status,
@@ -93,8 +92,6 @@ export class MenuCore {
     return {
       role: 'menu' as const,
       tabIndex: -1,
-      // Root menus use the Popover API for dismiss and focus handling.
-      // Submenus render inline inside the parent viewport — no popover.
       ...(!state.isSubmenu && { popover: 'manual' as const }),
     };
   }

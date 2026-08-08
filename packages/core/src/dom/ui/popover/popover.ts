@@ -32,6 +32,8 @@ export interface PopoverOptions {
   delay?: () => number;
   closeDelay?: () => number;
   group?: () => PopupGroup | undefined;
+  /** Request open changes without applying them until `syncOpen` is called. */
+  deferOpenChanges?: boolean;
 }
 
 export interface PopoverTriggerProps {
@@ -59,6 +61,8 @@ export interface PopoverApi {
   setPopupElement: (el: HTMLElement | null) => void;
   open: (reason?: PopoverOpenChangeReason) => void;
   close: (reason?: PopoverOpenChangeReason) => void;
+  /** Apply a resolved open state when `deferOpenChanges` is enabled. */
+  syncOpen: (open: boolean) => void;
   destroy: () => void;
 }
 
@@ -163,14 +167,11 @@ export function createPopover(options: PopoverOptions): PopoverApi {
    * `onOpenChange` fires immediately (before animations).
    * `onOpenChangeComplete` fires after animations finish.
    */
-  function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
+  function commitOpen(): void {
     const opening = layer.open();
     if (!opening) return;
 
     options.group?.()?.open(groupMember);
-
-    const details: PopoverChangeDetails = event ? { reason, event } : { reason };
-    onOpenChange(true, details);
 
     opening.then(() => {
       if (layer.signal.aborted || !state.current.active) return;
@@ -178,20 +179,37 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     });
   }
 
-  function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
+  function commitClose(): void {
     const closing = layer.close(popupEl);
     if (!closing) return;
 
     options.group?.()?.close(groupMember);
-
-    const details: PopoverChangeDetails = event ? { reason, event } : { reason };
-    onOpenChange(false, details);
 
     closing.then(() => {
       if (layer.signal.aborted) return;
       tryHidePopover(popupEl);
       options.onOpenChangeComplete?.(false);
     });
+  }
+
+  function applyOpen(reason: PopoverOpenChangeReason, event?: Event): void {
+    if (layer.signal.aborted) return;
+    const { active, status } = state.current;
+    if (active && status !== 'ending') return;
+
+    const details: PopoverChangeDetails = event ? { reason, event } : { reason };
+    onOpenChange(true, details);
+    if (!options.deferOpenChanges) commitOpen();
+  }
+
+  function applyClose(reason: PopoverOpenChangeReason, event?: Event): void {
+    if (layer.signal.aborted) return;
+    const { active, status } = state.current;
+    if (!active || status === 'ending') return;
+
+    const details: PopoverChangeDetails = event ? { reason, event } : { reason };
+    onOpenChange(false, details);
+    if (!options.deferOpenChanges) commitClose();
   }
 
   // --- Imperative API ---
@@ -203,6 +221,12 @@ export function createPopover(options: PopoverOptions): PopoverApi {
   function close(reason: PopoverOpenChangeReason = 'click'): void {
     clearHoverTimeout();
     applyClose(reason);
+  }
+
+  function syncOpen(open: boolean): void {
+    if (!options.deferOpenChanges) return;
+    if (open) commitOpen();
+    else commitClose();
   }
 
   // --- Outside-click handler ---
@@ -395,6 +419,7 @@ export function createPopover(options: PopoverOptions): PopoverApi {
     setPopupElement,
     open,
     close,
+    syncOpen,
     destroy: layer.destroy,
   };
 }

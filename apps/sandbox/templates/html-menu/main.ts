@@ -3,6 +3,7 @@
 import '@app/styles.css';
 
 import '@videojs/html/ui/menu';
+import '@videojs/html/ui/menu-transition';
 
 // ── Class constants ───────────────────────────────────────────────────────────
 
@@ -53,9 +54,9 @@ const subMenuContentClass = [
 
 // Root and submenu views share the same viewport so they can slide over each other.
 const rootViewClass = [
-  'absolute inset-0 p-1 translate-x-0',
-  'transition-transform duration-300 ease-in-out will-change-transform',
-  'data-[menu-view-state=inactive]:-translate-x-full',
+  'absolute inset-0 p-1 translate-x-0 transition-transform',
+  'duration-300 ease-in-out will-change-transform',
+  'data-[view-state=inactive]:-translate-x-full',
 ].join(' ');
 
 const backButtonClass = [
@@ -143,9 +144,8 @@ root.innerHTML = `
           <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
         </button>
 
-        <media-menu id="nav-menu" class="${menuNavPopupClass}">
-          <!-- Root list view — slides left when a submenu is active. -->
-          <media-menu-view id="nav-root-view" class="${rootViewClass}">
+        <media-menu-transition-root root-view-class="${rootViewClass}">
+          <media-menu id="nav-menu" class="${menuNavPopupClass}">
 
             <!-- Quality submenu trigger -->
             <media-menu-item id="nav-quality-trigger" commandfor="nav-quality-sub" class="${subMenuTriggerClass}">
@@ -168,13 +168,12 @@ root.innerHTML = `
             <media-menu-separator class="${menuSeparatorClass}"></media-menu-separator>
             <media-menu-item id="nav-copy-item" class="${menuItemClass}">Copy link</media-menu-item>
 
-          </media-menu-view>
-
+          <media-menu-transition-view>
           <media-menu id="nav-quality-sub" class="${subMenuContentClass}">
-            <media-menu-back class="${backButtonClass}">
+            <media-menu-item class="${backButtonClass}">
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Quality
-            </media-menu-back>
+            </media-menu-item>
             <media-menu-radio-group id="nav-quality-group" aria-label="Resolution" value="auto">
               <media-menu-radio-item value="auto" class="${radioItemClass}">Auto</media-menu-radio-item>
               <media-menu-radio-item value="1080p" class="${radioItemClass}">1080p</media-menu-radio-item>
@@ -182,12 +181,14 @@ root.innerHTML = `
               <media-menu-radio-item value="480p" class="${radioItemClass}">480p</media-menu-radio-item>
             </media-menu-radio-group>
           </media-menu>
+          </media-menu-transition-view>
 
+          <media-menu-transition-view>
           <media-menu id="nav-speed-sub" class="${subMenuContentClass}">
-            <media-menu-back class="${backButtonClass}">
+            <media-menu-item class="${backButtonClass}">
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Speed
-            </media-menu-back>
+            </media-menu-item>
             <media-menu-radio-group id="nav-speed-group" aria-label="Speed" value="1">
               <media-menu-radio-item value="0.5" class="${radioItemClass}">0.5x</media-menu-radio-item>
               <media-menu-radio-item value="0.75" class="${radioItemClass}">0.75x</media-menu-radio-item>
@@ -197,7 +198,9 @@ root.innerHTML = `
               <media-menu-radio-item value="2" class="${radioItemClass}">2x</media-menu-radio-item>
             </media-menu-radio-group>
           </media-menu>
+          </media-menu-transition-view>
         </media-menu>
+        </media-menu-transition-root>
 
         <p class="text-[0.8125rem] text-slate-500">
           Quality: <strong id="nav-quality-output" class="text-slate-900 font-medium">auto</strong>

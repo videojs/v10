@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { addAnchorName, getAnchorNames, resolveCSSLength } from '../style';
+import { addAnchorName, getAnchorNames, resolveCSSLength, withTemporaryStyles } from '../style';
 
 describe('getAnchorNames', () => {
   it('returns normalized anchor names', () => {
@@ -45,6 +45,24 @@ describe('addAnchorName', () => {
     cleanup();
 
     expect(getAnchorNames(el)).toEqual(['--settings-menu']);
+  });
+});
+
+describe('withTemporaryStyles', () => {
+  it('restores existing and absent declarations after the callback', () => {
+    const element = document.createElement('div');
+    element.style.setProperty('position', 'relative');
+
+    const position = withTemporaryStyles(
+      element,
+      { position: 'absolute', width: 'max-content' },
+      () => element.style.cssText
+    );
+
+    expect(position).toContain('position: absolute');
+    expect(position).toContain('width: max-content');
+    expect(element.style.getPropertyValue('position')).toBe('relative');
+    expect(element.style.getPropertyValue('width')).toBe('');
   });
 });
 

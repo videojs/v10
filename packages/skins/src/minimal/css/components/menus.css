@@ -11,8 +11,8 @@
   --menu-item-border-radius: calc(var(--menu-border-radius) - var(--menu-padding));
   box-sizing: border-box;
   min-width: max-content;
-  max-width: var(--media-popover-available-width, none);
-  max-height: min(var(--media-popover-available-height, var(--menu-max-height)), var(--menu-max-height));
+  max-width: var(--media-menu-available-width, none);
+  max-height: min(var(--media-menu-available-height, var(--menu-max-height)), var(--menu-max-height));
   padding: var(--menu-padding);
   overflow: auto;
   overscroll-behavior: none;
@@ -28,7 +28,7 @@
     --menu-transition-duration: 0ms;
   }
 
-  & .media-menu__panel {
+  & [data-menu-view] {
     position: absolute;
     inset: 0;
     padding: var(--menu-padding);
@@ -47,7 +47,7 @@
     }
 
     /* Root settings view — slides out when a submenu is active */
-    &[data-menu-root-view][data-menu-view-state="inactive"] {
+    &[data-menu-root-view][data-view-state="inactive"] {
       filter: blur(8px);
       translate: -100% 0;
 

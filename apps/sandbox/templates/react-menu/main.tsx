@@ -55,9 +55,9 @@ const subMenuContentClass = [
 
 // Root and submenu views share the same viewport so they can slide over each other.
 const rootViewClass = [
-  'absolute inset-0 p-1 translate-x-0',
-  'transition-transform duration-300 ease-in-out will-change-transform',
-  'data-[menu-view-state=inactive]:-translate-x-full',
+  'absolute inset-0 p-1 translate-x-0 transition-transform',
+  'duration-300 ease-in-out will-change-transform',
+  'data-[view-state=inactive]:-translate-x-full',
 ].join(' ');
 
 const backButtonClass = [
@@ -234,71 +234,69 @@ function App() {
           <span className="text-xs font-medium text-slate-500 uppercase tracking-widest">Submenu</span>
           <Menu.Root>
             <TriggerButton>Settings</TriggerButton>
-            <Menu.Content className={menuNavPopupClass}>
-              <Menu.View className={rootViewClass}>
-                {/* Quality submenu */}
-                <Menu.Root>
-                  <Menu.Trigger className={subMenuTriggerClass}>
-                    <span>Quality</span>
-                    <span className="flex items-center gap-1">
-                      <span className="text-xs text-slate-400">{quality}</span>
-                      <ChevronRight />
-                    </span>
-                  </Menu.Trigger>
-                  <Menu.Content className={subMenuContentClass}>
-                    <Menu.Back className={backButtonClass}>
-                      <ChevronLeft />
-                      Quality
-                    </Menu.Back>
-                    <Menu.RadioGroup aria-label="Resolution" value={quality} onValueChange={setQuality}>
-                      {['auto', '1080p', '720p', '480p'].map((v) => (
-                        <Menu.RadioItem key={v} value={v} className={radioItemClass}>
-                          {quality === v && <RadioDot />}
-                          {v}
-                        </Menu.RadioItem>
-                      ))}
-                    </Menu.RadioGroup>
-                  </Menu.Content>
-                </Menu.Root>
+            <Menu.TransitionRoot render={<Menu.Content className={menuNavPopupClass} />} className={rootViewClass}>
+              {/* Quality submenu */}
+              <Menu.TransitionView render={<Menu.Root />}>
+                <Menu.Trigger className={subMenuTriggerClass}>
+                  <span>Quality</span>
+                  <span className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">{quality}</span>
+                    <ChevronRight />
+                  </span>
+                </Menu.Trigger>
+                <Menu.Content className={subMenuContentClass}>
+                  <Menu.Item className={backButtonClass}>
+                    <ChevronLeft />
+                    Quality
+                  </Menu.Item>
+                  <Menu.RadioGroup aria-label="Resolution" value={quality} onValueChange={setQuality}>
+                    {['auto', '1080p', '720p', '480p'].map((v) => (
+                      <Menu.RadioItem key={v} value={v} className={radioItemClass}>
+                        {quality === v && <RadioDot />}
+                        {v}
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.TransitionView>
 
-                {/* Speed submenu */}
-                <Menu.Root>
-                  <Menu.Trigger className={subMenuTriggerClass}>
-                    <span>Speed</span>
-                    <span className="flex items-center gap-1">
-                      <span className="text-xs text-slate-400">{speed === '1' ? 'Normal' : `${speed}x`}</span>
-                      <ChevronRight />
-                    </span>
-                  </Menu.Trigger>
-                  <Menu.Content className={subMenuContentClass}>
-                    <Menu.Back className={backButtonClass}>
-                      <ChevronLeft />
-                      Speed
-                    </Menu.Back>
-                    <Menu.RadioGroup aria-label="Speed" value={speed} onValueChange={setSpeed}>
-                      {[
-                        { value: '0.5', label: '0.5x' },
-                        { value: '0.75', label: '0.75x' },
-                        { value: '1', label: 'Normal' },
-                        { value: '1.25', label: '1.25x' },
-                        { value: '1.5', label: '1.5x' },
-                        { value: '2', label: '2x' },
-                      ].map(({ value, label }) => (
-                        <Menu.RadioItem key={value} value={value} className={radioItemClass}>
-                          {speed === value && <RadioDot />}
-                          {label}
-                        </Menu.RadioItem>
-                      ))}
-                    </Menu.RadioGroup>
-                  </Menu.Content>
-                </Menu.Root>
+              {/* Speed submenu */}
+              <Menu.TransitionView render={<Menu.Root />}>
+                <Menu.Trigger className={subMenuTriggerClass}>
+                  <span>Speed</span>
+                  <span className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">{speed === '1' ? 'Normal' : `${speed}x`}</span>
+                    <ChevronRight />
+                  </span>
+                </Menu.Trigger>
+                <Menu.Content className={subMenuContentClass}>
+                  <Menu.Item className={backButtonClass}>
+                    <ChevronLeft />
+                    Speed
+                  </Menu.Item>
+                  <Menu.RadioGroup aria-label="Speed" value={speed} onValueChange={setSpeed}>
+                    {[
+                      { value: '0.5', label: '0.5x' },
+                      { value: '0.75', label: '0.75x' },
+                      { value: '1', label: 'Normal' },
+                      { value: '1.25', label: '1.25x' },
+                      { value: '1.5', label: '1.5x' },
+                      { value: '2', label: '2x' },
+                    ].map(({ value, label }) => (
+                      <Menu.RadioItem key={value} value={value} className={radioItemClass}>
+                        {speed === value && <RadioDot />}
+                        {label}
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.TransitionView>
 
-                <Menu.Separator className={menuSeparatorClass} />
-                <Menu.Item onSelect={() => console.log('copy link')} className={menuItemClass}>
-                  Copy link
-                </Menu.Item>
-              </Menu.View>
-            </Menu.Content>
+              <Menu.Separator className={menuSeparatorClass} />
+              <Menu.Item onSelect={() => console.log('copy link')} className={menuItemClass}>
+                Copy link
+              </Menu.Item>
+            </Menu.TransitionRoot>
           </Menu.Root>
           <p className="text-[0.8125rem] text-slate-500">
             Quality: <strong className="text-slate-900 font-medium">{quality}</strong>

@@ -120,7 +120,8 @@ function cancelAnimations(el: HTMLElement | null): void {
   }
 }
 
-function waitForAnimations(el: HTMLElement | null): Promise<void> {
+/** Waits for animations currently running on an element to settle. */
+export function waitForAnimations(el: HTMLElement | null): Promise<void> {
   if (!el) return Promise.resolve();
 
   const animations = el.getAnimations?.() ?? [];

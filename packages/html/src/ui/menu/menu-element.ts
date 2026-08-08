@@ -1,24 +1,16 @@
-import { MenuCore, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR } from '@videojs/core';
+import { MenuCore, MenuCSSVars, MenuDataAttrs, type MenuInput, POPUP_HOST_ATTR, PopoverCSSVars } from '@videojs/core';
 import {
   applyElementProps,
   applyStateDataAttrs,
   createMenu,
-  createMenuViewTransition,
   createTransition,
-  getMenuViewportAttrs,
-  getMenuViewTransitionAttrs,
   getRootPositionOptions,
   isMenuNavigationKey,
   type MenuApi,
   type MenuChangeDetails,
   type MenuOpenChangeReason,
-  type MenuViewTransitionState,
-  type NavigationState,
-  observeMenuViewContent,
   type PositioningBoundary,
   selectControls,
-  syncMenuViewRoot,
-  syncMenuViewTransition,
   type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
@@ -30,8 +22,9 @@ import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
-import { type MenuContextValue, menuContext } from './context';
+import { menuContext } from './context';
 
+/** An independent menu root and popup. Optional integrations can bind it inline. */
 export class MenuElement extends MediaElement {
   static readonly tagName: string = 'media-menu';
 
@@ -60,54 +53,49 @@ export class MenuElement extends MediaElement {
   readonly #position = new PositionController(this);
   readonly #controlsState = new PlayerController(this, playerContext, selectControls);
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
-  // Consume parent menu context — present when this is a nested (submenu) element.
-  readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
-  readonly #menuViewTransition = createMenuViewTransition({
-    focusFirstItem: () => {
-      this.#menu?.highlightFirstItem({ preventScroll: true });
-    },
-    restoreFocus: (triggerId) => {
-      const triggerElement = triggerId ? document.getElementById(triggerId) : null;
-      const fallbackTrigger = this.parentElement?.querySelector<HTMLElement>(
-        `[data-has-submenu][commandfor="${this.id}"]`
-      );
 
-      (triggerElement ?? fallbackTrigger)?.focus({ preventScroll: true });
-    },
-  });
   #menu: MenuApi | null = null;
   #snapshot: SnapshotController<MenuInput> | null = null;
-  #navSnapshot: SnapshotController<NavigationState> | null = null;
-  #menuViewSnapshot: SnapshotController<MenuViewTransitionState> | null = null;
-  #navState: NavigationState = { stack: [], direction: 'forward' };
-
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
-  #cleanupContentObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #inlineTrigger: HTMLElement | null = null;
   #releaseControlsLock: (() => void) | null = null;
+
+  get menuApi(): MenuApi | null {
+    return this.#menu;
+  }
+
+  /** Bind this menu as inline content owned by an optional integration. */
+  setInlineTrigger(trigger: HTMLElement | null): void {
+    if (this.#inlineTrigger === trigger) return;
+    this.#inlineTrigger = trigger;
+    this.requestUpdate();
+  }
 
   override connectedCallback(): void {
     super.connectedCallback();
     if (this.destroyed) return;
 
     this.setAttribute(POPUP_HOST_ATTR, '');
-
     this.#disconnect = new AbortController();
-
     this.#menu = createMenu({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: MenuChangeDetails) => {
-        this.open = nextOpen;
-        this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
+        const accepted = this.dispatchEvent(
+          new CustomEvent('open-change', {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            detail: { open: nextOpen, ...details },
+          })
+        );
+        if (accepted) this.open = nextOpen;
       },
       closeOnEscape: () => this.closeOnEscape,
       closeOnOutsideClick: () => this.closeOnOutsideClick,
-      group: () => (this.#parentCtx.value ? undefined : this.#containerCtx.value?.popupGroup),
+      group: () => (this.#inlineTrigger ? undefined : this.#containerCtx.value?.popupGroup),
     });
-
-    // The element itself is the content (popup) for root menus.
-    // Submenu detection happens in update() once parent context is available.
     this.#menu.setContentElement(this);
 
     applyElementProps(
@@ -121,51 +109,30 @@ export class MenuElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#menu.input);
     }
-
-    if (this.#navSnapshot) {
-      this.#navSnapshot.track(this.#menu.navigationInput);
-    } else {
-      this.#navSnapshot = new SnapshotController(this, this.#menu.navigationInput);
-    }
-
-    if (this.#menuViewSnapshot) {
-      this.#menuViewSnapshot.track(this.#menuViewTransition.input);
-    } else {
-      this.#menuViewSnapshot = new SnapshotController(this, this.#menuViewTransition.input);
-    }
-  }
-
-  protected override firstUpdated(changed: PropertyValues): void {
-    super.firstUpdated(changed);
-
-    if (this.defaultOpen && !this.open) {
-      this.#menu?.open();
-    }
   }
 
   override disconnectedCallback(): void {
     this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
-    this.#cleanupContentObserver?.();
-    this.#cleanupContentObserver = null;
     this.#cleanupTrigger();
+    this.#position.cleanup();
     this.#menu?.destroy();
     this.#menu = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
-    this.#menuViewTransition.destroy();
   }
 
   close(reason: MenuOpenChangeReason = 'imperative-action'): void {
     this.#menu?.close(reason);
   }
 
+  openMenu(reason: MenuOpenChangeReason = 'imperative-action'): void {
+    this.#menu?.open(reason);
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
-
-    const parentCtx = this.#parentCtx.value ?? null;
-    const isSubmenu = parentCtx !== null;
-
+    if (!this.hasUpdated && this.defaultOpen && !this.open) this.open = true;
     this.#core.setProps({
       open: this.open,
       defaultOpen: this.defaultOpen,
@@ -173,96 +140,52 @@ export class MenuElement extends MediaElement {
       align: this.align,
       closeOnEscape: this.closeOnEscape,
       closeOnOutsideClick: this.closeOnOutsideClick,
-      isSubmenu,
+      isSubmenu: this.#inlineTrigger !== null,
     });
 
-    if (this.#menu && changed.has('open') && !isSubmenu) {
-      const { active: interactionOpen } = this.#menu.input.current;
-      if (this.open !== interactionOpen) {
-        if (this.open) {
-          this.#menu.open();
-        } else {
-          this.#menu.close();
-        }
-      }
+    if (this.#menu && changed.has('open')) {
+      this.#menu.syncOpen(this.open);
     }
   }
 
-  protected override update(_changed: PropertyValues): void {
-    super.update(_changed);
+  protected override update(changed: PropertyValues): void {
+    super.update(changed);
     if (!this.#menu) return;
 
-    const parentCtx = this.#parentCtx.value ?? null;
-    const isSubmenu = parentCtx !== null;
-
-    this.#navState = this.#menu.navigationInput.current;
-    const input = this.#menu.input.current;
-    this.#core.setInput(input);
+    this.#core.setInput(this.#menu.input.current);
     const state = this.#core.getState();
+    const inline = this.#inlineTrigger !== null;
 
-    if (!isSubmenu && state.open) {
+    if (!inline && state.open) {
       this.#releaseControlsLock ??= this.#controlsState.value?.requestControlsLock() ?? null;
     } else {
       this.#releaseControlsVisibilityLock();
     }
 
-    if (isSubmenu && parentCtx) {
-      this.#updateAsSubmenu(parentCtx);
-    } else {
-      this.#updateAsRoot(state);
-    }
+    this.#provider.setValue({ menu: this.#menu, state, stateAttrMap: MenuDataAttrs });
+    this.#syncTrigger(inline ? this.#inlineTrigger : this.#position.findTrigger());
 
-    // Provide context to child parts.
-    // When nested, expose the parent menu's API so items can pop on select.
-    const parentMenu = parentCtx?.menu ?? null;
-    this.#provider.setValue({
-      menu: this.#menu,
-      state,
-      stateAttrMap: MenuDataAttrs,
-      navigation: this.#navState,
-      parentMenu,
-    });
-  }
-
-  #releaseControlsVisibilityLock(): void {
-    this.#releaseControlsLock?.();
-    this.#releaseControlsLock = null;
-  }
-
-  #updateAsRoot(state: ReturnType<MenuCore['getState']>): void {
-    if (!this.#menu) return;
-
-    const triggerElement = this.#position.findTrigger();
-    this.#syncTrigger(triggerElement);
-
-    applyElementProps(this, {
-      ...this.#core.getContentAttrs(state),
-      ...getMenuViewportAttrs(),
-    });
+    applyElementProps(this, this.#core.getContentAttrs(state));
     applyStateDataAttrs(this, state, MenuDataAttrs);
 
-    if (state.open) {
-      tryShowPopover(this);
-    } else {
+    if (inline) {
+      this.removeAttribute('popover');
+      this.removeAttribute(MenuDataAttrs.side);
+      this.removeAttribute(MenuDataAttrs.align);
       tryHidePopover(this);
+    } else {
+      if (state.open) tryShowPopover(this);
+      else tryHidePopover(this);
     }
 
     if (this.#currentTrigger) {
       applyElementProps(this.#currentTrigger, this.#core.getTriggerAttrs(state, this.id));
     }
 
-    if (!state.open) {
-      this.#cleanupContentObserver?.();
-      this.#cleanupContentObserver = null;
+    if (inline || !state.open) {
       this.#position.cleanup();
       return;
     }
-
-    this.#cleanupContentObserver ??= observeMenuViewContent(this, () => {
-      this.requestUpdate();
-    });
-
-    syncMenuViewRoot(this, this.#navState.stack.length > 0);
 
     const positionOptions = getRootPositionOptions(state.side, state.align);
     if (!positionOptions || !this.#currentTrigger) return;
@@ -275,68 +198,23 @@ export class MenuElement extends MediaElement {
       container: this.#containerCtx.value?.container ?? null,
       onSideChange: (side) => {
         this.setAttribute(MenuDataAttrs.side, side);
-        syncMenuViewRoot(this, this.#navState.stack.length > 0);
+        const availableWidth = this.style.getPropertyValue(PopoverCSSVars.availableWidth);
+        const availableHeight = this.style.getPropertyValue(PopoverCSSVars.availableHeight);
+        if (availableWidth) this.style.setProperty(MenuCSSVars.availableWidth, availableWidth);
+        if (availableHeight) this.style.setProperty(MenuCSSVars.availableHeight, availableHeight);
       },
     });
   }
 
-  #updateAsSubmenu(parentCtx: MenuContextValue): void {
-    const parentNavigation = parentCtx.navigation;
-    const topEntry = parentNavigation.stack[parentNavigation.stack.length - 1];
-    const activeSubMenuId = topEntry?.menuId ?? null;
-    const isActive = activeSubMenuId === this.id;
-
-    this.#menuViewTransition.setElement(this);
-    this.#menuViewTransition.sync({
-      active: isActive,
-      direction: parentNavigation.direction,
-      triggerId: topEntry?.triggerId ?? null,
-    });
-
-    // Apply base submenu attributes regardless of phase.
-    const transitionState = this.#menuViewTransition.input.current;
-
-    this.removeAttribute(MenuDataAttrs.side);
-    this.removeAttribute(MenuDataAttrs.align);
-
-    applyElementProps(this, {
-      ...getMenuViewTransitionAttrs(transitionState),
-      role: 'menu',
-      tabIndex: -1,
-      'data-submenu': '',
-    });
-    syncMenuViewTransition(parentCtx.menu.contentElement, this, transitionState);
+  #releaseControlsVisibilityLock(): void {
+    this.#releaseControlsLock?.();
+    this.#releaseControlsLock = null;
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
     const isNavigationKey = isMenuNavigationKey(event);
-    const defaultPreventedBeforeMenu = event.defaultPrevented;
-
     this.#menu?.contentProps.onKeyDown(event);
-
-    const parentCtx = this.#parentCtx.value ?? null;
-
-    if (!parentCtx) {
-      if (event.key === 'Escape') return;
-      if (isNavigationKey) {
-        event.stopPropagation();
-      }
-      return;
-    }
-
-    const stack = parentCtx.menu.navigationInput.current.stack;
-    const topEntry = stack[stack.length - 1];
-    const ownsActiveSubmenu = topEntry?.menuId === this.id;
-    const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
-
-    if (isBackNavigationKey && ownsActiveSubmenu && !defaultPreventedBeforeMenu) {
-      event.preventDefault();
-      parentCtx.menu.pop();
-    }
-
-    if (isNavigationKey && (!isBackNavigationKey || ownsActiveSubmenu)) {
-      event.stopPropagation();
-    }
+    if (event.key !== 'Escape' && isNavigationKey && event.defaultPrevented) event.stopPropagation();
   };
 
   #handleContentFocusOut = (event: UIFocusEvent): void => {
@@ -365,7 +243,6 @@ export class MenuElement extends MediaElement {
         'aria-controls': undefined,
       });
     }
-
     this.#triggerAbort?.abort();
     this.#triggerAbort = null;
     this.#currentTrigger = null;
