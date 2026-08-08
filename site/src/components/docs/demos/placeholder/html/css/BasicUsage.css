@@ -1,0 +1,67 @@
+.video-player {
+  position: relative;
+  display: block;
+}
+
+.video-player video {
+  width: 100%;
+}
+
+.media-placeholder {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: cover;
+  filter: blur(20px);
+  transition: opacity 0.25s;
+}
+
+.media-placeholder:not([data-visible]) {
+  opacity: 0;
+}
+
+.media-poster {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+
+.media-poster:not([data-visible]) {
+  opacity: 0;
+}
+
+.media-poster img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.media-play-button {
+  position: absolute;
+  bottom: 10px;
+  left: 10px;
+  padding-block: 8px;
+  padding-inline: 16px;
+  color: black;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 9999px;
+  backdrop-filter: blur(10px);
+}
+
+.media-play-button .paused,
+.media-play-button .playing {
+  display: none;
+}
+
+.media-play-button[data-paused] .paused {
+  display: inline;
+}
+
+.media-play-button:not([data-paused]) .playing {
+  display: inline;
+}

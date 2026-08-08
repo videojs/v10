@@ -90,6 +90,7 @@ export const sidebar: Sidebar = [
       { slug: 'reference/mute-button' },
       { slug: 'reference/mux-data' },
       { slug: 'reference/pip-button' },
+      { slug: 'reference/placeholder' },
       { slug: 'reference/play-button' },
       { slug: 'reference/playback-rate-button' },
       { slug: 'reference/playback-rate-radio-group' },

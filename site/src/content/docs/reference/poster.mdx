@@ -6,6 +6,7 @@ description: Poster image component that displays a thumbnail until video playba
 ---
 
 import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import DocsLink from "@/components/docs/DocsLink.astro";
 import FrameworkCase from "@/components/docs/FrameworkCase.astro";
 import StyleCase from "@/components/docs/StyleCase.astro";
 import Demo from "@/components/docs/demos/Demo.astro";
@@ -42,6 +43,8 @@ Import the component:
 ## Behavior
 
 The poster is visible before playback starts. Once the user plays or seeks, the poster hides permanently — pausing does not bring it back. The poster reappears when a new source is loaded.
+
+A poster is a full-size image, so it takes a moment to arrive. Render a <DocsLink slug="reference/placeholder">`Placeholder`</DocsLink> behind it and viewers see a blurred stand-in in the meantime.
 
 ## Styling
 

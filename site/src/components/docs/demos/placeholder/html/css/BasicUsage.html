@@ -1,0 +1,26 @@
+<!-- biome-ignore-all lint/a11y/useMediaCaption: TODO -->
+<video-player
+    class="video-player"
+    placeholder="{{VJS10_DEMO_PLACEHOLDER}}"
+>
+    <media-container>
+        <video
+            src="{{VJS10_DEMO_VIDEO_MP4}}"
+            playsinline
+        ></video>
+
+        <media-placeholder class="media-placeholder"></media-placeholder>
+
+        <media-poster class="media-poster">
+            <img
+                src="{{VJS10_DEMO_POSTER}}"
+                alt="Video thumbnail"
+                />
+            </media-poster>
+
+            <media-play-button class="media-play-button">
+                <span class="paused">Play</span>
+                <span class="playing">Pause</span>
+            </media-play-button>
+    </media-container>
+</video-player>
