@@ -1,10 +1,11 @@
+import type { TooltipProps } from '@videojs/core';
 import { Tooltip as TooltipPrimitive } from '@videojs/core/components';
-import type { ComponentNode as ReactElement } from '@videojs/jsx';
+import type { ComponentNode } from '@videojs/jsx';
 import { tooltip } from '../../styles/components/popup.tailwind';
 
-export type ButtonTooltipProps = Omit<Parameters<typeof TooltipPrimitive.Root>[0], 'children'> & {
-  children: ReactElement;
-};
+export interface ButtonTooltipProps extends TooltipProps {
+  children: ComponentNode;
+}
 
 export function ButtonTooltip({ children, ...props }: ButtonTooltipProps) {
   return (

@@ -27,6 +27,8 @@ export {
   replace,
   replaceJsxChild,
   tagName,
+  type UnwrapOptions,
+  unwrap,
   type WrapOptions,
   wrap,
 } from './jsx';

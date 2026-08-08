@@ -97,7 +97,7 @@
   },
   "overrides": [
     {
-      "includes": ["packages/{html,react}/tests/fixtures/source-ui/**"],
+      "includes": ["packages/{html,react}/src/__generated__/skins/**"],
       "formatter": {
         "enabled": false
       },

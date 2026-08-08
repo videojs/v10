@@ -1,8 +1,6 @@
-import { type CompilerTransform, defineConfig, transform } from '@videojs/compiler';
-import { tagName } from '@videojs/compiler/ast';
+import { defineConfig, jsx, transform } from '@videojs/compiler';
 import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { tailwind } from '@videojs/compiler/tailwind';
-import ts from 'typescript';
 
 export type SkinSourceStyle = 'css' | 'tailwind';
 
@@ -70,6 +68,13 @@ const elementModules: Readonly<Record<string, readonly string[]>> = {
 
 export function createHtmlSkinSourceConfig({ style, tailwindInput, styleProgram }: CreateHtmlSkinSourceConfigOptions) {
   return defineConfig({
+    target: jsx({
+      imports: {
+        '@videojs/core/components': false,
+        '@videojs/icons/components': false,
+        '@videojs/jsx': false,
+      },
+    }),
     plugins: [
       tailwind(
         style === 'tailwind'
@@ -88,20 +93,23 @@ export function createHtmlSkinSourceConfig({ style, tailwindInput, styleProgram 
       transform(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
-          const TooltipProps = code.type.named(code.import('@videojs/core', 'TooltipProps', { type: true }));
 
           return [
-            flattenPopupCompound('Popover.Root', 'Popover.Trigger', 'Popover.Popup'),
-            flattenPopupCompound('TooltipPrimitive.Root', 'TooltipPrimitive.Trigger', 'TooltipPrimitive.Popup'),
+            code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' }),
+            code.jsx.element('Popover.Trigger').unwrap(),
+            code.jsx.element('TooltipPrimitive.Root').unwrap({ forwardPropsTo: 'TooltipPrimitive.Popup' }),
+            code.jsx.element('TooltipPrimitive.Trigger').unwrap(),
             ...Object.entries(componentTags).map(([source, target]) => code.jsx.element(source).replace(target)),
             ...Object.entries(iconNames).flatMap(([source, name]) => [
               code.jsx.element(source).addProp('name', name),
               code.jsx.element(source).replace('media-icon'),
             ]),
             code.jsx.props('className').replace(({ value }) => code.value.call(cn, [value])),
-            replaceCanonicalTooltipProps(TooltipProps),
-            renameClassNameToClass(),
-            removeCanonicalImports(),
+            code.jsx.props('className').rename('class'),
+            code
+              .interface('ButtonTooltipProps')
+              .property('children')
+              .setType(() => code.type.unknown()),
           ];
         },
         { name: '@videojs/html:source-ui' }
@@ -129,123 +137,4 @@ export function resolveHtmlElementImports(componentSymbols: readonly string[]): 
   }
 
   return [...imports].sort();
-}
-
-function removeCanonicalImports(): CompilerTransform {
-  const canonicalSources = new Set(['@videojs/core/components', '@videojs/icons/components', '@videojs/jsx']);
-
-  return (context) => (sourceFile) =>
-    context.factory.updateSourceFile(
-      sourceFile,
-      sourceFile.statements.filter(
-        (statement) =>
-          !(
-            ts.isImportDeclaration(statement) &&
-            ts.isStringLiteral(statement.moduleSpecifier) &&
-            canonicalSources.has(statement.moduleSpecifier.text)
-          )
-      )
-    );
-}
-
-function flattenPopupCompound(rootTag: string, triggerTag: string, popupTag: string): CompilerTransform {
-  return (context) => {
-    const factory = context.factory;
-
-    const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
-      const next = ts.visitEachChild(node, visit, context);
-      if (!ts.isJsxElement(next) || tagName(next) !== rootTag) return next;
-
-      let foundPopup = false;
-      const children = next.children.flatMap((child): readonly ts.JsxChild[] => {
-        if (!ts.isJsxElement(child)) return [child];
-        if (tagName(child) === triggerTag) return child.children;
-        if (tagName(child) !== popupTag) return [child];
-
-        foundPopup = true;
-        const attributes = factory.updateJsxAttributes(child.openingElement.attributes, [
-          ...next.openingElement.attributes.properties,
-          ...child.openingElement.attributes.properties,
-        ]);
-
-        return [
-          factory.updateJsxElement(
-            child,
-            factory.updateJsxOpeningElement(
-              child.openingElement,
-              child.openingElement.tagName,
-              child.openingElement.typeArguments,
-              attributes
-            ),
-            child.children,
-            child.closingElement
-          ),
-        ];
-      });
-
-      if (!foundPopup) return next;
-      return factory.createJsxFragment(
-        factory.createJsxOpeningFragment(),
-        children,
-        factory.createJsxJsxClosingFragment()
-      );
-    };
-
-    return (sourceFile) => ts.visitNode(sourceFile, visit) as ts.SourceFile;
-  };
-}
-
-function replaceCanonicalTooltipProps(tooltipProps: ts.TypeNode): CompilerTransform {
-  return (context) => {
-    const factory = context.factory;
-    const replacement = factory.createIntersectionTypeNode([
-      tooltipProps,
-      factory.createTypeLiteralNode([
-        factory.createPropertySignature(
-          undefined,
-          'children',
-          factory.createToken(ts.SyntaxKind.QuestionToken),
-          factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword)
-        ),
-      ]),
-    ]);
-
-    const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
-      if (isCanonicalTooltipProps(node)) return replacement;
-      if (ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && node.typeName.text === 'ReactElement') {
-        return factory.createKeywordTypeNode(ts.SyntaxKind.UnknownKeyword);
-      }
-      return ts.visitEachChild(node, visit, context);
-    };
-
-    return (sourceFile) => ts.visitNode(sourceFile, visit) as ts.SourceFile;
-  };
-}
-
-function isCanonicalTooltipProps(node: ts.Node): node is ts.IndexedAccessTypeNode {
-  if (!ts.isIndexedAccessTypeNode(node) || !ts.isTypeReferenceNode(node.objectType)) return false;
-  if (!ts.isIdentifier(node.objectType.typeName) || node.objectType.typeName.text !== 'Parameters') return false;
-  if (node.objectType.typeArguments?.length !== 1) return false;
-
-  const parameter = node.objectType.typeArguments[0];
-  if (!ts.isTypeQueryNode(parameter) || !ts.isQualifiedName(parameter.exprName)) return false;
-  if (!ts.isIdentifier(parameter.exprName.left) || parameter.exprName.left.text !== 'TooltipPrimitive') return false;
-  if (parameter.exprName.right.text !== 'Root') return false;
-
-  return (
-    ts.isLiteralTypeNode(node.indexType) &&
-    ts.isNumericLiteral(node.indexType.literal) &&
-    node.indexType.literal.text === '0'
-  );
-}
-
-function renameClassNameToClass(): CompilerTransform {
-  return (context) => {
-    const visit = (node: ts.Node): ts.VisitResult<ts.Node> => {
-      const next = ts.visitEachChild(node, visit, context);
-      if (!ts.isJsxAttribute(next) || !ts.isIdentifier(next.name) || next.name.text !== 'className') return next;
-      return context.factory.updateJsxAttribute(next, context.factory.createIdentifier('class'), next.initializer);
-    };
-    return (sourceFile) => ts.visitNode(sourceFile, visit) as ts.SourceFile;
-  };
 }

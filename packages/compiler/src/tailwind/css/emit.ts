@@ -111,7 +111,7 @@ function emitRecipes(
   return (
     chunks
       .flatMap((chunk) => chunk.recipes.map((recipe) => ({ chunk, recipe })))
-      // Module collection may be concurrent (for example, through esbuild).
+      // Module collection may be concurrent (for example, through a bundler).
       // Public class names provide a stable output order independent of load order.
       .sort(
         (a, b) =>

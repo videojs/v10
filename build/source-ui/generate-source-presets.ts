@@ -10,6 +10,7 @@ import { toPosixPath } from './path.ts';
 
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const rootArtifactId = 'default-video-controls';
+const presetSlug = 'default-video';
 const targets = [
   { framework: 'react', style: 'tailwind' },
   { framework: 'react', style: 'css' },
@@ -25,7 +26,7 @@ export interface GenerateSourcePresetOptions {
 export async function generateSourcePresets(options: GenerateSourcePresetOptions = {}): Promise<void> {
   const rootDir = resolve(options.rootDir ?? repositoryRoot);
   const expected = await createSourcePresetFiles();
-  const existing = await generatedFixturePaths(rootDir);
+  const existing = await generatedSkinPaths(rootDir);
 
   if (options.check) {
     const differences = await generatedDifferences(rootDir, expected, existing);
@@ -59,7 +60,12 @@ export async function createSourcePresetFiles(): Promise<ReadonlyMap<string, str
   const files = new Map<string, string>();
 
   for (const target of targets) {
-    const output = await createSourceOutput(graph, { rootDir: skinsRoot, target });
+    const output = await createSourceOutput(graph, {
+      rootDir: skinsRoot,
+      target,
+      targetRoot: '',
+      rootArtifactId,
+    });
     const artifactIds = target.framework === 'html' ? [rootArtifactId] : reactArtifactIds;
 
     for (const artifactId of artifactIds) {
@@ -67,8 +73,14 @@ export async function createSourcePresetFiles(): Promise<ReadonlyMap<string, str
       if (!artifactFiles) throw new Error(`Source output is missing artifact \`${artifactId}\`.`);
 
       for (const file of artifactFiles) {
-        const relativeTarget = file.target.replace(/^components\/videojs\//, '');
-        const path = posix.join('packages', target.framework, 'tests/fixtures/source-ui', target.style, relativeTarget);
+        const path = posix.join(
+          'packages',
+          target.framework,
+          'src/__generated__/skins',
+          presetSlug,
+          target.style,
+          file.target
+        );
         const content = await formatSourceFile(path, file.content);
         const previous = files.get(path);
         if (previous !== undefined && previous !== content) throw new Error(`Generated output collision: ${path}`);
@@ -104,9 +116,9 @@ async function generatedDifferences(
   return [...new Set(differences)].sort();
 }
 
-async function generatedFixturePaths(rootDir: string): Promise<string[]> {
+async function generatedSkinPaths(rootDir: string): Promise<string[]> {
   const roots = targets.map(({ framework, style }) =>
-    posix.join('packages', framework, 'tests/fixtures/source-ui', style)
+    posix.join('packages', framework, 'src/__generated__/skins', presetSlug, style)
   );
   const paths = await Promise.all(
     roots.map(async (root) => (await walkFiles(resolve(rootDir, root))).map((path) => posix.join(root, path)))

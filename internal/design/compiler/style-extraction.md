@@ -12,20 +12,20 @@ The compiler can preserve Tailwind authoring or extract it into framework-owned 
 Extraction is target-first. Every recognized utility in one static `className` expression contributes to one semantic class chosen for that element:
 
 ```tsx
-<PlayButtonPrimitive className={button.play} />
+<PlayButtonPrimitive className={playButton} />
 // becomes
-<PlayButtonPrimitive className="media-button-play" />
+<PlayButtonPrimitive className="media-play-button" />
 ```
 
 ```css
-.media-button-play {
+.media-play-button {
   display: grid;
   width: var(--media-control-size);
   height: var(--media-control-size);
 }
 
 @media (hover: hover) {
-  .media-button-play:hover {
+  .media-play-button:hover {
     background: var(--media-control-hover-background);
   }
 }
@@ -49,6 +49,7 @@ The plugin has three modes:
 - Tailwind determines candidate meaning, rule precedence, theme values, keyframes, and support rules.
 - Lightning CSS structurally reads and rewrites selectors, discovers custom-property references, and serializes browser-ready CSS.
 - Source-output generation assigns emitted files to artifacts and shares global support CSS where its output layout requires that.
+- Tailwind input controls whether Tailwind theme variables remain configurable or are substituted into generated declarations. Canonical source presets use `theme(inline)` while preserving Video.js `--media-*` variables as the runtime customization surface.
 
 The compiler does not infer component ownership from utilities. Component ownership is established when the JSX transform records a recipe for the semantic class selected by the target configuration.
 
@@ -69,17 +70,7 @@ const { files } = await program.emit();
 
 When `tailwind()` creates its own program, the plugin calls `emit()` during compiler finish and returns normal compiler assets. When a caller supplies `program`, the plugin only collects and the caller owns `emit()`.
 
-A program may contain chunks. Each chunk owns:
-
-```ts
-interface StyleChunk {
-  name?: string;
-  recipes: readonly StyleRecipe[];
-  groupPeerBindings: ReadonlyMap<string, string>;
-}
-```
-
-`group`, `peer`, and named forms such as `group/play` are selector relationship markers. The transform records their semantic target in the containing chunk before removing the marker from emitted markup. Keeping `groupPeerBindings` on each chunk allows the same marker name in independent chunks without a global ambiguous map.
+A program may contain chunks, each with its own recipes and `groupPeerBindings` map. `group`, `peer`, and named forms such as `group/play` are selector relationship markers. The transform records their semantic target in the containing chunk before removing the marker from emitted markup, allowing the same marker name in independent chunks without a global ambiguous map.
 
 ## Pipeline
 
@@ -100,6 +91,15 @@ StyleProgram: candidate union + chunks + recipes + relationship bindings
 program.emit() → merged, split, or styles + support CSS files
 ```
 
+The compiler's general JSX transform API handles target-shape adaptation alongside style extraction. For example, the HTML target removes compound wrappers compositionally:
+
+```ts
+code.jsx.element('Popover.Root').unwrap({ forwardPropsTo: 'Popover.Popup' });
+code.jsx.element('Popover.Trigger').unwrap();
+```
+
+`unwrap()` preserves children and can forward wrapper props to exactly one matching direct child. Ambiguous forwarding is a compiler diagnostic. Generic prop renaming, interface-heritage replacement, and type helpers cover the remaining HTML and React target differences; framework configs should not contain raw TypeScript AST visitors for these operations.
+
 ### Source extraction
 
 `transformJsxElement()` reads the style expression and retains the existing literal, array, dotted-token, conditional, and opaque-expression behavior. `extractStaticClassName()` delegates to smaller stages:
@@ -115,7 +115,7 @@ Conditional branches keep their runtime condition and record a recipe for each s
 
 `StyleProgram.emit()` compiles the union of the program's candidates once. Tailwind compiler builders are incremental, so `DesignSystem.compileCandidates()` creates a fresh builder for every emitted program; otherwise a later output could retain candidates from an earlier one. The loaded design-system view and recognition cache may be reused safely.
 
-HTML skin rendering bundles many `.skin.tsx` modules into one artifact. All of those compiler calls therefore collect into one caller-owned `StyleProgram`, followed by one `program.emit()`. This gives the artifact one theme block, one support section, correct ordering, and collision checks across every participating module.
+HTML skin rendering uses Rolldown to bundle many `.skin.tsx` modules into one artifact. All of those compiler calls collect into one caller-owned `StyleProgram`, followed by one `program.emit()`. This gives the artifact one support section, correct ordering, and collision checks across every participating module. Rolldown keeps this build-time renderer on the same bundler family as Vite; it is only responsible for module loading and executable JSX output, while the compiler still owns source and style transforms.
 
 React source presets intentionally emit one component stylesheet per artifact. A shared `StyleClassRegistry` verifies that the same public `media-*` class has an equivalent recipe wherever independently emitted programs reuse it.
 
@@ -127,7 +127,7 @@ For readable output, `emitRecipes()` serializes each semantic recipe independent
 
 Lightning CSS owns declaration normalization, shorthand folding, value serialization, nesting transforms, and compatible declaration merging inside one semantic target. Tailwind rule precedence is preserved, but exact declaration text and order may change when Lightning CSS changes. Generated fixture changes from a Lightning CSS upgrade should be reviewed as serializer output, not assumed to be authored ordering changes.
 
-Theme-variable discovery uses Lightning CSS visitors rather than serialized-text matching. Tailwind custom-property setters, registered `@property` rules, fallback layers, and keyframes remain intact. Inlining internal `--tw-*` variables would require whole-stylesheet data-flow analysis and computed-style parity tests, so it is not part of baseline extraction.
+Theme-variable discovery uses Lightning CSS visitors rather than serialized-text matching. Tailwind custom-property setters, registered `@property` rules, fallback layers, and keyframes remain intact. Tailwind's `theme(inline)` option substitutes theme values such as spacing and font weights before extraction. It does not inline stateful filter, shadow, and transform `--tw-*` properties; eliminating those would require whole-stylesheet data-flow analysis and computed-style parity tests. Video.js variables are never substituted because they are the public theming API.
 
 ## Output layouts
 
@@ -135,7 +135,9 @@ Theme-variable discovery uses Lightning CSS visitors rather than serialized-text
 - `split` emits one index/support file plus one file per named chunk.
 - `support: 'separate'` emits semantic recipes in the requested stylesheet and global Tailwind support in a sibling support stylesheet.
 
-React source presets use separate support output, consolidate identical global rules once into `styles/support.css`, and import that shared file from component stylesheets. This avoids repeating Tailwind's banner, theme block, `@property` registrations, and fallback layer in every component file. HTML emits one merged stylesheet for its complete bundled artifact.
+React source presets use separate support output, consolidate identical global rules once into `styles/support.css`, and import that shared file from component stylesheets. This avoids repeating Tailwind's banner, `@property` registrations, and fallback layer in every component file. HTML emits one merged stylesheet for its complete bundled artifact.
+
+Generated source lives at `packages/{react,html}/src/__generated__/skins/default-video/{tailwind,css}/` instead of in test fixtures. React keeps component files and styles in subdirectories. HTML emits the complete skin HTML, one element-registration module, and styles at the style root. Generated components import public `@videojs/react/icons[/<set>]` or `@videojs/html/icons/element[/<set>]` entry points; the generator does not synthesize icon modules.
 
 ## Class contracts
 
@@ -147,7 +149,7 @@ An implicitly or explicitly resolved semantic class may not silently acquire inc
 - A class cannot merge recipes across chunks.
 - A shared `StyleClassRegistry` rejects incompatible recipes across independently emitted programs.
 
-Names derived from internal token structure become public CSS API, so canonical tokens avoid non-semantic leaves such as `base`. Source-preset fixtures audit representative selectors including `media-button-icon-seek-forward` and `media-controls-group-primary`.
+Names derived from internal token structure become public CSS API, so canonical tokens are organized by semantic component contract rather than implementation reuse. Shared arrays remain private implementation details; exported tokens include `button`, `playButton`, `muteButton`, `fullscreenButton`, and `seekButton`. Source-preset tests audit representative selectors including `media-play-button`, `media-seek-button-icon-forward`, and `media-controls-group-primary`.
 
 ## Alternatives
 

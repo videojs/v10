@@ -15,9 +15,8 @@ import {
   collectModuleSpecifiers,
   rewriteModuleSpecifiers,
 } from '../../packages/compiler/src/utils/module-specifiers.ts';
-import { renderSkinSourceOutput } from '../../packages/html/scripts/render-skin-source.ts';
+import { renderSkinSourceOutput } from '../../packages/html/scripts/render-skins.ts';
 import { resolveHtmlElementImports } from '../../packages/html/skins.compiler.config.ts';
-import { createHtmlIconsSource, createReactIconsSource } from '../../packages/icons/scripts/source.ts';
 import { createReactSkinSourceConfig } from '../../packages/react/skins.compiler.config.ts';
 import { toPosixPath } from './path.ts';
 
@@ -48,6 +47,8 @@ export interface CreateSourceOutputOptions {
   iconSet?: string | undefined;
   outputRoot?: string | undefined;
   targetRoot?: string | undefined;
+  /** Place this artifact directly in `targetRoot` instead of an artifact subdirectory. */
+  rootArtifactId?: string | undefined;
 }
 
 interface ArtifactOutputContext {
@@ -72,7 +73,7 @@ export async function createSourceOutput(
   const rootDir = resolve(options.rootDir);
   const outputRoot = options.outputRoot ?? 'generated';
   const targetRoot = options.targetRoot ?? 'components/videojs';
-  const contexts = createArtifactContexts(graph, targetRoot, options.target);
+  const contexts = createArtifactContexts(graph, targetRoot, options.target, options.rootArtifactId);
   const entryArtifacts = new Map(
     [...contexts.values()].map((context) => [absoluteGraphPath(rootDir, context.artifact.entry), context])
   );
@@ -148,6 +149,7 @@ async function emitArtifact(
       filename: inputFile,
       config: createReactSkinSourceConfig({
         style: options.target.style,
+        iconSet: options.iconSet,
         ...(options.target.style === 'css' ? { tailwindInput } : {}),
         ...(options.styleRegistry ? { styleRegistry: options.styleRegistry } : {}),
       }),
@@ -167,18 +169,9 @@ async function emitArtifact(
   const icons = symbols.icons ?? [];
   const components = symbols.components ?? [];
 
-  if (icons.length > 0) {
-    const content =
-      options.target.framework === 'react'
-        ? await createReactIconsSource(icons, options.iconSet)
-        : await createHtmlIconsSource(icons, options.iconSet);
-    const iconFile = options.target.framework === 'react' ? 'icons.tsx' : 'icons.ts';
-    outputFiles.push(outputFile(options, posix.join(context.artifactDir, iconFile), content));
-  }
-
   if (options.target.framework === 'html') {
     const imports = [
-      ...(icons.length > 0 ? [`import './icons';`] : []),
+      ...(icons.length > 0 ? [`import '${htmlIconElementImport(options.iconSet)}';`] : []),
       ...resolveHtmlElementImports(components).map((specifier) => `import '${specifier}';`),
     ];
     if (imports.length > 0) {
@@ -186,7 +179,7 @@ async function emitArtifact(
     }
   }
 
-  const styleFiles = await emitStyleFiles(artifact, extractedCss, options);
+  const styleFiles = await emitStyleFiles(context, extractedCss, options);
   outputFiles.push(...styleFiles.files);
   if (styleFiles.entryImport) entrySource = `import '${styleFiles.entryImport}';\n${entrySource}`;
   outputFiles.push(outputFile(options, context.entryFile, entrySource));
@@ -200,11 +193,12 @@ async function emitArtifact(
 function createArtifactContexts(
   graph: ArtifactGraph,
   targetRoot: string,
-  target: SourceTarget
+  target: SourceTarget,
+  rootArtifactId: string | undefined
 ): ReadonlyMap<string, ArtifactOutputContext> {
   return new Map(
     graph.artifacts.map((artifact) => {
-      const artifactDir = posix.join(targetRoot, artifact.id);
+      const artifactDir = artifact.id === rootArtifactId ? targetRoot : posix.join(targetRoot, artifact.id);
       const entryFile = posix.join(artifactDir, outputEntryName(artifact.entry, target.framework));
       return [artifact.id, { artifact, artifactDir, entryFile }] as const;
     })
@@ -212,7 +206,7 @@ function createArtifactContexts(
 }
 
 async function emitStyleFiles(
-  artifact: ArtifactGraphNode,
+  context: ArtifactOutputContext,
   extractedCss: string,
   options: {
     rootDir: string;
@@ -221,6 +215,7 @@ async function emitStyleFiles(
     outputRoot: string;
   }
 ): Promise<{ files: SourceOutputFile[]; entryImport?: string | undefined }> {
+  const { artifact, artifactDir } = context;
   const files: SourceOutputFile[] = [];
 
   for (const resource of artifact.resources.styles ?? []) {
@@ -237,15 +232,24 @@ async function emitStyleFiles(
   if (options.target.style === 'tailwind') {
     return {
       files,
-      ...(options.target.framework === 'react' ? { entryImport: '../styles/tailwind.css' } : {}),
+      ...(options.target.framework === 'react'
+        ? {
+            entryImport: relativeModulePath(
+              posix.dirname(context.entryFile),
+              posix.join(options.targetRoot, 'styles/tailwind.css')
+            ),
+          }
+        : {}),
     };
   }
 
-  const artifactStyles = posix.join(options.targetRoot, artifact.id, 'styles.css');
+  const artifactStyles = posix.join(artifactDir, 'styles.css');
+  const stylesDir = posix.join(options.targetRoot, 'styles');
+  const relativeStylesDir = relativeModulePath(posix.dirname(artifactStyles), stylesDir);
   const content = [
-    `@import '../styles/base.css';`,
-    `@import '../styles/themes/default.css';`,
-    ...(options.target.framework === 'react' ? [`@import '../styles/support.css';`] : []),
+    `@import '${relativeStylesDir}/base.css';`,
+    `@import '${relativeStylesDir}/themes/default.css';`,
+    ...(options.target.framework === 'react' ? [`@import '${relativeStylesDir}/support.css';`] : []),
     ``,
     extractedCss.trim(),
     ``,
@@ -319,11 +323,10 @@ function rewriteRelativeImports(
     entryArtifacts: ReadonlyMap<string, ArtifactOutputContext>;
   }
 ): string {
-  const synthesized = new Set(['./icons']);
   return rewriteModuleSpecifiers(source, {
     filename: context.entryFile,
     resolve(specifier) {
-      if (!specifier.startsWith('.') || synthesized.has(specifier)) return specifier;
+      if (!specifier.startsWith('.')) return specifier;
       const importedFile = resolveSourceFile(inputFile, specifier);
       const dependency = options.entryArtifacts.get(importedFile);
       if (!existsSync(importedFile)) {
@@ -343,6 +346,10 @@ function rewriteRelativeImports(
       return relativeModulePath(dirname(context.entryFile), withoutTypeScriptExtension(dependency.entryFile));
     },
   });
+}
+
+function htmlIconElementImport(iconSet: string): string {
+  return iconSet === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${iconSet}`;
 }
 
 function outputFile(

@@ -175,9 +175,9 @@
     "@videojs/compiler": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
-    "esbuild": "^0.28.1",
     "happy-dom": "^20.11.1",
     "lightningcss": "^1.32.0",
+    "rolldown": "~1.1.5",
     "tsdown": "^0.22.14",
     "typescript": "^6.0.2",
     "vitest": "^4.1.10"

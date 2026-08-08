@@ -68,6 +68,7 @@ export {
   type JsxElementContext,
   type JsxElementReplacement,
   type JsxElementSelection,
+  type JsxElementUnwrapOptions,
   type JsxHelpers,
   type JsxPropContext,
   type JsxPropsSelection,

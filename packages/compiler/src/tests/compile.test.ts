@@ -106,6 +106,15 @@ describe('compile pipeline phases', () => {
 });
 
 describe('compile (transformImports — bare-string rule)', () => {
+  it('removes imports explicitly replaced by the target runtime', async () => {
+    const source = `import { Glyph } from '@fixture/icons/components';\nconst value = 1;`;
+    const { code } = await compileJsx(source, {
+      imports: { '@fixture/icons/components': false },
+    });
+    expect(code).not.toContain('@fixture/icons/components');
+    expect(code).toContain('const value = 1');
+  });
+
   it('rewrites the module specifier and leaves identifiers untouched', async () => {
     const source = `import { Glyph } from '@fixture/icons/components';\nconst _x = Glyph;`;
     const { code } = await compileJsx(source, {

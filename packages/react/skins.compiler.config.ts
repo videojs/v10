@@ -6,12 +6,14 @@ export type SkinSourceStyle = 'css' | 'tailwind';
 
 export interface CreateReactSkinSourceConfigOptions {
   style: SkinSourceStyle;
+  iconSet?: string | undefined;
   tailwindInput?: string | undefined;
   styleRegistry?: StyleClassRegistry | undefined;
 }
 
 export function createReactSkinSourceConfig({
   style,
+  iconSet = 'default',
   tailwindInput,
   styleRegistry,
 }: CreateReactSkinSourceConfigOptions) {
@@ -19,7 +21,7 @@ export function createReactSkinSourceConfig({
     target: jsx({
       imports: {
         '@videojs/core/components': '@videojs/react',
-        '@videojs/icons/components': './icons',
+        '@videojs/icons/components': iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`,
         '@videojs/jsx': (name) => ({ source: 'react', name: name === 'ComponentNode' ? 'ReactElement' : name }),
       },
       transforms: [
@@ -47,6 +49,7 @@ export function createReactSkinSourceConfig({
       transform(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
+          const ReactElement = code.import('react', 'ReactElement', { type: true });
 
           return [
             code.jsx.element('Text').replace('span'),
@@ -56,6 +59,11 @@ export function createReactSkinSourceConfig({
               .props('className')
               .where(code.value.isArray())
               .replace(({ value }) => code.value.call(cn, code.value.arrayItems(value))),
+            code.interface('ButtonTooltipProps').replaceExtends('TooltipProps', 'TooltipPrimitive.RootProps'),
+            code
+              .interface('ButtonTooltipProps')
+              .property('children')
+              .setType(() => code.type.named(ReactElement)),
           ];
         },
         { name: '@videojs/react:source-ui' }

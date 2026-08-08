@@ -16,4 +16,5 @@ export {
   type ReplaceJsxChildOptions,
   replaceJsxChild,
 } from './transforms/replace-jsx-child';
+export { type UnwrapOptions, unwrap } from './transforms/unwrap';
 export { type WrapOptions, wrap } from './transforms/wrap';
