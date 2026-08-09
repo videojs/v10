@@ -1,5 +1,5 @@
 import { Popover } from '@videojs/core/components';
-import { surface, volumePopover } from '../../styles/components/popup.tailwind';
+import styles from '../../styles/components/popup.tailwind';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
 
@@ -9,7 +9,7 @@ export function VolumePopover() {
       <Popover.Trigger>
         <MuteButton />
       </Popover.Trigger>
-      <Popover.Popup className={[surface, volumePopover]}>
+      <Popover.Popup className={[styles.surface, styles.volumePopover]}>
         <VolumeSlider orientation="vertical" />
       </Popover.Popup>
     </Popover.Root>

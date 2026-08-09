@@ -6,6 +6,13 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src", "build", "scripts", "canonical/catalog.ts", "canonical/registry/config.ts"],
+  "include": [
+    "src",
+    "build",
+    "scripts",
+    "canonical/catalog.ts",
+    "canonical/registry/config.ts",
+    "canonical/styles/define.ts"
+  ],
   "exclude": ["canonical/registry/default"]
 }

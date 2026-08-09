@@ -3,9 +3,10 @@ import { readFile } from 'node:fs/promises';
 import { basename, dirname, extname, posix, relative, resolve, sep } from 'node:path';
 import { compile } from '@videojs/compiler';
 import { collectModuleSpecifiers, rewriteModuleSpecifiers } from '@videojs/compiler/ast';
-import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../graph/types';
+import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../catalog/types';
+import { createCompilerReactConfig } from '../compiler/react';
 import type { GeneratedFile } from '../output/files';
-import { createReactSkinSourceConfig } from '../targets/react';
+import { loadCatalogStyleManifest, type SkinStyleManifest } from '../styles/manifest';
 
 export type RegistrySourceFileKind = 'source' | 'style';
 
@@ -37,6 +38,7 @@ interface SkinItemLayout {
 interface SkinItemContext extends SkinItemLayout {
   layoutsByInput: ReadonlyMap<string, SkinItemLayout>;
   options: ResolvedRegistrySourceOptions;
+  styles: SkinStyleManifest;
 }
 
 interface ResolvedRegistrySourceOptions {
@@ -56,6 +58,10 @@ export async function generateReactRegistry(
   const layouts = createItemLayouts(catalog, resolved);
   const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
   const selected = selectLayouts(layouts, resolved.itemNames);
+  const styles = await loadCatalogStyleManifest(catalog, {
+    rootDir: resolved.rootDir,
+    itemNames: selected.map((layout) => layout.item.name),
+  });
   const items: Record<string, RegistrySourceFile[]> = {};
 
   for (const layout of selected) {
@@ -64,6 +70,7 @@ export async function generateReactRegistry(
         ...layout,
         layoutsByInput,
         options: resolved,
+        styles,
       },
       installAlias
     );
@@ -225,7 +232,11 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
   const canonical = await readFile(context.inputFile, 'utf8');
   const result = await compile(canonical, {
     filename: context.inputFile,
-    config: createReactSkinSourceConfig({ style: 'tailwind', iconSet: context.options.iconSet }),
+    config: createCompilerReactConfig({
+      style: 'tailwind',
+      styles: context.styles,
+      iconSet: context.options.iconSet,
+    }),
     configDir: resolve(context.options.rootDir, context.itemDir),
     outputFile: resolve(context.options.rootDir, context.entryFile),
   });

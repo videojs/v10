@@ -1,14 +1,14 @@
 import { FullscreenButton as FullscreenButtonPrimitive } from '@videojs/core/components';
 import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/icons/components';
-import { button, buttonIcon, fullscreenButton, fullscreenButtonIcon } from '../../styles/components/button.tailwind';
+import styles from '../../styles/components/button.tailwind';
 import { ButtonTooltip } from './button-tooltip';
 
 export function FullscreenButton() {
   return (
     <ButtonTooltip side="top">
-      <FullscreenButtonPrimitive className={[button, fullscreenButton]}>
-        <FullscreenEnterIcon className={[buttonIcon, fullscreenButtonIcon.enter]} />
-        <FullscreenExitIcon className={[buttonIcon, fullscreenButtonIcon.exit]} />
+      <FullscreenButtonPrimitive className={[styles.button, styles.fullscreenButton]}>
+        <FullscreenEnterIcon className={[styles.buttonIcon, styles.fullscreenButtonIcon.enter]} />
+        <FullscreenExitIcon className={[styles.buttonIcon, styles.fullscreenButtonIcon.exit]} />
       </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );

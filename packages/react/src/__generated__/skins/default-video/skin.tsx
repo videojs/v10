@@ -124,7 +124,7 @@ function TimeSlider$1() {
 const SEEK_SECONDS = 10;
 function DefaultVideoSkin() {
   return (
-    <Controls.Root className="media-surface media-skin media-theme-default">
+    <Controls.Root className="media-surface media-theme-default media-skin">
       <Tooltip.Provider>
         <Controls.Group className="media-controls-group-primary">
           <PlayButton$1 />

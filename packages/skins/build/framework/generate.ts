@@ -1,27 +1,35 @@
 import { resolve } from 'node:path';
-import { loadDesignSystem } from '@videojs/compiler/tailwind';
-import type { ResolvedSkinCatalog } from '../graph/types';
+import type { ResolvedSkinCatalog } from '../catalog/types';
+import { compileSkinStyles, loadDesignSystem } from '../styles/compile';
+import { loadCatalogStyleManifest } from '../styles/manifest';
+import { createSkinStyleUsage } from '../styles/transform';
 import { generateHtmlSkinSource } from './html';
 import { generateReactSkinSource } from './react';
-import { createFrameworkStyleProgram, createFrameworkStyles, type FrameworkStyleFile } from './styles';
+import { createFrameworkStyles, type FrameworkStyleFile } from './styles';
 
-export type SkinFramework = 'html' | 'react';
+export type FrameworkProjection =
+  | { framework: 'html'; resolveImport?: ((source: string) => string) | undefined }
+  | { framework: 'react' };
+
+export type FrameworkSkinSource =
+  | { framework: 'html'; sourceFile: 'skin.ts'; source: string }
+  | { framework: 'react'; sourceFile: 'skin.tsx'; source: string };
+
+export type SkinFramework = FrameworkProjection['framework'];
 
 export interface FrameworkSkinFiles {
-  sourceFile: 'skin.ts' | 'skin.tsx';
-  source: string;
+  sources: readonly FrameworkSkinSource[];
   styles: readonly FrameworkStyleFile[];
 }
 
 export interface CreateFrameworkSkinOptions {
-  framework: SkinFramework;
   rootDir: string;
   skin: string;
   iconSet?: string | undefined;
-  resolveHtmlImport?: ((source: string) => string) | undefined;
+  projections: readonly FrameworkProjection[];
 }
 
-/** Create the compact, vanilla-CSS Skin projection consumed by a framework package. */
+/** Create compact, vanilla-CSS Skin projections consumed by framework packages. */
 export async function createFrameworkSkin(
   catalog: ResolvedSkinCatalog,
   options: CreateFrameworkSkinOptions
@@ -30,19 +38,62 @@ export async function createFrameworkSkin(
   if (!skin) throw new Error(`Skin \`${options.skin}\` does not exist.`);
 
   const entryFile = resolve(options.rootDir, skin.source);
+  const styles = await loadCatalogStyleManifest(catalog, { rootDir: options.rootDir, itemNames: [skin.name] });
   const design = await loadDesignSystem(resolve(options.rootDir, catalog.resources.styles.tailwind));
-  const program = createFrameworkStyleProgram(design);
+  const usage = createSkinStyleUsage();
   const iconSet = options.iconSet ?? 'default';
-  const source =
-    options.framework === 'html'
-      ? await generateHtmlSkinSource(catalog, skin.name, entryFile, iconSet, program, options.resolveHtmlImport)
-      : `// @ts-nocheck -- temporary bundled output; authored types remain in packages/skins/canonical.\n${await generateReactSkinSource(entryFile, iconSet, program)}`;
+  const projections = uniqueProjections(options.projections, skin.name);
+  const sources: FrameworkSkinSource[] = [];
+
+  for (const projection of projections) {
+    if (projection.framework === 'html') {
+      sources.push({
+        framework: 'html',
+        sourceFile: 'skin.ts',
+        source: await generateHtmlSkinSource(
+          catalog,
+          skin.name,
+          entryFile,
+          iconSet,
+          styles,
+          usage,
+          projection.resolveImport
+        ),
+      });
+    } else {
+      sources.push({
+        framework: 'react',
+        sourceFile: 'skin.tsx',
+        source: `// @ts-nocheck -- temporary bundled output; authored types remain in packages/skins/canonical.\n${await generateReactSkinSource(entryFile, iconSet, styles, usage)}`,
+      });
+    }
+  }
 
   return {
-    sourceFile: options.framework === 'html' ? 'skin.ts' : 'skin.tsx',
-    source,
-    styles: await createFrameworkStyles(catalog.resources.styles, options.rootDir, design, await program.emit()),
+    sources,
+    styles: await createFrameworkStyles(
+      catalog.resources.styles,
+      options.rootDir,
+      design,
+      await compileSkinStyles({ design, manifest: styles, usage })
+    ),
   };
+}
+
+function uniqueProjections(projections: readonly FrameworkProjection[], skin: string): readonly FrameworkProjection[] {
+  if (projections.length === 0) {
+    throw new Error(`Framework Skin generation requires a projection for Skin \`${skin}\`.`);
+  }
+  const frameworks = new Set<SkinFramework>();
+  for (const projection of projections) {
+    if (frameworks.has(projection.framework)) {
+      throw new Error(
+        `Framework Skin generation received duplicate ${projection.framework} projections for Skin \`${skin}\`.`
+      );
+    }
+    frameworks.add(projection.framework);
+  }
+  return projections;
 }
 
 export type { FrameworkStyleFile } from './styles';

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { skinRegistry } from '../../../canonical/registry/config';
-import { canonicalRoot, loadSkinCatalog } from '../../graph/load';
-import { resolveSkinClosure } from '../../graph/resolve';
+import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
+import { resolveSkinClosure } from '../../catalog/resolve';
 import { createRegistryManifest } from '../manifest';
 import { generateReactRegistry } from '../source';
 

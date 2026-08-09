@@ -1,9 +1,9 @@
-import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { format } from 'oxfmt';
-import { resolveSkinClosure } from '../graph/resolve';
-import type { ResolvedSkinCatalog } from '../graph/types';
-import { resolveHtmlElementImports } from '../targets/html';
-import { connectHtmlPopups } from './html-markup';
+import { resolveSkinClosure } from '../catalog/resolve';
+import type { ResolvedSkinCatalog } from '../catalog/types';
+import { finalizeCompilerHtml, resolveHtmlElementImports } from '../compiler/html';
+import type { SkinStyleManifest } from '../styles/manifest';
+import type { MutableSkinStyleUsage } from '../styles/transform';
 import { renderHtmlSkin } from './render-html';
 
 /** Render the complete canonical Skin closure into one HTML template module. */
@@ -12,12 +12,13 @@ export async function generateHtmlSkinSource(
   skin: string,
   entryFile: string,
   iconSet: string,
-  program: StyleProgram,
+  styles: SkinStyleManifest,
+  usage: MutableSkinStyleUsage,
   resolveImport: (source: string) => string = (source) => source
 ): Promise<string> {
-  const output = await renderHtmlSkin(entryFile, program);
+  const output = await renderHtmlSkin(entryFile, styles, usage);
   const imports = htmlImports(catalog, skin, iconSet).map(resolveImport);
-  const html = await format('skin.html', connectHtmlPopups(output), {
+  const html = await format('skin.html', finalizeCompilerHtml(output), {
     printWidth: 120,
     htmlWhitespaceSensitivity: 'ignore',
   });

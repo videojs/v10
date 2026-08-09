@@ -1,21 +1,23 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, isAbsolute } from 'node:path';
 import { compile } from '@videojs/compiler';
-import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
-import { createReactSkinSourceConfig } from '../targets/react';
+import { createCompilerReactConfig } from '../compiler/react';
+import type { SkinStyleManifest } from '../styles/manifest';
+import type { MutableSkinStyleUsage } from '../styles/transform';
 
 /** Bundle the complete canonical Skin closure into one React module. */
 export async function generateReactSkinSource(
   entryFile: string,
   iconSet: string,
-  program: StyleProgram
+  styles: SkinStyleManifest,
+  usage: MutableSkinStyleUsage
 ): Promise<string> {
   const bundle = await rolldown({
     input: entryFile,
     platform: 'neutral',
     external: (id) => isBareModule(id),
-    plugins: [canonicalReactPlugin(iconSet, program)],
+    plugins: [canonicalReactPlugin(iconSet, styles, usage)],
     transform: { jsx: 'preserve' },
     experimental: { attachDebugInfo: 'none' },
   });
@@ -29,7 +31,7 @@ export async function generateReactSkinSource(
   return source;
 }
 
-function canonicalReactPlugin(iconSet: string, program: StyleProgram): Plugin {
+function canonicalReactPlugin(iconSet: string, styles: SkinStyleManifest, usage: MutableSkinStyleUsage): Plugin {
   return {
     name: 'videojs-skins-react',
     async load(id) {
@@ -37,14 +39,12 @@ function canonicalReactPlugin(iconSet: string, program: StyleProgram): Plugin {
       const source = await readFile(id, 'utf8');
       const result = await compile(source, {
         filename: id,
-        config: createReactSkinSourceConfig({ style: 'css', iconSet, program }),
+        config: createCompilerReactConfig({ style: 'vanilla', styles, usage, iconSet }),
         configDir: dirname(id),
       });
       const errors = result.diagnostics.filter((diagnostic) => diagnostic.level === 'error');
       if (errors.length > 0) throw new Error(errors.map((diagnostic) => diagnostic.message).join('\n'));
-      if (result.assets.length > 0) {
-        throw new Error(`React Skin module \`${id}\` emitted CSS before the shared StyleProgram.`);
-      }
+      if (result.assets.length > 0) throw new Error(`React Skin module \`${id}\` unexpectedly emitted assets.`);
       return { code: result.code, moduleType: 'tsx' };
     },
   };

@@ -1,6 +1,6 @@
 import { posix } from 'node:path';
 import type { SkinRegistryConfig } from '../../canonical/registry/config';
-import type { ResolvedSkinCatalog, ResolvedSkinItem } from '../graph/types';
+import type { ResolvedSkinCatalog, ResolvedSkinItem } from '../catalog/types';
 import type { RegistrySourceFile, RegistrySourceOutput } from './source';
 
 export type RegistryItemType = 'registry:block' | 'registry:component';

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinCatalog } from '../../graph/load';
+import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
 import { generateReactRegistry } from '../source';
 
 describe('generateReactRegistry', () => {

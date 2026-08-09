@@ -1,49 +1,25 @@
 import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
-import {
-  createStyleProgram,
-  type DesignSystem,
-  type StyleEmitResult,
-  type StyleProgram,
-} from '@videojs/compiler/tailwind';
-import type { SkinStyleResources } from '../graph/types';
+import type { SkinStyleRole } from '../../canonical/styles/define';
+import type { SkinStyleResources } from '../catalog/types';
+import type { DesignSystem } from '../styles/compile';
 
 export interface FrameworkStyleFile {
   fileName: string;
   source: string;
 }
 
-export function createFrameworkStyleProgram(design: DesignSystem): StyleProgram {
-  return createStyleProgram({
-    design,
-    output: 'styles.css',
-    mode: 'split',
-    tailwindVariables: 'inline',
-    themeSelector: '.media-skin',
-  });
-}
-
 export async function createFrameworkStyles(
   resources: SkinStyleResources,
   rootDir: string,
   design: DesignSystem,
-  emitted: StyleEmitResult
+  styles: ReadonlyMap<SkinStyleRole, string>
 ): Promise<FrameworkStyleFile[]> {
-  const chunks = emitted.files.filter((file) => file.kind === 'chunk');
-  const index = emitted.files.find((file) => file.kind === 'index');
-  if (!index || chunks.length === 0 || emitted.files.some((file) => file.kind !== 'index' && file.kind !== 'chunk')) {
-    throw new Error('Framework Skin generation expected one split CSS index and named role chunks.');
-  }
-  const expectedIndex = chunks.map((file) => `@import "./${basename(file.fileName)}";`).join('\n');
-  if (normalizeCssImports(index.source) !== normalizeCssImports(expectedIndex)) {
-    throw new Error('Framework Skin split CSS index unexpectedly contains global support styles.');
-  }
-
   const themePath = resources.themes.default;
   if (!themePath) throw new Error('Framework Skin generation requires a default theme resource.');
 
-  const roleFiles = chunks
-    .map((file) => ({ fileName: basename(file.fileName), source: file.source }))
+  const roleFiles = [...styles]
+    .map(([role, source]) => ({ fileName: `${role}.css`, source }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
   const files: FrameworkStyleFile[] = [
     { fileName: 'styles/preflight.css', source: await design.compilePreflight('.media-skin') },
@@ -61,8 +37,4 @@ export async function createFrameworkStyles(
     },
     ...files,
   ];
-}
-
-function normalizeCssImports(source: string): string {
-  return source.replaceAll("'", '"').replace(/\s+/g, ' ').trim();
 }

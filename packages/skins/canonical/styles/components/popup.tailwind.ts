@@ -1,10 +1,14 @@
-export const surface = 'bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface';
+import { defineStyles } from '../define';
 
-export const tooltip = [
-  'm-0 whitespace-nowrap rounded-media-pill border-0 px-2.5 py-[0.35rem]',
-  'data-open:flex data-open:items-center data-open:gap-1',
-];
-
-export const tooltipShortcut = 'text-[0.75em] font-semibold';
-
-export const volumePopover = 'm-0 rounded-media-pill border-0 py-3';
+export default defineStyles({
+  role: 'popups',
+  styles: {
+    surface: 'bg-media-surface text-media-controls shadow-media-surface backdrop-blur-media-surface',
+    tooltip: [
+      'm-0 whitespace-nowrap rounded-media-pill border-0 px-2.5 py-[0.35rem]',
+      'data-open:flex data-open:items-center data-open:gap-1',
+    ],
+    tooltipShortcut: 'text-[0.75em] font-semibold',
+    volumePopover: 'm-0 rounded-media-pill border-0 py-3',
+  },
+});
