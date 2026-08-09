@@ -3,6 +3,11 @@ export interface SkinRegistryConfig {
   homepage: string;
   namespace: string;
   installRoot: string;
+  outputDir: string;
+  sourceRoot: string;
+  skin: string;
+  framework: 'react';
+  style: 'tailwind';
   items: readonly string[];
 }
 
@@ -12,6 +17,11 @@ export const skinRegistry = {
   homepage: 'https://videojs.org',
   namespace: '@videojs',
   installRoot: 'components/videojs',
+  outputDir: 'canonical/registry',
+  sourceRoot: 'default',
+  skin: 'default-video',
+  framework: 'react',
+  style: 'tailwind',
   items: [
     'default-video',
     'fullscreen-button',

@@ -1,11 +1,11 @@
 import { describe, expect, it } from 'vitest';
-import { canonicalRoot, loadSkinManifest } from '../../graph/load';
+import { canonicalRoot, loadSkinCatalog } from '../../graph/load';
 import { generateReactRegistry } from '../source';
 
 describe('generateReactRegistry', () => {
   it('derives source layouts from Skin item types', async () => {
-    const manifest = await loadSkinManifest();
-    const output = await generateReactRegistry(manifest, {
+    const catalog = await loadSkinCatalog();
+    const output = await generateReactRegistry(catalog, {
       rootDir: canonicalRoot,
       itemNames: ['default-video', 'play-button'],
     });
@@ -15,6 +15,16 @@ describe('generateReactRegistry', () => {
     expect(output.items['play-button']?.some((file) => file.path === 'components/play-button/play-button.tsx')).toBe(
       true
     );
+    expect(output.sharedFiles.map((file) => file.path)).toEqual([
+      'styles/tailwind.css',
+      'styles/base.css',
+      'styles/themes/default.css',
+    ]);
+    expect(
+      Object.values(output.items)
+        .flat()
+        .every((file) => file.kind === 'source')
+    ).toBe(true);
     expect(output.dependencies['play-button']).toEqual(['@videojs/react']);
   });
 });

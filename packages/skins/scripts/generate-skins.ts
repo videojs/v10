@@ -1,7 +1,7 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createFrameworkSkin, type SkinFramework } from '../build/framework/generate';
-import { canonicalRoot, loadSkinManifest, skinsPackageRoot } from '../build/graph/load';
+import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/graph/load';
 import { resolveSkinClosure } from '../build/graph/resolve';
 import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/output/files';
 import { createRegistryManifest } from '../build/registry/manifest';
@@ -19,7 +19,6 @@ export interface FrameworkSkinTarget {
 export interface GenerateSkinsOptions {
   check?: boolean | undefined;
   frameworkTargets?: readonly FrameworkSkinTarget[] | undefined;
-  registryOutputDir?: string | undefined;
 }
 
 const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
@@ -39,11 +38,11 @@ const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
 
 /** Generate compact framework Skins and the contained React/Tailwind registry. */
 export async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
-  const manifest = await loadSkinManifest();
+  const catalog = await loadSkinCatalog();
   const targets = options.frameworkTargets ?? defaultFrameworkTargets;
 
   for (const target of targets) {
-    const output = await createFrameworkSkin(manifest, {
+    const output = await createFrameworkSkin(catalog, {
       framework: target.framework,
       rootDir: canonicalRoot,
       skin: target.skin,
@@ -65,23 +64,25 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     });
   }
 
-  const registryOutputDir = options.registryOutputDir ?? 'registry';
-  const closure = resolveSkinClosure(manifest, 'default-video');
-  const output = await generateReactRegistry(manifest, {
+  const closure = resolveSkinClosure(catalog, skinRegistry.skin);
+  const output = await generateReactRegistry(catalog, {
     rootDir: canonicalRoot,
     itemNames: closure.itemNames,
-    targetRoot: 'default',
+    sourceRoot: skinRegistry.sourceRoot,
     installAlias: `@/${skinRegistry.installRoot}`,
   });
-  const files = await collectGeneratedFiles(output, registryOutputDir);
+  const files = await collectGeneratedFiles(
+    [...output.sharedFiles, ...Object.values(output.items).flat()],
+    skinRegistry.outputDir
+  );
   files.set(
-    posix.join(registryOutputDir, 'registry.json'),
-    await formatGeneratedFile('registry.json', JSON.stringify(createRegistryManifest(manifest, output, skinRegistry)))
+    posix.join(skinRegistry.outputDir, 'registry.json'),
+    await formatGeneratedFile('registry.json', JSON.stringify(createRegistryManifest(catalog, output, skinRegistry)))
   );
   await syncGeneratedFiles({
-    rootDir: canonicalRoot,
+    rootDir: skinsPackageRoot,
     files,
-    managedRoots: [posix.join(registryOutputDir, 'default')],
+    managedRoots: [posix.join(skinRegistry.outputDir, skinRegistry.sourceRoot)],
     check: options.check,
   });
 }

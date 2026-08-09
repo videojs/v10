@@ -37,7 +37,7 @@ function canonicalReactPlugin(iconSet: string, program: StyleProgram): Plugin {
       const source = await readFile(id, 'utf8');
       const result = await compile(source, {
         filename: id,
-        config: createReactSkinSourceConfig({ style: 'css', iconSet, styleProgram: program }),
+        config: createReactSkinSourceConfig({ style: 'css', iconSet, program }),
         configDir: dirname(id),
       });
       const errors = result.diagnostics.filter((diagnostic) => diagnostic.level === 'error');

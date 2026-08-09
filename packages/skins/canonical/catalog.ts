@@ -1,21 +1,30 @@
-export interface SkinDefinition {
+export interface SkinItemDefinition {
   name: string;
+  source: string;
+  title: string;
+  description: string;
+}
+
+export interface SkinDefinition extends SkinItemDefinition {
   type: 'skin';
-  source: string;
-  title: string;
-  description: string;
 }
 
-export interface SkinComponent {
-  name: string;
+export interface SkinComponent extends SkinItemDefinition {
   type: 'component';
-  source: string;
-  title: string;
-  description: string;
 }
 
-export interface SkinManifest {
-  resources: Readonly<Record<string, readonly string[]>>;
+export interface SkinStyleResources {
+  tailwind: string;
+  base: string;
+  themes: Readonly<Record<string, string>>;
+}
+
+export interface SkinResources {
+  styles: SkinStyleResources;
+}
+
+export interface SkinCatalog {
+  resources: SkinResources;
   dependencyModules: Readonly<Record<string, string>>;
   skins: readonly SkinDefinition[];
   components: readonly SkinComponent[];
@@ -32,11 +41,15 @@ export function defineSkinComponent<const Component extends SkinComponent>(compo
 }
 
 const resources = {
-  styles: ['./styles/tailwind.css', './styles/base.css', './styles/themes/default.css'],
+  styles: {
+    tailwind: './styles/tailwind.css',
+    base: './styles/base.css',
+    themes: { default: './styles/themes/default.css' },
+  },
 } as const;
 
-/** Canonical Skin source inventory shared by package, registry, and future documentation outputs. */
-export const skinManifest = {
+/** Canonical Skin source catalog shared by package, registry, and future documentation outputs. */
+export const skinCatalog = {
   resources,
   dependencyModules: {
     '@videojs/core/components': 'components',
@@ -114,4 +127,4 @@ export const skinManifest = {
       description: 'A mute toggle with a vertical slider for adjusting playback volume in a popover.',
     }),
   ],
-} as const satisfies SkinManifest;
+} as const satisfies SkinCatalog;

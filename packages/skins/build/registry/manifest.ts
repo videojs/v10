@@ -1,7 +1,7 @@
 import { posix } from 'node:path';
 import type { SkinRegistryConfig } from '../../canonical/registry/config';
-import type { ResolvedSkinItem, ResolvedSkinManifest } from '../graph/types';
-import type { SourceOutput, SourceOutputFile } from './source';
+import type { ResolvedSkinCatalog, ResolvedSkinItem } from '../graph/types';
+import type { RegistrySourceFile, RegistrySourceOutput } from './source';
 
 export type RegistryItemType = 'registry:block' | 'registry:component';
 export type RegistryFileType = 'registry:component' | 'registry:file';
@@ -32,11 +32,11 @@ export interface ShadcnRegistry {
 
 /** Create the shadcn source manifest for the generated React/Tailwind projection. */
 export function createRegistryManifest(
-  manifest: ResolvedSkinManifest,
-  output: SourceOutput,
+  catalog: ResolvedSkinCatalog,
+  output: RegistrySourceOutput,
   config: SkinRegistryConfig
 ): ShadcnRegistry {
-  const items = new Map(manifest.items.map((item) => [item.name, item]));
+  const items = new Map(catalog.items.map((item) => [item.name, item]));
   const published = new Set(config.items);
 
   return {
@@ -48,11 +48,14 @@ export function createRegistryManifest(
       if (!item) throw new Error(`Registry references missing Skin item \`${name}\`.`);
       const partition = partitionDependencies(item, items, published);
       const files = uniqueFiles(
-        partition.included.flatMap((includedName) => {
-          const generated = output.items[includedName];
-          if (!generated) throw new Error(`Registry output is missing Skin item \`${includedName}\`.`);
-          return generated.map((file) => registryFile(file, item.name, config.installRoot));
-        })
+        [
+          ...output.sharedFiles,
+          ...partition.included.flatMap((includedName) => {
+            const generated = output.items[includedName];
+            if (!generated) throw new Error(`Registry output is missing Skin item \`${includedName}\`.`);
+            return generated;
+          }),
+        ].map((file) => registryFile(file, item.name, config))
       );
       const dependencies = [
         ...new Set(partition.included.flatMap((includedName) => output.dependencies[includedName] ?? [])),
@@ -66,9 +69,11 @@ export function createRegistryManifest(
         files,
         ...(dependencies.length ? { dependencies } : {}),
         ...(partition.dependencies.length
-          ? { registryDependencies: partition.dependencies.map((dependency) => `${config.namespace}/${dependency}`) }
+          ? {
+              registryDependencies: partition.dependencies.map((dependency) => `${config.namespace}/${dependency}`),
+            }
           : {}),
-        meta: { framework: 'react', style: 'tailwind', skin: 'default-video' },
+        meta: { framework: config.framework, style: config.style, skin: config.skin },
       };
     }),
   };
@@ -91,28 +96,32 @@ function partitionDependencies(
     included.add(name);
     const item = items.get(name);
     if (!item) throw new Error(`Skin item \`${root.name}\` depends on missing item \`${name}\`.`);
-    for (const dependency of item.dependencies.items) visit(dependency);
+    for (const dependency of item.dependencies.itemNames) visit(dependency);
   };
 
   visit(root.name);
   return { included: [...included].sort(), dependencies: [...dependencies].sort() };
 }
 
-function registryFile(file: SourceOutputFile, owner: string, installRoot: string): RegistryFile {
+function registryFile(file: RegistrySourceFile, owner: string, config: SkinRegistryConfig): RegistryFile {
   return {
-    path: posix.join('canonical/registry', file.path),
-    target: registryTarget(file.path, owner, installRoot),
+    path: posix.join(config.outputDir, file.path),
+    target: registryTarget(file.path, owner, config),
     type: file.kind === 'source' ? 'registry:component' : 'registry:file',
   };
 }
 
-function registryTarget(path: string, owner: string, installRoot: string): string {
-  const relativePath = path.replace(/^default\//, '');
-  if (relativePath === 'skin.tsx') return posix.join(installRoot, owner, relativePath);
-  if (relativePath.startsWith('components/')) {
-    return posix.join(installRoot, relativePath.replace(/^components\//, ''));
+function registryTarget(path: string, owner: string, config: SkinRegistryConfig): string {
+  const sourcePrefix = `${config.sourceRoot}/`;
+  if (!path.startsWith(sourcePrefix)) {
+    throw new Error(`Registry source file \`${path}\` must be inside \`${config.sourceRoot}\`.`);
   }
-  return posix.join(installRoot, relativePath);
+  const relativePath = path.slice(sourcePrefix.length);
+  if (relativePath === 'skin.tsx') return posix.join(config.installRoot, owner, relativePath);
+  if (relativePath.startsWith('components/')) {
+    return posix.join(config.installRoot, relativePath.replace(/^components\//, ''));
+  }
+  return posix.join(config.installRoot, relativePath);
 }
 
 function uniqueFiles(files: readonly RegistryFile[]): RegistryFile[] {

@@ -6,7 +6,7 @@ import {
   type StyleEmitResult,
   type StyleProgram,
 } from '@videojs/compiler/tailwind';
-import type { ResolvedSkinItem } from '../graph/types';
+import type { SkinStyleResources } from '../graph/types';
 
 export interface FrameworkStyleFile {
   fileName: string;
@@ -24,7 +24,7 @@ export function createFrameworkStyleProgram(design: DesignSystem): StyleProgram 
 }
 
 export async function createFrameworkStyles(
-  item: ResolvedSkinItem,
+  resources: SkinStyleResources,
   rootDir: string,
   design: DesignSystem,
   emitted: StyleEmitResult
@@ -39,17 +39,18 @@ export async function createFrameworkStyles(
     throw new Error('Framework Skin split CSS index unexpectedly contains global support styles.');
   }
 
-  const resources = item.resources.styles ?? [];
-  const basePath = resources.find((path) => path.endsWith('/base.css'));
-  const themePath = resources.find((path) => path.endsWith('/themes/default.css'));
-  if (!basePath || !themePath) throw new Error(`Skin item \`${item.name}\` is missing base or default theme CSS.`);
+  const themePath = resources.themes.default;
+  if (!themePath) throw new Error('Framework Skin generation requires a default theme resource.');
 
   const roleFiles = chunks
     .map((file) => ({ fileName: basename(file.fileName), source: file.source }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
   const files: FrameworkStyleFile[] = [
     { fileName: 'styles/preflight.css', source: await design.compilePreflight('.media-skin') },
-    { fileName: 'styles/base.css', source: await readFile(resolve(rootDir, basePath), 'utf8') },
+    {
+      fileName: 'styles/base.css',
+      source: await readFile(resolve(rootDir, resources.base), 'utf8'),
+    },
     { fileName: 'styles/theme.css', source: await readFile(resolve(rootDir, themePath), 'utf8') },
     ...roleFiles.map((file) => ({ ...file, fileName: `styles/${file.fileName}` })),
   ];

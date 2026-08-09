@@ -1,22 +1,22 @@
 import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { format } from 'oxfmt';
 import { resolveSkinClosure } from '../graph/resolve';
-import type { ResolvedSkinManifest } from '../graph/types';
+import type { ResolvedSkinCatalog } from '../graph/types';
 import { resolveHtmlElementImports } from '../targets/html';
 import { connectHtmlPopups } from './html-markup';
-import { renderSkinSourceOutput } from './render-html';
+import { renderHtmlSkin } from './render-html';
 
 /** Render the complete canonical Skin closure into one HTML template module. */
 export async function generateHtmlSkinSource(
-  manifest: ResolvedSkinManifest,
+  catalog: ResolvedSkinCatalog,
   skin: string,
   entryFile: string,
   iconSet: string,
   program: StyleProgram
 ): Promise<string> {
-  const output = await renderSkinSourceOutput(entryFile, { style: 'css', styleProgram: program });
-  const imports = htmlImports(manifest, skin, iconSet);
-  const html = await format('skin.html', connectHtmlPopups(output.html), {
+  const output = await renderHtmlSkin(entryFile, program);
+  const imports = htmlImports(catalog, skin, iconSet);
+  const html = await format('skin.html', connectHtmlPopups(output), {
     printWidth: 120,
     htmlWhitespaceSensitivity: 'ignore',
   });
@@ -24,8 +24,8 @@ export async function generateHtmlSkinSource(
   return `${imports.join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
 }
 
-function htmlImports(manifest: ResolvedSkinManifest, skin: string, iconSet: string): string[] {
-  const closure = resolveSkinClosure(manifest, skin);
+function htmlImports(catalog: ResolvedSkinCatalog, skin: string, iconSet: string): string[] {
+  const closure = resolveSkinClosure(catalog, skin);
   const icons = closure.symbols.icons ?? [];
   const components = closure.symbols.components ?? [];
   return [

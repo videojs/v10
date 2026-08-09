@@ -3,19 +3,19 @@ import { readFile } from 'node:fs/promises';
 import { basename, dirname, extname, posix, relative, resolve, sep } from 'node:path';
 import { compile } from '@videojs/compiler';
 import { collectModuleSpecifiers, rewriteModuleSpecifiers } from '@videojs/compiler/ast';
-import type { ResolvedSkinItem, ResolvedSkinManifest } from '../graph/types';
+import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../graph/types';
+import type { GeneratedFile } from '../output/files';
 import { createReactSkinSourceConfig } from '../targets/react';
 
-export type SkinSourceFileKind = 'source' | 'style';
+export type RegistrySourceFileKind = 'source' | 'style';
 
-export interface SourceOutputFile {
-  path: string;
-  kind: SkinSourceFileKind;
-  content: string;
+export interface RegistrySourceFile extends GeneratedFile {
+  kind: RegistrySourceFileKind;
 }
 
-export interface SourceOutput {
-  items: Readonly<Record<string, readonly SourceOutputFile[]>>;
+export interface RegistrySourceOutput {
+  sharedFiles: readonly RegistrySourceFile[];
+  items: Readonly<Record<string, readonly RegistrySourceFile[]>>;
   dependencies: Readonly<Record<string, readonly string[]>>;
 }
 
@@ -23,7 +23,7 @@ export interface GenerateReactRegistryOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
   iconSet?: string | undefined;
-  targetRoot?: string | undefined;
+  sourceRoot?: string | undefined;
   installAlias?: string | undefined;
 }
 
@@ -35,7 +35,6 @@ interface SkinItemLayout {
 }
 
 interface SkinItemContext extends SkinItemLayout {
-  manifest: ResolvedSkinManifest;
   layoutsByInput: ReadonlyMap<string, SkinItemLayout>;
   options: ResolvedRegistrySourceOptions;
 }
@@ -44,26 +43,25 @@ interface ResolvedRegistrySourceOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
   iconSet: string;
-  targetRoot: string;
+  sourceRoot: string;
 }
 
 /** Emit the editable React/Tailwind source projection consumed by the shadcn registry. */
 export async function generateReactRegistry(
-  manifest: ResolvedSkinManifest,
+  catalog: ResolvedSkinCatalog,
   options: GenerateReactRegistryOptions
-): Promise<SourceOutput> {
+): Promise<RegistrySourceOutput> {
   const { installAlias = '@/components/videojs', ...sourceOptions } = options;
   const resolved = resolveOptions(sourceOptions);
-  const layouts = createItemLayouts(manifest, resolved);
+  const layouts = createItemLayouts(catalog, resolved);
   const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
   const selected = selectLayouts(layouts, resolved.itemNames);
-  const items: Record<string, SourceOutputFile[]> = {};
+  const items: Record<string, RegistrySourceFile[]> = {};
 
   for (const layout of selected) {
     items[layout.item.name] = await emitReactItem(
       {
         ...layout,
-        manifest,
         layoutsByInput,
         options: resolved,
       },
@@ -76,23 +74,36 @@ export async function generateReactRegistry(
     files.sort((a, b) => a.path.localeCompare(b.path));
     dependencies[itemName] = collectPackageDependencies(files);
   }
-  return { items, dependencies };
+  return {
+    sharedFiles: await createStyleResourceFiles(catalog.resources.styles, resolved),
+    items,
+    dependencies,
+  };
 }
 
-async function createStyleResourceFiles(context: SkinItemContext): Promise<SourceOutputFile[]> {
-  const files: SourceOutputFile[] = [];
-  for (const resource of context.item.resources.styles ?? []) {
-    const isTailwindInput = resource.endsWith('/tailwind.css');
-    const inputFile = absoluteSkinPath(context.options.rootDir, resource);
+async function createStyleResourceFiles(
+  resources: SkinStyleResources,
+  options: ResolvedRegistrySourceOptions
+): Promise<RegistrySourceFile[]> {
+  const files: RegistrySourceFile[] = [];
+  const entries = [
+    { path: resources.tailwind, transform: rewriteTailwindInput },
+    { path: resources.base },
+    ...Object.entries(resources.themes)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([, path]) => ({ path })),
+  ];
+  for (const entry of entries) {
+    const inputFile = absoluteSkinPath(options.rootDir, entry.path);
     const source = await readFile(inputFile, 'utf8');
-    const target = posix.join(context.options.targetRoot, toPosixPath(resource));
-    const content = isTailwindInput ? rewriteTailwindInput(source, inputFile) : source;
-    files.push(createSourceOutputFile(target, content));
+    const target = posix.join(options.sourceRoot, toPosixPath(entry.path));
+    const content = entry.transform ? entry.transform(source, inputFile) : source;
+    files.push(createRegistrySourceFile(target, content));
   }
   return files;
 }
 
-function createSourceOutputFile(path: string, content: string): SourceOutputFile {
+function createRegistrySourceFile(path: string, content: string): RegistrySourceFile {
   return {
     path,
     kind: path.endsWith('.css') ? 'style' : 'source',
@@ -127,13 +138,13 @@ function resolveOptions(options: GenerateReactRegistryOptions): ResolvedRegistry
     rootDir: resolve(options.rootDir),
     ...(options.itemNames ? { itemNames: options.itemNames } : {}),
     iconSet: options.iconSet ?? 'default',
-    targetRoot: options.targetRoot ?? '',
+    sourceRoot: options.sourceRoot ?? '',
   };
 }
 
-function createItemLayouts(manifest: ResolvedSkinManifest, options: ResolvedRegistrySourceOptions): SkinItemLayout[] {
-  return manifest.items.map((item) => {
-    const itemDir = item.type === 'skin' ? options.targetRoot : posix.join(options.targetRoot, 'components', item.name);
+function createItemLayouts(catalog: ResolvedSkinCatalog, options: ResolvedRegistrySourceOptions): SkinItemLayout[] {
+  return catalog.items.map((item) => {
+    const itemDir = item.type === 'skin' ? options.sourceRoot : posix.join(options.sourceRoot, 'components', item.name);
     return {
       item,
       itemDir,
@@ -153,7 +164,7 @@ function missingItem(name: string): never {
   throw new Error(`Skin generation references missing item \`${name}\`.`);
 }
 
-function collectPackageDependencies(files: readonly SourceOutputFile[]): string[] {
+function collectPackageDependencies(files: readonly RegistrySourceFile[]): string[] {
   const packages = new Set<string>();
   for (const file of files) {
     if (file.kind === 'style' || !/\.[cm]?[jt]sx?$/.test(file.path)) continue;
@@ -165,15 +176,36 @@ function collectPackageDependencies(files: readonly SourceOutputFile[]): string[
 }
 
 function rewriteTailwindInput(source: string, inputFile: string): string {
-  const marker = '@import "./themes/default.css";';
-  if (!source.includes(marker)) {
-    throw new Error(`Tailwind source entry \`${inputFile}\` is missing the expected theme import marker.`);
+  // Tailwind directives are outside Lightning CSS's typed AST. Rewrite only
+  // anchored top-level directive headers and require each semantic marker once.
+  let output = replaceDirective(
+    source,
+    /^@import\s+(["'])tailwindcss\1\s+theme\(inline\)\s*;\s*$/m,
+    '@import "tailwindcss";',
+    inputFile,
+    'inline Tailwind import'
+  );
+  output = replaceDirective(output, /^@theme\s+inline\s*\{/m, '@theme {', inputFile, 'inline theme block');
+  output = output.replace(/^@source\s+.+;\s*$/gm, '').trim();
+  const importBlock = output.match(/^(?:@import[^\n]+;\s*)+/)?.[0];
+  if (!importBlock) throw new Error(`Tailwind source entry \`${inputFile}\` must begin with imports.`);
+  return `${importBlock.trim()}\n\n@source "../**/*.{ts,tsx,html}";\n\n${output.slice(importBlock.length).trimStart()}\n`;
+}
+
+function replaceDirective(
+  source: string,
+  pattern: RegExp,
+  replacement: string,
+  inputFile: string,
+  description: string
+): string {
+  const matches = source.match(
+    new RegExp(pattern.source, pattern.flags.includes('g') ? pattern.flags : `${pattern.flags}g`)
+  );
+  if (matches?.length !== 1) {
+    throw new Error(`Tailwind source entry \`${inputFile}\` must contain exactly one ${description}.`);
   }
-  return source
-    .replace('@import "tailwindcss" theme(inline);', '@import "tailwindcss";')
-    .replace('@theme inline {', '@theme {')
-    .replace(/^@source .*;\s*$/gm, '')
-    .replace(marker, `${marker}\n\n@source "../**/*.{ts,tsx,html}";`);
+  return source.replace(pattern, replacement);
 }
 
 function absoluteSkinPath(rootDir: string, path: string): string {
@@ -189,7 +221,7 @@ function isPackageSpecifier(specifier: string): boolean {
   return Boolean(specifier) && !specifier.startsWith('.') && !specifier.startsWith('@/') && !specifier.startsWith('~/');
 }
 
-async function emitReactItem(context: SkinItemContext, installAlias: string): Promise<SourceOutputFile[]> {
+async function emitReactItem(context: SkinItemContext, installAlias: string): Promise<RegistrySourceFile[]> {
   const canonical = await readFile(context.inputFile, 'utf8');
   const result = await compile(canonical, {
     filename: context.inputFile,
@@ -202,7 +234,7 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
   }
 
   const entrySource = rewriteRelativeImports(result.code, context, installAlias);
-  return [...(await createStyleResourceFiles(context)), createSourceOutputFile(context.entryFile, entrySource)];
+  return [createRegistrySourceFile(context.entryFile, entrySource)];
 }
 
 function rewriteRelativeImports(source: string, context: SkinItemContext, installAlias: string): string {

@@ -3,15 +3,14 @@ import { dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path'
 import { collectModuleReferences, type ModuleReference } from '@videojs/compiler/ast';
 import ts from 'typescript';
 import type {
+  ResolvedSkinCatalog,
   ResolvedSkinItem,
-  ResolvedSkinManifest,
-  ResolveSkinManifestResult,
+  ResolveSkinCatalogResult,
+  SkinCatalog,
   SkinClosure,
   SkinDependencies,
   SkinDiagnostic,
   SkinItem,
-  SkinManifest,
-  SkinResources,
   SkinSourceFile,
 } from './types';
 
@@ -37,21 +36,21 @@ interface SkinVisitContext {
   visited: Set<string>;
   dependencies: MutableDependencies;
   diagnostics: SkinDiagnostic[];
-  definition: SkinManifest;
+  catalog: SkinCatalog;
 }
 
-export async function resolveSkinManifest(
-  definition: SkinManifest,
+export async function resolveSkinCatalog(
+  catalog: SkinCatalog,
   options: { rootDir: string }
-): Promise<ResolveSkinManifestResult> {
+): Promise<ResolveSkinCatalogResult> {
   const rootDir = resolve(options.rootDir);
   const diagnostics: SkinDiagnostic[] = [];
-  const normalized = normalizeItems([...definition.skins, ...definition.components], rootDir, diagnostics);
+  const normalized = normalizeItems([...catalog.skins, ...catalog.components], rootDir, diagnostics);
   const entries = new Map(normalized.map((entry) => [entry.sourceFile, entry]));
   const items: ResolvedSkinItem[] = [];
 
   for (const entry of normalized) {
-    const dependencies = createMutableDependencies(Object.values(definition.dependencyModules));
+    const dependencies = createMutableDependencies(Object.values(catalog.dependencyModules));
     const files = new Set<string>();
     const visited = new Set<string>();
 
@@ -64,7 +63,7 @@ export async function resolveSkinManifest(
       visited,
       dependencies,
       diagnostics,
-      definition,
+      catalog,
     });
 
     items.push({
@@ -77,24 +76,25 @@ export async function resolveSkinManifest(
           })
         )
         .sort((a, b) => compareStrings(a.path, b.path)),
-      resources: normalizeGroups(definition.resources),
       dependencies: freezeDependencies(dependencies),
     });
   }
 
   items.sort((a, b) => compareStrings(a.name, b.name));
   diagnoseCycles(items, diagnostics);
-  return { manifest: { items }, diagnostics: sortDiagnostics(diagnostics) };
+  return {
+    catalog: { resources: catalog.resources, items },
+    diagnostics: sortDiagnostics(diagnostics),
+  };
 }
 
-export function resolveSkinClosure(manifest: ResolvedSkinManifest, itemName: string): SkinClosure {
-  const items = new Map(manifest.items.map((item) => [item.name, item]));
+export function resolveSkinClosure(catalog: ResolvedSkinCatalog, itemName: string): SkinClosure {
+  const items = new Map(catalog.items.map((item) => [item.name, item]));
   if (!items.has(itemName)) throw new Error(`Skin item \`${itemName}\` does not exist.`);
 
   const itemNames: string[] = [];
   const visited = new Set<string>();
   const files = new Map<string, SkinSourceFile>();
-  const resources = new Map<string, Set<string>>();
   const packages = new Set<string>();
   const symbols = new Map<string, Set<string>>();
 
@@ -104,13 +104,12 @@ export function resolveSkinClosure(manifest: ResolvedSkinManifest, itemName: str
     const item = items.get(name);
     if (!item) throw new Error(`Skin item \`${itemName}\` depends on missing item \`${name}\`.`);
 
-    for (const dependency of item.dependencies.items) visit(dependency);
+    for (const dependency of item.dependencies.itemNames) visit(dependency);
     itemNames.push(name);
     for (const file of item.files) {
       const previous = files.get(file.path);
       if (!previous || file.role === 'entry') files.set(file.path, file);
     }
-    mergeGroups(resources, item.resources);
     for (const dependency of item.dependencies.packages) packages.add(dependency);
     mergeGroups(symbols, item.dependencies.symbols);
   };
@@ -119,8 +118,6 @@ export function resolveSkinClosure(manifest: ResolvedSkinManifest, itemName: str
   return {
     itemNames,
     files: [...files.values()].sort((a, b) => compareStrings(a.path, b.path)),
-    resources: freezeGroups(resources),
-    items: itemNames.filter((name) => name !== itemName),
     packages: sortedUnique(packages),
     symbols: freezeGroups(symbols),
   };
@@ -205,7 +202,7 @@ function recordPackageReference(
   reference: ModuleReference
 ): void {
   context.dependencies.packages.add(packageName(reference.source));
-  const symbolKind = context.definition.dependencyModules[reference.source];
+  const symbolKind = context.catalog.dependencyModules[reference.source];
   if (symbolKind === undefined) return;
   if (reference.ambiguous) {
     context.diagnostics.push(
@@ -255,7 +252,7 @@ async function visitRelativeReference(
     context.dependencies.items.add(dependency.item.name);
     return;
   }
-  if (isCanonicalComponentFile(importedFile) && importedFile !== context.entry.sourceFile) {
+  if (isComponentSourceFile(context.rootDir, importedFile) && importedFile !== context.entry.sourceFile) {
     context.diagnostics.push(
       nodeDiagnostic(
         sourceFile,
@@ -291,7 +288,7 @@ function diagnoseCycles(items: readonly ResolvedSkinItem[], diagnostics: SkinDia
     visited.add(name);
     active.add(name);
     stack.push(name);
-    for (const dependency of byName.get(name)?.dependencies.items ?? []) visit(dependency);
+    for (const dependency of byName.get(name)?.dependencies.itemNames ?? []) visit(dependency);
     stack.pop();
     active.delete(name);
   };
@@ -305,7 +302,7 @@ function createMutableDependencies(symbolKinds: Iterable<string>): MutableDepend
 
 function freezeDependencies(dependencies: MutableDependencies): SkinDependencies {
   return {
-    items: sortedUnique(dependencies.items),
+    itemNames: sortedUnique(dependencies.items),
     packages: sortedUnique(dependencies.packages),
     symbols: freezeGroups(dependencies.symbols),
   };
@@ -331,14 +328,6 @@ function mergeGroups(target: DependencyGroups, source: Readonly<Record<string, r
     const group = getOrCreateGroup(target, key);
     for (const value of values) group.add(value);
   }
-}
-
-function normalizeGroups(groups: SkinResources): Record<string, string[]> {
-  return Object.fromEntries(
-    Object.entries(groups)
-      .sort(([a], [b]) => compareStrings(a, b))
-      .map(([key, values]) => [key, sortedUnique(values)])
-  );
 }
 
 function freezeGroups(groups: ReadonlyMap<string, ReadonlySet<string>>): Record<string, string[]> {
@@ -379,8 +368,8 @@ function isSourceFile(fileName: string): boolean {
   return new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']).has(extname(fileName));
 }
 
-function isCanonicalComponentFile(fileName: string): boolean {
-  return /[/\\]canonical[/\\]components[/\\].+\.tsx$/.test(fileName);
+function isComponentSourceFile(rootDir: string, fileName: string): boolean {
+  return isWithinRoot(resolve(rootDir, 'components'), fileName) && fileName.endsWith('.tsx');
 }
 
 function packageName(source: string): string {

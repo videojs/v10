@@ -1,8 +1,13 @@
-import type { SkinComponent, SkinDefinition } from '../../canonical/manifest';
+import type { SkinComponent, SkinDefinition, SkinResources } from '../../canonical/catalog';
 
-export type { SkinComponent, SkinDefinition as Skin, SkinManifest } from '../../canonical/manifest';
+export type {
+  SkinCatalog,
+  SkinComponent,
+  SkinDefinition as Skin,
+  SkinResources,
+  SkinStyleResources,
+} from '../../canonical/catalog';
 
-export type SkinResources = Readonly<Record<string, readonly string[]>>;
 export type SkinSymbols = Readonly<Record<string, readonly string[]>>;
 
 export type SkinItem = SkinDefinition | SkinComponent;
@@ -13,25 +18,26 @@ export interface SkinSourceFile {
 }
 
 export interface SkinDependencies {
-  items: readonly string[];
+  itemNames: readonly string[];
   packages: readonly string[];
   symbols: SkinSymbols;
 }
 
 export type ResolvedSkinItem = SkinItem & {
   files: readonly SkinSourceFile[];
-  resources: SkinResources;
   dependencies: SkinDependencies;
 };
 
-export interface ResolvedSkinManifest {
+export interface ResolvedSkinCatalog {
+  resources: SkinResources;
   items: readonly ResolvedSkinItem[];
 }
 
-export interface SkinClosure extends SkinDependencies {
+export interface SkinClosure {
   itemNames: readonly string[];
   files: readonly SkinSourceFile[];
-  resources: SkinResources;
+  packages: readonly string[];
+  symbols: SkinSymbols;
 }
 
 export interface SkinDiagnostic {
@@ -44,7 +50,7 @@ export interface SkinDiagnostic {
   column?: number | undefined;
 }
 
-export interface ResolveSkinManifestResult {
-  manifest: ResolvedSkinManifest;
+export interface ResolveSkinCatalogResult {
+  catalog: ResolvedSkinCatalog;
   diagnostics: readonly SkinDiagnostic[];
 }

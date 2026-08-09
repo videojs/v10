@@ -2,21 +2,23 @@ import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, posix, relative, resolve, sep } from 'node:path';
 import { format } from 'oxfmt';
-import type { SourceOutput } from '../registry/source';
+
+export interface GeneratedFile {
+  path: string;
+  content: string;
+}
 
 export async function collectGeneratedFiles(
-  output: SourceOutput,
+  generated: Iterable<GeneratedFile>,
   outputDir: string,
   files: Map<string, string> = new Map()
 ): Promise<Map<string, string>> {
-  for (const itemFiles of Object.values(output.items)) {
-    for (const file of itemFiles) {
-      const path = posix.join(outputDir, file.path);
-      const content = await formatGeneratedFile(path, file.content);
-      const previous = files.get(path);
-      if (previous !== undefined && previous !== content) throw new Error(`Generated output collision: ${path}`);
-      files.set(path, content);
-    }
+  for (const file of generated) {
+    const path = posix.join(outputDir, file.path);
+    const content = await formatGeneratedFile(path, file.content);
+    const previous = files.get(path);
+    if (previous !== undefined && previous !== content) throw new Error(`Generated output collision: ${path}`);
+    files.set(path, content);
   }
   return files;
 }

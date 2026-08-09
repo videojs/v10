@@ -23,4 +23,4 @@ The current authored paths are:
 - `components/sliders/volume-slider.tsx`
 - `components/sliders/time-slider.tsx`
 
-Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. `manifest.ts` owns the item inventory, while `registry/config.ts` owns React/Tailwind publication policy and `registry/default` contains its generated projection.
+Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. `catalog.ts` owns the source catalog and shared resources, while `registry/config.ts` owns the complete React/Tailwind publication target and `registry/default` contains its generated projection.

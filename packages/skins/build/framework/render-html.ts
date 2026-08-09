@@ -2,46 +2,17 @@ import { readFile } from 'node:fs/promises';
 import { basename, dirname } from 'node:path';
 import { runInNewContext } from 'node:vm';
 import { compile } from '@videojs/compiler';
-import { createStyleProgram, loadDesignSystem, type StyleProgram } from '@videojs/compiler/tailwind';
+import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
-import { createHtmlSkinSourceConfig, type SkinSourceStyle } from '../targets/html.ts';
+import { createHtmlSkinSourceConfig } from '../targets/html.ts';
 import { classNamesRuntime, jsxRuntime } from './html-runtime';
 
-export interface RenderSkinSourceOptions {
-  style?: SkinSourceStyle | undefined;
-  tailwindInput?: string | undefined;
-  styleProgram?: StyleProgram | undefined;
-}
-
-export interface RenderedSkinSource {
-  html: string;
-  css: string;
-}
-
 /** Render one canonical Skin entry to static light-DOM HTML. */
-export async function renderSkinSource(entryFile: string, options: RenderSkinSourceOptions = {}): Promise<string> {
-  return (await renderSkinSourceOutput(entryFile, options)).html;
-}
-
-export async function renderSkinSourceOutput(
-  entryFile: string,
-  options: RenderSkinSourceOptions = {}
-): Promise<RenderedSkinSource> {
-  const style = options.style ?? 'tailwind';
-  const ownedStyleProgram =
-    style === 'css'
-      ? (options.styleProgram ??
-        createStyleProgram({
-          design: await loadDesignSystem(requiredTailwindInput(options.tailwindInput)),
-          output: 'styles.css',
-          tailwindVariables: 'inline',
-          themeSelector: '.media-skin',
-        }))
-      : undefined;
+export async function renderHtmlSkin(entryFile: string, program: StyleProgram): Promise<string> {
   const bundle = await rolldown({
     input: entryFile,
     platform: 'neutral',
-    plugins: [canonicalHtmlPlugin({ ...options, style }, ownedStyleProgram)],
+    plugins: [canonicalHtmlPlugin(program)],
     transform: {
       jsx: { runtime: 'automatic', importSource: 'source-ui-html' },
     },
@@ -58,15 +29,7 @@ export async function renderSkinSourceOutput(
   runInNewContext(code, { module, exports: module.exports });
   const render = selectSkinRender(module.exports, entryFile);
 
-  const emittedStyles = ownedStyleProgram && !options.styleProgram ? await ownedStyleProgram.emit() : { files: [] };
-  if (emittedStyles.files.length > 1) {
-    throw new Error('HTML source rendering expects one merged CSS output file.');
-  }
-
-  return {
-    html: String(render({})).trim(),
-    css: emittedStyles.files[0]?.source ?? '',
-  };
+  return String(render({})).trim();
 }
 
 function selectSkinRender(
@@ -99,7 +62,7 @@ function selectSkinRender(
   );
 }
 
-function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styleProgram: StyleProgram | undefined): Plugin {
+function canonicalHtmlPlugin(program: StyleProgram): Plugin {
   return {
     name: 'videojs-source-html',
     resolveId(source) {
@@ -115,11 +78,7 @@ function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styleProgram: Sty
       const source = await readFile(id, 'utf8');
       const result = await compile(source, {
         filename: id,
-        config: createHtmlSkinSourceConfig({
-          style: options.style ?? 'tailwind',
-          ...(options.tailwindInput ? { tailwindInput: options.tailwindInput } : {}),
-          ...(styleProgram ? { styleProgram } : {}),
-        }),
+        config: createHtmlSkinSourceConfig({ style: 'css', program }),
         configDir: dirname(id),
       });
       if (result.assets.length > 0) {
@@ -128,9 +87,4 @@ function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styleProgram: Sty
       return { code: result.code, moduleType: 'tsx' };
     },
   };
-}
-
-function requiredTailwindInput(input: string | undefined): string {
-  if (!input) throw new Error('HTML vanilla CSS source generation requires a Tailwind input file.');
-  return input;
 }

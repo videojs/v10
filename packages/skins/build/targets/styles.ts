@@ -1,4 +1,27 @@
-import type { ResolveElementContext, ResolveElementResult } from '@videojs/compiler/tailwind';
+import {
+  type ResolveElementContext,
+  type ResolveElementResult,
+  type StyleProgram,
+  tailwind,
+} from '@videojs/compiler/tailwind';
+
+export type SkinStyleTarget = { style: 'tailwind' } | { style: 'css'; program: StyleProgram };
+
+/** Create the shared Tailwind policy for a Skin source target. */
+export function skinTailwind(target: SkinStyleTarget) {
+  return tailwind(
+    target.style === 'tailwind'
+      ? { mode: 'inline' }
+      : {
+          mode: 'extract',
+          program: target.program,
+          resolve: {
+            element: resolveSkinStyle,
+            token: resolveSkinStyle,
+          },
+        }
+  );
+}
 
 /** Map canonical style tokens and fallback elements to public classes and role stylesheets. */
 export function resolveSkinStyle({ defaultName }: ResolveElementContext): ResolveElementResult {
