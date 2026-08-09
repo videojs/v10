@@ -7,25 +7,23 @@ import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerReactConfig } from '../compiler/react';
 import type { GeneratedFile } from '../output/files';
 import type { SkinStyleManifest } from '../styles/manifest';
-import type { MutableSkinStyleUsage } from '../styles/transform';
 
-interface GenerateReactSkinSourcesOptions {
+interface GenerateReactSkinsOptions {
   rootDir: string;
   skin: string;
   iconSet: string;
   styles: SkinStyleManifest;
-  usage: MutableSkinStyleUsage;
 }
 
-interface SourceLayout {
+interface FileLayout {
   inputFile: string;
   outputFile: string;
 }
 
 /** Transform the complete canonical Skin closure into editable React modules. */
-export async function generateReactSkinSources(
+export async function generateReactSkins(
   catalog: ResolvedSkinCatalog,
-  options: GenerateReactSkinSourcesOptions
+  options: GenerateReactSkinsOptions
 ): Promise<GeneratedFile[]> {
   const skin = catalog.items.find((item) => item.name === options.skin && item.type === 'skin');
   if (!skin) throw new Error(`Skin \`${options.skin}\` does not exist.`);
@@ -34,7 +32,7 @@ export async function generateReactSkinSources(
   const entryDir = posix.dirname(entryPath);
   const layouts = resolveSkinClosure(catalog, skin.name)
     .files.map(canonicalPath)
-    .filter(isReactSource)
+    .filter(isReactFile)
     .map((path) => ({
       inputFile: resolve(options.rootDir, path),
       outputFile: path.startsWith(`${entryDir}/`) ? posix.relative(entryDir, path) : path,
@@ -44,20 +42,19 @@ export async function generateReactSkinSources(
   const config = createCompilerReactConfig({
     style: 'vanilla',
     styles: options.styles,
-    usage: options.usage,
     iconSet: options.iconSet,
   });
 
   const files: GeneratedFile[] = [];
   for (const layout of layouts) {
-    const source = await readFile(layout.inputFile, 'utf8');
-    const result = await transform(source, {
+    const content = await readFile(layout.inputFile, 'utf8');
+    const result = await transform(content, {
       filename: layout.inputFile,
       outputFile: resolve(options.rootDir, layout.outputFile),
       config,
     });
     if (result.diagnostics.some((diagnostic) => diagnostic.level === 'error')) {
-      throw new Error(`React Skin source \`${layout.inputFile}\` failed to transform.`);
+      throw new Error(`React Skin file \`${layout.inputFile}\` failed to transform.`);
     }
     files.push({
       path: layout.outputFile,
@@ -68,17 +65,17 @@ export async function generateReactSkinSources(
 }
 
 function rewriteRelativeImports(
-  source: string,
-  layout: SourceLayout,
-  layoutsByInput: ReadonlyMap<string, SourceLayout>
+  content: string,
+  layout: FileLayout,
+  layoutsByInput: ReadonlyMap<string, FileLayout>
 ): string {
-  return rewriteModuleSpecifiers(source, {
+  return rewriteModuleSpecifiers(content, {
     filename: layout.outputFile,
     resolve(specifier) {
       if (!specifier.startsWith('.')) return specifier;
-      const imported = resolveSourceLayout(layout.inputFile, specifier, layoutsByInput);
+      const imported = resolveFileLayout(layout.inputFile, specifier, layoutsByInput);
       if (!imported) {
-        throw new Error(`React Skin source \`${layout.inputFile}\` cannot map relative import \`${specifier}\`.`);
+        throw new Error(`React Skin file \`${layout.inputFile}\` cannot map relative import \`${specifier}\`.`);
       }
       const target = posix.relative(posix.dirname(layout.outputFile), withoutTypeScriptExtension(imported.outputFile));
       return target.startsWith('.') ? target : `./${target}`;
@@ -86,11 +83,11 @@ function rewriteRelativeImports(
   });
 }
 
-function resolveSourceLayout(
+function resolveFileLayout(
   importer: string,
   specifier: string,
-  layoutsByInput: ReadonlyMap<string, SourceLayout>
-): SourceLayout | undefined {
+  layoutsByInput: ReadonlyMap<string, FileLayout>
+): FileLayout | undefined {
   const base = resolve(dirname(importer), specifier);
   for (const candidate of [
     base,
@@ -111,7 +108,7 @@ function canonicalPath(path: string): string {
   return path.replace(/^\.\//, '');
 }
 
-function isReactSource(path: string): boolean {
+function isReactFile(path: string): boolean {
   return !path.startsWith('styles/') && /\.[cm]?[jt]sx?$/.test(path);
 }
 

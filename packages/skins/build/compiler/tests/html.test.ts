@@ -36,10 +36,10 @@ describe('createCompilerHtmlConfig', () => {
     ]);
   });
 
-  it('connects tooltip relationships in JSX before HTML rendering', async () => {
+  it('leaves adjacent popup identity wiring to the HTML runtime', async () => {
     const result = await transform(
-      `export function PlayButton() {
-  return <ButtonTooltip><PlayButtonPrimitive /></ButtonTooltip>;
+      `export function VolumePopover() {
+  return <Popover.Root><Popover.Trigger><MuteButtonPrimitive /></Popover.Trigger><Popover.Popup /></Popover.Root>;
 }`,
       {
         config: createCompilerHtmlConfig({
@@ -49,18 +49,10 @@ describe('createCompilerHtmlConfig', () => {
       }
     );
 
-    expect(result.code).toContain('<ButtonTooltip id={"play-tooltip"}>');
-    expect(result.code).toContain('<media-play-button commandfor={"play-tooltip"}/>');
-  });
-
-  it('rejects conflicting tooltip relationships in JSX', async () => {
-    await expect(
-      transform(`<ButtonTooltip id="play-tooltip"><PlayButtonPrimitive commandfor="other" /></ButtonTooltip>`, {
-        config: createCompilerHtmlConfig({
-          style: 'tailwind',
-          styles: await loadSkinStyleManifest(styleFiles),
-        }),
-      })
-    ).rejects.toThrow('HTML trigger targets `other`, but its popup is identified by `play-tooltip`.');
+    expect(result.code).toContain('<media-mute-button {...props}/>');
+    expect(result.code).toContain('<media-popover />');
+    expect(result.code.indexOf('<media-mute-button')).toBeLessThan(result.code.indexOf('<media-popover'));
+    expect(result.code).not.toContain('commandfor');
+    expect(result.code).not.toContain(' id=');
   });
 });

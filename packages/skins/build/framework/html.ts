@@ -4,20 +4,18 @@ import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../compiler/html';
 import type { SkinStyleManifest } from '../styles/manifest';
-import type { MutableSkinStyleUsage } from '../styles/transform';
 
 /** Render the complete canonical Skin closure into one HTML template module. */
-export async function generateHtmlSkinSource(
+export async function generateHtmlSkin(
   catalog: ResolvedSkinCatalog,
   skin: string,
   entryFile: string,
   iconSet: string,
   styles: SkinStyleManifest,
-  usage: MutableSkinStyleUsage,
-  resolveImport: (source: string) => string = (source) => source
+  resolveImport: (specifier: string) => string = (specifier) => specifier
 ): Promise<string> {
   const result = await build({
-    ...createCompilerHtmlConfig({ style: 'vanilla', styles, usage }),
+    ...createCompilerHtmlConfig({ style: 'vanilla', styles }),
     input: entryFile,
     output: { file: entryFile.replace(/\.tsx$/, '.html') },
   });
@@ -31,7 +29,7 @@ export async function generateHtmlSkinSource(
     htmlWhitespaceSensitivity: 'ignore',
   });
   if (html.errors.length > 0) throw new Error(html.errors.map((error) => error.message).join('\n'));
-  return `${imports.map((source) => `import '${source}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
+  return `${imports.map((specifier) => `import '${specifier}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
 }
 
 function htmlImports(catalog: ResolvedSkinCatalog, skin: string, iconSet: string): string[] {
@@ -45,6 +43,6 @@ function htmlIconElementImport(iconSet: string): string {
   return iconSet === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${iconSet}`;
 }
 
-function escapeTemplate(source: string): string {
-  return source.replaceAll('`', '\\`').replaceAll('${', '\\${');
+function escapeTemplate(content: string): string {
+  return content.replaceAll('`', '\\`').replaceAll('${', '\\${');
 }

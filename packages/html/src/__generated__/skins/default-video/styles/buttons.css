@@ -6,7 +6,7 @@
   border-style: solid;
   color: inherit;
   outline-style: solid;
-  outline-offset: calc(2px * -1);
+  outline-offset: -2px;
   background-color: #0000;
   border-width: 0;
   outline-width: 2px;
@@ -49,7 +49,7 @@
   display: none;
 }
 
-.media-fullscreen-button-icon-enter:is(:where(.media-fullscreen-button):not([data-fullscreen]) *) {
+:where(.media-fullscreen-button):not([data-fullscreen]) .media-fullscreen-button-icon-enter {
   opacity: 1;
   display: block;
 }
@@ -59,7 +59,7 @@
   display: none;
 }
 
-.media-fullscreen-button-icon-exit:is(:where(.media-fullscreen-button)[data-fullscreen] *) {
+:where(.media-fullscreen-button)[data-fullscreen] .media-fullscreen-button-icon-exit {
   opacity: 1;
   display: block;
 }
@@ -69,9 +69,7 @@
   display: none;
 }
 
-.media-mute-button-icon-volume-high:is(:where(.media-mute-button):not([data-muted]) *):is(
-    :where(.media-mute-button):not([data-volume-level='low']) *
-  ) {
+:where(.media-mute-button):not([data-muted]):not([data-volume-level='low']) .media-mute-button-icon-volume-high {
   opacity: 1;
   display: block;
 }
@@ -81,9 +79,7 @@
   display: none;
 }
 
-.media-mute-button-icon-volume-low:is(:where(.media-mute-button):not([data-muted]) *):is(
-    :where(.media-mute-button)[data-volume-level='low'] *
-  ) {
+:where(.media-mute-button):not([data-muted])[data-volume-level='low'] .media-mute-button-icon-volume-low {
   opacity: 1;
   display: block;
 }
@@ -93,7 +89,7 @@
   display: none;
 }
 
-.media-mute-button-icon-volume-off:is(:where(.media-mute-button)[data-muted] *) {
+:where(.media-mute-button)[data-muted] .media-mute-button-icon-volume-off {
   opacity: 1;
   display: block;
 }
@@ -103,9 +99,7 @@
   display: none;
 }
 
-.media-play-button-icon-pause:is(:where(.media-play-button)[data-started] *):is(
-    :where(.media-play-button):not([data-paused]) *
-  ):is(:where(.media-play-button):not([data-ended]) *) {
+:where(.media-play-button)[data-started]:not([data-paused]):not([data-ended]) .media-play-button-icon-pause {
   opacity: 1;
   display: block;
 }
@@ -115,12 +109,8 @@
   display: none;
 }
 
-.media-play-button-icon-play:is(:where(.media-play-button):not([data-ended]) *):is(
-    :where(.media-play-button):not([data-started]) *
-  ),
-.media-play-button-icon-play:is(:where(.media-play-button):not([data-ended]) *):is(
-    :where(.media-play-button)[data-paused] *
-  ) {
+:where(.media-play-button):not([data-ended]):not([data-started]) .media-play-button-icon-play,
+:where(.media-play-button):not([data-ended])[data-paused] .media-play-button-icon-play {
   opacity: 1;
   display: block;
 }
@@ -130,13 +120,13 @@
   display: none;
 }
 
-.media-play-button-icon-restart:is(:where(.media-play-button)[data-ended] *) {
+:where(.media-play-button)[data-ended] .media-play-button-icon-restart {
   opacity: 1;
   display: block;
 }
 
 .media-seek-button-icon-backward {
-  scale: calc(100% * -1) 1;
+  scale: -100% 1;
 }
 
 .media-seek-button-label {

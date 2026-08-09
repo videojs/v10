@@ -2,7 +2,7 @@ import { resolve } from 'node:path';
 import { jsx, transform } from '@videojs/compiler';
 import { describe, expect, it } from 'vitest';
 import type { SkinStyleManifest, SkinStyleRecipe } from '../manifest';
-import { createSkinStyleUsage, skinStyles } from '../transform';
+import { skinStyles } from '../transform';
 
 const filename = resolve(import.meta.dirname, 'component.tsx');
 const modulePath = resolve(import.meta.dirname, 'fixture.tailwind.ts');
@@ -40,19 +40,14 @@ describe('skinStyles', () => {
     expect(result.code).not.toContain('seekIcon');
   });
 
-  it('projects the same references to semantic classes and records compositions', async () => {
-    const usage = createSkinStyleUsage();
-    const result = await compileWithStyle('vanilla', usage);
+  it('projects the same references to semantic classes', async () => {
+    const result = await compileWithStyle('vanilla');
 
     expect(result.code).toContain('className="media-button media-seek-button hook"');
     expect(result.code).toContain(
       '? "media-button-icon media-seek-button-icon-backward" : "media-button-icon media-seek-button-icon-forward"'
     );
     expect(result.code).not.toContain('seekIcon');
-    expect(usage.compositions.map((composition) => composition.classNames)).toContainEqual([
-      'media-button',
-      'media-seek-button',
-    ]);
   });
 
   it('rejects style references outside the supported static className forms', async () => {
@@ -68,12 +63,12 @@ describe('skinStyles', () => {
   });
 });
 
-function compileWithStyle(target: 'tailwind' | 'vanilla', usage = createSkinStyleUsage()) {
+function compileWithStyle(target: 'tailwind' | 'vanilla') {
   return transform(source, {
     filename,
     config: {
       target: jsx(),
-      plugins: [skinStyles({ manifest, target, usage })],
+      plugins: [skinStyles({ manifest, target })],
     },
   });
 }

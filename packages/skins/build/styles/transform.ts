@@ -9,27 +9,9 @@ import {
   readDottedPath,
   rewriteClassName,
 } from './jsx-class-name';
-import { isGroupPeerMarker, recipeForToken, type SkinStyleManifest, type SkinStyleRecipe } from './manifest';
+import { isGroupPeerMarker, recipeForToken, type SkinStyleManifest } from './manifest';
 
 export type SkinStyleTarget = 'tailwind' | 'vanilla';
-
-export interface SkinStyleComposition {
-  classNames: readonly string[];
-  origin: {
-    description: string;
-    file?: string | undefined;
-    line?: number | undefined;
-    column?: number | undefined;
-  };
-}
-
-export interface SkinStyleUsage {
-  compositions: readonly SkinStyleComposition[];
-}
-
-export interface MutableSkinStyleUsage extends SkinStyleUsage {
-  recordComposition(composition: SkinStyleComposition): void;
-}
 
 interface TokenReference {
   modulePath: string;
@@ -44,30 +26,12 @@ interface SourceBindings {
 
 interface ResolvedClassName {
   classes: readonly string[];
-  recipes: readonly SkinStyleRecipe[];
   passThrough: readonly ts.Expression[];
 }
 
 interface SkinStylesOptions {
   manifest: SkinStyleManifest;
   target: SkinStyleTarget;
-  usage?: MutableSkinStyleUsage | undefined;
-}
-
-export function createSkinStyleUsage(): MutableSkinStyleUsage {
-  const compositions: SkinStyleComposition[] = [];
-  const compositionKeys = new Set<string>();
-  return {
-    compositions,
-    recordComposition(composition) {
-      const classNames = [...new Set(composition.classNames)];
-      if (classNames.length < 2) return;
-      const key = [...classNames].sort().join('\0');
-      if (compositionKeys.has(key)) return;
-      compositionKeys.add(key);
-      compositions.push({ ...composition, classNames });
-    },
-  };
 }
 
 /** Project explicit canonical style references to Tailwind utilities or semantic classes. */
@@ -85,7 +49,7 @@ export function skinStyles(options: SkinStylesOptions): CompilerPlugin {
             const visit = (node: ts.Node): ts.Node => {
               if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
                 const info = readClassName(node);
-                const transformed = info ? transformStyleAttribute(info, bindings, options, factory, sourceFile) : node;
+                const transformed = info ? transformStyleAttribute(info, bindings, options, factory) : node;
                 return ts.visitEachChild(transformed, visit, transformContext);
               }
               return ts.visitEachChild(node, visit, transformContext);
@@ -154,8 +118,7 @@ function transformStyleAttribute(
   info: ClassNameInfo,
   bindings: SourceBindings,
   options: SkinStylesOptions,
-  factory: ts.NodeFactory,
-  sourceFile: ts.SourceFile
+  factory: ts.NodeFactory
 ): ts.JsxElement | ts.JsxSelfClosingElement {
   if (info.kind === 'opaque' && ts.isConditionalExpression(info.expression)) {
     const whenTrue = resolveExpression(info.expression.whenTrue, bindings, options);
@@ -163,8 +126,6 @@ function transformStyleAttribute(
     if (!whenTrue || !whenFalse || whenTrue.passThrough.length > 0 || whenFalse.passThrough.length > 0) {
       return info.element;
     }
-    recordUsage(options.usage, whenTrue.recipes, info, sourceFile);
-    recordUsage(options.usage, whenFalse.recipes, info, sourceFile);
     return rewriteClassName(
       info,
       factory.updateConditionalExpression(
@@ -182,7 +143,6 @@ function transformStyleAttribute(
 
   const resolved = resolveSegments(info.segments, bindings, options);
   if (!resolved || (resolved.classes.length === 0 && resolved.passThrough.length === 0)) return info.element;
-  recordUsage(options.usage, resolved.recipes, info, sourceFile);
   const literal = factory.createStringLiteral(resolved.classes.join(' '));
   const replacement =
     resolved.passThrough.length === 0
@@ -209,7 +169,6 @@ function resolveSegments(
   options: SkinStylesOptions
 ): ResolvedClassName | undefined {
   const classes: string[] = [];
-  const recipes: SkinStyleRecipe[] = [];
   const passThrough: ts.Expression[] = [];
 
   for (const segment of segments) {
@@ -227,7 +186,6 @@ function resolveSegments(
       passThrough.push(segment.node);
       continue;
     }
-    recipes.push(recipe);
     if (options.target === 'vanilla') {
       classes.push(recipe.className);
     } else {
@@ -237,7 +195,7 @@ function resolveSegments(
 
   const outputClasses =
     options.target === 'vanilla' ? classes.filter((className) => !isGroupPeerMarker(className)) : classes;
-  return { classes: [...new Set(outputClasses)], recipes, passThrough };
+  return { classes: [...new Set(outputClasses)], passThrough };
 }
 
 function sourceBindings(sourceFile: ts.SourceFile, manifest: SkinStyleManifest): SourceBindings {
@@ -288,25 +246,6 @@ function resolveTokenReference(path: readonly string[], bindings: Pick<SourceBin
   if (modulePath) return { modulePath, tokenPath: tail };
   const alias = bindings.aliases.get(root);
   return alias ? { modulePath: alias.modulePath, tokenPath: [...alias.tokenPath, ...tail] } : undefined;
-}
-
-function recordUsage(
-  usage: MutableSkinStyleUsage | undefined,
-  recipes: readonly SkinStyleRecipe[],
-  info: ClassNameInfo,
-  sourceFile: ts.SourceFile
-): void {
-  if (!usage) return;
-  const location = sourceFile.getLineAndCharacterOfPosition(info.attribute.getStart(sourceFile));
-  usage.recordComposition({
-    classNames: recipes.map((recipe) => recipe.className),
-    origin: {
-      description: 'className',
-      file: sourceFile.fileName,
-      line: location.line + 1,
-      column: location.character + 1,
-    },
-  });
 }
 
 function pushClasses(output: string[], value: string): void {

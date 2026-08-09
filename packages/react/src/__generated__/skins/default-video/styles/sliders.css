@@ -59,7 +59,7 @@
   left: var(--media-slider-fill);
   width: var(--media-slider-thumb-size);
   height: var(--media-slider-thumb-size);
-  translate: calc(calc(1 / 2 * 100%) * -1) calc(calc(1 / 2 * 100%) * -1);
+  translate: -50% -50%;
   border-radius: var(--media-radius-pill);
   background-color: currentColor;
   position: absolute;

@@ -2,23 +2,22 @@ import { resolve } from 'node:path';
 import type { ResolvedSkinCatalog } from '../catalog/types';
 import { compileSkinStyles, loadDesignSystem } from '../styles/compile';
 import { loadCatalogStyleManifest } from '../styles/manifest';
-import { createSkinStyleUsage } from '../styles/transform';
-import { generateHtmlSkinSource } from './html';
-import { generateReactSkinSources } from './react';
+import { generateHtmlSkin } from './html';
+import { generateReactSkins } from './react';
 import { createFrameworkStyles, type FrameworkStyleFile } from './styles';
 
 export type FrameworkProjection =
-  | { framework: 'html'; resolveImport?: ((source: string) => string) | undefined }
+  | { framework: 'html'; resolveImport?: ((specifier: string) => string) | undefined }
   | { framework: 'react' };
 
-interface FrameworkSkinSource {
+interface FrameworkSkinFile {
   framework: FrameworkProjection['framework'];
   fileName: string;
-  source: string;
+  content: string;
 }
 
-interface FrameworkSkinFiles {
-  sources: readonly FrameworkSkinSource[];
+interface FrameworkSkinOutput {
+  files: readonly FrameworkSkinFile[];
   styles: readonly FrameworkStyleFile[];
 }
 
@@ -33,54 +32,44 @@ interface CreateFrameworkSkinOptions {
 export async function createFrameworkSkin(
   catalog: ResolvedSkinCatalog,
   options: CreateFrameworkSkinOptions
-): Promise<FrameworkSkinFiles> {
+): Promise<FrameworkSkinOutput> {
   const skin = catalog.items.find((item) => item.name === options.skin && item.type === 'skin');
   if (!skin) throw new Error(`Skin \`${options.skin}\` does not exist.`);
 
   const entryFile = resolve(options.rootDir, skin.source);
   const styles = await loadCatalogStyleManifest(catalog, { rootDir: options.rootDir, itemNames: [skin.name] });
   const design = await loadDesignSystem(resolve(options.rootDir, catalog.resources.styles.tailwind));
-  const usage = createSkinStyleUsage();
   const iconSet = options.iconSet ?? 'default';
   const projections = uniqueProjections(options.projections, skin.name);
-  const sources: FrameworkSkinSource[] = [];
+  const files: FrameworkSkinFile[] = [];
 
   for (const projection of projections) {
     if (projection.framework === 'html') {
-      sources.push({
+      files.push({
         framework: 'html',
         fileName: 'skin.ts',
-        source: await generateHtmlSkinSource(
-          catalog,
-          skin.name,
-          entryFile,
-          iconSet,
-          styles,
-          usage,
-          projection.resolveImport
-        ),
+        content: await generateHtmlSkin(catalog, skin.name, entryFile, iconSet, styles, projection.resolveImport),
       });
     } else {
-      const files = await generateReactSkinSources(catalog, {
+      const reactFiles = await generateReactSkins(catalog, {
         rootDir: options.rootDir,
         skin: skin.name,
         iconSet,
         styles,
-        usage,
       });
-      for (const file of files) {
-        sources.push({ framework: 'react', fileName: file.path, source: file.content });
+      for (const file of reactFiles) {
+        files.push({ framework: 'react', fileName: file.path, content: file.content });
       }
     }
   }
 
   return {
-    sources,
+    files,
     styles: await createFrameworkStyles(
       catalog.resources.styles,
       options.rootDir,
       design,
-      await compileSkinStyles({ design, manifest: styles, usage })
+      await compileSkinStyles({ design, manifest: styles })
     ),
   };
 }

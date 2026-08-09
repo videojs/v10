@@ -1,12 +1,10 @@
 import { defineConfig, html, rewrite } from '@videojs/compiler';
 import type { SkinStyleManifest } from '../styles/manifest';
-import { type MutableSkinStyleUsage, type SkinStyleTarget, skinStyles } from '../styles/transform';
-import { resolveHtmlRelationships } from './html-relationships';
+import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
 interface CreateCompilerHtmlConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
-  usage?: MutableSkinStyleUsage | undefined;
 }
 
 interface HtmlComponentDescriptor {
@@ -111,11 +109,7 @@ export function createCompilerHtmlConfig(styleTarget: CreateCompilerHtmlConfigOp
       },
     }),
     plugins: [
-      skinStyles({ manifest: styleTarget.styles, target: styleTarget.style, usage: styleTarget.usage }),
-      {
-        name: '@videojs/skins:html-relationships',
-        setup: () => ({ transform: resolveHtmlRelationships() }),
-      },
+      skinStyles({ manifest: styleTarget.styles, target: styleTarget.style }),
       rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');

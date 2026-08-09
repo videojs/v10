@@ -18,7 +18,7 @@ interface FrameworkSkinTargetBase {
 type FrameworkSkinTarget =
   | (FrameworkSkinTargetBase & {
       framework: 'html';
-      resolveImport?: ((source: string) => string) | undefined;
+      resolveImport?: ((specifier: string) => string) | undefined;
     })
   | (FrameworkSkinTargetBase & { framework: 'react' });
 
@@ -60,20 +60,17 @@ async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> 
     });
     const styles = await Promise.all(
       output.styles.map(
-        async (style) => [style.fileName, await formatGeneratedFile(style.fileName, style.source)] as const
+        async (style) => [style.fileName, await formatGeneratedFile(style.fileName, style.content)] as const
       )
     );
     for (const target of group.targets) {
-      const sources = output.sources.filter((source) => source.framework === target.framework);
-      if (sources.length === 0) {
+      const generatedFiles = output.files.filter((file) => file.framework === target.framework);
+      if (generatedFiles.length === 0) {
         throw new Error(`Framework Skin generation did not emit the ${target.framework} target.`);
       }
       const files = new Map<string, string>();
-      for (const source of sources) {
-        files.set(
-          posix.join(target.outputDir, source.fileName),
-          await formatGeneratedFile(source.fileName, source.source)
-        );
+      for (const file of generatedFiles) {
+        files.set(posix.join(target.outputDir, file.fileName), await formatGeneratedFile(file.fileName, file.content));
       }
       for (const [fileName, formatted] of styles) {
         files.set(posix.join(target.outputDir, fileName), formatted);
@@ -141,22 +138,22 @@ function groupFrameworkTargets(
   return [...groups.values()];
 }
 
-function htmlPackageImportResolver(outputFile: string): (source: string) => string {
-  return (source) => {
-    const target = htmlSourceModule(source);
-    const specifier = posix.relative(posix.dirname(outputFile), target);
-    return specifier.startsWith('.') ? specifier : `./${specifier}`;
+function htmlPackageImportResolver(outputFile: string): (specifier: string) => string {
+  return (specifier) => {
+    const target = htmlPackageModule(specifier);
+    const relative = posix.relative(posix.dirname(outputFile), target);
+    return relative.startsWith('.') ? relative : `./${relative}`;
   };
 }
 
-function htmlSourceModule(source: string): string {
+function htmlPackageModule(specifier: string): string {
   const uiPrefix = '@videojs/html/ui/';
-  if (source.startsWith(uiPrefix)) return posix.join('src/define/ui', source.slice(uiPrefix.length));
+  if (specifier.startsWith(uiPrefix)) return posix.join('src/define/ui', specifier.slice(uiPrefix.length));
   const iconsPrefix = '@videojs/html/icons/element';
-  if (source === iconsPrefix) return 'src/icons/element';
-  if (source.startsWith(`${iconsPrefix}/`))
-    return posix.join('src/icons/element', source.slice(iconsPrefix.length + 1));
-  throw new Error(`Cannot resolve HTML package source import \`${source}\`.`);
+  if (specifier === iconsPrefix) return 'src/icons/element';
+  if (specifier.startsWith(`${iconsPrefix}/`))
+    return posix.join('src/icons/element', specifier.slice(iconsPrefix.length + 1));
+  throw new Error(`Cannot resolve HTML package import \`${specifier}\`.`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

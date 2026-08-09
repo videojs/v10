@@ -6,7 +6,7 @@ import type { DesignSystem } from '../styles/compile';
 
 export interface FrameworkStyleFile {
   fileName: string;
-  source: string;
+  content: string;
 }
 
 export async function createFrameworkStyles(
@@ -19,21 +19,21 @@ export async function createFrameworkStyles(
   if (!themePath) throw new Error('Framework Skin generation requires a default theme resource.');
 
   const roleFiles = [...styles]
-    .map(([role, source]) => ({ fileName: `${role}.css`, source }))
+    .map(([role, content]) => ({ fileName: `${role}.css`, content }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
   const files: FrameworkStyleFile[] = [
-    { fileName: 'styles/preflight.css', source: await design.compilePreflight('.media-skin') },
+    { fileName: 'styles/preflight.css', content: await design.compilePreflight('.media-skin') },
     {
       fileName: 'styles/base.css',
-      source: await readFile(resolve(rootDir, resources.base), 'utf8'),
+      content: await readFile(resolve(rootDir, resources.base), 'utf8'),
     },
-    { fileName: 'styles/theme.css', source: await readFile(resolve(rootDir, themePath), 'utf8') },
+    { fileName: 'styles/theme.css', content: await readFile(resolve(rootDir, themePath), 'utf8') },
     ...roleFiles.map((file) => ({ ...file, fileName: `styles/${file.fileName}` })),
   ];
   return [
     {
       fileName: 'styles/styles.css',
-      source: files.map((file) => `@import './${basename(file.fileName)}';`).join('\n'),
+      content: files.map((file) => `@import './${basename(file.fileName)}';`).join('\n'),
     },
     ...files,
   ];

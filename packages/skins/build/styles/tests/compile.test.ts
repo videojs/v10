@@ -2,7 +2,6 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { compileSkinStyles, loadDesignSystem } from '../compile';
 import type { SkinStyleManifest, SkinStyleRecipe } from '../manifest';
-import type { SkinStyleUsage } from '../transform';
 
 const designPath = resolve(import.meta.dirname, '../../../canonical/styles/tailwind.css');
 
@@ -16,7 +15,6 @@ describe('compileSkinStyles', () => {
     const styles = await compileSkinStyles({
       design: await loadDesignSystem(designPath),
       manifest: manifest([playButton, restartIcon], new Map([['group/play', playButton.className]])),
-      usage: usage([[playButton.className, restartIcon.className]]),
     });
 
     expect(styles.get('buttons')).toContain(':where(.media-play-button)[data-ended]');
@@ -24,17 +22,24 @@ describe('compileSkinStyles', () => {
     expect(styles.get('buttons')).not.toContain('group\\/play');
   });
 
-  it('rejects conflicting declarations on co-applied semantic classes', async () => {
-    const base = recipe('base', 'media-base', ['p-1']);
-    const specific = recipe('specific', 'media-specific', ['p-2']);
+  it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {
+    const muteButton = recipe('muteButton', 'media-mute-button', ['grid', 'group/mute']);
+    const highIcon = recipe('muteButtonIcon.high', 'media-mute-button-icon-high', [
+      'hidden',
+      '-outline-offset-2',
+      'group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block',
+    ]);
+    const styles = await compileSkinStyles({
+      design: await loadDesignSystem(designPath),
+      manifest: manifest([muteButton, highIcon], new Map([['group/mute', muteButton.className]])),
+    });
 
-    await expect(
-      compileSkinStyles({
-        design: await loadDesignSystem(designPath),
-        manifest: manifest([base, specific]),
-        usage: usage([[base.className, specific.className]]),
-      })
-    ).rejects.toThrow("co-applied semantic classes 'media-base' and 'media-specific' both declare 'padding'");
+    expect(styles.get('buttons')).toContain(
+      ':where(.media-mute-button):not([data-muted]):not([data-volume-level="low"]) .media-mute-button-icon-high'
+    );
+    expect(styles.get('buttons')).toContain('outline-offset: -2px');
+    expect(styles.get('buttons')).not.toContain(':is(:where(.media-mute-button)');
+    expect(styles.get('buttons')).not.toContain('calc(2px * -1)');
   });
 });
 
@@ -53,10 +58,4 @@ function manifest(
   groupPeerBindings: ReadonlyMap<string, string> = new Map()
 ): SkinStyleManifest {
   return { modules: new Map(), recipes, groupPeerBindings };
-}
-
-function usage(compositions: readonly (readonly string[])[]): SkinStyleUsage {
-  return {
-    compositions: compositions.map((classNames) => ({ classNames, origin: { description: 'test' } })),
-  };
 }

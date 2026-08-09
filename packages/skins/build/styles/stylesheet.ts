@@ -1,5 +1,3 @@
-import type { SkinStyleComposition } from './transform';
-
 interface SkinCssRecipeOrigin {
   description: string;
   file?: string | undefined;
@@ -21,6 +19,4 @@ export interface SkinCssRole {
 
 export interface SkinStyleSheet {
   roles: readonly SkinCssRole[];
-  candidates: readonly string[];
-  compositions: readonly SkinStyleComposition[];
 }

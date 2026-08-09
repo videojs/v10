@@ -3,16 +3,12 @@ import type { DesignSystem } from './design-system';
 import { emitSkinRoleCss } from './emitter';
 import { isGroupPeerMarker, type SkinStyleManifest, type SkinStyleRecipe } from './manifest';
 import type { SkinCssRecipe, SkinCssRole, SkinStyleSheet } from './stylesheet';
-import type { SkinStyleUsage } from './transform';
 
 /** Compile referenced semantic recipes once and return reviewable CSS grouped by explicit role. */
 export async function compileSkinStyles(options: {
   design: DesignSystem;
   manifest: SkinStyleManifest;
-  usage: SkinStyleUsage;
 }): Promise<Map<SkinStyleRole, string>> {
-  const candidates: string[] = [];
-  const candidateSet = new Set<string>();
   const byRole = new Map<SkinStyleRole, SkinCssRecipe[]>();
 
   for (const recipe of [...options.manifest.recipes].sort((a, b) => a.className.localeCompare(b.className))) {
@@ -24,11 +20,6 @@ export async function compileSkinStyles(options: {
       byRole.set(recipe.role, recipes);
     }
     recipes.push(compiled);
-    for (const candidate of compiled.candidates) {
-      if (candidateSet.has(candidate)) continue;
-      candidateSet.add(candidate);
-      candidates.push(candidate);
-    }
   }
 
   const roles: SkinCssRole[] = skinStyleRoles.flatMap((role) => {
@@ -37,8 +28,6 @@ export async function compileSkinStyles(options: {
   });
   const stylesheet: SkinStyleSheet = {
     roles,
-    candidates: candidates.sort(),
-    compositions: options.usage.compositions,
   };
   const emitted = await emitSkinRoleCss({
     design: options.design,
