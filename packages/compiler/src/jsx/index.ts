@@ -5,6 +5,7 @@ export {
   jsxExpression,
   propertyAccess,
   readStringAttribute,
+  singleJsxElementChild,
 } from '../utils/jsx';
 export { hasChild } from './matchers/has-child';
 export { anyTag, byTag, type JsxElementLike, type Matcher, tagName } from './matchers/tag';

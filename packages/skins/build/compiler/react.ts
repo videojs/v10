@@ -1,4 +1,4 @@
-import { defineConfig, jsx, transform } from '@videojs/compiler';
+import { defineConfig, jsx, rewrite } from '@videojs/compiler';
 import { anyTag, childAsProp } from '@videojs/compiler/ast';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type MutableSkinStyleUsage, type SkinStyleTarget, skinStyles } from '../styles/transform';
@@ -32,7 +32,7 @@ export function createCompilerReactConfig(options: CreateCompilerReactConfigOpti
     }),
     plugins: [
       skinStyles({ manifest: options.styles, target: options.style, usage: options.usage }),
-      transform(
+      rewrite(
         (code) => {
           const cn = code.import('@videojs/utils/style', 'cn');
           const ReactElement = code.import('react', 'ReactElement', { type: true });

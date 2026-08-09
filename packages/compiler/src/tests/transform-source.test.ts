@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { type CompilerPlugin, type CompilerTransform, compile } from '..';
+import { type CompilerPlugin, type CompilerTransform, transform } from '..';
 import {
   accessPath,
   addProp,
@@ -25,7 +25,7 @@ import { parse } from '../parse';
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 
 const compileJsx = (source: string, options: JsxTargetOptions = {}) =>
-  compile(source, { config: { target: jsx(options) } });
+  transform(source, { config: { target: jsx(options) } });
 
 describe('parse', () => {
   it('produces a TSX SourceFile with parent pointers set', () => {
@@ -35,7 +35,7 @@ describe('parse', () => {
   });
 });
 
-describe('compile (no transforms)', () => {
+describe('transform (no transforms)', () => {
   it('round-trips a simple TSX module', async () => {
     const source = `import { Foo } from 'bar';\nexport function App() { return <Foo/>; }\n`;
     const { code } = await compileJsx(source);
@@ -58,10 +58,10 @@ describe('compile (no transforms)', () => {
   });
 });
 
-describe('compile pipeline phases', () => {
+describe('transform pipeline phases', () => {
   it('maps transformed output back to the authored source', async () => {
     const source = `import { Widget } from 'old';\nexport const view = <Widget/>;\n`;
-    const result = await compile(source, {
+    const result = await transform(source, {
       filename: '/src/input.tsx',
       outputFile: '/dist/input.tsx',
       config: { target: jsx({ imports: { old: 'new' } }) },
@@ -94,7 +94,7 @@ describe('compile pipeline phases', () => {
       },
     });
 
-    await compile(`import { Widget } from 'old';\nexport const view = <Widget/>;`, {
+    await transform(`import { Widget } from 'old';\nexport const view = <Widget/>;`, {
       config: {
         plugins: [plugin('normal'), plugin('post', 'post'), plugin('pre', 'pre')],
         target: jsx({ imports: { old: 'new' }, transforms: [observe('target')] }),
@@ -105,7 +105,7 @@ describe('compile pipeline phases', () => {
   });
 });
 
-describe('compile (transformImports — bare-string rule)', () => {
+describe('transform (transformImports — bare-string rule)', () => {
   it('removes imports explicitly replaced by the target runtime', async () => {
     const source = `import { Glyph } from '@fixture/icons/components';\nconst value = 1;`;
     const { code } = await compileJsx(source, {
@@ -133,7 +133,7 @@ describe('compile (transformImports — bare-string rule)', () => {
   });
 });
 
-describe('compile (transformImports — function rule)', () => {
+describe('transform (transformImports — function rule)', () => {
   it('rewrites per-identifier source and bucket-merges by resolved target', async () => {
     const source = `import { Alpha, Beta } from '@fixture/widgets';\nconst _ = [Alpha, Beta];`;
     const { code } = await compileJsx(source, {

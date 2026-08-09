@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { compile, jsx } from '@videojs/compiler';
+import { jsx, transform } from '@videojs/compiler';
 import { describe, expect, it } from 'vitest';
 import type { SkinStyleManifest, SkinStyleRecipe } from '../manifest';
 import { createSkinStyleUsage, skinStyles } from '../transform';
@@ -57,7 +57,7 @@ describe('skinStyles', () => {
 
   it('rejects style references outside the supported static className forms', async () => {
     await expect(
-      compile(
+      transform(
         `import styles from './fixture.tailwind'; export const Example = ({ enabled }) => <div className={enabled && styles.button} />;`,
         {
           filename,
@@ -69,7 +69,7 @@ describe('skinStyles', () => {
 });
 
 function compileWithStyle(target: 'tailwind' | 'vanilla', usage = createSkinStyleUsage()) {
-  return compile(source, {
+  return transform(source, {
     filename,
     config: {
       target: jsx(),

@@ -229,12 +229,12 @@ importers:
 
   packages/compiler:
     dependencies:
-      '@videojs/utils':
-        specifier: workspace:*
-        version: link:../utils
       kleur:
         specifier: ^4.1.5
         version: 4.1.5
+      rolldown:
+        specifier: ~1.1.5
+        version: 1.1.5
       typescript:
         specifier: 6.0.2
         version: 6.0.2
@@ -492,12 +492,6 @@ importers:
       oxfmt:
         specifier: ^0.62.0
         version: 0.62.0
-      parse5:
-        specifier: ^8.0.0
-        version: 8.0.0
-      rolldown:
-        specifier: ~1.1.5
-        version: 1.1.5
       shadcn:
         specifier: ^4.16.2
         version: 4.16.2(supports-color@7.2.0)(typescript@6.0.2)

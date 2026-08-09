@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
-import { compile } from '@videojs/compiler';
+import { transform } from '@videojs/compiler';
 import { describe, expect, it } from 'vitest';
 import { loadSkinStyleManifest } from '../../styles/manifest';
 import { createCompilerReactConfig } from '../react';
@@ -15,7 +15,7 @@ describe('createCompilerReactConfig', () => {
   it('emits canonical button composition with public React imports', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
-    const result = await compile(source, {
+    const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
       configDir: dirname(filename),
@@ -31,7 +31,7 @@ describe('createCompilerReactConfig', () => {
   it('uses public primitive props for the tooltip composition', async () => {
     const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.tsx');
     const source = await readFile(filename, 'utf8');
-    const result = await compile(source, {
+    const result = await transform(source, {
       filename,
       config: createCompilerReactConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
     });

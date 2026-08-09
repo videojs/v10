@@ -1,9 +1,9 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { compile } from '@videojs/compiler';
+import { transform } from '@videojs/compiler';
 import { describe, expect, it } from 'vitest';
 import { loadSkinStyleManifest } from '../../styles/manifest';
-import { createCompilerHtmlConfig, finalizeCompilerHtml, resolveHtmlElementImports } from '../html';
+import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../html';
 
 const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 const styleFiles = [
@@ -15,7 +15,7 @@ describe('createCompilerHtmlConfig', () => {
   it('emits idiomatic light-DOM elements', async () => {
     const filename = resolve(canonicalRoot, 'components/sliders/time-slider.tsx');
     const source = await readFile(filename, 'utf8');
-    const result = await compile(source, {
+    const result = await transform(source, {
       filename,
       config: createCompilerHtmlConfig({ style: 'tailwind', styles: await loadSkinStyleManifest(styleFiles) }),
     });
@@ -36,20 +36,31 @@ describe('createCompilerHtmlConfig', () => {
     ]);
   });
 
-  it('connects popup relationships after the full component tree is composed', () => {
-    const source = `<div>
-  <media-play-button></media-play-button>
-  <media-tooltip></media-tooltip>
-  <media-seek-button seconds="-10"></media-seek-button>
-  <media-tooltip></media-tooltip>
-  <media-mute-button></media-mute-button>
-  <media-popover></media-popover>
-</div>`;
+  it('connects tooltip relationships in JSX before HTML rendering', async () => {
+    const result = await transform(
+      `export function PlayButton() {
+  return <ButtonTooltip><PlayButtonPrimitive /></ButtonTooltip>;
+}`,
+      {
+        config: createCompilerHtmlConfig({
+          style: 'tailwind',
+          styles: await loadSkinStyleManifest(styleFiles),
+        }),
+      }
+    );
 
-    const output = finalizeCompilerHtml(source);
-    expect(output).toContain('<media-play-button commandfor="play-tooltip"></media-play-button>');
-    expect(output).toContain('<media-tooltip id="play-tooltip"></media-tooltip>');
-    expect(output).toContain('commandfor="seek-backward-tooltip"');
-    expect(output).toContain('id="volume-popover"');
+    expect(result.code).toContain('<ButtonTooltip id={"play-tooltip"}>');
+    expect(result.code).toContain('<media-play-button commandfor={"play-tooltip"}/>');
+  });
+
+  it('rejects conflicting tooltip relationships in JSX', async () => {
+    await expect(
+      transform(`<ButtonTooltip id="play-tooltip"><PlayButtonPrimitive commandfor="other" /></ButtonTooltip>`, {
+        config: createCompilerHtmlConfig({
+          style: 'tailwind',
+          styles: await loadSkinStyleManifest(styleFiles),
+        }),
+      })
+    ).rejects.toThrow('HTML trigger targets `other`, but its popup is identified by `play-tooltip`.');
   });
 });

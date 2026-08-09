@@ -1,10 +1,10 @@
+import { build } from '@videojs/compiler';
 import { format } from 'oxfmt';
 import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
-import { finalizeCompilerHtml, resolveHtmlElementImports } from '../compiler/html';
+import { createCompilerHtmlConfig, resolveHtmlElementImports } from '../compiler/html';
 import type { SkinStyleManifest } from '../styles/manifest';
 import type { MutableSkinStyleUsage } from '../styles/transform';
-import { renderHtmlSkin } from './render-html';
 
 /** Render the complete canonical Skin closure into one HTML template module. */
 export async function generateHtmlSkinSource(
@@ -16,9 +16,17 @@ export async function generateHtmlSkinSource(
   usage: MutableSkinStyleUsage,
   resolveImport: (source: string) => string = (source) => source
 ): Promise<string> {
-  const output = await renderHtmlSkin(entryFile, styles, usage);
+  const result = await build({
+    ...createCompilerHtmlConfig({ style: 'vanilla', styles, usage }),
+    input: entryFile,
+    output: { file: entryFile.replace(/\.tsx$/, '.html') },
+  });
+  const chunks = result.files.filter((file) => file.type === 'chunk');
+  if (chunks.length !== 1 || !chunks[0]) {
+    throw new Error(`HTML Skin generation expected one output chunk, but received ${chunks.length}.`);
+  }
   const imports = htmlImports(catalog, skin, iconSet).map(resolveImport);
-  const html = await format('skin.html', finalizeCompilerHtml(output), {
+  const html = await format('skin.html', chunks[0].source, {
     printWidth: 120,
     htmlWhitespaceSensitivity: 'ignore',
   });

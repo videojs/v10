@@ -1,6 +1,6 @@
 import type ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { CompilerError, compile } from '..';
+import { CompilerError, transform } from '..';
 import {
   DiagnosticError,
   diagnosticLocationFromNode,
@@ -88,10 +88,10 @@ describe('formatCompilerDiagnosticJsonLine', () => {
 describe('CompilerError diagnostics', () => {
   it('rejects syntax-invalid TSX before transforms run', async () => {
     try {
-      await compile(`export function App( { return <Foo/> }`, {
+      await transform(`export function App( { return <Foo/> }`, {
         filename: '/workspace/broken.tsx',
       });
-      throw new Error('Expected compile to fail');
+      throw new Error('Expected transform to fail');
     } catch (error) {
       expect(error).toBeInstanceOf(CompilerError);
       expect((error as CompilerError).diagnostics[0]).toMatchObject({
@@ -105,7 +105,7 @@ describe('CompilerError diagnostics', () => {
   });
 
   it('attributes reported and thrown failures to their plugin', async () => {
-    const reported = await compile(`export const value = 1;`, {
+    const reported = await transform(`export const value = 1;`, {
       filename: '/workspace/input.tsx',
       config: {
         plugins: [
@@ -132,7 +132,7 @@ describe('CompilerError diagnostics', () => {
       },
     };
     await expect(
-      compile(`export const value = 1;`, {
+      transform(`export const value = 1;`, {
         filename: '/workspace/input.tsx',
         config: { plugins: [failingPlugin] },
       })
@@ -143,7 +143,7 @@ describe('CompilerError diagnostics', () => {
 
   it('attributes finish failures even when the plugin has no transform', async () => {
     await expect(
-      compile(`export const value = 1;`, {
+      transform(`export const value = 1;`, {
         filename: '/workspace/input.tsx',
         config: {
           plugins: [
@@ -166,7 +166,7 @@ describe('CompilerError diagnostics', () => {
   });
 
   it('preserves source ranges thrown from transforms', async () => {
-    const transform = (): ts.TransformerFactory<ts.SourceFile> => () => (sourceFile) => {
+    const failingTransform = (): ts.TransformerFactory<ts.SourceFile> => () => (sourceFile) => {
       throw new DiagnosticError('Fixture transform failed', {
         ...diagnosticLocationFromNode(sourceFile.statements[0]!),
         diagnosticCode: 'fixture-transform',
@@ -174,11 +174,11 @@ describe('CompilerError diagnostics', () => {
     };
 
     try {
-      await compile(`export function App(){ return <Foo/>; }`, {
+      await transform(`export function App(){ return <Foo/>; }`, {
         filename: '/workspace/skin.tsx',
-        config: { target: jsx({ transforms: [transform()] }) },
+        config: { target: jsx({ transforms: [failingTransform()] }) },
       });
-      throw new Error('Expected compile to fail');
+      throw new Error('Expected transform to fail');
     } catch (error) {
       expect(error).toBeInstanceOf(CompilerError);
       const diagnostic = (error as CompilerError).diagnostics[0]!;

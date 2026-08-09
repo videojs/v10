@@ -2,13 +2,13 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { compileProject, transform } from '..';
+import { build, html, rewrite } from '..';
 import type { CompilerPlugin } from '../config';
 
 let workDir: string;
 
 beforeEach(() => {
-  workDir = mkdtempSync(join(tmpdir(), 'compiler-project-'));
+  workDir = mkdtempSync(join(tmpdir(), 'compiler-build-'));
   mkdirSync(join(workDir, 'src'), { recursive: true });
 });
 
@@ -16,7 +16,48 @@ afterEach(() => {
   rmSync(workDir, { recursive: true, force: true });
 });
 
-describe('compileProject', () => {
+describe('build', () => {
+  it('bundles the complete local module graph for an entry', async () => {
+    writeFileSync(join(workDir, 'src', 'message.ts'), `export const message = 'ready';\n`, 'utf8');
+    writeFileSync(
+      join(workDir, 'src', 'input.tsx'),
+      `import { message } from './message';\nexport const App = () => <Root>{message}</Root>;\n`,
+      'utf8'
+    );
+
+    const result = await build(
+      {
+        input: 'src/input.tsx',
+        output: { file: 'dist/output.tsx' },
+      },
+      { configDir: workDir }
+    );
+
+    expect(result.files).toHaveLength(1);
+    expect(result.files[0]!.source).toContain('const message = "ready"');
+    expect(result.files[0]!.source).not.toContain(`from './message'`);
+  });
+
+  it('renders an HTML target after transforming its module graph', async () => {
+    writeFileSync(
+      join(workDir, 'src', 'input.tsx'),
+      `export function Skin(){ return <Panel className={['root', false, 'ready']}>Hello & goodbye</Panel>; }\n`,
+      'utf8'
+    );
+
+    const result = await build(
+      {
+        input: 'src/input.tsx',
+        output: { file: 'dist/output.html' },
+        target: html(),
+        plugins: [rewrite((code) => [code.jsx.element('Panel').replace('section')])],
+      },
+      { configDir: workDir }
+    );
+
+    expect(result.files[0]!.source).toBe('<section class="root ready">Hello &amp; goodbye</section>');
+  });
+
   it('compiles configured entries and emitted assets', async () => {
     writeFileSync(join(workDir, 'src', 'input.tsx'), `export function App(){ return <Root/>; }\n`, 'utf8');
 
@@ -30,7 +71,7 @@ describe('compileProject', () => {
         };
       },
     };
-    const result = await compileProject(
+    const result = await build(
       {
         input: { template: 'src/input.tsx' },
         output: {
@@ -38,7 +79,7 @@ describe('compileProject', () => {
           entryFileNames: '[name].tsx',
           banner: '// Generated\n',
         },
-        plugins: [transform((code) => [code.jsx.element('Root').addProp('data-root', '')]), assetPlugin],
+        plugins: [rewrite((code) => [code.jsx.element('Root').addProp('data-root', '')]), assetPlugin],
       },
       { configDir: workDir }
     );
@@ -55,24 +96,24 @@ describe('compileProject', () => {
     expect(result.files[0]!.source).toContain('// Generated');
   });
 
-  it('compiles multiple project configs in authored order', async () => {
+  it('compiles multiple build configs in authored order', async () => {
     writeFileSync(join(workDir, 'src', 'input.tsx'), `export function App(){ return <Root/>; }\n`, 'utf8');
 
     const config = [
       {
         input: { template: 'src/input.tsx' },
         output: { dir: 'dist/one', entryFileNames: '[name].tsx' },
-        plugins: [transform((code) => [code.jsx.element('Root').addProp('data-one', '')])],
+        plugins: [rewrite((code) => [code.jsx.element('Root').addProp('data-one', '')])],
       },
       {
         input: { template: 'src/input.tsx' },
         output: { dir: 'dist/two', entryFileNames: '[name].tsx' },
-        plugins: [transform((code) => [code.jsx.element('Root').addProp('data-two', '')])],
+        plugins: [rewrite((code) => [code.jsx.element('Root').addProp('data-two', '')])],
       },
     ] as const;
 
-    const first = await compileProject(config, { configDir: workDir });
-    const second = await compileProject(config, { configDir: workDir });
+    const first = await build(config, { configDir: workDir });
+    const second = await build(config, { configDir: workDir });
 
     expect(first).toEqual(second);
     expect(first.files.map((file) => file.fileName)).toEqual([
@@ -83,17 +124,17 @@ describe('compileProject', () => {
     expect(first.files[1]!.source).toContain('data-two=""');
   });
 
-  it('rejects colliding output files across project configs', async () => {
+  it('rejects colliding output files across build configs', async () => {
     writeFileSync(join(workDir, 'src', 'input.tsx'), `export function App(){ return <Root/>; }\n`, 'utf8');
 
     await expect(
-      compileProject(
+      build(
         [
           { input: 'src/input.tsx', output: { file: 'dist/output.tsx' } },
           { input: 'src/input.tsx', output: { file: 'dist/output.tsx' } },
         ],
         { configDir: workDir }
       )
-    ).rejects.toThrow('Compiler project output collision');
+    ).rejects.toThrow('Compiler build output collision');
   });
 });

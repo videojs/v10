@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, extname, posix, relative, resolve, sep } from 'node:path';
-import { compile } from '@videojs/compiler';
+import { transform } from '@videojs/compiler';
 import { collectModuleSpecifiers, rewriteModuleSpecifiers } from '@videojs/compiler/ast';
 import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../catalog/types';
 import { createCompilerReactConfig } from '../compiler/react';
@@ -230,7 +230,7 @@ function isPackageSpecifier(specifier: string): boolean {
 
 async function emitReactItem(context: SkinItemContext, installAlias: string): Promise<RegistrySourceFile[]> {
   const canonical = await readFile(context.inputFile, 'utf8');
-  const result = await compile(canonical, {
+  const result = await transform(canonical, {
     filename: context.inputFile,
     config: createCompilerReactConfig({
       style: 'tailwind',
