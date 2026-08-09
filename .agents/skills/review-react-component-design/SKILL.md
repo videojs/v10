@@ -7,11 +7,11 @@ description: Review React component designs. Use for boundaries, APIs, opt-outs,
 
 Read the proposal, nearby records, and relevant React code, tests, exports, and package metadata.
 
-1. Test whether the consumer problem needs a component or part rather than markup, CSS, a hook, a utility, or existing composition.
+1. Ask whether the proposal is a reusable primitive or app/skin composition before adding a component or part.
 2. Trace ownership and data flow across core, DOM behavior, and React. Check effects and cleanup.
-3. Review compound anatomy, React and CSS APIs, and whether each addition has a consumer. Leave visual structure to CSS.
+3. Review compound anatomy, React and CSS APIs, and whether each addition has a consumer. Leave visual structure to CSS. If the surface spans independent features, separate them into another component or hook. Treat descendant selectors, `:has()`, and other complex selectors introduced by composition as a likely sign of a weak primitive boundary or missing `data-*` or CSS custom-property hooks.
 4. Exercise omission, render replacement, styling, behavior, and import opt-outs.
-5. Weigh API complexity against bundle cost and verify client boundaries. Check accessibility, interaction, and SSR constraints.
+5. Weigh API complexity against bundle cost and verify client boundaries. Compound APIs should use tree-shakeable ESM namespace re-exports rather than runtime namespace objects. Check accessibility, interaction, and SSR constraints.
 
 Use `packages/react/src/ui/`, `use-render.tsx`, and package metadata as evidence. Report findings by severity with the smallest change.
 
