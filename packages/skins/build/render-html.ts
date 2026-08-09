@@ -9,6 +9,7 @@ import { createHtmlSkinSourceConfig, type SkinSourceStyle } from './compiler/htm
 export interface RenderSkinSourceOptions {
   style?: SkinSourceStyle | undefined;
   tailwindInput?: string | undefined;
+  styleProgram?: StyleProgram | undefined;
 }
 
 export interface RenderedSkinSource {
@@ -26,19 +27,20 @@ export async function renderSkinSourceOutput(
   options: RenderSkinSourceOptions = {}
 ): Promise<RenderedSkinSource> {
   const style = options.style ?? 'tailwind';
-  const styleProgram =
+  const ownedStyleProgram =
     style === 'css'
-      ? createStyleProgram({
+      ? (options.styleProgram ??
+        createStyleProgram({
           design: await loadDesignSystem(requiredTailwindInput(options.tailwindInput)),
           output: 'styles.css',
           tailwindVariables: 'inline',
           themeSelector: '.media-skin',
-        })
+        }))
       : undefined;
   const bundle = await rolldown({
     input: entryFile,
     platform: 'neutral',
-    plugins: [canonicalHtmlPlugin({ ...options, style }, styleProgram)],
+    plugins: [canonicalHtmlPlugin({ ...options, style }, ownedStyleProgram)],
     transform: {
       jsx: { runtime: 'automatic', importSource: 'source-ui-html' },
     },
@@ -55,7 +57,7 @@ export async function renderSkinSourceOutput(
   runInNewContext(code, { module, exports: module.exports });
   const render = selectSkinRender(module.exports, entryFile);
 
-  const emittedStyles = styleProgram ? await styleProgram.emit() : { files: [] };
+  const emittedStyles = ownedStyleProgram && !options.styleProgram ? await ownedStyleProgram.emit() : { files: [] };
   if (emittedStyles.files.length > 1) {
     throw new Error('HTML source rendering expects one merged CSS output file.');
   }
@@ -107,7 +109,7 @@ function canonicalHtmlPlugin(options: RenderSkinSourceOptions, styleProgram: Sty
     async load(id) {
       if (id === '\0videojs-source-html:jsx-runtime') return { code: jsxRuntime, moduleType: 'js' };
       if (id === '\0videojs-source-html:style') return { code: classNamesRuntime, moduleType: 'js' };
-      if (!id.endsWith('.skin.tsx') && basename(id) !== 'skin.tsx') return null;
+      if (!id.endsWith('.tsx')) return null;
 
       const source = await readFile(id, 'utf8');
       const result = await compile(source, {

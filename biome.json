@@ -103,6 +103,13 @@
       },
       "assist": {
         "enabled": false
+      },
+      "linter": {
+        "rules": {
+          "complexity": {
+            "noImportantStyles": "off"
+          }
+        }
       }
     },
     {

@@ -1,4 +1,3 @@
-import '@/components/videojs/styles/tailwind.css';
 import { Tooltip as TooltipPrimitive } from '@videojs/react';
 import type { ReactElement } from 'react';
 export interface ButtonTooltipProps extends TooltipPrimitive.RootProps {

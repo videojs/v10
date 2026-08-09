@@ -14,13 +14,13 @@ Canonical source:
 The current canonical paths are:
 
 - `skins/default-video/skin.tsx`
-- `components/buttons/button-tooltip.skin.tsx`
-- `components/buttons/fullscreen-button.skin.tsx`
-- `components/buttons/mute-button.skin.tsx`
-- `components/buttons/play-button.skin.tsx`
-- `components/buttons/seek-button.skin.tsx`
-- `components/controls/volume-popover.skin.tsx`
-- `components/sliders/volume-slider.skin.tsx`
-- `components/sliders/time-slider.skin.tsx`
+- `components/buttons/button-tooltip.tsx`
+- `components/buttons/fullscreen-button.tsx`
+- `components/buttons/mute-button.tsx`
+- `components/buttons/play-button.tsx`
+- `components/buttons/seek-button.tsx`
+- `components/controls/volume-popover.tsx`
+- `components/sliders/volume-slider.tsx`
+- `components/sliders/time-slider.tsx`
 
-Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only source contract with local named React exports or exact HTML registrations. The Tailwind v4 input in `styles/tailwind.css` maps semantic utilities to scoped media variables, so Tailwind source can be preserved or extracted into vanilla CSS from the same authored utilities. Registry items are authored in `../registry/entries.ts`; generated target output remains a separate stack boundary.
+Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. The manifest in `../src/manifest.ts` owns the item inventory; registry publication policy lives in `../src/registry/config.ts`.

@@ -1,4 +1,3 @@
-import '@/components/videojs/styles/tailwind.css';
 import type { SeekButtonProps } from '@videojs/core';
 import { SeekButton as SeekButtonPrimitive } from '@videojs/react';
 import { SeekIcon } from '@videojs/react/icons';
@@ -6,7 +5,7 @@ import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-toolti
 export function SeekButton(props: SeekButtonProps = {}) {
   const seconds = props.seconds ?? 10;
   return (
-    <ButtonTooltip>
+    <ButtonTooltip side="top">
       <SeekButtonPrimitive
         className="grid size-media-control shrink-0 place-items-center rounded-media-pill border-0 bg-transparent p-0 text-inherit cursor-pointer outline-2 outline-transparent -outline-offset-2 hover:bg-media-control-hover focus-visible:bg-media-control-hover aria-expanded:bg-media-control-hover focus-visible:outline-current focus-visible:outline-offset-2 aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
         {...props}

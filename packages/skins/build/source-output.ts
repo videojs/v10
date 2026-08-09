@@ -104,7 +104,7 @@ export function createSourceOutputFile(path: string, content: string): SourceOut
 }
 
 export function sourceEntryName(source: string): string {
-  return basename(source).replace(/\.skin(?=\.[^.]+$)/, '');
+  return basename(source);
 }
 
 export function resolveSourceFile(inputFile: string, specifier: string): string {
@@ -183,7 +183,11 @@ function rewriteTailwindInput(source: string, inputFile: string): string {
   if (!source.includes(marker)) {
     throw new Error(`Tailwind source entry \`${inputFile}\` is missing the expected theme import marker.`);
   }
-  return source.replace(/^@source .*;\s*$/gm, '').replace(marker, `${marker}\n\n@source "../**/*.{ts,tsx,html}";`);
+  return source
+    .replace('@import "tailwindcss" theme(inline);', '@import "tailwindcss";')
+    .replace('@theme inline {', '@theme {')
+    .replace(/^@source .*;\s*$/gm, '')
+    .replace(marker, `${marker}\n\n@source "../**/*.{ts,tsx,html}";`);
 }
 
 function stripCanonicalPrefix(path: string): string {

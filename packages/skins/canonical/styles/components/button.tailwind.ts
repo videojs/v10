@@ -6,57 +6,49 @@ const buttonStyles = [
   'aria-disabled:cursor-not-allowed aria-disabled:opacity-50',
 ];
 
-const buttonIconStyles = 'size-media-icon drop-shadow-media-icon';
-
-export const fullscreenButton = [...buttonStyles, 'group/fullscreen'];
-export const muteButton = [...buttonStyles, 'group/mute'];
-export const playButton = [...buttonStyles, 'group/play'];
-export const seekButton = buttonStyles;
+export const button = buttonStyles;
+export const buttonIcon = 'size-media-icon drop-shadow-media-icon';
+export const fullscreenButton = 'group/fullscreen';
+export const muteButton = 'group/mute';
+export const playButton = 'group/play';
+export const seekButton = '';
 
 export const fullscreenButtonIcon = {
   enter: [
-    buttonIconStyles,
     'hidden opacity-0 group-not-data-fullscreen/fullscreen:block group-not-data-fullscreen/fullscreen:opacity-100',
   ],
-  exit: [
-    buttonIconStyles,
-    'hidden opacity-0 group-data-fullscreen/fullscreen:block group-data-fullscreen/fullscreen:opacity-100',
-  ],
+  exit: ['hidden opacity-0 group-data-fullscreen/fullscreen:block group-data-fullscreen/fullscreen:opacity-100'],
 };
 
 export const playButtonIcon = {
   pause: [
-    buttonIconStyles,
     'hidden opacity-0 group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:block',
     'group-data-started/play:group-not-data-paused/play:group-not-data-ended/play:opacity-100',
   ],
   play: [
-    buttonIconStyles,
     'hidden opacity-0 group-not-data-ended/play:group-data-paused/play:block',
     'group-not-data-ended/play:group-data-paused/play:opacity-100',
     'group-not-data-ended/play:group-not-data-started/play:block',
     'group-not-data-ended/play:group-not-data-started/play:opacity-100',
   ],
-  restart: [buttonIconStyles, 'hidden opacity-0 group-data-ended/play:block group-data-ended/play:opacity-100'],
+  restart: 'hidden opacity-0 group-data-ended/play:block group-data-ended/play:opacity-100',
 };
 
 export const seekButtonIcon = {
-  backward: [buttonIconStyles, '-scale-x-100'],
-  forward: buttonIconStyles,
+  backward: '-scale-x-100',
+  forward: '',
 };
 
 export const muteButtonIcon = {
   volumeHigh: [
-    buttonIconStyles,
     'hidden opacity-0 group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block',
     'group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:opacity-100',
   ],
   volumeLow: [
-    buttonIconStyles,
     'hidden opacity-0 group-not-data-muted/mute:group-data-[volume-level=low]/mute:block',
     'group-not-data-muted/mute:group-data-[volume-level=low]/mute:opacity-100',
   ],
-  volumeOff: [buttonIconStyles, 'hidden opacity-0 group-data-muted/mute:block group-data-muted/mute:opacity-100'],
+  volumeOff: 'hidden opacity-0 group-data-muted/mute:block group-data-muted/mute:opacity-100',
 };
 
 export const seekButtonLabel = 'tabular-nums';

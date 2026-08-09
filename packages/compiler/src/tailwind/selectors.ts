@@ -20,6 +20,7 @@ export interface ResolveClassListContext {
 }
 
 export type ResolveElement = (context: ResolveElementContext) => ResolveElementResult | string | null | undefined;
+export type ResolveToken = ResolveElement;
 export type ResolveClassList = (context: ResolveClassListContext) => readonly string[] | null | undefined;
 
 export function normalizeResolveElementResult(

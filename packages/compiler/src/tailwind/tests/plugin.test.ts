@@ -60,6 +60,14 @@ const compileTailwind = (source: string, options: Parameters<typeof tailwind>[0]
   compileSource(source, { filename, config: { plugins: [tailwind(options)] } });
 
 describe('tailwindPlugin — mode: preserve', () => {
+  it('compiles Tailwind preflight inside the requested skin scope', async () => {
+    const css = await design.compilePreflight('.media-skin');
+
+    expect(css).toContain('@scope (.media-skin)');
+    expect(css).toContain('box-sizing: border-box');
+    expect(css).toContain('button, input, select');
+  });
+
   it('preserves static className values', async () => {
     const source = `function App(){ return <Foo className="flex items-center"/>; }`;
     const { code } = await compile(source, {
@@ -219,6 +227,7 @@ describe('tailwindPlugin — mode: extract', () => {
       cssPath: 'fixture.css',
       recognizesCandidate: () => true,
       compileCandidates: async () => '.flex, .grid { display: block; }',
+      compilePreflight: async () => '',
       resolveThemeVar: () => undefined,
     };
 
@@ -236,6 +245,7 @@ describe('tailwindPlugin — mode: extract', () => {
       recognizesCandidate: () => true,
       compileCandidates: async () =>
         '.flex { display: flex; } @property --fixture { syntax: "*"; inherits: false; } .grid { display: grid; }',
+      compilePreflight: async () => '',
       resolveThemeVar: () => undefined,
     };
 
@@ -254,6 +264,7 @@ describe('tailwindPlugin — mode: extract', () => {
       recognizesCandidate: () => true,
       compileCandidates: async () =>
         '.fixture { content: "--not-a-variable"; color: var(--actual-theme-variable); /* --not-a-reference */ }',
+      compilePreflight: async () => '',
       resolveThemeVar(name) {
         requested.push(name);
         return name === '--actual-theme-variable' ? 'red' : undefined;
@@ -720,6 +731,69 @@ function App(){ return <Foo className={styles.button}/>; }`;
     const controls = assets.find((asset) => asset.fileName.endsWith('controls.css'));
     expect(controls).toBeDefined();
     expect(collapse(controls!.source)).toContain(collapse('.play-button{display:flex;}'));
+  });
+
+  it('extracts reusable token references into separate semantic recipes', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const button = 'flex p-2';
+export const playButton = 'group/play';
+`
+    );
+    const source = `import { button, playButton } from './tokens';
+function App(){ return <PlayButton className={[button, playButton]}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { assets, code } = await compile(source, {
+      target: 'jsx',
+      filename: sourcePath,
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          emit: { mode: 'split' },
+          resolve: {
+            token({ defaultName }) {
+              return { className: `media-${defaultName}`, chunk: 'buttons' };
+            },
+          },
+        }),
+      ],
+    });
+
+    expect(code).toContain('className="media-button media-play-button"');
+    const buttons = assets.find((asset) => asset.fileName.endsWith('buttons.css'));
+    expect(collapse(buttons!.source)).toContain(
+      collapse('.media-button{padding:calc(var(--spacing,.25rem)*2);display:flex;}')
+    );
+    expect(buttons!.source).not.toContain('.media-play-button{');
+  });
+
+  it('extracts token arrays in conditional branches', async () => {
+    writeFixture(
+      'tokens.ts',
+      `export const icon = 'size-4';
+export const backward = '-scale-x-100';
+export const forward = '';
+`
+    );
+    const source = `import { icon, backward, forward } from './tokens';
+function App({ reverse }){ return <Icon className={reverse ? [icon, backward] : [icon, forward]}/>; }`;
+    const sourcePath = writeFixture('skin.tsx', source);
+
+    const { code } = await compile(source, {
+      target: 'jsx',
+      filename: sourcePath,
+      plugins: [
+        tailwindPlugin({
+          design,
+          mode: 'extract',
+          resolve: { token: ({ defaultName }) => `media-${defaultName}` },
+        }),
+      ],
+    });
+
+    expect(code).toContain('reverse ? "media-icon media-backward" : "media-icon media-forward"');
   });
 
   it('skips dynamic conditional class expressions', async () => {

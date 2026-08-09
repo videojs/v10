@@ -18,6 +18,8 @@ export interface DesignSystem {
   recognizesCandidate(candidate: string): boolean;
   /** Compile a complete candidate set with Tailwind's ordering and support rules. */
   compileCandidates(candidates: readonly string[]): Promise<string>;
+  /** Compile Tailwind's reset inside a native CSS scope. */
+  compilePreflight(scopeSelector: string): Promise<string>;
   /**
    * Resolve a `@theme` variable (e.g. `--spacing`, `--color-white`) to its
    * value, or `undefined` if the theme doesn't define it. Used to emit a
@@ -70,6 +72,15 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
         loadStylesheet,
       });
       return compiler.build([...new Set(candidates)]);
+    },
+    async compilePreflight(scopeSelector: string): Promise<string> {
+      const preflightPath = resolveStylesheet('tailwindcss/preflight.css', base);
+      const preflight = readFileSync(preflightPath, 'utf8');
+      const compiler = await compile(
+        `@reference "${VIRTUAL_REFERENCE}";\n@layer base {\n@scope (${scopeSelector}) {\n${preflight}\n}\n}`,
+        { base, loadStylesheet }
+      );
+      return compiler.build([]);
     },
     resolveThemeVar(name: string): string | undefined {
       if (themeCache.has(name)) return themeCache.get(name);

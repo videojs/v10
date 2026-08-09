@@ -1,16 +1,17 @@
 import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/core/components';
-import { FullscreenButton } from '../../components/buttons/fullscreen-button.skin';
-import { PlayButton } from '../../components/buttons/play-button.skin';
-import { SeekButton } from '../../components/buttons/seek-button.skin';
-import { VolumePopover } from '../../components/controls/volume-popover.skin';
-import { TimeSlider } from '../../components/sliders/time-slider.skin';
+import { FullscreenButton } from '../../components/buttons/fullscreen-button';
+import { PlayButton } from '../../components/buttons/play-button';
+import { SeekButton } from '../../components/buttons/seek-button';
+import { VolumePopover } from '../../components/controls/volume-popover';
+import { TimeSlider } from '../../components/sliders/time-slider';
+import { surface } from '../../styles/components/popup.tailwind';
 import { controlsGroup, skin, time } from '../../styles/skins/default-video.tailwind';
 
 const SEEK_SECONDS = 10;
 
 export function DefaultVideoSkin() {
   return (
-    <Controls.Root className={skin}>
+    <Controls.Root className={[surface, skin]}>
       <Tooltip.Provider>
         <Controls.Group className={controlsGroup.primary}>
           <PlayButton />

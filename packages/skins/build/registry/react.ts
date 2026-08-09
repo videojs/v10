@@ -47,11 +47,7 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
     throw new Error(`Skin item \`${context.item.name}\` failed React source emission.`);
   }
 
-  const entrySource = `import '${installAlias}/styles/tailwind.css';\n${rewriteRelativeImports(
-    result.code,
-    context,
-    installAlias
-  )}`;
+  const entrySource = rewriteRelativeImports(result.code, context, installAlias);
   return [...(await createStyleResourceFiles(context)), createSourceOutputFile(context.entryFile, entrySource)];
 }
 

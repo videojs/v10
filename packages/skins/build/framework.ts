@@ -1,11 +1,18 @@
 import { readFile } from 'node:fs/promises';
 import { basename, dirname, isAbsolute, resolve } from 'node:path';
 import { compile } from '@videojs/compiler';
-import { createStyleProgram, loadDesignSystem, type StyleProgram } from '@videojs/compiler/tailwind';
-import { format } from 'prettier';
+import {
+  createStyleProgram,
+  type DesignSystem,
+  loadDesignSystem,
+  type StyleEmitResult,
+  type StyleProgram,
+} from '@videojs/compiler/tailwind';
+import { format } from 'oxfmt';
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
 import { resolveHtmlElementImports } from './compiler/html';
 import { createReactSkinSourceConfig } from './compiler/react';
+import { connectHtmlPopups } from './html-markup';
 import { renderSkinSourceOutput } from './render-html';
 import { resolveSkinClosure } from './resolve';
 import type { ResolvedSkinItem, ResolvedSkinManifest } from './types';
@@ -15,7 +22,12 @@ export type SkinFramework = 'html' | 'react';
 export interface FrameworkSkinFiles {
   sourceFile: 'skin.ts' | 'skin.tsx';
   source: string;
-  styles: string;
+  styles: readonly FrameworkStyleFile[];
+}
+
+export interface FrameworkStyleFile {
+  fileName: string;
+  source: string;
 }
 
 export interface CreateFrameworkSkinOptions {
@@ -33,37 +45,41 @@ export async function createFrameworkSkin(
   const skin = findSkin(manifest, options.skin);
   const entryFile = resolve(options.rootDir, skin.source);
   const tailwindInput = resolve(options.rootDir, requiredStyleResource(skin, 'tailwind.css'));
-  const sharedStyles = await loadSharedStyles(skin, options.rootDir);
+  const design = await loadDesignSystem(tailwindInput);
+  const program = createFrameworkStyleProgram(design);
 
   if (options.framework === 'html') {
-    const output = await renderSkinSourceOutput(entryFile, { style: 'css', tailwindInput });
+    const output = await renderSkinSourceOutput(entryFile, { style: 'css', styleProgram: program });
     const imports = htmlImports(manifest, skin.name, options.iconSet ?? 'default');
-    const html = await format(output.html, {
-      parser: 'html',
+    const html = await format('skin.html', connectHtmlPopups(output.html), {
       printWidth: 120,
       htmlWhitespaceSensitivity: 'ignore',
     });
+    assertFormatted(html);
     return {
       sourceFile: 'skin.ts',
-      source: `${imports.join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.trim())}\`;\n`,
-      styles: joinCss(sharedStyles, output.css),
+      source: `${imports.join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`,
+      styles: await createFrameworkStyles(skin, options.rootDir, design, await program.emit()),
     };
   }
 
-  const program = createStyleProgram({
-    design: await loadDesignSystem(tailwindInput),
+  const source = await bundleReactSkin(entryFile, options.iconSet ?? 'default', program);
+  const emitted = await program.emit();
+  return {
+    sourceFile: 'skin.tsx',
+    source: `// @ts-nocheck -- temporary bundled output; authored types remain in packages/skins/canonical.\n${source}`,
+    styles: await createFrameworkStyles(skin, options.rootDir, design, emitted),
+  };
+}
+
+function createFrameworkStyleProgram(design: DesignSystem): StyleProgram {
+  return createStyleProgram({
+    design,
     output: 'styles.css',
+    mode: 'split',
     tailwindVariables: 'inline',
     themeSelector: '.media-skin',
   });
-  const source = await bundleReactSkin(entryFile, options.iconSet ?? 'default', program);
-  const emitted = await program.emit();
-  if (emitted.files.length !== 1) throw new Error('React Skin generation expected one merged CSS output file.');
-  return {
-    sourceFile: 'skin.tsx',
-    source: `// @ts-nocheck -- temporary bundled output; authored types remain in packages/skins/canonical.\nimport './styles.css';\n${source}`,
-    styles: joinCss(sharedStyles, emitted.files[0]?.source ?? ''),
-  };
 }
 
 async function bundleReactSkin(entryFile: string, iconSet: string, program: StyleProgram): Promise<string> {
@@ -88,7 +104,7 @@ function canonicalReactPlugin(iconSet: string, program: StyleProgram): Plugin {
   return {
     name: 'videojs-skins-react',
     async load(id) {
-      if (!id.endsWith('.skin.tsx') && basename(id) !== 'skin.tsx') return null;
+      if (!id.endsWith('.tsx')) return null;
       const source = await readFile(id, 'utf8');
       const result = await compile(source, {
         filename: id,
@@ -119,10 +135,43 @@ function htmlIconElementImport(iconSet: string): string {
   return iconSet === 'default' ? '@videojs/html/icons/element' : `@videojs/html/icons/element/${iconSet}`;
 }
 
-async function loadSharedStyles(item: ResolvedSkinItem, rootDir: string): Promise<string[]> {
+async function createFrameworkStyles(
+  item: ResolvedSkinItem,
+  rootDir: string,
+  design: DesignSystem,
+  emitted: StyleEmitResult
+): Promise<FrameworkStyleFile[]> {
+  const chunks = emitted.files.filter((file) => file.kind === 'chunk');
+  const index = emitted.files.find((file) => file.kind === 'index');
+  if (!index || chunks.length === 0 || emitted.files.some((file) => file.kind !== 'index' && file.kind !== 'chunk')) {
+    throw new Error('Framework Skin generation expected one split CSS index and named role chunks.');
+  }
+  const expectedIndex = chunks.map((file) => `@import "./${basename(file.fileName)}";`).join('\n');
+  if (normalizeCssImports(index.source) !== normalizeCssImports(expectedIndex)) {
+    throw new Error('Framework Skin split CSS index unexpectedly contains global support styles.');
+  }
+
   const resources = item.resources.styles ?? [];
-  const paths = resources.filter((path) => path.endsWith('/base.css') || path.endsWith('/themes/default.css'));
-  return Promise.all(paths.map((path) => readFile(resolve(rootDir, path), 'utf8')));
+  const basePath = resources.find((path) => path.endsWith('/base.css'));
+  const themePath = resources.find((path) => path.endsWith('/themes/default.css'));
+  if (!basePath || !themePath) throw new Error(`Skin item \`${item.name}\` is missing base or default theme CSS.`);
+
+  const roleFiles = chunks
+    .map((file) => ({ fileName: basename(file.fileName), source: file.source }))
+    .sort((a, b) => a.fileName.localeCompare(b.fileName));
+  const files: FrameworkStyleFile[] = [
+    { fileName: 'preflight.css', source: await design.compilePreflight('.media-skin') },
+    { fileName: 'base.css', source: await readFile(resolve(rootDir, basePath), 'utf8') },
+    { fileName: 'theme.css', source: await readFile(resolve(rootDir, themePath), 'utf8') },
+    ...roleFiles,
+  ];
+  return [
+    {
+      fileName: 'styles.css',
+      source: files.map((file) => `@import './${file.fileName}';`).join('\n'),
+    },
+    ...files,
+  ];
 }
 
 function requiredStyleResource(item: ResolvedSkinItem, suffix: string): string {
@@ -137,11 +186,12 @@ function findSkin(manifest: ResolvedSkinManifest, name: string): ResolvedSkinIte
   return item;
 }
 
-function joinCss(shared: readonly string[], extracted: string): string {
-  return [...shared, extracted]
-    .map((source) => source.trim())
-    .filter(Boolean)
-    .join('\n\n');
+function normalizeCssImports(source: string): string {
+  return source.replaceAll("'", '"').replace(/\s+/g, ' ').trim();
+}
+
+function assertFormatted(result: Awaited<ReturnType<typeof format>>): void {
+  if (result.errors.length > 0) throw new Error(result.errors.map((error) => error.message).join('\n'));
 }
 
 function isBareModule(id: string): boolean {

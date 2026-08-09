@@ -8,7 +8,7 @@ const canonicalRoot = resolve(import.meta.dirname, '../../canonical');
 
 describe('createHtmlSkinSourceConfig', () => {
   it('emits idiomatic light-DOM elements', async () => {
-    const filename = resolve(canonicalRoot, 'components/sliders/time-slider.skin.tsx');
+    const filename = resolve(canonicalRoot, 'components/sliders/time-slider.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, { filename, config: createHtmlSkinSourceConfig({ style: 'tailwind' }) });
 

@@ -32,6 +32,7 @@ import {
   type ResolveClassList,
   type ResolveElement,
   type ResolveElementResult,
+  type ResolveToken,
 } from './selectors';
 
 /** Styling mode for Tailwind-backed className handling. */
@@ -55,6 +56,8 @@ export interface TailwindResolveOptions {
   tokenModule?: ResolveTokenModule | undefined;
   /** Resolve the semantic CSS class name and optional output chunk for an extracted element. */
   element?: ResolveElement | undefined;
+  /** Extract each resolved token reference into its own semantic class and optional output chunk. */
+  token?: ResolveToken | undefined;
   /** Rewrite the final static class list written back to JSX. */
   classList?: ResolveClassList | undefined;
 }
@@ -236,11 +239,11 @@ function transformConditionalClassName(
   const trueClass =
     state.mode === 'inline'
       ? whenTrue.utilities.join(' ')
-      : extractStaticClassName(info.element, whenTrue.segments, whenTrue.utilities, options, state);
+      : extractResolvedClassNames(info.element, whenTrue.segments, whenTrue.utilities, options, state).join(' ');
   const falseClass =
     state.mode === 'inline'
       ? whenFalse.utilities.join(' ')
-      : extractStaticClassName(info.element, whenFalse.segments, whenFalse.utilities, options, state);
+      : extractResolvedClassNames(info.element, whenFalse.segments, whenFalse.utilities, options, state).join(' ');
   const expression = factory.updateConditionalExpression(
     info.expression,
     info.expression.condition,
@@ -256,11 +259,14 @@ function conditionalBranch(
   expression: ts.Expression,
   state: TailwindState
 ): { segments: readonly StyleSegment[]; utilities: readonly string[] } | null {
-  const segment = styleSegment(expression);
-  if (!segment) return null;
-  const resolved = collectExtractUtilities([segment], state.env.values);
+  const segments = ts.isArrayLiteralExpression(expression)
+    ? expression.elements.map((element) => (!ts.isSpreadElement(element) ? styleSegment(element) : null))
+    : [styleSegment(expression)];
+  if (segments.some((segment) => !segment)) return null;
+  const resolvedSegments = segments as StyleSegment[];
+  const resolved = collectExtractUtilities(resolvedSegments, state.env.values);
   if (resolved.passThrough.length > 0 || resolved.utilities.length === 0) return null;
-  return { segments: [segment], utilities: resolved.utilities };
+  return { segments: resolvedSegments, utilities: resolved.utilities };
 }
 
 function styleSegment(expression: ts.Expression): StyleSegment | null {
@@ -299,13 +305,57 @@ function transformExtractClassName(
   state: TailwindState,
   factory: ts.NodeFactory
 ): ts.JsxElement | ts.JsxSelfClosingElement {
-  const baseName = extractStaticClassName(data.info.element, data.info.segments, data.utilities, options, state);
+  const classNames = extractResolvedClassNames(data.info.element, data.info.segments, data.utilities, options, state);
+  if (classNames.length === 0) return data.info.element;
+  const staticClasses = factory.createStringLiteral(classNames.join(' '));
   const replacement =
     data.passThrough.length === 0
-      ? factory.createStringLiteral(baseName)
-      : factory.createArrayLiteralExpression([factory.createStringLiteral(baseName), ...data.passThrough]);
+      ? staticClasses
+      : factory.createArrayLiteralExpression([staticClasses, ...data.passThrough]);
 
   return rewriteStyleAttribute(data.info, replacement, factory);
+}
+
+function extractResolvedClassNames(
+  element: ts.JsxElement | ts.JsxSelfClosingElement,
+  segments: readonly StyleSegment[],
+  utilities: readonly string[],
+  options: TailwindOptions,
+  state: TailwindState
+): string[] {
+  return options.resolve?.token
+    ? extractTokenClassNames(element, segments, options, state)
+    : [extractStaticClassName(element, segments, utilities, options, state)];
+}
+
+function extractTokenClassNames(
+  element: ts.JsxElement | ts.JsxSelfClosingElement,
+  segments: readonly StyleSegment[],
+  options: TailwindOptions,
+  state: TailwindState
+): string[] {
+  const classes: string[] = [];
+  const elementSegments: StyleSegment[] = [];
+
+  for (const segment of segments) {
+    if (segment.kind !== 'token') {
+      if (segment.kind === 'literal') elementSegments.push(segment);
+      continue;
+    }
+
+    const resolved = collectExtractUtilities([segment], state.env.values);
+    if (resolved.passThrough.length > 0) continue;
+    classes.push(...extractStyleRecipe(element, [segment], resolved.utilities, options.resolve?.token, options, state));
+  }
+
+  if (elementSegments.length > 0) {
+    const resolved = collectExtractUtilities(elementSegments, state.env.values);
+    classes.push(
+      ...extractStyleRecipe(element, elementSegments, resolved.utilities, options.resolve?.element, options, state)
+    );
+  }
+
+  return [...new Set(classes)];
 }
 
 function extractStaticClassName(
@@ -315,10 +365,21 @@ function extractStaticClassName(
   options: TailwindOptions,
   state: TailwindState
 ): string {
+  return extractStyleRecipe(element, segments, utilities, options.resolve?.element, options, state).join(' ');
+}
+
+function extractStyleRecipe(
+  element: ts.JsxElement | ts.JsxSelfClosingElement,
+  segments: readonly StyleSegment[],
+  utilities: readonly string[],
+  resolver: ResolveElement | undefined,
+  options: TailwindOptions,
+  state: TailwindState
+): string[] {
   if (!state.design) throw new Error('@videojs/compiler: tailwind extract mode requires `design` or `input`');
   if (!state.program) throw new Error('@videojs/compiler: missing StyleProgram in Tailwind extract mode');
 
-  const target = resolveExtractedElementStyle(element, segments, options, state.env);
+  const target = resolveExtractedElementStyle(element, segments, resolver, state.env);
   const { candidates, preserved } = partitionUtilities(utilities, state.design);
   const origin = styleRecipeOrigin(element);
   registerGroupPeerBindings(state.program, utilities, target.className, target.chunk, origin);
@@ -341,13 +402,13 @@ function extractStaticClassName(
       segments,
     }) ?? classes;
 
-  return resolvedClasses.join(' ');
+  return [...resolvedClasses];
 }
 
 function resolveExtractedElementStyle(
   element: ts.JsxElement | ts.JsxSelfClosingElement,
   segments: readonly StyleSegment[],
-  options: TailwindOptions,
+  resolver: ResolveElement | undefined,
   env: TokenEnv
 ): ExtractedElementStyle {
   let resolution: ResolveElementResult | undefined;
@@ -355,7 +416,7 @@ function resolveExtractedElementStyle(
     element,
     segments,
     resolveName(context) {
-      resolution = normalizeResolveElementResult(options.resolve?.element?.(context));
+      resolution = normalizeResolveElementResult(resolver?.(context));
       return resolution?.className ?? context.defaultName;
     },
     ...(env.hasSource ? { tokenNamespaces: env.namespaces, tokenRoots: env.roots } : {}),

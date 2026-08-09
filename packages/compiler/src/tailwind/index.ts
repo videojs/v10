@@ -22,6 +22,7 @@ export type {
   ResolveElement,
   ResolveElementContext,
   ResolveElementResult,
+  ResolveToken,
   Selector,
   SelectorComponent,
   SelectorList,

@@ -1,7 +1,7 @@
 import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, posix, relative, resolve, sep } from 'node:path';
-import { format } from 'prettier';
+import { format } from 'oxfmt';
 import type { SourceOutput } from './source-output';
 
 export async function collectGeneratedFiles(
@@ -57,15 +57,13 @@ export async function syncGeneratedFiles(options: {
 }
 
 export async function formatGeneratedFile(path: string, content: string): Promise<string> {
-  const parser =
-    path.endsWith('.tsx') || path.endsWith('.ts')
-      ? 'typescript'
-      : path.endsWith('.css')
-        ? 'css'
-        : path.endsWith('.html')
-          ? 'html'
-          : 'json';
-  return format(content, { parser, printWidth: 120, singleQuote: true, htmlWhitespaceSensitivity: 'ignore' });
+  const result = await format(path, content, {
+    printWidth: 120,
+    singleQuote: true,
+    htmlWhitespaceSensitivity: 'ignore',
+  });
+  if (result.errors.length > 0) throw new Error(result.errors.map((error) => error.message).join('\n'));
+  return result.code;
 }
 
 async function generatedDifferences(

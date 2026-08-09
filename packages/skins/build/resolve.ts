@@ -255,13 +255,13 @@ async function visitRelativeReference(
     context.dependencies.items.add(dependency.item.name);
     return;
   }
-  if (isSkinEntryFile(importedFile) && importedFile !== context.entry.sourceFile) {
+  if (isCanonicalComponentFile(importedFile) && importedFile !== context.entry.sourceFile) {
     context.diagnostics.push(
       nodeDiagnostic(
         sourceFile,
         reference.node,
         'skin-entry-unregistered',
-        `Skin source \`${skinPath(context.rootDir, importedFile)}\` must have an authored Skin item.`
+        `Skin component \`${skinPath(context.rootDir, importedFile)}\` must have an authored Skin item.`
       )
     );
     return;
@@ -375,12 +375,12 @@ async function resolveImportedFile(importer: string, source: string): Promise<st
   return null;
 }
 
-function isSkinEntryFile(fileName: string): boolean {
-  return fileName.endsWith('.skin.tsx') || /[/\\]skins[/\\][^/\\]+[/\\]skin\.tsx$/.test(fileName);
-}
-
 function isSourceFile(fileName: string): boolean {
   return new Set(['.ts', '.tsx', '.mts', '.cts', '.js', '.jsx', '.mjs', '.cjs']).has(extname(fileName));
+}
+
+function isCanonicalComponentFile(fileName: string): boolean {
+  return /[/\\]canonical[/\\]components[/\\].+\.tsx$/.test(fileName);
 }
 
 function packageName(source: string): string {

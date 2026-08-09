@@ -1,4 +1,3 @@
-import '@/components/videojs/styles/tailwind.css';
 import { Popover } from '@videojs/react';
 import { MuteButton } from '@/components/videojs/mute-button/mute-button';
 import { VolumeSlider } from '@/components/videojs/volume-slider/volume-slider';

@@ -1,6 +1,7 @@
 import { defineConfig, jsx, transform } from '@videojs/compiler';
 import type { StyleProgram } from '@videojs/compiler/tailwind';
 import { tailwind } from '@videojs/compiler/tailwind';
+import { resolveSkinStyle } from './styles';
 
 export type SkinSourceStyle = 'css' | 'tailwind';
 
@@ -85,7 +86,8 @@ export function createHtmlSkinSourceConfig({ style, tailwindInput, styleProgram 
                 ? { program: styleProgram }
                 : { input: requiredTailwindInput(tailwindInput), output: 'styles.css' }),
               resolve: {
-                element: ({ defaultName }) => ({ className: `media-${defaultName}` }),
+                element: resolveSkinStyle,
+                token: resolveSkinStyle,
               },
               ...(styleProgram ? {} : { emit: { tailwindVariables: 'inline', themeSelector: '.media-skin' } }),
             }

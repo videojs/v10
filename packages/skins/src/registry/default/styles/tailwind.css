@@ -1,10 +1,10 @@
-@import 'tailwindcss' theme(inline);
+@import 'tailwindcss';
 @import './base.css';
 @import './themes/default.css';
 
 @source "../**/*.{ts,tsx,html}";
 
-@theme inline {
+@theme {
   --color-media-controls: var(--media-controls-color);
   --color-media-control-hover: var(--media-control-hover-background);
   --color-media-slider-buffer: var(--media-slider-buffer-background);

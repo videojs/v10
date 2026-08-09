@@ -62,16 +62,16 @@ describe('resolveSkinManifest', () => {
 
   it('reports invalid Skin definitions, missing imports, and dependency cycles', async () => {
     const root = setup({
-      'a.skin.tsx': `import { B } from './b.skin'; import './missing'; export const A = B;`,
-      'b.skin.tsx': `import { A } from './a.skin'; export const B = A;`,
+      'a.tsx': `import { B } from './b'; import './missing'; export const A = B;`,
+      'b.tsx': `import { A } from './a'; export const B = A;`,
     });
     const definition = {
       resources: {},
       dependencyModules: {},
       skins: [],
       components: [
-        { name: 'a', type: 'component', source: './a.skin.tsx', title: 'A', description: 'A.' },
-        { name: 'b', type: 'component', source: './b.skin.tsx', title: 'B', description: 'B.' },
+        { name: 'a', type: 'component', source: './a.tsx', title: 'A', description: 'A.' },
+        { name: 'b', type: 'component', source: './b.tsx', title: 'B', description: 'B.' },
       ],
     } as const satisfies SkinManifest;
 

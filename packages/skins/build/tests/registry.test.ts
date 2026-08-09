@@ -17,7 +17,7 @@ describe('generateReactRegistry', () => {
     const registry = createRegistryManifest(manifest, output, skinRegistry);
     const playButton = registry.items.find((item) => item.name === 'play-button');
 
-    expect(entry?.content).toContain("import '@/components/videojs/styles/tailwind.css'");
+    expect(entry?.content).not.toContain('styles/tailwind.css');
     expect(entry?.content).toMatch(/from ["']@\/components\/videojs\/button-tooltip\/button-tooltip["']/);
     expect(entry?.content).toContain('grid size-media-control');
     expect(playButton?.files.some((file) => file.path.endsWith('/play-button/play-button.tsx'))).toBe(true);
@@ -27,5 +27,9 @@ describe('generateReactRegistry', () => {
       '@videojs/play-button'
     );
     expect(registry.items.some((item) => item.name === 'button-tooltip')).toBe(false);
+    const tailwind = output.items['default-video']?.find((file) => file.path.endsWith('/styles/tailwind.css'));
+    expect(tailwind?.content).toContain('@import "tailwindcss";');
+    expect(tailwind?.content).not.toContain('theme(inline)');
+    expect(tailwind?.content).toContain('@theme {');
   });
 });

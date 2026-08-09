@@ -1,4 +1,3 @@
-import '@/components/videojs/styles/tailwind.css';
 import { MuteButton as MuteButtonPrimitive } from '@videojs/react';
 import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
 export function MuteButton() {

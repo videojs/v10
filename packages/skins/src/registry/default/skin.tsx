@@ -1,4 +1,3 @@
-import '@/components/videojs/styles/tailwind.css';
 import { Controls, Time as TimePrimitive, Tooltip } from '@videojs/react';
 import { FullscreenButton } from '@/components/videojs/fullscreen-button/fullscreen-button';
 import { PlayButton } from '@/components/videojs/play-button/play-button';

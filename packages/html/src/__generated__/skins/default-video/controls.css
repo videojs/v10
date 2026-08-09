@@ -1,0 +1,28 @@
+.media-controls-group-primary {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  display: flex;
+}
+
+.media-controls-group-time {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  flex: 1;
+  display: flex;
+}
+
+.media-skin {
+  align-items: center;
+  gap: var(--media-controls-gap);
+  border-radius: var(--media-radius-pill);
+  padding: var(--media-controls-padding);
+  font-family: var(--media-font-family);
+  font-size: var(--media-font-size);
+  color: var(--media-controls-color);
+  line-height: 1;
+  display: flex;
+}
+
+.media-time {
+  font-variant-numeric: tabular-nums;
+}

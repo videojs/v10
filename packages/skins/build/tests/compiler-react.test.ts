@@ -8,7 +8,7 @@ const canonicalRoot = resolve(import.meta.dirname, '../../canonical');
 
 describe('createReactSkinSourceConfig', () => {
   it('emits canonical button composition with public React imports', async () => {
-    const filename = resolve(canonicalRoot, 'components/buttons/seek-button.skin.tsx');
+    const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, {
       filename,
@@ -24,7 +24,7 @@ describe('createReactSkinSourceConfig', () => {
   });
 
   it('uses public primitive props for the tooltip composition', async () => {
-    const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.skin.tsx');
+    const filename = resolve(canonicalRoot, 'components/buttons/button-tooltip.tsx');
     const source = await readFile(filename, 'utf8');
     const result = await compile(source, {
       filename,

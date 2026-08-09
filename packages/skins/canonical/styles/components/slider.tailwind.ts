@@ -1,5 +1,3 @@
-import { surface } from './popup.tailwind';
-
 const fillBase = [
   'absolute inset-y-0 left-0 rounded-[inherit]',
   'data-[orientation=vertical]:inset-x-0 data-[orientation=vertical]:top-auto data-[orientation=vertical]:bottom-0 data-[orientation=vertical]:w-auto',
@@ -34,5 +32,5 @@ export const sliderThumb = [
 export const sliderPreview = 'relative';
 export const sliderValue = 'tabular-nums';
 
-export const thumbnail = [surface, 'absolute bottom-[calc(100%+0.75rem)] overflow-hidden rounded-media-surface'];
+export const thumbnail = 'absolute bottom-[calc(100%+0.75rem)] overflow-hidden rounded-media-surface';
 export const thumbnailImage = 'block max-h-28 max-w-48';

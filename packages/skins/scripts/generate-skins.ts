@@ -54,7 +54,9 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
       posix.join(target.outputDir, output.sourceFile),
       await formatGeneratedFile(output.sourceFile, output.source)
     );
-    files.set(posix.join(target.outputDir, 'styles.css'), await formatGeneratedFile('styles.css', output.styles));
+    for (const style of output.styles) {
+      files.set(posix.join(target.outputDir, style.fileName), await formatGeneratedFile(style.fileName, style.source));
+    }
     await syncGeneratedFiles({
       rootDir: target.packageRoot,
       files,

@@ -1,4 +1,3 @@
-import '@/components/videojs/styles/tailwind.css';
 import type { VolumeSliderProps } from '@videojs/core';
 import { VolumeSlider as VolumeSliderPrimitive } from '@videojs/react';
 export function VolumeSlider(props: VolumeSliderProps = {}) {

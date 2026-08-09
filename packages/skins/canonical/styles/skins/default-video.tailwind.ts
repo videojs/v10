@@ -1,7 +1,4 @@
-import { surface } from '../components/popup.tailwind';
-
 export const skin = [
-  surface,
   'media-theme-default flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding',
   'font-media text-media leading-none text-media-controls',
 ];

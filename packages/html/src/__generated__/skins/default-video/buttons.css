@@ -1,0 +1,144 @@
+.media-button {
+  width: var(--media-control-size);
+  height: var(--media-control-size);
+  cursor: pointer;
+  border-radius: var(--media-radius-pill);
+  border-style: solid;
+  color: inherit;
+  outline-style: solid;
+  outline-offset: calc(2px * -1);
+  background-color: #0000;
+  border-width: 0;
+  outline-width: 2px;
+  outline-color: #0000;
+  flex-shrink: 0;
+  place-items: center;
+  padding: 0;
+  display: grid;
+}
+
+@media (hover: hover) {
+  .media-button:hover {
+    background-color: var(--media-control-hover-background);
+  }
+}
+
+.media-button:focus-visible {
+  background-color: var(--media-control-hover-background);
+  outline-offset: 2px;
+  outline-color: currentColor;
+}
+
+.media-button[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.media-button[aria-expanded='true'] {
+  background-color: var(--media-control-hover-background);
+}
+
+.media-button-icon {
+  width: var(--media-icon-size);
+  height: var(--media-icon-size);
+  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+}
+
+.media-fullscreen-button-icon-enter {
+  opacity: 0;
+  display: none;
+}
+
+.media-fullscreen-button-icon-enter:is(:where(.media-fullscreen-button):not([data-fullscreen]) *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-fullscreen-button-icon-exit {
+  opacity: 0;
+  display: none;
+}
+
+.media-fullscreen-button-icon-exit:is(:where(.media-fullscreen-button)[data-fullscreen] *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-mute-button-icon-volume-high {
+  opacity: 0;
+  display: none;
+}
+
+.media-mute-button-icon-volume-high:is(:where(.media-mute-button):not([data-muted]) *):is(
+    :where(.media-mute-button):not([data-volume-level='low']) *
+  ) {
+  opacity: 1;
+  display: block;
+}
+
+.media-mute-button-icon-volume-low {
+  opacity: 0;
+  display: none;
+}
+
+.media-mute-button-icon-volume-low:is(:where(.media-mute-button):not([data-muted]) *):is(
+    :where(.media-mute-button)[data-volume-level='low'] *
+  ) {
+  opacity: 1;
+  display: block;
+}
+
+.media-mute-button-icon-volume-off {
+  opacity: 0;
+  display: none;
+}
+
+.media-mute-button-icon-volume-off:is(:where(.media-mute-button)[data-muted] *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-play-button-icon-pause {
+  opacity: 0;
+  display: none;
+}
+
+.media-play-button-icon-pause:is(:where(.media-play-button)[data-started] *):is(
+    :where(.media-play-button):not([data-paused]) *
+  ):is(:where(.media-play-button):not([data-ended]) *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-play-button-icon-play {
+  opacity: 0;
+  display: none;
+}
+
+.media-play-button-icon-play:is(:where(.media-play-button):not([data-ended]) *):is(
+    :where(.media-play-button):not([data-started]) *
+  ),
+.media-play-button-icon-play:is(:where(.media-play-button):not([data-ended]) *):is(
+    :where(.media-play-button)[data-paused] *
+  ) {
+  opacity: 1;
+  display: block;
+}
+
+.media-play-button-icon-restart {
+  opacity: 0;
+  display: none;
+}
+
+.media-play-button-icon-restart:is(:where(.media-play-button)[data-ended] *) {
+  opacity: 1;
+  display: block;
+}
+
+.media-seek-button-icon-backward {
+  scale: calc(100% * -1) 1;
+}
+
+.media-seek-button-label {
+  font-variant-numeric: tabular-nums;
+}

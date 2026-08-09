@@ -1,5 +1,6 @@
 import { Slider, TimeSlider as TimeSliderPrimitive } from '@videojs/core/components';
 import { SpinnerIcon } from '@videojs/icons/components';
+import { surface } from '../../styles/components/popup.tailwind';
 import {
   slider,
   sliderBuffer,
@@ -14,13 +15,13 @@ import {
 
 export function TimeSlider() {
   return (
-    <TimeSliderPrimitive.Root className={slider} thumbAlignment="edge">
+    <TimeSliderPrimitive.Root className={slider}>
       <TimeSliderPrimitive.Track className={sliderTrack}>
         <TimeSliderPrimitive.Fill className={sliderFill} />
         <TimeSliderPrimitive.Buffer className={sliderBuffer} />
       </TimeSliderPrimitive.Track>
       <TimeSliderPrimitive.Thumb className={sliderThumb} />
-      <Slider.Thumbnail.Root className={thumbnail}>
+      <Slider.Thumbnail.Root className={[surface, thumbnail]}>
         <Slider.Thumbnail.Image className={thumbnailImage} />
         <TimeSliderPrimitive.Value className={sliderValue} type="pointer" />
         <SpinnerIcon className="size-media-icon drop-shadow-media-icon" />
