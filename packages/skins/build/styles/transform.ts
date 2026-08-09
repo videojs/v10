@@ -1,12 +1,14 @@
 import { dirname, resolve } from 'node:path';
 import type { CompilerPlugin } from '@videojs/compiler';
-import {
-  readStyleAttribute,
-  rewriteStyleAttribute,
-  type StyleAttributeInfo,
-  type StyleSegment,
-} from '@videojs/compiler/ast';
 import ts from 'typescript';
+import {
+  type ClassNameInfo,
+  type ClassNameSegment,
+  classNameSegment,
+  readClassName,
+  readDottedPath,
+  rewriteClassName,
+} from './jsx-class-name';
 import { isGroupPeerMarker, recipeForToken, type SkinStyleManifest, type SkinStyleRecipe } from './manifest';
 
 export type SkinStyleTarget = 'tailwind' | 'vanilla';
@@ -82,7 +84,7 @@ export function skinStyles(options: SkinStylesOptions): CompilerPlugin {
 
             const visit = (node: ts.Node): ts.Node => {
               if (ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node)) {
-                const info = readStyleAttribute(node);
+                const info = readClassName(node);
                 const transformed = info ? transformStyleAttribute(info, bindings, options, factory, sourceFile) : node;
                 return ts.visitEachChild(transformed, visit, transformContext);
               }
@@ -149,7 +151,7 @@ function stripStyleBindings(
 }
 
 function transformStyleAttribute(
-  info: StyleAttributeInfo,
+  info: ClassNameInfo,
   bindings: SourceBindings,
   options: SkinStylesOptions,
   factory: ts.NodeFactory,
@@ -163,7 +165,7 @@ function transformStyleAttribute(
     }
     recordUsage(options.usage, whenTrue.recipes, info, sourceFile);
     recordUsage(options.usage, whenFalse.recipes, info, sourceFile);
-    return rewriteStyleAttribute(
+    return rewriteClassName(
       info,
       factory.updateConditionalExpression(
         info.expression,
@@ -186,7 +188,7 @@ function transformStyleAttribute(
     resolved.passThrough.length === 0
       ? literal
       : factory.createArrayLiteralExpression([literal, ...resolved.passThrough]);
-  return rewriteStyleAttribute(info, replacement, factory);
+  return rewriteClassName(info, replacement, factory);
 }
 
 function resolveExpression(
@@ -198,11 +200,11 @@ function resolveExpression(
     ? expression.elements.filter((element): element is ts.Expression => !ts.isSpreadElement(element))
     : [expression];
   if (ts.isArrayLiteralExpression(expression) && expressions.length !== expression.elements.length) return undefined;
-  return resolveSegments(expressions.map(styleSegment), bindings, options);
+  return resolveSegments(expressions.map(classNameSegment), bindings, options);
 }
 
 function resolveSegments(
-  segments: readonly StyleSegment[],
+  segments: readonly ClassNameSegment[],
   bindings: SourceBindings,
   options: SkinStylesOptions
 ): ResolvedClassName | undefined {
@@ -261,7 +263,7 @@ function sourceBindings(sourceFile: ts.SourceFile, manifest: SkinStyleManifest):
     if (!ts.isVariableStatement(statement)) continue;
     for (const declaration of statement.declarationList.declarations) {
       if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
-      const path = dottedPath(declaration.initializer);
+      const path = readDottedPath(declaration.initializer);
       if (!path) continue;
       const reference = resolveTokenReference(path, { styleImports, aliases });
       if (reference) aliases.set(declaration.name.text, reference);
@@ -288,27 +290,10 @@ function resolveTokenReference(path: readonly string[], bindings: Pick<SourceBin
   return alias ? { modulePath: alias.modulePath, tokenPath: [...alias.tokenPath, ...tail] } : undefined;
 }
 
-function styleSegment(expression: ts.Expression): StyleSegment {
-  if (ts.isStringLiteral(expression) || ts.isNoSubstitutionTemplateLiteral(expression)) {
-    return { kind: 'literal', value: expression.text, node: expression };
-  }
-  const path = dottedPath(expression);
-  return path
-    ? { kind: 'token', path, node: expression as ts.Identifier | ts.PropertyAccessExpression }
-    : { kind: 'opaque', node: expression };
-}
-
-function dottedPath(expression: ts.Expression): readonly string[] | undefined {
-  if (ts.isIdentifier(expression)) return [expression.text];
-  if (!ts.isPropertyAccessExpression(expression)) return undefined;
-  const head = dottedPath(expression.expression);
-  return head ? [...head, expression.name.text] : undefined;
-}
-
 function recordUsage(
   usage: MutableSkinStyleUsage | undefined,
   recipes: readonly SkinStyleRecipe[],
-  info: StyleAttributeInfo,
+  info: ClassNameInfo,
   sourceFile: ts.SourceFile
 ): void {
   if (!usage) return;

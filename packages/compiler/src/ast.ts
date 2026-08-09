@@ -51,15 +51,3 @@ export {
   type RewriteModuleSpecifiersOptions,
   rewriteModuleSpecifiers,
 } from './utils/module-specifiers';
-export {
-  type AnalyzeStylesOptions,
-  analyzeStyles,
-  readStyleAttribute,
-  rewriteStyleAttribute,
-  type StyleAttributeInfo,
-  type StyleAttributeOpaqueInfo,
-  type StyleAttributeSegmentsInfo,
-  type StyleSegment,
-  type StyleVisitor,
-  type StyleVisitorResult,
-} from './utils/style-attribute';
