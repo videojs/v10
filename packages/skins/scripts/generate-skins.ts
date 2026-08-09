@@ -14,6 +14,7 @@ export interface FrameworkSkinTarget {
   outputDir: string;
   skin: string;
   iconSet?: string | undefined;
+  resolveHtmlImport?: ((source: string) => string) | undefined;
 }
 
 export interface GenerateSkinsOptions {
@@ -21,18 +22,22 @@ export interface GenerateSkinsOptions {
   frameworkTargets?: readonly FrameworkSkinTarget[] | undefined;
 }
 
+const DEFAULT_SKIN = 'default-video';
+const DEFAULT_SKIN_OUTPUT_DIR = `src/__generated__/skins/${DEFAULT_SKIN}`;
+
 const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
   {
     framework: 'html',
     packageRoot: resolve(skinsPackageRoot, '../html'),
-    outputDir: 'src/__generated__/skins/default-video',
-    skin: 'default-video',
+    outputDir: DEFAULT_SKIN_OUTPUT_DIR,
+    skin: DEFAULT_SKIN,
+    resolveHtmlImport: htmlPackageImportResolver(posix.join(DEFAULT_SKIN_OUTPUT_DIR, 'skin.ts')),
   },
   {
     framework: 'react',
     packageRoot: resolve(skinsPackageRoot, '../react'),
-    outputDir: 'src/__generated__/skins/default-video',
-    skin: 'default-video',
+    outputDir: DEFAULT_SKIN_OUTPUT_DIR,
+    skin: DEFAULT_SKIN,
   },
 ];
 
@@ -47,6 +52,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
       rootDir: canonicalRoot,
       skin: target.skin,
       ...(target.iconSet ? { iconSet: target.iconSet } : {}),
+      ...(target.resolveHtmlImport ? { resolveHtmlImport: target.resolveHtmlImport } : {}),
     });
     const files = new Map<string, string>();
     files.set(
@@ -85,6 +91,24 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     managedRoots: [posix.join(skinRegistry.outputDir, skinRegistry.sourceRoot)],
     check: options.check,
   });
+}
+
+function htmlPackageImportResolver(outputFile: string): (source: string) => string {
+  return (source) => {
+    const target = htmlSourceModule(source);
+    const specifier = posix.relative(posix.dirname(outputFile), target);
+    return specifier.startsWith('.') ? specifier : `./${specifier}`;
+  };
+}
+
+function htmlSourceModule(source: string): string {
+  const uiPrefix = '@videojs/html/ui/';
+  if (source.startsWith(uiPrefix)) return posix.join('src/define/ui', source.slice(uiPrefix.length));
+  const iconsPrefix = '@videojs/html/icons/element';
+  if (source === iconsPrefix) return 'src/icons/element';
+  if (source.startsWith(`${iconsPrefix}/`))
+    return posix.join('src/icons/element', source.slice(iconsPrefix.length + 1));
+  throw new Error(`Cannot resolve HTML package source import \`${source}\`.`);
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

@@ -12,26 +12,24 @@ export async function generateHtmlSkinSource(
   skin: string,
   entryFile: string,
   iconSet: string,
-  program: StyleProgram
+  program: StyleProgram,
+  resolveImport: (source: string) => string = (source) => source
 ): Promise<string> {
   const output = await renderHtmlSkin(entryFile, program);
-  const imports = htmlImports(catalog, skin, iconSet);
+  const imports = htmlImports(catalog, skin, iconSet).map(resolveImport);
   const html = await format('skin.html', connectHtmlPopups(output), {
     printWidth: 120,
     htmlWhitespaceSensitivity: 'ignore',
   });
   if (html.errors.length > 0) throw new Error(html.errors.map((error) => error.message).join('\n'));
-  return `${imports.join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
+  return `${imports.map((source) => `import '${source}';`).join('\n')}\n\nexport const skin = /* html */ \`${escapeTemplate(html.code.trim())}\`;\n`;
 }
 
 function htmlImports(catalog: ResolvedSkinCatalog, skin: string, iconSet: string): string[] {
   const closure = resolveSkinClosure(catalog, skin);
   const icons = closure.symbols.icons ?? [];
   const components = closure.symbols.components ?? [];
-  return [
-    ...(icons.length > 0 ? [`import '${htmlIconElementImport(iconSet)}';`] : []),
-    ...resolveHtmlElementImports(components).map((source) => `import '${source}';`),
-  ];
+  return [...(icons.length > 0 ? [htmlIconElementImport(iconSet)] : []), ...resolveHtmlElementImports(components)];
 }
 
 function htmlIconElementImport(iconSet: string): string {

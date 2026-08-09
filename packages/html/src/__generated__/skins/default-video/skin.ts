@@ -1,15 +1,15 @@
-import '@videojs/html/icons/element';
-import '@videojs/html/ui/controls';
-import '@videojs/html/ui/fullscreen-button';
-import '@videojs/html/ui/mute-button';
-import '@videojs/html/ui/play-button';
-import '@videojs/html/ui/popover';
-import '@videojs/html/ui/seek-button';
-import '@videojs/html/ui/time';
-import '@videojs/html/ui/time-slider';
-import '@videojs/html/ui/tooltip';
-import '@videojs/html/ui/tooltip-group';
-import '@videojs/html/ui/volume-slider';
+import '../../../icons/element';
+import '../../../define/ui/controls';
+import '../../../define/ui/fullscreen-button';
+import '../../../define/ui/mute-button';
+import '../../../define/ui/play-button';
+import '../../../define/ui/popover';
+import '../../../define/ui/seek-button';
+import '../../../define/ui/time';
+import '../../../define/ui/time-slider';
+import '../../../define/ui/tooltip';
+import '../../../define/ui/tooltip-group';
+import '../../../define/ui/volume-slider';
 
 export const skin = /* html */ `<media-controls class="media-surface media-skin media-theme-default">
   <media-tooltip-group>

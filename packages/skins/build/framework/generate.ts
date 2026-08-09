@@ -18,6 +18,7 @@ export interface CreateFrameworkSkinOptions {
   rootDir: string;
   skin: string;
   iconSet?: string | undefined;
+  resolveHtmlImport?: ((source: string) => string) | undefined;
 }
 
 /** Create the compact, vanilla-CSS Skin projection consumed by a framework package. */
@@ -34,7 +35,7 @@ export async function createFrameworkSkin(
   const iconSet = options.iconSet ?? 'default';
   const source =
     options.framework === 'html'
-      ? await generateHtmlSkinSource(catalog, skin.name, entryFile, iconSet, program)
+      ? await generateHtmlSkinSource(catalog, skin.name, entryFile, iconSet, program, options.resolveHtmlImport)
       : `// @ts-nocheck -- temporary bundled output; authored types remain in packages/skins/canonical.\n${await generateReactSkinSource(entryFile, iconSet, program)}`;
 
   return {
