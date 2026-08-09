@@ -15,7 +15,7 @@ import type {
   SkinSourceFile,
 } from './types';
 
-type MutableGroups = Map<string, Set<string>>;
+type DependencyGroups = Map<string, Set<string>>;
 
 interface NormalizedItem {
   item: SkinItem;
@@ -25,7 +25,7 @@ interface NormalizedItem {
 interface MutableDependencies {
   items: Set<string>;
   packages: Set<string>;
-  symbols: MutableGroups;
+  symbols: DependencyGroups;
 }
 
 interface SkinVisitContext {
@@ -300,7 +300,7 @@ function diagnoseCycles(items: readonly ResolvedSkinItem[], diagnostics: SkinDia
 }
 
 function createMutableDependencies(symbolKinds: Iterable<string>): MutableDependencies {
-  return { items: new Set(), packages: new Set(), symbols: createMutableGroups(symbolKinds) };
+  return { items: new Set(), packages: new Set(), symbols: createDependencyGroups(symbolKinds) };
 }
 
 function freezeDependencies(dependencies: MutableDependencies): SkinDependencies {
@@ -311,13 +311,13 @@ function freezeDependencies(dependencies: MutableDependencies): SkinDependencies
   };
 }
 
-function createMutableGroups(keys: Iterable<string> = []): MutableGroups {
-  const groups: MutableGroups = new Map();
+function createDependencyGroups(keys: Iterable<string> = []): DependencyGroups {
+  const groups: DependencyGroups = new Map();
   for (const key of keys) getOrCreateGroup(groups, key);
   return groups;
 }
 
-function getOrCreateGroup(groups: MutableGroups, key: string): Set<string> {
+function getOrCreateGroup(groups: DependencyGroups, key: string): Set<string> {
   let values = groups.get(key);
   if (!values) {
     values = new Set();
@@ -326,7 +326,7 @@ function getOrCreateGroup(groups: MutableGroups, key: string): Set<string> {
   return values;
 }
 
-function mergeGroups(target: MutableGroups, source: Readonly<Record<string, readonly string[]>>): void {
+function mergeGroups(target: DependencyGroups, source: Readonly<Record<string, readonly string[]>>): void {
   for (const [key, values] of Object.entries(source)) {
     const group = getOrCreateGroup(target, key);
     for (const value of values) group.add(value);

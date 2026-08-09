@@ -1,8 +1,10 @@
 import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { basename, dirname, extname, posix, resolve, sep } from 'node:path';
-import { collectModuleSpecifiers } from '@videojs/compiler/ast';
-import type { ResolvedSkinItem, ResolvedSkinManifest } from './types';
+import { basename, dirname, extname, posix, relative, resolve, sep } from 'node:path';
+import { compile } from '@videojs/compiler';
+import { collectModuleSpecifiers, rewriteModuleSpecifiers } from '@videojs/compiler/ast';
+import type { ResolvedSkinItem, ResolvedSkinManifest } from '../graph/types';
+import { createReactSkinSourceConfig } from '../targets/react';
 
 export type SkinSourceFileKind = 'source' | 'style';
 
@@ -17,62 +19,57 @@ export interface SourceOutput {
   dependencies: Readonly<Record<string, readonly string[]>>;
 }
 
-export interface GenerateSourceOptions {
+export interface GenerateReactRegistryOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
   iconSet?: string | undefined;
   targetRoot?: string | undefined;
+  installAlias?: string | undefined;
 }
 
-export interface ResolvedGenerateSourceOptions {
+interface SkinItemLayout {
+  item: ResolvedSkinItem;
+  itemDir: string;
+  entryFile: string;
+  inputFile: string;
+}
+
+interface SkinItemContext extends SkinItemLayout {
+  manifest: ResolvedSkinManifest;
+  layoutsByInput: ReadonlyMap<string, SkinItemLayout>;
+  options: ResolvedRegistrySourceOptions;
+}
+
+interface ResolvedRegistrySourceOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
   iconSet: string;
   targetRoot: string;
 }
 
-export interface SkinItemLayout {
-  item: ResolvedSkinItem;
-  itemDir: string;
-  entryFile: string;
-  inputFile: string;
-  tailwindInput: string;
-}
-
-export interface SkinItemContext extends SkinItemLayout {
-  manifest: ResolvedSkinManifest;
-  layoutsByInput: ReadonlyMap<string, SkinItemLayout>;
-  options: ResolvedGenerateSourceOptions;
-}
-
-export interface SourceEmitter {
-  outputEntryName(source: string): string;
-  emitItem(context: SkinItemContext): Promise<SourceOutputFile[]>;
-  finish?(items: Record<string, SourceOutputFile[]>, options: ResolvedGenerateSourceOptions): void | Promise<void>;
-}
-
-/** Generate editable source items from the resolved Skin manifest. */
-export async function generateSource(
+/** Emit the editable React/Tailwind source projection consumed by the shadcn registry. */
+export async function generateReactRegistry(
   manifest: ResolvedSkinManifest,
-  options: GenerateSourceOptions,
-  emitter: SourceEmitter
+  options: GenerateReactRegistryOptions
 ): Promise<SourceOutput> {
-  const resolved = resolveOptions(options);
-  const layouts = createItemLayouts(manifest, resolved, emitter.outputEntryName);
+  const { installAlias = '@/components/videojs', ...sourceOptions } = options;
+  const resolved = resolveOptions(sourceOptions);
+  const layouts = createItemLayouts(manifest, resolved);
   const layoutsByInput = new Map(layouts.map((layout) => [layout.inputFile, layout]));
   const selected = selectLayouts(layouts, resolved.itemNames);
   const items: Record<string, SourceOutputFile[]> = {};
 
   for (const layout of selected) {
-    items[layout.item.name] = await emitter.emitItem({
-      ...layout,
-      manifest,
-      layoutsByInput,
-      options: resolved,
-    });
+    items[layout.item.name] = await emitReactItem(
+      {
+        ...layout,
+        manifest,
+        layoutsByInput,
+        options: resolved,
+      },
+      installAlias
+    );
   }
-
-  await emitter.finish?.(items, resolved);
 
   const dependencies: Record<string, string[]> = {};
   for (const [itemName, files] of Object.entries(items)) {
@@ -82,20 +79,20 @@ export async function generateSource(
   return { items, dependencies };
 }
 
-export async function createStyleResourceFiles(context: SkinItemContext): Promise<SourceOutputFile[]> {
+async function createStyleResourceFiles(context: SkinItemContext): Promise<SourceOutputFile[]> {
   const files: SourceOutputFile[] = [];
   for (const resource of context.item.resources.styles ?? []) {
     const isTailwindInput = resource.endsWith('/tailwind.css');
     const inputFile = absoluteSkinPath(context.options.rootDir, resource);
     const source = await readFile(inputFile, 'utf8');
-    const target = posix.join(context.options.targetRoot, stripCanonicalPrefix(toPosixPath(resource)));
+    const target = posix.join(context.options.targetRoot, toPosixPath(resource));
     const content = isTailwindInput ? rewriteTailwindInput(source, inputFile) : source;
     files.push(createSourceOutputFile(target, content));
   }
   return files;
 }
 
-export function createSourceOutputFile(path: string, content: string): SourceOutputFile {
+function createSourceOutputFile(path: string, content: string): SourceOutputFile {
   return {
     path,
     kind: path.endsWith('.css') ? 'style' : 'source',
@@ -103,11 +100,11 @@ export function createSourceOutputFile(path: string, content: string): SourceOut
   };
 }
 
-export function sourceEntryName(source: string): string {
+function sourceEntryName(source: string): string {
   return basename(source);
 }
 
-export function resolveSourceFile(inputFile: string, specifier: string): string {
+function resolveSourceFile(inputFile: string, specifier: string): string {
   const candidate = resolve(dirname(inputFile), specifier);
   if (['.ts', '.tsx', '.mts', '.cts'].includes(extname(candidate))) return candidate;
   for (const extension of ['.ts', '.tsx', '.mts', '.cts']) {
@@ -117,15 +114,15 @@ export function resolveSourceFile(inputFile: string, specifier: string): string 
   return candidate;
 }
 
-export function withoutTypeScriptExtension(path: string): string {
+function withoutTypeScriptExtension(path: string): string {
   return path.replace(/\.(?:[cm]?ts|tsx)$/, '');
 }
 
-export function toPosixPath(path: string): string {
+function toPosixPath(path: string): string {
   return path.split(sep).join('/');
 }
 
-function resolveOptions(options: GenerateSourceOptions): ResolvedGenerateSourceOptions {
+function resolveOptions(options: GenerateReactRegistryOptions): ResolvedRegistrySourceOptions {
   return {
     rootDir: resolve(options.rootDir),
     ...(options.itemNames ? { itemNames: options.itemNames } : {}),
@@ -134,19 +131,14 @@ function resolveOptions(options: GenerateSourceOptions): ResolvedGenerateSourceO
   };
 }
 
-function createItemLayouts(
-  manifest: ResolvedSkinManifest,
-  options: ResolvedGenerateSourceOptions,
-  outputEntryName: SourceEmitter['outputEntryName']
-): SkinItemLayout[] {
+function createItemLayouts(manifest: ResolvedSkinManifest, options: ResolvedRegistrySourceOptions): SkinItemLayout[] {
   return manifest.items.map((item) => {
     const itemDir = item.type === 'skin' ? options.targetRoot : posix.join(options.targetRoot, 'components', item.name);
     return {
       item,
       itemDir,
-      entryFile: posix.join(itemDir, outputEntryName(item.source)),
+      entryFile: posix.join(itemDir, sourceEntryName(item.source)),
       inputFile: absoluteSkinPath(options.rootDir, item.source),
-      tailwindInput: tailwindResource(item, options.rootDir),
     };
   });
 }
@@ -172,12 +164,6 @@ function collectPackageDependencies(files: readonly SourceOutputFile[]): string[
   return [...packages].sort();
 }
 
-function tailwindResource(item: ResolvedSkinItem, rootDir: string): string {
-  const resource = item.resources.styles?.find((path) => path.endsWith('/tailwind.css'));
-  if (!resource) throw new Error(`Skin item \`${item.name}\` has no Tailwind style resource.`);
-  return absoluteSkinPath(rootDir, resource);
-}
-
 function rewriteTailwindInput(source: string, inputFile: string): string {
   const marker = '@import "./themes/default.css";';
   if (!source.includes(marker)) {
@@ -188,10 +174,6 @@ function rewriteTailwindInput(source: string, inputFile: string): string {
     .replace('@theme inline {', '@theme {')
     .replace(/^@source .*;\s*$/gm, '')
     .replace(marker, `${marker}\n\n@source "../**/*.{ts,tsx,html}";`);
-}
-
-function stripCanonicalPrefix(path: string): string {
-  return path.replace(/^\.\/canonical\//, '');
 }
 
 function absoluteSkinPath(rootDir: string, path: string): string {
@@ -205,4 +187,46 @@ function packageName(specifier: string): string {
 
 function isPackageSpecifier(specifier: string): boolean {
   return Boolean(specifier) && !specifier.startsWith('.') && !specifier.startsWith('@/') && !specifier.startsWith('~/');
+}
+
+async function emitReactItem(context: SkinItemContext, installAlias: string): Promise<SourceOutputFile[]> {
+  const canonical = await readFile(context.inputFile, 'utf8');
+  const result = await compile(canonical, {
+    filename: context.inputFile,
+    config: createReactSkinSourceConfig({ style: 'tailwind', iconSet: context.options.iconSet }),
+    configDir: resolve(context.options.rootDir, context.itemDir),
+    outputFile: resolve(context.options.rootDir, context.entryFile),
+  });
+  if (result.diagnostics.some((diagnostic) => diagnostic.level === 'error')) {
+    throw new Error(`Skin item \`${context.item.name}\` failed React source emission.`);
+  }
+
+  const entrySource = rewriteRelativeImports(result.code, context, installAlias);
+  return [...(await createStyleResourceFiles(context)), createSourceOutputFile(context.entryFile, entrySource)];
+}
+
+function rewriteRelativeImports(source: string, context: SkinItemContext, installAlias: string): string {
+  return rewriteModuleSpecifiers(source, {
+    filename: context.entryFile,
+    resolve(specifier) {
+      if (!specifier.startsWith('.')) return specifier;
+      const importedFile = resolveSourceFile(context.inputFile, specifier);
+      const dependency = context.layoutsByInput.get(importedFile);
+      if (!existsSync(importedFile)) {
+        throw new Error(
+          `Skin item \`${context.item.name}\` has unresolved relative import \`${specifier}\` from \`${toPosixPath(
+            relative(context.options.rootDir, context.inputFile)
+          )}\`.`
+        );
+      }
+      if (!dependency) {
+        throw new Error(
+          `Skin item \`${context.item.name}\` cannot map relative import \`${specifier}\` from \`${toPosixPath(
+            relative(context.options.rootDir, context.inputFile)
+          )}\`.`
+        );
+      }
+      return `${installAlias}/${dependency.item.name}/${withoutTypeScriptExtension(posix.basename(dependency.entryFile))}`;
+    },
+  });
 }

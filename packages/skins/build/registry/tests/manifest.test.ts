@@ -1,15 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { skinRegistry } from '../../src/registry/config';
-import { loadSkinManifest, skinsRoot } from '../load';
-import { createRegistryManifest } from '../registry/manifest';
-import { generateReactRegistry } from '../registry/react';
-import { resolveSkinClosure } from '../resolve';
+import { skinRegistry } from '../../../canonical/registry/config';
+import { canonicalRoot, loadSkinManifest } from '../../graph/load';
+import { resolveSkinClosure } from '../../graph/resolve';
+import { createRegistryManifest } from '../manifest';
+import { generateReactRegistry } from '../source';
 
 describe('generateReactRegistry', () => {
   it('emits individual React/Tailwind components and a shadcn source manifest', async () => {
     const manifest = await loadSkinManifest();
     const output = await generateReactRegistry(manifest, {
-      rootDir: skinsRoot,
+      rootDir: canonicalRoot,
       targetRoot: 'default',
       itemNames: resolveSkinClosure(manifest, 'default-video').itemNames,
     });

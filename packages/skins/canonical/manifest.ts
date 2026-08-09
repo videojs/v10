@@ -32,7 +32,7 @@ export function defineSkinComponent<const Component extends SkinComponent>(compo
 }
 
 const resources = {
-  styles: ['./canonical/styles/tailwind.css', './canonical/styles/base.css', './canonical/styles/themes/default.css'],
+  styles: ['./styles/tailwind.css', './styles/base.css', './styles/themes/default.css'],
 } as const;
 
 /** Canonical Skin source inventory shared by package, registry, and future documentation outputs. */
@@ -46,7 +46,7 @@ export const skinManifest = {
     defineSkin({
       name: 'default-video',
       type: 'skin',
-      source: './canonical/skins/default-video/skin.tsx',
+      source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
       description:
         'A video skin with play, seek, current and remaining time, volume, fullscreen, tooltips, and thumbnail previews.',
@@ -56,21 +56,21 @@ export const skinManifest = {
     defineSkinComponent({
       name: 'fullscreen-button',
       type: 'component',
-      source: './canonical/components/buttons/fullscreen-button.tsx',
+      source: './components/buttons/fullscreen-button.tsx',
       title: 'Fullscreen Button',
       description: 'A button that enters and exits fullscreen with state-aware icons and an accessible tooltip.',
     }),
     defineSkinComponent({
       name: 'mute-button',
       type: 'component',
-      source: './canonical/components/buttons/mute-button.tsx',
+      source: './components/buttons/mute-button.tsx',
       title: 'Mute Button',
       description: 'A state-aware mute button used by the volume control.',
     }),
     defineSkinComponent({
       name: 'play-button',
       type: 'component',
-      source: './canonical/components/buttons/play-button.tsx',
+      source: './components/buttons/play-button.tsx',
       title: 'Play Button',
       description:
         'A three-state button that plays, pauses, or restarts media with matching icons and an accessible tooltip.',
@@ -78,7 +78,7 @@ export const skinManifest = {
     defineSkinComponent({
       name: 'seek-button',
       type: 'component',
-      source: './canonical/components/buttons/seek-button.tsx',
+      source: './components/buttons/seek-button.tsx',
       title: 'Seek Button',
       description:
         'A button that skips playback forward or backward by a configurable number of seconds, with a direction-aware icon and accessible tooltip.',
@@ -86,7 +86,7 @@ export const skinManifest = {
     defineSkinComponent({
       name: 'time-slider',
       type: 'component',
-      source: './canonical/components/sliders/time-slider.tsx',
+      source: './components/sliders/time-slider.tsx',
       title: 'Time Slider',
       description:
         'A playback timeline for seeking, with current and buffered progress plus time and thumbnail previews.',
@@ -94,14 +94,14 @@ export const skinManifest = {
     defineSkinComponent({
       name: 'button-tooltip',
       type: 'component',
-      source: './canonical/components/buttons/button-tooltip.tsx',
+      source: './components/buttons/button-tooltip.tsx',
       title: 'Button Tooltip',
       description: 'An internal tooltip composition shared by button controls.',
     }),
     defineSkinComponent({
       name: 'volume-slider',
       type: 'component',
-      source: './canonical/components/sliders/volume-slider.tsx',
+      source: './components/sliders/volume-slider.tsx',
       title: 'Volume Slider',
       description:
         'A horizontal or vertical slider for adjusting playback volume by dragging, using the keyboard, or scrolling.',
@@ -109,7 +109,7 @@ export const skinManifest = {
     defineSkinComponent({
       name: 'volume-popover',
       type: 'component',
-      source: './canonical/components/controls/volume-popover.tsx',
+      source: './components/controls/volume-popover.tsx',
       title: 'Volume Control',
       description: 'A mute toggle with a vertical slider for adjusting playback volume in a popover.',
     }),

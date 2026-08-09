@@ -1,6 +1,6 @@
 import type { ResolveElementContext, ResolveElementResult } from '@videojs/compiler/tailwind';
 
-/** Map canonical style tokens and fallback element recipes to reviewable role stylesheets. */
+/** Map canonical style tokens and fallback elements to public classes and role stylesheets. */
 export function resolveSkinStyle({ defaultName }: ResolveElementContext): ResolveElementResult {
   return {
     className: `media-${defaultName}`,

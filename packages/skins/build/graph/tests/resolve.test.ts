@@ -2,8 +2,8 @@ import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { skinManifest } from '../../src/manifest';
-import { loadSkinManifest, skinsRoot } from '../load';
+import { skinManifest } from '../../../canonical/manifest';
+import { canonicalRoot, loadSkinManifest } from '../load';
 import { resolveSkinClosure, resolveSkinManifest } from '../resolve';
 import type { SkinManifest } from '../types';
 
@@ -83,7 +83,7 @@ describe('resolveSkinManifest', () => {
   });
 
   it('keeps the Skin manifest rooted in the skins package', async () => {
-    const result = await resolveSkinManifest(skinManifest, { rootDir: skinsRoot });
+    const result = await resolveSkinManifest(skinManifest, { rootDir: canonicalRoot });
     expect(result.diagnostics).toEqual([]);
   });
 });

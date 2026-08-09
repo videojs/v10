@@ -6,6 +6,6 @@
     "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src", "build", "scripts"],
-  "exclude": ["src/registry/default"]
+  "include": ["src", "build", "scripts", "canonical/manifest.ts", "canonical/registry/config.ts"],
+  "exclude": ["canonical/registry/default"]
 }

@@ -1,6 +1,6 @@
 # Canonical Skin source
 
-This directory contains target-neutral, authored source for source-owned Video.js UI. It is intentionally isolated from `../src`, which remains the input for the currently packaged React and HTML skins until generated output proves parity.
+This directory contains the next source root for source-owned Video.js UI. It remains isolated from `../src`, which still feeds the currently published package build until generated output proves parity.
 
 Canonical source:
 
@@ -11,7 +11,7 @@ Canonical source:
 - Imports named Tailwind utility tokens from locally owned style modules.
 - Does not copy Media, Store, feature, or SVG implementations.
 
-The current canonical paths are:
+The current authored paths are:
 
 - `skins/default-video/skin.tsx`
 - `components/buttons/button-tooltip.tsx`
@@ -23,4 +23,4 @@ The current canonical paths are:
 - `components/sliders/volume-slider.tsx`
 - `components/sliders/time-slider.tsx`
 
-Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. The manifest in `../src/manifest.ts` owns the item inventory; registry publication policy lives in `../src/registry/config.ts`.
+Canonical components import icon roles from `@videojs/icons/components`; target emission replaces that compiler-only contract with public React icon exports or exact HTML registrations. The Tailwind v4 input maps semantic utilities to media variables, so the same source can produce editable registry utilities or role-based vanilla CSS. `manifest.ts` owns the item inventory, while `registry/config.ts` owns React/Tailwind publication policy and `registry/default` contains its generated projection.

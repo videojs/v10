@@ -70,6 +70,7 @@ function violationForSource(
 
 export function checkCanonicalImports(canonicalRoot = DEFAULT_CANONICAL_ROOT): CanonicalImportCheckResult {
   const files = globSync('**/*.{ts,tsx}', { cwd: canonicalRoot })
+    .filter((file) => !file.startsWith('registry/default/'))
     .map((file) => resolve(canonicalRoot, file))
     .sort();
   const violations: CanonicalImportViolation[] = [];

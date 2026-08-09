@@ -67,6 +67,7 @@ const elementModules: Readonly<Record<string, readonly string[]>> = {
   VolumeSlider: ['@videojs/html/ui/volume-slider'],
 };
 
+/** Create the compiler policy for an HTML Skin projection. */
 export function createHtmlSkinSourceConfig({ style, tailwindInput, styleProgram }: CreateHtmlSkinSourceConfigOptions) {
   return defineConfig({
     target: jsx({

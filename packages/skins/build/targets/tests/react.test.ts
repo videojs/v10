@@ -2,9 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { compile } from '@videojs/compiler';
 import { describe, expect, it } from 'vitest';
-import { createReactSkinSourceConfig } from '../compiler/react';
+import { createReactSkinSourceConfig } from '../react';
 
-const canonicalRoot = resolve(import.meta.dirname, '../../canonical');
+const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 
 describe('createReactSkinSourceConfig', () => {
   it('emits canonical button composition with public React imports', async () => {

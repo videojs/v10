@@ -8,7 +8,7 @@ interface AttributeEdit {
   source: string;
 }
 
-/** Add stable explicit popup relationships without reserializing the authored markup. */
+/** Add stable explicit popup relationships without reserializing generated HTML. */
 export function connectHtmlPopups(source: string): string {
   const root = parseFragment(source, { sourceCodeLocationInfo: true });
   const usedIds = collectIds(root);

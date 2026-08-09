@@ -2,7 +2,7 @@ import type { Dirent } from 'node:fs';
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { dirname, posix, relative, resolve, sep } from 'node:path';
 import { format } from 'oxfmt';
-import type { SourceOutput } from './source-output';
+import type { SourceOutput } from '../registry/source';
 
 export async function collectGeneratedFiles(
   output: SourceOutput,

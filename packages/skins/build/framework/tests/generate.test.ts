@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { createFrameworkSkin } from '../framework';
-import { loadSkinManifest, skinsRoot } from '../load';
+import { canonicalRoot, loadSkinManifest } from '../../graph/load';
+import { createFrameworkSkin } from '../generate';
 
 describe('createFrameworkSkin', () => {
   it('bundles React into one Skin module and role-based vanilla stylesheets', async () => {
     const output = await createFrameworkSkin(await loadSkinManifest(), {
       framework: 'react',
-      rootDir: skinsRoot,
+      rootDir: canonicalRoot,
       skin: 'default-video',
     });
 
@@ -26,7 +26,7 @@ describe('createFrameworkSkin', () => {
   it('bundles HTML registrations and markup into one Skin module', async () => {
     const output = await createFrameworkSkin(await loadSkinManifest(), {
       framework: 'html',
-      rootDir: skinsRoot,
+      rootDir: canonicalRoot,
       skin: 'default-video',
     });
 

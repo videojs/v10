@@ -12,6 +12,7 @@ export interface CreateReactSkinSourceConfigOptions {
   styleProgram?: StyleProgram | undefined;
 }
 
+/** Create the compiler policy for a React Skin projection. */
 export function createReactSkinSourceConfig({
   style,
   iconSet = 'default',

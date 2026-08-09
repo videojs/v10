@@ -1,6 +1,6 @@
-import type { SkinComponent, SkinDefinition } from '../src/manifest';
+import type { SkinComponent, SkinDefinition } from '../../canonical/manifest';
 
-export type { SkinComponent, SkinDefinition as Skin, SkinManifest } from '../src/manifest';
+export type { SkinComponent, SkinDefinition as Skin, SkinManifest } from '../../canonical/manifest';
 
 export type SkinResources = Readonly<Record<string, readonly string[]>>;
 export type SkinSymbols = Readonly<Record<string, readonly string[]>>;

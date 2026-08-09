@@ -6,7 +6,7 @@ export interface SkinRegistryConfig {
   items: readonly string[];
 }
 
-/** React/Tailwind publication policy. Canonical Skin ownership remains in ../manifest.ts. */
+/** React/Tailwind publication policy for the canonical Skin inventory. */
 export const skinRegistry = {
   name: 'videojs',
   homepage: 'https://videojs.org',

@@ -1,7 +1,7 @@
 import { posix } from 'node:path';
-import type { SkinRegistryConfig } from '../../src/registry/config';
-import type { SourceOutput, SourceOutputFile } from '../source-output';
-import type { ResolvedSkinItem, ResolvedSkinManifest } from '../types';
+import type { SkinRegistryConfig } from '../../canonical/registry/config';
+import type { ResolvedSkinItem, ResolvedSkinManifest } from '../graph/types';
+import type { SourceOutput, SourceOutputFile } from './source';
 
 export type RegistryItemType = 'registry:block' | 'registry:component';
 export type RegistryFileType = 'registry:component' | 'registry:file';
@@ -100,7 +100,7 @@ function partitionDependencies(
 
 function registryFile(file: SourceOutputFile, owner: string, installRoot: string): RegistryFile {
   return {
-    path: posix.join('src/registry', file.path),
+    path: posix.join('canonical/registry', file.path),
     target: registryTarget(file.path, owner, installRoot),
     type: file.kind === 'source' ? 'registry:component' : 'registry:file',
   };

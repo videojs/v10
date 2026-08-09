@@ -4,7 +4,8 @@ import { runInNewContext } from 'node:vm';
 import { compile } from '@videojs/compiler';
 import { createStyleProgram, loadDesignSystem, type StyleProgram } from '@videojs/compiler/tailwind';
 import { type OutputChunk, type Plugin, rolldown } from 'rolldown';
-import { createHtmlSkinSourceConfig, type SkinSourceStyle } from './compiler/html.ts';
+import { createHtmlSkinSourceConfig, type SkinSourceStyle } from '../targets/html.ts';
+import { classNamesRuntime, jsxRuntime } from './html-runtime';
 
 export interface RenderSkinSourceOptions {
   style?: SkinSourceStyle | undefined;
@@ -133,49 +134,3 @@ function requiredTailwindInput(input: string | undefined): string {
   if (!input) throw new Error('HTML vanilla CSS source generation requires a Tailwind input file.');
   return input;
 }
-
-const classNamesRuntime = `
-export function cn(...values) {
-  return values.flat(Infinity).filter(Boolean).join(' ');
-}
-`;
-
-const jsxRuntime = `
-export const Fragment = Symbol('Fragment');
-const raw = Symbol('raw-html');
-
-export function jsx(type, props) {
-  if (type === Fragment) return html(renderChildren(props?.children));
-  if (typeof type === 'function') return type(props ?? {});
-
-  const { children, ...attributes } = props ?? {};
-  return html('<' + type + renderAttributes(attributes) + '>' + renderChildren(children) + '</' + type + '>');
-}
-
-export const jsxs = jsx;
-
-function renderAttributes(attributes) {
-  let output = '';
-  for (const [name, value] of Object.entries(attributes)) {
-    if (value == null || value === false || typeof value === 'function') continue;
-    const attribute = name === 'className' ? 'class' : name.replace(/[A-Z]/g, (letter) => '-' + letter.toLowerCase());
-    const normalized = attribute === 'class' ? [value].flat(Infinity).filter(Boolean).join(' ') : value;
-    output += normalized === true ? ' ' + attribute : ' ' + attribute + '="' + escape(normalized) + '"';
-  }
-  return output;
-}
-
-function renderChildren(children) {
-  return [children].flat(Infinity).filter((value) => value != null && value !== false).map((value) => {
-    return value && typeof value === 'object' && raw in value ? value[raw] : escape(value);
-  }).join('');
-}
-
-function escape(value) {
-  return String(value).replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
-}
-
-function html(value) {
-  return { [raw]: value, toString() { return value; } };
-}
-`;

@@ -1,12 +1,12 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/files';
-import { createFrameworkSkin, type SkinFramework } from '../build/framework';
-import { loadSkinManifest, skinsRoot } from '../build/load';
+import { createFrameworkSkin, type SkinFramework } from '../build/framework/generate';
+import { canonicalRoot, loadSkinManifest, skinsPackageRoot } from '../build/graph/load';
+import { resolveSkinClosure } from '../build/graph/resolve';
+import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/output/files';
 import { createRegistryManifest } from '../build/registry/manifest';
-import { generateReactRegistry } from '../build/registry/react';
-import { resolveSkinClosure } from '../build/resolve';
-import { skinRegistry } from '../src/registry/config';
+import { generateReactRegistry } from '../build/registry/source';
+import { skinRegistry } from '../canonical/registry/config';
 
 export interface FrameworkSkinTarget {
   framework: SkinFramework;
@@ -25,13 +25,13 @@ export interface GenerateSkinsOptions {
 const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
   {
     framework: 'html',
-    packageRoot: resolve(skinsRoot, '../html'),
+    packageRoot: resolve(skinsPackageRoot, '../html'),
     outputDir: 'src/__generated__/skins/default-video',
     skin: 'default-video',
   },
   {
     framework: 'react',
-    packageRoot: resolve(skinsRoot, '../react'),
+    packageRoot: resolve(skinsPackageRoot, '../react'),
     outputDir: 'src/__generated__/skins/default-video',
     skin: 'default-video',
   },
@@ -45,7 +45,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
   for (const target of targets) {
     const output = await createFrameworkSkin(manifest, {
       framework: target.framework,
-      rootDir: skinsRoot,
+      rootDir: canonicalRoot,
       skin: target.skin,
       ...(target.iconSet ? { iconSet: target.iconSet } : {}),
     });
@@ -65,10 +65,10 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     });
   }
 
-  const registryOutputDir = options.registryOutputDir ?? 'src/registry';
+  const registryOutputDir = options.registryOutputDir ?? 'registry';
   const closure = resolveSkinClosure(manifest, 'default-video');
   const output = await generateReactRegistry(manifest, {
-    rootDir: skinsRoot,
+    rootDir: canonicalRoot,
     itemNames: closure.itemNames,
     targetRoot: 'default',
     installAlias: `@/${skinRegistry.installRoot}`,
@@ -79,7 +79,7 @@ export async function generateSkins(options: GenerateSkinsOptions = {}): Promise
     await formatGeneratedFile('registry.json', JSON.stringify(createRegistryManifest(manifest, output, skinRegistry)))
   );
   await syncGeneratedFiles({
-    rootDir: skinsRoot,
+    rootDir: canonicalRoot,
     files,
     managedRoots: [posix.join(registryOutputDir, 'default')],
     check: options.check,

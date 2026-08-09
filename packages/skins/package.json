@@ -27,7 +27,7 @@
   },
   "scripts": {
     "build": "tsdown && pnpm run build:registry",
-    "build:registry": "shadcn build src/registry/registry.json --output dist/registry",
+    "build:registry": "shadcn build canonical/registry/registry.json --output dist/registry",
     "build:watch": "tsdown --watch ./src --no-clean",
     "check:canonical": "node --import tsx ./scripts/check-canonical-imports.ts",
     "generate:skins": "node --import tsx ./scripts/generate-skins.ts",

@@ -2,9 +2,9 @@ import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { compile } from '@videojs/compiler';
 import { describe, expect, it } from 'vitest';
-import { createHtmlSkinSourceConfig, resolveHtmlElementImports } from '../compiler/html';
+import { createHtmlSkinSourceConfig, resolveHtmlElementImports } from '../html';
 
-const canonicalRoot = resolve(import.meta.dirname, '../../canonical');
+const canonicalRoot = resolve(import.meta.dirname, '../../../canonical');
 
 describe('createHtmlSkinSourceConfig', () => {
   it('emits idiomatic light-DOM elements', async () => {
