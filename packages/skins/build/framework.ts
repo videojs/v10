@@ -160,15 +160,15 @@ async function createFrameworkStyles(
     .map((file) => ({ fileName: basename(file.fileName), source: file.source }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
   const files: FrameworkStyleFile[] = [
-    { fileName: 'preflight.css', source: await design.compilePreflight('.media-skin') },
-    { fileName: 'base.css', source: await readFile(resolve(rootDir, basePath), 'utf8') },
-    { fileName: 'theme.css', source: await readFile(resolve(rootDir, themePath), 'utf8') },
-    ...roleFiles,
+    { fileName: 'styles/preflight.css', source: await design.compilePreflight('.media-skin') },
+    { fileName: 'styles/base.css', source: await readFile(resolve(rootDir, basePath), 'utf8') },
+    { fileName: 'styles/theme.css', source: await readFile(resolve(rootDir, themePath), 'utf8') },
+    ...roleFiles.map((file) => ({ ...file, fileName: `styles/${file.fileName}` })),
   ];
   return [
     {
-      fileName: 'styles.css',
-      source: files.map((file) => `@import './${file.fileName}';`).join('\n'),
+      fileName: 'styles/styles.css',
+      source: files.map((file) => `@import './${basename(file.fileName)}';`).join('\n'),
     },
     ...files,
   ];

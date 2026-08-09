@@ -15,12 +15,12 @@ describe('createFrameworkSkin', () => {
     expect(output.source).toContain('function PlayButton$1()');
     expect(output.source).toContain('export { DefaultVideoSkin }');
     expect(output.source).not.toContain('./components/');
-    expect(style(output, 'styles.css')).toContain("@import './buttons.css'");
-    expect(style(output, 'buttons.css')).toContain('.media-button {');
-    expect(style(output, 'buttons.css').match(/^\.media-button \{/gm)).toHaveLength(1);
-    expect(style(output, 'buttons.css')).not.toContain('.media-play-button {');
+    expect(style(output, 'styles/styles.css')).toContain("@import './buttons.css'");
+    expect(style(output, 'styles/buttons.css')).toContain('.media-button {');
+    expect(style(output, 'styles/buttons.css').match(/^\.media-button \{/gm)).toHaveLength(1);
+    expect(style(output, 'styles/buttons.css')).not.toContain('.media-play-button {');
     expect(output.styles.map((file) => file.source).join('\n')).not.toContain('--tw-');
-    expect(style(output, 'preflight.css')).toContain('@scope (.media-skin)');
+    expect(style(output, 'styles/preflight.css')).toContain('@scope (.media-skin)');
   });
 
   it('bundles HTML registrations and markup into one Skin module', async () => {
@@ -49,8 +49,8 @@ describe('createFrameworkSkin', () => {
     expect(output.source).toContain('open-on-hover');
     expect(output.source).toContain('delay="200"');
     expect(output.source).toContain('close-delay="100"');
-    expect(style(output, 'buttons.css')).toContain('.media-button {');
-    expect(style(output, 'buttons.css').match(/^\.media-button \{/gm)).toHaveLength(1);
+    expect(style(output, 'styles/buttons.css')).toContain('.media-button {');
+    expect(style(output, 'styles/buttons.css').match(/^\.media-button \{/gm)).toHaveLength(1);
     expect(output.styles.map((file) => file.source).join('\n')).not.toContain('--tw-');
   });
 });

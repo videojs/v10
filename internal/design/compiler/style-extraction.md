@@ -131,7 +131,7 @@ Framework generation also asks the loaded design system to compile Tailwind's in
 
 The compiler can emit merged CSS, an index/support file plus named chunks, or semantic recipes with global support in a separate sibling stylesheet.
 
-Canonical framework CSS resolves all private Tailwind variables. `styles.css` only imports scoped preflight, base/theme CSS, and role chunks such as `buttons.css`, `controls.css`, `popups.css`, and `sliders.css`; the Skin module does not import the stylesheet.
+Canonical framework CSS resolves all private Tailwind variables. Each Skin keeps CSS under `styles/`: `styles/styles.css` only imports scoped preflight, base/theme CSS, and role chunks such as `buttons.css`, `controls.css`, `popups.css`, and `sliders.css`; the Skin module does not import the stylesheet.
 
 `pnpm generate:skins` creates two projections:
 
