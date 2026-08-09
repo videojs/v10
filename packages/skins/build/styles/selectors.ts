@@ -1,9 +1,7 @@
 import type { Selector, SelectorComponent, SelectorList } from 'lightningcss';
 import { cloneCssAst } from './css-ast';
 
-export type { Selector, SelectorComponent, SelectorList } from 'lightningcss';
-
-export function cloneSelectorList(selectors: SelectorList): SelectorList {
+function cloneSelectorList(selectors: SelectorList): SelectorList {
   return selectors.map(cloneSelector);
 }
 

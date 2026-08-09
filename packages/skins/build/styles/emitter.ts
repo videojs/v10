@@ -17,7 +17,7 @@ import type { SkinCssRecipe, SkinCssRole, SkinStyleSheet } from './stylesheet';
 const encoder = new TextEncoder();
 const decoder = new TextDecoder();
 
-export interface EmitSkinRoleCssOptions {
+interface EmitSkinRoleCssOptions {
   design: DesignSystem;
   stylesheet: SkinStyleSheet;
 }

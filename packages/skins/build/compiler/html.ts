@@ -1,8 +1,9 @@
 import { defineConfig, jsx, transform } from '@videojs/compiler';
 import { type DefaultTreeAdapterMap, parseFragment } from 'parse5';
-import { type MutableSkinStyleUsage, type SkinStyleManifest, type SkinStyleTarget, skinStyles } from './styles';
+import type { SkinStyleManifest } from '../styles/manifest';
+import { type MutableSkinStyleUsage, type SkinStyleTarget, skinStyles } from '../styles/transform';
 
-export interface CreateCompilerHtmlConfigOptions {
+interface CreateCompilerHtmlConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
   usage?: MutableSkinStyleUsage | undefined;

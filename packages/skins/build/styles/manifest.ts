@@ -80,7 +80,7 @@ export function loadCatalogStyleManifest(
   const files = new Set<string>();
   for (const itemName of options.itemNames) {
     for (const file of resolveSkinClosure(catalog, itemName).files) {
-      files.add(resolve(options.rootDir, file.path));
+      files.add(resolve(options.rootDir, file));
     }
   }
   return loadSkinStyleManifest([...files]);

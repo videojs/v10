@@ -1,8 +1,9 @@
 import { defineConfig, jsx, transform } from '@videojs/compiler';
 import { anyTag, childAsProp } from '@videojs/compiler/ast';
-import { type MutableSkinStyleUsage, type SkinStyleManifest, type SkinStyleTarget, skinStyles } from './styles';
+import type { SkinStyleManifest } from '../styles/manifest';
+import { type MutableSkinStyleUsage, type SkinStyleTarget, skinStyles } from '../styles/transform';
 
-export interface CreateCompilerReactConfigOptions {
+interface CreateCompilerReactConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
   usage?: MutableSkinStyleUsage | undefined;

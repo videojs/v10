@@ -11,7 +11,6 @@ import type {
   SkinDependencies,
   SkinDiagnostic,
   SkinItem,
-  SkinSourceFile,
 } from './types';
 
 type DependencyGroups = Map<string, Set<string>>;
@@ -23,7 +22,6 @@ interface NormalizedItem {
 
 interface MutableDependencies {
   items: Set<string>;
-  packages: Set<string>;
   symbols: DependencyGroups;
 }
 
@@ -42,7 +40,7 @@ interface SkinVisitContext {
 /**
  * Analyze authored imports while preserving item and file boundaries.
  * Framework builds can bundle this graph, but registry output needs the
- * original files, item edges, package imports, and named component symbols.
+ * original files, item edges, and named component symbols.
  */
 export async function resolveSkinCatalog(
   catalog: SkinCatalog,
@@ -73,14 +71,7 @@ export async function resolveSkinCatalog(
 
     items.push({
       ...entry.item,
-      files: [...files]
-        .map(
-          (fileName): SkinSourceFile => ({
-            path: skinPath(rootDir, fileName),
-            role: fileName === entry.sourceFile ? 'entry' : 'source',
-          })
-        )
-        .sort((a, b) => compareStrings(a.path, b.path)),
+      files: [...files].map((fileName) => skinPath(rootDir, fileName)).sort(compareStrings),
       dependencies: freezeDependencies(dependencies),
     });
   }
@@ -93,15 +84,14 @@ export async function resolveSkinCatalog(
   };
 }
 
-/** Collect the transitive authored items, files, packages, and symbols needed by one item. */
+/** Collect the transitive authored items, files, and symbols needed by one item. */
 export function resolveSkinClosure(catalog: ResolvedSkinCatalog, itemName: string): SkinClosure {
   const items = new Map(catalog.items.map((item) => [item.name, item]));
   if (!items.has(itemName)) throw new Error(`Skin item \`${itemName}\` does not exist.`);
 
   const itemNames: string[] = [];
   const visited = new Set<string>();
-  const files = new Map<string, SkinSourceFile>();
-  const packages = new Set<string>();
+  const files = new Set<string>();
   const symbols = new Map<string, Set<string>>();
 
   const visit = (name: string): void => {
@@ -112,19 +102,14 @@ export function resolveSkinClosure(catalog: ResolvedSkinCatalog, itemName: strin
 
     for (const dependency of item.dependencies.itemNames) visit(dependency);
     itemNames.push(name);
-    for (const file of item.files) {
-      const previous = files.get(file.path);
-      if (!previous || file.role === 'entry') files.set(file.path, file);
-    }
-    for (const dependency of item.dependencies.packages) packages.add(dependency);
+    for (const file of item.files) files.add(file);
     mergeGroups(symbols, item.dependencies.symbols);
   };
 
   visit(itemName);
   return {
     itemNames,
-    files: [...files.values()].sort((a, b) => compareStrings(a.path, b.path)),
-    packages: sortedUnique(packages),
+    files: sortedUnique(files),
     symbols: freezeGroups(symbols),
   };
 }
@@ -195,19 +180,18 @@ async function visitSkinSourceFile(context: SkinVisitContext): Promise<void> {
 
   for (const reference of collectModuleReferences(sourceFile)) {
     if (!reference.source.startsWith('.')) {
-      recordPackageReference(context, sourceFile, reference);
+      recordDependencySymbols(context, sourceFile, reference);
       continue;
     }
     await visitRelativeReference(context, sourceFile, reference);
   }
 }
 
-function recordPackageReference(
+function recordDependencySymbols(
   context: SkinVisitContext,
   sourceFile: ts.SourceFile,
   reference: ModuleReference
 ): void {
-  context.dependencies.packages.add(packageName(reference.source));
   const symbolKind = context.catalog.dependencyModules[reference.source];
   if (symbolKind === undefined) return;
   if (reference.ambiguous) {
@@ -303,13 +287,12 @@ function diagnoseCycles(items: readonly ResolvedSkinItem[], diagnostics: SkinDia
 }
 
 function createMutableDependencies(symbolKinds: Iterable<string>): MutableDependencies {
-  return { items: new Set(), packages: new Set(), symbols: createDependencyGroups(symbolKinds) };
+  return { items: new Set(), symbols: createDependencyGroups(symbolKinds) };
 }
 
 function freezeDependencies(dependencies: MutableDependencies): SkinDependencies {
   return {
     itemNames: sortedUnique(dependencies.items),
-    packages: sortedUnique(dependencies.packages),
     symbols: freezeGroups(dependencies.symbols),
   };
 }
@@ -376,11 +359,6 @@ function isSourceFile(fileName: string): boolean {
 
 function isComponentSourceFile(rootDir: string, fileName: string): boolean {
   return isWithinRoot(resolve(rootDir, 'components'), fileName) && fileName.endsWith('.tsx');
-}
-
-function packageName(source: string): string {
-  if (!source.startsWith('@')) return source.split('/')[0]!;
-  return source.split('/').slice(0, 2).join('/');
 }
 
 function skinPath(rootDir: string, fileName: string): string {

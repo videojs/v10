@@ -3,16 +3,16 @@ import type { SkinRegistryConfig } from '../../canonical/registry/config';
 import type { ResolvedSkinCatalog, ResolvedSkinItem } from '../catalog/types';
 import type { RegistrySourceFile, RegistrySourceOutput } from './source';
 
-export type RegistryItemType = 'registry:block' | 'registry:component';
-export type RegistryFileType = 'registry:component' | 'registry:file';
+type RegistryItemType = 'registry:block' | 'registry:component';
+type RegistryFileType = 'registry:component' | 'registry:file';
 
-export interface RegistryFile {
+interface RegistryFile {
   path: string;
   type: RegistryFileType;
   target: string;
 }
 
-export interface RegistryItem {
+interface RegistryItem {
   name: string;
   type: RegistryItemType;
   title: string;
@@ -23,7 +23,7 @@ export interface RegistryItem {
   meta: { framework: 'react'; style: 'tailwind'; skin: string };
 }
 
-export interface ShadcnRegistry {
+interface ShadcnRegistry {
   $schema: 'https://ui.shadcn.com/schema/registry.json';
   name: string;
   homepage: string;

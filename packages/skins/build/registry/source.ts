@@ -8,7 +8,7 @@ import { createCompilerReactConfig } from '../compiler/react';
 import type { GeneratedFile } from '../output/files';
 import { loadCatalogStyleManifest, type SkinStyleManifest } from '../styles/manifest';
 
-export type RegistrySourceFileKind = 'source' | 'style';
+type RegistrySourceFileKind = 'source' | 'style';
 
 export interface RegistrySourceFile extends GeneratedFile {
   kind: RegistrySourceFileKind;
@@ -20,7 +20,7 @@ export interface RegistrySourceOutput {
   dependencies: Readonly<Record<string, readonly string[]>>;
 }
 
-export interface GenerateReactRegistryOptions {
+interface GenerateReactRegistryOptions {
   rootDir: string;
   itemNames?: readonly string[] | undefined;
   iconSet?: string | undefined;

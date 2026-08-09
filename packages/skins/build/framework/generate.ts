@@ -17,12 +17,12 @@ export type FrameworkSkinSource =
 
 export type SkinFramework = FrameworkProjection['framework'];
 
-export interface FrameworkSkinFiles {
+interface FrameworkSkinFiles {
   sources: readonly FrameworkSkinSource[];
   styles: readonly FrameworkStyleFile[];
 }
 
-export interface CreateFrameworkSkinOptions {
+interface CreateFrameworkSkinOptions {
   rootDir: string;
   skin: string;
   iconSet?: string | undefined;
@@ -95,5 +95,3 @@ function uniqueProjections(projections: readonly FrameworkProjection[], skin: st
   }
   return projections;
 }
-
-export type { FrameworkStyleFile } from './styles';

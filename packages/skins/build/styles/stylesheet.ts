@@ -1,6 +1,6 @@
 import type { SkinStyleComposition } from './transform';
 
-export interface SkinCssRecipeOrigin {
+interface SkinCssRecipeOrigin {
   description: string;
   file?: string | undefined;
   line?: number | undefined;

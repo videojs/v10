@@ -8,23 +8,17 @@ export type {
   SkinStyleResources,
 } from '../../canonical/catalog';
 
-export type SkinSymbols = Readonly<Record<string, readonly string[]>>;
+type SkinSymbols = Readonly<Record<string, readonly string[]>>;
 
 export type SkinItem = SkinDefinition | SkinComponent;
 
-export interface SkinSourceFile {
-  path: string;
-  role: 'entry' | 'source';
-}
-
 export interface SkinDependencies {
   itemNames: readonly string[];
-  packages: readonly string[];
   symbols: SkinSymbols;
 }
 
 export type ResolvedSkinItem = SkinItem & {
-  files: readonly SkinSourceFile[];
+  files: readonly string[];
   dependencies: SkinDependencies;
 };
 
@@ -36,8 +30,7 @@ export interface ResolvedSkinCatalog {
 
 export interface SkinClosure {
   itemNames: readonly string[];
-  files: readonly SkinSourceFile[];
-  packages: readonly string[];
+  files: readonly string[];
   symbols: SkinSymbols;
 }
 

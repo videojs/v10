@@ -20,14 +20,14 @@ interface FrameworkSkinTargetBase {
   iconSet?: string | undefined;
 }
 
-export type FrameworkSkinTarget =
+type FrameworkSkinTarget =
   | (FrameworkSkinTargetBase & {
       framework: 'html';
       resolveImport?: ((source: string) => string) | undefined;
     })
   | (FrameworkSkinTargetBase & { framework: 'react' });
 
-export interface GenerateSkinsOptions {
+interface GenerateSkinsOptions {
   check?: boolean | undefined;
   frameworkTargets?: readonly FrameworkSkinTarget[] | undefined;
 }
@@ -52,7 +52,7 @@ const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
 ];
 
 /** Generate compact framework Skins and the contained React/Tailwind registry. */
-export async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
+async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
   const catalog = await loadSkinCatalog();
   const targets = options.frameworkTargets ?? defaultFrameworkTargets;
 

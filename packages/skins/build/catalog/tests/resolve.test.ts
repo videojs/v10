@@ -19,13 +19,12 @@ describe('resolveSkinCatalog', () => {
     expect(resolved.items).toMatchObject([
       {
         name: 'button-tooltip',
-        dependencies: { itemNames: [], packages: ['@videojs/core', '@videojs/jsx'] },
+        dependencies: { itemNames: [] },
       },
       {
         name: 'default-video',
         dependencies: {
           itemNames: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider', 'volume-popover'],
-          packages: ['@videojs/core'],
         },
       },
       { name: 'fullscreen-button', dependencies: { itemNames: ['button-tooltip'] } },
@@ -49,7 +48,6 @@ describe('resolveSkinCatalog', () => {
         'volume-popover',
         'default-video',
       ],
-      packages: ['@videojs/core', '@videojs/icons', '@videojs/jsx'],
     });
   });
 
