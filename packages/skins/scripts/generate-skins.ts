@@ -2,12 +2,7 @@ import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog/load';
 import { resolveSkinClosure } from '../build/catalog/resolve';
-import {
-  createFrameworkSkin,
-  type FrameworkProjection,
-  type FrameworkSkinSource,
-  type SkinFramework,
-} from '../build/framework/generate';
+import { createFrameworkSkin, type FrameworkProjection } from '../build/framework/generate';
 import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/output/files';
 import { createRegistryManifest } from '../build/registry/manifest';
 import { generateReactRegistry } from '../build/registry/source';
@@ -51,7 +46,7 @@ const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
   },
 ];
 
-/** Generate compact framework Skins and the contained React/Tailwind registry. */
+/** Generate framework Skins and the contained React/Tailwind registry. */
 async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> {
   const catalog = await loadSkinCatalog();
   const targets = options.frameworkTargets ?? defaultFrameworkTargets;
@@ -69,12 +64,17 @@ async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> 
       )
     );
     for (const target of group.targets) {
-      const source = findFrameworkSource(output.sources, target.framework);
+      const sources = output.sources.filter((source) => source.framework === target.framework);
+      if (sources.length === 0) {
+        throw new Error(`Framework Skin generation did not emit the ${target.framework} target.`);
+      }
       const files = new Map<string, string>();
-      files.set(
-        posix.join(target.outputDir, source.sourceFile),
-        await formatGeneratedFile(source.sourceFile, source.source)
-      );
+      for (const source of sources) {
+        files.set(
+          posix.join(target.outputDir, source.fileName),
+          await formatGeneratedFile(source.fileName, source.source)
+        );
+      }
       for (const [fileName, formatted] of styles) {
         files.set(posix.join(target.outputDir, fileName), formatted);
       }
@@ -117,12 +117,6 @@ function toFrameworkProjection(target: FrameworkSkinTarget): FrameworkProjection
         ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
       }
     : { framework: 'react' };
-}
-
-function findFrameworkSource(sources: readonly FrameworkSkinSource[], framework: SkinFramework): FrameworkSkinSource {
-  const source = sources.find((candidate) => candidate.framework === framework);
-  if (!source) throw new Error(`Framework Skin generation did not emit the ${framework} target.`);
-  return source;
 }
 
 function groupFrameworkTargets(

@@ -22,6 +22,7 @@ describe('createCompilerReactConfig', () => {
     });
 
     expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain("import type { SeekButtonProps } from '@videojs/core'");
     expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@videojs/react"');
     expect(result.code).toContain('import { SeekIcon } from "@videojs/react/icons"');
     expect(result.code).toContain('<span className="tabular-nums">');

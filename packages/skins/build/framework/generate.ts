@@ -4,18 +4,18 @@ import { compileSkinStyles, loadDesignSystem } from '../styles/compile';
 import { loadCatalogStyleManifest } from '../styles/manifest';
 import { createSkinStyleUsage } from '../styles/transform';
 import { generateHtmlSkinSource } from './html';
-import { generateReactSkinSource } from './react';
+import { generateReactSkinSources } from './react';
 import { createFrameworkStyles, type FrameworkStyleFile } from './styles';
 
 export type FrameworkProjection =
   | { framework: 'html'; resolveImport?: ((source: string) => string) | undefined }
   | { framework: 'react' };
 
-export type FrameworkSkinSource =
-  | { framework: 'html'; sourceFile: 'skin.ts'; source: string }
-  | { framework: 'react'; sourceFile: 'skin.tsx'; source: string };
-
-export type SkinFramework = FrameworkProjection['framework'];
+interface FrameworkSkinSource {
+  framework: FrameworkProjection['framework'];
+  fileName: string;
+  source: string;
+}
 
 interface FrameworkSkinFiles {
   sources: readonly FrameworkSkinSource[];
@@ -29,7 +29,7 @@ interface CreateFrameworkSkinOptions {
   projections: readonly FrameworkProjection[];
 }
 
-/** Create compact, vanilla-CSS Skin projections consumed by framework packages. */
+/** Create vanilla-CSS Skin projections consumed by framework packages. */
 export async function createFrameworkSkin(
   catalog: ResolvedSkinCatalog,
   options: CreateFrameworkSkinOptions
@@ -49,7 +49,7 @@ export async function createFrameworkSkin(
     if (projection.framework === 'html') {
       sources.push({
         framework: 'html',
-        sourceFile: 'skin.ts',
+        fileName: 'skin.ts',
         source: await generateHtmlSkinSource(
           catalog,
           skin.name,
@@ -61,11 +61,16 @@ export async function createFrameworkSkin(
         ),
       });
     } else {
-      sources.push({
-        framework: 'react',
-        sourceFile: 'skin.tsx',
-        source: `// @ts-nocheck -- temporary bundled output; authored types remain in packages/skins/canonical.\n${await generateReactSkinSource(entryFile, iconSet, styles, usage)}`,
+      const files = await generateReactSkinSources(catalog, {
+        rootDir: options.rootDir,
+        skin: skin.name,
+        iconSet,
+        styles,
+        usage,
       });
+      for (const file of files) {
+        sources.push({ framework: 'react', fileName: file.path, source: file.content });
+      }
     }
   }
 
@@ -84,7 +89,7 @@ function uniqueProjections(projections: readonly FrameworkProjection[], skin: st
   if (projections.length === 0) {
     throw new Error(`Framework Skin generation requires a projection for Skin \`${skin}\`.`);
   }
-  const frameworks = new Set<SkinFramework>();
+  const frameworks = new Set<FrameworkProjection['framework']>();
   for (const projection of projections) {
     if (frameworks.has(projection.framework)) {
       throw new Error(
