@@ -1,8 +1,11 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "lib": ["ES2020"],
+    "allowImportingTsExtensions": true,
+    "lib": ["ES2022"],
+    "types": ["node"],
     "declarationDir": "types"
   },
-  "include": ["src"]
+  "include": ["src", "build", "scripts"],
+  "exclude": ["src/registry/default"]
 }

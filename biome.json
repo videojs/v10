@@ -97,7 +97,7 @@
   },
   "overrides": [
     {
-      "includes": ["packages/{html,react}/src/__generated__/skins/**"],
+      "includes": ["packages/{html,react}/src/__generated__/skins/**", "packages/skins/src/registry/default/**"],
       "formatter": {
         "enabled": false
       },

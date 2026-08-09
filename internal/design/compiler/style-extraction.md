@@ -1,5 +1,5 @@
 ---
-status: decided
+status: implemented
 date: 2026-08-07
 ---
 
@@ -48,7 +48,9 @@ The plugin has three modes:
 - `StyleProgram` owns all recipes, candidates, chunks, and relationship bindings for one CSS output program.
 - Tailwind determines candidate meaning, rule precedence, theme values, keyframes, and support rules.
 - Lightning CSS structurally reads and rewrites selectors, discovers custom-property references, and serializes browser-ready CSS.
-- `packages/skins/registry` owns the item definitions, dependency graph, shared generation, and publication catalog. HTML and React own only their framework emitters and package-level `generate:registry`/`check:registry` commands; root scripts are command aliases, not an implementation layer.
+- `packages/skins/src/manifest.ts` owns the output-neutral inventory of authored Skins and Skin components. It is the common input for framework packages, the source registry, and future documentation projections.
+- `packages/skins/build` owns dependency analysis, HTML and React compiler configuration, Rolldown integration, and output emitters. Framework packages do not own compiler configuration or generation scripts.
+- `packages/skins/src/registry` contains the React/Tailwind shadcn source registry. Publication policy is separate from the authored Skin manifest, so an internal component may be embedded in an item without becoming independently published.
 - Tailwind input controls whether theme variables remain configurable or are substituted into generated declarations. Canonical registry output uses `theme(inline)` and resolves private `--tw-*` state while preserving Video.js `--media-*` variables as the runtime customization surface.
 
 The compiler does not infer component ownership from utilities. Component ownership is established when the JSX transform records a recipe for the semantic class selected by the target configuration.
@@ -58,14 +60,10 @@ The compiler does not infer component ownership from utilities. Component owners
 `StyleProgram` is deliberately opaque. Compiler plugins collect into it; its owner finishes it:
 
 ```ts
-const program = createStyleProgram({
-  design,
-  output: 'styles.css',
-  themeSelector: '.media-skin',
-});
+const program = createStyleProgram({ design, output: 'styles.css', themeSelector: '.media-skin' });
 await compile(moduleA, { plugins: [tailwind({ mode: 'extract', program })] });
 await compile(moduleB, { plugins: [tailwind({ mode: 'extract', program })] });
-const { files } = await program.emit();
+await program.emit();
 ```
 
 When `tailwind()` creates its own program, the plugin calls `emit()` during compiler finish and returns normal compiler assets. When a caller supplies `program`, the plugin only collects and the caller owns `emit()`.
@@ -115,9 +113,9 @@ Conditional branches keep their runtime condition and record a recipe for each s
 
 `StyleProgram.emit()` compiles the union of the program's candidates once. Tailwind compiler builders are incremental, so `DesignSystem.compileCandidates()` creates a fresh builder for every emitted program; otherwise a later output could retain candidates from an earlier one. The loaded design-system view and recognition cache may be reused safely.
 
-HTML skin rendering uses Rolldown to bundle the root `skin.tsx` and its component closure. All compiler calls collect into one caller-owned `StyleProgram`, followed by one `program.emit()`. This gives the complete skin one support section, correct ordering, and collision checks across every participating module. Rolldown keeps this build-time renderer on the same bundler family as Vite; it is only responsible for module loading and executable JSX output, while the compiler owns source and style transforms.
+Framework Skin generation uses Rolldown to load the root `skin.tsx` and its complete component closure. HTML compilation renders that closure to a template; React compilation preserves JSX while Rolldown combines the modules. Every compiler call contributes to one caller-owned `StyleProgram`, followed by one `program.emit()`. This gives each framework Skin one support section, correct ordering, and collision checks across every participating module. Rolldown only owns module loading and bundling; the compiler owns JSX and style transforms.
 
-React registry items intentionally emit one component stylesheet per item. A shared `StyleClassRegistry` verifies that the same public `media-*` class has an equivalent recipe wherever independently emitted programs reuse it.
+The source registry has a different purpose. It preserves Tailwind utilities and emits individual React component modules so consumers can install and edit them. It therefore does not run CSS extraction or create framework package output.
 
 ### CSS emission
 
@@ -131,13 +129,16 @@ Theme-variable discovery uses Lightning CSS visitors rather than serialized-text
 
 ## Output layouts
 
-- `merged` emits base CSS, theme variables, support rules, and semantic recipes in one file.
-- `split` emits one index/support file plus one file per named chunk.
-- `support: 'separate'` emits semantic recipes in the requested stylesheet and global Tailwind support in a sibling support stylesheet.
+The compiler can emit merged CSS, an index/support file plus named chunks, or semantic recipes with global support in a separate sibling stylesheet.
 
-React can consolidate non-empty global support output once into `styles/support.css` and import it from component stylesheets. Canonical vanilla CSS resolves all private Tailwind variables, so no support file is emitted today. HTML emits one merged stylesheet for its complete bundled skin.
+Canonical framework CSS resolves all private Tailwind variables, so no support file is emitted today. Shared base styles, the selected theme, and extracted component styles are combined into one vanilla `styles.css`.
 
-Generated source lives at `packages/{react,html}/src/__generated__/skins/default-video/{tailwind,css}/`. The skin entry is `skin.tsx` or `skin.html`; React component items live under `components/<name>/`. HTML emits the flattened skin, one element-registration module, and styles at the style root. Generated source imports public `@videojs/react/icons[/<set>]` or `@videojs/html/icons/element[/<set>]` entry points; the registry does not synthesize icon modules.
+`pnpm generate:skins` creates two projections:
+
+- Framework packages receive one complete Skin module plus one vanilla stylesheet. React receives `skin.tsx`; HTML receives `skin.ts`, which contains element registrations and the rendered template. Child component modules and Tailwind inputs are not copied into framework packages.
+- `packages/skins/src/registry` receives individual React/Tailwind component sources, shared Tailwind resources, and a shadcn-compatible `registry.json` source manifest. Registry publication currently targets React and Tailwind only.
+
+The current framework destination is `packages/{react,html}/src/__generated__/skins/default-video/`, but `__generated__` is not an architectural contract. `generateSkins()` accepts explicit package roots and output directories; moving generated sources into exported preset directories changes target configuration rather than compiler or manifest code. `pnpm check:skins` performs the corresponding drift check.
 
 ## Class contracts
 
@@ -147,7 +148,6 @@ An implicitly or explicitly resolved semantic class may not silently acquire inc
 - Different recipes in one program produce a collision diagnostic.
 - A resolver may return `merge: true` to explicitly compose compatible recipes in one chunk.
 - A class cannot merge recipes across chunks.
-- A shared `StyleClassRegistry` rejects incompatible recipes across independently emitted programs.
 
 Names derived from token paths become public CSS API, so canonical tokens are flat semantic component or part names rather than structural keys such as `base`, `root`, or `popup`. Shared arrays remain implementation details; applied tokens include `playButton`, `slider`, `sliderTrack`, `tooltip`, and `volumePopover`. Registry tests audit representative selectors including `media-play-button`, `media-seek-button-icon-forward`, and `media-controls-group-primary`.
 

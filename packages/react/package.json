@@ -109,8 +109,6 @@
   },
   "scripts": {
     "build": "tsdown",
-    "generate:registry": "node --import tsx ./scripts/registry/generate.ts",
-    "check:registry": "node --import tsx ./scripts/registry/generate.ts --check",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm build:watch",
     "test": "vitest run",
@@ -132,11 +130,9 @@
   "devDependencies": {
     "@testing-library/react": "^16.3.0",
     "@types/react": "^19.2.17",
-    "@videojs/compiler": "workspace:*",
     "@videojs/icons": "workspace:*",
     "@videojs/skins": "workspace:*",
     "jsdom": "^26.1.0",
-    "lightningcss": "^1.32.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tsdown": "^0.22.14",
