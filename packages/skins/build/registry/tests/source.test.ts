@@ -1,6 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { dirname, join } from 'node:path';
+import { afterEach, describe, expect, it } from 'vitest';
 import { canonicalRoot, loadSkinCatalog } from '../../catalog/load';
+import type { ResolvedSkinCatalog } from '../../catalog/types';
 import { generateReactRegistry } from '../source';
+
+const roots: string[] = [];
+
+afterEach(() => {
+  for (const root of roots.splice(0)) rmSync(root, { recursive: true, force: true });
+});
 
 describe('generateReactRegistry', () => {
   it('derives source layouts from Skin item types', async () => {
@@ -30,4 +40,58 @@ describe('generateReactRegistry', () => {
     ).toBe(true);
     expect(output.dependencies['play-button']).toEqual(['@videojs/react']);
   });
+
+  it('emits private helper modules without promoting them to catalog items', async () => {
+    const root = setup({
+      'entry.tsx': `import { helper } from './helpers'; export function Entry(){ return <div>{helper}</div>; }`,
+      'helpers/index.ts': `import { createElement } from 'react'; export const helper = createElement;`,
+      'styles/tailwind.css': `@import "tailwindcss" theme(inline);\n@theme inline { --color-test: red; }\n@source "../";\n`,
+      'styles/base.css': `@layer videojs.base {}`,
+      'styles/theme.css': `@layer videojs.theme {}`,
+    });
+    const catalog: ResolvedSkinCatalog = {
+      resources: {
+        styles: {
+          tailwind: './styles/tailwind.css',
+          base: './styles/base.css',
+          themes: { default: './styles/theme.css' },
+        },
+      },
+      items: [
+        {
+          name: 'entry',
+          type: 'component',
+          source: './entry.tsx',
+          title: 'Entry',
+          description: 'Entry.',
+          dependencies: [],
+          sourceFiles: ['./entry.tsx', './helpers/index.ts'],
+          styleFiles: [],
+          symbols: {},
+        },
+      ],
+    };
+
+    const output = await generateReactRegistry(catalog, { rootDir: root, itemNames: ['entry'] });
+
+    expect(output.items.entry?.map((file) => file.path)).toEqual([
+      'components/entry/entry.tsx',
+      'components/entry/helpers/index.ts',
+    ]);
+    expect(output.items.entry?.find((file) => file.path.endsWith('entry.tsx'))?.content).toContain(
+      'from "./helpers/index"'
+    );
+    expect(output.dependencies.entry).toEqual(['react']);
+  });
 });
+
+function setup(files: Record<string, string>): string {
+  const root = mkdtempSync(join(tmpdir(), 'videojs-skins-registry-'));
+  roots.push(root);
+  for (const [file, source] of Object.entries(files)) {
+    const path = join(root, file);
+    mkdirSync(dirname(path), { recursive: true });
+    writeFileSync(path, source);
+  }
+  return root;
+}

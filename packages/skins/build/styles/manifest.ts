@@ -79,7 +79,7 @@ export function loadCatalogStyleManifest(
 ): Promise<SkinStyleManifest> {
   const files = new Set<string>();
   for (const itemName of options.itemNames) {
-    for (const file of resolveSkinClosure(catalog, itemName).files) {
+    for (const file of resolveSkinClosure(catalog, itemName).styleFiles) {
       files.add(resolve(options.rootDir, file));
     }
   }

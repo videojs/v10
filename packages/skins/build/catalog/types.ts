@@ -12,14 +12,11 @@ type SkinSymbols = Readonly<Record<string, readonly string[]>>;
 
 export type SkinItem = SkinDefinition | SkinComponent;
 
-export interface SkinDependencies {
-  itemNames: readonly string[];
-  symbols: SkinSymbols;
-}
-
 export type ResolvedSkinItem = SkinItem & {
-  files: readonly string[];
-  dependencies: SkinDependencies;
+  dependencies: readonly string[];
+  sourceFiles: readonly string[];
+  styleFiles: readonly string[];
+  symbols: SkinSymbols;
 };
 
 /** Authored Skin metadata enriched with source and dependency analysis. */
@@ -29,22 +26,8 @@ export interface ResolvedSkinCatalog {
 }
 
 export interface SkinClosure {
-  itemNames: readonly string[];
-  files: readonly string[];
+  items: readonly ResolvedSkinItem[];
+  sourceFiles: readonly string[];
+  styleFiles: readonly string[];
   symbols: SkinSymbols;
-}
-
-export interface SkinDiagnostic {
-  level: 'error';
-  code: string;
-  message: string;
-  plugin: 'videojs/skins';
-  file?: string | undefined;
-  line?: number | undefined;
-  column?: number | undefined;
-}
-
-export interface ResolveSkinCatalogResult {
-  catalog: ResolvedSkinCatalog;
-  diagnostics: readonly SkinDiagnostic[];
 }

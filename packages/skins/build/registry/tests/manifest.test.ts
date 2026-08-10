@@ -11,7 +11,7 @@ describe('generateReactRegistry', () => {
     const output = await generateReactRegistry(catalog, {
       rootDir: canonicalRoot,
       sourceRoot: skinRegistry.sourceRoot,
-      itemNames: resolveSkinClosure(catalog, skinRegistry.skin).itemNames,
+      itemNames: resolveSkinClosure(catalog, skinRegistry.skin).items.map((item) => item.name),
     });
     const entry = output.items['play-button']?.find((file) => file.path.endsWith('/play-button.tsx'));
     const registry = createRegistryManifest(catalog, output, skinRegistry);

@@ -87,7 +87,7 @@ async function generateSkins(options: GenerateSkinsOptions = {}): Promise<void> 
   const closure = resolveSkinClosure(catalog, skinRegistry.skin);
   const output = await generateReactRegistry(catalog, {
     rootDir: canonicalRoot,
-    itemNames: closure.itemNames,
+    itemNames: closure.items.map((item) => item.name),
     sourceRoot: skinRegistry.sourceRoot,
     installAlias: `@/${skinRegistry.installRoot}`,
   });

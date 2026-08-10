@@ -1,10 +1,8 @@
-import { existsSync } from 'node:fs';
 import { readFile } from 'node:fs/promises';
-import { basename, dirname, extname, posix, relative, resolve, sep } from 'node:path';
-import { transform } from '@videojs/compiler';
-import { collectModuleSpecifiers, rewriteModuleSpecifiers } from '@videojs/compiler/ast';
+import { basename, posix, resolve, sep } from 'node:path';
 import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinStyleResources } from '../catalog/types';
 import { createCompilerReactConfig } from '../compiler/react';
+import { emitReactModules, type ReactModuleLayout } from '../compiler/react-modules';
 import type { GeneratedFile } from '../output/files';
 import { loadCatalogStyleManifest, type SkinStyleManifest } from '../styles/manifest';
 
@@ -33,6 +31,7 @@ interface SkinItemLayout {
   itemDir: string;
   entryFile: string;
   inputFile: string;
+  modules: readonly ReactModuleLayout[];
 }
 
 interface SkinItemContext extends SkinItemLayout {
@@ -46,6 +45,11 @@ interface ResolvedRegistrySourceOptions {
   itemNames?: readonly string[] | undefined;
   iconSet: string;
   sourceRoot: string;
+}
+
+interface EmittedReactItem {
+  files: readonly RegistrySourceFile[];
+  dependencies: readonly string[];
 }
 
 /** Emit the editable React/Tailwind source projection consumed by the shadcn registry. */
@@ -63,9 +67,10 @@ export async function generateReactRegistry(
     itemNames: selected.map((layout) => layout.item.name),
   });
   const items: Record<string, RegistrySourceFile[]> = {};
+  const dependencies: Record<string, string[]> = {};
 
   for (const layout of selected) {
-    items[layout.item.name] = await emitReactItem(
+    const emitted = await emitReactItem(
       {
         ...layout,
         layoutsByInput,
@@ -74,12 +79,8 @@ export async function generateReactRegistry(
       },
       installAlias
     );
-  }
-
-  const dependencies: Record<string, string[]> = {};
-  for (const [itemName, files] of Object.entries(items)) {
-    files.sort((a, b) => a.path.localeCompare(b.path));
-    dependencies[itemName] = collectPackageDependencies(files);
+    items[layout.item.name] = [...emitted.files];
+    dependencies[layout.item.name] = [...emitted.dependencies];
   }
   return {
     sharedFiles: await createStyleResourceFiles(catalog.resources.styles, resolved),
@@ -122,16 +123,6 @@ function sourceEntryName(source: string): string {
   return basename(source);
 }
 
-function resolveSourceFile(inputFile: string, specifier: string): string {
-  const candidate = resolve(dirname(inputFile), specifier);
-  if (['.ts', '.tsx', '.mts', '.cts'].includes(extname(candidate))) return candidate;
-  for (const extension of ['.ts', '.tsx', '.mts', '.cts']) {
-    const fileName = `${candidate}${extension}`;
-    if (existsSync(fileName)) return fileName;
-  }
-  return candidate;
-}
-
 function withoutTypeScriptExtension(path: string): string {
   return path.replace(/\.(?:[cm]?ts|tsx)$/, '');
 }
@@ -152,11 +143,20 @@ function resolveOptions(options: GenerateReactRegistryOptions): ResolvedRegistry
 function createItemLayouts(catalog: ResolvedSkinCatalog, options: ResolvedRegistrySourceOptions): SkinItemLayout[] {
   return catalog.items.map((item) => {
     const itemDir = item.type === 'skin' ? options.sourceRoot : posix.join(options.sourceRoot, 'components', item.name);
+    const source = canonicalPath(item.source);
+    const entryFile = posix.join(itemDir, sourceEntryName(item.source));
     return {
       item,
       itemDir,
-      entryFile: posix.join(itemDir, sourceEntryName(item.source)),
+      entryFile,
       inputFile: absoluteSkinPath(options.rootDir, item.source),
+      modules: item.sourceFiles.map((file) => {
+        const path = canonicalPath(file);
+        return {
+          inputFile: absoluteSkinPath(options.rootDir, file),
+          outputFile: path === source ? entryFile : privateSourceOutput(itemDir, source, path),
+        };
+      }),
     };
   });
 }
@@ -169,17 +169,6 @@ function selectLayouts(layouts: readonly SkinItemLayout[], itemNames: readonly s
 
 function missingItem(name: string): never {
   throw new Error(`Skin generation references missing item \`${name}\`.`);
-}
-
-function collectPackageDependencies(files: readonly RegistrySourceFile[]): string[] {
-  const packages = new Set<string>();
-  for (const file of files) {
-    if (file.kind === 'style' || !/\.[cm]?[jt]sx?$/.test(file.path)) continue;
-    for (const specifier of collectModuleSpecifiers(file.content, file.path)) {
-      if (isPackageSpecifier(specifier)) packages.add(packageName(specifier));
-    }
-  }
-  return [...packages].sort();
 }
 
 function rewriteTailwindInput(source: string, inputFile: string): string {
@@ -219,57 +208,40 @@ function absoluteSkinPath(rootDir: string, path: string): string {
   return resolve(rootDir, path);
 }
 
-function packageName(specifier: string): string {
-  if (!specifier.startsWith('@')) return specifier.split('/')[0] ?? specifier;
-  return specifier.split('/').slice(0, 2).join('/');
-}
-
-function isPackageSpecifier(specifier: string): boolean {
-  return Boolean(specifier) && !specifier.startsWith('.') && !specifier.startsWith('@/') && !specifier.startsWith('~/');
-}
-
-async function emitReactItem(context: SkinItemContext, installAlias: string): Promise<RegistrySourceFile[]> {
-  const canonical = await readFile(context.inputFile, 'utf8');
-  const result = await transform(canonical, {
-    filename: context.inputFile,
+async function emitReactItem(context: SkinItemContext, installAlias: string): Promise<EmittedReactItem> {
+  const output = await emitReactModules({
+    rootDir: context.options.rootDir,
+    layouts: context.modules,
     config: createCompilerReactConfig({
       style: 'tailwind',
       styles: context.styles,
       iconSet: context.options.iconSet,
     }),
     configDir: resolve(context.options.rootDir, context.itemDir),
-    outputFile: resolve(context.options.rootDir, context.entryFile),
-  });
-  if (result.diagnostics.some((diagnostic) => diagnostic.level === 'error')) {
-    throw new Error(`Skin item \`${context.item.name}\` failed React source emission.`);
-  }
-
-  const entrySource = rewriteRelativeImports(result.code, context, installAlias);
-  return [createRegistrySourceFile(context.entryFile, entrySource)];
-}
-
-function rewriteRelativeImports(source: string, context: SkinItemContext, installAlias: string): string {
-  return rewriteModuleSpecifiers(source, {
-    filename: context.entryFile,
-    resolve(specifier) {
-      if (!specifier.startsWith('.')) return specifier;
-      const importedFile = resolveSourceFile(context.inputFile, specifier);
+    description: `Skin item \`${context.item.name}\``,
+    resolveRelativeImport({ importedFile, specifier, importer }) {
       const dependency = context.layoutsByInput.get(importedFile);
-      if (!existsSync(importedFile)) {
-        throw new Error(
-          `Skin item \`${context.item.name}\` has unresolved relative import \`${specifier}\` from \`${toPosixPath(
-            relative(context.options.rootDir, context.inputFile)
-          )}\`.`
-        );
-      }
       if (!dependency) {
         throw new Error(
           `Skin item \`${context.item.name}\` cannot map relative import \`${specifier}\` from \`${toPosixPath(
-            relative(context.options.rootDir, context.inputFile)
+            importer.inputFile
           )}\`.`
         );
       }
       return `${installAlias}/${dependency.item.name}/${withoutTypeScriptExtension(posix.basename(dependency.entryFile))}`;
     },
   });
+  return {
+    files: output.files.map((file) => createRegistrySourceFile(file.path, file.content)),
+    dependencies: output.dependencies,
+  };
+}
+
+function privateSourceOutput(itemDir: string, entrySource: string, source: string): string {
+  const relative = posix.relative(posix.dirname(entrySource), source);
+  return relative.startsWith('../') ? posix.join(itemDir, 'internal', source) : posix.join(itemDir, relative);
+}
+
+function canonicalPath(path: string): string {
+  return path.replace(/^\.\//, '');
 }

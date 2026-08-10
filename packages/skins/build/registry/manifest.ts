@@ -96,7 +96,7 @@ function partitionDependencies(
     included.add(name);
     const item = items.get(name);
     if (!item) throw new Error(`Skin item \`${root.name}\` depends on missing item \`${name}\`.`);
-    for (const dependency of item.dependencies.itemNames) visit(dependency);
+    for (const dependency of item.dependencies) visit(dependency);
   };
 
   visit(root.name);
