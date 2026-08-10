@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import type { CompilerPlugin } from '@videojs/compiler';
-import { readAccessPath, replaceJsxPropValue } from '@videojs/compiler/ast';
+import { collectReferencedIdentifiers, readAccessPath, replaceJsxPropValue } from '@videojs/compiler/ast';
 import ts from 'typescript';
 import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
 import { isGroupPeerMarker, recipeForToken, type SkinStyleManifest } from './manifest';
@@ -92,13 +92,8 @@ function stripStyleBindings(
   }
 
   const output = factory.updateSourceFile(sourceFile, statements);
-  const unresolved = new Set<string>();
   const styleNames = new Set([...bindings.styleImports.keys(), ...bindings.aliases.keys()]);
-  const visit = (node: ts.Node): void => {
-    if (ts.isIdentifier(node) && styleNames.has(node.text)) unresolved.add(node.text);
-    ts.forEachChild(node, visit);
-  };
-  ts.forEachChild(output, visit);
+  const unresolved = new Set([...collectReferencedIdentifiers(output)].filter((name) => styleNames.has(name)));
   if (unresolved.size > 0) {
     throw new Error(
       `Skin styles in \`${sourceFile.fileName}\` must use static className references. ` +

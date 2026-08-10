@@ -56,3 +56,4 @@ export {
   type RewriteModuleSpecifiersOptions,
   rewriteModuleSpecifiers,
 } from './utils/module-specifiers';
+export { collectReferencedIdentifiers } from './utils/references';

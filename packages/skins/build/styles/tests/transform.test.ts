@@ -61,6 +61,19 @@ describe('skinStyles', () => {
       )
     ).rejects.toThrow('must use static className references');
   });
+
+  it('ignores matching property names outside style references', async () => {
+    const result = await transform(
+      `import styles from './fixture.tailwind'; const value = { styles: true }; export const Example = () => <div className={styles.button}>{value.styles}</div>;`,
+      {
+        filename,
+        config: { target: jsx(), plugins: [skinStyles({ manifest, target: 'vanilla' })] },
+      }
+    );
+
+    expect(result.code).toContain('className="media-button"');
+    expect(result.code).toContain('value.styles');
+  });
 });
 
 function compileWithStyle(target: 'tailwind' | 'vanilla') {
