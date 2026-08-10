@@ -8,6 +8,13 @@ export type JsxElementLike = ts.JsxElement | ts.JsxSelfClosingElement;
 /** A JSX node that can be lifted into an element-valued prop. */
 export type JsxElementChild = JsxElementLike | ts.JsxFragment;
 
+/** One named JSX prop with an expression value and its owning element. */
+export interface JsxPropReference {
+  readonly element: JsxElementLike;
+  readonly attribute: ts.JsxAttribute;
+  readonly expression: ts.Expression;
+}
+
 export function isJsxElementLike(node: ts.Node): node is JsxElementLike {
   return ts.isJsxElement(node) || ts.isJsxSelfClosingElement(node);
 }
@@ -28,6 +35,33 @@ export function hasJsxSpreadAttribute(attributes: ts.JsxAttributes, name: string
     (property) =>
       ts.isJsxSpreadAttribute(property) && ts.isIdentifier(property.expression) && property.expression.text === name
   );
+}
+
+/** Read one named JSX prop whose value can be represented as an expression. */
+export function readJsxProp(element: JsxElementLike, name: string): JsxPropReference | undefined {
+  const attribute = findJsxAttribute(attributesOf(element), name);
+  if (!attribute) return undefined;
+  const expression = readJsxAttributeExpression(attribute);
+  return expression ? { element, attribute, expression } : undefined;
+}
+
+/** Replace the value of a prop returned by `readJsxProp`. */
+export function replaceJsxPropValue(
+  reference: JsxPropReference,
+  expression: ts.Expression,
+  factory: ts.NodeFactory
+): JsxElementLike {
+  const attribute = factory.updateJsxAttribute(
+    reference.attribute,
+    reference.attribute.name,
+    ts.isStringLiteral(expression) ? expression : factory.createJsxExpression(undefined, expression)
+  );
+  const attributes = attributesOf(reference.element);
+  const nextAttributes = factory.updateJsxAttributes(
+    attributes,
+    attributes.properties.map((property) => (property === reference.attribute ? attribute : property))
+  );
+  return updateJsxAttributes(reference.element, nextAttributes, factory);
 }
 
 export function singleJsxElementChild(children: readonly ts.JsxChild[]): JsxElementChild | null {
@@ -85,6 +119,14 @@ export function accessPath(
   return expression;
 }
 
+/** Read an identifier and property-access expression as path segments. */
+export function readAccessPath(expression: ts.Expression): readonly string[] | undefined {
+  if (ts.isIdentifier(expression)) return [expression.text];
+  if (!ts.isPropertyAccessExpression(expression) || expression.questionDotToken) return undefined;
+  const head = readAccessPath(expression.expression);
+  return head ? [...head, expression.name.text] : undefined;
+}
+
 export function propertyAccess(factory: ts.NodeFactory, expression: ts.Expression, property: string): ts.Expression {
   if (IDENTIFIER_NAME_RE.test(property)) {
     return factory.createPropertyAccessExpression(expression, property);
@@ -106,4 +148,32 @@ export function readStringAttribute(attributes: ts.JsxAttributes, name: string):
     }
   }
   return null;
+}
+
+function attributesOf(element: JsxElementLike): ts.JsxAttributes {
+  return ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
+}
+
+export function readJsxAttributeExpression(attribute: ts.JsxAttribute): ts.Expression | undefined {
+  const initializer = attribute.initializer;
+  if (!initializer) return undefined;
+  if (ts.isStringLiteral(initializer)) return initializer;
+  return ts.isJsxExpression(initializer) ? initializer.expression : undefined;
+}
+
+function updateJsxAttributes(
+  element: JsxElementLike,
+  attributes: ts.JsxAttributes,
+  factory: ts.NodeFactory
+): JsxElementLike {
+  if (ts.isJsxElement(element)) {
+    const opening = element.openingElement;
+    return factory.updateJsxElement(
+      element,
+      factory.updateJsxOpeningElement(opening, opening.tagName, opening.typeArguments, attributes),
+      element.children,
+      element.closingElement
+    );
+  }
+  return factory.updateJsxSelfClosingElement(element, element.tagName, element.typeArguments, attributes);
 }

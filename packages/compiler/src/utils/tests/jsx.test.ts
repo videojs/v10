@@ -6,7 +6,10 @@ import {
   hasJsxSpreadAttribute,
   isJsxElementLike,
   propertyAccess,
+  readAccessPath,
+  readJsxProp,
   readStringAttribute,
+  replaceJsxPropValue,
   singleJsxChildExpression,
   singleJsxElementChild,
 } from '../jsx';
@@ -23,6 +26,24 @@ describe('JSX attribute utilities', () => {
     expect(readStringAttribute(attributes, 'empty')).toBe('');
     expect(readStringAttribute(attributes, 'dynamic')).toBeNull();
     expect(readStringAttribute(attributes, 'missing')).toBeUndefined();
+  });
+
+  it('reads and replaces prop values on paired and self-closing elements', () => {
+    for (const source of ['<div className={styles.root}></div>', '<span className={styles.label} />']) {
+      const element = firstJsxElement(source);
+      const prop = readJsxProp(element, 'className');
+      if (!prop) throw new Error('Expected a className prop.');
+
+      expect(readAccessPath(prop.expression)).toEqual(['styles', source.startsWith('<div') ? 'root' : 'label']);
+      const replacement = replaceJsxPropValue(prop, ts.factory.createStringLiteral('media-root'), ts.factory);
+      expect(ts.createPrinter().printNode(ts.EmitHint.Unspecified, replacement, element.getSourceFile())).toContain(
+        'className="media-root"'
+      );
+    }
+  });
+
+  it('does not read bare props as expression values', () => {
+    expect(readJsxProp(firstJsxElement('<Root disabled />'), 'disabled')).toBeUndefined();
   });
 });
 
@@ -74,6 +95,22 @@ describe('propertyAccess', () => {
     const expression = propertyAccess(ts.factory, ts.factory.createIdentifier('values'), 'poster-image');
     expect(ts.isElementAccessExpression(expression)).toBe(true);
     expect((expression as ts.ElementAccessExpression).argumentExpression).toMatchObject({ text: 'poster-image' });
+  });
+
+  it('reads static access paths and rejects optional access', () => {
+    expect(readAccessPath(propertyAccess(ts.factory, ts.factory.createIdentifier('styles'), 'button'))).toEqual([
+      'styles',
+      'button',
+    ]);
+    expect(
+      readAccessPath(
+        ts.factory.createPropertyAccessChain(
+          ts.factory.createIdentifier('styles'),
+          ts.factory.createToken(ts.SyntaxKind.QuestionDotToken),
+          'button'
+        )
+      )
+    ).toBeUndefined();
   });
 });
 

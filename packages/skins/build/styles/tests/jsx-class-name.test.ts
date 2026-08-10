@@ -1,6 +1,6 @@
 import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { readClassName, rewriteClassName } from '../jsx-class-name';
+import { readClassName } from '../jsx-class-name';
 
 describe('readClassName', () => {
   it('reads literal and dotted token segments in order', () => {
@@ -27,13 +27,6 @@ describe('readClassName', () => {
   });
 });
 
-describe('rewriteClassName', () => {
-  it('rewrites className on paired and self-closing elements', () => {
-    expect(rewrite(`<div className={styles.root}></div>`)).toContain('<div className="media-root"></div>');
-    expect(rewrite(`<span className={styles.label} />`)).toContain('<span className="media-root"/>');
-  });
-});
-
 function read(source: string) {
   const sourceFile = ts.createSourceFile('test.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
   let element: ts.JsxElement | ts.JsxSelfClosingElement | undefined;
@@ -46,10 +39,4 @@ function read(source: string) {
   const info = readClassName(element);
   if (!info) throw new Error('Expected a className attribute.');
   return info;
-}
-
-function rewrite(source: string): string {
-  const info = read(source);
-  const element = rewriteClassName(info, ts.factory.createStringLiteral('media-root'), ts.factory);
-  return ts.createPrinter().printNode(ts.EmitHint.Unspecified, element, element.getSourceFile());
 }

@@ -1,14 +1,8 @@
 import { dirname, resolve } from 'node:path';
 import type { CompilerPlugin } from '@videojs/compiler';
+import { readAccessPath, replaceJsxPropValue } from '@videojs/compiler/ast';
 import ts from 'typescript';
-import {
-  type ClassNameInfo,
-  type ClassNameSegment,
-  classNameSegment,
-  readClassName,
-  readDottedPath,
-  rewriteClassName,
-} from './jsx-class-name';
+import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
 import { isGroupPeerMarker, recipeForToken, type SkinStyleManifest } from './manifest';
 
 export type SkinStyleTarget = 'tailwind' | 'vanilla';
@@ -126,7 +120,7 @@ function transformStyleAttribute(
     if (!whenTrue || !whenFalse || whenTrue.passThrough.length > 0 || whenFalse.passThrough.length > 0) {
       return info.element;
     }
-    return rewriteClassName(
+    return replaceJsxPropValue(
       info,
       factory.updateConditionalExpression(
         info.expression,
@@ -148,7 +142,7 @@ function transformStyleAttribute(
     resolved.passThrough.length === 0
       ? literal
       : factory.createArrayLiteralExpression([literal, ...resolved.passThrough]);
-  return rewriteClassName(info, replacement, factory);
+  return replaceJsxPropValue(info, replacement, factory);
 }
 
 function resolveExpression(
@@ -221,7 +215,7 @@ function sourceBindings(sourceFile: ts.SourceFile, manifest: SkinStyleManifest):
     if (!ts.isVariableStatement(statement)) continue;
     for (const declaration of statement.declarationList.declarations) {
       if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
-      const path = readDottedPath(declaration.initializer);
+      const path = readAccessPath(declaration.initializer);
       if (!path) continue;
       const reference = resolveTokenReference(path, { styleImports, aliases });
       if (reference) aliases.set(declaration.name.text, reference);

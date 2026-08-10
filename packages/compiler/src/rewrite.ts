@@ -8,6 +8,8 @@ import {
   hasJsxAttribute,
   hasJsxSpreadAttribute,
   isJsxElementLike as isJsxNodeLike,
+  readAccessPath,
+  readJsxAttributeExpression,
   singleJsxChildExpression,
 } from './utils/jsx';
 import { insertStatementsAfterImports } from './utils/source-file';
@@ -795,7 +797,7 @@ function editJsxProp(options: JsxPropEditOptions): CompilerTransform {
       let changed = false;
       const properties = attrs.properties.map((property) => {
         if (!ts.isJsxAttribute(property)) return property;
-        const value = readPropValue(property);
+        const value = readJsxAttributeExpression(property);
         if (!value) return property;
         const propContext: JsxPropContext = { element: next, prop: property, value, factory };
         if (!options.when(property, propContext)) return property;
@@ -1285,26 +1287,11 @@ function createJsxProps(spec: JsxPropsSpec, factory: ts.NodeFactory): (ts.JsxAtt
 }
 
 function heritageTypeName(type: ts.ExpressionWithTypeArguments): string | undefined {
-  return expressionName(type.expression);
-}
-
-function expressionName(expression: ts.Expression): string | undefined {
-  if (ts.isIdentifier(expression)) return expression.text;
-  if (!ts.isPropertyAccessExpression(expression)) return undefined;
-  const left = expressionName(expression.expression);
-  return left ? `${left}.${expression.name.text}` : undefined;
+  return readAccessPath(type.expression)?.join('.');
 }
 
 function bindingElementName(element: ts.BindingElement): string | undefined {
   if (ts.isIdentifier(element.name)) return element.name.text;
-  return undefined;
-}
-
-function readPropValue(prop: ts.JsxAttribute): ts.Expression | undefined {
-  const init = prop.initializer;
-  if (!init) return undefined;
-  if (ts.isStringLiteral(init)) return init;
-  if (ts.isJsxExpression(init) && init.expression) return init.expression;
   return undefined;
 }
 
@@ -1323,7 +1310,7 @@ function readJsxProp(value: unknown, context: unknown): ts.JsxAttribute | undefi
 function readJsxPropValue(value: unknown, context: unknown): ts.Expression | undefined {
   if (isObject(context) && isNode(context.value) && ts.isExpression(context.value)) return context.value;
   const prop = readJsxProp(value, context);
-  return prop ? readPropValue(prop) : undefined;
+  return prop ? readJsxAttributeExpression(prop) : undefined;
 }
 
 function readInterface(value: unknown, context: unknown): ts.InterfaceDeclaration | undefined {

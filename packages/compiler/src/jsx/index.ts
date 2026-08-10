@@ -2,9 +2,13 @@ export { type JsxTargetOptions, jsx } from '../config';
 export type { ImportRef } from '../transforms/imports';
 export {
   accessPath,
+  type JsxPropReference,
   jsxExpression,
   propertyAccess,
+  readAccessPath,
+  readJsxProp,
   readStringAttribute,
+  replaceJsxPropValue,
   singleJsxElementChild,
 } from '../utils/jsx';
 export { hasChild } from './matchers/has-child';
