@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import type { DrmSystemsConfig } from '../../../core/drm';
 import { MediaError } from '../../../core/media-error';
 import { NativeHlsDrmErrors } from '../fairplay';
 import { NativeHlsMedia } from '../index';
@@ -140,14 +141,12 @@ function stubFetch() {
 }
 
 /**
- * Only FairPlay is typed, since it is the only system Safari negotiates, but an
- * hls.js `drmSystems` naming the rest can be shared with a native source — so
- * the helper takes what reaches the mixin at runtime.
+ * Licensed the standard way, through `source.drm`. Systems only an MSE engine
+ * can negotiate are welcome there — one source describes every path — so the
+ * helper takes whatever a caller would name.
  */
 function setup(
-  drmSystems: Record<string, { licenseUrl: string; serverCertificateUrl?: string }> | null = {
-    'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL },
-  }
+  drm: DrmSystemsConfig | null = { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } }
 ) {
   const video = document.createElement('video');
   document.body.append(video);
@@ -156,7 +155,7 @@ function setup(
   media.attach(video);
   media.source = {
     src: 'https://example.test/protected.m3u8',
-    ...(drmSystems && { engine: { nativeHls: { drmSystems } } }),
+    ...(drm && { drm }),
   };
 
   const errors = vi.fn();
@@ -187,19 +186,42 @@ afterEach(() => {
 });
 
 describe('NativeHlsMediaDrmMixin', () => {
-  it('carries `source.engine` across an `src` assignment', () => {
+  it('carries the DRM configuration across an `src` assignment', () => {
     const { media } = setup();
 
     media.src = 'https://example.test/other.m3u8';
 
     expect(media.source).toEqual({
-      engine: {
-        nativeHls: {
-          drmSystems: { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
-        },
-      },
+      drm: { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
       src: 'https://example.test/other.m3u8',
     });
+  });
+
+  it('licenses from `engine.nativeHls.drmSystems` where the native path names its own', async () => {
+    const nativeLicense = 'https://license.test/native-fairplay';
+    const { session } = stubKeySystem();
+    const video = document.createElement('video');
+    document.body.append(video);
+
+    const media = new NativeHlsMedia();
+    media.attach(video);
+    video.setMediaKeys = vi.fn(async () => {});
+    media.source = {
+      src: 'https://example.test/protected.m3u8',
+      drm: { 'com.apple.fps': { licenseUrl: LICENSE_URL, serverCertificateUrl: CERTIFICATE_URL } },
+      engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: nativeLicense } } } },
+    };
+
+    fireKeyRequest(video);
+    await settle();
+
+    session.dispatch(Object.assign(new Event('message'), { message: new Uint8Array([5, 5]).buffer }));
+    await settle();
+
+    // The escape hatch replaces `source.drm` rather than merging with it, so no
+    // certificate is fetched either.
+    expect(fetchMock).not.toHaveBeenCalledWith(CERTIFICATE_URL, expect.anything());
+    expect(fetchMock).toHaveBeenCalledWith(nativeLicense, expect.objectContaining({ method: 'POST' }));
   });
 
   it('exchanges the SPC for a license and updates the session', async () => {
@@ -236,10 +258,7 @@ describe('NativeHlsMediaDrmMixin', () => {
 
     // Same manifest, new license server: nothing reloads, so the key system the
     // CDM is holding has to pick the change up on its own.
-    media.source = {
-      src: media.src,
-      engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: rotated } } } },
-    };
+    media.source = { src: media.src, drm: { 'com.apple.fps': { licenseUrl: rotated } } };
 
     session.dispatch(Object.assign(new Event('message'), { message: new Uint8Array([5, 5]).buffer }));
     await settle();

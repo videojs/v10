@@ -251,6 +251,53 @@ describe('HlsJsMedia', () => {
     }
 
     const drmEngine = { emeEnabled: true, drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } };
+    const drm = {
+      'com.apple.fps': { licenseUrl: FAIRPLAY_LICENSE, serverCertificateUrl: 'https://license.test/appcert' },
+      'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE },
+    };
+
+    it('licenses the hls.js engine from `source.drm`', () => {
+      const { media } = setupMse({ drm });
+
+      // hls.js takes the same shape, and only negotiates keys while EME is on.
+      expect(media.engine!.config.emeEnabled).toBe(true);
+      expect(media.engine!.config.drmSystems).toEqual(drm);
+    });
+
+    it('leaves EME alone when `source.drm` names nothing', () => {
+      const { media } = setupMse({ drm: {} });
+      expect(media.engine!.config.emeEnabled).toBe(false);
+    });
+
+    it('describes licensing without acting on it for an explicit `emeEnabled: false`', () => {
+      const { media } = setupMse({ drm, engine: { hlsJs: { emeEnabled: false } } });
+
+      expect(media.engine!.config.emeEnabled).toBe(false);
+      expect(media.engine!.config.drmSystems).toEqual(drm);
+    });
+
+    it('lets `engine.hlsJs.drmSystems` replace `source.drm`', () => {
+      const { media } = setupMse({ drm, engine: { hlsJs: { drmSystems: drmEngine.drmSystems } } });
+
+      // An escape hatch replaces what it is an escape from, rather than merging:
+      // the FairPlay server named in `drm` is gone.
+      expect(media.engine!.config.drmSystems).toEqual({ 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } });
+      expect(media.engine!.config.emeEnabled).toBe(true);
+    });
+
+    it('recreates the engine when a `source.drm` license server changes', () => {
+      const { media } = setupMse({ drm });
+      const engine = media.engine;
+
+      // Same license servers in a new object (e.g. an inline React prop).
+      media.source = { src: media.src, drm: { ...drm } };
+      media.load();
+      expect(media.engine).toBe(engine);
+
+      media.source = { src: media.src, drm: { 'com.widevine.alpha': { licenseUrl: 'https://other.test/widevine' } } };
+      media.load();
+      expect(media.engine).not.toBe(engine);
+    });
 
     it('hands DRM options straight to the hls.js engine', () => {
       const { media } = setupMse({ engine: { hlsJs: drmEngine } });
@@ -301,7 +348,7 @@ describe('HlsJsMedia', () => {
       });
     });
 
-    it('warns when native playback is taken and only hls.js DRM is configured', () => {
+    it('warns when native playback is taken and no FairPlay server is named', () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
       const { media } = setup();
@@ -309,7 +356,50 @@ describe('HlsJsMedia', () => {
       media.load();
 
       expect(media.engine).toBeNull();
-      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.engine.nativeHls.drmSystems`'));
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.drm`'));
+    });
+
+    it('hands `source.drm` to the native delegate', async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));
+      vi.stubGlobal('navigator', { ...navigator, requestMediaKeySystemAccess });
+
+      const { media, video } = setup();
+      // Every system named, as a source describing both paths would: the native
+      // delegate takes the FairPlay entry and leaves the rest to an MSE engine.
+      media.source = { ...media.source, drm };
+      media.load();
+
+      // jsdom has no `MediaEncryptedEvent`; only these two fields are read.
+      video.dispatchEvent(Object.assign(new Event('encrypted'), { initDataType: 'skd', initData: new ArrayBuffer(8) }));
+      await Promise.resolve();
+
+      expect(media.engine).toBeNull();
+      expect(warn).not.toHaveBeenCalled();
+      expect(requestMediaKeySystemAccess).toHaveBeenCalledWith('com.apple.fps', expect.any(Array));
+    });
+
+    it('recreates the native delegate when `source.drm` changes', () => {
+      const { media, video } = setup();
+      media.source = { ...media.source, drm };
+      media.load();
+
+      fireDurationChange(video, Infinity);
+      expect(media.streamType).toBe('live');
+
+      const handler = vi.fn();
+      media.addEventListener('streamtypechange', handler);
+
+      media.source = { ...media.source, drm: { ...drm } };
+      media.load();
+      // Structurally equal, so the delegate playing it is left alone.
+      expect(handler).not.toHaveBeenCalled();
+
+      media.source = { ...media.source, drm: { 'com.apple.fps': { licenseUrl: 'https://other.test/fairplay' } } };
+      media.load();
+
+      // Teardown `live` → `unknown`, then the new delegate re-detects `live`.
+      expect(handler).toHaveBeenCalledTimes(2);
     });
 
     it('hands `nativeHls` to the native delegate', async () => {

@@ -1,9 +1,10 @@
 import { deepEqual } from '@videojs/utils/object';
 import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
+import { type DrmSystemsConfig, KeySystems } from '../../core/drm';
 
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
-import { FAIRPLAY_KEY_SYSTEM, type NativeHlsConfig, NativeHlsMedia } from '../native-hls';
+import { type NativeHlsConfig, NativeHlsMedia, type NativeHlsSource } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsOnlyMedia } from './hls-js-only';
 
@@ -55,6 +56,15 @@ export interface HlsSource {
    */
   preferPlayback?: PlaybackType | undefined;
   /**
+   * License servers for protected content, keyed by EME key system id.
+   *
+   * Engine neutral, because which engine plays is decided later: hls.js is
+   * handed every system named here (with EME switched on), and native playback
+   * negotiates the `com.apple.fps` entry itself. Name every system you hold a
+   * license server for — which one is used is the browser's choice.
+   */
+  drm?: DrmSystemsConfig | undefined;
+  /**
    * Playback options, keyed by the engine that reads them. Only one of the two
    * engines below ends up playing, and each reads only its own key.
    */
@@ -64,15 +74,16 @@ export interface HlsSource {
 /** The engines an HLS source can configure. */
 export interface HlsEngineConfig {
   /**
-   * hls.js's own configuration, passed through untouched. DRM-protected MSE
-   * playback is configured here, through `emeEnabled` and `drmSystems`.
+   * hls.js's own configuration, passed through untouched. A `drmSystems` of its
+   * own replaces `source.drm` for hls.js — an escape hatch for licensing MSE
+   * playback differently, or for the parts of hls.js's DRM configuration
+   * `source.drm` does not cover.
    */
   hlsJs?: Partial<HlsJsConfig> | undefined;
   /**
    * Options for the browser's own HLS playback, used whenever the native path
-   * is the one taken. DRM lives here too: Safari negotiates FairPlay itself and
-   * never sees the hls.js configuration. `nativeHls.drmSystems` takes the same
-   * shape as the hls.js one, so both paths can share a single object.
+   * is the one taken. Its `drmSystems` replaces `source.drm` for that path in
+   * the same way.
    */
   nativeHls?: NativeHlsConfig | undefined;
 }
@@ -172,10 +183,11 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   set src(src: string) {
     // `src` says which source to play; every other field says how to play it, so
     // they carry over.
-    const { type, preferPlayback, engine } = this.#source ?? {};
+    const { type, preferPlayback, drm, engine } = this.#source ?? {};
     const next: HlsSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
+      ...(drm && { drm }),
       ...(engine && { engine }),
       ...(src && { src }),
     };
@@ -283,14 +295,14 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       // Read the stored source, not the `source` getter: subclasses override the
       // getter to return what was assigned to them, while the fields below come
       // from what they resolved and handed down (Mux fills in the DRM options).
-      const { type, preferPlayback, engine } = this.#source ?? {};
+      const { type, preferPlayback, drm, engine } = this.#source ?? {};
       const { hlsJs, nativeHls } = engine ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
 
       this.#delegate = useMse
-        ? new HlsJsOnlyMedia({ config: { ...hlsJs } })
-        : this.#createNativeDelegate(nativeHls, hlsJs);
+        ? new HlsJsOnlyMedia({ config: withDrmSystems(hlsJs, drm) })
+        : this.#createNativeDelegate(drm, nativeHls, hlsJs);
 
       bridgeEvents(this.#delegate, this);
 
@@ -314,19 +326,34 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   }
 
   /**
-   * A native delegate carrying the native half of the source. Its `src` is
-   * assigned separately, once the delegate is wired up, and carries what is
-   * set here forward.
+   * A native delegate carrying the native half of the source — the DRM
+   * configuration and the native engine options, which it applies the same
+   * precedence to. Its `src` is assigned separately, once the delegate is wired
+   * up, and carries what is set here forward.
    */
-  #createNativeDelegate(nativeHls: NativeHlsConfig | undefined, hlsJs: Partial<HlsJsConfig> | undefined) {
-    if (__DEV__ && hlsJs?.emeEnabled && !nativeHls?.drmSystems?.[FAIRPLAY_KEY_SYSTEM]) {
+  #createNativeDelegate(
+    drm: DrmSystemsConfig | undefined,
+    nativeHls: NativeHlsConfig | undefined,
+    hlsJs: Partial<HlsJsConfig> | undefined
+  ) {
+    // The delegate applies the same precedence, so the warning has to read what
+    // it will end up licensing against.
+    const drmSystems = nativeHls?.drmSystems ?? drm;
+    const isProtected = hlsJs?.emeEnabled || hlsJs?.drmSystems || Object.keys(drmSystems ?? {}).length > 0;
+
+    if (__DEV__ && isProtected && !drmSystems?.[KeySystems.FAIRPLAY]) {
       console.warn(
-        `[vjs-drm] Native HLS playback reads \`source.engine.nativeHls.drmSystems\` rather than the hls.js one, and no \`${FAIRPLAY_KEY_SYSTEM}\` license server is configured there. DRM-protected media will not play.`
+        `[vjs-drm] Native HLS playback negotiates FairPlay itself and never sees the hls.js DRM configuration, and no \`${KeySystems.FAIRPLAY}\` license server is named in \`source.drm\`. DRM-protected media will not play.`
       );
     }
 
     const media = new NativeHlsMedia();
-    if (nativeHls) media.source = { engine: { nativeHls } };
+    const source: NativeHlsSource = {
+      ...(drm && { drm }),
+      ...(nativeHls && { engine: { nativeHls } }),
+    };
+
+    if (Object.keys(source).length > 0) media.source = source;
     return media;
   }
 
@@ -352,8 +379,8 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
    * the object identity did.
    */
   #engineConfigKey() {
-    const { type, preferPlayback, engine } = this.#source ?? {};
-    return { engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
+    const { type, preferPlayback, drm, engine } = this.#source ?? {};
+    return { drm, engine, preferPlayback, contentType: type ?? inferContentType(this.src) };
   }
 
   #engineDestroy() {
@@ -364,6 +391,27 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     // Delegate teardown already emits `streamtypechange` (bridged); only sync cache.
     if (!this.#isUserStreamType) this.#streamType = StreamTypes.UNKNOWN;
   }
+}
+
+/**
+ * hls.js configuration with the source's DRM licensing folded in. hls.js takes
+ * `drmSystems` in the same shape as `source.drm`, so the standardized config is
+ * what it plays from unless `engine.hlsJs` names servers of its own.
+ *
+ * hls.js runs key exchange only while `emeEnabled` is set, so configured DRM
+ * switches it on — short of an explicit `emeEnabled: false`, which stays a way
+ * to describe a source's licensing without acting on it.
+ */
+function withDrmSystems(
+  hlsJs: Partial<HlsJsConfig> | undefined,
+  drm: DrmSystemsConfig | undefined
+): Partial<HlsJsConfig> {
+  const drmSystems = hlsJs?.drmSystems ?? drm;
+  if (!drmSystems || Object.keys(drmSystems).length === 0) return { ...hlsJs };
+
+  // hls.js declares `serverCertificateUrl` without `undefined`, which an
+  // omittable property here is allowed to carry. The values are the same.
+  return { emeEnabled: true, ...hlsJs, drmSystems: drmSystems as HlsJsConfig['drmSystems'] };
 }
 
 function inferContentType(src: string): SourceType {

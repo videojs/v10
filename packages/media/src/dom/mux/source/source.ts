@@ -2,12 +2,13 @@
  * The Mux source: playback identity, the params that modify it, and the URLs
  * derived from both. Engine-neutral on purpose — every Mux Media needs it, and
  * they don't share an engine. Nothing here may reach for a specific one
- * (hls.js's license-server shaping lives in `../drm.ts`), because
- * `@videojs/spf` imports this module for its own Mux Media.
+ * (license-server derivation lives in `../drm.ts`, for the engines that
+ * license), because `@videojs/spf` imports this module for its own Mux Media.
  */
 import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
+import type { DrmSystemsConfig } from '../../../core/drm';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -84,7 +85,12 @@ export interface MuxStoryboardParams {
   [param: string]: string | number | undefined;
 }
 
-export interface MuxDrmParams {
+/**
+ * Mux's DRM authoring input: a license token, in place of the license servers
+ * `source.drm` normally names. Servers named outright alongside it still win,
+ * key by key, for content Mux does not license.
+ */
+export interface MuxDrmParams extends DrmSystemsConfig {
   /**
    * DRM license token: a JWT signed for the playback ID with the DRM (`d`)
    * audience. Mux derives every license server URL from it, so it is the only
@@ -110,6 +116,7 @@ export interface MuxSourceBase {
   playback?: MuxPlaybackParams | undefined;
   poster?: MuxPosterParams | undefined;
   storyboard?: MuxStoryboardParams | undefined;
+  /** License servers keyed by key system, or a Mux license `token` to derive them from. */
   drm?: MuxDrmParams | undefined;
 }
 

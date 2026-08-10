@@ -483,6 +483,28 @@ describe('MuxMedia', () => {
       expect(fetchMock).not.toHaveBeenCalled();
     });
 
+    it('lets a license server named alongside the token replace the derived one', async () => {
+      const media = setupMse();
+      media.source = {
+        playbackId: 'abc123',
+        drm: { token: DRM_TOKEN, 'com.widevine.alpha': { licenseUrl: 'https://drm.example/widevine' } },
+      };
+      await flushLoad();
+
+      // `drm` is the standard shape with a Mux token folded in, so the two mix:
+      // Widevine is licensed by the caller, the rest by Mux.
+      expect(media.engine!.config.drmSystems).toEqual({
+        'com.apple.fps': {
+          licenseUrl: `https://license.mux.com/license/fairplay/abc123?token=${DRM_TOKEN}`,
+          serverCertificateUrl: `https://license.mux.com/appcert/fairplay/abc123?token=${DRM_TOKEN}`,
+        },
+        'com.widevine.alpha': { licenseUrl: 'https://drm.example/widevine' },
+        'com.microsoft.playready': {
+          licenseUrl: `https://license.mux.com/license/playready/abc123?token=${DRM_TOKEN}`,
+        },
+      });
+    });
+
     it('lets an explicit hlsJs.drmSystems override the derived one', async () => {
       const media = setupMse();
       media.source = {

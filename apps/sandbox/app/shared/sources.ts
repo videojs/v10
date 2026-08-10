@@ -40,8 +40,9 @@ const DRM_TOKENS = {
 
 /**
  * License servers for the DRM asset below, named outright rather than derived
- * from a Mux token. Both engines take the same shape, so one object configures
- * either — native HLS reads the FairPlay entry and ignores the rest.
+ * from a Mux token. `source.drm` is engine neutral, so naming every system here
+ * licenses whichever path the browser takes — native HLS reads the FairPlay
+ * entry and leaves the rest to hls.js.
  */
 const DRM_SYSTEMS = {
   'com.apple.fps': {
@@ -124,26 +125,16 @@ const SOURCE_MAP = {
     },
   },
   'hls-drm': {
-    // The same asset, licensed the generic way: each engine's own configuration,
-    // naming the license servers outright. Works on any hls.js-backed element,
-    // and shows what the per-engine source options still reach.
-    label: 'HLS - DRM protected (engine config)',
+    // The same asset, licensed the generic way: `source.drm` naming the license
+    // servers outright. Works on any HLS element, whichever path it takes.
+    label: 'HLS - DRM protected (license servers)',
     type: 'hls',
     subType: 'mp4',
     drm: true,
     poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
     source: {
       src: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
-      engine: {
-        hlsJs: {
-          // hls.js only listens for `encrypted` when EME is switched on.
-          emeEnabled: true,
-          drmSystems: DRM_SYSTEMS,
-        },
-        // Safari negotiates FairPlay itself when it plays the manifest, and never
-        // sees the hls.js configuration above, so the native path is named too.
-        nativeHls: { drmSystems: DRM_SYSTEMS },
-      },
+      drm: DRM_SYSTEMS,
     },
   },
   'hls-live': {

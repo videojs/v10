@@ -1,9 +1,9 @@
 import type { WebKitVideoElement } from '@videojs/utils/dom';
+import { KeySystems } from '../../core/drm';
 import {
   createDrmError,
   FAIRPLAY_CONTENT_TYPE,
   FAIRPLAY_INIT_DATA_TYPE,
-  FAIRPLAY_KEY_SYSTEM,
   type FairPlayContext,
   type FairPlayKeySystem,
   NativeHlsDrmErrors,
@@ -53,7 +53,7 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
   async function createKeys(): Promise<MediaKeys> {
     let access: MediaKeySystemAccess;
     try {
-      access = await navigator.requestMediaKeySystemAccess(FAIRPLAY_KEY_SYSTEM, [FAIRPLAY_CONFIGURATION]);
+      access = await navigator.requestMediaKeySystemAccess(KeySystems.FAIRPLAY, [FAIRPLAY_CONFIGURATION]);
     } catch (cause) {
       throw toDrmError(cause, NativeHlsDrmMessages.UNSUPPORTED_KEY_SYSTEM, NativeHlsDrmErrors.UNSUPPORTED_KEY_SYSTEM);
     }

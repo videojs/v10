@@ -1,17 +1,15 @@
 import { isWebKitAirPlayCapable } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 
+import { type DrmSystemConfig, type DrmSystemsConfig, KeySystems } from '../../core/drm';
 import { MediaError } from '../../core/media-error';
 import type { NativeMediaHost } from './errors';
 import {
   createDrmError,
-  FAIRPLAY_KEY_SYSTEM,
   type FairPlayContext,
   type FairPlayKeySystem,
   NativeHlsDrmErrors,
   NativeHlsDrmMessages,
-  type NativeHlsDrmSystemConfig,
-  type NativeHlsDrmSystemsConfig,
 } from './fairplay';
 import { createFairPlayEme } from './fairplay-eme';
 import { createFairPlayWebKit } from './fairplay-webkit';
@@ -22,14 +20,15 @@ import { createFairPlayWebKit } from './fairplay-webkit';
  */
 export type NativeHlsDrmHost = NativeMediaHost & {
   readonly source: {
-    engine?: { nativeHls?: { drmSystems?: NativeHlsDrmSystemsConfig | undefined } | undefined } | undefined;
+    drm?: DrmSystemsConfig | undefined;
+    engine?: { nativeHls?: { drmSystems?: DrmSystemsConfig | undefined } | undefined } | undefined;
   } | null;
   setError(error: MediaError): void;
 };
 
 /**
- * Play DRM-protected HLS natively, configured by
- * `source.engine.nativeHls.drmSystems`.
+ * Play DRM-protected HLS natively, configured by `source.drm` (or, where the
+ * native path needs licensing of its own, `source.engine.nativeHls.drmSystems`).
  *
  * Native HLS has no JS engine to hand key exchange to, so this mixin does it
  * against the media element directly: it answers the element's key requests by
@@ -102,21 +101,31 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       }
     }
 
+    /**
+     * The license servers in effect: `source.drm`, or the native engine's own
+     * `drmSystems` where one is named — an escape hatch replaces what it is an
+     * escape from rather than merging with it.
+     */
+    #drmSystems(): DrmSystemsConfig {
+      const { drm, engine } = this.source ?? {};
+      return engine?.nativeHls?.drmSystems ?? drm ?? {};
+    }
+
     #serve(event: MediaEncryptedEvent, fromWebKit: boolean): void {
       if (fromWebKit !== this.#useWebKit) return;
 
       const media = this.target as HTMLVideoElement | null;
-      const drmSystems = this.source?.engine?.nativeHls?.drmSystems;
-      const config = drmSystems?.[FAIRPLAY_KEY_SYSTEM];
+      const drmSystems = this.#drmSystems();
+      const config = drmSystems[KeySystems.FAIRPLAY];
       if (!media) return;
 
       if (!config?.licenseUrl) {
-        if (__DEV__ && drmSystems && Object.keys(drmSystems).length > 0) {
-          // Sharing one `drmSystems` object with hls.js is the point of the
-          // shape, so a config naming only the systems MSE reaches is an easy
+        if (__DEV__ && Object.keys(drmSystems).length > 0) {
+          // One DRM configuration describing every system is the point of the
+          // shape, so a source naming only the systems MSE reaches is an easy
           // mistake to make and looks configured from the outside.
           console.warn(
-            `[vjs-drm] Native HLS negotiates FairPlay only, and \`source.engine.nativeHls.drmSystems\` names no \`${FAIRPLAY_KEY_SYSTEM}\` license server.`
+            `[vjs-drm] Native HLS negotiates FairPlay only, and this source names no \`${KeySystems.FAIRPLAY}\` license server.`
           );
         }
 
@@ -140,7 +149,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       });
     }
 
-    #createKeySystem(media: HTMLVideoElement, config: NativeHlsDrmSystemConfig) {
+    #createKeySystem(media: HTMLVideoElement, config: DrmSystemConfig) {
       const disconnect = new AbortController();
 
       // The key system outlives the object the source was assigned as, so the
@@ -148,7 +157,7 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
       // server updated on a playing source reaches the next request. Dropping it
       // altogether falls back to what key exchange started with, since requests
       // already in flight still have to finish.
-      const readConfig = () => this.source?.engine?.nativeHls?.drmSystems?.[FAIRPLAY_KEY_SYSTEM] ?? config;
+      const readConfig = () => this.#drmSystems()[KeySystems.FAIRPLAY] ?? config;
 
       const context: FairPlayContext = {
         media,

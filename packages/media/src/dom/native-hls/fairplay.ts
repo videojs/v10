@@ -1,7 +1,5 @@
+import type { DrmSystemConfig } from '../../core/drm';
 import { MediaError } from '../../core/media-error';
-
-/** EME key system identifier for FairPlay Streaming. */
-export const FAIRPLAY_KEY_SYSTEM = 'com.apple.fps';
 
 /** Key system identifier the legacy `WebKitMediaKeys` API answers to. */
 export const FAIRPLAY_LEGACY_KEY_SYSTEM = 'com.apple.fps.1_0';
@@ -11,32 +9,6 @@ export const FAIRPLAY_INIT_DATA_TYPE = 'skd';
 
 /** What FairPlay negotiates capabilities against — the manifest, not a codec. */
 export const FAIRPLAY_CONTENT_TYPE = 'application/vnd.apple.mpegurl';
-
-/**
- * License servers for one key system. The fields mirror hls.js's
- * `DRMSystemConfiguration`, minus the parts only an MSE engine can act on.
- */
-export interface NativeHlsDrmSystemConfig {
-  /** License server the SPC is POSTed to; answers with the CKC. */
-  licenseUrl: string;
-  /**
-   * URL of the FairPlay application certificate (DER). Every FairPlay
-   * deployment issues one; the legacy WebKit path cannot run without it.
-   */
-  serverCertificateUrl?: string | undefined;
-}
-
-/**
- * DRM configuration for native HLS playback, keyed by key system id — the same
- * shape as the hls.js `drmSystems` configuration, so one object can describe
- * both engines.
- *
- * Only `com.apple.fps` is typed: key exchange is left to Safari's own CDM,
- * which negotiates FairPlay and nothing else. An hls.js `drmSystems` naming
- * Widevine or PlayReady can still be shared with this; the systems only MSE
- * reaches are ignored.
- */
-export type NativeHlsDrmSystemsConfig = Partial<Record<typeof FAIRPLAY_KEY_SYSTEM, NativeHlsDrmSystemConfig>>;
 
 /**
  * `context` values carried by the `MediaError`s key exchange produces. The
@@ -96,11 +68,11 @@ export interface FairPlayContext {
   /** The element the CDM is bound to. */
   media: HTMLMediaElement;
   /**
-   * The FairPlay half of `source.engine.nativeHls.drmSystems`, read on every
-   * use rather than captured — a license server updated on a playing source
-   * (a rotated token, say) has to reach the next request.
+   * The FairPlay entry of the source's DRM configuration, read on every use
+   * rather than captured — a license server updated on a playing source (a
+   * rotated token, say) has to reach the next request.
    */
-  readonly config: NativeHlsDrmSystemConfig;
+  readonly config: DrmSystemConfig;
   /** Aborted when the source is replaced or the media detaches. */
   signal: AbortSignal;
   /** Surface an error on the media host. Non-fatal ones are announced only. */

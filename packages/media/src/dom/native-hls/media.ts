@@ -1,8 +1,8 @@
+import type { DrmSystemsConfig } from '../../core/drm';
 import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { NativeHlsMediaDrmMixin } from './drm';
 import { NativeHlsMediaErrorsMixin } from './errors';
-import type { NativeHlsDrmSystemsConfig } from './fairplay';
 import { NativeHlsMediaLiveMixin } from './live';
 import { NativeHlsMediaStreamTypeMixin } from './stream-type';
 
@@ -29,6 +29,13 @@ export interface NativeHlsMediaProps {
 export interface NativeHlsSource {
   /** Manifest URL. Mirrors the host's `src` property. */
   src?: string | undefined;
+  /**
+   * License servers for protected content, keyed by EME key system id. Safari
+   * negotiates keys itself and reaches FairPlay only, so the `com.apple.fps`
+   * entry is the one read here — the rest can ride along for an engine that can
+   * negotiate them.
+   */
+  drm?: DrmSystemsConfig | undefined;
   /** Playback options, keyed by the engine that reads them. */
   engine?: NativeHlsEngineConfig | undefined;
 }
@@ -45,11 +52,11 @@ export interface NativeHlsEngineConfig {
  */
 export interface NativeHlsConfig {
   /**
-   * License servers for protected content, keyed by key system id, in the same
-   * shape hls.js takes. Safari negotiates keys itself; this names the servers
-   * it negotiates with, so only the `com.apple.fps` entry is read.
+   * License servers for protected content, keyed by EME key system id. An
+   * escape hatch for licensing native playback differently from every other
+   * path: naming it replaces `source.drm` here, and nowhere else.
    */
-  drmSystems?: NativeHlsDrmSystemsConfig | undefined;
+  drmSystems?: DrmSystemsConfig | undefined;
 }
 
 export const nativeHlsMediaDefaultProps: NativeHlsMediaProps = {
@@ -87,8 +94,9 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   set src(src: string) {
     // `src` says which source to play; everything else says how to play it, so
     // it carries over.
-    const { engine } = this.#source ?? {};
+    const { drm, engine } = this.#source ?? {};
     const next: NativeHlsSource = {
+      ...(drm && { drm }),
       ...(engine && { engine }),
       ...(src && { src }),
     };

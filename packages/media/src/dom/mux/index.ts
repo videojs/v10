@@ -1,3 +1,5 @@
+export type { DrmSystemConfig, DrmSystemsConfig, KeySystem } from '../../core/drm';
+export { KeySystems } from '../../core/drm';
 export * from './media';
 export { MuxData, type MuxDataProps, muxDataDefaultProps } from './mux-data';
 // The engine-neutral source layer, re-exported so this stays the one import for
