@@ -6,7 +6,6 @@ import {
   settingsText,
   speedText,
 } from '@videojs/core/i18n/text/menu';
-import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
@@ -66,14 +65,13 @@ import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { isRenderProp } from '@/utils/use-render';
-import type { BaseVideoSkinProps } from '../types';
+import type { BaseSkinProps } from '../types';
 
 const SEEK_TIME = 10;
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
 const CENTER_STATUS_ACTIONS = ['togglePaused'] as const;
 
-export type MinimalVideoSkinProps = BaseVideoSkinProps;
+export type MinimalVideoSkinProps = BaseSkinProps;
 
 const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function Button({ className, ...props }, ref) {
   return (
@@ -359,7 +357,7 @@ function SettingsMenu(): ReactNode {
 }
 
 export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
-  const { children, className, poster, style, ...rest } = props;
+  const { children, className, style, ...rest } = props;
 
   return (
     <Container className={cn('media-minimal-skin media-minimal-skin--video', className)} style={style} {...rest}>
@@ -367,9 +365,7 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
 
       <PosterPlaceholder className="media-poster-placeholder" />
 
-      {poster && (
-        <Poster src={isString(poster) ? poster : undefined} render={isRenderProp(poster) ? poster : undefined} />
-      )}
+      <Poster className="media-poster" />
 
       <BufferingIndicator
         render={(props) => (

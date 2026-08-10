@@ -18,7 +18,6 @@ import {
   slider,
   spacer,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
-import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
 import { type ComponentProps, forwardRef, type ReactNode } from 'react';
 import { useTranslator } from '@/i18n/context';
@@ -67,7 +66,6 @@ import { StatusIndicator } from '@/ui/status-indicator';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
-import { isRenderProp } from '@/utils/use-render';
 import type { MinimalLiveVideoSkinProps } from './minimal-skin';
 
 const TOP_STATUS_ACTIONS = ['toggleSubtitles', 'toggleFullscreen', 'togglePictureInPicture'] as const;
@@ -203,7 +201,7 @@ function CaptionsTrigger(): ReactNode {
 }
 
 export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): ReactNode {
-  const { children, className, poster: posterProp, style, ...rest } = props;
+  const { children, className, style, ...rest } = props;
 
   return (
     <Container className={cn(root(false), className)} style={style} {...rest}>
@@ -211,13 +209,7 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
 
       <PosterPlaceholder className={posterPlaceholder} />
 
-      {posterProp && (
-        <Poster
-          src={isString(posterProp) ? posterProp : undefined}
-          render={isRenderProp(posterProp) ? posterProp : undefined}
-          className={poster(false)}
-        />
-      )}
+      <Poster className={poster(false)} />
 
       <BufferingIndicator
         render={(props) => (
