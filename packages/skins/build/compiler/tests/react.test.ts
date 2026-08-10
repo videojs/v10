@@ -41,4 +41,24 @@ describe('createCompilerReactConfig', () => {
     expect(result.code).toContain('children: ReactElement');
     expect(result.code).not.toContain('Parameters<typeof TooltipPrimitive.Root>');
   });
+
+  it('allows a projection to resolve generated React imports', async () => {
+    const filename = resolve(canonicalRoot, 'components/buttons/seek-button.tsx');
+    const source = await readFile(filename, 'utf8');
+    const result = await transform(source, {
+      filename,
+      config: createCompilerReactConfig({
+        style: 'tailwind',
+        styles: await loadSkinStyleManifest(styleFiles),
+        resolveImport(reference) {
+          if (reference.source === '@videojs/react') return { ...reference, source: '@/ui/seek-button' };
+          if (reference.source === '@videojs/react/icons') return { ...reference, source: '@/icons' };
+          return reference;
+        },
+      }),
+    });
+
+    expect(result.code).toContain('import { SeekButton as SeekButtonPrimitive } from "@/ui/seek-button"');
+    expect(result.code).toContain('import { SeekIcon } from "@/icons"');
+  });
 });

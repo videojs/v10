@@ -5,7 +5,7 @@ import { loadSkinStyleManifest, recipeForToken } from '../manifest';
 const stylesRoot = resolve(import.meta.dirname, '../../../canonical/styles');
 
 describe('loadSkinStyleManifest', () => {
-  it('derives semantic classes and bindings from explicit default exports', async () => {
+  it('derives semantic classes and relationship markers from explicit default exports', async () => {
     const buttonFile = resolve(stylesRoot, 'components/button.tailwind.ts');
     const manifest = await loadSkinStyleManifest([buttonFile]);
 
@@ -13,6 +13,7 @@ describe('loadSkinStyleManifest', () => {
     expect(recipeForToken(manifest, buttonFile, ['playButtonIcon', 'pause'])?.className).toBe(
       'media-play-button-icon-pause'
     );
-    expect(manifest.groupPeerBindings.get('group/play')).toBe('media-play-button');
+    expect(manifest.groupOwners.get('group/play')).toBe('media-play-button');
+    expect(manifest.peerMarkers).toEqual(new Set());
   });
 });

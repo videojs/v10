@@ -38,7 +38,7 @@ describe('generateReactRegistry', () => {
         .flat()
         .every((file) => file.kind === 'source')
     ).toBe(true);
-    expect(output.dependencies['play-button']).toEqual(['@videojs/react']);
+    expect(output.packageDependenciesByItem['play-button']).toEqual(['@videojs/react']);
   });
 
   it('emits private helper modules without promoting them to catalog items', async () => {
@@ -67,7 +67,7 @@ describe('generateReactRegistry', () => {
           dependencies: [],
           sourceFiles: ['./entry.tsx', './helpers/index.ts'],
           styleFiles: [],
-          symbols: {},
+          symbols: { components: [], icons: [] },
         },
       ],
     };
@@ -81,7 +81,7 @@ describe('generateReactRegistry', () => {
     expect(output.items.entry?.find((file) => file.path.endsWith('entry.tsx'))?.content).toContain(
       'from "./helpers/index"'
     );
-    expect(output.dependencies.entry).toEqual(['react']);
+    expect(output.packageDependenciesByItem.entry).toEqual(['react']);
   });
 });
 

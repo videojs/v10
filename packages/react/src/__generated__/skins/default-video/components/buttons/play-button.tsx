@@ -1,6 +1,7 @@
-import { PlayButton as PlayButtonPrimitive } from '@videojs/react';
-import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/react/icons';
+import { PlayButton as PlayButtonPrimitive } from '@/ui/play-button';
+import { PauseIcon, PlayIcon, RestartIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+
 export function PlayButton() {
   return (
     <ButtonTooltip side="top">

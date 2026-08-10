@@ -4,7 +4,9 @@ import { PlayButton } from '@/components/videojs/play-button/play-button';
 import { SeekButton } from '@/components/videojs/seek-button/seek-button';
 import { VolumePopover } from '@/components/videojs/volume-popover/volume-popover';
 import { TimeSlider } from '@/components/videojs/time-slider/time-slider';
+
 const SEEK_SECONDS = 10;
+
 export function DefaultVideoSkin() {
   return (
     <Controls.Root className="media-skin media-skin-video media-theme-default flex items-center gap-media-controls-gap rounded-media-pill p-media-controls-padding font-media text-media leading-none text-media-controls bg-media-surface shadow-media-surface backdrop-blur-media-surface">

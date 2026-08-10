@@ -1,7 +1,9 @@
 import { posix, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import type { ImportRef } from '@videojs/compiler/ast';
 import { canonicalRoot, loadSkinCatalog, skinsPackageRoot } from '../build/catalog/load';
 import { resolveSkinClosure } from '../build/catalog/resolve';
+import type { ReactImportResolver } from '../build/compiler/react';
 import { createFrameworkSkin, type FrameworkProjection } from '../build/framework/generate';
 import { collectGeneratedFiles, formatGeneratedFile, syncGeneratedFiles } from '../build/output/files';
 import { createRegistryManifest } from '../build/registry/manifest';
@@ -20,7 +22,10 @@ type FrameworkSkinTarget =
       framework: 'html';
       resolveImport?: ((specifier: string) => string) | undefined;
     })
-  | (FrameworkSkinTargetBase & { framework: 'react' });
+  | (FrameworkSkinTargetBase & {
+      framework: 'react';
+      resolveImport?: ReactImportResolver | undefined;
+    });
 
 interface GenerateSkinsOptions {
   check?: boolean | undefined;
@@ -43,6 +48,7 @@ const defaultFrameworkTargets: readonly FrameworkSkinTarget[] = [
     packageRoot: resolve(skinsPackageRoot, '../react'),
     outputDir: DEFAULT_SKIN_OUTPUT_DIR,
     skin: DEFAULT_SKIN,
+    resolveImport: reactPackageImportResolver,
   },
 ];
 
@@ -113,7 +119,10 @@ function toFrameworkProjection(target: FrameworkSkinTarget): FrameworkProjection
         framework: 'html',
         ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
       }
-    : { framework: 'react' };
+    : {
+        framework: 'react',
+        ...(target.resolveImport ? { resolveImport: target.resolveImport } : {}),
+      };
 }
 
 function groupFrameworkTargets(
@@ -154,6 +163,23 @@ function htmlPackageModule(specifier: string): string {
   if (specifier.startsWith(`${iconsPrefix}/`))
     return posix.join('src/icons/element', specifier.slice(iconsPrefix.length + 1));
   throw new Error(`Cannot resolve HTML package import \`${specifier}\`.`);
+}
+
+function reactPackageImportResolver(reference: ImportRef): ImportRef | false {
+  if (reference.source === '@videojs/react') {
+    if (reference.name === 'Text') return false;
+    return { ...reference, source: `@/ui/${kebabCase(reference.name)}` };
+  }
+  const iconsPrefix = '@videojs/react/icons';
+  if (reference.source === iconsPrefix) return { ...reference, source: '@/icons' };
+  if (reference.source.startsWith(`${iconsPrefix}/`)) {
+    return { ...reference, source: `@/icons/${reference.source.slice(iconsPrefix.length + 1)}` };
+  }
+  return reference;
+}
+
+function kebabCase(value: string): string {
+  return value.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

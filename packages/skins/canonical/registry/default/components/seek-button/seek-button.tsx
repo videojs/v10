@@ -2,6 +2,7 @@ import type { SeekButtonProps } from '@videojs/core';
 import { SeekButton as SeekButtonPrimitive } from '@videojs/react';
 import { SeekIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
+
 export function SeekButton(props: SeekButtonProps = {}) {
   const seconds = props.seconds ?? 10;
   return (

@@ -4,8 +4,6 @@ import { __unstable__loadDesignSystem, compile, normalizePath } from '@tailwindc
 
 /** Operations Skin style generation needs from a loaded Tailwind v4 design system. */
 export interface DesignSystem {
-  /** The path the design system was loaded from, for diagnostics. */
-  readonly cssPath: string;
   /** Return whether Tailwind recognizes a candidate. */
   recognizesCandidate(candidate: string): boolean;
   /** Compile semantic CSS containing Tailwind directives such as `@apply`. */
@@ -27,7 +25,6 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
   };
 
   return {
-    cssPath: absolute,
     recognizesCandidate(candidate: string): boolean {
       const cached = candidateCache.get(candidate);
       if (cached !== undefined) return cached;

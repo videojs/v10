@@ -24,9 +24,11 @@ export interface SkinResources {
   styles: SkinStyleResources;
 }
 
+export type SkinDependencyKind = 'components' | 'icons';
+
 export interface SkinCatalog {
   resources: SkinResources;
-  dependencyModules: Readonly<Record<string, string>>;
+  dependencyModules: Readonly<Record<string, SkinDependencyKind>>;
   skins: readonly SkinDefinition[];
   components: readonly SkinComponent[];
 }

@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import type { CompilerPlugin } from '@videojs/compiler';
-import { collectReferencedIdentifiers, readAccessPath, replaceJsxPropValue } from '@videojs/compiler/ast';
+import { collectReferencedIdentifiers, replaceJsxPropValue } from '@videojs/compiler/ast';
 import ts from 'typescript';
 import { type ClassNameInfo, type ClassNameSegment, classNameSegment, readClassName } from './jsx-class-name';
 import { isGroupPeerMarker, recipeForToken, type SkinStyleManifest } from './manifest';
@@ -14,7 +14,6 @@ interface TokenReference {
 
 interface SourceBindings {
   styleImports: ReadonlyMap<string, string>;
-  aliases: ReadonlyMap<string, TokenReference>;
   importedModules: ReadonlySet<string>;
 }
 
@@ -50,7 +49,7 @@ export function skinStyles(options: SkinStylesOptions): CompilerPlugin {
             };
 
             const transformed = ts.visitEachChild(sourceFile, visit, transformContext);
-            return stripStyleBindings(transformed, bindings, factory);
+            return stripStyleBindings(transformed, bindings);
           };
         },
       };
@@ -58,41 +57,15 @@ export function skinStyles(options: SkinStylesOptions): CompilerPlugin {
   };
 }
 
-function stripStyleBindings(
-  sourceFile: ts.SourceFile,
-  bindings: SourceBindings,
-  factory: ts.NodeFactory
-): ts.SourceFile {
-  const statements: ts.Statement[] = [];
-  for (const statement of sourceFile.statements) {
-    if (
-      ts.isImportDeclaration(statement) &&
-      ts.isStringLiteral(statement.moduleSpecifier) &&
-      bindings.importedModules.has(statement.moduleSpecifier.text)
-    ) {
-      continue;
-    }
-    if (!ts.isVariableStatement(statement)) {
-      statements.push(statement);
-      continue;
-    }
-    const declarations = statement.declarationList.declarations.filter(
-      (declaration) => !ts.isIdentifier(declaration.name) || !bindings.aliases.has(declaration.name.text)
-    );
-    if (declarations.length === 0) continue;
-    statements.push(
-      declarations.length === statement.declarationList.declarations.length
-        ? statement
-        : factory.updateVariableStatement(
-            statement,
-            statement.modifiers,
-            factory.updateVariableDeclarationList(statement.declarationList, declarations)
-          )
-    );
-  }
-
-  const output = factory.updateSourceFile(sourceFile, statements);
-  const styleNames = new Set([...bindings.styleImports.keys(), ...bindings.aliases.keys()]);
+function stripStyleBindings(sourceFile: ts.SourceFile, bindings: SourceBindings): ts.SourceFile {
+  const statements = sourceFile.statements.filter(
+    (statement) =>
+      !ts.isImportDeclaration(statement) ||
+      !ts.isStringLiteral(statement.moduleSpecifier) ||
+      !bindings.importedModules.has(statement.moduleSpecifier.text)
+  );
+  const output = ts.factory.updateSourceFile(sourceFile, statements);
+  const styleNames = new Set(bindings.styleImports.keys());
   const unresolved = new Set([...collectReferencedIdentifiers(output)].filter((name) => styleNames.has(name)));
   if (unresolved.size > 0) {
     throw new Error(
@@ -169,7 +142,7 @@ function resolveSegments(
       passThrough.push(segment.node);
       continue;
     }
-    const reference = resolveTokenReference(segment.path, bindings);
+    const reference = resolveTokenReference(segment.path, bindings.styleImports);
     const recipe = reference ? recipeForToken(options.manifest, reference.modulePath, reference.tokenPath) : undefined;
     if (!recipe) {
       passThrough.push(segment.node);
@@ -205,18 +178,7 @@ function sourceBindings(sourceFile: ts.SourceFile, manifest: SkinStyleManifest):
     importedModules.add(statement.moduleSpecifier.text);
   }
 
-  const aliases = new Map<string, TokenReference>();
-  for (const statement of sourceFile.statements) {
-    if (!ts.isVariableStatement(statement)) continue;
-    for (const declaration of statement.declarationList.declarations) {
-      if (!ts.isIdentifier(declaration.name) || !declaration.initializer) continue;
-      const path = readAccessPath(declaration.initializer);
-      if (!path) continue;
-      const reference = resolveTokenReference(path, { styleImports, aliases });
-      if (reference) aliases.set(declaration.name.text, reference);
-    }
-  }
-  return { styleImports, aliases, importedModules };
+  return { styleImports, importedModules };
 }
 
 function resolveStyleModule(sourceFile: string, specifier: string, manifest: SkinStyleManifest): string | undefined {
@@ -228,13 +190,14 @@ function resolveStyleModule(sourceFile: string, specifier: string, manifest: Ski
   return undefined;
 }
 
-function resolveTokenReference(path: readonly string[], bindings: Pick<SourceBindings, 'styleImports' | 'aliases'>) {
+function resolveTokenReference(
+  path: readonly string[],
+  styleImports: ReadonlyMap<string, string>
+): TokenReference | undefined {
   const [root, ...tail] = path;
   if (!root) return undefined;
-  const modulePath = bindings.styleImports.get(root);
-  if (modulePath) return { modulePath, tokenPath: tail };
-  const alias = bindings.aliases.get(root);
-  return alias ? { modulePath: alias.modulePath, tokenPath: [...alias.tokenPath, ...tail] } : undefined;
+  const modulePath = styleImports.get(root);
+  return modulePath ? { modulePath, tokenPath: tail } : undefined;
 }
 
 function pushClasses(output: string[], value: string): void {

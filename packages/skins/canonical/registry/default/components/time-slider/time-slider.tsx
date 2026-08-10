@@ -1,5 +1,6 @@
 import { Slider, TimeSlider as TimeSliderPrimitive } from '@videojs/react';
 import { SpinnerIcon } from '@videojs/react/icons';
+
 export function TimeSlider() {
   return (
     <TimeSliderPrimitive.Root className="group/slider relative flex min-h-media-control min-w-20 flex-1 cursor-pointer items-center justify-center outline-none data-[orientation=vertical]:h-20 data-[orientation=vertical]:w-media-control data-[orientation=vertical]:min-w-0">

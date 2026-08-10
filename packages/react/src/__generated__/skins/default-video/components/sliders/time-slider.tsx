@@ -1,5 +1,7 @@
-import { Slider, TimeSlider as TimeSliderPrimitive } from '@videojs/react';
-import { SpinnerIcon } from '@videojs/react/icons';
+import { Slider } from '@/ui/slider';
+import { TimeSlider as TimeSliderPrimitive } from '@/ui/time-slider';
+import { SpinnerIcon } from '@/icons';
+
 export function TimeSlider() {
   return (
     <TimeSliderPrimitive.Root className="media-slider">

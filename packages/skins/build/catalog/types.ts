@@ -4,11 +4,15 @@ export type {
   SkinCatalog,
   SkinComponent,
   SkinDefinition as Skin,
+  SkinDependencyKind,
   SkinResources,
   SkinStyleResources,
 } from '../../canonical/catalog';
 
-type SkinSymbols = Readonly<Record<string, readonly string[]>>;
+export interface SkinSymbols {
+  components: readonly string[];
+  icons: readonly string[];
+}
 
 export type SkinItem = SkinDefinition | SkinComponent;
 

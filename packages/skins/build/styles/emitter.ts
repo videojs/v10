@@ -11,7 +11,7 @@ import {
 import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import { replaceRuleClasses } from './selectors';
-import type { SkinCssRole, SkinStyleSheet } from './stylesheet';
+import type { SkinCssRole } from './stylesheet';
 import { collectTailwindDefaults, inlinePrivateTailwindVariables, optimizeSemanticCss } from './tailwind-values';
 
 const encoder = new TextEncoder();
@@ -19,12 +19,13 @@ const decoder = new TextDecoder();
 
 interface EmitSkinRoleCssOptions {
   design: DesignSystem;
-  stylesheet: SkinStyleSheet;
+  scopeClass: string;
+  roles: readonly SkinCssRole[];
 }
 
 export async function emitSkinRoleCss(options: EmitSkinRoleCssOptions): Promise<Map<string, string>> {
   const analyzedRoles = new Map<SkinCssRole, AnalyzedRole>();
-  for (const role of options.stylesheet.roles) {
+  for (const role of options.roles) {
     const source = role.recipes
       .map((recipe) => `.${recipe.className} {\n  @apply ${recipe.candidates.join(' ')};\n}`)
       .join('\n');
@@ -32,18 +33,17 @@ export async function emitSkinRoleCss(options: EmitSkinRoleCssOptions): Promise<
   }
 
   const roles = new Map<string, string>();
-  for (const role of [...options.stylesheet.roles].sort((a, b) => (a.name ?? '').localeCompare(b.name ?? ''))) {
-    if (!role.name) throw new Error('Every Skin style recipe must declare a role.');
+  for (const role of [...options.roles].sort((a, b) => a.name.localeCompare(b.name))) {
     const analyzed = analyzedRoles.get(role);
     if (!analyzed) throw new Error(`Skin style role '${role.name}' was not compiled.`);
-    roles.set(role.name, scopeRoleCss(emitRole(analyzed, role), options.stylesheet.scopeClass, role));
+    roles.set(role.name, scopeRoleCss(emitRole(analyzed, role), options.scopeClass, role));
   }
 
   return roles;
 }
 
 function scopeRoleCss(css: string, scopeClass: string, role: SkinCssRole): string {
-  const relationshipOwners = new Set(role.groupPeerBindings.values());
+  const relationshipOwners = new Set(role.groupOwners.values());
   const wrapped = `@layer videojs.components {\n@scope (.${scopeClass}) {\n${css}\n}\n}`;
   return decoder
     .decode(
@@ -137,8 +137,8 @@ function emitRole(analyzed: AnalyzedRole, role: SkinCssRole): string {
     .map((recipe) => {
       const source = analyzed.recipeRules.get(recipe.className);
       if (!source) throw new Error(`Tailwind did not emit the semantic style '.${recipe.className}'.`);
-      const rule = replaceRuleClasses(source, role.groupPeerBindings);
-      assertNoRelationshipMarkers(rule, role.groupPeerBindings);
+      const rule = replaceRuleClasses(source, role.groupOwners);
+      assertNoRelationshipMarkers(rule, role.groupOwners);
       return rule;
     });
   return inlinePrivateTailwindVariables(emitRuleSet(analyzed.template, rules), analyzed.tailwindDefaults);

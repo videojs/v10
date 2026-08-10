@@ -54,7 +54,7 @@ describe('compileSkinStyles', () => {
     await expect(
       compileSkinStyles({
         design: await loadDesignSystem(designPath),
-        manifest: manifest([peer], new Map([['peer/control', peer.className]])),
+        manifest: manifest([peer], new Map(), new Set(['peer/control'])),
         scopeClass: 'media-skin-video',
       })
     ).rejects.toThrow('Vanilla Skin styles do not support peer relationships: peer/control');
@@ -73,7 +73,8 @@ function recipe(token: string, className: string, utilities: readonly string[]):
 
 function manifest(
   recipes: readonly SkinStyleRecipe[],
-  groupPeerBindings: ReadonlyMap<string, string> = new Map()
+  groupOwners: ReadonlyMap<string, string> = new Map(),
+  peerMarkers: ReadonlySet<string> = new Set()
 ): SkinStyleManifest {
-  return { modules: new Map(), recipes, groupPeerBindings };
+  return { modules: new Map(), recipes, groupOwners, peerMarkers };
 }

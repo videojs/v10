@@ -2,7 +2,7 @@ import { type SkinStyleRole, skinStyleRoles } from '../../canonical/styles/defin
 import type { DesignSystem } from './design-system';
 import { emitSkinRoleCss } from './emitter';
 import { isGroupPeerMarker, type SkinStyleManifest, type SkinStyleRecipe } from './manifest';
-import type { SkinCssRecipe, SkinCssRole, SkinStyleSheet } from './stylesheet';
+import type { SkinCssRecipe, SkinCssRole } from './stylesheet';
 
 /** Compile referenced semantic recipes once and return reviewable CSS grouped by explicit role. */
 export async function compileSkinStyles(options: {
@@ -10,9 +10,7 @@ export async function compileSkinStyles(options: {
   manifest: SkinStyleManifest;
   scopeClass: string;
 }): Promise<Map<SkinStyleRole, string>> {
-  const peerMarkers = [...options.manifest.groupPeerBindings.keys()].filter(
-    (marker) => marker === 'peer' || marker.startsWith('peer/')
-  );
+  const peerMarkers = [...options.manifest.peerMarkers];
   if (peerMarkers.length > 0) {
     throw new Error(`Vanilla Skin styles do not support peer relationships: ${peerMarkers.join(', ')}.`);
   }
@@ -31,15 +29,12 @@ export async function compileSkinStyles(options: {
 
   const roles: SkinCssRole[] = skinStyleRoles.flatMap((role) => {
     const recipes = byRole.get(role);
-    return recipes?.length ? [{ name: role, recipes, groupPeerBindings: options.manifest.groupPeerBindings }] : [];
+    return recipes?.length ? [{ name: role, recipes, groupOwners: options.manifest.groupOwners }] : [];
   });
-  const stylesheet: SkinStyleSheet = {
-    scopeClass: options.scopeClass,
-    roles,
-  };
   const emitted = await emitSkinRoleCss({
     design: options.design,
-    stylesheet,
+    scopeClass: options.scopeClass,
+    roles,
   });
 
   return new Map(skinStyleRoles.map((role) => [role, emitted.get(role) ?? '']));
@@ -62,10 +57,6 @@ function compileRecipe(recipe: SkinStyleRecipe, design: DesignSystem): SkinCssRe
   return {
     className: recipe.className,
     candidates,
-    origin: {
-      description: recipe.tokenPath.join('.'),
-      file: recipe.modulePath,
-    },
   };
 }
 

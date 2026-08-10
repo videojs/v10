@@ -1,5 +1,6 @@
-import { MuteButton as MuteButtonPrimitive } from '@videojs/react';
-import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@videojs/react/icons';
+import { MuteButton as MuteButtonPrimitive } from '@/ui/mute-button';
+import { VolumeHighIcon, VolumeLowIcon, VolumeOffIcon } from '@/icons';
+
 export function MuteButton() {
   return (
     <MuteButtonPrimitive className="media-button media-mute-button">

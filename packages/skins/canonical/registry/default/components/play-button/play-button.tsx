@@ -1,6 +1,7 @@
 import { PlayButton as PlayButtonPrimitive } from '@videojs/react';
 import { PauseIcon, PlayIcon, RestartIcon } from '@videojs/react/icons';
 import { ButtonTooltip } from '@/components/videojs/button-tooltip/button-tooltip';
+
 export function PlayButton() {
   return (
     <ButtonTooltip side="top">

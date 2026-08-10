@@ -1,6 +1,7 @@
-import { Popover } from '@videojs/react';
+import { Popover } from '@/ui/popover';
 import { MuteButton } from '../buttons/mute-button';
 import { VolumeSlider } from '../sliders/volume-slider';
+
 export function VolumePopover() {
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="top">

@@ -16,16 +16,16 @@ const recipes = [
 const manifest: SkinStyleManifest = {
   modules: new Map([[modulePath, new Map(recipes.map((recipe) => [recipe.tokenPath.join('.'), recipe]))]]),
   recipes,
-  groupPeerBindings: new Map(),
+  groupOwners: new Map(),
+  peerMarkers: new Set(),
 };
 const source = `
   import styles from './fixture.tailwind';
-  const seekIcon = styles.seekButtonIcon;
   export function Example({ reverse }) {
     return <button className={[styles.button, styles.seekButton, 'hook']}>
       <span className={reverse
-        ? [styles.buttonIcon, seekIcon.backward]
-        : [styles.buttonIcon, seekIcon.forward]} />
+        ? [styles.buttonIcon, styles.seekButtonIcon.backward]
+        : [styles.buttonIcon, styles.seekButtonIcon.forward]} />
     </button>;
   }
 `;
@@ -37,7 +37,6 @@ describe('skinStyles', () => {
     expect(result.code).toContain('className="grid p-0 hook"');
     expect(result.code).toContain('? "size-4 -scale-x-100" : "size-4"');
     expect(result.code).not.toContain('fixture.tailwind');
-    expect(result.code).not.toContain('seekIcon');
   });
 
   it('projects the same references to semantic classes', async () => {
@@ -47,7 +46,18 @@ describe('skinStyles', () => {
     expect(result.code).toContain(
       '? "media-button-icon media-seek-button-icon-backward" : "media-button-icon media-seek-button-icon-forward"'
     );
-    expect(result.code).not.toContain('seekIcon');
+  });
+
+  it('rejects aliases for style references', async () => {
+    await expect(
+      transform(
+        `import styles from './fixture.tailwind'; const button = styles.button; export const Example = () => <div className={button} />;`,
+        {
+          filename,
+          config: { target: jsx(), plugins: [skinStyles({ manifest, target: 'vanilla' })] },
+        }
+      )
+    ).rejects.toThrow('must use static className references');
   });
 
   it('rejects style references outside the supported static className forms', async () => {

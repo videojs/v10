@@ -1,7 +1,7 @@
 import { posix, resolve } from 'node:path';
 import { resolveSkinClosure } from '../catalog/resolve';
 import type { ResolvedSkinCatalog } from '../catalog/types';
-import { createCompilerReactConfig } from '../compiler/react';
+import { createCompilerReactConfig, type ReactImportResolver } from '../compiler/react';
 import { emitReactModules } from '../compiler/react-modules';
 import type { GeneratedFile } from '../output/files';
 import type { SkinStyleManifest } from '../styles/manifest';
@@ -11,6 +11,7 @@ interface GenerateReactSkinsOptions {
   skin: string;
   iconSet: string;
   styles: SkinStyleManifest;
+  resolveImport?: ReactImportResolver | undefined;
 }
 
 /** Transform the complete canonical Skin closure into editable React modules. */
@@ -34,6 +35,7 @@ export async function generateReactSkins(
     style: 'vanilla',
     styles: options.styles,
     iconSet: options.iconSet,
+    ...(options.resolveImport ? { resolveImport: options.resolveImport } : {}),
   });
 
   const output = await emitReactModules({

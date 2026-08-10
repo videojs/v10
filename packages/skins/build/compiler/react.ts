@@ -1,5 +1,5 @@
 import { defineConfig, jsx, rewrite } from '@videojs/compiler';
-import { anyTag, childAsProp } from '@videojs/compiler/ast';
+import { anyTag, childAsProp, type ImportRef } from '@videojs/compiler/ast';
 import type { SkinStyleManifest } from '../styles/manifest';
 import { type SkinStyleTarget, skinStyles } from '../styles/transform';
 
@@ -7,20 +7,30 @@ interface CreateCompilerReactConfigOptions {
   style: SkinStyleTarget;
   styles: SkinStyleManifest;
   iconSet?: string | undefined;
+  resolveImport?: ReactImportResolver | undefined;
 }
+
+export type ReactImportResolver = (reference: ImportRef) => ImportRef | false;
 
 /** Create the compiler policy for a React Skin projection. */
 export function createCompilerReactConfig(options: CreateCompilerReactConfigOptions) {
   const iconSet = options.iconSet ?? 'default';
+  const resolveImport = (reference: ImportRef): ImportRef | false =>
+    options.resolveImport ? options.resolveImport(reference) : reference;
   return defineConfig({
     target: jsx({
       imports: {
-        '@videojs/core/components': '@videojs/react',
-        '@videojs/icons/components': iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`,
-        '@videojs/jsx': (name) => ({
-          source: 'react',
-          name: name === 'ComponentNode' ? 'ReactElement' : name,
-        }),
+        '@videojs/core/components': (name) => resolveImport({ source: '@videojs/react', name }),
+        '@videojs/icons/components': (name) =>
+          resolveImport({
+            source: iconSet === 'default' ? '@videojs/react/icons' : `@videojs/react/icons/${iconSet}`,
+            name,
+          }),
+        '@videojs/jsx': (name) =>
+          resolveImport({
+            source: 'react',
+            name: name === 'ComponentNode' ? 'ReactElement' : name,
+          }),
       },
       transforms: [
         childAsProp({

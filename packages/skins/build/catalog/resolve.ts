@@ -2,9 +2,17 @@ import { readFile, stat } from 'node:fs/promises';
 import { dirname, extname, isAbsolute, relative, resolve, sep } from 'node:path';
 import { collectModuleReferences, type ModuleReference } from '@videojs/compiler/ast';
 import ts from 'typescript';
-import type { ResolvedSkinCatalog, ResolvedSkinItem, SkinCatalog, SkinClosure, SkinItem } from './types';
+import type {
+  ResolvedSkinCatalog,
+  ResolvedSkinItem,
+  SkinCatalog,
+  SkinClosure,
+  SkinDependencyKind,
+  SkinItem,
+  SkinSymbols,
+} from './types';
 
-type DependencyGroups = Map<string, Set<string>>;
+type DependencyGroups = Map<SkinDependencyKind, Set<string>>;
 
 interface NormalizedItem {
   item: SkinItem;
@@ -40,7 +48,7 @@ export async function resolveSkinCatalog(
     const dependencies = new Set<string>();
     const sourceFiles = new Set<string>();
     const styleFiles = new Set<string>();
-    const symbols = createDependencyGroups(Object.values(catalog.dependencyModules));
+    const symbols = createDependencyGroups();
 
     await analyzeSkinSourceFile(
       {
@@ -80,7 +88,7 @@ export function resolveSkinClosure(catalog: ResolvedSkinCatalog, itemName: strin
   const visited = new Set<string>();
   const sourceFiles = new Set<string>();
   const styleFiles = new Set<string>();
-  const symbols = new Map<string, Set<string>>();
+  const symbols = createDependencyGroups();
 
   const visit = (name: string): void => {
     if (visited.has(name)) return;
@@ -166,7 +174,8 @@ function recordDependencySymbols(
       `Skin item \`${context.entry.item.name}\` must use named imports from \`${reference.source}\` so ${symbolKind} dependencies can be inferred.`
     );
   }
-  const target = getOrCreateGroup(context.symbols, symbolKind);
+  const target = context.symbols.get(symbolKind);
+  if (!target) throw new Error(`Unknown Skin dependency kind \`${symbolKind}\`.`);
   for (const name of reference.names) target.add(name);
 }
 
@@ -228,32 +237,27 @@ function diagnoseCycles(items: readonly ResolvedSkinItem[]): void {
   for (const item of items) visit(item.name);
 }
 
-function createDependencyGroups(keys: Iterable<string> = []): DependencyGroups {
-  const groups: DependencyGroups = new Map();
-  for (const key of keys) getOrCreateGroup(groups, key);
-  return groups;
+function createDependencyGroups(): DependencyGroups {
+  return new Map([
+    ['components', new Set()],
+    ['icons', new Set()],
+  ]);
 }
 
-function getOrCreateGroup(groups: DependencyGroups, key: string): Set<string> {
-  let values = groups.get(key);
-  if (!values) {
-    values = new Set();
-    groups.set(key, values);
-  }
-  return values;
-}
-
-function mergeGroups(target: DependencyGroups, source: Readonly<Record<string, readonly string[]>>): void {
-  for (const [key, values] of Object.entries(source)) {
-    const group = getOrCreateGroup(target, key);
+function mergeGroups(target: DependencyGroups, source: SkinSymbols): void {
+  for (const key of ['components', 'icons'] as const) {
+    const values = source[key];
+    const group = target.get(key);
+    if (!group) throw new Error(`Unknown Skin dependency kind \`${key}\`.`);
     for (const value of values) group.add(value);
   }
 }
 
-function freezeGroups(groups: ReadonlyMap<string, ReadonlySet<string>>): Record<string, string[]> {
-  return Object.fromEntries(
-    [...groups.entries()].sort(([a], [b]) => compareStrings(a, b)).map(([key, values]) => [key, sortedUnique(values)])
-  );
+function freezeGroups(groups: ReadonlyMap<SkinDependencyKind, ReadonlySet<string>>): SkinSymbols {
+  return {
+    components: sortedUnique(groups.get('components') ?? []),
+    icons: sortedUnique(groups.get('icons') ?? []),
+  };
 }
 
 function sortedUnique(values: Iterable<string>): string[] {

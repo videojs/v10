@@ -1,5 +1,6 @@
 import { resolve } from 'node:path';
 import type { ResolvedSkinCatalog } from '../catalog/types';
+import type { ReactImportResolver } from '../compiler/react';
 import { compileSkinStyles, loadDesignSystem } from '../styles/compile';
 import { loadCatalogStyleManifest } from '../styles/manifest';
 import { generateHtmlSkin } from './html';
@@ -8,7 +9,7 @@ import { createFrameworkStyles, type FrameworkStyleFile } from './styles';
 
 export type FrameworkProjection =
   | { framework: 'html'; resolveImport?: ((specifier: string) => string) | undefined }
-  | { framework: 'react' };
+  | { framework: 'react'; resolveImport?: ReactImportResolver | undefined };
 
 interface FrameworkSkinFile {
   framework: FrameworkProjection['framework'];
@@ -48,7 +49,13 @@ export async function createFrameworkSkin(
       files.push({
         framework: 'html',
         fileName: 'skin.ts',
-        content: await generateHtmlSkin(catalog, skin.name, entryFile, iconSet, styles, projection.resolveImport),
+        content: await generateHtmlSkin(catalog, {
+          skin: skin.name,
+          entryFile,
+          iconSet,
+          styles,
+          ...(projection.resolveImport ? { resolveImport: projection.resolveImport } : {}),
+        }),
       });
     } else {
       const reactFiles = await generateReactSkins(catalog, {
@@ -56,6 +63,7 @@ export async function createFrameworkSkin(
         skin: skin.name,
         iconSet,
         styles,
+        ...(projection.resolveImport ? { resolveImport: projection.resolveImport } : {}),
       });
       for (const file of reactFiles) {
         files.push({ framework: 'react', fileName: file.path, content: file.content });

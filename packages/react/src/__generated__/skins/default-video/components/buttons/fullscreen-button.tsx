@@ -1,6 +1,7 @@
-import { FullscreenButton as FullscreenButtonPrimitive } from '@videojs/react';
-import { FullscreenEnterIcon, FullscreenExitIcon } from '@videojs/react/icons';
+import { FullscreenButton as FullscreenButtonPrimitive } from '@/ui/fullscreen-button';
+import { FullscreenEnterIcon, FullscreenExitIcon } from '@/icons';
 import { ButtonTooltip } from './button-tooltip';
+
 export function FullscreenButton() {
   return (
     <ButtonTooltip side="top">

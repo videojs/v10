@@ -46,19 +46,21 @@ export function createRegistryManifest(
     items: config.items.map((name) => {
       const item = items.get(name);
       if (!item) throw new Error(`Registry references missing Skin item \`${name}\`.`);
-      const partition = partitionDependencies(item, items, published);
+      const partition = partitionItemDependencies(item, items, published);
       const files = uniqueFiles(
         [
           ...output.sharedFiles,
-          ...partition.included.flatMap((includedName) => {
+          ...partition.bundledItems.flatMap((includedName) => {
             const generated = output.items[includedName];
             if (!generated) throw new Error(`Registry output is missing Skin item \`${includedName}\`.`);
             return generated;
           }),
         ].map((file) => registryFile(file, item.name, config))
       );
-      const dependencies = [
-        ...new Set(partition.included.flatMap((includedName) => output.dependencies[includedName] ?? [])),
+      const packageDependencies = [
+        ...new Set(
+          partition.bundledItems.flatMap((includedName) => output.packageDependenciesByItem[includedName] ?? [])
+        ),
       ].sort();
 
       return {
@@ -67,10 +69,10 @@ export function createRegistryManifest(
         title: item.title,
         description: item.description,
         files,
-        ...(dependencies.length ? { dependencies } : {}),
-        ...(partition.dependencies.length
+        ...(packageDependencies.length ? { dependencies: packageDependencies } : {}),
+        ...(partition.registryItems.length
           ? {
-              registryDependencies: partition.dependencies.map((dependency) => `${config.namespace}/${dependency}`),
+              registryDependencies: partition.registryItems.map((dependency) => `${config.namespace}/${dependency}`),
             }
           : {}),
         meta: { framework: config.framework, style: config.style, skin: config.skin },
@@ -79,28 +81,28 @@ export function createRegistryManifest(
   };
 }
 
-function partitionDependencies(
+function partitionItemDependencies(
   root: ResolvedSkinItem,
   items: ReadonlyMap<string, ResolvedSkinItem>,
   published: ReadonlySet<string>
-): { included: string[]; dependencies: string[] } {
-  const included = new Set<string>();
-  const dependencies = new Set<string>();
+): { bundledItems: string[]; registryItems: string[] } {
+  const bundledItems = new Set<string>();
+  const registryItems = new Set<string>();
 
   const visit = (name: string): void => {
     if (name !== root.name && published.has(name)) {
-      dependencies.add(name);
+      registryItems.add(name);
       return;
     }
-    if (included.has(name)) return;
-    included.add(name);
+    if (bundledItems.has(name)) return;
+    bundledItems.add(name);
     const item = items.get(name);
     if (!item) throw new Error(`Skin item \`${root.name}\` depends on missing item \`${name}\`.`);
     for (const dependency of item.dependencies) visit(dependency);
   };
 
   visit(root.name);
-  return { included: [...included].sort(), dependencies: [...dependencies].sort() };
+  return { bundledItems: [...bundledItems].sort(), registryItems: [...registryItems].sort() };
 }
 
 function registryFile(file: RegistrySourceFile, owner: string, config: SkinRegistryConfig): RegistryFile {

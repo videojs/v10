@@ -116,7 +116,7 @@ describe('resolveSkinCatalog', () => {
     expect(resolved.items.find((item) => item.name === 'entry')).toMatchObject({
       dependencies: ['dependency'],
       sourceFiles: ['./components/private-helper.tsx', './entry.tsx', './helpers/index.ts'],
-      symbols: { components: ['Controls'] },
+      symbols: { components: ['Controls'], icons: [] },
     });
     expect(resolveSkinClosure(resolved, 'entry').sourceFiles).toEqual([
       './components/private-helper.tsx',

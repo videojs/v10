@@ -15,7 +15,7 @@ export interface RegistrySourceFile extends GeneratedFile {
 export interface RegistrySourceOutput {
   sharedFiles: readonly RegistrySourceFile[];
   items: Readonly<Record<string, readonly RegistrySourceFile[]>>;
-  dependencies: Readonly<Record<string, readonly string[]>>;
+  packageDependenciesByItem: Readonly<Record<string, readonly string[]>>;
 }
 
 interface GenerateReactRegistryOptions {
@@ -49,7 +49,7 @@ interface ResolvedRegistrySourceOptions {
 
 interface EmittedReactItem {
   files: readonly RegistrySourceFile[];
-  dependencies: readonly string[];
+  packageDependencies: readonly string[];
 }
 
 /** Emit the editable React/Tailwind source projection consumed by the shadcn registry. */
@@ -67,7 +67,7 @@ export async function generateReactRegistry(
     itemNames: selected.map((layout) => layout.item.name),
   });
   const items: Record<string, RegistrySourceFile[]> = {};
-  const dependencies: Record<string, string[]> = {};
+  const packageDependenciesByItem: Record<string, string[]> = {};
 
   for (const layout of selected) {
     const emitted = await emitReactItem(
@@ -80,12 +80,12 @@ export async function generateReactRegistry(
       installAlias
     );
     items[layout.item.name] = [...emitted.files];
-    dependencies[layout.item.name] = [...emitted.dependencies];
+    packageDependenciesByItem[layout.item.name] = [...emitted.packageDependencies];
   }
   return {
     sharedFiles: await createStyleResourceFiles(catalog.resources.styles, resolved),
     items,
-    dependencies,
+    packageDependenciesByItem,
   };
 }
 
@@ -233,7 +233,7 @@ async function emitReactItem(context: SkinItemContext, installAlias: string): Pr
   });
   return {
     files: output.files.map((file) => createRegistrySourceFile(file.path, file.content)),
-    dependencies: output.dependencies,
+    packageDependencies: output.dependencies,
   };
 }
 

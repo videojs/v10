@@ -21,7 +21,8 @@ export interface SkinStyleRecipe {
 export interface SkinStyleManifest {
   modules: ReadonlyMap<string, ReadonlyMap<string, SkinStyleRecipe>>;
   recipes: readonly SkinStyleRecipe[];
-  groupPeerBindings: ReadonlyMap<string, string>;
+  groupOwners: ReadonlyMap<string, string>;
+  peerMarkers: ReadonlySet<string>;
 }
 
 /** Load controlled canonical style modules and normalize their explicit definitions. */
@@ -32,7 +33,8 @@ export async function loadSkinStyleManifest(files: readonly string[]): Promise<S
   const modules = new Map<string, ReadonlyMap<string, SkinStyleRecipe>>();
   const recipes: SkinStyleRecipe[] = [];
   const classes = new Map<string, SkinStyleRecipe>();
-  const groupPeerBindings = new Map<string, string>();
+  const groupOwners = new Map<string, string>();
+  const peerMarkers = new Set<string>();
 
   for (const inputFile of moduleFiles) {
     const modulePath = await realpath(inputFile);
@@ -61,7 +63,7 @@ export async function loadSkinStyleManifest(files: readonly string[]): Promise<S
       classes.set(className, recipe);
       moduleRecipes.set(tokenKey(tokenPath), recipe);
       recipes.push(recipe);
-      registerGroupPeerBindings(groupPeerBindings, recipe);
+      registerRelationshipMarkers(groupOwners, peerMarkers, recipe);
     });
     modules.set(modulePath, moduleRecipes);
   }
@@ -69,7 +71,8 @@ export async function loadSkinStyleManifest(files: readonly string[]): Promise<S
   return Object.freeze({
     modules,
     recipes: Object.freeze(recipes),
-    groupPeerBindings,
+    groupOwners,
+    peerMarkers,
   });
 }
 
@@ -125,21 +128,37 @@ function splitUtilities(value: SkinStyleValue): readonly string[] {
   return values.flatMap((part) => part.split(/\s+/)).filter(Boolean);
 }
 
-function registerGroupPeerBindings(bindings: Map<string, string>, recipe: SkinStyleRecipe): void {
+function registerRelationshipMarkers(
+  groupOwners: Map<string, string>,
+  peerMarkers: Set<string>,
+  recipe: SkinStyleRecipe
+): void {
   for (const utility of recipe.utilities) {
-    if (!isGroupPeerMarker(utility)) continue;
-    const previous = bindings.get(utility);
+    if (isPeerMarker(utility)) {
+      peerMarkers.add(utility);
+      continue;
+    }
+    if (!isGroupMarker(utility)) continue;
+    const previous = groupOwners.get(utility);
     if (previous && previous !== recipe.className) {
       throw new Error(
         `Skin relationship marker \`${utility}\` maps to both \`${previous}\` and \`${recipe.className}\`.`
       );
     }
-    bindings.set(utility, recipe.className);
+    groupOwners.set(utility, recipe.className);
   }
 }
 
 export function isGroupPeerMarker(value: string): boolean {
-  return value === 'group' || value === 'peer' || value.startsWith('group/') || value.startsWith('peer/');
+  return isGroupMarker(value) || isPeerMarker(value);
+}
+
+function isGroupMarker(value: string): boolean {
+  return value === 'group' || value.startsWith('group/');
+}
+
+function isPeerMarker(value: string): boolean {
+  return value === 'peer' || value.startsWith('peer/');
 }
 
 function tokenKey(path: readonly string[]): string {
