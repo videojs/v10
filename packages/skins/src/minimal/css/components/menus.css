@@ -93,9 +93,14 @@
     outline: 2px solid transparent;
     outline-offset: -2px;
     border-radius: var(--menu-item-border-radius);
-    transition: background-color, color;
-    transition-timing-function: ease-out;
-    transition-duration: 100ms;
+    transition:
+      background-color 100ms ease-out,
+      color 100ms ease-out,
+      opacity var(--menu-transition-duration) ease-in-out;
+
+    &[aria-expanded="true"] {
+      opacity: 0;
+    }
 
     &:focus-visible {
       outline-color: currentColor;
