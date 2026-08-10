@@ -18,9 +18,9 @@ export interface ImportRef {
  * - `false`: remove the import because the target intentionally replaces its runtime contract.
  * - `string`: rewrite the module specifier; identifier names pass through.
  * - function: per-identifier full power. Receives the imported name; returns
- *   the target `{ source, name }`.
+ *   the target `{ source, name }`, or `false` to remove that identifier.
  */
-export type ImportRule = false | string | ((name: string) => ImportRef);
+export type ImportRule = false | string | ((name: string) => ImportRef | false);
 
 export interface ImportRewriteOptions {
   /** Map: original module specifier → rewrite rule. */
@@ -91,6 +91,7 @@ function rewriteImportStatement(
     const localName = element.name.text;
     const importedName = element.propertyName?.text ?? localName;
     const target = rule(importedName);
+    if (target === false) continue;
     const resolvedSource =
       options.configDir && target.source.startsWith('.') ? resolveRelative(target.source, options) : target.source;
     const propertyName = target.name === localName ? undefined : factory.createIdentifier(target.name);

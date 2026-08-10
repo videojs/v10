@@ -13,12 +13,12 @@ export {
   type CompilerPluginEnforce,
   type CompilerSourceMap,
   type CompilerTarget,
+  type CompilerTargetOptions,
   type CompilerTransform,
   defineConfig,
   type HtmlTarget,
   html,
   type JsxTarget,
-  type JsxTargetOptions,
   jsx,
 } from './config';
 export {

@@ -1,4 +1,4 @@
-export { type JsxTargetOptions, jsx } from '../config';
+export { type CompilerTargetOptions, jsx } from '../config';
 export type { ImportRef } from '../transforms/imports';
 export {
   accessPath,

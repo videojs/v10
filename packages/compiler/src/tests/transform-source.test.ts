@@ -6,10 +6,10 @@ import {
   addProp,
   anyTag,
   byTag,
+  type CompilerTargetOptions,
   childAsProp,
   hasChild,
   type JsxElementLike,
-  type JsxTargetOptions,
   jsx,
   jsxExpression,
   replace,
@@ -24,7 +24,7 @@ import { parse } from '../parse';
  */
 const collapse = (s: string): string => s.replace(/\s+/g, '');
 
-const compileJsx = (source: string, options: JsxTargetOptions = {}) =>
+const compileJsx = (source: string, options: CompilerTargetOptions = {}) =>
   transform(source, { config: { target: jsx(options) } });
 
 describe('parse', () => {
@@ -151,6 +151,15 @@ describe('transform (transformImports — function rule)', () => {
       imports: { src: (_name) => ({ source: 'dst', name: 'NewName' }) },
     });
     expect(code).toContain(`import { NewName as OldName } from "dst"`);
+  });
+
+  it('removes identifiers explicitly replaced by the target runtime', async () => {
+    const source = `import { Keep, Remove } from 'src';\nconst _ = Keep;`;
+    const { code } = await compileJsx(source, {
+      imports: { src: (name) => (name === 'Remove' ? false : { source: 'dst', name }) },
+    });
+    expect(code).toContain(`import { Keep } from "dst"`);
+    expect(code).not.toContain('Remove');
   });
 
   it('preserves a default binding while rewriting named imports', async () => {
