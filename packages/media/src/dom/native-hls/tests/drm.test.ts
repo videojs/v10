@@ -401,6 +401,36 @@ describe('NativeHlsMediaDrmMixin', () => {
     expect(setMediaKeys).toHaveBeenLastCalledWith(null);
   });
 
+  it('installs no keys when the source is replaced mid key exchange', async () => {
+    const { mediaKeys, requestMediaKeySystemAccess } = stubKeySystem();
+
+    // Hold the CDM negotiation open so teardown lands in the middle of it.
+    let grantAccess: (() => void) | undefined;
+    const granted = new Promise<void>((resolve) => {
+      grantAccess = resolve;
+    });
+    requestMediaKeySystemAccess.mockImplementation(async () => {
+      await granted;
+      return { createMediaKeys: async () => mediaKeys };
+    });
+
+    const setMediaKeys = vi.fn(async (_keys: MediaKeys | null) => {});
+    const { video } = setup();
+    video.setMediaKeys = setMediaKeys;
+
+    fireKeyRequest(video);
+    await settle();
+
+    // A new resource abandons this exchange, then the CDM answers anyway. The
+    // element is shared with whatever plays next, so nothing may be installed on
+    // it this late.
+    video.dispatchEvent(new Event('emptied'));
+    grantAccess?.();
+    await settle();
+
+    expect(setMediaKeys).not.toHaveBeenCalled();
+  });
+
   it('stops answering key requests after detach', async () => {
     const { requestMediaKeySystemAccess } = stubKeySystem();
     const { media, video } = setup();

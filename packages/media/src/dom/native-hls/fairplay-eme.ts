@@ -73,6 +73,12 @@ export function createFairPlayEme(context: FairPlayContext, options: FairPlayEme
       }
     }
 
+    // The element outlives this key system, so keys the teardown has already
+    // abandoned must not reach it. `close()` releases only keys it still owns,
+    // and cannot un-install what lands after that check — which would leave the
+    // source that replaced this one holding a CDM configured for the last one.
+    if (signal.aborted) return mediaKeys;
+
     await media.setMediaKeys(mediaKeys);
     return mediaKeys;
   }
