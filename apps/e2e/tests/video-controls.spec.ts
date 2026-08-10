@@ -4,6 +4,7 @@ import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
 const UI_VIDEO_PAGES = VIDEO_PAGES.filter(({ media }) => media === 'video');
+const EJECTED_HTML_VIDEO_PATH = '/pages/ejected-html-video-mp4.html';
 
 function getMediaVolume(page: Page): Promise<number> {
   return page.evaluate((selector) => {
@@ -181,6 +182,23 @@ for (const { name, path, skipBrowsers } of ALL_VIDEO_PAGES as readonly PageEntry
     });
   });
 }
+
+test.describe('Video Controls — Ejected HTML registration', () => {
+  test('upgrades connected markup before registration', async ({ page }) => {
+    const errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+
+    const player = new PlayerPage(page);
+    await page.goto(EJECTED_HTML_VIDEO_PATH);
+    await player.waitForMediaReady();
+    await player.showControls();
+    await player.muteButton.hover();
+
+    await expect(player.volumeSlider).toBeVisible();
+    await player.selectAlternativePlaybackRate();
+    expect(errors).toEqual([]);
+  });
+});
 
 for (const { name, path } of UI_VIDEO_PAGES) {
   test.describe(`Video Controls — ${name} UI`, () => {

@@ -143,6 +143,9 @@ export abstract class InputIndicatorElement<IndicatorState extends IndicatorLife
   }
 
   #reconnect(): void {
+    // Context can resolve before this field assignment completes.
+    if (!this.container) return;
+
     this.#inputActionUnsubscribe?.();
     this.#visibilityUnsubscribe?.();
     this.#inputActionUnsubscribe = null;

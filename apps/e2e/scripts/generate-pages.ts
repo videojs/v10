@@ -297,7 +297,6 @@ function ejectedHtmlPage(): string {
   const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
 
   return `import '@videojs/html/icons/element';
-import '@videojs/html/video/ui';
 import ejectedSkins from '${jsonPath}';
 
 interface EjectedSkinEntry {
@@ -324,6 +323,8 @@ if (!playerMatch) {
 
 const root = document.getElementById('root')!;
 root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
+
+await import('@videojs/html/video/ui');
 `;
 }
 

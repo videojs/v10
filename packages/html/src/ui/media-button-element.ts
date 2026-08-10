@@ -124,6 +124,7 @@ export abstract class MediaButtonElement<Core extends MediaButtonComponent> exte
   getResolvedLabel(): string | undefined {
     const media = this.mediaState.value;
     if (!media) return undefined;
+    this.core.setMedia(media);
     const state = this.core.getState() as InferComponentState<Core>;
     return translateText(this.core.getLabel(state), this.#i18n.value, getLabelParams(this.core, state));
   }
