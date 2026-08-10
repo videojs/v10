@@ -10,6 +10,8 @@ import {
   showDurationText,
   showElapsedText,
   showRemainingText,
+  toggleDurationText,
+  toggleElapsedText,
 } from '../../i18n/text/time';
 import { resolveLabel } from '../utils/resolve-label';
 
@@ -52,6 +54,12 @@ const DEFAULT_LABELS: Record<TimeType, Text> = {
   current: currentText,
   duration: durationText,
   remaining: remainingText,
+};
+
+const TOGGLE_DESCRIPTIONS: Record<TimeType, Text> = {
+  current: toggleElapsedText,
+  duration: toggleDurationText,
+  remaining: toggleDurationText,
 };
 
 export class TimeCore {
@@ -144,12 +152,29 @@ export class TimeCore {
 
   getLabelParams(state: TimeState): { duration: string } | undefined {
     const custom = resolveLabel(this.#props.label, state);
-    return custom === undefined && this.#props.toggle ? { duration: state.phrase } : undefined;
+    if (custom !== undefined || !this.#props.toggle) return undefined;
+
+    const options = this.#formatLocale === undefined ? undefined : { locale: this.#formatLocale };
+    const duration = formatTimeAsPhrase(Math.abs(state.seconds), options);
+
+    switch (state.type) {
+      case 'current':
+        return { duration: `${duration} elapsed` };
+      case 'duration':
+        return { duration: `${duration} duration` };
+      case 'remaining':
+        return { duration: `${duration} remaining` };
+    }
+  }
+
+  getDescription(type = this.#props.type): Text | undefined {
+    return this.#props.toggle ? TOGGLE_DESCRIPTIONS[type] : undefined;
   }
 
   getAttrs(state: TimeState, type = this.#props.type) {
     return {
       'aria-label': this.getLabel(state, type),
+      'aria-description': this.getDescription(type),
       role: this.#props.toggle ? 'button' : undefined,
       tabIndex: this.#props.toggle ? 0 : undefined,
     };

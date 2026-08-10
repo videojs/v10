@@ -27,10 +27,14 @@ export interface TranslationParams {
   'time.current': never;
   'time.duration': never;
   'time.remaining': never;
+  'time.elapsedSuffix': { duration: string | number };
+  'time.durationSuffix': { duration: string | number };
   'time.remainingSuffix': { duration: string | number };
   'time.showElapsed': { duration: string | number };
   'time.showDuration': { duration: string | number };
   'time.showRemaining': { duration: string | number };
+  'time.toggleElapsed': never;
+  'time.toggleDuration': never;
   'time.position': { current: string | number; duration: string | number };
   'playback.rate': { rate: string | number };
   'volume.mutedValue': { percent: string | number };

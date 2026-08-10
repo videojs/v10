@@ -41,6 +41,20 @@ test.describe('Keyboard Navigation', () => {
     await expect(player.playButton).not.toBeFocused();
   });
 
+  test('Enter and Space toggle the time control', async ({ page }) => {
+    const time = page.locator('media-time[toggle]').first();
+
+    await expect(time).toHaveAttribute('data-type', 'remaining');
+    await expect(time).toHaveAttribute('role', 'button');
+    await time.focus();
+
+    await page.keyboard.press('Enter');
+    await expect(time).toHaveAttribute('data-type', 'duration');
+
+    await page.keyboard.press('Space');
+    await expect(time).toHaveAttribute('data-type', 'remaining');
+  });
+
   test('Arrow keys adjust time slider', async ({ page }) => {
     // Seek somewhere first so arrow keys have room to adjust
     await player.seekTo(50);

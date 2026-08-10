@@ -97,6 +97,10 @@ describe('formatTimeAsPhrase', () => {
     expect(formatTimeAsPhrase(300)).toMatch(/minute/i);
   });
 
+  it('formats zero duration', () => {
+    expect(formatTimeAsPhrase(0)).toBe('0 seconds');
+  });
+
   it('adds remaining suffix for negative seconds', () => {
     expect(formatTimeAsPhrase(-30)).toMatch(/30/);
     expect(formatTimeAsPhrase(-30)).toMatch(/remaining$/i);

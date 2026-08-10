@@ -12,9 +12,15 @@ export type TimeFormatOptions = {
 
 type DurationRecord = Partial<{ hours: number; minutes: number; seconds: number }>;
 
+type DurationFormatOptions = {
+  style?: TimeFormatOptions['style'];
+  hoursDisplay?: 'auto' | 'always';
+  secondsDisplay?: 'auto' | 'always';
+};
+
 type DurationFormatConstructor = new (
   locales?: string | string[],
-  options?: { style?: TimeFormatOptions['style']; hoursDisplay?: 'auto' | 'always' }
+  options?: DurationFormatOptions
 ) => { format: (duration: DurationRecord) => string };
 
 const DurationFormat = (Intl as typeof Intl & { DurationFormat?: DurationFormatConstructor }).DurationFormat;
@@ -76,13 +82,16 @@ function isEnglishLocale(locale?: string | string[]): boolean {
 function getDurationFormatter(
   locale?: string | string[],
   style: NonNullable<TimeFormatOptions['style']> = 'long',
-  hoursDisplay?: 'auto' | 'always'
+  hoursDisplay?: 'auto' | 'always',
+  secondsDisplay?: 'auto' | 'always'
 ): DurationFormatter {
-  const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}`;
+  const key = `${localeCacheKey(locale)}:${style}:${hoursDisplay ?? ''}:${secondsDisplay ?? ''}`;
   let formatter = durationFormatters.get(key);
   if (!formatter) {
     if (DurationFormat) {
-      const options = hoursDisplay === undefined ? { style } : { style, hoursDisplay };
+      const options: DurationFormatOptions = { style };
+      if (hoursDisplay !== undefined) options.hoursDisplay = hoursDisplay;
+      if (secondsDisplay !== undefined) options.secondsDisplay = secondsDisplay;
       formatter = new DurationFormat(locale, options);
     } else {
       formatter = createFallbackFormatter(style, hoursDisplay, locale);
@@ -193,7 +202,10 @@ export function formatTimeAsPhrase(seconds: number, options?: TimeFormatOptions)
   if (minutes > 0) record.minutes = minutes;
   if (secondsPart > 0 || (hours === 0 && minutes === 0)) record.seconds = secondsPart;
 
-  const body = getDurationFormatter(options?.locale, options?.style ?? 'long').format(record);
+  const secondsDisplay = totalSeconds === 0 ? 'always' : undefined;
+  const body = getDurationFormatter(options?.locale, options?.style ?? 'long', undefined, secondsDisplay).format(
+    record
+  );
 
   if (negative) {
     const formatRemaining = options?.formatRemaining;
