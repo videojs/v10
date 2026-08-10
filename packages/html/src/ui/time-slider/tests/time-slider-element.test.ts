@@ -1,6 +1,6 @@
 import { SliderDataAttrs, type SliderState } from '@videojs/core';
 import { ContextProvider } from '@videojs/element/context';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaElement } from '../../media-element';
 import { sliderContext } from '../../slider/context';

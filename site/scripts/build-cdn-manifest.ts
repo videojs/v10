@@ -9,11 +9,11 @@
  * (one per media subpath), consumed via the `cdnMedia` content collection.
  *
  * Source of truth: the built output of `@videojs/html`'s `build:cdn` task
- * (configured in `packages/html/tsdown.cdn.config.ts`). Reading the build
+ * (configured in `packages/html/pack.cdn.config.ts`). Reading the build
  * output — rather than a hand-maintained list — means a renderer that fails to
  * ship a CDN bundle correctly shows as no-CDN.
  *
- * Prerequisites: `@videojs/html`'s `build:cdn` (wired as a turbo dependency).
+ * Prerequisites: `@videojs/html`'s `build:cdn` (wired as a Vite+ task dependency).
  */
 
 import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
@@ -54,7 +54,7 @@ function collectSubpaths(dir: string, prefix = ''): string[] {
 function main() {
   if (!existsSync(CDN_MEDIA_DIR)) {
     log.error(`CDN media build not found at ${CDN_MEDIA_DIR}.`);
-    log.error("Run @videojs/html's build:cdn first (it's wired as a turbo dependency).");
+    log.error("Run @videojs/html's build:cdn first (it's wired as a Vite+ task dependency).");
     process.exit(1);
   }
 

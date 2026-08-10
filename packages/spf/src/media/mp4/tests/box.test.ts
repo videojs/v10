@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { findBox, iterateBoxes, iterateBoxesOfType, readFullBoxVersion, toDataView } from '../box';
 import { box, concat, largeBox, u32 } from './synthetic-boxes';
 

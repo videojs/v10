@@ -1,6 +1,6 @@
 import { render, waitFor } from '@testing-library/react';
 import type { ReactNode } from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { PlayerContextProvider, type PlayerContextValue } from '../../../player/context';
 import { createMockStore } from '../../../testing/mocks';

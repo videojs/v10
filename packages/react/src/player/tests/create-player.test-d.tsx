@@ -10,7 +10,7 @@ import {
   videoFeatures,
 } from '@videojs/core/dom';
 import type { Slice } from '@videojs/store';
-import { assertType, describe, it } from 'vitest';
+import { assertType, describe, it } from 'vite-plus/test';
 
 import { type CreatePlayerResult, createPlayer } from '../create-player';
 

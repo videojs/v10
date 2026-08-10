@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { type MaybeResolvedPresentation, MEDIA_PLAYLIST_METADATA_KEY, type ResolvedTrack } from '../../types';
 import { liveLatencyFor, mediaPlaylistReloadDelay, resolveLiveLatency } from '../reload-policy';
 

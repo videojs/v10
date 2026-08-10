@@ -1,5 +1,5 @@
 import type { AstroCookies } from 'astro';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import { DEFAULT_FRAMEWORK, SUPPORTED_FRAMEWORKS } from '@/types/docs';
 import {
   FRAMEWORK_COOKIE,

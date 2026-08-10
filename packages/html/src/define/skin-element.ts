@@ -19,7 +19,7 @@ const sharedSheet = createShadowStyle(sharedStyles);
  */
 export class SkinElement extends ReactiveElement {
   static get observedAttributes(): string[] {
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+    // Intentionally use `super` to preserve inherited static properties.
     return [...super.observedAttributes, 'placeholdersrc'];
   }
 

@@ -1,5 +1,5 @@
 import type { MediaQualityState } from '@videojs/media';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { QualityRadioGroupState } from '../quality-radio-group-core';
 import { QUALITY_AUTO_VALUE, QualityRadioGroupCore } from '../quality-radio-group-core';
 

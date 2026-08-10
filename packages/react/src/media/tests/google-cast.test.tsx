@@ -3,7 +3,7 @@ import type { Media } from '@videojs/media';
 import { GoogleCast as GoogleCastComponent } from '@videojs/media/dom/google-cast';
 import { HlsJsMedia } from '@videojs/media/dom/hls-js';
 import { getMediaComponents } from '@videojs/media/dom/media-host';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createPlayerWrapper } from '../../testing/mocks';
 import { GoogleCast } from '../google-cast';
 

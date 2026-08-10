@@ -1,5 +1,5 @@
 import type { MediaRemotePlaybackState } from '@videojs/media';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { AirPlayButtonState } from '../airplay-button-core';
 import { AirPlayButtonCore } from '../airplay-button-core';
 

@@ -7,11 +7,6 @@ on:
     branches:
       - main
 
-# To use Turborepo Remote Caching, set the following environment variables.
-# env:
-#   TURBO_TOKEN: ${{ secrets.TURBO_TOKEN }}
-#   TURBO_TEAM: ${{ secrets.TURBO_TEAM }}
-
 jobs:
   release:
     runs-on: ubuntu-latest
@@ -53,14 +48,14 @@ jobs:
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm i --frozen-lockfile
 
-      - name: Cache turbo build setup
+      - name: Cache Vite Task build setup
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         uses: actions/cache@v5
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-vite-task-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-vite-task-
 
       - name: Clean
         if: ${{ steps.release.outputs.releases_created == 'true' }}
@@ -87,8 +82,7 @@ jobs:
       # The site build emits per-framework markdown to site/dist/docs/framework/{html,react}/.
       # The @videojs/html and @videojs/react packages' prepack scripts (fired by `pnpm publish`
       # below) copy that subtree into each package's docs/ directory so it ships in the tarball.
-      # build:cli also depends on the site build transitively; turbo caches it, so this step
-      # adds no rebuild cost — it just makes the dependency visible in CI.
+      # The site task and CLI dependency graph let Vite Task reuse the package builds here.
       - name: Build site (required by html/react prepack and CLI)
         if: ${{ steps.release.outputs.releases_created == 'true' }}
         run: pnpm build:site

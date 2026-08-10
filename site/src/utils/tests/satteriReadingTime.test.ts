@@ -2,7 +2,7 @@
 // Sätteri's native binding builds typed-array buffers that fail against jsdom's
 // patched ArrayBuffer/DataView globals; run these against the real node realm.
 import { markdownToHtml } from 'satteri';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { satteriReadingTime } from '../satteriReadingTime';
 
 function render(source: string) {

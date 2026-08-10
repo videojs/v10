@@ -1,5 +1,5 @@
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { loadSkinStyleManifest, recipeForToken } from '../manifest';
 
 const stylesRoot = resolve(import.meta.dirname, '../../../canonical/styles');

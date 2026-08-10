@@ -1,4 +1,4 @@
-import { describe, expectTypeOf, it } from 'vitest';
+import { describe, expectTypeOf, it } from 'vite-plus/test';
 import { type Signal, signal } from '../../signals/primitives';
 import {
   type Behavior,
@@ -159,7 +159,8 @@ describe('InferBehaviorState', () => {
       contextKeys: [],
       setup: ({ config: _config }: { config: { x: number } }) => {},
     };
-    // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback in create-composition
+    // matches the Empty fallback in create-composition
+    // oxlint-disable-next-line typescript/no-empty-object-type
     expectTypeOf<InferBehaviorState<typeof noState>>().toEqualTypeOf<{}>();
   });
 });
@@ -170,7 +171,8 @@ describe('InferBehaviorContext', () => {
   });
 
   it('returns an empty shape for a behavior with no context in params', () => {
-    // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback in create-composition
+    // matches the Empty fallback in create-composition
+    // oxlint-disable-next-line typescript/no-empty-object-type
     expectTypeOf<InferBehaviorContext<typeof counter>>().toEqualTypeOf<{}>();
   });
 });
@@ -428,7 +430,8 @@ describe('defineBehavior', () => {
       },
     });
     // `{}` is not assignable to the deps param when S has keys — state is required.
-    // biome-ignore lint/complexity/noBannedTypes: testing that `{}` (empty arg) doesn't satisfy deps
+    // testing that `{}` (empty arg) doesn't satisfy deps
+    // oxlint-disable-next-line typescript/no-empty-object-type
     expectTypeOf<{}>().not.toMatchTypeOf<Parameters<typeof b.setup>[0]>();
   });
 
@@ -438,7 +441,8 @@ describe('defineBehavior', () => {
       contextKeys: [],
       setup: () => {},
     });
-    // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback in create-composition
+    // matches the Empty fallback in create-composition
+    // oxlint-disable-next-line typescript/no-empty-object-type
     expectTypeOf<InferBehaviorState<typeof b>>().toEqualTypeOf<{}>();
   });
 });
@@ -916,9 +920,11 @@ describe('buildSignalMap', () => {
   });
 
   it('produces an empty map for an empty Partial<{}>', () => {
-    // biome-ignore lint/complexity/noBannedTypes: empty interface intentional
+    // empty interface intentional
+    // oxlint-disable-next-line typescript/no-empty-object-type
     const map = buildSignalMap<{}>([], {});
-    // biome-ignore lint/complexity/noBannedTypes: matches the Empty fallback
+    // matches the Empty fallback
+    // oxlint-disable-next-line typescript/no-empty-object-type
     expectTypeOf<typeof map>().toEqualTypeOf<{}>();
   });
 });

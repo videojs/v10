@@ -26,14 +26,16 @@
     }
   },
   "scripts": {
-    "build": "tsdown && pnpm run build:registry",
+    "build": "vp pack && pnpm run build:registry",
     "build:registry": "shadcn build canonical/registry/registry.json --output dist/registry",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build:watch": "vp pack --watch ./src --no-clean",
+    "check:artifacts": "node --import tsx ./scripts/check-artifacts.ts",
     "check:canonical": "node --import tsx ./scripts/check-canonical-imports.ts",
     "generate:skins": "node --import tsx ./scripts/generate-skins.ts",
     "check:skins": "node --import tsx ./scripts/generate-skins.ts --check",
     "dev": "pnpm run build:watch",
-    "test": "pnpm run check:canonical && pnpm run test:types && vitest run",
+    "generate:artifacts": "node --import tsx ./scripts/check-artifacts.ts --write && vp fmt ./artifacts.generated.json --write",
+    "test": "pnpm run check:canonical && pnpm run check:artifacts && pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./tsconfig.canonical.json",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
@@ -51,10 +53,10 @@
     "oxfmt": "^0.62.0",
     "shadcn": "^4.16.2",
     "tailwindcss": "4.2.1",
-    "tsdown": "^0.22.14",
     "tsx": "^4.23.1",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "keywords": [
     "media",

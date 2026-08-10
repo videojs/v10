@@ -3,7 +3,7 @@
  * fixed behavior is readable back off the Media because the host forwards to the
  * element, not because the adapter keeps a parallel copy of it.
  */
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { HlsBackgroundVideoMedia } from '../media';
 
 describe('HlsBackgroundVideoMedia', () => {

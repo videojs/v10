@@ -30,12 +30,7 @@ export {
 export { isDocument, isHTMLAudioElement, isHTMLMediaElement, isHTMLVideoElement, isShadowRoot } from './predicates';
 export { type RafThrottled, rafThrottle } from './raf-throttle';
 export { loadScript } from './script';
-export {
-  applyShadowStyles,
-  createShadowStyle,
-  ensureGlobalStyle,
-  type ShadowStyle,
-} from './shadow-styles';
+export { applyShadowStyles, createShadowStyle, ensureGlobalStyle, type ShadowStyle } from './shadow-styles';
 export { getSlottedElement, querySlot } from './slotted';
 export { addAnchorName, applyStyles, getAnchorNames, resolveCSSLength } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
@@ -48,13 +43,7 @@ export {
 } from './text-track';
 export { serializeTimeRanges } from './time-ranges';
 export { containsComposed } from './tree';
-export type {
-  CustomElement,
-  CustomElementCallbacks,
-  EventListenerFor,
-  EventType,
-  QueriedElement,
-} from './types';
+export type { CustomElement, CustomElementCallbacks, EventListenerFor, EventType, QueriedElement } from './types';
 export { walkAncestors } from './walk-ancestors';
 export {
   isWebKitAirPlayCapable,

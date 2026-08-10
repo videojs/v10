@@ -26,16 +26,16 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Cache turbo build setup
+      - name: Cache Vite Task setup
         uses: actions/cache@v5
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-vite-task-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-vite-task-
 
       - name: Run website tests
-        run: pnpm exec turbo run test --filter=site
+        run: pnpm exec vp run --filter="site^..." build && pnpm exec vp run site#test
 
   astro-check:
     runs-on: ubuntu-latest
@@ -56,19 +56,19 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
-      - name: Cache turbo build setup
+      - name: Cache Vite Task build setup
         uses: actions/cache@v5
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-vite-task-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-vite-task-
 
       - name: Build packages
         run: pnpm build:packages
 
       - name: Generate site content
-        run: cd site && pnpm api-docs && pnpm ejected-skins
+        run: pnpm exec vp run site#api-docs:generate && pnpm exec vp run site#ejected-skins
 
       - name: Astro check
         run: cd site && pnpm astro check --minimumSeverity warning

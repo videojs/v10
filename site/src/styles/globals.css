@@ -71,7 +71,7 @@
 }
 
 /* theme inline tells tailwind to reference the value of these properties */
-/* biome-ignore assist/source/useSortedProperties: Tailwind theme namespace resets are order-sensitive. */
+/* Tailwind theme namespace resets are order-sensitive. */
 @theme inline {
   --font-*: initial;
   /* --font-instrument-sans and --font-ibm-plex-mono are defined in Base.astro */
@@ -81,7 +81,7 @@
   --font-display: "Eurostile LT Pro Extended", "Eurostile LT Pro Extended Fallback", sans-serif;
 }
 
-/* biome-ignore assist/source/useSortedProperties: Tailwind theme namespace resets are order-sensitive. */
+/* Tailwind theme namespace resets are order-sensitive. */
 @theme {
   --color-*: initial;
 

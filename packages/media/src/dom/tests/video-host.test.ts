@@ -1,5 +1,5 @@
 import type { WebKitDocument, WebKitVideoElement } from '@videojs/utils/dom';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { HTMLVideoElementHost } from '../video-host';
 
 afterEach(() => {

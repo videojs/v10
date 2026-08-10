@@ -11,13 +11,7 @@ import {
 } from '../../core/types';
 import { getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
-export {
-  addMediaComponent,
-  getMediaComponents,
-  getMediaOwner,
-  getMediaProp,
-  setMediaProp,
-} from '../utils';
+export { addMediaComponent, getMediaComponents, getMediaOwner, getMediaProp, setMediaProp } from '../utils';
 
 export interface HTMLMediaTargetLike extends MediaTargetLike, EventTarget {
   querySelector<E extends Element = Element>(selectors: string): E | null;

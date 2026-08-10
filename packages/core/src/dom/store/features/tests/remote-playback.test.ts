@@ -1,6 +1,6 @@
 import type { Media } from '@videojs/media/dom';
 import type { AttachContext } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { PlayerTarget } from '../../../player';
 import { remotePlaybackFeature } from '../remote-playback';
 

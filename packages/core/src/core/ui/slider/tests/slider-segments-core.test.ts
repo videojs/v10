@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import type { SliderState } from '../slider-core';
 import { SliderSegmentsCore } from '../slider-segments-core';

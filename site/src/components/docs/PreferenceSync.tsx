@@ -29,6 +29,7 @@ export function PreferenceSync() {
     }
   }, [framework]);
 
-  // biome-ignore lint/complexity/noUselessFragments: Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+  // Astro SSR logs false "Invalid hook call" when a React component with hooks returns null. See withastro/astro#12283.
+  // oxlint-disable-next-line react/jsx-no-useless-fragment
   return <></>;
 }

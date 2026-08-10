@@ -23,7 +23,8 @@ lib/
 out/
 packages/*/types/
 *.tsbuildinfo
-.turbo/
+.vite/
+.vite-hooks/_/
 coverage/
 *.lcov
 .nyc_output/

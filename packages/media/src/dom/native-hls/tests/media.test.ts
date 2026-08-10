@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { NativeHlsMedia, type NativeHlsSource } from '../index';
 
 const MANIFEST = 'https://example.test/video.m3u8';

@@ -37,17 +37,17 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build": "vp pack",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "pnpm run test:types && vitest run",
+    "test": "pnpm run test:types && vp test run",
     "test:types": "tsgo --project ./src/tests/tsconfig.json",
-    "test:watch": "vitest",
+    "test:watch": "vp test",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "devDependencies": {
-    "tsdown": "^0.22.14",
     "typescript": "^6.0.2",
-    "vitest": "^4.1.10"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   }
 }

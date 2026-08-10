@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { type AppendedSegment, isLastSegmentAppended } from '../end-of-stream';
 
 function appendedFromIds(segmentIds: string[]): AppendedSegment[] {

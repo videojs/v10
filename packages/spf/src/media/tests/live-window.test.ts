@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { liveWindowFor } from '../live-window';
 import { type AudioTrack, MEDIA_PLAYLIST_METADATA_KEY, type Presentation, type VideoTrack } from '../types';
 

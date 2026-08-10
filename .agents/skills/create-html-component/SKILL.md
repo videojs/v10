@@ -18,7 +18,7 @@ Read the relevant core contract, nearest HTML element and tests, definition entr
 7. Keep the element class free of registration side effects. Register it with `safeDefine` under `packages/html/src/define/ui/`, update `HTMLElementTagNameMap`, and preserve narrow import and `sideEffects` boundaries.
 8. Clean up subscriptions, observers, listeners, locks, and async work across disconnect and destroy. Add focused core and HTML tests; verify interaction in a browser when semantics, focus, or pointer behavior changes.
 
-Check `packages/html/package.json` and `packages/html/tsdown.config.ts` when adding an entrypoint or registration module. Run the narrow package tests and build; build changed exported types before repository typechecking.
+Check `packages/html/package.json` and `packages/html/pack.config.ts` when adding an entrypoint or registration module. Run the narrow package tests and build; build changed exported types before repository typechecking.
 
 ## Example
 

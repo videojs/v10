@@ -1,6 +1,6 @@
 import type { MediaVolumeState } from '@videojs/media';
 import { formatPercent } from '@videojs/utils/percent';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { SliderInput } from '../../slider/slider-core';
 import { VolumeSliderCore } from '../volume-slider-core';
 

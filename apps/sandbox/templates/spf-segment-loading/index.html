@@ -12,8 +12,12 @@
         margin: 0 auto;
         font-family: monospace;
       }
-      h1 { margin-bottom: 6px; }
-      p { margin: 0 0 12px; }
+      h1 {
+        margin-bottom: 6px;
+      }
+      p {
+        margin: 0 0 12px;
+      }
 
       video {
         display: block;
@@ -62,7 +66,12 @@
         margin-bottom: 10px;
         font-size: 12px;
       }
-      #playback-config label { display: flex; gap: 4px; align-items: center; cursor: pointer; }
+      #playback-config label {
+        display: flex;
+        gap: 4px;
+        align-items: center;
+        cursor: pointer;
+      }
       #playback-config select {
         padding: 2px 6px;
         font-family: monospace;
@@ -88,10 +97,14 @@
         white-space: nowrap;
         text-decoration: none;
       }
-      #share-link:hover { text-decoration: underline; }
+      #share-link:hover {
+        text-decoration: underline;
+      }
 
       /* ── Main controls ── */
-      #controls { margin-bottom: 10px; }
+      #controls {
+        margin-bottom: 10px;
+      }
       button {
         padding: 8px 16px;
         margin-right: 8px;
@@ -102,7 +115,9 @@
         border: 1px solid #333;
         border-radius: 4px;
       }
-      button:hover { background: #e0e0e0; }
+      button:hover {
+        background: #e0e0e0;
+      }
 
       /* ── Video info strip ── */
       #now-playing-quality {
@@ -111,22 +126,32 @@
         font-size: 12px;
         color: #555;
       }
-      #now-playing-quality.has-quality { font-weight: bold; color: #0070f3; }
+      #now-playing-quality.has-quality {
+        font-weight: bold;
+        color: #0070f3;
+      }
       #throughput-display {
         margin-bottom: 12px;
         font-family: monospace;
         font-size: 12px;
         color: #555;
       }
-      #throughput-display.has-data { color: #16a34a; }
-      #throughput-display.warming { color: #d97706; }
+      #throughput-display.has-data {
+        color: #16a34a;
+      }
+      #throughput-display.warming {
+        color: #d97706;
+      }
       #live-status {
         margin-bottom: 12px;
         font-family: monospace;
         font-size: 12px;
         color: #555;
       }
-      #live-status.is-live { font-weight: bold; color: #dc2626; }
+      #live-status.is-live {
+        font-weight: bold;
+        color: #dc2626;
+      }
 
       /* ── Rendition / resolution / audio panels ── */
       #rendition-picker,
@@ -139,9 +164,20 @@
         border: 1px solid #ddd;
         border-radius: 4px;
       }
-      #rendition-picker h2, #audio-track-picker h2, #text-track-picker h2, #resolution-status h2 { margin-top: 0; font-size: 14px; }
+      #rendition-picker h2,
+      #audio-track-picker h2,
+      #text-track-picker h2,
+      #resolution-status h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
 
-      #audio-track-buttons, #text-track-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      #audio-track-buttons,
+      #text-track-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .audio-track-btn {
         padding: 6px 12px;
         font-family: monospace;
@@ -151,20 +187,53 @@
         border: 2px solid #999;
         border-radius: 4px;
       }
-      .audio-track-btn:hover { background: #eee; border-color: #555; }
-      .audio-track-btn.selected-default { font-weight: bold; background: #e6f0ff; border-color: #0070f3; }
-      .audio-track-btn.selected-pinned  { font-weight: bold; background: #fef3c7; border-color: #d97706; }
-
-      .audio-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-      .mode-default { font-weight: bold; color: #0070f3; }
-      .mode-pinned  { font-weight: bold; color: #d97706; }
-      .clear-filter-btn {
-        padding: 4px 10px; font-size: 11px; color: #d97706; cursor: pointer; background: #fef3c7;
-        border: 1px solid #d97706; border-radius: 4px;
+      .audio-track-btn:hover {
+        background: #eee;
+        border-color: #555;
       }
-      .clear-filter-btn:hover { background: #fde68a; }
+      .audio-track-btn.selected-default {
+        font-weight: bold;
+        background: #e6f0ff;
+        border-color: #0070f3;
+      }
+      .audio-track-btn.selected-pinned {
+        font-weight: bold;
+        background: #fef3c7;
+        border-color: #d97706;
+      }
 
-      #rendition-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
+      .audio-status {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-default {
+        font-weight: bold;
+        color: #0070f3;
+      }
+      .mode-pinned {
+        font-weight: bold;
+        color: #d97706;
+      }
+      .clear-filter-btn {
+        padding: 4px 10px;
+        font-size: 11px;
+        color: #d97706;
+        cursor: pointer;
+        background: #fef3c7;
+        border: 1px solid #d97706;
+        border-radius: 4px;
+      }
+      .clear-filter-btn:hover {
+        background: #fde68a;
+      }
+
+      #rendition-buttons {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
       .rendition-btn {
         padding: 6px 12px;
         font-family: monospace;
@@ -174,53 +243,124 @@
         border: 2px solid #999;
         border-radius: 4px;
       }
-      .rendition-btn:hover { background: #eee; border-color: #555; }
-      .rendition-btn.selected-abr  { font-weight: bold; background: #e6f0ff; border-color: #0070f3; }
-      .rendition-btn.selected-manual { font-weight: bold; background: #fef3c7; border-color: #d97706; }
+      .rendition-btn:hover {
+        background: #eee;
+        border-color: #555;
+      }
+      .rendition-btn.selected-abr {
+        font-weight: bold;
+        background: #e6f0ff;
+        border-color: #0070f3;
+      }
+      .rendition-btn.selected-manual {
+        font-weight: bold;
+        background: #fef3c7;
+        border-color: #d97706;
+      }
 
-      .abr-status { display: flex; gap: 10px; align-items: center; margin-bottom: 10px; }
-      .mode-abr    { font-weight: bold; color: #0070f3; }
-      .mode-manual { font-weight: bold; color: #d97706; }
+      .abr-status {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+      }
+      .mode-abr {
+        font-weight: bold;
+        color: #0070f3;
+      }
+      .mode-manual {
+        font-weight: bold;
+        color: #d97706;
+      }
       .enable-abr-btn {
-        padding: 4px 10px; font-size: 11px; color: #0070f3; cursor: pointer;background: #e6f0ff; 
-        border: 1px solid #0070f3; border-radius: 4px;
+        padding: 4px 10px;
+        font-size: 11px;
+        color: #0070f3;
+        cursor: pointer;
+        background: #e6f0ff;
+        border: 1px solid #0070f3;
+        border-radius: 4px;
       }
-      .enable-abr-btn:hover { background: #cce0ff; }
+      .enable-abr-btn:hover {
+        background: #cce0ff;
+      }
 
-      #resolution-list { display: flex; flex-wrap: wrap; gap: 8px; }
-      .resolution-item {
-        padding: 4px 10px; 
-        font-family: monospace; font-size: 11px;border: 1px solid #ccc; border-radius: 4px;
+      #resolution-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
       }
-      .resolution-item.resolved   { color: green; border-color: green; }
-      .resolution-item.unresolved { color: #888; border-color: #aaa; }
+      .resolution-item {
+        padding: 4px 10px;
+        font-family: monospace;
+        font-size: 11px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+      }
+      .resolution-item.resolved {
+        color: green;
+        border-color: green;
+      }
+      .resolution-item.unresolved {
+        color: #888;
+        border-color: #aaa;
+      }
 
       /* ── Logs ── */
-      #logs-section { margin: 16px 0; }
-      #logs-section h2 { margin-bottom: 6px; font-size: 14px; }
-      #logs {
-        max-height: 400px; padding: 10px; overflow-y: auto; font-size: 12px;
-        background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px;
+      #logs-section {
+        margin: 16px 0;
       }
-      #logs div { padding: 2px 0; border-bottom: 1px solid #eee; }
+      #logs-section h2 {
+        margin-bottom: 6px;
+        font-size: 14px;
+      }
+      #logs {
+        max-height: 400px;
+        padding: 10px;
+        overflow-y: auto;
+        font-size: 12px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      #logs div {
+        padding: 2px 0;
+        border-bottom: 1px solid #eee;
+      }
 
       /* ── State inspector ── */
       #state {
-        padding: 15px; margin: 16px 0;font-size: 12px;
-        background: #f5f5f5; 
-        border: 1px solid #ddd; border-radius: 4px;
+        padding: 15px;
+        margin: 16px 0;
+        font-size: 12px;
+        background: #f5f5f5;
+        border: 1px solid #ddd;
+        border-radius: 4px;
       }
-      #state h2 { margin-top: 0; font-size: 14px; }
+      #state h2 {
+        margin-top: 0;
+        font-size: 14px;
+      }
       #state pre {
-        padding: 10px; 
-        margin: 10px 0; overflow-x: auto;background: #fff;
-        border: 1px solid #ddd; border-radius: 4px;
+        padding: 10px;
+        margin: 10px 0;
+        overflow-x: auto;
+        background: #fff;
+        border: 1px solid #ddd;
+        border-radius: 4px;
       }
 
       /* ── Log colours ── */
-      .error   { font-weight: bold; color: red; }
-      .success { color: green; }
-      .warning { color: orange; }
+      .error {
+        font-weight: bold;
+        color: red;
+      }
+      .success {
+        color: green;
+      }
+      .warning {
+        color: orange;
+      }
     </style>
   </head>
   <body>
@@ -264,13 +404,21 @@
     <div id="controls">
       <button type="button" id="play">Play</button>
       <button type="button" id="pause">Pause</button>
-      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">Seek to Live Edge</button>
-      <button type="button" id="seek-behind-window" title="Seek 30s behind the window start — exercises the window-exit rescue">Seek Out of Window</button>
+      <button type="button" id="seek-to-edge" title="Seek to the live edge (window end − HOLD-BACK)">
+        Seek to Live Edge
+      </button>
+      <button
+        type="button"
+        id="seek-behind-window"
+        title="Seek 30s behind the window start — exercises the window-exit rescue"
+      >
+        Seek Out of Window
+      </button>
       <button type="button" id="inspect">Inspect State</button>
       <button type="button" id="clearLogs">Clear Logs</button>
     </div>
 
-    <!-- biome-ignore lint/a11y/useMediaCaption: test harness, captions managed by SPF -->
+    <!-- Test harness: captions are managed by SPF. -->
     <video id="video" controls preload="none"></video>
     <div id="now-playing-quality"></div>
     <div id="throughput-display"></div>

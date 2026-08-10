@@ -1,7 +1,7 @@
 import { type Locale, registerI18n, resetI18nRegistry, type Text, type Translator } from '@videojs/core/i18n';
 import { type PropertyValues, ReactiveElement } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { SkinElement } from '../../define/skin-element';
 import { i18nContext, MediaI18nProviderElement, MediaTextElement } from '../index';

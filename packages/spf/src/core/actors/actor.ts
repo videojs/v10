@@ -18,8 +18,9 @@ export interface ActorSnapshot<State extends string, Context extends object> ext
 }
 
 /** Generic actor interface: owns its snapshot as a reactive signal. */
-export interface SignalActor<State extends string, Context extends object>
-  extends Machine<ActorSnapshot<State, Context>> {}
+export interface SignalActor<State extends string, Context extends object> extends Machine<
+  ActorSnapshot<State, Context>
+> {}
 
 /**
  * A message-driven actor with no reactive snapshot.

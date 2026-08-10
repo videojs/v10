@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { AudioTrack, Presentation, VideoTrack } from '../../types';
 import { getResolvedSelectedTrackDuration, type TrackSelectionState } from '../track-selection';
 

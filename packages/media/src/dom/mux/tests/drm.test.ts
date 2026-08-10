@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { createMuxDrmSystems } from '../drm';
 
 // Header `{"alg":"HS256"}`, body sets `aud`, empty signature. Unpadded base64url,

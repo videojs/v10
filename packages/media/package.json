@@ -45,11 +45,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build": "vp pack",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
@@ -63,8 +63,8 @@
     "@types/chrome": "^0.1.40",
     "@types/chromecast-caf-sender": "^1.0.11",
     "jsdom": "^26.1.0",
-    "tsdown": "^0.21.9",
-    "vitest": "^4.1.0"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "publishConfig": {
     "access": "public"

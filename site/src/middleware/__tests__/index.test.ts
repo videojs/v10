@@ -3,7 +3,7 @@
 import { getActionContext } from 'astro:actions';
 import type { APIContext } from 'astro';
 import { jwtVerify } from 'jose';
-import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterAll, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { onRequest } from '@/middleware/index';
 import { refreshToken, seal, unseal } from '@/utils/auth';
 

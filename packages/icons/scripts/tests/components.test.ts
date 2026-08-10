@@ -1,6 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 const componentsRoot = resolve(import.meta.dirname, '../../dist/components');
 const reactRoot = resolve(import.meta.dirname, '../../dist/react');

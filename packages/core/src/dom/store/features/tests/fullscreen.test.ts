@@ -1,7 +1,7 @@
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
 import { createStore } from '@videojs/store';
 import type { WebKitVideoElement } from '@videojs/utils/dom';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { selectFullscreen } from '../../selectors';

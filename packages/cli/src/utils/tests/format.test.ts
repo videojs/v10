@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { InstallationOptions } from '@/utils/installation/codegen';
 import { formatInstallationCode } from '../format.js';
 

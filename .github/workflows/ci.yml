@@ -114,17 +114,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Cache turbo test setup
+      - name: Cache Vite Task test setup
         uses: actions/cache@v5
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-test-${{ github.sha }}-${{ matrix.package }}
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-vite-task-test-${{ github.sha }}-${{ matrix.package }}
           restore-keys: |
-            ${{ runner.os }}-turbo-test-
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-vite-task-test-
+            ${{ runner.os }}-vite-task-
 
       - name: Test package
-        run: pnpm turbo run test --filter="${{ matrix.package }}"
+        run: pnpm exec vp run --filter="${{ matrix.package }}..." build && pnpm exec vp run "${{ matrix.package }}#test"
 
   test-spf:
     name: Test (@videojs/spf)
@@ -150,7 +150,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Test SPF
-        run: pnpm turbo run test --filter="@videojs/spf" --env-mode=loose
+        run: pnpm exec vp run --filter="@videojs/spf..." build && pnpm exec vp run @videojs/spf#test
 
   workspace:
     needs: install
@@ -195,13 +195,13 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile --prefer-offline
 
-      - name: Cache turbo build setup
+      - name: Cache Vite Task build setup
         uses: actions/cache@v5
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-vite-task-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-vite-task-
 
       - name: Build
         run: pnpm build:packages

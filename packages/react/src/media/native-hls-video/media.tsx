@@ -10,8 +10,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export interface NativeHlsVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof NativeHlsMediaProps>,
-    Partial<NativeHlsMediaProps> {
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof NativeHlsMediaProps>, Partial<NativeHlsMediaProps> {
   children?: ReactNode;
 }
 

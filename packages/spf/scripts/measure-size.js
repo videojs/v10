@@ -33,11 +33,11 @@ if (measureAll) {
 
 console.log(`\n📦 Measuring ${label} bundle size...\n`);
 
-// Temporarily modify tsdown config to use the correct entry and enable minification
-const configPath = './tsdown.config.ts';
+// Temporarily modify the Vite+ pack config to use the correct entry and enable minification
+const configPath = './pack.config.ts';
 const originalConfig = readFileSync(configPath, 'utf8');
 
-const tempConfig = `import { defineConfig } from 'tsdown';
+const tempConfig = `import { defineConfig } from 'vite-plus/pack';
 
 export default defineConfig({
   entry: ['src/${entry}'],
@@ -100,5 +100,5 @@ try {
 } finally {
   // Restore original config
   writeFileSync(configPath, originalConfig);
-  console.log('Restored tsdown config\n');
+  console.log('Restored Vite+ pack config\n');
 }

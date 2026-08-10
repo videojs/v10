@@ -1,6 +1,6 @@
 import { type MediaStreamType, MediaStreamTypes } from '@videojs/media';
 import { createStore } from '@videojs/store';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { streamTypeFeature } from '../stream-type';

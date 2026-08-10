@@ -9,7 +9,7 @@ export class PosterElement extends MediaUIElement<PosterCore> {
   static readonly tagName = 'media-poster';
 
   static get observedAttributes(): string[] {
-    // biome-ignore lint/complexity/noThisInStatic: intentional use of super
+    // Intentionally use `super` to preserve inherited static properties.
     return [...super.observedAttributes, 'placeholdersrc'];
   }
 

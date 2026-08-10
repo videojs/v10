@@ -204,7 +204,7 @@ writeGenerated(resolve(coreRoot, 'src/core/i18n/load-locale.ts'), generateLoadLo
 generateTextModules();
 syncPlatformLocaleDir(htmlLocalesDir);
 syncPlatformLocaleDir(reactLocalesDir);
-execFileSync('pnpm', ['exec', 'biome', 'check', '--write', ...generatedFiles], {
+execFileSync('pnpm', ['exec', 'vp', 'check', '--fix', ...generatedFiles], {
   cwd: repoRoot,
   stdio: 'inherit',
 });

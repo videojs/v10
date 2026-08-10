@@ -20,7 +20,8 @@ export function useLocaleRootNotifications(resolvedLocale: Locale, onActiveLocal
 
   // Nested lang roots report their own active locale while mounted. When the
   // last one unmounts, notify the ancestor again with its now-effective locale.
-  // biome-ignore lint/correctness/useExhaustiveDependencies: rerun when nested locale roots unmount even though notification reads refs.
+  // rerun when nested locale roots unmount even though notification reads refs.
+  // oxlint-disable-next-line react/exhaustive-deps
   useEffect(() => {
     const id = setTimeout(() => {
       if (childLocaleRootCountRef.current > 0) return;

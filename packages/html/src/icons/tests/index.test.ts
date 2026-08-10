@@ -1,5 +1,5 @@
 import { Window } from 'happy-dom';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 describe('@videojs/html/icons', () => {
   afterEach(() => {

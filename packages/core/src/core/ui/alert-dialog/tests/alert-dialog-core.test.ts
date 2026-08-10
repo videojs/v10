@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { AlertDialogCore, type AlertDialogInput } from '../alert-dialog-core';
 
 const CLOSED: AlertDialogInput = { active: false, status: 'idle' };

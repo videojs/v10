@@ -1,7 +1,7 @@
 import type { RadioOption, RadioOptionsState } from '@videojs/core';
 import { createTranslator } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MenuItemIndicatorElement } from '../../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../../menu/menu-radio-group-element';

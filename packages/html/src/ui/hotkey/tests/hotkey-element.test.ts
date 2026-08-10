@@ -1,5 +1,5 @@
 import { ContextProvider } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { containerContext } from '../../../player/context';
 import { MediaElement } from '../../media-element';
 import { AriaKeyShortcutsController } from '../aria-key-shortcuts-controller';

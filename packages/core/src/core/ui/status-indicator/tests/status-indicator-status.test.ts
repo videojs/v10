@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import type { MediaSnapshot } from '../../input-action/input-action';
 import { getSeekDirection, getSeekIndicatorDisplayValue } from '../../seek-indicator/seek-indicator-status';

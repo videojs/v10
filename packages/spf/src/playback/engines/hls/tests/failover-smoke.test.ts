@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { isResolvedTrack, type MaybeResolvedPresentation } from '../../../../media/types';
 import { createHlsVideoEngine } from '../engine';
 

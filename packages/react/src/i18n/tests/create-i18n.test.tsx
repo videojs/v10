@@ -2,7 +2,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import * as coreI18n from '@videojs/core/i18n';
 import { type FlatTranslations, registerI18n, resetI18nRegistry } from '@videojs/core/i18n';
 import { createRef, type ReactElement } from 'react';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { createI18n, I18nProvider as DefaultI18nProvider } from '../create-i18n';
 

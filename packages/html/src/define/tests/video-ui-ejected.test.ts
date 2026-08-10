@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 async function waitForUpdates(elements: Element[]): Promise<void> {
   for (const element of elements) {

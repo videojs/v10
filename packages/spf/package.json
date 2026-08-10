@@ -76,11 +76,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build": "vp pack",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
-    "test:watch": "vitest",
+    "test": "vp test run",
+    "test:watch": "vp test",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'",
     "size": "node scripts/measure-size.js --hls",
     "size:all": "node scripts/measure-size.js --all"
@@ -91,13 +91,11 @@
     "signal-polyfill": "^0.2.2"
   },
   "devDependencies": {
-    "@vitest/browser": "^4.1.10",
-    "@vitest/browser-playwright": "^4.1.10",
     "@vitest/coverage-v8": "^4.1.10",
     "jsdom": "^26.1.0",
     "playwright": "^1.59.1",
-    "tsdown": "^0.22.14",
-    "vitest": "^4.1.10"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "publishConfig": {
     "access": "public"

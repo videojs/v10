@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MediaError } from '../../../core/media-error';
 import type { RemotePlaybackLike } from '../../../core/types';
 import { addMediaComponent, type MediaComponent } from '../../media-host';

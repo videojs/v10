@@ -2,7 +2,7 @@ import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { getMediaComponents, type MediaComponent } from '@videojs/media/dom/media-host';
 import { HTMLVideoElementHost } from '@videojs/media/dom/video-host';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 import { mediaContext } from '../../player/context';
 import { MediaElement } from '../../ui/media-element';
 import { MediaComponentElement } from '../media-component-element';

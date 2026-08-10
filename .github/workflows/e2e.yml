@@ -37,14 +37,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Cache turbo build
+      - name: Cache Vite Task build
         uses: actions/cache@v5
         with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-e2e-${{ github.sha }}
+          path: node_modules/.vite/task-cache
+          key: ${{ runner.os }}-vite-task-e2e-${{ github.sha }}
           restore-keys: |
-            ${{ runner.os }}-turbo-e2e-
-            ${{ runner.os }}-turbo-
+            ${{ runner.os }}-vite-task-e2e-
+            ${{ runner.os }}-vite-task-
 
       - name: Build packages
         run: pnpm build:packages
@@ -53,7 +53,7 @@ jobs:
         run: pnpm build:cdn
 
       - name: Build ejected skins
-        run: pnpm -F site ejected-skins
+        run: pnpm exec vp run site#ejected-skins
 
       - name: Generate E2E test pages
         run: pnpm --dir apps/e2e generate-pages

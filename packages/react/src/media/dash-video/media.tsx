@@ -10,8 +10,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export interface DashVideoProps
-  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashMediaProps>,
-    Partial<DashMediaProps> {
+  extends Omit<VideoHTMLAttributes<HTMLVideoElement>, keyof DashMediaProps>, Partial<DashMediaProps> {
   children?: ReactNode;
 }
 

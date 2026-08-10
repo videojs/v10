@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import type { MediaSnapshot } from '../../input-action/input-action';
 import { StatusAnnouncerCore } from '../status-announcer-core';

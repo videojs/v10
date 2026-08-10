@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { parseJwt } from '../parse-jwt';
 
 // Header `{"alg":"HS256"}`, body is the payload (UTF-8), empty signature.

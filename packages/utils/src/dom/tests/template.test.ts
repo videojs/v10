@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { cloneTemplateRoot, createTemplate, getTemplateElement, getTemplateRoot, renderTemplate } from '../template';
 
 describe('createTemplate', () => {

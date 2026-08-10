@@ -1,7 +1,7 @@
 /** @jsxImportSource @videojs/jsx */
 
 import { Slot } from '@videojs/jsx';
-import { describe, it } from 'vitest';
+import { describe, it } from 'vite-plus/test';
 import {
   Controls,
   FullscreenButton,

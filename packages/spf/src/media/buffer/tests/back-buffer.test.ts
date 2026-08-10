@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { Segment } from '../../types';
 import { calculateBackBufferFlushPoint, DEFAULT_BACK_BUFFER_CONFIG } from '../back-buffer';
 

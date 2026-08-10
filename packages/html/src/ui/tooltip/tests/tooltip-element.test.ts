@@ -4,7 +4,7 @@ import { HOTKEY_SHORTCUT_CHANGE_EVENT, playbackFeature } from '@videojs/core/dom
 import { registerI18n, resetI18nRegistry, resolveText, type Text } from '@videojs/core/i18n';
 import { ContextProvider } from '@videojs/element/context';
 import { createState, createStore } from '@videojs/store';
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 
 import { MediaI18nProviderElement } from '../../../i18n';
 import { playerContext } from '../../../player/context';

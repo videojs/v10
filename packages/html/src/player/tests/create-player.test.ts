@@ -1,6 +1,6 @@
 import { audioFeatures, backgroundFeatures, metadataFeature, type PopupGroup, videoFeatures } from '@videojs/core/dom';
 import { ContextConsumer } from '@videojs/element/context';
-import { afterEach, describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vite-plus/test';
 
 import { MediaElement } from '../../ui/media-element';
 import { createPlayer } from '../create-player';

@@ -64,18 +64,32 @@ document.getElementById('root')!.innerHTML = html`
     /* Play button icon states */
     media-play-button .icon-play,
     media-play-button .icon-pause,
-    media-play-button .icon-restart { display: none; }
+    media-play-button .icon-restart {
+      display: none;
+    }
 
-    media-play-button[data-paused]:not([data-ended]) .icon-play        { display: block; }
-    media-play-button:not([data-paused]):not([data-ended]) .icon-pause  { display: block; }
-    media-play-button[data-ended] .icon-restart                        { display: block; }
+    media-play-button[data-paused]:not([data-ended]) .icon-play {
+      display: block;
+    }
+    media-play-button:not([data-paused]):not([data-ended]) .icon-pause {
+      display: block;
+    }
+    media-play-button[data-ended] .icon-restart {
+      display: block;
+    }
 
     /* Mute button icon states */
     media-mute-button .icon-volume-high,
-    media-mute-button .icon-volume-off { display: none; }
+    media-mute-button .icon-volume-off {
+      display: none;
+    }
 
-    media-mute-button:not([data-muted]) .icon-volume-high { display: block; }
-    media-mute-button[data-muted]       .icon-volume-off  { display: block; }
+    media-mute-button:not([data-muted]) .icon-volume-high {
+      display: block;
+    }
+    media-mute-button[data-muted] .icon-volume-off {
+      display: block;
+    }
   </style>
 
   <div class="player-wrapper">

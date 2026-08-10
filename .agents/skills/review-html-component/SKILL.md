@@ -15,7 +15,7 @@ Read the implementation, core and DOM contracts, rendered semantics, tests, defi
 6. Inspect registration and tree-shaking boundaries. Element classes should not self-register; `define/ui` modules should register narrowly through `safeDefine`; `package.json` and build entries must mark only real side effects.
 7. Check connection, disconnection, destruction, upgrade behavior, transition presence and races, cleanup, accessibility, and platform tests. Verify interaction in a browser when focus, keyboard, pointer, timing, or rendered structure matters.
 
-Use `packages/html/src/ui/play-button/`, `packages/html/src/ui/slider/`, `packages/html/src/define/ui/`, `packages/html/package.json`, and `packages/html/tsdown.config.ts` as comparison anchors.
+Use `packages/html/src/ui/play-button/`, `packages/html/src/ui/slider/`, `packages/html/src/define/ui/`, `packages/html/package.json`, and `packages/html/pack.config.ts` as comparison anchors.
 
 Report findings by severity with the location, affected consumer, evidence, and smallest viable improvement. Separate correctness and contract gaps from optional trade-offs.
 

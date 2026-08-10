@@ -15,7 +15,7 @@ Read the implementation, core and DOM contracts, rendered semantics, tests, expo
 6. Inspect imports, dependencies, re-exports, client boundaries, and production tree shaking. Compound APIs should use `export * as Name from './index.parts'` with direct part re-exports, not a runtime namespace object. Optional parts or integrations should not force unrelated code into a consumer bundle.
 7. Check transition presence and races, cleanup, SSR behavior, accessibility, and tests for state flow, nested roots, prop/ref composition, rendered output, and customization.
 
-Use `packages/react/src/ui/create-media-button.tsx`, `packages/react/src/utils/use-render.tsx`, `packages/react/src/ui/play-button/`, `packages/react/src/ui/slider/`, `packages/react/package.json`, and `packages/react/tsdown.config.ts` as comparison anchors.
+Use `packages/react/src/ui/create-media-button.tsx`, `packages/react/src/utils/use-render.tsx`, `packages/react/src/ui/play-button/`, `packages/react/src/ui/slider/`, `packages/react/package.json`, and `packages/react/pack.config.ts` as comparison anchors.
 
 Report findings by severity with the location, affected consumer, evidence, and smallest viable improvement. Separate correctness and contract gaps from optional trade-offs.
 

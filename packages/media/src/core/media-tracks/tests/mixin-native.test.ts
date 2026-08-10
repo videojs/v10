@@ -1,4 +1,4 @@
-import { afterAll, describe, expect, it, vi } from 'vitest';
+import { afterAll, describe, expect, it, vi } from 'vite-plus/test';
 
 class FakeNativeTrackList extends EventTarget {
   #tracks: object[] = [];

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { BandwidthState } from '../bandwidth-estimator';
 import { getBandwidthEstimate, hasGoodEstimate, sampleBandwidth } from '../bandwidth-estimator';
 

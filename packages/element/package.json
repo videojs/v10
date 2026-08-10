@@ -29,10 +29,10 @@
     }
   },
   "scripts": {
-    "build": "tsdown",
-    "build:watch": "tsdown --watch ./src --no-clean",
+    "build": "vp pack",
+    "build:watch": "vp pack --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
-    "test": "vitest run",
+    "test": "vp test run",
     "clean": "rimraf --glob dist types '*.tsbuildinfo'"
   },
   "dependencies": {
@@ -40,8 +40,8 @@
   },
   "devDependencies": {
     "happy-dom": "^20.11.1",
-    "tsdown": "^0.22.14",
-    "vitest": "^4.1.10"
+    "vitest": "catalog:",
+    "vite-plus": "catalog:"
   },
   "publishConfig": {
     "access": "public"

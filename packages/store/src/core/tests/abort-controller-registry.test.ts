@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { AbortControllerRegistry } from '../abort-controller-registry';
 
 const NativeAbortController = globalThis.AbortController;

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { CueSegmentMeta } from '../text-tracks';
 import { createTextTracksActor } from '../text-tracks';
 

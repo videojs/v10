@@ -1,5 +1,5 @@
 import Hls from 'hls.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import { MediaTracksMixin } from '../../../core/media-tracks';
 import { HTMLVideoElementHost } from '../../video-host';
 import { HlsJsMediaMediaTracksMixin } from '../media-tracks';

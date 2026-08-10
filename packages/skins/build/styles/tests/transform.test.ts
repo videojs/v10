@@ -1,6 +1,6 @@
 import { resolve } from 'node:path';
 import { jsx, transform } from '@videojs/compiler';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 import type { SkinStyleManifest, SkinStyleRecipe } from '../manifest';
 import { skinStyles } from '../transform';
 

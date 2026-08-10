@@ -1,5 +1,5 @@
 import { flush } from '@videojs/store';
-import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vite-plus/test';
 import { TooltipGroupCore } from '../../../../core/ui/tooltip/tooltip-group-core';
 import { createPopupGroup } from '../../popover/popup-group';
 import { createTestPopover } from '../../popover/tests/popover-helpers';

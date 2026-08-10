@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vite-plus/test';
 import { MEDIA_PLAYLIST_METADATA_KEY } from '../../types';
 import { canPlayTrack } from '../capabilities';
 

@@ -1,5 +1,5 @@
 import { createStore } from '@videojs/store';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 import type { PlayerTarget } from '../../../player';
 import { createMockVideo } from '../../../tests/test-helpers';
 import { playbackFeature } from '../playback';

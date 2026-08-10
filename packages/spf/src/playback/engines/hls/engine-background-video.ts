@@ -75,8 +75,10 @@ export type BackgroundVideoEngineSignals = {
  * `HlsVideoEngineConfig`, audio/text/ABR/bandwidth/quality knobs are
  * dropped: the variant subtracts the behaviors that read them.
  */
-export interface BackgroundVideoEngineConfig
-  extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
+export interface BackgroundVideoEngineConfig extends ShareSignalsConfig<
+  BackgroundVideoEngineState,
+  BackgroundVideoEngineContext
+> {
   /**
    * Track picker handed to `selectVideoTrack`. Default:
    * `pickHighestResolutionVideoTrack` — picks the highest-resolution variant on

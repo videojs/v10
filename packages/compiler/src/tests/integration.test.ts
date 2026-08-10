@@ -1,4 +1,4 @@
-import { beforeAll, describe, expect, it } from 'vitest';
+import { beforeAll, describe, expect, it } from 'vite-plus/test';
 import { transform } from '..';
 import { anyTag, byTag, childAsProp, hasChild, jsx, replace } from '../jsx';
 import type { ImportRule } from '../transforms';
