@@ -359,6 +359,22 @@ describe('HlsJsMedia', () => {
       expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.drm`'));
     });
 
+    it('names the configuration it is licensing against when it warns', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const { media } = setup();
+      // `source.drm` names FairPlay, but the escape hatch replaces it and does
+      // not — so the field to go and look at is the escape hatch.
+      media.source = {
+        ...media.source,
+        drm,
+        engine: { nativeHls: { drmSystems: { 'com.widevine.alpha': { licenseUrl: WIDEVINE_LICENSE } } } },
+      };
+      media.load();
+
+      expect(warn).toHaveBeenCalledWith(expect.stringContaining('`source.engine.nativeHls.drmSystems`'));
+    });
+
     it('hands `source.drm` to the native delegate', async () => {
       const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
       const requestMediaKeySystemAccess = vi.fn(() => new Promise<never>(() => {}));

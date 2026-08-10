@@ -336,15 +336,20 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     nativeHls: NativeHlsConfig | undefined,
     hlsJs: Partial<HlsJsConfig> | undefined
   ) {
-    // The delegate applies the same precedence, so the warning has to read what
-    // it will end up licensing against.
-    const drmSystems = nativeHls?.drmSystems ?? drm;
-    const isProtected = hlsJs?.emeEnabled || hlsJs?.drmSystems || Object.keys(drmSystems ?? {}).length > 0;
+    if (__DEV__) {
+      // The delegate applies the same precedence, so the warning has to read — and
+      // name — whatever it will end up licensing against. An escape hatch replaces
+      // `source.drm` rather than adding to it, so pointing at the wrong one of the
+      // two would send a reader looking in a field that is already correct.
+      const drmSystems = nativeHls?.drmSystems ?? drm;
+      const field = nativeHls?.drmSystems ? 'source.engine.nativeHls.drmSystems' : 'source.drm';
+      const isProtected = hlsJs?.emeEnabled || hlsJs?.drmSystems || Object.keys(drmSystems ?? {}).length > 0;
 
-    if (__DEV__ && isProtected && !drmSystems?.[KeySystems.FAIRPLAY]) {
-      console.warn(
-        `[vjs-drm] Native HLS playback negotiates FairPlay itself and never sees the hls.js DRM configuration, and no \`${KeySystems.FAIRPLAY}\` license server is named in \`source.drm\`. DRM-protected media will not play.`
-      );
+      if (isProtected && !drmSystems?.[KeySystems.FAIRPLAY]) {
+        console.warn(
+          `[vjs-drm] Native HLS playback negotiates FairPlay itself and never sees the hls.js DRM configuration, and no \`${KeySystems.FAIRPLAY}\` license server is named in \`${field}\`. DRM-protected media will not play.`
+        );
+      }
     }
 
     const media = new NativeHlsMedia();
