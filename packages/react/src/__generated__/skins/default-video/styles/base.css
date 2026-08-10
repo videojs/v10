@@ -1,8 +1,25 @@
 @layer videojs.base {
-  .media-skin,
-  .media-skin *,
-  .media-skin *::before,
-  .media-skin *::after {
-    box-sizing: border-box;
+  @scope (.media-skin) {
+    :scope,
+    *,
+    ::before,
+    ::after {
+      box-sizing: border-box;
+    }
+
+    button {
+      font: inherit;
+      color: inherit;
+      letter-spacing: inherit;
+    }
+
+    svg {
+      display: block;
+    }
+
+    [hidden] {
+      /* Hidden must override component display styles. */
+      display: none !important;
+    }
   }
 }

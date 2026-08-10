@@ -2,7 +2,6 @@ import { readFile } from 'node:fs/promises';
 import { basename, resolve } from 'node:path';
 import type { SkinStyleRole } from '../../canonical/styles/define';
 import type { SkinStyleResources } from '../catalog/types';
-import type { DesignSystem } from '../styles/compile';
 
 export interface FrameworkStyleFile {
   fileName: string;
@@ -12,7 +11,6 @@ export interface FrameworkStyleFile {
 export async function createFrameworkStyles(
   resources: SkinStyleResources,
   rootDir: string,
-  design: DesignSystem,
   styles: ReadonlyMap<SkinStyleRole, string>
 ): Promise<FrameworkStyleFile[]> {
   const themePath = resources.themes.default;
@@ -22,7 +20,6 @@ export async function createFrameworkStyles(
     .map(([role, content]) => ({ fileName: `${role}.css`, content }))
     .sort((a, b) => a.fileName.localeCompare(b.fileName));
   const files: FrameworkStyleFile[] = [
-    { fileName: 'styles/preflight.css', content: await design.compilePreflight('.media-skin') },
     {
       fileName: 'styles/base.css',
       content: await readFile(resolve(rootDir, resources.base), 'utf8'),
@@ -33,7 +30,10 @@ export async function createFrameworkStyles(
   return [
     {
       fileName: 'styles/styles.css',
-      content: files.map((file) => `@import './${basename(file.fileName)}';`).join('\n'),
+      content: [
+        '@layer videojs.base, videojs.theme, videojs.components;',
+        ...files.map((file) => `@import './${basename(file.fileName)}';`),
+      ].join('\n'),
     },
     ...files,
   ];

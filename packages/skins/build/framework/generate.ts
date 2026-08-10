@@ -34,7 +34,7 @@ export async function createFrameworkSkin(
   options: CreateFrameworkSkinOptions
 ): Promise<FrameworkSkinOutput> {
   const skin = catalog.items.find((item) => item.name === options.skin && item.type === 'skin');
-  if (!skin) throw new Error(`Skin \`${options.skin}\` does not exist.`);
+  if (skin?.type !== 'skin') throw new Error(`Skin \`${options.skin}\` does not exist.`);
 
   const entryFile = resolve(options.rootDir, skin.source);
   const styles = await loadCatalogStyleManifest(catalog, { rootDir: options.rootDir, itemNames: [skin.name] });
@@ -68,8 +68,7 @@ export async function createFrameworkSkin(
     styles: await createFrameworkStyles(
       catalog.resources.styles,
       options.rootDir,
-      design,
-      await compileSkinStyles({ design, manifest: styles })
+      await compileSkinStyles({ design, manifest: styles, scopeClass: skin.scopeClass })
     ),
   };
 }

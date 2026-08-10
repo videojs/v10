@@ -29,6 +29,8 @@ describe('createFrameworkSkin', () => {
     ]);
     expect(skin).toContain('from "./components/buttons/play-button"');
     expect(skin).toContain('export function DefaultVideoSkin()');
+    expect(skin).toContain('media-skin media-skin-video media-theme-default');
+    expect(skin).not.toContain('className="media-surface');
     expect(buttonTooltip).toContain('export interface ButtonTooltipProps extends TooltipPrimitive.RootProps');
     expect(playButton).toContain('export function PlayButton()');
     expect(seekButton).toContain("import type { SeekButtonProps } from '@videojs/core'");
@@ -38,7 +40,6 @@ describe('createFrameworkSkin', () => {
     expect(files.map((file) => file.content).join('\n')).not.toContain('$1');
     expect(output.styles.map((file) => file.fileName)).toEqual([
       'styles/styles.css',
-      'styles/preflight.css',
       'styles/base.css',
       'styles/theme.css',
       'styles/buttons.css',
@@ -47,11 +48,21 @@ describe('createFrameworkSkin', () => {
       'styles/sliders.css',
     ]);
     expect(style(output, 'styles/styles.css')).toContain("@import './buttons.css'");
+    expect(style(output, 'styles/styles.css')).toContain('@layer videojs.base, videojs.theme, videojs.components;');
+    expect(style(output, 'styles/buttons.css')).toContain('@scope (.media-skin-video)');
     expect(style(output, 'styles/buttons.css')).toContain('.media-button {');
-    expect(style(output, 'styles/buttons.css').match(/^\.media-button \{/gm)).toHaveLength(1);
+    expect(style(output, 'styles/buttons.css').match(/\.media-button \{/g)).toHaveLength(1);
     expect(style(output, 'styles/buttons.css')).not.toContain('.media-play-button {');
+    expect(style(output, 'styles/buttons.css')).not.toContain(':where(');
+    expect(style(output, 'styles/controls.css')).toContain('& {');
+    expect(style(output, 'styles/controls.css')).toContain('background-color: var(--media-surface-background)');
+    expect(style(output, 'styles/popups.css')).toContain('.media-surface {');
+    expect(style(output, 'styles/theme.css')).toContain('.media-theme-default {');
+    expect(style(output, 'styles/theme.css')).not.toContain('@scope');
     expect(output.styles.map((file) => file.content).join('\n')).not.toContain('--tw-');
-    expect(style(output, 'styles/preflight.css')).toContain('@scope (.media-skin)');
+    expect(style(output, 'styles/base.css')).toContain('@scope (.media-skin)');
+    expect(style(output, 'styles/base.css')).toContain('button {');
+    expect(style(output, 'styles/base.css')).toContain('[hidden] {');
   });
 
   it('bundles HTML registrations and markup into one Skin module', async () => {
@@ -64,6 +75,7 @@ describe('createFrameworkSkin', () => {
 
     expect(html).toContain("import '@videojs/html/icons/element'");
     expect(html).toContain('export const skin = /* html */ `<media-controls');
+    expect(html).toContain('class="media-skin media-skin-video media-theme-default"');
     expect(html).toContain('<media-play-button class="media-button media-play-button">');
     expect(html).toContain('<media-tooltip side="top" class="media-surface media-tooltip">');
     expect(html).not.toContain('commandfor=');
@@ -75,7 +87,7 @@ describe('createFrameworkSkin', () => {
     expect(html).toContain('delay="200"');
     expect(html).toContain('close-delay="100"');
     expect(style(output, 'styles/buttons.css')).toContain('.media-button {');
-    expect(style(output, 'styles/buttons.css').match(/^\.media-button \{/gm)).toHaveLength(1);
+    expect(style(output, 'styles/buttons.css').match(/\.media-button \{/g)).toHaveLength(1);
     expect(output.styles.map((file) => file.content).join('\n')).not.toContain('--tw-');
   });
 });

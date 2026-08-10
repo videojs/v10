@@ -8,7 +8,14 @@ import type { SkinCssRecipe, SkinCssRole, SkinStyleSheet } from './stylesheet';
 export async function compileSkinStyles(options: {
   design: DesignSystem;
   manifest: SkinStyleManifest;
+  scopeClass: string;
 }): Promise<Map<SkinStyleRole, string>> {
+  const peerMarkers = [...options.manifest.groupPeerBindings.keys()].filter(
+    (marker) => marker === 'peer' || marker.startsWith('peer/')
+  );
+  if (peerMarkers.length > 0) {
+    throw new Error(`Vanilla Skin styles do not support peer relationships: ${peerMarkers.join(', ')}.`);
+  }
   const byRole = new Map<SkinStyleRole, SkinCssRecipe[]>();
 
   for (const recipe of [...options.manifest.recipes].sort((a, b) => a.className.localeCompare(b.className))) {
@@ -27,6 +34,7 @@ export async function compileSkinStyles(options: {
     return recipes?.length ? [{ name: role, recipes, groupPeerBindings: options.manifest.groupPeerBindings }] : [];
   });
   const stylesheet: SkinStyleSheet = {
+    scopeClass: options.scopeClass,
     roles,
   };
   const emitted = await emitSkinRoleCss({

@@ -1,6 +1,5 @@
 import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { __unstable__loadDesignSystem, compile, normalizePath } from '@tailwindcss/node';
 
 /** Operations Skin style generation needs from a loaded Tailwind v4 design system. */
@@ -11,8 +10,6 @@ export interface DesignSystem {
   recognizesCandidate(candidate: string): boolean;
   /** Compile semantic CSS containing Tailwind directives such as `@apply`. */
   compileCss(css: string): Promise<string>;
-  /** Compile Tailwind's reset inside a native CSS scope. */
-  compilePreflight(scopeSelector: string): Promise<string>;
 }
 
 /** Load a design system from a Tailwind v4 entry CSS file. */
@@ -40,10 +37,5 @@ export async function loadDesignSystem(cssPath: string): Promise<DesignSystem> {
       return recognized;
     },
     compileCss: compileReferencedCss,
-    async compilePreflight(scopeSelector: string): Promise<string> {
-      const preflightPath = fileURLToPath(import.meta.resolve('tailwindcss/preflight.css'));
-      const preflight = readFileSync(preflightPath, 'utf8');
-      return compileReferencedCss(`@layer base {\n@scope (${scopeSelector}) {\n${preflight}\n}\n}`);
-    },
   };
 }

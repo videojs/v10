@@ -4,14 +4,13 @@ import { PlayButton } from '../../components/buttons/play-button';
 import { SeekButton } from '../../components/buttons/seek-button';
 import { VolumePopover } from '../../components/controls/volume-popover';
 import { TimeSlider } from '../../components/sliders/time-slider';
-import popupStyles from '../../styles/components/popup.tailwind';
 import styles from '../../styles/skins/default-video.tailwind';
 
 const SEEK_SECONDS = 10;
 
 export function DefaultVideoSkin() {
   return (
-    <Controls.Root className={[popupStyles.surface, 'media-theme-default', styles.skin]}>
+    <Controls.Root className={['media-skin media-skin-video media-theme-default', styles.skin]}>
       <Tooltip.Provider>
         <Controls.Group className={styles.controlsGroup.primary}>
           <PlayButton />

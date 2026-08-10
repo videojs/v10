@@ -23,6 +23,7 @@ describe('resolveSkinCatalog', () => {
       },
       {
         name: 'default-video',
+        scopeClass: 'media-skin-video',
         dependencies: {
           itemNames: ['fullscreen-button', 'play-button', 'seek-button', 'time-slider', 'volume-popover'],
         },

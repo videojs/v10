@@ -1,5 +1,13 @@
 import { DiagnosticError } from '@videojs/compiler';
-import { Features, type Rule, type StyleSheet, type TokenOrValue, transform } from 'lightningcss';
+import {
+  Features,
+  type Rule,
+  type Selector,
+  type SelectorList,
+  type StyleSheet,
+  type TokenOrValue,
+  transform,
+} from 'lightningcss';
 import { cloneCssAst, collectRuleClasses, withoutNullValues } from './css-ast';
 import type { DesignSystem } from './design-system';
 import { replaceRuleClasses } from './selectors';
@@ -28,10 +36,93 @@ export async function emitSkinRoleCss(options: EmitSkinRoleCssOptions): Promise<
     if (!role.name) throw new Error('Every Skin style recipe must declare a role.');
     const analyzed = analyzedRoles.get(role);
     if (!analyzed) throw new Error(`Skin style role '${role.name}' was not compiled.`);
-    roles.set(role.name, emitRole(analyzed, role));
+    roles.set(role.name, scopeRoleCss(emitRole(analyzed, role), options.stylesheet.scopeClass, role));
   }
 
   return roles;
+}
+
+function scopeRoleCss(css: string, scopeClass: string, role: SkinCssRole): string {
+  const relationshipOwners = new Set(role.groupPeerBindings.values());
+  const wrapped = `@layer videojs.components {\n@scope (.${scopeClass}) {\n${css}\n}\n}`;
+  return decoder
+    .decode(
+      transform({
+        filename: 'scoped.css',
+        code: encoder.encode(wrapped),
+        visitor: {
+          Rule: {
+            style(rule) {
+              const relationship = relationshipScope(rule, relationshipOwners);
+              if (relationship) return relationship;
+
+              const selectors = scopeSkinRootSelectors(rule.value.selectors);
+              if (selectors === rule.value.selectors) return;
+              return withoutNullValues({
+                ...cloneCssAst(rule),
+                value: { ...cloneCssAst(rule.value), selectors },
+              });
+            },
+          },
+        },
+      }).code
+    )
+    .trim();
+}
+
+function scopeSkinRootSelectors(selectors: SelectorList): SelectorList {
+  let changed = false;
+  const scoped = selectors.map((selector) => {
+    if (selector[0]?.type !== 'class' || selector[0].name !== 'media-skin') return selector;
+    changed = true;
+    return [{ type: 'nesting' } as const, ...selector.slice(1).map(cloneCssAst)];
+  });
+  return changed ? scoped : selectors;
+}
+
+function relationshipScope(
+  rule: Extract<Rule, { type: 'style' }>,
+  relationshipOwners: ReadonlySet<string>
+): Rule | undefined {
+  const relationships = rule.value.selectors.map((selector) => scopedRelationship(selector, relationshipOwners));
+  const owner = relationships[0]?.owner;
+  if (!owner || relationships.some((relationship) => relationship?.owner !== owner)) return;
+
+  const style = cloneCssAst(rule);
+  style.value.selectors = relationships.map((relationship) => relationship!.selector);
+  return withoutNullValues({
+    type: 'scope',
+    value: {
+      loc: cloneCssAst(rule.value.loc),
+      scopeStart: [[{ type: 'class', name: owner }]],
+      rules: [style],
+    },
+  });
+}
+
+function scopedRelationship(
+  selector: Selector,
+  relationshipOwners: ReadonlySet<string>
+): { owner: string; selector: Selector } | undefined {
+  const owner = selector[0];
+  if (
+    owner?.type !== 'pseudo-class' ||
+    owner.kind !== 'where' ||
+    owner.selectors.length !== 1 ||
+    owner.selectors[0]?.length !== 1 ||
+    owner.selectors[0][0]?.type !== 'class' ||
+    !relationshipOwners.has(owner.selectors[0][0].name)
+  ) {
+    return;
+  }
+  const descendant = selector.findIndex(
+    (component, index) => index > 0 && component.type === 'combinator' && component.value === 'descendant'
+  );
+  if (descendant < 0) return;
+  return {
+    owner: owner.selectors[0][0].name,
+    selector: [{ type: 'nesting' }, ...selector.slice(1).map(cloneCssAst)],
+  };
 }
 
 interface AnalyzedRole {

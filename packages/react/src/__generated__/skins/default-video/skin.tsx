@@ -7,7 +7,7 @@ import { TimeSlider } from './components/sliders/time-slider';
 const SEEK_SECONDS = 10;
 export function DefaultVideoSkin() {
   return (
-    <Controls.Root className="media-surface media-theme-default media-skin">
+    <Controls.Root className="media-skin media-skin-video media-theme-default">
       <Tooltip.Provider>
         <Controls.Group className="media-controls-group-primary">
           <PlayButton />

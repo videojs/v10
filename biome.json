@@ -97,7 +97,11 @@
   },
   "overrides": [
     {
-      "includes": ["packages/{html,react}/src/__generated__/skins/**", "packages/skins/canonical/registry/default/**"],
+      "includes": [
+        "packages/{html,react}/src/__generated__/skins/**",
+        "packages/skins/canonical/registry/default/**",
+        "packages/skins/canonical/styles/base.css"
+      ],
       "formatter": {
         "enabled": false
       },

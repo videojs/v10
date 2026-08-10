@@ -11,7 +11,7 @@ import '../../../define/ui/tooltip';
 import '../../../define/ui/tooltip-group';
 import '../../../define/ui/volume-slider';
 
-export const skin = /* html */ `<media-controls class="media-surface media-theme-default media-skin">
+export const skin = /* html */ `<media-controls class="media-skin media-skin-video media-theme-default">
   <media-tooltip-group>
     <media-controls-group class="media-controls-group-primary">
       <media-play-button class="media-button media-play-button">

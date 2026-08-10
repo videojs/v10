@@ -1,134 +1,152 @@
-.media-button {
-  width: var(--media-control-size);
-  height: var(--media-control-size);
-  cursor: pointer;
-  border-radius: var(--media-radius-pill);
-  border-style: solid;
-  color: inherit;
-  outline-style: solid;
-  outline-offset: -2px;
-  background-color: #0000;
-  border-width: 0;
-  outline-width: 2px;
-  outline-color: #0000;
-  flex-shrink: 0;
-  place-items: center;
-  padding: 0;
-  display: grid;
-}
+@layer videojs.components {
+  @scope (.media-skin-video) {
+    .media-button {
+      width: var(--media-control-size);
+      height: var(--media-control-size);
+      cursor: pointer;
+      border-radius: var(--media-radius-pill);
+      color: inherit;
+      outline-offset: -2px;
+      background-color: #0000;
+      border-style: solid;
+      border-width: 0;
+      outline: 2px solid #0000;
+      flex-shrink: 0;
+      place-items: center;
+      padding: 0;
+      display: grid;
+    }
 
-@media (hover: hover) {
-  .media-button:hover {
-    background-color: var(--media-control-hover-background);
+    @media (hover: hover) {
+      .media-button:hover {
+        background-color: var(--media-control-hover-background);
+      }
+    }
+
+    .media-button:focus-visible {
+      background-color: var(--media-control-hover-background);
+      outline-offset: 2px;
+      outline-color: currentColor;
+    }
+
+    .media-button[aria-disabled='true'] {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .media-button[aria-expanded='true'] {
+      background-color: var(--media-control-hover-background);
+    }
+
+    .media-button-icon {
+      width: var(--media-icon-size);
+      height: var(--media-icon-size);
+      filter: drop-shadow(0 1px 0 var(--media-shadow-color));
+    }
+
+    .media-fullscreen-button-icon-enter {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-fullscreen-button) {
+      &:not([data-fullscreen]) .media-fullscreen-button-icon-enter {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-fullscreen-button-icon-exit {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-fullscreen-button) {
+      &[data-fullscreen] .media-fullscreen-button-icon-exit {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-mute-button-icon-volume-high {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-mute-button) {
+      &:not([data-muted]):not([data-volume-level='low']) .media-mute-button-icon-volume-high {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-mute-button-icon-volume-low {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-mute-button) {
+      &:not([data-muted])[data-volume-level='low'] .media-mute-button-icon-volume-low {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-mute-button-icon-volume-off {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-mute-button) {
+      &[data-muted] .media-mute-button-icon-volume-off {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-play-button-icon-pause {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-play-button) {
+      &[data-started]:not([data-paused]):not([data-ended]) .media-play-button-icon-pause {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-play-button-icon-play {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-play-button) {
+      &:not([data-ended]):not([data-started]) .media-play-button-icon-play,
+      &:not([data-ended])[data-paused] .media-play-button-icon-play {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-play-button-icon-restart {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-play-button) {
+      &[data-ended] .media-play-button-icon-restart {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-seek-button-icon-backward {
+      scale: -1 1;
+    }
+
+    .media-seek-button-label {
+      font-variant-numeric: tabular-nums;
+    }
   }
-}
-
-.media-button:focus-visible {
-  background-color: var(--media-control-hover-background);
-  outline-offset: 2px;
-  outline-color: currentColor;
-}
-
-.media-button[aria-disabled='true'] {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
-.media-button[aria-expanded='true'] {
-  background-color: var(--media-control-hover-background);
-}
-
-.media-button-icon {
-  width: var(--media-icon-size);
-  height: var(--media-icon-size);
-  filter: drop-shadow(0 1px 0 var(--media-shadow-color));
-}
-
-.media-fullscreen-button-icon-enter {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-fullscreen-button):not([data-fullscreen]) .media-fullscreen-button-icon-enter {
-  opacity: 1;
-  display: block;
-}
-
-.media-fullscreen-button-icon-exit {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-fullscreen-button)[data-fullscreen] .media-fullscreen-button-icon-exit {
-  opacity: 1;
-  display: block;
-}
-
-.media-mute-button-icon-volume-high {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-mute-button):not([data-muted]):not([data-volume-level='low']) .media-mute-button-icon-volume-high {
-  opacity: 1;
-  display: block;
-}
-
-.media-mute-button-icon-volume-low {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-mute-button):not([data-muted])[data-volume-level='low'] .media-mute-button-icon-volume-low {
-  opacity: 1;
-  display: block;
-}
-
-.media-mute-button-icon-volume-off {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-mute-button)[data-muted] .media-mute-button-icon-volume-off {
-  opacity: 1;
-  display: block;
-}
-
-.media-play-button-icon-pause {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-play-button)[data-started]:not([data-paused]):not([data-ended]) .media-play-button-icon-pause {
-  opacity: 1;
-  display: block;
-}
-
-.media-play-button-icon-play {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-play-button):not([data-ended]):not([data-started]) .media-play-button-icon-play,
-:where(.media-play-button):not([data-ended])[data-paused] .media-play-button-icon-play {
-  opacity: 1;
-  display: block;
-}
-
-.media-play-button-icon-restart {
-  opacity: 0;
-  display: none;
-}
-
-:where(.media-play-button)[data-ended] .media-play-button-icon-restart {
-  opacity: 1;
-  display: block;
-}
-
-.media-seek-button-icon-backward {
-  scale: -100% 1;
-}
-
-.media-seek-button-label {
-  font-variant-numeric: tabular-nums;
 }

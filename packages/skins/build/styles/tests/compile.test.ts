@@ -15,11 +15,15 @@ describe('compileSkinStyles', () => {
     const styles = await compileSkinStyles({
       design: await loadDesignSystem(designPath),
       manifest: manifest([playButton, restartIcon], new Map([['group/play', playButton.className]])),
+      scopeClass: 'media-skin-video',
     });
 
-    expect(styles.get('buttons')).toContain(':where(.media-play-button)[data-ended]');
+    expect(styles.get('buttons')).toContain('@scope (.media-skin-video)');
+    expect(styles.get('buttons')).toContain('@scope (.media-play-button)');
+    expect(styles.get('buttons')).toContain('&[data-ended]');
     expect(styles.get('buttons')).toContain('.media-play-button-icon-restart');
     expect(styles.get('buttons')).not.toContain('group\\/play');
+    expect(styles.get('buttons')).not.toContain(':where(');
   });
 
   it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {
@@ -32,14 +36,28 @@ describe('compileSkinStyles', () => {
     const styles = await compileSkinStyles({
       design: await loadDesignSystem(designPath),
       manifest: manifest([muteButton, highIcon], new Map([['group/mute', muteButton.className]])),
+      scopeClass: 'media-skin-video',
     });
 
     expect(styles.get('buttons')).toContain(
-      ':where(.media-mute-button):not([data-muted]):not([data-volume-level="low"]) .media-mute-button-icon-high'
+      '&:not([data-muted]):not([data-volume-level="low"]) .media-mute-button-icon-high'
     );
     expect(styles.get('buttons')).toContain('outline-offset: -2px');
     expect(styles.get('buttons')).not.toContain(':is(:where(.media-mute-button)');
+    expect(styles.get('buttons')).not.toContain(':where(');
     expect(styles.get('buttons')).not.toContain('calc(2px * -1)');
+  });
+
+  it('rejects peer relationships in vanilla output', async () => {
+    const peer = recipe('control', 'media-control', ['peer/control']);
+
+    await expect(
+      compileSkinStyles({
+        design: await loadDesignSystem(designPath),
+        manifest: manifest([peer], new Map([['peer/control', peer.className]])),
+        scopeClass: 'media-skin-video',
+      })
+    ).rejects.toThrow('Vanilla Skin styles do not support peer relationships: peer/control');
   });
 });
 

@@ -7,6 +7,7 @@ export interface SkinItemDefinition {
 
 export interface SkinDefinition extends SkinItemDefinition {
   type: 'skin';
+  scopeClass: string;
 }
 
 export interface SkinComponent extends SkinItemDefinition {
@@ -59,6 +60,7 @@ export const skinCatalog = {
     defineSkin({
       name: 'default-video',
       type: 'skin',
+      scopeClass: 'media-skin-video',
       source: './skins/default-video/skin.tsx',
       title: 'Default Video Skin',
       description:

@@ -18,5 +18,6 @@ export interface SkinCssRole {
 }
 
 export interface SkinStyleSheet {
+  scopeClass: string;
   roles: readonly SkinCssRole[];
 }
