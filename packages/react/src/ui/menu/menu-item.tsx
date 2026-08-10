@@ -6,27 +6,21 @@ import { forwardRef, useCallback, useEffect, useRef } from 'react';
 
 import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
-import { useMenuContext, useOptionalMenuItemSettingContext, useSubMenuContext } from './context';
-import { MenuItemSettingProvider } from './menu-item-setting-provider';
-import type { MenuItemSettingType } from './menu-item-type';
+import { useMenuContext } from './context';
 
 export interface MenuItemProps extends UIComponentProps<'div', MenuState> {
   /** Called when the item is selected. */
   onSelect?: () => void;
   /** Whether the item is disabled. */
   disabled?: boolean;
-  /** Setting kind for submenu triggers (`playback-rate`, `quality`, `audio-track`, or `captions`). */
-  type?: MenuItemSettingType | undefined;
 }
 
 /** A single action in the menu. Renders a `<div>` with `role="menuitem"`. */
 export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuItem(
-  { render, className, style, onSelect, disabled, type, onClick, ...elementProps },
+  { render, className, style, onSelect, disabled, onClick, ...elementProps },
   forwardedRef
 ) {
   const { menu, state } = useMenuContext();
-  const subMenuCtx = useSubMenuContext();
-  const parentMenu = subMenuCtx?.parentMenu.menu ?? null;
   const elementRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -39,10 +33,11 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
     (event: React.MouseEvent<HTMLDivElement>) => {
       if (disabled) return;
       onClick?.(event);
+      if (event.defaultPrevented) return;
       onSelect?.();
-      completeMenuItemSelection(menu, parentMenu);
+      completeMenuItemSelection(menu);
     },
-    [disabled, onClick, onSelect, menu, parentMenu]
+    [disabled, onClick, onSelect, menu]
   );
 
   const handlePointerEnter = useCallback(() => {
@@ -51,7 +46,7 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
     menu.highlight(element, { focus: false });
   }, [menu, disabled]);
 
-  const item = (
+  return (
     <MenuItemContent
       disabled={disabled}
       elementProps={elementProps}
@@ -65,10 +60,6 @@ export const MenuItem = forwardRef<HTMLDivElement, MenuItemProps>(function MenuI
       elementRef={elementRef}
     />
   );
-
-  if (!type) return item;
-
-  return <MenuItemSettingProvider type={type}>{item}</MenuItemSettingProvider>;
 });
 
 interface MenuItemContentProps {
@@ -96,9 +87,6 @@ function MenuItemContent({
   forwardedRef,
   elementRef,
 }: MenuItemContentProps) {
-  const setting = useOptionalMenuItemSettingContext();
-  const settingAttrs = setting ? { 'data-availability': setting.availability } : undefined;
-
   return renderElement(
     'div',
     { render, className, style },
@@ -111,7 +99,6 @@ function MenuItemContent({
           'aria-disabled': disabled ? true : undefined,
           onClick,
           onPointerEnter,
-          ...settingAttrs,
         },
         elementProps,
       ],

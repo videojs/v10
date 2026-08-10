@@ -43,19 +43,10 @@ const checkboxItemClass = [menuItemClass, 'pl-8'].join(' ');
 const subMenuTriggerClass = [menuItemClass, 'justify-between'].join(' ');
 
 const subMenuContentClass = [
-  'absolute inset-0 z-10 bg-white rounded-[inherit] p-1 outline-none overflow-hidden translate-x-0',
-  'transition-transform duration-300 ease-in-out will-change-transform',
-  '[&[data-starting-style][data-direction=forward]]:translate-x-full',
-  '[&[data-ending-style][data-direction=forward]]:-translate-x-full',
-  '[&[data-starting-style][data-direction=back]]:-translate-x-full',
-  '[&[data-ending-style][data-direction=back]]:translate-x-full',
-].join(' ');
-
-// Root and submenu views share the same viewport so they can slide over each other.
-const rootViewClass = [
-  'absolute inset-0 p-1 translate-x-0',
-  'transition-transform duration-300 ease-in-out will-change-transform',
-  'data-[menu-view-state=inactive]:-translate-x-full',
+  'absolute inset-x-0 top-0 z-10 bg-white rounded-[inherit] p-1 outline-none overflow-auto',
+  'translate-none transition-[translate,filter] duration-150 ease-in-out',
+  'data-starting-style:translate-x-full data-ending-style:translate-x-full',
+  'data-starting-style:blur-sm data-ending-style:blur-sm',
 ].join(' ');
 
 const backButtonClass = [
@@ -65,10 +56,10 @@ const backButtonClass = [
 ].join(' ');
 
 const menuNavPopupClass = [
-  'group relative',
+  'relative',
   menuNavSurfaceClass,
-  'w-(--media-menu-width) h-(--media-menu-height)',
-  'transition-[opacity,scale,translate,filter,width,height] duration-150 ease-in-out',
+  'w-64 max-w-(--media-menu-available-width) h-(--media-menu-height)',
+  'transition-[opacity,scale,translate,filter,height] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -144,11 +135,8 @@ root.innerHTML = `
         </button>
 
         <media-menu id="nav-menu" class="${menuNavPopupClass}">
-          <!-- Root list view — slides left when a submenu is active. -->
-          <media-menu-view id="nav-root-view" class="${rootViewClass}">
-
-            <!-- Quality submenu trigger -->
-            <media-menu-item id="nav-quality-trigger" commandfor="nav-quality-sub" class="${subMenuTriggerClass}">
+          <!-- Quality submenu trigger -->
+          <media-menu-item id="nav-quality-trigger" commandfor="nav-quality-sub" class="${subMenuTriggerClass}">
               <span>Quality</span>
               <span class="flex items-center gap-1">
                 <span id="nav-quality-hint" class="text-xs text-slate-400">auto</span>
@@ -165,16 +153,14 @@ root.innerHTML = `
               </span>
             </media-menu-item>
 
-            <media-menu-separator class="${menuSeparatorClass}"></media-menu-separator>
-            <media-menu-item id="nav-copy-item" class="${menuItemClass}">Copy link</media-menu-item>
-
-          </media-menu-view>
+          <media-menu-separator class="${menuSeparatorClass}"></media-menu-separator>
+          <media-menu-item id="nav-copy-item" class="${menuItemClass}">Copy link</media-menu-item>
 
           <media-menu id="nav-quality-sub" class="${subMenuContentClass}">
-            <media-menu-back class="${backButtonClass}">
+            <media-menu-item class="${backButtonClass}">
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Quality
-            </media-menu-back>
+            </media-menu-item>
             <media-menu-radio-group id="nav-quality-group" aria-label="Resolution" value="auto">
               <media-menu-radio-item value="auto" class="${radioItemClass}">Auto</media-menu-radio-item>
               <media-menu-radio-item value="1080p" class="${radioItemClass}">1080p</media-menu-radio-item>
@@ -184,10 +170,10 @@ root.innerHTML = `
           </media-menu>
 
           <media-menu id="nav-speed-sub" class="${subMenuContentClass}">
-            <media-menu-back class="${backButtonClass}">
+            <media-menu-item class="${backButtonClass}">
               <svg class="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
               Speed
-            </media-menu-back>
+            </media-menu-item>
             <media-menu-radio-group id="nav-speed-group" aria-label="Speed" value="1">
               <media-menu-radio-item value="0.5" class="${radioItemClass}">0.5x</media-menu-radio-item>
               <media-menu-radio-item value="0.75" class="${radioItemClass}">0.75x</media-menu-radio-item>

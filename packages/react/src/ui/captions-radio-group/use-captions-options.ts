@@ -20,6 +20,7 @@ export interface CaptionsOption {
 export interface CaptionsOptionsResult {
   state: CaptionsRadioGroupCore.State;
   value: string;
+  selectedLabel: string;
   options: CaptionsOption[];
   disabled: boolean;
   showMenu: boolean;
@@ -52,22 +53,25 @@ export function useCaptionsOptions(props?: CaptionsOptionsProps): CaptionsOption
   core.setMedia(media);
   const state = core.getState();
   const showMenu = state.tracks.length > 1;
+  const offLabel = translateText(offText, t);
+  const options = [
+    {
+      value: CAPTIONS_OFF_VALUE,
+      label: offLabel,
+      disabled: state.disabled,
+    },
+    ...state.tracks.map((track) => ({
+      value: track.value,
+      label: translateText(track.label, t),
+      disabled: state.disabled,
+    })),
+  ];
 
   return {
     state,
     value: state.value,
-    options: [
-      {
-        value: CAPTIONS_OFF_VALUE,
-        label: translateText(offText, t),
-        disabled: state.disabled,
-      },
-      ...state.tracks.map((track) => ({
-        value: track.value,
-        label: translateText(track.label, t),
-        disabled: state.disabled,
-      })),
-    ],
+    selectedLabel: options.find((option) => option.value === state.value)?.label ?? offLabel,
+    options,
     disabled: state.disabled,
     showMenu,
     setValue,

@@ -45,19 +45,10 @@ const checkboxItemClass = [menuItemClass, 'pl-8'].join(' ');
 const subMenuTriggerClass = [menuItemClass, 'justify-between'].join(' ');
 
 const subMenuContentClass = [
-  'absolute inset-0 z-10 bg-white rounded-[inherit] p-1 outline-none overflow-hidden translate-x-0',
-  'transition-transform duration-300 ease-in-out will-change-transform',
-  '[&[data-starting-style][data-direction=forward]]:translate-x-full',
-  '[&[data-ending-style][data-direction=forward]]:-translate-x-full',
-  '[&[data-starting-style][data-direction=back]]:-translate-x-full',
-  '[&[data-ending-style][data-direction=back]]:translate-x-full',
-].join(' ');
-
-// Root and submenu views share the same viewport so they can slide over each other.
-const rootViewClass = [
-  'absolute inset-0 p-1 translate-x-0',
-  'transition-transform duration-300 ease-in-out will-change-transform',
-  'data-[menu-view-state=inactive]:-translate-x-full',
+  'absolute inset-x-0 top-0 z-10 bg-white rounded-[inherit] p-1 outline-none overflow-auto',
+  'translate-none transition-[translate,filter] duration-150 ease-in-out',
+  'data-starting-style:translate-x-full data-ending-style:translate-x-full',
+  'data-starting-style:blur-sm data-ending-style:blur-sm',
 ].join(' ');
 
 const backButtonClass = [
@@ -67,10 +58,10 @@ const backButtonClass = [
 ].join(' ');
 
 const menuNavPopupClass = [
-  'group relative',
+  'relative',
   menuNavSurfaceClass,
-  'w-(--media-menu-width) h-(--media-menu-height)',
-  'transition-[opacity,scale,translate,filter,width,height] duration-150 ease-in-out',
+  'w-64 max-w-(--media-menu-available-width) h-(--media-menu-height)',
+  'transition-[opacity,scale,translate,filter,height] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 
@@ -235,69 +226,67 @@ function App() {
           <Menu.Root>
             <TriggerButton>Settings</TriggerButton>
             <Menu.Content className={menuNavPopupClass}>
-              <Menu.View className={rootViewClass}>
-                {/* Quality submenu */}
-                <Menu.Root>
-                  <Menu.Trigger className={subMenuTriggerClass}>
-                    <span>Quality</span>
-                    <span className="flex items-center gap-1">
-                      <span className="text-xs text-slate-400">{quality}</span>
-                      <ChevronRight />
-                    </span>
-                  </Menu.Trigger>
-                  <Menu.Content className={subMenuContentClass}>
-                    <Menu.Back className={backButtonClass}>
-                      <ChevronLeft />
-                      Quality
-                    </Menu.Back>
-                    <Menu.RadioGroup aria-label="Resolution" value={quality} onValueChange={setQuality}>
-                      {['auto', '1080p', '720p', '480p'].map((v) => (
-                        <Menu.RadioItem key={v} value={v} className={radioItemClass}>
-                          {quality === v && <RadioDot />}
-                          {v}
-                        </Menu.RadioItem>
-                      ))}
-                    </Menu.RadioGroup>
-                  </Menu.Content>
-                </Menu.Root>
+              {/* Quality submenu */}
+              <Menu.Root>
+                <Menu.Trigger className={subMenuTriggerClass}>
+                  <span>Quality</span>
+                  <span className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">{quality}</span>
+                    <ChevronRight />
+                  </span>
+                </Menu.Trigger>
+                <Menu.Content className={subMenuContentClass}>
+                  <Menu.Item className={backButtonClass}>
+                    <ChevronLeft />
+                    Quality
+                  </Menu.Item>
+                  <Menu.RadioGroup aria-label="Resolution" value={quality} onValueChange={setQuality}>
+                    {['auto', '1080p', '720p', '480p'].map((v) => (
+                      <Menu.RadioItem key={v} value={v} className={radioItemClass}>
+                        {quality === v && <RadioDot />}
+                        {v}
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
 
-                {/* Speed submenu */}
-                <Menu.Root>
-                  <Menu.Trigger className={subMenuTriggerClass}>
-                    <span>Speed</span>
-                    <span className="flex items-center gap-1">
-                      <span className="text-xs text-slate-400">{speed === '1' ? 'Normal' : `${speed}x`}</span>
-                      <ChevronRight />
-                    </span>
-                  </Menu.Trigger>
-                  <Menu.Content className={subMenuContentClass}>
-                    <Menu.Back className={backButtonClass}>
-                      <ChevronLeft />
-                      Speed
-                    </Menu.Back>
-                    <Menu.RadioGroup aria-label="Speed" value={speed} onValueChange={setSpeed}>
-                      {[
-                        { value: '0.5', label: '0.5x' },
-                        { value: '0.75', label: '0.75x' },
-                        { value: '1', label: 'Normal' },
-                        { value: '1.25', label: '1.25x' },
-                        { value: '1.5', label: '1.5x' },
-                        { value: '2', label: '2x' },
-                      ].map(({ value, label }) => (
-                        <Menu.RadioItem key={value} value={value} className={radioItemClass}>
-                          {speed === value && <RadioDot />}
-                          {label}
-                        </Menu.RadioItem>
-                      ))}
-                    </Menu.RadioGroup>
-                  </Menu.Content>
-                </Menu.Root>
+              {/* Speed submenu */}
+              <Menu.Root>
+                <Menu.Trigger className={subMenuTriggerClass}>
+                  <span>Speed</span>
+                  <span className="flex items-center gap-1">
+                    <span className="text-xs text-slate-400">{speed === '1' ? 'Normal' : `${speed}x`}</span>
+                    <ChevronRight />
+                  </span>
+                </Menu.Trigger>
+                <Menu.Content className={subMenuContentClass}>
+                  <Menu.Item className={backButtonClass}>
+                    <ChevronLeft />
+                    Speed
+                  </Menu.Item>
+                  <Menu.RadioGroup aria-label="Speed" value={speed} onValueChange={setSpeed}>
+                    {[
+                      { value: '0.5', label: '0.5x' },
+                      { value: '0.75', label: '0.75x' },
+                      { value: '1', label: 'Normal' },
+                      { value: '1.25', label: '1.25x' },
+                      { value: '1.5', label: '1.5x' },
+                      { value: '2', label: '2x' },
+                    ].map(({ value, label }) => (
+                      <Menu.RadioItem key={value} value={value} className={radioItemClass}>
+                        {speed === value && <RadioDot />}
+                        {label}
+                      </Menu.RadioItem>
+                    ))}
+                  </Menu.RadioGroup>
+                </Menu.Content>
+              </Menu.Root>
 
-                <Menu.Separator className={menuSeparatorClass} />
-                <Menu.Item onSelect={() => console.log('copy link')} className={menuItemClass}>
-                  Copy link
-                </Menu.Item>
-              </Menu.View>
+              <Menu.Separator className={menuSeparatorClass} />
+              <Menu.Item onSelect={() => console.log('copy link')} className={menuItemClass}>
+                Copy link
+              </Menu.Item>
             </Menu.Content>
           </Menu.Root>
           <p className="text-[0.8125rem] text-slate-500">

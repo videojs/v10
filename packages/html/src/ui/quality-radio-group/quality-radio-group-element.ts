@@ -10,6 +10,7 @@ import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+import { applyRadioGroupAriaLabel } from '../radio-group/apply-radio-group-aria-label';
 
 export class QualityRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-quality-radio-group';
@@ -60,8 +61,9 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = state.value;
-      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state));
+      applyRadioGroupAriaLabel(this, this.#i18n.value, this.#core.getLabel(state));
       this.#syncContent(state);
+      this.publishMenuMetadata(state.disabled, state.availability);
     }
 
     super.update(changed);

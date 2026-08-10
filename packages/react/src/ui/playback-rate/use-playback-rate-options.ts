@@ -22,6 +22,7 @@ export interface PlaybackRateOptionsResult {
   state: PlaybackRateRadioGroupCore.State;
   rate: number;
   value: string;
+  selectedLabel: string;
   options: PlaybackRateOption[];
   disabled: boolean;
   setRate: (rate: number) => void;
@@ -50,11 +51,13 @@ export function usePlaybackRateOptions(props?: PlaybackRateOptionsProps): Playba
 
   core.setMedia(media);
   const state = core.getState();
+  const value = core.getRateValue(state.rate);
 
   return {
     state,
     rate: state.rate,
-    value: core.getRateValue(state.rate),
+    value,
+    selectedLabel: core.getRateLabel(state.rate),
     options: state.rates.map((rate) => ({
       rate,
       value: core.getRateValue(rate),

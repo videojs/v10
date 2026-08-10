@@ -21,6 +21,7 @@ export interface QualityOption {
 export interface QualityOptionsResult {
   state: QualityRadioGroupCore.State;
   value: string;
+  selectedLabel: string;
   options: QualityOption[];
   disabled: boolean;
   setValue: (value: string) => void;
@@ -51,24 +52,27 @@ export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsRe
 
   core.setMedia(media);
   const state = core.getState();
+  const autoLabel = translateText(state.autoLabel, t, state.autoLabelParams);
+  const options = [
+    {
+      value: QUALITY_AUTO_VALUE,
+      label: autoLabel,
+      disabled: state.disabled,
+    },
+    ...state.renditions.map((rendition) => ({
+      value: rendition.value,
+      label: translateText(rendition.label, t),
+      ...(rendition.tier && { tier: rendition.tier }),
+      ...(rendition.badge && { badge: rendition.badge }),
+      disabled: state.disabled,
+    })),
+  ];
 
   return {
     state,
     value: state.value,
-    options: [
-      {
-        value: QUALITY_AUTO_VALUE,
-        label: translateText(state.autoLabel, t, state.autoLabelParams),
-        disabled: state.disabled,
-      },
-      ...state.renditions.map((rendition) => ({
-        value: rendition.value,
-        label: translateText(rendition.label, t),
-        ...(rendition.tier && { tier: rendition.tier }),
-        ...(rendition.badge && { badge: rendition.badge }),
-        disabled: state.disabled,
-      })),
-    ],
+    selectedLabel: options.find((option) => option.value === state.value)?.label ?? autoLabel,
+    options,
     disabled: state.disabled,
     setValue,
   };

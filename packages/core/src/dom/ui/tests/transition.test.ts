@@ -30,6 +30,31 @@ describe('createTransition', () => {
       expect(handler.state.current).toEqual({ active: true, status: 'idle' });
     });
 
+    it('resolves after the opening animation finishes', async () => {
+      const handler = createTransition();
+      const el = document.createElement('div');
+      let finishAnimation!: () => void;
+      const finished = new Promise<void>((resolve) => {
+        finishAnimation = resolve;
+      });
+      const getAnimations = vi.fn(() => [{ finished }] as unknown as Animation[]);
+      Object.defineProperty(el, 'getAnimations', { value: getAnimations });
+
+      let resolved = false;
+      const promise = handler.open(el).then(() => {
+        resolved = true;
+      });
+
+      await vi.waitFor(() => expect(getAnimations).toHaveBeenCalled());
+      expect(handler.state.current.status).toBe('idle');
+      expect(resolved).toBe(false);
+
+      finishAnimation();
+      await promise;
+
+      expect(resolved).toBe(true);
+    });
+
     it('cancels active animations and flushes styles when restarting an active transition', async () => {
       const handler = createTransition();
       const el = document.createElement('div');
@@ -134,9 +159,7 @@ describe('createTransition', () => {
       handler.destroy();
       handler.open();
 
-      // open() still patches synchronously (state.patch runs before the RAF guard),
-      // but the RAF callback won't fire the idle transition.
-      expect(handler.state.current.active).toBe(true);
+      expect(handler.state.current).toEqual({ active: false, status: 'idle' });
     });
 
     it('is idempotent', () => {

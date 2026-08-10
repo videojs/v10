@@ -1,7 +1,8 @@
-import { type Text, type Translator, translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
+import { ContextConsumer } from '@videojs/element/context';
 
 import { RadioGroupElement } from '../radio-group/radio-group-element';
+import { type MenuContextValue, type MenuTriggerMetadata, menuContext } from './context';
 import { MenuGroupController } from './menu-group-controller';
 import { MenuRadioItemElement } from './menu-radio-item-element';
 
@@ -9,7 +10,14 @@ export class MenuRadioGroupElement extends RadioGroupElement {
   static readonly tagName: string = 'media-menu-radio-group';
 
   readonly #group = new MenuGroupController(this);
-  #ariaLabel: string | null = null;
+  readonly #menu = new ContextConsumer(this, { context: menuContext, subscribe: true });
+  #metadataMenu: MenuContextValue['menu'] | null = null;
+  #setTriggerMetadata: ((metadata: MenuTriggerMetadata) => void) | null = null;
+
+  override disconnectedCallback(): void {
+    this.#clearMenuMetadata();
+    super.disconnectedCallback();
+  }
 
   protected override update(changed: PropertyValues): void {
     super.update(changed);
@@ -48,17 +56,29 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     }
   }
 
-  protected applyAriaLabel(
-    translator: Translator,
-    label: Text | string,
-    params?: Record<string, string | number>
-  ): void {
-    if (this.hasAttribute('aria-labelledby')) return;
+  protected publishMenuMetadata(disabled: boolean, availability?: 'available' | 'unavailable' | 'unsupported'): void {
+    const context = this.#menu.value ?? null;
 
-    const current = this.getAttribute('aria-label');
-    if (current !== null && current !== this.#ariaLabel) return;
+    if (context?.menu !== this.#metadataMenu) {
+      this.#clearMenuMetadata();
+      this.#metadataMenu = context?.menu ?? null;
+      this.#setTriggerMetadata = context?.setTriggerMetadata ?? null;
+    }
 
-    this.#ariaLabel = translateText(label, translator, params);
-    this.setAttribute('aria-label', this.#ariaLabel);
+    if (!this.#setTriggerMetadata) return;
+
+    const selectedItem = [...this.children].find(
+      (item): item is MenuRadioItemElement => item instanceof MenuRadioItemElement && item.value === this.value
+    );
+    const label = selectedItem?.querySelector<HTMLElement>('[data-part~="label"]')?.textContent;
+    const hint = label ?? selectedItem?.textContent?.trim() ?? '';
+
+    this.#setTriggerMetadata({ hint, disabled, availability });
+  }
+
+  #clearMenuMetadata(): void {
+    this.#setTriggerMetadata?.({ hint: '', disabled: false });
+    this.#metadataMenu = null;
+    this.#setTriggerMetadata = null;
   }
 }

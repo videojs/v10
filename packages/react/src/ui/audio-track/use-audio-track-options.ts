@@ -19,6 +19,7 @@ export interface AudioTrackOption {
 export interface AudioTrackOptionsResult {
   state: AudioTrackRadioGroupCore.State;
   value: string;
+  selectedLabel: string;
   options: AudioTrackOption[];
   disabled: boolean;
   setValue: (value: string) => void;
@@ -48,15 +49,17 @@ export function useAudioTrackOptions(props?: AudioTrackOptionsProps): AudioTrack
 
   core.setMedia(media);
   const state = core.getState();
+  const options = state.tracks.map((track) => ({
+    value: track.value,
+    label: translateText(track.label, t),
+    disabled: state.disabled,
+  }));
 
   return {
     state,
     value: state.value,
-    options: state.tracks.map((track) => ({
-      value: track.value,
-      label: translateText(track.label, t),
-      disabled: state.disabled,
-    })),
+    selectedLabel: options.find((option) => option.value === state.value)?.label ?? '',
+    options,
     disabled: state.disabled,
     setValue,
   };

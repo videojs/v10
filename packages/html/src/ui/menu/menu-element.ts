@@ -3,22 +3,17 @@ import {
   applyElementProps,
   applyStateDataAttrs,
   createMenu,
-  createMenuViewTransition,
   createTransition,
-  getMenuViewportAttrs,
-  getMenuViewTransitionAttrs,
   getRootPositionOptions,
   isMenuNavigationKey,
   type MenuApi,
   type MenuChangeDetails,
   type MenuOpenChangeReason,
-  type MenuViewTransitionState,
-  type NavigationState,
-  observeMenuViewContent,
+  MenuPositioningCSSVars,
+  observeMenuHeight,
   type PositioningBoundary,
   selectControls,
-  syncMenuViewRoot,
-  syncMenuViewTransition,
+  syncMenuHeightChain,
   type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
@@ -30,7 +25,12 @@ import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
-import { type MenuContextValue, menuContext } from './context';
+import { type MenuContextValue, type MenuTriggerMetadata, menuContext } from './context';
+
+const defaultTriggerMetadata: MenuTriggerMetadata = {
+  hint: '',
+  disabled: false,
+};
 
 export class MenuElement extends MediaElement {
   static readonly tagName: string = 'media-menu';
@@ -62,30 +62,19 @@ export class MenuElement extends MediaElement {
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
-  readonly #menuViewTransition = createMenuViewTransition({
-    focusFirstItem: () => {
-      this.#menu?.highlightFirstItem({ preventScroll: true });
-    },
-    restoreFocus: (triggerId) => {
-      const triggerElement = triggerId ? document.getElementById(triggerId) : null;
-      const fallbackTrigger = this.parentElement?.querySelector<HTMLElement>(
-        `[data-has-submenu][commandfor="${this.id}"]`
-      );
-
-      (triggerElement ?? fallbackTrigger)?.focus({ preventScroll: true });
-    },
-  });
   #menu: MenuApi | null = null;
   #snapshot: SnapshotController<MenuInput> | null = null;
-  #navSnapshot: SnapshotController<NavigationState> | null = null;
-  #menuViewSnapshot: SnapshotController<MenuViewTransitionState> | null = null;
-  #navState: NavigationState = { stack: [], direction: 'forward' };
+  #submenuActive = false;
 
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
-  #cleanupContentObserver: (() => void) | null = null;
+  #cleanupHeightObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
+  #metadataTrigger: HTMLElement | null = null;
+  #triggerMetadata = defaultTriggerMetadata;
   #releaseControlsLock: (() => void) | null = null;
+  #registeredParentMenu: MenuApi | null = null;
+  #cleanupParentRegistration: (() => void) | null = null;
 
   override connectedCallback(): void {
     super.connectedCallback();
@@ -98,8 +87,15 @@ export class MenuElement extends MediaElement {
     this.#menu = createMenu({
       transition: createTransition(),
       onOpenChange: (nextOpen: boolean, details: MenuChangeDetails) => {
-        this.open = nextOpen;
-        this.dispatchEvent(new CustomEvent('open-change', { detail: { open: nextOpen, ...details } }));
+        const accepted = this.dispatchEvent(
+          new CustomEvent('open-change', {
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            detail: { open: nextOpen, ...details },
+          })
+        );
+        if (accepted) this.open = nextOpen;
       },
       closeOnEscape: () => this.closeOnEscape,
       closeOnOutsideClick: () => this.closeOnOutsideClick,
@@ -121,50 +117,40 @@ export class MenuElement extends MediaElement {
     } else {
       this.#snapshot = new SnapshotController(this, this.#menu.input);
     }
-
-    if (this.#navSnapshot) {
-      this.#navSnapshot.track(this.#menu.navigationInput);
-    } else {
-      this.#navSnapshot = new SnapshotController(this, this.#menu.navigationInput);
-    }
-
-    if (this.#menuViewSnapshot) {
-      this.#menuViewSnapshot.track(this.#menuViewTransition.input);
-    } else {
-      this.#menuViewSnapshot = new SnapshotController(this, this.#menuViewTransition.input);
-    }
-  }
-
-  protected override firstUpdated(changed: PropertyValues): void {
-    super.firstUpdated(changed);
-
-    if (this.defaultOpen && !this.open) {
-      this.#menu?.open();
-    }
   }
 
   override disconnectedCallback(): void {
     this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
-    this.#cleanupContentObserver?.();
-    this.#cleanupContentObserver = null;
+    this.#cleanupHeightObserver?.();
+    this.#cleanupHeightObserver = null;
+    this.#syncTriggerMetadata(null);
     this.#cleanupTrigger();
+    this.#cleanupParentRegistration?.();
+    this.#cleanupParentRegistration = null;
+    this.#registeredParentMenu = null;
     this.#menu?.destroy();
     this.#menu = null;
     this.#disconnect?.abort();
     this.#disconnect = null;
-    this.#menuViewTransition.destroy();
   }
 
   close(reason: MenuOpenChangeReason = 'imperative-action'): void {
     this.#menu?.close(reason);
   }
 
+  openMenu(reason: MenuOpenChangeReason = 'imperative-action'): void {
+    this.#menu?.open(reason);
+  }
+
   protected override willUpdate(changed: PropertyValues): void {
     super.willUpdate(changed);
 
+    if (!this.hasUpdated && this.defaultOpen && !this.open) this.open = true;
+
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
+    this.#syncParentRegistration(parentCtx);
 
     this.#core.setProps({
       open: this.open,
@@ -176,15 +162,8 @@ export class MenuElement extends MediaElement {
       isSubmenu,
     });
 
-    if (this.#menu && changed.has('open') && !isSubmenu) {
-      const { active: interactionOpen } = this.#menu.input.current;
-      if (this.open !== interactionOpen) {
-        if (this.open) {
-          this.#menu.open();
-        } else {
-          this.#menu.close();
-        }
-      }
+    if (this.#menu && changed.has('open')) {
+      this.#menu.syncOpen(this.open);
     }
   }
 
@@ -195,7 +174,6 @@ export class MenuElement extends MediaElement {
     const parentCtx = this.#parentCtx.value ?? null;
     const isSubmenu = parentCtx !== null;
 
-    this.#navState = this.#menu.navigationInput.current;
     const input = this.#menu.input.current;
     this.#core.setInput(input);
     const state = this.#core.getState();
@@ -207,26 +185,32 @@ export class MenuElement extends MediaElement {
     }
 
     if (isSubmenu && parentCtx) {
-      this.#updateAsSubmenu(parentCtx);
+      this.#updateAsSubmenu(state, parentCtx);
     } else {
       this.#updateAsRoot(state);
     }
 
     // Provide context to child parts.
-    // When nested, expose the parent menu's API so items can pop on select.
-    const parentMenu = parentCtx?.menu ?? null;
     this.#provider.setValue({
       menu: this.#menu,
       state,
       stateAttrMap: MenuDataAttrs,
-      navigation: this.#navState,
-      parentMenu,
+      setTriggerMetadata: this.#setTriggerMetadata,
     });
   }
 
   #releaseControlsVisibilityLock(): void {
     this.#releaseControlsLock?.();
     this.#releaseControlsLock = null;
+  }
+
+  #syncParentRegistration(parentCtx: MenuContextValue | null): void {
+    const parentMenu = parentCtx?.menu ?? null;
+    if (parentMenu === this.#registeredParentMenu || !this.#menu) return;
+
+    this.#cleanupParentRegistration?.();
+    this.#registeredParentMenu = parentMenu;
+    this.#cleanupParentRegistration = parentMenu?.registerSubmenu(this.#menu) ?? null;
   }
 
   #updateAsRoot(state: ReturnType<MenuCore['getState']>): void {
@@ -237,7 +221,6 @@ export class MenuElement extends MediaElement {
 
     applyElementProps(this, {
       ...this.#core.getContentAttrs(state),
-      ...getMenuViewportAttrs(),
     });
     applyStateDataAttrs(this, state, MenuDataAttrs);
 
@@ -252,17 +235,16 @@ export class MenuElement extends MediaElement {
     }
 
     if (!state.open) {
-      this.#cleanupContentObserver?.();
-      this.#cleanupContentObserver = null;
+      this.#cleanupHeightObserver?.();
+      this.#cleanupHeightObserver = null;
       this.#position.cleanup();
       return;
     }
 
-    this.#cleanupContentObserver ??= observeMenuViewContent(this, () => {
-      this.requestUpdate();
-    });
-
-    syncMenuViewRoot(this, this.#navState.stack.length > 0);
+    this.#cleanupHeightObserver?.();
+    const syncHeight = () => syncMenuHeightChain(this);
+    syncHeight();
+    this.#cleanupHeightObserver = observeMenuHeight(this, syncHeight);
 
     const positionOptions = getRootPositionOptions(state.side, state.align);
     if (!positionOptions || !this.#currentTrigger) return;
@@ -273,39 +255,44 @@ export class MenuElement extends MediaElement {
       trigger: this.#currentTrigger,
       boundary: this.boundary,
       container: this.#containerCtx.value?.container ?? null,
-      onSideChange: (side) => {
-        this.setAttribute(MenuDataAttrs.side, side);
-        syncMenuViewRoot(this, this.#navState.stack.length > 0);
-      },
+      cssVars: MenuPositioningCSSVars,
+      onSideChange: (side) => this.setAttribute(MenuDataAttrs.side, side),
     });
   }
 
-  #updateAsSubmenu(parentCtx: MenuContextValue): void {
-    const parentNavigation = parentCtx.navigation;
-    const topEntry = parentNavigation.stack[parentNavigation.stack.length - 1];
-    const activeSubMenuId = topEntry?.menuId ?? null;
-    const isActive = activeSubMenuId === this.id;
+  #updateAsSubmenu(state: ReturnType<MenuCore['getState']>, parentCtx: MenuContextValue): void {
+    const isActive = state.open || state.status === 'ending';
+    const triggerElement = this.parentElement?.querySelector<HTMLElement>(
+      `[data-has-submenu][commandfor="${this.id}"]`
+    );
 
-    this.#menuViewTransition.setElement(this);
-    this.#menuViewTransition.sync({
-      active: isActive,
-      direction: parentNavigation.direction,
-      triggerId: topEntry?.triggerId ?? null,
-    });
-
-    // Apply base submenu attributes regardless of phase.
-    const transitionState = this.#menuViewTransition.input.current;
+    this.#menu?.setTriggerElement(triggerElement ?? null);
+    if (triggerElement) applyElementProps(triggerElement, this.#core.getTriggerAttrs(state, this.id));
+    this.#syncTriggerMetadata(triggerElement ?? null);
 
     this.removeAttribute(MenuDataAttrs.side);
     this.removeAttribute(MenuDataAttrs.align);
+    applyStateDataAttrs(this, state, MenuDataAttrs);
 
     applyElementProps(this, {
-      ...getMenuViewTransitionAttrs(transitionState),
+      hidden: !isActive,
       role: 'menu',
       tabIndex: -1,
-      'data-submenu': '',
     });
-    syncMenuViewTransition(parentCtx.menu.contentElement, this, transitionState);
+
+    if (isActive && !this.#submenuActive) {
+      this.#menu?.highlightFirstItem({ preventScroll: true });
+    } else if (!isActive && this.#submenuActive) {
+      triggerElement?.focus({ preventScroll: true });
+    }
+
+    this.#submenuActive = isActive;
+    this.#cleanupHeightObserver?.();
+    const parentContentElement = parentCtx.menu.contentElement;
+    const syncHeight = () => syncMenuHeightChain(parentContentElement);
+    syncHeight();
+    this.#cleanupHeightObserver =
+      isActive && parentContentElement ? observeMenuHeight(parentContentElement, syncHeight) : null;
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
@@ -324,24 +311,65 @@ export class MenuElement extends MediaElement {
       return;
     }
 
-    const stack = parentCtx.menu.navigationInput.current.stack;
-    const topEntry = stack[stack.length - 1];
-    const ownsActiveSubmenu = topEntry?.menuId === this.id;
     const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
-    if (isBackNavigationKey && ownsActiveSubmenu && !defaultPreventedBeforeMenu) {
+    if (isBackNavigationKey && !defaultPreventedBeforeMenu) {
       event.preventDefault();
-      parentCtx.menu.pop();
+      this.#menu?.close('escape');
     }
 
-    if (isNavigationKey && (!isBackNavigationKey || ownsActiveSubmenu)) {
-      event.stopPropagation();
-    }
+    if (isNavigationKey) event.stopPropagation();
   };
 
   #handleContentFocusOut = (event: UIFocusEvent): void => {
     this.#menu?.contentProps.onFocusOut(event);
   };
+
+  #setTriggerMetadata = (metadata: MenuTriggerMetadata): void => {
+    if (
+      metadata.hint === this.#triggerMetadata.hint &&
+      metadata.disabled === this.#triggerMetadata.disabled &&
+      metadata.availability === this.#triggerMetadata.availability
+    ) {
+      return;
+    }
+
+    this.#triggerMetadata = metadata;
+    if (metadata.disabled && this.open && this.#parentCtx.value) this.close('imperative-action');
+    this.requestUpdate();
+  };
+
+  #syncTriggerMetadata(trigger: HTMLElement | null): void {
+    if (trigger !== this.#metadataTrigger) {
+      this.#clearTriggerMetadata();
+      this.#metadataTrigger = trigger;
+    }
+
+    if (!trigger) return;
+
+    const disabled = this.#triggerMetadata.disabled || isTriggerExplicitlyDisabled(trigger);
+    applyElementProps(trigger, {
+      'aria-disabled': disabled ? 'true' : undefined,
+      'data-availability': this.#triggerMetadata.availability,
+    });
+
+    const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+    if (hint && hint.textContent !== this.#triggerMetadata.hint) hint.textContent = this.#triggerMetadata.hint;
+  }
+
+  #clearTriggerMetadata(): void {
+    const trigger = this.#metadataTrigger;
+    if (!trigger) return;
+
+    applyElementProps(trigger, {
+      'aria-disabled': isTriggerExplicitlyDisabled(trigger) ? 'true' : undefined,
+      'data-availability': undefined,
+    });
+
+    const hint = trigger.querySelector<HTMLElement>('[data-part~="hint"]');
+    if (hint?.textContent) hint.textContent = '';
+    this.#metadataTrigger = null;
+  }
 
   #syncTrigger(triggerElement: HTMLElement | null): void {
     if (triggerElement === this.#currentTrigger) return;
@@ -370,4 +398,11 @@ export class MenuElement extends MediaElement {
     this.#triggerAbort = null;
     this.#currentTrigger = null;
   }
+}
+
+function isTriggerExplicitlyDisabled(trigger: HTMLElement): boolean {
+  return (
+    trigger.hasAttribute('disabled') ||
+    ('disabled' in trigger && (trigger as HTMLElement & { disabled?: boolean }).disabled === true)
+  );
 }

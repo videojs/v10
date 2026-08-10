@@ -9,6 +9,7 @@ import { PlayerController } from '../../player/player-controller';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
 import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+import { applyRadioGroupAriaLabel } from '../radio-group/apply-radio-group-aria-label';
 
 export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
   static override readonly tagName = 'media-playback-rate-radio-group';
@@ -56,12 +57,13 @@ export class PlaybackRateRadioGroupElement extends MenuRadioGroupElement {
       state = this.#core.getState();
 
       this.value = this.#core.getRateValue(state.rate);
-      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state), this.#core.getLabelParams(state));
+      applyRadioGroupAriaLabel(this, this.#i18n.value, this.#core.getLabel(state), this.#core.getLabelParams(state));
       applyElementProps(this, {
         'aria-disabled': state.disabled ? 'true' : undefined,
       });
 
       this.#syncContent(state);
+      this.publishMenuMetadata(state.disabled, state.availability);
     }
 
     super.update(changed);

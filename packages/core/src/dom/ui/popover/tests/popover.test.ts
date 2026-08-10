@@ -14,6 +14,28 @@ describe('createPopover', () => {
   });
 
   describe('open/close', () => {
+    it('can defer open changes until the owner commits them', () => {
+      const { popover, onOpenChange } = createTestPopover({ deferOpenChanges: true });
+
+      popover.open();
+
+      expect(onOpenChange).toHaveBeenCalledWith(true, { reason: 'click' });
+      expect(popover.input.current).toEqual({ active: false, status: 'idle' });
+
+      popover.syncOpen(true);
+
+      expect(popover.input.current).toEqual({ active: true, status: 'starting' });
+
+      popover.close();
+
+      expect(onOpenChange).toHaveBeenCalledWith(false, { reason: 'click' });
+      expect(popover.input.current).toEqual({ active: true, status: 'starting' });
+
+      popover.syncOpen(false);
+
+      expect(popover.input.current).toEqual({ active: true, status: 'ending' });
+    });
+
     it('updates input state and calls onOpenChange when opening', () => {
       const { popover, onOpenChange } = createTestPopover();
 
@@ -144,14 +166,38 @@ describe('createPopover', () => {
   });
 
   describe('onOpenChangeComplete', () => {
-    it('fires after open animation completes', () => {
+    it('fires after open animation completes', async () => {
+      const onOpenChangeComplete = vi.fn();
+      const { popover } = createTestPopover({ onOpenChangeComplete });
+      const popup = document.createElement('div');
+      let finishAnimation!: () => void;
+      const finished = new Promise<void>((resolve) => {
+        finishAnimation = resolve;
+      });
+      const getAnimations = vi.fn(() => [{ finished }] as unknown as Animation[]);
+      Object.defineProperty(popup, 'getAnimations', { value: getAnimations });
+      popover.setPopupElement(popup);
+
+      popover.open();
+
+      await vi.waitFor(() => expect(getAnimations).toHaveBeenCalled());
+      expect(onOpenChangeComplete).not.toHaveBeenCalled();
+
+      finishAnimation();
+
+      await vi.waitFor(() => expect(onOpenChangeComplete).toHaveBeenCalledWith(true));
+    });
+
+    it('does not complete a close that is cancelled by reopening', async () => {
       const onOpenChangeComplete = vi.fn();
       const { popover } = createTestPopover({ onOpenChangeComplete });
 
       popover.open();
+      popover.close();
+      popover.open();
+      await Promise.resolve();
 
-      // Not called synchronously
-      expect(onOpenChangeComplete).not.toHaveBeenCalled();
+      expect(onOpenChangeComplete).not.toHaveBeenCalledWith(false);
     });
   });
 
