@@ -23,14 +23,33 @@ jobs:
           node-version-file: '.nvmrc'
           cache: pnpm
 
-      - name: Install and build
-        run: pnpm install && pnpm build:packages
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-pr-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-pr-
+
+      - name: Build packages
+        run: pnpm build:packages
 
       - name: Test bundle size reporting
         run: pnpm test:size
 
       - name: Measure bundle size
         run: node .github/scripts/bundle-size.js --json pr-size.json
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
       - name: Upload size data
         uses: actions/upload-artifact@v4
@@ -66,10 +85,20 @@ jobs:
             pnpm-lock.yaml
             .bundle-size-pr/pnpm-lock.yaml
 
-      - name: Install and build
-        run: |
-          pnpm install
+      - name: Install dependencies
+        run: pnpm install
 
+      - name: Restore Vite Task cache
+        id: vite-task-cache
+        uses: actions/cache/restore@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-base-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: |
+            vite-task-${{ runner.os }}-${{ runner.arch }}-bundle-size-base-
+
+      - name: Build and measure base
+        run: |
           if [ -f .bundle-size-pr/.github/scripts/bundle-size.js ]; then
             pnpm --dir .bundle-size-pr install --frozen-lockfile --ignore-scripts --filter video.js
             pnpm build:packages
@@ -77,6 +106,13 @@ jobs:
           else
             echo '[]' > base-size.json
           fi
+
+      - name: Save Vite Task cache
+        if: success()
+        uses: actions/cache/save@v6
+        with:
+          path: node_modules/.vite/task-cache
+          key: ${{ steps.vite-task-cache.outputs.cache-primary-key }}
 
       - name: Upload size data
         uses: actions/upload-artifact@v4

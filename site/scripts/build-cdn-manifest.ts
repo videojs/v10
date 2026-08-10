@@ -9,7 +9,7 @@
  * (one per media subpath), consumed via the `cdnMedia` content collection.
  *
  * Source of truth: the built output of `@videojs/html`'s `build:cdn` task
- * (configured in `packages/html/pack.cdn.config.ts`). Reading the build
+ * (configured in `packages/html/vite.config.ts`). Reading the build
  * output — rather than a hand-maintained list — means a renderer that fails to
  * ship a CDN bundle correctly shows as no-CDN.
  *

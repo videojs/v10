@@ -1,8 +1,17 @@
 import { defineConfig } from 'vite-plus';
-import packConfig from './pack.config.js';
-import testConfig from './test.config.js';
+import { neutralLibraryConfig } from '../../build/pack.ts';
 
 export default defineConfig({
-  ...testConfig,
-  pack: packConfig,
+  test: {
+    name: 'jsx',
+    include: ['src/**/*.test.ts'],
+  },
+  pack: {
+    ...neutralLibraryConfig,
+    entry: {
+      index: './src/index.ts',
+      'jsx-runtime': './src/jsx-runtime.ts',
+      'jsx-dev-runtime': './src/jsx-dev-runtime.ts',
+    },
+  },
 });

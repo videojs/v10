@@ -57,7 +57,7 @@ async function main() {
   // The build config resolves its entry globs against the working directory.
   process.chdir(PACKAGE_DIR);
   const [{ entries }, pkg] = await Promise.all([
-    import('../tsdown.cdn.config.ts'),
+    import('../vite.config.ts'),
     import('../package.json', { with: { type: 'json' } }).then((module) => module.default),
   ]);
 

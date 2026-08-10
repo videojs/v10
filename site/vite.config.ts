@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import react from '@vitejs/plugin-react';
 import { getViteConfig } from 'astro/config';
 import type { ViteUserConfig } from 'vite-plus';
@@ -65,4 +66,4 @@ const config: ViteUserConfig = {
   },
 };
 
-export default getViteConfig(config, { root: new URL('.', import.meta.url) });
+export default getViteConfig(config, { root: fileURLToPath(new URL('.', import.meta.url)) });

@@ -81,7 +81,7 @@
     "dev": "pnpm run build:watch",
     "test": "vp test run",
     "test:watch": "vp test",
-    "clean": "rimraf --glob dist types '*.tsbuildinfo'",
+    "clean": "rimraf --glob dist types '*.tsbuildinfo' 'src/**/*.tsbuildinfo'",
     "size": "node scripts/measure-size.js --hls",
     "size:all": "node scripts/measure-size.js --all"
   },

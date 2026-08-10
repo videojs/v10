@@ -4,8 +4,8 @@ import { describe, expect, it } from 'vite-plus/test';
 
 /**
  * The CLI aliases source files from the site package via path aliases in
- * pack.config.ts and test.config.ts. If these files move, the CLI build
- * breaks silently. This test makes that failure loud.
+ * vite.config.ts. If these aliases move, the CLI build breaks silently. This
+ * test makes that failure loud.
  */
 const SITE_ROOT = resolve(__dirname, '../../../../../site/src');
 
