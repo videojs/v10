@@ -5,8 +5,8 @@ import {
   getRootPositionOptions,
   isMenuNavigationKey,
   MenuPositioningCSSVars,
-  observeMenuHeight,
-  syncMenuHeightChain,
+  observeMenuSize,
+  syncMenuSizeChain,
 } from '@videojs/core/dom';
 import { forwardRef, useCallback, useLayoutEffect, useMemo, useRef } from 'react';
 import { createPortal } from 'react-dom';
@@ -99,7 +99,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     (element: HTMLDivElement | null) => {
       menu.setContentElement(element);
       if (!element) {
-        requestAnimationFrame(() => syncMenuHeightChain(parent?.menu.contentElement ?? null));
+        requestAnimationFrame(() => syncMenuSizeChain(parent?.menu.contentElement ?? null));
       }
     },
     [menu, parent]
@@ -184,10 +184,10 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
     const contentElement = internalRef.current;
     if (!contentElement) return;
 
-    const sync = () => syncMenuHeightChain(contentElement);
+    const sync = () => syncMenuSizeChain(contentElement);
     sync();
     const frame = requestAnimationFrame(sync);
-    const stopObserving = observeMenuHeight(contentElement, sync);
+    const stopObserving = observeMenuSize(contentElement, sync);
 
     return () => {
       cancelAnimationFrame(frame);
@@ -200,11 +200,11 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
 
     const isEnding = state.status === 'ending';
     const parentContentElement = parent?.menu.contentElement ?? null;
-    const sync = () => syncMenuHeightChain(parentContentElement);
+    const sync = () => syncMenuSizeChain(parentContentElement);
     sync();
     const frame = requestAnimationFrame(sync);
     const stopObserving =
-      state.open && !isEnding && parentContentElement ? observeMenuHeight(parentContentElement, sync) : null;
+      state.open && !isEnding && parentContentElement ? observeMenuSize(parentContentElement, sync) : null;
 
     return () => {
       cancelAnimationFrame(frame);

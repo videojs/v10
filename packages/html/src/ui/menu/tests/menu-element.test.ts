@@ -91,9 +91,10 @@ function nextFrame(): Promise<void> {
   return new Promise((resolve) => requestAnimationFrame(() => resolve()));
 }
 
-function setElementHeight(element: HTMLElement, height: number): void {
+function setElementSize(element: HTMLElement, width: number, height: number): void {
+  Object.defineProperty(element, 'scrollWidth', { configurable: true, value: width });
   Object.defineProperty(element, 'scrollHeight', { configurable: true, value: height });
-  vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ height } as DOMRect);
+  vi.spyOn(element, 'getBoundingClientRect').mockReturnValue({ width, height } as DOMRect);
 }
 
 async function waitForAssertion(assertion: () => void): Promise<void> {
@@ -391,7 +392,7 @@ describe('MenuElement', () => {
     });
   });
 
-  it('propagates the deepest submenu height to the root menu', async () => {
+  it('propagates the deepest submenu size to the root menu', async () => {
     const root = createElement(MenuElement);
     const rootItems = document.createElement('div');
     const child = createElement(MenuElement);
@@ -401,9 +402,9 @@ describe('MenuElement', () => {
     root.open = true;
     child.id = 'child-menu';
     grandchild.id = 'grandchild-menu';
-    setElementHeight(rootItems, 100);
-    setElementHeight(childItems, 150);
-    setElementHeight(grandchildItems, 240);
+    setElementSize(rootItems, 180, 100);
+    setElementSize(childItems, 200, 150);
+    setElementSize(grandchildItems, 220, 240);
     grandchild.append(grandchildItems);
     child.append(childItems, grandchild);
     root.append(rootItems, child);
@@ -418,6 +419,8 @@ describe('MenuElement', () => {
     await grandchild.updateComplete;
 
     await waitForAssertion(() => {
+      expect(child.style.getPropertyValue('--media-menu-width')).toBe('220px');
+      expect(root.style.getPropertyValue('--media-menu-width')).toBe('220px');
       expect(child.style.getPropertyValue('--media-menu-height')).toBe('240px');
       expect(root.style.getPropertyValue('--media-menu-height')).toBe('240px');
     });

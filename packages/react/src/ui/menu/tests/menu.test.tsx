@@ -540,26 +540,34 @@ describe('MenuContent', () => {
     });
   });
 
-  it('propagates the deepest submenu height to the root content', async () => {
+  it('propagates the deepest submenu size to the root content', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const widths: Record<string, number> = {
+        'root-items': 180,
+        'first-submenu-items': 200,
+        'second-submenu-item': 220,
+      };
       const heights: Record<string, number> = {
         'root-items': 100,
         'first-submenu-items': 150,
         'second-submenu-item': 240,
       };
-      return createRect(160, heights[this.dataset.testid ?? ''] ?? 0);
+      return createRect(widths[this.dataset.testid ?? ''] ?? 0, heights[this.dataset.testid ?? ''] ?? 0);
     });
 
     render(<NestedSubmenuFixture />);
     fireEvent.click(screen.getByTestId('first-submenu-trigger'));
 
     await waitFor(() => {
+      expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-width')).toBe('200px');
       expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-height')).toBe('150px');
     });
 
     fireEvent.click(screen.getByTestId('second-submenu-trigger'));
 
     await waitFor(() => {
+      expect(screen.getByTestId('first-submenu-content').style.getPropertyValue('--media-menu-width')).toBe('220px');
+      expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-width')).toBe('220px');
       expect(screen.getByTestId('first-submenu-content').style.getPropertyValue('--media-menu-height')).toBe('240px');
       expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-height')).toBe('240px');
     });

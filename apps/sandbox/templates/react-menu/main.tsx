@@ -60,8 +60,8 @@ const backButtonClass = [
 const menuNavPopupClass = [
   'relative',
   menuNavSurfaceClass,
-  'w-64 max-w-(--media-menu-available-width) h-(--media-menu-height)',
-  'transition-[opacity,scale,translate,filter,height] duration-150 ease-in-out',
+  'w-(--media-menu-width) max-w-(--media-menu-available-width) h-(--media-menu-height)',
+  'transition-[opacity,scale,translate,filter,width,height] duration-150 ease-in-out',
   menuContentPlacementClass,
 ].join(' ');
 

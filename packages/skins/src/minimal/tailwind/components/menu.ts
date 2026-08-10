@@ -5,6 +5,7 @@ import { popup } from './popup';
 const submenuPanel = cn(
   'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
+  'bg-(--media-popover-background-color) [backdrop-filter:var(--media-popover-backdrop-filter)]',
   'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate,filter]',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
@@ -64,12 +65,12 @@ export const menu = {
   /** Settings menu host with nested submenu navigation. */
   settings: cn(
     menuHostShell,
-    // Only the menu height changes between panels.
-    '[--media-popup-transition:var(--media-popup-base-transition),height_var(--media-popup-transition-timing-function)_var(--menu-transition-duration)]',
-    // Don't transition height on open/close.
+    // Only the menu size changes between panels.
+    '[--media-popup-transition:var(--media-popup-base-transition),width_var(--media-popup-transition-timing-function)_var(--menu-transition-duration),height_var(--media-popup-transition-timing-function)_var(--menu-transition-duration)]',
+    // Don't transition size on open/close.
     'data-starting-style:[--media-popup-transition:var(--media-popup-base-transition)]',
     'data-ending-style:[--media-popup-transition:var(--media-popup-base-transition)]',
-    'w-64 max-w-(--media-menu-available-width) h-(--media-menu-height)',
+    'min-w-48! w-(--media-menu-width) max-w-(--media-menu-available-width) h-(--media-menu-height)',
     'overflow-hidden!'
   ),
   group,

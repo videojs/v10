@@ -10,10 +10,10 @@ import {
   type MenuChangeDetails,
   type MenuOpenChangeReason,
   MenuPositioningCSSVars,
-  observeMenuHeight,
+  observeMenuSize,
   type PositioningBoundary,
   selectControls,
-  syncMenuHeightChain,
+  syncMenuSizeChain,
   type UIFocusEvent,
   type UIKeyboardEvent,
 } from '@videojs/core/dom';
@@ -68,7 +68,7 @@ export class MenuElement extends MediaElement {
 
   #disconnect: AbortController | null = null;
   #triggerAbort: AbortController | null = null;
-  #cleanupHeightObserver: (() => void) | null = null;
+  #cleanupSizeObserver: (() => void) | null = null;
   #currentTrigger: HTMLElement | null = null;
   #metadataTrigger: HTMLElement | null = null;
   #triggerMetadata = defaultTriggerMetadata;
@@ -122,8 +122,8 @@ export class MenuElement extends MediaElement {
   override disconnectedCallback(): void {
     this.#releaseControlsVisibilityLock();
     super.disconnectedCallback();
-    this.#cleanupHeightObserver?.();
-    this.#cleanupHeightObserver = null;
+    this.#cleanupSizeObserver?.();
+    this.#cleanupSizeObserver = null;
     this.#syncTriggerMetadata(null);
     this.#cleanupTrigger();
     this.#cleanupParentRegistration?.();
@@ -235,16 +235,16 @@ export class MenuElement extends MediaElement {
     }
 
     if (!state.open) {
-      this.#cleanupHeightObserver?.();
-      this.#cleanupHeightObserver = null;
+      this.#cleanupSizeObserver?.();
+      this.#cleanupSizeObserver = null;
       this.#position.cleanup();
       return;
     }
 
-    this.#cleanupHeightObserver?.();
-    const syncHeight = () => syncMenuHeightChain(this);
-    syncHeight();
-    this.#cleanupHeightObserver = observeMenuHeight(this, syncHeight);
+    this.#cleanupSizeObserver?.();
+    const syncSize = () => syncMenuSizeChain(this);
+    syncSize();
+    this.#cleanupSizeObserver = observeMenuSize(this, syncSize);
 
     const positionOptions = getRootPositionOptions(state.side, state.align);
     if (!positionOptions || !this.#currentTrigger) return;
@@ -287,12 +287,12 @@ export class MenuElement extends MediaElement {
     }
 
     this.#submenuActive = isActive;
-    this.#cleanupHeightObserver?.();
+    this.#cleanupSizeObserver?.();
     const parentContentElement = parentCtx.menu.contentElement;
-    const syncHeight = () => syncMenuHeightChain(parentContentElement);
-    syncHeight();
-    this.#cleanupHeightObserver =
-      isActive && parentContentElement ? observeMenuHeight(parentContentElement, syncHeight) : null;
+    const syncSize = () => syncMenuSizeChain(parentContentElement);
+    syncSize();
+    this.#cleanupSizeObserver =
+      isActive && parentContentElement ? observeMenuSize(parentContentElement, syncSize) : null;
   }
 
   #handleContentKeyDown = (event: UIKeyboardEvent): void => {
