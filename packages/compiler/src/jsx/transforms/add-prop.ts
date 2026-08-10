@@ -1,6 +1,7 @@
 import ts from 'typescript';
 import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
-import { findJsxAttribute, isJsxElementLike } from '../../utils/jsx';
+import { isJsxElementLike } from '../../utils/jsx';
+import { setJsxAttribute } from '../edits';
 import type { Matcher } from '../matchers';
 
 export interface AddPropImportRef {
@@ -45,27 +46,11 @@ export function addProp(opts: AddPropOptions, ctx: AddImportContext = {}): ts.Tr
       if (!isJsxElementLike(out)) return out;
       if (!opts.match(out)) return out;
 
-      const attrs = ts.isJsxElement(out) ? out.openingElement.attributes : out.attributes;
-      const existing = findJsxAttribute(attrs, opts.prop);
-      const existingIdx = existing ? attrs.properties.indexOf(existing) : -1;
-      if (existingIdx !== -1 && !opts.overwrite) return out;
-
-      if (isImportRef(opts.value)) needsImport = opts.value;
       const newAttribute = buildAttribute();
-      const nextProperties =
-        existingIdx === -1
-          ? [...attrs.properties, newAttribute]
-          : attrs.properties.map((p, i) => (i === existingIdx ? newAttribute : p));
-      const newAttrs = factory.createJsxAttributes(nextProperties);
-
-      if (ts.isJsxSelfClosingElement(out)) {
-        return factory.createJsxSelfClosingElement(out.tagName, out.typeArguments, newAttrs);
-      }
-      return factory.createJsxElement(
-        factory.createJsxOpeningElement(out.openingElement.tagName, out.openingElement.typeArguments, newAttrs),
-        out.children,
-        out.closingElement
-      );
+      const replacement = setJsxAttribute(out, opts.prop, newAttribute, factory, { overwrite: opts.overwrite });
+      if (!replacement) return out;
+      if (isImportRef(opts.value)) needsImport = opts.value;
+      return replacement;
     };
 
     return (sourceFile) => {

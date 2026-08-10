@@ -2,15 +2,14 @@ import ts from 'typescript';
 import type { CompilerContext, CompilerPipelineStep, CompilerPlugin, CompilerTransform } from './config';
 import type { JsxElementLike } from './jsx';
 import { tagName, unwrap as unwrapJsxElement } from './jsx';
+import { moveJsxChildToProp, replaceJsxElementTag, setJsxAttribute } from './jsx/edits';
 import { addNamedImport } from './transforms/add-import';
 import { type ImportRewriteOptions, type ImportRule, transformImports } from './transforms/imports';
 import {
-  hasJsxAttribute,
   hasJsxSpreadAttribute,
   isJsxElementLike as isJsxNodeLike,
   readAccessPath,
   readJsxAttributeExpression,
-  singleJsxChildExpression,
 } from './utils/jsx';
 import { insertStatementsAfterImports } from './utils/source-file';
 
@@ -703,7 +702,7 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
       addProp:
         (name, value) =>
         (element, { factory }) =>
-          addJsxProp(element, name, value, factory),
+          setJsxAttribute(element, name, createJsxProp(name, value, factory), factory),
       addPropsSpread:
         (value) =>
         (element, { factory }) =>
@@ -711,11 +710,11 @@ function createEditHelpers(context: CompilerContext): EditHelpers {
       moveChildToProp:
         (prop) =>
         (element, { factory }) =>
-          liftSingleChildToProp(element, prop, factory),
+          moveJsxChildToProp(element, prop, factory),
       replaceTag:
         (tag) =>
         (element, { factory }) =>
-          replaceJsxTag(element, tag, factory),
+          replaceJsxElementTag(element, jsxTagNameFromReference(tag), factory),
     },
     interface: {
       declaration: editInterfaceDeclaration,
@@ -1001,54 +1000,6 @@ function asConst(expression: ts.Expression): ts.AsExpression {
   return ts.factory.createAsExpression(expression, ts.factory.createTypeReferenceNode('const'));
 }
 
-function liftSingleChildToProp(
-  element: JsxElementLike,
-  prop: string,
-  factory: ts.NodeFactory
-): JsxElementLike | undefined {
-  if (!ts.isJsxElement(element)) return undefined;
-  const opening = element.openingElement;
-  if (hasJsxAttribute(opening.attributes, prop)) return undefined;
-
-  const child = singleJsxChildExpression(element.children);
-  if (!child) return undefined;
-
-  const nextAttrs = factory.createJsxAttributes([
-    ...opening.attributes.properties,
-    factory.createJsxAttribute(factory.createIdentifier(prop), factory.createJsxExpression(undefined, child)),
-  ]);
-
-  return factory.createJsxSelfClosingElement(opening.tagName, opening.typeArguments, nextAttrs);
-}
-
-function addJsxProp(
-  element: JsxElementLike,
-  name: string,
-  value: JsxPropValue,
-  factory: ts.NodeFactory
-): JsxElementLike | undefined {
-  const attrs = ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
-  if (hasJsxAttribute(attrs, name)) return undefined;
-
-  const nextAttrs = factory.createJsxAttributes([...attrs.properties, createJsxProp(name, value, factory)]);
-
-  if (ts.isJsxElement(element)) {
-    return factory.updateJsxElement(
-      element,
-      factory.updateJsxOpeningElement(
-        element.openingElement,
-        element.openingElement.tagName,
-        element.openingElement.typeArguments,
-        nextAttrs
-      ),
-      element.children,
-      element.closingElement
-    );
-  }
-
-  return factory.updateJsxSelfClosingElement(element, element.tagName, element.typeArguments, nextAttrs);
-}
-
 function addJsxPropsSpread(
   element: JsxElementLike,
   value: ValueReference,
@@ -1241,33 +1192,6 @@ function addFunctionProps(
     nextParameters,
     declaration.type,
     declaration.body
-  );
-}
-
-function replaceJsxTag(
-  element: JsxElementLike,
-  tag: string | ImportReference,
-  factory: ts.NodeFactory
-): JsxElementLike {
-  if (ts.isJsxElement(element)) {
-    return factory.updateJsxElement(
-      element,
-      factory.updateJsxOpeningElement(
-        element.openingElement,
-        jsxTagNameFromReference(tag),
-        element.openingElement.typeArguments,
-        element.openingElement.attributes
-      ),
-      element.children,
-      factory.updateJsxClosingElement(element.closingElement, jsxTagNameFromReference(tag))
-    );
-  }
-
-  return factory.updateJsxSelfClosingElement(
-    element,
-    jsxTagNameFromReference(tag),
-    element.typeArguments,
-    element.attributes
   );
 }
 

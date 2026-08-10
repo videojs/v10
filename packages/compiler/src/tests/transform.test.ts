@@ -1,5 +1,7 @@
+import ts from 'typescript';
 import { describe, expect, it } from 'vitest';
-import { rewrite, transform } from '..';
+import { jsx, rewrite, transform } from '..';
+import { addProp, byTag, childAsProp, replace } from '../jsx';
 
 const compact = (value: string): string => value.replace(/\s+/g, '');
 
@@ -101,6 +103,37 @@ export function Template({ children, className }: TemplateProps) {
     expect(compact(result.code)).toContain(compact('<RangeTrack className={cn(styles.track)} />'));
     expect(compact(result.code)).toContain(compact('<Toolbar.Root data-toolbar="">'));
     expect(compact(result.code)).toContain(compact('<Hint.Trigger render={<Action'));
+  });
+
+  it('keeps legacy and rewrite JSX node edits aligned', async () => {
+    const source = `export function Template(){ return <Old><Action><Child/></Action></Old>; }`;
+    const legacy = await transform(source, {
+      config: {
+        target: jsx({
+          transforms: [
+            childAsProp({ match: byTag('Action'), prop: 'render' }),
+            addProp({ match: byTag('Old'), prop: 'count', value: ts.factory.createNumericLiteral(1) }),
+            replace({ match: byTag('Old'), with: { source: '@fixture/react', name: 'Panel' } }),
+          ],
+        }),
+      },
+    });
+    const rewritten = await transform(source, {
+      config: {
+        plugins: [
+          rewrite((code) => {
+            const Panel = code.import('@fixture/react', 'Panel');
+            return [
+              code.jsx.element('Action').childToProp('render'),
+              code.jsx.element('Old').addProp('count', code.value.number(1)),
+              code.jsx.element('Old').replace(Panel),
+            ];
+          }),
+        ],
+      },
+    });
+
+    expect(compact(rewritten.code)).toBe(compact(legacy.code));
   });
 
   it('materializes default lazy imports', async () => {
