@@ -75,6 +75,10 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
   /**
    * Media source URL. Assigning it replaces the identity half of `source` and
    * leaves `engine` intact, so changing the URL never disturbs key exchange.
+   *
+   * Like the element's own `src`, assigning it always loads — including the URL
+   * already playing. This is the imperative half of the API, and what
+   * `HlsJsMedia` loads its native delegate through.
    */
   get src() {
     return this.#src;
@@ -89,14 +93,18 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
       ...(src && { src }),
     };
 
-    // Everything happens in the `source` setter, so there is one path for
-    // storing it and loading.
-    this.source = Object.keys(next).length > 0 ? next : null;
+    this.#source = Object.keys(next).length > 0 ? next : null;
+    this.#src = src;
+    if (this.target) this.target.src = src;
   }
 
   /**
    * Structured source: what to play (`src`) plus how to play it
    * (`engine.nativeHls`). Assigning it derives `src`.
+   *
+   * Only a new URL reaches the element, so reassigning an equivalent source —
+   * an inline React prop, for instance — neither reloads nor disturbs key
+   * exchange. Use `src` or `load()` to reload what is already playing.
    *
    * Unlike `HlsJsMedia`, this does not announce a `sourcechange`. It is also
    * the delegate `HlsJsMedia` plays native sources through, and every event it
@@ -112,9 +120,17 @@ class NativeHlsMediaBase extends HTMLVideoElementHost implements Omit<NativeHlsM
     // nothing.
     if (source === this.#source) return;
 
+    const src = source?.src ?? '';
+    // Assigning the element's `src` restarts the media load algorithm, even for
+    // the URL it already holds, so only a different one reaches it. Nothing else
+    // here is read up front — the DRM options are read when a key request
+    // arrives — so an equivalent source cannot interrupt playback.
+    const srcChanged = this.#src !== src;
+
     this.#source = source;
-    this.#src = source?.src ?? '';
-    if (this.target) this.target.src = this.#src;
+    this.#src = src;
+
+    if (srcChanged && this.target) this.target.src = src;
   }
 
   /** Preload type (`'none'` / `'metadata'` / `'auto'`). */
