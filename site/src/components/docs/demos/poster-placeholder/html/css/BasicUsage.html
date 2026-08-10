@@ -1,6 +1,7 @@
 <!-- biome-ignore-all lint/a11y/useMediaCaption: TODO -->
 <video-player
     class="video-player"
+    poster="{{VJS10_DEMO_POSTER}}"
     poster-placeholder="{{VJS10_DEMO_POSTER_PLACEHOLDER}}"
 >
     <media-container>
@@ -11,16 +12,11 @@
 
         <media-poster-placeholder class="media-poster-placeholder"></media-poster-placeholder>
 
-        <media-poster class="media-poster">
-            <img
-                src="{{VJS10_DEMO_POSTER}}"
-                alt="Video thumbnail"
-                />
-            </media-poster>
+        <media-poster class="media-poster"></media-poster>
 
-            <media-play-button class="media-play-button">
-                <span class="paused">Play</span>
-                <span class="playing">Pause</span>
-            </media-play-button>
+        <media-play-button class="media-play-button">
+            <span class="paused">Play</span>
+            <span class="playing">Pause</span>
+        </media-play-button>
     </media-container>
 </video-player>
