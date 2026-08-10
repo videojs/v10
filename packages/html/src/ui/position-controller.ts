@@ -7,10 +7,16 @@ export type PositionControllerOptions = Omit<PopupPositionerOptions, 'popup'>;
 
 let popupId = 0;
 
+interface ImplicitTriggerBinding {
+  id: string;
+  trigger: HTMLElement;
+}
+
 /** Connects a popup element to the shared positioning lifecycle. */
 export class PositionController implements ReactiveController {
   readonly #host: PositionControllerHost;
   readonly #positioner = new PopupPositioner();
+  #implicitBinding: ImplicitTriggerBinding | null = null;
 
   constructor(host: PositionControllerHost) {
     this.#host = host;
@@ -21,8 +27,22 @@ export class PositionController implements ReactiveController {
   findTrigger(trigger?: string): HTMLElement | null {
     const root = this.#host.getRootNode() as Document | ShadowRoot;
     if (trigger) {
+      this.#releaseImplicitBinding();
       return root.getElementById(trigger);
     }
+
+    if (this.#implicitBinding) {
+      const { id, trigger: boundTrigger } = this.#implicitBinding;
+      if (
+        this.#host.id === id &&
+        boundTrigger.getAttribute('commandfor') === id &&
+        this.#host.previousElementSibling === boundTrigger
+      ) {
+        return boundTrigger;
+      }
+      this.#releaseImplicitBinding();
+    }
+
     if (this.#host.id) {
       return root.querySelector<HTMLElement>(`[commandfor="${this.#host.id}"]`);
     }
@@ -46,8 +66,10 @@ export class PositionController implements ReactiveController {
       return null;
     }
 
-    this.#host.id = nextPopupId(root);
-    adjacent.setAttribute('commandfor', this.#host.id);
+    const id = nextPopupId(root);
+    this.#host.id = id;
+    adjacent.setAttribute('commandfor', id);
+    this.#implicitBinding = { id, trigger: adjacent };
     return adjacent;
   }
 
@@ -61,10 +83,25 @@ export class PositionController implements ReactiveController {
 
   hostDisconnected(): void {
     this.cleanup();
+    this.#releaseImplicitBinding();
   }
 
   hostDestroyed(): void {
     this.cleanup();
+    this.#releaseImplicitBinding();
+  }
+
+  #releaseImplicitBinding(): void {
+    const binding = this.#implicitBinding;
+    if (!binding) return;
+
+    if (binding.trigger.getAttribute('commandfor') === binding.id) {
+      binding.trigger.removeAttribute('commandfor');
+    }
+    if (this.#host.id === binding.id) {
+      this.#host.removeAttribute('id');
+    }
+    this.#implicitBinding = null;
   }
 }
 
