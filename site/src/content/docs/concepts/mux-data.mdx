@@ -75,7 +75,9 @@ An explicit key always wins, so set one to send Mux-hosted views to a specific e
 
 ## Any media element works
 
-The component attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/dash-video">DashVideo</DocsLink>, and the rest alike. When the media exposes an [hls.js](https://github.com/video-dev/hls.js/) engine, the component hands that engine to the Mux Data SDK so it can report stream-level detail alongside the playback metrics.
+The component attaches to the media the player is using, not to a specific element type, so it monitors <DocsLink slug="reference/mux-video">MuxVideo</DocsLink>, <DocsLink slug="reference/hlsjs-video">HlsJsVideo</DocsLink>, <DocsLink slug="reference/dash-video">DashVideo</DocsLink>, and the rest alike.
+
+How much it reports depends on the engine playing the stream. Every media gets the playback metrics the media element itself can tell us. On top of that, the component recognizes [hls.js](https://github.com/video-dev/hls.js/) and [dash.js](https://github.com/Dash-Industry-Forum/dash.js) engines and hands them to the Mux Data SDK, which adds stream-level detail: rendition switches, segment request timing and throughput, and engine errors. Media with no JavaScript engine, like native HLS or a plain `<video>`, report the element-level metrics alone.
 
 The `video_id` it reports is the Mux playback ID for streams served from `stream.mux.com`, and the source URL otherwise. Each view also gets a generated `view_session_id`. Override either through `metadata`.
 
