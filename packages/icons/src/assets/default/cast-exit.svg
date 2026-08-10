@@ -1,13 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" viewBox="0 0 18 18">
-  <rect width="11" height="7" x="3.5" y="5.5" fill="currentColor" rx="1"/>
-  <rect width="16" height="12" x="1" y="3" stroke="currentColor" stroke-width="2" rx="2.5"/>
-  <circle cy="16" r="7.5" fill="#fff"/>
-  <mask id="a" width="8" height="8" x="0" y="8" maskUnits="userSpaceOnUse" style="mask-type:alpha">
-    <rect width="8" height="8" y="8" fill="#fff" rx=".5"/>
-  </mask>
-  <g mask="url(#a)">
-    <circle cy="16" r="3.25" stroke="currentColor" stroke-width="1.5"/>
-    <circle cy="16" r="5.75" stroke="currentColor" stroke-width="1.5"/>
-    <circle cy="16" r="1.5" fill="currentColor"/>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" viewBox="0 0 18 18">
+  <path d="M14.5 2A3.5 3.5 0 0 1 18 5.5v7a3.5 3.5 0 0 1-3.5 3.5h-7c0-.693-.096-1.363-.271-2H14.5a1.5 1.5 0 0 0 1.5-1.5v-7A1.5 1.5 0 0 0 14.5 4h-11A1.5 1.5 0 0 0 2 5.5v3.271A7.5 7.5 0 0 0 0 8.5v-3A3.5 3.5 0 0 1 3.5 2z"/>
+  <path d="M13.5 5.5a1 1 0 0 1 1 1v5a1 1 0 0 1-1 1H6.634A7.53 7.53 0 0 0 3.5 9.366V6.5a1 1 0 0 1 1-1zM0 12a4 4 0 0 1 4 4H2.5A2.5 2.5 0 0 0 0 13.5z"/>
+  <path d="M0 9.5A6.5 6.5 0 0 1 6.5 16H5a5 5 0 0 0-5-5zm0 5A1.5 1.5 0 0 1 1.5 16h-1a.5.5 0 0 1-.5-.5z"/>
 </svg>
