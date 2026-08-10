@@ -12,7 +12,7 @@ import {
   type BackgroundVideoEngineSignals,
   type BackgroundVideoEngineState,
   createBackgroundVideoEngine,
-} from './engine';
+} from '../../engines/hls/engine-background-video';
 
 export interface BackgroundVideoMediaProps {
   src: string;

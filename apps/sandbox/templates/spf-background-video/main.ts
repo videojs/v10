@@ -19,8 +19,8 @@ import '@app/styles.css';
 
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
-import type { BackgroundVideoEngineState } from '@videojs/spf/background-video';
 import { BackgroundVideoMediaElement } from '@videojs/spf/background-video';
+import type { BackgroundVideoEngineState } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('bg-video') as HTMLVideoElement;

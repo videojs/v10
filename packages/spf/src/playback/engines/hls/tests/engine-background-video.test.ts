@@ -10,7 +10,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
-import { createBackgroundVideoEngine } from '../engine';
+import { createBackgroundVideoEngine } from '../engine-background-video';
 
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
   appendSegment: vi.fn().mockResolvedValue(undefined),
