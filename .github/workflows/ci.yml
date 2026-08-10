@@ -146,7 +146,7 @@ jobs:
       # CLI tests resolve a committed CDN-manifest fixture and are deliberately
       # independent of the site's production build graph.
       - name: Test package
-        run: pnpm exec vp run "${{ matrix.package }}#test"
+        run: pnpm --filter "${{ matrix.package }}" test
 
       - name: Save Vite Task cache
         if: success()
