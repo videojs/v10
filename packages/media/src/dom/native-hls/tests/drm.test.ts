@@ -225,6 +225,29 @@ describe('NativeHlsMediaDrmMixin', () => {
     expect(session.update).toHaveBeenCalledWith(CKC);
   });
 
+  it('follows a license server updated on the playing source', async () => {
+    const rotated = 'https://license.test/fairplay?token=rotated';
+    const { session } = stubKeySystem();
+    const { media, video } = setup();
+    video.setMediaKeys = vi.fn(async () => {});
+
+    fireKeyRequest(video);
+    await settle();
+
+    // Same manifest, new license server: nothing reloads, so the key system the
+    // CDM is holding has to pick the change up on its own.
+    media.source = {
+      src: media.src,
+      engine: { nativeHls: { drmSystems: { 'com.apple.fps': { licenseUrl: rotated } } } },
+    };
+
+    session.dispatch(Object.assign(new Event('message'), { message: new Uint8Array([5, 5]).buffer }));
+    await settle();
+
+    expect(fetchMock).toHaveBeenCalledWith(rotated, expect.objectContaining({ method: 'POST' }));
+    expect(session.update).toHaveBeenCalledWith(CKC);
+  });
+
   it('negotiates FairPlay against the manifest, without persistent state', async () => {
     const { requestMediaKeySystemAccess } = stubKeySystem();
     const { video } = setup();

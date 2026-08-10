@@ -38,8 +38,9 @@ export type NativeHlsDrmHost = NativeMediaHost & {
  * PlayReady content needs the hls.js (MSE) engine.
  *
  * The configuration is read when a key request arrives rather than up front,
- * so assigning `source` and letting the element load are independent; state is
- * released on `emptied`, when the element starts on a new resource.
+ * so assigning `source` and letting the element load are independent, and a
+ * license server updated on a playing source is picked up without a reload;
+ * state is released on `emptied`, when the element starts on a new resource.
  *
  * Encrypted content with nothing configured fails loudly. Safari otherwise
  * stalls without explanation, which is indistinguishable from a slow network.
@@ -142,9 +143,18 @@ export function NativeHlsMediaDrmMixin<Base extends Constructor<NativeHlsDrmHost
     #createKeySystem(media: HTMLVideoElement, config: NativeHlsDrmSystemConfig) {
       const disconnect = new AbortController();
 
+      // The key system outlives the object the source was assigned as, so the
+      // configuration is resolved on every use rather than captured: a license
+      // server updated on a playing source reaches the next request. Dropping it
+      // altogether falls back to what key exchange started with, since requests
+      // already in flight still have to finish.
+      const readConfig = () => this.source?.engine?.nativeHls?.drmSystems?.[FAIRPLAY_KEY_SYSTEM] ?? config;
+
       const context: FairPlayContext = {
         media,
-        config,
+        get config() {
+          return readConfig();
+        },
         signal: disconnect.signal,
         reportError: (error) => this.setError(error),
       };

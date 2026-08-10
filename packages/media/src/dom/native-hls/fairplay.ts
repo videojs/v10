@@ -95,7 +95,12 @@ export interface FairPlayKeySystem {
 export interface FairPlayContext {
   /** The element the CDM is bound to. */
   media: HTMLMediaElement;
-  config: NativeHlsDrmSystemConfig;
+  /**
+   * The FairPlay half of `source.engine.nativeHls.drmSystems`, read on every
+   * use rather than captured — a license server updated on a playing source
+   * (a rotated token, say) has to reach the next request.
+   */
+  readonly config: NativeHlsDrmSystemConfig;
   /** Aborted when the source is replaced or the media detaches. */
   signal: AbortSignal;
   /** Surface an error on the media host. Non-fatal ones are announced only. */
