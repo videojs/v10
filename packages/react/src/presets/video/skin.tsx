@@ -62,6 +62,7 @@ import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Title } from '@/ui/title';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
@@ -549,6 +550,8 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className="media-overlay" />
+
+      <Title className="media-title media-title--offset-controls" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

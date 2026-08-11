@@ -14,7 +14,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getContentTitle, getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -39,7 +39,7 @@ async function render() {
   const srcAttr = source ? '' : ` src="${url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
-    <${playerTag}>
+    <${playerTag} content-title="${getContentTitle(state.source)}">
       <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
         <!-- The storyboard track is derived automatically from the Mux src. -->
         <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>

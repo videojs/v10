@@ -11,7 +11,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { SOURCES } from '@app/shared/sources';
+import { getContentTitle, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { Video } from '@videojs/react/video';
 import { createRoot } from 'react-dom/client';
@@ -33,7 +33,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <VideoProvider>
+      <VideoProvider contentTitle={getContentTitle(source)}>
         <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <Video
             src={SOURCES[source].url}

@@ -240,6 +240,11 @@ export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
 
 export const YOUTUBE_VIDEO_SRC = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
 
+/** Titles for the two templates that play one fixed video instead of a picked source. */
+export const VIMEO_VIDEO_TITLE = 'Vimeo sandbox clip';
+
+export const YOUTUBE_VIDEO_TITLE = 'YouTube sandbox clip';
+
 /** Returns true when the given source represents a live stream and should use the live-video skin. */
 export function isLiveSource(id: SourceId): boolean {
   return SOURCES[id].live === true;
@@ -273,6 +278,15 @@ export function getPosterSrc(source: SourceId): string | undefined {
 export function getPlaceholderSrc(source: SourceId): string | undefined {
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/thumbnail.webp${imageQuery(source, 'poster', 'width=20')}` : undefined;
+}
+
+/**
+ * The title the sandbox hands the player, so skins that render one have
+ * something to show. Uses the source label, which changes as you switch
+ * sources and varies in length enough to exercise truncation.
+ */
+export function getContentTitle(source: SourceId): string {
+  return SOURCES[source].label;
 }
 
 export function getStoryboardSrc(source: SourceId): string | undefined {

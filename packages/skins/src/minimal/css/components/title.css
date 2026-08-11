@@ -1,0 +1,61 @@
+/* ==========================================================================
+   Title
+   ========================================================================== */
+
+.media-minimal-skin .media-title {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  /* The block-end padding is the scrim's fade-out, not space around the text. */
+  padding: calc(var(--spacing) * 3) calc(var(--spacing) * 4) calc(var(--spacing) * 10);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-medium);
+  font-weight: 500;
+  color: oklch(1 0 0);
+  white-space: nowrap;
+  text-shadow: 0 1px 0 var(--media-current-shadow-color);
+  pointer-events: none;
+  background-image: linear-gradient(to bottom, oklch(0 0 0 / 0.7), oklch(0 0 0 / 0));
+  transition-timing-function: var(--media-controls-transition-timing-function);
+  /* Speed up the entry transition, like the controls do */
+  transition-duration: calc(var(--media-controls-transition-duration) / 2);
+
+  @media (pointer: fine) {
+    transition-property: translate, filter, opacity;
+    will-change: translate, filter, opacity;
+  }
+
+  @media (pointer: coarse) {
+    transition-property: translate, opacity;
+    will-change: translate, opacity;
+  }
+
+  /* Slides off the top edge, mirroring the control bar leaving the bottom. */
+  &:not([data-visible]) {
+    opacity: 0;
+    transition-duration: var(--media-controls-transition-duration);
+
+    @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      filter: blur(8px);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      translate: 0 -100%;
+    }
+  }
+
+  /* No text to read, so no scrim to darken the video with. */
+  &:not([data-has-title]) {
+    display: none;
+  }
+
+  @container media-root (width > 42rem) {
+    padding: calc(var(--spacing) * 4) calc(var(--spacing) * 6) calc(var(--spacing) * 14);
+    font-size: var(--size);
+  }
+}
+
+.media-minimal-skin .media-error[data-open] ~ .media-title {
+  display: none;
+}

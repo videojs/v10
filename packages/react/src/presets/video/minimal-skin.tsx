@@ -62,6 +62,7 @@ import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Title } from '@/ui/title';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
@@ -530,6 +531,8 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className="media-overlay" />
+
+      <Title className="media-title" />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

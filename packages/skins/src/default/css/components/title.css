@@ -1,0 +1,78 @@
+/* ==========================================================================
+   Title
+   ========================================================================== */
+
+.media-default-skin .media-title {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  /* The block-end padding is the scrim's fade-out, not space around the text. */
+  padding: calc(var(--spacing) * 4) calc(var(--spacing) * 6) calc(var(--spacing) * 12);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--font-size-medium);
+  font-weight: 500;
+  color: var(--media-color-primary, oklch(1 0 0));
+  white-space: nowrap;
+  text-shadow: 0 1px 0 var(--media-current-shadow-color);
+  pointer-events: none;
+  background-image: linear-gradient(to bottom, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0));
+  transform-origin: top;
+  transition-timing-function: var(--media-controls-transition-timing-function);
+  /* Speed up the entry transition, like the controls do */
+  transition-duration: calc(var(--media-controls-transition-duration) / 2);
+
+  @media (pointer: fine) {
+    transition-property: filter, opacity, scale, translate;
+    will-change: filter, opacity, scale, translate;
+  }
+
+  @media (pointer: coarse) {
+    transition-property: opacity, scale, translate;
+    will-change: opacity, scale, translate;
+  }
+
+  /* Leaves with the secondary controls, which share the top of the player. */
+  &:not([data-visible]) {
+    opacity: 0;
+    scale: 0.95;
+    transition-duration: var(--media-controls-transition-duration);
+
+    @media (pointer: fine) and (prefers-reduced-motion: no-preference) {
+      filter: blur(8px);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      translate: 0 -4px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      scale: 1;
+    }
+  }
+
+  /* No text to read, so no scrim to darken the video with. */
+  &:not([data-has-title]) {
+    display: none;
+  }
+
+  @container media-root (width > 42rem) {
+    padding: calc(var(--spacing) * 6) calc(var(--spacing) * 8) calc(var(--spacing) * 16);
+    font-size: var(--size);
+  }
+}
+
+/*
+  Below this width the video skin splits its controls and pins the secondary
+  group to the top-right. Reserve room so a long title ellipsises instead of
+  sliding underneath it.
+*/
+@container media-root (width < 32rem) {
+  .media-default-skin .media-title--offset-controls {
+    padding-inline-end: calc(var(--spacing) * 44);
+  }
+}
+
+.media-default-skin .media-error[data-open] ~ .media-title {
+  display: none;
+}

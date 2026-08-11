@@ -8,7 +8,7 @@ import { useMuted } from '@app/shared/react/use-muted';
 import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
-import { SOURCES } from '@app/shared/sources';
+import { getContentTitle, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { DashVideo } from '@videojs/react/media/dash-video';
 import { MuxData } from '@videojs/react/media/mux-data';
@@ -30,7 +30,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <VideoProvider>
+      <VideoProvider contentTitle={getContentTitle(source)}>
         <VideoSkinComponent skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <DashVideo
             src={SOURCES[source].url ?? ''}

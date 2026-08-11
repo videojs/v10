@@ -12,7 +12,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
+import { getContentTitle, getPosterSrc, getStoryboardSrc, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -30,7 +30,7 @@ async function render() {
   const mediaAttrs = renderMediaAttrs(state);
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
-    <video-player>
+    <video-player content-title="${getContentTitle(state.source)}">
       <${tag} class="aspect-video max-w-4xl mx-auto">
         <video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}

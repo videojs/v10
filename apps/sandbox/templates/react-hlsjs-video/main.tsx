@@ -11,7 +11,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { isLiveSource, SOURCES } from '@app/shared/sources';
+import { getContentTitle, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { useMemo } from 'react';
@@ -39,7 +39,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Provider>
+      <Provider contentTitle={getContentTitle(source)}>
         <VideoSkinComponent
           poster={poster}
           skin={skin}

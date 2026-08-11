@@ -28,6 +28,7 @@ import {
   slider,
   thumbnail,
   time,
+  title,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
@@ -85,6 +86,7 @@ import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
+import { Title } from '@/ui/title';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
@@ -595,6 +597,8 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
       </Controls.Root>
 
       <div className={overlay} />
+
+      <Title className={cn(title.base, title.offsetControls)} />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

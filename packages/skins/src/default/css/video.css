@@ -3,6 +3,7 @@
 @import "./components/surface.css";
 @import "./components/media.css";
 @import "./components/overlay.css";
+@import "./components/title.css";
 @import "./components/buffering.css";
 @import "./components/error.css";
 @import "./components/controls.css";

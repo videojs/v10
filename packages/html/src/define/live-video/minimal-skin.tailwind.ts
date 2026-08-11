@@ -16,6 +16,7 @@ import {
   root,
   slider,
   spacer,
+  title,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -143,6 +144,8 @@ function getTemplateHTML() {
       </media-controls>
 
       <div class="${overlay}"></div>
+
+      <media-title class="${title}"></media-title>
 
       <!-- Hotkeys -->
       <media-hotkey keys="Space" action="togglePaused"></media-hotkey>

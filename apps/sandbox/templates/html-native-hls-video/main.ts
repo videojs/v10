@@ -13,7 +13,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getContentTitle, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -40,7 +40,7 @@ async function render() {
   const srcAttr = source ? '' : ` src="${url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
-    <${playerTag}>
+    <${playerTag} content-title="${getContentTitle(state.source)}">
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
         <native-hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderStoryboard(storyboard)}

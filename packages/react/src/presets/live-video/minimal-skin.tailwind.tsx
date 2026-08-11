@@ -16,6 +16,7 @@ import {
   root,
   slider,
   spacer,
+  title,
 } from '@videojs/skins/minimal/tailwind/video.tailwind';
 import { isString } from '@videojs/utils/predicate';
 import { cn } from '@videojs/utils/style';
@@ -62,6 +63,7 @@ import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { StatusAnnouncer } from '@/ui/status-announcer';
 import { StatusIndicator } from '@/ui/status-indicator';
+import { Title } from '@/ui/title';
 import { Tooltip } from '@/ui/tooltip';
 import { VolumeIndicator } from '@/ui/volume-indicator';
 import { VolumeSlider } from '@/ui/volume-slider';
@@ -337,6 +339,8 @@ export function MinimalLiveVideoSkinTailwind(props: MinimalLiveVideoSkinProps): 
       </Controls.Root>
 
       <div className={overlay} />
+
+      <Title className={title} />
 
       {/* Hotkeys */}
       <Hotkey keys="Space" action="togglePaused" />

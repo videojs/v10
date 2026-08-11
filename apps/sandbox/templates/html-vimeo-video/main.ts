@@ -4,7 +4,7 @@ import '@videojs/html/media/vimeo-video';
 import { createHtmlSandboxState, createLatestLoader } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { onSkinChange } from '@app/shared/sandbox-listener';
-import { VIMEO_VIDEO_SRC } from '@app/shared/sources';
+import { VIMEO_VIDEO_SRC, VIMEO_VIDEO_TITLE } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -16,7 +16,7 @@ async function render() {
   if (!tag) return;
 
   document.getElementById('root')!.innerHTML = html`
-    <video-player>
+    <video-player content-title="${VIMEO_VIDEO_TITLE}">
       <${tag} class="aspect-video max-w-4xl mx-auto">
         <vimeo-video class="block w-full h-full" src="${VIMEO_VIDEO_SRC}" playsinline></vimeo-video>
       </${tag}>
