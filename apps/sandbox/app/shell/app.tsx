@@ -76,6 +76,8 @@ export function App() {
   const hlsPreset = preset === 'hlsjs-video' || preset === 'native-hls-video';
   const muxPreset = preset === 'mux-video' || preset === 'mux-audio';
   const muxSpfPreset = preset === 'mux-video-spf' || preset === 'mux-audio-spf';
+  // Both background presets render a fixed source and have no Tailwind skin.
+  const backgroundPreset = preset === 'background-video' || preset === 'mux-background-video';
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
@@ -168,12 +170,12 @@ export function App() {
   // CDN, background video, and embed (Vimeo/YouTube) videos do not have a Tailwind skin variant.
   useEffect(() => {
     if (
-      (platform === 'cdn' || preset === 'background-video' || preset === 'vimeo-video' || preset === 'youtube-video') &&
+      (platform === 'cdn' || backgroundPreset || preset === 'vimeo-video' || preset === 'youtube-video') &&
       styling === 'tailwind'
     ) {
       setStyling('css');
     }
-  }, [platform, preset, styling]);
+  }, [platform, preset, backgroundPreset, styling]);
 
   const handleSourceChange = useCallback((value: string) => setSource(value as SourceId), []);
 
@@ -201,7 +203,7 @@ export function App() {
         locale={locale}
         onLocaleChange={setLocale}
         availableSources={availableSources}
-        isBackgroundVideo={preset === 'background-video'}
+        isBackgroundVideo={backgroundPreset}
         isSimpleHls={preset.startsWith('simple-hls-')}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}

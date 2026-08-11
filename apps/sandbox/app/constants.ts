@@ -14,6 +14,7 @@ export const PRESETS = [
   'dash-video',
   'audio',
   'background-video',
+  'mux-background-video',
   'vimeo-video',
   'youtube-video',
 ] as const;

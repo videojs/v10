@@ -332,6 +332,19 @@ export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
+/**
+ * The same clip as {@link BACKGROUND_VIDEO_SRC} over HLS, for the SPF-backed
+ * `<mux-background-video>`. Re-ingested from that asset's `high.mp4` rendition.
+ *
+ * Must be a **CMAF/fMP4** asset: SPF appends fMP4 segments directly and does no
+ * MPEG-TS transmuxing, so a TS-packaged playback ID surfaces the
+ * unsupported-container error instead of playing. Packaging follows the video
+ * quality tier — `premium` yields CMAF, while `plus`/`basic` (legacy
+ * `encoding_tier: smart`) yield MPEG-TS — which is why this is a separate asset
+ * rather than the `.m3u8` of the one above.
+ */
+export const HLS_BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/JsDMLkGisX8lHq01wcVv32kQ2vIYvsrEXx007W15xDKJg.m3u8';
+
 export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
 
 export const YOUTUBE_VIDEO_SRC = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
