@@ -22,7 +22,11 @@ class ContentDataMedia extends EventTarget {
     this.#setKey('poster', value);
   }
 
-  #setKey(key: 'title' | 'poster', value: MediaContentValue): void {
+  setContentPosterPlaceholder(value: MediaContentValue): void {
+    this.#setKey('posterPlaceholder', value);
+  }
+
+  #setKey(key: 'title' | 'poster' | 'posterPlaceholder', value: MediaContentValue): void {
     if (!this.contentData || Object.is(this.contentData[key], value)) return;
     const contentData = { ...this.contentData };
     if (value === undefined) delete contentData[key];
@@ -177,6 +181,43 @@ describe('metadataFeature', () => {
     expect(store.poster).toBe('media.jpg');
   });
 
+  it('resolves the poster placeholder through the same order as the poster', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+
+    expect(store.posterPlaceholder).toBe('');
+
+    store.setDefaultPosterPlaceholder('fallback-tiny.jpg');
+    expect(store.posterPlaceholder).toBe('fallback-tiny.jpg');
+
+    const media = new ContentDataMedia({ posterPlaceholder: 'media-tiny.jpg' });
+    store.attach(target(media));
+    expect(store.posterPlaceholder).toBe('media-tiny.jpg');
+
+    store.setPosterPlaceholder('user-tiny.jpg');
+    expect(store.posterPlaceholder).toBe('user-tiny.jpg');
+
+    media.setContentPosterPlaceholder('latest-media-tiny.jpg');
+    expect(store.posterPlaceholder).toBe('user-tiny.jpg');
+
+    store.setPosterPlaceholder(null);
+    expect(store.posterPlaceholder).toBe('latest-media-tiny.jpg');
+
+    media.setContentPosterPlaceholder(undefined);
+    expect(store.posterPlaceholder).toBe('fallback-tiny.jpg');
+  });
+
+  it('resolves the poster placeholder independently of the poster', () => {
+    const store = createStore<PlayerTarget>()(metadataFeature);
+    store.setPoster('user.jpg');
+
+    expect(store.posterPlaceholder).toBe('');
+
+    store.setPosterPlaceholder('tiny.jpg');
+
+    expect(store.poster).toBe('user.jpg');
+    expect(store.posterPlaceholder).toBe('tiny.jpg');
+  });
+
   it('resets both media-owned values on detach while preserving user-owned state', () => {
     const store = createStore<PlayerTarget>()(metadataFeature);
     store.setDefaultPoster('fallback.jpg');
@@ -194,12 +235,16 @@ describe('metadataFeature', () => {
     expect(selectMetadata(store.state)).toEqual({
       contentTitle: '',
       poster: '',
+      posterPlaceholder: '',
       setContentTitle: store.setContentTitle,
       setDefaultContentTitle: store.setDefaultContentTitle,
       setPoster: store.setPoster,
       setDefaultPoster: store.setDefaultPoster,
+      setPosterPlaceholder: store.setPosterPlaceholder,
+      setDefaultPosterPlaceholder: store.setDefaultPosterPlaceholder,
     });
     expect(store.state).not.toHaveProperty('defaultContentTitle');
     expect(store.state).not.toHaveProperty('defaultPoster');
+    expect(store.state).not.toHaveProperty('defaultPosterPlaceholder');
   });
 });
