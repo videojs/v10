@@ -80,6 +80,19 @@ describe('composite define registration', () => {
       expect(batch).toContain('media-slider-thumb');
       expect(batch).toContain('media-slider-track');
       expect(batch).toContain('media-slider-value');
+      expect(batch).not.toContain('media-time-slider-chapters');
+      expect(batch).not.toContain('media-time-slider-chapter-title');
+    });
+  });
+
+  describe('ui/time-slider-chapters', () => {
+    it('registers the opt-in chapter elements', async () => {
+      const before = spy.mock.calls.length;
+      await import('../ui/time-slider-chapters');
+      const batch = batchSince(before);
+
+      expect(batch).toContain('media-time-slider-chapters');
+      expect(batch).toContain('media-time-slider-chapter-title');
     });
   });
 
@@ -164,6 +177,8 @@ describe('composite define registration', () => {
         'media-slider-thumb',
         'media-slider-track',
         'media-slider-value',
+        'media-time-slider-chapters',
+        'media-time-slider-chapter-title',
         // Time
         'media-time',
         'media-time-group',

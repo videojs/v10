@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { renderChapters } from '@app/shared/html/chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
 import '@videojs/html/media/native-hls-video';
@@ -13,7 +14,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getChapters, getPosterSrc, getStoryboardSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -43,6 +44,7 @@ async function render() {
     <${playerTag}>
       <${tag} class="w-full aspect-video max-w-4xl mx-auto">
         <native-hls-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+          ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
         </native-hls-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}

@@ -78,12 +78,14 @@ export function kebabToPascal(str: string): string {
  * Example: `partKebabFromSource('./time-value', 'time')` -> `'value'`
  */
 export function partKebabFromSource(source: string, componentKebab: string): string {
+  const basename = source.split('/').at(-1) ?? source;
   const prefix = `./${componentKebab}-`;
-  if (source.startsWith(prefix)) {
-    return source.slice(prefix.length);
+  const basenamePrefix = `${componentKebab}-`;
+  if (source.startsWith(prefix) || basename.startsWith(basenamePrefix)) {
+    return basename.replace(new RegExp(`^${componentKebab}-`), '');
   }
   // Fallback: strip leading './' and the component prefix
-  return source.replace(/^\.\//, '').replace(new RegExp(`^${componentKebab}-`), '');
+  return basename.replace(/^\.\//, '').replace(new RegExp(`^${componentKebab}-`), '');
 }
 
 export function sortProps(props: Record<string, PropDef>): Record<string, PropDef> {

@@ -127,10 +127,6 @@ const SliderFill = forwardRef<HTMLDivElement, ComponentProps<'div'> & { type?: '
   );
 });
 
-const SliderBuffer = forwardRef<HTMLDivElement, ComponentProps<'div'>>(function SliderBuffer(props, ref) {
-  return <SliderFill type="buffer" ref={ref} {...props} />;
-});
-
 const SliderThumb = forwardRef<HTMLDivElement, ComponentProps<'div'> & { persistent?: boolean }>(function SliderThumb(
   { persistent, className, ...props },
   ref
@@ -491,18 +487,32 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
             <div className={time.group}>
               <Time.Value type="current" className={time.current} />
               <TimeSlider.Root render={<SliderRoot />}>
-                <TimeSlider.Track render={<SliderTrack />}>
-                  <TimeSlider.Fill render={<SliderFill />} />
-                  <TimeSlider.Buffer render={<SliderBuffer />} />
-                </TimeSlider.Track>
+                <TimeSlider.Chapters
+                  className={slider.chapters}
+                  renderChapter={(props) => (
+                    <div {...props} className={cn(props.className, slider.chapter.base)}>
+                      <TimeSlider.Track render={<div className={slider.chapter.track} />}>
+                        <TimeSlider.Buffer render={<div className={cn(slider.fill.base, slider.fill.buffer)} />} />
+                        <TimeSlider.Fill render={<div className={cn(slider.fill.base, slider.fill.fill)} />} />
+                      </TimeSlider.Track>
+                    </div>
+                  )}
+                >
+                  <TimeSlider.Track render={<div className={slider.track} />}>
+                    <TimeSlider.Buffer render={<div className={cn(slider.fill.base, slider.fill.buffer)} />} />
+                    <TimeSlider.Fill render={<div className={cn(slider.fill.base, slider.fill.fill)} />} />
+                  </TimeSlider.Track>
+                </TimeSlider.Chapters>
                 <TimeSlider.Thumb render={<SliderThumb />} />
-                <div className={thumbnail.root}>
-                  <Slider.Thumbnail className={thumbnail.image} />
-                  <TimeSlider.Value type="pointer" className={thumbnail.time} />
-                  <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
-                </div>
-                <TimeSlider.Preview className={slider.preview}>
-                  <TimeSlider.Value type="pointer" className={slider.value} />
+                <TimeSlider.Preview overflow="visible" className={slider.preview}>
+                  <div className={cn(thumbnail.root, slider.thumbnail)}>
+                    <Slider.Thumbnail className={thumbnail.image} />
+                    <SpinnerIcon className={cn(icon, thumbnail.spinner)} />
+                  </div>
+                  <div className={slider.value}>
+                    <TimeSlider.ChapterTitle className={slider.chapterTitle} />
+                    <TimeSlider.Value type="pointer" />
+                  </div>
                 </TimeSlider.Preview>
               </TimeSlider.Root>
               <Time.Value toggle type="remaining" className={time.duration} />

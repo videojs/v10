@@ -256,7 +256,9 @@ describe('Component pipeline (end-to-end)', () => {
 
       // Parts record exists
       expect(ref.parts).toBeDefined();
-      expect(Object.keys(ref.parts!)).toEqual(expect.arrayContaining(['indicator', 'track', 'fill', 'label']));
+      expect(Object.keys(ref.parts!)).toEqual(
+        expect.arrayContaining(['indicator', 'track', 'fill', 'label', 'marker'])
+      );
     });
 
     it('primary part (Indicator) gets core props, state, data-attrs, CSS vars', () => {
@@ -349,6 +351,15 @@ describe('Component pipeline (end-to-end)', () => {
       // React-only: has platforms.react but NOT platforms.html
       expect(label.platforms.react).toEqual({});
       expect(label.platforms.html).toBeUndefined();
+    });
+
+    it('nested sub-part (Marker) resolves its React and HTML files', () => {
+      const marker = findComponent('Gauge')!.reference.parts!.marker!;
+
+      expect(marker.name).toBe('Marker');
+      expect(marker.description).toBe('A nested marker for the current gauge value.');
+      expect(marker.platforms.html).toEqual({ tagName: 'media-gauge-marker' });
+      expect(marker.platforms.react).toEqual({});
     });
 
     // Extra data-attrs files ({component}-{x}-data-attrs.ts, next to the

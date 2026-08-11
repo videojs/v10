@@ -145,6 +145,15 @@ export type { StatusIndicatorValueProps } from './ui/status-indicator/status-ind
 export { Thumbnail, type ThumbnailProps } from './ui/thumbnail/thumbnail';
 export { Time } from './ui/time';
 export { TimeSlider } from './ui/time-slider';
+export type {
+  TimeSliderChapterTitleProps,
+  TimeSliderChapterTitleState,
+} from './ui/time-slider/time-slider-chapters/time-slider-chapter-title';
+export type {
+  TimeSliderChapterState,
+  TimeSliderChaptersProps,
+  TimeSliderChaptersState,
+} from './ui/time-slider/time-slider-chapters/time-slider-chapters';
 export { Tooltip, type TooltipContent, type TooltipContextValue, useTooltipContext } from './ui/tooltip';
 export { VolumeIndicator } from './ui/volume-indicator';
 export type { VolumeIndicatorFillProps } from './ui/volume-indicator/volume-indicator-fill';

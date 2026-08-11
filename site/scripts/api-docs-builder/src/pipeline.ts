@@ -148,6 +148,22 @@ function discoverExtraDataAttrs(componentDir: string, componentKebab: string): E
   return extras;
 }
 
+function findFiles(directory: string, matches: (name: string) => boolean): string[] {
+  const files: string[] = [];
+
+  for (const entry of fs.readdirSync(directory, { withFileTypes: true })) {
+    const entryPath = path.join(directory, entry.name);
+
+    if (entry.isDirectory()) {
+      if (entry.name !== 'tests') files.push(...findFiles(entryPath, matches));
+    } else if (matches(entry.name)) {
+      files.push(entryPath);
+    }
+  }
+
+  return files;
+}
+
 export function discoverComponents(monorepoRoot: string): ComponentSource[] {
   const coreUiPath = path.join(monorepoRoot, 'packages/core/src/core/ui');
   const htmlUiPath = path.join(monorepoRoot, 'packages/html/src/ui');
@@ -213,9 +229,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
     if (source.partsIndexPath) {
       const htmlDir = path.join(htmlUiPath, source.kebab);
       if (fs.existsSync(htmlDir)) {
-        const elementFiles = fs.readdirSync(htmlDir).filter((f) => f.endsWith('-element.ts'));
-        for (const file of elementFiles) {
-          const fullPath = path.join(htmlDir, file);
+        const elementFiles = findFiles(htmlDir, (file) => file.endsWith('-element.ts'));
+        for (const fullPath of elementFiles) {
           if (!files.includes(fullPath)) {
             files.push(fullPath);
           }
@@ -223,9 +238,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
       }
 
       const reactDir = path.dirname(source.partsIndexPath);
-      const reactFiles = fs.readdirSync(reactDir).filter((f) => f.endsWith('.tsx'));
-      for (const file of reactFiles) {
-        const fullPath = path.join(reactDir, file);
+      const reactFiles = findFiles(reactDir, (file) => file.endsWith('.tsx'));
+      for (const fullPath of reactFiles) {
         if (!files.includes(fullPath)) {
           files.push(fullPath);
         }
@@ -241,9 +255,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
 
           const originHtmlDir = path.join(htmlUiPath, originKebab);
           if (fs.existsSync(originHtmlDir)) {
-            const originElementFiles = fs.readdirSync(originHtmlDir).filter((f) => f.endsWith('-element.ts'));
-            for (const file of originElementFiles) {
-              const fullPath = path.join(originHtmlDir, file);
+            const originElementFiles = findFiles(originHtmlDir, (file) => file.endsWith('-element.ts'));
+            for (const fullPath of originElementFiles) {
               if (!files.includes(fullPath)) {
                 files.push(fullPath);
               }
@@ -251,9 +264,8 @@ export function createComponentProgram(sources: ComponentSource[], monorepoRoot:
           }
 
           if (fs.existsSync(originDir)) {
-            const originReactFiles = fs.readdirSync(originDir).filter((f) => f.endsWith('.tsx'));
-            for (const file of originReactFiles) {
-              const fullPath = path.join(originDir, file);
+            const originReactFiles = findFiles(originDir, (file) => file.endsWith('.tsx'));
+            for (const fullPath of originReactFiles) {
               if (!files.includes(fullPath)) {
                 files.push(fullPath);
               }
@@ -286,6 +298,12 @@ function usesDataAttrs(filePath: string): boolean {
   }
 }
 
+function resolvePartElement(htmlDir: string, componentKebab: string, source: string, partKebab: string): string {
+  const override = PART_ELEMENT_OVERRIDES[`${componentKebab}/${partKebab}`];
+  const relative = source.replace(/^\.\//, '');
+  return path.join(htmlDir, override ? `${override}.ts` : `${relative}-element.ts`);
+}
+
 export function discoverParts(source: ComponentSource, program: ts.Program, monorepoRoot: string): PartSource[] {
   if (!source.partsIndexPath) return [];
 
@@ -308,9 +326,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
   for (const partExport of localExports) {
     const kebab = partKebabFromSource(partExport.source, componentKebab);
 
-    const overrideKey = `${componentKebab}/${kebab}`;
-    const elementBasename = PART_ELEMENT_OVERRIDES[overrideKey] ?? `${componentKebab}-${kebab}-element`;
-    const subPartElementFile = path.join(htmlDir, `${elementBasename}.ts`);
+    const subPartElementFile = resolvePartElement(htmlDir, componentKebab, partExport.source, kebab);
     const hasSubPartElement = fs.existsSync(subPartElementFile);
 
     const reactFile = path.join(path.dirname(source.partsIndexPath!), `${partExport.source.replace('./', '')}.tsx`);
@@ -360,7 +376,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
 
         const kebab = partKebabFromSource(originExport.source, originKebab);
 
-        const subPartElementFile = path.join(originHtmlDir, `${originKebab}-${kebab}-element.ts`);
+        const subPartElementFile = resolvePartElement(originHtmlDir, originKebab, originExport.source, kebab);
         const hasSubPartElement = fs.existsSync(subPartElementFile);
 
         const reactFile = path.join(originReactDir, `${originExport.source.replace('./', '')}.tsx`);

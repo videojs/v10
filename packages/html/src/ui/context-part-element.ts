@@ -26,8 +26,17 @@ export interface PartContextValue<State extends object> {
 export abstract class ContextPartElement<State extends object> extends MediaElement {
   protected abstract readonly consumer: { value?: PartContextValue<State> | undefined };
 
+  override connectedCallback(): void {
+    super.connectedCallback();
+    this.#applyState();
+  }
+
   protected override update(_changed: PropertyValues): void {
     super.update(_changed);
+    this.#applyState();
+  }
+
+  #applyState(): void {
     const ctx = this.consumer.value;
     if (ctx) applyStateDataAttrs(this, ctx.state, ctx.stateAttrMap);
   }

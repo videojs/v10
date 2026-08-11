@@ -1,7 +1,13 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import { SliderDataAttrs, type SliderState } from '@videojs/core';
+import { ContextProvider } from '@videojs/element/context';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { MediaElement } from '../../media-element';
+import { sliderContext } from '../../slider/context';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { SliderValueElement } from '../../slider/slider-value-element';
+import { TimeSliderChapterTitleElement } from '../time-slider-chapters/time-slider-chapter-title-element';
+import { TimeSliderChaptersElement } from '../time-slider-chapters/time-slider-chapters-element';
 import { TimeSliderElement } from '../time-slider-element';
 
 let tagCounter = 0;
@@ -14,6 +20,34 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   const tag = uniqueTag('test-el');
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
+}
+
+class TestSliderProviderElement extends MediaElement {
+  readonly provider = new ContextProvider(this, {
+    context: sliderContext,
+    initialValue: createSliderContext(),
+  });
+}
+
+function createSliderContext(state: Partial<SliderState> = {}, pointerValue = 0) {
+  return {
+    state: {
+      value: 0,
+      fillPercent: 0,
+      pointerPercent: 0,
+      dragging: false,
+      pointing: false,
+      interactive: false,
+      orientation: 'horizontal' as const,
+      disabled: false,
+      thumbAlignment: 'center' as const,
+      ...state,
+    },
+    stateAttrMap: SliderDataAttrs,
+    pointerValue,
+    thumbAttrs: {},
+    thumbProps: { onKeyDown: () => {}, onFocus: () => {}, onBlur: () => {} },
+  };
 }
 
 afterEach(() => {
@@ -122,4 +156,87 @@ describe('TimeSliderElement', () => {
     // This verifies no errors occur in the context chain.
     expect(thumb.isConnected).toBe(true);
   });
+});
+
+describe('TimeSlider chapter elements', () => {
+  it('exposes the chapter collection and title tags', () => {
+    expect(TimeSliderChaptersElement.tagName).toBe('media-time-slider-chapters');
+    expect(TimeSliderChapterTitleElement.tagName).toBe('media-time-slider-chapter-title');
+  });
+
+  it('only exposes the chapter title to assistive technology during keyboard interaction', async () => {
+    const slider = createElement(TestSliderProviderElement);
+    const title = createElement(TimeSliderChapterTitleElement);
+    slider.appendChild(title);
+    document.body.appendChild(slider);
+    await title.updateComplete;
+
+    expect(title.getAttribute('aria-hidden')).toBe('true');
+    expect(title.hasAttribute('aria-live')).toBe(false);
+
+    slider.provider.setValue(createSliderContext({ interactive: true }));
+    await title.updateComplete;
+
+    expect(title.hasAttribute('aria-hidden')).toBe(false);
+    expect(title.getAttribute('aria-live')).toBe('polite');
+  });
+
+  it('marks the chapter collection as decorative', async () => {
+    const slider = createElement(TestSliderProviderElement);
+    const chapters = createElement(TimeSliderChaptersElement);
+    const template = document.createElement('template');
+    template.innerHTML = '<div class="chapter"></div>';
+    chapters.appendChild(template);
+    slider.appendChild(chapters);
+    document.body.appendChild(slider);
+    await chapters.updateComplete;
+
+    expect(chapters.getAttribute('aria-hidden')).toBe('true');
+    expect(chapters.querySelector('template')).toBeNull();
+    expect(chapters.querySelectorAll('.chapter')).toHaveLength(1);
+    expect((chapters.firstElementChild as HTMLElement).style.getPropertyValue('--media-slider-chapter-start')).toBe(
+      '0%'
+    );
+    expect((chapters.firstElementChild as HTMLElement).style.getPropertyValue('--media-slider-chapter-end')).toBe(
+      '100%'
+    );
+    expect(chapters.querySelector('svg')).toBeNull();
+  });
+
+  it('keeps fallback content when the template is missing', async () => {
+    const slider = createElement(TestSliderProviderElement);
+    const chapters = createElement(TimeSliderChaptersElement);
+    const fallback = document.createElement('div');
+    fallback.className = 'fallback';
+    chapters.appendChild(fallback);
+    slider.appendChild(chapters);
+    document.body.appendChild(slider);
+    await chapters.updateComplete;
+
+    expect(chapters.querySelector('.fallback')).toBe(fallback);
+  });
+
+  for (const [name, content] of [
+    ['empty', ''],
+    ['multiple-root', '<div></div><div></div>'],
+    ['non-HTML', '<svg></svg>'],
+  ] as const) {
+    it(`keeps fallback content when the template is ${name}`, async () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+      const slider = createElement(TestSliderProviderElement);
+      const chapters = createElement(TimeSliderChaptersElement);
+      const fallback = document.createElement('div');
+      fallback.className = 'fallback';
+      const template = document.createElement('template');
+      template.innerHTML = content;
+      chapters.append(fallback, template);
+      slider.appendChild(chapters);
+      document.body.appendChild(slider);
+      await chapters.updateComplete;
+
+      expect(chapters.querySelector('.fallback')).toBe(fallback);
+      expect(warn).toHaveBeenCalledOnce();
+      warn.mockRestore();
+    });
+  }
 });
