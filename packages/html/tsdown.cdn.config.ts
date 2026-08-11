@@ -34,8 +34,14 @@ const media = [
   'google-cast',
   'hlsjs-video',
   'mux-audio',
+  // The SPF-backed flavors ship as their own entries, since a CDN bundle can't
+  // pick an engine by import path the way an npm subpath does. Loading one of
+  // these alongside its hls.js-backed counterpart puts two Mux engines in one
+  // realm — see the tag-collision note in `define/media/mux-video/spf`.
+  'mux-audio-spf',
   'mux-data',
   'mux-video',
+  'mux-video-spf',
   'native-hls-video',
   'simple-hls-audio-only',
   'simple-hls-video',
