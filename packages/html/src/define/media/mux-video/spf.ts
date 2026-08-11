@@ -2,7 +2,7 @@ import { MuxVideo } from '../../../media/mux-video/spf';
 import { safeDefine } from '../../safe-define';
 
 const PRIMARY_TAG = 'mux-video';
-const FALLBACK_TAG = 'mux-spf-video';
+const FALLBACK_TAG = 'mux-video-spf';
 
 /**
  * `<mux-video>` unless that tag is already taken.
@@ -10,7 +10,7 @@ const FALLBACK_TAG = 'mux-spf-video';
  * Both Mux flavors are the same element with a different engine underneath, so
  * each claims the same tag and the import path is what chooses. Having both in
  * one runtime is the exception — it means two Mux engines in one bundle — so this
- * one steps aside to `<mux-spf-video>` rather than losing the registration
+ * one steps aside to `<mux-video-spf>` rather than losing the registration
  * silently, which is what `safeDefine` would otherwise do.
  *
  * Whichever flavor is imported second is the one that yields, so the tag a given
@@ -40,6 +40,6 @@ declare global {
   interface HTMLElementTagNameMap {
     // Only the fallback is declared: `mux-video` is already mapped to the
     // hls.js-backed element, and an interface can't merge two types for one key.
-    'mux-spf-video': MuxVideoElement;
+    'mux-video-spf': MuxVideoElement;
   }
 }

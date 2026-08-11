@@ -2,7 +2,7 @@ import { MuxAudio } from '../../../media/mux-audio/spf';
 import { safeDefine } from '../../safe-define';
 
 const PRIMARY_TAG = 'mux-audio';
-const FALLBACK_TAG = 'mux-spf-audio';
+const FALLBACK_TAG = 'mux-audio-spf';
 
 /**
  * `<mux-audio>` unless that tag is already taken.
@@ -35,6 +35,6 @@ declare global {
   interface HTMLElementTagNameMap {
     // Only the fallback is declared: `mux-audio` is already mapped to the
     // hls.js-backed element, and an interface can't merge two types for one key.
-    'mux-spf-audio': MuxAudioElement;
+    'mux-audio-spf': MuxAudioElement;
   }
 }

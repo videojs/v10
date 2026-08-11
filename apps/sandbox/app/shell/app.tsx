@@ -81,7 +81,7 @@ export function App() {
           ? MUX_SOURCE_IDS
           : structuredSource && hlsPreset
             ? HLS_SOURCE_IDS
-            : preset.startsWith('simple-hls-') || preset === 'mux-spf-video' || preset === 'mux-spf-audio'
+            : preset.startsWith('simple-hls-') || preset === 'mux-video-spf' || preset === 'mux-audio-spf'
               ? SIMPLE_HLS_SOURCE_IDS
               : NON_DASH_SOURCE_IDS;
 

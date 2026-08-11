@@ -35,15 +35,15 @@ describe('mux-video/spf registration', () => {
     expect(warn).not.toHaveBeenCalled();
   });
 
-  it('falls back to mux-spf-video when the hls.js-backed element already claimed the tag', async () => {
+  it('falls back to mux-video-spf when the hls.js-backed element already claimed the tag', async () => {
     const define = stubRegistry(['mux-video']);
     // Silence the fallback warning; the case below is what asserts on it.
     vi.spyOn(console, 'warn').mockImplementation(() => {});
 
     const { MuxVideoElement } = await import('../media/mux-video/spf');
 
-    expect(MuxVideoElement.tagName).toBe('mux-spf-video');
-    expect(define).toHaveBeenCalledWith('mux-spf-video', MuxVideoElement);
+    expect(MuxVideoElement.tagName).toBe('mux-video-spf');
+    expect(define).toHaveBeenCalledWith('mux-video-spf', MuxVideoElement);
   });
 
   it('warns that two Mux engines are in one runtime when it falls back', async () => {
@@ -53,7 +53,7 @@ describe('mux-video/spf registration', () => {
     await import('../media/mux-video/spf');
 
     expect(warn).toHaveBeenCalledTimes(1);
-    expect(warn.mock.calls[0]?.[0]).toContain('mux-spf-video');
+    expect(warn.mock.calls[0]?.[0]).toContain('mux-video-spf');
   });
 
   it('imports without customElements, for SSR', async () => {
