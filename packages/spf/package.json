@@ -48,6 +48,11 @@
       "development": "./dist/dev/mux.js",
       "default": "./dist/default/mux.js"
     },
+    "./mux-audio-only": {
+      "types": "./dist/dev/mux-audio-only.d.ts",
+      "development": "./dist/dev/mux-audio-only.js",
+      "default": "./dist/default/mux-audio-only.js"
+    },
     "./simple-hls": {
       "types": "./dist/dev/simple-hls.d.ts",
       "development": "./dist/dev/simple-hls.js",
