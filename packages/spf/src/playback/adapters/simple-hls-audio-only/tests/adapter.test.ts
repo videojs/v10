@@ -396,6 +396,29 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       media.destroy();
     });
 
+    it('appends the alternative-Media suggestion when the class names one', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      class Suggesting extends SimpleHlsAudioOnlyMediaMixin(EventTarget) {
+        static override get alternativeMediaSuggestion(): string {
+          return 'Import from "/media/mux/hls-js" instead.';
+        }
+      }
+      const media = new Suggesting();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(
+        spy.mock.calls
+          .map((call) => String(call[0]))
+          .find((text) => text.startsWith(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE))
+      ).toMatch(/Import from "\/media\/mux\/hls-js" instead\.$/);
+      vi.restoreAllMocks();
+      media.destroy();
+    });
+
     it('stops promoting conditions after destroy', async () => {
       const media = new TestMedia();
       media.destroy();

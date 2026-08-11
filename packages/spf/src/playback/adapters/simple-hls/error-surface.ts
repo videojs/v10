@@ -1,11 +1,11 @@
 /**
  * The shared half of promoting reported conditions onto a media surface.
  *
- * Both HLS adapters do the same two things: pick the first condition they treat
- * as fatal, and latch it so a later append doesn't re-fire. Only the *policy*
- * differs — which codes are fatal, which the video adapter and the audio-only
- * adapter answer differently — so that stays with each adapter and everything
- * else lives here.
+ * Both HLS adapters do the same things: pick the first condition they treat as
+ * fatal, latch it so a later append doesn't re-fire, and name a better-equipped
+ * Media when their own class points at one. Only the *policy* differs — which
+ * codes are fatal, which the video adapter and the audio-only adapter answer
+ * differently — so that stays with each adapter and everything else lives here.
  *
  * See `internal/design/spf/features/errors.md` for the causes-vs-verdicts split
  * this rests on.
@@ -30,6 +30,21 @@ import {
 export interface SimpleHlsMediaError extends ErrorLike {
   /** Reporter context (which selection emptied, which track, …). */
   readonly data?: unknown;
+}
+
+/**
+ * `message`, plus the alternative-Media sentence when `media`'s class names one.
+ *
+ * Read off the class rather than passed in so a subclass can point at a
+ * better-equipped sibling — the SPF Mux Medias name the hls.js-backed one, which
+ * plays the MPEG-TS and DRM sources SPF doesn't — without either adapter knowing
+ * that sibling exists.
+ */
+export function withAlternativeMediaSuggestion(message: string, media: object): string {
+  const { alternativeMediaSuggestion } = media.constructor as { alternativeMediaSuggestion?: string };
+  const suggestion = alternativeMediaSuggestion?.trim();
+
+  return suggestion ? `${message} ${suggestion}` : message;
 }
 
 /** The first condition `fatalCodes` covers — the root cause, not its consequences. */

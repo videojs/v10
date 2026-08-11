@@ -30,7 +30,12 @@ import {
   UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE,
 } from '../../primitives/error-messages';
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
-import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
+import {
+  firstFatal,
+  hasUnsupportedFeatureCause,
+  type SimpleHlsMediaError,
+  withAlternativeMediaSuggestion,
+} from './error-surface';
 
 /**
  * The media-level stream type: the engine's detected stream type (`'live'` /
@@ -437,15 +442,9 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // Private
     // -------------------------------------------------------------------------
 
-    /** This class's static, if it set one. */
-    #alternativeMediaSuggestion(): string | undefined {
-      return (this.constructor as { alternativeMediaSuggestion?: string }).alternativeMediaSuggestion;
-    }
-
     /** `message`, plus the alternative-Media sentence when this class names one. */
     #withSuggestion(message: string): string {
-      const suggestion = this.#alternativeMediaSuggestion()?.trim();
-      return suggestion ? `${message} ${suggestion}` : message;
+      return withAlternativeMediaSuggestion(message, this);
     }
 
     /**
