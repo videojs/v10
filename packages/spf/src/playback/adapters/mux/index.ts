@@ -6,5 +6,6 @@
  * path picks the engine, and nothing else about the surface changes.
  */
 export type { MuxContentData, MuxSourceBase } from '@videojs/media/dom/mux/source';
-export type { MuxMediaProps } from './media';
-export { MuxMedia, muxMediaDefaultProps } from './media';
+export type { MuxMediaAPI, MuxMediaProps } from './adapter';
+export { MuxMediaMixin, muxMediaDefaultProps } from './adapter';
+export { MuxMedia } from './media';
