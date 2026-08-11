@@ -12,6 +12,8 @@ import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
+import { GoogleCast } from '@videojs/react/media/google-cast';
+import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video/spf';
 import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
@@ -19,6 +21,10 @@ import { createRoot } from 'react-dom/client';
 // The SPF-backed counterpart to `react-mux-video`. See that page's HTML sibling
 // for what differs: SPF appends fMP4/CMAF only, so MPEG-TS and DRM playback IDs
 // are expected to surface the unsupported-source error rather than play.
+//
+// Mux Data and Cast both work here, as on the hls.js-backed page — Mux Data
+// monitors this flavor from the media element alone, since its engine
+// integrations are hls.js and dash.js.
 
 function readStyling(): Styling {
   return new URLSearchParams(location.search).get('styling') === 'tailwind' ? 'tailwind' : 'css';
@@ -62,6 +68,9 @@ function App() {
             playsInline
             crossOrigin="anonymous"
           />
+          {/* Opt-in media components; no env key is needed for Mux-hosted sources. */}
+          <MuxData playerSoftwareName="mux-video" />
+          <GoogleCast />
         </VideoSkinComponent>
       </Provider>
     </SandboxI18nProvider>

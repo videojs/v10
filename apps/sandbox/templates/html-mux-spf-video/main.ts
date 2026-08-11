@@ -1,6 +1,8 @@
 import '@app/styles.css';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
+import '@videojs/html/media/google-cast';
+import '@videojs/html/media/mux-data';
 import '@videojs/html/media/mux-video/spf';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
@@ -23,7 +25,10 @@ import { getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/sha
 // with console copy pointing at the hls.js-backed import. Those sources are left
 // in the picker deliberately: failing well is part of what this page demos.
 //
-// Mux Data and Cast are absent because neither is wired to this flavor yet.
+// Mux Data and Cast both work here, as on the hls.js-backed page. Cast is
+// engine-agnostic — it hands the URL to the receiver. Mux Data monitors this
+// flavor from the media element alone: its engine integrations are hls.js and
+// dash.js, so an SPF engine gets element-level data and says so in dev.
 
 const html = String.raw;
 
@@ -52,6 +57,9 @@ async function render() {
       <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
         <!-- The storyboard track is derived automatically from the Mux src. -->
         <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
+        <!-- Opt-in media components; no env key is needed for Mux-hosted sources. -->
+        <mux-data player-software-name="mux-video"></mux-data>
+        <google-cast></google-cast>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>
