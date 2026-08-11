@@ -6,6 +6,7 @@ export const PRESETS = [
   'hlsjs-video',
   'native-hls-video',
   'mux-video',
+  'mux-spf-video',
   'mux-audio',
   'simple-hls-video',
   'simple-hls-audio-only',

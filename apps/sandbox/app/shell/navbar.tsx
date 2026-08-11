@@ -86,6 +86,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'hlsjs-video': 'HLS Video',
   'native-hls-video': 'Native HLS Video',
   'mux-video': 'Mux Video',
+  'mux-spf-video': 'Mux Video (SPF)',
   'mux-audio': 'Mux Audio',
   'simple-hls-video': 'Simple HLS Video',
   'simple-hls-audio-only': 'Simple HLS Audio-Only',
