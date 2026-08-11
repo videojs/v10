@@ -148,33 +148,33 @@ function getTemplateHTML() {
       <media-gesture type="tap" action="toggleControls" pointer="touch"></media-gesture>
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
 
-      <!-- Input Feedback -->
+      <!-- Input Indicators -->
       <media-status-announcer class="media-sr-only"></media-status-announcer>
-      <div class="media-input-feedback">
-        <media-volume-indicator hidden class="media-surface media-input-feedback-island media-input-feedback-island--volume">
-          <media-volume-indicator-fill class="media-input-feedback-island__content">
+      <div class="media-input-indicator-overlay">
+        <media-volume-indicator hidden class="media-surface media-volume-indicator">
+          <media-volume-indicator-fill class="media-volume-indicator__content">
             ${renderIcon('volume-high', { class: 'media-icon media-icon--volume-high' })}
             ${renderIcon('volume-low', { class: 'media-icon media-icon--volume-low' })}
             ${renderIcon('volume-off', { class: 'media-icon media-icon--volume-off' })}
-            <media-volume-indicator-value class="media-input-feedback-island__value"></media-volume-indicator-value>
+            <media-volume-indicator-value class="media-volume-indicator__value"></media-volume-indicator-value>
           </media-volume-indicator-fill>
         </media-volume-indicator>
         <media-status-indicator
           hidden
           actions="toggleSubtitles toggleFullscreen togglePictureInPicture"
-          class="media-surface media-input-feedback-island media-input-feedback-island--status"
+          class="media-surface media-status-indicator media-status-indicator--state"
         >
-          <div class="media-input-feedback-island__content">
+          <div class="media-status-indicator__content">
             ${renderIcon('captions-on', { class: 'media-icon media-icon--captions-on' })}
             ${renderIcon('captions-off', { class: 'media-icon media-icon--captions-off' })}
             ${renderIcon('fullscreen-enter', { class: 'media-icon media-icon--fullscreen-enter' })}
             ${renderIcon('fullscreen-exit', { class: 'media-icon media-icon--fullscreen-exit' })}
             ${renderIcon('pip-enter', { class: 'media-icon media-icon--pip-enter' })}
             ${renderIcon('pip-exit', { class: 'media-icon media-icon--pip-exit' })}
-            <media-status-indicator-value class="media-input-feedback-island__value"></media-status-indicator-value>
+            <media-status-indicator-value class="media-status-indicator__value"></media-status-indicator-value>
           </div>
         </media-status-indicator>
-        <media-status-indicator hidden actions="togglePaused" class="media-input-feedback-bubble">
+        <media-status-indicator hidden actions="togglePaused" class="media-status-indicator media-status-indicator--playback">
           ${renderIcon('play', { class: 'media-icon media-icon--play' })}
           ${renderIcon('pause', { class: 'media-icon media-icon--pause' })}
         </media-status-indicator>

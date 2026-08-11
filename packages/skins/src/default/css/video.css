@@ -17,7 +17,11 @@
 @import "./components/popup.css";
 @import "./components/menus.css";
 @import "./components/captions.css";
-@import "./components/input-feedback.css";
+@import "./components/input-indicator-overlay.css";
+@import "./components/input-indicator.css";
+@import "./components/volume-indicator.css";
+@import "./components/status-indicator.css";
+@import "./components/seek-indicator.css";
 @import "../../shared/css/video/icon-state.css";
 @import "../../shared/global/video/keyframes.css";
 @import "../../shared/global/video/properties.css";

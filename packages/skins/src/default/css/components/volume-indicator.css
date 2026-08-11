@@ -1,0 +1,29 @@
+.media-default-skin .media-volume-indicator {
+  width: min(80%, calc(var(--spacing) * 48));
+
+  .media-volume-indicator__content {
+    --media-progress-fill: var(--media-volume-fill);
+    background-image: linear-gradient(
+      to right,
+      currentColor 0%,
+      currentColor var(--media-progress-fill),
+      transparent var(--media-progress-fill),
+      transparent 100%
+    );
+    border-radius: inherit;
+    transition: --media-progress-fill 200ms linear;
+  }
+
+  &[data-level="high"] .media-icon--volume-high,
+  &[data-level="low"] .media-icon--volume-low,
+  &[data-level="off"] .media-icon--volume-off {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-min],
+    &[data-max] {
+      animation: media-shake 300ms ease-in-out;
+    }
+  }
+}

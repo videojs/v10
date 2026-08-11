@@ -3,14 +3,15 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { inputFeedback as baseInputFeedback } from './components/input-feedback';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
+import { statusIndicator as baseStatusIndicator } from './components/status-indicator';
 import { surface } from './components/surface';
 import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
+import { volumeIndicator as baseVolumeIndicator } from './components/volume-indicator';
 
 /* ==========================================================================
    Root
@@ -248,15 +249,17 @@ export const error = {
 };
 
 /* ==========================================================================
-   Input Feedback (islands use video surface)
+   Input indicators (top indicators use video surface)
    ========================================================================== */
 
-export const inputFeedback = {
-  ...baseInputFeedback,
-  island: {
-    ...baseInputFeedback.island,
-    base: cn(baseInputFeedback.island.base, surface),
-  },
+export const volumeIndicator = {
+  ...baseVolumeIndicator,
+  root: cn(baseVolumeIndicator.root, surface),
+};
+
+export const statusIndicator = {
+  ...baseStatusIndicator,
+  root: cn(baseStatusIndicator.root, surface),
 };
 
 /* ==========================================================================
@@ -268,7 +271,9 @@ export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { inputIndicatorOverlay } from './components/input-indicator-overlay';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';
+export { seekIndicator } from './components/seek-indicator';
