@@ -1,9 +1,9 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { MuxMedia } from '@videojs/spf/mux';
+import { MuxVideoMedia } from '@videojs/spf/mux-video';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { MuxVideoMixin } from './mixin';
 
-const MuxVideoBase = MuxVideoMixin(MediaAttachMixin(CustomMediaElement('video', MuxMedia)));
+const MuxVideoBase = MuxVideoMixin(MediaAttachMixin(CustomMediaElement('video', MuxVideoMedia)));
 
 /**
  * `<mux-video>` over the SPF-backed Mux Media instead of the hls.js-backed one.

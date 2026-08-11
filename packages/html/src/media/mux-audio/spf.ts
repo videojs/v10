@@ -1,9 +1,9 @@
 import { CustomMediaElement } from '@videojs/media/dom/custom-media-element';
-import { MuxAudioOnlyMedia } from '@videojs/spf/mux-audio-only';
+import { MuxAudioMedia } from '@videojs/spf/mux-audio';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
 import { MuxAudioMixin } from './mixin';
 
-const MuxAudioBase = MuxAudioMixin(MediaAttachMixin(CustomMediaElement('audio', MuxAudioOnlyMedia)));
+const MuxAudioBase = MuxAudioMixin(MediaAttachMixin(CustomMediaElement('audio', MuxAudioMedia)));
 
 /**
  * `<mux-audio>` over the SPF audio-only Mux Media instead of the hls.js-backed one.

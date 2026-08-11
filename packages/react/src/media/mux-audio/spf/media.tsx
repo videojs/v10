@@ -1,7 +1,7 @@
 'use client';
 
-import type { MuxMediaProps } from '@videojs/spf/mux-audio-only';
-import { MuxAudioOnlyMedia, muxMediaDefaultProps } from '@videojs/spf/mux-audio-only';
+import type { MuxMediaProps } from '@videojs/spf/mux-audio';
+import { MuxAudioMedia, muxMediaDefaultProps } from '@videojs/spf/mux-audio';
 import type { SimpleHlsAudioOnlyMediaProps } from '@videojs/spf/simple-hls-audio-only';
 import { simpleHlsAudioOnlyMediaDefaultProps } from '@videojs/spf/simple-hls-audio-only';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
@@ -26,7 +26,7 @@ const muxAudioDefaultProps: Omit<SimpleHlsAudioOnlyMediaProps, 'src'> & MuxMedia
 };
 
 export const MuxAudio = forwardRef<HTMLAudioElement, MuxAudioProps>(function MuxAudio({ children, ...props }, ref) {
-  const media = useMediaInstance(MuxAudioOnlyMedia);
+  const media = useMediaInstance(MuxAudioMedia);
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const htmlProps = useSyncProps(media, props, muxAudioDefaultProps);

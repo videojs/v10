@@ -4,7 +4,7 @@ import type { AnyConstructor, Constructor } from '@videojs/utils/types';
  * What this mixin needs from whichever Mux Media the element hosts.
  *
  * Structural on purpose: the hls.js-backed `MuxMedia` and the SPF-backed
- * `MuxAudioOnlyMedia` satisfy it identically, and `src` is the WHATWG surface
+ * `MuxAudioMedia` satisfy it identically, and `src` is the WHATWG surface
  * rather than anything engine-specific, so the element itself has no engine.
  */
 interface MuxAudioHost {

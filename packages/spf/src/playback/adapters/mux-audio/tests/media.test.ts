@@ -1,5 +1,5 @@
 /**
- * SPF-backed MuxAudioOnlyMedia tests.
+ * SPF-backed MuxAudioMedia tests.
  *
  * The Mux surface is the shared mixin's, covered against the video flavor in
  * `../../mux/tests/media.test.ts`. What's worth asserting here is that applying
@@ -8,29 +8,29 @@
  * decides for itself.
  */
 import { describe, expect, it, vi } from 'vitest';
-import { MuxAudioOnlyMedia } from '../media';
+import { MuxAudioMedia } from '../media';
 
-describe('MuxAudioOnlyMedia', () => {
+describe('MuxAudioMedia', () => {
   it('defaults source to null', () => {
-    expect(new MuxAudioOnlyMedia().source).toBe(null);
+    expect(new MuxAudioMedia().source).toBe(null);
   });
 
   it('derives src from source.playbackId', () => {
-    const media = new MuxAudioOnlyMedia();
+    const media = new MuxAudioMedia();
     media.source = { playbackId: 'abc123' };
 
     expect(media.src).toBe('https://stream.mux.com/abc123.m3u8');
   });
 
   it('parses a Mux src into a structured source', () => {
-    const media = new MuxAudioOnlyMedia();
+    const media = new MuxAudioMedia();
     media.src = 'https://stream.mux.com/abc123.m3u8?max_resolution=720p';
 
     expect(media.source).toEqual({ playbackId: 'abc123', playback: { maxResolution: '720p' } });
   });
 
   it('keeps a non-Mux src as a plain source.src', () => {
-    const media = new MuxAudioOnlyMedia();
+    const media = new MuxAudioMedia();
     media.src = 'https://example.com/audio.m3u8';
 
     expect(media.source).toEqual({ src: 'https://example.com/audio.m3u8' });
@@ -38,7 +38,7 @@ describe('MuxAudioOnlyMedia', () => {
   });
 
   it('dispatches sourcechange when source changes', () => {
-    const media = new MuxAudioOnlyMedia();
+    const media = new MuxAudioMedia();
     const onSourceChange = vi.fn();
     media.addEventListener('sourcechange', onSourceChange);
 
@@ -50,7 +50,7 @@ describe('MuxAudioOnlyMedia', () => {
   it('derives poster and storyboard URLs, for a video asset played as audio', () => {
     // Kept rather than dropped: a playback ID played as audio is usually a video
     // asset, whose images exist. The element ignores them.
-    const media = new MuxAudioOnlyMedia();
+    const media = new MuxAudioMedia();
     media.source = { playbackId: 'abc123' };
 
     expect(media.contentData).toEqual({
@@ -62,6 +62,6 @@ describe('MuxAudioOnlyMedia', () => {
   it('points unplayable-source copy at the hls.js-backed Media', () => {
     // The audio-only adapter gained the suggestion seam for this: SPF plays
     // neither MPEG-TS nor DRM whichever engine variant is underneath.
-    expect(MuxAudioOnlyMedia.alternativeMediaSuggestion).toContain('@videojs/media/dom/mux');
+    expect(MuxAudioMedia.alternativeMediaSuggestion).toContain('@videojs/media/dom/mux');
   });
 });

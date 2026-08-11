@@ -1,7 +1,7 @@
 'use client';
 
-import type { MuxMediaProps } from '@videojs/spf/mux';
-import { MuxMedia, muxMediaDefaultProps } from '@videojs/spf/mux';
+import type { MuxMediaProps } from '@videojs/spf/mux-video';
+import { MuxVideoMedia, muxMediaDefaultProps } from '@videojs/spf/mux-video';
 import type { SimpleHlsMediaProps } from '@videojs/spf/simple-hls';
 import { simpleHlsMediaDefaultProps } from '@videojs/spf/simple-hls';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
@@ -27,7 +27,7 @@ const muxVideoDefaultProps: Omit<SimpleHlsMediaProps, 'src'> & MuxMediaProps = {
 };
 
 export const MuxVideo = forwardRef<HTMLVideoElement, MuxVideoProps>(function MuxVideo({ children, ...props }, ref) {
-  const media = useMediaInstance(MuxMedia);
+  const media = useMediaInstance(MuxVideoMedia);
   const attachRef = useAttachMedia(media);
   const composedRef = useComposedRefs(attachRef, ref);
   const htmlProps = useSyncProps(media, props, muxVideoDefaultProps);
