@@ -3,21 +3,23 @@ import Hls from 'hls.js';
 import { afterEach, beforeEach, describe, expect, it, type MockInstance, vi } from 'vitest';
 import { toMuxDataEngineOptions } from '../mux-data-engine';
 
-/** Shaped like an hls.js instance: its class carries the event names `mux-embed` reads. */
+/** Shaped like an hls.js instance, class statics included. */
 class FakeHlsJsEngine {
   static Events = { MANIFEST_LOADED: 'hlsManifestLoaded' };
-  loadSource() {}
-  attachMedia() {}
+  static ErrorDetails = { MANIFEST_LOAD_ERROR: 'manifestLoadError' };
+  static version = '1.6.15';
+  levels: unknown[] = [];
   on() {}
   off() {}
 }
 
-/** Shaped like a dash.js `MediaPlayerClass`. */
+/** Shaped like a dash.js v5 `MediaPlayerClass`. */
 class FakeDashJsEngine {
-  attachSource() {}
-  attachView() {}
-  getDashMetrics() {
-    return {};
+  getCurrentTrackFor() {
+    return null;
+  }
+  getRepresentationsByType() {
+    return [];
   }
   on() {}
   off() {}
@@ -46,6 +48,14 @@ describe('toMuxDataEngineOptions', () => {
     expect(toMuxDataEngineOptions(engine)).toEqual({ dashjs: engine });
   });
 
+  it('wires a pre-v5 dash.js player into the dash.js integration', () => {
+    // v5 replaced `getBitrateInfoListFor` with `getRepresentationsByType`, and
+    // `mux-embed` reads whichever the player has.
+    const engine = { on() {}, off() {}, getCurrentTrackFor() {}, getBitrateInfoListFor() {} };
+
+    expect(toMuxDataEngineOptions(engine)).toEqual({ dashjs: engine });
+  });
+
   it('sends no engine options for media with no engine', () => {
     expect(toMuxDataEngineOptions(null)).toEqual({});
     expect(toMuxDataEngineOptions(undefined)).toEqual({});
@@ -58,11 +68,11 @@ describe('toMuxDataEngineOptions', () => {
     expect(toMuxDataEngineOptions(engine)).toEqual({});
   });
 
-  it('skips the hls.js integration when the engine class carries no events', () => {
+  it('skips the hls.js integration when the engine class publishes no events', () => {
     // `mux-embed` needs the class to hook hls.js events, and reaches for
     // `window.Hls` when it isn't given one — better to monitor the element alone
     // than to let it pick up an unrelated global.
-    const engine = { loadSource() {}, attachMedia() {}, on() {}, off() {} };
+    const engine = { levels: [], on() {}, off() {} };
 
     expect(toMuxDataEngineOptions(engine)).toEqual({});
   });

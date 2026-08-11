@@ -16,21 +16,23 @@ class FakeMedia extends EventTarget {
   src = '';
 }
 
-/** Shaped like an hls.js instance: its class carries the event names `mux-embed` reads. */
+/** Shaped like an hls.js instance, class statics included. */
 class FakeHlsJsEngine {
   static Events = { MANIFEST_LOADED: 'hlsManifestLoaded' };
-  loadSource() {}
-  attachMedia() {}
+  static ErrorDetails = { MANIFEST_LOAD_ERROR: 'manifestLoadError' };
+  static version = '1.6.15';
+  levels: unknown[] = [];
   on() {}
   off() {}
 }
 
 /** Shaped like a dash.js `MediaPlayerClass`. */
 class FakeDashJsEngine {
-  attachSource() {}
-  attachView() {}
-  getDashMetrics() {
-    return {};
+  getCurrentTrackFor() {
+    return null;
+  }
+  getRepresentationsByType() {
+    return [];
   }
   on() {}
   off() {}

@@ -1,4 +1,4 @@
-import { isFunction, isObject } from '@videojs/utils/predicate';
+import { hasMethods, isFunction, isObject, isString } from '@videojs/utils/predicate';
 import type { MuxDataOptions } from './types';
 
 /** The `mux-embed` monitor options that hook a playback engine's own telemetry. */
@@ -33,9 +33,9 @@ export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
   if (isDashJsEngine(engine)) return { dashjs: engine };
 
   if (isHlsJsEngine(engine)) {
-    // `mux-embed` reads hls.js's event names off the class, falling back to
-    // `window.Hls` when it isn't given one. Take it from the instance so a
-    // bundled hls.js is always found, without importing hls.js here.
+    // `mux-embed` reads hls.js's event names and error details off the class,
+    // falling back to `window.Hls` when it isn't given one. Take it from the
+    // instance so a bundled hls.js is always found, without importing it here.
     const Hls = toHlsJsClass(engine);
     if (Hls) return { hlsjs: engine, Hls };
   }
@@ -51,25 +51,27 @@ export function toMuxDataEngineOptions(engine: unknown): MuxDataEngineOptions {
   return {};
 }
 
-/** hls.js: loads a source into a media element and emits its own events. */
+// Each engine is recognized by what its `mux-embed` monitor reaches for, so a
+// match means the integration has everything it needs. Both monitors subscribe
+// through `on` / `off`; the rendition APIs are what tell the two engines apart.
+
+/** hls.js: its monitor reads renditions from `levels`. */
 function isHlsJsEngine(engine: unknown): engine is MuxDataHlsJsEngine {
-  return hasMethods(engine, ['loadSource', 'attachMedia', 'on', 'off']);
+  return hasMethods(engine, ['on', 'off']) && Array.isArray((engine as { levels?: unknown }).levels);
 }
 
-/** dash.js: attaches a source and a view, and exposes the metrics `mux-embed` reads. */
+/** dash.js: its monitor reads renditions through the track and rendition-list getters. */
 function isDashJsEngine(engine: unknown): engine is MuxDataDashJsEngine {
-  return hasMethods(engine, ['attachSource', 'attachView', 'getDashMetrics', 'on', 'off']);
+  if (!hasMethods(engine, ['on', 'off', 'getCurrentTrackFor'])) return false;
+  // dash.js v5 replaced `getBitrateInfoListFor` with `getRepresentationsByType`.
+  // `mux-embed` reads whichever the player has, so either one is a match.
+  return hasMethods(engine, ['getRepresentationsByType']) || hasMethods(engine, ['getBitrateInfoListFor']);
 }
 
-function hasMethods(value: unknown, methods: string[]): boolean {
-  if (!isObject(value)) return false;
-  return methods.every((method) => isFunction((value as Record<string, unknown>)[method]));
-}
-
-/** hls.js's own class, the only place its event names are published. */
+/** hls.js's own class, the only place its event names and error details are published. */
 function toHlsJsClass(engine: object): MuxDataHlsJsClass | undefined {
   const engineClass: unknown = engine.constructor;
   if (!isFunction(engineClass)) return undefined;
   const statics = engineClass as unknown as MuxDataHlsJsClass;
-  return isObject(statics.Events) ? statics : undefined;
+  return isObject(statics.Events) && isObject(statics.ErrorDetails) && isString(statics.version) ? statics : undefined;
 }
