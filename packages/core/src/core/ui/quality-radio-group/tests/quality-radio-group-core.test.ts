@@ -17,11 +17,11 @@ function createMediaState(overrides: Partial<MediaQualityState> = {}): MediaQual
 
 function createState(overrides: Partial<QualityRadioGroupState> = {}): QualityRadioGroupState {
   return {
-    renditions: [
-      { value: '0', label: '1080p' },
-      { value: '1', label: '720p' },
+    options: [
+      { value: QUALITY_AUTO_VALUE, label: 'Auto', disabled: false },
+      { value: '0', label: '1080p', disabled: false },
+      { value: '1', label: '720p', disabled: false },
     ],
-    autoLabel: 'Auto',
     value: QUALITY_AUTO_VALUE,
     disabled: false,
     availability: 'available',
@@ -39,9 +39,10 @@ describe('QualityRadioGroupCore', () => {
 
       const state = core.getState();
 
-      expect(state.renditions).toEqual([
-        { value: '0', label: '1080p', tier: 'HD' },
-        { value: '1', label: '720p' },
+      expect(state.options).toEqual([
+        { value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
+        { value: '0', label: '1080p', disabled: false, tier: 'HD' },
+        { value: '1', label: '720p', disabled: false },
       ]);
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
     });
@@ -57,10 +58,11 @@ describe('QualityRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().renditions).toEqual([
-        { value: '0', label: '1080p', tier: 'HD', badge: '6 Mbps' },
-        { value: '1', label: '1080p', tier: 'HD', badge: '3 Mbps' },
-        { value: '2', label: '720p' },
+      expect(core.getState().options).toEqual([
+        { value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
+        { value: '0', label: '1080p', disabled: false, tier: 'HD', badge: '6 Mbps' },
+        { value: '1', label: '1080p', disabled: false, tier: 'HD', badge: '3 Mbps' },
+        { value: '2', label: '720p', disabled: false },
       ]);
     });
 
@@ -75,10 +77,11 @@ describe('QualityRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().renditions).toEqual([
-        { value: '0', label: '1080p', tier: 'HD' },
-        { value: '1', label: '2160p', tier: '4K' },
-        { value: '2', label: '4320p', tier: '8K' },
+      expect(core.getState().options).toEqual([
+        { value: QUALITY_AUTO_VALUE, label: { key: 'menu.auto', text: 'Auto' }, disabled: false },
+        { value: '0', label: '1080p', disabled: false, tier: 'HD' },
+        { value: '1', label: '2160p', disabled: false, tier: '4K' },
+        { value: '2', label: '4320p', disabled: false, tier: '8K' },
       ]);
     });
 
@@ -105,8 +108,12 @@ describe('QualityRadioGroupCore', () => {
       const state = core.getState();
 
       expect(state.value).toBe(QUALITY_AUTO_VALUE);
-      expect(state.autoLabel).toMatchObject({ key: 'menu.autoWithLabel', text: 'Auto ({label})' });
-      expect(state.autoLabelParams).toEqual({ label: '720p' });
+      expect(state.options[0]).toEqual({
+        value: QUALITY_AUTO_VALUE,
+        label: { key: 'menu.autoWithLabel', text: 'Auto ({label})' },
+        labelParams: { label: '720p' },
+        disabled: false,
+      });
     });
 
     it('marks availability unavailable with one rendition', () => {

@@ -1,0 +1,107 @@
+import type { RadioOption, RadioOptionsState } from '@videojs/core';
+import { applyElementProps } from '@videojs/core/dom';
+import { type Translator, translateText } from '@videojs/core/i18n';
+import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
+
+import { cacheKey } from '../../i18n/cache-key';
+import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
+import { MenuRadioItemElement } from '../menu/menu-radio-item-element';
+
+export type RadioOptionsControllerHost = ReactiveControllerHost &
+  HTMLElement & {
+    value: string;
+  };
+
+export interface RadioOptionsControllerConfig<Option extends RadioOption> {
+  getTemplate: () => HTMLTemplateElement | null;
+  createItem: (template: HTMLTemplateElement | null) => MenuRadioItemElement;
+  renderItem: (item: MenuRadioItemElement, label: string, option: Option) => void;
+  setItemAttributes?: ((item: MenuRadioItemElement, option: Option) => void) | undefined;
+  getOptionCacheKey?: ((option: Option) => string) | undefined;
+  onValueChange: (value: string) => void;
+}
+
+/** Renders normalized options into menu radio items and manages their interaction lifecycle. */
+export class RadioOptionsController<Option extends RadioOption> implements ReactiveController {
+  readonly #host: RadioOptionsControllerHost;
+  readonly #config: RadioOptionsControllerConfig<Option>;
+
+  #contentKey = '';
+  #translator: Translator | null = null;
+  #disconnect: AbortController | null = null;
+
+  constructor(host: RadioOptionsControllerHost, config: RadioOptionsControllerConfig<Option>) {
+    this.#host = host;
+    this.#config = config;
+    host.addController(this);
+  }
+
+  hostConnected(): void {
+    this.#disconnect = new AbortController();
+    this.#host.addEventListener('value-change', this.#handleValueChange, { signal: this.#disconnect.signal });
+  }
+
+  hostDisconnected(): void {
+    this.#disconnect?.abort();
+    this.#disconnect = null;
+  }
+
+  hostDestroyed(): void {
+    this.hostDisconnected();
+  }
+
+  sync(state: RadioOptionsState<Option>, translator: Translator, locale: string): void {
+    this.#host.value = state.value;
+    applyElementProps(this.#host, {
+      'aria-disabled': state.disabled ? 'true' : undefined,
+    });
+
+    const template = this.#config.getTemplate();
+    const contentKey = `${state.options
+      .map(
+        (option) =>
+          `${option.value}:${cacheKey(option.label, option.labelParams)}:${this.#config.getOptionCacheKey?.(option) ?? ''}`
+      )
+      .join('|')}::${locale}::${template?.innerHTML ?? ''}`;
+
+    if (contentKey !== this.#contentKey || translator !== this.#translator) {
+      this.#contentKey = contentKey;
+      this.#translator = translator;
+
+      for (const child of [...this.#host.children]) {
+        if (child instanceof HTMLTemplateElement) continue;
+        child.remove();
+      }
+
+      const items = state.options.map((option) => {
+        const item = this.#config.createItem(template);
+        item.value = option.value;
+        this.#config.setItemAttributes?.(item, option);
+        this.#config.renderItem(item, translateText(option.label, translator, option.labelParams), option);
+        return item;
+      });
+
+      this.#host.append(...items);
+    }
+
+    const optionsByValue = new Map(state.options.map((option) => [option.value, option]));
+
+    for (const item of this.#host.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)) {
+      const checked = item.value === state.value;
+      const option = optionsByValue.get(item.value);
+
+      item.disabled = state.disabled || option?.disabled === true;
+
+      for (const indicator of item.querySelectorAll<MenuItemIndicatorElement>(MenuItemIndicatorElement.tagName)) {
+        indicator.checked = checked;
+      }
+    }
+  }
+
+  #handleValueChange = (event: Event): void => {
+    if (event.target !== this.#host) return;
+
+    const { value } = (event as CustomEvent<{ value: string }>).detail;
+    this.#config.onValueChange(value);
+  };
+}

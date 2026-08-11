@@ -17,7 +17,7 @@ function createMediaState(overrides: Partial<MediaTextTrackState> = {}): MediaTe
 
 function createState(overrides: Partial<CaptionsRadioGroupState> = {}): CaptionsRadioGroupState {
   return {
-    tracks: [],
+    options: [{ value: CAPTIONS_OFF_VALUE, label: 'Off', disabled: false }],
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
     disabled: false,
@@ -42,10 +42,11 @@ describe('CaptionsRadioGroupCore', () => {
       core.setMedia(media);
       const state = core.getState();
 
-      expect(state.tracks).toEqual([
-        { value: 'captions-en', label: 'CC' },
-        { value: 'subtitles-en', label: 'English' },
-        { value: 'subtitles-es', label: 'Spanish' },
+      expect(state.options).toEqual([
+        { value: CAPTIONS_OFF_VALUE, label: { key: 'menu.off', text: 'Off' }, disabled: false },
+        { value: 'captions-en', label: 'CC', disabled: false },
+        { value: 'subtitles-en', label: 'English', disabled: false },
+        { value: 'subtitles-es', label: 'Spanish', disabled: false },
       ]);
       expect(state.value).toBe('subtitles-en');
       expect(state.subtitlesShowing).toBe(true);
@@ -147,9 +148,10 @@ describe('CaptionsRadioGroupCore', () => {
 
       core.setMedia(media);
 
-      expect(core.getState().tracks).toEqual([
-        { value: 'captions-en', label: { key: 'menu.captions', text: 'Captions' } },
-        { value: 'subtitles-en', label: { key: 'menu.subtitles', text: 'Subtitles' } },
+      expect(core.getState().options).toEqual([
+        { value: CAPTIONS_OFF_VALUE, label: { key: 'menu.off', text: 'Off' }, disabled: false },
+        { value: 'captions-en', label: { key: 'menu.captions', text: 'Captions' }, disabled: false },
+        { value: 'subtitles-en', label: { key: 'menu.subtitles', text: 'Subtitles' }, disabled: false },
       ]);
     });
 

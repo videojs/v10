@@ -5,7 +5,7 @@ import { isUndefined } from '@videojs/utils/predicate';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
 import { rateText } from '../../i18n/text/playback';
-import type { ButtonState } from '../types';
+import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface PlaybackRateRadioGroupProps {
@@ -17,11 +17,12 @@ export interface PlaybackRateRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-export interface PlaybackRateRadioGroupState extends ButtonState {
+export interface PlaybackRateRadioGroupOption extends RadioOption {
   rate: number;
-  rates: readonly number[];
-  disabled: boolean;
-  availability: 'available' | 'unavailable';
+}
+
+export interface PlaybackRateRadioGroupState extends RadioOptionsState<PlaybackRateRadioGroupOption> {
+  rate: number;
 }
 
 function formatPlaybackRate(rate: number): string {
@@ -37,7 +38,8 @@ export class PlaybackRateRadioGroupCore {
 
   readonly state = createState<PlaybackRateRadioGroupState>({
     rate: 1,
-    rates: [],
+    value: '1',
+    options: [],
     disabled: false,
     availability: 'unavailable',
     label: '',
@@ -92,7 +94,13 @@ export class PlaybackRateRadioGroupCore {
 
     this.state.patch({
       rate: media.playbackRate,
-      rates: media.playbackRates,
+      value: this.getRateValue(media.playbackRate),
+      options: media.playbackRates.map((rate) => ({
+        rate,
+        value: this.getRateValue(rate),
+        label: this.getRateLabel(rate),
+        disabled: false,
+      })),
       disabled: this.#props.disabled || media.playbackRates.length === 0,
       availability,
     });

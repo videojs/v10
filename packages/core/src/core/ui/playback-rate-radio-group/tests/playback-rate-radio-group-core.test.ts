@@ -15,7 +15,8 @@ function createMediaState(overrides: Partial<MediaPlaybackRateState> = {}): Medi
 function createState(overrides: Partial<PlaybackRateRadioGroupState> = {}): PlaybackRateRadioGroupState {
   return {
     rate: 1,
-    rates: [0.5, 1, 1.5, 2],
+    value: '1',
+    options: [0.5, 1, 1.5, 2].map((rate) => ({ rate, value: String(rate), label: `${rate}×`, disabled: false })),
     disabled: false,
     availability: 'available',
     label: '',
@@ -32,7 +33,11 @@ describe('PlaybackRateRadioGroupCore', () => {
       const state = core.getState();
 
       expect(state.rate).toBe(1.5);
-      expect(state.rates).toEqual([1, 1.5]);
+      expect(state.value).toBe('1.5');
+      expect(state.options).toEqual([
+        { rate: 1, value: '1', label: '1×', disabled: false },
+        { rate: 1.5, value: '1.5', label: '1.5×', disabled: false },
+      ]);
     });
 
     it('marks state disabled when no rates are available', () => {

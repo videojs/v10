@@ -3,20 +3,16 @@
 import {
   type PlaybackRateRadioGroupCore,
   PlaybackRateRadioGroupCore as PlaybackRateRadioGroupCoreClass,
+  type PlaybackRateRadioGroupOption,
 } from '@videojs/core';
-import { logMissingFeature, selectPlaybackRate } from '@videojs/core/dom';
-import { useCallback, useState } from 'react';
+import { selectPlaybackRate } from '@videojs/core/dom';
+import { useCallback } from 'react';
 
-import { usePlayer } from '../../player/context';
+import { createRadioOptionsHook, type TranslatedRadioOption } from '../hooks/create-radio-options-hook';
 
 export interface PlaybackRateOptionsProps extends PlaybackRateRadioGroupCore.Props {}
 
-export interface PlaybackRateOption {
-  rate: number;
-  value: string;
-  label: string;
-  disabled: boolean;
-}
+export type PlaybackRateOption = TranslatedRadioOption<PlaybackRateRadioGroupOption>;
 
 export interface PlaybackRateOptionsResult {
   state: PlaybackRateRadioGroupCore.State;
@@ -28,6 +24,13 @@ export interface PlaybackRateOptionsResult {
   setValue: (value: string) => void;
 }
 
+const usePlaybackRateRadioOptions = createRadioOptionsHook({
+  name: 'usePlaybackRateOptions',
+  feature: 'playbackRate',
+  selector: selectPlaybackRate,
+  createCore: () => new PlaybackRateRadioGroupCoreClass(),
+});
+
 /**
  * Create playback rate menu options from the player playback rate state.
  * Returns `null` when the playback rate feature is not configured.
@@ -35,35 +38,14 @@ export interface PlaybackRateOptionsResult {
  * @param props - Optional `label`, `formatRate`, and `disabled` overrides.
  */
 export function usePlaybackRateOptions(props?: PlaybackRateOptionsProps): PlaybackRateOptionsResult | null {
-  const media = usePlayer(selectPlaybackRate);
-  const [core] = useState(() => new PlaybackRateRadioGroupCoreClass());
-
-  core.setProps(props ?? {});
-
-  const setRate = useCallback((rate: number) => core.select(media!, rate), [core, media]);
-  const setValue = useCallback((value: string) => core.selectValue(media!, value), [core, media]);
-
-  if (!media) {
-    if (__DEV__) logMissingFeature('usePlaybackRateOptions', selectPlaybackRate.displayName ?? 'playbackRate');
-    return null;
-  }
-
-  core.setMedia(media);
-  const state = core.getState();
+  const result = usePlaybackRateRadioOptions(props);
+  const setRate = useCallback((rate: number) => result?.setValue(String(rate)), [result?.setValue]);
+  if (!result) return null;
 
   return {
-    state,
-    rate: state.rate,
-    value: core.getRateValue(state.rate),
-    options: state.rates.map((rate) => ({
-      rate,
-      value: core.getRateValue(rate),
-      label: core.getRateLabel(rate),
-      disabled: state.disabled,
-    })),
-    disabled: state.disabled,
+    ...result,
+    rate: result.state.rate,
     setRate,
-    setValue,
   };
 }
 
