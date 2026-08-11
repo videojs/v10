@@ -8,6 +8,7 @@ export const PRESETS = [
   'mux-video',
   'mux-spf-video',
   'mux-audio',
+  'mux-spf-audio',
   'simple-hls-video',
   'simple-hls-audio-only',
   'dash-video',
