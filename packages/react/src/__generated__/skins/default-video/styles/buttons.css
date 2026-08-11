@@ -44,109 +44,109 @@
       filter: drop-shadow(0 1px 0 var(--media-shadow-color));
     }
 
-    .media-fullscreen-button-icon-enter {
+    .media-fullscreen-enter-icon {
       opacity: 0;
       display: none;
     }
 
     @scope (.media-fullscreen-button) {
-      &:not([data-fullscreen]) .media-fullscreen-button-icon-enter {
+      &:not([data-fullscreen]) .media-fullscreen-enter-icon {
         opacity: 1;
         display: block;
       }
     }
 
-    .media-fullscreen-button-icon-exit {
+    .media-fullscreen-exit-icon {
       opacity: 0;
       display: none;
     }
 
     @scope (.media-fullscreen-button) {
-      &[data-fullscreen] .media-fullscreen-button-icon-exit {
+      &[data-fullscreen] .media-fullscreen-exit-icon {
         opacity: 1;
         display: block;
       }
     }
 
-    .media-mute-button-icon-volume-high {
-      opacity: 0;
-      display: none;
-    }
-
-    @scope (.media-mute-button) {
-      &:not([data-muted]):not([data-volume-level='low']) .media-mute-button-icon-volume-high {
-        opacity: 1;
-        display: block;
-      }
-    }
-
-    .media-mute-button-icon-volume-low {
-      opacity: 0;
-      display: none;
-    }
-
-    @scope (.media-mute-button) {
-      &:not([data-muted])[data-volume-level='low'] .media-mute-button-icon-volume-low {
-        opacity: 1;
-        display: block;
-      }
-    }
-
-    .media-mute-button-icon-volume-off {
-      opacity: 0;
-      display: none;
-    }
-
-    @scope (.media-mute-button) {
-      &[data-muted] .media-mute-button-icon-volume-off {
-        opacity: 1;
-        display: block;
-      }
-    }
-
-    .media-play-button-icon-pause {
+    .media-pause-icon {
       opacity: 0;
       display: none;
     }
 
     @scope (.media-play-button) {
-      &[data-started]:not([data-paused]):not([data-ended]) .media-play-button-icon-pause {
+      &[data-started]:not([data-paused]):not([data-ended]) .media-pause-icon {
         opacity: 1;
         display: block;
       }
     }
 
-    .media-play-button-icon-play {
+    .media-play-icon {
       opacity: 0;
       display: none;
     }
 
     @scope (.media-play-button) {
-      &:not([data-ended]):not([data-started]) .media-play-button-icon-play,
-      &:not([data-ended])[data-paused] .media-play-button-icon-play {
+      &:not([data-ended]):not([data-started]) .media-play-icon,
+      &:not([data-ended])[data-paused] .media-play-icon {
         opacity: 1;
         display: block;
       }
     }
 
-    .media-play-button-icon-restart {
+    .media-restart-icon {
       opacity: 0;
       display: none;
     }
 
     @scope (.media-play-button) {
-      &[data-ended] .media-play-button-icon-restart {
+      &[data-ended] .media-restart-icon {
         opacity: 1;
         display: block;
       }
     }
 
-    .media-seek-button-icon-backward {
+    .media-seek-backward-icon {
       scale: -1 1;
     }
 
     .media-seek-button-label {
       font-variant-numeric: tabular-nums;
+    }
+
+    .media-volume-high-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-mute-button) {
+      &:not([data-muted]):not([data-volume-level='low']) .media-volume-high-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-volume-low-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-mute-button) {
+      &:not([data-muted])[data-volume-level='low'] .media-volume-low-icon {
+        opacity: 1;
+        display: block;
+      }
+    }
+
+    .media-volume-off-icon {
+      opacity: 0;
+      display: none;
+    }
+
+    @scope (.media-mute-button) {
+      &[data-muted] .media-volume-off-icon {
+        opacity: 1;
+        display: block;
+      }
     }
   }
 }

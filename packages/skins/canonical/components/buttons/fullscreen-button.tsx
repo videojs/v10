@@ -7,8 +7,8 @@ export function FullscreenButton() {
   return (
     <ButtonTooltip side="top">
       <FullscreenButtonPrimitive className={[styles.button, styles.fullscreenButton]}>
-        <FullscreenEnterIcon className={[styles.buttonIcon, styles.fullscreenButtonIcon.enter]} />
-        <FullscreenExitIcon className={[styles.buttonIcon, styles.fullscreenButtonIcon.exit]} />
+        <FullscreenEnterIcon className={[styles.buttonIcon, styles.fullscreenEnterIcon]} />
+        <FullscreenExitIcon className={[styles.buttonIcon, styles.fullscreenExitIcon]} />
       </FullscreenButtonPrimitive>
     </ButtonTooltip>
   );

@@ -10,9 +10,7 @@ describe('loadSkinStyleManifest', () => {
     const manifest = await loadSkinStyleManifest([buttonFile]);
 
     expect(recipeForToken(manifest, buttonFile, ['button'])?.className).toBe('media-button');
-    expect(recipeForToken(manifest, buttonFile, ['playButtonIcon', 'pause'])?.className).toBe(
-      'media-play-button-icon-pause'
-    );
+    expect(recipeForToken(manifest, buttonFile, ['pauseIcon'])?.className).toBe('media-pause-icon');
     expect(manifest.groupOwners.get('group/play')).toBe('media-play-button');
     expect(manifest.peerMarkers).toEqual(new Set());
   });

@@ -5,9 +5,9 @@ import styles from '../../styles/components/button.tailwind';
 export function MuteButton() {
   return (
     <MuteButtonPrimitive className={[styles.button, styles.muteButton]}>
-      <VolumeOffIcon className={[styles.buttonIcon, styles.muteButtonIcon.volumeOff]} />
-      <VolumeLowIcon className={[styles.buttonIcon, styles.muteButtonIcon.volumeLow]} />
-      <VolumeHighIcon className={[styles.buttonIcon, styles.muteButtonIcon.volumeHigh]} />
+      <VolumeOffIcon className={[styles.buttonIcon, styles.volumeOffIcon]} />
+      <VolumeLowIcon className={[styles.buttonIcon, styles.volumeLowIcon]} />
+      <VolumeHighIcon className={[styles.buttonIcon, styles.volumeHighIcon]} />
     </MuteButtonPrimitive>
   );
 }

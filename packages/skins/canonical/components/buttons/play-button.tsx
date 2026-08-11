@@ -7,9 +7,9 @@ export function PlayButton() {
   return (
     <ButtonTooltip side="top">
       <PlayButtonPrimitive className={[styles.button, styles.playButton]}>
-        <RestartIcon className={[styles.buttonIcon, styles.playButtonIcon.restart]} />
-        <PlayIcon className={[styles.buttonIcon, styles.playButtonIcon.play]} />
-        <PauseIcon className={[styles.buttonIcon, styles.playButtonIcon.pause]} />
+        <RestartIcon className={[styles.buttonIcon, styles.restartIcon]} />
+        <PlayIcon className={[styles.buttonIcon, styles.playIcon]} />
+        <PauseIcon className={[styles.buttonIcon, styles.pauseIcon]} />
       </PlayButtonPrimitive>
     </ButtonTooltip>
   );

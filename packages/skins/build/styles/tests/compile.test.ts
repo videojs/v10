@@ -8,10 +8,7 @@ const designPath = resolve(import.meta.dirname, '../../../canonical/styles/tailw
 describe('compileSkinStyles', () => {
   it('rewrites named group variants to their semantic owner', async () => {
     const playButton = recipe('playButton', 'media-play-button', ['group/play']);
-    const restartIcon = recipe('playButtonIcon.restart', 'media-play-button-icon-restart', [
-      'hidden',
-      'group-data-ended/play:block',
-    ]);
+    const restartIcon = recipe('restartIcon', 'media-restart-icon', ['hidden', 'group-data-ended/play:block']);
     const styles = await compileSkinStyles({
       design: await loadDesignSystem(designPath),
       manifest: manifest([playButton, restartIcon], new Map([['group/play', playButton.className]])),
@@ -21,14 +18,14 @@ describe('compileSkinStyles', () => {
     expect(styles.get('buttons')).toContain('@scope (.media-skin-video)');
     expect(styles.get('buttons')).toContain('@scope (.media-play-button)');
     expect(styles.get('buttons')).toContain('&[data-ended]');
-    expect(styles.get('buttons')).toContain('.media-play-button-icon-restart');
+    expect(styles.get('buttons')).toContain('.media-restart-icon');
     expect(styles.get('buttons')).not.toContain('group\\/play');
     expect(styles.get('buttons')).not.toContain(':where(');
   });
 
   it('folds stacked group conditions and negative calculations into reviewable CSS', async () => {
     const muteButton = recipe('muteButton', 'media-mute-button', ['grid', 'group/mute']);
-    const highIcon = recipe('muteButtonIcon.high', 'media-mute-button-icon-high', [
+    const highIcon = recipe('volumeHighIcon', 'media-volume-high-icon', [
       'hidden',
       '-outline-offset-2',
       'group-not-data-muted/mute:group-not-data-[volume-level=low]/mute:block',
@@ -40,7 +37,7 @@ describe('compileSkinStyles', () => {
     });
 
     expect(styles.get('buttons')).toContain(
-      '&:not([data-muted]):not([data-volume-level="low"]) .media-mute-button-icon-high'
+      '&:not([data-muted]):not([data-volume-level="low"]) .media-volume-high-icon'
     );
     expect(styles.get('buttons')).toContain('outline-offset: -2px');
     expect(styles.get('buttons')).not.toContain(':is(:where(.media-mute-button)');

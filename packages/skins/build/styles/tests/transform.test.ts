@@ -10,8 +10,7 @@ const recipes = [
   recipe(['button'], 'media-button', ['grid', 'p-0']),
   recipe(['seekButton'], 'media-seek-button', []),
   recipe(['buttonIcon'], 'media-button-icon', ['size-4']),
-  recipe(['seekButtonIcon', 'backward'], 'media-seek-button-icon-backward', ['-scale-x-100']),
-  recipe(['seekButtonIcon', 'forward'], 'media-seek-button-icon-forward', []),
+  recipe(['seekBackwardIcon'], 'media-seek-backward-icon', ['-scale-x-100']),
 ];
 const manifest: SkinStyleManifest = {
   modules: new Map([[modulePath, new Map(recipes.map((recipe) => [recipe.tokenPath.join('.'), recipe]))]]),
@@ -24,8 +23,8 @@ const source = `
   export function Example({ reverse }) {
     return <button className={[styles.button, styles.seekButton, 'hook']}>
       <span className={reverse
-        ? [styles.buttonIcon, styles.seekButtonIcon.backward]
-        : [styles.buttonIcon, styles.seekButtonIcon.forward]} />
+        ? [styles.buttonIcon, styles.seekBackwardIcon]
+        : styles.buttonIcon} />
     </button>;
   }
 `;
@@ -43,9 +42,7 @@ describe('skinStyles', () => {
     const result = await compileWithStyle('vanilla');
 
     expect(result.code).toContain('className="media-button media-seek-button hook"');
-    expect(result.code).toContain(
-      '? "media-button-icon media-seek-button-icon-backward" : "media-button-icon media-seek-button-icon-forward"'
-    );
+    expect(result.code).toContain('? "media-button-icon media-seek-backward-icon" : "media-button-icon"');
   });
 
   it('rejects aliases for style references', async () => {

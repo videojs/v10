@@ -15,16 +15,16 @@ export const skin = /* html */ `<media-controls class="media-skin media-skin-vid
   <media-tooltip-group>
     <media-controls-group class="media-controls-group-primary">
       <media-play-button class="media-button media-play-button">
-        <media-icon class="media-button-icon media-play-button-icon-restart" name="restart"></media-icon>
-        <media-icon class="media-button-icon media-play-button-icon-play" name="play"></media-icon>
-        <media-icon class="media-button-icon media-play-button-icon-pause" name="pause"></media-icon>
+        <media-icon class="media-button-icon media-restart-icon" name="restart"></media-icon>
+        <media-icon class="media-button-icon media-play-icon" name="play"></media-icon>
+        <media-icon class="media-button-icon media-pause-icon" name="pause"></media-icon>
       </media-play-button>
       <media-tooltip side="top" class="media-surface media-tooltip">
         <media-tooltip-label></media-tooltip-label>
         <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
       </media-tooltip>
       <media-seek-button class="media-button media-seek-button" seconds="-10">
-        <media-icon class="media-button-icon media-seek-button-icon-backward" name="seek"></media-icon>
+        <media-icon class="media-button-icon media-seek-backward-icon" name="seek"></media-icon>
         <span class="media-seek-button-label">10</span>
       </media-seek-button>
       <media-tooltip side="top" class="media-surface media-tooltip">
@@ -32,7 +32,7 @@ export const skin = /* html */ `<media-controls class="media-skin media-skin-vid
         <media-tooltip-shortcut class="media-tooltip-shortcut"></media-tooltip-shortcut>
       </media-tooltip>
       <media-seek-button class="media-button media-seek-button" seconds="10">
-        <media-icon class="media-button-icon media-seek-button-icon-forward" name="seek"></media-icon>
+        <media-icon class="media-button-icon" name="seek"></media-icon>
         <span class="media-seek-button-label">10</span>
       </media-seek-button>
       <media-tooltip side="top" class="media-surface media-tooltip">
@@ -61,9 +61,9 @@ export const skin = /* html */ `<media-controls class="media-skin media-skin-vid
     </media-controls-group>
     <media-controls-group class="media-controls-group-primary">
       <media-mute-button class="media-button media-mute-button">
-        <media-icon class="media-button-icon media-mute-button-icon-volume-off" name="volume-off"></media-icon>
-        <media-icon class="media-button-icon media-mute-button-icon-volume-low" name="volume-low"></media-icon>
-        <media-icon class="media-button-icon media-mute-button-icon-volume-high" name="volume-high"></media-icon>
+        <media-icon class="media-button-icon media-volume-off-icon" name="volume-off"></media-icon>
+        <media-icon class="media-button-icon media-volume-low-icon" name="volume-low"></media-icon>
+        <media-icon class="media-button-icon media-volume-high-icon" name="volume-high"></media-icon>
       </media-mute-button>
       <media-popover open-on-hover delay="200" close-delay="100" side="top" class="media-surface media-volume-popover">
         <media-volume-slider class="media-slider" thumb-alignment="edge" orientation="vertical">
@@ -74,8 +74,8 @@ export const skin = /* html */ `<media-controls class="media-skin media-skin-vid
         </media-volume-slider>
       </media-popover>
       <media-fullscreen-button class="media-button media-fullscreen-button">
-        <media-icon class="media-button-icon media-fullscreen-button-icon-enter" name="fullscreen-enter"></media-icon>
-        <media-icon class="media-button-icon media-fullscreen-button-icon-exit" name="fullscreen-exit"></media-icon>
+        <media-icon class="media-button-icon media-fullscreen-enter-icon" name="fullscreen-enter"></media-icon>
+        <media-icon class="media-button-icon media-fullscreen-exit-icon" name="fullscreen-exit"></media-icon>
       </media-fullscreen-button>
       <media-tooltip side="top" class="media-surface media-tooltip">
         <media-tooltip-label></media-tooltip-label>
