@@ -2,6 +2,7 @@ import { resolveCSSLength } from '@videojs/utils/dom';
 import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
 
 const MENU_SUBMENU_ATTR = 'data-submenu';
+const MENU_SUBMENU_EXPANDED_ATTR = 'data-submenu-expanded';
 
 interface CoveredState {
   ariaHidden: string | null;
@@ -203,6 +204,9 @@ export function syncMenuSize(content: HTMLElement | null): void {
   const activeSubmenu = getActiveSubmenu(content);
   const rootChildren = getRootChildren(content);
   const covered = activeSubmenu !== null;
+  const submenuExpanded = activeSubmenu !== null && !activeSubmenu.hasAttribute('data-ending-style');
+
+  content.toggleAttribute(MENU_SUBMENU_EXPANDED_ATTR, submenuExpanded);
 
   for (const child of rootChildren) setCovered(child, covered);
 

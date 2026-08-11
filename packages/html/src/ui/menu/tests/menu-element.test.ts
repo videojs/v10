@@ -527,6 +527,7 @@ describe('MenuElement', () => {
     });
     expect(rootItems.hasAttribute('inert')).toBe(true);
     expect(rootItems.getAttribute('aria-hidden')).toBe('true');
+    expect(root.hasAttribute('data-submenu-expanded')).toBe(true);
 
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
@@ -537,6 +538,7 @@ describe('MenuElement', () => {
     expect(child.hasAttribute('data-ending-style')).toBe(true);
     expect(child.hasAttribute('data-open')).toBe(true);
     expect(child.hidden).toBe(false);
+    expect(root.hasAttribute('data-submenu-expanded')).toBe(false);
     await waitForAssertion(() => {
       expect(child.hidden).toBe(true);
     });

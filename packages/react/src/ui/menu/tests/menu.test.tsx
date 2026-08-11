@@ -491,6 +491,7 @@ describe('MenuContent', () => {
 
       expect(rootItems.getAttribute('aria-hidden')).toBe('true');
       expect(rootItems.hasAttribute('inert')).toBe(true);
+      expect(screen.getByTestId('root-content').hasAttribute('data-submenu-expanded')).toBe(true);
     });
   });
 
@@ -507,6 +508,7 @@ describe('MenuContent', () => {
     expect(submenu.hasAttribute('data-ending-style')).toBe(true);
     expect(submenu.hasAttribute('data-open')).toBe(true);
     expect(screen.getByTestId('submenu-trigger').getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByTestId('root-content').hasAttribute('data-submenu-expanded')).toBe(false);
   });
 
   it('portals submenu content into the parent content', async () => {

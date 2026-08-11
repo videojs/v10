@@ -88,14 +88,9 @@
     outline: 2px solid transparent;
     outline-offset: -2px;
     border-radius: var(--menu-item-border-radius);
-    transition:
-      background-color 100ms ease-out,
-      color 100ms ease-out,
-      opacity var(--menu-transition-duration) ease-in-out;
-
-    &[aria-expanded="true"] {
-      opacity: 0;
-    }
+    transition: background-color, color;
+    transition-timing-function: ease-out;
+    transition-duration: 100ms;
 
     &:focus-visible {
       outline-color: currentColor;
@@ -196,11 +191,25 @@
     min-width: calc(var(--spacing) * 48);
     height: var(--media-menu-height);
     overflow: hidden;
+
     /* Only the menu size changes between panels. */
     transition:
       var(--media-popup-transition),
       width var(--media-popup-transition-timing-function) var(--menu-transition-duration),
       height var(--media-popup-transition-timing-function) var(--menu-transition-duration);
+
+    & > :not([data-submenu]) {
+      translate: 0 0;
+      transition:
+        translate var(--menu-transition-duration) ease-in-out,
+        filter var(--menu-transition-duration) ease-in-out;
+      will-change: translate, filter;
+    }
+
+    &[data-submenu-expanded] > :not([data-submenu]) {
+      filter: blur(8px);
+      translate: -100% 0;
+    }
 
     /* Don't transition size on open/close. */
     &[data-starting-style],
