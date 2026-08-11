@@ -1,0 +1,193 @@
+---
+title: Title
+frameworkTitle:
+  html: media-title
+description: Displays the resolved content title for the current media
+---
+
+import ComponentReference from "@/components/docs/api-reference/ComponentReference.astro";
+import FrameworkCase from "@/components/docs/FrameworkCase.astro";
+import StyleCase from "@/components/docs/StyleCase.astro";
+import Demo from "@/components/docs/demos/Demo.astro";
+
+{/* React demos */}
+import BasicUsageDemoReact from "@/components/docs/demos/title/react/css/BasicUsage";
+import basicUsageReactTsx from "@/components/docs/demos/title/react/css/BasicUsage.tsx?raw";
+import basicUsageReactCss from "@/components/docs/demos/title/react/css/BasicUsage.css?raw";
+
+{/* HTML demos */}
+import BasicUsageDemoHtml from "@/components/docs/demos/title/html/css/BasicUsage.astro";
+import basicUsageHtml from "@/components/docs/demos/title/html/css/BasicUsage.html?raw";
+import basicUsageHtmlCss from "@/components/docs/demos/title/html/css/BasicUsage.css?raw";
+import basicUsageHtmlTs from "@/components/docs/demos/title/html/css/BasicUsage.ts?raw";
+
+## Anatomy
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Title />
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <media-title></media-title>
+  ```
+</FrameworkCase>
+
+## Behavior
+
+The component shows the name of what is playing. It writes its own text, so set the
+title on the player instead of passing children.
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  <Player.Provider contentTitle="Big Buck Bunny">
+    <Player.Container>
+      <Video src="video.mp4" />
+      <Title />
+    </Player.Container>
+  </Player.Provider>
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```html
+  <video-player content-title="Big Buck Bunny">
+    <video src="video.mp4"></video>
+    <media-title></media-title>
+  </video-player>
+  ```
+</FrameworkCase>
+
+A title can come from three places. The player uses the first one that has a value:
+
+1. `contentTitle`, the title you set.
+2. The title the media reports about itself.
+3. `defaultContentTitle`, the fallback you set for media that does not name itself.
+
+If none of them has a value, the title is empty. The element stays in the page with no
+text, and `data-has-title` comes off so your CSS can hide it.
+
+To change the title while the player is running, call `setContentTitle` on the store:
+
+<FrameworkCase frameworks={["react"]}>
+  ```tsx
+  function Rename() {
+    const store = Player.usePlayer();
+
+    return <button onClick={() => store.setContentTitle("Sintel")}>Rename</button>;
+  }
+  ```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  ```ts
+  const player = document.querySelector("video-player");
+
+  player.store.setContentTitle("Sintel");
+  ```
+</FrameworkCase>
+
+The title is part of the player's chrome. It shows whenever a title exists and the
+controls are on screen, and it leaves when they do, so it never sits over the video on
+its own. An audio player has no controls that come and go, so its title stays on screen
+whenever there is one to show.
+
+## Styling
+
+Two data attributes drive presentation:
+
+- `data-has-title` is present when a title exists. Use it to remove the element entirely
+  when there is nothing to show, so a background or gradient never sits over empty space.
+- `data-visible` is present when the component decides the title should be shown. Use it
+  for the transition.
+
+<FrameworkCase frameworks={["html"]}>
+```css
+media-title:not([data-has-title]) {
+  display: none;
+}
+
+media-title {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+media-title[data-visible] {
+  opacity: 1;
+}
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+React renders a `<span>`. Add a `className` to style it:
+
+```css
+.title:not([data-has-title]) {
+  display: none;
+}
+
+.title {
+  opacity: 0;
+  transition: opacity 150ms ease-out;
+}
+
+.title[data-visible] {
+  opacity: 1;
+}
+```
+
+`className` and `style` also accept a function of component state when you would rather
+branch in JavaScript than in CSS:
+
+```tsx
+<Title className={(state) => (state.visible ? "title title--visible" : "title")} />
+```
+</FrameworkCase>
+
+## Accessibility
+
+The title is ordinary text, so it reaches assistive technology as content with no ARIA
+of its own. Hiding it with `display: none` when there is no title also removes it from
+the accessibility tree.
+
+Fading the title out with `opacity` leaves it readable by a screen reader while it is not
+painted. That is deliberate — the name of what is playing stays relevant whether or not
+the controls happen to be on screen.
+
+The component does not name the player. To give the player region an accessible name,
+set `aria-label` or `aria-labelledby` on the container yourself.
+
+## Examples
+
+### Basic Usage
+
+<FrameworkCase frameworks={["react"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "App.tsx", code: basicUsageReactTsx, lang: "tsx" },
+        { title: "App.css", code: basicUsageReactCss, lang: "css" },
+      ]}
+    >
+      <BasicUsageDemoReact client:idle />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+  <StyleCase styles={["css"]}>
+    <Demo
+      files={[
+        { title: "index.html", code: basicUsageHtml, lang: "html" },
+        { title: "index.css", code: basicUsageHtmlCss, lang: "css" },
+        { title: "index.ts", code: basicUsageHtmlTs, lang: "ts" },
+      ]}
+    >
+      <BasicUsageDemoHtml />
+    </Demo>
+  </StyleCase>
+</FrameworkCase>
+
+<ComponentReference component="Title" />

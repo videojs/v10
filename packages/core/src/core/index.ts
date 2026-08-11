@@ -68,6 +68,8 @@ export * from './ui/time/time-data-attrs';
 export * from './ui/time-slider/time-slider-core';
 export * from './ui/time-slider/time-slider-css-vars';
 export * from './ui/time-slider/time-slider-data-attrs';
+export * from './ui/title/title-core';
+export * from './ui/title/title-data-attrs';
 export * from './ui/tooltip/tooltip-core';
 export * from './ui/tooltip/tooltip-css-vars';
 export * from './ui/tooltip/tooltip-data-attrs';
