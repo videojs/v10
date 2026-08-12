@@ -136,9 +136,10 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   class SimpleHlsMediaImpl extends BaseClass {
     /**
      * A complete sentence naming the Media to reach for when this one can't play
-     * a source — `Import <mux-video> from "@videojs/html/media/mux-video"
-     * instead.` Appended to the copy this adapter surfaces, and to the notices it
-     * logs.
+     * a source — `Try the hls.js-backed Mux media instead: import the hls-js
+     * flavor in place of the spf one.` Appended to the copy this adapter
+     * surfaces, and to the notices it logs. Name the flavor, not an import path:
+     * a Media is reached through several packages, each with its own counterpart.
      *
      * Empty here: `simple-hls-video` has no better-equipped sibling to point at.
      * A Media that does (a Mux Video built on this engine, whose hls.js-backed

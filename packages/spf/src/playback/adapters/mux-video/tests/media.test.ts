@@ -132,7 +132,9 @@ describe('MuxVideoMedia', () => {
 
   it('points unplayable-source copy at the hls.js-backed Media', () => {
     // The static exists for exactly this: SPF plays neither MPEG-TS nor DRM, and
-    // the hls.js-backed Mux Media plays both.
-    expect(MuxVideoMedia.alternativeMediaSuggestion).toContain('@videojs/media/dom/mux');
+    // the hls.js-backed Mux Media plays both. Named by flavor rather than by
+    // import path, since this one Media is reached through three packages.
+    expect(MuxVideoMedia.alternativeMediaSuggestion).toContain('hls-js');
+    expect(MuxVideoMedia.alternativeMediaSuggestion).not.toContain('@videojs/');
   });
 });

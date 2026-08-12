@@ -45,11 +45,13 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
      * hls.js-backed Mux Media plays the MPEG-TS and DRM-protected sources that
      * SPF does not, and it backs both `<mux-video>` and `<mux-audio>`.
      *
-     * Read by the full HLS adapter. The audio-only adapter has no suggestion
-     * seam yet, so it is inert there rather than wrong.
+     * Names the flavor rather than an import path, because one Media is reached
+     * through three of them — `@videojs/html`, `@videojs/react`, and this package
+     * — and each has a different counterpart. The flavor suffix is the one thing
+     * common to the layers a consumer imports elements and components from.
      */
     static get alternativeMediaSuggestion(): string | undefined {
-      return 'Try the hls.js-backed Mux media from `@videojs/media/dom/mux` instead.';
+      return 'Try the hls.js-backed Mux media instead: import the `hls-js` flavor in place of the `spf` one.';
     }
 
     #source: MuxSourceBase | null = muxMediaDefaultProps.source;

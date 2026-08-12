@@ -61,7 +61,9 @@ describe('MuxAudioMedia', () => {
 
   it('points unplayable-source copy at the hls.js-backed Media', () => {
     // The audio-only adapter gained the suggestion seam for this: SPF plays
-    // neither MPEG-TS nor DRM whichever engine variant is underneath.
-    expect(MuxAudioMedia.alternativeMediaSuggestion).toContain('@videojs/media/dom/mux');
+    // neither MPEG-TS nor DRM whichever engine variant is underneath. Named by
+    // flavor rather than by import path, as on the video Media.
+    expect(MuxAudioMedia.alternativeMediaSuggestion).toContain('hls-js');
+    expect(MuxAudioMedia.alternativeMediaSuggestion).not.toContain('@videojs/');
   });
 });
