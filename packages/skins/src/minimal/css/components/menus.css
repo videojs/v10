@@ -39,8 +39,6 @@
     overflow: auto;
     overscroll-behavior: none;
     outline: none;
-    background-color: var(--media-popover-background-color);
-    backdrop-filter: var(--media-popover-backdrop-filter);
     translate: 0 0;
     transition-timing-function: ease-in-out;
     transition-duration: var(--menu-transition-duration);

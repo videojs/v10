@@ -33,8 +33,6 @@
     overflow: auto;
     overscroll-behavior: none;
     outline: none;
-    background-color: var(--media-surface-background-color);
-    backdrop-filter: var(--media-surface-backdrop-filter);
     translate: 0 0;
     transition-timing-function: ease-in-out;
     transition-duration: var(--menu-transition-duration);

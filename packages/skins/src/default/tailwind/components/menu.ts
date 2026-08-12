@@ -6,7 +6,6 @@ import { surface } from './surface';
 const submenuPanel = cn(
   'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
-  'bg-(--media-surface-background-color) [backdrop-filter:var(--media-surface-backdrop-filter)]',
   'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate,filter]',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
   'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
