@@ -1,3 +1,4 @@
+import { hasMethods } from '@videojs/utils/predicate';
 import type { AnyConstructor, MixinReturn } from '@videojs/utils/types';
 import type {
   MediaAudioRenditionCapability,
@@ -148,6 +149,15 @@ function getBaseMediaTracksFn(MediaElementClass: any, type: string): (() => any)
   return undefined;
 }
 
+// Native track lists are event targets wherever they are implemented (Safari).
+// Environments that stub them out as plain arrays (jsdom) publish no changes, so
+// there is nothing to mirror and the list stays local.
+function isNativeTrackList(
+  value: unknown
+): value is Iterable<any> & Record<'addEventListener' | 'removeEventListener', (...args: any[]) => void> {
+  return hasMethods(value, ['addEventListener', 'removeEventListener']);
+}
+
 function getVideoTracks(media: any) {
   let tracks = getPrivate(media).videoTracks as VideoTrackList | undefined;
   if (!tracks) {
@@ -155,10 +165,10 @@ function getVideoTracks(media: any) {
     getPrivate(media).videoTracks = tracks;
 
     const nativeEl = media.target;
+    const nativeTracks = nativeVideoTracksFn && nativeEl ? nativeVideoTracksFn.call(nativeEl) : undefined;
 
-    if (nativeVideoTracksFn && nativeEl) {
+    if (isNativeTrackList(nativeTracks)) {
       const currentTracks = tracks;
-      const nativeTracks = nativeVideoTracksFn.call(nativeEl);
 
       for (const nativeTrack of nativeTracks) {
         addVideoTrack(media, nativeTrack);
@@ -205,10 +215,10 @@ function getAudioTracks(media: any) {
     getPrivate(media).audioTracks = tracks;
 
     const nativeEl = media.target;
+    const nativeTracks = nativeAudioTracksFn && nativeEl ? nativeAudioTracksFn.call(nativeEl) : undefined;
 
-    if (nativeAudioTracksFn && nativeEl) {
+    if (isNativeTrackList(nativeTracks)) {
       const currentTracks = tracks;
-      const nativeTracks = nativeAudioTracksFn.call(nativeEl);
 
       for (const nativeTrack of nativeTracks) {
         addAudioTrack(media, nativeTrack);
