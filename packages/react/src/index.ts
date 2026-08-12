@@ -139,9 +139,12 @@ export {
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export {
+  type QualityAutoOption,
   type QualityOption,
+  type QualityOptionParts,
   type QualityOptionsProps,
   type QualityOptionsResult,
+  type QualityRenditionOption,
   useQualityOptions,
 } from './ui/quality';
 export {

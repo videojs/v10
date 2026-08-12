@@ -160,7 +160,7 @@ function getTemplateHTML() {
                             <bdi data-part="label" dir="auto"></bdi>
                             <sup data-part="tier" class="media-menu__tier"></sup>
                           </span>
-                          <span data-part="badge" class="media-badge"></span>
+                          <span data-part="bitrate" class="media-badge"></span>
                           <media-menu-item-indicator force-mount class="media-menu__indicator">
                             ${renderIcon('check', { class: 'media-icon' })}
                           </media-menu-item-indicator>

@@ -215,7 +215,7 @@ describe('QualityRadioGroupElement', () => {
     });
   });
 
-  it('renders bitrate badges from a template', async () => {
+  it('renders bitrate parts from a template', async () => {
     const { menu, options } = setup({
       videoRenditionList: [
         { id: '0', height: 1080, bitrate: 6_000_000, selected: false },
@@ -223,14 +223,14 @@ describe('QualityRadioGroupElement', () => {
         { id: '2', height: 720, bitrate: 1_500_000, selected: false },
       ],
       template:
-        '<media-menu-radio-item><span data-part="label"></span><sup data-part="tier"></sup><span data-part="badge"></span><media-menu-item-indicator force-mount></media-menu-item-indicator></media-menu-radio-item>',
+        '<media-menu-radio-item><span data-part="label"></span><sup data-part="tier"></sup><span data-part="bitrate"></span><media-menu-item-indicator force-mount></media-menu-item-indicator></media-menu-radio-item>',
     });
 
     await waitForMenu(menu, options);
 
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
     const tiers = items.map((item) => item.querySelector<HTMLElement>('[data-part~="tier"]'));
-    const badges = items.map((item) => item.querySelector<HTMLElement>('[data-part~="badge"]'));
+    const bitrates = items.map((item) => item.querySelector<HTMLElement>('[data-part~="bitrate"]'));
 
     expect(items.map((item) => item.querySelector('[data-part~="label"]')?.textContent)).toEqual([
       'Auto',
@@ -240,8 +240,8 @@ describe('QualityRadioGroupElement', () => {
     ]);
     expect(tiers.map((tier) => tier?.textContent)).toEqual(['', 'HD', 'HD', '']);
     expect(tiers.map((tier) => tier?.hidden)).toEqual([true, false, false, true]);
-    expect(badges.map((badge) => badge?.textContent)).toEqual(['', '6 Mbps', '3 Mbps', '']);
-    expect(badges.map((badge) => badge?.hidden)).toEqual([true, false, false, true]);
+    expect(bitrates.map((bitrate) => bitrate?.textContent)).toEqual(['', '6 Mbps', '3 Mbps', '']);
+    expect(bitrates.map((bitrate) => bitrate?.hidden)).toEqual([true, false, false, true]);
   });
 
   it('sets the selected rendition', async () => {
@@ -251,11 +251,11 @@ describe('QualityRadioGroupElement', () => {
     await waitForMenu(menu, options);
 
     const item = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)].find(
-      (candidate) => candidate.value === '1'
+      (candidate) => candidate.value === 'rendition:1'
     )!;
 
     item.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
 
-    expect(selectVideoRendition).toHaveBeenCalledWith('1');
+    expect(selectVideoRendition).toHaveBeenCalledWith(1);
   });
 });

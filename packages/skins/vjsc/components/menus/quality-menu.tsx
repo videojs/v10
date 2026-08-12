@@ -27,7 +27,7 @@ export function QualityMenu(props: QualityMenuProps = {}) {
               <Template.Part name="label" />
               <Template.Part name="tier" className={styles.tier} />
             </Text>
-            <Template.Part name="badge" className={styles.badge} />
+            <Template.Part name="bitrate" className={styles.badge} />
           </RadioItem>
         </Template>
       </QualityRadioGroup>

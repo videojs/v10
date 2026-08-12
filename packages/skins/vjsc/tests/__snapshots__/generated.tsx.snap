@@ -830,10 +830,10 @@ const available = quality?.state.availability === 'available';
     >
       <QualityRadioGroup renderItem={(props, item) => (<RadioItem {...props}>
             <span>
-              <span>{item.label}</span>
-              {item.tier ? <sup className={"media-menu-tier"}>{item.tier}</sup> : null}
+              <span>{item.parts.primary}</span>
+              {item.parts.tier ? <sup className={"media-menu-tier"}>{item.parts.tier}</sup> : null}
             </span>
-            {item.badge ? <span className={"media-menu-badge"}>{item.badge}</span> : null}
+            {item.parts.bitrate ? <span className={"media-menu-badge"}>{item.parts.bitrate}</span> : null}
           </RadioItem>)}>
 
       </QualityRadioGroup>
@@ -2038,10 +2038,10 @@ const available = quality?.state.availability === 'available';
     >
       <QualityRadioGroup renderItem={(props, item) => (<RadioItem {...props}>
             <span>
-              <span>{item.label}</span>
-              {item.tier ? <sup className={"ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70"}>{item.tier}</sup> : null}
+              <span>{item.parts.primary}</span>
+              {item.parts.tier ? <sup className={"ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70"}>{item.parts.tier}</sup> : null}
             </span>
-            {item.badge ? <span className={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"}>{item.badge}</span> : null}
+            {item.parts.bitrate ? <span className={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"}>{item.parts.bitrate}</span> : null}
           </RadioItem>)}>
 
       </QualityRadioGroup>
@@ -3295,10 +3295,10 @@ const available = quality?.state.availability === 'available';
     >
       <QualityRadioGroup renderItem={(props, item) => (<RadioItem {...props}>
             <span>
-              <span>{item.label}</span>
-              {item.tier ? <sup className={"media-menu-tier"}>{item.tier}</sup> : null}
+              <span>{item.parts.primary}</span>
+              {item.parts.tier ? <sup className={"media-menu-tier"}>{item.parts.tier}</sup> : null}
             </span>
-            {item.badge ? <span className={"media-menu-badge"}>{item.badge}</span> : null}
+            {item.parts.bitrate ? <span className={"media-menu-badge"}>{item.parts.bitrate}</span> : null}
           </RadioItem>)}>
 
       </QualityRadioGroup>
@@ -4505,10 +4505,10 @@ const available = quality?.state.availability === 'available';
     >
       <QualityRadioGroup renderItem={(props, item) => (<RadioItem {...props}>
             <span>
-              <span>{item.label}</span>
-              {item.tier ? <sup className={"ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70"}>{item.tier}</sup> : null}
+              <span>{item.parts.primary}</span>
+              {item.parts.tier ? <sup className={"ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70"}>{item.parts.tier}</sup> : null}
             </span>
-            {item.badge ? <span className={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"}>{item.badge}</span> : null}
+            {item.parts.bitrate ? <span className={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"}>{item.parts.bitrate}</span> : null}
           </RadioItem>)}>
 
       </QualityRadioGroup>
@@ -5683,7 +5683,7 @@ export function QualityMenu(props: QualityMenuProps = {}) {
               <span data-part="label" />
               <sup data-part="tier" class={"media-menu-tier"} />
             </span>
-            <span data-part="badge" class={"media-menu-badge"} />
+            <span data-part="bitrate" class={"media-menu-badge"} />
           </RadioItem>
         </template>
       </QualityRadioGroup>
@@ -6774,7 +6774,7 @@ export function QualityMenu(props: QualityMenuProps = {}) {
               <span data-part="label" />
               <sup data-part="tier" class={"ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70"} />
             </span>
-            <span data-part="badge" class={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"} />
+            <span data-part="bitrate" class={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"} />
           </RadioItem>
         </template>
       </QualityRadioGroup>
@@ -7914,7 +7914,7 @@ export function QualityMenu(props: QualityMenuProps = {}) {
               <span data-part="label" />
               <sup data-part="tier" class={"media-menu-tier"} />
             </span>
-            <span data-part="badge" class={"media-menu-badge"} />
+            <span data-part="bitrate" class={"media-menu-badge"} />
           </RadioItem>
         </template>
       </QualityRadioGroup>
@@ -9009,7 +9009,7 @@ export function QualityMenu(props: QualityMenuProps = {}) {
               <span data-part="label" />
               <sup data-part="tier" class={"ps-0.5 pt-px text-media-xs font-semibold leading-none text-current/70"} />
             </span>
-            <span data-part="badge" class={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"} />
+            <span data-part="bitrate" class={"rounded-media-control bg-media-control-hover px-1.5 text-media-xs font-semibold"} />
           </RadioItem>
         </template>
       </QualityRadioGroup>

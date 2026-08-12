@@ -25,7 +25,7 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
   const Sup = element('sup');
   const I18nText = imported({ from: '@videojs/react', name: 'Text' });
   const renderProps = code.param('props');
-  const item = code.param<{ badge?: unknown; label: unknown; tier?: unknown }>('item');
+  const item = code.param<{ label: unknown; parts: { bitrate?: unknown; primary: unknown; tier?: unknown } }>('item');
   const optionTemplate: TemplateTargetDefinition = {
     render: ({ children }) => <Host renderItem={code.fn([renderProps, item], code.withProps(children, renderProps))} />,
     parts: {
@@ -105,8 +105,9 @@ export const reactComponentTarget: ComponentTarget<CoreSchema> = defineComponent
           ...optionTemplate,
           parts: {
             ...optionTemplate.parts,
-            tier: ({ props }) => code.when(item.tier, <Sup {...props}>{item.tier}</Sup>),
-            badge: ({ props }) => code.when(item.badge, <Span {...props}>{item.badge}</Span>),
+            label: ({ props }) => <Span {...props}>{item.parts.primary}</Span>,
+            tier: ({ props }) => code.when(item.parts.tier, <Sup {...props}>{item.parts.tier}</Sup>),
+            bitrate: ({ props }) => code.when(item.parts.bitrate, <Span {...props}>{item.parts.bitrate}</Span>),
           },
         },
         'audio-track-option': optionTemplate,

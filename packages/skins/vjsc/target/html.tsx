@@ -240,7 +240,7 @@ export const htmlComponentTarget: ComponentTarget<CoreSchema> = defineComponentT
           parts: {
             ...optionTemplate.parts,
             tier: ({ props }) => <Sup data-part="tier" {...props} />,
-            badge: ({ props }) => <Span data-part="badge" {...props} />,
+            bitrate: ({ props }) => <Span data-part="bitrate" {...props} />,
           },
         },
         'audio-track-option': optionTemplate,

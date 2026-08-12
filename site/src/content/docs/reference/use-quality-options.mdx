@@ -12,20 +12,24 @@ import DocsLink from "@/components/docs/DocsLink.astro";
 import { useQualityOptions } from "@videojs/react";
 ```
 
-`useQualityOptions` returns the current quality value, the available options, and a `setValue` callback for wiring quality selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
+`useQualityOptions` returns the current quality value, the available options, the group `label` and `availability`, and a `setValue` callback for wiring quality selection into a menu. It returns `null` when the <DocsLink slug="reference/feature-quality">quality feature</DocsLink> is not configured.
 
 ```tsx title="QualityMenu.tsx"
 import { Menu, useQualityOptions } from "@videojs/react";
 
 function QualityMenu() {
   const quality = useQualityOptions();
-  if (quality?.state.availability !== "available") return null;
+  if (quality?.availability !== "available") return null;
 
   return (
-    <Menu.RadioGroup value={quality.value} onValueChange={quality.setValue} aria-label="Quality">
+    <Menu.RadioGroup value={quality.value} onValueChange={quality.setValue} aria-label={quality.label}>
       {quality.options.map((option) => (
         <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-          {option.label}
+          <span>
+            {option.parts.primary}
+            {option.parts.tier ? <sup>{option.parts.tier}</sup> : null}
+          </span>
+          {option.parts.bitrate ? <span>{option.parts.bitrate}</span> : null}
           <Menu.ItemIndicator checked={option.value === quality.value} />
         </Menu.RadioItem>
       ))}
@@ -34,8 +38,8 @@ function QualityMenu() {
 }
 ```
 
-The first option is always `Auto`; selecting it returns control to adaptive bitrate selection. Options carry optional `tier` and `badge` fields (e.g. `4K`, `HD`) for richer labels. Pass `formatRendition` to customize the visible rendition labels.
+The first option is always `Auto`; selecting it returns control to adaptive bitrate selection. Each option's `label` is a complete accessible label such as `1080p HD 6 Mbps`. Use `parts.primary`, `parts.tier`, and `parts.bitrate` when the design styles those pieces separately. Rendition options have `kind: "rendition"` and carry the source `rendition`; the automatic option has `kind: "auto"`. Option values are stable menu keys, not rendition identifiers, so they stay unambiguous when identifiers repeat.
 
-See <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
+Pass `formatRendition` to customize the primary rendition label. See <DocsLink slug="reference/quality-radio-group">QualityRadioGroup</DocsLink> for the component-level pattern, and <DocsLink slug="reference/menu">Menu</DocsLink> for a complete settings menu example.
 
 <UtilReference util="useQualityOptions" />
