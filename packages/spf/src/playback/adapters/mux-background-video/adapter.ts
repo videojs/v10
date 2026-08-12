@@ -51,7 +51,7 @@ export interface MuxBackgroundVideoMediaAPI extends MuxBackgroundVideoMediaProps
  * an intention rather than what the element is doing.
  *
  * @example
- * class MuxBackgroundVideoMedia extends MuxBackgroundVideoMediaMixin(HTMLVideoElementHost) {}
+ * class MuxBackgroundVideoMedia extends MuxBackgroundVideoMediaMixin(BackgroundVideoHost) {}
  *
  * const media = new MuxBackgroundVideoMedia();
  * media.attach(document.querySelector('video'));

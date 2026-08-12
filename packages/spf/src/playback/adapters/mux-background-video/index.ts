@@ -10,6 +10,9 @@
  * that one exposes a client-side `maxResolution` and binds no host, so it has
  * no Media to hand an element. Both are the muted-looping case, so a change to
  * one usually belongs in the other.
+ *
+ * Binding a host here costs nothing this entry was avoiding: its host is local
+ * and narrow, so it stays free of `@videojs/media` exactly as its sibling does.
  */
 export type { MuxBackgroundVideoMediaAPI, MuxBackgroundVideoMediaProps } from './adapter';
 export {
