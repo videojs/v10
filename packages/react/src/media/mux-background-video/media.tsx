@@ -41,11 +41,25 @@ export const MuxBackgroundVideo = forwardRef<HTMLVideoElement, MuxBackgroundVide
   const htmlProps = useSyncProps(media, props, muxBackgroundVideoMediaDefaultProps);
 
   return (
-    // Applied after the spread rather than before it: unlike the generic
-    // `BackgroundVideo`, these four aren't overridable. They're what the
-    // component is for, and attaching the Media re-applies them anyway, so
-    // letting a caller pass `muted={false}` would only look honored.
-    <video {...htmlProps} ref={composedRef} muted autoPlay loop playsInline>
+    // The same set `<mux-background-video>` forces onto its inner video, so the
+    // two platforms present the same surface: silent looping playback with no
+    // affordance a UA could hang chrome on — AirPlay, Cast, and picture-in-picture
+    // all being things a background video has nowhere to put.
+    //
+    // Applied after the spread rather than before it, unlike the generic
+    // `BackgroundVideo`: they're what the component is for, and attaching the
+    // Media re-applies its own anyway, so honoring `muted={false}` would only
+    // look like it worked.
+    <video
+      {...htmlProps}
+      ref={composedRef}
+      muted
+      autoPlay
+      loop
+      playsInline
+      disableRemotePlayback
+      disablePictureInPicture
+    >
       {children}
     </video>
   );
