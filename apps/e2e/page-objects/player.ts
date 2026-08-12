@@ -176,6 +176,16 @@ export class PlayerPage {
     await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
   }
 
+  /** Start the media without interacting with controls. */
+  async playMedia(): Promise<void> {
+    await this.page.evaluate(async (selector) => {
+      const media = document.querySelector(selector) as HTMLMediaElement | null;
+      const actual = (media?.querySelector?.('video') as HTMLMediaElement) ?? media;
+      await actual?.play();
+    }, SELECTORS.media);
+    await expect(this.playButton).not.toHaveAttribute(DATA_ATTRS.paused, { timeout: 5_000 });
+  }
+
   /** Click pause and wait for the paused attribute to appear. */
   async pause(): Promise<void> {
     // In Firefox headless (especially audio), controls may hide after play
@@ -277,13 +287,7 @@ export class PlayerPage {
     const box = await btn.boundingBox();
     if (!box) throw new Error('Play button not visible — cannot show controls');
 
-    const x = box.x + box.width / 2;
-    const y = box.y + box.height / 2;
-
-    // The preceding action may have left the pointer at the button center.
-    // Move away first so returning to the center always resets the idle timer.
-    await this.page.mouse.move(x - 1, y);
-    await this.page.mouse.move(x, y);
+    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     if ((await this.videoPlayer.count()) > 0) {
       await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
     }
