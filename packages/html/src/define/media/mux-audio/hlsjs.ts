@@ -8,7 +8,12 @@ export class MuxAudioElement extends MuxAudio {
 safeDefine(MuxAudioElement);
 
 declare global {
+  /** The Mux audio flavors in the build — see `../mux-video/spf` for why. */
+  interface MuxAudioFlavors {
+    hlsjs: MuxAudioElement;
+  }
+
   interface HTMLElementTagNameMap {
-    [MuxAudioElement.tagName]: MuxAudioElement;
+    [MuxAudioElement.tagName]: MuxAudioFlavors[keyof MuxAudioFlavors];
   }
 }

@@ -8,11 +8,13 @@ const FALLBACK_TAG = 'mux-audio-spf';
  * `<mux-audio>` unless that tag is already taken.
  *
  * The same rule as the SPF-backed `<mux-video>`, for the same reason — see
- * `../mux-video/spf` for why the tag is shared and why this one steps aside
- * rather than losing the registration silently.
+ * `../mux-video/spf` for why the tag is shared, why this one steps aside rather
+ * than losing the registration silently, and why `expected` under the tag is not
+ * a reason to step aside.
  */
-function resolveTagName(): typeof PRIMARY_TAG | typeof FALLBACK_TAG {
-  if (!globalThis.customElements?.get(PRIMARY_TAG)) return PRIMARY_TAG;
+function resolveTagName(expected: CustomElementConstructor): typeof PRIMARY_TAG | typeof FALLBACK_TAG {
+  const registered = globalThis.customElements?.get(PRIMARY_TAG);
+  if (!registered || registered === expected) return PRIMARY_TAG;
 
   if (__DEV__) {
     console.warn(
@@ -26,15 +28,21 @@ function resolveTagName(): typeof PRIMARY_TAG | typeof FALLBACK_TAG {
 }
 
 export class MuxAudioElement extends MuxAudio {
-  static readonly tagName = resolveTagName();
+  static readonly tagName: typeof PRIMARY_TAG | typeof FALLBACK_TAG = resolveTagName(MuxAudioElement);
 }
 
 safeDefine(MuxAudioElement);
 
 declare global {
+  /** The Mux audio flavors in the build — see `../mux-video/spf` for why. */
+  interface MuxAudioFlavors {
+    spf: MuxAudioElement;
+  }
+
   interface HTMLElementTagNameMap {
-    // Only the fallback is declared: `mux-audio` is already mapped to the
-    // hls.js-backed element, and an interface can't merge two types for one key.
-    'mux-audio-spf': MuxAudioElement;
+    [PRIMARY_TAG]: MuxAudioFlavors[keyof MuxAudioFlavors];
+    // The fallback registration is conditional, so the tag resolves to `never`
+    // unless the flavor it steps aside for is in the build too.
+    [FALLBACK_TAG]: 'hlsjs' extends keyof MuxAudioFlavors ? MuxAudioElement : never;
   }
 }

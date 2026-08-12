@@ -8,7 +8,12 @@ export class MuxVideoElement extends MuxVideo {
 safeDefine(MuxVideoElement);
 
 declare global {
+  /** The Mux video flavors in the build — see `./spf` for why. */
+  interface MuxVideoFlavors {
+    hlsjs: MuxVideoElement;
+  }
+
   interface HTMLElementTagNameMap {
-    [MuxVideoElement.tagName]: MuxVideoElement;
+    [MuxVideoElement.tagName]: MuxVideoFlavors[keyof MuxVideoFlavors];
   }
 }
