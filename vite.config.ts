@@ -20,6 +20,7 @@ const ignoredPaths = [
   '**/packages/html/cdn/**',
   '**/styles/vjs.css',
   '**/packages/*/types/**',
+  'packages/core/src/core/ui/components.generated.ts',
 ];
 
 export default defineConfig({
