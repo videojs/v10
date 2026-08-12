@@ -7,12 +7,11 @@
   --media-current-shadow-color: oklch(from currentColor 0 0 0 / clamp(0, calc((l - 0.5) * 0.5), 0.15));
   --media-current-shadow-color-subtle: oklch(from var(--media-current-shadow-color) l c h / calc(alpha * 0.4));
   --scrollbar-thumb-color: oklch(from currentColor l c h / 0.3);
-
-  /* Scaling (used in video fullscreen) */
+  /* Scaling - used in video fullscreen to scale the UI. */
   --scale: 1;
-  /* What value and unit to use - 1rem assumes the document font size remains at the default 16px */
-  --base-size: 1rem;
-  --size: calc(var(--base-size) * var(--scale));
+  /* Fixed scaling unit to avoid inheriting the document's root font size. This must be a CSS <length>. */
+  --scale-unit: var(--media-scale-unit, 16px);
+  --size: calc(var(--scale-unit) * var(--scale));
   /* Create a Tailwind-like spacing unit */
   --spacing: calc(var(--size) / 4);
   --font-size-medium: calc(0.9375 * var(--size)); /* 15px */
