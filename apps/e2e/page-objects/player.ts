@@ -132,6 +132,12 @@ export class PlayerPage {
   /** Wait for the player to load media and show controls. */
   async waitForMediaReady({ muted = true }: { muted?: boolean } = {}): Promise<void> {
     await this.playButton.waitFor({ state: 'attached', timeout: 20_000 });
+    await this.playButton.evaluate(async (element) => {
+      if (element.localName.includes('-')) {
+        await customElements.whenDefined(element.localName);
+        await (element as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete;
+      }
+    });
 
     // Wait for the media element to have at least metadata loaded.
     // SPF-based renderers (simple-hls-video) with preload="metadata" need
@@ -266,6 +272,8 @@ export class PlayerPage {
     if (!box) throw new Error('Play button not visible — cannot show controls');
 
     await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
-    await this.page.waitForTimeout(200);
+    if ((await this.videoPlayer.count()) > 0) {
+      await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
+    }
   }
 }
