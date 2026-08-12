@@ -48,11 +48,10 @@ export interface BackgroundVideoMediaAPI extends BackgroundVideoMediaProps {
  * - drives the underlying engine with the background-video
  *   composition (single-rendition, video-only, autoplay-from-construction).
  *
- * A new engine is created on every src assignment — this fully tears down
- * all state, SourceBuffers, and in-flight requests from the previous
- * source before the next one begins. The media element reference is
- * preserved across src changes and re-applied to the new engine
- * automatically.
+ * A new src re-resolves the presentation, tearing down the state,
+ * SourceBuffers, and in-flight requests the previous one built before the next
+ * begins. The engine instance and the attached media element are both kept, so
+ * neither has to be rewired.
  *
  * @example
  * class BackgroundVideoMedia extends BackgroundVideoMediaMixin(HTMLVideoElementHost) {}
@@ -135,8 +134,6 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
 
     // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // Each assignment destroys the current engine and starts a fresh one,
-    // matching the browser's load algorithm reset on src change.
     // -------------------------------------------------------------------------
 
     get src(): string {

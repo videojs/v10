@@ -1,10 +1,10 @@
 /**
  * BackgroundVideoMediaElement adapter tests.
  *
- * Covers the HTMLMediaElement-compatible contract for src, preload, loop,
- * muted, and play(). Adapter-shape parallels SimpleHlsMediaElement; the
- * tests focus on what diverges: the new adapter owns `loop` / `muted`
- * passthroughs and defaults both to true (autoplay-muted, looping).
+ * Covers the HTMLMediaElement-compatible contract for `src` and `play()`.
+ * Adapter-shape parallels SimpleHlsMediaElement; the tests focus on what
+ * diverges: silent autoplay-looping playback is fixed on the element at attach
+ * rather than exposed, and `maxResolution` caps the rendition the engine pins.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MaybeResolvedPresentation } from '../../../../media/types';
