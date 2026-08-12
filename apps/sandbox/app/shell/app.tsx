@@ -9,8 +9,10 @@ import {
   DEFAULT_SOURCE,
   HLS_SOURCE_IDS,
   isDrmSource,
+  isMuxSource,
   MP4_SOURCE_IDS,
   MUX_SOURCE_IDS,
+  MUX_SPF_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
   SIMPLE_HLS_SOURCE_IDS,
   SOURCES,
@@ -72,18 +74,22 @@ export function App() {
   // reaches it.
   const structuredSource = platform !== 'cdn';
   const hlsPreset = preset === 'hlsjs-video' || preset === 'native-hls-video';
+  const muxPreset = preset === 'mux-video' || preset === 'mux-audio';
+  const muxSpfPreset = preset === 'mux-video-spf' || preset === 'mux-audio-spf';
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
       : preset === 'dash-video'
         ? DASH_SOURCE_IDS
-        : structuredSource && preset === 'mux-video'
+        : structuredSource && muxPreset
           ? MUX_SOURCE_IDS
           : structuredSource && hlsPreset
             ? HLS_SOURCE_IDS
-            : preset.startsWith('simple-hls-') || preset === 'mux-video-spf' || preset === 'mux-audio-spf'
-              ? SIMPLE_HLS_SOURCE_IDS
-              : NON_DASH_SOURCE_IDS;
+            : structuredSource && muxSpfPreset
+              ? MUX_SPF_SOURCE_IDS
+              : preset.startsWith('simple-hls-') || muxSpfPreset
+                ? SIMPLE_HLS_SOURCE_IDS
+                : NON_DASH_SOURCE_IDS;
 
   // Keep the URL in sync with all state.
   useEffect(() => {
@@ -151,9 +157,10 @@ export function App() {
     }
   }, [preset, source]);
 
-  // Constrain source away from DRM the preset cannot license
+  // Constrain source away from DRM the preset cannot license, and away from a
+  // playback ID a non-Mux preset has no URL for.
   useEffect(() => {
-    if (isDrmSource(source) && !availableSources.includes(source)) {
+    if ((isDrmSource(source) || isMuxSource(source)) && !availableSources.includes(source)) {
       setSource(DEFAULT_SOURCE);
     }
   }, [availableSources, source]);

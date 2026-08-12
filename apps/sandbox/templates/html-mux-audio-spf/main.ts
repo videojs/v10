@@ -40,11 +40,16 @@ async function render() {
 
   const mediaAttrs = renderMediaAttrs(state);
 
+  // A source carrying signed tokens has no room in the `src` attribute, so it is
+  // assigned as an object below instead.
+  const { source, url } = SOURCES[state.source];
+  const srcAttr = source ? '' : ` src="${url}"`;
+
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <mux-audio${srcAttr} ${mediaAttrs} crossorigin="anonymous"></mux-audio>
           <!--
             Both are opt-in media components, and no env key is needed for Mux-hosted sources.
             Mux Data monitors this flavor from the media element alone: its engine integrations are
@@ -56,6 +61,12 @@ async function render() {
       </audio-player>
     </div>
   `);
+
+  // `source.drm` is accepted but inert here: SPF prunes encrypted renditions and
+  // reports unsupported DRM rather than fetching a license.
+  if (source) {
+    document.querySelector('mux-audio')!.source = source;
+  }
 }
 
 render();
