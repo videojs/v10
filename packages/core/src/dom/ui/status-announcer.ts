@@ -1,4 +1,4 @@
-import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/status-announcer-core';
+import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/core';
 import { getMediaSnapshot, type MediaSnapshotStore } from './input-action';
 import { isSliderFocused } from './slider-focus';
 

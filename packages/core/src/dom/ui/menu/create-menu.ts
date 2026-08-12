@@ -1,8 +1,8 @@
 import type { State } from '@videojs/store';
-import type { MenuInput, MenuState } from '../../../core/ui/menu/menu-core';
-import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
-import { MenuItemDataAttrs } from '../../../core/ui/menu/menu-item-data-attrs';
-import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
+import type { MenuInput, MenuState } from '../../../core/ui/menu/core';
+import { MenuItemDataAttrs } from '../../../core/ui/menu/item-data';
+import { MenuCSSVars } from '../../../core/ui/menu/vars';
+import { PopoverCSSVars } from '../../../core/ui/popover/vars';
 import type { UIFocusEvent, UIKeyboardEvent } from '../event';
 import { createPopover, type PopoverChangeDetails, type PopoverOpenChangeReason } from '../popover/popover';
 import type { PositioningCSSVars, PositioningOptions } from '../popover/popover-positioning';

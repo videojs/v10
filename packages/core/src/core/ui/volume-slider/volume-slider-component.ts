@@ -1,7 +1,7 @@
 import { defineComponent } from '@videojs/jsx';
 import type { SliderValueProps } from '../slider/slider-component';
-import type { VolumeSliderProps } from './volume-slider-core';
-import { VolumeSliderDataAttrs } from './volume-slider-data-attrs';
+import type { VolumeSliderProps } from './core';
+import { VolumeSliderDataAttrs } from './data';
 
 export default defineComponent({
   name: 'VolumeSlider',

@@ -1,7 +1,7 @@
 import type { MediaTextCue } from '@videojs/media';
 import { findRangeAt } from '@videojs/utils/array';
 import { toPercent } from '@videojs/utils/number';
-import type { SliderSegmentRange, SliderSegmentState } from '../../slider/slider-segments-core';
+import type { SliderSegmentRange, SliderSegmentState } from '../../slider/segments-core';
 
 import type { TimeSliderChapterRange, TimeSliderChapterState } from './types';
 

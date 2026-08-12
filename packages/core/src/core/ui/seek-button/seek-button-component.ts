@@ -1,6 +1,6 @@
 import { defineComponent } from '@videojs/jsx';
-import type { SeekButtonProps } from './seek-button-core';
-import { SeekButtonDataAttrs } from './seek-button-data-attrs';
+import type { SeekButtonProps } from './core';
+import { SeekButtonDataAttrs } from './data';
 
 export default defineComponent<SeekButtonProps>({
   name: 'SeekButton',

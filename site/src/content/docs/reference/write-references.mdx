@@ -16,7 +16,7 @@ Reference pages use the portable `write-api-reference` agent skill. Invoke `/wri
 
 Before creating a reference page, the component must exist in:
 
-- **Core**: `packages/core/src/core/ui/{name}/{name}-core.ts` (props, state, behavior)
+- **Core**: `packages/core/src/core/ui/{name}/core.ts` (props, state, behavior)
 - **HTML**: `packages/html/src/ui/{name}/` (custom element)
 - **React**: `packages/react/src/ui/{name}/` (React component)
 
@@ -38,11 +38,15 @@ The builder relies on file naming conventions to discover components:
 
 | Convention | Pattern | Example |
 |------------|---------|---------|
-| Core file | `{name}-core.ts` | `play-button-core.ts` |
-| Data attrs | `{name}-data-attrs.ts` | `play-button-data-attrs.ts` |
+| Core file | `core.ts` | `packages/core/src/core/ui/play-button/core.ts` |
+| Data attrs | `data.ts` | `packages/core/src/core/ui/play-button/data.ts` |
+| CSS vars | `vars.ts` | `packages/core/src/core/ui/slider/vars.ts` |
 | HTML element | `{name}-element.ts` | `play-button-element.ts` |
 | React component | `packages/react/src/ui/{name}/` | `packages/react/src/ui/play-button/` |
 | Multi-part detection | `index.parts.ts` | `packages/react/src/ui/slider/index.parts.ts` |
+
+Qualified helpers keep their qualifier, such as `segments-core.ts`. Additional part-scoped data attribute files use
+`{qualifier}-data.ts`, such as `item-data.ts`.
 
 If the builder output is missing or incomplete, check that your files match these conventions. See `.agents/skills/write-api-reference/references/builder-conventions.md` for the full list.
 

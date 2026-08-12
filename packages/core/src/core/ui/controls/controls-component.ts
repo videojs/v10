@@ -1,5 +1,5 @@
 import { defineComponent } from '@videojs/jsx';
-import { ControlsDataAttrs } from './controls-data-attrs';
+import { ControlsDataAttrs } from './data';
 
 export default defineComponent({
   name: 'Controls',

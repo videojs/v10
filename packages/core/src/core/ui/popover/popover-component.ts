@@ -1,6 +1,6 @@
 import { defineComponent } from '@videojs/jsx';
-import type { PopoverProps } from './popover-core';
-import { PopoverDataAttrs } from './popover-data-attrs';
+import type { PopoverProps } from './core';
+import { PopoverDataAttrs } from './data';
 
 export default defineComponent({
   name: 'Popover',
