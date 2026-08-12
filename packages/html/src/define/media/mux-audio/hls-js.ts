@@ -1,4 +1,4 @@
-import { MuxAudio } from '../../../media/mux-audio/hls-js-media';
+import { MuxAudio } from '../../../media/mux-audio/hls-js';
 import { safeDefine } from '../../safe-define';
 
 export class MuxAudioElement extends MuxAudio {

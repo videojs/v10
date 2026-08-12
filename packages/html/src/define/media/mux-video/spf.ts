@@ -1,4 +1,4 @@
-import { MuxVideo } from '../../../media/mux-video/spf-media';
+import { MuxVideo } from '../../../media/mux-video/spf';
 import { safeDefine } from '../../safe-define';
 
 export class MuxVideoElement extends MuxVideo {

@@ -1,4 +1,4 @@
-import { MuxAudio } from '../../../media/mux-audio/spf-media';
+import { MuxAudio } from '../../../media/mux-audio/spf';
 import { safeDefine } from '../../safe-define';
 
 export class MuxAudioElement extends MuxAudio {

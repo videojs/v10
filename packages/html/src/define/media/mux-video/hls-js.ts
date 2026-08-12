@@ -1,4 +1,4 @@
-import { MuxVideo } from '../../../media/mux-video/hls-js-media';
+import { MuxVideo } from '../../../media/mux-video/hls-js';
 import { safeDefine } from '../../safe-define';
 
 export class MuxVideoElement extends MuxVideo {
