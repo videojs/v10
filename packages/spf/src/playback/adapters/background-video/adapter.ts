@@ -199,6 +199,11 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
     }
 
     set src(value: string) {
+      // Same line the HLS Medias draw: the presentation is set from a fresh
+      // object every time, so re-resolving a URL already playing would restart
+      // it for no reason.
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
 
       if (value) {
