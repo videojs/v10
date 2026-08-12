@@ -277,7 +277,13 @@ export class PlayerPage {
     const box = await btn.boundingBox();
     if (!box) throw new Error('Play button not visible — cannot show controls');
 
-    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    const x = box.x + box.width / 2;
+    const y = box.y + box.height / 2;
+
+    // The preceding action may have left the pointer at the button center.
+    // Move away first so returning to the center always resets the idle timer.
+    await this.page.mouse.move(x - 1, y);
+    await this.page.mouse.move(x, y);
     if ((await this.videoPlayer.count()) > 0) {
       await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
     }
