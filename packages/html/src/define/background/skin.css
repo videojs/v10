@@ -14,14 +14,16 @@ background-video-skin {
 }
 
 /*
- * Every background media the skin can hold. Selected by tag because that is what
- * a background media is here — there is no shared base element or attribute to
- * key on — so a new flavor has to be added to this list or it renders at 0×0:
- * the element gets no box, and the `<video>` inside it is absolutely positioned
- * against that box.
+ * Whatever the skin holds that isn't the placeholder image is the media, and gets
+ * stretched over the host. Matched by what it is *not*, because there is no shared
+ * base element or attribute the media flavors have in common — naming them by tag
+ * meant a new one silently rendered at 0×0, having no box for its inner `<video>`
+ * to be positioned against.
+ *
+ * `:not()` takes the specificity of its most specific argument, so this stays at
+ * (0,0,2) — exactly where the tag-name selectors it replaces were.
  */
-background-video-skin > background-video,
-background-video-skin > mux-background-video {
+background-video-skin > :not(img, picture) {
   position: absolute;
   inset: 0;
   width: 100%;
