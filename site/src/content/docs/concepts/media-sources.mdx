@@ -42,7 +42,7 @@ The shape answers one question: does this option describe the source, or how to 
 |---|---|---|
 | Which source to play | `source.src`, or an element's own identity fields | `src`, `MuxVideo`'s `playbackId` |
 | How to interpret it | `source.type` | `'video/mp4'` |
-| How Video.js plays it | `source`, at the top level | `preferPlayback` |
+| How Video.js plays it | `source`, at the top level | `preferPlayback`, `maxAutoResolution` |
 | How a specific engine behaves | `source.engine`, under that engine's name | hls.js's `maxBufferLength`, in `source.engine.hlsJs` |
 | A side-car component's own settings | that component's props | <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>, <DocsLink slug="concepts/cast">Google Cast</DocsLink> |
 
@@ -213,6 +213,26 @@ video.source = { src: 'https://example.com/stream.m3u8', preferPlayback: 'native
 
 It's a preference, not a demand — Video.js falls back to whichever path can actually play the source. `HlsJsVideo`, `MuxVideo`, and `MuxAudio` accept it; DASH and Vimeo have no second playback path.
 
+`maxAutoResolution` caps the highest rendition adaptive bitrate selection reaches for on its own:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<HlsJsVideo source={{ src: 'https://example.com/stream.m3u8', maxAutoResolution: '720p' }} />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = { src: 'https://example.com/stream.m3u8', maxAutoResolution: '720p' };
+```
+</FrameworkCase>
+
+The cap limits automatic selection without hiding anything. Renditions above it stay in `videoRenditions`, so a viewer can still choose 1080p by hand. Reach for it to hold down bandwidth on a stream that would otherwise climb to 4K, or to keep a background or thumbnail player cheap.
+
+Renditions are matched on pixel area rather than height, which keeps unusual aspect ratios honest: an ultrawide 2560×1080 rendition carries more pixels than 16:9 1080p, so a `'1080p'` cap leaves it out. When every rendition sits above the cap, the smallest one plays.
+
+Changing the cap applies to the running engine, so playback continues uninterrupted. It needs the hls.js engine — native HLS playback ignores it, and audio-only streams have no video renditions to cap.
+
 ## DRM protected sources
 
 Protected content is licensed through `source.drm`, keyed by EME key system id — alongside the URL rather than inside an engine's namespace, because which engine plays the manifest is decided later and both paths read it:
@@ -313,6 +333,8 @@ video.source = {
 };
 ```
 </FrameworkCase>
+
+`playback` params ride along in the URL, so `playback.maxResolution` decides which renditions the manifest carries in the first place. `maxAutoResolution` is the other half of that pair: it caps what adaptive selection picks from the renditions that do arrive. Use `playback.maxResolution` when a viewer should never get 4K, and `maxAutoResolution` when they should be able to ask for it.
 
 Setting a Mux stream URL as `src` works too — the element parses the playback ID and query params back out into `source`. To play something Mux doesn't host, name it with `src` inside `source`; engine options still apply.
 

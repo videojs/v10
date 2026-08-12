@@ -193,6 +193,48 @@ describe('MuxMedia', () => {
     expect(loadstart).not.toHaveBeenCalled();
   });
 
+  it('inherits maxAutoResolution without restarting playback', async () => {
+    vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', maxAutoResolution: '1080p' };
+    await flushLoad();
+
+    const engine = media.engine;
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', maxAutoResolution: '720p' };
+    await flushLoad();
+
+    expect(media.source?.maxAutoResolution).toBe('720p');
+    expect(media.engine).toBe(engine);
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.destroy();
+  });
+
+  it('keeps the client-side cap separate from the server-side manifest filter', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    // `playback.maxResolution` asks Mux to leave higher renditions out of the
+    // manifest; `maxAutoResolution` caps what ABR picks from the ones that
+    // arrive. Only the former belongs in the URL.
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      playback: { maxResolution: '1080p' },
+      maxAutoResolution: '720p',
+    };
+    await flushLoad();
+
+    expect(media.src).toBe('https://stream.mux.com/abc123.m3u8?max_resolution=1080p');
+    expect(media.source?.maxAutoResolution).toBe('720p');
+
+    media.destroy();
+  });
+
   it('reloads when the playback id changes', async () => {
     const media = new MuxMedia();
     media.attach(document.createElement('video'));

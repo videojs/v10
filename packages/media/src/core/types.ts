@@ -28,6 +28,15 @@ export function TypedEventTarget<Events extends { [K in keyof Events]: EventLike
 
 export type MediaFeatureAvailability = 'available' | 'unavailable' | 'unsupported';
 
+/**
+ * Rendition height, as the `{height}p` shorthand streaming providers use.
+ *
+ * Options that accept one match renditions by pixel area rather than by
+ * literal height, so anamorphic variants land in the bucket their source
+ * material belongs to.
+ */
+export type MediaResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080p' | '1440p' | '2160p';
+
 // ----------------------------------------
 // Controls
 // ----------------------------------------

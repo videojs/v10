@@ -9,11 +9,12 @@ import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
 import type { DrmSystemsConfig } from '../../../core/drm';
-import type { MediaContentData } from '../../../core/types';
+import type { MediaContentData, MediaResolution } from '../../../core/types';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
-export type MuxResolution = '270p' | '360p' | '480p' | '540p' | '720p' | '1080p' | '1440p' | '2160p';
+/** Mux's rendition-height shorthand. Alias of {@link MediaResolution}. */
+export type MuxResolution = MediaResolution;
 export type MuxRenditionOrder = 'desc';
 export type MuxImageExt = 'webp' | 'jpg' | 'png';
 export type MuxPosterFitMode = 'preserve' | 'stretch' | 'crop' | 'smartcrop' | 'pad';

@@ -23,6 +23,25 @@ describe('MuxVideo', () => {
     expect(el.hasAttribute('source')).toBe(false);
   });
 
+  it('carries maxAutoResolution through the source property', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123', preferPlayback: 'native', maxAutoResolution: '720p' };
+
+    expect(el.source?.maxAutoResolution).toBe('720p');
+    // Normalized source options ride the property; no attribute is reflected.
+    expect(el.hasAttribute('maxautoresolution')).toBe(false);
+  });
+
+  it('keeps maxAutoResolution when the src attribute changes', () => {
+    const el = createMuxVideo();
+
+    el.source = { playbackId: 'abc123', preferPlayback: 'native', maxAutoResolution: '720p' };
+    el.setAttribute('src', 'https://stream.mux.com/other.m3u8');
+
+    expect(el.source?.maxAutoResolution).toBe('720p');
+  });
+
   it('keeps engine options when the src attribute changes', () => {
     const el = createMuxVideo();
 

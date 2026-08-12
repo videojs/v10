@@ -74,6 +74,12 @@ describe('MuxVideo', () => {
     expect(media.source?.engine?.hlsJs).toEqual({ maxBufferLength: 60 });
   });
 
+  it('forwards maxAutoResolution from the source prop to the media', () => {
+    const { media } = renderWithMedia(<MuxVideo source={{ playbackId: 'abc123', maxAutoResolution: '720p' }} />);
+
+    expect(media.source?.maxAutoResolution).toBe('720p');
+  });
+
   it('adds a storyboard track inferred from the source prop', () => {
     const { container } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 

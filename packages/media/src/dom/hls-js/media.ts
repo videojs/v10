@@ -3,12 +3,14 @@ import Hls, { type HlsConfig as HlsJsConfig } from 'hls.js';
 import { bridgeEvents } from '../../core/bridge-events';
 import { type DrmSystemsConfig, KeySystems } from '../../core/drm';
 
-import { type MediaStreamType, MediaStreamTypes } from '../../core/types';
+import { type MediaResolution, type MediaStreamType, MediaStreamTypes } from '../../core/types';
 import { type NativeHlsConfig, NativeHlsMedia, type NativeHlsSource } from '../native-hls';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsOnlyMedia } from './hls-js-only';
 
 export type PreloadType = '' | 'none' | 'metadata' | 'auto';
+
+export type { MediaResolution };
 
 export { Hls };
 
@@ -64,6 +66,22 @@ export interface HlsSource {
    * license server for — which one is used is the browser's choice.
    */
   drm?: DrmSystemsConfig | undefined;
+  /**
+   * Highest resolution adaptive bitrate selection may choose on its own.
+   *
+   * A ceiling on automatic selection, not a filter on what is available:
+   * renditions above it stay in `videoRenditions` and can still be selected by
+   * hand. Matching is by pixel area, so a `'720p'` cap admits any rendition at
+   * or below 1280×720 worth of pixels. When every rendition sits above the cap,
+   * the smallest one is used.
+   *
+   * Applied live — changing it never rebuilds the playback engine. Requires the
+   * hls.js (MSE) engine; native HLS playback ignores it.
+   *
+   * For Mux sources this is distinct from `playback.maxResolution`, which asks
+   * Mux to leave higher renditions out of the manifest altogether.
+   */
+  maxAutoResolution?: MediaResolution | undefined;
   /**
    * Playback options, keyed by the engine that reads them. Only one of the two
    * engines below ends up playing, and each reads only its own key.
@@ -183,12 +201,13 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   set src(src: string) {
     // `src` says which source to play; every other field says how to play it, so
     // they carry over.
-    const { type, preferPlayback, drm, engine } = this.#source ?? {};
+    const { type, preferPlayback, drm, engine, maxAutoResolution } = this.#source ?? {};
     const next: HlsSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
       ...(drm && { drm }),
       ...(engine && { engine }),
+      ...(maxAutoResolution && { maxAutoResolution }),
       ...(src && { src }),
     };
 
@@ -220,6 +239,10 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
     this.#source = source;
     this.#src = src;
+
+    // Deliberately outside the engine config key below, so it reaches the engine
+    // already running.
+    this.#applyRenditionCaps();
 
     // Assigning is always a source change, so it is always announced.
     this.dispatchEvent(new Event('sourcechange'));
@@ -295,10 +318,16 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       // Read the stored source, not the `source` getter: subclasses override the
       // getter to return what was assigned to them, while the fields below come
       // from what they resolved and handed down (Mux fills in the DRM options).
-      const { type, preferPlayback, drm, engine } = this.#source ?? {};
+      const { type, preferPlayback, drm, engine, maxAutoResolution } = this.#source ?? {};
       const { hlsJs, nativeHls } = engine ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
+
+      if (__DEV__ && !useMse && maxAutoResolution) {
+        console.warn(
+          '[vjs-media] `maxAutoResolution` requires the hls.js (MSE) engine; native HLS playback ignores it.'
+        );
+      }
 
       this.#delegate = useMse
         ? new HlsJsOnlyMedia({ config: withDrmSystems(hlsJs, drm) })
@@ -313,6 +342,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       }
 
       this.#delegate.preload = this.preload;
+      this.#applyRenditionCaps();
 
       if (this.#mediaElement) {
         this.#delegate.attach(this.#mediaElement);
@@ -360,6 +390,13 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
 
     if (Object.keys(source).length > 0) media.source = source;
     return media;
+  }
+
+  /** Push the source's rendition caps down; only the hls.js engine has a lever. */
+  #applyRenditionCaps() {
+    if (this.#delegate instanceof HlsJsOnlyMedia) {
+      this.#delegate.maxAutoResolution = this.#source?.maxAutoResolution;
+    }
   }
 
   #stopTargetLoadStartEvent = (event: Event) => {

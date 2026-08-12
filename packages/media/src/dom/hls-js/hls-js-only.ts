@@ -5,11 +5,13 @@ import { MediaTracksMixin, type WithMediaTracks } from '../../core/media-tracks'
 import type {
   MediaEngineHost,
   MediaLiveCapability,
+  MediaResolution,
   MediaSourceCapability,
   MediaStreamTypeCapability,
 } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaAirPlayMixin } from './airplay-bridge';
+import { createCapLevelController, type RenditionCapPolicy } from './cap-level';
 import { setupDrm } from './drm';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaLiveMixin } from './live';
@@ -35,12 +37,16 @@ export interface HlsJsOnlyMediaParams {
 
 class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
+  #capPolicy: RenditionCapPolicy = { maxAutoResolution: undefined };
 
   constructor(params: HlsJsOnlyMediaParams) {
     super();
+    const config = { ...defaultHlsConfig, ...params.config };
     this.#engine = new Hls({
-      ...defaultHlsConfig,
-      ...params.config,
+      ...config,
+      // Layered over whatever controller the config already names, so a
+      // `capLevelController` passed through `source.engine` keeps working.
+      capLevelController: createCapLevelController(this.#capPolicy, config.capLevelController),
     });
 
     setupDrm(this.#engine);
@@ -48,6 +54,17 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
 
   get engine() {
     return this.#engine;
+  }
+
+  /** Ceiling on automatic rendition selection. See `HlsSource.maxAutoResolution`. */
+  get maxAutoResolution(): MediaResolution | undefined {
+    return this.#capPolicy.maxAutoResolution;
+  }
+
+  set maxAutoResolution(value: MediaResolution | undefined) {
+    if (this.#capPolicy.maxAutoResolution === value) return;
+    this.#capPolicy.maxAutoResolution = value;
+    this.#capPolicy.controller?.apply();
   }
 
   get src() {
