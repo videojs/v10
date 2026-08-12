@@ -228,7 +228,7 @@ for (const { name, path } of UI_VIDEO_PAGES) {
     test('controls remain visible while the settings menu is open', async ({ page }) => {
       await player.play();
       await player.showControls();
-      await player.settingsButton.dispatchEvent('click');
+      await player.settingsButton.click();
       await expect(player.settingsSpeedItem).toBeVisible();
 
       await page.waitForTimeout(2_500);
