@@ -313,8 +313,8 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
 
   /**
    * Structured source: the YouTube URL or ID in `src`, plus player parameters
-   * under `engine`. Replacing it re-derives `src`; assigning an equivalent source
-   * is a no-op.
+   * under `engine.youtube`. Replacing it re-derives `src`; assigning an
+   * equivalent source is a no-op.
    */
   get source(): YouTubeSource | null {
     return this.#source;
@@ -329,7 +329,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     const srcChanged = this.#src !== src;
     // Player parameters are read when the embed is built, so a change to them
     // needs a reload of its own even though the URL is the same.
-    const engineChanged = !deepEqual(this.#source?.engine ?? null, source?.engine ?? null);
+    const engineChanged = !deepEqual(this.#source?.engine?.youtube ?? null, source?.engine?.youtube ?? null);
 
     this.#source = source;
     this.#src = src;

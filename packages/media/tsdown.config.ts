@@ -7,6 +7,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'neutral'),
   entry: {
     index: './src/core/index.ts',
+    'media-tracks': './src/core/media-tracks/index.ts',
     dom: './src/dom/index.ts',
     'dom/audio-host/index': './src/dom/audio-host/index.ts',
     'dom/media-host/index': './src/dom/media-host/index.ts',
@@ -16,11 +17,10 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/dash/index': './src/dom/dash/index.ts',
     'dom/hls-js/index': './src/dom/hls-js/index.ts',
     'dom/native-hls/index': './src/dom/native-hls/index.ts',
-    'dom/simple-hls-audio-only/index': './src/dom/simple-hls-audio-only/index.ts',
-    'dom/simple-hls/index': './src/dom/simple-hls/index.ts',
     'dom/vimeo/index': './src/dom/vimeo/index.ts',
     'dom/youtube/index': './src/dom/youtube/index.ts',
     'dom/mux/index': './src/dom/mux/index.ts',
+    'dom/mux/source/index': './src/dom/mux/source/index.ts',
     'dom/google-cast/index': './src/dom/google-cast/index.ts',
   },
   define: {

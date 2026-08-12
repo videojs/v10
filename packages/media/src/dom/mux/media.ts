@@ -1,12 +1,26 @@
-import { HlsJsMedia } from '../hls-js';
+import { HlsJsMedia, type HlsSource } from '../hls-js';
+import { createMuxDrmSystems } from './drm';
 import {
-  createMuxDrmSystems,
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
-  type MuxSource,
+  type MuxDrmParams,
+  type MuxSourceBase,
   parseMuxVideoURL,
-} from './utils';
+} from './source';
+
+/**
+ * Structured Mux source for the hls.js-backed Media: Mux identity and params
+ * from {@link MuxSourceBase}, plus everything the HLS layer takes — `type`,
+ * `preferPlayback`, and its `engine` config.
+ */
+export interface MuxSource extends HlsSource, MuxSourceBase {
+  /**
+   * The inherited license servers, or a Mux license `token` to derive them from.
+   * Redeclared because both halves name `drm`, and Mux's is the wider of the two.
+   */
+  drm?: MuxDrmParams | undefined;
+}
 
 export interface MuxMediaProps {
   src: string;
@@ -60,10 +74,10 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * params). A `playback.token` replaces all other params — signed URLs bake
    * them into the token. Engine options live under `engine`.
    *
-   * A `drm.token` fills in the inherited `engine.drmSystems` with Mux's
-   * FairPlay, Widevine, and PlayReady license servers for this playback ID.
-   * Naming `engine.drmSystems` yourself overrides that, for content Mux does
-   * not license.
+   * A `drm.token` fills in `drm` itself: Mux's FairPlay, Widevine, and
+   * PlayReady license servers for this playback ID, so protected media plays
+   * whichever path the browser takes. License servers named alongside the token
+   * win, key by key, for content Mux does not license.
    */
   get source(): MuxSource | null {
     return this.#source;
@@ -83,7 +97,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
     super.source = source && {
       ...source,
       src: createMuxVideoURL(source) ?? source.src ?? '',
-      engine: withMuxDrm(source),
+      ...withMuxDrm(source),
     };
   }
 
@@ -109,13 +123,17 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
 }
 
 /**
- * Fold Mux's derived license servers into the engine config, switching EME on
- * so hls.js listens for `encrypted`. Whatever the caller set under `engine`
- * wins, key by key, so `drmSystems` of their own replaces the derived set.
+ * Resolve Mux's DRM authoring input into the license servers the HLS layer
+ * licenses from. Which engine ends up playing is decided later, and both read
+ * `drm`, so a signed Mux source plays either way.
+ *
+ * `token` is Mux's own input and stops here — it names no license server, and a
+ * key system is what everything downstream expects to find. Servers the caller
+ * named win, key by key, so their own licensing replaces the derived URLs.
  */
-function withMuxDrm(source: MuxSource): MuxSource['engine'] {
-  const drmSystems = createMuxDrmSystems(source);
-  if (!drmSystems) return source.engine;
+function withMuxDrm(source: MuxSource): Pick<HlsSource, 'drm'> {
+  const { token: _token, ...systems } = source.drm ?? {};
+  const drm = { ...createMuxDrmSystems(source), ...systems };
 
-  return { emeEnabled: true, drmSystems, ...source.engine };
+  return { drm: Object.keys(drm).length > 0 ? drm : undefined };
 }

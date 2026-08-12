@@ -251,8 +251,15 @@ Focused workflows live as direct children of `.agents/skills/`; host-specific di
 | ------------------------ | ------------------------------------------------------- |
 | `design-api`             | Designing public APIs and TypeScript contracts          |
 | `review-api`             | Auditing API and architecture changes                   |
-| `build-ui-component`     | Building HTML or React components                       |
-| `review-ui-component`    | Reviewing component architecture                        |
+| `create-html-component`  | Building custom-element UI components                   |
+| `create-react-component` | Building React UI components                            |
+| `implement-ui-transition`| Implementing UI transition and rendered-presence logic  |
+| `review-html-component`  | Reviewing custom-element component architecture         |
+| `review-react-component` | Reviewing React component architecture                  |
+| `write-html-component-design`  | Writing custom-element component design records    |
+| `write-react-component-design` | Writing React component design records             |
+| `review-html-component-design` | Reviewing proposed custom-element designs           |
+| `review-react-component-design`| Reviewing proposed React component designs           |
 | `implement-accessible-ui`| Implementing accessible interaction                     |
 | `review-accessibility`   | Auditing accessibility                                  |
 | `write-docs`             | Writing guides, READMEs, and JSDoc                      |
@@ -277,11 +284,11 @@ When your changes introduce new patterns:
 
 We use two types of design documents:
 
-**Design Docs** (`internal/design/`) — Decisions you own, documented for posterity. Write one when making significant decisions in your area, choosing between approaches, or documenting architecture. See [`internal/design/README.md`](./internal/design/README.md).
+**Design Docs** (`internal/design/`) — Compact records of architecture or feature rationale that cannot be inferred from code and tests. Create one only when a maintainer explicitly requests it. See [`internal/design/README.md`](./internal/design/README.md).
 
 **RFCs** (`rfc/`) — Proposals needing buy-in from others. Write one when the decision affects multiple areas, changes shared API surface, or is hard to reverse. See [`rfc/README.md`](./rfc/README.md).
 
-**Rule of thumb:** If you need someone else's approval, it's an RFC. If you're documenting your own decision, it's a Design Doc.
+**Rule of thumb:** If you need someone else's approval, explicitly request an RFC. If you intentionally want durable rationale for a decision you own, explicitly request a Design Doc or decision record.
 
 **Skip both for:** Bug fixes, small contained features, implementation details.
 

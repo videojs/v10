@@ -292,13 +292,13 @@ document.getElementById('root')!.innerHTML = html\`
 `;
 }
 
-function ejectedHtmlPage(): string {
+function ejectedHtmlPage(resource: string): string {
   // Path from pages/ to the site content
   const jsonPath = '../../../../../../site/src/content/ejected-skins.json';
 
   return `import '@videojs/html/icons/element';
-import '@videojs/html/video/ui';
 import ejectedSkins from '${jsonPath}';
+import { MEDIA } from '../resources';
 
 interface EjectedSkinEntry {
   id: string;
@@ -324,6 +324,21 @@ if (!playerMatch) {
 
 const root = document.getElementById('root')!;
 root.innerHTML = \`<div style="max-width: 800px; aspect-ratio: 16/9">\${playerMatch[0]}</div>\`;
+
+const video = root.querySelector('video');
+const poster = root.querySelector('media-poster img');
+
+if (!video || !poster) {
+  throw new Error('Ejected skin "default-video" is missing video media.');
+}
+
+video.src = MEDIA.${resource}.url;
+video.crossOrigin = 'anonymous';
+video.innerHTML = \`<track kind="metadata" label="thumbnails" src="\${MEDIA.${resource}.storyboard}" default />\`;
+poster.src = MEDIA.${resource}.poster;
+poster.alt = 'Video poster';
+
+await import('@videojs/html/video/ui');
 `;
 }
 
@@ -460,7 +475,7 @@ function generatePage(page: PageDef): { ts: string; html: string; ext: string } 
   if (page.category === 'captions') {
     ts = captionsPage(page.resource);
   } else if (page.category === 'ejected-html') {
-    ts = ejectedHtmlPage();
+    ts = ejectedHtmlPage(page.resource);
   } else if (page.category === 'ejected-react') {
     ts = ejectedReactPage(page.resource);
   } else if (page.framework === 'react') {

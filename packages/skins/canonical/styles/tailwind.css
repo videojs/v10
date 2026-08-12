@@ -1,8 +1,8 @@
-@import "tailwindcss";
+@import "tailwindcss" theme(inline);
 @import "./base.css";
 @import "./themes/default.css";
 
-@source "../**/*.skin.tsx";
+@source "../**/*.tsx";
 @source "./**/*.tailwind.ts";
 
 @theme inline {

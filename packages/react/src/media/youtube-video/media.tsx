@@ -37,7 +37,7 @@ export const YouTubeVideo = forwardRef<HTMLIFrameElement, YouTubeVideoProps>(fun
       frameBorder={0}
       width="100%"
       height="100%"
-      referrerPolicy={props.source?.engine?.referrerPolicy}
+      referrerPolicy={props.source?.engine?.youtube?.referrerPolicy}
       {...iframeProps}
       ref={composedRef}
     >

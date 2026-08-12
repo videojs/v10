@@ -9,8 +9,8 @@
   align-items: center;
   container: media-time-controls / inline-size;
 
-  & .media-time:last-child {
-    @container media-time-controls (width < 10rem) {
+  & > .media-time:last-child {
+    @container media-time-controls (width < 16rem) {
       display: none;
     }
   }

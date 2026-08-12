@@ -1,6 +1,13 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
 import { getMuxAssetId } from './mux';
 
+export interface ChapterTrack {
+  label: string;
+  lang: string;
+  src: string;
+  isDefault: boolean;
+}
+
 export interface SandboxSource {
   label: string;
   /** Plain media URL. Absent when the source needs more than a URL can carry. */
@@ -17,6 +24,7 @@ export interface SandboxSource {
   poster?: string;
   /** Structured source, for what a plain `url` cannot express. Takes precedence. */
   source?: MuxSource;
+  chapters?: readonly ChapterTrack[];
 }
 
 // The two DRM sources below are the same Mux asset reached two ways, so the
@@ -36,6 +44,25 @@ const DRM_TOKENS = {
     'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InQiLCJleHAiOjIxNDc0ODM2NDd9.gzoiMPjqjRSS8F1PjrvaOX4a0J9m-L1Egx3DIQVWbTWr89T21cSMJI5mPKs89umv0f7tvZjHjIaUY6L1wmdGR3FwVBLj5nvWx1DPWayJvqZbIv-2DoSCbTdui5tsPvgxtAAfmX_GGvb1UB4apGY6njapHmzMT__oTHTKvAM8e4waJGswtv9cr6V3TE8ysSqdS3_Cbme5e69S3IULjLHl21JSrHK-ABY7IzNxLOoT8lbyh77P3NMw-jF2joRVQK6hZJnAMY99_k8K2hRmGEQRMw-NTtOeM1gWQar6-Ksb7ZOZidshCHHqI69iF_ricl-Csb_c4O3ai3BZLviM7ZXRVg',
   storyboard:
     'eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCIsImtpZCI6IndGcXlSYlRjZDZSaEJkMDJ3Wnd6YTAwR0htNnFVOUlQZTFJS1kwMHgzMDE2dUhBIn0.eyJzdWIiOiJGZWZoV25TTXpEcXo1ejl5eHNzaWhkUng4ZFY2c3JoWUo4MzAxdVFCaFJhayIsImF1ZCI6InMiLCJleHAiOjIxNDc0ODM2NDd9.Eh5a51KEYRbwWIvX7M3Z-9hMwmydt2XC9kq0m-oCmnSegnN0l-GOQoUvzFMOOCKJHbfVRTuLkEvoCjCgo1JEmTHKRDo7u_V5JDZbQf6xKjtJXlTEibNEi_wD3M_3DiuYYv3R5sNol97j-yGbJQ8_16HTv7muJhr7qI8S9sKr_zJgp_E0PyFBm6plaigWcDBMcXfcvK4I9IwTKBehlXw2sVy6eUarhmS_wtA6sNXJk8f2RG2fUnt6jq8HWQlpkrXTqJCDcQ69dwDzl_TOdDWWLN3dNBlmGyEjEZyHJD2podRdddV4Yu78_bq7ImCH05JpJqY_caX9seXS6uJh38HuIA',
+} as const;
+
+/**
+ * License servers for the DRM asset below, named outright rather than derived
+ * from a Mux token. `source.drm` is engine neutral, so naming every system here
+ * licenses whichever path the browser takes — native HLS reads the FairPlay
+ * entry and leaves the rest to hls.js.
+ */
+const DRM_SYSTEMS = {
+  'com.apple.fps': {
+    licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+    serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+  },
+  'com.widevine.alpha': {
+    licenseUrl: `https://license.mux.com/license/widevine/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+  },
+  'com.microsoft.playready': {
+    licenseUrl: `https://license.mux.com/license/playready/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
+  },
 } as const;
 
 const SOURCE_MAP = {
@@ -75,6 +102,20 @@ const SOURCE_MAP = {
     type: 'hls',
     subType: 'mp4',
   },
+  'hls-7': {
+    label: 'HLS - Dahlback Golf RSI (chapters)',
+    url: 'https://stream.mux.com/yH00b01Lj2z023hUQdEf6EpURPROSsvE1qWPnR8ShnbnI8.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+    chapters: [
+      {
+        label: 'English',
+        lang: 'en',
+        src: new URL('./chapters-en.vtt?no-inline', import.meta.url).href,
+        isDefault: true,
+      },
+    ],
+  },
   'hls-multi-audio': {
     label: 'HLS - Multi-language audio',
     url: 'https://stream.mux.com/s41JYeqIpBMBzE4OzxDyGR2yrp2hD1CQ6gJN9SlVGDQ.m3u8',
@@ -106,32 +147,16 @@ const SOURCE_MAP = {
     },
   },
   'hls-drm': {
-    // The same asset, licensed the generic way: hls.js's own `drmSystems`, keyed
-    // by EME key system id and naming each license server outright. Works on any
-    // hls.js-backed element, and shows what `source.engine` still reaches.
-    label: 'HLS - DRM protected (engine config)',
+    // The same asset, licensed the generic way: `source.drm` naming the license
+    // servers outright. Works on any HLS element, whichever path it takes.
+    label: 'HLS - DRM protected (license servers)',
     type: 'hls',
     subType: 'mp4',
     drm: true,
     poster: `https://image.mux.com/${DRM_PLAYBACK_ID}/thumbnail.webp?token=${DRM_TOKENS.thumbnail}`,
     source: {
       src: `https://stream.mux.com/${DRM_PLAYBACK_ID}.m3u8?token=${DRM_TOKENS.playback}`,
-      engine: {
-        // hls.js only listens for `encrypted` when EME is switched on.
-        emeEnabled: true,
-        drmSystems: {
-          'com.apple.fps': {
-            licenseUrl: `https://license.mux.com/license/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-            serverCertificateUrl: `https://license.mux.com/appcert/fairplay/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          },
-          'com.widevine.alpha': {
-            licenseUrl: `https://license.mux.com/license/widevine/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          },
-          'com.microsoft.playready': {
-            licenseUrl: `https://license.mux.com/license/playready/${DRM_PLAYBACK_ID}?token=${DRM_TOKENS.drm}`,
-          },
-        },
-      },
+      drm: DRM_SYSTEMS,
     },
   },
   'hls-live': {
@@ -206,8 +231,12 @@ export const SOURCES: Record<SourceId, SandboxSource> = SOURCE_MAP;
 
 export const SOURCE_IDS = Object.keys(SOURCES) as SourceId[];
 export const NON_DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'dash' && !isDrmSource(id));
-/** hls.js-backed presets add the DRM asset that names its license servers outright. */
-export const HLSJS_SOURCE_IDS = SOURCE_IDS.filter(
+/**
+ * HLS presets add the DRM asset that names its license servers outright. Both
+ * hls.js and native HLS read it, each from its own half of the source — which
+ * half depends on the path the browser ends up taking.
+ */
+export const HLS_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && id !== 'mux-drm' && id !== 'hls-drm-unlicensed'
 );
 /** Mux presets add the DRM asset licensed by a Mux token, which only they can read. */
@@ -273,4 +302,8 @@ export function getStoryboardSrc(source: SourceId): string | undefined {
   if (isLiveSource(source)) return undefined;
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/storyboard.vtt${imageQuery(source, 'storyboard')}` : undefined;
+}
+
+export function getChapters(source: SourceId): readonly ChapterTrack[] {
+  return SOURCES[source].chapters ?? [];
 }

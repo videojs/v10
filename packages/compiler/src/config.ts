@@ -59,28 +59,39 @@ export interface CompilerPlugin {
   setup?(context: CompilerContext): CompilerPipelineStep | Promise<CompilerPipelineStep>;
 }
 
-/** Per-target compile configuration for JSX transforms. */
-export interface JsxTargetOptions {
+/** Source transformations shared by JSX and HTML targets. */
+export interface CompilerTargetOptions {
   /** Per-source-module rewrite rules. */
   imports?: Record<string, ImportRule> | undefined;
   /** Transforms applied in order after `transformImports`. */
   transforms?: readonly CompilerTransform[] | undefined;
 }
 
-export interface CompilerTarget {
+export interface JsxTarget {
   name: 'jsx';
   imports?: Record<string, ImportRule> | undefined;
   transforms?: readonly CompilerTransform[] | undefined;
 }
 
+export interface HtmlTarget {
+  name: 'html';
+  imports?: Record<string, ImportRule> | undefined;
+  transforms?: readonly CompilerTransform[] | undefined;
+}
+
+export type CompilerTarget = JsxTarget | HtmlTarget;
+
+export type CompilerExternal = readonly string[] | ((source: string, importer: string | undefined) => boolean);
+
 export interface CompilerConfig {
   input?: CompilerInput | undefined;
+  external?: CompilerExternal | undefined;
   output?: CompilerOutputOptions | undefined;
   plugins?: readonly CompilerPlugin[] | undefined;
   target?: CompilerTarget | undefined;
 }
 
-export type CompilerProjectConfig = CompilerConfig | readonly CompilerConfig[];
+export type CompilerBuildConfig = CompilerConfig | readonly CompilerConfig[];
 
 export type CompilerInput = string | readonly string[] | Record<string, string>;
 
@@ -91,13 +102,22 @@ export interface CompilerOutputOptions {
   banner?: string | undefined;
 }
 
-export function defineConfig<const Config extends CompilerProjectConfig>(config: Config): Config {
+export function defineConfig<const Config extends CompilerBuildConfig>(config: Config): Config {
   return config;
 }
 
-export function jsx(options: JsxTargetOptions = {}): CompilerTarget {
+export function jsx(options: CompilerTargetOptions = {}): JsxTarget {
   return {
     name: 'jsx',
+    ...(options.imports ? { imports: options.imports } : {}),
+    ...(options.transforms ? { transforms: options.transforms } : {}),
+  };
+}
+
+/** Emit a statically rendered HTML entry when used with `build()`. */
+export function html(options: CompilerTargetOptions = {}): HtmlTarget {
+  return {
+    name: 'html',
     ...(options.imports ? { imports: options.imports } : {}),
     ...(options.transforms ? { transforms: options.transforms } : {}),
   };

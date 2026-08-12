@@ -3,6 +3,7 @@
    ========================================================================== */
 
 .media-default-skin .media-thumbnail {
+  position: relative;
   pointer-events: none;
   background-color: oklch(0 0 0 / 0.9);
   border-radius: calc(var(--spacing) * 3);
@@ -10,6 +11,8 @@
   & .media-thumbnail__image {
     position: relative;
     display: block;
+    max-width: var(--thumbnail-max-width);
+    max-height: var(--max-height);
     overflow: clip;
     border-radius: inherit;
 
@@ -20,13 +23,6 @@
       background-image: linear-gradient(to top, oklch(0 0 0 / 0.5), oklch(0 0 0 / 0.1), oklch(0 0 0 / 0));
       border-radius: inherit;
     }
-  }
-
-  & .media-thumbnail__time {
-    position: absolute;
-    inset-inline: 0;
-    bottom: calc(var(--spacing) * 2);
-    text-align: center;
   }
 
   & .media-thumbnail__spinner {
@@ -49,6 +45,11 @@
   }
 
   &:has(.media-thumbnail__image[data-loading]) {
+    width: var(--thumbnail-max-width);
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+
     & .media-thumbnail__image {
       opacity: 0;
     }

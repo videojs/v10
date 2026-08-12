@@ -1,0 +1,118 @@
+.media-container {
+  position: relative;
+}
+
+.media-container video {
+  width: 100%;
+}
+
+.media-time-slider {
+  position: absolute;
+  right: 12px;
+  bottom: 8px;
+  left: 12px;
+  display: flex;
+  align-items: center;
+  height: 20px;
+  color: white;
+  cursor: pointer;
+}
+
+.media-slider-chapters {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.media-slider-chapter {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  clip-path: inset(0 calc(100% - var(--media-slider-chapter-end)) 0 var(--media-slider-chapter-start));
+}
+
+.media-slider-track {
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 4px;
+  overflow: hidden;
+  background: rgb(255 255 255 / 30%);
+  border-radius: 9999px;
+  transition: height 150ms ease;
+}
+
+.media-slider-chapter .media-slider-track {
+  clip-path: inset(
+    0 calc(100% - var(--media-slider-chapter-end) + 2px) 0 calc(var(--media-slider-chapter-start) + 2px) round 9999px
+  );
+}
+
+.media-slider-chapter[data-highlighted] .media-slider-track {
+  height: 7px;
+}
+
+.media-slider-buffer,
+.media-slider-fill {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  border-radius: inherit;
+  transition: width 200ms linear;
+}
+
+.media-slider-buffer {
+  width: var(--media-slider-buffer);
+  background: rgb(255 255 255 / 30%);
+}
+
+.media-slider-fill {
+  width: var(--media-slider-fill);
+  background: white;
+}
+
+.media-time-slider[data-dragging] .media-slider-fill {
+  width: var(--media-slider-pointer);
+  transition-duration: 0ms;
+}
+
+.media-slider-thumb {
+  position: absolute;
+  top: 50%;
+  left: var(--media-slider-fill);
+  width: 12px;
+  height: 12px;
+  background: white;
+  border-radius: 50%;
+  translate: -50% -50%;
+}
+
+.media-time-slider[data-dragging] .media-slider-thumb {
+  left: var(--media-slider-pointer);
+}
+
+.media-slider-preview {
+  position: absolute;
+  bottom: 100%;
+  left: var(--media-slider-pointer);
+  display: flex;
+  gap: 6px;
+  padding: 3px 7px;
+  color: white;
+  white-space: nowrap;
+  pointer-events: none;
+  background: rgb(0 0 0 / 80%);
+  border-radius: 4px;
+  opacity: 0;
+  translate: -50% -4px;
+}
+
+.media-time-slider[data-pointing] .media-slider-preview,
+.media-time-slider[data-interactive]:not([data-pointing]) .media-slider-preview {
+  opacity: 1;
+}
+
+.media-slider-chapter-title:empty {
+  display: none;
+}

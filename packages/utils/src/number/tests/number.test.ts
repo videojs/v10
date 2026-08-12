@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { clamp, roundToStep } from '../number';
+import { clamp, roundToStep, toPercent } from '../number';
 
 describe('clamp', () => {
   it('returns value when within range', () => {
@@ -22,6 +22,24 @@ describe('clamp', () => {
   it('handles negative ranges', () => {
     expect(clamp(0, -10, -5)).toBe(-5);
     expect(clamp(-20, -10, -5)).toBe(-10);
+  });
+});
+
+describe('toPercent', () => {
+  it('converts a value within a range', () => {
+    expect(toPercent(30, 20, 60)).toBe(25);
+  });
+
+  it('clamps values outside the range', () => {
+    expect(toPercent(10, 20, 60)).toBe(0);
+    expect(toPercent(70, 20, 60)).toBe(100);
+  });
+
+  it('returns zero for an invalid range', () => {
+    expect(toPercent(10, 10, 10)).toBe(0);
+    expect(toPercent(10, 20, 10)).toBe(0);
+    expect(toPercent(10, 0, Number.POSITIVE_INFINITY)).toBe(0);
+    expect(toPercent(10, 0, Number.NaN)).toBe(0);
   });
 });
 

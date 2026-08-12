@@ -12,13 +12,31 @@ setup time, and `SimpleHlsMediaMixin` is the canonical adapter that
 maps a WHATWG HTMLMediaElement-shaped API onto those refs. The
 *audience* for this feature is adapter authors and contributors who
 need to drive the engine from outside — not end users, who see the
-adapter's API only through whatever wraps it (e.g.,
-`packages/core`'s `SimpleHlsMedia` class).
+adapter's API only through whatever wraps it (e.g., the
+`SimpleHlsMedia` class, or the custom elements built on it).
 
 The feature ships as a *pair*: the framework-level `shareSignals`
 mechanism + the canonical mixin. New adapter shapes (React hooks, RN
 bridges, etc.) would compose on top of `shareSignals` independently of
 the mixin.
+
+**Both halves live in `@videojs/spf`, and the Media is the package's
+public playback API.** SPF is unlike hls.js or dash.js in that it
+exposes no engine-shaped API for consumers to drive: the
+`@videojs/media` facade *is* how a composed engine is consumed, so SPF
+owns and ships that facade rather than leaving it to a downstream
+package. `@videojs/spf` therefore depends on `@videojs/media` (for the
+`ErrorLike` / `MediaStreamType` contracts, the element hosts, and the
+track-list infrastructure) — not the other way around — which is why
+`SimpleHlsMediaError` extends `ErrorLike` and `SimpleHlsMediaStreamType`
+*is* `MediaStreamType` rather than a structurally-compatible copy.
+
+The Medias ship behind their own entry points, `@videojs/spf/simple-hls`
+and `@videojs/spf/simple-hls-audio-only`, kept separate from
+`@videojs/spf/hls` so that wiring an engine directly pulls in neither a
+Media nor `@videojs/media`. That separation also keeps `./hls` measurable
+as the engine's own size budget: splitting the adapters out took it from
+20.40 KB to 19.08 KB gzipped, back under its 20 KB target.
 
 ## Status
 
@@ -33,7 +51,7 @@ the mixin.
 | Phase | What | Notes |
 |---|---|---|
 | Writable signal refs via `onSignalsReady` | `shareSignals` captures `Signal<T>` / `ReadonlySignal<T>` refs into a consumer-supplied callback at setup time. Generic over composition shape (`makeShareSignals<S, C>()`) | Per-slot read/write intent is expressed at the use site (callers type captured refs as `Signal<T>` or `ReadonlySignal<T>`). Composed last in the engine so initial state writes are visible to the consumer |
-| Mixin adapter pattern | `SimpleHlsMediaMixin` is the canonical consumer: function-of-base-class structure (mix into any base), captures refs once in `onSignalsReady`, exposes a WHATWG HTMLMediaElement-shaped API mapping each setter/method to engine writes | Downstream use: `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}` in `packages/media/src/dom/simple-hls/` |
+| Mixin adapter pattern | `SimpleHlsMediaMixin` is the canonical consumer: function-of-base-class structure (mix into any base), captures refs once in `onSignalsReady`, exposes a WHATWG HTMLMediaElement-shaped API mapping each setter/method to engine writes | Downstream use: `class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}` in `packages/spf/src/playback/adapters/simple-hls/` |
 | Media element binding | `attach(el)` writes `context.mediaElement`; `detach()` clears it. **Engine persists across attach/detach cycles** — only `src` reassignment or explicit `destroy()` tears it down | Re-attach to a different element is supported. The engine is the durable state holder; `mediaElement` is a context slot |
 | Source assignment via in-place recycling | Adapter's `set src` overwrites `state.presentation` on its single recycled engine (`{ url }`, or `undefined` for empty src). Media element + engine-wide preload persist; no engine recreation, no signal re-capture | Drives the engine's in-place source-replacement cascade — see [source-replacement.md](./source-replacement.md). (The adapter previously destroyed + recreated the engine per assignment.) |
 | Preload reflection | `set preload(value)` writes W3C values to `state.preload`; clearing (`preload = ''`) doesn't patch the current engine but is re-applied on the next src change. Pre-attach src + preload combinations are supported | Extended preload values flow through state but don't reach the DOM (per [`preload-modes`](./preload-modes.md)'s sticky-extended-values semantics) |
@@ -92,7 +110,7 @@ return createComposition(
 
 | Export | File | Role |
 |---|---|---|
-| `SimpleHlsMediaMixin<Base>` | `packages/spf/src/playback/engines/hls/adapter.ts` | Function-of-base-class mixin. Captures refs in `onSignalsReady`, exposes WHATWG HTMLMediaElement-shaped API |
+| `SimpleHlsMediaMixin<Base>` | `packages/spf/src/playback/adapters/simple-hls/adapter.ts` | Function-of-base-class mixin. Captures refs in `onSignalsReady`, exposes WHATWG HTMLMediaElement-shaped API |
 | `SimpleHlsMediaElement` | same | Standalone subclass: `SimpleHlsMediaMixin(class {})`. Bare-bones reference instance |
 | `SimpleHlsMediaProps` / `SimpleHlsMediaAPI` | same | The adapter's public-facing shape |
 
@@ -107,7 +125,7 @@ return createComposition(
 | `set preload(value)` | `state.preload.set(value)` (W3C values only; pre-empties stay engine-local) |
 | `play()` | `state.loadActivated.set(true)` → native `play()` with `loadstart` retry on "no supported sources" |
 
-**Downstream consumer:** `packages/media/src/dom/simple-hls/media.ts`:
+**Downstream consumer:** `packages/spf/src/playback/adapters/simple-hls/media.ts`:
 
 ```ts
 export class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
@@ -139,7 +157,7 @@ each `set src`).
 ## Verification
 
 - **Unit tests:**
-  - `packages/spf/src/playback/engines/hls/tests/adapter.test.ts` —
+  - `packages/spf/src/playback/adapters/simple-hls/tests/adapter.test.ts` —
     extensive coverage: src assignment / re-assignment / clear,
     engine recreation on src change, mediaElement preservation across
     src changes, play retry on `loadstart`, preload propagation,
@@ -150,7 +168,7 @@ each `set src`).
   - `packages/spf/src/core/composition/tests/share-signals.test.ts`
     — the behavior itself
 - **Downstream usage:**
-  - `packages/media/src/dom/simple-hls/media.ts` —
+  - `packages/spf/src/playback/adapters/simple-hls/media.ts` —
     `SimpleHlsMedia` consumer
 - **Walkthrough:**
   - `packages/spf/docs/hls-engine.md` Stage 10 — high-level coverage
@@ -222,5 +240,5 @@ each `set src`).
 - [conventions/signals.md](../conventions/signals.md) — per-slot
   `Signal<T>` / `ReadonlySignal<T>` intent (relevant for how consumers
   type captured refs at the use site)
-- `packages/media/src/dom/simple-hls/media.ts` — canonical
+- `packages/spf/src/playback/adapters/simple-hls/media.ts` — canonical
   downstream consumer

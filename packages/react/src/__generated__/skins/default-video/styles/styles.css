@@ -1,0 +1,7 @@
+@layer videojs.base, videojs.theme, videojs.components;
+@import './base.css';
+@import './theme.css';
+@import './buttons.css';
+@import './controls.css';
+@import './popups.css';
+@import './sliders.css';

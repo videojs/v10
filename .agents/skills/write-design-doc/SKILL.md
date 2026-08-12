@@ -1,27 +1,25 @@
 ---
 name: write-design-doc
-description: Write or update a Video.js design or decision record. Use for owned architecture, feature designs, component specifications, or durable rationale.
+description: Write or update a Video.js architecture, feature, or decision record only when the user explicitly requests that record. Use for compact, non-inferable rationale outside UI component design.
 ---
 
-# Design records
+# Internal records
 
 Read `internal/design/README.md` and `internal/decisions/README.md`; they define current placement, status, and format.
 
 ## Workflow
 
-1. Decide whether the work is an architecture/feature design, a single tactical decision, an RFC, or only an implementation plan.
-2. Read the relevant code, tests, existing records, and history. Treat code as current behavior and records as rationale.
-3. State the problem and constraints before the chosen design.
-4. Record the decision, alternatives actually considered, tradeoffs, and consequences. Use code only where it clarifies a contract.
-5. Link the implementation surface and related records.
-6. Remove speculative detail that the code will express better or that has not been decided.
+1. Confirm that the user explicitly requested creation or revision of the record. Do not invoke this skill merely because a design decision exists.
+2. Use the requested artifact and path when given; otherwise choose the smallest matching design or decision location.
+3. Read the relevant code, tests, history, and existing record. Treat executable sources as current behavior.
+4. State the decision directly, then preserve only the important rationale, constraint, or trade-off that cannot be inferred from those sources.
+5. Link source, tests, or related records instead of copying APIs, schemas, state flow, file inventories, or mechanics.
+6. Include alternatives or consequences only when they materially explain the choice. Omit empty headings and speculative detail.
 
-Use a template in `templates/` only when it matches the artifact. Load `references/structure.md` for a complex document, `references/components.md` for UI component design, or `references/features.md` for multi-part features.
-
-Keep the document useful after implementation: preserve why, constraints, and rejected alternatives; let code and tests own mechanics.
+Keep the result to a few paragraphs when possible. Do not create adjacent records, split one record into several, or turn it into an RFC without a separate explicit request.
 
 ## Example
 
 Input: “Record why source selection belongs in the core player.”
 
-Output: A durable design or decision record covering context, constraints, choice, credible alternatives, consequences, and implementation links.
+Output: A compact decision and the non-inferable reason it should survive outside the code, with source links where useful.

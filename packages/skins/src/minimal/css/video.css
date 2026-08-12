@@ -16,7 +16,11 @@
 @import "./components/popup.css";
 @import "./components/menus.css";
 @import "./components/captions.css";
-@import "./components/input-feedback.css";
+@import "./components/input-indicator-overlay.css";
+@import "./components/input-indicator.css";
+@import "./components/volume-indicator.css";
+@import "./components/status-indicator.css";
+@import "./components/seek-indicator.css";
 @import "../../shared/css/video/icon-state.css";
 @import "../../shared/global/video/keyframes.css";
 @import "../../shared/global/video/properties.css";
@@ -167,7 +171,7 @@
   ========================================================================== */
 
 .media-minimal-skin--video .media-controls {
-  --base-side-offset: 7;
+  --base-side-offset: 5;
   --base-boundary-offset: 1;
   --inset-factor: 1;
   --inset: calc(var(--spacing) * var(--inset-factor));
@@ -270,14 +274,6 @@
 }
 
 /* ==========================================================================
-   Sliders
-   ========================================================================== */
-
-.media-minimal-skin--video .media-slider__track {
-  box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
-}
-
-/* ==========================================================================
    Popups & Animations
    ========================================================================== */
 
@@ -290,64 +286,15 @@
    Slider preview
    ========================================================================== */
 
-.media-minimal-skin--video .media-slider__thumbnail {
-  --max-width: calc(var(--spacing) * 44);
-  --max-height: calc(var(--spacing) * 32);
-  --padding: calc(var(--spacing) * -2);
-  /**
-    Inset is the difference between the container width and the slider (100%) width.
-    We only add to the end as we render the time there.
-  */
-  --thumbnail-inset: calc(100cqi - 100%);
-
-  position: absolute;
-  bottom: 100%;
-  left: clamp(
-    calc(var(--max-width) / 2 + var(--padding)),
+.media-minimal-skin--video .media-slider .media-slider__preview {
+  --preview-end-inset: calc(100cqi - 100%);
+  --preview-left: clamp(
+    calc(var(--max-width) / 2),
     var(--media-slider-pointer),
-    calc(100% - var(--max-width) / 2 - var(--padding) + var(--thumbnail-inset))
+    calc(100% - var(--max-width) / 2 + var(--preview-end-inset))
   );
-  opacity: 0;
-  filter: blur(8px);
-  transform-origin: bottom;
-  scale: 0.8;
-  translate: -50%;
-  transition-timing-function: ease-out;
-  transition-duration: 150ms;
-  transition-property: scale, opacity, filter;
 
   @container media-root (width > 42rem) {
-    left: var(--media-slider-pointer);
+    --preview-left: var(--media-slider-pointer);
   }
-
-  & .media-thumbnail__image-wrapper {
-    position: relative;
-
-    &::after {
-      position: absolute;
-      inset: 0;
-      content: "";
-      border-radius: inherit;
-      box-shadow:
-        0 0 0 1px oklch(0 0 0 / 0.05),
-        0 1px 3px 0 oklch(0 0 0 / 0.2),
-        0 1px 2px -1px oklch(0 0 0 / 0.2);
-    }
-  }
-
-  & .media-thumbnail__image {
-    max-width: var(--max-width);
-    max-height: var(--max-height);
-  }
-}
-.media-minimal-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
-  opacity: 1;
-  filter: blur(0);
-  scale: 1;
-}
-.media-minimal-skin--video
-  .media-slider__thumbnail:has([role="img"]:not([data-hidden]))
-  + .media-slider__preview
-  .media-slider__value {
-  display: none;
 }

@@ -1,8 +1,8 @@
 import { createHash } from 'node:crypto';
 import type { Plugin } from 'vite';
-import { CompilerError, compile } from '../compile';
 import type { CompilerConfig, CompilerDiagnostic, CompilerSourceMap } from '../config';
 import { type LoadedCompilerConfig, loadConfig } from '../load-config';
+import { CompilerError, transform } from '../transform';
 
 export interface VideojsCompilerPluginOptions {
   config?: CompilerConfig | undefined;
@@ -64,9 +64,9 @@ export function vjsCompiler(options: VideojsCompilerPluginOptions = {}): Plugin 
       const { config, configDir, configPath } = await getConfig();
       if (configPath) this.addWatchFile(configPath);
 
-      let result: Awaited<ReturnType<typeof compile>>;
+      let result: Awaited<ReturnType<typeof transform>>;
       try {
-        result = await compile(code, { filename: id, config, configDir, outputFile: id });
+        result = await transform(code, { filename: id, config, configDir, outputFile: id });
       } catch (error) {
         if (error instanceof CompilerError) this.error(viteLogFromDiagnostic(error.diagnostics[0]!));
         throw error;

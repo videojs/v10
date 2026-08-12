@@ -26,13 +26,13 @@ describe('MuxVideo', () => {
   it('keeps engine options when the src attribute changes', () => {
     const el = createMuxVideo();
 
-    el.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { maxBufferLength: 60 } };
+    el.source = { playbackId: 'abc123', preferPlayback: 'native', engine: { hlsJs: { maxBufferLength: 60 } } };
     el.setAttribute('src', 'https://stream.mux.com/other.m3u8');
 
     expect(el.source).toEqual({
       playbackId: 'other',
       preferPlayback: 'native',
-      engine: { maxBufferLength: 60 },
+      engine: { hlsJs: { maxBufferLength: 60 } },
     });
   });
 

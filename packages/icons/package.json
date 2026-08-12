@@ -59,11 +59,11 @@
     "dist"
   ],
   "scripts": {
-    "build": "node --import tsx scripts/build.ts",
+    "build": "node --import tsx scripts/build-icons.ts",
     "build:watch": "pnpm run build -- --watch",
     "dev": "pnpm run build:watch",
     "clean": "rimraf dist",
-    "format": "node --import tsx scripts/format.ts",
+    "format": "node --import tsx scripts/format-icons.ts",
     "test": "pnpm run build && vitest run"
   },
   "dependencies": {
@@ -75,6 +75,7 @@
     "@types/react": "^19.2.17",
     "@videojs/jsx": "workspace:*",
     "@videojs/utils": "workspace:*",
+    "oxc-transform": "0.143.0",
     "react": "^19.2.8",
     "tsx": "^4.23.1",
     "vitest": "^4.1.10"

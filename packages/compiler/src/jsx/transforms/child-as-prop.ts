@@ -1,5 +1,5 @@
 import ts from 'typescript';
-import { hasJsxAttribute, singleJsxChildExpression } from '../../utils/jsx';
+import { moveJsxChildToProp } from '../edits';
 import type { JsxElementLike, Matcher } from '../matchers';
 
 export interface ChildAsPropOptions {
@@ -26,19 +26,7 @@ export function childAsProp(opts: ChildAsPropOptions): ts.TransformerFactory<ts.
       if (!ts.isJsxElement(out)) return out;
       if (!opts.match(out as JsxElementLike)) return out;
 
-      const opening = out.openingElement;
-      if (hasJsxAttribute(opening.attributes, opts.prop)) return out;
-
-      const child = singleJsxChildExpression(out.children);
-      if (!child) return out;
-
-      const factory = context.factory;
-      const newAttrs = factory.createJsxAttributes([
-        ...opening.attributes.properties,
-        factory.createJsxAttribute(factory.createIdentifier(opts.prop), factory.createJsxExpression(undefined, child)),
-      ]);
-
-      return factory.createJsxSelfClosingElement(opening.tagName, opening.typeArguments, newAttrs);
+      return moveJsxChildToProp(out, opts.prop, context.factory) ?? out;
     };
 
     return (sourceFile) => ts.visitEachChild(sourceFile, visit, context);

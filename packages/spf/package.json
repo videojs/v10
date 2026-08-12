@@ -42,6 +42,16 @@
       "types": "./dist/dev/background-video.d.ts",
       "development": "./dist/dev/background-video.js",
       "default": "./dist/default/background-video.js"
+    },
+    "./simple-hls": {
+      "types": "./dist/dev/simple-hls.d.ts",
+      "development": "./dist/dev/simple-hls.js",
+      "default": "./dist/default/simple-hls.js"
+    },
+    "./simple-hls-audio-only": {
+      "types": "./dist/dev/simple-hls-audio-only.d.ts",
+      "development": "./dist/dev/simple-hls-audio-only.js",
+      "default": "./dist/default/simple-hls-audio-only.js"
     }
   },
   "main": "dist/default/index.js",
@@ -61,6 +71,7 @@
     "size:all": "node scripts/measure-size.js --all"
   },
   "dependencies": {
+    "@videojs/media": "workspace:*",
     "@videojs/utils": "workspace:*",
     "signal-polyfill": "^0.2.2"
   },

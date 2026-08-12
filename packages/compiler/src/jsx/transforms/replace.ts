@@ -2,6 +2,7 @@ import ts from 'typescript';
 import { type AddImportContext, addNamedImport } from '../../transforms/add-import';
 import type { ImportRef } from '../../transforms/imports';
 import { isJsxElementLike } from '../../utils/jsx';
+import { replaceJsxElementTag } from '../edits';
 import type { JsxElementLike, Matcher } from '../matchers';
 
 export interface ReplaceOptions {
@@ -50,17 +51,10 @@ function buildReplacement(
 ): ts.JsxElement | ts.JsxSelfClosingElement {
   const newTag = factory.createIdentifier(opts.with.name);
   const originalAttrs = ts.isJsxElement(node) ? node.openingElement.attributes : node.attributes;
-  const attrs = opts.mapProps ? opts.mapProps(originalAttrs, factory) : originalAttrs;
-
-  if (ts.isJsxSelfClosingElement(node) && !opts.mapChildren) {
-    return factory.createJsxSelfClosingElement(newTag, undefined, attrs);
-  }
-
   const originalChildren = ts.isJsxElement(node) ? node.children : ([] as readonly ts.JsxChild[]);
-  const children = opts.mapChildren ? opts.mapChildren(originalChildren, factory) : originalChildren;
-  return factory.createJsxElement(
-    factory.createJsxOpeningElement(newTag, undefined, attrs),
-    children,
-    factory.createJsxClosingElement(newTag)
-  );
+  return replaceJsxElementTag(node, newTag, factory, {
+    ...(opts.mapProps ? { attributes: opts.mapProps(originalAttrs, factory) } : {}),
+    ...(opts.mapChildren ? { children: opts.mapChildren(originalChildren, factory) } : {}),
+    preserveTypeArguments: false,
+  });
 }

@@ -8,9 +8,12 @@ Treat source and colocated tests as implementation truth. Use internal/design/sp
 - media: media models, algorithms, and format parsing; browser media helpers live under media/dom.
 - network: fetch and bandwidth primitives.
 - playback: playback actors, behaviors, and engines; browser-bound playback code lives in nested dom directories.
-- index.ts and dom.ts are the primary entry points. Package exports also expose HLS and background-video compositions.
+- playback/adapters: the HTMLMediaElement-shaped facades over the engines, one directory each, exposing an adapter mixin and — where a host binding exists — a Media. This is SPF's public playback API, so each ships behind its own entry point, separate from the engine's.
+- index.ts and dom.ts are the primary entry points. Package exports also expose HLS and background-video compositions plus the Medias.
 
 Place code in the lowest layer that satisfies its dependencies. Keep browser APIs out of core and review public entry-point changes deliberately.
+
+`@videojs/spf` depends on `@videojs/media`, never the reverse. Unlike hls.js or dash.js, SPF publishes no engine-shaped consumer API — the media facade is the public API — so the Medias live here and implement `@videojs/media`'s contracts directly. Keep them out of the engine entry points so driving an engine directly costs neither a Media nor `@videojs/media`.
 
 ## Working rules
 

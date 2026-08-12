@@ -7,7 +7,7 @@ import {
   DEFAULT_AUDIO_SOURCE,
   DEFAULT_DASH_SOURCE,
   DEFAULT_SOURCE,
-  HLSJS_SOURCE_IDS,
+  HLS_SOURCE_IDS,
   isDrmSource,
   MP4_SOURCE_IDS,
   MUX_SOURCE_IDS,
@@ -67,9 +67,11 @@ export function App() {
   const pagePath = getPagePath(platform, preset);
 
   // `MuxVideo` is the only preset that turns a Mux DRM token into license URLs;
-  // any hls.js-backed one can take license servers through `source.engine`. The
-  // CDN sandbox builds elements from attributes alone, so neither reaches it.
+  // the HLS presets take license servers through `source.drm`, whichever path
+  // they play. The CDN sandbox builds elements from attributes alone, so neither
+  // reaches it.
   const structuredSource = platform !== 'cdn';
+  const hlsPreset = preset === 'hlsjs-video' || preset === 'native-hls-video';
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
@@ -77,8 +79,8 @@ export function App() {
         ? DASH_SOURCE_IDS
         : structuredSource && preset === 'mux-video'
           ? MUX_SOURCE_IDS
-          : structuredSource && preset === 'hlsjs-video'
-            ? HLSJS_SOURCE_IDS
+          : structuredSource && hlsPreset
+            ? HLS_SOURCE_IDS
             : preset.startsWith('simple-hls-')
               ? SIMPLE_HLS_SOURCE_IDS
               : NON_DASH_SOURCE_IDS;

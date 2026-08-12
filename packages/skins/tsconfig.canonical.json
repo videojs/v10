@@ -9,5 +9,6 @@
     "lib": ["ES2022"],
     "noEmit": true
   },
-  "include": ["artifacts.ts", "canonical/**/*.ts", "canonical/**/*.tsx"]
+  "include": ["canonical/**/*.ts", "canonical/**/*.tsx"],
+  "exclude": ["canonical/registry/default"]
 }

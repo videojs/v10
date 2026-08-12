@@ -11,7 +11,7 @@ import {
   icon,
   iconFlipped,
   iconState,
-  inputFeedback,
+  inputIndicatorOverlay,
   menu,
   overlay,
   popup,
@@ -19,9 +19,12 @@ import {
   primaryControls,
   root,
   secondaryControls,
+  seekIndicator,
   slider,
+  statusIndicator,
   thumbnail,
   time,
+  volumeIndicator,
 } from '@videojs/skins/default/tailwind/video.tailwind';
 import { createTemplate } from '@videojs/utils/dom';
 import { cn } from '@videojs/utils/style';
@@ -92,19 +95,27 @@ function getTemplateHTML() {
             <div class="${time.group}">
               <media-time type="current" class="${time.current}"></media-time>
               <media-time-slider class="${slider.root}">
-                <media-slider-track class="${slider.track}">
-                  <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
-                  <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
-                </media-slider-track>
+                <media-time-slider-chapters class="${slider.chapters}">
+                  <template>
+                    <div class="${slider.chapter.base}">
+                      <media-slider-track class="${slider.chapter.track}">
+                        <media-slider-buffer class="${cn(slider.fill.base, slider.fill.buffer)}"></media-slider-buffer>
+                        <media-slider-fill class="${cn(slider.fill.base, slider.fill.fill)}"></media-slider-fill>
+                      </media-slider-track>
+                    </div>
+                  </template>
+                </media-time-slider-chapters>
                 <media-slider-thumb class="${cn(slider.thumb.base, slider.thumb.interactive)}"></media-slider-thumb>
 
-                <div class="${thumbnail.root}">
-                  <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
-                  <media-slider-value type="pointer" class="${cn(time.current, thumbnail.time)}"></media-slider-value>
-                  ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
-                </div>
-                <media-slider-preview class="${slider.preview}">
-                  <media-slider-value type="pointer" class="${cn(slider.value, time.current)}"></media-slider-value>
+                <media-slider-preview overflow="visible" class="${slider.preview}">
+                  <div class="${cn(thumbnail.root, slider.thumbnail)}">
+                    <media-slider-thumbnail class="${thumbnail.image}"></media-slider-thumbnail>
+                    ${renderIcon('spinner', { class: cn(icon, thumbnail.spinner) })}
+                  </div>
+                  <div class="${slider.value}">
+                    <media-time-slider-chapter-title class="${slider.chapterTitle}"></media-time-slider-chapter-title>
+                    <media-slider-value type="pointer"></media-slider-value>
+                  </div>
                 </media-slider-preview>
               </media-time-slider>
               <media-time toggle type="remaining" class="${time.duration}"></media-time>
@@ -309,41 +320,41 @@ function getTemplateHTML() {
       <media-gesture type="doubletap" action="toggleFullscreen" region="center"></media-gesture>
       <media-gesture type="doubletap" action="seekStep" value="10" region="right"></media-gesture>
 
-      <!-- Input Feedback -->
+      <!-- Input Indicators -->
       <media-status-announcer class="sr-only"></media-status-announcer>
-      <div class="${inputFeedback.root}">
+      <div class="${inputIndicatorOverlay}">
         <media-volume-indicator
           hidden
-          class="${cn(inputFeedback.island.base, inputFeedback.island.volume, inputFeedback.island.shownVolume)}"
+          class="${volumeIndicator.root}"
         >
-          <media-volume-indicator-fill class="${inputFeedback.island.content}">
-            ${renderIcon('volume-high', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeHigh) })}
-            ${renderIcon('volume-low', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeLow) })}
-            ${renderIcon('volume-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownVolumeOff) })}
-            <media-volume-indicator-value class="${inputFeedback.island.value}"></media-volume-indicator-value>
+          <media-volume-indicator-fill class="${volumeIndicator.content}">
+            ${renderIcon('volume-high', { class: cn(volumeIndicator.icon.base, volumeIndicator.icon.high) })}
+            ${renderIcon('volume-low', { class: cn(volumeIndicator.icon.base, volumeIndicator.icon.low) })}
+            ${renderIcon('volume-off', { class: cn(volumeIndicator.icon.base, volumeIndicator.icon.off) })}
+            <media-volume-indicator-value class="${volumeIndicator.value}"></media-volume-indicator-value>
           </media-volume-indicator-fill>
         </media-volume-indicator>
 
-        <media-status-indicator hidden actions="toggleSubtitles toggleFullscreen togglePictureInPicture" class="${cn(inputFeedback.island.base, inputFeedback.island.shownStatus)}">
-          <div class="${inputFeedback.island.content}">
-            ${renderIcon('captions-on', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOn) })}
-            ${renderIcon('captions-off', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownCaptionsOff) })}
-            ${renderIcon('fullscreen-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenEnter) })}
-            ${renderIcon('fullscreen-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownFullscreenExit) })}
-            ${renderIcon('pip-enter', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipEnter) })}
-            ${renderIcon('pip-exit', { class: cn(inputFeedback.island.icon, inputFeedback.island.shownPipExit) })}
-            <media-status-indicator-value class="${inputFeedback.island.value}"></media-status-indicator-value>
+        <media-status-indicator hidden actions="toggleSubtitles toggleFullscreen togglePictureInPicture" class="${statusIndicator.root}">
+          <div class="${statusIndicator.content}">
+            ${renderIcon('captions-on', { class: cn(statusIndicator.icon.base, statusIndicator.icon.captionsOn) })}
+            ${renderIcon('captions-off', { class: cn(statusIndicator.icon.base, statusIndicator.icon.captionsOff) })}
+            ${renderIcon('fullscreen-enter', { class: cn(statusIndicator.icon.base, statusIndicator.icon.fullscreenEnter) })}
+            ${renderIcon('fullscreen-exit', { class: cn(statusIndicator.icon.base, statusIndicator.icon.fullscreenExit) })}
+            ${renderIcon('pip-enter', { class: cn(statusIndicator.icon.base, statusIndicator.icon.pipEnter) })}
+            ${renderIcon('pip-exit', { class: cn(statusIndicator.icon.base, statusIndicator.icon.pipExit) })}
+            <media-status-indicator-value class="${statusIndicator.value}"></media-status-indicator-value>
           </div>
         </media-status-indicator>
 
-        <media-seek-indicator hidden class="${inputFeedback.bubble.base}">
-          ${renderIcon('chevron', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownSeek) })}
-          <media-seek-indicator-value class="${inputFeedback.bubble.time}"></media-seek-indicator-value>
+        <media-seek-indicator hidden class="${seekIndicator.root}">
+          ${renderIcon('chevron', { class: seekIndicator.icon })}
+          <media-seek-indicator-value class="${seekIndicator.value}"></media-seek-indicator-value>
         </media-seek-indicator>
 
-        <media-status-indicator hidden actions="togglePaused" class="${inputFeedback.bubble.base}">
-          ${renderIcon('play', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPlay) })}
-          ${renderIcon('pause', { class: cn(inputFeedback.bubble.icon, inputFeedback.bubble.shownPause) })}
+        <media-status-indicator hidden actions="togglePaused" class="${statusIndicator.playback.root}">
+          ${renderIcon('play', { class: cn(statusIndicator.playback.icon.base, statusIndicator.playback.icon.play) })}
+          ${renderIcon('pause', { class: cn(statusIndicator.playback.icon.base, statusIndicator.playback.icon.pause) })}
         </media-status-indicator>
       </div>
     </media-container>

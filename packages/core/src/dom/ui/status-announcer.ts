@@ -1,4 +1,4 @@
-import type { StatusAnnouncerCore } from '../../core/ui/input-feedback/status-announcer-core';
+import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/status-announcer-core';
 import { getMediaSnapshot, type MediaSnapshotStore } from './input-action';
 
 export interface StatusAnnouncerStore extends MediaSnapshotStore {

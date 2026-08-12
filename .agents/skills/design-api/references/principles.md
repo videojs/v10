@@ -222,9 +222,9 @@ Don't invent paradigms. Use familiar names and behaviors:
 
 ---
 
-## Controlled + Uncontrolled Support
+## Controlled and Uncontrolled State
 
-Support both patterns with consistent naming:
+Support both patterns when each has a demonstrated use case and the synchronization cost is justified. Otherwise expose the one ownership model the feature requires.
 
 ```tsx
 // Uncontrolled - library manages state
@@ -234,7 +234,7 @@ Support both patterns with consistent naming:
 <Dialog open={isOpen} onOpenChange={setIsOpen}>...</Dialog>
 ```
 
-**Convention:** `defaultValue`/`value`, `defaultOpen`/`open`, with `onXxxChange` callbacks.
+When both are warranted, use `defaultValue`/`value` or `defaultOpen`/`open` with `onXxxChange` callbacks. Define mode selection, initialization, and prop-change behavior explicitly.
 
 ---
 

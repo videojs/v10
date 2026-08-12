@@ -247,6 +247,12 @@ describe('SliderCore', () => {
       const core = new SliderCore({ min: 50, max: 50 });
       expect(core.percentFromValue(50)).toBe(0);
     });
+
+    it('clamps values outside the range', () => {
+      const core = new SliderCore();
+      expect(core.percentFromValue(-10)).toBe(0);
+      expect(core.percentFromValue(110)).toBe(100);
+    });
   });
 
   describe('adjustPercentForAlignment', () => {

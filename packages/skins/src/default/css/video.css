@@ -17,7 +17,11 @@
 @import "./components/popup.css";
 @import "./components/menus.css";
 @import "./components/captions.css";
-@import "./components/input-feedback.css";
+@import "./components/input-indicator-overlay.css";
+@import "./components/input-indicator.css";
+@import "./components/volume-indicator.css";
+@import "./components/status-indicator.css";
+@import "./components/seek-indicator.css";
 @import "../../shared/css/video/icon-state.css";
 @import "../../shared/global/video/keyframes.css";
 @import "../../shared/global/video/properties.css";
@@ -329,49 +333,4 @@
 
 .media-default-skin--video .media-slider__track {
   background-color: oklch(1 0 0 / 0.2);
-  box-shadow: 0 0 0 1px oklch(0 0 0 / 0.05);
-}
-
-.media-default-skin--video .media-slider__thumbnail {
-  --max-width: calc(var(--spacing) * 44);
-  --max-height: calc(var(--spacing) * 32);
-  --padding: calc(var(--spacing) * -4.5);
-  /**
-    Inset is the difference between the container width and the slider (100%) width.
-    Divided by 2 as we render the time on both sides.
-  */
-  --inset: calc((100cqi - 100%) / 2);
-
-  position: absolute;
-  bottom: calc(100% + calc(var(--spacing) * 4.8));
-  left: clamp(
-    calc(var(--max-width) / 2 + var(--padding) - var(--inset)),
-    var(--media-slider-pointer),
-    calc(100% - var(--max-width) / 2 - var(--padding) + var(--inset))
-  );
-  pointer-events: none;
-  opacity: 0;
-  filter: blur(8px);
-  transform-origin: bottom;
-  scale: 0.8;
-  translate: -50%;
-  transition-timing-function: ease-out;
-  transition-duration: 150ms;
-  transition-property: scale, opacity, filter;
-
-  & .media-thumbnail__image {
-    max-width: var(--max-width);
-    max-height: var(--max-height);
-  }
-}
-.media-default-skin--video .media-slider[data-pointing] .media-slider__thumbnail:has([role="img"]:not([data-hidden])) {
-  opacity: 1;
-  filter: blur(0);
-  scale: 1;
-}
-.media-default-skin--video
-  .media-slider__thumbnail:has([role="img"]:not([data-hidden]))
-  + .media-slider__preview
-  .media-slider__value {
-  display: none;
 }

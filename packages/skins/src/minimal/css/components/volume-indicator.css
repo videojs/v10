@@ -1,0 +1,33 @@
+.media-minimal-skin .media-volume-indicator {
+  .media-volume-indicator__content {
+    width: min(80%, calc(var(--spacing) * 56));
+  }
+
+  .media-volume-indicator__progress {
+    --media-progress-fill: var(--media-volume-fill);
+    width: 100%;
+    height: calc(var(--spacing) * 0.75);
+    background-image: linear-gradient(
+      to right,
+      currentColor 0%,
+      currentColor var(--media-progress-fill),
+      oklch(from currentColor l c h / 0.2) var(--media-progress-fill),
+      oklch(from currentColor l c h / 0.2) 100%
+    );
+    border-radius: calc(Infinity * 1px);
+    box-shadow: 0 1px 0 var(--media-current-shadow-color-subtle);
+  }
+
+  &[data-level="high"] .media-icon--volume-high,
+  &[data-level="low"] .media-icon--volume-low,
+  &[data-level="off"] .media-icon--volume-off {
+    display: block;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &[data-min] .media-volume-indicator__content,
+    &[data-max] .media-volume-indicator__content {
+      animation: media-shake 300ms ease-in-out;
+    }
+  }
+}

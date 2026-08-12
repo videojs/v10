@@ -1,5 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { HlsJsMedia } from '../../hls-js';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MuxData } from '..';
 import type { MuxDataSdk } from '../types';
 
@@ -13,8 +12,30 @@ function createSdk() {
 }
 
 class FakeMedia extends EventTarget {
-  engine: HlsJsMedia['engine'] = null;
+  engine: unknown = null;
   src = '';
+}
+
+/** Shaped like an hls.js instance, class statics included. */
+class FakeHlsJsEngine {
+  static Events = { MANIFEST_LOADED: 'hlsManifestLoaded' };
+  static ErrorDetails = { MANIFEST_LOAD_ERROR: 'manifestLoadError' };
+  static version = '1.6.15';
+  levels: unknown[] = [];
+  on() {}
+  off() {}
+}
+
+/** Shaped like a dash.js `MediaPlayerClass`. */
+class FakeDashJsEngine {
+  getCurrentTrackFor() {
+    return null;
+  }
+  getRepresentationsByType() {
+    return [];
+  }
+  on() {}
+  off() {}
 }
 
 // Initialization is deferred by a microtask so all props settle first.
@@ -22,6 +43,10 @@ async function settle() {
   await Promise.resolve();
   await Promise.resolve();
 }
+
+afterEach(() => {
+  document.body.innerHTML = '';
+});
 
 describe('MuxData', () => {
   it('accepts a player software name', () => {
@@ -74,7 +99,7 @@ describe('MuxData', () => {
 
     expect(monitor).toHaveBeenCalledTimes(1);
 
-    const engine = {} as NonNullable<HlsJsMedia['engine']>;
+    const engine = new FakeHlsJsEngine();
     media.engine = engine;
     media.src = 'https://stream.mux.com/abc123.m3u8';
     media.dispatchEvent(new Event('loadstart'));
@@ -86,9 +111,47 @@ describe('MuxData', () => {
       video,
       expect.objectContaining({
         hlsjs: engine,
+        Hls: FakeHlsJsEngine,
         data: expect.objectContaining({ video_id: 'abc123' }),
       })
     );
+  });
+
+  it('monitors a dash.js engine through the dash.js integration', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+    media.engine = new FakeDashJsEngine();
+    media.src = 'https://example.com/manifest.mpd';
+
+    data.setMedia(media);
+    data.attach(video);
+
+    await settle();
+
+    const [, options] = monitor.mock.lastCall!;
+    expect(options.dashjs).toBe(media.engine);
+    expect(options).not.toHaveProperty('hlsjs');
+    expect(options).not.toHaveProperty('Hls');
+  });
+
+  it('monitors media with no engine from the media element alone', async () => {
+    const { sdk, monitor } = createSdk();
+    const data = new MuxData({ MuxDataSdk: sdk, envKey: 'key' });
+    const video = document.createElement('video');
+    const media = new FakeMedia();
+    media.src = 'https://example.com/video.mp4';
+
+    data.setMedia(media);
+    data.attach(video);
+
+    await settle();
+
+    const [, options] = monitor.mock.lastCall!;
+    expect(options).not.toHaveProperty('hlsjs');
+    expect(options).not.toHaveProperty('Hls');
+    expect(options).not.toHaveProperty('dashjs');
   });
 
   it('moves its media listener when registered with another host', async () => {

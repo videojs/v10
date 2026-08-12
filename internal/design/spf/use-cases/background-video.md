@@ -26,8 +26,9 @@ is the narrower "deliver video-only despite mixed source" use case.
 ## Status
 
 Phase 1 implemented ([#1586](https://github.com/videojs/v10/issues/1586)):
-`createBackgroundVideoEngine`, `BackgroundVideoMediaElement`,
-and the `pickMaxResolutionVideoTrack` primitive ship under
+`createBackgroundVideoEngine` ships under `@videojs/spf/hls`, beside the other
+HLS engines; `BackgroundVideoMediaElement` and the max-resolution picker
+primitives (`maxResolutionToPixelArea`, `pickTrackUnderPixelArea`) ship under
 `@videojs/spf/background-video`. Phases 2-3 (decorator composition
 of audio and preload) and Phase 4 (Video.js component shell — out of SPF
 scope) stay coarser.

@@ -166,8 +166,11 @@ describe('buildVimeoIframeSrc', () => {
     expect(src).not.toContain('controls=0');
   });
 
-  it('forwards preload and Vimeo-specific engine knobs', () => {
-    const src = buildVimeoIframeSrc('76979871', { preload: 'auto', source: { engine: { autopause: true } } });
+  it('forwards preload and Vimeo-specific knobs', () => {
+    const src = buildVimeoIframeSrc('76979871', {
+      preload: 'auto',
+      source: { engine: { vimeo: { autopause: true } } },
+    });
     expect(src).toContain('preload=auto');
     expect(src).toContain('autopause=1');
   });
@@ -182,14 +185,14 @@ describe('buildVimeoIframeSrc', () => {
     expect(src).not.toContain('h=');
   });
 
-  it('merges arbitrary engine options into params', () => {
-    const src = buildVimeoIframeSrc('76979871', { source: { engine: { background: true, byline: false } } });
+  it('merges arbitrary Vimeo options into params', () => {
+    const src = buildVimeoIframeSrc('76979871', { source: { engine: { vimeo: { background: true, byline: false } } } });
     expect(src).toContain('background=1');
     expect(src).toContain('byline=0');
   });
 
-  it('lets engine options override derived params', () => {
-    const src = buildVimeoIframeSrc('76979871', { controls: false, source: { engine: { controls: true } } });
+  it('lets Vimeo options override derived params', () => {
+    const src = buildVimeoIframeSrc('76979871', { controls: false, source: { engine: { vimeo: { controls: true } } } });
     expect(src).toContain('controls=1');
     expect(src).not.toContain('controls=0');
   });
@@ -467,25 +470,25 @@ describe('VimeoMedia', () => {
     expect(sourcechange).toHaveBeenCalledTimes(1);
   });
 
-  it('preserves source engine options across a src change', () => {
+  it('preserves source Vimeo options across a src change', () => {
     const media = new VimeoMedia();
-    media.source = { src: '76979871', engine: { autopause: true } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: true } } };
 
     media.src = 'https://vimeo.com/12345';
-    expect(media.source).toEqual({ src: 'https://vimeo.com/12345', engine: { autopause: true } });
+    expect(media.source).toEqual({ src: 'https://vimeo.com/12345', engine: { vimeo: { autopause: true } } });
   });
 
   it('does not reload for a structurally equal source', async () => {
     const media = new VimeoMedia();
     const { player } = await attachAndLoad(media);
-    media.source = { src: '76979871', engine: { autopause: true } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: true } } };
     await Promise.resolve();
 
     const sourcechange = vi.fn();
     media.addEventListener('sourcechange', sourcechange);
     player.loadVideo.mockClear();
 
-    media.source = { src: '76979871', engine: { autopause: true } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: true } } };
     await Promise.resolve();
 
     // Assigning is always announced, but nothing reaches the Vimeo player.
@@ -503,9 +506,9 @@ describe('VimeoMedia', () => {
     expect(media.src).toBe('');
   });
 
-  it('carries engine options into the initial embed URL', () => {
+  it('carries Vimeo options into the initial embed URL', () => {
     const media = new VimeoMedia();
-    media.source = { src: '76979871', engine: { autopause: true } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: true } } };
 
     const iframe = createIframe();
     media.attach(iframe);
@@ -513,16 +516,16 @@ describe('VimeoMedia', () => {
     expect(iframe.src).toContain('autopause=1');
   });
 
-  it('reloads when only engine options change', async () => {
+  it('reloads when only Vimeo options change', async () => {
     const media = new VimeoMedia();
     const { player } = await attachAndLoad(media);
-    media.source = { src: '76979871', engine: { autopause: true } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: true } } };
     await Promise.resolve();
     player.loadVideo.mockClear();
 
     // Same video, new embed options. They are read at load time, so the video
     // has to be loaded again for them to take effect.
-    media.source = { src: '76979871', engine: { autopause: false } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: false } } };
     await Promise.resolve();
 
     expect(player.loadVideo).toHaveBeenCalledWith({
@@ -531,12 +534,12 @@ describe('VimeoMedia', () => {
     });
   });
 
-  it('carries engine options into loadVideo options', async () => {
+  it('carries Vimeo options into loadVideo options', async () => {
     const media = new VimeoMedia();
     const { player } = await attachAndLoad(media);
     player.loadVideo.mockClear();
 
-    media.source = { src: '76979871', engine: { autopause: false } };
+    media.source = { src: '76979871', engine: { vimeo: { autopause: false } } };
     await Promise.resolve();
     expect(player.loadVideo).toHaveBeenCalledWith({
       url: 'https://player.vimeo.com/video/76979871',

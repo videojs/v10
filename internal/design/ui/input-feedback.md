@@ -24,8 +24,10 @@ Skins can arrange and animate independent feedback surfaces without duplicating 
 
 ## Current sources of truth
 
-- Derivation, lifecycle, component cores, styling contracts, and tests: `packages/core/src/core/ui/input-feedback/`
+- Shared action and lifecycle contracts: `packages/core/src/core/ui/input-action/` and `packages/core/src/core/ui/indicator/`
+- Component state and derivation: the `seek-indicator/`, `status-indicator/`, `volume-indicator/`, and `status-announcer/` directories under `packages/core/src/core/ui/`
 - Gesture and hotkey event sources: `packages/core/src/dom/gesture/` and `packages/core/src/dom/hotkey/`
-- HTML elements: `packages/html/src/ui/status-indicator/`, `status-announcer/`, `volume-indicator/`, and `seek-indicator/`
-- React components: corresponding directories under `packages/react/src/ui/`
-- Preset composition and styling: package preset sources
+- Shared HTML indicator adapters: `packages/html/src/ui/input-indicator/`
+- Shared React indicator hooks: `packages/react/src/ui/input-indicator/`
+- HTML and React components: their `status-indicator/`, `status-announcer/`, `volume-indicator/`, and `seek-indicator/` directories
+- Preset composition and component-named styles: package preset sources and `packages/skins/src/{default,minimal}/{css,tailwind}/`

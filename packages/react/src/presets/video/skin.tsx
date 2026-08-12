@@ -493,19 +493,33 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
             <div className="media-time-controls">
               <Time.Value type="current" className="media-time" />
               <TimeSlider.Root className="media-slider">
-                <TimeSlider.Track className="media-slider__track">
-                  <TimeSlider.Fill className="media-slider__fill" />
-                  <TimeSlider.Buffer className="media-slider__buffer" />
-                </TimeSlider.Track>
+                <TimeSlider.Chapters
+                  className="media-slider__chapters"
+                  renderChapter={(props) => (
+                    <div {...props} className={cn(props.className, 'media-slider__chapter')}>
+                      <TimeSlider.Track className="media-slider__track media-slider__chapter-track">
+                        <TimeSlider.Buffer className="media-slider__buffer" />
+                        <TimeSlider.Fill className="media-slider__fill" />
+                      </TimeSlider.Track>
+                    </div>
+                  )}
+                >
+                  <TimeSlider.Track className="media-slider__track">
+                    <TimeSlider.Buffer className="media-slider__buffer" />
+                    <TimeSlider.Fill className="media-slider__fill" />
+                  </TimeSlider.Track>
+                </TimeSlider.Chapters>
                 <TimeSlider.Thumb className="media-slider__thumb" />
 
-                <div className="media-surface media-thumbnail media-slider__thumbnail">
-                  <Slider.Thumbnail className="media-thumbnail__image" />
-                  <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
-                  <SpinnerIcon className="media-thumbnail__spinner media-icon" />
-                </div>
-                <TimeSlider.Preview className="media-slider__preview">
-                  <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
+                <TimeSlider.Preview overflow="visible" className="media-slider__preview">
+                  <div className="media-surface media-thumbnail media-slider__thumbnail">
+                    <Slider.Thumbnail className="media-thumbnail__image" />
+                    <SpinnerIcon className="media-thumbnail__spinner media-icon" />
+                  </div>
+                  <div className="media-slider__value">
+                    <TimeSlider.ChapterTitle className="media-slider__chapter-title" />
+                    <TimeSlider.Value type="pointer" className="media-time" />
+                  </div>
                 </TimeSlider.Preview>
               </TimeSlider.Root>
               <Time.Value toggle type="remaining" className="media-time" />
@@ -570,39 +584,42 @@ export function VideoSkin(props: VideoSkinProps): ReactNode {
       <Gesture type="doubletap" action="toggleFullscreen" region="center" />
       <Gesture type="doubletap" action="seekStep" value={SEEK_TIME} region="right" />
 
-      {/* Input Feedback */}
+      {/* Input Indicators */}
       <StatusAnnouncer className="media-sr-only" />
-      <div className="media-input-feedback">
-        <VolumeIndicator.Root className="media-surface media-input-feedback-island media-input-feedback-island--volume">
-          <VolumeIndicator.Fill className="media-input-feedback-island__content">
+      <div className="media-input-indicator-overlay">
+        <VolumeIndicator.Root className="media-surface media-volume-indicator">
+          <VolumeIndicator.Fill className="media-volume-indicator__content">
             <VolumeHighIcon className="media-icon media-icon--volume-high" />
             <VolumeLowIcon className="media-icon media-icon--volume-low" />
             <VolumeOffIcon className="media-icon media-icon--volume-off" />
-            <VolumeIndicator.Value className="media-input-feedback-island__value" />
+            <VolumeIndicator.Value className="media-volume-indicator__value" />
           </VolumeIndicator.Fill>
         </VolumeIndicator.Root>
 
         <StatusIndicator.Root
           actions={TOP_STATUS_ACTIONS}
-          className="media-surface media-input-feedback-island media-input-feedback-island--status"
+          className="media-surface media-status-indicator media-status-indicator--state"
         >
-          <div className="media-input-feedback-island__content">
+          <div className="media-status-indicator__content">
             <CaptionsOnIcon className="media-icon media-icon--captions-on" />
             <CaptionsOffIcon className="media-icon media-icon--captions-off" />
             <FullscreenEnterIcon className="media-icon media-icon--fullscreen-enter" />
             <FullscreenExitIcon className="media-icon media-icon--fullscreen-exit" />
             <PipEnterIcon className="media-icon media-icon--pip-enter" />
             <PipExitIcon className="media-icon media-icon--pip-exit" />
-            <StatusIndicator.Value className="media-input-feedback-island__value" />
+            <StatusIndicator.Value className="media-status-indicator__value" />
           </div>
         </StatusIndicator.Root>
 
-        <SeekIndicator.Root className="media-input-feedback-bubble">
+        <SeekIndicator.Root className="media-seek-indicator">
           <ChevronIcon className="media-icon media-icon--seek" />
-          <SeekIndicator.Value className="media-time" />
+          <SeekIndicator.Value className="media-seek-indicator__value" />
         </SeekIndicator.Root>
 
-        <StatusIndicator.Root actions={CENTER_STATUS_ACTIONS} className="media-input-feedback-bubble">
+        <StatusIndicator.Root
+          actions={CENTER_STATUS_ACTIONS}
+          className="media-status-indicator media-status-indicator--playback"
+        >
           <PlayIcon className="media-icon media-icon--play" />
           <PauseIcon className="media-icon media-icon--pause" />
         </StatusIndicator.Root>

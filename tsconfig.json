@@ -36,6 +36,7 @@
     { "path": "packages/spf/src/playback/actors" },
     { "path": "packages/spf/src/playback/actors/dom" },
     { "path": "packages/spf/src/playback/engines/hls" },
+    { "path": "packages/spf/src/playback/adapters" },
 
     { "path": "packages/html" },
     { "path": "packages/react" },

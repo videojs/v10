@@ -18,6 +18,16 @@ export const remainingText = {
   text: 'Remaining',
 } as const satisfies Text;
 
+export const elapsedSuffixText = {
+  key: `${prefix}elapsedSuffix`,
+  text: '{duration} elapsed',
+} as const satisfies Text;
+
+export const durationSuffixText = {
+  key: `${prefix}durationSuffix`,
+  text: '{duration} duration',
+} as const satisfies Text;
+
 export const remainingSuffixText = {
   key: `${prefix}remainingSuffix`,
   text: '{duration} remaining',
@@ -25,17 +35,27 @@ export const remainingSuffixText = {
 
 export const showElapsedText = {
   key: `${prefix}showElapsed`,
-  text: '{duration}. Show elapsed time.',
+  text: 'Show elapsed time, {duration}.',
 } as const satisfies Text;
 
 export const showDurationText = {
   key: `${prefix}showDuration`,
-  text: '{duration}. Show duration.',
+  text: 'Show duration, {duration}.',
 } as const satisfies Text;
 
 export const showRemainingText = {
   key: `${prefix}showRemaining`,
-  text: '{duration}. Show remaining time.',
+  text: 'Show remaining time, {duration}.',
+} as const satisfies Text;
+
+export const toggleElapsedText = {
+  key: `${prefix}toggleElapsed`,
+  text: 'Toggle between elapsed and remaining time.',
+} as const satisfies Text;
+
+export const toggleDurationText = {
+  key: `${prefix}toggleDuration`,
+  text: 'Toggle between duration and remaining time.',
 } as const satisfies Text;
 
 export const positionText = {

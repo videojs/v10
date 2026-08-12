@@ -9,7 +9,9 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     dom: 'src/dom.ts',
     hls: 'src/playback/engines/hls/index.ts',
     'media-tracks': 'src/media/media-tracks/index.ts',
-    'background-video': 'src/playback/engines/background-video/index.ts',
+    'background-video': 'src/playback/adapters/background-video/index.ts',
+    'simple-hls': 'src/playback/adapters/simple-hls/index.ts',
+    'simple-hls-audio-only': 'src/playback/adapters/simple-hls-audio-only/index.ts',
   },
 });
 

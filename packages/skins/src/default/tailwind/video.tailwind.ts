@@ -3,14 +3,15 @@ import { bufferingIndicator as baseBufferingIndicator } from './components/buffe
 import { buttonGroup as baseButtonGroup } from './components/button-group';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
-import { inputFeedback as baseInputFeedback } from './components/input-feedback';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
 import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
+import { statusIndicator as baseStatusIndicator } from './components/status-indicator';
 import { surface } from './components/surface';
 import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
+import { volumeIndicator as baseVolumeIndicator } from './components/volume-indicator';
 
 /* ==========================================================================
    Root
@@ -67,8 +68,7 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-22)]',
-    '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:--spacing(-14)]',
+    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-14)]',
     // Native caption track container
     !isShadowDOM
       ? [
@@ -184,21 +184,7 @@ export const time = {
 
 export const thumbnail = {
   ...baseThumbnail,
-  root: cn(
-    baseThumbnail.root,
-    surface,
-    '[--max-width:--spacing(44)]',
-    '[--max-height:--spacing(32)]',
-    '[--padding:--spacing(-4.5)]',
-    '[--inset:calc((100cqi-100%)/2)]',
-    'absolute [left:clamp(calc(var(--max-width)/2+var(--padding)-var(--inset)),var(--media-slider-pointer),calc(100%-var(--max-width)/2-var(--padding)+var(--inset)))] [bottom:calc(100%+--spacing(4.8))] -translate-x-1/2',
-    'opacity-0 scale-80 blur-sm origin-bottom',
-    'transition-[scale,opacity,filter] duration-150',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
-  ),
-  image: cn(baseThumbnail.image, 'max-w-(--max-width)', 'max-h-(--max-height)'),
+  root: cn(baseThumbnail.root, surface),
 };
 
 /* ==========================================================================
@@ -207,7 +193,7 @@ export const thumbnail = {
 
 export const slider = {
   ...baseSlider,
-  track: cn(baseSlider.track, 'bg-white/20 ring-1 ring-black/5'),
+  track: cn(baseSlider.track, 'bg-white/20'),
 };
 
 /* ==========================================================================
@@ -248,15 +234,17 @@ export const error = {
 };
 
 /* ==========================================================================
-   Input Feedback (islands use video surface)
+   Input indicators (top indicators use video surface)
    ========================================================================== */
 
-export const inputFeedback = {
-  ...baseInputFeedback,
-  island: {
-    ...baseInputFeedback.island,
-    base: cn(baseInputFeedback.island.base, surface),
-  },
+export const volumeIndicator = {
+  ...baseVolumeIndicator,
+  root: cn(baseVolumeIndicator.root, surface),
+};
+
+export const statusIndicator = {
+  ...baseStatusIndicator,
+  root: cn(baseStatusIndicator.root, surface),
 };
 
 /* ==========================================================================
@@ -268,7 +256,9 @@ export { badge } from './components/badge';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
+export { inputIndicatorOverlay } from './components/input-indicator-overlay';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';
+export { seekIndicator } from './components/seek-indicator';

@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from 'vitest';
-import { compile } from '..';
+import { transform } from '..';
 import { anyTag, byTag, childAsProp, hasChild, jsx, replace } from '../jsx';
 import type { ImportRule } from '../transforms';
 
@@ -44,7 +44,7 @@ export function Example() {
   };
 
   beforeAll(async () => {
-    const result = await compile(source, {
+    const result = await transform(source, {
       config: {
         target: jsx({
           imports,

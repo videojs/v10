@@ -384,6 +384,9 @@ other features consume. Worked example: `track-registry-primitive`
 likely warrants its own doc when extracted, even though "multi-language
 audio" stays one doc.
 
+Name any additional record as a candidate only. Do not create it unless
+the user explicitly requests that separate record.
+
 ### Step 6 — Draft (or update) the doc
 
 Write the file at `internal/design/spf/features/<name>.md` using the
@@ -567,10 +570,8 @@ by Step 1's gathering.
   Step 6a may route you to `/change-spf-behavior`.
 - **You want to merge two behaviors** → `/change-spf-behavior`'s Step 3
   routes to `/change-spf-behavior`.
-- **You want to write a design doc for an architecture concern (not a
-  feature)** → `design` skill. Architectural concerns live in
-  `internal/design/spf/` directly, not under `features/`.
-- **You want to write an RFC for a cross-team decision** → `rfc` skill.
+- **The user requests a different durable record** → treat it as a separate
+  explicit task. Do not create it from this workflow.
 - **You want to write user-facing documentation** → `docs` skill.
 
 ## How the failure-mode catalog grows

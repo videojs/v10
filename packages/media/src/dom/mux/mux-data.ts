@@ -1,6 +1,6 @@
 import Mux from 'mux-embed';
-import { Hls, type HlsJsMedia } from '../hls-js';
 import { getPlayerVersion } from './env';
+import { toMuxDataEngineOptions } from './mux-data-engine';
 import type { MuxDataOptions, MuxDataSdk } from './types';
 
 export interface MuxDataProps {
@@ -30,8 +30,19 @@ export const muxDataDefaultProps: MuxDataProps = {
 
 const MUX_VIDEO_DOMAIN = 'mux.com';
 
+/**
+ * What Mux Data needs from the media it monitors: the source being played, a
+ * `loadstart` to re-monitor on, and — for engine-backed playback — the engine
+ * itself.
+ *
+ * `engine` is deliberately untyped. Every engine-backed media host exposes one,
+ * but they are unrelated types (an hls.js instance, a dash.js player, an SPF
+ * composition), and which of them Mux Data can hook is decided by
+ * {@link toMuxDataEngineOptions}, not by this contract. Media with no JS engine
+ * simply omit it.
+ */
 export interface MuxDataMedia extends EventTarget {
-  readonly engine?: HlsJsMedia['engine'];
+  readonly engine?: unknown;
   readonly src: string;
 }
 
@@ -204,7 +215,6 @@ export class MuxData implements MuxDataProps {
       playerInitTime: player_init_time,
       metadata = {},
     } = this;
-    const { engine: hlsjs } = media;
 
     const { view_session_id = this.MuxDataSdk?.utils.generateUUID() } = metadata;
     const video_id = toVideoId({ metadata, src: media.src });
@@ -215,8 +225,7 @@ export class MuxData implements MuxDataProps {
       debug,
       ...(beaconCollectionDomain ? { beaconCollectionDomain } : {}),
       ...(disableCookies ? { disableCookies } : {}),
-      ...(hlsjs ? { hlsjs } : {}),
-      Hls,
+      ...toMuxDataEngineOptions(media.engine),
       data: {
         ...(env_key ? { env_key } : {}),
         ...(player_software_name ? { player_software_name } : {}),

@@ -63,7 +63,7 @@ export const root = (isShadowDOM: boolean) =>
     '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
     '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
-    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-20)]',
+    'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-18)]',
     '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:--spacing(-12)]',
     // Native caption track container
     !isShadowDOM
@@ -107,7 +107,7 @@ export const controls = cn(
   baseControls,
   // Position & wrapping layout (small)
   'absolute bottom-1 inset-x-1',
-  '[--base-side-offset:2] [--base-boundary-offset:1]',
+  '[--base-side-offset:5] [--base-boundary-offset:1]',
   'gap-x-2 flex-wrap rounded-[--spacing(3)] group/controls',
   'text-white z-20',
   'peer-data-open/error:hidden',
@@ -123,7 +123,7 @@ export const controls = cn(
   'motion-safe:not-data-visible:translate-y-full',
   'pointer-fine:motion-safe:not-data-visible:blur-sm',
   // Single-row layout (large)
-  '@2xl/media-root:flex-nowrap @2xl/media-root:[--controls-padding:2] @2xl/media-root:[--base-side-offset:0]'
+  '@2xl/media-root:flex-nowrap @2xl/media-root:[--controls-padding:2] @2xl/media-root:[--base-side-offset:2]'
 );
 
 /* ==========================================================================
@@ -168,29 +168,7 @@ export const error = {
    Thumbnail
    ========================================================================== */
 
-export const thumbnail = {
-  ...baseThumbnail,
-  root: cn(
-    baseThumbnail.root,
-    '[--max-width:--spacing(44)]',
-    '[--max-height:--spacing(32)]',
-    '[--padding:--spacing(-2)]',
-    '[--inset:calc(100cqi-100%)]',
-    'absolute [left:clamp(calc(var(--max-width)/2+var(--padding)),var(--media-slider-pointer),calc(100%-var(--max-width)/2-var(--padding)+var(--inset)))] bottom-full -translate-x-1/2',
-    '@2xl/media-root:[left:var(--media-slider-pointer)]',
-    'opacity-0 scale-80 blur-sm origin-bottom',
-    'transition-[scale,opacity,filter] duration-150',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:opacity-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:scale-100',
-    'has-[[role=img]:not([data-hidden])]:group-data-pointing/slider:blur-none'
-  ),
-  imageWrapper: cn(
-    baseThumbnail.imageWrapper,
-    'after:absolute after:inset-0 after:rounded-[inherit]',
-    'after:ring-1 after:ring-black/5 after:shadow-sm after:shadow-black/20'
-  ),
-  image: cn(baseThumbnail.image, 'max-w-(--max-width)', 'max-h-(--max-height)'),
-};
+export const thumbnail = baseThumbnail;
 
 /* ==========================================================================
    Sliders
@@ -199,6 +177,12 @@ export const thumbnail = {
 export const slider = {
   ...baseSlider,
   track: cn(baseSlider.track, 'ring-1 ring-black/5'),
+  preview: cn(
+    baseSlider.preview,
+    '[--preview-end-inset:calc(100cqi-100%)]',
+    '[--preview-left:clamp(calc(var(--max-width)/2),var(--media-slider-pointer),calc(100%-var(--max-width)/2+var(--preview-end-inset)))]',
+    '@2xl/media-root:[--preview-left:var(--media-slider-pointer)]'
+  ),
 };
 
 /* ==========================================================================
@@ -230,8 +214,11 @@ export { bufferingIndicator } from './components/buffering';
 export { button } from './components/button';
 export { buttonGroup } from './components/button-group';
 export { icon, iconContainer, iconFlipped, iconHidden } from './components/icon';
-export { inputFeedback } from './components/input-feedback';
+export { inputIndicatorOverlay } from './components/input-indicator-overlay';
 export { overlay } from './components/overlay';
 export { playbackRate } from './components/playback-rate';
 export { poster } from './components/poster';
 export { seek } from './components/seek';
+export { seekIndicator } from './components/seek-indicator';
+export { statusIndicator } from './components/status-indicator';
+export { volumeIndicator } from './components/volume-indicator';

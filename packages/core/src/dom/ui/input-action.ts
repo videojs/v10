@@ -1,7 +1,7 @@
 import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 
-import { IndicatorVisibilityCoordinator } from '../../core/ui/input-feedback/indicator-lifecycle';
-import type { InputActionEvent, MediaSnapshot } from '../../core/ui/input-feedback/status';
+import { IndicatorVisibilityCoordinator } from '../../core/ui/indicator/indicator-lifecycle';
+import type { InputActionEvent, MediaSnapshot } from '../../core/ui/input-action/input-action';
 import { getGestureCoordinator } from '../gesture/coordinator';
 import type { GestureActivateEvent } from '../gesture/gesture';
 import type { HotkeyActivateEvent } from '../hotkey/coordinator';

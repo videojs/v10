@@ -12,7 +12,7 @@
 
 .media-default-skin .media-popover,
 .media-default-skin .media-tooltip {
-  --popup-translate-distance: calc(0.5 * var(--base-size));
+  --popup-translate-distance: calc(0.5 * var(--scale-unit));
   margin: 0;
   overflow: visible;
   color: inherit;

@@ -2,7 +2,7 @@ import { mkdirSync, mkdtempSync, rmSync, utimesSync, writeFileSync } from 'node:
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { findConfig, loadConfig, loadConfigFile, loadProjectConfig, loadProjectConfigFile } from '../load-config';
+import { findConfig, loadBuildConfig, loadBuildConfigFile, loadConfig, loadConfigFile } from '../load-config';
 
 let workDir: string;
 
@@ -43,7 +43,7 @@ describe('loadConfigFile', () => {
     });
   });
 
-  it('rejects a project config array', async () => {
+  it('rejects a build config array', async () => {
     const configPath = join(workDir, 'compiler.config.mjs');
     writeFileSync(configPath, `export default [{ input: 'one.tsx' }, { input: 'two.tsx' }];\n`, 'utf8');
 
@@ -79,12 +79,12 @@ describe('loadConfigFile', () => {
   });
 });
 
-describe('loadProjectConfigFile', () => {
-  it('loads a multi-target project config', async () => {
+describe('loadBuildConfigFile', () => {
+  it('loads a multi-target build config', async () => {
     const configPath = join(workDir, 'compiler.config.mjs');
     writeFileSync(configPath, `export const config = [{ input: 'one.tsx' }, { input: 'two.tsx' }];\n`, 'utf8');
 
-    const loaded = await loadProjectConfigFile(configPath);
+    const loaded = await loadBuildConfigFile(configPath);
 
     expect(loaded.config).toEqual([{ input: 'one.tsx' }, { input: 'two.tsx' }]);
     expect(loaded.configDir).toBe(workDir);
@@ -97,12 +97,12 @@ describe('loadConfig', () => {
   });
 });
 
-describe('loadProjectConfig', () => {
-  it('loads a discovered project config', async () => {
+describe('loadBuildConfig', () => {
+  it('loads a discovered build config', async () => {
     const configPath = join(workDir, 'compiler.config.mjs');
     writeFileSync(configPath, `export default { input: 'input.tsx' };\n`, 'utf8');
 
-    await expect(loadProjectConfig(workDir, undefined)).resolves.toMatchObject({
+    await expect(loadBuildConfig(workDir, undefined)).resolves.toMatchObject({
       config: { input: 'input.tsx' },
       configPath,
       configDir: workDir,

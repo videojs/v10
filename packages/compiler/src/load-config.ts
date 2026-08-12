@@ -2,11 +2,11 @@ import { existsSync, statSync } from 'node:fs';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 
-import type { CompilerConfig, CompilerProjectConfig } from './config';
+import type { CompilerBuildConfig, CompilerConfig } from './config';
 
 interface ConfigModule {
-  default?: CompilerProjectConfig;
-  config?: CompilerProjectConfig;
+  default?: CompilerBuildConfig;
+  config?: CompilerBuildConfig;
 }
 
 export interface LoadedCompilerConfig {
@@ -15,8 +15,8 @@ export interface LoadedCompilerConfig {
   configDir: string;
 }
 
-export interface LoadedCompilerProjectConfig {
-  config: CompilerProjectConfig;
+export interface LoadedCompilerBuildConfig {
+  config: CompilerBuildConfig;
   configPath: string;
   configDir: string;
 }
@@ -43,7 +43,7 @@ export function findConfig(cwd: string, override: string | undefined): string | 
   return null;
 }
 
-export async function loadProjectConfigFile(configPath: string): Promise<LoadedCompilerProjectConfig> {
+export async function loadBuildConfigFile(configPath: string): Promise<LoadedCompilerBuildConfig> {
   const configUrl = pathToFileURL(configPath);
   configUrl.searchParams.set('mtime', String(statSync(configPath).mtimeMs));
   const mod = (await import(configUrl.href)) as ConfigModule;
@@ -51,24 +51,24 @@ export async function loadProjectConfigFile(configPath: string): Promise<LoadedC
   if (!exported) {
     throw new Error(`Config file ${configPath} must export a default compiler config (use \`defineConfig\`).`);
   }
-  const config = parseProjectConfig(exported, configPath);
+  const config = parseBuildConfig(exported, configPath);
   return { config, configPath, configDir: dirname(configPath) };
 }
 
 export async function loadConfigFile(configPath: string): Promise<LoadedCompilerConfig> {
-  const loaded = await loadProjectConfigFile(configPath);
+  const loaded = await loadBuildConfigFile(configPath);
   if (isCompilerConfigArray(loaded.config)) {
     throw new Error(`Config file ${configPath} must export a single compiler config.`);
   }
   return { ...loaded, config: loaded.config };
 }
 
-export async function loadProjectConfig(
+export async function loadBuildConfig(
   cwd: string,
   override: string | undefined
-): Promise<LoadedCompilerProjectConfig | null> {
+): Promise<LoadedCompilerBuildConfig | null> {
   const configPath = findConfig(cwd, override);
-  return configPath ? loadProjectConfigFile(configPath) : null;
+  return configPath ? loadBuildConfigFile(configPath) : null;
 }
 
 export async function loadConfig(cwd: string, override: string | undefined): Promise<LoadedCompilerConfig | null> {
@@ -76,11 +76,11 @@ export async function loadConfig(cwd: string, override: string | undefined): Pro
   return configPath ? loadConfigFile(configPath) : null;
 }
 
-function isCompilerConfigArray(config: CompilerProjectConfig): config is readonly CompilerConfig[] {
+function isCompilerConfigArray(config: CompilerBuildConfig): config is readonly CompilerConfig[] {
   return Array.isArray(config);
 }
 
-function parseProjectConfig(value: unknown, configPath: string): CompilerProjectConfig {
+function parseBuildConfig(value: unknown, configPath: string): CompilerBuildConfig {
   if (Array.isArray(value)) {
     value.forEach((config, index) => validateCompilerConfig(config, `${configPath}[${index}]`));
     return value as readonly CompilerConfig[];
@@ -94,6 +94,14 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
 
   if (value.input !== undefined && !isCompilerInput(value.input)) {
     throw invalidConfig(location, '`input` must be a string, string array, or string record');
+  }
+
+  if (
+    value.external !== undefined &&
+    typeof value.external !== 'function' &&
+    (!Array.isArray(value.external) || value.external.some((item) => typeof item !== 'string'))
+  ) {
+    throw invalidConfig(location, '`external` must be a string array or function');
   }
 
   if (value.output !== undefined) {
@@ -124,8 +132,8 @@ function validateCompilerConfig(value: unknown, location: string): asserts value
   }
 
   if (value.target !== undefined) {
-    if (!isRecord(value.target) || value.target.name !== 'jsx') {
-      throw invalidConfig(location, '`target.name` must be "jsx"');
+    if (!isRecord(value.target) || (value.target.name !== 'jsx' && value.target.name !== 'html')) {
+      throw invalidConfig(location, '`target.name` must be "jsx" or "html"');
     }
     if (value.target.imports !== undefined) {
       if (!isRecord(value.target.imports)) throw invalidConfig(location, '`target.imports` must be an object');

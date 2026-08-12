@@ -174,7 +174,7 @@ export class TimeSliderElement extends MediaElement {
     this.#provider.setValue({
       state,
       stateAttrMap: TimeSliderDataAttrs,
-      pointerValue: this.#core.valueFromPercent(state.pointerPercent),
+      pointerValue: this.#core.rawValueFromPercent(state.pointerPercent),
       thumbAttrs: {
         ...thumbAttrs,
         'aria-label': translateText(thumbAttrs['aria-label'], this.#i18n.value),

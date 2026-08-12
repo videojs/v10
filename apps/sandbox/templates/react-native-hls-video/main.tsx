@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { Chapters } from '@app/shared/react/chapters';
 import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
@@ -11,7 +12,7 @@ import { usePreload } from '@app/shared/react/use-preload';
 import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
-import { isLiveSource, SOURCES } from '@app/shared/sources';
+import { getChapters, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
 import { NativeHlsVideo } from '@videojs/react/media/native-hls-video';
 import { useMemo } from 'react';
@@ -34,6 +35,11 @@ function App() {
   const preload = usePreload();
   const Provider = live ? LiveVideoProvider : VideoProvider;
 
+  // A source carrying DRM license servers has no room in a plain `src`. Only the
+  // FairPlay entry of its `drm` is read here — the systems the same object names
+  // for hls.js are ignored.
+  const { source: hlsSource, url } = SOURCES[source];
+
   return (
     <SandboxI18nProvider>
       <Provider>
@@ -45,7 +51,7 @@ function App() {
           className="w-full aspect-video max-w-4xl mx-auto"
         >
           <NativeHlsVideo
-            src={SOURCES[source].url ?? ''}
+            {...(hlsSource ? { source: hlsSource } : { src: url ?? '' })}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}
@@ -53,6 +59,7 @@ function App() {
             playsInline
             crossOrigin="anonymous"
           >
+            <Chapters tracks={getChapters(source)} />
             <Storyboard src={storyboard} />
           </NativeHlsVideo>
         </VideoSkinComponent>

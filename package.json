@@ -43,6 +43,8 @@
     "test:e2e:install": "pnpm --dir apps/e2e run install:browsers && pnpm --dir apps/e2e run install:deps",
     "test:size": "node --test .github/scripts/tests/*.test.js",
     "format:astro": "prettier --write 'site/src/**/*.astro'",
+    "generate:skins": "pnpm -F @videojs/skins generate:skins",
+    "check:skins": "pnpm -F @videojs/skins check:skins",
     "typecheck": "tsgo --build",
     "changelog": "git-cliff --config cliff.toml --output CHANGELOG.md",
     "check:workspace": "node build/scripts/check-workspace.mjs"
@@ -77,7 +79,7 @@
     "commit-msg": "pnpm commitlint"
   },
   "lint-staged": {
-    "packages/icons/src/assets/**/*.svg": "node --import tsx packages/icons/scripts/format.ts",
+    "packages/icons/src/assets/**/*.svg": "node --import tsx packages/icons/scripts/format-icons.ts",
     "*.astro": "prettier --write",
     "*": "biome check --write --no-errors-on-unmatched"
   }

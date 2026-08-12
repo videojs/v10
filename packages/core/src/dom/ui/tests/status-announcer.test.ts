@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { StatusAnnouncerCore } from '../../../core/ui/input-feedback/status-announcer-core';
+import { StatusAnnouncerCore } from '../../../core/ui/status-announcer/status-announcer-core';
 import { type StatusAnnouncerStore, subscribeToStatusAnnouncer } from '../status-announcer';
 
 describe('subscribeToStatusAnnouncer', () => {
