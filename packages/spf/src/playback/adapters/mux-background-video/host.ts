@@ -10,12 +10,16 @@
  * entry free of `@videojs/media`, and small enough to suit a component whose
  * whole pitch is its size.
  *
- * ⚠️ It implements too little to be a `Media` structurally, which bounds what may
- * consume it: a store feature reading any property outside this set gets
- * `undefined` rather than an error. A Media needing more of the media surface
+ * An `EventTarget`, because a Media is one: the store and the element layers
+ * take anything they attach as an event source, and inheriting the three methods
+ * satisfies that for free rather than by stubbing them.
+ *
+ * ⚠️ It still implements too little to carry the rest of the media surface, which
+ * bounds what may consume it: a store feature reading a property outside this set
+ * gets `undefined` rather than an error. A Media needing more of that surface
  * belongs on a host that provides it.
  */
-export class BackgroundVideoHost {
+export class BackgroundVideoHost extends EventTarget {
   #target: HTMLVideoElement | null = null;
 
   attach(target: HTMLVideoElement): void {
