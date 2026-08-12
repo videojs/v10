@@ -104,26 +104,24 @@ describe('BackgroundVideoMediaElement', () => {
     });
   });
 
-  describe('loop / muted defaults', () => {
-    it('defaults loop to true', () => {
-      const media = new BackgroundVideoMediaElement();
-      expect(media.loop).toBe(true);
-    });
-
-    it('defaults muted to true', () => {
-      const media = new BackgroundVideoMediaElement();
-      expect(media.muted).toBe(true);
-    });
-
-    it('applies loop / muted defaults to the media element on attach', () => {
+  // The adapter declares none of these; `attach` is the one place the fixed
+  // behavior is written, so the element is where it is observable.
+  describe('fixed playback behavior', () => {
+    it('fixes loop, muted, autoplay, and preload on the media element at attach', () => {
       const media = new BackgroundVideoMediaElement();
       const el = document.createElement('video');
       // start the element in the opposite state so we can confirm attach overrides it
       el.loop = false;
       el.muted = false;
+      el.autoplay = false;
+      el.preload = 'none';
+
       media.attach(el);
+
       expect(el.loop).toBe(true);
       expect(el.muted).toBe(true);
+      expect(el.autoplay).toBe(true);
+      expect(el.preload).toBe('auto');
     });
 
     // attach modifies native props; changing src doesn't
@@ -134,37 +132,6 @@ describe('BackgroundVideoMediaElement', () => {
       el.loop = false;
       el.muted = false;
       media.src = 'https://example.com/v.m3u8';
-      expect(el.loop).toBe(false);
-      expect(el.muted).toBe(false);
-    });
-
-    // Skipped: `set loop` / `set muted` are noops in Phase 1 (the adapter
-    // pins loop=true / muted=true for the autoplay-looping use case). These
-    // assert functional setters — unskip when the setters are implemented.
-    it.skip('mirrors loop changes onto the attached element', () => {
-      const media = new BackgroundVideoMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
-      media.loop = false;
-      expect(el.loop).toBe(false);
-      expect(media.loop).toBe(false);
-    });
-
-    it.skip('mirrors muted changes onto the attached element', () => {
-      const media = new BackgroundVideoMediaElement();
-      const el = document.createElement('video');
-      media.attach(el);
-      media.muted = false;
-      expect(el.muted).toBe(false);
-      expect(media.muted).toBe(false);
-    });
-
-    it.skip('stores loop / muted updates made before attach and applies them on attach', () => {
-      const media = new BackgroundVideoMediaElement();
-      media.loop = false;
-      media.muted = false;
-      const el = document.createElement('video');
-      media.attach(el);
       expect(el.loop).toBe(false);
       expect(el.muted).toBe(false);
     });
