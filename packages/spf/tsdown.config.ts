@@ -11,6 +11,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'media-tracks': 'src/media/media-tracks/index.ts',
     'background-video': 'src/playback/adapters/background-video/index.ts',
     'mux-audio': 'src/playback/adapters/mux-audio/index.ts',
+    'mux-background-video': 'src/playback/adapters/mux-background-video/index.ts',
     'mux-video': 'src/playback/adapters/mux-video/index.ts',
     'simple-hls': 'src/playback/adapters/simple-hls/index.ts',
     'simple-hls-audio-only': 'src/playback/adapters/simple-hls-audio-only/index.ts',
