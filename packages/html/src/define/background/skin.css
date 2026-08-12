@@ -13,7 +13,15 @@ background-video-skin {
   object-fit: var(--media-object-fit);
 }
 
-background-video-skin > background-video {
+/*
+ * Every background media the skin can hold. Selected by tag because that is what
+ * a background media is here — there is no shared base element or attribute to
+ * key on — so a new flavor has to be added to this list or it renders at 0×0:
+ * the element gets no box, and the `<video>` inside it is absolutely positioned
+ * against that box.
+ */
+background-video-skin > background-video,
+background-video-skin > mux-background-video {
   position: absolute;
   inset: 0;
   width: 100%;
