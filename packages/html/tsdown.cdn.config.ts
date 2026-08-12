@@ -34,6 +34,7 @@ const media = [
   'google-cast',
   'hlsjs-video',
   'mux-audio',
+  'mux-background-video',
   'mux-data',
   'mux-video',
   'native-hls-video',

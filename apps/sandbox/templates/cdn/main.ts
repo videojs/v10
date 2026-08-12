@@ -21,6 +21,7 @@ import {
   getChapters,
   getPosterSrc,
   getStoryboardSrc,
+  HLS_BACKGROUND_VIDEO_SRC,
   isLiveSource,
   SOURCES,
 } from '@app/shared/sources';
@@ -146,6 +147,9 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
       else await import('@videojs/html/cdn/audio');
       break;
     case 'background-video':
+    case 'mux-background-video':
+      // Player and skin are shared; the element each one renders is what differs,
+      // and that arrives from `loadCdnMedia`.
       await import('@videojs/html/cdn/background');
       break;
   }
@@ -170,6 +174,12 @@ async function loadCdnMedia(preset: Preset) {
       break;
     case 'mux-audio-spf':
       await import('@videojs/html/cdn/media/mux-audio/spf');
+      break;
+    // `<background-video>` rides along inside the `background` bundle above; the
+    // Mux flavor is its own, so the page loads it the way it loads every other
+    // media element.
+    case 'mux-background-video':
+      await import('@videojs/html/cdn/media/mux-background-video');
       break;
     case 'native-hls-video':
       await import('@videojs/html/cdn/media/native-hls-video');
@@ -196,14 +206,18 @@ function isAudioPreset(preset: Preset): boolean {
   );
 }
 
+function isBackgroundPreset(preset: Preset): boolean {
+  return preset === 'background-video' || preset === 'mux-background-video';
+}
+
 function getPlayerTag(preset: Preset, live: boolean): string {
-  if (preset === 'background-video') return 'background-video-player';
+  if (isBackgroundPreset(preset)) return 'background-video-player';
   if (isAudioPreset(preset)) return live ? 'live-audio-player' : 'audio-player';
   return live ? 'live-video-player' : 'video-player';
 }
 
 function getSkinTag(preset: Preset, skin: Skin, live: boolean): string {
-  if (preset === 'background-video') return 'background-video-skin';
+  if (isBackgroundPreset(preset)) return 'background-video-skin';
   if (isAudioPreset(preset)) return CSS_SKIN_TAGS[skin].audio;
   if (live) return LIVE_VIDEO_CSS_SKIN_TAGS[skin];
   return CSS_SKIN_TAGS[skin].video;
@@ -222,6 +236,7 @@ function getMediaTag(preset: Preset): string {
     'dash-video': 'dash-video',
     audio: 'audio',
     'background-video': 'background-video',
+    'mux-background-video': 'mux-background-video',
   };
 
   return tags[preset] ?? 'video';
@@ -229,7 +244,7 @@ function getMediaTag(preset: Preset): string {
 
 function loadStylesheets(preset: Preset, skin: Skin) {
   if (isAudioPreset(preset)) loadAudioStylesheets(skin);
-  else if (preset !== 'background-video') loadVideoStylesheets(skin);
+  else if (!isBackgroundPreset(preset)) loadVideoStylesheets(skin);
   // Background CSS is loaded via dynamic import in loadCdnPreset.
 }
 
@@ -281,16 +296,21 @@ async function render() {
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
-  const sourceAttr = preset === 'background-video' ? `src="${BACKGROUND_VIDEO_SRC}"` : `src="${source.url}"`;
+  // Each background preset renders its own fixed source: the native element takes
+  // a progressive MP4, the SPF-backed one needs CMAF/fMP4 over HLS, capped by a
+  // Mux URL param rather than an attribute.
+  const backgroundSrc =
+    preset === 'mux-background-video' ? `${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p` : BACKGROUND_VIDEO_SRC;
+  const sourceAttr = isBackgroundPreset(preset) ? `src="${backgroundSrc}"` : `src="${source.url}"`;
   const mediaAttrs = renderMediaAttrs(state);
 
   // Background video needs viewport dimensions instead of flex centering.
-  if (preset === 'background-video') {
+  if (isBackgroundPreset(preset)) {
     root.className = '';
     root.style.cssText = 'width: 100vw; height: 100vh;';
   }
 
-  if (preset === 'background-video') {
+  if (isBackgroundPreset(preset)) {
     root.innerHTML = wrapCdnPlayerI18n(
       playerTag,
       html`
