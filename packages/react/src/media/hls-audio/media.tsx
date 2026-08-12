@@ -10,8 +10,7 @@ import { useMediaInstance } from '../../utils/use-media-instance';
 import { useSyncProps } from '../../utils/use-sync-props';
 
 export interface HlsAudioProps
-  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps>,
-    Partial<HlsAudioMediaProps> {
+  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps>, Partial<HlsAudioMediaProps> {
   children?: ReactNode;
 }
 

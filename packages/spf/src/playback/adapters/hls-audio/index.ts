@@ -4,9 +4,5 @@
  * separately from `@videojs/spf/hls`.
  */
 export type { HlsAudioMediaAPI, HlsAudioMediaProps } from './adapter';
-export {
-  HlsAudioMediaElement,
-  HlsAudioMediaMixin,
-  hlsAudioMediaDefaultProps,
-} from './adapter';
+export { HlsAudioMediaElement, HlsAudioMediaMixin, hlsAudioMediaDefaultProps } from './adapter';
 export { HlsAudioMedia } from './media';

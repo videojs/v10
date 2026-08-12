@@ -124,7 +124,7 @@ export default defineConfig({
     },
   },
   staged: {
-    'packages/icons/src/assets/**/*.svg': 'node --import tsx packages/icons/scripts/format.ts',
+    'packages/icons/src/assets/**/*.svg': 'node --import tsx packages/icons/scripts/format-icons.ts',
     '*': 'vp check --fix --no-error-on-unmatched-pattern',
   },
 });

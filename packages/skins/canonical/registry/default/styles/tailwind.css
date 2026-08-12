@@ -1,6 +1,6 @@
-@import 'tailwindcss';
-@import './base.css';
-@import './themes/default.css';
+@import "tailwindcss";
+@import "./base.css";
+@import "./themes/default.css";
 
 @source "../**/*.{ts,tsx,html}";
 

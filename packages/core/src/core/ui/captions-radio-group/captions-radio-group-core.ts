@@ -20,8 +20,7 @@ export interface CaptionsRadioGroupProps {
 export interface CaptionsRadioGroupOption extends RadioOption {}
 
 export interface CaptionsRadioGroupState
-  extends Pick<MediaTextTrackState, 'subtitlesShowing'>,
-    RadioOptionsState<CaptionsRadioGroupOption> {}
+  extends Pick<MediaTextTrackState, 'subtitlesShowing'>, RadioOptionsState<CaptionsRadioGroupOption> {}
 
 export const CAPTIONS_OFF_VALUE = 'off';
 
