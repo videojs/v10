@@ -280,14 +280,9 @@ export class PlayerPage {
     await expect.poll(async () => this.getPlaybackRate()).not.toBe(initialRate);
   }
 
-  /** Hover over the player area to trigger user-active state and show controls. */
+  /** Signal pointer activity to show controls and reset the idle timer. */
   async showControls(): Promise<void> {
-    // Use the play button as anchor — it's always inside the player
-    const btn = this.playButton;
-    const box = await btn.boundingBox();
-    if (!box) throw new Error('Play button not visible — cannot show controls');
-
-    await this.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await this.playerRoot.dispatchEvent('pointermove', { pointerType: 'mouse' });
     if ((await this.videoPlayer.count()) > 0) {
       await expect(this.controls).toHaveAttribute(DATA_ATTRS.visible, '');
     }
