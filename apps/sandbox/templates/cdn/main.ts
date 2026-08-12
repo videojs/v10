@@ -118,6 +118,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'video':
     case 'hlsjs-video':
     case 'mux-video':
+    case 'mux-video-spf':
     case 'native-hls-video':
     case 'simple-hls-video':
     case 'dash-video':
@@ -131,6 +132,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
       break;
     case 'audio':
     case 'mux-audio':
+    case 'mux-audio-spf':
     case 'simple-hls-audio-only':
       if (skin === 'minimal') await import('@videojs/html/cdn/audio-minimal');
       else await import('@videojs/html/cdn/audio');
@@ -149,8 +151,17 @@ async function loadCdnMedia(preset: Preset) {
     case 'mux-video':
       await import('@videojs/html/cdn/media/mux-video');
       break;
+    // One preset loads one flavor, so the SPF-backed element is the only claimant
+    // and registers as `<mux-video>` — the CDN page is where that rule is visible,
+    // since a page picks bundles at runtime rather than by import path.
+    case 'mux-video-spf':
+      await import('@videojs/html/cdn/media/mux-video/spf');
+      break;
     case 'mux-audio':
       await import('@videojs/html/cdn/media/mux-audio');
+      break;
+    case 'mux-audio-spf':
+      await import('@videojs/html/cdn/media/mux-audio/spf');
       break;
     case 'native-hls-video':
       await import('@videojs/html/cdn/media/native-hls-video');
@@ -172,7 +183,9 @@ async function loadCdnMedia(preset: Preset) {
 // ---------------------------------------------------------------------------
 
 function isAudioPreset(preset: Preset): boolean {
-  return preset === 'audio' || preset === 'mux-audio' || preset === 'simple-hls-audio-only';
+  return (
+    preset === 'audio' || preset === 'mux-audio' || preset === 'mux-audio-spf' || preset === 'simple-hls-audio-only'
+  );
 }
 
 function getPlayerTag(preset: Preset, live: boolean): string {
@@ -192,7 +205,9 @@ function getMediaTag(preset: Preset): string {
   const tags: Partial<Record<Preset, string>> = {
     'hlsjs-video': 'hlsjs-video',
     'mux-video': 'mux-video',
+    'mux-video-spf': 'mux-video',
     'mux-audio': 'mux-audio',
+    'mux-audio-spf': 'mux-audio',
     'native-hls-video': 'native-hls-video',
     'simple-hls-video': 'simple-hls-video',
     'simple-hls-audio-only': 'simple-hls-audio-only',
@@ -215,6 +230,7 @@ function isVideoPreset(preset: Preset): boolean {
     preset === 'video' ||
     preset === 'hlsjs-video' ||
     preset === 'mux-video' ||
+    preset === 'mux-video-spf' ||
     preset === 'native-hls-video' ||
     preset === 'simple-hls-video' ||
     preset === 'dash-video'
@@ -223,7 +239,11 @@ function isVideoPreset(preset: Preset): boolean {
 
 function canPlayLive(preset: Preset): boolean {
   return (
-    preset === 'hlsjs-video' || preset === 'mux-video' || preset === 'native-hls-video' || preset === 'simple-hls-video'
+    preset === 'hlsjs-video' ||
+    preset === 'mux-video' ||
+    preset === 'mux-video-spf' ||
+    preset === 'native-hls-video' ||
+    preset === 'simple-hls-video'
   );
 }
 
