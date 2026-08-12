@@ -108,6 +108,59 @@ describe('MuxVideoMedia', () => {
     expect(media.contentData).toEqual({});
   });
 
+  it('dispatches `contentdatachange` when the derived urls change', () => {
+    const media = new MuxVideoMedia();
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp');
+
+    media.source = { playbackId: 'xyz789' };
+
+    expect(handler).toHaveBeenCalledTimes(2);
+    expect(media.contentData.poster).toBe('https://image.mux.com/xyz789/thumbnail.webp');
+  });
+
+  it('dedupes `contentdatachange` when a source change leaves the urls alone', () => {
+    const media = new MuxVideoMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    // A new object, so `sourcechange` still fires, but nothing the images are
+    // built from moved.
+    media.source = { playbackId: 'abc123', playback: { maxResolution: '720p' } };
+
+    expect(handler).not.toHaveBeenCalled();
+  });
+
+  it('clears the content data and announces it when the source is dropped', () => {
+    const media = new MuxVideoMedia();
+    media.source = { playbackId: 'abc123' };
+
+    const handler = vi.fn();
+    media.addEventListener('contentdatachange', handler);
+
+    media.source = null;
+
+    expect(handler).toHaveBeenCalledTimes(1);
+    expect(media.contentData).toEqual({});
+  });
+
+  it('has the content data in step when `sourcechange` fires', () => {
+    const media = new MuxVideoMedia();
+    const seen: (string | null | undefined)[] = [];
+    media.addEventListener('sourcechange', () => seen.push(media.contentData.poster));
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(seen).toEqual(['https://image.mux.com/abc123/thumbnail.webp']);
+  });
+
   it('fires sourcechange when source is set', () => {
     const media = new MuxVideoMedia();
     const onSourceChange = vi.fn();

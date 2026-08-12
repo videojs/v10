@@ -6,6 +6,7 @@ import {
   type MuxSourceBase,
   parseMuxVideoURL,
 } from '@videojs/media/dom/mux/source';
+import { shallowEqual } from '@videojs/utils/object';
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 
 export interface MuxMediaProps {
@@ -37,6 +38,7 @@ export interface MuxMediaAPI extends MuxMediaProps {
  * source and dispatches `sourcechange` itself.
  *
  * @fires sourcechange - Fired when `source` changes, either directly or by parsing a new `src`. Read `source` for the new value.
+ * @fires contentdatachange - Fired when the derived `contentData` changes. Read `contentData` for the new value.
  */
 export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class MuxMediaImpl extends BaseClass {
@@ -55,6 +57,7 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
     }
 
     #source: MuxSourceBase | null = muxMediaDefaultProps.source;
+    #contentData: MuxContentData = {};
 
     /**
      * Media source URL. Setting a Mux stream URL
@@ -95,26 +98,45 @@ export function MuxMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
       if (source === this.#source) return;
 
       this.#source = source;
+
+      // Refresh the bag before announcing `sourcechange`, because listeners read
+      // `contentData` from that event. Announcing its own change waits until
+      // after, so `src` is in step by the time either event fires.
+      const contentDataChanged = this.#refreshContentData();
+
       super.src = (source && (createMuxVideoURL(source) ?? source.src)) || '';
 
       this.dispatchEvent?.(new Event('sourcechange'));
+
+      if (contentDataChanged) this.dispatchEvent?.(new Event('contentdatachange'));
     }
 
     /**
      * Image URLs `source` describes rather than plays: `poster` from its `poster`
      * params, `storyboard` from its `storyboard` params.
      *
-     * Read-only and re-derived on read, so read it again after `sourcechange`.
-     * Nothing here is applied for you.
+     * Derived from `source` and nothing else. The same object is handed back
+     * until one of those URLs changes, and `contentdatachange` announces it when
+     * it does. Nothing here is applied for you.
      */
     get contentData(): MuxContentData {
+      return this.#contentData;
+    }
+
+    /** Rebuild the derived bag, reporting whether anything about it changed. */
+    #refreshContentData(): boolean {
       const poster = createMuxPosterURL(this.#source);
       const storyboard = createMuxStoryboardURL(this.#source);
 
-      return {
+      const next: MuxContentData = {
         ...(poster && { poster }),
         ...(storyboard && { storyboard }),
       };
+
+      if (shallowEqual(this.#contentData, next)) return false;
+
+      this.#contentData = next;
+      return true;
     }
   }
 

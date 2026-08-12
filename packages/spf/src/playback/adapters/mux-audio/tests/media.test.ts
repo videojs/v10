@@ -59,6 +59,16 @@ describe('MuxAudioMedia', () => {
     });
   });
 
+  it('dispatches contentdatachange when the derived urls change', () => {
+    const media = new MuxAudioMedia();
+    const onContentDataChange = vi.fn();
+    media.addEventListener('contentdatachange', onContentDataChange);
+
+    media.source = { playbackId: 'abc123' };
+
+    expect(onContentDataChange).toHaveBeenCalledTimes(1);
+  });
+
   it('points unplayable-source copy at the hls.js-backed Media', () => {
     // The audio-only adapter gained the suggestion seam for this: SPF plays
     // neither MPEG-TS nor DRM whichever engine variant is underneath. Named by
