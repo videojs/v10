@@ -11,8 +11,8 @@
  * no Media to hand an element. Both are the muted-looping case, so a change to
  * one usually belongs in the other.
  *
- * Binding a host here costs nothing this entry was avoiding: its host is local
- * and narrow, so it stays free of `@videojs/media` exactly as its sibling does.
+ * Its host is local and narrow, so this entry carries no `@videojs/media`
+ * dependency either.
  */
 export type { MuxBackgroundVideoMediaAPI, MuxBackgroundVideoMediaProps } from './adapter';
 export {

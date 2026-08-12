@@ -4,12 +4,12 @@ import { BackgroundVideoHost } from './host';
 const MuxBackgroundVideoMediaBase = MuxBackgroundVideoMediaMixin(BackgroundVideoHost);
 
 /**
- * The Mux background-video Media, bound to a `<video>`.
+ * The Mux background-video Media, bound to a `<video>` through
+ * {@link BackgroundVideoHost}.
  *
- * Over {@link BackgroundVideoHost} rather than `@videojs/media`'s
- * `HTMLVideoElementHost`: a background video reaches four of that host's members
- * and downloads the rest. It also keeps this entry free of `@videojs/media`, the
- * property `@videojs/spf/background-video` documents for itself.
+ * That host carries the attached element and the four properties `attach` fixes,
+ * which is all this Media's surface needs, and it is local — so this entry has
+ * no `@videojs/media` dependency.
  *
  * No `MediaTracksMixin`, unlike `SimpleHlsMedia`: the engine subtracts audio and
  * text entirely and pins one video rendition for the session, so there are no

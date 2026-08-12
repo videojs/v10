@@ -1,21 +1,19 @@
 /**
- * The `<video>` binding a background video actually uses: somewhere to keep the
- * attached element, and the four properties whose values it fixes.
+ * The `<video>` binding a background video uses: somewhere to keep the attached
+ * element, and the four properties the Media fixes on it.
  *
- * `HTMLVideoElementHost` would do this too, along with the rest of the WHATWG
- * surface — `currentTime`, `play()`, picture-in-picture, fullscreen, event
- * forwarding, media-component registration. None of it is reachable here. The
- * engine drives playback, the element exposes `src` and nothing else, and the
- * background player's store subscribes to no features at all, so every one of
- * those members is weight a consumer downloads to never call. Measured, the full
- * host is 1,644 B gzipped against this one's 234 B, and swapping it takes ~1.2 KB
- * off each of the three published entries.
+ * That is the whole surface anything here reaches. The engine drives playback,
+ * the element exposes `src` and nothing else, and the background player
+ * subscribes to no store features, so nothing asks a background video for
+ * `currentTime`, `play()`, picture-in-picture, fullscreen, forwarded events, or
+ * media components. Holding the host to what is reachable is what keeps this
+ * entry free of `@videojs/media`, and small enough to suit a component whose
+ * whole pitch is its size.
  *
- * ⚠️ The tradeoff is that this is no longer a `Media` structurally, so the layers
- * above cast to reach it, and **a store feature added to `backgroundFeatures`
- * would read properties that aren't here** — silently, as `undefined`. That is
- * the point at which this should become a composition over the shared host
- * rather than a replacement for it.
+ * ⚠️ It implements too little to be a `Media` structurally, which bounds what may
+ * consume it: a store feature reading any property outside this set gets
+ * `undefined` rather than an error. A Media needing more of the media surface
+ * belongs on a host that provides it.
  */
 export class BackgroundVideoHost {
   #target: HTMLVideoElement | null = null;
