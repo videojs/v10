@@ -4,7 +4,7 @@ import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
 import { audioText } from '../../i18n/text/menu';
-import type { ButtonState } from '../types';
+import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface AudioTrackRadioGroupProps {
@@ -16,17 +16,9 @@ export interface AudioTrackRadioGroupProps {
   disabled?: boolean | undefined;
 }
 
-export interface AudioTrackRadioGroupTrack {
-  value: string;
-  label: Text | string;
-}
+export interface AudioTrackRadioGroupOption extends RadioOption {}
 
-export interface AudioTrackRadioGroupState extends ButtonState {
-  tracks: readonly AudioTrackRadioGroupTrack[];
-  value: string;
-  disabled: boolean;
-  availability: 'available' | 'unavailable';
-}
+export interface AudioTrackRadioGroupState extends RadioOptionsState<AudioTrackRadioGroupOption> {}
 
 function formatTrackLabel(track: MediaAudioTrack): Text | string {
   if (track.label) return track.label;
@@ -47,7 +39,7 @@ export class AudioTrackRadioGroupCore {
   };
 
   readonly state = createState<AudioTrackRadioGroupState>({
-    tracks: [],
+    options: [],
     value: '',
     disabled: false,
     availability: 'unavailable',
@@ -90,14 +82,15 @@ export class AudioTrackRadioGroupCore {
   getState(): AudioTrackRadioGroupState {
     const media = this.#media!;
     const enabledIndex = media.audioTrackList.findIndex((track) => track.enabled);
-    const tracks = media.audioTrackList.map((track, index) => ({
+    const options = media.audioTrackList.map((track, index) => ({
       value: getTrackValue(track, index),
       label: this.getTrackLabel(track),
+      disabled: false,
     }));
-    const availability: AudioTrackRadioGroupState['availability'] = tracks.length > 1 ? 'available' : 'unavailable';
+    const availability: AudioTrackRadioGroupState['availability'] = options.length > 1 ? 'available' : 'unavailable';
 
     this.state.patch({
-      tracks,
+      options,
       value: enabledIndex === -1 ? '' : getTrackValue(media.audioTrackList[enabledIndex]!, enabledIndex),
       disabled: this.#props.disabled || availability === 'unavailable',
       availability,

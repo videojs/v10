@@ -1,5 +1,6 @@
 import { cleanup, render } from '@testing-library/react';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
+import type { HTMLAttributes } from 'react';
 import { createRef } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -10,26 +11,37 @@ import { SliderFill } from '../../slider/slider-fill';
 import { SliderThumb } from '../../slider/slider-thumb';
 import { SliderTrack } from '../../slider/slider-track';
 import { SliderValue } from '../../slider/slider-value';
+import { TimeSliderChapterTitle } from '../time-slider-chapters/time-slider-chapter-title';
+import { TimeSliderChapters, type TimeSliderChaptersState } from '../time-slider-chapters/time-slider-chapters';
 import { TimeSliderRoot } from '../time-slider-root';
 
 // --- Hoisted mock data (available inside vi.mock factories) ---
 
-const { mockSliderApi, mockTimeState, mockBufferState, mockPlaybackState, capturedSliderOptions } = vi.hoisted(() => {
+const {
+  mockSliderApi,
+  mockSliderInput,
+  mockTimeState,
+  mockBufferState,
+  mockPlaybackState,
+  mockTextTrackState,
+  capturedSliderOptions,
+} = vi.hoisted(() => {
   const capturedSliderOptions: { current: { onDragStart?: () => void; onDragEnd?: () => void } } = {
     current: {},
+  };
+  const mockSliderInput = {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
   };
   return {
     mockSliderApi: (options: { onDragStart?: () => void; onDragEnd?: () => void }) => {
       capturedSliderOptions.current = options;
       return {
         input: {
-          current: {
-            pointerPercent: 0,
-            dragPercent: 0,
-            dragging: false,
-            pointing: false,
-            focused: false,
-          },
+          current: mockSliderInput,
           subscribe: vi.fn(() => vi.fn()),
         },
         rootProps: {
@@ -46,6 +58,7 @@ const { mockSliderApi, mockTimeState, mockBufferState, mockPlaybackState, captur
         destroy: vi.fn(),
       };
     },
+    mockSliderInput,
     mockTimeState: {
       currentTime: 30,
       duration: 120,
@@ -64,6 +77,12 @@ const { mockSliderApi, mockTimeState, mockBufferState, mockPlaybackState, captur
       play: vi.fn(() => Promise.resolve()),
       pause: vi.fn(),
     },
+    mockTextTrackState: {
+      chaptersCues: [
+        { id: 'first', startTime: 0, endTime: 40, text: 'First' },
+        { id: 'second', startTime: 60, endTime: 120, text: 'Second' },
+      ],
+    },
     capturedSliderOptions,
   };
 });
@@ -80,20 +99,34 @@ vi.mock('@videojs/store/react', () => ({
   useStore: vi.fn((_store: unknown, selector?: (state: object) => unknown) => {
     if (!selector) return _store;
     try {
-      const result = selector({ time: mockTimeState, buffer: mockBufferState, playback: mockPlaybackState });
+      const result = selector({
+        time: mockTimeState,
+        buffer: mockBufferState,
+        playback: mockPlaybackState,
+        textTrack: mockTextTrackState,
+      });
       if (result !== undefined) return result;
     } catch {
       // fall through
     }
     try {
-      return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState });
+      return selector({ ...mockTimeState, ...mockBufferState, ...mockPlaybackState, ...mockTextTrackState });
     } catch {
       return undefined;
     }
   }),
 }));
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  Object.assign(mockSliderInput, {
+    pointerPercent: 0,
+    dragPercent: 0,
+    dragging: false,
+    pointing: false,
+    focused: false,
+  });
+});
 
 // --- Tests ---
 
@@ -162,6 +195,193 @@ describe('TimeSliderRoot', () => {
 });
 
 describe('TimeSlider compound', () => {
+  it('provides collection state to chapter collection callbacks', () => {
+    const className = vi.fn((state: TimeSliderChaptersState) => (state.hasChapters ? 'chapters' : 'fallback'));
+    const renderRoot = vi.fn((props: HTMLAttributes<HTMLElement>, state: TimeSliderChaptersState) => (
+      <section {...props} data-count={state.chapters.length} />
+    ));
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <TimeSliderChapters
+            className={className}
+            render={renderRoot}
+            renderChapter={(props) => <div {...props} className="chapter" />}
+          />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    expect(className).toHaveBeenCalledWith(expect.objectContaining({ hasChapters: true }));
+    expect(className.mock.calls[0]?.[0].chapters).toHaveLength(3);
+    expect(className.mock.calls[0]?.[0]).not.toHaveProperty('active');
+    expect(renderRoot).toHaveBeenCalledWith(
+      expect.any(Object),
+      expect.objectContaining({ hasChapters: true, chapters: expect.any(Array) })
+    );
+    expect(container.querySelector('section.chapters')?.getAttribute('data-count')).toBe('3');
+  });
+
+  it('leaves chapter class names to the consumer', () => {
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <TimeSliderRoot>
+          <TimeSliderChapters
+            className="chapters"
+            renderChapter={(props, state) => (
+              <div {...props} className={state.active ? 'chapter active' : 'chapter'}>
+                <SliderTrack className="chapter-track">
+                  <SliderBuffer className="chapter-buffer" />
+                  <SliderFill className="chapter-fill" />
+                </SliderTrack>
+              </div>
+            )}
+          >
+            <SliderTrack className="fallback" />
+          </TimeSliderChapters>
+          <TimeSliderChapterTitle className="chapter-title" />
+        </TimeSliderRoot>
+      </Wrapper>
+    );
+
+    const chapters = container.querySelectorAll('.chapter');
+    const collection = container.querySelector('.chapters');
+    expect(chapters).toHaveLength(3);
+    expect(collection?.getAttribute('data-orientation')).toBe('horizontal');
+    expect(chapters[0]?.getAttribute('data-orientation')).toBe('horizontal');
+    expect(chapters[0]?.hasAttribute('data-active')).toBe(true);
+    expect(chapters[0]?.matches(':first-child')).toBe(true);
+    expect(chapters[2]?.matches(':last-child')).toBe(true);
+    expect(chapters[0]?.classList).toContain('active');
+    expect((chapters[1] as HTMLElement).style.pointerEvents).toBe('none');
+    expect(chapters[0]?.querySelector('.chapter-track')).toBeTruthy();
+    expect(chapters[0]?.querySelector('.chapter-buffer')).toBeTruthy();
+    expect(chapters[0]?.querySelector('.chapter-fill')).toBeTruthy();
+    expect(container.querySelector('.fallback')).toBeNull();
+    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-start')).toBe('0%');
+    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-end')).toBe(
+      `${(40 / 120) * 100}%`
+    );
+    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-width')).toBe(
+      `${(40 / 120) * 100}%`
+    );
+    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-fill')).toBe('75%');
+    expect((chapters[0] as HTMLElement).style.getPropertyValue('--media-slider-chapter-buffer')).toBe('100%');
+    expect(container.querySelector('svg')).toBeNull();
+    expect(container.querySelector('.chapter-title')?.textContent).toBe('First');
+  });
+
+  it('renders the regular track until chapters are available', () => {
+    const cues = mockTextTrackState.chaptersCues;
+    mockTextTrackState.chaptersCues = [];
+
+    try {
+      const { Wrapper } = createPlayerWrapper();
+      const { container } = render(
+        <Wrapper>
+          <TimeSliderRoot>
+            <TimeSliderChapters className="chapters" renderChapter={(props) => <div {...props} className="chapter" />}>
+              <SliderTrack className="fallback">
+                <SliderBuffer />
+                <SliderFill />
+              </SliderTrack>
+            </TimeSliderChapters>
+          </TimeSliderRoot>
+        </Wrapper>
+      );
+
+      expect(container.querySelector('.chapters')).toBeTruthy();
+      expect(container.querySelector('.fallback')).toBeTruthy();
+      expect(container.querySelector('.chapter')).toBeNull();
+    } finally {
+      mockTextTrackState.chaptersCues = cues;
+    }
+  });
+
+  it('uses the real duration for chapter geometry under one second', () => {
+    const duration = mockTimeState.duration;
+    const currentTime = mockTimeState.currentTime;
+    const cues = mockTextTrackState.chaptersCues;
+    mockTimeState.duration = 0.5;
+    mockTimeState.currentTime = 0.25;
+    mockTextTrackState.chaptersCues = [{ id: 'short', startTime: 0, endTime: 0.5, text: 'Short' }];
+
+    try {
+      const { Wrapper } = createPlayerWrapper();
+      const { container } = render(
+        <Wrapper>
+          <TimeSliderRoot>
+            <TimeSliderChapters renderChapter={(props) => <div {...props} className="chapter" />} />
+          </TimeSliderRoot>
+        </Wrapper>
+      );
+
+      const chapter = container.querySelector('.chapter') as HTMLElement;
+      expect(chapter.style.getPropertyValue('--media-slider-chapter-end')).toBe('100%');
+      expect(chapter.style.getPropertyValue('--media-slider-chapter-width')).toBe('100%');
+    } finally {
+      mockTimeState.duration = duration;
+      mockTimeState.currentTime = currentTime;
+      mockTextTrackState.chaptersCues = cues;
+    }
+  });
+
+  it('keeps the final chapter at the exact right edge', () => {
+    const duration = mockTimeState.duration;
+    const cues = mockTextTrackState.chaptersCues;
+    mockTimeState.duration = 487.626;
+    mockTextTrackState.chaptersCues = [
+      { id: 'first', startTime: 0, endTime: 200, text: 'First' },
+      { id: 'last', startTime: 200, endTime: 487.626, text: 'Last' },
+    ];
+    mockSliderInput.pointerPercent = 100;
+    mockSliderInput.pointing = true;
+
+    try {
+      const { Wrapper } = createPlayerWrapper();
+      const { container } = render(
+        <Wrapper>
+          <TimeSliderRoot>
+            <TimeSliderChapterTitle className="chapter-title" />
+          </TimeSliderRoot>
+        </Wrapper>
+      );
+
+      expect(container.querySelector('.chapter-title')?.textContent).toBe('Last');
+      expect(container.querySelector('.chapter-title')?.getAttribute('aria-hidden')).toBe('true');
+      expect(container.querySelector('.chapter-title')?.hasAttribute('aria-live')).toBe(false);
+    } finally {
+      mockTimeState.duration = duration;
+      mockTextTrackState.chaptersCues = cues;
+    }
+  });
+
+  it('announces the current chapter while using the keyboard', () => {
+    const currentTime = mockTimeState.currentTime;
+    mockTimeState.currentTime = 70;
+    mockSliderInput.focused = true;
+
+    try {
+      const { Wrapper } = createPlayerWrapper();
+      const { container } = render(
+        <Wrapper>
+          <TimeSliderRoot>
+            <TimeSliderChapterTitle className="chapter-title" />
+          </TimeSliderRoot>
+        </Wrapper>
+      );
+      const title = container.querySelector('.chapter-title');
+
+      expect(title?.textContent).toBe('Second');
+      expect(title?.hasAttribute('aria-hidden')).toBe(false);
+      expect(title?.getAttribute('aria-live')).toBe('polite');
+    } finally {
+      mockTimeState.currentTime = currentTime;
+    }
+  });
+
   it('renders all parts together', () => {
     const { Wrapper } = createPlayerWrapper();
     const { container } = render(

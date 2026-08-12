@@ -73,22 +73,27 @@ function getTemplateHTML() {
             </media-time-group>
 
             <media-time-slider class="media-slider">
-              <media-slider-track class="media-slider__track">
-                <media-slider-fill class="media-slider__fill"></media-slider-fill>
-                <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
-              </media-slider-track>
+              <media-time-slider-chapters class="media-slider__chapters">
+                <template>
+                  <div class="media-slider__chapter">
+                    <media-slider-track class="media-slider__track media-slider__chapter-track">
+                      <media-slider-buffer class="media-slider__buffer"></media-slider-buffer>
+                      <media-slider-fill class="media-slider__fill"></media-slider-fill>
+                    </media-slider-track>
+                  </div>
+                </template>
+              </media-time-slider-chapters>
               <media-slider-thumb class="media-slider__thumb"></media-slider-thumb>
 
-              <div class="media-thumbnail media-slider__thumbnail">
-                <div class="media-thumbnail__image-wrapper">
-                  <media-slider-thumbnail class="media-thumbnail__image"></media-slider-thumbnail>
-                </div>
-                <media-slider-value type="pointer" class="media-time media-thumbnail__time"></media-slider-value>
-                ${renderIcon('spinner', { class: 'media-thumbnail__spinner media-icon' })}
-              </div>
-
               <media-slider-preview class="media-slider__preview">
-                <media-slider-value type="pointer" class="media-slider__value media-time"></media-slider-value>
+                <div class="media-thumbnail media-slider__thumbnail">
+                  <media-slider-thumbnail class="media-thumbnail__image"></media-slider-thumbnail>
+                  ${renderIcon('spinner', { class: 'media-thumbnail__spinner media-icon' })}
+                </div>
+                <div class="media-slider__value">
+                  <media-time-slider-chapter-title class="media-slider__chapter-title"></media-time-slider-chapter-title>
+                  <media-slider-value type="pointer" class="media-time"></media-slider-value>
+                </div>
               </media-slider-preview>
             </media-time-slider>
           </div>

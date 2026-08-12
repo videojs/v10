@@ -1,6 +1,13 @@
 import type { MuxSource } from '@videojs/media/dom/mux';
 import { getMuxAssetId } from './mux';
 
+export interface ChapterTrack {
+  label: string;
+  lang: string;
+  src: string;
+  isDefault: boolean;
+}
+
 export interface SandboxSource {
   label: string;
   /** Plain media URL. Absent when the source needs more than a URL can carry. */
@@ -17,6 +24,7 @@ export interface SandboxSource {
   poster?: string;
   /** Structured source, for what a plain `url` cannot express. Takes precedence. */
   source?: MuxSource;
+  chapters?: readonly ChapterTrack[];
 }
 
 // The two DRM sources below are the same Mux asset reached two ways, so the
@@ -93,6 +101,20 @@ const SOURCE_MAP = {
     url: 'https://stream.mux.com/vth873zxidmhBVVRWBKcPTxnSQ302QqUm.m3u8',
     type: 'hls',
     subType: 'mp4',
+  },
+  'hls-7': {
+    label: 'HLS - Dahlback Golf RSI (chapters)',
+    url: 'https://stream.mux.com/yH00b01Lj2z023hUQdEf6EpURPROSsvE1qWPnR8ShnbnI8.m3u8',
+    type: 'hls',
+    subType: 'mp4',
+    chapters: [
+      {
+        label: 'English',
+        lang: 'en',
+        src: new URL('./chapters-en.vtt?no-inline', import.meta.url).href,
+        isDefault: true,
+      },
+    ],
   },
   'hls-multi-audio': {
     label: 'HLS - Multi-language audio',
@@ -280,4 +302,8 @@ export function getStoryboardSrc(source: SourceId): string | undefined {
   if (isLiveSource(source)) return undefined;
   const id = getMuxAssetId(source);
   return id ? `https://image.mux.com/${id}/storyboard.vtt${imageQuery(source, 'storyboard')}` : undefined;
+}
+
+export function getChapters(source: SourceId): readonly ChapterTrack[] {
+  return SOURCES[source].chapters ?? [];
 }

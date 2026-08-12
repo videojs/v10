@@ -428,22 +428,33 @@ export function MinimalVideoSkin(props: MinimalVideoSkinProps): ReactNode {
             </Time.Group>
 
             <TimeSlider.Root className="media-slider">
-              <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
-                <TimeSlider.Buffer className="media-slider__buffer" />
-              </TimeSlider.Track>
+              <TimeSlider.Chapters
+                className="media-slider__chapters"
+                renderChapter={(props) => (
+                  <div {...props} className={cn(props.className, 'media-slider__chapter')}>
+                    <TimeSlider.Track className="media-slider__track media-slider__chapter-track">
+                      <TimeSlider.Buffer className="media-slider__buffer" />
+                      <TimeSlider.Fill className="media-slider__fill" />
+                    </TimeSlider.Track>
+                  </div>
+                )}
+              >
+                <TimeSlider.Track className="media-slider__track">
+                  <TimeSlider.Buffer className="media-slider__buffer" />
+                  <TimeSlider.Fill className="media-slider__fill" />
+                </TimeSlider.Track>
+              </TimeSlider.Chapters>
               <TimeSlider.Thumb className="media-slider__thumb" />
 
-              <div className="media-thumbnail media-slider__thumbnail">
-                <div className="media-thumbnail__image-wrapper">
-                  <Slider.Thumbnail className="media-thumbnail__image" />
-                </div>
-                <TimeSlider.Value type="pointer" className="media-time media-thumbnail__time" />
-                <SpinnerIcon className="media-thumbnail__spinner media-icon" />
-              </div>
-
               <TimeSlider.Preview className="media-slider__preview">
-                <TimeSlider.Value type="pointer" className="media-time media-slider__value" />
+                <div className="media-thumbnail media-slider__thumbnail">
+                  <Slider.Thumbnail className="media-thumbnail__image" />
+                  <SpinnerIcon className="media-thumbnail__spinner media-icon" />
+                </div>
+                <div className="media-slider__value">
+                  <TimeSlider.ChapterTitle className="media-slider__chapter-title" />
+                  <TimeSlider.Value type="pointer" className="media-time" />
+                </div>
               </TimeSlider.Preview>
             </TimeSlider.Root>
           </div>

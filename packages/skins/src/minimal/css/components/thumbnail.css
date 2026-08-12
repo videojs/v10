@@ -3,26 +3,28 @@
    ========================================================================== */
 
 .media-minimal-skin .media-thumbnail {
+  position: relative;
   pointer-events: none;
+  background-color: oklch(0 0 0 / 0.9);
+  border-radius: calc(var(--spacing) * 2);
 
-  & .media-thumbnail__image-wrapper {
-    position: relative;
-    background-color: oklch(0 0 0 / 0.9);
-    border-radius: calc(var(--spacing) * 2);
-  }
-  & .media-thumbnail__image {
-    display: block;
+  &::after {
+    position: absolute;
+    inset: 0;
+    content: "";
     border-radius: inherit;
+    box-shadow:
+      0 0 0 1px oklch(0 0 0 / 0.05),
+      0 1px 3px 0 oklch(0 0 0 / 0.2),
+      0 1px 2px -1px oklch(0 0 0 / 0.2);
   }
 
-  & .media-thumbnail__time {
+  & .media-thumbnail__image {
+    position: relative;
     display: block;
-    margin-top: calc(var(--spacing) * 2);
-    text-align: center;
-  }
-
-  & .media-overlay {
-    opacity: 1;
+    max-width: var(--thumbnail-max-width);
+    overflow: clip;
+    border-radius: inherit;
   }
 
   & .media-thumbnail__spinner {
@@ -45,6 +47,11 @@
   }
 
   &:has(.media-thumbnail__image[data-loading]) {
+    width: var(--thumbnail-max-width);
+    max-width: 100%;
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+
     & .media-thumbnail__image {
       opacity: 0;
     }

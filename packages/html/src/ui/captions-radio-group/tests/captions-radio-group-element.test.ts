@@ -121,4 +121,40 @@ describe('CaptionsRadioGroupElement', () => {
       expect(items.map((item) => item.textContent)).toEqual(['Desactive', 'Legendes']);
     });
   });
+
+  it('uses a custom track formatter', async () => {
+    const { menu, options } = setup('en', {
+      textTrackList: [{ id: 'es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' }],
+    });
+    options.formatTrack = (track) => `${track.language.toUpperCase()} subtitles`;
+    options.requestUpdate();
+
+    await options.updateComplete;
+
+    const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+    expect(items.map((item) => item.textContent)).toEqual(['Off', 'ES subtitles']);
+  });
+
+  it('applies group disabled semantics when captions are unavailable', async () => {
+    const { menu, options } = setup('en', { textTrackList: [] });
+
+    await options.updateComplete;
+
+    const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
+    expect(options.getAttribute('aria-disabled')).toBe('true');
+    expect(items.map((item) => item.disabled)).toEqual([true]);
+  });
+
+  it('selects a captions option by normalized value', async () => {
+    const selectSubtitlesTrack = vi.fn();
+    const { options } = setup('en', {
+      textTrackList: [{ id: 'es', kind: 'subtitles', label: 'Spanish', language: 'es', mode: 'disabled' }],
+      selectSubtitlesTrack,
+    });
+
+    await options.updateComplete;
+    options.dispatchEvent(new CustomEvent('value-change', { detail: { value: 'es' } }));
+
+    expect(selectSubtitlesTrack).toHaveBeenCalledWith('es');
+  });
 });

@@ -1,22 +1,13 @@
 'use client';
 
-import { QUALITY_AUTO_VALUE, QualityRadioGroupCore } from '@videojs/core';
-import { logMissingFeature, selectQuality } from '@videojs/core/dom';
-import { translateText } from '@videojs/core/i18n';
-import { useCallback, useState } from 'react';
+import { QualityRadioGroupCore, type QualityRadioGroupOption } from '@videojs/core';
+import { selectQuality } from '@videojs/core/dom';
 
-import { useTranslator } from '../../i18n/context';
-import { usePlayer } from '../../player/context';
+import { createRadioOptionsHook, type TranslatedRadioOption } from '../hooks/create-radio-options-hook';
 
 export interface QualityOptionsProps extends QualityRadioGroupCore.Props {}
 
-export interface QualityOption {
-  value: string;
-  label: string;
-  tier?: string | undefined;
-  badge?: string | undefined;
-  disabled: boolean;
-}
+export type QualityOption = TranslatedRadioOption<QualityRadioGroupOption>;
 
 export interface QualityOptionsResult {
   state: QualityRadioGroupCore.State;
@@ -25,6 +16,13 @@ export interface QualityOptionsResult {
   disabled: boolean;
   setValue: (value: string) => void;
 }
+
+const useQualityRadioOptions = createRadioOptionsHook({
+  name: 'useQualityOptions',
+  feature: 'quality',
+  selector: selectQuality,
+  createCore: () => new QualityRadioGroupCore(),
+});
 
 /**
  * Create quality menu options (including an `Auto` option) from the player
@@ -36,42 +34,7 @@ export interface QualityOptionsResult {
 export function useQualityOptions(props?: QualityOptionsProps): QualityOptionsResult | null {
   'use no memo';
 
-  const media = usePlayer(selectQuality);
-  const t = useTranslator();
-  const [core] = useState(() => new QualityRadioGroupCore());
-
-  core.setProps(props ?? {});
-
-  const setValue = useCallback((value: string) => core.selectValue(media!, value), [core, media]);
-
-  if (!media) {
-    if (__DEV__) logMissingFeature('useQualityOptions', selectQuality.displayName ?? 'quality');
-    return null;
-  }
-
-  core.setMedia(media);
-  const state = core.getState();
-
-  return {
-    state,
-    value: state.value,
-    options: [
-      {
-        value: QUALITY_AUTO_VALUE,
-        label: translateText(state.autoLabel, t, state.autoLabelParams),
-        disabled: state.disabled,
-      },
-      ...state.renditions.map((rendition) => ({
-        value: rendition.value,
-        label: translateText(rendition.label, t),
-        ...(rendition.tier && { tier: rendition.tier }),
-        ...(rendition.badge && { badge: rendition.badge }),
-        disabled: state.disabled,
-      })),
-    ],
-    disabled: state.disabled,
-    setValue,
-  };
+  return useQualityRadioOptions(props);
 }
 
 export namespace useQualityOptions {

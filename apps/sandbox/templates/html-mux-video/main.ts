@@ -1,4 +1,5 @@
 import '@app/styles.css';
+import { renderChapters } from '@app/shared/html/chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
 import '@videojs/html/media/google-cast';
@@ -14,7 +15,7 @@ import {
   onSkinChange,
   onSourceChange,
 } from '@app/shared/sandbox-listener';
-import { getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
+import { getChapters, getPlaceholderSrc, getPosterSrc, isLiveSource, SOURCES } from '@app/shared/sources';
 
 const html = String.raw;
 
@@ -42,7 +43,9 @@ async function render() {
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto"${placeholder ? ` placeholdersrc="${placeholder}"` : ''}>
         <!-- The storyboard track is derived automatically from the Mux src. -->
-        <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous"></mux-video>
+        <mux-video${srcAttr} ${mediaAttrs} playsinline crossorigin="anonymous">
+          ${renderChapters(getChapters(state.source))}
+        </mux-video>
         <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
         <mux-data player-software-name="mux-video"></mux-data>
         <google-cast></google-cast>

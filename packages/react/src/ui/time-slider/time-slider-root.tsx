@@ -89,7 +89,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
 
         return core.getState();
       },
-      getPercent: () => (duration > 0 ? ((time?.currentTime ?? 0) / duration) * 100 : 0),
+      getPercent: () => core.percentFromValue(time?.currentTime ?? 0),
       getStepPercent: () => core.getStepPercent(),
       getLargeStepPercent: () => core.getLargeStepPercent(),
       orientation,
@@ -121,7 +121,7 @@ export const TimeSliderRoot = forwardRef<HTMLDivElement, TimeSliderRootProps>(
       <SliderProvider
         value={{
           state,
-          pointerValue: core.valueFromPercent(state.pointerPercent),
+          pointerValue: core.rawValueFromPercent(state.pointerPercent),
           thumbRef,
           thumbProps,
           stateAttrMap: TimeSliderDataAttrs,

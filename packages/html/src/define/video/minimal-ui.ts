@@ -21,6 +21,8 @@ import { PopoverElement } from '../../ui/popover/popover-element';
 import { PosterElement } from '../../ui/poster/poster-element';
 import { QualityRadioGroupElement } from '../../ui/quality-radio-group/quality-radio-group-element';
 import { SeekButtonElement } from '../../ui/seek-button/seek-button-element';
+import { TimeSliderChapterTitleElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapter-title-element';
+import { TimeSliderChaptersElement } from '../../ui/time-slider/time-slider-chapters/time-slider-chapters-element';
 import { safeDefine } from '../safe-define';
 import {
   defineControls,
@@ -47,6 +49,8 @@ defineControls();
 defineErrorDialog();
 defineInputIndicators();
 defineTimeSlider();
+safeDefine(TimeSliderChaptersElement);
+safeDefine(TimeSliderChapterTitleElement);
 defineVolumeSlider();
 defineTime();
 defineMenu();

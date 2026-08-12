@@ -1,4 +1,5 @@
 import type { MediaBufferState, MediaPlaybackState, MediaTimeState } from '@videojs/media';
+import { toPercent } from '@videojs/utils/number';
 import { defaults } from '@videojs/utils/object';
 import { formatTimeAsPhrase } from '@videojs/utils/time';
 import type { NonNullableObject } from '@videojs/utils/types';
@@ -72,7 +73,7 @@ export class TimeSliderCore extends SliderCore {
 
     // Use end of the furthest buffered range
     const bufferedEnd = buffered.length > 0 ? buffered[buffered.length - 1]![1] : 0;
-    const bufferPercent = duration > 0 ? (bufferedEnd / duration) * 100 : 0;
+    const bufferPercent = toPercent(bufferedEnd, 0, duration);
 
     return {
       ...base,
