@@ -14,6 +14,7 @@ declare global {
   }
 
   interface HTMLElementTagNameMap {
-    [MuxAudioElement.tagName]: MuxAudioFlavors[keyof MuxAudioFlavors];
+    // Spelled out rather than `[MuxAudioElement.tagName]` — see `../mux-video/hlsjs`.
+    'mux-audio': MuxAudioFlavors[keyof MuxAudioFlavors];
   }
 }
