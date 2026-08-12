@@ -127,8 +127,17 @@ export function DashMediaMediaTracksMixin<Base extends Constructor<MediaTracksHo
 
       // Applying `engine.dashJs` resets dash.js settings wholesale, which drops
       // the switching this mixin turned off; re-apply the selection it was for.
-      if (this.#isBitrateSwitchingOff) this.#switchRendition();
+      if (this.#isBitrateSwitchingOff && this.#isEngineBitrateSwitchingOn()) this.#switchRendition();
     };
+
+    // dash.js's own reading rather than what this mixin last asked for: settings
+    // are reset out from under it, and only the engine knows whether that
+    // happened. Announcing a source that changed nothing must leave the pinned
+    // representation alone, or an inline React `source` prop would interrupt
+    // playback on every render.
+    #isEngineBitrateSwitchingOn() {
+      return this.engine?.getSettings().streaming?.abr?.autoSwitchBitrate?.video !== false;
+    }
 
     #setActiveRendition(id: string | undefined) {
       for (const rendition of this.videoRenditions) {

@@ -6,17 +6,32 @@ vi.mock('dashjs', () => {
     QUALITY_CHANGE_RENDERED: 'qualityChangeRendered',
   };
 
+  /** dash.js merges every `updateSettings()` call into the current settings. */
+  function merge(target: Record<string, any>, source: Record<string, any>) {
+    for (const [key, value] of Object.entries(source)) {
+      const isPlainObject = typeof value === 'object' && value !== null && !Array.isArray(value);
+      target[key] = isPlainObject ? merge({ ...target[key] }, value) : value;
+    }
+    return target;
+  }
+
   function create() {
     const listeners = new Map<string, Set<(event: any) => void>>();
 
     const player = {
       representations: [] as any[],
       currentRepresentation: null as any,
+      settings: {} as Record<string, any>,
       initialize: vi.fn(),
       attachView: vi.fn(),
       attachSource: vi.fn(),
-      updateSettings: vi.fn(),
-      resetSettings: vi.fn(),
+      updateSettings: vi.fn((settings: Record<string, any>) => {
+        player.settings = merge(player.settings, settings);
+      }),
+      resetSettings: vi.fn(() => {
+        player.settings = {};
+      }),
+      getSettings: vi.fn(() => player.settings),
       destroy: vi.fn(),
       on: vi.fn((type: string, listener: (event: any) => void) => {
         const typeListeners = listeners.get(type) ?? new Set();
@@ -56,6 +71,7 @@ type MockEngine = {
   attachSource: ReturnType<typeof vi.fn>;
   updateSettings: ReturnType<typeof vi.fn>;
   resetSettings: ReturnType<typeof vi.fn>;
+  getSettings: ReturnType<typeof vi.fn>;
   setRepresentationForTypeById: ReturnType<typeof vi.fn>;
   emit(type: string, event?: Record<string, unknown>): void;
 };
@@ -359,6 +375,26 @@ describe('DashMedia', () => {
 
       expect(engine.updateSettings).toHaveBeenLastCalledWith(AUTO_SWITCH_OFF);
       expect(engine.setRepresentationForTypeById).toHaveBeenCalledWith('video', '1', true);
+    });
+
+    it('leaves the pinned representation alone when an equivalent source is re-assigned', async () => {
+      const { media, engine } = setup();
+      const source: DashSource = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
+      media.source = source;
+      initStream(engine, REPRESENTATIONS);
+
+      media.videoRenditions.selectedIndex = 1;
+      await flush();
+      engine.updateSettings.mockClear();
+      engine.setRepresentationForTypeById.mockClear();
+
+      media.source = { src: MANIFEST, engine: { dashJs: { streaming: { abandonLoadTimeout: 1000 } } } };
+
+      // Settings were never reset, so the pin still holds — re-pinning would
+      // interrupt playback on every render of an inline React `source` prop.
+      expect(engine.updateSettings).not.toHaveBeenCalled();
+      expect(engine.setRepresentationForTypeById).not.toHaveBeenCalled();
+      expect(media.videoRenditions.selectedIndex).toBe(1);
     });
 
     it('drops renditions and restores switching when the source changes', async () => {
