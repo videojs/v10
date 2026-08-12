@@ -7,6 +7,7 @@ import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@a
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';
 import {
+  getInitialPlaybackOverrides,
   onAutoplayChange,
   onLoopChange,
   onMutedChange,
@@ -34,9 +35,13 @@ async function render() {
   const playerTag = live ? 'live-video-player' : 'video-player';
 
   // A source carrying DRM license servers has no room in the `src` attribute, so
-  // it is assigned as an object below instead.
+  // it is assigned as an object below instead. Query-string playback overrides
+  // need the object for the same reason, and need it before the first load so the
+  // engine is built with them rather than reconfigured afterwards.
+  const overrides = getInitialPlaybackOverrides();
   const { source, url } = SOURCES[state.source];
-  const srcAttr = source ? '' : ` src="${url}"`;
+  const initialSource = source ?? (Object.keys(overrides).length > 0 ? { src: url } : undefined);
+  const srcAttr = initialSource ? '' : ` src="${url}"`;
 
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
@@ -50,8 +55,8 @@ async function render() {
     </${playerTag}>
   `);
 
-  if (source) {
-    document.querySelector('hlsjs-video')!.source = source;
+  if (initialSource) {
+    document.querySelector('hlsjs-video')!.source = { ...initialSource, ...overrides };
   }
 }
 

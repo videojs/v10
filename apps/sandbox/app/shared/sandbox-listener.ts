@@ -1,11 +1,18 @@
 import { SKINS } from '@app/constants';
 import { DEFAULT_SANDBOX_LOCALE, SANDBOX_LOCALE_TAGS, type SandboxLocaleTag } from '@app/shared/i18n/locale-meta';
 import type { Skin } from '@app/types';
+import type { MediaResolution } from '@videojs/media';
 import { DEFAULT_AUDIO_SOURCE, SOURCES, type SourceId } from './sources';
 
 export const PRELOAD_VALUES = ['none', 'metadata', 'auto'] as const;
 export type PreloadValue = (typeof PRELOAD_VALUES)[number];
 export const DEFAULT_PRELOAD: PreloadValue = 'metadata';
+
+// Any `{height}p`, not just the rungs `MediaResolution` names.
+const MAX_AUTO_RESOLUTION_PATTERN = /^\d+p$/;
+
+export const PREFER_PLAYBACK_VALUES = ['mse', 'native'] as const;
+export type PreferPlaybackValue = (typeof PREFER_PLAYBACK_VALUES)[number];
 
 const params = new URLSearchParams(window.location.search);
 
@@ -30,6 +37,18 @@ function readPreload(): PreloadValue {
   return PRELOAD_VALUES.includes(value as PreloadValue) ? (value as PreloadValue) : DEFAULT_PRELOAD;
 }
 
+function readMaxAutoResolution(): MediaResolution | undefined {
+  const value = params.get('maxAutoResolution');
+  if (!value || !MAX_AUTO_RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
+
+  return value as MediaResolution;
+}
+
+function readPreferPlayback(): PreferPlaybackValue | undefined {
+  const value = params.get('preferPlayback');
+  return PREFER_PLAYBACK_VALUES.includes(value as PreferPlaybackValue) ? (value as PreferPlaybackValue) : undefined;
+}
+
 let currentSkin = readSkin();
 let currentSource = readSource();
 let currentAutoplay = readBoolean('autoplay');
@@ -37,10 +56,31 @@ let currentMuted = readBoolean('muted');
 let currentLoop = readBoolean('loop');
 let currentPreload = readPreload();
 let currentLocale = readLocale();
+const initialMaxAutoResolution = readMaxAutoResolution();
+const initialPreferPlayback = readPreferPlayback();
 
 function readLocale(): SandboxLocaleTag {
   const value = params.get('locale');
   return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag) ? (value as SandboxLocaleTag) : DEFAULT_SANDBOX_LOCALE;
+}
+
+/**
+ * Playback options read once from the query string and folded into the *initial*
+ * `source`, so the engine is built with them instead of having them switched in
+ * afterwards. Both keys are absent unless named, leaving the default sandbox
+ * behavior untouched.
+ *
+ * - `?maxAutoResolution=720p` caps automatic rendition selection.
+ * - `?preferPlayback=native` forces the browser's own HLS.
+ */
+export function getInitialPlaybackOverrides(): {
+  maxAutoResolution?: MediaResolution;
+  preferPlayback?: PreferPlaybackValue;
+} {
+  return {
+    ...(initialMaxAutoResolution && { maxAutoResolution: initialMaxAutoResolution }),
+    ...(initialPreferPlayback && { preferPlayback: initialPreferPlayback }),
+  };
 }
 
 export function getInitialSkin(): Skin {
