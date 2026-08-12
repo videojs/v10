@@ -1,4 +1,4 @@
-import { MuxVideo } from '../../../media/mux-video/hlsjs-media';
+import { MuxVideo } from '../../../media/mux-video/hls-js-media';
 import { safeDefine } from '../../safe-define';
 
 export class MuxVideoElement extends MuxVideo {
@@ -10,7 +10,7 @@ safeDefine(MuxVideoElement);
 declare global {
   /** The Mux video flavors in the build — see `./spf` for why. */
   interface MuxVideoFlavors {
-    hlsjs: MuxVideoElement;
+    'hls-js': MuxVideoElement;
   }
 
   interface HTMLElementTagNameMap {

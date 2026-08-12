@@ -1,1 +1,1 @@
-export * from './hlsjs-media';
+export * from './hls-js-media';

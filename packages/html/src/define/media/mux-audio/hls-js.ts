@@ -1,4 +1,4 @@
-import { MuxAudio } from '../../../media/mux-audio/hlsjs-media';
+import { MuxAudio } from '../../../media/mux-audio/hls-js-media';
 import { safeDefine } from '../../safe-define';
 
 export class MuxAudioElement extends MuxAudio {
@@ -10,11 +10,11 @@ safeDefine(MuxAudioElement);
 declare global {
   /** The Mux audio flavors in the build — see `../mux-video/spf` for why. */
   interface MuxAudioFlavors {
-    hlsjs: MuxAudioElement;
+    'hls-js': MuxAudioElement;
   }
 
   interface HTMLElementTagNameMap {
-    // Spelled out rather than `[MuxAudioElement.tagName]` — see `../mux-video/hlsjs`.
+    // Spelled out rather than `[MuxAudioElement.tagName]` — see `../mux-video/hls-js`.
     'mux-audio': MuxAudioFlavors[keyof MuxAudioFlavors];
   }
 }
