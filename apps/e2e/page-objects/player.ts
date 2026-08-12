@@ -132,11 +132,17 @@ export class PlayerPage {
   /** Wait for the player to load media and show controls. */
   async waitForMediaReady({ muted = true }: { muted?: boolean } = {}): Promise<void> {
     await this.playButton.waitFor({ state: 'attached', timeout: 20_000 });
-    await this.playButton.evaluate(async (element) => {
-      if (element.localName.includes('-')) {
-        await customElements.whenDefined(element.localName);
-        await (element as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete;
-      }
+    await this.playerRoot.evaluate(async (root) => {
+      const elements = [root, ...root.querySelectorAll<HTMLElement>('*')].filter((element) =>
+        element.localName.includes('-')
+      );
+
+      await Promise.all(
+        [...new Set(elements.map((element) => element.localName))].map((name) => customElements.whenDefined(name))
+      );
+      await Promise.all(
+        elements.map((element) => (element as HTMLElement & { updateComplete?: Promise<unknown> }).updateComplete)
+      );
     });
 
     // Wait for the media element to have at least metadata loaded.
