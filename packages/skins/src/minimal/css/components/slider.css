@@ -88,6 +88,7 @@
   /* Preview */
   & .media-slider__preview {
     --max-width: min(calc(var(--spacing) * 48), 100cqi);
+    --max-height: calc(var(--spacing) * 32);
 
     min-width: 100%;
     height: calc(var(--spacing) * 1);

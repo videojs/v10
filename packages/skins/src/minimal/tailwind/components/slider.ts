@@ -96,7 +96,7 @@ export const slider = {
     ),
   },
   preview: cn(
-    'group/preview [--max-width:min(--spacing(48),100cqi)] min-w-full h-1',
+    'group/preview [--max-width:min(--spacing(48),100cqi)] [--max-height:--spacing(32)] min-w-full h-1',
     'before:absolute before:z-1 before:bg-current/35 before:pointer-events-none',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
     'before:transition-[opacity,scale] before:duration-200 before:ease-out',
