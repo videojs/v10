@@ -130,6 +130,18 @@ describe('MuxVideoMedia', () => {
     expect(onSourceChange).not.toHaveBeenCalled();
   });
 
+  it('keeps the presentation when only image params change', () => {
+    const media = new MuxVideoMedia();
+    media.source = { playbackId: 'abc123' };
+    const presentation = media.engine.state.presentation.get();
+
+    // What `poster-time` does through the element: same stream, new object.
+    media.source = { playbackId: 'abc123', poster: { time: 3 } };
+
+    expect(media.contentData.poster).toBe('https://image.mux.com/abc123/thumbnail.webp?time=3');
+    expect(media.engine.state.presentation.get()).toBe(presentation);
+  });
+
   it('points unplayable-source copy at the hls.js-backed Media', () => {
     // The static exists for exactly this: SPF plays neither MPEG-TS nor DRM, and
     // the hls.js-backed Mux Media plays both. Named by flavor rather than by

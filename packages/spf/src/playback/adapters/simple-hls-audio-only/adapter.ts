@@ -236,6 +236,9 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
 
     set src(value: string) {
+      // Unchanged URL, no reload — see the video adapter's note.
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
       this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }

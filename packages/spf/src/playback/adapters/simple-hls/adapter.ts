@@ -403,6 +403,14 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
 
     set src(value: string) {
+      // Assigning the URL already playing is not a request to reload it. The
+      // presentation is set from a fresh object every time, so re-resolving an
+      // unchanged URL restarts playback — which is what a caller changing only
+      // the parts of a structured source that describe images, rather than the
+      // stream, would get. The hls.js Media draws the same line: it announces
+      // every source change and loads only when the URL or engine config moves.
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
       this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }

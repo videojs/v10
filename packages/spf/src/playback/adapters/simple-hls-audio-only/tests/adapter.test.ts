@@ -77,6 +77,17 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       media.src = '';
       expect(media.engine.state.presentation.get()?.url).toBeFalsy();
     });
+
+    it('leaves engine presentation state alone when src is set to the URL already playing', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.src = 'https://example.com/v.m3u8';
+      const presentation = media.engine.state.presentation.get();
+
+      media.src = 'https://example.com/v.m3u8';
+
+      // See the video adapter's note: a fresh presentation re-resolves.
+      expect(media.engine.state.presentation.get()).toBe(presentation);
+    });
   });
 
   // ---------------------------------------------------------------------------
