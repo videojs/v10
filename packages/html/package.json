@@ -106,6 +106,16 @@
       "development": "./dist/dev/define/feature/*.js",
       "default": "./dist/default/define/feature/*.js"
     },
+    "./media/mux-video": {
+      "types": "./dist/dev/define/media/mux-video/index.d.ts",
+      "development": "./dist/dev/define/media/mux-video/index.js",
+      "default": "./dist/default/define/media/mux-video/index.js"
+    },
+    "./media/mux-audio": {
+      "types": "./dist/dev/define/media/mux-audio/index.d.ts",
+      "development": "./dist/dev/define/media/mux-audio/index.js",
+      "default": "./dist/default/define/media/mux-audio/index.js"
+    },
     "./media/*": {
       "types": "./dist/dev/define/media/*.d.ts",
       "development": "./dist/dev/define/media/*.js",

@@ -6,10 +6,10 @@ import type { SimpleHlsAudioOnlyMediaProps } from '@videojs/spf/simple-hls-audio
 import { simpleHlsAudioOnlyMediaDefaultProps } from '@videojs/spf/simple-hls-audio-only';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
-import { useAttachMedia } from '../../../utils/use-attach-media';
-import { useComposedRefs } from '../../../utils/use-composed-refs';
-import { useMediaInstance } from '../../../utils/use-media-instance';
-import { useSyncProps } from '../../../utils/use-sync-props';
+import { useAttachMedia } from '../../utils/use-attach-media';
+import { useComposedRefs } from '../../utils/use-composed-refs';
+import { useMediaInstance } from '../../utils/use-media-instance';
+import { useSyncProps } from '../../utils/use-sync-props';
 
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
 // `source` is the structured Mux one rather than the generic engine's.

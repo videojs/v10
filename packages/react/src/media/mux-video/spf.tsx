@@ -6,11 +6,11 @@ import type { SimpleHlsMediaProps } from '@videojs/spf/simple-hls';
 import { simpleHlsMediaDefaultProps } from '@videojs/spf/simple-hls';
 import type { ReactNode, VideoHTMLAttributes } from 'react';
 import { forwardRef } from 'react';
-import { useAttachMedia } from '../../../utils/use-attach-media';
-import { useComposedRefs } from '../../../utils/use-composed-refs';
-import { useMediaInstance } from '../../../utils/use-media-instance';
-import { useSyncProps } from '../../../utils/use-sync-props';
-import { MuxStoryboard } from '../storyboard';
+import { useAttachMedia } from '../../utils/use-attach-media';
+import { useComposedRefs } from '../../utils/use-composed-refs';
+import { useMediaInstance } from '../../utils/use-media-instance';
+import { useSyncProps } from '../../utils/use-sync-props';
+import { MuxStoryboard } from './storyboard';
 
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
 // `source` is the structured Mux one rather than the generic engine's.

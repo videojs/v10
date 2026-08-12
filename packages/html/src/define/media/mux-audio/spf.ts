@@ -1,4 +1,4 @@
-import { MuxAudio } from '../../../media/mux-audio/spf';
+import { MuxAudio } from '../../../media/mux-audio/spf-media';
 import { safeDefine } from '../../safe-define';
 
 const PRIMARY_TAG = 'mux-audio';

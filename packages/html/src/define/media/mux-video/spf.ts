@@ -1,4 +1,4 @@
-import { MuxVideo } from '../../../media/mux-video/spf';
+import { MuxVideo } from '../../../media/mux-video/spf-media';
 import { safeDefine } from '../../safe-define';
 
 const PRIMARY_TAG = 'mux-video';

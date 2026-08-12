@@ -1,5 +1,5 @@
-import { MuxVideo } from '../../media/mux-video';
-import { safeDefine } from '../safe-define';
+import { MuxVideo } from '../../../media/mux-video/hlsjs-media';
+import { safeDefine } from '../../safe-define';
 
 export class MuxVideoElement extends MuxVideo {
   static readonly tagName = 'mux-video';
