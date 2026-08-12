@@ -10,7 +10,7 @@
  *      Undocumented `children` and React DOM attributes are excluded.
  */
 
-import type { GaugeDataAttrs } from '../../../../core/src/core/ui/gauge/gauge-data-attrs';
+import type { GaugeDataAttrs } from '../../../../core/src/core/ui/gauge/data';
 
 const stateAttrMap = {} as typeof GaugeDataAttrs;
 

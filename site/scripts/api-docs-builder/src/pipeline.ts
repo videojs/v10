@@ -124,24 +124,24 @@ export function buildCSSVars(cssVarsData: CSSVarsExtraction): Record<string, CSS
 
 // ─── Discovery ─────────────────────────────────────────────────────
 
-// Extra data-attrs files in a component dir ({kebab}-{x}-data-attrs.ts)
+// Extra data-attrs files in a component dir ({qualifier}-data.ts)
 // declare their target parts with a `@parts item, radio-item` JSDoc tag on
 // the exported const. They cover attrs a DOM layer applies to part elements
 // directly, which the per-part stateAttrMap heuristic can't see (e.g.
-// menu-item-data-attrs applied by create-menu).
-function dataAttrsComponentName(fileBasename: string): string {
-  return kebabToPascal(fileBasename.replace(/-data-attrs\.ts$/, ''));
+// item-data.ts applied by create-menu).
+function dataAttrsComponentName(fileBasename: string, componentKebab: string): string {
+  const qualifier = fileBasename.replace(/-data\.ts$/, '');
+  return kebabToPascal(`${componentKebab}-${qualifier}`);
 }
 
 function discoverExtraDataAttrs(componentDir: string, componentKebab: string): ExtraDataAttrsSource[] {
   const extras: ExtraDataAttrsSource[] = [];
-  const mainFile = `${componentKebab}-data-attrs.ts`;
 
   for (const file of fs.readdirSync(componentDir)) {
-    if (!file.endsWith('-data-attrs.ts') || file === mainFile) continue;
+    if (!file.endsWith('-data.ts')) continue;
 
     const filePath = path.join(componentDir, file);
-    const exportName = `${dataAttrsComponentName(file)}DataAttrs`;
+    const exportName = `${dataAttrsComponentName(file, componentKebab)}DataAttrs`;
     const sourceFile = ts.createSourceFile(filePath, fs.readFileSync(filePath, 'utf-8'), ts.ScriptTarget.Latest, true);
 
     let tagValue: string | undefined;
@@ -206,9 +206,9 @@ export function discoverComponents(monorepoRoot: string): ComponentSource[] {
     const componentName = NAME_OVERRIDES[dir.name] ?? kebabToPascal(dir.name);
     const componentDir = path.join(coreUiPath, dir.name);
 
-    const coreFile = path.join(componentDir, `${dir.name}-core.ts`);
-    const dataAttrsFile = path.join(componentDir, `${dir.name}-data-attrs.ts`);
-    const cssVarsFile = path.join(componentDir, `${dir.name}-css-vars.ts`);
+    const coreFile = path.join(componentDir, 'core.ts');
+    const dataAttrsFile = path.join(componentDir, 'data.ts');
+    const cssVarsFile = path.join(componentDir, 'vars.ts');
     const htmlFile = path.join(htmlUiPath, dir.name, `${dir.name}-element.ts`);
 
     const source: ComponentSource = {
@@ -430,7 +430,7 @@ export function discoverParts(source: ComponentSource, program: ts.Program, mono
         const reactPath = fs.existsSync(reactFile) ? reactFile : undefined;
 
         const reExportUsesDataAttrs = !!reactPath && usesDataAttrs(reactPath);
-        const originDataAttrsFile = path.join(coreUiPath, originKebab, `${originKebab}-data-attrs.ts`);
+        const originDataAttrsFile = path.join(coreUiPath, originKebab, 'data.ts');
         const originDataAttrsPath =
           reExportUsesDataAttrs && fs.existsSync(originDataAttrsFile) ? originDataAttrsFile : undefined;
         const originComponentName = originDataAttrsPath ? kebabToPascal(originKebab) : undefined;
@@ -575,7 +575,7 @@ function buildMultiPartReference(
   }
 
   for (const extra of source.extraDataAttrs ?? []) {
-    const componentName = dataAttrsComponentName(path.basename(extra.path));
+    const componentName = dataAttrsComponentName(path.basename(extra.path), source.kebab);
     const extraData = extractDataAttrs(extra.path, program, componentName);
 
     if (!extraData) {

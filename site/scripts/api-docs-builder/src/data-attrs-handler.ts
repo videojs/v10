@@ -48,7 +48,7 @@ function inferStateTypes(satisfiesType: ts.TypeNode, program: ts.Program): Map<s
 }
 
 /**
- * Extract data attributes from a data-attrs file.
+ * Extract data attributes from a component's data.ts file.
  *
  * Looks for patterns like:
  * ```ts

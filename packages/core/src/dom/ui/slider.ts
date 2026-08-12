@@ -4,7 +4,7 @@ import { throttle } from '@videojs/utils/function';
 import { clamp, roundToStep } from '@videojs/utils/number';
 import { isNull } from '@videojs/utils/predicate';
 
-import type { SliderInput, SliderState } from '../../core/ui/slider/slider-core';
+import type { SliderInput, SliderState } from '../../core/ui/slider/core';
 import { getPercentFromPointerEvent } from '../utils/pointer';
 import type { UIKeyboardEvent, UIPointerEvent } from './event';
 

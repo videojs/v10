@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vite-plus/test';
 
-import { PopoverCSSVars } from '../../../../core/ui/popover/popover-css-vars';
+import { PopoverCSSVars } from '../../../../core/ui/popover/vars';
 import {
   getAnchorPositionStyle,
   getManualPositionStyle,

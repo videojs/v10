@@ -5,7 +5,7 @@ import type { CSSVarsExtraction } from './types.js';
 import { unwrapObjectLiteral } from './utils.js';
 
 /**
- * Extract CSS custom properties from a css-vars file.
+ * Extract CSS custom properties from a component's vars.ts file.
  *
  * Looks for patterns like:
  * ```ts
