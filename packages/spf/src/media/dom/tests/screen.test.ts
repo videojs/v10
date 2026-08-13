@@ -94,9 +94,12 @@ describe('watchScreenResolution', () => {
     return queries;
   }
 
-  /** A mutable screen, so a test can move it the way the environment would. */
+  /**
+   * A mutable screen, so a test can move it the way the environment would. An
+   * `EventTarget` because the real one is: `screen` dispatches its own `change`.
+   */
   function stubScreen(width: number, height: number, ratio = 1) {
-    const screen = { width, height, orientation: new EventTarget() };
+    const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
     vi.stubGlobal('screen', screen);
     vi.stubGlobal('devicePixelRatio', ratio);
     return screen;
@@ -133,6 +136,21 @@ describe('watchScreenResolution', () => {
     const stop = watchScreenResolution(onChange);
 
     expect(onChange).not.toHaveBeenCalled();
+    stop();
+  });
+
+  it("reports on the screen's own change event", () => {
+    // The direct signal, and the only one that catches a window moving between
+    // two same-size, same-ratio displays. Chromium-only, so the others stay.
+    const screen = stubScreen(1440, 900);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    screen.width = 3840;
+    screen.height = 2160;
+    screen.dispatchEvent(new Event('change'));
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 3840, height: 2160 });
     stop();
   });
 
@@ -238,7 +256,7 @@ describe('watchScreenResolution', () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it('stops the ratio query and the orientation listener too', () => {
+  it('stops every signal, not just resize', () => {
     const queries = stubMatchMedia();
     const screen = stubScreen(1440, 900, 1);
     const onChange = vi.fn();
@@ -248,6 +266,7 @@ describe('watchScreenResolution', () => {
 
     screen.width = 1920;
     queries[0]!.fire();
+    screen.dispatchEvent(new Event('change'));
     screen.orientation.dispatchEvent(new Event('change'));
 
     expect(onChange).not.toHaveBeenCalled();

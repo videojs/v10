@@ -83,6 +83,13 @@ export function getScreenResolution(options: ScreenResolutionOptions = {}): Scre
  *
  * The signals, and what each one is here for:
  *
+ * - **`screen`'s own `change`** — the screen itself being reconfigured, or the
+ *   window landing on a different one. The direct signal, and the only one that
+ *   catches a window moving between two same-size, same-ratio displays. From the
+ *   Window Management API, but on the base `Screen` rather than behind
+ *   `getScreenDetails()`, so it needs no permission — only a secure context.
+ *   Measured present in Chromium and absent in WebKit and Firefox, hence the
+ *   three below rather than this alone.
  * - **`resize`** — the window changing size, which is also what the OS does to it
  *   when the display it was on goes away.
  * - **`screen.orientation` change** — rotation, which swaps the axes without
@@ -92,12 +99,11 @@ export function getScreenResolution(options: ScreenResolutionOptions = {}): Scre
  *   display with a different ratio. Armed against the current ratio and re-armed
  *   when it moves, since the query only reports on the ratio it was built for.
  *
- * ⚠️ Known gap: dragging a window between two same-ratio displays of different
- * sizes, without the window resizing, changes the reading with none of the above
- * firing. Closing it needs the Window Management API's screen-change events,
- * which are permission-gated and not broadly available — so it is deliberately
- * out of this slice rather than approximated with polling, whose interval and
- * battery cost are a policy decision this function shouldn't be making.
+ * ⚠️ Known gap, on engines without `screen`'s change event: dragging a window
+ * between two different-size displays that share a ratio, without the window
+ * resizing, changes the reading with nothing firing. Closing it there would mean
+ * polling, whose interval and battery cost are a policy decision this function
+ * shouldn't be making.
  */
 export function watchScreenResolution(
   onChange: (resolution: ScreenResolution | undefined) => void,
@@ -137,16 +143,34 @@ export function watchScreenResolution(
 
   // Each signal is optional for the same reason the reading is: an environment
   // missing one has nothing to report from it, which is not a reason to fail.
+  // `screen`'s own change event is subscribed unconditionally rather than
+  // feature-detected — where it isn't implemented it simply never fires, and a
+  // signal that never fires costs nothing under comparison.
+  const screen = globalThis.screen;
+  const screenEvents = asEventTarget(screen);
   const stopResize = globalThis.window ? listen(globalThis.window, 'resize', check) : undefined;
-  const orientation = globalThis.screen?.orientation;
-  const stopOrientation = orientation ? listen(orientation, 'change', check) : undefined;
+  const stopScreen = screenEvents ? listen(screenEvents, 'change', check) : undefined;
+  const stopOrientation = screen?.orientation ? listen(screen.orientation, 'change', check) : undefined;
 
   return () => {
     stopResize?.();
+    stopScreen?.();
     stopOrientation?.();
     stopRatioQuery?.();
     stopRatioQuery = undefined;
   };
+}
+
+/**
+ * `Screen` as something subscribable.
+ *
+ * It is an `EventTarget` at runtime, and dispatches `change` where the Window
+ * Management API is implemented, but `lib.dom.d.ts` types neither — so the shape
+ * gets checked rather than declared. Same approach `@videojs/core` takes to
+ * `screen.orientation`'s lock methods, which that lib under-types too.
+ */
+function asEventTarget(value: object | undefined): EventTarget | undefined {
+  return value && 'addEventListener' in value ? (value as EventTarget) : undefined;
 }
 
 /** Whether two readings say the same thing, counting two unknowns as agreeing. */
