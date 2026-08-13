@@ -41,7 +41,7 @@ import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
-import { useCaptionsOptions } from '@/ui/captions-radio-group';
+import { CaptionsRadioGroup, useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -323,30 +323,18 @@ function SettingsMenu(): ReactNode {
                     {t(captionsText)}
                   </Menu.Back>
                   <Menu.Separator className="media-menu__separator" />
-                  <Menu.RadioGroup
+                  <CaptionsRadioGroup
                     className="media-menu__group"
-                    value={captions.value}
-                    onValueChange={captions.setValue}
                     aria-label={t(captionsText)}
-                  >
-                    {captions.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className="media-menu__item"
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === captions.value}
-                          forceMount
-                          className="media-menu__indicator"
-                        >
+                    renderItem={(props, item) => (
+                      <Menu.RadioItem {...props} className="media-menu__item">
+                        <span>{item.label}</span>
+                        <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                           <CheckIcon className="media-icon" />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
+                    )}
+                  />
                 </Menu.Content>
               </Menu.Root>
             ) : null}
