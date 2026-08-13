@@ -1,9 +1,9 @@
 'use client';
 
+import type { HlsAudioMediaProps } from '@videojs/spf/hls-audio';
+import { hlsAudioMediaDefaultProps } from '@videojs/spf/hls-audio';
 import type { MuxMediaProps } from '@videojs/spf/mux-audio';
 import { MuxAudioMedia, muxMediaDefaultProps } from '@videojs/spf/mux-audio';
-import type { SimpleHlsAudioOnlyMediaProps } from '@videojs/spf/simple-hls-audio-only';
-import { simpleHlsAudioOnlyMediaDefaultProps } from '@videojs/spf/simple-hls-audio-only';
 import type { AudioHTMLAttributes, ReactNode } from 'react';
 import { forwardRef } from 'react';
 import { useAttachMedia } from '../../utils/use-attach-media';
@@ -14,14 +14,14 @@ import { useSyncProps } from '../../utils/use-sync-props';
 // `src` and `source` come from `MuxMediaProps`: the Mux Media owns both, and its
 // `source` is the structured Mux one rather than the generic engine's.
 export interface MuxAudioProps
-  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof SimpleHlsAudioOnlyMediaProps | keyof MuxMediaProps>,
-    Partial<Omit<SimpleHlsAudioOnlyMediaProps, 'src'>>,
+  extends Omit<AudioHTMLAttributes<HTMLAudioElement>, keyof HlsAudioMediaProps | keyof MuxMediaProps>,
+    Partial<Omit<HlsAudioMediaProps, 'src'>>,
     Partial<MuxMediaProps> {
   children?: ReactNode;
 }
 
-const muxAudioDefaultProps: Omit<SimpleHlsAudioOnlyMediaProps, 'src'> & MuxMediaProps = {
-  ...simpleHlsAudioOnlyMediaDefaultProps,
+const muxAudioDefaultProps: Omit<HlsAudioMediaProps, 'src'> & MuxMediaProps = {
+  ...hlsAudioMediaDefaultProps,
   ...muxMediaDefaultProps,
 };
 
