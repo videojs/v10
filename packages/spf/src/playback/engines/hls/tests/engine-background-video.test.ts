@@ -179,4 +179,55 @@ describe('createBackgroundVideoEngine', () => {
     expect(engine.state.selectedVideoTrackId.get()).toBe('forced-pick');
     engine.destroy();
   });
+
+  describe('screenResolution', () => {
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    function stubScreen(width: number, height: number, ratio = 1) {
+      const screen = Object.assign(new EventTarget(), { width, height, orientation: new EventTarget() });
+      vi.stubGlobal('screen', screen);
+      vi.stubGlobal('devicePixelRatio', ratio);
+      return screen;
+    }
+
+    it('is populated in device pixels before any presentation is set', () => {
+      // The cap needs the screen from frame 0, not once a source arrives — the
+      // slot is independent of the presentation lifecycle.
+      stubScreen(1440, 900, 2);
+      const engine = createBackgroundVideoEngine();
+
+      expect(engine.state.screenResolution.get()).toEqual({ width: 2880, height: 1800 });
+
+      engine.destroy();
+    });
+
+    it('honors useDevicePixelRatio from engine config', () => {
+      stubScreen(1440, 900, 2);
+      const engine = createBackgroundVideoEngine({ useDevicePixelRatio: false });
+
+      expect(engine.state.screenResolution.get()).toEqual({ width: 1440, height: 900 });
+
+      engine.destroy();
+    });
+
+    it('tracks the screen changing under the window', () => {
+      const screen = stubScreen(1440, 900);
+      const engine = createBackgroundVideoEngine();
+
+      screen.width = 3840;
+      screen.height = 2160;
+      screen.dispatchEvent(new Event('change'));
+
+      expect(engine.state.screenResolution.get()).toEqual({ width: 3840, height: 2160 });
+
+      engine.destroy();
+    });
+
+    // Teardown is asserted at the behavior level instead — see
+    // `behaviors/dom/tests/track-screen-resolution.test.ts`. Reading the slot
+    // after `destroy()` returns `undefined` regardless, so an engine-level
+    // assertion here couldn't tell a removed listener from torn-down state.
+  });
 });

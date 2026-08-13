@@ -5,6 +5,7 @@ import {
   type StateSignals,
 } from '../../../core/composition/create-composition';
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
+import type { ScreenResolution } from '../../../media/dom/screen';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
 import { pickHighestResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import type { MaybeResolvedPresentation } from '../../../media/types';
@@ -17,6 +18,7 @@ import { loadVideoSegments } from '../../behaviors/dom/load-segments';
 import { setupVideoBufferActors } from '../../behaviors/dom/setup-buffer-actors';
 import { setupMediaSource } from '../../behaviors/dom/setup-mediasource';
 import { trackCurrentTime } from '../../behaviors/dom/track-current-time';
+import { trackScreenResolution } from '../../behaviors/dom/track-screen-resolution';
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveVideoTrack } from '../../behaviors/resolve-track';
@@ -29,11 +31,16 @@ import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/s
 /**
  * State shape for the background-video playback engine.
  *
- * Narrower than `HlsVideoEngineState`: audio/text track slots are absent
+ * Mostly narrower than `HlsVideoEngineState`: audio/text track slots are absent
  * because their selection/resolution behaviors are subtracted. `bandwidthState`
  * is present because `setupVideoBufferActors` declares it and `loadVideoSegments`
  * samples into it (wasted work in this variant — a Phase 3 alt-impl will skip
  * sampling).
+ *
+ * `screenResolution` is the one slot this variant has and the HLS video engine
+ * doesn't, because the screen-size cap is being built here first. It generalizes
+ * — the cap is a selection rule both engines can compose — so expect the slot to
+ * appear there too rather than staying variant-specific.
  */
 export interface BackgroundVideoEngineState {
   /**
@@ -44,6 +51,12 @@ export interface BackgroundVideoEngineState {
   preload?: 'auto' | 'metadata' | 'none';
   selectedVideoTrackId?: string;
   loadActivated?: boolean;
+  /**
+   * The screen's pixel dimensions, or `undefined` where there is none to read.
+   * Written by `trackScreenResolution`; nothing reads it yet — the screen-size
+   * rendition cap that will is the next step.
+   */
+  screenResolution?: ScreenResolution;
 }
 
 /**
@@ -92,6 +105,11 @@ export interface BackgroundVideoEngineConfig
    * multivariant-playlist parser.
    */
   parsePresentation?: ParsePresentation;
+  /**
+   * Whether `state.screenResolution` is reported in device pixels. Read by
+   * `trackScreenResolution`; defaults to `true`.
+   */
+  useDevicePixelRatio?: boolean;
 }
 
 // ============================================================================
@@ -160,6 +178,11 @@ export function createBackgroundVideoEngine(
 
       // Playback tracking
       trackCurrentTime,
+
+      // Environment tracking — the signal source for a screen-size rendition
+      // cap. Independent of the presentation, so it sits outside the
+      // resolve/select/load sequence above.
+      trackScreenResolution,
 
       // End of stream coordination
       endOfStream,
