@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getScreenResolution } from '../screen';
+import { getScreenResolution, watchScreenResolution } from '../screen';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -67,5 +67,189 @@ describe('getScreenResolution', () => {
         expect(getScreenResolution()).toEqual({ width: 1440, height: 900 });
       }
     });
+  });
+});
+
+describe('watchScreenResolution', () => {
+  /**
+   * A `matchMedia` stand-in whose queries can be told to fire. The real one only
+   * reports on ratios the environment actually has, so driving a ratio change
+   * means driving the query.
+   */
+  function stubMatchMedia() {
+    const queries: Array<{ query: string; fire: () => void }> = [];
+
+    vi.stubGlobal('matchMedia', (query: string) => {
+      const listeners = new Set<() => void>();
+      queries.push({ query, fire: () => listeners.forEach((listener) => listener()) });
+
+      return {
+        matches: true,
+        media: query,
+        addEventListener: (_: string, listener: () => void) => listeners.add(listener),
+        removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
+      };
+    });
+
+    return queries;
+  }
+
+  /** A mutable screen, so a test can move it the way the environment would. */
+  function stubScreen(width: number, height: number, ratio = 1) {
+    const screen = { width, height, orientation: new EventTarget() };
+    vi.stubGlobal('screen', screen);
+    vi.stubGlobal('devicePixelRatio', ratio);
+    return screen;
+  }
+
+  it('reports a new reading on resize', () => {
+    const screen = stubScreen(1440, 900);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    screen.width = 1920;
+    screen.height = 1080;
+    globalThis.dispatchEvent(new Event('resize'));
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 1920, height: 1080 });
+    stop();
+  });
+
+  it('does not report when nothing moved', () => {
+    // `resize` is noisy, so comparing readings is what keeps it from firing.
+    stubScreen(1440, 900);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    globalThis.dispatchEvent(new Event('resize'));
+
+    expect(onChange).not.toHaveBeenCalled();
+    stop();
+  });
+
+  it('does not report on subscribe', () => {
+    stubScreen(1440, 900);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    expect(onChange).not.toHaveBeenCalled();
+    stop();
+  });
+
+  it('reports rotation, which swaps the axes without a resize', () => {
+    const screen = stubScreen(390, 844);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    screen.width = 844;
+    screen.height = 390;
+    screen.orientation.dispatchEvent(new Event('change'));
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 844, height: 390 });
+    stop();
+  });
+
+  it('reports a device pixel ratio change under a window that kept its size', () => {
+    const queries = stubMatchMedia();
+    stubScreen(1440, 900, 1);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    expect(queries[0]?.query).toBe('(resolution: 1dppx)');
+
+    vi.stubGlobal('devicePixelRatio', 2);
+    queries[0]!.fire();
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 2880, height: 1800 });
+    stop();
+  });
+
+  it('re-arms the ratio query against the new ratio', () => {
+    // A `dppx` query only answers about the ratio it was built for, so the old
+    // one goes quiet once the ratio moves.
+    const queries = stubMatchMedia();
+    stubScreen(1440, 900, 1);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    vi.stubGlobal('devicePixelRatio', 2);
+    queries[0]!.fire();
+
+    expect(queries[1]?.query).toBe('(resolution: 2dppx)');
+
+    vi.stubGlobal('devicePixelRatio', 3);
+    queries[1]!.fire();
+
+    expect(onChange).toHaveBeenLastCalledWith({ width: 4320, height: 2700 });
+    stop();
+  });
+
+  it('reports the reading becoming unknown, then known again', () => {
+    const screen = stubScreen(1440, 900);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    screen.width = 0;
+    globalThis.dispatchEvent(new Event('resize'));
+    expect(onChange).toHaveBeenLastCalledWith(undefined);
+
+    screen.width = 1440;
+    globalThis.dispatchEvent(new Event('resize'));
+    expect(onChange).toHaveBeenLastCalledWith({ width: 1440, height: 900 });
+
+    expect(onChange).toHaveBeenCalledTimes(2);
+    stop();
+  });
+
+  it('honors the reader options', () => {
+    const screen = stubScreen(1440, 900, 2);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange, { useDevicePixelRatio: false });
+
+    screen.width = 1920;
+    globalThis.dispatchEvent(new Event('resize'));
+
+    expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 1920, height: 900 });
+    stop();
+  });
+
+  it('watches harmlessly where there is no screen to read', () => {
+    // Nothing to report from a signal an environment doesn't have, which is not a
+    // reason to fail — same line the reading draws.
+    vi.stubGlobal('screen', undefined);
+    const onChange = vi.fn();
+
+    const stop = watchScreenResolution(onChange);
+    globalThis.dispatchEvent(new Event('resize'));
+
+    expect(onChange).not.toHaveBeenCalled();
+    expect(stop).not.toThrow();
+  });
+
+  it('stops reporting once stopped', () => {
+    const screen = stubScreen(1440, 900);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    stop();
+    screen.width = 1920;
+    globalThis.dispatchEvent(new Event('resize'));
+
+    expect(onChange).not.toHaveBeenCalled();
+  });
+
+  it('stops the ratio query and the orientation listener too', () => {
+    const queries = stubMatchMedia();
+    const screen = stubScreen(1440, 900, 1);
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange);
+
+    stop();
+
+    screen.width = 1920;
+    queries[0]!.fire();
+    screen.orientation.dispatchEvent(new Event('change'));
+
+    expect(onChange).not.toHaveBeenCalled();
   });
 });

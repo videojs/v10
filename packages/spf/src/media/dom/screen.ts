@@ -7,16 +7,17 @@
  * `maxResolutionToPixelArea` has to make, and the one that mis-measures an
  * anamorphic or otherwise non-16:9 rendition.
  *
- * This is the first slice of the screen-size cap in
- * `internal/design/spf/features/rendition-selection-caps.md`. What it leaves out
- * is reacting to change: this is a one-shot read, and the screen underneath a
- * window is not stable. Rotating a device swaps the axes; unplugging or
- * reattaching a monitor, or dragging the window to a different display, changes
- * the numbers *and* which physical screen they describe. So a live cap has to
- * re-read rather than cache — which is why this reads the ambient screen at call
- * time, with no subscription and no memoization of its own. A watcher belongs
- * over this function, not inside it.
+ * The signal source for the screen-size cap in
+ * `internal/design/spf/features/rendition-selection-caps.md`.
+ *
+ * The screen underneath a window is not stable: rotating a device swaps the axes,
+ * and unplugging a monitor or dragging the window to another display changes the
+ * numbers *and* which physical screen they describe. So `getScreenResolution`
+ * reads at call time and caches nothing, and `watchScreenResolution` layers the
+ * reacting on top rather than the reader holding state of its own.
  */
+
+import { listen } from '@videojs/utils/dom';
 
 /** A screen's pixel dimensions. */
 export interface ScreenResolution {
@@ -67,4 +68,89 @@ export function getScreenResolution(options: ScreenResolutionOptions = {}): Scre
   const height = Math.round(screen.height * ratio);
 
   return width > 0 && height > 0 ? { width, height } : undefined;
+}
+
+/**
+ * Call `onChange` whenever {@link getScreenResolution} would start answering
+ * differently. Returns a function that stops watching.
+ *
+ * There is no single event for "the screen changed", so this subscribes to every
+ * signal that implies one and compares readings to decide whether anything
+ * actually moved. Comparing is what makes that safe: the signals overlap and
+ * `resize` in particular is noisy, so over-subscribing costs a discarded read
+ * rather than a spurious call. `onChange` fires only on a genuine change, and
+ * never on subscribe — call {@link getScreenResolution} for the starting value.
+ *
+ * The signals, and what each one is here for:
+ *
+ * - **`resize`** — the window changing size, which is also what the OS does to it
+ *   when the display it was on goes away.
+ * - **`screen.orientation` change** — rotation, which swaps the axes without
+ *   necessarily resizing the window.
+ * - **a `(resolution: <ratio>dppx)` media query** — the device pixel ratio
+ *   changing under a window that kept its size, from zoom or from moving to a
+ *   display with a different ratio. Armed against the current ratio and re-armed
+ *   when it moves, since the query only reports on the ratio it was built for.
+ *
+ * ⚠️ Known gap: dragging a window between two same-ratio displays of different
+ * sizes, without the window resizing, changes the reading with none of the above
+ * firing. Closing it needs the Window Management API's screen-change events,
+ * which are permission-gated and not broadly available — so it is deliberately
+ * out of this slice rather than approximated with polling, whose interval and
+ * battery cost are a policy decision this function shouldn't be making.
+ */
+export function watchScreenResolution(
+  onChange: (resolution: ScreenResolution | undefined) => void,
+  options: ScreenResolutionOptions = {}
+): () => void {
+  let current = getScreenResolution(options);
+  let armedRatio: number | undefined;
+  let stopRatioQuery: (() => void) | undefined;
+
+  const check = () => {
+    armRatioQuery();
+
+    const next = getScreenResolution(options);
+    if (isSameResolution(current, next)) return;
+
+    current = next;
+    onChange(next);
+  };
+
+  // Re-armed rather than armed once: a `dppx` query only answers about the ratio
+  // it was built for, so after the ratio moves the old query goes quiet.
+  const armRatioQuery = () => {
+    const ratio = globalThis.devicePixelRatio;
+    if (ratio === armedRatio) return;
+
+    stopRatioQuery?.();
+    stopRatioQuery = undefined;
+    armedRatio = ratio;
+
+    if (!(typeof ratio === 'number' && Number.isFinite(ratio) && ratio > 0)) return;
+
+    const query = globalThis.matchMedia?.(`(resolution: ${ratio}dppx)`);
+    if (query) stopRatioQuery = listen(query, 'change', check);
+  };
+
+  armRatioQuery();
+
+  // Each signal is optional for the same reason the reading is: an environment
+  // missing one has nothing to report from it, which is not a reason to fail.
+  const stopResize = globalThis.window ? listen(globalThis.window, 'resize', check) : undefined;
+  const orientation = globalThis.screen?.orientation;
+  const stopOrientation = orientation ? listen(orientation, 'change', check) : undefined;
+
+  return () => {
+    stopResize?.();
+    stopOrientation?.();
+    stopRatioQuery?.();
+    stopRatioQuery = undefined;
+  };
+}
+
+/** Whether two readings say the same thing, counting two unknowns as agreeing. */
+function isSameResolution(a: ScreenResolution | undefined, b: ScreenResolution | undefined): boolean {
+  if (!a || !b) return a === b;
+  return a.width === b.width && a.height === b.height;
 }
