@@ -3,8 +3,6 @@
    Note: Menus use `.media-popover` styles for positioning and transitions.
    ========================================================================== */
 
-@import "../../../shared/global/menu/keyframes.css";
-
 .media-default-skin .media-menu {
   --menu-transition-duration: 250ms;
   --menu-max-height: calc(var(--spacing) * 56);
@@ -13,8 +11,8 @@
   --menu-item-border-radius: calc(var(--menu-border-radius) - var(--menu-padding));
   box-sizing: border-box;
   min-width: max-content;
-  max-width: var(--media-menu-available-width, none);
-  max-height: min(var(--media-menu-available-height, var(--menu-max-height)), var(--menu-max-height));
+  max-width: var(--media-popover-available-width, none);
+  max-height: min(var(--media-popover-available-height, var(--menu-max-height)), var(--menu-max-height));
   padding: var(--menu-padding);
   overflow: auto;
   overscroll-behavior: none;
@@ -24,13 +22,9 @@
     --menu-transition-duration: 0ms;
   }
 
-  & > .media-menu__panel {
+  & .media-menu__panel {
     position: absolute;
-    inset-inline: 0;
-    top: 0;
-
-    z-index: 10;
-    max-height: inherit;
+    inset: 0;
     padding: var(--menu-padding);
     overflow: auto;
     overscroll-behavior: none;
@@ -41,11 +35,46 @@
     transition-property: translate, filter;
     will-change: translate, filter;
 
-    &:where([data-starting-style], [data-ending-style]) {
+    &[data-starting-style],
+    &[data-ending-style] {
       overflow: hidden;
-      pointer-events: none;
+    }
+
+    /* Root settings view — slides out when a submenu is active */
+    &[data-menu-root-view][data-menu-view-state="inactive"] {
       filter: blur(8px);
-      translate: 100% 0;
+      translate: -100% 0;
+
+      /* Hide the indicator while transitioning */
+      & .media-menu__group::before {
+        display: none;
+      }
+    }
+
+    /* Submenu panels — slide in/out alongside the root view */
+    &[data-submenu] {
+      z-index: 10;
+
+      &:not([data-open], [data-ending-style]) {
+        translate: -100% 0;
+        transition-property: none;
+      }
+
+      &[data-starting-style],
+      &[data-ending-style] {
+        pointer-events: none;
+        filter: blur(8px);
+      }
+
+      &[data-starting-style][data-direction="forward"],
+      &[data-ending-style][data-direction="back"] {
+        translate: 100% 0;
+      }
+
+      &[data-ending-style][data-direction="forward"],
+      &[data-starting-style][data-direction="back"] {
+        translate: -100% 0;
+      }
     }
   }
 
@@ -66,6 +95,9 @@
         position: absolute;
         position-anchor: --media-menu-item-highlight-anchor;
         inset: anchor(inside);
+        /* Firefox treats the moving highlight as a content shift and re-scrolls
+           the menu while hovering. Exclude it from scroll anchoring. */
+        overflow-anchor: none;
         pointer-events: none;
         content: "";
         background-color: oklch(from currentColor l c h / 0.1);
@@ -191,32 +223,13 @@
     min-width: calc(var(--spacing) * 48);
     height: var(--media-menu-height);
     overflow: hidden;
-
-    /* Only the menu size changes between panels. */
+    /* Add height and width transitions. */
     transition:
       var(--media-popup-transition),
-      width var(--media-popup-transition-timing-function) var(--menu-transition-duration),
-      height var(--media-popup-transition-timing-function) var(--menu-transition-duration);
+      height var(--media-popup-transition-timing-function) var(--menu-transition-duration),
+      width var(--media-popup-transition-timing-function) var(--menu-transition-duration);
 
-    & > :not([data-submenu]) {
-      translate: 0 0;
-      transition:
-        translate var(--menu-transition-duration) ease-in-out,
-        filter var(--menu-transition-duration) ease-in-out;
-      will-change: translate, filter;
-    }
-
-    &[data-submenu-expanded="true"] > :not([data-submenu]) {
-      filter: blur(8px);
-      translate: -100% 0;
-      animation: media-menu-content-exit var(--menu-transition-duration) ease-in-out both;
-    }
-
-    &[data-submenu-expanded="false"] > :not([data-submenu]) {
-      animation: media-menu-content-enter var(--menu-transition-duration) ease-in-out both;
-    }
-
-    /* Don't transition size on open/close. */
+    /* Don't transition width and height on open/close. */
     &[data-starting-style],
     &[data-ending-style] {
       transition: var(--media-popup-transition);
