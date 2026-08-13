@@ -3,28 +3,24 @@ import { createState } from '@videojs/store';
 import type { IndicatorCoreProps } from '../indicator/indicator-lifecycle';
 import { getIndicatorCloseDelay, IndicatorCloseController } from '../indicator/indicator-lifecycle';
 import type { MediaSnapshot } from '../input-action/input-action';
-import { formatVolumeValue } from '../volume-indicator/volume-indicator-status';
-import {
-  DEFAULT_STATUS_ANNOUNCER_LABELS,
-  formatPlaybackRateAnnouncerLabel,
-  formatSeekAnnouncerLabel,
-  type StatusAnnouncerLabels,
-} from './status-announcer-labels';
+import { DEFAULT_STATUS_ANNOUNCER_LABELS, type StatusAnnouncerLabels } from './status-announcer-labels';
+import { deriveStatusAnnouncement, deriveVolumeAnnouncement } from './status-announcer-status';
 
 const ANNOUNCEMENT_DEBOUNCE = 200;
 
 export interface StatusAnnouncerProps extends IndicatorCoreProps {
   labels?: Partial<StatusAnnouncerLabels> | undefined;
-  shouldAnnounceSeek?: ((snapshot: MediaSnapshot) => boolean) | undefined;
-  shouldAnnounceVolume?: ((snapshot: MediaSnapshot) => boolean) | undefined;
+  /** Whether debounced seek and volume changes should be announced. */
+  shouldAnnounce?: (() => boolean) | undefined;
 }
 
 export interface StatusAnnouncerState {
+  generation: number;
   label: string | null;
 }
 
 export class StatusAnnouncerCore {
-  readonly state = createState<StatusAnnouncerState>({ label: null });
+  readonly state = createState<StatusAnnouncerState>({ generation: 0, label: null });
 
   #props: StatusAnnouncerProps = {};
   #snapshot: MediaSnapshot | null = null;
@@ -60,42 +56,12 @@ export class StatusAnnouncerCore {
     if (!previous) return false;
 
     const labels = this.#getLabels();
-    let handled = false;
-    const queue: string[] = [];
+    const statusLabel = deriveStatusAnnouncement(previous, snapshot, labels);
+    const statusHandled = statusLabel !== null && this.#announce(statusLabel);
+    const seekHandled = this.#processSeekSnapshot(previous, snapshot, labels, statusHandled);
+    const volumeHandled = this.#processVolumeSnapshot(previous, snapshot, labels, statusHandled || seekHandled);
 
-    if (hasChanged(previous.paused, snapshot.paused)) {
-      queue.push(snapshot.paused ? labels.paused : labels.playing);
-    }
-
-    if (hasChanged(previous.subtitlesShowing, snapshot.subtitlesShowing) && snapshot.subtitlesAvailable !== false) {
-      queue.push(snapshot.subtitlesShowing ? labels.captionsOn : labels.captionsOff);
-    }
-
-    if (hasChanged(previous.fullscreen, snapshot.fullscreen)) {
-      queue.push(snapshot.fullscreen ? labels.fullscreen : labels.exitFullscreen);
-    }
-
-    if (hasChanged(previous.pip, snapshot.pip)) {
-      queue.push(snapshot.pip ? labels.pictureInPicture : labels.exitPictureInPicture);
-    }
-
-    if (hasChanged(previous.playbackRate, snapshot.playbackRate)) {
-      queue.push(formatPlaybackRateAnnouncerLabel(snapshot.playbackRate, labels));
-    }
-
-    if (queue.length > 0) {
-      handled = this.#announce(queue.join('. '));
-    }
-
-    if (this.#processSeekSnapshot(previous, snapshot, labels, handled)) {
-      handled = true;
-    }
-
-    if (this.#processVolumeSnapshot(previous, snapshot, labels, handled)) {
-      handled = true;
-    }
-
-    return handled;
+    return statusHandled || seekHandled || volumeHandled;
   }
 
   #getLabels(): StatusAnnouncerLabels {
@@ -107,7 +73,7 @@ export class StatusAnnouncerCore {
 
   #announce(label: string): boolean {
     this.#clearTimer();
-    this.state.patch({ label });
+    this.state.patch({ generation: this.state.current.generation + 1, label });
     this.#close.arm();
     return true;
   }
@@ -118,17 +84,10 @@ export class StatusAnnouncerCore {
     labels: StatusAnnouncerLabels,
     alreadyHandled: boolean
   ): boolean {
-    if (!hasChanged(previous.volume, snapshot.volume) && !hasChanged(previous.muted, snapshot.muted)) return false;
-    if (this.#props.shouldAnnounceVolume?.(snapshot) === false) return false;
-    if (alreadyHandled) return false;
+    const label = deriveVolumeAnnouncement(previous, snapshot, labels);
+    if (label === null || alreadyHandled || !this.#shouldAnnounce()) return false;
 
-    const volume = snapshot.volume ?? previous.volume;
-    const muted = snapshot.muted ?? previous.muted;
-
-    if (volume === undefined && muted === undefined) return false;
-
-    const label = muted || (volume ?? 0) <= 0 ? labels.muted : labels.volumeWithValue(formatVolumeValue(volume ?? 0));
-    this.#schedule(label, () => this.#props.shouldAnnounceVolume?.(snapshot) !== false);
+    this.#schedule(label);
     return true;
   }
 
@@ -158,27 +117,27 @@ export class StatusAnnouncerCore {
     this.#seekTargetTime = null;
 
     if (targetTime === undefined || targetTime === null || Object.is(targetTime, startTime)) return false;
-    if (this.#props.shouldAnnounceSeek?.(snapshot) === false) return false;
-    if (alreadyHandled) return false;
+    if (alreadyHandled || !this.#shouldAnnounce()) return false;
 
-    this.#schedule(
-      formatSeekAnnouncerLabel(targetTime, labels),
-      () => this.#props.shouldAnnounceSeek?.(snapshot) !== false
-    );
+    this.#schedule(labels.seekedTo(targetTime));
     return true;
   }
 
-  #schedule(label: string, shouldAnnounce: () => boolean): void {
+  #schedule(label: string): void {
     this.#clearTimer();
     this.#timer = setTimeout(() => {
       this.#timer = null;
-      if (!shouldAnnounce()) return;
+      if (!this.#shouldAnnounce()) return;
       this.#announce(label);
     }, ANNOUNCEMENT_DEBOUNCE);
   }
 
+  #shouldAnnounce(): boolean {
+    return this.#props.shouldAnnounce?.() !== false;
+  }
+
   #clearTimer(): void {
-    if (!this.#timer) return;
+    if (this.#timer === null) return;
     clearTimeout(this.#timer);
     this.#timer = null;
   }
@@ -187,8 +146,4 @@ export class StatusAnnouncerCore {
 export namespace StatusAnnouncerCore {
   export type Props = StatusAnnouncerProps;
   export type State = StatusAnnouncerState;
-}
-
-function hasChanged<Value>(previous: Value | undefined, next: Value | undefined): next is Value {
-  return previous !== undefined && next !== undefined && !Object.is(previous, next);
 }

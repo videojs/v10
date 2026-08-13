@@ -34,11 +34,3 @@ export function createStatusAnnouncerLabels(translator: Translator, locale = DEF
     playbackRate: (rate) => translator(rateText, { rate }),
   };
 }
-
-export function formatSeekAnnouncerLabel(time: number, labels: StatusAnnouncerLabels): string {
-  return labels.seekedTo(time);
-}
-
-export function formatPlaybackRateAnnouncerLabel(rate: number, labels: StatusAnnouncerLabels): string {
-  return labels.playbackRate(`${rate}×`);
-}

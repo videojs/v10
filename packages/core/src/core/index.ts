@@ -57,6 +57,7 @@ export * from './ui/slider/slider-data-attrs';
 export * from './ui/slider/slider-segments-core';
 export * from './ui/status-announcer/status-announcer-core';
 export * from './ui/status-announcer/status-announcer-labels';
+export * from './ui/status-announcer/status-announcer-status';
 export * from './ui/status-indicator/status-indicator-core';
 export * from './ui/status-indicator/status-indicator-data-attrs';
 export * from './ui/status-indicator/status-indicator-status';
