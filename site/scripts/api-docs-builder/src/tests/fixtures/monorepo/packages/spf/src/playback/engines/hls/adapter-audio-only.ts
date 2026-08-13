@@ -1,5 +1,5 @@
 /**
- * Mock SPF audio-only adapter mixin — mirrors SimpleHlsAudioOnlyMediaMixin.
+ * Mock SPF audio-only adapter mixin — mirrors HlsAudioMediaMixin.
  *
  * Exercises:
  *   - Cross-package mixin resolution (host lives in core, mixin in spf)

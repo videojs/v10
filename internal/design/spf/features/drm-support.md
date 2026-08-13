@@ -34,7 +34,7 @@ Milestone: GA. Prior art: [videojs-contrib-eme](https://github.com/videojs/video
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. No
+- **Composition:** not implemented in `createHlsVideoEngine`. No
   decryption pipeline: nothing sets up MediaKeys, negotiates a session,
   or requests a license. What exists is the *refusal* —
   `parseMediaPlaylist` recognizes `#EXT-X-KEY` well enough to flag a

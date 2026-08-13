@@ -20,7 +20,7 @@ without it, live HLS sources don't play correctly.
 
 ## Status
 
-- **Composition:** implemented in `createSimpleHlsEngine`. Live HLS
+- **Composition:** implemented in `createHlsVideoEngine`. Live HLS
   plays end-to-end: media playlists reload on a runner-driven schedule,
   the sliding window is declared to the browser via
   `setLiveSeekableRange`, duration is `Infinity`, playback starts near
@@ -238,7 +238,7 @@ endOfStream,
   completeness rides on `Track.duration` finiteness, so "is live" needs
   no state of its own.
 
-**Above-engine surface:** `packages/spf/src/playback/adapters/simple-hls/adapter.ts`
+**Above-engine surface:** `packages/spf/src/playback/adapters/hls-video/adapter.ts`
 exposes `streamType`, `targetLiveWindow`, and `liveEdgeStart` with
 `streamtypechange` / `targetlivewindowchange` events — the
 `MediaStreamTypeCapability` + `MediaLiveCapability` contract that

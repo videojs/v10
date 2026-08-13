@@ -21,7 +21,7 @@ in-place path against regression.
 
 ## Status
 
-- **Composition:** `createSimpleHlsEngine` (HLS VoD)
+- **Composition:** `createHlsVideoEngine` (HLS VoD)
 - **Definition depth:** sketched — capability surface, cleanup contract,
   and validation test all in place
 - **Cleanup contract** (load-bearing): every behavior that gates on
@@ -43,7 +43,7 @@ distinct engine behavior observable from outside.
 | Initial source load | First source on a fresh engine: external write of `state.presentation = { url }` triggers resolve + full pipeline setup | The unresolved → resolved transition that bootstraps everything |
 | In-place source replacement | Overwrite `state.presentation` with a new `{ url }` while a previous source is resolved / playing. `resolvePresentation` routes back through `'resolving'`; downstream behaviors tear down via reactor state-exit; new source resolves and plays — *same engine instance* | Validated end-to-end. MediaSource + buffer actors are fresh instances; in-flight fetches aborted via state-bound `AbortController`s |
 | Source unset | Set `state.presentation` to `undefined`. All presentation-gated behaviors transition to `'preconditions-unmet'` and tear down. Engine is fresh-but-attached, ready for the next source | The "no source" steady state; reachable from any resolved state |
-| Adapter-driven in-place replacement (canonical consumer path) | `SimpleHlsMediaMixin.src` overwrites `state.presentation` on its recycled engine (empty `src` → `undefined`, unsetting the source). Media element + engine-wide preload persist across the change | Canonical *consumer-side* mechanism. Rides the same in-place cascade as engine-internal replacement — no engine recreation. Tested via the recycling assertions in `adapter.test.ts` |
+| Adapter-driven in-place replacement (canonical consumer path) | `HlsVideoMediaMixin.src` overwrites `state.presentation` on its recycled engine (empty `src` → `undefined`, unsetting the source). Media element + engine-wide preload persist across the change | Canonical *consumer-side* mechanism. Rides the same in-place cascade as engine-internal replacement — no engine recreation. Tested via the recycling assertions in `adapter.test.ts` |
 | Per-source-identity slot lifecycle | `loadActivated` resets to `false` when source identity changes (URL or `mediaElement`); selected*TrackIds clear naturally on un-resolve (their pickers re-run against the new presentation); **`bandwidthState` is intentionally preserved** across source resets — sampling accumulates via the once-per-behavior `createTrackedFetch` | ABR resume: bandwidth estimate carries over so the first segment of a new source picks an appropriate quality based on observed throughput |
 
 ## What's not implemented
@@ -147,7 +147,7 @@ semantics — every replaced source runs through the same parser.
     `state.presentation` with source B, verify B resolves and the
     captured identities differ from the new ones (proving teardown
     cascade ran)
-  - `packages/spf/src/playback/adapters/simple-hls/tests/adapter.test.ts` →
+  - `packages/spf/src/playback/adapters/hls-video/tests/adapter.test.ts` →
     `"reuses the same engine instance when src changes"` /
     `"does not destroy the engine when src changes"` /
     `"keeps the attached media element across src changes"`
@@ -157,7 +157,7 @@ semantics — every replaced source runs through the same parser.
 - **Sandbox:**
   - `apps/sandbox/src/spf-segment-loading/` — exercises initial source
     load + manual rendition switching (in-track, not source change)
-  - `apps/sandbox/src/simple-hls-html/` / `simple-hls-react/` — adapter
+  - `apps/sandbox/src/hls-video-html/` / `hls-video-react/` — adapter
     integration; src reassignment recycles the engine via the in-place path
 
 ## Open questions
@@ -196,7 +196,7 @@ semantics — every replaced source runs through the same parser.
   re-bootstrapping from `initialBandwidth`.
 - **subtitles** — text-track actors and selection clear on source
   un-resolve via the cleanup cascade.
-- **engine-adapter-integration** — `SimpleHlsMediaMixin`'s source-
+- **engine-adapter-integration** — `HlsVideoMediaMixin`'s source-
   assignment path lives here. The adapter recycles a single engine and
   drives source changes through this feature's in-place cascade.
 

@@ -12,7 +12,7 @@ This doc captures the **capability surface**: what works, what doesn't, which be
 
 ## Status
 
-- **Composition:** `createSimpleHlsEngine` (HLS VoD)
+- **Composition:** `createHlsVideoEngine` (HLS VoD)
 - **Definition depth:** sketched — capability surface and implementation footprint documented; architectural deep-dive lives in [text-track-architecture.md](../text-track-architecture.md)
 
 ## Phases of complexity

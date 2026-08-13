@@ -5,7 +5,7 @@ describe('resolveReferenceSlug', () => {
   it('kebab-cases names without an override', () => {
     expect(resolveReferenceSlug('PlayButton')).toBe('play-button');
     expect(resolveReferenceSlug('VolumeSlider')).toBe('volume-slider');
-    expect(resolveReferenceSlug('SimpleHlsVideo')).toBe('simple-hls-video');
+    expect(resolveReferenceSlug('HlsVideo')).toBe('hls-video');
   });
 
   it('uses the inverted NAME_OVERRIDES map for special casing', () => {

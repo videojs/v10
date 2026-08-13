@@ -20,7 +20,7 @@ appears in the buffer."
 
 ## Status
 
-- **Composition:** `createSimpleHlsEngine` (HLS VoD)
+- **Composition:** `createHlsVideoEngine` (HLS VoD)
 - **Definition depth:** sketched — capability surface and implementation
   footprint documented; `MediaSourceActor` factoring is an open
   follow-up tracked under sibling candidates. Audio SourceBuffer flush
@@ -165,7 +165,7 @@ but belongs to `buffer-management` (`forwardBuffer` / `backBuffer`) and
   - `apps/sandbox/src/firefox-mse-repro/` — Firefox `mozHasAudio`
     invariant repro; load-bearing for verifying composition order +
     `runPending` semantics survive future refactors
-  - `apps/sandbox/src/simple-hls-html/` / `simple-hls-react/` — engine
+  - `apps/sandbox/src/hls-video-html/` / `hls-video-react/` — engine
     integration through the adapter layer
 
 ## Open questions

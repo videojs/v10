@@ -29,7 +29,7 @@ Tier 2 phases.
 
 ## Status
 
-- **Composition:** not implemented in `createSimpleHlsEngine`. No
+- **Composition:** not implemented in `createHlsVideoEngine`. No
   retry logic in `packages/spf/src/` today; `createTrackedFetch` and
   other fetch sites treat HTTP errors as fatal. Aligns with `hls.js`'s
   default behavior (4xx fatal, basic 5xx retry).

@@ -40,7 +40,7 @@ phase structure — phases map to discrete epic deliverables.
 
 | Phase | What |
 |---|---|
-| **1 — Composition + adapter** ([#1586](https://github.com/videojs/v10/issues/1586)) | Subtractive composition removing audio, text, ABR, preload-monitoring, and play/seek-monitoring behaviors; adds `selectVideoTrack` with a max-resolution picker; seeds `loadActivated: true`; ships independent adapter parallel to `SimpleHlsMediaElement`. HLS multivariant source; native `mediaElement.loop = true`. |
+| **1 — Composition + adapter** ([#1586](https://github.com/videojs/v10/issues/1586)) | Subtractive composition removing audio, text, ABR, preload-monitoring, and play/seek-monitoring behaviors; adds `selectVideoTrack` with a max-resolution picker; seeds `loadActivated: true`; ships independent adapter parallel to `HlsVideoMediaElement`. HLS multivariant source; native `mediaElement.loop = true`. |
 | **2 — `withAudio()` decoration** | Composes audio-side behaviors back in for surfaces needing audio (user-initiated unmute, audible ambient). Decorator shape TBD. |
 | **3 — `withPreload()` + optimizations** | Composes preload-state monitoring back in for lazy/viewport-gated tiles. Co-scoped with loop-around forward-buffer fetching, GPU/thermal-aware quality caps, and a sampling-strip alt-impl of `loadVideoSegments`. |
 | **4 — Video.js component** | Full `<mux-background-video>` integration. **Out of SPF scope** — adapter / consumer territory. |
@@ -52,7 +52,7 @@ configuration. Alternative-implementation buckets surface in Phase 3.
 
 ### Subtracted
 
-From [`createSimpleHlsEngine`](../../../../packages/spf/src/playback/engines/hls/engine.ts):
+From [`createHlsVideoEngine`](../../../../packages/spf/src/playback/engines/hls/engine.ts):
 
 - `syncPreload`, `trackLoadTriggers` — no preload-state monitoring or DOM `play`/`seeking` activation; replaced by `loadActivated: true` initial state.
 - `selectAudioTrack`, `resolveAudioTrack`, `setupAudioBufferActors`, `loadAudioSegments` — no audio side.
@@ -80,7 +80,7 @@ tree-shakes out the ABR code path."* — exactly the affordance Phase 1 wants.
 
 ## Customer-policy surface
 
-Independent adapter parallel to `SimpleHlsMediaElement`:
+Independent adapter parallel to `HlsVideoMediaElement`:
 
 ```ts
 const bgPlayer = new BackgroundVideoMediaElement({ picker: maxResolutionPicker });
@@ -109,7 +109,7 @@ use cases resolve via adapter choice.
 Phase 1 baseline:
 
 - **`video-only-composition`** — used at the *composition-mechanism* level; same audio-side subtraction pattern as the Case-1 feature, driven by adapter choice instead of source-shape detection. Plus further subtractions (text, ABR, preload).
-- **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** — variant adapter parallels `SimpleHlsMediaElement` via the same `SimpleHlsMediaMixin` / `shareSignals` pattern.
+- **[`engine-adapter-integration`](../features/engine-adapter-integration.md)** — variant adapter parallels `HlsVideoMediaElement` via the same `HlsVideoMediaMixin` / `shareSignals` pattern.
 - **[`mse-mms-pipeline`](../features/mse-mms-pipeline.md)** — used as-is. Firefox `mozHasAudio=false` verification under subtractive-audio composition is **joint Phase 1 scope** with `video-only-mode-override` and the Case-1 `video-only-composition` feature.
 - **[`buffer-management`](../features/buffer-management.md)** — as-is in Phase 1; Phase 3 surfaces back-buffer tuning and loop-around forward-buffer fetching (the "loop-around buffer fetching" candidate in that feature's *What's not implemented* directly targets this use case).
 - **[`preload-modes`](../features/preload-modes.md)** — alternative initial state (`loadActivated: true`) plus subtraction of `syncPreload` + `trackLoadTriggers`. Semantic contract preserved; the variant just seeds the gate-passable state from composition time.
@@ -126,7 +126,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 
 - **Shared engine factory.** Three use cases now want subtractive-audio composition (this, `video-only-mode-override`, Case-1 `video-only-composition`). Lean: shared factory at the subtractive-audio level, with this use case layering further subtractions (text, ABR, preload) and an initial-state override on top.
 - **Firefox `mozHasAudio` verification.** Joint scope with the two sibling cases — same mixed-source-with-audio-subtracted permutation.
-- **Adapter proliferation.** N+1 adapter parallel to `SimpleHlsMediaElement`; three adapters share the `SimpleHlsMediaMixin` / `shareSignals` pattern — cost is configuration surface, not architecture.
+- **Adapter proliferation.** N+1 adapter parallel to `HlsVideoMediaElement`; three adapters share the `HlsVideoMediaMixin` / `shareSignals` pattern — cost is configuration surface, not architecture.
 - **`loadActivated: true` initial-state pattern.** Pioneered here. If a second use case wants the same shape, consider a shared `withAutoLoad()`-style helper or document treatment in [`preload-modes`](../features/preload-modes.md).
 
 ## Open questions

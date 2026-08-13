@@ -427,7 +427,7 @@ It survives a `src` change, so swapping the source keeps the frame you asked for
 
 ## Elements without engine options
 
-<DocsLink slug="reference/simple-hls-video">SimpleHlsVideo</DocsLink> and <DocsLink slug="reference/simple-hls-audio-only">SimpleHlsAudioOnly</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
+<DocsLink slug="reference/hls-video">HlsVideo</DocsLink> and <DocsLink slug="reference/hls-audio">HlsAudio</DocsLink> take `src` and the usual media attributes but expose no `source`. They run on our own playback engine, which does not accept configuration from the element yet.
 
 ## Migrate from `config`
 
@@ -465,7 +465,7 @@ video.source = { src, preferPlayback: 'native', engine: { hlsJs: { maxBufferLeng
 ```
 </FrameworkCase>
 
-`<simple-hls-video>` and `<simple-hls-audio-only>` accepted a `config` that nothing read. Remove it — those elements never applied it.
+`<hls-video>` and `<hls-audio>` accepted a `config` that nothing read. Remove it — those elements never applied it.
 
 ## See also
 

@@ -1,5 +1,5 @@
 /**
- * Mock audio-only media element — mirrors SimpleHlsAudioOnly.
+ * Mock audio-only media element — mirrors HlsAudio.
  *
  * Exercises: audio media type ('audio' tag argument) with a cross-package
  * mixin host.

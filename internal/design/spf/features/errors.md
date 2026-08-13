@@ -129,7 +129,7 @@ retry-exhaustion, pipeline producers) are not.
   the source even when video is fine. Correct for the Mux shapes in
   scope (muxed or uniformly-encoded), wrong for a source meant to play
   video-only.
-- **An SVTA code in a `MEDIA_ERR_*` field.** `SimpleHlsMediaError`
+- **An SVTA code in a `MEDIA_ERR_*` field.** `HlsVideoMediaError`
   extends `@videojs/media`'s `ErrorLike`, so the shape is right, but the
   `code` it carries is an SVTA code where consumers expect
   `MEDIA_ERR_*`. What's missing is an extensible code lookup above the
@@ -254,11 +254,11 @@ DOM-free, so the codes are usable from any layer: `SvtaError`
 | `canPlayTrack` | `media/dom/capabilities.ts` | Prunes non-fMP4 containers and encrypted renditions, so every reported cause has a corresponding exclusion |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.encrypted` | `media/hls/parse-media-playlist.ts` | `EXT-X-KEY` detection. `METHOD=NONE` is not encryption; a clear lead followed by a real key is. Deliberately not a CMAF-HAM `Protection` model — set-level `defaultKid` can't express a clear lead or key rotation, and CML never populates it from HLS |
 | `parseMediaPlaylist` → `MediaPlaylistMetadata.lowLatency` | `media/hls/parse-media-playlist.ts` | LL-HLS detection for the phase-5 notice — any of `EXT-X-PART`, `EXT-X-PART-INF`, or `PART-HOLD-BACK`. Records that the publisher configured LL-HLS, not that we honour it; partial segments are still skipped |
-| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/simple-hls/error-surface.ts` | The shared half of both adapters' promotion step, plus the `SimpleHlsMediaError` type. Only the *policy* — which codes are fatal — stays per adapter |
+| `firstFatal` / `hasUnsupportedFeatureCause` | `playback/adapters/hls-video/error-surface.ts` | The shared half of both adapters' promotion step, plus the `HlsVideoMediaError` type. Only the *policy* — which codes are fatal — stays per adapter |
 | `UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE` and the two notice strings | `playback/primitives/error-messages.ts` | **Console-only** copy, plain constants. Nothing here is viewer-facing; separate exports so a composition that logs neither notice doesn't carry the bytes |
 
-**Adapters** — `playback/adapters/simple-hls/adapter.ts` and
-`simple-hls-audio-only/adapter.ts`. Each owns `FATAL_SVTA_CODES` (its fatality
+**Adapters** — `playback/adapters/hls-video/adapter.ts` and
+`hls-audio/adapter.ts`. Each owns `FATAL_SVTA_CODES` (its fatality
 allow-list — the audio-only set is narrower, since it composes no video
 selection and so can never report 2011), the `error` getter, and the
 `'error'` dispatch. First fatal wins, latched on the *reported* code so a
@@ -271,7 +271,7 @@ empty either way.
 Media with a better-equipped sibling to point at (a Mux Video whose
 hls.js-backed counterpart plays MPEG-TS and DRM) overrides it, and the
 logged copy gains a second sentence with no other change. Empty for
-`simple-hls-video`, which has no such sibling.
+`hls-video`, which has no such sibling.
 
 **State slots:**
 
@@ -283,7 +283,7 @@ logged copy gains a second sentence with no other change. Empty for
   same shape [clusters.md § Multi-writer state slots](./clusters.md#multi-writer-state-slots)
   records for `userTextTrackSelection`.
 
-**Composition** — both `createSimpleHlsEngine` and the audio-only
+**Composition** — both `createHlsVideoEngine` and the audio-only
 variant declare the `errors` slot, compose `collectErrors`, and wire
 `reportUnsupportedTrackConditions`. The audio-only variant matters
 because an all-encrypted or all-TS source there has no video to fall
@@ -334,7 +334,7 @@ limitations*).
   - `packages/spf/src/playback/behaviors/tests/resolve-track.test.ts` —
     reports unsupported DRM through the seam for an encrypted playlist;
     nothing for a playable rendition; nothing when no seam is wired
-  - `packages/spf/src/playback/adapters/simple-hls/tests/adapter.test.ts` →
+  - `packages/spf/src/playback/adapters/hls-video/tests/adapter.test.ts` →
     *error surface* — fatal condition surfaces as an `ErrorLike` and
     fires `'error'`; first fatal wins; non-fatal reports stay in the
     sequence only; fires once per distinct condition; clears on
@@ -358,12 +358,12 @@ limitations*).
     `errors.unplayable` translation rather than the generic fallback; a
     source change to fMP4 clears the error, closes the dialog, and plays;
     and an fMP4 control reports nothing. Driven by the
-    `html-simple-hls-video-ts` page, deliberately absent from
+    `html-hls-video-ts` page, deliberately absent from
     `fixtures/media.ts`'s page arrays
-- **Manual:** the sandbox offers both failing shapes to the Simple HLS
+- **Manual:** the sandbox offers both failing shapes to the plain HLS
   presets — `hls-audio-only-ts` (MPEG-TS) and `hls-drm-unlicensed` (the
   DRM asset with no license path), each labelled with the error it should
-  produce. `SIMPLE_HLS_SOURCE_IDS` is what keeps the unlicensed DRM
+  produce. `SPF_HLS_SOURCE_IDS` is what keeps the unlicensed DRM
   source reachable there while the presets that *can* license DRM get the
   playable variants instead.
 - **Out of scope / deferred:**
@@ -432,9 +432,9 @@ settled against.
   resolved/unresolved presentation cascade, which
   [source-replacement](./source-replacement.md) documents — and whose
   open question ("single error vs per-source") this feature answers.
-- **Adapter surface shape.** Whether this is a `SimpleHlsMediaErrorsMixin`
+- **Adapter surface shape.** Whether this is a `HlsVideoMediaErrorsMixin`
   sibling to the existing mixins or folded into
-  `adapters/simple-hls/adapter.ts`. The mixin precedent is strong, and
+  `adapters/hls-video/adapter.ts`. The mixin precedent is strong, and
   [engine-adapter-integration](./engine-adapter-integration.md) lists
   "curated state / error introspection" as not-implemented — this is
   the error half of it.
@@ -532,10 +532,10 @@ Kept for traceability.
   element's native `emptied` is re-dispatched by the host, so
   `errorFeature`'s reset path fires (E2E-verified on Chromium and WebKit).
 - **Adapter surface shape** → folded into each adapter rather than a
-  `SimpleHlsMediaErrorsMixin` sibling, since the fatal derivation needs the
+  `HlsVideoMediaErrorsMixin` sibling, since the fatal derivation needs the
   same engine signals the adapter already holds. With two adapters wanting
   it, the shared half (`firstFatal`, `hasUnsupportedFeatureCause`, the
-  `SimpleHlsMediaError` type) was extracted to `error-surface.ts` and only
+  `HlsVideoMediaError` type) was extracted to `error-surface.ts` and only
   the fatality allow-list stayed per adapter. The promotion step itself is
   still duplicated between them.
 
