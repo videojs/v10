@@ -95,9 +95,6 @@
         position: absolute;
         position-anchor: --media-menu-item-highlight-anchor;
         inset: anchor(inside);
-        /* Firefox treats the moving highlight as a content shift and re-scrolls
-           the menu while hovering. Exclude it from scroll anchoring. */
-        overflow-anchor: none;
         pointer-events: none;
         content: "";
         background-color: oklch(from currentColor l c h / 0.1);
