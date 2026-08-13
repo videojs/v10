@@ -66,6 +66,7 @@
 .menu[data-submenu-expanded] > :not([data-submenu]) {
   filter: blur(8px);
   translate: -100% 0;
+  transition: none;
 }
 
 .menu-panel[data-submenu] {

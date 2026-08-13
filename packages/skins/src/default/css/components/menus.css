@@ -207,6 +207,7 @@
     &[data-submenu-expanded] > :not([data-submenu]) {
       filter: blur(8px);
       translate: -100% 0;
+      transition: none;
     }
 
     /* Don't transition size on open/close. */

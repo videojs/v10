@@ -75,6 +75,7 @@ export const menu = {
     '[&>:not([data-submenu])]:will-change-[translate,filter]',
     '[&[data-submenu-expanded]>:not([data-submenu])]:-translate-x-full',
     '[&[data-submenu-expanded]>:not([data-submenu])]:blur',
+    '[&[data-submenu-expanded]>:not([data-submenu])]:transition-none',
     'overflow-hidden!'
   ),
   group,
