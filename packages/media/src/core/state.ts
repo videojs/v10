@@ -323,7 +323,11 @@ export interface MediaTextTrackState {
   textTrackList: MediaTextTrack[];
   /** Whether captions/subtitles are currently enabled. */
   subtitlesShowing: boolean;
-  /** Toggle captions/subtitles visibility. Returns the new enabled value. */
+  /**
+   * Toggle captions/subtitles visibility. Showing restores the track that was
+   * last showing, or the first caption/subtitle track when there is none.
+   * Returns the new enabled value.
+   */
   toggleSubtitles(forceShow?: boolean): boolean;
   /** Select a captions/subtitles track by menu value, or disable with `"off"`. */
   selectSubtitlesTrack(value: string): void;
