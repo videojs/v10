@@ -1,5 +1,5 @@
 import type { Media } from '@videojs/media/dom';
-import { MuxBackgroundVideoMedia } from '@videojs/spf/mux-background-video';
+import { HlsBackgroundVideoMedia } from '@videojs/spf/hls-background-video';
 import { type CustomElement, namedNodeMapToObject } from '@videojs/utils/dom';
 import type { Constructor } from '@videojs/utils/types';
 import { MediaAttachMixin } from '../../store/media-attach-mixin';
@@ -8,7 +8,7 @@ import { getTemplateHTML } from '../background-video/template';
 // `MediaAttachMixin` is typed as returning its base, so its `disconnectedCallback`
 // isn't visible for `super` to reach. `CustomElement` declares the lifecycle
 // callbacks this element overrides.
-const MuxBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Constructor<CustomElement>;
+const HlsBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Constructor<CustomElement>;
 
 /**
  * A muted, looping, chrome-less video over the SPF background-video engine.
@@ -21,27 +21,31 @@ const MuxBackgroundVideoBase = MediaAttachMixin(HTMLElement) as unknown as Const
  * Nearer an image than a player, and `src` is the whole surface. Replaces the
  * standalone `mux-background-video` package, whose `audio`, `debug`, `preload`,
  * and `max-resolution` attributes are all deliberately absent. Capping which
- * rendition is fetched is a Mux URL param, which keeps the renditions it
- * excludes out of the manifest rather than merely unpicked; `preload` would have
- * nothing to say, since the engine loads from the moment it has a source. And
- * unlike `<background-video>` there are no `nomuted` / `noloop` / `noautoplay`
- * opt-outs: those three are what this element is for, so the adapter fixes them
- * on at attach.
+ * rendition is fetched is a delivery param on the URL — `?max_resolution=720p`
+ * on a Mux stream, for one — which keeps the renditions it excludes out of the
+ * manifest rather than merely unpicked; `preload` would have nothing to say,
+ * since the engine loads from the moment it has a source. And unlike
+ * `<background-video>` there are no `nomuted` / `noloop` / `noautoplay` opt-outs:
+ * those three are what this element is for, so the adapter fixes them on at
+ * attach.
  *
  * Takes no structured `source` — `src` is an HLS URL, as the package it replaces
  * required. Mux playback-ID identity, poster, and storyboard belong to
  * `<mux-video>`; none of them mean anything without controls to hang them on.
  *
+ * `<mux-background-video>` is this element under the name the package it replaces
+ * used. Same class, so the tag is a naming choice and nothing more.
+ *
  * @example
  * ```html
- * <mux-background-video src="https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p">
+ * <hls-background-video src="https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p">
  *   <img src="https://image.mux.com/PLAYBACK_ID/thumbnail.webp?time=0" alt="" />
- * </mux-background-video>
+ * </hls-background-video>
  * ```
  */
 // Deliberately not `CustomMediaElement`, matching `<background-video>`: a
 // background video needs one property, not the full WHATWG media API.
-export class MuxBackgroundVideo extends MuxBackgroundVideoBase {
+export class HlsBackgroundVideo extends HlsBackgroundVideoBase {
   static shadowRootOptions = { mode: 'open' as ShadowRootMode };
   static getTemplateHTML = getTemplateHTML;
 
@@ -49,13 +53,13 @@ export class MuxBackgroundVideo extends MuxBackgroundVideoBase {
     return ['src'];
   }
 
-  #media = new MuxBackgroundVideoMedia();
+  #media = new HlsBackgroundVideoMedia();
 
   constructor() {
     super();
 
     if (!this.shadowRoot) {
-      this.attachShadow((this.constructor as typeof MuxBackgroundVideo).shadowRootOptions);
+      this.attachShadow((this.constructor as typeof HlsBackgroundVideo).shadowRootOptions);
 
       const attrs = {
         ...namedNodeMapToObject(this.attributes),
