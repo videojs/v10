@@ -136,6 +136,12 @@ export {
   type QualityOptionsResult,
   useQualityOptions,
 } from './ui/quality';
+export {
+  QualityRadioGroup,
+  type QualityRadioGroupItemProps,
+  type QualityRadioGroupItemState,
+  type QualityRadioGroupProps,
+} from './ui/quality-radio-group';
 export { SeekButton, type SeekButtonProps } from './ui/seek-button/seek-button';
 export { SeekIndicator } from './ui/seek-indicator';
 export type { SeekIndicatorRootProps } from './ui/seek-indicator/seek-indicator-root';
