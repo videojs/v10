@@ -15,43 +15,43 @@
         <div class="menu-bar">
             <button type="button" commandfor="settings-menu" class="settings-trigger">Settings</button>
             <media-menu id="settings-menu" side="top" align="end" class="menu">
-                <media-menu-view class="menu-panel">
-                    <media-menu-item commandfor="quality-menu" type="quality" class="menu-item">
+                <div class="menu-panel">
+                    <media-menu-item commandfor="quality-menu" class="menu-item">
                         <span>Quality</span>
                         <span class="menu-value">
-                            <media-menu-item-value></media-menu-item-value>
+                            <span data-part="hint"></span>
                             <span aria-hidden="true">›</span>
                         </span>
                     </media-menu-item>
-                    <media-menu-item commandfor="audio-menu" type="audio-track" class="menu-item">
+                    <media-menu-item commandfor="audio-menu" class="menu-item">
                         <span>Audio</span>
                         <span class="menu-value">
-                            <media-menu-item-value></media-menu-item-value>
+                            <span data-part="hint"></span>
                             <span aria-hidden="true">›</span>
                         </span>
                     </media-menu-item>
-                    <media-menu-item commandfor="speed-menu" type="playback-rate" class="menu-item">
+                    <media-menu-item commandfor="speed-menu" class="menu-item">
                         <span>Speed</span>
                         <span class="menu-value">
-                            <media-menu-item-value></media-menu-item-value>
+                            <span data-part="hint"></span>
                             <span aria-hidden="true">›</span>
                         </span>
                     </media-menu-item>
-                    <media-menu-item commandfor="captions-menu" type="captions" class="menu-item">
+                    <media-menu-item commandfor="captions-menu" class="menu-item">
                         <span>Captions</span>
                         <span class="menu-value">
-                            <media-menu-item-value></media-menu-item-value>
+                            <span data-part="hint"></span>
                             <span aria-hidden="true">›</span>
                         </span>
                     </media-menu-item>
                     <media-menu-item class="menu-item">Copy link</media-menu-item>
-                </media-menu-view>
+                </div>
 
                 <media-menu id="quality-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Quality
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-quality-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -67,10 +67,10 @@
                 </media-menu>
 
                 <media-menu id="audio-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Audio
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-audio-track-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -82,10 +82,10 @@
                 </media-menu>
 
                 <media-menu id="speed-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Speed
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-playback-rate-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
@@ -97,10 +97,10 @@
                 </media-menu>
 
                 <media-menu id="captions-menu" class="menu-panel">
-                    <media-menu-back class="menu-back">
+                    <media-menu-item class="menu-back">
                         <span aria-hidden="true">‹</span>
                         Captions
-                    </media-menu-back>
+                    </media-menu-item>
                     <media-captions-radio-group class="menu-group">
                         <template>
                             <media-menu-radio-item class="menu-item">
