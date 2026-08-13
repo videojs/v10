@@ -144,7 +144,7 @@ describe('selectVideoTrack', () => {
     reactor.destroy();
   });
 
-  it('honors a caller-supplied picker', async () => {
+  it('honors a caller-supplied rule chain', async () => {
     const videoTracks: PartiallyResolvedVideoTrack[] = [
       {
         type: 'video',
@@ -167,11 +167,11 @@ describe('selectVideoTrack', () => {
     const presentation = createPresentation({ video: videoTracks });
     const state = makeState({ presentation });
 
-    // Custom picker bypasses the default first-track rule and pins to a
-    // specific id; the behavior should honor it.
+    // A narrowing rule replaces the default empty chain, so the pick is the
+    // survivor rather than the first candidate.
     const reactor = selectVideoTrack.setup({
       state,
-      config: { picker: () => 'video-high' },
+      config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === 'video-high')] },
     });
 
     await new Promise((resolve) => setTimeout(resolve, 50));

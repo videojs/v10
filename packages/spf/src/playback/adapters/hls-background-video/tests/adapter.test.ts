@@ -219,9 +219,12 @@ describe('HlsBackgroundVideoMediaElement', () => {
       media.destroy();
     });
 
-    it('honors a config-supplied picker, overriding the adapter default', async () => {
-      // The adapter's own picker is spread first, so a consumer-supplied one wins.
-      const media = new HlsBackgroundVideoMediaElement({ config: { picker: () => '360p' } });
+    it('honors a config-supplied rule chain, overriding the engine default', async () => {
+      // The adapter supplies no selection config of its own, so a consumer's chain
+      // replaces the engine's `preferHighestResolution` default outright.
+      const media = new HlsBackgroundVideoMediaElement({
+        config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === '360p')] },
+      });
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('360p');

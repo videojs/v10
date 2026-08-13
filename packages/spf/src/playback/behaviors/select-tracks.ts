@@ -1,20 +1,31 @@
 /**
  * **Default audio/video track selection on src load / unselect on src unload.**
  * When a presentation is resolved, sets `selectedVideoTrackId` /
- * `selectedAudioTrackId` to a per-type-picker default if no selection already
- * exists. When the presentation is unset/reset (transitions back to unresolved),
+ * `selectedAudioTrackId` from a per-type default rule chain if no selection
+ * already exists. When the presentation is unset/reset (transitions back to unresolved),
  * clears the selection so a stale id from the previous source doesn't persist.
  *
  * Lifecycle-driven: each transition fires its work once. Does not police the
  * selection between transitions; external writes (user picks, ABR, programmatic
  * filter-driven re-picks) are left alone.
  *
- * Picker is config-driven: each per-type export wires a sensible default
- * (`pickAudioTrack` for audio — three-tier language-aware; `pickFirstTrackId`
- * for video) and the caller can supply their own via `config.picker` for custom
- * selection logic. The behavior's `config` is forwarded to the picker as its
- * second argument, so options like `preferredAudioLanguage` reach the picker
- * without an intermediate wrapping layer.
+ * Selection runs the same rule model `switchVideoTrack` does — a hard
+ * `constraints` pre-pass, then an ordered `rules` chain, with the pick as the
+ * head (see `internal/design/spf/track-switching-model.md`). What differs is
+ * reactivity, not the rules: this evaluates the chain once on resolve and pins
+ * the result, where `switchVideoTrack` re-evaluates inside an effect so its rules
+ * subscribe to bandwidth and user selection. A rule written for one therefore
+ * composes into the other unchanged.
+ *
+ * Both are config-driven, each per-type export wiring a sensible default: audio's
+ * three-tier language policy, and for video the *empty* chain — with nothing
+ * narrowing or reordering, the head is the first candidate. The behavior's
+ * `config` is forwarded to the rules, so options like `preferredAudioLanguage`
+ * reach them without an intermediate layer.
+ *
+ * Note a rule can only pick among real candidates, where the picker it replaced
+ * could return any id at all. An id absent from the manifest was never
+ * selectable, so that narrowing is the point rather than a limitation.
  *
  * Compose `selectVideoTrack` for the simple "pick a default video track"
  * behavior, or `switchVideoTrack` (`./track-switching.ts`) for the
@@ -37,13 +48,14 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import {
   type AudioSelectionConfig,
-  pickAudioTrack,
-  pickFirstTrackId,
-  type TrackPicker,
+  pickAudioTrackFromTracks,
+  pickTrackUnderPixelArea,
   type TrackSelectionState,
   type VideoSelectionConfig,
 } from '../../media/primitives/select-tracks';
-import { isResolvedPresentation } from '../../media/types';
+import { isResolvedPresentation, type TrackType } from '../../media/types';
+import { getTracksByType } from '../../media/utils/tracks';
+import { applyConstraints, applyRules, type SelectionRule } from '../primitives/selection-rules';
 import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types';
 
 // ============================================================================
@@ -52,7 +64,7 @@ import { AUDIO_TYPE_CONFIG, VIDEO_TYPE_CONFIG } from '../primitives/track-types'
 // `setupTrackSelection` has the same shape as a Behavior `setup` function:
 // `({ state, config }) => Reactor`. Each `selectXTrack` export below calls
 // it from inside its own `defineBehavior` setup, supplying its per-type
-// `selectedKey`, default picker, and forwarded picker config. The lifecycle
+// `selectedKey`, track type, default rule chain, and forwarded config. The lifecycle
 // — pick on entering 'presentation-resolved' if not already selected; clear
 // on entering 'presentation-unresolved' — is shared.
 // ============================================================================
@@ -63,18 +75,26 @@ type SelectStateMap<K extends SelectedTrackKey> = {
   presentation: ReadonlySignal<TrackSelectionState['presentation']>;
 } & { [P in K]: Signal<TrackSelectionState[P]> };
 
-interface TrackSelectionSetupConfig<K extends SelectedTrackKey, PickerConfig> {
+/** A selection rule over this behavior's candidate tracks. */
+export type SelectTrackRule<Config> = SelectionRule<SelectableTrack, unknown, unknown, Config | undefined>;
+
+/** What a rule here needs off a candidate: the id it may become the pick by. */
+type SelectableTrack = { id: string };
+
+interface TrackSelectionSetupConfig<K extends SelectedTrackKey, RuleConfig> {
   selectedKey: K;
-  picker: TrackPicker<PickerConfig>;
-  pickerConfig?: PickerConfig;
+  trackType: TrackType;
+  constraints: readonly SelectTrackRule<RuleConfig>[];
+  rules: readonly SelectTrackRule<RuleConfig>[];
+  ruleConfig?: RuleConfig;
 }
 
-function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
+function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
   state,
-  config: { selectedKey, picker, pickerConfig },
+  config: { selectedKey, trackType, constraints, rules, ruleConfig },
 }: {
   state: SelectStateMap<K>;
-  config: TrackSelectionSetupConfig<K, PickerConfig>;
+  config: TrackSelectionSetupConfig<K, RuleConfig>;
 }) {
   const derivedStateSignal = computed(() =>
     isResolvedPresentation(state.presentation.get())
@@ -105,7 +125,14 @@ function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
             // the reactor's `'presentation-resolved'` gate is exactly
             // `isResolvedPresentation(state.presentation.get())`, which
             // requires a truthy Presentation.
-            const id = picker(state.presentation.get()!, pickerConfig);
+            const deps = { state, config: ruleConfig };
+            const candidates = getTracksByType(state.presentation.get()!, trackType);
+            // Constraints prune the unplayable, then the chain narrows and ranks;
+            // the pick is the head. An empty `rules` chain therefore selects the
+            // first candidate — the same answer `pickFirstTrackId` gave, now a
+            // consequence of the model rather than a separate code path.
+            const survivors = applyRules(rules, applyConstraints(constraints, candidates, deps), deps);
+            const id = survivors[0]?.id;
             if (id) state[selectedKey].set(id);
           }
           return () => state[selectedKey].set(undefined);
@@ -116,28 +143,59 @@ function setupTrackSelection<K extends SelectedTrackKey, PickerConfig>({
 }
 
 // ============================================================================
-// Default pickers
+// Default rules
 //
-// Each variant resolves its picker as `config?.picker ?? <default>` and
-// forwards the whole engine config as `pickerConfig`, so a rich picker
-// (`pickAudioTrack`) reads its options directly. Audio uses its primitive
-// picker as-is; video adapts `pickFirstTrackId` (positional `type` arg) into
-// the `TrackPicker` shape.
+// Each variant resolves its chain as `config?.rules ?? <default>`. The whole
+// behavior config is forwarded as the rules' `config`, so a policy rule reads
+// its own options (`preferredAudioLanguage`) directly off it.
+//
+// Video's default is the *empty* chain: with no rule narrowing or reordering the
+// candidates, the head is the first track — exactly what `pickFirstTrackId` used
+// to return, now falling out of the model instead of being its own code path.
 // ============================================================================
 
-/** Default video picker: first track in the video selection set. */
-const defaultVideoPicker: TrackPicker = (presentation) => pickFirstTrackId(presentation, 'video');
+/** Default video chain: none. The first candidate is the pick. */
+const DEFAULT_VIDEO_RULES: readonly SelectTrackRule<SelectVideoTrackConfig>[] = [];
+
+/**
+ * Default audio chain: the three-tier policy (`preferredAudioLanguage` →
+ * `DEFAULT=YES` → first) as a single narrowing rule. Returning `[]` when nothing
+ * is picked lets `applyRules` fall through to the unnarrowed candidates, so the
+ * head stays the first track — the same last tier the policy itself ends on.
+ */
+const preferAudioPolicy: SelectTrackRule<SelectAudioTrackConfig> = (tracks, { config }) => {
+  const id = pickAudioTrackFromTracks(tracks as readonly { id: string }[], config);
+  const pick = tracks.find((track) => track.id === id);
+  return pick ? [pick] : [];
+};
+
+const DEFAULT_AUDIO_RULES: readonly SelectTrackRule<SelectAudioTrackConfig>[] = [preferAudioPolicy];
+
+/**
+ * Narrow to the largest rendition on offer, by pixel area. The background-video
+ * default — that variant pins one rendition for the session, and absent a cap the
+ * largest is the pick.
+ *
+ * Exported because it is a *rule*, not a variant's private policy: the same one
+ * composes into `switchVideoTrack`'s chain when a ranker is wanted there.
+ */
+export const preferHighestResolution: SelectTrackRule<unknown> = (tracks) => {
+  const pick = pickTrackUnderPixelArea(tracks as readonly { id: string }[]);
+  return pick ? [pick] : [];
+};
 
 // ============================================================================
 // Specialized exports — one per track type
 // ============================================================================
 
 /**
- * Config for `selectVideoTrack`. Pass `picker` to fully override selection
- * logic; otherwise the default `pickFirstTrackId` is used.
+ * Config for `selectVideoTrack`. Pass `rules` to replace the selection chain, or
+ * `constraints` to prune candidates before it runs; otherwise the chain is empty
+ * and the first candidate is the pick.
  */
 export interface SelectVideoTrackConfig extends VideoSelectionConfig {
-  picker?: TrackPicker<SelectVideoTrackConfig>;
+  constraints?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
+  rules?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
 }
 
 /**
@@ -162,19 +220,22 @@ export const selectVideoTrack = defineBehavior({
       state,
       config: {
         selectedKey: VIDEO_TYPE_CONFIG.selectedKey,
-        picker: config?.picker ?? defaultVideoPicker,
-        pickerConfig: config,
+        trackType: 'video',
+        constraints: config?.constraints ?? [],
+        rules: config?.rules ?? DEFAULT_VIDEO_RULES,
+        ruleConfig: config,
       },
     }),
 });
 
 /**
- * Config for `selectAudioTrack`. Pass `picker` to fully override selection
- * logic; otherwise the default `pickAudioTrack` is used (three-tier:
- * `preferredAudioLanguage` → `DEFAULT=YES` → first track).
+ * Config for `selectAudioTrack`. Pass `rules` to replace the selection chain, or
+ * `constraints` to prune candidates before it runs; otherwise the default
+ * three-tier policy applies (`preferredAudioLanguage` → `DEFAULT=YES` → first).
  */
 export interface SelectAudioTrackConfig extends AudioSelectionConfig {
-  picker?: TrackPicker<SelectAudioTrackConfig>;
+  constraints?: readonly SelectTrackRule<SelectAudioTrackConfig>[];
+  rules?: readonly SelectTrackRule<SelectAudioTrackConfig>[];
 }
 
 /**
@@ -194,10 +255,10 @@ export interface SelectAudioTrackConfig extends AudioSelectionConfig {
  * const reactor = selectAudioTrack.setup({ state });
  *
  * @example
- * // Custom picker with language preference
+ * // Language preference, honored by the default audio policy rule
  * const reactor = selectAudioTrack.setup({
  *   state,
- *   config: { preferredAudioLanguage: 'en', picker: myLanguageAwarePicker },
+ *   config: { preferredAudioLanguage: 'en' },
  * });
  */
 export const selectAudioTrack = defineBehavior({
@@ -208,8 +269,10 @@ export const selectAudioTrack = defineBehavior({
       state,
       config: {
         selectedKey: AUDIO_TYPE_CONFIG.selectedKey,
-        picker: config?.picker ?? pickAudioTrack,
-        pickerConfig: config,
+        trackType: 'audio',
+        constraints: config?.constraints ?? [],
+        rules: config?.rules ?? DEFAULT_AUDIO_RULES,
+        ruleConfig: config,
       },
     }),
 });

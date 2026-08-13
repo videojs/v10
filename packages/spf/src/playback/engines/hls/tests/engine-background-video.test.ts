@@ -135,9 +135,11 @@ describe('createBackgroundVideoEngine', () => {
     engine.destroy();
   });
 
-  it('honors a custom picker override from config', async () => {
+  it('honors a custom rule chain from config', async () => {
+    // Two tracks, so overriding is observable: the default chain
+    // (`preferHighestResolution`) would take 720p, and this rule takes 480p.
     const engine = createBackgroundVideoEngine({
-      picker: () => 'forced-pick',
+      rules: [(tracks) => tracks.filter((track) => track.id === '480p')],
     });
 
     const presentation: MaybeResolvedPresentation = {
@@ -167,6 +169,20 @@ describe('createBackgroundVideoEngine', () => {
                   width: 854,
                   height: 480,
                 } as never,
+                {
+                  type: 'video',
+                  id: '720p',
+                  url: 'https://example.com/720p.m3u8',
+                  bandwidth: 2_500_000,
+                  mimeType: 'video/mp4',
+                  codecs: ['avc1.42E01E'],
+                  initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+                  segments: [],
+                  startTime: 0,
+                  duration: 0,
+                  width: 1280,
+                  height: 720,
+                } as never,
               ],
             },
           ],
@@ -176,7 +192,7 @@ describe('createBackgroundVideoEngine', () => {
 
     engine.state.presentation.set(presentation);
     await new Promise<void>((resolve) => queueMicrotask(resolve));
-    expect(engine.state.selectedVideoTrackId.get()).toBe('forced-pick');
+    expect(engine.state.selectedVideoTrackId.get()).toBe('480p');
     engine.destroy();
   });
 

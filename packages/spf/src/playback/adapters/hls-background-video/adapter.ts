@@ -1,7 +1,5 @@
 import type { Constructor, MixinReturn } from '@videojs/utils/types';
 import type { Composition } from '../../../core/composition/create-composition';
-import { pickTrackUnderPixelArea, type TrackPicker } from '../../../media/primitives/select-tracks';
-import type { VideoSelectionSet } from '../../../media/types';
 import {
   type BackgroundVideoEngineConfig,
   type BackgroundVideoEngineContext,
@@ -30,7 +28,7 @@ export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps
  * Mixin that adds the background-video SPF playback engine to any base class,
  * for an HLS URL.
  *
- * `src` is the whole surface, and the picker always pins the top rendition on
+ * `src` is the whole surface, and selection always pins the top rendition on
  * offer. There is no cap of its own because the manifest is the better place to
  * narrow one: a delivery param — `?max_resolution=720p` on a Mux stream URL, for
  * one — keeps the renditions it excludes out of the manifest entirely, rather
@@ -165,16 +163,10 @@ export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     // -------------------------------------------------------------------------
 
     #createEngine(): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
-      // No cap to apply, so the pick is whichever rendition is largest. Passing
-      // no maximum is what makes that the answer, rather than a rule of its own.
-      const adapterPicker: TrackPicker = (presentation) => {
-        const videoSet = presentation.selectionSets?.find((s) => s.type === 'video') as VideoSelectionSet | undefined;
-        const tracks = videoSet?.switchingSets[0]?.tracks ?? [];
-        return pickTrackUnderPixelArea(tracks)?.id;
-      };
-
+      // No selection config of its own: the engine's default rule chain already
+      // narrows to the largest rendition on offer, which is exactly what this
+      // adapter used to hand over as a bespoke picker.
       return createBackgroundVideoEngine({
-        picker: adapterPicker,
         ...this.#config,
         onSignalsReady: (signals) => {
           this.#signals = signals;

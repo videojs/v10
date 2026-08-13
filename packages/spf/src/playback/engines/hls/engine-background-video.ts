@@ -7,7 +7,6 @@ import {
 import { makeShareSignals, type ShareSignalsConfig } from '../../../core/composition/share-signals';
 import type { ScreenResolution } from '../../../media/dom/screen';
 import { parseMultivariantPlaylist } from '../../../media/hls/parse-multivariant';
-import { pickHighestResolutionVideoTrack, type TrackPicker } from '../../../media/primitives/select-tracks';
 import type { MaybeResolvedPresentation } from '../../../media/types';
 import { getResolvedSelectedTrackDuration } from '../../../media/utils/track-selection';
 import type { SegmentLoaderActor } from '../../actors/dom/segment-loader';
@@ -22,7 +21,7 @@ import { trackScreenResolution } from '../../behaviors/dom/track-screen-resoluti
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveVideoTrack } from '../../behaviors/resolve-track';
-import { type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
+import { preferHighestResolution, type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
 
 // ============================================================================
 // Background-video engine state & context
@@ -91,15 +90,15 @@ export type BackgroundVideoEngineSignals = {
 export interface BackgroundVideoEngineConfig
   extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   /**
-   * Track picker handed to `selectVideoTrack`. Default:
-   * `pickHighestResolutionVideoTrack` — picks the highest-resolution variant on
-   * presentation resolve and pins it for the session. Override for
-   * mobile-aware or content-aware caps.
+   * Selection-rule chain handed to `selectVideoTrack`. Defaults to
+   * `[preferHighestResolution]` — narrows to the largest rendition on offer and
+   * pins it for the session.
    *
-   * Adapters (e.g. `HlsBackgroundVideoMediaElement`) install their own
-   * picker; this default applies when the engine is constructed directly.
+   * A cap composes as another rule ahead of it, which is how the screen-size cap
+   * will arrive; nothing about this variant's selection is a bespoke picker any
+   * more.
    */
-  picker?: TrackPicker<SelectVideoTrackConfig>;
+  rules?: readonly NonNullable<SelectVideoTrackConfig['rules']>[number][];
   /**
    * Manifest parser handed to `resolvePresentation`. Defaults to the HLS
    * multivariant-playlist parser.
@@ -124,7 +123,7 @@ const shareSignals = makeShareSignals<BackgroundVideoEngineState, BackgroundVide
  * Subtractive composition over the HLS engine baseline:
  * audio-side, text-side, ABR-driven, preload-monitoring, and play/seek
  * load-trigger behaviors are removed. `selectVideoTrack` (with a
- * max-resolution picker by default) replaces `switchVideoQuality`, pinning
+ * highest-resolution rule by default) replaces `switchVideoQuality`, pinning
  * a single rendition for the session. The initial state seeds
  * `loadActivated: true` so the composition behaves as if preload has
  * already been activated — appropriate for ambient / hero / GIF-replacement
@@ -153,7 +152,7 @@ export function createBackgroundVideoEngine(
 ): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   const finalConfig = {
     ...config,
-    picker: config.picker ?? pickHighestResolutionVideoTrack,
+    rules: config.rules ?? [preferHighestResolution],
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,
   };

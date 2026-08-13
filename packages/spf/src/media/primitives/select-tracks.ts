@@ -263,19 +263,24 @@ export function pickAudioTrack(
   config?: AudioSelectionConfig
 ): string | undefined {
   const audioSet = presentation.selectionSets?.find((set) => set.type === 'audio') as AudioSelectionSet | undefined;
+  const tracks = audioSet?.switchingSets[0]?.tracks;
+  if (!tracks?.length) return undefined;
+  return pickAudioTrackFromTracks(tracks, config);
+}
 
-  if (!audioSet || audioSet.switchingSets.length === 0) {
-    return undefined;
-  }
-
-  // Get first switching set's tracks
-  const switchingSet = audioSet.switchingSets[0];
-  if (!switchingSet || switchingSet.tracks.length === 0) {
-    return undefined;
-  }
-
-  const tracks = switchingSet.tracks;
-
+/**
+ * Default audio policy over an explicit candidate list rather than a whole
+ * presentation: the three-tier pick `pickAudioTrack` delegates to, factored out
+ * for the same reason `pickTextTrackFromTracks` was — a caller that has already
+ * narrowed the candidates (a selection-rule chain) applies the same policy
+ * without re-deriving from the presentation.
+ *
+ * Priority: `preferredAudioLanguage` match → `DEFAULT=YES` → first track.
+ */
+export function pickAudioTrackFromTracks(
+  tracks: readonly { id: string; language?: string | undefined; default?: boolean | undefined }[],
+  config?: AudioSelectionConfig
+): string | undefined {
   // Try preferred language first
   if (config?.preferredAudioLanguage) {
     const languageMatch = tracks.find((track) => track.language === config.preferredAudioLanguage);
