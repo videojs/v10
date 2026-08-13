@@ -84,6 +84,12 @@ export {
   type AudioTrackOptionsResult,
   useAudioTrackOptions,
 } from './ui/audio-track';
+export {
+  AudioTrackRadioGroup,
+  type AudioTrackRadioGroupItemProps,
+  type AudioTrackRadioGroupItemState,
+  type AudioTrackRadioGroupProps,
+} from './ui/audio-track-radio-group';
 export { BufferingIndicator, type BufferingIndicatorProps } from './ui/buffering-indicator/buffering-indicator';
 export { CaptionsButton, type CaptionsButtonProps } from './ui/captions-button/captions-button';
 export {

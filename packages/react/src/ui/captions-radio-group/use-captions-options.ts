@@ -11,6 +11,7 @@ export type CaptionsOption = TranslatedRadioOption<CaptionsRadioGroupOption>;
 
 export interface CaptionsOptionsResult {
   state: CaptionsRadioGroupCore.State;
+  label: string;
   value: string;
   options: CaptionsOption[];
   disabled: boolean;
