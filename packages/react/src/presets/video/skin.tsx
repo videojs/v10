@@ -39,6 +39,7 @@ import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
+import { AudioTrackRadioGroup } from '@/ui/audio-track-radio-group';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
 import { useCaptionsOptions } from '@/ui/captions-radio-group';
@@ -223,30 +224,18 @@ function SettingsMenu(): ReactNode {
                     {t(audioText)}
                   </Menu.Back>
                   <Menu.Separator className="media-menu__separator" />
-                  <Menu.RadioGroup
+                  <AudioTrackRadioGroup
                     className="media-menu__group"
-                    value={audioTrack.value}
-                    onValueChange={audioTrack.setValue}
                     aria-label={t(audioText)}
-                  >
-                    {audioTrack.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className="media-menu__item"
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === audioTrack.value}
-                          forceMount
-                          className="media-menu__indicator"
-                        >
+                    renderItem={(props, item) => (
+                      <Menu.RadioItem {...props} className="media-menu__item">
+                        <span>{item.label}</span>
+                        <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                           <CheckIcon className="media-icon" />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
+                    )}
+                  />
                 </Menu.Content>
               </Menu.Root>
             ) : null}
