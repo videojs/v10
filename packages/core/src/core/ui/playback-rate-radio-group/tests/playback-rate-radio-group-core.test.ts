@@ -18,6 +18,7 @@ function createState(overrides: Partial<PlaybackRateRadioGroupState> = {}): Play
     value: '1',
     options: [0.5, 1, 1.5, 2].map((rate) => ({ rate, value: String(rate), label: `${rate}×`, disabled: false })),
     disabled: false,
+    hidden: false,
     availability: 'available',
     label: '',
     ...overrides,
@@ -52,14 +53,14 @@ describe('PlaybackRateRadioGroupCore', () => {
       const core = new PlaybackRateRadioGroupCore();
       core.setMedia(createMediaState({ playbackRates: [] }));
 
-      expect(core.getState().availability).toBe('unavailable');
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
 
     it('marks availability available when rates exist', () => {
       const core = new PlaybackRateRadioGroupCore();
       core.setMedia(createMediaState());
 
-      expect(core.getState().availability).toBe('available');
+      expect(core.getState()).toMatchObject({ availability: 'available', hidden: false });
     });
   });
 
@@ -123,6 +124,12 @@ describe('PlaybackRateRadioGroupCore', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ disabled: true }));
       expect(attrs['aria-disabled']).toBe('true');
+    });
+
+    it('sets hidden when unavailable', () => {
+      const core = new PlaybackRateRadioGroupCore();
+      const attrs = core.getAttrs(createState({ hidden: true }));
+      expect(attrs.hidden).toBe('');
     });
   });
 

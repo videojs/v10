@@ -41,7 +41,8 @@ export class AudioTrackRadioGroupCore {
   readonly state = createState<AudioTrackRadioGroupState>({
     options: [],
     value: '',
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -72,6 +73,7 @@ export class AudioTrackRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -93,6 +95,7 @@ export class AudioTrackRadioGroupCore {
       options,
       value: enabledIndex === -1 ? '' : getTrackValue(media.audioTrackList[enabledIndex]!, enabledIndex),
       disabled: this.#props.disabled || availability === 'unavailable',
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

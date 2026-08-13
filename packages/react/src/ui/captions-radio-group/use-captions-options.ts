@@ -14,6 +14,7 @@ export interface CaptionsOptionsResult {
   value: string;
   options: CaptionsOption[];
   disabled: boolean;
+  hidden: boolean;
   showMenu: boolean;
   setValue: (value: string) => void;
 }

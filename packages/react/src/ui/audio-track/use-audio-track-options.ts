@@ -14,6 +14,7 @@ export interface AudioTrackOptionsResult {
   value: string;
   options: AudioTrackOption[];
   disabled: boolean;
+  hidden: boolean;
   setValue: (value: string) => void;
 }
 

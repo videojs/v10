@@ -54,6 +54,7 @@ export class RadioOptionsController<Option extends RadioOption> implements React
     this.#host.value = state.value;
     applyElementProps(this.#host, {
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     });
 
     const template = this.#config.getTemplate();

@@ -32,6 +32,7 @@ class TestRadioOptionsElement extends MenuRadioGroupElement {
       { value: 'two', label: 'Two', disabled: true },
     ],
     disabled: false,
+    hidden: false,
     availability: 'available',
   };
   translator = createTranslator({ 'option.one': 'First ({detail})' }, 'en');
@@ -109,6 +110,22 @@ describe('RadioOptionsController', () => {
 
     expect(element.hasAttribute('aria-disabled')).toBe(false);
     expect(items.map((item) => item.disabled)).toEqual([false, true]);
+  });
+
+  it('applies native hidden semantics to unavailable groups', async () => {
+    const element = new TestRadioOptionsElement();
+    document.body.append(element);
+    await element.updateComplete;
+
+    element.setState({ ...element.state, hidden: true, availability: 'unavailable' });
+    await element.updateComplete;
+
+    expect(element.hidden).toBe(true);
+
+    element.setState({ ...element.state, hidden: false, availability: 'available' });
+    await element.updateComplete;
+
+    expect(element.hidden).toBe(false);
   });
 
   it('connects and cleans up value-change handling with the host lifecycle', async () => {

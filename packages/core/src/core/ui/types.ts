@@ -41,6 +41,8 @@ export interface RadioOptionsState<Option extends RadioOption = RadioOption> ext
   options: readonly Option[];
   /** Whether the entire option group is disabled. */
   disabled: boolean;
+  /** Whether the option group is hidden because no meaningful selection is available. */
+  hidden: boolean;
   /** Whether the media exposes a meaningful selection. */
   availability: 'available' | 'unavailable';
 }

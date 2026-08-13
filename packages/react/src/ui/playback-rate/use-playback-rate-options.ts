@@ -20,6 +20,7 @@ export interface PlaybackRateOptionsResult {
   value: string;
   options: PlaybackRateOption[];
   disabled: boolean;
+  hidden: boolean;
   setRate: (rate: number) => void;
   setValue: (value: string) => void;
 }

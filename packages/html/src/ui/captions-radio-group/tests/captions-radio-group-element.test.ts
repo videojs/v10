@@ -142,6 +142,8 @@ describe('CaptionsRadioGroupElement', () => {
 
     const items = [...menu.querySelectorAll<MenuRadioItemElement>(MenuRadioItemElement.tagName)];
     expect(options.getAttribute('aria-disabled')).toBe('true');
+    expect(options.hidden).toBe(true);
+    expect(options.hasAttribute('data-hidden')).toBe(true);
     expect(items.map((item) => item.disabled)).toEqual([true]);
   });
 
