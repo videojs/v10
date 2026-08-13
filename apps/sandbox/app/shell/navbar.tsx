@@ -94,6 +94,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
+  'hls-background-video': 'HLS Background Video (SPF)',
   'mux-background-video': 'Mux Background Video (SPF)',
   'vimeo-video': 'Vimeo Video',
   'youtube-video': 'YouTube Video',

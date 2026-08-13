@@ -334,7 +334,8 @@ export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02n
 
 /**
  * The same clip as {@link BACKGROUND_VIDEO_SRC} over HLS, for the SPF-backed
- * `<mux-background-video>`. Re-ingested from that asset's `high.mp4` rendition.
+ * `<hls-background-video>` and its `<mux-background-video>` alias. Re-ingested
+ * from that asset's `high.mp4` rendition.
  *
  * Must be a **CMAF/fMP4** asset: SPF appends fMP4 segments directly and does no
  * MPEG-TS transmuxing, so a TS-packaged playback ID surfaces the

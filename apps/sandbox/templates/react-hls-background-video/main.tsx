@@ -4,21 +4,23 @@ import { BackgroundVideoProvider } from '@app/shared/react/providers';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { HLS_BACKGROUND_VIDEO_SRC } from '@app/shared/sources';
 import { BackgroundVideoSkin } from '@videojs/react/background';
-import { MuxBackgroundVideo } from '@videojs/react/media/mux-background-video';
+import { HlsBackgroundVideo } from '@videojs/react/media/hls-background-video';
 import { createRoot } from 'react-dom/client';
 
-// `MuxBackgroundVideo` is `HlsBackgroundVideo` under its Mux-flavored name — the
-// same component, so `react-hls-background-video` is the same page with the other
-// name. What this one adds is `?max_resolution=720p`: capping the rendition is a
-// Mux URL param rather than a prop, so the excluded renditions are absent from the
-// manifest rather than present and unpicked.
+// The SPF-backed counterpart to `react-background-video`. See that page's HTML
+// sibling for what differs: the engine streams HLS and pins one rendition rather
+// than handing a progressive MP4 to the browser, and the source must be CMAF/fMP4.
+//
+// No cap, so the pinned rendition is the largest the manifest offers.
+// `react-mux-background-video` is this same component under its Mux-flavored name,
+// pointed at a URL that caps the manifest instead.
 
 function App() {
   return (
     <SandboxI18nProvider>
       <BackgroundVideoProvider>
         <BackgroundVideoSkin>
-          <MuxBackgroundVideo src={`${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p`} />
+          <HlsBackgroundVideo src={HLS_BACKGROUND_VIDEO_SRC} />
         </BackgroundVideoSkin>
       </BackgroundVideoProvider>
     </SandboxI18nProvider>

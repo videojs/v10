@@ -77,8 +77,9 @@ export function App() {
   const muxPreset = preset === 'mux-video' || preset === 'mux-audio';
   const muxSpfPreset = preset === 'mux-video-spf' || preset === 'mux-audio-spf';
   const spfHlsPreset = preset === 'hls-video' || preset === 'hls-audio';
-  // Both background presets render a fixed source and have no Tailwind skin.
-  const backgroundPreset = preset === 'background-video' || preset === 'mux-background-video';
+  // Every background preset renders a fixed source and has no Tailwind skin.
+  const backgroundPreset =
+    preset === 'background-video' || preset === 'hls-background-video' || preset === 'mux-background-video';
   const availableSources =
     preset === 'audio'
       ? MP4_SOURCE_IDS
