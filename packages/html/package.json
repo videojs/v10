@@ -166,6 +166,7 @@
   "scripts": {
     "build": "tsdown",
     "build:cdn": "node --import tsx ./scripts/build-cdn-locales.ts && tsdown --config tsdown.cdn.config.ts",
+    "check:cdn": "node --import tsx ./scripts/check-cdn-self-contained.ts",
     "build:watch": "tsdown --watch ./src --no-clean",
     "dev": "pnpm run build:watch",
     "test": "vitest run",

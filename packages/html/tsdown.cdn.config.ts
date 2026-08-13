@@ -7,7 +7,6 @@ import { cdnI18nExternalPlugin } from '../../build/plugins/cdn-i18n-external-plu
 import { inlineCssPlugin } from '../../build/plugins/inline-css-plugin.ts';
 import { inlineTemplatePlugin } from '../../build/plugins/inline-template-plugin.ts';
 import { baseConfig } from '../../build/tsdown.ts';
-import pkg from './package.json' with { type: 'json' };
 
 type BuildMode = 'dev' | 'prod';
 
@@ -148,7 +147,7 @@ for (const mode of buildModes) {
       __DEV__: isProd ? 'false' : 'true',
     },
     plugins: [
-      cdnI18nExternalPlugin({ prod: isProd, version: pkg.version }),
+      cdnI18nExternalPlugin({ prod: isProd }),
       inlineCssPlugin({ skinsDir, minify: isProd }),
       inlineTemplatePlugin({ minify: isProd }),
       ...(!isProd ? [dtsStubsPlugin(outDir)] : []),

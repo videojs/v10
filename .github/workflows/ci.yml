@@ -208,3 +208,8 @@ jobs:
 
       - name: Build CDN bundles
         run: pnpm build:cdn
+
+      # Mirroring cdn/ onto another origin is supported, so the output must not
+      # reference an external CDN or resolve outside the directory.
+      - name: Check CDN bundles are self-contained
+        run: pnpm -F @videojs/html check:cdn
