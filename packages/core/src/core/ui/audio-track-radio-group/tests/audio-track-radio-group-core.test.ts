@@ -22,6 +22,7 @@ function createState(overrides: Partial<AudioTrackRadioGroupState> = {}): AudioT
     ],
     value: '0',
     disabled: false,
+    hidden: false,
     availability: 'available',
     label: '',
     ...overrides,
@@ -82,8 +83,7 @@ describe('AudioTrackRadioGroupCore', () => {
         createMediaState({ audioTrackList: [{ id: '0', label: 'English', language: 'en', enabled: true }] })
       );
 
-      expect(core.getState().availability).toBe('unavailable');
-      expect(core.getState().disabled).toBe(true);
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
   });
 

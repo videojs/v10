@@ -40,7 +40,8 @@ export class PlaybackRateRadioGroupCore {
     rate: 1,
     value: '1',
     options: [],
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -79,6 +80,7 @@ export class PlaybackRateRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -102,6 +104,7 @@ export class PlaybackRateRadioGroupCore {
         disabled: false,
       })),
       disabled: this.#props.disabled || media.playbackRates.length === 0,
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

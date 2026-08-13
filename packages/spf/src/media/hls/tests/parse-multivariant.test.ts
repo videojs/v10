@@ -343,6 +343,66 @@ https://example.com/v.m3u8`;
         | undefined;
       expect(audioHi?.codecs).toEqual([]); // Default when not extracted from streams
     });
+
+    // Mux serves an audio-only asset this way: the rendition carries the naming and
+    // DEFAULT/AUTOSELECT but no URI, because its media is the audio-only variant
+    // that references the group.
+    const muxAudioOnlyPlaylist = `#EXTM3U
+#EXT-X-VERSION:5
+#EXT-X-INDEPENDENT-SEGMENTS
+
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-0",NAME="Default",AUTOSELECT=YES,DEFAULT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=211200,AVERAGE-BANDWIDTH=211200,CODECS="mp4a.40.2",AUDIO="audio-0",CLOSED-CAPTIONS=NONE
+audio.m3u8`;
+
+    it('merges a URI-less audio rendition into the audio-only stream carrying it', () => {
+      const result = parseMultivariantPlaylist(muxAudioOnlyPlaylist, { url: baseUrl });
+
+      expect(result.selectionSets).toHaveLength(1);
+      const audioTracks = result.selectionSets[0]?.switchingSets[0]?.tracks;
+
+      // One track, not the rendition and the stream separately.
+      expect(audioTracks).toHaveLength(1);
+      expect(audioTracks?.[0]).toMatchObject({
+        type: 'audio',
+        // The stream's URL and bandwidth: what the rendition has nothing of.
+        url: 'https://example.com/audio.m3u8',
+        bandwidth: 211200,
+        // The rendition's naming and selection metadata.
+        groupId: 'audio-0',
+        name: 'Default',
+        default: true,
+        autoselect: true,
+        codecs: ['mp4a.40.2'],
+      });
+    });
+
+    it('leaves no unfetchable audio track for an audio-only asset', () => {
+      const result = parseMultivariantPlaylist(muxAudioOnlyPlaylist, { url: baseUrl });
+      const audioTracks = result.selectionSets[0]?.switchingSets[0]?.tracks ?? [];
+
+      expect(audioTracks.every((track) => track.url !== '')).toBe(true);
+    });
+
+    it('keeps a URI-less rendition separate from a group carried by video streams', () => {
+      // Same rendition shape, but the stream referencing the group is muxed A/V, so
+      // there is no audio-only track to merge into and the rendition stands alone.
+      const text = `#EXTM3U
+#EXT-X-MEDIA:TYPE=AUDIO,GROUP-ID="audio-0",NAME="Default",AUTOSELECT=YES,DEFAULT=YES
+#EXT-X-STREAM-INF:BANDWIDTH=2493700,CODECS="mp4a.40.2,avc1.640020",AUDIO="audio-0",RESOLUTION=1280x720
+video.m3u8`;
+
+      const result = parseMultivariantPlaylist(text, { url: baseUrl });
+      const audioSet = result.selectionSets.find((s) => s.type === 'audio');
+      const audioTracks = audioSet?.switchingSets[0]?.tracks;
+
+      expect(audioTracks).toHaveLength(1);
+      // Still URL-less, since the audio lives in the video stream's segments rather
+      // than a playlist of its own. Merging that case would mean folding audio into a
+      // video track, which no Mux asset needs — the muxed-audio shapes it serves
+      // declare no audio rendition at all.
+      expect(audioTracks?.[0]).toMatchObject({ type: 'audio', groupId: 'audio-0', url: '' });
+    });
   });
 
   describe('Subtitle tracks', () => {

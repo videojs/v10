@@ -1,15 +1,21 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { StatusAnnouncerCore } from '../../../core/ui/status-announcer/status-announcer-core';
 import { type StatusAnnouncerStore, subscribeToStatusAnnouncer } from '../status-announcer';
 
 describe('subscribeToStatusAnnouncer', () => {
   it('uses attach updates as the snapshot baseline', async () => {
     const core = new StatusAnnouncerCore();
+    const resetSnapshot = vi.spyOn(core, 'resetSnapshot');
     const { attach, setState, store } = createStore({ paused: true });
     const unsubscribe = subscribeToStatusAnnouncer(store, core);
 
+    expect(resetSnapshot).toHaveBeenCalledTimes(1);
+
     attach({ paused: false });
+    expect(resetSnapshot).toHaveBeenCalledTimes(2);
     await Promise.resolve();
+
+    expect(resetSnapshot).toHaveBeenCalledTimes(2);
 
     expect(core.state.current.label).toBeNull();
 

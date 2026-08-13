@@ -29,6 +29,29 @@ describe('StatusAnnouncer', () => {
     expect(getByRole('status').textContent).toBe('Playing');
   });
 
+  it('replaces live content for repeated announcement labels', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
+      const { getByRole } = renderWithPlayer(<StatusAnnouncer />, store);
+      await act(async () => {});
+
+      setState({ volume: 0 });
+      await act(async () => vi.advanceTimersByTime(200));
+      const firstContent = getByRole('status').querySelector('[data-status-announcer-content]');
+
+      setState({ muted: true });
+      await act(async () => vi.advanceTimersByTime(200));
+      const nextContent = getByRole('status').querySelector('[data-status-announcer-content]');
+
+      expect(getByRole('status').textContent).toBe('Muted');
+      expect(nextContent).not.toBe(firstContent);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('uses custom labels', async () => {
     const { store, setState } = createTestStore({ paused: true });
     const { getByRole } = renderWithPlayer(<StatusAnnouncer labels={{ playing: 'Custom playing' }} />, store);

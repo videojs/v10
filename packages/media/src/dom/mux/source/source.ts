@@ -9,6 +9,7 @@ import { parseJwt } from '@videojs/utils/jwt';
 import { isNil } from '@videojs/utils/predicate';
 import { camelCase, snakeCase } from '@videojs/utils/string';
 import type { DrmSystemsConfig } from '../../../core/drm';
+import type { MediaContentData } from '../../../core/types';
 
 export const MUX_VIDEO_DOMAIN = 'mux.com';
 
@@ -195,6 +196,21 @@ function parseMuxParamValue(value: string): string | number | boolean {
   if (value === 'false') return false;
   if (value !== '' && String(Number(value)) === value) return Number(value);
   return value;
+}
+
+/**
+ * Image URLs a Mux source describes rather than plays, as every Mux Media
+ * exposes them through `contentData`. A key is absent when its URL can't be
+ * built — no playback ID, or signed playback without a matching image token.
+ *
+ * Names the two keys a Mux source actually derives. The index signature comes
+ * from `MediaContentData`, which the shared `contentData` capability is typed
+ * as, so it can't be closed off here — extending it is what keeps this
+ * assignable to that contract.
+ */
+export interface MuxContentData extends MediaContentData {
+  readonly poster?: string;
+  readonly storyboard?: string;
 }
 
 /**

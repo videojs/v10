@@ -86,7 +86,11 @@ function createReactiveTextTrackWrapper(initialState: Record<string, unknown>) {
 
 function CaptionsAvailability(): ReactNode {
   const captions = useCaptionsOptions();
-  return <div data-testid="availability">{captions?.state.availability ?? 'missing'}</div>;
+  return (
+    <div data-testid="availability">
+      {captions ? `${captions.state.availability}:${captions.hidden ? 'hidden' : 'visible'}` : 'missing'}
+    </div>
+  );
 }
 
 function CaptionsRadioGroup(): ReactNode {
@@ -172,7 +176,7 @@ describe('useCaptionsOptions', () => {
 
     render(<CaptionsAvailability />, { wrapper: Wrapper });
 
-    expect(screen.getByTestId('availability').textContent).toBe('unavailable');
+    expect(screen.getByTestId('availability').textContent).toBe('unavailable:hidden');
 
     act(() => {
       updateState({
@@ -189,6 +193,6 @@ describe('useCaptionsOptions', () => {
       });
     });
 
-    expect(screen.getByTestId('availability').textContent).toBe('available');
+    expect(screen.getByTestId('availability').textContent).toBe('available:visible');
   });
 });

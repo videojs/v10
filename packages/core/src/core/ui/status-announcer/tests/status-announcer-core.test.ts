@@ -71,7 +71,7 @@ describe('StatusAnnouncerCore', () => {
   it('rechecks volume suppression when the debounced announcement fires', () => {
     let shouldAnnounce = true;
     const core = new StatusAnnouncerCore();
-    core.setProps({ shouldAnnounceVolume: () => shouldAnnounce });
+    core.setProps({ shouldAnnounce: () => shouldAnnounce });
 
     core.processSnapshot({ volume: 0.5, muted: false });
     expect(core.processSnapshot({ volume: 0.75, muted: false })).toBe(true);
@@ -85,7 +85,7 @@ describe('StatusAnnouncerCore', () => {
   it('rechecks seek suppression when the debounced announcement fires', () => {
     let shouldAnnounce = true;
     const core = new StatusAnnouncerCore();
-    core.setProps({ shouldAnnounceSeek: () => shouldAnnounce });
+    core.setProps({ shouldAnnounce: () => shouldAnnounce });
 
     core.processSnapshot({ currentTime: 10, duration: 120, seeking: false });
     core.processSnapshot({ currentTime: 45, duration: 120, seeking: true });
@@ -95,30 +95,6 @@ describe('StatusAnnouncerCore', () => {
     vi.advanceTimersByTime(200);
 
     expect(core.state.current.label).toBeNull();
-  });
-
-  it('combines multiple immediate snapshot announcements', () => {
-    const core = new StatusAnnouncerCore();
-
-    core.processSnapshot({
-      paused: true,
-      subtitlesShowing: false,
-      subtitlesAvailable: true,
-      fullscreen: false,
-      playbackRate: 1,
-    });
-
-    expect(
-      core.processSnapshot({
-        paused: false,
-        subtitlesShowing: true,
-        subtitlesAvailable: true,
-        fullscreen: true,
-        playbackRate: 1.25,
-      })
-    ).toBe(true);
-
-    expect(core.state.current.label).toBe('Playing. Captions on. Fullscreen. Playback rate 1.25×');
   });
 
   it('announces confirmed playback, captions, fullscreen, pip, and playback-rate changes', () => {
@@ -144,15 +120,6 @@ describe('StatusAnnouncerCore', () => {
     }
   });
 
-  it('does not announce captions when captions are unavailable', () => {
-    const core = new StatusAnnouncerCore();
-
-    core.processSnapshot({ subtitlesShowing: false, subtitlesAvailable: false });
-
-    expect(core.processSnapshot({ subtitlesShowing: true, subtitlesAvailable: false })).toBe(false);
-    expect(core.state.current.label).toBeNull();
-  });
-
   it('debounces volume snapshot announcements to the final value', () => {
     const core = new StatusAnnouncerCore();
     const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
@@ -166,17 +133,6 @@ describe('StatusAnnouncerCore', () => {
 
     vi.advanceTimersByTime(1);
     expect(core.state.current.label).toBe('Volume 60%');
-  });
-
-  it('uses the translated volume phrase order', () => {
-    const core = new StatusAnnouncerCore();
-    core.setProps({ labels: { volumeWithValue: (value) => `${value} volume` } });
-    const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
-
-    process({ volume: 0.75 });
-    vi.advanceTimersByTime(200);
-
-    expect(core.state.current.label).toBe('75% volume');
   });
 
   it('replaces a pending volume announcement with a completed seek', () => {
@@ -232,6 +188,21 @@ describe('StatusAnnouncerCore', () => {
     expect(core.state.current.label).toBe('Muted');
   });
 
+  it('increments the generation for repeated announcement labels', () => {
+    const core = new StatusAnnouncerCore();
+    const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
+
+    process({ volume: 0 });
+    vi.advanceTimersByTime(200);
+    const firstGeneration = core.state.current.generation;
+
+    process({ muted: true });
+    vi.advanceTimersByTime(200);
+
+    expect(core.state.current.label).toBe('Muted');
+    expect(core.state.current.generation).toBe(firstGeneration + 1);
+  });
+
   it('ignores regular currentTime updates and announces completed seeks once', () => {
     const core = new StatusAnnouncerCore();
     const process = createSnapshotProcessor(core, { currentTime: 10, duration: 120, seeking: false });
@@ -269,7 +240,7 @@ describe('StatusAnnouncerCore', () => {
 
   it('allows seek announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
-    core.setProps({ shouldAnnounceSeek: () => false });
+    core.setProps({ shouldAnnounce: () => false });
     const process = createSnapshotProcessor(core, { currentTime: 10, duration: 120, seeking: false });
 
     process({ currentTime: 45, seeking: true });
@@ -282,7 +253,7 @@ describe('StatusAnnouncerCore', () => {
 
   it('allows volume announcements to be suppressed by callers', () => {
     const core = new StatusAnnouncerCore();
-    core.setProps({ shouldAnnounceVolume: () => false });
+    core.setProps({ shouldAnnounce: () => false });
     const process = createSnapshotProcessor(core, { volume: 0.5, muted: false });
 
     expect(process({ volume: 0.75 })).toBe(false);

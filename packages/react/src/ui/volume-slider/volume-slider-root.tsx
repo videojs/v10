@@ -48,6 +48,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
     const translator = useTranslator();
     const locale = useLocale();
+    const isUnavailable = volume?.volumeAvailability !== 'available';
+    const isDisabled = Boolean(disabled) || isUnavailable;
 
     const [core] = useState(() => new VolumeSliderCore());
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
@@ -55,7 +57,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
 
     // Keep refs to the latest dynamic values for stable closures.
     const volumeRef = useLatestRef(volume);
-    const disabledRef = useLatestRef(disabled);
+    const disabledRef = useLatestRef(isDisabled);
 
     const getPercent = () => (volumeRef.current?.volume ?? 0) * 100;
     const getStepPercent = () => core.getStepPercent();
@@ -71,7 +73,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       getStepPercent,
       getLargeStepPercent: () => core.getLargeStepPercent(),
       orientation,
-      disabled,
+      disabled: isDisabled,
       adjustPercent: (rawPercent, thumbSize, trackSize) =>
         core.adjustPercentForAlignment(rawPercent, thumbSize, trackSize),
       getCSSVars: getSliderCSSVars,
@@ -83,7 +85,7 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
 
     const [wheelHandler] = useState(() =>
       createWheelStep({
-        isDisabled: () => !!disabledRef.current || !volumeRef.current,
+        isDisabled: () => disabledRef.current,
         getPercent: () => (volumeRef.current?.volume ?? 0) * 100,
         getStepPercent: () => core.getWheelStepPercent(),
         onValueChange: (percent) => volumeRef.current?.setVolume(percent / 100),
@@ -108,6 +110,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
       if (__DEV__) logMissingFeature('VolumeSlider', 'volume');
       return null;
     }
+
+    if (state.hidden) return null;
 
     return (
       <SliderProvider

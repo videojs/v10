@@ -97,7 +97,7 @@
   padding: calc(var(--spacing) * 3) 0;
   border-radius: calc(Infinity * 1px);
 
-  &:has(media-volume-slider[data-availability="unsupported"]) {
+  &:has(media-volume-slider[data-hidden]) {
     display: none;
   }
 }

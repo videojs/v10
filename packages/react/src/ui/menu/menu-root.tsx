@@ -11,7 +11,8 @@ import {
 import { useSnapshot } from '@videojs/store/react';
 import type { ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
-import { useOptionalContainer, useOptionalPlayer, useOptionalPopupGroup } from '../../player/context';
+import { useOptionalContainer, useOptionalPlayer } from '../../player/context';
+import { useOptionalPopupGroup } from '../../player/popup-group-context';
 import { useDestroy } from '../../utils/use-destroy';
 import { useLatestRef } from '../../utils/use-latest-ref';
 import { useSafeId } from '../../utils/use-safe-id';

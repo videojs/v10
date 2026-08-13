@@ -51,7 +51,8 @@ export class CaptionsRadioGroupCore {
     options: [{ value: CAPTIONS_OFF_VALUE, label: offText, disabled: false }],
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -82,6 +83,7 @@ export class CaptionsRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -110,6 +112,7 @@ export class CaptionsRadioGroupCore {
       value: showingIndex === -1 ? CAPTIONS_OFF_VALUE : captionTracks[showingIndex]!.id || String(showingIndex),
       subtitlesShowing: media.subtitlesShowing,
       disabled: this.#props.disabled || captionTracks.length === 0,
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

@@ -39,7 +39,7 @@ export {
 export { getSlottedElement, querySlot } from './slotted';
 export { addAnchorName, applyStyles, getAnchorNames, resolveCSSLength } from './style';
 export { supportsAnchorPositioning, supportsAnimationFrame, supportsIdleCallback } from './supports';
-export { createTemplate, renderTemplate } from './template';
+export { cloneTemplateRoot, createTemplate, getTemplateElement, getTemplateRoot, renderTemplate } from './template';
 export {
   type CaptionOrSubtitleKind,
   findTrackElement,

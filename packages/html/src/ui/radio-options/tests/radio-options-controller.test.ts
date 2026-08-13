@@ -32,14 +32,13 @@ class TestRadioOptionsElement extends MenuRadioGroupElement {
       { value: 'two', label: 'Two', disabled: true },
     ],
     disabled: false,
+    hidden: false,
     availability: 'available',
   };
   translator = createTranslator({ 'option.one': 'First ({detail})' }, 'en');
   readonly onValueChange = vi.fn();
 
   readonly #options = new RadioOptionsController<TestOption>(this, {
-    getTemplate: () => this.getTemplate(),
-    createItem: (template) => this.createRadioItem(template),
     renderItem: (item, label, option) => this.setItemLabel(item, `${label}${option.badge ?? ''}`),
     setItemAttributes: (item, option) => item.setAttribute('data-option', option.value),
     getOptionCacheKey: (option) => option.badge ?? '',
@@ -83,6 +82,21 @@ describe('RadioOptionsController', () => {
     expect(items.map((item) => item.getAttribute('data-option'))).toEqual(['one', 'two']);
     expect(items.map((item) => item.disabled)).toEqual([false, true]);
     expect(indicators.map((indicator) => indicator.checked)).toEqual([true, false]);
+    expect(element.querySelector('template')).toBe(template);
+  });
+
+  it('falls back to default items for an invalid template', async () => {
+    const element = new TestRadioOptionsElement();
+    const template = document.createElement('template');
+    template.innerHTML = '<div class="invalid"></div><div></div>';
+    element.append(template);
+    document.body.append(element);
+
+    await element.updateComplete;
+
+    expect(element.querySelectorAll(MenuRadioItemElement.tagName)).toHaveLength(2);
+    expect(element.querySelector('.invalid')).toBeNull();
+    expect(element.querySelector('template')).toBe(template);
   });
 
   it('rebuilds specialized content and applies group disabled semantics', async () => {
@@ -109,6 +123,22 @@ describe('RadioOptionsController', () => {
 
     expect(element.hasAttribute('aria-disabled')).toBe(false);
     expect(items.map((item) => item.disabled)).toEqual([false, true]);
+  });
+
+  it('applies native hidden semantics to unavailable groups', async () => {
+    const element = new TestRadioOptionsElement();
+    document.body.append(element);
+    await element.updateComplete;
+
+    element.setState({ ...element.state, hidden: true, availability: 'unavailable' });
+    await element.updateComplete;
+
+    expect(element.hidden).toBe(true);
+
+    element.setState({ ...element.state, hidden: false, availability: 'available' });
+    await element.updateComplete;
+
+    expect(element.hidden).toBe(false);
   });
 
   it('connects and cleans up value-change handling with the host lifecycle', async () => {

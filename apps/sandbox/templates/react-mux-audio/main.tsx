@@ -29,12 +29,16 @@ function App() {
   const loop = useLoop();
   const preload = usePreload();
 
+  // A source carrying signed tokens has no room in a plain `src`, so it is passed
+  // structured instead — the same way `react-mux-video` does.
+  const { source: muxSource, url } = SOURCES[source];
+
   return (
     <SandboxI18nProvider>
       <AudioProvider>
         <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
           <MuxAudio
-            src={SOURCES[source].url ?? ''}
+            {...(muxSource ? { source: muxSource } : { src: url ?? '' })}
             autoPlay={autoplay}
             muted={muted}
             loop={loop}

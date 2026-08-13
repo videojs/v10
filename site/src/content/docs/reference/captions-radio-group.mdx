@@ -68,15 +68,10 @@ The group is available when the configured media exposes at least one caption or
 | --- | --- | --- |
 | `data-active` | Present / absent | Present when captions are enabled. |
 | `data-disabled` | Present / absent | Present when track selection is disabled. |
+| `data-hidden` | Present / absent | Present when caption or subtitle tracks are unavailable. |
 | `data-availability` | `"available"` / `"unavailable"` | Whether caption or subtitle tracks are available. |
 
-<FrameworkCase frameworks={["html"]}>
-  ```css
-  media-captions-radio-group[data-availability="unavailable"] {
-    display: none;
-  }
-  ```
-</FrameworkCase>
+Unavailable groups receive the native `hidden` attribute in HTML. React consumers can use the hook's `hidden` result to omit their group.
 
 ## Accessibility
 

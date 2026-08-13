@@ -21,6 +21,7 @@ function createState(overrides: Partial<CaptionsRadioGroupState> = {}): Captions
     value: CAPTIONS_OFF_VALUE,
     subtitlesShowing: false,
     disabled: false,
+    hidden: false,
     availability: 'unavailable',
     label: '',
     ...overrides,
@@ -66,7 +67,7 @@ describe('CaptionsRadioGroupCore', () => {
       const core = new CaptionsRadioGroupCore();
       core.setMedia(createMediaState());
 
-      expect(core.getState().availability).toBe('unavailable');
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
 
     it('marks availability available when caption tracks exist', () => {
@@ -76,7 +77,7 @@ describe('CaptionsRadioGroupCore', () => {
       });
       core.setMedia(media);
 
-      expect(core.getState().availability).toBe('available');
+      expect(core.getState()).toMatchObject({ availability: 'available', hidden: false });
     });
 
     it('uses off when no track is showing', () => {

@@ -1,5 +1,5 @@
 import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
-import { isSliderFocused, type StatusAnnouncerStore, subscribeToStatusAnnouncer } from '@videojs/core/dom';
+import { type StatusAnnouncerStore, shouldAnnounceStatusChange, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
 
@@ -62,14 +62,7 @@ export class StatusAnnouncerElement extends MediaElement {
     this.#core.setProps({
       closeDelay: this.closeDelay,
       labels: createStatusAnnouncerLabels(this.#i18n.value, this.#i18n.locale),
-      shouldAnnounceSeek: () => {
-        const container = this.#container.value?.container;
-        return !container || !isSliderFocused(container);
-      },
-      shouldAnnounceVolume: () => {
-        const container = this.#container.value?.container;
-        return !container || !isSliderFocused(container);
-      },
+      shouldAnnounce: () => shouldAnnounceStatusChange(this.#container.value?.container),
     });
   }
 
@@ -77,15 +70,22 @@ export class StatusAnnouncerElement extends MediaElement {
     super.update(changed);
 
     const label = this.#core.state.current.label;
-    this.#ensureLiveText().textContent = label ?? '';
+    const liveText = this.#ensureLiveText();
+
+    if (label === null) {
+      liveText.replaceChildren();
+    } else {
+      liveText.replaceChildren(document.createTextNode(label));
+    }
   }
 
   #reconnect(store: StatusAnnouncerStore | undefined = this.#player.value): void {
     this.#storeUnsubscribe?.();
     this.#storeUnsubscribe = null;
-    this.#core.resetSnapshot();
-
-    if (!store) return;
+    if (!store) {
+      this.#core.resetSnapshot();
+      return;
+    }
 
     this.#storeUnsubscribe = subscribeToStatusAnnouncer(store, this.#core);
   }

@@ -68,15 +68,10 @@ The group is available when the configured media exposes playback rates. Option 
 | --- | --- | --- |
 | `data-rate` | `number` | Current playback rate. |
 | `data-disabled` | Present / absent | Present when playback rate selection is disabled. |
+| `data-hidden` | Present / absent | Present when playback-rate selection is unavailable. |
 | `data-availability` | `"available"` / `"unavailable"` | Whether playback rates are available. |
 
-<FrameworkCase frameworks={["html"]}>
-  ```css
-  media-playback-rate-radio-group[data-availability="unavailable"] {
-    display: none;
-  }
-  ```
-</FrameworkCase>
+Unavailable groups receive the native `hidden` attribute in HTML. React consumers can use the hook's `hidden` result to omit their group.
 
 ## Accessibility
 

@@ -4,6 +4,7 @@ import * as dashjs from 'dashjs';
 import { MediaTracksMixin } from '../../core/media-tracks';
 import type { MediaEngineHost } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
+import { DashMediaMediaTracksMixin } from './media-tracks';
 
 /** Structured DASH source: which source to play, plus how to play it. */
 export interface DashSource {
@@ -32,13 +33,10 @@ export const dashMediaDefaultProps: DashMediaProps = {
   source: null,
 };
 
-const DashMediaBase = MediaTracksMixin(HTMLVideoElementHost);
+const DashMediaHost = MediaTracksMixin(HTMLVideoElementHost);
 
-/**
- * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
- */
-export class DashMedia
-  extends DashMediaBase
+class DashMediaBase
+  extends DashMediaHost
   implements MediaEngineHost<dashjs.MediaPlayerClass, HTMLVideoElement>, DashMediaProps
 {
   #engine: dashjs.MediaPlayerClass;
@@ -133,3 +131,8 @@ export class DashMedia
     if (settings) this.#engine.updateSettings(settings);
   }
 }
+
+/**
+ * @fires sourcechange - Fired when `source` changes, either directly or by resolving a new `src`. Read `source` for the new value.
+ */
+export class DashMedia extends DashMediaMediaTracksMixin(DashMediaBase) {}

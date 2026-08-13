@@ -4,6 +4,7 @@ import {
   createMuxPosterURL,
   createMuxStoryboardURL,
   createMuxVideoURL,
+  type MuxContentData,
   type MuxDrmParams,
   type MuxSourceBase,
   parseMuxVideoURL,
@@ -111,7 +112,7 @@ export class MuxMedia extends HlsJsMedia implements MuxMediaProps {
    * Nothing here is applied for you, apart from the thumbnail track
    * `<mux-video>` adds from `storyboard` (and drops for live streams).
    */
-  get contentData(): Record<string, string> {
+  get contentData(): MuxContentData {
     const poster = createMuxPosterURL(this.source);
     const storyboard = createMuxStoryboardURL(this.source);
 

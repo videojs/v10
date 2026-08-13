@@ -98,7 +98,7 @@ Add `Chapters` to progressively divide the track when a default `kind="chapters"
   </media-time-slider-chapters>
   ```
 
-  The template must contain exactly one HTML root element. It is cloned for each normalized chapter, including a full-duration range while chapter cues are unavailable. If the template is missing or invalid, non-template fallback content remains in place.
+  The template must contain exactly one HTML root element. It remains in the light DOM and is cloned for each normalized chapter, including a full-duration range while chapter cues are unavailable. If the template is missing or invalid, non-template fallback content remains in place.
 </FrameworkCase>
 
 ## Behavior

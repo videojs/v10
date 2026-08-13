@@ -29,11 +29,16 @@ async function render() {
 
   const mediaAttrs = renderMediaAttrs(state);
 
+  // A source carrying signed tokens has no room in the `src` attribute, so it is
+  // assigned as an object below instead — the same way `html-mux-video` does.
+  const { source, url } = SOURCES[state.source];
+  const srcAttr = source ? '' : ` src="${url}"`;
+
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <mux-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></mux-audio>
+          <mux-audio${srcAttr} ${mediaAttrs} crossorigin="anonymous"></mux-audio>
           <!-- Mux Data and Cast are opt-in media components; no env key is needed for Mux-hosted sources. -->
           <mux-data player-software-name="mux-audio"></mux-data>
           <google-cast></google-cast>
@@ -41,6 +46,10 @@ async function render() {
       </audio-player>
     </div>
   `);
+
+  if (source) {
+    document.querySelector('mux-audio')!.source = source;
+  }
 }
 
 render();

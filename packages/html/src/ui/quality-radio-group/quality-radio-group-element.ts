@@ -28,8 +28,6 @@ export class QualityRadioGroupElement extends MenuRadioGroupElement {
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectQuality);
   readonly #options = new RadioOptionsController<QualityRadioGroupOption>(this, {
-    getTemplate: () => this.getTemplate(),
-    createItem: (template) => this.createRadioItem(template),
     renderItem: (item, label, option) => this.#setContent(item, label, option.tier, option.badge),
     setItemAttributes: (item, option) => item.setAttribute('data-rendition', option.value),
     getOptionCacheKey: (option) => `${option.tier ?? ''}:${option.badge ?? ''}`,

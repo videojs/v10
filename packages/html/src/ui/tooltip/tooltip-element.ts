@@ -27,6 +27,7 @@ import { isFunction } from '@videojs/utils/predicate';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { containerContext } from '../../player/context';
+import { popupGroupContext } from '../../player/popup-group-context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { tooltipGroupContext } from './context';
@@ -75,6 +76,7 @@ export class TooltipElement extends MediaElement {
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #groupConsumer = new ContextConsumer(this, { context: tooltipGroupContext });
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #popupGroupCtx = new ContextConsumer(this, { context: popupGroupContext });
   readonly #position = new PositionController(this);
   #tooltip: TooltipApi | null = null;
   #snapshot: SnapshotController<TooltipInput> | null = null;
@@ -104,7 +106,7 @@ export class TooltipElement extends MediaElement {
       disabled: () => this.disabled,
       // Lazy getter — group may arrive after connect via context.
       group: () => this.#groupConsumer.value,
-      popupGroup: () => this.#containerCtx.value?.popupGroup,
+      popupGroup: () => this.#popupGroupCtx.value,
     });
 
     // Register self as the popup element — the element IS the popup.

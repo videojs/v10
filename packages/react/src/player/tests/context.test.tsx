@@ -17,6 +17,7 @@ import {
   usePlayer,
   usePlayerContext,
 } from '../context';
+import { useOptionalPopupGroup } from '../popup-group-context';
 
 afterEach(() => {
   cleanup();
@@ -61,6 +62,7 @@ describe('usePlayerContext', () => {
 
     expect(result.current.store).toBe(store);
     expect(result.current.media).toBe(null);
+    expect(result.current).not.toHaveProperty('popupGroup');
   });
 });
 
@@ -219,6 +221,34 @@ describe('useMedia', () => {
 });
 
 describe('Container', () => {
+  it('scopes popup coordination to container children', () => {
+    const value = createContextValue();
+    let outsideGroup: unknown;
+    let insideGroup: unknown;
+
+    function OutsideProbe() {
+      outsideGroup = useOptionalPopupGroup();
+      return null;
+    }
+
+    function InsideProbe() {
+      insideGroup = useOptionalPopupGroup();
+      return null;
+    }
+
+    render(
+      <PlayerContextProvider value={value}>
+        <OutsideProbe />
+        <Container>
+          <InsideProbe />
+        </Container>
+      </PlayerContextProvider>
+    );
+
+    expect(outsideGroup).toBeUndefined();
+    expect(insideGroup).toBeDefined();
+  });
+
   it('renders children', () => {
     const value = createContextValue();
 

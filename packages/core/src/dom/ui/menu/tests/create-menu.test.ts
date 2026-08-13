@@ -563,6 +563,20 @@ describe('createMenu', () => {
       expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
     });
 
+    it('skips a hidden first item', () => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Hidden');
+      const visible = addItem('Visible');
+      hidden.hidden = true;
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.highlightFirstItem();
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('can highlight the first item without scrolling it into view', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
@@ -629,6 +643,39 @@ describe('createMenu', () => {
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
+    it('ArrowDown skips items marked data-hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const hidden = addItem('Beta');
+      const c = addItem('Gamma');
+      hidden.setAttribute('data-hidden', '');
+      menu.registerItem(a);
+      menu.registerItem(hidden);
+      menu.registerItem(c);
+      menu.highlight(a);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowDown preserves position when the highlighted item becomes hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+      b.setAttribute('data-hidden', '');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('ArrowDown wraps from last to first', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -661,6 +708,22 @@ describe('createMenu', () => {
       menu.registerItem(a);
       menu.registerItem(b);
       menu.highlight(b);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowUp'));
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowUp preserves position when the highlighted item becomes hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+      b.hidden = true;
 
       menu.contentProps.onKeyDown(makeKeyEvent('ArrowUp'));
 
@@ -777,6 +840,20 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('b'));
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ignores aria-hidden type-ahead matches', () => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Beta');
+      const visible = addItem('Bravo');
+      hidden.setAttribute('aria-hidden', 'true');
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('cycles through matching items when the same character is pressed repeatedly', () => {

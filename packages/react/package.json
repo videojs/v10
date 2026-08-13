@@ -36,6 +36,26 @@
       "development": "./dist/dev/icons/*/index.js",
       "default": "./dist/default/icons/*/index.js"
     },
+    "./media/mux-video/hls-js": {
+      "types": "./dist/dev/media/mux-video/hls-js.d.ts",
+      "development": "./dist/dev/media/mux-video/hls-js.js",
+      "default": "./dist/default/media/mux-video/hls-js.js"
+    },
+    "./media/mux-video/spf": {
+      "types": "./dist/dev/media/mux-video/spf.d.ts",
+      "development": "./dist/dev/media/mux-video/spf.js",
+      "default": "./dist/default/media/mux-video/spf.js"
+    },
+    "./media/mux-audio/hls-js": {
+      "types": "./dist/dev/media/mux-audio/hls-js.d.ts",
+      "development": "./dist/dev/media/mux-audio/hls-js.js",
+      "default": "./dist/default/media/mux-audio/hls-js.js"
+    },
+    "./media/mux-audio/spf": {
+      "types": "./dist/dev/media/mux-audio/spf.d.ts",
+      "development": "./dist/dev/media/mux-audio/spf.js",
+      "default": "./dist/default/media/mux-audio/spf.js"
+    },
     "./media/*": {
       "types": "./dist/dev/media/*/index.d.ts",
       "development": "./dist/dev/media/*/index.js",

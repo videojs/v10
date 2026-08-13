@@ -43,6 +43,21 @@
       "development": "./dist/dev/background-video.js",
       "default": "./dist/default/background-video.js"
     },
+    "./mux-audio": {
+      "types": "./dist/dev/mux-audio.d.ts",
+      "development": "./dist/dev/mux-audio.js",
+      "default": "./dist/default/mux-audio.js"
+    },
+    "./mux-background-video": {
+      "types": "./dist/dev/mux-background-video.d.ts",
+      "development": "./dist/dev/mux-background-video.js",
+      "default": "./dist/default/mux-background-video.js"
+    },
+    "./mux-video": {
+      "types": "./dist/dev/mux-video.d.ts",
+      "development": "./dist/dev/mux-video.js",
+      "default": "./dist/default/mux-video.js"
+    },
     "./simple-hls": {
       "types": "./dist/dev/simple-hls.d.ts",
       "development": "./dist/dev/simple-hls.js",

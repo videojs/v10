@@ -2,6 +2,7 @@ import type { RadioOption, RadioOptionsState } from '@videojs/core';
 import { applyElementProps } from '@videojs/core/dom';
 import { type Translator, translateText } from '@videojs/core/i18n';
 import type { ReactiveController, ReactiveControllerHost } from '@videojs/element';
+import { cloneTemplateRoot, getTemplateElement, getTemplateRoot } from '@videojs/utils/dom';
 
 import { cacheKey } from '../../i18n/cache-key';
 import { MenuItemIndicatorElement } from '../menu/menu-item-indicator-element';
@@ -13,9 +14,7 @@ export type RadioOptionsControllerHost = ReactiveControllerHost &
   };
 
 export interface RadioOptionsControllerConfig<Option extends RadioOption> {
-  getTemplate: () => HTMLTemplateElement | null;
-  createItem: (template: HTMLTemplateElement | null) => MenuRadioItemElement;
-  renderItem: (item: MenuRadioItemElement, label: string, option: Option) => void;
+  renderItem?: ((item: MenuRadioItemElement, label: string, option: Option) => void) | undefined;
   setItemAttributes?: ((item: MenuRadioItemElement, option: Option) => void) | undefined;
   getOptionCacheKey?: ((option: Option) => string) | undefined;
   onValueChange: (value: string) => void;
@@ -54,9 +53,12 @@ export class RadioOptionsController<Option extends RadioOption> implements React
     this.#host.value = state.value;
     applyElementProps(this.#host, {
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     });
 
-    const template = this.#config.getTemplate();
+    const template = getTemplateElement(this.#host);
+    const templateRoot = template ? getTemplateRoot(template) : null;
+    const itemRoot = templateRoot?.localName === MenuRadioItemElement.tagName ? templateRoot : null;
     const contentKey = `${state.options
       .map(
         (option) =>
@@ -69,15 +71,19 @@ export class RadioOptionsController<Option extends RadioOption> implements React
       this.#translator = translator;
 
       for (const child of [...this.#host.children]) {
-        if (child instanceof HTMLTemplateElement) continue;
+        if (child === template) continue;
         child.remove();
       }
 
       const items = state.options.map((option) => {
-        const item = this.#config.createItem(template);
+        const item = itemRoot
+          ? (cloneTemplateRoot(itemRoot, this.#host.ownerDocument) as MenuRadioItemElement)
+          : (this.#host.ownerDocument.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement);
         item.value = option.value;
         this.#config.setItemAttributes?.(item, option);
-        this.#config.renderItem(item, translateText(option.label, translator, option.labelParams), option);
+        const label = translateText(option.label, translator, option.labelParams);
+        if (this.#config.renderItem) this.#config.renderItem(item, label, option);
+        else this.#setItemLabel(item, label);
         return item;
       });
 
@@ -104,4 +110,11 @@ export class RadioOptionsController<Option extends RadioOption> implements React
     const { value } = (event as CustomEvent<{ value: string }>).detail;
     this.#config.onValueChange(value);
   };
+
+  #setItemLabel(item: MenuRadioItemElement, label: string): void {
+    const labelPart = item.querySelector<HTMLElement>('[data-part~="label"]');
+
+    if (labelPart) labelPart.textContent = label;
+    else item.textContent = label;
+  }
 }

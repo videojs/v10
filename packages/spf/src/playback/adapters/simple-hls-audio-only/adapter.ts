@@ -14,7 +14,12 @@ import {
   type SimpleHlsAudioOnlyEngineState,
 } from '../../engines/hls/engine-audio-only';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
-import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from '../simple-hls/error-surface';
+import {
+  firstFatal,
+  hasUnsupportedFeatureCause,
+  type SimpleHlsMediaError,
+  withAlternativeMediaSuggestion,
+} from '../simple-hls/error-surface';
 
 export interface SimpleHlsAudioOnlyMediaProps {
   src: string;
@@ -69,6 +74,19 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  */
 export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
   class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
+    /**
+     * A complete sentence naming the Media to reach for when this one can't play
+     * a source. Appended to the copy this adapter logs.
+     *
+     * Empty here, and overridden the same way as on the video adapter — see its
+     * note. `simple-hls-audio-only` has no better-equipped sibling of its own; the
+     * Mux audio Media built on this engine does, and points at the hls.js-backed
+     * one.
+     */
+    static get alternativeMediaSuggestion(): string | undefined {
+      return undefined;
+    }
+
     readonly #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
     #config: SimpleHlsAudioOnlyEngineConfig;
     #signals!: SimpleHlsAudioOnlyEngineSignals;
@@ -126,7 +144,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
       // consumer needs, so it replaces the verdict's code on the surface.
       const unsupported = hasUnsupportedFeatureCause(errors);
       if (unsupported) {
-        console.error(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE, { conditions: errors });
+        console.error(this.#withSuggestion(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE), { conditions: errors });
       }
 
       this.#error = {
@@ -218,6 +236,9 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
 
     set src(value: string) {
+      // Unchanged URL, no reload — see the video adapter's note.
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
       this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }
@@ -253,6 +274,11 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     // Private
     // -------------------------------------------------------------------------
 
+    /** `message`, plus the alternative-Media sentence when this class names one. */
+    #withSuggestion(message: string): string {
+      return withAlternativeMediaSuggestion(message, this);
+    }
+
     #createEngine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
       return createHlsAudioOnlyEngine({
         ...this.#config,
@@ -270,7 +296,11 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     }
   }
 
-  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI>;
+  // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
+  // adding back to the type or callers can't read it.
+  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI> & {
+    readonly alternativeMediaSuggestion: string | undefined;
+  };
 }
 
 /** Standalone SPF audio-only media adapter with no base class. */

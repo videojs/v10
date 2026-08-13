@@ -36,6 +36,7 @@ export interface RadioOptionsHookResult<Option extends RadioOption, State extend
   selectedLabel: string;
   options: TranslatedRadioOption<Option>[];
   disabled: boolean;
+  hidden: boolean;
   setValue: (value: string) => void;
 }
 
@@ -82,6 +83,7 @@ export function createRadioOptionsHook<Props, Media, State extends RadioOptionsS
       selectedLabel: options.find((option) => option.value === state.value)?.label ?? '',
       options,
       disabled: state.disabled,
+      hidden: state.hidden,
       setValue,
     };
   };

@@ -27,9 +27,6 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
   readonly #i18n = new I18nController(this, i18nContext);
   readonly #mediaState = new PlayerController(this, playerContext, selectTextTrack);
   readonly #options = new RadioOptionsController<CaptionsRadioGroupOption>(this, {
-    getTemplate: () => this.getTemplate(),
-    createItem: (template) => this.createRadioItem(template),
-    renderItem: (item, label) => this.setItemLabel(item, label),
     setItemAttributes: (item, option) => item.setAttribute('data-track', option.value),
     onValueChange: (value) => {
       const media = this.#mediaState.value;

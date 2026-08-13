@@ -67,7 +67,7 @@ const Button = forwardRef<HTMLButtonElement, ComponentProps<'button'>>(function 
 });
 
 function VolumePopover(): ReactNode {
-  const volumeUnsupported = usePlayer((s) => s.volumeAvailability === 'unsupported');
+  const volumeUnavailable = usePlayer((s) => s.volumeAvailability !== 'available');
 
   const muteButton = (
     <MuteButton className="media-button--mute" render={<Button />}>
@@ -77,7 +77,7 @@ function VolumePopover(): ReactNode {
     </MuteButton>
   );
 
-  if (volumeUnsupported) return muteButton;
+  if (volumeUnavailable) return muteButton;
 
   return (
     <Popover.Root openOnHover delay={200} closeDelay={100} side="right">

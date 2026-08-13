@@ -1,5 +1,6 @@
 import type { StatusAnnouncerCore } from '../../core/ui/status-announcer/status-announcer-core';
 import { getMediaSnapshot, type MediaSnapshotStore } from './input-action';
+import { isSliderFocused } from './slider-focus';
 
 export interface StatusAnnouncerStore extends MediaSnapshotStore {
   readonly target: unknown | null;
@@ -13,15 +14,16 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
   let revision = 0;
 
   const baseline = () => {
+    target = store.target;
     pending = true;
     const current = ++revision;
+    core.resetSnapshot();
 
     queueMicrotask(() => {
       if (!active || current !== revision) return;
 
       pending = false;
       target = store.target;
-      core.resetSnapshot();
       if (target) core.processSnapshot(getMediaSnapshot(store));
     });
   };
@@ -30,8 +32,6 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
     const nextTarget = store.target;
 
     if (nextTarget !== target) {
-      target = nextTarget;
-      core.resetSnapshot();
       baseline();
       return;
     }
@@ -40,11 +40,14 @@ export function subscribeToStatusAnnouncer(store: StatusAnnouncerStore, core: St
     core.processSnapshot(getMediaSnapshot(store));
   });
 
-  core.resetSnapshot();
   baseline();
 
   return () => {
     active = false;
     unsubscribe();
   };
+}
+
+export function shouldAnnounceStatusChange(container: HTMLElement | null | undefined): boolean {
+  return !container || !isSliderFocused(container);
 }

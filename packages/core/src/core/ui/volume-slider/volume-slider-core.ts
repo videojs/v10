@@ -19,6 +19,7 @@ export interface VolumeSliderProps extends SliderProps {
 
 export interface VolumeSliderState extends SliderState, Pick<MediaVolumeState, 'volume' | 'muted'> {
   availability: MediaFeatureAvailability;
+  hidden: boolean;
 }
 
 /** Volume-domain slider: maps media volume/mute state to slider state. */
@@ -58,13 +59,16 @@ export class VolumeSliderCore extends SliderCore {
     const volumePercent = volume * 100;
     const value = dragging ? this.valueFromPercent(dragPercent) : volumePercent;
     const base = super.getSliderState(value);
+    const availability = media.volumeAvailability;
 
     return {
       ...base,
+      disabled: base.disabled || availability !== 'available',
       fillPercent: effectivelyMuted ? 0 : base.fillPercent,
       volume,
       muted: effectivelyMuted,
-      availability: media.volumeAvailability,
+      availability,
+      hidden: availability !== 'available',
     };
   }
 

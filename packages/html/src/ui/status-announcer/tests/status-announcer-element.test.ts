@@ -95,6 +95,32 @@ describe('StatusAnnouncerElement', () => {
     expect(announcer.textContent).toBe('Playing');
   });
 
+  it('replaces live content for repeated announcement labels', async () => {
+    vi.useFakeTimers();
+
+    try {
+      const { store, setState } = createTestStore({ volume: 0.5, muted: false });
+      const { announcer } = await renderStatusAnnouncerElement(store);
+      const content = announcer.querySelector('[data-status-announcer-content]')!;
+
+      setState({ volume: 0 });
+      await Promise.resolve();
+      vi.advanceTimersByTime(200);
+      await (announcer as StatusAnnouncerElement).updateComplete;
+      const firstContent = content.firstChild;
+
+      setState({ muted: true });
+      await Promise.resolve();
+      vi.advanceTimersByTime(200);
+      await (announcer as StatusAnnouncerElement).updateComplete;
+
+      expect(announcer.textContent).toBe('Muted');
+      expect(content.firstChild).not.toBe(firstContent);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('uses the next store snapshot as baseline when the store changes', async () => {
     const first = createTestStore({ paused: false });
     const second = createTestStore({ paused: false });

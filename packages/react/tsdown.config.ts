@@ -21,7 +21,10 @@ const i18nLocaleEntries = Object.fromEntries([
 
 const createConfig = (mode: PackageBuildMode): UserConfig => ({
   ...packageBuildConfig(mode, 'browser'),
-  entry: ['src/**/index.{ts,tsx}', i18nLocaleEntries],
+  // Flavor modules sit beside their element's index rather than under one, so
+  // they need their own entries to stay separate chunks: importing one flavor
+  // must never pull the other engine in with it.
+  entry: ['src/**/index.{ts,tsx}', 'src/media/*/{hls-js,spf}.tsx', i18nLocaleEntries],
   noExternal: [/^@videojs\/skins/],
   alias: {
     '@': new URL('./src', import.meta.url).pathname,

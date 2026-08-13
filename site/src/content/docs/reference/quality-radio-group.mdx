@@ -70,15 +70,10 @@ The group is available when the configured media exposes more than one video ren
 | --- | --- | --- |
 | `data-quality` | `string` | Current quality value. |
 | `data-disabled` | Present / absent | Present when quality selection is disabled. |
+| `data-hidden` | Present / absent | Present when multiple renditions are unavailable. |
 | `data-availability` | `"available"` / `"unavailable"` | Whether multiple renditions are available. |
 
-<FrameworkCase frameworks={["html"]}>
-  ```css
-  media-quality-radio-group[data-availability="unavailable"] {
-    display: none;
-  }
-  ```
-</FrameworkCase>
+Unavailable groups receive the native `hidden` attribute in HTML. React consumers can use the hook's `hidden` result to omit their group.
 
 ## Accessibility
 

@@ -77,6 +77,17 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       media.src = '';
       expect(media.engine.state.presentation.get()?.url).toBeFalsy();
     });
+
+    it('leaves engine presentation state alone when src is set to the URL already playing', () => {
+      const media = new SimpleHlsAudioOnlyMediaElement();
+      media.src = 'https://example.com/v.m3u8';
+      const presentation = media.engine.state.presentation.get();
+
+      media.src = 'https://example.com/v.m3u8';
+
+      // See the video adapter's note: a fresh presentation re-resolves.
+      expect(media.engine.state.presentation.get()).toBe(presentation);
+    });
   });
 
   // ---------------------------------------------------------------------------
@@ -392,6 +403,29 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
         .map((call) => String(call[0]))
         .filter((text) => text.startsWith(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE));
       expect(logged).toHaveLength(1);
+      vi.restoreAllMocks();
+      media.destroy();
+    });
+
+    it('appends the alternative-Media suggestion when the class names one', async () => {
+      const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      class Suggesting extends SimpleHlsAudioOnlyMediaMixin(EventTarget) {
+        static override get alternativeMediaSuggestion(): string {
+          return 'Import from "/media/mux/hls-js" instead.';
+        }
+      }
+      const media = new Suggesting();
+      media.engine.state.errors.set([
+        { code: SVTA_UNSUPPORTED_DRM_SYSTEM, data: { trackType: 'audio', trackId: 'a1' } },
+        { code: SVTA_NO_SUPPORTED_AUDIO_TRACK },
+      ]);
+      await flush();
+
+      expect(
+        spy.mock.calls
+          .map((call) => String(call[0]))
+          .find((text) => text.startsWith(UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE))
+      ).toMatch(/Import from "\/media\/mux\/hls-js" instead\.$/);
       vi.restoreAllMocks();
       media.destroy();
     });

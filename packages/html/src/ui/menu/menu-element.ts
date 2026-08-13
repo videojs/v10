@@ -23,6 +23,7 @@ import { SnapshotController } from '@videojs/store/html';
 import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext, playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
+import { popupGroupContext } from '../../player/popup-group-context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 import { type MenuContextValue, type MenuTriggerMetadata, menuContext } from './context';
@@ -60,6 +61,7 @@ export class MenuElement extends MediaElement {
   readonly #position = new PositionController(this);
   readonly #controlsState = new PlayerController(this, playerContext, selectControls);
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #popupGroupCtx = new ContextConsumer(this, { context: popupGroupContext });
   // Consume parent menu context — present when this is a nested (submenu) element.
   readonly #parentCtx = new ContextConsumer(this, { context: menuContext, subscribe: true });
   #menu: MenuApi | null = null;
@@ -99,7 +101,7 @@ export class MenuElement extends MediaElement {
       },
       closeOnEscape: () => this.closeOnEscape,
       closeOnOutsideClick: () => this.closeOnOutsideClick,
-      group: () => (this.#parentCtx.value ? undefined : this.#containerCtx.value?.popupGroup),
+      group: () => (this.#parentCtx.value ? undefined : this.#popupGroupCtx.value),
     });
 
     // The element itself is the content (popup) for root menus.

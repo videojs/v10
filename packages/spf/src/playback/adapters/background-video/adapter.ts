@@ -16,19 +16,11 @@ import {
 
 export interface BackgroundVideoMediaProps {
   src: string;
-  preload: '' | 'none' | 'metadata' | 'auto';
-  loop: boolean;
-  muted: boolean;
-  autoplay: boolean;
   maxResolution: string | number | undefined;
 }
 
 export const backgroundVideoMediaDefaultProps: BackgroundVideoMediaProps = {
   src: '',
-  preload: 'auto',
-  loop: true,
-  muted: true,
-  autoplay: true,
   maxResolution: undefined,
 };
 
@@ -44,23 +36,22 @@ export interface BackgroundVideoMediaAPI extends BackgroundVideoMediaProps {
  * Mixin that adds the background-video SPF playback engine to any
  * base class.
  *
- * Implements the WHATWG HTML media element contract (`src`, `preload`,
- * `loop`, `muted`, `autoplay`, `play()`) so it can be dropped in anywhere a
- * media element API is expected. Compared to `SimpleHlsMediaMixin`, this
- * variant:
+ * Implements the WHATWG HTML media element contract (`src`, `play()`) so it can
+ * be dropped in anywhere a media element API is expected. Compared to
+ * `SimpleHlsMediaMixin`, this variant:
  *
- * - exposes `loop`, `muted`, and `autoplay` as adapter-owned native
- *   passthroughs, all defaulting to `true` — the use case is silent
- *   autoplay-looping video, so muted + autoplay satisfy browser autoplay
- *   policies and loop is the defining behavior;
+ * - fixes silent autoplay-looping playback at `attach` rather than exposing it:
+ *   muted and autoplay are what let it start without a gesture, loop is the
+ *   defining behavior, and `preload` says out loud what the engine does anyway.
+ *   Nothing here declares those four, so a base that has them — a host — keeps
+ *   answering for them, and reads describe the element instead of an intention;
  * - drives the underlying engine with the background-video
  *   composition (single-rendition, video-only, autoplay-from-construction).
  *
- * A new engine is created on every src assignment — this fully tears down
- * all state, SourceBuffers, and in-flight requests from the previous
- * source before the next one begins. The media element reference is
- * preserved across src changes and re-applied to the new engine
- * automatically.
+ * A new src re-resolves the presentation, tearing down the state,
+ * SourceBuffers, and in-flight requests the previous one built before the next
+ * begins. The engine instance and the attached media element are both kept, so
+ * neither has to be rewired.
  *
  * @example
  * class BackgroundVideoMedia extends BackgroundVideoMediaMixin(HTMLVideoElementHost) {}
@@ -75,10 +66,6 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
     #engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
     #config: BackgroundVideoEngineConfig;
     #signals!: BackgroundVideoEngineSignals;
-    #preload: '' | 'none' | 'metadata' | 'auto' = backgroundVideoMediaDefaultProps.preload;
-    #loop: boolean = backgroundVideoMediaDefaultProps.loop;
-    #muted: boolean = backgroundVideoMediaDefaultProps.muted;
-    #autoplay: boolean = backgroundVideoMediaDefaultProps.autoplay;
     #maxResolution: string | number | undefined;
 
     /** Pending loadstart listener from a deferred play() retry, if any. */
@@ -104,12 +91,11 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
 
     attach(mediaElement: HTMLMediaElement): void {
       super.attach?.(mediaElement);
-      // Apply adapter-owned native props before the engine takes over —
-      // the underlying element needs `loop` / `muted` / `autoplay` set for
-      // the use case's autoplay-looping semantics.
-      mediaElement.loop = this.#loop;
-      mediaElement.muted = this.#muted;
-      mediaElement.autoplay = this.#autoplay;
+      // The one place the fixed behavior is stated — see the mixin note.
+      mediaElement.loop = true;
+      mediaElement.muted = true;
+      mediaElement.autoplay = true;
+      mediaElement.preload = 'auto';
 
       this.#signals.context.mediaElement.set(mediaElement);
     }
@@ -123,48 +109,6 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
     destroy(): void {
       this.#cancelPendingPlay();
       this.#engine.destroy();
-    }
-
-    // -------------------------------------------------------------------------
-    // preload — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // -------------------------------------------------------------------------
-
-    get preload(): '' | 'none' | 'metadata' | 'auto' {
-      return this.#preload;
-    }
-
-    set preload(_value: '' | 'none' | 'metadata' | 'auto') {
-      // Noop for this phase
-    }
-
-    // -------------------------------------------------------------------------
-    // loop / muted / autoplay — adapter-owned IDL attributes mirrored onto
-    // the attached media element. The engine itself has no opinion on any
-    // of them.
-    // -------------------------------------------------------------------------
-
-    get loop(): boolean {
-      return this.#loop;
-    }
-
-    set loop(_value: boolean) {
-      // Noop for this phase
-    }
-
-    get muted(): boolean {
-      return this.#muted;
-    }
-
-    set muted(_value: boolean) {
-      // Noop for this phase
-    }
-
-    get autoplay(): boolean {
-      return this.#autoplay;
-    }
-
-    set autoplay(_value: boolean) {
-      // Noop for this phase
     }
 
     // -------------------------------------------------------------------------
@@ -190,8 +134,6 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
 
     // -------------------------------------------------------------------------
     // src — synchronous IDL attribute (WHATWG §4.8.11.2)
-    // Each assignment destroys the current engine and starts a fresh one,
-    // matching the browser's load algorithm reset on src change.
     // -------------------------------------------------------------------------
 
     get src(): string {
@@ -199,6 +141,11 @@ export function BackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseCla
     }
 
     set src(value: string) {
+      // Same line the HLS Medias draw: the presentation is set from a fresh
+      // object every time, so re-resolving a URL already playing would restart
+      // it for no reason.
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
 
       if (value) {

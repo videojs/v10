@@ -24,6 +24,7 @@ function createState(overrides: Partial<QualityRadioGroupState> = {}): QualityRa
     ],
     value: QUALITY_AUTO_VALUE,
     disabled: false,
+    hidden: false,
     availability: 'available',
     label: '',
     ...overrides,
@@ -120,8 +121,7 @@ describe('QualityRadioGroupCore', () => {
       const core = new QualityRadioGroupCore();
       core.setMedia(createMediaState({ videoRenditionList: [{ id: '0', height: 1080, selected: false }] }));
 
-      expect(core.getState().availability).toBe('unavailable');
-      expect(core.getState().disabled).toBe(true);
+      expect(core.getState()).toMatchObject({ availability: 'unavailable', disabled: true, hidden: true });
     });
   });
 

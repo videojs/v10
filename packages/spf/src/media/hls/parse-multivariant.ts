@@ -263,7 +263,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
 
   // Build PartiallyResolvedAudioTracks from audio renditions (EXT-X-MEDIA)
   // Extract audio codecs from referencing streams
-  const audioRenditionTracks: PartiallyResolvedAudioTrack[] = audioRenditions.map((rendition) => {
+  const audioRenditionTracks: PartiallyResolvedAudioTrack[] = audioRenditions.flatMap((rendition) => {
     let audioCodecs: string[] | undefined;
     for (const stream of streams) {
       if (stream.audioGroupId === rendition.groupId && stream.codecs) {
@@ -272,6 +272,23 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
           audioCodecs = [codecs.audio];
           break;
         }
+      }
+    }
+
+    // A rendition with no URI names media carried in the streams referencing its
+    // group. When such a stream is audio-only it is already a track of its own, so
+    // the two describe one rendition: merge rather than add a second entry that has
+    // nothing to fetch. The rendition holds the naming and selection metadata, the
+    // stream the URL and bandwidth.
+    if (!rendition.uri) {
+      const carrier = audioOnlyTracks.find((track) => track.groupId === rendition.groupId);
+      if (carrier) {
+        carrier.name = rendition.name;
+        if (rendition.language) carrier.language = rendition.language;
+        if (rendition.channels) carrier.channels = rendition.channels;
+        if (rendition.default) carrier.default = rendition.default;
+        if (rendition.autoselect) carrier.autoselect = rendition.autoselect;
+        return [];
       }
     }
 
@@ -302,7 +319,7 @@ export function parseMultivariantPlaylist(text: string, unresolved: AddressableO
       track.autoselect = rendition.autoselect;
     }
 
-    return track;
+    return [track];
   });
 
   // Combine audio tracks from both EXT-X-MEDIA renditions and audio-only STREAM-INF

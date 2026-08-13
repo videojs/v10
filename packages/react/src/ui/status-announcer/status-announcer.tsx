@@ -1,7 +1,7 @@
 'use client';
 
 import { createStatusAnnouncerLabels, StatusAnnouncerCore } from '@videojs/core';
-import { isSliderFocused, subscribeToStatusAnnouncer } from '@videojs/core/dom';
+import { shouldAnnounceStatusChange, subscribeToStatusAnnouncer } from '@videojs/core/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useState, useSyncExternalStore } from 'react';
 import { useLocale, useTranslator } from '../../i18n/context';
@@ -31,8 +31,7 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
       ...createStatusAnnouncerLabels(translator, locale),
       ...labels,
     },
-    shouldAnnounceSeek: () => !container || !isSliderFocused(container),
-    shouldAnnounceVolume: () => !container || !isSliderFocused(container),
+    shouldAnnounce: () => shouldAnnounceStatusChange(container),
   });
 
   useEffect(() => subscribeToStatusAnnouncer(store, core), [core, store]);
@@ -53,7 +52,11 @@ export const StatusAnnouncer = forwardRef(function StatusAnnouncer(
         elementProps,
         {
           role: 'status',
-          children: state.label ?? '',
+          children: (
+            <span key={state.generation} data-status-announcer-content="">
+              {state.label ?? ''}
+            </span>
+          ),
         },
       ],
     }

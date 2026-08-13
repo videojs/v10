@@ -109,7 +109,8 @@ export class QualityRadioGroupCore {
   readonly state = createState<QualityRadioGroupState>({
     options: [{ value: QUALITY_AUTO_VALUE, label: autoText, disabled: false }],
     value: QUALITY_AUTO_VALUE,
-    disabled: false,
+    disabled: true,
+    hidden: true,
     availability: 'unavailable',
     label: '',
   });
@@ -163,6 +164,7 @@ export class QualityRadioGroupCore {
     return {
       'aria-label': this.getLabel(state),
       'aria-disabled': state.disabled ? 'true' : undefined,
+      hidden: state.hidden ? '' : undefined,
     };
   }
 
@@ -207,6 +209,7 @@ export class QualityRadioGroupCore {
           ? QUALITY_AUTO_VALUE
           : this.getRenditionValue(media.videoRenditionList[selectedIndex]!, selectedIndex),
       disabled: this.#props.disabled || availability === 'unavailable',
+      hidden: availability === 'unavailable',
       availability,
     });
     this.state.patch({ label: resolveText(this.getLabel(this.state.current)) });

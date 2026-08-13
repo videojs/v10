@@ -30,7 +30,12 @@ import {
   UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE,
 } from '../../primitives/error-messages';
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
-import { firstFatal, hasUnsupportedFeatureCause, type SimpleHlsMediaError } from './error-surface';
+import {
+  firstFatal,
+  hasUnsupportedFeatureCause,
+  type SimpleHlsMediaError,
+  withAlternativeMediaSuggestion,
+} from './error-surface';
 
 /**
  * The media-level stream type: the engine's detected stream type (`'live'` /
@@ -131,9 +136,10 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
   class SimpleHlsMediaImpl extends BaseClass {
     /**
      * A complete sentence naming the Media to reach for when this one can't play
-     * a source — `Import <mux-video> from "@videojs/html/media/mux-video"
-     * instead.` Appended to the copy this adapter surfaces, and to the notices it
-     * logs.
+     * a source — `Try the hls.js-backed Mux media instead: import the hls-js
+     * flavor in place of the spf one.` Appended to the copy this adapter
+     * surfaces, and to the notices it logs. Name the flavor, not an import path:
+     * a Media is reached through several packages, each with its own counterpart.
      *
      * Empty here: `simple-hls-video` has no better-equipped sibling to point at.
      * A Media that does (a Mux Video built on this engine, whose hls.js-backed
@@ -397,6 +403,14 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     }
 
     set src(value: string) {
+      // Assigning the URL already playing is not a request to reload it. The
+      // presentation is set from a fresh object every time, so re-resolving an
+      // unchanged URL restarts playback — which is what a caller changing only
+      // the parts of a structured source that describe images, rather than the
+      // stream, would get. The hls.js Media draws the same line: it announces
+      // every source change and loads only when the URL or engine config moves.
+      if (value === this.src) return;
+
       this.#cancelPendingPlay();
       this.#signals.state.presentation.set(value ? { url: value } : undefined);
     }
@@ -437,15 +451,9 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     // Private
     // -------------------------------------------------------------------------
 
-    /** This class's static, if it set one. */
-    #alternativeMediaSuggestion(): string | undefined {
-      return (this.constructor as { alternativeMediaSuggestion?: string }).alternativeMediaSuggestion;
-    }
-
     /** `message`, plus the alternative-Media sentence when this class names one. */
     #withSuggestion(message: string): string {
-      const suggestion = this.#alternativeMediaSuggestion()?.trim();
-      return suggestion ? `${message} ${suggestion}` : message;
+      return withAlternativeMediaSuggestion(message, this);
     }
 
     /**

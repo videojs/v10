@@ -15,6 +15,7 @@ export interface QualityOptionsResult {
   selectedLabel: string;
   options: QualityOption[];
   disabled: boolean;
+  hidden: boolean;
   setValue: (value: string) => void;
 }
 

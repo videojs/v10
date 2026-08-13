@@ -7,6 +7,7 @@ export { MuxData, type MuxDataProps, muxDataDefaultProps } from './mux-data';
 // is what a Media on another engine imports — reaching it through here would
 // pull hls.js in with it.
 export type {
+  MuxContentData,
   MuxDrmParams,
   MuxImageExt,
   MuxPlaybackParams,
