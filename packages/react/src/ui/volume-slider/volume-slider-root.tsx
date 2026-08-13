@@ -48,8 +48,8 @@ export const VolumeSliderRoot = forwardRef<HTMLDivElement, VolumeSliderRootProps
     const volume = usePlayer(selectVolume);
     const translator = useTranslator();
     const locale = useLocale();
-    const unavailable = volume?.volumeAvailability !== 'available';
-    const isDisabled = Boolean(disabled) || unavailable;
+    const isUnavailable = volume?.volumeAvailability !== 'available';
+    const isDisabled = Boolean(disabled) || isUnavailable;
 
     const [core] = useState(() => new VolumeSliderCore());
     core.setProps({ label, orientation, step, largeStep, wheelStep, disabled, thumbAlignment });
