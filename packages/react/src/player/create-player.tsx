@@ -6,7 +6,6 @@ import {
   type AudioFeatures,
   type AudioPlayerStore,
   combinePlayerFeatureConfigs,
-  createPopupGroup,
   type InferPlayerConfig,
   type PlayerFeatureConfig,
   type PlayerStore,
@@ -93,7 +92,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     const configValues = pick(props, configKeys);
     const [store, setStore] = useState(() => createConfiguredStore(configValues));
     const syncedValues = useRef({ store, values: configValues });
-    const [popupGroup] = useState(() => createPopupGroup());
     const [media, setMedia] = useState<Media | null>(null);
     const [container, setContainer] = useState<HTMLElement | null>(null);
 
@@ -131,10 +129,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
       return store.attach({ media, container });
     }, [media, container, store]);
 
-    const value = useMemo(
-      () => ({ store, media, setMedia, container, setContainer, popupGroup }),
-      [store, media, container, popupGroup]
-    );
+    const value = useMemo(() => ({ store, media, setMedia, container, setContainer }), [store, media, container]);
 
     return <PlayerContextProvider value={value}>{children}</PlayerContextProvider>;
   }

@@ -14,6 +14,7 @@ import { ContextConsumer } from '@videojs/element/context';
 import { SnapshotController } from '@videojs/store/html';
 import { tryHidePopover, tryShowPopover } from '@videojs/utils/dom';
 import { containerContext } from '../../player/context';
+import { popupGroupContext } from '../../player/popup-group-context';
 import { MediaElement } from '../media-element';
 import { PositionController } from '../position-controller';
 export class PopoverElement extends MediaElement {
@@ -47,6 +48,7 @@ export class PopoverElement extends MediaElement {
 
   readonly #core = new PopoverCore();
   readonly #containerCtx = new ContextConsumer(this, { context: containerContext, subscribe: true });
+  readonly #popupGroupCtx = new ContextConsumer(this, { context: popupGroupContext });
   readonly #position = new PositionController(this);
   #popover: PopoverApi | null = null;
   #snapshot: SnapshotController<PopoverInput> | null = null;
@@ -75,7 +77,7 @@ export class PopoverElement extends MediaElement {
       openOnHover: () => this.openOnHover,
       delay: () => this.delay,
       closeDelay: () => this.closeDelay,
-      group: () => this.#containerCtx.value?.popupGroup,
+      group: () => this.#popupGroupCtx.value,
     });
 
     // Register self as the popup element — the element IS the popup.

@@ -1,5 +1,4 @@
 import {
-  createPopupGroup,
   type MediaContainer,
   type PlayerFeatureConfig,
   type PlayerStore,
@@ -57,7 +56,6 @@ export function createProviderMixin<Store extends PlayerStore>(
       #detach: (() => void) | null = null;
       #media: Media | null = null;
       #container: MediaContainer | null = null;
-      #popupGroup = createPopupGroup();
       #fallbackQueued = false;
 
       #setMedia = (media: Media | null): void => {
@@ -73,7 +71,6 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#containerProvider.setValue({
           container,
           setContainer: this.#setContainer,
-          popupGroup: this.#popupGroup,
         });
         this.#tryAttach();
       };
@@ -93,7 +90,6 @@ export function createProviderMixin<Store extends PlayerStore>(
         initialValue: {
           container: this.#container,
           setContainer: this.#setContainer,
-          popupGroup: this.#popupGroup,
         },
       });
 
@@ -113,7 +109,6 @@ export function createProviderMixin<Store extends PlayerStore>(
         this.#containerProvider.setValue({
           container: this.#container,
           setContainer: this.#setContainer,
-          popupGroup: this.#popupGroup,
         });
         this.#tryAttach();
         this.#queueFallbackDiscovery();

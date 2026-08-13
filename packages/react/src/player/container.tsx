@@ -1,11 +1,25 @@
 'use client';
 
-import { DEFAULT_CONTAINER_ROLE, DEFAULT_CONTAINER_TAB_INDEX, focusContainer } from '@videojs/core/dom';
+import {
+  createPopupGroup,
+  DEFAULT_CONTAINER_ROLE,
+  DEFAULT_CONTAINER_TAB_INDEX,
+  focusContainer,
+} from '@videojs/core/dom';
 import { labelText } from '@videojs/core/i18n/text/container';
-import { forwardRef, type HTMLAttributes, type PointerEventHandler, type ReactNode, useEffect, useRef } from 'react';
+import {
+  forwardRef,
+  type HTMLAttributes,
+  type PointerEventHandler,
+  type ReactNode,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import { useTranslator } from '../i18n/context';
 import { useComposedRefs } from '../utils/use-composed-refs';
 import { useContainerAttach } from './context';
+import { PopupGroupProvider } from './popup-group-context';
 
 export interface ContainerProps extends HTMLAttributes<HTMLDivElement> {
   children?: ReactNode;
@@ -24,6 +38,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
 ) {
   const setContainer = useContainerAttach();
   const translator = useTranslator();
+  const [popupGroup] = useState(() => createPopupGroup());
   const internalRef = useRef<HTMLDivElement>(null);
   const composedRef = useComposedRefs(ref, internalRef);
 
@@ -53,7 +68,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(function Con
       {...props}
       onPointerUp={handlePointerUp}
     >
-      {children}
+      <PopupGroupProvider value={popupGroup}>{children}</PopupGroupProvider>
     </div>
   );
 });
