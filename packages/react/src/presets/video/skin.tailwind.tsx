@@ -82,6 +82,7 @@ import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { useQualityOptions } from '@/ui/quality';
+import { QualityRadioGroup } from '@/ui/quality-radio-group';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
 import { StatusAnnouncer } from '@/ui/status-announcer';
@@ -230,34 +231,22 @@ function SettingsMenu(): ReactNode {
                     {t(qualityText)}
                   </Menu.Back>
                   <Menu.Separator className={menu.separator} />
-                  <Menu.RadioGroup
+                  <QualityRadioGroup
                     className={menu.group}
-                    value={quality.value}
-                    onValueChange={quality.setValue}
                     aria-label={t(qualityText)}
-                  >
-                    {quality.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className={menu.item}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
+                    renderItem={(props, item) => (
+                      <Menu.RadioItem {...props} className={menu.item}>
                         <span>
-                          {option.label}
-                          {option.tier ? <sup className={menu.tier}>{option.tier}</sup> : null}
+                          {item.label}
+                          {item.tier ? <sup className={menu.tier}>{item.tier}</sup> : null}
                         </span>
-                        {option.badge ? <span className={badge}>{option.badge}</span> : null}
-                        <Menu.ItemIndicator
-                          checked={option.value === quality.value}
-                          forceMount
-                          className={menu.indicator}
-                        >
+                        {item.badge ? <span className={badge}>{item.badge}</span> : null}
+                        <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
                           <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
+                    )}
+                  />
                 </Menu.Content>
               </Menu.Root>
             ) : null}
