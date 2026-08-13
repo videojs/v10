@@ -64,14 +64,30 @@ test.describe('Captions', () => {
  * hls.js resets every text track on the media element when it attaches, detaches,
  * or loads a source, so a `<track>` that loaded before the source was known used
  * to end up selected but empty — the browser never parses a loaded track again.
+ *
+ * Losing cues is the part no one can undo, so that is what these assert. Which
+ * track is selected afterwards is the browser's call: loading a source re-runs
+ * automatic text-track selection, and WebKit turns off caption tracks it did not
+ * pick itself. `withPreservedTextTracks` unit tests cover the mode it restores.
  */
 test.describe('Captions sideloaded before an hls.js source', () => {
-  /** State of the sideloaded track, read from the element the page author sees. */
-  const englishTrack = (page: Page) => {
+  /**
+   * Cues on the sideloaded track, read from the element the page author sees.
+   * A disabled track reports no cues at all, so read them through a mode that
+   * exposes them and put the track back the way it was found.
+   */
+  const englishCues = (page: Page) => {
     return page.evaluate(() => {
       const media = document.querySelector('hlsjs-video');
       const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
-      return { mode: track?.mode ?? 'missing', cues: track?.cues?.length ?? 0 };
+      if (!track) return -1;
+
+      const { mode } = track;
+      if (mode === 'disabled') track.mode = 'hidden';
+      const cues = track.cues?.length ?? 0;
+      if (mode === 'disabled') track.mode = mode;
+
+      return cues;
     });
   };
 
@@ -80,7 +96,8 @@ test.describe('Captions sideloaded before an hls.js source', () => {
    * attribute. The element clones `<track>` children into its inner `<video>`,
    * and whether a script-added track wins automatic text-track selection is up
    * to the browser's caption preferences — WebKit leaves it `disabled`, which
-   * also stops it from ever loading its cues.
+   * also stops it from ever loading its cues. A track has to be enabled once to
+   * load them, which is the state these tests are about.
    */
   const showEnglishTrack = (page: Page) => {
     return page.waitForFunction(() => {
@@ -120,23 +137,23 @@ test.describe('Captions sideloaded before an hls.js source', () => {
     }, CAPTIONS.english);
 
     await showEnglishTrack(page);
-    await expect.poll(() => englishTrack(page)).toEqual({ mode: 'showing', cues: 1 });
+    await expect.poll(() => englishCues(page)).toBe(1);
   });
 
   test('keeps its cues when the source is assigned after connection', async ({ page }) => {
     await setSource(page, MEDIA.hlsTs.url);
     await waitForManifest(page);
 
-    expect(await englishTrack(page)).toEqual({ mode: 'showing', cues: 1 });
+    expect(await englishCues(page)).toBe(1);
   });
 
-  test('keeps its cues and selection when the source is replaced', async ({ page }) => {
+  test('keeps its cues when the source is replaced', async ({ page }) => {
     await setSource(page, MEDIA.hlsTs.url);
     await waitForManifest(page);
 
     await setSource(page, MEDIA.hlsFmp4.url);
     await waitForManifest(page);
 
-    expect(await englishTrack(page)).toEqual({ mode: 'showing', cues: 1 });
+    expect(await englishCues(page)).toBe(1);
   });
 });
