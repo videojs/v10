@@ -128,6 +128,12 @@ export {
   usePlaybackRateOptions,
 } from './ui/playback-rate';
 export { PlaybackRateButton, type PlaybackRateButtonProps } from './ui/playback-rate-button/playback-rate-button';
+export {
+  PlaybackRateRadioGroup,
+  type PlaybackRateRadioGroupItemProps,
+  type PlaybackRateRadioGroupItemState,
+  type PlaybackRateRadioGroupProps,
+} from './ui/playback-rate-radio-group';
 export { Popover, type PopoverContextValue, usePopoverContext } from './ui/popover';
 export { Poster, type PosterProps } from './ui/poster/poster';
 export {
