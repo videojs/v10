@@ -74,6 +74,11 @@ export class PlayerPage {
     return this.page.locator(SELECTORS.settingsSpeedItem).first();
   }
 
+  /** The scrollable panel of the menu view that is currently on screen. */
+  get activeMenuPanel(): Locator {
+    return this.page.locator(SELECTORS.activeMenuPanel).first();
+  }
+
   get poster(): Locator {
     return this.page.locator(SELECTORS.poster).first();
   }

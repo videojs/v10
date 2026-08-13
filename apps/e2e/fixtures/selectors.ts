@@ -57,6 +57,7 @@ export const SELECTORS = {
   ].join(', '),
   playbackRateUncheckedOptions: unchecked(playbackRateOptions),
   activeMenuOptions: `${activeMenu} ${option}`,
+  activeMenuPanel: '.media-menu__panel[data-menu-view-state="active"]',
   activeMenuUncheckedOptions: unchecked(`${activeMenu} ${option}`),
   settingsButton: [
     withinControls('.media-button--settings'),
