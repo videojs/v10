@@ -1,0 +1,6 @@
+@import "./global/menu/keyframes.css";
+
+@theme {
+  --animate-media-menu-content-enter: media-menu-content-enter var(--menu-transition-duration) ease-in-out both;
+  --animate-media-menu-content-exit: media-menu-content-exit var(--menu-transition-duration) ease-in-out both;
+}

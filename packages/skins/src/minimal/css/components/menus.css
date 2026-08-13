@@ -1,3 +1,5 @@
+@import "../../../shared/global/menu/keyframes.css";
+
 .media-minimal-skin .media-menu {
   --menu-transition-duration: 250ms;
   --menu-max-height: calc(var(--spacing) * 56);
@@ -23,9 +25,12 @@
     --menu-transition-duration: 0ms;
   }
 
-  .media-menu__panel {
+  & > .media-menu__panel {
     position: absolute;
-    inset: 0;
+    inset-inline: 0;
+    top: 0;
+    z-index: 10;
+    max-height: inherit;
     padding: var(--menu-padding);
     overflow: auto;
     overscroll-behavior: none;
@@ -36,46 +41,11 @@
     transition-property: translate, filter;
     will-change: translate, filter;
 
-    &[data-starting-style],
-    &[data-ending-style] {
+    &:where([data-starting-style], [data-ending-style]) {
       overflow: hidden;
-    }
-
-    /* Root settings view — slides out when a submenu is active */
-    &[data-menu-root-view][data-menu-view-state="inactive"] {
+      pointer-events: none;
       filter: blur(8px);
-      translate: -100% 0;
-
-      /* Hide the indicator while transitioning */
-      .media-menu__group::before {
-        display: none;
-      }
-    }
-
-    /* Submenu panels — slide in/out alongside the root view */
-    &[data-submenu] {
-      z-index: 10;
-
-      &:not([data-open], [data-ending-style]) {
-        translate: -100% 0;
-        transition-property: none;
-      }
-
-      &[data-starting-style],
-      &[data-ending-style] {
-        pointer-events: none;
-        filter: blur(8px);
-      }
-
-      &[data-starting-style][data-direction="forward"],
-      &[data-ending-style][data-direction="back"] {
-        translate: 100% 0;
-      }
-
-      &[data-ending-style][data-direction="forward"],
-      &[data-starting-style][data-direction="back"] {
-        translate: -100% 0;
-      }
+      translate: 100% 0;
     }
   }
 
@@ -225,13 +195,31 @@
     min-width: calc(var(--spacing) * 48);
     height: var(--media-menu-height);
     overflow: hidden;
-    /* Add height and width transitions. */
+    /* Only the menu size changes between panels. */
     transition:
       var(--popup-transition),
-      height var(--popup-transition-timing-function) var(--menu-transition-duration),
-      width var(--popup-transition-timing-function) var(--menu-transition-duration);
+      width var(--popup-transition-timing-function) var(--menu-transition-duration),
+      height var(--popup-transition-timing-function) var(--menu-transition-duration);
 
-    /* Don't transition width and height on open/close. */
+    & > :not([data-submenu]) {
+      translate: 0 0;
+      transition:
+        translate var(--menu-transition-duration) ease-in-out,
+        filter var(--menu-transition-duration) ease-in-out;
+      will-change: translate, filter;
+    }
+
+    &[data-submenu-expanded="true"] > :not([data-submenu]) {
+      filter: blur(8px);
+      translate: -100% 0;
+      animation: media-menu-content-exit var(--menu-transition-duration) ease-in-out both;
+    }
+
+    &[data-submenu-expanded="false"] > :not([data-submenu]) {
+      animation: media-menu-content-enter var(--menu-transition-duration) ease-in-out both;
+    }
+
+    /* Don't transition size on open/close. */
     &[data-starting-style],
     &[data-ending-style] {
       transition: var(--popup-transition);

@@ -3,29 +3,14 @@ import { cn } from '@videojs/utils/style';
 import { popup } from './popup';
 import { surface } from './surface';
 
-const panelBase = cn(
-  'absolute inset-0 overflow-auto overscroll-none p-(--menu-padding) outline-none translate-none',
-  'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
-  'transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate,filter]'
-);
-
-const rootView = cn(
-  panelBase,
-  'group/menu-root-view',
-  'data-[menu-view-state=inactive]:-translate-x-full data-[menu-view-state=inactive]:blur'
-);
-
 const submenuPanel = cn(
-  panelBase,
+  'absolute inset-x-0 top-0 [max-height:inherit] overflow-auto overscroll-none p-(--menu-padding) outline-none',
   'z-10',
-  'not-data-open:not-data-ending-style:-translate-x-full',
-  'not-data-open:not-data-ending-style:transition-none',
+  'translate-none transition-[translate,filter] duration-(--menu-transition-duration) ease-in-out will-change-[translate,filter]',
   'data-starting-style:pointer-events-none data-ending-style:pointer-events-none',
-  'data-starting-style:blur data-ending-style:blur',
-  'data-starting-style:data-[direction=forward]:translate-x-full',
-  'data-ending-style:data-[direction=forward]:-translate-x-full',
-  'data-starting-style:data-[direction=back]:-translate-x-full',
-  'data-ending-style:data-[direction=back]:translate-x-full'
+  'data-starting-style:overflow-hidden data-ending-style:overflow-hidden',
+  'data-starting-style:translate-x-full data-ending-style:translate-x-full',
+  'data-starting-style:blur data-ending-style:blur'
 );
 
 const itemBase = cn(
@@ -62,8 +47,7 @@ const group = cn(
   'supports-[top:anchor(top)]:before:rounded-(--menu-item-border-radius)',
   'supports-[top:anchor(top)]:before:transition-[inset]',
   'supports-[top:anchor(top)]:before:duration-100',
-  'supports-[top:anchor(top)]:before:ease-in-out',
-  'group-data-[menu-view-state=inactive]/menu-root-view:before:hidden'
+  'supports-[top:anchor(top)]:before:ease-in-out'
 );
 
 const menuHostShell = cn(
@@ -77,15 +61,22 @@ const menuHostShell = cn(
 export const menu = {
   /** Standalone menu popover host (audio playback rate, sandbox demos). */
   root: cn(menuHostShell, 'overflow-auto!'),
-  /** Settings menu viewport host with nested submenu navigation. */
+  /** Settings menu host with nested submenu navigation. */
   settings: cn(
     menuHostShell,
-    // Add height and width transitions.
-    '[--popup-transition:var(--popup-base-transition),height_var(--popup-transition-timing-function)_var(--menu-transition-duration),width_var(--popup-transition-timing-function)_var(--menu-transition-duration)]',
-    // Don't transition width and height on open/close.
+    // Only the menu size changes between panels.
+    '[--popup-transition:var(--popup-base-transition),width_var(--popup-transition-timing-function)_var(--menu-transition-duration),height_var(--popup-transition-timing-function)_var(--menu-transition-duration)]',
+    // Don't transition size on open/close.
     'data-starting-style:[--popup-transition:var(--popup-base-transition)]',
     'data-ending-style:[--popup-transition:var(--popup-base-transition)]',
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
+    '[&>:not([data-submenu])]:translate-none [&>:not([data-submenu])]:transition-[translate,filter]',
+    '[&>:not([data-submenu])]:duration-(--menu-transition-duration) [&>:not([data-submenu])]:ease-in-out',
+    '[&>:not([data-submenu])]:will-change-[translate,filter]',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:animate-media-menu-content-exit',
+    '[&[data-submenu-expanded=false]>:not([data-submenu])]:animate-media-menu-content-enter',
     'overflow-hidden!'
   ),
   group,
@@ -103,9 +94,7 @@ export const menu = {
   tier: 'pl-0.5 pt-px text-(length:--font-size-tiny) font-semibold leading-none text-current/70',
   indicator: 'ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
   icon: 'shrink-0 text-current/65 drop-shadow-[0_1px_0_var(--shadow-current-color)] group-hover/menu-item:text-inherit group-data-highlighted/menu-item:text-inherit',
-  /** Root settings view — slides out when a submenu is active. */
-  rootView,
-  /** Submenu panel — slides in/out alongside the root view. */
+  /** Nested submenu panel. */
   submenuPanel,
   back: cn(itemBase, 'mb-0.5 w-full'),
   hint: 'ml-auto inline-flex min-w-0 items-center gap-1 pl-2 text-current/65',
