@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { getScreenResolution, watchScreenResolution } from '../screen';
+import { getScreenResolution, type ScreenResolutionOptions, watchScreenResolution } from '../screen';
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -80,15 +80,12 @@ describe('watchScreenResolution', () => {
     const queries: Array<{ query: string; fire: () => void }> = [];
 
     vi.stubGlobal('matchMedia', (query: string) => {
-      const listeners = new Set<() => void>();
-      queries.push({ query, fire: () => listeners.forEach((listener) => listener()) });
+      // A real `EventTarget`, so `once` and `signal` come from the platform rather
+      // than from a stub that could model them wrongly — the watcher leans on both.
+      const target = new EventTarget();
+      queries.push({ query, fire: () => target.dispatchEvent(new Event('change')) });
 
-      return {
-        matches: true,
-        media: query,
-        addEventListener: (_: string, listener: () => void) => listeners.add(listener),
-        removeEventListener: (_: string, listener: () => void) => listeners.delete(listener),
-      };
+      return Object.assign(target, { matches: true, media: query });
     });
 
     return queries;
@@ -105,10 +102,54 @@ describe('watchScreenResolution', () => {
     return screen;
   }
 
+  /**
+   * Subscribe, then forget the call the subscribe itself makes, so a test can
+   * assert on changes alone.
+   */
+  function watchChanges(options?: ScreenResolutionOptions) {
+    const onChange = vi.fn();
+    const stop = watchScreenResolution(onChange, options);
+    onChange.mockClear();
+    return { onChange, stop };
+  }
+
+  describe('on subscribe', () => {
+    it('reports the starting value, so a consumer needs no separate read', () => {
+      stubScreen(1440, 900);
+      const onChange = vi.fn();
+
+      const stop = watchScreenResolution(onChange);
+
+      expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 1440, height: 900 });
+      stop();
+    });
+
+    it('reports undefined where there is no screen', () => {
+      // Unconditional, so a consumer can tell "there is no screen" from "not
+      // called yet". Comparing against an empty starting value would stay silent.
+      vi.stubGlobal('screen', undefined);
+      const onChange = vi.fn();
+
+      const stop = watchScreenResolution(onChange);
+
+      expect(onChange).toHaveBeenCalledExactlyOnceWith(undefined);
+      stop();
+    });
+
+    it('honors the reader options', () => {
+      stubScreen(1440, 900, 2);
+      const onChange = vi.fn();
+
+      const stop = watchScreenResolution(onChange, { useDevicePixelRatio: false });
+
+      expect(onChange).toHaveBeenCalledExactlyOnceWith({ width: 1440, height: 900 });
+      stop();
+    });
+  });
+
   it('reports a new reading on resize', () => {
     const screen = stubScreen(1440, 900);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     screen.width = 1920;
     screen.height = 1080;
@@ -121,19 +162,9 @@ describe('watchScreenResolution', () => {
   it('does not report when nothing moved', () => {
     // `resize` is noisy, so comparing readings is what keeps it from firing.
     stubScreen(1440, 900);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     globalThis.dispatchEvent(new Event('resize'));
-
-    expect(onChange).not.toHaveBeenCalled();
-    stop();
-  });
-
-  it('does not report on subscribe', () => {
-    stubScreen(1440, 900);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
 
     expect(onChange).not.toHaveBeenCalled();
     stop();
@@ -143,8 +174,7 @@ describe('watchScreenResolution', () => {
     // The direct signal, and the only one that catches a window moving between
     // two same-size, same-ratio displays. Chromium-only, so the others stay.
     const screen = stubScreen(1440, 900);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     screen.width = 3840;
     screen.height = 2160;
@@ -156,8 +186,7 @@ describe('watchScreenResolution', () => {
 
   it('reports rotation, which swaps the axes without a resize', () => {
     const screen = stubScreen(390, 844);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     screen.width = 844;
     screen.height = 390;
@@ -168,10 +197,10 @@ describe('watchScreenResolution', () => {
   });
 
   it('reports a device pixel ratio change under a window that kept its size', () => {
+    // The cross-display drag: the only coverage that case has in WebKit and Gecko.
     const queries = stubMatchMedia();
     stubScreen(1440, 900, 1);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     expect(queries[0]?.query).toBe('(resolution: 1dppx)');
 
@@ -187,8 +216,7 @@ describe('watchScreenResolution', () => {
     // one goes quiet once the ratio moves.
     const queries = stubMatchMedia();
     stubScreen(1440, 900, 1);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     vi.stubGlobal('devicePixelRatio', 2);
     queries[0]!.fire();
@@ -202,10 +230,41 @@ describe('watchScreenResolution', () => {
     stop();
   });
 
+  it('arms one ratio query, no matter how much else fires', () => {
+    // Only the query's own handler re-arms, so noisy signals can't accumulate
+    // queries. This is what `once: true` replaces the old ratio bookkeeping with.
+    const queries = stubMatchMedia();
+    stubScreen(1440, 900, 1);
+    const { stop } = watchChanges();
+
+    globalThis.dispatchEvent(new Event('resize'));
+    globalThis.dispatchEvent(new Event('resize'));
+
+    expect(queries).toHaveLength(1);
+    stop();
+  });
+
+  it('retires each ratio query once it has fired', () => {
+    // `once: true`, so re-firing the spent query is inert — the live one is the
+    // replacement, armed against the ratio that is now current.
+    const queries = stubMatchMedia();
+    stubScreen(1440, 900, 1);
+    const { onChange, stop } = watchChanges();
+
+    vi.stubGlobal('devicePixelRatio', 2);
+    queries[0]!.fire();
+    expect(onChange).toHaveBeenCalledTimes(1);
+
+    queries[0]!.fire();
+
+    expect(onChange).toHaveBeenCalledTimes(1);
+    expect(queries).toHaveLength(2);
+    stop();
+  });
+
   it('reports the reading becoming unknown, then known again', () => {
     const screen = stubScreen(1440, 900);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     screen.width = 0;
     globalThis.dispatchEvent(new Event('resize'));
@@ -219,10 +278,9 @@ describe('watchScreenResolution', () => {
     stop();
   });
 
-  it('honors the reader options', () => {
+  it('reports changes in CSS pixels when the ratio is opted out', () => {
     const screen = stubScreen(1440, 900, 2);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange, { useDevicePixelRatio: false });
+    const { onChange, stop } = watchChanges({ useDevicePixelRatio: false });
 
     screen.width = 1920;
     globalThis.dispatchEvent(new Event('resize'));
@@ -235,9 +293,8 @@ describe('watchScreenResolution', () => {
     // Nothing to report from a signal an environment doesn't have, which is not a
     // reason to fail — same line the reading draws.
     vi.stubGlobal('screen', undefined);
-    const onChange = vi.fn();
+    const { onChange, stop } = watchChanges();
 
-    const stop = watchScreenResolution(onChange);
     globalThis.dispatchEvent(new Event('resize'));
 
     expect(onChange).not.toHaveBeenCalled();
@@ -246,8 +303,7 @@ describe('watchScreenResolution', () => {
 
   it('stops reporting once stopped', () => {
     const screen = stubScreen(1440, 900);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     stop();
     screen.width = 1920;
@@ -257,10 +313,10 @@ describe('watchScreenResolution', () => {
   });
 
   it('stops every signal, not just resize', () => {
+    // One abort signal behind all of them, so none can outlive the watcher.
     const queries = stubMatchMedia();
     const screen = stubScreen(1440, 900, 1);
-    const onChange = vi.fn();
-    const stop = watchScreenResolution(onChange);
+    const { onChange, stop } = watchChanges();
 
     stop();
 

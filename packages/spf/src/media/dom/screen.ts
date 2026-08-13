@@ -18,6 +18,8 @@
  */
 
 import { listen } from '@videojs/utils/dom';
+import { shallowEqual } from '@videojs/utils/object';
+import { isFunction } from '@videojs/utils/predicate';
 
 /** A screen's pixel dimensions. */
 export interface ScreenResolution {
@@ -34,8 +36,13 @@ export interface ScreenResolutionOptions {
    * Opt out for CSS pixels. Note that derating — a 3x phone rarely wanting 3x the
    * pixels of its layout — is a scale applied over this reading rather than a
    * reason to turn it off.
+   *
+   * ⚠️ Chromium and Gecko fold page zoom into `devicePixelRatio`, so with this on,
+   * zooming moves the reading even though the screen didn't change. WebKit holds
+   * the ratio independent of zoom and is unaffected. Whether a cap should track
+   * zoom is the cap's call; this flag is only what puts zoom in scope.
    */
-  useDevicePixelRatio?: boolean | undefined;
+  useDevicePixelRatio: boolean;
 }
 
 /**
@@ -52,13 +59,14 @@ export interface ScreenResolutionOptions {
  * cap should flap on rotation, or hold the larger budget across both — and
  * belongs to the cap rather than to the reading.
  */
-export function getScreenResolution(options: ScreenResolutionOptions = {}): ScreenResolution | undefined {
+export function getScreenResolution(
+  { useDevicePixelRatio }: ScreenResolutionOptions = { useDevicePixelRatio: true }
+): ScreenResolution | undefined {
   const screen = globalThis.screen;
   if (!screen) return undefined;
 
   // `|| 1` covers a missing or nonsense ratio: a CSS-pixel reading is still true
   // and still cappable, so it isn't worth failing the whole answer over.
-  const { useDevicePixelRatio = true } = options;
   const ratio = useDevicePixelRatio ? globalThis.devicePixelRatio || 1 : 1;
 
   // Rounded because device pixels are whole and a fractional ratio doesn't divide
@@ -78,8 +86,12 @@ export function getScreenResolution(options: ScreenResolutionOptions = {}): Scre
  * signal that implies one and compares readings to decide whether anything
  * actually moved. Comparing is what makes that safe: the signals overlap and
  * `resize` in particular is noisy, so over-subscribing costs a discarded read
- * rather than a spurious call. `onChange` fires only on a genuine change, and
- * never on subscribe — call {@link getScreenResolution} for the starting value.
+ * rather than a spurious call.
+ *
+ * `onChange` is called once on subscribe with the starting value — including
+ * `undefined` where there is no screen — and after that only on a genuine change.
+ * So a consumer gets its initial state from the watcher and never has to pair it
+ * with a separate {@link getScreenResolution} call.
  *
  * The signals, and what each one is here for:
  *
@@ -95,9 +107,16 @@ export function getScreenResolution(options: ScreenResolutionOptions = {}): Scre
  * - **`screen.orientation` change** — rotation, which swaps the axes without
  *   necessarily resizing the window.
  * - **a `(resolution: <ratio>dppx)` media query** — the device pixel ratio
- *   changing under a window that kept its size, from zoom or from moving to a
- *   display with a different ratio. Armed against the current ratio and re-armed
- *   when it moves, since the query only reports on the ratio it was built for.
+ *   changing under a window that kept its size, which is the cross-display drag
+ *   between displays of different density. Each query only answers about the ratio
+ *   it was built for, so it reports one change and its handler arms the next.
+ *
+ *   Worth keeping despite looking redundant, because it is the only coverage that
+ *   case has in WebKit and Firefox: neither implements `screen`'s change event,
+ *   and the drag doesn't resize the window. It is also a cleaner signal in Safari
+ *   than elsewhere — WebKit holds `devicePixelRatio` independent of page zoom, so
+ *   there it moves only on a real density change, where Chromium and Gecko fold
+ *   zoom into it as well.
  *
  * ⚠️ Known gap, on engines without `screen`'s change event: dragging a window
  * between two different-size displays that share a ratio, without the window
@@ -107,74 +126,72 @@ export function getScreenResolution(options: ScreenResolutionOptions = {}): Scre
  */
 export function watchScreenResolution(
   onChange: (resolution: ScreenResolution | undefined) => void,
-  options: ScreenResolutionOptions = {}
+  options: ScreenResolutionOptions = { useDevicePixelRatio: true }
 ): () => void {
+  // One signal for every listener, so stopping is one call rather than a handle
+  // per subscription. Also makes a late `watchRatio` inert: `addEventListener`
+  // drops a listener whose signal has already aborted.
+  const disconnect = new AbortController();
+  const { signal } = disconnect;
   let current = getScreenResolution(options);
-  let armedRatio: number | undefined;
-  let stopRatioQuery: (() => void) | undefined;
 
   const check = () => {
-    armRatioQuery();
-
     const next = getScreenResolution(options);
-    if (isSameResolution(current, next)) return;
+    if (shallowEqual(current, next)) return;
 
     current = next;
     onChange(next);
   };
 
-  // Re-armed rather than armed once: a `dppx` query only answers about the ratio
-  // it was built for, so after the ratio moves the old query goes quiet.
-  const armRatioQuery = () => {
-    const ratio = globalThis.devicePixelRatio;
-    if (ratio === armedRatio) return;
+  // Deliver the starting value up front, so a consumer gets its initial state from
+  // the watcher rather than having to pair it with a separate read. Unconditional,
+  // rather than falling out of comparing against an empty `current`: an unknown
+  // reading is a value too, and a consumer that only ever heard from us about a
+  // *known* screen couldn't tell "there is no screen" from "not called yet".
+  //
+  // Before the listeners rather than after, so a callback that throws takes
+  // nothing with it — there is no subscription yet to strand.
+  onChange(current);
 
-    stopRatioQuery?.();
-    stopRatioQuery = undefined;
-    armedRatio = ratio;
+  // A `dppx` query only answers about the ratio it was built for, so each one
+  // reports a single change and the handler builds the next. `once: true` is what
+  // keeps that from accumulating listeners: the fired one is gone before the
+  // replacement is armed, with no handle to track. Same shape as MDN's snippet
+  // for this, whose earlier non-re-arming version fired exactly once and stopped.
+  const watchRatio = () => {
+    const query = globalThis.matchMedia?.(`(resolution: ${globalThis.devicePixelRatio}dppx)`);
+    if (!query) return;
 
-    if (!(typeof ratio === 'number' && Number.isFinite(ratio) && ratio > 0)) return;
-
-    const query = globalThis.matchMedia?.(`(resolution: ${ratio}dppx)`);
-    if (query) stopRatioQuery = listen(query, 'change', check);
+    listen(
+      query,
+      'change',
+      () => {
+        watchRatio();
+        check();
+      },
+      { once: true, signal }
+    );
   };
 
-  armRatioQuery();
+  watchRatio();
 
   // Each signal is optional for the same reason the reading is: an environment
   // missing one has nothing to report from it, which is not a reason to fail.
-  // `screen`'s own change event is subscribed unconditionally rather than
-  // feature-detected — where it isn't implemented it simply never fires, and a
-  // signal that never fires costs nothing under comparison.
+  // `screen`'s own change event is subscribed without feature-detecting — where
+  // it isn't implemented it simply never fires, and a signal that never fires
+  // costs nothing under comparison.
   const screen = globalThis.screen;
-  const screenEvents = asEventTarget(screen);
-  const stopResize = globalThis.window ? listen(globalThis.window, 'resize', check) : undefined;
-  const stopScreen = screenEvents ? listen(screenEvents, 'change', check) : undefined;
-  const stopOrientation = screen?.orientation ? listen(screen.orientation, 'change', check) : undefined;
+  const orientation = screen?.orientation;
 
-  return () => {
-    stopResize?.();
-    stopScreen?.();
-    stopOrientation?.();
-    stopRatioQuery?.();
-    stopRatioQuery = undefined;
-  };
+  if (globalThis.window) listen(globalThis.window, 'resize', check, { signal });
+  // NOTE: Chromium browsers support screen change event.
+  // See: https://developer.mozilla.org/en-US/docs/Web/API/Screen/change_event
+  if (isEventTarget(screen)) listen(screen, 'change', check, { signal });
+  if (orientation) listen(orientation, 'change', check, { signal });
+
+  return () => disconnect.abort();
 }
 
-/**
- * `Screen` as something subscribable.
- *
- * It is an `EventTarget` at runtime, and dispatches `change` where the Window
- * Management API is implemented, but `lib.dom.d.ts` types neither — so the shape
- * gets checked rather than declared. Same approach `@videojs/core` takes to
- * `screen.orientation`'s lock methods, which that lib under-types too.
- */
-function asEventTarget(value: object | undefined): EventTarget | undefined {
-  return value && 'addEventListener' in value ? (value as EventTarget) : undefined;
-}
-
-/** Whether two readings say the same thing, counting two unknowns as agreeing. */
-function isSameResolution(a: ScreenResolution | undefined, b: ScreenResolution | undefined): boolean {
-  if (!a || !b) return a === b;
-  return a.width === b.width && a.height === b.height;
+function isEventTarget(value: any): value is EventTarget {
+  return isFunction(value?.addEventListener);
 }
