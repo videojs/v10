@@ -17,7 +17,7 @@ import { HlsJsMediaMediaTracksMixin } from './media-tracks';
 import { HlsJsMediaMetadataTracksMixin } from './metadata-tracks';
 import { HlsJsMediaPreloadMixin } from './preload';
 import { HlsJsMediaStreamTypeMixin } from './stream-type';
-import { HlsJsMediaTextTracksMixin } from './text-tracks';
+import { HlsJsMediaTextTracksMixin, withPreservedTextTracks } from './text-tracks';
 
 export const defaultHlsConfig: Partial<HlsConfig> = {
   backBufferLength: 30,
@@ -55,16 +55,18 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   }
 
   set src(src: string) {
-    this.#engine?.loadSource(src);
+    // Attaching, detaching, and loading a source each reset every text track on
+    // the element, sideloaded ones included. See `withPreservedTextTracks`.
+    withPreservedTextTracks(this.target as HTMLVideoElement | null, () => this.#engine?.loadSource(src));
   }
 
   attach(target: HTMLVideoElement) {
     super.attach(target);
-    this.#engine?.attachMedia(target);
+    withPreservedTextTracks(target, () => this.#engine?.attachMedia(target));
   }
 
   detach() {
-    this.#engine?.detachMedia();
+    withPreservedTextTracks(this.target as HTMLVideoElement | null, () => this.#engine?.detachMedia());
     super.detach();
   }
 
