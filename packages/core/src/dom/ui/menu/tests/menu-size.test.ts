@@ -38,7 +38,7 @@ describe('syncMenuSize', () => {
 
     expect(root.getAttribute('aria-hidden')).toBe('true');
     expect(root.hasAttribute('inert')).toBe(true);
-    expect(content.hasAttribute('data-submenu-expanded')).toBe(true);
+    expect(content.getAttribute('data-submenu-expanded')).toBe('true');
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('220px');
     expect(content.style.getPropertyValue('--media-menu-height')).toBe('240px');
   });
@@ -80,7 +80,7 @@ describe('syncMenuSize', () => {
 
     expect(root.getAttribute('aria-hidden')).toBe('true');
     expect(root.hasAttribute('inert')).toBe(true);
-    expect(content.hasAttribute('data-submenu-expanded')).toBe(false);
+    expect(content.getAttribute('data-submenu-expanded')).toBe('false');
     expect(content.style.getPropertyValue('--media-menu-width')).toBe('180px');
     expect(content.style.getPropertyValue('--media-menu-height')).toBe('120px');
   });
@@ -128,8 +128,8 @@ describe('syncMenuSize', () => {
     expect(first.style.getPropertyValue('--media-menu-height')).toBe('240px');
     expect(rootItems.hasAttribute('inert')).toBe(true);
     expect(firstItems.hasAttribute('inert')).toBe(true);
-    expect(root.hasAttribute('data-submenu-expanded')).toBe(true);
-    expect(first.hasAttribute('data-submenu-expanded')).toBe(true);
+    expect(root.getAttribute('data-submenu-expanded')).toBe('true');
+    expect(first.getAttribute('data-submenu-expanded')).toBe('true');
 
     second.setAttribute('data-ending-style', '');
     syncMenuSizeChain(first);
@@ -140,7 +140,7 @@ describe('syncMenuSize', () => {
     expect(first.style.getPropertyValue('--media-menu-height')).toBe('180px');
     expect(rootItems.hasAttribute('inert')).toBe(true);
     expect(firstItems.hasAttribute('inert')).toBe(true);
-    expect(root.hasAttribute('data-submenu-expanded')).toBe(true);
-    expect(first.hasAttribute('data-submenu-expanded')).toBe(false);
+    expect(root.getAttribute('data-submenu-expanded')).toBe('true');
+    expect(first.getAttribute('data-submenu-expanded')).toBe('false');
   });
 });

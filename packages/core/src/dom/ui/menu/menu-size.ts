@@ -204,9 +204,15 @@ export function syncMenuSize(content: HTMLElement | null): void {
   const activeSubmenu = getActiveSubmenu(content);
   const rootChildren = getRootChildren(content);
   const covered = activeSubmenu !== null;
-  const submenuExpanded = activeSubmenu !== null && !activeSubmenu.hasAttribute('data-ending-style');
 
-  content.toggleAttribute(MENU_SUBMENU_EXPANDED_ATTR, submenuExpanded);
+  if (activeSubmenu) {
+    content.setAttribute(
+      MENU_SUBMENU_EXPANDED_ATTR,
+      activeSubmenu.hasAttribute('data-ending-style') ? 'false' : 'true'
+    );
+  } else {
+    content.removeAttribute(MENU_SUBMENU_EXPANDED_ATTR);
+  }
 
   for (const child of rootChildren) setCovered(child, covered);
 

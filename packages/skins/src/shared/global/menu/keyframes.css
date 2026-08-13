@@ -1,0 +1,27 @@
+/* -------------------------------------------------------------------------- */
+/* Global @keyframes for menu skins (CSS & Tailwind)                          */
+/* -------------------------------------------------------------------------- */
+
+@keyframes media-menu-content-exit {
+  from {
+    filter: none;
+    translate: 0 0;
+  }
+
+  to {
+    filter: blur(8px);
+    translate: -100% 0;
+  }
+}
+
+@keyframes media-menu-content-enter {
+  from {
+    filter: blur(8px);
+    translate: -100% 0;
+  }
+
+  to {
+    filter: none;
+    translate: 0 0;
+  }
+}

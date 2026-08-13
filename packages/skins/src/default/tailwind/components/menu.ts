@@ -73,9 +73,10 @@ export const menu = {
     '[&>:not([data-submenu])]:translate-none [&>:not([data-submenu])]:transition-[translate,filter]',
     '[&>:not([data-submenu])]:duration-(--menu-transition-duration) [&>:not([data-submenu])]:ease-in-out',
     '[&>:not([data-submenu])]:will-change-[translate,filter]',
-    '[&[data-submenu-expanded]>:not([data-submenu])]:-translate-x-full',
-    '[&[data-submenu-expanded]>:not([data-submenu])]:blur',
-    '[&[data-submenu-expanded]>:not([data-submenu])]:transition-none',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
+    '[&[data-submenu-expanded=true]>:not([data-submenu])]:animate-media-menu-content-exit',
+    '[&[data-submenu-expanded=false]>:not([data-submenu])]:animate-media-menu-content-enter',
     'overflow-hidden!'
   ),
   group,

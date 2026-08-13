@@ -3,6 +3,8 @@
    Note: Menus use `.media-popover` styles for positioning and transitions.
    ========================================================================== */
 
+@import "../../../shared/global/menu/keyframes.css";
+
 .media-default-skin .media-menu {
   --menu-transition-duration: 250ms;
   --menu-max-height: calc(var(--spacing) * 56);
@@ -204,10 +206,14 @@
       will-change: translate, filter;
     }
 
-    &[data-submenu-expanded] > :not([data-submenu]) {
+    &[data-submenu-expanded="true"] > :not([data-submenu]) {
       filter: blur(8px);
       translate: -100% 0;
-      transition: none;
+      animation: media-menu-content-exit var(--menu-transition-duration) ease-in-out both;
+    }
+
+    &[data-submenu-expanded="false"] > :not([data-submenu]) {
+      animation: media-menu-content-enter var(--menu-transition-duration) ease-in-out both;
     }
 
     /* Don't transition size on open/close. */
