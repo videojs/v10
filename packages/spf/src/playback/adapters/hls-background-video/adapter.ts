@@ -10,15 +10,15 @@ import {
   createBackgroundVideoEngine,
 } from '../../engines/hls/engine-background-video';
 
-export interface MuxBackgroundVideoMediaProps {
+export interface HlsBackgroundVideoMediaProps {
   src: string;
 }
 
-export const muxBackgroundVideoMediaDefaultProps: MuxBackgroundVideoMediaProps = {
+export const hlsBackgroundVideoMediaDefaultProps: HlsBackgroundVideoMediaProps = {
   src: '',
 };
 
-export interface MuxBackgroundVideoMediaAPI extends MuxBackgroundVideoMediaProps {
+export interface HlsBackgroundVideoMediaAPI extends HlsBackgroundVideoMediaProps {
   readonly engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
@@ -28,20 +28,18 @@ export interface MuxBackgroundVideoMediaAPI extends MuxBackgroundVideoMediaProps
 
 /**
  * Mixin that adds the background-video SPF playback engine to any base class,
- * for a Mux stream URL.
+ * for an HLS URL.
  *
- * `src` is the whole surface. What a consumer would otherwise reach for an
- * attribute to do — capping which rendition is fetched — is a Mux stream URL
- * param (`?max_resolution=720p`), so the cap is applied server-side and the
- * manifest never offers the renditions it excludes. This adapter therefore has
- * no cap of its own and always pins the top rendition on offer.
+ * `src` is the whole surface, and the picker always pins the top rendition on
+ * offer. There is no cap of its own because the manifest is the better place to
+ * narrow one: a delivery param — `?max_resolution=720p` on a Mux stream URL, for
+ * one — keeps the renditions it excludes out of the manifest entirely, rather
+ * than fetched-then-unpicked. Deriving a cap from the screen instead is on the
+ * roadmap, and lands here when it does.
  *
- * Deliberately a sibling of `../background-video` rather than a layer over it.
- * They share the engine, not the adapter: that one exposes a client-side
- * `maxResolution` this one has no use for, and it binds no host. The two are
- * otherwise line-for-line the same today — **changes to one usually belong in
- * both** until the Mux flavor grows something of its own, which the screen
- * resolution and pixel-density capping on the roadmap is expected to be.
+ * `@videojs/spf/mux-background-video` is this same Media under a Mux-flavored
+ * name — an alias, not a variant. Nothing about the surface changes with the
+ * import path.
  *
  * Everything else the use case fixes rather than exposes: video-only, looping,
  * muted, autoplaying, loading as soon as there is a source. `attach` writes that
@@ -50,16 +48,21 @@ export interface MuxBackgroundVideoMediaAPI extends MuxBackgroundVideoMediaProps
  * already, and shadowing them with fixed values would only make reads describe
  * an intention rather than what the element is doing.
  *
- * @example
- * class MuxBackgroundVideoMedia extends MuxBackgroundVideoMediaMixin(BackgroundVideoHost) {}
+ * A new src re-resolves the presentation, tearing down the state, SourceBuffers,
+ * and in-flight requests the previous one built before the next begins. The
+ * engine instance and the attached media element are both kept, so neither has to
+ * be rewired.
  *
- * const media = new MuxBackgroundVideoMedia();
+ * @example
+ * class HlsBackgroundVideoMedia extends HlsBackgroundVideoMediaMixin(BackgroundVideoHost) {}
+ *
+ * const media = new HlsBackgroundVideoMedia();
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/PLAYBACK_ID.m3u8?max_resolution=720p';
  * media.play();
  */
-export function MuxBackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  class MuxBackgroundVideoMediaImpl extends BaseClass {
+export function HlsBackgroundVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  class HlsBackgroundVideoMediaImpl extends BaseClass {
     #engine: Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext>;
     #config: BackgroundVideoEngineConfig;
     #signals!: BackgroundVideoEngineSignals;
@@ -134,7 +137,7 @@ export function MuxBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     async play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
-        return Promise.reject(new Error('MuxBackgroundVideoMediaElement: no media element attached'));
+        return Promise.reject(new Error('HlsBackgroundVideoMediaElement: no media element attached'));
       }
 
       try {
@@ -187,8 +190,8 @@ export function MuxBackgroundVideoMediaMixin<Base extends Constructor<any>>(Base
     }
   }
 
-  return MuxBackgroundVideoMediaImpl as unknown as MixinReturn<Base, MuxBackgroundVideoMediaAPI>;
+  return HlsBackgroundVideoMediaImpl as unknown as MixinReturn<Base, HlsBackgroundVideoMediaAPI>;
 }
 
-/** Standalone Mux background-video adapter with no base class. */
-export class MuxBackgroundVideoMediaElement extends MuxBackgroundVideoMediaMixin(class {}) {}
+/** Standalone SPF background-video adapter with no base class. */
+export class HlsBackgroundVideoMediaElement extends HlsBackgroundVideoMediaMixin(class {}) {}

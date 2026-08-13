@@ -1,10 +1,10 @@
-import { MuxBackgroundVideoMediaMixin } from './adapter';
+import { HlsBackgroundVideoMediaMixin } from './adapter';
 import { BackgroundVideoHost } from './host';
 
-const MuxBackgroundVideoMediaBase = MuxBackgroundVideoMediaMixin(BackgroundVideoHost);
+const HlsBackgroundVideoMediaBase = HlsBackgroundVideoMediaMixin(BackgroundVideoHost);
 
 /**
- * The Mux background-video Media, bound to a `<video>` through
+ * The background-video Media, bound to a `<video>` through
  * {@link BackgroundVideoHost}.
  *
  * That host carries the attached element and the four properties `attach` fixes,
@@ -15,4 +15,4 @@ const MuxBackgroundVideoMediaBase = MuxBackgroundVideoMediaMixin(BackgroundVideo
  * text entirely and pins one video rendition for the session, so there are no
  * track lists for a consumer to project or switch between.
  */
-export class MuxBackgroundVideoMedia extends MuxBackgroundVideoMediaBase {}
+export class HlsBackgroundVideoMedia extends HlsBackgroundVideoMediaBase {}

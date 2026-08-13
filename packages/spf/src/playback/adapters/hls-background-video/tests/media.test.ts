@@ -4,11 +4,11 @@
  * element, not because the adapter keeps a parallel copy of it.
  */
 import { describe, expect, it } from 'vitest';
-import { MuxBackgroundVideoMedia } from '../media';
+import { HlsBackgroundVideoMedia } from '../media';
 
-describe('MuxBackgroundVideoMedia', () => {
+describe('HlsBackgroundVideoMedia', () => {
   it('reports the fixed behavior from the attached element', () => {
-    const media = new MuxBackgroundVideoMedia();
+    const media = new HlsBackgroundVideoMedia();
     const el = document.createElement('video');
 
     media.attach(el);
@@ -20,7 +20,7 @@ describe('MuxBackgroundVideoMedia', () => {
   });
 
   it('follows the element when it is changed underneath', () => {
-    const media = new MuxBackgroundVideoMedia();
+    const media = new HlsBackgroundVideoMedia();
     const el = document.createElement('video');
     media.attach(el);
 

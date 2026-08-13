@@ -1,23 +1,25 @@
 /**
- * The Mux background-video Media over the SPF background-video engine — a
- * muted, looping, chrome-less video from a Mux stream URL.
+ * The Mux-flavored name for `@videojs/spf/hls-background-video` — a muted,
+ * looping, chrome-less video from a Mux stream URL.
  *
- * `src` is the whole surface. Capping which rendition is fetched is a Mux URL
- * param (`?max_resolution=720p`) rather than a property here, which keeps the
- * excluded renditions out of the manifest instead of merely unpicked.
+ * An alias, not a variant: every export below is the same class or value that
+ * entry exposes, renamed. There is no Mux identity to carry, because there is no
+ * Mux input to take — `src` is an HLS URL, and capping which rendition is fetched
+ * is a param on it (`?max_resolution=720p`) rather than a property. Playback-ID
+ * identity, poster, and storyboard belong to `@videojs/spf/mux-video`; none of
+ * them mean anything without controls to hang them on.
  *
- * Shares the engine with `@videojs/spf/background-video` but not the adapter:
- * that one exposes a client-side `maxResolution` and binds no host, so it has
- * no Media to hand an element. Both are the muted-looping case, so a change to
- * one usually belongs in the other.
- *
- * Its host is local and narrow, so this entry carries no `@videojs/media`
- * dependency either.
+ * So the import path is a naming choice and nothing more. Kept because
+ * `<mux-background-video>` is what the standalone package this replaces was
+ * called, and because a Mux-shaped app reads better importing a Mux-shaped name.
  */
-export type { MuxBackgroundVideoMediaAPI, MuxBackgroundVideoMediaProps } from './adapter';
+export type {
+  HlsBackgroundVideoMediaAPI as MuxBackgroundVideoMediaAPI,
+  HlsBackgroundVideoMediaProps as MuxBackgroundVideoMediaProps,
+} from '../hls-background-video/adapter';
 export {
-  MuxBackgroundVideoMediaElement,
-  MuxBackgroundVideoMediaMixin,
-  muxBackgroundVideoMediaDefaultProps,
-} from './adapter';
-export { MuxBackgroundVideoMedia } from './media';
+  HlsBackgroundVideoMediaElement as MuxBackgroundVideoMediaElement,
+  HlsBackgroundVideoMediaMixin as MuxBackgroundVideoMediaMixin,
+  hlsBackgroundVideoMediaDefaultProps as muxBackgroundVideoMediaDefaultProps,
+} from '../hls-background-video/adapter';
+export { HlsBackgroundVideoMedia as MuxBackgroundVideoMedia } from '../hls-background-video/media';

@@ -27,11 +27,16 @@ is the narrower "deliver video-only despite mixed source" use case.
 
 Phase 1 implemented ([#1586](https://github.com/videojs/v10/issues/1586)):
 `createBackgroundVideoEngine` ships under `@videojs/spf/hls`, beside the other
-HLS engines; `BackgroundVideoMediaElement` and the max-resolution picker
-primitives (`maxResolutionToPixelArea`, `pickTrackUnderPixelArea`) ship under
-`@videojs/spf/background-video`. Phases 2-3 (decorator composition
-of audio and preload) and Phase 4 (Video.js component shell — out of SPF
-scope) stay coarser.
+HLS engines; `HlsBackgroundVideoMediaElement` and the host-bound
+`HlsBackgroundVideoMedia` ship under `@videojs/spf/hls-background-video`, with
+`@videojs/spf/mux-background-video` re-exporting them under Mux-flavored names.
+The adapter carries no client-side cap: it pins the largest rendition the
+manifest offers, and narrowing that set is a delivery param on the URL. The
+max-resolution picker primitives (`maxResolutionToPixelArea`,
+`pickTrackUnderPixelArea`) remain in `media/primitives/select-tracks.ts`, where
+screen-resolution-derived capping will read them. Phases 2-3 (decorator
+composition of audio and preload) and Phase 4 (Video.js component shell — out of
+SPF scope) stay coarser.
 
 ## Phases
 
@@ -83,7 +88,7 @@ tree-shakes out the ABR code path."* — exactly the affordance Phase 1 wants.
 Independent adapter parallel to `HlsVideoMediaElement`:
 
 ```ts
-const bgPlayer = new BackgroundVideoMediaElement({ picker: maxResolutionPicker });
+const bgPlayer = new HlsBackgroundVideoMediaElement({ config: { picker: maxResolutionPicker } });
 bgPlayer.src = sourceUrl;
 bgPlayer.loop = true;        // native HTMLMediaElement.loop
 bgPlayer.muted = true;       // browser autoplay policy
@@ -98,7 +103,7 @@ Video.js component shell) live above the SPF engine.
 
 ## Variant-decision signal source
 
-**Adapter-upfront.** Selecting `BackgroundVideoMediaElement` *is*
+**Adapter-upfront.** Selecting `HlsBackgroundVideoMediaElement` *is*
 the variant choice — no parser detection, no runtime config branch. Same
 resolution as [`video-only-mode-override`](./video-only-mode-override.md)
 and [`audio-only-mode-override`](./audio-only-mode-override.md): Case-2
@@ -136,7 +141,7 @@ Phase 2 (decorations TBD): **[`audio-playback`](../features/audio-playback.md)**
 - **Sampling-strip alt-impl Path A vs B.** Likely Path B per [`README.md` § Implementation note](./README.md#implementation-note-customizing-behaviors-for-use-cases).
 - **GPU/thermal-aware quality caps boundary.** Engine-variant (compose a thermal-aware behavior) or adapter (cap the picker candidate set). Likely engine-variant given the product context.
 
-Resolved Phase 1: ~~picker location~~ (`pickMaxResolutionVideoTrack` ships in [`media/primitives/select-tracks.ts`](../../../../packages/spf/src/media/primitives/select-tracks.ts) next to `pickFirstTrackId`); ~~adapter naming~~ (`BackgroundVideoMediaElement`; product-shell naming `<mux-background-video>` lives in the adapter layer).
+Resolved Phase 1: ~~picker location~~ (`pickMaxResolutionVideoTrack` ships in [`media/primitives/select-tracks.ts`](../../../../packages/spf/src/media/primitives/select-tracks.ts) next to `pickFirstTrackId`); ~~adapter naming~~ (`HlsBackgroundVideoMediaElement`, named for the delivery format like the other HLS adapters; the product-shell name `<mux-background-video>` is an alias over it rather than a variant, at every layer).
 
 ## See also
 

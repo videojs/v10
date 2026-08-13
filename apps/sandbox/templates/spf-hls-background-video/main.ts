@@ -1,32 +1,30 @@
 import '@app/styles.css';
 
-// SPF Background Video — sandbox demo
-// http://localhost:5173/spf-background-video/
+// SPF HLS Background Video — sandbox demo
+// http://localhost:5173/spf-hls-background-video/
 //
-// Drives `BackgroundVideoMediaElement`. The diagnostic strip
-// surfaces three signals reviewers should verify:
+// Drives `HlsBackgroundVideoMediaElement` directly, one layer below the
+// `<hls-background-video>` element. The diagnostic strip surfaces three signals
+// reviewers should verify:
 //   - loadActivated is true from frame 0 (no preload-gate or play-event needed)
-//   - the picker honors `maxResolution` (defaults to the highest variant)
+//   - the picker pins the largest rendition the manifest offers
 //   - audio-side actors are absent from the engine context (subtraction proof)
 //
-// Rendition selection is driven by `maxResolution` on the adapter. The
-// rendition list is read-only; it shows the available tracks and
-// highlights the one the picker chose. Changing `maxResolution` just
-// stashes the new value — clicking Load reassigns `src`, which cycles
-// the presentation through `unresolved → resolved` and re-fires the
-// closure picker (so the new cap takes effect on the live engine,
-// without a rebuild).
+// The adapter has no cap of its own, so the rendition list is read-only: it shows
+// the available tracks and highlights the one the picker chose. Narrowing the set
+// is the manifest's job — pick a source whose URL caps it. Reload tears the adapter
+// down and builds a new one, which is the only way to re-run resolution against a
+// URL that is already playing.
 
 import { SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
-import { BackgroundVideoMediaElement } from '@videojs/spf/background-video';
 import type { BackgroundVideoEngineState } from '@videojs/spf/hls';
+import { HlsBackgroundVideoMediaElement } from '@videojs/spf/hls-background-video';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('bg-video') as HTMLVideoElement;
 const sourceSelect = document.getElementById('source-select') as HTMLSelectElement;
 const renditionButtons = document.getElementById('rendition-buttons') as HTMLDivElement;
-const maxResolutionSelect = document.getElementById('max-resolution-select') as HTMLSelectElement;
 const loadBtn = document.getElementById('load-btn') as HTMLButtonElement;
 const diagLoad = document.getElementById('diag-load') as HTMLSpanElement;
 const diagRendition = document.getElementById('diag-rendition') as HTMLSpanElement;
@@ -76,8 +74,7 @@ function trackDimensions(track: VideoTrack): { w: number; h: number } {
 
 // ── Adapter lifecycle ─────────────────────────────────────────────────────────
 let currentSourceId: keyof typeof SOURCES = DEFAULT_ID;
-let currentMaxResolution: string | undefined;
-let adapter!: BackgroundVideoMediaElement;
+let adapter!: HlsBackgroundVideoMediaElement;
 let stopDiag: () => void = () => {};
 
 function rebuildAdapter(): void {
@@ -86,7 +83,7 @@ function rebuildAdapter(): void {
   video.pause();
   adapter?.destroy();
 
-  adapter = new BackgroundVideoMediaElement({ config: { maxResolution: currentMaxResolution } });
+  adapter = new HlsBackgroundVideoMediaElement();
   // src before attach: the engine starts resolving the presentation before
   // play() (called inside attach) runs, so no teardown races the play promise.
   adapter.src = SOURCES[currentSourceId].url ?? '';
@@ -114,19 +111,10 @@ sourceSelect.addEventListener('change', () => {
   rebuildAdapter();
 });
 
-maxResolutionSelect.addEventListener('change', () => {
-  currentMaxResolution = maxResolutionSelect.value || undefined;
-  // Closure picker reads `#maxResolution` at pick time, so the setter
-  // just stashes the value. Use the Load button to reassign src and
-  // force a re-pick.
-  adapter.maxResolution = currentMaxResolution;
-});
-
 loadBtn.addEventListener('click', () => {
-  // Reassign src to cycle the presentation through
-  // `unresolved → resolved`. That re-fires the picker, which reads the
-  // current `maxResolution` via the adapter's closure.
-  adapter.src = SOURCES[currentSourceId].url ?? '';
+  // A full rebuild rather than a src reassignment: the setter early-returns on the
+  // URL already playing, so reassigning the same one would do nothing.
+  rebuildAdapter();
 });
 
 // ── Diagnostic strip + rendition picker ──────────────────────────────────────
