@@ -94,7 +94,7 @@ export default {
   },
   menu: {
     settings: 'सेटिंग्स',
-    quality: 'गुणवत्ता',
+    quality: 'रेज़ोल्यूशन',
     audio: 'ऑडियो',
     default: 'डिफ़ॉल्ट',
     speed: 'गति',
