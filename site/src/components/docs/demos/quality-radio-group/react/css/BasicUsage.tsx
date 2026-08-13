@@ -15,7 +15,6 @@ function QualityMenu(): ReactNode {
       <Menu.Content className="menu">
         <QualityRadioGroup
           className="menu-group"
-          aria-label="Quality"
           renderItem={(props, item) => (
             <Menu.RadioItem {...props} className="menu-item">
               <span>
