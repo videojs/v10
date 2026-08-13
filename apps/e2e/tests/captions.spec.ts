@@ -1,5 +1,5 @@
-import { expect, test } from '@playwright/test';
-import { MEDIA } from '../fixtures/resources';
+import { expect, type Page, test } from '@playwright/test';
+import { CAPTIONS, MEDIA } from '../fixtures/resources';
 import { DATA_ATTRS, SELECTORS } from '../fixtures/selectors';
 import { PlayerPage } from '../page-objects/player';
 
@@ -67,24 +67,48 @@ test.describe('Captions', () => {
  */
 test.describe('Captions sideloaded before an hls.js source', () => {
   /** State of the sideloaded track, read from the element the page author sees. */
-  const englishTrack = (page: import('@playwright/test').Page) => {
+  const englishTrack = (page: Page) => {
     return page.evaluate(() => {
-      const media = document.querySelector('hlsjs-video') as HTMLMediaElement | null;
+      const media = document.querySelector('hlsjs-video');
       const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
       return { mode: track?.mode ?? 'missing', cues: track?.cues?.length ?? 0 };
     });
   };
 
-  const waitForManifest = (page: import('@playwright/test').Page) => {
-    return page.waitForFunction(() => (document.querySelector('hlsjs-video') as HTMLMediaElement).readyState >= 1);
+  /**
+   * Selects the track from the page rather than leaning on its `default`
+   * attribute. The element clones `<track>` children into its inner `<video>`,
+   * and whether a script-added track wins automatic text-track selection is up
+   * to the browser's caption preferences — WebKit leaves it `disabled`, which
+   * also stops it from ever loading its cues.
+   */
+  const showEnglishTrack = (page: Page) => {
+    return page.waitForFunction(() => {
+      const media = document.querySelector('hlsjs-video');
+      const track = Array.from(media?.textTracks ?? []).find(({ label }) => label === 'English');
+      if (!track) return false;
+
+      track.mode = 'showing';
+      return true;
+    });
+  };
+
+  const waitForManifest = (page: Page) => {
+    return page.waitForFunction(() => (document.querySelector('hlsjs-video')?.readyState ?? 0) >= 1);
+  };
+
+  const setSource = (page: Page, url: string) => {
+    return page.evaluate((src) => {
+      const media = document.querySelector('hlsjs-video');
+      if (media) media.src = src;
+    }, url);
   };
 
   test.beforeEach(async ({ page }) => {
     // Reuse the page's registered elements, but start from a media element that
     // has caption tracks and no source yet.
     await page.goto('/pages/html-video-hls.html');
-    await page.evaluate(() => {
-      const vtt = `data:text/vtt,${encodeURIComponent('WEBVTT\n\n00:00:00.000 --> 00:00:30.000\nSideloaded caption')}`;
+    await page.evaluate((vtt) => {
       document.getElementById('root')!.innerHTML = `
         <video-player>
           <video-skin style="max-width: 800px; aspect-ratio: 16/9">
@@ -93,29 +117,24 @@ test.describe('Captions sideloaded before an hls.js source', () => {
             </hlsjs-video>
           </video-skin>
         </video-player>`;
-    });
+    }, CAPTIONS.english);
 
+    await showEnglishTrack(page);
     await expect.poll(() => englishTrack(page)).toEqual({ mode: 'showing', cues: 1 });
   });
 
   test('keeps its cues when the source is assigned after connection', async ({ page }) => {
-    await page.evaluate((url) => {
-      (document.querySelector('hlsjs-video') as HTMLMediaElement).src = url;
-    }, MEDIA.hlsTs.url);
+    await setSource(page, MEDIA.hlsTs.url);
     await waitForManifest(page);
 
     expect(await englishTrack(page)).toEqual({ mode: 'showing', cues: 1 });
   });
 
   test('keeps its cues and selection when the source is replaced', async ({ page }) => {
-    await page.evaluate((url) => {
-      (document.querySelector('hlsjs-video') as HTMLMediaElement).src = url;
-    }, MEDIA.hlsTs.url);
+    await setSource(page, MEDIA.hlsTs.url);
     await waitForManifest(page);
 
-    await page.evaluate((url) => {
-      (document.querySelector('hlsjs-video') as HTMLMediaElement).src = url;
-    }, MEDIA.hlsFmp4.url);
+    await setSource(page, MEDIA.hlsFmp4.url);
     await waitForManifest(page);
 
     expect(await englishTrack(page)).toEqual({ mode: 'showing', cues: 1 });
