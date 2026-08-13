@@ -128,6 +128,16 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   const navigationState = createState<NavigationState>({ stack: [], direction: 'forward' });
 
+  function isItemHidden(item: HTMLElement): boolean {
+    return (
+      item.hasAttribute('hidden') || item.hasAttribute('data-hidden') || item.getAttribute('aria-hidden') === 'true'
+    );
+  }
+
+  function getNavigableItems(): HTMLElement[] {
+    return items.filter((item) => !isItemHidden(item));
+  }
+
   function push(menuId: string, triggerId: string): void {
     const stack = navigationState.current.stack;
     const topEntry = stack[stack.length - 1];
@@ -154,6 +164,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Highlight ---
 
   function highlight(element: HTMLElement | null, highlightOptions?: MenuHighlightOptions): void {
+    if (element && isItemHidden(element)) return;
     if (highlightedItem === element) return;
 
     if (highlightedItem) {
@@ -188,13 +199,17 @@ export function createMenu(options: MenuOptions): MenuApi {
   }
 
   function highlightFirstItem(options?: MenuHighlightOptions): void {
-    highlight(items[0] ?? null, options);
+    highlight(getNavigableItems()[0] ?? null, options);
   }
 
   function getInitialHighlightItem(): HTMLElement | null {
+    const navigableItems = getNavigableItems();
+
     return (
-      items.find((item) => item.matches('[role="menuitemradio"][aria-checked="true"], [aria-selected="true"]')) ??
-      items[0] ??
+      navigableItems.find((item) =>
+        item.matches('[role="menuitemradio"][aria-checked="true"], [aria-selected="true"]')
+      ) ??
+      navigableItems[0] ??
       null
     );
   }
@@ -227,11 +242,12 @@ export function createMenu(options: MenuOptions): MenuApi {
     if (typeaheadTimer !== null) clearTimeout(typeaheadTimer);
     typeaheadTimer = setTimeout(clearTypeahead, 500);
 
-    const currentIdx = highlightedItem ? items.indexOf(highlightedItem) : -1;
+    const navigableItems = getNavigableItems();
+    const currentIdx = highlightedItem ? navigableItems.indexOf(highlightedItem) : -1;
 
     // Search from after the current item so repeated chars cycle through matches.
     const searchStart = currentIdx + 1;
-    const candidates = [...items.slice(searchStart), ...items.slice(0, searchStart)];
+    const candidates = [...navigableItems.slice(searchStart), ...navigableItems.slice(0, searchStart)];
 
     const needle = typeaheadBuffer.toLowerCase();
     const match = candidates.find((candidate) => {
@@ -280,40 +296,41 @@ export function createMenu(options: MenuOptions): MenuApi {
     onFocusOut: popover.popupProps.onFocusOut,
     onKeyDown(event) {
       const { key } = event;
+      const navigableItems = getNavigableItems();
 
       if (key !== 'Escape' && isMenuNavigationKey(event) && !event.defaultPrevented) {
         event.preventDefault();
       }
 
-      if (items.length === 0) return;
+      if (navigableItems.length === 0) return;
 
       switch (key) {
         case 'ArrowDown': {
           event.preventDefault();
-          const currentIndex = highlightedItem ? items.indexOf(highlightedItem) : -1;
-          highlight(items[(currentIndex + 1) % items.length] ?? null);
+          const currentIndex = highlightedItem ? navigableItems.indexOf(highlightedItem) : -1;
+          highlight(navigableItems[(currentIndex + 1) % navigableItems.length] ?? null);
           break;
         }
         case 'ArrowUp': {
           event.preventDefault();
-          const currentIndex = highlightedItem ? items.indexOf(highlightedItem) : 0;
-          highlight(items[(currentIndex <= 0 ? items.length : currentIndex) - 1] ?? null);
+          const currentIndex = highlightedItem ? navigableItems.indexOf(highlightedItem) : 0;
+          highlight(navigableItems[(currentIndex <= 0 ? navigableItems.length : currentIndex) - 1] ?? null);
           break;
         }
         case 'Home': {
           event.preventDefault();
-          highlight(items[0] ?? null);
+          highlight(navigableItems[0] ?? null);
           break;
         }
         case 'End': {
           event.preventDefault();
-          highlight(items[items.length - 1] ?? null);
+          highlight(navigableItems[navigableItems.length - 1] ?? null);
           break;
         }
         case 'Enter':
         case ' ': {
           event.preventDefault();
-          highlightedItem?.click();
+          if (highlightedItem && navigableItems.includes(highlightedItem)) highlightedItem.click();
           break;
         }
         default: {

@@ -550,6 +550,20 @@ describe('createMenu', () => {
       expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
     });
 
+    it('skips a hidden first item', () => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Hidden');
+      const visible = addItem('Visible');
+      hidden.hidden = true;
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.highlightFirstItem();
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('can highlight the first item without scrolling it into view', () => {
       const { menu } = createTestMenu();
       const element = addItem('Alpha');
@@ -614,6 +628,23 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowDown skips items marked data-hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const hidden = addItem('Beta');
+      const c = addItem('Gamma');
+      hidden.setAttribute('data-hidden', '');
+      menu.registerItem(a);
+      menu.registerItem(hidden);
+      menu.registerItem(c);
+      menu.highlight(a);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('ArrowDown wraps from last to first', () => {
@@ -800,6 +831,20 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('b'));
 
       expect(b.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ignores aria-hidden type-ahead matches', () => {
+      const { menu } = createTestMenu();
+      const hidden = addItem('Beta');
+      const visible = addItem('Bravo');
+      hidden.setAttribute('aria-hidden', 'true');
+      menu.registerItem(hidden);
+      menu.registerItem(visible);
+
+      menu.contentProps.onKeyDown(makeKeyEvent('b'));
+
+      expect(hidden.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(visible.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('cycles through matching items when the same character is pressed repeatedly', () => {
