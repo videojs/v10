@@ -206,11 +206,6 @@ export function CustomMediaElement<T extends Constructor<MediaHost>>(
         if (prop in CustomMedia.prototype) continue;
 
         const attr = attribute ?? prop.toLowerCase();
-        // Embed hosts never mirror attributes onto their target, so an attribute
-        // whose name diverges from its property (`muted` → `defaultMuted`,
-        // `playsinline` → `playsInline`) has no other route to the mediaHost, and
-        // the host is what builds the embed URL for a source that arrives late.
-        if (!syncTargetAttributes && prop in MediaHost.prototype) mediaHostAttrToProp.set(attr, prop);
         Object.defineProperty(CustomMedia.prototype, prop, {
           get: function (this: CustomMedia) {
             return type === Boolean ? this.hasAttribute(attr) : this.getAttribute(attr);

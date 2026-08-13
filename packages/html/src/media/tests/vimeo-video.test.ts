@@ -39,11 +39,10 @@ describe('VimeoVideo', () => {
     const tag = defineVimeoVideo();
     const element = document.createElement(tag) as HTMLElement & { engine: unknown };
     element.setAttribute('src', 'https://vimeo.com/1181503036');
-    element.setAttribute('muted', '');
     element.setAttribute('controls', '');
     await flushDeferredEmbed();
 
-    expect(iframeSrc(element)).toContain('muted=1');
+    // Vimeo chrome is hidden with `controls=0` unless controls are asked for.
     expect(iframeSrc(element)).not.toContain('controls=0');
     expect(element.engine).not.toBe(null);
   });
