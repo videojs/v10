@@ -91,7 +91,7 @@ describe('PlaybackRateRadioGroup', () => {
     const group = screen.getByTestId('group');
     expect(ref.current).toBe(group);
     expect(group.classList.contains('rate-available')).toBe(true);
-    expect(group.getAttribute('aria-label')).toBe('Playback rate 1.5');
+    expect(group.getAttribute('aria-label')).toBe('Playback rate');
     expect(group.getAttribute('data-rate')).toBe('1.5');
     expect(group.getAttribute('data-availability')).toBe('available');
   });
@@ -122,16 +122,16 @@ describe('PlaybackRateRadioGroup', () => {
       ),
     });
 
-    const group = screen.getByRole('group', { name: 'Playback rate 1.5' });
+    const group = screen.getByRole('group', { name: 'Playback rate' });
     expect(group.tagName).toBe('SECTION');
     expect(group.getAttribute('data-value')).toBe('1.5');
     expect(screen.getByRole('menuitemradio', { name: '1.5×' }).querySelector('[aria-hidden="true"]')).toBeTruthy();
   });
 
   it('translates the default accessible label', () => {
-    registerI18n('xx', { 'playback.rate': 'Translated rate {rate}' });
+    registerI18n('xx', { 'menu.playbackRate': 'Translated playback rate' });
     renderPlaybackRateRadioGroup({ locale: 'xx' });
 
-    expect(screen.getByRole('group', { name: 'Translated rate 1.5' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Translated playback rate' })).toBeTruthy();
   });
 });

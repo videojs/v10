@@ -65,11 +65,11 @@ describe('PlaybackRateRadioGroupCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns default label with rate', () => {
+    it('returns a stable default group label', () => {
       const core = new PlaybackRateRadioGroupCore();
       expect(core.getLabel(createState({ rate: 1.5 }))).toMatchObject({
-        key: 'playback.rate',
-        text: 'Playback rate {rate}',
+        key: 'menu.playbackRate',
+        text: 'Playback rate',
       });
     });
 
@@ -87,14 +87,9 @@ describe('PlaybackRateRadioGroupCore', () => {
   });
 
   describe('getLabelParams', () => {
-    it('returns rate for default label', () => {
+    it('returns no parameters for the stable group label', () => {
       const core = new PlaybackRateRadioGroupCore();
-      expect(core.getLabelParams(createState({ rate: 2 }))).toEqual({ rate: 2 });
-    });
-
-    it('returns undefined when custom label is set', () => {
-      const core = new PlaybackRateRadioGroupCore({ label: 'Speed' });
-      expect(core.getLabelParams(createState())).toBeUndefined();
+      expect(core.getLabelParams(createState({ rate: 2 }))).toBeUndefined();
     });
   });
 
@@ -117,7 +112,7 @@ describe('PlaybackRateRadioGroupCore', () => {
     it('returns aria-label', () => {
       const core = new PlaybackRateRadioGroupCore();
       const attrs = core.getAttrs(createState({ rate: 1.5 }));
-      expect(attrs['aria-label']).toMatchObject({ key: 'playback.rate', text: 'Playback rate {rate}' });
+      expect(attrs['aria-label']).toMatchObject({ key: 'menu.playbackRate', text: 'Playback rate' });
     });
 
     it('sets aria-disabled when disabled', () => {
