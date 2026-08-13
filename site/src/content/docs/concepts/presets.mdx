@@ -14,18 +14,15 @@ A **preset** packages what you need for a specific player use case. It can inclu
 For example, the `@videojs/react/background` preset includes a media element with autoplay, mute, and loop built in, a skin with no controls, and just the features needed to power them:
 
 ```tsx title="App.tsx"
-import { createPlayer } from '@videojs/react';
-import { backgroundFeatures, BackgroundVideo, BackgroundVideoSkin } from '@videojs/react/background'; // [!code focus]
-
-const Player = createPlayer({ features: backgroundFeatures });
+import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@videojs/react/background'; // [!code focus]
 
 function Hero() {
   return (
-    <Player.Provider>
+    <BackgroundVideoPlayer.Provider>
       <BackgroundVideoSkin>
         <BackgroundVideo src="hero.mp4" />
       </BackgroundVideoSkin>
-    </Player.Provider>
+    </BackgroundVideoPlayer.Provider>
   );
 }
 ```
@@ -56,11 +53,21 @@ The default presets are `/video` and `/audio`. These cover the baseline controls
 
 ## What's in a preset
 
-Each preset exports up to three things:
+Each React preset exports a named, preconfigured player and typed `usePlayer` hook, plus the building blocks needed to customize or eject from it:
 
+- **Player** — A `createPlayer` result named for the preset, such as `VideoPlayer`, with a `Provider` already configured with the preset's feature bundle.
+- **Typed hook** — A `usePlayer` hook whose state and actions match the preset.
 - **Feature bundle** — An array of <DocsLink slug="concepts/features">features</DocsLink> that define the player's state and actions. For example, the video feature bundle includes playback, volume, time, fullscreen, and more.
 - **Skins** — Pre-built UIs designed for that feature bundle. For example, a video skin renders fullscreen and PiP controls because the video feature bundle includes those features. An audio skin doesn't.
 - **Media element** — A media component suited to the use case. For example, the background video element bakes in autoplay, mute, and loop.
+
+The convenient hook is the same typed hook available on the player result:
+
+```tsx
+import { usePlayer, VideoPlayer } from '@videojs/react/video';
+
+usePlayer === VideoPlayer.usePlayer;
+```
 
 These parts aren't equally tied together. Skins depend tightly on their feature bundle — a skin expects specific features to exist. Media elements are more interchangeable — you can swap in an HLS or DASH provider without changing your skin or features.
 
@@ -131,11 +138,11 @@ A preset's default media element is just the starting point. You can replace it 
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<Player.Provider>
+<VideoPlayer.Provider>
   <VideoSkin>
     <HlsJsVideo src="https://example.com/stream.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
-</Player.Provider>
+</VideoPlayer.Provider>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
