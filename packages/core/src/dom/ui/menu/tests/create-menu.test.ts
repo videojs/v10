@@ -717,23 +717,6 @@ describe('createMenu', () => {
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
-    it('moves highlight when the current item becomes hidden', async () => {
-      const { menu } = createTestMenu();
-      const a = addItem('Alpha');
-      const b = addItem('Beta');
-      const c = addItem('Gamma');
-      menu.registerItem(a);
-      menu.registerItem(b);
-      menu.registerItem(c);
-      menu.highlight(b);
-
-      b.setAttribute('aria-hidden', 'true');
-      await Promise.resolve();
-
-      expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
-      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
-    });
-
     it('ArrowUp wraps from first to last', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');

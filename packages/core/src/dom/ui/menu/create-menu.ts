@@ -118,7 +118,6 @@ export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.
   const items: HTMLElement[] = [];
-  const itemObservers = new Map<HTMLElement, MutationObserver>();
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
   let contentElement: HTMLElement | null = null;
@@ -401,24 +400,11 @@ export function createMenu(options: MenuOptions): MenuApi {
     items.push(element);
     items.sort(compareItems);
 
-    const observer = new MutationObserver(() => {
-      if (highlightedItem === element && isItemHidden(element)) {
-        highlight(getAdjacentNavigableItem(1));
-      }
-    });
-    observer.observe(element, {
-      attributes: true,
-      attributeFilter: ['hidden', 'data-hidden', 'aria-hidden'],
-    });
-    itemObservers.set(element, observer);
-
     if (popover.input.current.active && popover.input.current.status !== 'ending' && !highlightedItem) {
       scheduleInitialHighlight();
     }
 
     return () => {
-      itemObservers.get(element)?.disconnect();
-      itemObservers.delete(element);
       const index = items.indexOf(element);
       if (index !== -1) items.splice(index, 1);
       if (highlightedItem === element) clearHighlight();
@@ -429,8 +415,6 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = 0;
     clearTypeahead();
-    for (const observer of itemObservers.values()) observer.disconnect();
-    itemObservers.clear();
     popover.destroy();
   }
 
