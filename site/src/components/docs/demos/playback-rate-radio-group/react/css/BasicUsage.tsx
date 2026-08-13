@@ -13,7 +13,6 @@ function SpeedMenu(): ReactNode {
       <Menu.Content className="menu">
         <PlaybackRateRadioGroup
           className="menu-group"
-          aria-label="Speed"
           renderItem={(props, item) => (
             <Menu.RadioItem {...props} className="menu-item">
               {item.label}
