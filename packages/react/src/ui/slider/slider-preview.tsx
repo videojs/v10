@@ -3,6 +3,7 @@
 import type { SliderState } from '@videojs/core';
 import type { SliderPreviewOverflow } from '@videojs/core/dom';
 import { getSliderPreviewStyle } from '@videojs/core/dom';
+import { observeResize } from '@videojs/utils/dom';
 import type { ForwardedRef } from 'react';
 import { forwardRef, useEffect, useRef, useState } from 'react';
 
@@ -32,12 +33,9 @@ export const SliderPreview = forwardRef(function SliderPreview(
     const el = measureRef.current;
     if (!el) return;
 
-    const observer = new ResizeObserver(([entry]) => {
+    return observeResize(el, ([entry]) => {
       setWidth(entry!.contentRect.width);
     });
-
-    observer.observe(el);
-    return () => observer.disconnect();
   }, []);
 
   const positionStyle = getSliderPreviewStyle(width, overflow);

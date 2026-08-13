@@ -1,5 +1,28 @@
 import { escapeHtml } from '../string/escape-html';
 
+export interface AttributeSnapshotEntry {
+  name: string;
+  value: string | null;
+}
+
+export type AttributeSnapshot = readonly AttributeSnapshotEntry[];
+
+/** Capture authored values for the selected attributes. */
+export function snapshotAttributes(element: Element, names: Iterable<string>): AttributeSnapshot {
+  return [...names].map((name) => ({ name, value: element.getAttribute(name) }));
+}
+
+/** Restore a snapshot created by `snapshotAttributes`. */
+export function restoreAttributes(element: Element, snapshot: AttributeSnapshot): void {
+  for (const { name, value } of snapshot) {
+    if (value === null) {
+      element.removeAttribute(name);
+    } else {
+      element.setAttribute(name, value);
+    }
+  }
+}
+
 /**
  * Convert a NamedNodeMap to a plain object.
  */
