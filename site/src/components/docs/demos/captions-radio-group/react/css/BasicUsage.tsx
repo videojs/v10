@@ -13,7 +13,6 @@ function CaptionsMenu(): ReactNode {
       <Menu.Content className="menu">
         <CaptionsRadioGroup
           className="menu-group"
-          aria-label="Captions"
           renderItem={(props, item) => (
             <Menu.RadioItem {...props} className="menu-item">
               {item.label}
