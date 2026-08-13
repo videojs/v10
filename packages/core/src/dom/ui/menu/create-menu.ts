@@ -129,9 +129,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   const navigationState = createState<NavigationState>({ stack: [], direction: 'forward' });
 
   function isItemHidden(item: HTMLElement): boolean {
-    return (
-      item.hasAttribute('hidden') || item.hasAttribute('data-hidden') || item.getAttribute('aria-hidden') === 'true'
-    );
+    return Boolean(item.hidden || item.hasAttribute('data-hidden') || item.getAttribute('aria-hidden') === 'true');
   }
 
   function getNavigableItems(): HTMLElement[] {
