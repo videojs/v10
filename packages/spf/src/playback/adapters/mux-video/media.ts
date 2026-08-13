@@ -1,7 +1,7 @@
-import { SimpleHlsMedia } from '../simple-hls/media';
+import { HlsVideoMedia } from '../hls-video/media';
 import { MuxMediaMixin } from './adapter';
 
-const MuxVideoMediaBase = MuxMediaMixin(SimpleHlsMedia);
+const MuxVideoMediaBase = MuxMediaMixin(HlsVideoMedia);
 
 /**
  * The Mux Media over the SPF HLS engine.

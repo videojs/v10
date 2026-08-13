@@ -2,7 +2,7 @@
  * createBackgroundVideoEngine tests.
  *
  * The variant subtracts audio, text, ABR, and preload-monitoring behaviors
- * from the simple HLS engine, then seeds `loadActivated: true` so the
+ * from the HLS video engine, then seeds `loadActivated: true` so the
  * composition behaves as if preload has already been activated. These tests
  * confirm the seed, the absence of subtracted state slots, and the picker
  * configurability.

@@ -22,7 +22,7 @@ import {
   toUserVideoTrackSelection,
   type VideoTrack,
 } from '../../../media/media-tracks';
-import type { SimpleHlsEngineContext, SimpleHlsEngineState } from '../../engines/hls/engine';
+import type { HlsVideoEngineContext, HlsVideoEngineState } from '../../engines/hls/engine';
 
 // Translate a DOM rendition/track into the SPF dedupe-key shape
 const toVideoKey = (rendition: VideoRenditionLike) => ({
@@ -33,12 +33,12 @@ const toVideoKey = (rendition: VideoRenditionLike) => ({
 
 const toAudioKey = (track: AudioTrackLike) => ({ language: track.language, name: track.label });
 
-type SimpleHlsEngineHost = {
-  readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
+type HlsVideoEngineHost = {
+  readonly engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
   destroy?(): void;
 };
 
-type MediaTracksHost = SimpleHlsEngineHost &
+type MediaTracksHost = HlsVideoEngineHost &
   MediaVideoTrackCapability &
   MediaAudioTrackCapability &
   MediaVideoRenditionCapability;
@@ -55,8 +55,8 @@ const sameIds = (a: { id: string }[], b: { id: string }[]): boolean =>
  * Requires the media-tracks mixin (track-list infrastructure) earlier in the
  * chain so the host exposes `addVideoTrack`, `videoRenditions`, and friends.
  */
-export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
-  class SimpleHlsMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
+export function HlsVideoMediaMediaTracksMixin<Base extends Constructor<MediaTracksHost>>(BaseClass: Base) {
+  class HlsVideoMediaMediaTracks extends (BaseClass as Constructor<MediaTracksHost>) {
     #abort = new AbortController();
     #destroyed = false;
     // Memoized SPF model — the last `computed` result per type — so a DOM
@@ -217,5 +217,5 @@ export function SimpleHlsMediaMediaTracksMixin<Base extends Constructor<MediaTra
     }
   }
 
-  return SimpleHlsMediaMediaTracks as unknown as Base;
+  return HlsVideoMediaMediaTracks as unknown as Base;
 }

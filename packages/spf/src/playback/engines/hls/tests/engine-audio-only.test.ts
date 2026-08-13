@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
 import type { Presentation } from '../../../../media/types';
-import { createHlsAudioOnlyEngine } from '../engine-audio-only';
+import { createHlsAudioEngine } from '../engine-audio-only';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
@@ -20,7 +20,7 @@ function unmockedFetchFallback(url: string): Promise<Response> {
   return Promise.reject(new Error(`Unmocked URL: ${url}`));
 }
 
-describe('createHlsAudioOnlyEngine', () => {
+describe('createHlsAudioEngine', () => {
   let originalFetch: typeof globalThis.fetch;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
@@ -51,7 +51,7 @@ describe('createHlsAudioOnlyEngine', () => {
   });
 
   it('creates engine with state, context, and destroy', () => {
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
@@ -61,7 +61,7 @@ describe('createHlsAudioOnlyEngine', () => {
   });
 
   it('exposes userAudioTrackSelection slot for multi-language-audio Tier 2 writes', () => {
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
 
     // Slot exists as a signal — consumer-facing programmatic-write path
     // for multi-language-audio.
@@ -81,7 +81,7 @@ describe('createHlsAudioOnlyEngine', () => {
     // (audio/aac) rendition is asserted unplayable, so it should be pruned
     // rather than selected. (If the default weren't wired, the constraint would
     // pass through and select it.)
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     engine.state.presentation.set({
       id: 'pres-aac',
       url: 'https://example.com/master.m3u8',
@@ -121,7 +121,7 @@ describe('createHlsAudioOnlyEngine', () => {
   });
 
   it('does not seed bandwidthState (no ABR behavior subscribed at init)', () => {
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
 
     const state = snapshot(engine.state) as Record<string, unknown>;
     // bandwidthState slot may or may not exist depending on whether any
@@ -163,7 +163,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -227,7 +227,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -302,7 +302,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -331,7 +331,7 @@ http://example.com/audio-seg1.m4s
   });
 
   it('cleans up on destroy', () => {
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     expect(() => engine.destroy()).not.toThrow();
   });
 
@@ -393,7 +393,7 @@ http://example.com/audio-b-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('audio');
     mediaElement.preload = 'auto';
 
@@ -490,7 +490,7 @@ http://example.com/audio-seg1.m4s
     // and make the fallback inert — silently disabling AirPlay.
     globalThis.fetch = mockAudioOnlyManifest();
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('audio');
     mediaElement.preload = 'auto';
 
@@ -514,7 +514,7 @@ http://example.com/audio-seg1.m4s
   });
 
   it('materializes the startPosition / loadingSuspended / disableRemotePlayback slots', () => {
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const state = snapshot(engine.state) as Record<string, unknown>;
 
     // `startPosition` + `loadingSuspended` come from setupAirPlay /
@@ -536,7 +536,7 @@ http://example.com/audio-seg1.m4s
   it('composes applyStartPosition — a startPosition command seeds the load window', async () => {
     globalThis.fetch = mockAudioOnlyManifest();
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('audio');
     mediaElement.preload = 'auto';
 
@@ -575,7 +575,7 @@ http://example.com/audio-seg1.m4s
     const fetchedUrls: string[] = [];
     globalThis.fetch = mockAudioOnlyManifest((url) => fetchedUrls.push(url));
 
-    const engine = createHlsAudioOnlyEngine();
+    const engine = createHlsAudioEngine();
     const mediaElement = document.createElement('audio');
     mediaElement.preload = 'auto';
 

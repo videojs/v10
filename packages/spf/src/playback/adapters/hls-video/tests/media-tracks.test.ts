@@ -3,7 +3,7 @@ import { MediaTracksMixin } from '@videojs/media/media-tracks';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { effect } from '../../../../core/signals/effect';
 import { signal } from '../../../../core/signals/primitives';
-import { SimpleHlsMediaMediaTracksMixin } from '../media-tracks';
+import { HlsVideoMediaMediaTracksMixin } from '../media-tracks';
 
 // The projection only touches these five engine-state signals; a fake engine
 // backed by real signals is enough to drive the effects.
@@ -29,7 +29,7 @@ class FakeHost extends HTMLVideoElementHost {
   }
 }
 
-const SimpleHlsMediaMediaTracks = SimpleHlsMediaMediaTracksMixin(MediaTracksMixin(FakeHost as any));
+const HlsVideoMediaMediaTracks = HlsVideoMediaMediaTracksMixin(MediaTracksMixin(FakeHost as any));
 
 const presentation = (video: any[], audio: any[] = [], url = 'https://example.com/master.m3u8') => ({
   id: 'pres-1',
@@ -73,13 +73,13 @@ const flush = () =>
     sig.set(1);
   });
 
-describe('SimpleHlsMediaMediaTracksMixin', () => {
+describe('HlsVideoMediaMediaTracksMixin', () => {
   let engine: Engine;
   let host: any;
 
   beforeEach(() => {
     engine = createEngine();
-    host = new SimpleHlsMediaMediaTracks(engine) as any;
+    host = new HlsVideoMediaMediaTracks(engine) as any;
   });
 
   afterEach(() => {

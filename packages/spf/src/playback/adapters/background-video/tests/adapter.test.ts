@@ -2,7 +2,7 @@
  * BackgroundVideoMediaElement adapter tests.
  *
  * Covers the HTMLMediaElement-compatible contract for `src` and `play()`.
- * Adapter-shape parallels SimpleHlsMediaElement; the tests focus on what
+ * Adapter-shape parallels HlsVideoMediaElement; the tests focus on what
  * diverges: silent autoplay-looping playback is fixed on the element at attach
  * rather than exposed, and `maxResolution` caps the rendition the engine pins.
  */

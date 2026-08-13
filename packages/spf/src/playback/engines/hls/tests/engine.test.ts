@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
 import type { PartiallyResolvedAudioTrack, PartiallyResolvedVideoTrack, Presentation } from '../../../../media/types';
-import { createSimpleHlsEngine } from '../engine';
+import { createHlsVideoEngine } from '../engine';
 
 // Mock appendSegment to succeed without real MP4 data
 vi.mock('../../../../media/dom/mse/append-segment', () => ({
@@ -20,7 +20,7 @@ function unmockedFetchFallback(url: string): Promise<Response> {
   return Promise.reject(new Error(`Unmocked URL: ${url}`));
 }
 
-describe('createSimpleHlsEngine', () => {
+describe('createHlsVideoEngine', () => {
   let originalFetch: typeof globalThis.fetch;
   let consoleErrorSpy: ReturnType<typeof vi.spyOn>;
 
@@ -52,7 +52,7 @@ describe('createSimpleHlsEngine', () => {
     consoleErrorSpy.mockRestore();
   });
   it('creates engine with state, owners, and destroy', () => {
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     expect(engine.state).toBeDefined();
     expect(engine.context).toBeDefined();
@@ -63,7 +63,7 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('initializes state with seeded bandwidthState and behavior-supplied defaults', () => {
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     // Composition creates one signal per declared key. ABR machinery is
     // seeded via `initialState` with an empty BandwidthState. `preload` is
@@ -98,7 +98,7 @@ describe('createSimpleHlsEngine', () => {
 
   it('publishes the CDN list and keeps the video selection on the primary (redundant-stream source)', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
       type: 'video',
@@ -156,7 +156,7 @@ describe('createSimpleHlsEngine', () => {
     // `aud-a`, NOT the parse-order `aud-b`. This pins the type-priority ordering,
     // not a manifest/parse-order coincidence.
     const flush = () => Promise.resolve().then(() => Promise.resolve());
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
       type: 'video',
@@ -224,7 +224,7 @@ describe('createSimpleHlsEngine', () => {
 
   it('fails over video and audio to the next CDN when one is marked failed', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     const videoTrack = (id: string, host: string): PartiallyResolvedVideoTrack => ({
       type: 'video',
@@ -301,7 +301,7 @@ describe('createSimpleHlsEngine', () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
     // Reject HEVC; accept everything else.
     const canPlayTrack = (track: { codecs?: string[] }) => !track.codecs?.some((c) => c.startsWith('hvc1'));
-    const engine = createSimpleHlsEngine({ canPlayTrack });
+    const engine = createHlsVideoEngine({ canPlayTrack });
 
     const videoTrack = (id: string, codec: string): PartiallyResolvedVideoTrack => ({
       type: 'video',
@@ -343,7 +343,7 @@ describe('createSimpleHlsEngine', () => {
     // A composition that ships no MPEG-TS, or wants a different vocabulary, replaces
     // the reporter rather than living with the built-in checks.
     const reportUnsupportedTrackConditions = () => [{ code: 99001, message: 'custom' }];
-    const engine = createSimpleHlsEngine({ reportUnsupportedTrackConditions });
+    const engine = createHlsVideoEngine({ reportUnsupportedTrackConditions });
 
     vi.spyOn(globalThis, 'fetch').mockImplementation(
       async () =>
@@ -392,7 +392,7 @@ describe('createSimpleHlsEngine', () => {
 
   it('makes no video pick when no rendition is decodable', async () => {
     const flush = () => Promise.resolve().then(() => Promise.resolve());
-    const engine = createSimpleHlsEngine({ canPlayTrack: () => false });
+    const engine = createHlsVideoEngine({ canPlayTrack: () => false });
 
     engine.state.presentation.set({
       id: 'pres-unsupported',
@@ -429,7 +429,7 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('auto-fails-over when a CDN fetch fails (monitor trips, failedCdns set)', async () => {
-    const engine = createSimpleHlsEngine({ failover: { cooldownMs: 60_000 } });
+    const engine = createHlsVideoEngine({ failover: { cooldownMs: 60_000 } });
 
     // cdn-a is down (media-playlist fetch rejects); cdn-b serves a valid playlist.
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
@@ -482,7 +482,7 @@ describe('createSimpleHlsEngine', () => {
     // host, so origin-based identity would see ONE CDN (no redundancy); the
     // custom resolver must be respected at every site for failover to work.
     const getCdnId = (url: string) => new URL(url).searchParams.get('cdn') ?? url;
-    const engine = createSimpleHlsEngine({ getCdnId, failover: { cooldownMs: 60_000 } });
+    const engine = createHlsVideoEngine({ getCdnId, failover: { cooldownMs: 60_000 } });
 
     globalThis.fetch = vi.fn(async (input: RequestInfo | URL) => {
       const url = typeof input === 'string' ? input : String((input as Request).url ?? input);
@@ -524,7 +524,7 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('allows patching state and owners from outside', async () => {
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
@@ -542,7 +542,7 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('accepts custom configuration', () => {
-    const engine = createSimpleHlsEngine({
+    const engine = createHlsVideoEngine({
       initialBandwidth: 3_000_000,
       preferredAudioLanguage: 'es',
     });
@@ -554,14 +554,14 @@ describe('createSimpleHlsEngine', () => {
   });
 
   it('cleans up all orchestrations on destroy', () => {
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     // Should not throw
     expect(() => engine.destroy()).not.toThrow();
   });
 
   it('can be destroyed multiple times safely', () => {
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     engine.destroy();
 
@@ -602,7 +602,7 @@ http://example.com/segment1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     // Patch state to trigger presentation resolution
     engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
@@ -670,7 +670,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -810,7 +810,7 @@ http://example.com/audio-b-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -905,7 +905,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -969,7 +969,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1033,7 +1033,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1088,7 +1088,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
 
     // Patch state but NOT owners (no mediaElement)
     engine.state.presentation.set({ url: 'http://example.com/playlist.m3u8' });
@@ -1165,7 +1165,7 @@ http://example.com/audio-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'none';
 
@@ -1245,7 +1245,7 @@ http://example.com/seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'metadata';
 
@@ -1320,7 +1320,7 @@ http://example.com/seg1.m4s
 
     // Use a conservative initialBandwidth so switchVideoQuality also selects 360p and
     // doesn't immediately upgrade — verifying only the selected track is resolved.
-    const engine = createSimpleHlsEngine({ initialBandwidth: 600_000 });
+    const engine = createHlsVideoEngine({ initialBandwidth: 600_000 });
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1423,7 +1423,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1515,7 +1515,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine({
+    const engine = createHlsVideoEngine({
       enableDefaultTrack: true,
     });
     const mediaElement = document.createElement('video');
@@ -1591,7 +1591,7 @@ http://example.com/text-fr-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine({
+    const engine = createHlsVideoEngine({
       preferredSubtitleLanguage: 'fr',
     });
     const mediaElement = document.createElement('video');
@@ -1676,7 +1676,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1768,7 +1768,7 @@ http://example.com/video-seg1.m4s
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1865,7 +1865,7 @@ http://example.com/text-es-seg1.vtt
     });
     globalThis.fetch = mockFetch;
 
-    const engine = createSimpleHlsEngine();
+    const engine = createHlsVideoEngine();
     const mediaElement = document.createElement('video');
     mediaElement.preload = 'auto';
 
@@ -1965,7 +1965,7 @@ http://example.com/seg2.m4s
   });
   globalThis.fetch = mockFetch;
 
-  const engine = createSimpleHlsEngine();
+  const engine = createHlsVideoEngine();
   const mediaElement = document.createElement('video');
   mediaElement.preload = 'auto';
 
@@ -2040,7 +2040,7 @@ http://example.com/audio-seg1.m4s
   });
   globalThis.fetch = mockFetch;
 
-  const engine = createSimpleHlsEngine();
+  const engine = createHlsVideoEngine();
   const mediaElement = document.createElement('video');
   mediaElement.preload = 'auto';
 

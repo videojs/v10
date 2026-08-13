@@ -27,7 +27,7 @@ import {
  * to showing `message`; an extensible code lookup above the engine is the
  * follow-up that fixes it.
  */
-export interface SimpleHlsMediaError extends ErrorLike {
+export interface HlsVideoMediaError extends ErrorLike {
   /** Reporter context (which selection emptied, which track, …). */
   readonly data?: unknown;
 }

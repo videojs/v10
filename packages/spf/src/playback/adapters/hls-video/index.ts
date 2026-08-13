@@ -3,16 +3,16 @@
  *
  * SPF differs from engines like hls.js in that it exposes no engine-shaped API
  * of its own: the `@videojs/media` facade *is* how a composed engine is
- * consumed. `SimpleHlsMedia` is that facade, and this entry point is separate
+ * consumed. `HlsVideoMedia` is that facade, and this entry point is separate
  * from `@videojs/spf/hls` so wiring the engine directly doesn't pull the Media
  * (or `@videojs/media`) in with it.
  */
 export type {
-  SimpleHlsMediaAPI,
-  SimpleHlsMediaError,
-  SimpleHlsMediaProps,
-  SimpleHlsMediaStreamType,
+  HlsVideoMediaAPI,
+  HlsVideoMediaError,
+  HlsVideoMediaProps,
+  HlsVideoMediaStreamType,
 } from './adapter';
-export { SimpleHlsMediaElement, SimpleHlsMediaMixin, simpleHlsMediaDefaultProps } from './adapter';
-export { SimpleHlsMedia } from './media';
-export { SimpleHlsMediaMediaTracksMixin } from './media-tracks';
+export { HlsVideoMediaElement, HlsVideoMediaMixin, hlsVideoMediaDefaultProps } from './adapter';
+export { HlsVideoMedia } from './media';
+export { HlsVideoMediaMediaTracksMixin } from './media-tracks';

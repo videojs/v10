@@ -1,12 +1,13 @@
 // Deliberately the mixin's own module, not `../mux-video`: that barrel reaches
-// `MuxVideoMedia`, and through it `SimpleHlsMedia` and the full HLS engine. The
+// `MuxVideoMedia`, and through it `HlsVideoMedia` and the full HLS engine. The
 // mixin alone carries no engine, which is what keeps this entry point
-// audio-only. Same shape as `simple-hls-audio-only` importing its error surface
-// from `../simple-hls`.
-import { MuxMediaMixin } from '../mux-video/adapter';
-import { SimpleHlsAudioOnlyMedia } from '../simple-hls-audio-only/media';
+// audio-only. Same shape as `hls-audio` importing its error surface
+// from `../hls-video`.
 
-const MuxAudioMediaBase = MuxMediaMixin(SimpleHlsAudioOnlyMedia);
+import { HlsAudioMedia } from '../hls-audio/media';
+import { MuxMediaMixin } from '../mux-video/adapter';
+
+const MuxAudioMediaBase = MuxMediaMixin(HlsAudioMedia);
 
 /**
  * The Mux Media over the SPF audio-only HLS engine.

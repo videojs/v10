@@ -16,24 +16,24 @@ export {
   deriveSharedMinStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
 // The Medias over these engines are not here: they live behind
-// `@videojs/spf/simple-hls`, `@videojs/spf/simple-hls-audio-only`, and
+// `@videojs/spf/hls-video`, `@videojs/spf/hls-audio`, and
 // `@videojs/spf/background-video` so that driving an engine directly doesn't pull
 // a Media (and `@videojs/media`) in with it — and so this entry stays the
 // engines' own size budget.
 export type {
-  SimpleHlsEngineConfig,
-  SimpleHlsEngineContext,
-  SimpleHlsEngineSignals,
-  SimpleHlsEngineState,
+  HlsVideoEngineConfig,
+  HlsVideoEngineContext,
+  HlsVideoEngineSignals,
+  HlsVideoEngineState,
 } from './engine';
-export { createSimpleHlsEngine } from './engine';
+export { createHlsVideoEngine } from './engine';
 export type {
-  SimpleHlsAudioOnlyEngineConfig,
-  SimpleHlsAudioOnlyEngineContext,
-  SimpleHlsAudioOnlyEngineSignals,
-  SimpleHlsAudioOnlyEngineState,
+  HlsAudioEngineConfig,
+  HlsAudioEngineContext,
+  HlsAudioEngineSignals,
+  HlsAudioEngineState,
 } from './engine-audio-only';
-export { createHlsAudioOnlyEngine } from './engine-audio-only';
+export { createHlsAudioEngine } from './engine-audio-only';
 export type {
   BackgroundVideoEngineConfig,
   BackgroundVideoEngineContext,

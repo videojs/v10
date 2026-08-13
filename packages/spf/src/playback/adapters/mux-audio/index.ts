@@ -1,7 +1,7 @@
 /**
  * The Mux Media over the SPF audio-only HLS engine. Sibling of
  * `@videojs/spf/mux-video`; see that entry point for the three-import-paths
- * design the two share, and `@videojs/spf/simple-hls` for why the Medias ship
+ * design the two share, and `@videojs/spf/hls-video` for why the Medias ship
  * separately from `@videojs/spf/hls`.
  *
  * Named for the flavor, not the composition underneath: the engine is the

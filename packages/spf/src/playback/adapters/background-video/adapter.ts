@@ -38,7 +38,7 @@ export interface BackgroundVideoMediaAPI extends BackgroundVideoMediaProps {
  *
  * Implements the WHATWG HTML media element contract (`src`, `play()`) so it can
  * be dropped in anywhere a media element API is expected. Compared to
- * `SimpleHlsMediaMixin`, this variant:
+ * `HlsVideoMediaMixin`, this variant:
  *
  * - fixes silent autoplay-looping playback at `attach` rather than exposing it:
  *   muted and autoplay are what let it start without a gesture, loop is the

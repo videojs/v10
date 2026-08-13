@@ -1,5 +1,5 @@
 /**
- * SimpleHlsAudioOnlyMediaElement adapter tests.
+ * HlsAudioMediaElement adapter tests.
  *
  * Covers the HTMLMediaElement-compatible contract for src and play(), per the
  * WHATWG HTML spec, for the audio-only HLS variant. Parallels
@@ -15,9 +15,9 @@ import {
   SVTA_UNSUPPORTED_PLAYBACK_FEATURE,
 } from '../../../../media/errors';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../../primitives/error-messages';
-import { SimpleHlsAudioOnlyMediaElement, SimpleHlsAudioOnlyMediaMixin } from '../adapter';
+import { HlsAudioMediaElement, HlsAudioMediaMixin } from '../adapter';
 
-describe('SimpleHlsAudioOnlyMediaElement', () => {
+describe('HlsAudioMediaElement', () => {
   beforeEach(() => {
     vi.stubGlobal(
       'fetch',
@@ -34,52 +34,52 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // ---------------------------------------------------------------------------
   describe('src', () => {
     it('returns empty string before any src is set', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       expect(media.src).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       expect(media.src).toBe('https://example.com/v.m3u8');
     });
 
     it('reflects the most recently set value', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
       expect(media.src).toBe('https://example.com/v2.m3u8');
     });
 
     it('reflects empty string when set to empty', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.src).toBe('');
     });
 
     it('synchronously updates engine presentation state when src is set', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('synchronously updates engine presentation state when src changes', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       media.src = 'https://example.com/v2.m3u8';
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v2.m3u8');
     });
 
     it('clears engine presentation state when src is set to empty string', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.src = '';
       expect(media.engine.state.presentation.get()?.url).toBeFalsy();
     });
 
     it('leaves engine presentation state alone when src is set to the URL already playing', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       const presentation = media.engine.state.presentation.get();
 
@@ -95,12 +95,12 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // ---------------------------------------------------------------------------
   describe('attach / detach', () => {
     it('exposes the engine immediately (created at construction, not on attach)', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       expect(media.engine).not.toBeNull();
     });
 
     it('reuses the same engine instance across attach calls', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
       media.attach(el1);
@@ -110,7 +110,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('reuses the same engine instance across attach/detach cycles', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.attach(document.createElement('video'));
       const engine = media.engine;
       media.detach();
@@ -119,14 +119,14 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('reuses the same engine instance when src is set', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const initial = media.engine;
       media.src = 'https://example.com/v1.m3u8';
       expect(media.engine).toBe(initial);
     });
 
     it('reuses the same engine instance when src changes', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       const engine = media.engine;
       media.src = 'https://example.com/v2.m3u8';
@@ -134,7 +134,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('does not destroy the engine when src changes', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v1.m3u8';
       const spy = vi.spyOn(media.engine, 'destroy');
       media.src = 'https://example.com/v2.m3u8';
@@ -142,7 +142,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('keeps the attached media element across src changes', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v1.m3u8';
@@ -151,21 +151,21 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('sets mediaElement in owners when attached', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       expect(media.engine.context.mediaElement.get()).toBe(el);
     });
 
     it('clears mediaElement in owners when detached', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.attach(document.createElement('video'));
       media.detach();
       expect(media.engine.context.mediaElement.get()).toBeUndefined();
     });
 
     it('updates mediaElement when re-attached to a different element', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const el1 = document.createElement('video');
       const el2 = document.createElement('video');
       media.attach(el1);
@@ -174,7 +174,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('preserves src across attach/detach cycles', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
       media.detach();
@@ -182,14 +182,14 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('src set before attach is reflected in engine state', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.src = 'https://example.com/v.m3u8';
       media.attach(document.createElement('video'));
       expect(media.engine.state.presentation.get()?.url).toBe('https://example.com/v.m3u8');
     });
 
     it('detach does not destroy the engine', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.attach(document.createElement('video'));
       const spy = vi.spyOn(media.engine, 'destroy');
       media.detach();
@@ -202,7 +202,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // ---------------------------------------------------------------------------
   describe('play()', () => {
     it('returns a Promise', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.attach(document.createElement('video'));
       const result = media.play();
       expect(result).toBeInstanceOf(Promise);
@@ -210,14 +210,14 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('sets loadActivated on engine state when called', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.attach(document.createElement('video'));
       media.play().catch(() => {});
       expect(media.engine.state.loadActivated.get()).toBe(true);
     });
 
     it('retries play() via loadstart when element has no src but adapter has one', async () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const el = document.createElement('video');
       media.attach(el);
       media.src = 'https://example.com/v.m3u8';
@@ -241,7 +241,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('re-throws when play() rejects and no adapter src is set', async () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const el = document.createElement('video');
       media.attach(el);
 
@@ -257,24 +257,24 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // ---------------------------------------------------------------------------
   describe('preload', () => {
     it('returns empty string before any preload is set', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       expect(media.preload).toBe('');
     });
 
     it('reflects the set value synchronously', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.preload = 'auto';
       expect(media.preload).toBe('auto');
     });
 
     it('updates engine state immediately when set', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.preload = 'none';
       expect(media.engine.state.preload.get()).toBe('none');
     });
 
     it('keeps explicit preload in engine state across src changes', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.preload = 'none';
       media.src = 'https://example.com/v.m3u8';
       // The engine is recycled, so state.preload is an engine-wide preference
@@ -289,18 +289,18 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // ---------------------------------------------------------------------------
   describe('disableRemotePlayback', () => {
     it('defaults to false', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       expect(media.disableRemotePlayback).toBe(false);
     });
 
     it('reflects the set value synchronously', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.disableRemotePlayback = true;
       expect(media.disableRemotePlayback).toBe(true);
     });
 
     it('updates engine state immediately when set', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.disableRemotePlayback = true;
       expect(media.engine.state.disableRemotePlayback.get()).toBe(true);
     });
@@ -309,7 +309,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
       // The engine is recycled, so author intent persists on the same signal.
       // An opted-out consumer must never get an AirPlay picker back on a
       // source change.
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.disableRemotePlayback = true;
       media.src = 'https://example.com/v.m3u8';
       expect(media.disableRemotePlayback).toBe(true);
@@ -317,7 +317,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
     });
 
     it('keeps a re-enabled remote playback across src changes', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       media.disableRemotePlayback = true;
       media.disableRemotePlayback = false;
       media.src = 'https://example.com/v.m3u8';
@@ -330,7 +330,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // ---------------------------------------------------------------------------
   describe('destroy()', () => {
     it('destroys the underlying engine', () => {
-      const media = new SimpleHlsAudioOnlyMediaElement();
+      const media = new HlsAudioMediaElement();
       const spy = vi.spyOn(media.engine, 'destroy');
       media.destroy();
       expect(spy).toHaveBeenCalledOnce();
@@ -341,7 +341,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
   // Error surface — parallels adapter.test.ts, with a narrower fatal policy
   // ---------------------------------------------------------------------------
   describe('error surface', () => {
-    class TestMedia extends SimpleHlsAudioOnlyMediaMixin(EventTarget) {}
+    class TestMedia extends HlsAudioMediaMixin(EventTarget) {}
 
     const flush = () => new Promise((resolve) => setTimeout(resolve, 0));
 
@@ -409,7 +409,7 @@ describe('SimpleHlsAudioOnlyMediaElement', () => {
 
     it('appends the alternative-Media suggestion when the class names one', async () => {
       const spy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      class Suggesting extends SimpleHlsAudioOnlyMediaMixin(EventTarget) {
+      class Suggesting extends HlsAudioMediaMixin(EventTarget) {
         static override get alternativeMediaSuggestion(): string {
           return 'Import from "/media/mux/hls-js" instead.';
         }

@@ -7,35 +7,35 @@ import {
   type SvtaError,
 } from '../../../media/errors';
 import {
-  createHlsAudioOnlyEngine,
-  type SimpleHlsAudioOnlyEngineConfig,
-  type SimpleHlsAudioOnlyEngineContext,
-  type SimpleHlsAudioOnlyEngineSignals,
-  type SimpleHlsAudioOnlyEngineState,
+  createHlsAudioEngine,
+  type HlsAudioEngineConfig,
+  type HlsAudioEngineContext,
+  type HlsAudioEngineSignals,
+  type HlsAudioEngineState,
 } from '../../engines/hls/engine-audio-only';
 import { UNSUPPORTED_PLAYBACK_FEATURE_MESSAGE } from '../../primitives/error-messages';
 import {
   firstFatal,
+  type HlsVideoMediaError,
   hasUnsupportedFeatureCause,
-  type SimpleHlsMediaError,
   withAlternativeMediaSuggestion,
-} from '../simple-hls/error-surface';
+} from '../hls-video/error-surface';
 
-export interface SimpleHlsAudioOnlyMediaProps {
+export interface HlsAudioMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
 }
 
-export const simpleHlsAudioOnlyMediaDefaultProps: SimpleHlsAudioOnlyMediaProps = {
+export const hlsAudioMediaDefaultProps: HlsAudioMediaProps = {
   src: '',
   preload: '',
   disableRemotePlayback: false,
 };
 
-export interface SimpleHlsAudioOnlyMediaAPI extends SimpleHlsAudioOnlyMediaProps {
-  readonly engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
-  readonly error: SimpleHlsMediaError | null;
+export interface HlsAudioMediaAPI extends HlsAudioMediaProps {
+  readonly engine: Composition<HlsAudioEngineState, HlsAudioEngineContext>;
+  readonly error: HlsVideoMediaError | null;
   attach(mediaElement: HTMLMediaElement): void;
   detach(): void;
   destroy(): void;
@@ -55,31 +55,31 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([SVTA_NO_SUPPORTED
  *
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
- * Parallel to `SimpleHlsMediaMixin` with one substantive difference: the
- * underlying engine is the audio-only variant (`createHlsAudioOnlyEngine`),
+ * Parallel to `HlsVideoMediaMixin` with one substantive difference: the
+ * underlying engine is the audio-only variant (`createHlsAudioEngine`),
  * which omits video and text-track behaviors. The src / preload /
  * disableRemotePlayback / play() contract per the WHATWG HTML spec is identical
  * to the default adapter.
  *
  * Selecting this adapter is the variant decision: instantiating
- * `SimpleHlsAudioOnlyMediaElement` opts the consumer into audio-only
+ * `HlsAudioMediaElement` opts the consumer into audio-only
  * delivery even when the source is a mixed-AV HLS manifest.
  *
  * @example
- * class SimpleHlsAudioOnlyMedia extends SimpleHlsAudioOnlyMediaMixin(HTMLVideoElementHost) {}
+ * class HlsAudioMedia extends HlsAudioMediaMixin(HTMLVideoElementHost) {}
  *
- * const media = new SimpleHlsAudioOnlyMedia();
+ * const media = new HlsAudioMedia();
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
-export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  class SimpleHlsAudioOnlyMediaImpl extends BaseClass {
+export function HlsAudioMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  class HlsAudioMediaImpl extends BaseClass {
     /**
      * A complete sentence naming the Media to reach for when this one can't play
      * a source. Appended to the copy this adapter logs.
      *
      * Empty here, and overridden the same way as on the video adapter — see its
-     * note. `simple-hls-audio-only` has no better-equipped sibling of its own; the
+     * note. `hls-audio` has no better-equipped sibling of its own; the
      * Mux audio Media built on this engine does, and points at the hls.js-backed
      * one.
      */
@@ -87,12 +87,12 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
       return undefined;
     }
 
-    readonly #engine: Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>;
-    #config: SimpleHlsAudioOnlyEngineConfig;
-    #signals!: SimpleHlsAudioOnlyEngineSignals;
-    #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsAudioOnlyMediaDefaultProps.preload;
-    #disableRemotePlayback: boolean = simpleHlsAudioOnlyMediaDefaultProps.disableRemotePlayback;
-    #error: SimpleHlsMediaError | null = null;
+    readonly #engine: Composition<HlsAudioEngineState, HlsAudioEngineContext>;
+    #config: HlsAudioEngineConfig;
+    #signals!: HlsAudioEngineSignals;
+    #preload: '' | 'none' | 'metadata' | 'auto' = hlsAudioMediaDefaultProps.preload;
+    #disableRemotePlayback: boolean = hlsAudioMediaDefaultProps.disableRemotePlayback;
+    #error: HlsVideoMediaError | null = null;
     /** Reported condition currently surfaced — see the video adapter's note. */
     #reportedCode: number | null = null;
     #stopErrorSync: () => void;
@@ -122,7 +122,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
      * the engine reports non-fatal ones too, which stay in `engine.state.errors`.
      * Resets per source. Fires `'error'` when set.
      */
-    get error(): SimpleHlsMediaError | null {
+    get error(): HlsVideoMediaError | null {
       return this.#error;
     }
 
@@ -161,7 +161,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
      * normal playback is driven through this element's own properties and
      * methods.
      */
-    get engine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+    get engine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
       return this.#engine;
     }
 
@@ -250,7 +250,7 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
     play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
-        return Promise.reject(new Error('SimpleHlsAudioOnlyMediaElement: no media element attached'));
+        return Promise.reject(new Error('HlsAudioMediaElement: no media element attached'));
       }
 
       this.#signals.state.loadActivated.set(true);
@@ -279,8 +279,8 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
       return withAlternativeMediaSuggestion(message, this);
     }
 
-    #createEngine(): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
-      return createHlsAudioOnlyEngine({
+    #createEngine(): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
+      return createHlsAudioEngine({
         ...this.#config,
         onSignalsReady: (signals) => {
           this.#signals = signals;
@@ -298,10 +298,10 @@ export function SimpleHlsAudioOnlyMediaMixin<Base extends Constructor<any>>(Base
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return SimpleHlsAudioOnlyMediaImpl as unknown as MixinReturn<Base, SimpleHlsAudioOnlyMediaAPI> & {
+  return HlsAudioMediaImpl as unknown as MixinReturn<Base, HlsAudioMediaAPI> & {
     readonly alternativeMediaSuggestion: string | undefined;
   };
 }
 
 /** Standalone SPF audio-only media adapter with no base class. */
-export class SimpleHlsAudioOnlyMediaElement extends SimpleHlsAudioOnlyMediaMixin(class {}) {}
+export class HlsAudioMediaElement extends HlsAudioMediaMixin(class {}) {}

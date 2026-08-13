@@ -90,7 +90,7 @@ import type { TextTrackSegmentResolver } from '../../primitives/text-segment-loa
  * the HLS engine. Each behavior declares its own state interface; this
  * type satisfies all of them.
  */
-export interface SimpleHlsEngineState {
+export interface HlsVideoEngineState {
   /**
    * The presentation being played. A caller writes `{ url }`;
    * `resolvePresentation` parses the manifest and populates the rest.
@@ -182,7 +182,7 @@ export interface SimpleHlsEngineState {
  *
  * Platform objects and actor references managed by HLS behaviors.
  */
-export interface SimpleHlsEngineContext {
+export interface HlsVideoEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   videoBufferActor?: SourceBufferActor;
@@ -199,9 +199,9 @@ export interface SimpleHlsEngineContext {
  * state (reads) without touching `composition.state` / `composition.context`
  * directly.
  */
-export type SimpleHlsEngineSignals = {
-  state: StateSignals<SimpleHlsEngineState>;
-  context: ContextSignals<SimpleHlsEngineContext>;
+export type HlsVideoEngineSignals = {
+  state: StateSignals<HlsVideoEngineState>;
+  context: ContextSignals<HlsVideoEngineContext>;
 };
 
 /**
@@ -210,7 +210,7 @@ export type SimpleHlsEngineSignals = {
  * Each option is consumed by the appropriate behavior — the engine itself
  * has no config beyond what its behaviors read.
  */
-export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngineState, SimpleHlsEngineContext> {
+export interface HlsVideoEngineConfig extends ShareSignalsConfig<HlsVideoEngineState, HlsVideoEngineContext> {
   /**
    * Bandwidth estimate in bps to use before enough samples have been
    * collected. Default: `DEFAULT_INITIAL_BANDWIDTH` (5 Mbps).
@@ -358,7 +358,7 @@ export interface SimpleHlsEngineConfig extends ShareSignalsConfig<SimpleHlsEngin
  * materialized and reachable on the `onSignalsReady` refs without being listed
  * here.
  */
-const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineContext>([
+const shareSignals = makeShareSignals<HlsVideoEngineState, HlsVideoEngineContext>([
   'userVideoTrackSelection',
   'userAudioTrackSelection',
   'userTextTrackSelection',
@@ -374,8 +374,8 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
  *
  * @example
  * ```ts
- * let signals: SimpleHlsEngineSignals;
- * const engine = createSimpleHlsEngine({
+ * let signals: HlsVideoEngineSignals;
+ * const engine = createHlsVideoEngine({
  *   initialBandwidth: 2_000_000,
  *   preferredAudioLanguage: 'en',
  *   onSignalsReady: (refs) => {
@@ -391,9 +391,9 @@ const shareSignals = makeShareSignals<SimpleHlsEngineState, SimpleHlsEngineConte
  * await engine.destroy();
  * ```
  */
-export function createSimpleHlsEngine(
-  config: SimpleHlsEngineConfig = {}
-): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+export function createHlsVideoEngine(
+  config: HlsVideoEngineConfig = {}
+): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
   // Non-zero-PTS relocation (spike): resolve the coordination seam once so the reactor
   // (model `startMediaTime`) and the loader stamps (buffer `timestampOffset`) apply the
   // SAME derive. Default is shared-`min` across selected A/V (subsumes per-type).

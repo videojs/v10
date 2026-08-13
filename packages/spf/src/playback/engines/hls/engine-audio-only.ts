@@ -58,11 +58,11 @@ import {
 /**
  * State shape for the audio-only HLS playback engine.
  *
- * Subset of `SimpleHlsEngineState` covering only the slots written and read
+ * Subset of `HlsVideoEngineState` covering only the slots written and read
  * by audio-side behaviors. Video and text-track slots are absent —
  * subtractive composition removes the behaviors that declare them.
  */
-export interface SimpleHlsAudioOnlyEngineState {
+export interface HlsAudioEngineState {
   presentation?: MaybeResolvedPresentation;
   preload?: 'auto' | 'metadata' | 'none';
   selectedAudioTrackId?: string;
@@ -129,29 +129,28 @@ export interface SimpleHlsAudioOnlyEngineState {
 /**
  * Context shape for the audio-only HLS playback engine.
  *
- * Subset of `SimpleHlsEngineContext` covering only the platform objects and
+ * Subset of `HlsVideoEngineContext` covering only the platform objects and
  * actor refs managed by audio-side behaviors.
  */
-export interface SimpleHlsAudioOnlyEngineContext {
+export interface HlsAudioEngineContext {
   mediaElement?: HTMLMediaElement | undefined;
   mediaSource?: MediaSource;
   audioBufferActor?: SourceBufferActor;
   audioSegmentLoaderActor?: SegmentLoaderActor;
 }
 
-export type SimpleHlsAudioOnlyEngineSignals = {
-  state: StateSignals<SimpleHlsAudioOnlyEngineState>;
-  context: ContextSignals<SimpleHlsAudioOnlyEngineContext>;
+export type HlsAudioEngineSignals = {
+  state: StateSignals<HlsAudioEngineState>;
+  context: ContextSignals<HlsAudioEngineContext>;
 };
 
 /**
  * Configuration for the audio-only HLS playback engine.
  *
- * Subset of `SimpleHlsEngineConfig` — video-quality, bandwidth-estimator,
+ * Subset of `HlsVideoEngineConfig` — video-quality, bandwidth-estimator,
  * and text-track config fields are omitted (no behavior consumes them).
  */
-export interface SimpleHlsAudioOnlyEngineConfig
-  extends ShareSignalsConfig<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+export interface HlsAudioEngineConfig extends ShareSignalsConfig<HlsAudioEngineState, HlsAudioEngineContext> {
   preferredAudioLanguage?: string;
   /**
    * Codec capability probe read by `track-switching`'s `excludeUnplayableTracks`
@@ -194,7 +193,7 @@ export interface SimpleHlsAudioOnlyEngineConfig
 // reads it) — in addition to forwarding refs. `failedCdns` is owned by
 // `setupFailoverMonitor`, so it's already materialized and reachable on the
 // `onSignalsReady` refs without being listed here.
-const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext>([
+const shareSignals = makeShareSignals<HlsAudioEngineState, HlsAudioEngineContext>([
   'userAudioTrackSelection',
   'disableRemotePlayback',
 ]);
@@ -202,7 +201,7 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
 /**
  * Create an audio-only HLS playback engine.
  *
- * Subtractive composition variant of `createSimpleHlsEngine`: omits
+ * Subtractive composition variant of `createHlsVideoEngine`: omits
  * video-side behaviors (`resolveVideoTrack`, `switchVideoTrack`,
  * `setupVideoBufferActors`, `loadVideoSegments`) and text-track behaviors
  * (`switchTextTrack`, `resolveTextTrack`, `syncTextTracks`,
@@ -217,8 +216,8 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  *
  * @example
  * ```ts
- * let signals: SimpleHlsAudioOnlyEngineSignals;
- * const engine = createHlsAudioOnlyEngine({
+ * let signals: HlsAudioEngineSignals;
+ * const engine = createHlsAudioEngine({
  *   preferredAudioLanguage: 'en',
  *   onSignalsReady: (refs) => {
  *     signals = refs;
@@ -229,9 +228,9 @@ const shareSignals = makeShareSignals<SimpleHlsAudioOnlyEngineState, SimpleHlsAu
  * signals.state.presentation.set({ url: 'https://example.com/stream.m3u8' });
  * ```
  */
-export function createHlsAudioOnlyEngine(
-  config: SimpleHlsAudioOnlyEngineConfig = {}
-): Composition<SimpleHlsAudioOnlyEngineState, SimpleHlsAudioOnlyEngineContext> {
+export function createHlsAudioEngine(
+  config: HlsAudioEngineConfig = {}
+): Composition<HlsAudioEngineState, HlsAudioEngineContext> {
   const deriveStartMediaTime = config.deriveStartMediaTime ?? deriveSharedMinStartMediaTime;
   const finalConfig = {
     ...config,

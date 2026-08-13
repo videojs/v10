@@ -18,11 +18,11 @@ import {
 } from '../../../media/types';
 import { findTrackById } from '../../../media/utils/tracks';
 import {
-  createSimpleHlsEngine,
-  type SimpleHlsEngineConfig,
-  type SimpleHlsEngineContext,
-  type SimpleHlsEngineSignals,
-  type SimpleHlsEngineState,
+  createHlsVideoEngine,
+  type HlsVideoEngineConfig,
+  type HlsVideoEngineContext,
+  type HlsVideoEngineSignals,
+  type HlsVideoEngineState,
 } from '../../engines/hls/engine';
 import {
   DVR_EXPERIMENTAL_MESSAGE,
@@ -32,8 +32,8 @@ import {
 import { getLiveEdge, type LiveWindowState, liveTrackId } from '../../primitives/live-window';
 import {
   firstFatal,
+  type HlsVideoMediaError,
   hasUnsupportedFeatureCause,
-  type SimpleHlsMediaError,
   withAlternativeMediaSuggestion,
 } from './error-surface';
 
@@ -43,27 +43,27 @@ import {
  * {@link MediaStreamType} itself, kept under its own name because that is what
  * this adapter's `streamType` property is documented against.
  */
-export type SimpleHlsMediaStreamType = MediaStreamType;
+export type HlsVideoMediaStreamType = MediaStreamType;
 
-export type { SimpleHlsMediaError } from './error-surface';
+export type { HlsVideoMediaError } from './error-surface';
 
-export interface SimpleHlsMediaProps {
+export interface HlsVideoMediaProps {
   src: string;
   preload: '' | 'none' | 'metadata' | 'auto';
   disableRemotePlayback: boolean;
-  streamType: SimpleHlsMediaStreamType;
+  streamType: HlsVideoMediaStreamType;
 }
 
-export const simpleHlsMediaDefaultProps: SimpleHlsMediaProps = {
+export const hlsVideoMediaDefaultProps: HlsVideoMediaProps = {
   src: '',
   preload: '',
   disableRemotePlayback: false,
   streamType: MediaStreamTypes.UNKNOWN,
 };
 
-export interface SimpleHlsMediaAPI extends SimpleHlsMediaProps {
-  readonly engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
-  readonly error: SimpleHlsMediaError | null;
+export interface HlsVideoMediaAPI extends HlsVideoMediaProps {
+  readonly engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
+  readonly error: HlsVideoMediaError | null;
   readonly liveEdgeStart: number;
   readonly targetLiveWindow: number;
   attach(mediaElement: HTMLMediaElement): void;
@@ -126,14 +126,14 @@ const FATAL_SVTA_CODES: ReadonlySet<number> = new Set<number>([
  * @fires error - Fired when a fatal condition is reported. Read `error` for it.
  *
  * @example
- * class SimpleHlsMedia extends SimpleHlsMediaMixin(HTMLVideoElementHost) {}
+ * class HlsVideoMedia extends HlsVideoMediaMixin(HTMLVideoElementHost) {}
  *
- * const media = new SimpleHlsMedia();
+ * const media = new HlsVideoMedia();
  * media.attach(document.querySelector('video'));
  * media.src = 'https://stream.mux.com/abc123.m3u8';
  */
-export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
-  class SimpleHlsMediaImpl extends BaseClass {
+export function HlsVideoMediaMixin<Base extends Constructor<any>>(BaseClass: Base) {
+  class HlsVideoMediaImpl extends BaseClass {
     /**
      * A complete sentence naming the Media to reach for when this one can't play
      * a source — `Try the hls.js-backed Mux media instead: import the hls-js
@@ -141,7 +141,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
      * surfaces, and to the notices it logs. Name the flavor, not an import path:
      * a Media is reached through several packages, each with its own counterpart.
      *
-     * Empty here: `simple-hls-video` has no better-equipped sibling to point at.
+     * Empty here: `hls-video` has no better-equipped sibling to point at.
      * A Media that does (a Mux Video built on this engine, whose hls.js-backed
      * counterpart plays MPEG-TS and DRM) overrides this static, and its copy gains
      * the second sentence with no other change.
@@ -150,15 +150,15 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       return undefined;
     }
 
-    readonly #engine: Composition<SimpleHlsEngineState, SimpleHlsEngineContext>;
-    #config: SimpleHlsEngineConfig;
-    #signals!: SimpleHlsEngineSignals;
-    #preload: '' | 'none' | 'metadata' | 'auto' = simpleHlsMediaDefaultProps.preload;
-    #disableRemotePlayback: boolean = simpleHlsMediaDefaultProps.disableRemotePlayback;
-    #streamType: SimpleHlsMediaStreamType = simpleHlsMediaDefaultProps.streamType;
+    readonly #engine: Composition<HlsVideoEngineState, HlsVideoEngineContext>;
+    #config: HlsVideoEngineConfig;
+    #signals!: HlsVideoEngineSignals;
+    #preload: '' | 'none' | 'metadata' | 'auto' = hlsVideoMediaDefaultProps.preload;
+    #disableRemotePlayback: boolean = hlsVideoMediaDefaultProps.disableRemotePlayback;
+    #streamType: HlsVideoMediaStreamType = hlsVideoMediaDefaultProps.streamType;
     #isUserStreamType = false;
     #targetLiveWindow = Number.NaN;
-    #error: SimpleHlsMediaError | null = null;
+    #error: HlsVideoMediaError | null = null;
     /**
      * The *reported* condition currently surfaced, which is what the re-fire
      * latch keys on. Not `#error.code`: that's the code this adapter chose to
@@ -209,7 +209,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
      * normal playback is driven through this element's own properties and
      * methods.
      */
-    get engine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
+    get engine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
       return this.#engine;
     }
 
@@ -225,7 +225,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
      * and promoting them would tell a consumer playback had failed when it
      * hadn't. Resets per source. Fires `'error'` when set.
      */
-    get error(): SimpleHlsMediaError | null {
+    get error(): HlsVideoMediaError | null {
       return this.#error;
     }
 
@@ -235,11 +235,11 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
      * user override (detection stops updating it); setting `'unknown'` reverts
      * to the engine's detected value.
      */
-    get streamType(): SimpleHlsMediaStreamType {
+    get streamType(): HlsVideoMediaStreamType {
       return this.#streamType;
     }
 
-    set streamType(value: SimpleHlsMediaStreamType) {
+    set streamType(value: HlsVideoMediaStreamType) {
       if (value === MediaStreamTypes.UNKNOWN) {
         this.#isUserStreamType = false;
         this.#updateStreamType(this.#signals.state.presentation.get()?.streamType ?? MediaStreamTypes.UNKNOWN);
@@ -274,15 +274,15 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       return this.#targetLiveWindow;
     }
 
-    #setDetectedStreamType(value: SimpleHlsMediaStreamType): void {
+    #setDetectedStreamType(value: HlsVideoMediaStreamType): void {
       if (this.#isUserStreamType) return;
       this.#updateStreamType(value);
     }
 
-    #updateStreamType(value: SimpleHlsMediaStreamType): void {
+    #updateStreamType(value: HlsVideoMediaStreamType): void {
       if (this.#streamType === value) return;
       this.#streamType = value;
-      // Optional-chained: with an EventTarget-less base (`SimpleHlsMediaElement`
+      // Optional-chained: with an EventTarget-less base (`HlsVideoMediaElement`
       // standalone) there's nowhere to dispatch; hosts forward it to listeners.
       this.dispatchEvent?.(new Event('streamtypechange'));
     }
@@ -423,7 +423,7 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
     play(): Promise<void> {
       const mediaElement = this.#signals.context.mediaElement.get();
       if (!mediaElement) {
-        return Promise.reject(new Error('SimpleHlsMediaElement: no media element attached'));
+        return Promise.reject(new Error('HlsVideoMediaElement: no media element attached'));
       }
 
       // Signal play intent — enables loading even with preload="none"
@@ -488,8 +488,8 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
       }
     }
 
-    #createEngine(): Composition<SimpleHlsEngineState, SimpleHlsEngineContext> {
-      return createSimpleHlsEngine({
+    #createEngine(): Composition<HlsVideoEngineState, HlsVideoEngineContext> {
+      return createHlsVideoEngine({
         ...this.#config,
         onSignalsReady: (signals) => {
           this.#signals = signals;
@@ -507,10 +507,10 @@ export function SimpleHlsMediaMixin<Base extends Constructor<any>>(BaseClass: Ba
 
   // `MixinReturn` sources statics from `Base`, so the adapter's own static needs
   // adding back to the type or callers can't read it.
-  return SimpleHlsMediaImpl as unknown as MixinReturn<Base, SimpleHlsMediaAPI> & {
+  return HlsVideoMediaImpl as unknown as MixinReturn<Base, HlsVideoMediaAPI> & {
     readonly alternativeMediaSuggestion: string | undefined;
   };
 }
 
 /** Standalone SPF media adapter with no base class. */
-export class SimpleHlsMediaElement extends SimpleHlsMediaMixin(class {}) {}
+export class HlsVideoMediaElement extends HlsVideoMediaMixin(class {}) {}
