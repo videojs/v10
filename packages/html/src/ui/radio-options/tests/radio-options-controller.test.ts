@@ -38,8 +38,6 @@ class TestRadioOptionsElement extends MenuRadioGroupElement {
   readonly onValueChange = vi.fn();
 
   readonly #options = new RadioOptionsController<TestOption>(this, {
-    getTemplate: () => this.getTemplate(),
-    createItem: (template) => this.createRadioItem(template),
     renderItem: (item, label, option) => this.setItemLabel(item, `${label}${option.badge ?? ''}`),
     setItemAttributes: (item, option) => item.setAttribute('data-option', option.value),
     getOptionCacheKey: (option) => option.badge ?? '',
@@ -83,6 +81,21 @@ describe('RadioOptionsController', () => {
     expect(items.map((item) => item.getAttribute('data-option'))).toEqual(['one', 'two']);
     expect(items.map((item) => item.disabled)).toEqual([false, true]);
     expect(indicators.map((indicator) => indicator.checked)).toEqual([true, false]);
+    expect(element.querySelector('template')).toBe(template);
+  });
+
+  it('falls back to default items for an invalid template', async () => {
+    const element = new TestRadioOptionsElement();
+    const template = document.createElement('template');
+    template.innerHTML = '<div class="invalid"></div><div></div>';
+    element.append(template);
+    document.body.append(element);
+
+    await element.updateComplete;
+
+    expect(element.querySelectorAll(MenuRadioItemElement.tagName)).toHaveLength(2);
+    expect(element.querySelector('.invalid')).toBeNull();
+    expect(element.querySelector('template')).toBe(template);
   });
 
   it('rebuilds specialized content and applies group disabled semantics', async () => {

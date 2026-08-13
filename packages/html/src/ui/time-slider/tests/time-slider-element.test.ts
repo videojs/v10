@@ -192,14 +192,11 @@ describe('TimeSlider chapter elements', () => {
     await chapters.updateComplete;
 
     expect(chapters.getAttribute('aria-hidden')).toBe('true');
-    expect(chapters.querySelector('template')).toBeNull();
+    expect(chapters.querySelector('template')).toBe(template);
     expect(chapters.querySelectorAll('.chapter')).toHaveLength(1);
-    expect((chapters.firstElementChild as HTMLElement).style.getPropertyValue('--media-slider-chapter-start')).toBe(
-      '0%'
-    );
-    expect((chapters.firstElementChild as HTMLElement).style.getPropertyValue('--media-slider-chapter-end')).toBe(
-      '100%'
-    );
+    const chapter = chapters.querySelector<HTMLElement>('.chapter')!;
+    expect(chapter.style.getPropertyValue('--media-slider-chapter-start')).toBe('0%');
+    expect(chapter.style.getPropertyValue('--media-slider-chapter-end')).toBe('100%');
     expect(chapters.querySelector('svg')).toBeNull();
   });
 
