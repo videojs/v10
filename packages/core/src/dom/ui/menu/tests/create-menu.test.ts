@@ -647,6 +647,22 @@ describe('createMenu', () => {
       expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
+    it('ArrowDown preserves position when the highlighted item becomes hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+      b.setAttribute('data-hidden', '');
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowDown'));
+
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
     it('ArrowDown wraps from last to first', () => {
       const { menu } = createTestMenu();
       const a = addItem('Alpha');
@@ -683,6 +699,39 @@ describe('createMenu', () => {
       menu.contentProps.onKeyDown(makeKeyEvent('ArrowUp'));
 
       expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('ArrowUp preserves position when the highlighted item becomes hidden', () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+      b.hidden = true;
+
+      menu.contentProps.onKeyDown(makeKeyEvent('ArrowUp'));
+
+      expect(a.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
+    });
+
+    it('moves highlight when the current item becomes hidden', async () => {
+      const { menu } = createTestMenu();
+      const a = addItem('Alpha');
+      const b = addItem('Beta');
+      const c = addItem('Gamma');
+      menu.registerItem(a);
+      menu.registerItem(b);
+      menu.registerItem(c);
+      menu.highlight(b);
+
+      b.setAttribute('aria-hidden', 'true');
+      await Promise.resolve();
+
+      expect(b.hasAttribute(MenuItemDataAttrs.highlighted)).toBe(false);
+      expect(c.getAttribute(MenuItemDataAttrs.highlighted)).toBe('');
     });
 
     it('ArrowUp wraps from first to last', () => {

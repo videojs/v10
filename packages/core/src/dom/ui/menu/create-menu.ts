@@ -118,6 +118,7 @@ export function createMenu(options: MenuOptions): MenuApi {
   // Items are stored in DOM order. Framework/component lifecycle ordering is
   // not always the same as visual order, especially across nested components.
   const items: HTMLElement[] = [];
+  const itemObservers = new Map<HTMLElement, MutationObserver>();
   let highlightedItem: HTMLElement | null = null;
   let triggerElement: HTMLElement | null = null;
   let contentElement: HTMLElement | null = null;
@@ -136,6 +137,20 @@ export function createMenu(options: MenuOptions): MenuApi {
 
   function getNavigableItems(): HTMLElement[] {
     return items.filter((item) => !isItemHidden(item));
+  }
+
+  function getAdjacentNavigableItem(direction: 1 | -1): HTMLElement | null {
+    if (items.length === 0) return null;
+
+    const currentIndex = highlightedItem ? items.indexOf(highlightedItem) : direction === 1 ? -1 : 0;
+
+    for (let offset = 1; offset <= items.length; offset++) {
+      const index = (currentIndex + direction * offset + items.length) % items.length;
+      const candidate = items[index];
+      if (candidate && !isItemHidden(candidate)) return candidate;
+    }
+
+    return null;
   }
 
   function push(menuId: string, triggerId: string): void {
@@ -164,7 +179,10 @@ export function createMenu(options: MenuOptions): MenuApi {
   // --- Highlight ---
 
   function highlight(element: HTMLElement | null, highlightOptions?: MenuHighlightOptions): void {
-    if (element && isItemHidden(element)) return;
+    if (element && isItemHidden(element)) {
+      if (element === highlightedItem) highlight(getAdjacentNavigableItem(1), highlightOptions);
+      return;
+    }
     if (highlightedItem === element) return;
 
     if (highlightedItem) {
@@ -307,14 +325,12 @@ export function createMenu(options: MenuOptions): MenuApi {
       switch (key) {
         case 'ArrowDown': {
           event.preventDefault();
-          const currentIndex = highlightedItem ? navigableItems.indexOf(highlightedItem) : -1;
-          highlight(navigableItems[(currentIndex + 1) % navigableItems.length] ?? null);
+          highlight(getAdjacentNavigableItem(1));
           break;
         }
         case 'ArrowUp': {
           event.preventDefault();
-          const currentIndex = highlightedItem ? navigableItems.indexOf(highlightedItem) : 0;
-          highlight(navigableItems[(currentIndex <= 0 ? navigableItems.length : currentIndex) - 1] ?? null);
+          highlight(getAdjacentNavigableItem(-1));
           break;
         }
         case 'Home': {
@@ -385,11 +401,24 @@ export function createMenu(options: MenuOptions): MenuApi {
     items.push(element);
     items.sort(compareItems);
 
+    const observer = new MutationObserver(() => {
+      if (highlightedItem === element && isItemHidden(element)) {
+        highlight(getAdjacentNavigableItem(1));
+      }
+    });
+    observer.observe(element, {
+      attributes: true,
+      attributeFilter: ['hidden', 'data-hidden', 'aria-hidden'],
+    });
+    itemObservers.set(element, observer);
+
     if (popover.input.current.active && popover.input.current.status !== 'ending' && !highlightedItem) {
       scheduleInitialHighlight();
     }
 
     return () => {
+      itemObservers.get(element)?.disconnect();
+      itemObservers.delete(element);
       const index = items.indexOf(element);
       if (index !== -1) items.splice(index, 1);
       if (highlightedItem === element) clearHighlight();
@@ -400,6 +429,8 @@ export function createMenu(options: MenuOptions): MenuApi {
     cancelAnimationFrame(openRafId);
     openRafId = 0;
     clearTypeahead();
+    for (const observer of itemObservers.values()) observer.disconnect();
+    itemObservers.clear();
     popover.destroy();
   }
 
