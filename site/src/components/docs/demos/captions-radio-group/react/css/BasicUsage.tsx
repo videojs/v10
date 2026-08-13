@@ -1,34 +1,28 @@
-import { createPlayer, Menu, useCaptionsOptions } from '@videojs/react';
+import { CaptionsRadioGroup, createPlayer, Menu } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
 const Player = createPlayer({ features: videoFeatures });
 
 function CaptionsMenu(): ReactNode {
-  const captions = useCaptionsOptions();
-  if (captions?.state.availability !== 'available') return null;
-
   return (
     <Menu.Root side="top" align="end">
       <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
         Captions
       </Menu.Trigger>
       <Menu.Content className="menu">
-        <Menu.RadioGroup
+        <CaptionsRadioGroup
           className="menu-group"
-          value={captions.value}
-          onValueChange={captions.setValue}
           aria-label="Captions"
-        >
-          {captions.options.map((option) => (
-            <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled} className="menu-item">
-              {option.label}
-              <Menu.ItemIndicator checked={option.value === captions.value} forceMount className="menu-indicator">
+          renderItem={(props, item) => (
+            <Menu.RadioItem {...props} className="menu-item">
+              {item.label}
+              <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
                 ✓
               </Menu.ItemIndicator>
             </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
+          )}
+        />
       </Menu.Content>
     </Menu.Root>
   );
