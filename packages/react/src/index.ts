@@ -96,6 +96,10 @@ export {
   type CaptionsOption,
   type CaptionsOptionsProps,
   type CaptionsOptionsResult,
+  CaptionsRadioGroup,
+  type CaptionsRadioGroupItemProps,
+  type CaptionsRadioGroupItemState,
+  type CaptionsRadioGroupProps,
   useCaptionsOptions,
 } from './ui/captions-radio-group';
 export { CastButton, type CastButtonProps } from './ui/cast-button/cast-button';
