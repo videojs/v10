@@ -31,26 +31,27 @@ function SettingsMenu(): ReactNode {
         Settings
       </Menu.Trigger>
       <Menu.Content className="menu">
-        <div className="menu-panel">
+        <Menu.View className="menu-panel">
           {hasQuality ? (
             <Menu.Root>
               <Menu.Trigger
+                type="quality"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Quality</span>
                     <span className="menu-value">
-                      {quality.selectedLabel}
+                      <Menu.ItemValue />
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Item className="menu-back">
+                <Menu.Back className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Quality
-                </Menu.Item>
+                </Menu.Back>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={quality.value}
@@ -86,22 +87,23 @@ function SettingsMenu(): ReactNode {
           {hasAudioTrack ? (
             <Menu.Root>
               <Menu.Trigger
+                type="audio-track"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Audio</span>
                     <span className="menu-value">
-                      {audioTrack.selectedLabel}
+                      <Menu.ItemValue />
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Item className="menu-back">
+                <Menu.Back className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Audio
-                </Menu.Item>
+                </Menu.Back>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={audioTrack.value}
@@ -133,22 +135,23 @@ function SettingsMenu(): ReactNode {
           {hasPlaybackRate ? (
             <Menu.Root>
               <Menu.Trigger
+                type="playback-rate"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Speed</span>
                     <span className="menu-value">
-                      {playbackRate.selectedLabel}
+                      <Menu.ItemValue />
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Item className="menu-back">
+                <Menu.Back className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Speed
-                </Menu.Item>
+                </Menu.Back>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={playbackRate.value}
@@ -180,22 +183,23 @@ function SettingsMenu(): ReactNode {
           {hasCaptions ? (
             <Menu.Root>
               <Menu.Trigger
+                type="captions"
                 className="menu-item"
                 render={(props) => (
                   <div {...props}>
                     <span>Captions</span>
                     <span className="menu-value">
-                      {captions.selectedLabel}
+                      <Menu.ItemValue />
                       <span aria-hidden="true">›</span>
                     </span>
                   </div>
                 )}
               />
               <Menu.Content className="menu-panel">
-                <Menu.Item className="menu-back">
+                <Menu.Back className="menu-back">
                   <span aria-hidden="true">‹</span>
                   Captions
-                </Menu.Item>
+                </Menu.Back>
                 <Menu.RadioGroup
                   className="menu-group"
                   value={captions.value}
@@ -227,7 +231,7 @@ function SettingsMenu(): ReactNode {
           <Menu.Item className="menu-item" onSelect={() => navigator.clipboard?.writeText(window.location.href)}>
             Copy link
           </Menu.Item>
-        </div>
+        </Menu.View>
       </Menu.Content>
     </Menu.Root>
   );
