@@ -78,7 +78,19 @@ describe('defaults', () => {
     expect(result).not.toHaveProperty('extra');
   });
 
-  it('does not read inherited properties of the input', () => {
+  it('reads default keys from inherited accessors on the input', () => {
+    // Mirrors ReactiveElement, which installs reactive properties as enumerable
+    // accessors on the class prototype rather than as own properties.
+    const proto = {};
+    Object.defineProperty(proto, 'delay', { get: () => 900, enumerable: true });
+
+    const input = Object.create(proto) as { delay?: number };
+
+    expect(Object.hasOwn(input, 'delay')).toBe(false);
+    expect(defaults(input, { delay: 600, timeout: 400 })).toEqual({ delay: 900, timeout: 400 });
+  });
+
+  it('does not read inherited properties absent from the default values', () => {
     const inherited = vi.fn(() => 'inherited');
     const proto = {};
     Object.defineProperty(proto, 'inherited', { get: inherited, enumerable: true });
