@@ -14,8 +14,8 @@ import {
   MUX_SOURCE_IDS,
   MUX_SPF_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
-  SIMPLE_HLS_SOURCE_IDS,
   SOURCES,
+  SPF_HLS_SOURCE_IDS,
 } from '@app/shared/sources';
 import type { Platform, Preset, Styling } from '@app/types';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -76,6 +76,7 @@ export function App() {
   const hlsPreset = preset === 'hlsjs-video' || preset === 'native-hls-video';
   const muxPreset = preset === 'mux-video' || preset === 'mux-audio';
   const muxSpfPreset = preset === 'mux-video-spf' || preset === 'mux-audio-spf';
+  const spfHlsPreset = preset === 'hls-video' || preset === 'hls-audio';
   // Both background presets render a fixed source and have no Tailwind skin.
   const backgroundPreset = preset === 'background-video' || preset === 'mux-background-video';
   const availableSources =
@@ -89,8 +90,8 @@ export function App() {
             ? HLS_SOURCE_IDS
             : structuredSource && muxSpfPreset
               ? MUX_SPF_SOURCE_IDS
-              : preset.startsWith('simple-hls-') || muxSpfPreset
-                ? SIMPLE_HLS_SOURCE_IDS
+              : spfHlsPreset || muxSpfPreset
+                ? SPF_HLS_SOURCE_IDS
                 : NON_DASH_SOURCE_IDS;
 
   // Keep the URL in sync with all state.
@@ -204,7 +205,7 @@ export function App() {
         onLocaleChange={setLocale}
         availableSources={availableSources}
         isBackgroundVideo={backgroundPreset}
-        isSimpleHls={preset.startsWith('simple-hls-')}
+        isSpfHls={spfHlsPreset}
         isMuxVideo={preset === 'mux-video'}
         isMuxAudio={preset === 'mux-audio'}
         isVimeoVideo={preset === 'vimeo-video'}

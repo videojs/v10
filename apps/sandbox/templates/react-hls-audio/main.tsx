@@ -9,7 +9,7 @@ import { useSkin } from '@app/shared/react/use-skin';
 import { useSource } from '@app/shared/react/use-source';
 import { SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
-import { SimpleHlsAudioOnly } from '@videojs/react/media/simple-hls-audio-only';
+import { HlsAudio } from '@videojs/react/media/hls-audio';
 import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -29,7 +29,7 @@ function App() {
   return (
     <AudioProvider>
       <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
-        <SimpleHlsAudioOnly
+        <HlsAudio
           src={SOURCES[source].url ?? ''}
           autoPlay={autoplay}
           muted={muted}

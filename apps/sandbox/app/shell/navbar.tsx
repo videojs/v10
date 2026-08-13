@@ -28,7 +28,7 @@ type NavbarProps = {
   onLocaleChange: (value: SandboxLocaleTag) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
-  isSimpleHls: boolean;
+  isSpfHls: boolean;
   isMuxVideo: boolean;
   isMuxAudio: boolean;
   isVimeoVideo: boolean;
@@ -41,12 +41,12 @@ type NavbarProps = {
 
 /**
  * What the selected media will do with a source, when that's worth labelling for
- * someone smoke-testing. Simple HLS is the SPF engine: no TS transmux pipeline
+ * someone smoke-testing. The plain HLS presets are the SPF engine: no TS transmux pipeline
  * and no EME, so it refuses MPEG-TS on format and encrypted renditions on
  * protection. Derived from the pair rather than stored on the source, since every
  * source here plays fine under some other media.
  *
- * Keyed on the *preset*, not a single is-Simple-HLS flag, because the two
+ * Keyed on the *preset*, not a single is-SPF-HLS flag, because the two
  * variants answer differently and a note promising the wrong outcome is worse
  * than none — a reviewer would file the difference as a bug:
  *
@@ -61,8 +61,8 @@ type NavbarProps = {
  *   only appears for one of them.
  */
 function expectedOutcomeNote(source: SandboxSource, preset: Preset): string | undefined {
-  if (!preset.startsWith('simple-hls-')) return undefined;
-  const audioOnlyPreset = preset === 'simple-hls-audio-only';
+  if (preset !== 'hls-video' && preset !== 'hls-audio') return undefined;
+  const audioOnlyPreset = preset === 'hls-audio';
 
   if (source.drm) {
     return audioOnlyPreset ? 'plays — Mux leaves audio clear' : 'expects protected error';
@@ -83,14 +83,14 @@ const PLATFORM_LABELS: Record<Platform, string> = {
 
 const PRESET_LABELS: Record<Preset, string> = {
   video: 'Video',
-  'hlsjs-video': 'HLS Video',
+  'hlsjs-video': 'HLS Video (hls.js)',
   'native-hls-video': 'Native HLS Video',
   'mux-video': 'Mux Video',
   'mux-video-spf': 'Mux Video (SPF)',
   'mux-audio': 'Mux Audio',
   'mux-audio-spf': 'Mux Audio (SPF)',
-  'simple-hls-video': 'Simple HLS Video',
-  'simple-hls-audio-only': 'Simple HLS Audio-Only',
+  'hls-video': 'HLS Video',
+  'hls-audio': 'HLS Audio',
   'dash-video': 'DASH Video',
   audio: 'Audio',
   'background-video': 'Background Video',
@@ -122,7 +122,7 @@ export function Navbar({
   onLocaleChange,
   availableSources,
   isBackgroundVideo,
-  isSimpleHls,
+  isSpfHls,
   isMuxVideo,
   isMuxAudio,
   isVimeoVideo,
@@ -183,9 +183,9 @@ export function Navbar({
               // The empty-src entry carries no media, so it's offered wherever
               // the preset can render one rather than being filtered by format.
               if (sources[id].type === 'none') return true;
-              // Any HLS source, including formats Simple HLS can't play — reaching
+              // Any HLS source, including formats the SPF engine can't play — reaching
               // those failures on purpose is how the error paths get smoke-tested.
-              if (isSimpleHls) return sources[id].type === 'hls';
+              if (isSpfHls) return sources[id].type === 'hls';
               if (isMuxVideo || isMuxAudio) return sources[id].type !== 'dash';
               return true;
             })

@@ -322,8 +322,8 @@ export const MUX_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type !== 'da
 export const MUX_SPF_SOURCE_IDS = SOURCE_IDS.filter(
   (id) => SOURCES[id].type !== 'dash' && (!isDrmSource(id) || id === 'hls-drm-unlicensed')
 );
-/** Simple HLS is the same engine without the Mux source, so it drops what only a playback ID reaches. */
-export const SIMPLE_HLS_SOURCE_IDS = MUX_SPF_SOURCE_IDS.filter((id) => !isMuxSource(id));
+/** The plain HLS presets are the same engine without the Mux source, so they drop what only a playback ID reaches. */
+export const SPF_HLS_SOURCE_IDS = MUX_SPF_SOURCE_IDS.filter((id) => !isMuxSource(id));
 export const MP4_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'mp4');
 export const DASH_SOURCE_IDS = SOURCE_IDS.filter((id) => SOURCES[id].type === 'dash');
 export const DEFAULT_SOURCE: SourceId = 'hls-1';

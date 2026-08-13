@@ -2,7 +2,7 @@ import '@app/styles.css';
 import { renderChapters } from '@app/shared/html/chapters';
 import { bindSandboxHtmlLocaleChange, prepareSandboxHtmlLocale, wrapSandboxHtmlI18n } from '@app/shared/html/i18n';
 import '@videojs/html/video/player';
-import '@videojs/html/media/simple-hls-video';
+import '@videojs/html/media/hls-video';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadVideoSkinTag } from '@app/shared/html/skins';
 import { renderStoryboard } from '@app/shared/html/storyboard';
@@ -36,10 +36,10 @@ async function render() {
   document.getElementById('root')!.innerHTML = wrapSandboxHtmlI18n(html`
     <${playerTag}>
       <${tag} class="aspect-video max-w-4xl mx-auto">
-        <simple-hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
+        <hls-video src="${SOURCES[state.source].url}" ${mediaAttrs} playsinline crossorigin="anonymous">
           ${renderChapters(getChapters(state.source))}
           ${renderStoryboard(storyboard)}
-        </simple-hls-video>
+        </hls-video>
         ${poster ? html`<img slot="poster" src="${poster}" alt="Video poster" />` : ''}
       </${tag}>
     </${playerTag}>

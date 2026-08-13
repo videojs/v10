@@ -1,9 +1,9 @@
 import '@app/styles.css';
-// SimpleHlsVideo + Video.js integration sandbox
-// http://localhost:5173/simple-hls-html/
+// HlsVideo + Video.js integration sandbox
+// http://localhost:5173/hls-video-html/
 //
-// Tests SimpleHlsVideo fully integrated into a VJS player with UI controls.
-// <media-container> wraps <simple-hls-video> and attaches it to the player store.
+// Tests HlsVideo fully integrated into a VJS player with UI controls.
+// <media-container> wraps <hls-video> and attaches it to the player store.
 //
 // Icon visibility is driven by data-* attributes set by the button elements:
 //   media-play-button: [data-paused], [data-ended]
@@ -11,7 +11,7 @@ import '@app/styles.css';
 
 import '@videojs/html/video/player';
 import '@videojs/html/media/container';
-import '@videojs/html/media/simple-hls-video';
+import '@videojs/html/media/hls-video';
 import '@videojs/html/ui/play-button';
 import '@videojs/html/ui/mute-button';
 import { pauseIcon, playIcon, restartIcon, volumeHighIcon, volumeOffIcon } from '@videojs/html/icons';
@@ -28,7 +28,7 @@ document.getElementById('root')!.innerHTML = html`
       overflow: hidden;
     }
 
-    simple-hls-video {
+    hls-video {
       width: 640px;
       aspect-ratio: 16 / 9;
       display: block;
@@ -81,11 +81,11 @@ document.getElementById('root')!.innerHTML = html`
   <div class="player-wrapper">
     <video-player>
       <media-container style="display: contents;">
-        <simple-hls-video
+        <hls-video
           src="https://stream.mux.com/lhnU49l1VGi3zrTAZhDm9LUUxSjpaPW9BL4jY25Kwo4.m3u8"
           preload="auto"
           playsinline
-        ></simple-hls-video>
+        ></hls-video>
       </media-container>
 
       <div class="control-bar">

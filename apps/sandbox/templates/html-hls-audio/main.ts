@@ -1,6 +1,6 @@
 import '@app/styles.css';
 import '@videojs/html/audio/player';
-import '@videojs/html/media/simple-hls-audio-only';
+import '@videojs/html/media/hls-audio';
 import { createHtmlSandboxState, createLatestLoader, renderMediaAttrs } from '@app/shared/html/sandbox-state';
 import { loadAudioSkinTag } from '@app/shared/html/skins';
 import {
@@ -28,7 +28,7 @@ async function render() {
     <div class="w-full max-w-xl mx-auto">
       <audio-player>
         <${tag}>
-          <simple-hls-audio-only src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></simple-hls-audio-only>
+          <hls-audio src="${SOURCES[state.source].url}" ${mediaAttrs} crossorigin="anonymous"></hls-audio>
         </${tag}>
       </audio-player>
     </div>

@@ -4,7 +4,7 @@ import { PlayerPage } from '../page-objects/player';
 /**
  * SPF MediaSource attach + sourceclose-recovery smoke tests.
  *
- * Runs against the SPF engine page (`simple-hls-video`) on every vite-*
+ * Runs against the SPF engine page (`hls-video`) on every vite-*
  * project (Chromium, WebKit, Firefox). Two things under test:
  *
  * 1. The attach shape: the object URL rides a `<source>` child on every
@@ -25,7 +25,7 @@ import { PlayerPage } from '../page-objects/player';
  * snapshot, so exact-position assertions would be flaky here.
  */
 
-const PAGE = '/pages/html-simple-hls-video-fmp4.html';
+const PAGE = '/pages/html-hls-video-fmp4.html';
 
 /** Serializable snapshot of the media element's MSE attachment. */
 interface AttachShape {
@@ -36,7 +36,7 @@ interface AttachShape {
 }
 
 function readAttachShape(): AttachShape {
-  const host = document.querySelector('simple-hls-video');
+  const host = document.querySelector('hls-video');
   const video = (host?.shadowRoot?.querySelector('video') ?? host?.querySelector('video') ?? host) as HTMLVideoElement;
   return {
     airPlayCapable: 'WebKitPlaybackTargetAvailabilityEvent' in window,
@@ -88,7 +88,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
     // MediaSource, which fires `sourceclose` — indistinguishable, from the
     // engine's side, from Safari doing it.
     await page.evaluate(() => {
-      const host = document.querySelector('simple-hls-video');
+      const host = document.querySelector('hls-video');
       const video = (host?.shadowRoot?.querySelector('video') ??
         host?.querySelector('video') ??
         host) as HTMLVideoElement;
@@ -107,7 +107,7 @@ test.describe('SPF MediaSource attach + recovery', () => {
     // returns without any consumer-side src rewrite.
     await page.waitForFunction(
       (prev) => {
-        const host = document.querySelector('simple-hls-video');
+        const host = document.querySelector('hls-video');
         const video = (host?.shadowRoot?.querySelector('video') ??
           host?.querySelector('video') ??
           host) as HTMLVideoElement;

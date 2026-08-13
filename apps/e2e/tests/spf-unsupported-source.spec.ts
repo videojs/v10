@@ -47,8 +47,8 @@ const UNEXPECTED_COPY = 'An unexpected error occurred.';
 /** `errors.unplayable` — what the surfaced code resolves to in the default locale. */
 const UNPLAYABLE_COPY = 'This media is unsupported by the player.';
 
-const TS_PAGE = '/pages/html-simple-hls-video-ts.html';
-const FMP4_PAGE = '/pages/html-simple-hls-video-fmp4.html';
+const TS_PAGE = '/pages/html-hls-video-ts.html';
+const FMP4_PAGE = '/pages/html-hls-video-fmp4.html';
 const FMP4_URL = MEDIA.hlsFmp4.url;
 
 interface SurfacedError {
@@ -58,13 +58,13 @@ interface SurfacedError {
 
 /** The error the media surface exposes, or null while none has surfaced. */
 function readSurfacedError(): SurfacedError | null {
-  const media = document.querySelector('simple-hls-video') as (HTMLElement & { error?: SurfacedError | null }) | null;
+  const media = document.querySelector('hls-video') as (HTMLElement & { error?: SurfacedError | null }) | null;
   return media?.error ?? null;
 }
 
 /** Every SVTA code in the engine's reported sequence, causes included. */
 function readReportedCodes(): number[] {
-  const media = document.querySelector('simple-hls-video') as
+  const media = document.querySelector('hls-video') as
     | (HTMLElement & { engine?: { state?: { errors?: { get(): Array<{ code: number }> | undefined } } } })
     | null;
   return (media?.engine?.state?.errors?.get() ?? []).map((error) => error.code);
@@ -73,7 +73,7 @@ function readReportedCodes(): number[] {
 async function waitForSurfacedError(page: Page): Promise<SurfacedError> {
   await page.waitForFunction(
     () => {
-      const media = document.querySelector('simple-hls-video') as (HTMLElement & { error?: unknown }) | null;
+      const media = document.querySelector('hls-video') as (HTMLElement & { error?: unknown }) | null;
       return !!media?.error;
     },
     undefined,
@@ -144,7 +144,7 @@ test.describe('SPF unsupported-source errors', () => {
     await expect(errorDialog).toHaveAttribute(DATA_ATTRS.open, '', { timeout: 20_000 });
 
     await page.evaluate((url) => {
-      const media = document.querySelector('simple-hls-video') as (HTMLElement & { src?: string }) | null;
+      const media = document.querySelector('hls-video') as (HTMLElement & { src?: string }) | null;
       if (media) media.src = url;
     }, FMP4_URL);
 
@@ -155,7 +155,7 @@ test.describe('SPF unsupported-source errors', () => {
     // the host) closes the dialog.
     await page.waitForFunction(
       () => {
-        const media = document.querySelector('simple-hls-video') as (HTMLElement & { error?: unknown }) | null;
+        const media = document.querySelector('hls-video') as (HTMLElement & { error?: unknown }) | null;
         return !!media && !media.error;
       },
       undefined,
@@ -167,7 +167,7 @@ test.describe('SPF unsupported-source errors', () => {
     // cleared flag over a dead engine.
     await page.waitForFunction(
       () => {
-        const host = document.querySelector('simple-hls-video');
+        const host = document.querySelector('hls-video');
         const video = (host?.querySelector('video') ??
           host?.shadowRoot?.querySelector('video')) as HTMLVideoElement | null;
         return !!video && video.readyState >= 1;

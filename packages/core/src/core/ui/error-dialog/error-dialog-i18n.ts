@@ -22,7 +22,7 @@ import {
  * `SVTA_UNSUPPORTED_PLAYBACK_FEATURE` and owns its meaning, but core doesn't
  * depend on spf, and reaching it through `@videojs/media` would pull an engine
  * entry point into a barrel that has no other reason to load one. Same trade
- * `SimpleHlsMediaStreamType` makes in the other direction — compatibility by
+ * `HlsVideoMediaStreamType` makes in the other direction — compatibility by
  * value, stated in a comment, instead of a dependency edge neither package
  * wants.
  */

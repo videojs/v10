@@ -81,7 +81,8 @@ doesn't need SPF's `preload=auto` load quirk):
 
 ```sh
 ./live-test.sh --page live-hls-engine            # bare SPF engine harness
-./live-test.sh --page html-hls-video             # hls.js-backed player component
+./live-test.sh --page html-hls-video             # SPF-backed player component
+./live-test.sh --page html-hlsjs-video           # hls.js-backed player component
 ./live-test.sh --page html-native-hls-video      # native HLS (Safari)
 ```
 

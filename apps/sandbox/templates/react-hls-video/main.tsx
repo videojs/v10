@@ -14,7 +14,7 @@ import { useSource } from '@app/shared/react/use-source';
 import { useStoryboard } from '@app/shared/react/use-storyboard';
 import { getChapters, isLiveSource, SOURCES } from '@app/shared/sources';
 import type { Styling } from '@app/types';
-import { SimpleHlsVideo } from '@videojs/react/media/simple-hls-video';
+import { HlsVideo } from '@videojs/react/media/hls-video';
 import { useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 
@@ -45,7 +45,7 @@ function App() {
           live={live}
           className="aspect-video max-w-4xl mx-auto"
         >
-          <SimpleHlsVideo
+          <HlsVideo
             src={SOURCES[source].url ?? ''}
             autoPlay={autoplay}
             muted={muted}
@@ -56,7 +56,7 @@ function App() {
           >
             <Chapters tracks={getChapters(source)} />
             <Storyboard src={storyboard} />
-          </SimpleHlsVideo>
+          </HlsVideo>
         </VideoSkinComponent>
       </Provider>
     </SandboxI18nProvider>

@@ -51,9 +51,9 @@ const MEDIA_TYPES: Record<string, MediaTypeConfig> = {
     hasPoster: true,
     isAudio: false,
   },
-  'simple-hls-video': {
-    element: 'simple-hls-video',
-    imports: ['@videojs/html/media/simple-hls-video'],
+  'hls-video': {
+    element: 'hls-video',
+    imports: ['@videojs/html/media/hls-video'],
     attrs: 'playsinline crossorigin="anonymous" preload="metadata"',
     hasStoryboard: true,
     hasPoster: true,
@@ -364,10 +364,10 @@ const PAGES: PageDef[] = [
   { name: 'HTML Video MP4', path: 'html-video-mp4', framework: 'html', media: 'video', resource: 'mp4' },
   { name: 'HTML Video HLS', path: 'html-video-hls', framework: 'html', media: 'hlsjs-video', resource: 'hlsTs' },
   {
-    name: 'HTML Simple HLS Video fMP4',
-    path: 'html-simple-hls-video-fmp4',
+    name: 'HTML HLS Video fMP4',
+    path: 'html-hls-video-fmp4',
     framework: 'html',
-    media: 'simple-hls-video',
+    media: 'hls-video',
     resource: 'hlsFmp4',
   },
   // A source the SPF engine cannot play: MPEG-TS segments, with no fMP4
@@ -375,10 +375,10 @@ const PAGES: PageDef[] = [
   // page arrays — the parameterized playback suites would all fail on it. Only
   // `spf-unsupported-source.spec.ts` uses it.
   {
-    name: 'HTML Simple HLS Video TS',
-    path: 'html-simple-hls-video-ts',
+    name: 'HTML HLS Video TS',
+    path: 'html-hls-video-ts',
     framework: 'html',
-    media: 'simple-hls-video',
+    media: 'hls-video',
     resource: 'hlsTs',
   },
   { name: 'HTML DASH Video', path: 'html-dash-video', framework: 'html', media: 'dash-video', resource: 'dash' },

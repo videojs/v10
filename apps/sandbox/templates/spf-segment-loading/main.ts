@@ -12,8 +12,8 @@ import '@app/styles.css';
 
 import { SOURCE_IDS, SOURCES } from '@app/shared/sources';
 import { effect, snapshot } from '@videojs/spf';
-import type { SimpleHlsEngineSignals, SimpleHlsEngineState } from '@videojs/spf/hls';
-import { createSimpleHlsEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
+import type { HlsVideoEngineSignals, HlsVideoEngineState } from '@videojs/spf/hls';
+import { createHlsVideoEngine, getMediaPlaylistMetadata } from '@videojs/spf/hls';
 
 // ── DOM refs ──────────────────────────────────────────────────────────────────
 const video = document.getElementById('video') as HTMLVideoElement;
@@ -129,15 +129,15 @@ function formatFrameRate(frameRate: { frameRateNumerator: number; frameRateDenom
   return `${Number.parseFloat(fps.toFixed(2))} fps`;
 }
 
-function getVideoTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getVideoTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'video')?.switchingSets[0]?.tracks ?? [];
 }
 
-function getAudioTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getAudioTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'audio')?.switchingSets[0]?.tracks ?? [];
 }
 
-function getTextTracks(presentation: SimpleHlsEngineState['presentation']) {
+function getTextTracks(presentation: HlsVideoEngineState['presentation']) {
   return presentation?.selectionSets?.find((s) => s.type === 'text')?.switchingSets[0]?.tracks ?? [];
 }
 
@@ -318,7 +318,7 @@ function buildVideoTrackButtons(groups: VideoSelectionGroup[]) {
 function updateVideoTrackSelection(
   tracks: ReturnType<typeof getVideoTracks>,
   selectedVideoTrackId: string | undefined,
-  userFilter: SimpleHlsEngineState['userVideoTrackSelection']
+  userFilter: HlsVideoEngineState['userVideoTrackSelection']
 ) {
   const isManual = userFilter !== undefined;
 
@@ -453,7 +453,7 @@ function buildAudioTrackButtons(groups: AudioSelectionGroup[]) {
 function updateAudioTrackSelection(
   tracks: ReturnType<typeof getAudioTracks>,
   selectedAudioTrackId: string | undefined,
-  userFilter: SimpleHlsEngineState['userAudioTrackSelection']
+  userFilter: HlsVideoEngineState['userAudioTrackSelection']
 ) {
   const isPinned = userFilter !== undefined;
 
@@ -736,15 +736,15 @@ function inspectState() {
 log('=== SPF Segment Loading POC Test ===');
 log(`Stream: ${INITIAL_SRC}`);
 
-let engine: ReturnType<typeof createSimpleHlsEngine>;
-let signals: SimpleHlsEngineSignals;
+let engine: ReturnType<typeof createHlsVideoEngine>;
+let signals: HlsVideoEngineSignals;
 let cleanupEffects: () => void = () => {};
 
 function startEngine(src: string) {
   cleanupEffects();
   if (engine) engine.destroy();
 
-  engine = createSimpleHlsEngine({
+  engine = createHlsVideoEngine({
     initialBandwidth: 1_000_000,
     // AVC-only filters HEVC so ABR never crosses codec families (no changeType).
     // Omitted (not set to undefined) when off, per exactOptionalPropertyTypes.

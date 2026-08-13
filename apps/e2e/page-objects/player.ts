@@ -146,7 +146,7 @@ export class PlayerPage {
     });
 
     // Wait for the media element to have at least metadata loaded.
-    // SPF-based renderers (simple-hls-video) with preload="metadata" need
+    // SPF-based renderers (hls-video) with preload="metadata" need
     // time to resolve the manifest before seeks or other interactions work.
     await this.page.waitForFunction(
       (selector) => {
