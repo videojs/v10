@@ -151,11 +151,18 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       // A cleared src replays too, so the barrier below always gets settled.
       this.#pendingLoad = !!this.#target;
       // The target can be attached before it has anything to embed, in which case
-      // this load is what finally builds it. Wait a microtask first: a framework
-      // sets `src` and the props that shape the embed in whatever order it likes,
-      // and the embed URL is only built once, so it has to see all of them.
+      // this load is what finally builds it.
       if (this.#target && !this.#player && !this.#creatingPlayer) {
+        // The barrier `attach()` opened was settled when there was nothing to
+        // embed, so this load needs one of its own — otherwise `play()` runs
+        // before the player it is waiting for exists.
+        const load = this.#beginLoad();
+        // Wait a microtask: a framework sets `src` and the props that shape the
+        // embed in whatever order it likes, and the embed URL is only built once,
+        // so it has to see all of them.
         await Promise.resolve();
+        // A later load took over while waiting; building the embed is its job now.
+        if (load !== this.#loadComplete) return;
         this.#createPlayer();
       }
       return;

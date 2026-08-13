@@ -408,6 +408,29 @@ describe('YouTubeMedia', () => {
     expect(media.engine).toBe(null);
   });
 
+  it('waits for a deferred embed to load before playing', async () => {
+    const media = new YouTubeMedia();
+    media.attach(createIframe());
+
+    media.src = 'aqz-KE-bpKQ';
+    let played = false;
+    const pending = media.play().then(() => {
+      played = true;
+    });
+
+    // The player the deferred embed creates has not reported readiness, so
+    // playing now would run against a player that cannot accept it.
+    const player = await waitForEngine(media);
+    expect(played).toBe(false);
+
+    player.ready();
+    player.emit('onStateChange', STATE.CUED);
+    await pending;
+
+    expect(player.playVideo).toHaveBeenCalled();
+    media.detach();
+  });
+
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new YouTubeMedia();
     const events: string[] = [];
