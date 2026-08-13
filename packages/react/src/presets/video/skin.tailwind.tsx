@@ -12,6 +12,7 @@ import {
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -23,7 +24,6 @@ import {
   popup,
   poster,
   primaryControls,
-  root,
   secondaryControls,
   seekIndicator,
   slider,
@@ -428,7 +428,7 @@ export function VideoSkinTailwind(props: VideoSkinProps): ReactNode {
     : style;
 
   return (
-    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(container(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (

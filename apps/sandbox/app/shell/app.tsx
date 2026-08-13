@@ -41,6 +41,7 @@ function readParams() {
     muted: params.get('muted') === '1',
     loop: params.get('loop') === '1',
     preload: PRELOAD_VALUES.includes(preload as PreloadValue) ? (preload as PreloadValue) : DEFAULT_PRELOAD,
+    accentColor: params.get('accent')?.trim() ?? '',
     locale: (() => {
       const value = params.get('locale');
       return SANDBOX_LOCALE_TAGS.includes(value as SandboxLocaleTag)
@@ -61,6 +62,7 @@ export function App() {
   const [muted, setMuted] = useState(initial.muted);
   const [loop, setLoop] = useState(initial.loop);
   const [preload, setPreload] = useState<PreloadValue>(initial.preload);
+  const [accentColor, setAccentColor] = useState(initial.accentColor);
   const [locale, setLocale] = useState<SandboxLocaleTag>(initial.locale);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -99,8 +101,9 @@ export function App() {
       preload,
       locale,
     });
+    if (accentColor) params.set('accent', accentColor);
     history.replaceState(null, '', `/?${params}`);
-  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, locale]);
+  }, [platform, styling, preset, skin, source, autoplay, muted, loop, preload, accentColor, locale]);
 
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'skin-change', skin }, '*');
@@ -129,6 +132,10 @@ export function App() {
   useEffect(() => {
     iframeRef.current?.contentWindow?.postMessage({ type: 'locale-change', locale }, '*');
   }, [locale]);
+
+  useEffect(() => {
+    iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
+  }, [accentColor]);
 
   // Constrain source to MP4 when switching to audio
   useEffect(() => {
@@ -193,6 +200,8 @@ export function App() {
         onPreloadChange={setPreload}
         locale={locale}
         onLocaleChange={setLocale}
+        accentColor={accentColor}
+        onAccentColorChange={setAccentColor}
         availableSources={availableSources}
         isBackgroundVideo={preset === 'background-video'}
         isSimpleHls={preset.startsWith('simple-hls-')}
@@ -218,6 +227,10 @@ export function App() {
         loop={loop}
         preload={preload}
         locale={locale}
+        accentColor={accentColor}
+        onLoad={() => {
+          iframeRef.current?.contentWindow?.postMessage({ type: 'accent-color-change', accentColor }, '*');
+        }}
       />
     </div>
   );

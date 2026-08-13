@@ -12,6 +12,7 @@ import {
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -22,7 +23,6 @@ import {
   overlay,
   popup,
   poster,
-  root,
   seekIndicator,
   slider,
   statusIndicator,
@@ -426,7 +426,7 @@ export function MinimalVideoSkinTailwind(props: MinimalVideoSkinProps): ReactNod
     : style;
 
   return (
-    <Container className={cn(root(false), className)} style={containerStyle} {...rest}>
+    <Container className={cn(container(false), className)} style={containerStyle} {...rest}>
       {children}
 
       {posterProp && (

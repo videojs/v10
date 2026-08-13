@@ -2,6 +2,7 @@ import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
@@ -12,7 +13,6 @@ import {
   playButton,
   playbackRate,
   popup,
-  root,
   seek,
   slider,
   time,
@@ -35,6 +35,7 @@ import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { ErrorDialog } from '@/ui/error-dialog';
+import { Hotkey } from '@/ui/hotkey';
 import { Menu } from '@/ui/menu';
 import { MuteButton } from '@/ui/mute-button';
 import { PlayButton } from '@/ui/play-button';
@@ -42,6 +43,7 @@ import { usePlaybackRateOptions } from '@/ui/playback-rate';
 import { PlaybackRateButton } from '@/ui/playback-rate-button';
 import { Popover } from '@/ui/popover';
 import { SeekButton } from '@/ui/seek-button';
+import { StatusAnnouncer } from '@/ui/status-announcer';
 import { Time } from '@/ui/time';
 import { TimeSlider } from '@/ui/time-slider';
 import { Tooltip } from '@/ui/tooltip';
@@ -166,7 +168,7 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>
@@ -255,8 +257,8 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
 
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
-                <TimeSlider.Fill render={<SliderFill />} />
                 <TimeSlider.Buffer render={<SliderBuffer />} />
+                <TimeSlider.Fill render={<SliderFill />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
               <TimeSlider.Preview className={slider.preview}>
@@ -277,6 +279,25 @@ export function MinimalAudioSkinTailwind(props: MinimalAudioSkinProps): ReactNod
           </div>
         </Tooltip.Provider>
       </div>
+
+      {/* Hotkeys */}
+      <Hotkey keys="Space" action="togglePaused" />
+      <Hotkey keys="k" action="togglePaused" />
+      <Hotkey keys="m" action="toggleMuted" />
+      <Hotkey keys="ArrowRight" action="seekStep" value={5} />
+      <Hotkey keys="ArrowLeft" action="seekStep" value={-5} />
+      <Hotkey keys="l" action="seekStep" value={10} />
+      <Hotkey keys="j" action="seekStep" value={-10} />
+      <Hotkey keys="ArrowUp" action="volumeStep" value={0.05} />
+      <Hotkey keys="ArrowDown" action="volumeStep" value={-0.05} />
+      <Hotkey keys="0-9" action="seekToPercent" />
+      <Hotkey keys="Home" action="seekToPercent" value={0} />
+      <Hotkey keys="End" action="seekToPercent" value={100} />
+      <Hotkey keys=">" action="speedUp" />
+      <Hotkey keys="<" action="speedDown" />
+
+      {/* Input Feedback */}
+      <StatusAnnouncer className="sr-only" />
     </Container>
   );
 }

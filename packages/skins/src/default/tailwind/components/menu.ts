@@ -29,17 +29,14 @@ const submenuPanel = cn(
 );
 
 const itemBase = cn(
-  'flex cursor-pointer select-none items-center gap-1.5 rounded-(--menu-item-border-radius) py-1.5 px-2',
+  'group/menu-item relative flex cursor-pointer select-none items-center gap-1.5 rounded-(--menu-item-border-radius) py-1.5 px-2',
   'text-left',
-  'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)',
+  'text-shadow-2xs text-shadow-(color:--shadow-current-color)',
   'outline-2 -outline-offset-2 outline-transparent',
-  'transition-colors duration-100 ease-out',
-  'hover:bg-current/10 data-highlighted:bg-current/10',
-  'supports-[top:anchor(top)]:hover:[anchor-name:--media-menu-item-highlight-anchor]',
-  'supports-[top:anchor(top)]:hover:bg-transparent',
-  'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--media-menu-item-highlight-anchor]',
-  'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
-  'focus-visible:outline-current focus-visible:outline-offset-2'
+  'transition-colors duration-200 ease-out',
+  'hover:bg-(--accent-background-color) hover:text-(--accent-text-color)',
+  'data-highlighted:bg-(--accent-background-color) data-highlighted:text-(--accent-text-color)',
+  'focus-visible:outline-(--focus-ring-color) focus-visible:outline-offset-2'
 );
 
 const menuTokens = cn(
@@ -53,12 +50,12 @@ const menuTokens = cn(
 
 const group = cn(
   'flex flex-col gap-0.5',
-  '[anchor-scope:--media-menu-item-highlight-anchor]',
+  '[anchor-scope:--menu-item-highlight-anchor]',
   'supports-[top:anchor(top)]:before:absolute',
-  'supports-[top:anchor(top)]:before:[position-anchor:--media-menu-item-highlight-anchor]',
+  'supports-[top:anchor(top)]:before:[position-anchor:--menu-item-highlight-anchor]',
   'supports-[top:anchor(top)]:before:[inset:anchor(inside)]',
   'supports-[top:anchor(top)]:before:pointer-events-none',
-  'supports-[top:anchor(top)]:before:bg-current/10',
+  'supports-[top:anchor(top)]:before:bg-(--accent-background-color)',
   'supports-[top:anchor(top)]:before:rounded-(--menu-item-border-radius)',
   'supports-[top:anchor(top)]:before:transition-[inset]',
   'supports-[top:anchor(top)]:before:duration-100',
@@ -81,24 +78,28 @@ export const menu = {
   settings: cn(
     menuHostShell,
     // Add height and width transitions.
-    '[--media-popup-transition:var(--media-popup-base-transition),height_var(--media-popup-transition-timing-function)_var(--menu-transition-duration),width_var(--media-popup-transition-timing-function)_var(--menu-transition-duration)]',
+    '[--popup-transition:var(--popup-base-transition),height_var(--popup-transition-timing-function)_var(--menu-transition-duration),width_var(--popup-transition-timing-function)_var(--menu-transition-duration)]',
     // Don't transition width and height on open/close.
-    'data-starting-style:[--media-popup-transition:var(--media-popup-base-transition)]',
-    'data-ending-style:[--media-popup-transition:var(--media-popup-base-transition)]',
+    'data-starting-style:[--popup-transition:var(--popup-base-transition)]',
+    'data-ending-style:[--popup-transition:var(--popup-base-transition)]',
     'min-w-48! w-(--media-menu-width) h-(--media-menu-height)',
     'overflow-hidden!'
   ),
   group,
   item: cn(
     itemBase,
-    'group/menu-item justify-between tabular-nums text-inherit',
+    'justify-between tabular-nums text-inherit',
+    'supports-[top:anchor(top)]:hover:[anchor-name:--menu-item-highlight-anchor]',
+    'supports-[top:anchor(top)]:hover:bg-transparent',
+    'supports-[top:anchor(top)]:data-highlighted:[anchor-name:--menu-item-highlight-anchor]',
+    'supports-[top:anchor(top)]:data-highlighted:bg-transparent',
     'data-[availability=unavailable]:hidden data-[availability=unsupported]:hidden',
     'aria-disabled:pointer-events-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50'
   ),
   separator: 'my-1 border-b border-[oklch(0_0_0/0.1)] shadow-[0_1px_0_0_oklch(1_0_0/0.075)]',
   tier: 'pl-0.5 pt-px text-(length:--font-size-tiny) font-semibold leading-none text-current/70',
   indicator: 'ml-auto -mr-1 shrink-0 opacity-0 group-aria-checked/menu-item:opacity-100',
-  icon: 'shrink-0 text-current/65 drop-shadow-[0_1px_0_var(--media-current-shadow-color)]',
+  icon: 'shrink-0 text-current/65 drop-shadow-[0_1px_0_var(--shadow-current-color)] group-hover/menu-item:text-inherit group-data-highlighted/menu-item:text-inherit',
   /** Root settings view — slides out when a submenu is active. */
   rootView,
   /** Submenu panel — slides in/out alongside the root view. */

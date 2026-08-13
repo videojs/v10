@@ -2,6 +2,7 @@ import { playbackRateText } from '@videojs/core/i18n/text/menu';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
@@ -12,7 +13,6 @@ import {
   playButton,
   playbackRate,
   popup,
-  root,
   seek,
   slider,
   time,
@@ -168,7 +168,7 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>
@@ -252,11 +252,11 @@ export function AudioSkinTailwind(props: AudioSkinProps): ReactNode {
             <Time.Value type="current" className={time.current} />
             <TimeSlider.Root render={<SliderRoot />}>
               <TimeSlider.Track render={<SliderTrack />}>
-                <TimeSlider.Fill render={<SliderFill />} />
                 <TimeSlider.Buffer render={<SliderBuffer />} />
+                <TimeSlider.Fill render={<SliderFill />} />
               </TimeSlider.Track>
               <TimeSlider.Thumb render={<SliderThumb />} />
-              <TimeSlider.Preview className={slider.preview}>
+              <TimeSlider.Preview overflow="visible" className={slider.preview}>
                 <TimeSlider.Value type="pointer" className={slider.value} />
               </TimeSlider.Preview>
             </TimeSlider.Root>

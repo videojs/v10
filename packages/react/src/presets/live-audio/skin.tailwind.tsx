@@ -1,13 +1,13 @@
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
   iconState,
   playButton,
   popup,
-  root,
   slider,
   spacer,
 } from '@videojs/skins/default/tailwind/audio.tailwind';
@@ -103,7 +103,7 @@ export function LiveAudioSkinTailwind(props: LiveAudioSkinProps): ReactNode {
   const { children, className, ...rest } = props;
 
   return (
-    <Container className={cn(root, className)} {...rest}>
+    <Container className={cn(container, className)} {...rest}>
       {children}
 
       <ErrorDialog.Root>

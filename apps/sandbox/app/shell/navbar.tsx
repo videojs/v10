@@ -26,6 +26,8 @@ type NavbarProps = {
   onPreloadChange: (value: PreloadValue) => void;
   locale: SandboxLocaleTag;
   onLocaleChange: (value: SandboxLocaleTag) => void;
+  accentColor: string;
+  onAccentColorChange: (value: string) => void;
   availableSources: readonly SourceId[];
   isBackgroundVideo: boolean;
   isSimpleHls: boolean;
@@ -117,6 +119,8 @@ export function Navbar({
   onPreloadChange,
   locale,
   onLocaleChange,
+  accentColor,
+  onAccentColorChange,
   availableSources,
   isBackgroundVideo,
   isSimpleHls,
@@ -206,6 +210,8 @@ export function Navbar({
           onPreloadChange={onPreloadChange}
           locale={locale}
           onLocaleChange={onLocaleChange}
+          accentColor={accentColor}
+          onAccentColorChange={onAccentColorChange}
         />
         <a
           href="https://github.com/videojs/v10"
@@ -244,6 +250,8 @@ type SettingsMenuProps = {
   onPreloadChange: (value: PreloadValue) => void;
   locale: SandboxLocaleTag;
   onLocaleChange: (value: SandboxLocaleTag) => void;
+  accentColor: string;
+  onAccentColorChange: (value: string) => void;
 };
 
 function SettingsMenu({
@@ -257,6 +265,8 @@ function SettingsMenu({
   onPreloadChange,
   locale,
   onLocaleChange,
+  accentColor,
+  onAccentColorChange,
 }: SettingsMenuProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -266,6 +276,7 @@ function SettingsMenu({
   const loopId = useId();
   const preloadId = useId();
   const localeId = useId();
+  const accentColorId = useId();
 
   useEffect(() => {
     if (!open) return;
@@ -331,6 +342,7 @@ function SettingsMenu({
             onChange={(value) => onLocaleChange(value as SandboxLocaleTag)}
             optionGroups={SANDBOX_LOCALE_OPTION_GROUPS}
           />
+          <ColorItem id={accentColorId} value={accentColor} onChange={onAccentColorChange} />
           <CheckboxItem id={autoplayId} label="Autoplay" checked={autoplay} onChange={onAutoplayChange} />
           <CheckboxItem id={mutedId} label="Muted" checked={muted} onChange={onMutedChange} />
           <CheckboxItem id={loopId} label="Loop" checked={loop} onChange={onLoopChange} />
@@ -344,6 +356,42 @@ function SettingsMenu({
         </div>
       )}
     </div>
+  );
+}
+
+type ColorItemProps = {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+};
+
+function ColorItem({ id, value, onChange }: ColorItemProps) {
+  const pickerValue = /^#[\da-f]{6}$/i.test(value) ? value : '#ff0000';
+
+  return (
+    <>
+      <label htmlFor={id} className="text-[13px] font-medium text-zinc-700 dark:text-zinc-200 cursor-pointer">
+        Accent color
+      </label>
+      <div className="flex items-center gap-1.5 justify-self-start">
+        <input
+          id={id}
+          type="text"
+          value={value}
+          onChange={(event) => onChange(event.target.value)}
+          placeholder="Default"
+          spellCheck={false}
+          className="h-7 w-28 rounded border-none bg-clip-border ring ring-zinc-800/10 dark:ring-white/10 bg-white dark:bg-zinc-900 px-2 text-[13px] font-medium text-zinc-950 dark:text-zinc-50 shadow-xs shadow-black/20 focus:outline-2 focus:outline-zinc-950 dark:focus:outline-zinc-50 focus:outline-offset-2"
+        />
+        <input
+          type="color"
+          value={pickerValue}
+          onChange={(event) => onChange(event.target.value)}
+          aria-label="Choose accent color"
+          className="size-7 rounded border-none bg-transparent p-0 cursor-pointer"
+        />
+      </div>
+    </>
   );
 }
 
