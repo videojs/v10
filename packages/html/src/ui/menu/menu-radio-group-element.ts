@@ -1,10 +1,9 @@
 import { type Text, type Translator, translateText } from '@videojs/core/i18n';
 import type { PropertyValues } from '@videojs/element';
-import { cloneTemplateRoot, getTemplateElement, getTemplateRoot } from '@videojs/utils/dom';
 
 import { RadioGroupElement } from '../radio-group/radio-group-element';
 import { MenuGroupController } from './menu-group-controller';
-import { MenuRadioItemElement } from './menu-radio-item-element';
+import type { MenuRadioItemElement } from './menu-radio-item-element';
 
 export class MenuRadioGroupElement extends RadioGroupElement {
   static readonly tagName: string = 'media-menu-radio-group';
@@ -16,20 +15,6 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     super.update(changed);
 
     this.#group.applyProps();
-  }
-
-  protected getTemplate(): HTMLTemplateElement | null {
-    return getTemplateElement(this);
-  }
-
-  protected createRadioItem(template: HTMLTemplateElement | null): MenuRadioItemElement {
-    const root = template ? getTemplateRoot(template) : null;
-
-    if (root?.localName === MenuRadioItemElement.tagName) {
-      return cloneTemplateRoot(root, this.ownerDocument) as MenuRadioItemElement;
-    }
-
-    return this.ownerDocument.createElement(MenuRadioItemElement.tagName) as MenuRadioItemElement;
   }
 
   protected setItemLabel(item: MenuRadioItemElement, label: string): void {

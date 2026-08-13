@@ -99,12 +99,14 @@ export class TimeSliderChaptersElement extends MediaElement {
 
   #getTemplateRoot(): HTMLElement | null {
     if (this.#templateChecked) return this.#templateRoot;
-    this.#templateChecked = true;
 
     const template = getTemplateElement(this);
-    const root = template ? getTemplateRoot(template) : null;
+    if (!template) return null;
+
+    this.#templateChecked = true;
+    const root = getTemplateRoot(template);
     if (root?.namespaceURI !== 'http://www.w3.org/1999/xhtml') {
-      if (__DEV__ && template) {
+      if (__DEV__) {
         console.warn(`[${this.localName}] template must contain exactly one HTML root element.`);
       }
       return null;

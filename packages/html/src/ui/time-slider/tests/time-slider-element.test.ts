@@ -213,6 +213,27 @@ describe('TimeSlider chapter elements', () => {
     expect(chapters.querySelector('.fallback')).toBe(fallback);
   });
 
+  it('discovers a template on a later update', async () => {
+    const slider = createElement(TestSliderProviderElement);
+    const chapters = createElement(TimeSliderChaptersElement);
+    const fallback = document.createElement('div');
+    fallback.className = 'fallback';
+    chapters.appendChild(fallback);
+    slider.appendChild(chapters);
+    document.body.appendChild(slider);
+    await chapters.updateComplete;
+
+    const template = document.createElement('template');
+    template.innerHTML = '<div class="chapter"></div>';
+    chapters.appendChild(template);
+    chapters.requestUpdate();
+    await chapters.updateComplete;
+
+    expect(chapters.querySelector('template')).toBe(template);
+    expect(chapters.querySelector('.fallback')).toBeNull();
+    expect(chapters.querySelectorAll('.chapter')).toHaveLength(1);
+  });
+
   for (const [name, content] of [
     ['empty', ''],
     ['multiple-root', '<div></div><div></div>'],
