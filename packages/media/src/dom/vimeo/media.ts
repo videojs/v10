@@ -3,6 +3,7 @@ import { deepEqual } from '@videojs/utils/object';
 import { isNull, isString, isUndefined } from '@videojs/utils/predicate';
 import VimeoPlayer, { type LoadVideoOptions, type VimeoEmbedParameters, type VimeoUrl } from '@vimeo/player';
 import { EMPTY_TEXT_TRACKS, EMPTY_TIME_RANGES } from '../../core/constants';
+import { MediaError } from '../../core/media-error';
 
 import type { ErrorLike, MediaPreloadType, TextTrackListLike, Video } from '../../core/types';
 import { MediaPlayedRangesMixin } from '../media-played-ranges';
@@ -114,7 +115,10 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   static PLAYER_SOFTWARE_NAME = 'vimeo-video';
 
-  /** Underlying `@vimeo/player` instance (null before attach). */
+  /**
+   * Underlying `@vimeo/player` instance. Null until an embed URL can be resolved,
+   * which for a target attached before its source is later than `attach()`.
+   */
   get engine() {
     return this.#player;
   }
@@ -123,20 +127,18 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     return this.#target;
   }
 
-  /** Bind the iframe hosting the embed, creating a `@vimeo/player` instance. */
+  /**
+   * Bind the iframe hosting the embed. The `@vimeo/player` instance follows as
+   * soon as an embed URL can be resolved, which is not always now: a framework
+   * that creates the element before setting `src` attaches an iframe with
+   * nothing to embed yet, and `load()` picks it up once a source arrives.
+   */
   attach(target: HTMLIFrameElement | null): void {
     if (!target || this.#target === target) return;
     if (this.#target) this.detach();
     this.#target = target;
-    if (!target.src) {
-      const initialSrc = buildVimeoIframeSrc(this.#src, this.#snapshotProps());
-      if (initialSrc) target.src = initialSrc;
-    }
     this.#beginLoad();
-    this.#player = new VimeoPlayer(target);
-    this.#bindPlayerEvents(this.#player);
-    this.#setupTextTracks(this.#player);
-    this.dispatchEvent(new Event('loadstart'));
+    this.#createPlayer();
   }
 
   detach(): void {
@@ -169,7 +171,9 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   get currentSrc() {
-    return this.#target?.src ?? '';
+    // The `src` property resolves an empty attribute to the document URL, so only
+    // the attribute can report an embed that hasn't been built yet as empty.
+    return this.#target?.getAttribute('src') ?? '';
   }
 
   get readyState() {
@@ -178,7 +182,21 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
 
   /** Reload the current source via Vimeo's `loadVideo`; no-op until `attach()`. */
   async load() {
-    if (!this.#player) return;
+    if (!this.#player) {
+      // Nothing to reload without a target, and no load to wait on either.
+      if (!this.#target) return;
+      // The target was attached before it had anything to embed, so this load is
+      // what finally builds it. Wait a microtask first: a framework sets `src`
+      // and the props that shape the embed in whatever order it likes, and the
+      // embed URL is only built once, so it has to see all of them.
+      const load = this.#beginLoad();
+      this.#resetState();
+      await Promise.resolve();
+      // A later load took over while waiting; building the embed is its job now.
+      if (load !== this.#loadComplete) return;
+      this.#createPlayer();
+      return;
+    }
     const load = this.#beginLoad();
     // Reset before bailing on an empty src: a cleared source has nothing to load,
     // but what we report about the old video still has to go.
@@ -212,6 +230,46 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#loadComplete.resolve();
     this.#loadComplete = createPublicPromise<void>();
     return this.#loadComplete;
+  }
+
+  /**
+   * Create the player for the attached target, building its embed URL first when
+   * the target arrived without one. `@vimeo/player` throws for an iframe that is
+   * not a Vimeo embed, and for a custom element `attach()` runs in a constructor
+   * where a throw breaks the element outright — so a target that cannot be
+   * resolved yet leaves the player null and settles the load it was given.
+   *
+   * @returns Whether a player was created.
+   */
+  #createPlayer(): boolean {
+    const target = this.#target;
+    if (!target || this.#player) return false;
+
+    // The `src` property resolves an empty attribute to the document URL, so it
+    // cannot tell an embed apart from a placeholder; the attribute can.
+    if (!target.getAttribute('src')) {
+      const initialSrc = buildVimeoIframeSrc(this.#src, this.#snapshotProps());
+      // No embed means no `loaded` is coming to settle this load.
+      if (!initialSrc) {
+        this.#loadComplete.resolve();
+        return false;
+      }
+      target.src = initialSrc;
+    }
+
+    try {
+      this.#player = new VimeoPlayer(target);
+    } catch {
+      this.#error = new MediaError('The attached iframe is not a Vimeo embed.', MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED);
+      this.dispatchEvent(new Event('error'));
+      this.#loadComplete.resolve();
+      return false;
+    }
+
+    this.#bindPlayerEvents(this.#player);
+    this.#setupTextTracks(this.#player);
+    this.dispatchEvent(new Event('loadstart'));
+    return true;
   }
 
   get paused() {

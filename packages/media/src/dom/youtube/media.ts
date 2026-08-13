@@ -37,6 +37,8 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   #playerReady = false;
   /** A load was requested before the player was ready; replay it on `onReady`. */
   #pendingLoad = false;
+  /** Player creation is in flight; the API load makes it span more than a tick. */
+  #creatingPlayer = false;
   #loadComplete = createPublicPromise<void>();
   /** Guards async player creation across attach/detach cycles. */
   #attachId = 0;
@@ -80,18 +82,18 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     return this.#target;
   }
 
-  /** Bind the iframe hosting the embed, loading the iframe API and creating a player. */
+  /**
+   * Bind the iframe hosting the embed. The iframe API and its player follow as
+   * soon as an embed URL can be resolved, which is not always now: a framework
+   * that creates the element before setting `src` attaches an iframe with
+   * nothing to embed yet, and `load()` picks it up once a source arrives.
+   */
   attach(target: HTMLIFrameElement | null): void {
     if (!target || this.#target === target) return;
     if (this.#target) this.detach();
     this.#target = target;
-    if (!target.src) {
-      const initialSrc = buildYouTubeIframeSrc(this.#src, this.#snapshotProps());
-      if (initialSrc) target.src = initialSrc;
-    }
     this.#beginLoad();
-    this.dispatchEvent(new Event('loadstart'));
-    void this.#createPlayer(target);
+    this.#createPlayer();
   }
 
   detach(): void {
@@ -107,6 +109,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     this.#player = null;
     this.#playerReady = false;
     this.#pendingLoad = false;
+    this.#creatingPlayer = false;
     this.#target = null;
     // Unblock callers awaiting load; they re-check `#player` (now null) and no-op.
     this.#loadComplete.resolve();
@@ -132,7 +135,9 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
   }
 
   get currentSrc() {
-    return this.#target?.src ?? '';
+    // The `src` property resolves an empty attribute to the document URL, so only
+    // the attribute can report an embed that hasn't been built yet as empty.
+    return this.#target?.getAttribute('src') ?? '';
   }
 
   get readyState() {
@@ -145,6 +150,14 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       // `cueVideoById`/`loadVideoById` fail before `onReady`; replay the load then.
       // A cleared src replays too, so the barrier below always gets settled.
       this.#pendingLoad = !!this.#target;
+      // The target can be attached before it has anything to embed, in which case
+      // this load is what finally builds it. Wait a microtask first: a framework
+      // sets `src` and the props that shape the embed in whatever order it likes,
+      // and the embed URL is only built once, so it has to see all of them.
+      if (this.#target && !this.#player && !this.#creatingPlayer) {
+        await Promise.resolve();
+        this.#createPlayer();
+      }
       return;
     }
     const load = this.#beginLoad();
@@ -380,7 +393,37 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
     this.#isFullscreen = false;
   }
 
-  async #createPlayer(target: HTMLIFrameElement) {
+  /**
+   * Build the embed and start player creation once a source can be resolved. The
+   * iframe API only talks to an iframe that already holds a YouTube embed, so a
+   * target that cannot be resolved yet leaves the player null and settles the
+   * load it was given; the next `load()` retries.
+   *
+   * @returns Whether player creation started.
+   */
+  #createPlayer(): boolean {
+    const target = this.#target;
+    if (!target || this.#player || this.#creatingPlayer) return false;
+
+    // The `src` property resolves an empty attribute to the document URL, so it
+    // cannot tell an embed apart from a placeholder; the attribute can.
+    if (!target.getAttribute('src')) {
+      const initialSrc = buildYouTubeIframeSrc(this.#src, this.#snapshotProps());
+      // No embed means no player is coming to settle this load.
+      if (!initialSrc) {
+        this.#loadComplete.resolve();
+        return false;
+      }
+      target.src = initialSrc;
+    }
+
+    this.#creatingPlayer = true;
+    this.dispatchEvent(new Event('loadstart'));
+    void this.#createPlayerApi(target);
+    return true;
+  }
+
+  async #createPlayerApi(target: HTMLIFrameElement) {
     const attachId = this.#attachId;
     let api: YouTubeApi;
     try {
@@ -389,6 +432,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       // A failed API load belongs to the attach that started it; a newer one must
       // not be marked failed or have its load unblocked.
       if (this.#isStale(attachId)) return;
+      this.#creatingPlayer = false;
       this.#error = new MediaError('Failed to load the YouTube iframe API', MediaError.MEDIA_ERR_NETWORK);
       this.dispatchEvent(new Event('error'));
       // Unblock callers awaiting load so play()/fullscreen don't hang.
@@ -409,6 +453,7 @@ export class YouTubeMedia extends YouTubeMediaBase implements Partial<Video> {
       },
     });
     this.#player = player;
+    this.#creatingPlayer = false;
     this.#bindPlayerEvents(player, attachId);
     this.#setupTextTracks(player);
   }

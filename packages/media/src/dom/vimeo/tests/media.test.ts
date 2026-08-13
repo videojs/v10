@@ -34,6 +34,14 @@ vi.mock('@vimeo/player', () => {
     });
 
     constructor(target: unknown) {
+      // The real player rejects any iframe that isn't a Vimeo embed, and reads the
+      // attribute rather than the property (an empty `src` attribute resolves to
+      // the document URL). Mirror it so tests can't pass on an embed the real
+      // player would have thrown on.
+      const src = (target as Element | null)?.getAttribute?.('src') ?? '';
+      if (!/^https?:\/\/((player|www)\.)?vimeo\.com\//.test(src)) {
+        throw new Error('The player element passed isn’t a Vimeo embed.');
+      }
       this.target = target;
       MockPlayer.instances.push(this);
     }
@@ -66,6 +74,19 @@ function createIframe(): HTMLIFrameElement {
   return document.createElement('iframe');
 }
 
+/** An iframe as React renders it before a source resolves: `src` present but empty. */
+function createEmptySrcIframe(): HTMLIFrameElement {
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('src', '');
+  return iframe;
+}
+
+/** Flush the microtask the deferred embed waits on before it is built. */
+async function flushDeferredEmbed(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 async function waitForVimeoLoaded(media: VimeoMedia): Promise<void> {
   if (media.readyState >= 1 && Number.isFinite(media.duration)) return;
   await new Promise<void>((resolve) => {
@@ -74,6 +95,9 @@ async function waitForVimeoLoaded(media: VimeoMedia): Promise<void> {
 }
 
 async function attachAndLoad(media: VimeoMedia): Promise<{ iframe: HTMLIFrameElement; player: MockPlayerLike }> {
+  // There is no embed to attach to without a source, so tests that don't care
+  // which video is playing get one.
+  if (!media.src) media.src = '76979871';
   const iframe = createIframe();
   media.attach(iframe);
   const player = media.engine as unknown as MockPlayerLike;
@@ -218,11 +242,103 @@ describe('VimeoMedia', () => {
 
   it('creates a Player when attached to an iframe', () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
 
     expect(media.target).toBe(iframe);
     expect(media.engine).not.toBe(null);
+  });
+
+  it('defers the player until a source arrives', async () => {
+    const media = new VimeoMedia();
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    // How every framework builds the element: created first, `src` set after.
+    const iframe = createIframe();
+    expect(() => media.attach(iframe)).not.toThrow();
+    expect(media.engine).toBe(null);
+    expect(media.currentSrc).toBe('');
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.src = '76979871';
+    await flushDeferredEmbed();
+
+    expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/76979871');
+    expect(media.engine).not.toBe(null);
+    expect(media.currentSrc).toContain('https://player.vimeo.com/video/76979871');
+    expect(loadstart).toHaveBeenCalledTimes(1);
+  });
+
+  it('defers the player for an iframe rendered with an empty src', async () => {
+    const media = new VimeoMedia();
+    // React renders `src=""` before a source resolves. The `src` property reports
+    // the document URL for it, so only the attribute says there is no embed.
+    const iframe = createEmptySrcIframe();
+    expect(() => media.attach(iframe)).not.toThrow();
+    expect(media.engine).toBe(null);
+
+    media.src = '76979871';
+    await flushDeferredEmbed();
+
+    expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/76979871');
+    expect(media.engine).not.toBe(null);
+  });
+
+  it('builds a deferred embed from every prop set in the same task', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    // Frameworks apply props in whatever order the template lists them, so props
+    // that follow `src` still have to reach the embed URL.
+    media.source = { src: '76979871', engine: { vimeo: { autopause: true } } };
+    media.autoplay = true;
+    media.defaultMuted = true;
+    await flushDeferredEmbed();
+
+    expect(iframe.getAttribute('src')).toContain('autoplay=1');
+    expect(iframe.getAttribute('src')).toContain('muted=1');
+    expect(iframe.getAttribute('src')).toContain('autopause=1');
+  });
+
+  it('builds a deferred embed once for repeated source changes in the same task', async () => {
+    const media = new VimeoMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    media.src = '76979871';
+    media.src = '12345';
+    await flushDeferredEmbed();
+
+    expect(iframe.getAttribute('src')).toContain('https://player.vimeo.com/video/12345');
+    expect((media.engine as unknown as MockPlayerLike).loadVideo).not.toHaveBeenCalled();
+  });
+
+  it('does not leave play() waiting while the embed is deferred', async () => {
+    const media = new VimeoMedia();
+    media.attach(createIframe());
+
+    // No embed means no `loaded` is ever coming; waiting on it would hang.
+    await expect(media.play()).resolves.toBeUndefined();
+    expect(media.engine).toBe(null);
+  });
+
+  it('reports an error instead of throwing for an iframe that is not a Vimeo embed', () => {
+    const media = new VimeoMedia();
+    const error = vi.fn();
+    media.addEventListener('error', error);
+
+    const iframe = createIframe();
+    iframe.setAttribute('src', 'https://example.com/embed');
+
+    // `attach()` runs in a custom element constructor, where a throw breaks the
+    // element outright.
+    expect(() => media.attach(iframe)).not.toThrow();
+    expect(media.engine).toBe(null);
+    expect(media.error?.code).toBe(4);
+    expect(error).toHaveBeenCalledTimes(1);
   });
 
   it('emits loadstart on attach and loadedmetadata/loadcomplete after loaded', async () => {
@@ -247,6 +363,7 @@ describe('VimeoMedia', () => {
 
   it('exposes the video title in contentData once the embed loads', async () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
 
@@ -336,9 +453,11 @@ describe('VimeoMedia', () => {
 
   it('settles the load for a src the player can never load', async () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
     const player = media.engine as unknown as MockPlayerLike;
+    player.loadVideo.mockClear();
 
     media.src = 'not-a-vimeo-url';
 
@@ -375,6 +494,7 @@ describe('VimeoMedia', () => {
 
   it('omits the title when Vimeo reports none', async () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
 
@@ -455,9 +575,9 @@ describe('VimeoMedia', () => {
     const { player } = await attachAndLoad(media);
     player.loadVideo.mockClear();
 
-    media.src = '76979871';
+    media.src = '12345';
     await Promise.resolve();
-    expect(player.loadVideo).toHaveBeenCalledWith({ url: 'https://player.vimeo.com/video/76979871' });
+    expect(player.loadVideo).toHaveBeenCalledWith({ url: 'https://player.vimeo.com/video/12345' });
   });
 
   it('derives src from a source object', () => {
@@ -584,6 +704,7 @@ describe('VimeoMedia', () => {
 
   it('unblocks pending play() when detached before load completes', async () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
 
@@ -597,6 +718,7 @@ describe('VimeoMedia', () => {
 
   it('destroys the player on detach', () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
     const player = media.engine as unknown as MockPlayerLike;

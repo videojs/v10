@@ -94,6 +94,19 @@ function createIframe(): HTMLIFrameElement {
   return document.createElement('iframe');
 }
 
+/** An iframe as React renders it before a source resolves: `src` present but empty. */
+function createEmptySrcIframe(): HTMLIFrameElement {
+  const iframe = document.createElement('iframe');
+  iframe.setAttribute('src', '');
+  return iframe;
+}
+
+/** Flush the microtask the deferred embed waits on before it is built. */
+async function flushDeferredEmbed(): Promise<void> {
+  await Promise.resolve();
+  await Promise.resolve();
+}
+
 async function waitForEngine(media: YouTubeMedia): Promise<MockPlayer> {
   await vi.waitFor(() => {
     if (!media.engine) throw new Error('player not created yet');
@@ -102,6 +115,9 @@ async function waitForEngine(media: YouTubeMedia): Promise<MockPlayer> {
 }
 
 async function attachAndLoad(media: YouTubeMedia): Promise<{ iframe: HTMLIFrameElement; player: MockPlayer }> {
+  // There is no embed to attach to without a source, so tests that don't care
+  // which video is playing get one.
+  if (!media.src) media.src = 'aqz-KE-bpKQ';
   const iframe = createIframe();
   media.attach(iframe);
   const player = await waitForEngine(media);
@@ -332,6 +348,66 @@ describe('YouTubeMedia', () => {
     media.detach();
   });
 
+  it('defers the player until a source arrives', async () => {
+    const media = new YouTubeMedia();
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    // How every framework builds the element: created first, `src` set after.
+    const iframe = createIframe();
+    media.attach(iframe);
+    expect(iframe.getAttribute('src')).toBe(null);
+    expect(media.engine).toBe(null);
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.src = 'https://www.youtube.com/watch?v=aqz-KE-bpKQ';
+    await flushDeferredEmbed();
+
+    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/aqz-KE-bpKQ');
+    expect(loadstart).toHaveBeenCalledTimes(1);
+    await waitForEngine(media);
+    media.detach();
+  });
+
+  it('defers the player for an iframe rendered with an empty src', async () => {
+    const media = new YouTubeMedia();
+    // React renders `src=""` before a source resolves. The `src` property reports
+    // the document URL for it, so only the attribute says there is no embed.
+    const iframe = createEmptySrcIframe();
+    media.attach(iframe);
+    expect(media.engine).toBe(null);
+
+    media.src = 'aqz-KE-bpKQ';
+    await flushDeferredEmbed();
+
+    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/aqz-KE-bpKQ');
+    await waitForEngine(media);
+    media.detach();
+  });
+
+  it('builds a deferred embed once for repeated source changes in the same task', async () => {
+    const media = new YouTubeMedia();
+    const iframe = createIframe();
+    media.attach(iframe);
+
+    media.src = 'aqz-KE-bpKQ';
+    media.src = 'dQw4w9WgXcQ';
+    await waitForEngine(media);
+
+    expect(iframe.getAttribute('src')).toContain('https://www.youtube.com/embed/dQw4w9WgXcQ');
+    expect(MockPlayer.instances.length).toBe(1);
+    media.detach();
+  });
+
+  it('does not leave play() waiting while the embed is deferred', async () => {
+    const media = new YouTubeMedia();
+    media.attach(createIframe());
+
+    // No embed means no player is coming to report a load; waiting would hang.
+    await expect(media.play()).resolves.toBeUndefined();
+    expect(media.engine).toBe(null);
+  });
+
   it('emits loadstart on attach and loadedmetadata/loadcomplete after ready', async () => {
     const media = new YouTubeMedia();
     const events: string[] = [];
@@ -514,6 +590,7 @@ describe('YouTubeMedia', () => {
 
   it('surfaces player errors', async () => {
     const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
     media.attach(iframe);
     const player = await waitForEngine(media);
@@ -567,6 +644,7 @@ describe('YouTubeMedia', () => {
 
   it('unblocks pending play() when detached before load completes', async () => {
     const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
     media.attach(iframe);
 
@@ -580,6 +658,7 @@ describe('YouTubeMedia', () => {
 
   it('does not create a player when detached before the API resolves', async () => {
     const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
     media.attach(iframe);
     media.detach();
@@ -750,6 +829,7 @@ describe('YouTubeMedia source', () => {
 
   it('unblocks pending play() when the source is cleared before the player is ready', async () => {
     const media = new YouTubeMedia();
+    media.src = 'aqz-KE-bpKQ';
     const iframe = createIframe();
     media.attach(iframe);
     const player = await waitForEngine(media);
@@ -757,7 +837,7 @@ describe('YouTubeMedia source', () => {
     // Setting src while the player is still loading defers the load, so the
     // clear below is what the replay on ready has to cope with. Nothing else
     // settles the barrier `attach()` opened.
-    media.src = 'aqz-KE-bpKQ';
+    media.src = 'dQw4w9WgXcQ';
     media.source = null;
     const pending = media.play();
     player.ready();

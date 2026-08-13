@@ -75,6 +75,25 @@ class TestAudioHost extends HTMLAudioElementHost {
 
 class TestIframeHost extends EventTarget {
   target: EventTarget | null = null;
+  #defaultMuted = false;
+  #playsInline = false;
+
+  get defaultMuted() {
+    return this.#defaultMuted;
+  }
+
+  set defaultMuted(value: boolean) {
+    this.#defaultMuted = value;
+  }
+
+  get playsInline() {
+    return this.#playsInline;
+  }
+
+  set playsInline(value: boolean) {
+    this.#playsInline = value;
+  }
+
   attach(target: EventTarget | null) {
     this.target = target;
   }
@@ -614,6 +633,33 @@ describe('CustomMediaElement', () => {
       const el = create(defineVideoElement());
       el.volume = 0.5;
       expect(el.volume).toBe(0.5);
+    });
+  });
+
+  describe('embed attribute forwarding', () => {
+    it('forwards attributes that diverge from their property name to the MediaHost', () => {
+      const el = create(defineIframeElement());
+
+      // An embed host has no target to mirror attributes onto, so `muted` and
+      // `playsinline` only reach it through the property they are named for.
+      el.setAttribute('muted', '');
+      el.setAttribute('playsinline', '');
+
+      expect(el.host.defaultMuted).toBe(true);
+      expect(el.host.playsInline).toBe(true);
+
+      el.removeAttribute('playsinline');
+      expect(el.host.playsInline).toBe(false);
+    });
+
+    it('keeps mirroring diverging attributes onto a native media target', () => {
+      const el = create(defineVideoElement());
+
+      el.setAttribute('playsinline', '');
+
+      // A native target reads the attribute itself, so it is mirrored rather than
+      // routed through the host.
+      expect(el.target!.hasAttribute('playsinline')).toBe(true);
     });
   });
 
