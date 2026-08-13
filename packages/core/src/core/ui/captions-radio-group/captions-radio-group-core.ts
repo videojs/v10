@@ -4,13 +4,12 @@ import { isCaptionOrSubtitleTrack } from '@videojs/utils/dom';
 import { defaults } from '@videojs/utils/object';
 import type { NonNullableObject } from '@videojs/utils/types';
 import { resolveText, type Text } from '../../i18n';
-import { disableText, enableText } from '../../i18n/text/captions';
 import { captionsText, offText, subtitlesText } from '../../i18n/text/menu';
 import type { RadioOption, RadioOptionsState } from '../types';
 import { resolveLabel } from '../utils/resolve-label';
 
 export interface CaptionsRadioGroupProps {
-  /** Custom label for the menu trigger. */
+  /** Custom label for the options group. */
   label?: Text | string | ((state: CaptionsRadioGroupState) => Text | string) | undefined;
   /** Custom formatter for visible track labels. */
   formatTrack?: ((track: MediaTextTrack) => Text | string) | undefined;
@@ -72,7 +71,7 @@ export class CaptionsRadioGroupCore {
     const label = resolveLabel(this.#props.label, state);
     if (label) return label;
 
-    return state.subtitlesShowing ? disableText : enableText;
+    return captionsText;
   }
 
   getTrackLabel(track: MediaTextTrack): Text | string {

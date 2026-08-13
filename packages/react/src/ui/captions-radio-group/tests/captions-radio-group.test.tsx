@@ -103,7 +103,7 @@ describe('CaptionsRadioGroup', () => {
     const group = screen.getByTestId('group');
     expect(ref.current).toBe(group);
     expect(group.classList.contains('captions-available')).toBe(true);
-    expect(group.getAttribute('aria-label')).toBe('Disable captions');
+    expect(group.getAttribute('aria-label')).toBe('Captions');
     expect(group.hasAttribute('data-active')).toBe(true);
     expect(group.getAttribute('data-availability')).toBe('available');
   });
@@ -134,16 +134,16 @@ describe('CaptionsRadioGroup', () => {
       ),
     });
 
-    const group = screen.getByRole('group', { name: 'Disable captions' });
+    const group = screen.getByRole('group', { name: 'Captions' });
     expect(group.tagName).toBe('SECTION');
     expect(group.getAttribute('data-value')).toBe('1');
     expect(screen.getByRole('menuitemradio', { name: 'Spanish' }).querySelector('[aria-hidden="true"]')).toBeTruthy();
   });
 
   it('translates the default accessible label', () => {
-    registerI18n('xx', { 'captions.disable': 'Disable translated captions' });
+    registerI18n('xx', { 'menu.captions': 'Translated captions' });
     renderCaptionsRadioGroup({ locale: 'xx' });
 
-    expect(screen.getByRole('group', { name: 'Disable translated captions' })).toBeTruthy();
+    expect(screen.getByRole('group', { name: 'Translated captions' })).toBeTruthy();
   });
 });
