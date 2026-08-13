@@ -37,7 +37,7 @@ import withPartsHtmlTs from "@/components/docs/demos/volume-slider/html/css/With
 
 ## Behavior
 
-Controls the media volume level. The slider maps its 0–100 internal range to the media's 0–1 volume scale. When the media is muted, the fill level drops to 0 regardless of the stored volume value.
+Controls the media volume level. The slider maps its 0–100 internal range to the media's 0–1 volume scale. When the media is muted, the fill level drops to 0 regardless of the stored volume value. When volume control is unavailable, the HTML custom element receives native `hidden`, `data-hidden`, and disabled ARIA semantics; the React component returns `null`.
 
 ## Styling
 

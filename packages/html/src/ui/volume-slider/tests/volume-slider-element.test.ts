@@ -1,5 +1,11 @@
-import { afterEach, describe, expect, it } from 'vitest';
+import type { AnyPlayerStore } from '@videojs/core/dom';
+import { ContextProvider } from '@videojs/element/context';
+import type { MediaVolumeState } from '@videojs/media';
+import { createStore } from '@videojs/store';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
+import { playerContext } from '../../../player/context';
+import { MediaElement } from '../../media-element';
 import { SliderThumbElement } from '../../slider/slider-thumb-element';
 import { VolumeSliderElement } from '../volume-slider-element';
 
@@ -13,6 +19,34 @@ function createElement<Element extends HTMLElement>(Base: abstract new () => Ele
   const tag = uniqueTag('test-el');
   customElements.define(tag, class extends (Base as unknown as typeof HTMLElement) {});
   return document.createElement(tag) as Element;
+}
+
+function createVolumeStore(volumeAvailability: MediaVolumeState['volumeAvailability']): AnyPlayerStore {
+  return createStore<unknown>()<MediaVolumeState>({
+    name: 'volume',
+    state: () => ({
+      volume: 1,
+      muted: false,
+      volumeAvailability,
+      setVolume: vi.fn(),
+      toggleMuted: vi.fn(),
+    }),
+  }) as unknown as AnyPlayerStore;
+}
+
+class TestPlayerProviderElement extends MediaElement {
+  store: AnyPlayerStore = createVolumeStore('available');
+
+  readonly #provider = new ContextProvider(this, { context: playerContext });
+
+  override connectedCallback(): void {
+    this.#provider.setValue(this.store);
+    super.connectedCallback();
+  }
+}
+
+if (!customElements.get('test-volume-slider-player')) {
+  customElements.define('test-volume-slider-player', TestPlayerProviderElement);
 }
 
 afterEach(() => {
@@ -84,6 +118,25 @@ describe('VolumeSliderElement', () => {
 
     expect(slider.isConnected).toBe(true);
     expect(thumb.isConnected).toBe(true);
+  });
+
+  it('hides and disables unavailable volume control', async () => {
+    const provider = document.createElement('test-volume-slider-player') as TestPlayerProviderElement;
+    provider.store = createVolumeStore('unsupported');
+    const slider = createElement(VolumeSliderElement);
+    const thumb = createElement(SliderThumbElement);
+
+    document.body.append(provider);
+    slider.append(thumb);
+    provider.append(slider);
+    await slider.updateComplete;
+    await thumb.updateComplete;
+
+    expect(slider.hidden).toBe(true);
+    expect(slider.hasAttribute('data-hidden')).toBe(true);
+    expect(slider.hasAttribute('data-disabled')).toBe(true);
+    expect(thumb.getAttribute('aria-disabled')).toBe('true');
+    expect(thumb.tabIndex).toBe(-1);
   });
 
   it('cleans up on disconnect', async () => {

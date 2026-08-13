@@ -17,7 +17,7 @@ media-container {
   min-height: 0;
 }
 
-/* Hide volume popover when volume control is unsupported (e.g., iOS Safari). */
-.media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
+/* Hide the volume popover when its slider is unavailable. */
+.media-popover--volume:has(media-volume-slider[data-hidden]) {
   display: none;
 }

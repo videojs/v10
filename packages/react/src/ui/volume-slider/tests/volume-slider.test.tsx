@@ -47,7 +47,13 @@ const { mockSliderApi, mockVolumeState, mutableVolume } = vi.hoisted(() => {
     }),
     mockVolumeState: volumeState,
     // Mutable holder so tests can swap between null and available volume.
-    mutableVolume: { current: volumeState as typeof volumeState | null },
+    mutableVolume: {
+      current: volumeState as
+        | (Omit<typeof volumeState, 'volumeAvailability'> & {
+            volumeAvailability: 'available' | 'unavailable' | 'unsupported';
+          })
+        | null,
+    },
   };
 });
 
@@ -134,6 +140,18 @@ describe('VolumeSliderRoot', () => {
 
     const el = container.querySelector('[data-orientation]');
     expect(el?.getAttribute('data-orientation')).toBe('horizontal');
+  });
+
+  it('does not render when volume control is unavailable', () => {
+    mutableVolume.current = { ...mockVolumeState, volumeAvailability: 'unsupported' };
+    const { Wrapper } = createPlayerWrapper();
+    const { container } = render(
+      <Wrapper>
+        <VolumeSliderRoot data-testid="vol-slider" />
+      </Wrapper>
+    );
+
+    expect(container.querySelector('[data-testid="vol-slider"]')).toBeNull();
   });
 
   it('sets slider CSS custom properties', () => {

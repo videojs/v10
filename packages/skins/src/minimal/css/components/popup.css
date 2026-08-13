@@ -137,6 +137,6 @@
   }
 }
 
-.media-minimal-skin .media-popover--volume:has(media-volume-slider[data-availability="unsupported"]) {
+.media-minimal-skin .media-popover--volume:has(media-volume-slider[data-hidden]) {
   display: none;
 }

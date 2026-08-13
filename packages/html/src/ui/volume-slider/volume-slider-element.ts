@@ -60,7 +60,10 @@ export class VolumeSliderElement extends MediaElement {
     this.#disconnect = new AbortController();
     const signal = this.#disconnect.signal;
 
-    const isDisabled = () => this.disabled || !this.#volumeState.value;
+    const isDisabled = () => {
+      const volume = this.#volumeState.value;
+      return this.disabled || !volume || volume.volumeAvailability !== 'available';
+    };
     const getPercent = () => (this.#volumeState.value?.volume ?? 0) * 100;
     const getStepPercent = () => this.#core.getStepPercent();
     const setVolume = (percent: number) => this.#setVolume(percent);
@@ -147,6 +150,7 @@ export class VolumeSliderElement extends MediaElement {
 
     // Apply data attributes to root.
     applyStateDataAttrs(this, state, VolumeSliderDataAttrs);
+    applyElementProps(this, { hidden: state.hidden ? '' : undefined });
 
     // Provide context to child elements.
     this.#provider.setValue({
