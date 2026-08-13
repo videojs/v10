@@ -75,7 +75,14 @@ const localeEntries = globSync('src/cdn/locales/*.ts').map((file) => ({
   name: `locales/${basename(file, '.ts')}`,
 }));
 
-const entries = [
+/**
+ * Every CDN bundle the build emits, as `{ src, name }` where `name` is the output path without
+ * its extension. Exported so the distribution archive can take its entry points from the build
+ * definition rather than guessing which built files are entries and which are shared chunks.
+ *
+ * The `src` paths are relative to this package, so importers must run from the package root.
+ */
+export const entries = [
   { src: 'src/cdn/i18n.ts', name: 'i18n' },
   ...localeEntries,
   ...presets.map((name) => ({ src: `src/cdn/${name}.ts`, name })),
