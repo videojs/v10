@@ -1,34 +1,28 @@
-import { createPlayer, Menu, usePlaybackRateOptions } from '@videojs/react';
+import { createPlayer, Menu, PlaybackRateRadioGroup } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
 const Player = createPlayer({ features: videoFeatures });
 
 function SpeedMenu(): ReactNode {
-  const playbackRate = usePlaybackRateOptions();
-  if (playbackRate?.state.availability !== 'available') return null;
-
   return (
     <Menu.Root side="top" align="end">
       <Menu.Trigger className="settings-trigger" render={<button type="button" />}>
         Speed
       </Menu.Trigger>
       <Menu.Content className="menu">
-        <Menu.RadioGroup
+        <PlaybackRateRadioGroup
           className="menu-group"
-          value={playbackRate.value}
-          onValueChange={playbackRate.setValue}
           aria-label="Speed"
-        >
-          {playbackRate.options.map((option) => (
-            <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled} className="menu-item">
-              {option.label}
-              <Menu.ItemIndicator checked={option.value === playbackRate.value} forceMount className="menu-indicator">
+          renderItem={(props, item) => (
+            <Menu.RadioItem {...props} className="menu-item">
+              {item.label}
+              <Menu.ItemIndicator checked={item.checked} forceMount className="menu-indicator">
                 ✓
               </Menu.ItemIndicator>
             </Menu.RadioItem>
-          ))}
-        </Menu.RadioGroup>
+          )}
+        />
       </Menu.Content>
     </Menu.Root>
   );
