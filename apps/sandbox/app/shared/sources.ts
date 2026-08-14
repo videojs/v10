@@ -356,6 +356,8 @@ export const CLOUDFLARE_VIDEO_SRC = 'https://watch.videodelivery.net/bfbd585059e
 // listener, where a track is a 30 second preview.
 export const SPOTIFY_AUDIO_SRC = 'https://open.spotify.com/episode/7makk4oTQel546B0PZlDM5';
 
+export const TIKTOK_VIDEO_SRC = 'https://www.tiktok.com/@_luwes/video/7527476667770522893';
+
 /** Returns true when the given source represents a live stream and should use the live-video skin. */
 export function isLiveSource(id: SourceId): boolean {
   return SOURCES[id].live === true;

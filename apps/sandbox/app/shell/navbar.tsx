@@ -101,6 +101,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'youtube-video': 'YouTube Video',
   'cloudflare-video': 'Cloudflare Stream Video',
   'spotify-audio': 'Spotify Audio',
+  'tiktok-video': 'TikTok Video',
 };
 
 export function Navbar({
