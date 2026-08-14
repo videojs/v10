@@ -10,8 +10,8 @@ export interface UIKeyboardEvent extends UIEvent {
   ctrlKey: boolean;
   altKey: boolean;
   metaKey: boolean;
-  target: Node;
-  currentTarget: Node;
+  target: EventTarget;
+  currentTarget: EventTarget;
 }
 
 export interface UIPointerEvent extends UIEvent {

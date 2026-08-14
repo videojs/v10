@@ -16,16 +16,13 @@ import { useComposedRefs } from '../../utils/use-composed-refs';
 import { renderElement } from '../../utils/use-render';
 import { usePopupPosition } from '../popover/use-popup-position';
 import { useMenuContext } from './context';
-import { toUIFocusEvent, toUIKeyboardEvent } from './menu-events';
 
 export interface MenuContentProps extends UIComponentProps<'div', MenuState> {}
 
 const menuPreventedNativeEvents = new WeakSet<Event>();
 
 function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLDivElement>): void {
-  const keyboardEvent = toUIKeyboardEvent(event);
-
-  if (event.key !== 'Escape' && isMenuNavigationKey(keyboardEvent) && !event.defaultPrevented) {
+  if (event.key !== 'Escape' && isMenuNavigationKey(event) && !event.defaultPrevented) {
     event.preventDefault();
     menuPreventedNativeEvents.add(event.nativeEvent);
   }
@@ -111,9 +108,8 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
         onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined,
         event
       );
-      const keyboardEvent = toUIKeyboardEvent(event);
-      const isNavigationKey = isMenuNavigationKey(keyboardEvent);
-      menu.contentProps.onKeyDown(keyboardEvent);
+      const isNavigationKey = isMenuNavigationKey(event);
+      menu.contentProps.onKeyDown(event);
       const isBackNavigationKey = event.key === 'ArrowLeft' || event.key === 'Escape';
 
       if (isBackNavigationKey && !defaultPreventedByUser) {
@@ -129,10 +125,9 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const handleRootMenuKeyDown = useCallback(
     (event: React.KeyboardEvent<HTMLDivElement>) => {
       (onKeyDown as React.KeyboardEventHandler<HTMLDivElement> | undefined)?.(event);
-      const keyboardEvent = toUIKeyboardEvent(event);
-      menu.contentProps.onKeyDown(keyboardEvent);
+      menu.contentProps.onKeyDown(event);
       if (event.key === 'Escape') return;
-      if (isMenuNavigationKey(keyboardEvent)) event.stopPropagation();
+      if (isMenuNavigationKey(event)) event.stopPropagation();
     },
     [onKeyDown, menu]
   );
@@ -140,7 +135,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const handleRootMenuBlur = useCallback(
     (event: React.FocusEvent<HTMLDivElement>) => {
       (onBlur as React.FocusEventHandler<HTMLDivElement> | undefined)?.(event);
-      menu.contentProps.onFocusOut(toUIFocusEvent(event));
+      menu.contentProps.onFocusOut(event);
     },
     [onBlur, menu]
   );
@@ -148,7 +143,7 @@ export const MenuContent = forwardRef<HTMLDivElement, MenuContentProps>(function
   const handleSubMenuBlur = useCallback(
     (event: React.FocusEvent<HTMLDivElement>) => {
       (onBlur as React.FocusEventHandler<HTMLDivElement> | undefined)?.(event);
-      menu.contentProps.onFocusOut(toUIFocusEvent(event));
+      menu.contentProps.onFocusOut(event);
     },
     [onBlur, menu]
   );

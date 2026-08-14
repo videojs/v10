@@ -8,7 +8,6 @@ import type { UIComponentProps } from '../../utils/types';
 import { renderElement } from '../../utils/use-render';
 import { useSafeId } from '../../utils/use-safe-id';
 import { MenuTriggerChildContextProvider, useMenuContext } from './context';
-import { toUIKeyboardEvent } from './menu-events';
 
 export interface MenuTriggerProps extends Omit<UIComponentProps<'button', MenuState>, 'type'> {
   /** Disables the trigger. */
@@ -16,9 +15,7 @@ export interface MenuTriggerProps extends Omit<UIComponentProps<'button', MenuSt
 }
 
 function preventMenuKeyDefault(event: React.KeyboardEvent<HTMLElement>): void {
-  const keyboardEvent = toUIKeyboardEvent(event);
-
-  if (event.key !== 'Escape' && isMenuNavigationKey(keyboardEvent) && !event.defaultPrevented) {
+  if (event.key !== 'Escape' && isMenuNavigationKey(event) && !event.defaultPrevented) {
     event.preventDefault();
   }
 }
@@ -100,8 +97,7 @@ export const MenuTrigger = forwardRef<HTMLButtonElement | HTMLDivElement, MenuTr
         event.preventDefault();
       },
       onKeyDown: (event: React.KeyboardEvent<HTMLElement>) => {
-        const keyboardEvent = toUIKeyboardEvent(event);
-        if (event.key === 'Enter' || event.key === ' ' || isMenuNavigationKey(keyboardEvent)) {
+        if (event.key === 'Enter' || event.key === ' ' || isMenuNavigationKey(event)) {
           event.preventDefault();
         }
       },
