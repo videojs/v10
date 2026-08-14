@@ -53,7 +53,7 @@ export const slider = {
       'data-dragging:duration-0 data-seeking:duration-0'
     ),
     fill: cn(
-      'bg-current',
+      'bg-(--accent-color)',
       // Horizontal
       'data-[orientation=horizontal]:inset-y-0 data-[orientation=horizontal]:left-0',
       'data-[orientation=horizontal]:transition-[width] data-[orientation=horizontal]:w-(--media-slider-fill)',
@@ -77,7 +77,7 @@ export const slider = {
     base: cn(
       'z-10 absolute -translate-x-1/2 -translate-y-1/2',
       'bg-current rounded-full',
-      'shadow-[0_0_0_1px_var(--media-current-shadow-color,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.35),0_1px_2px_-1px_oklch(0_0_0/0.35)]',
+      'shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.1)),0_1px_3px_0_oklch(0_0_0/0.35),0_1px_2px_-1px_oklch(0_0_0/0.35)]',
       'transition-[opacity,height,width,outline-offset] motion-safe:transition-[opacity,height,width,outline-offset,left,top] duration-150 ease-out select-none',
       'data-dragging:duration-0 data-seeking:duration-0',
       'outline-4 outline-transparent -outline-offset-4',
@@ -106,7 +106,7 @@ export const slider = {
   preview: cn(
     'group/preview [--max-width:min(--spacing(48),100cqi)] [--max-height:--spacing(32)] min-w-(--max-width) h-1',
     'before:absolute before:z-1 before:top-1/2 before:left-1/2 before:size-1 before:bg-current before:rounded-full before:pointer-events-none',
-    'before:shadow-[0_0_0_1px_var(--media-current-shadow-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
+    'before:shadow-[0_0_0_1px_var(--shadow-current-color,oklch(0_0_0/0.15)),0_1px_2px_0_oklch(0_0_0/0.35)]',
     'before:-translate-1/2 before:opacity-0 before:scale-50',
     'before:transition-[opacity,scale] before:duration-200 before:ease-out',
     'data-pointing:not-data-dragging:before:opacity-100 data-pointing:not-data-dragging:before:scale-100'
@@ -115,7 +115,7 @@ export const slider = {
   value: cn(
     previewContent,
     '[bottom:calc(100%+--spacing(10.5))] flex flex-col items-center tabular-nums',
-    'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)'
+    'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
   ),
   chapterTitle: 'min-w-0 max-w-(--max-width) px-3 overflow-hidden text-ellipsis whitespace-nowrap empty:hidden',
 };

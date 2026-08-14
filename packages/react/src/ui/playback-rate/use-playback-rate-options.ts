@@ -19,6 +19,7 @@ export interface PlaybackRateOptionsResult {
   label: string;
   rate: number;
   value: string;
+  selectedLabel: string;
   options: PlaybackRateOption[];
   disabled: boolean;
   hidden: boolean;

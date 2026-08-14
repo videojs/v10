@@ -195,11 +195,11 @@ export function AudioSkin(props: AudioSkinProps): ReactNode {
             <Time.Value type="current" className="media-time" />
             <TimeSlider.Root className="media-slider">
               <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
                 <TimeSlider.Buffer className="media-slider__buffer" />
+                <TimeSlider.Fill className="media-slider__fill" />
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
-              <TimeSlider.Preview className="media-slider__preview">
+              <TimeSlider.Preview overflow="visible" className="media-slider__preview">
                 <TimeSlider.Value type="pointer" className="media-slider__value media-time" />
               </TimeSlider.Preview>
             </TimeSlider.Root>

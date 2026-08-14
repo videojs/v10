@@ -4,7 +4,7 @@ import {
   type AudioTrackRadioGroupOption,
 } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectAudioTrack } from '@videojs/core/dom';
-import type { Text } from '@videojs/core/i18n';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
@@ -55,8 +55,9 @@ export class AudioTrackRadioGroupElement extends MenuRadioGroupElement {
       this.#core.setMedia(media);
       state = this.#core.getState();
 
-      this.applyAriaLabel(this.#i18n.value, this.#core.getLabel(state));
+      this.applyDefaultAriaLabel(translateText(this.#core.getLabel(state), this.#i18n.value));
       this.#options.sync(state, this.#i18n.value, this.#i18n.locale);
+      this.publishMenuMetadata(state.disabled, state.availability);
     }
 
     super.update(changed);

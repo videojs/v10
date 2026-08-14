@@ -12,5 +12,5 @@ export const controls = cn(
   '[padding:calc(var(--spacing)*var(--controls-padding,1))] flex items-center',
   'rounded-full',
   // Text shadow
-  'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)'
+  'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
 );

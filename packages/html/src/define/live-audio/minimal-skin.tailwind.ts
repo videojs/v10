@@ -2,13 +2,13 @@ import { renderIcon } from '@videojs/icons/render/minimal';
 import {
   button,
   buttonGroup,
+  container,
   controls,
   error,
   icon,
   iconState,
   playButton,
   popup,
-  root,
   slider,
   spacer,
 } from '@videojs/skins/minimal/tailwind/audio.tailwind';
@@ -22,7 +22,7 @@ import './minimal-ui';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root}">
+    <media-container class="${container}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -80,6 +80,13 @@ function getTemplateHTML() {
           </div>
         </media-tooltip-group>
       </div>
+
+      <!-- Hotkeys -->
+      <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="k" action="togglePaused"></media-hotkey>
+      <media-hotkey keys="m" action="toggleMuted"></media-hotkey>
+      <media-hotkey keys="ArrowUp" action="volumeStep" value="0.05"></media-hotkey>
+      <media-hotkey keys="ArrowDown" action="volumeStep" value="-0.05"></media-hotkey>
     </media-container>
   `;
 }

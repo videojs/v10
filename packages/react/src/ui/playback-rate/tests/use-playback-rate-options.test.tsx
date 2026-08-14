@@ -41,16 +41,19 @@ function PlaybackRateRadioGroup({ formatRate }: { formatRate?: ((rate: number) =
   const state = usePlaybackRateOptions(formatRate ? { formatRate } : undefined);
   if (!state) return null;
 
-  const { options, setValue, value } = state;
+  const { options, selectedLabel, setValue, value } = state;
 
   return (
-    <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Playback rate">
-      {options.map((option) => (
-        <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
-          {option.label}
-        </Menu.RadioItem>
-      ))}
-    </Menu.RadioGroup>
+    <>
+      <span data-testid="selected-label">{selectedLabel}</span>
+      <Menu.RadioGroup value={value} onValueChange={setValue} aria-label="Playback rate">
+        {options.map((option) => (
+          <Menu.RadioItem key={option.value} value={option.value} disabled={option.disabled}>
+            {option.label}
+          </Menu.RadioItem>
+        ))}
+      </Menu.RadioGroup>
+    </>
   );
 }
 
@@ -82,6 +85,7 @@ describe('usePlaybackRateOptions', () => {
     expect(screen.getByRole('menuitemradio', { name: '1×' }).getAttribute('aria-checked')).toBe('false');
     expect(screen.getByRole('menuitemradio', { name: '1.25×' }).getAttribute('aria-checked')).toBe('true');
     expect(screen.getByRole('menuitemradio', { name: '1.5×' }).getAttribute('aria-checked')).toBe('false');
+    expect(screen.getByTestId('selected-label').textContent).toBe('1.25×');
   });
 
   it('center aligns the popup by default', () => {

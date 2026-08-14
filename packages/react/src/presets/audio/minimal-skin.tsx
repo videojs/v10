@@ -200,8 +200,8 @@ export function MinimalAudioSkin(props: MinimalAudioSkinProps): ReactNode {
 
             <TimeSlider.Root className="media-slider">
               <TimeSlider.Track className="media-slider__track">
-                <TimeSlider.Fill className="media-slider__fill" />
                 <TimeSlider.Buffer className="media-slider__buffer" />
+                <TimeSlider.Fill className="media-slider__fill" />
               </TimeSlider.Track>
               <TimeSlider.Thumb className="media-slider__thumb" />
               <TimeSlider.Preview className="media-slider__preview">

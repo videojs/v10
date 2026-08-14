@@ -1,9 +1,8 @@
 /* ==========================================================================
    Icon State Visibility for Video Skins
 
-   Data-attribute-driven visibility rules for multi-state icon buttons.
-   Uses :is() with both element selectors (for HTML custom element wrappers)
-   and class selectors (for React rendered SVG elements).
+   Data-attribute-driven visibility rules for multi-state icon buttons shared
+   by the HTML and React skins.
    ========================================================================== */
 
 /* --- All icons hidden by default --- */

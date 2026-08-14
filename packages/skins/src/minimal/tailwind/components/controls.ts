@@ -11,8 +11,8 @@ export const controls = cn(
   '[--media-tooltip-boundary-offset:var(--media-popover-boundary-offset)]',
   '[padding:calc(var(--spacing)*var(--controls-padding,1))] flex items-center',
   // Appearance (driven by CSS variables set on the root)
-  'bg-(--media-controls-background-color)',
-  '[backdrop-filter:var(--media-controls-backdrop-filter)]',
+  'bg-(--controls-background-color)',
+  '[backdrop-filter:var(--controls-backdrop-filter)]',
   // Text shadow
-  'text-shadow-2xs text-shadow-(color:--media-current-shadow-color)'
+  'text-shadow-2xs text-shadow-(color:--shadow-current-color)'
 );

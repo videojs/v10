@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Controls
-   ========================================================================== */
-
 .media-default-skin .media-controls {
   --media-popover-side-offset: calc(var(--spacing) * (var(--base-side-offset, 2) + 1));
   --media-tooltip-side-offset: var(--media-popover-side-offset);
@@ -12,6 +8,6 @@
   align-items: center;
   padding: calc(var(--spacing) * 1);
   container: media-controls / inline-size;
-  text-shadow: 0 1px 0 var(--media-current-shadow-color);
+  text-shadow: 0 1px 0 var(--shadow-current-color);
   border-radius: calc(Infinity * 1px);
 }

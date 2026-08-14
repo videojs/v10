@@ -4,6 +4,7 @@ import {
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -14,7 +15,6 @@ import {
   popup,
   poster,
   primaryControls,
-  root,
   slider,
   spacer,
   statusIndicator,
@@ -30,7 +30,7 @@ import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root(true)}">
+    <media-container class="${container(true)}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>

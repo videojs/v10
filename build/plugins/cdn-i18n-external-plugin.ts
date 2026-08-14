@@ -6,12 +6,18 @@ export const CDN_I18N_REGISTRY = '@videojs/html/cdn/i18n-registry';
 
 export interface CdnI18nExternalPluginOptions {
   prod: boolean;
-  version: string;
 }
 
+/**
+ * Keeps the i18n registry out of every CDN bundle by pointing them at the shared `i18n` entry.
+ *
+ * The rewritten specifier is always relative, so a mirrored copy of `cdn/` resolves entirely within
+ * its own origin and works offline. Sharing one registry instance no longer depends on every bundle
+ * naming the same absolute URL — `@videojs/core/i18n` keeps its state on `globalThis`, so duplicate
+ * instances converge on their own.
+ */
 export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): BuildPlugin {
-  const url = `https://cdn.jsdelivr.net/npm/@videojs/html@${options.version}/cdn/i18n.js`;
-  const devFile = 'i18n.dev.js';
+  const file = options.prod ? 'i18n.js' : 'i18n.dev.js';
 
   function isCdnI18nEntry(importer: string): boolean {
     const normalized = importer.replaceAll('\\', '/');
@@ -34,10 +40,10 @@ export function cdnI18nExternalPlugin(options: CdnI18nExternalPluginOptions): Bu
     renderChunk(code, chunk) {
       if (!code.includes(CDN_I18N_REGISTRY)) return null;
 
-      const rel = chunk.fileName.includes('locales/')
-        ? `../${options.prod ? 'i18n.js' : devFile}`
-        : `./${options.prod ? 'i18n.js' : devFile}`;
-      const target = options.prod ? url : rel;
+      // Resolve against the chunk's own depth: `i18n` sits at the output root, and chunks are
+      // emitted at varying depths (`locales/es.js`, `media/mux-video/spf.js`).
+      const depth = chunk.fileName.split('/').length - 1;
+      const target = depth === 0 ? `./${file}` : `${'../'.repeat(depth)}${file}`;
       const output = new MagicString(code);
 
       for (const quote of ['"', "'"]) {

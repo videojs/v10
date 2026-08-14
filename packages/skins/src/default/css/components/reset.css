@@ -1,9 +1,5 @@
 @import "../../../shared/css/sr-only.css";
 
-/* ==========================================================================
-   Reset
-   ========================================================================== */
-
 .media-default-skin *,
 .media-default-skin *::before,
 .media-default-skin *::after {

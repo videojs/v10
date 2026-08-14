@@ -109,6 +109,20 @@ describe('CaptionsRadioGroupElement', () => {
     expect(enabled.getAttribute('aria-label')).toBe('Captions');
   });
 
+  it('preserves authored accessible names', async () => {
+    const explicit = setup('en').options;
+    explicit.setAttribute('aria-label', 'Subtitle tracks');
+
+    const labelled = setup('en').options;
+    labelled.setAttribute('aria-labelledby', 'captions-heading');
+
+    await Promise.all([explicit.updateComplete, labelled.updateComplete]);
+
+    expect(explicit.getAttribute('aria-label')).toBe('Subtitle tracks');
+    expect(labelled.getAttribute('aria-labelledby')).toBe('captions-heading');
+    expect(labelled.hasAttribute('aria-label')).toBe(false);
+  });
+
   it('refreshes translated items when registry strings load for the active locale', async () => {
     const { menu, options } = setup('x-test-captions');
 
