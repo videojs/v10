@@ -191,11 +191,27 @@ Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLi
 
 ## Coming soon
 
-Two changes are in flight that touch this guide. Neither is released yet, so everything above is what works today.
+Changes in flight that touch this guide. None has shipped, so everything above is what works today.
 
 **The player will own the poster.** Media Chrome's `media-poster-image` takes its own `src`. In Video.js the poster is a skin concern today, and it's moving onto the player, so a media component can report a poster and the player can resolve it ([#1798](https://github.com/videojs/v10/issues/1798)).
 
 **The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet ([#1123](https://github.com/videojs/v10/issues/1123)).
+
+<FrameworkCase frameworks={["react"]}>
+**`createPlayer` stops being step one.** Each preset will export a pre-composed player, so `createPlayer` becomes the escape hatch for custom feature sets rather than the entry point:
+
+```tsx
+import { Video, VideoPlayer } from '@videojs/react/video';
+
+<VideoPlayer.Provider>
+  <VideoPlayer.Container>
+    <Video src="video.mp4" />
+  </VideoPlayer.Container>
+</VideoPlayer.Provider>
+```
+
+The preset entry point will carry the React client boundary too, so the `'use client'` directive above becomes unnecessary ([#2116](https://github.com/videojs/v10/pull/2116)).
+</FrameworkCase>
 
 ## Known gaps
 
@@ -206,7 +222,7 @@ These Media Chrome features have no direct equivalent yet. Several can be approx
 - No preference persistence, so Media Chrome's `novolumepref`, `nomutedpref`, and `nosubtitleslangpref` opt-outs have nothing to opt out of. Persistence is out of scope for GA; tracked at [#944](https://github.com/videojs/v10/issues/944), with subtitle language at [#1423](https://github.com/videojs/v10/issues/1423)
 - No `breakpoints` or container-breakpoint attributes; use CSS container queries instead
 - No `seektoliveoffset` or `noautoseektolive` controls, and live-edge offset and tolerance aren't configurable ([#1730](https://github.com/videojs/v10/issues/1730))
-- Chapters render, but there's no active-chapter state and no `chapterchange` event ([#1441](https://github.com/videojs/v10/issues/1441))
+- Chapters render, but there's no active-chapter state, no `chapterchange` event, and no menu to jump between them ([#1873](https://github.com/videojs/v10/issues/1873))
 - Cue points are not supported ([#1442](https://github.com/videojs/v10/issues/1442))
 
 Chapters themselves do work. Add a default `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover, via `media-time-slider-chapters` and `media-time-slider-chapter-title`.
@@ -215,20 +231,25 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 ### Disable autohide (`autohide="-1"`)
 
-The skin hides controls by removing `data-visible` from `<media-controls>`. Keep them, and the cursor, visible by overriding that hidden state in your player CSS:
+The skin hides controls by removing `data-visible` from the root `<media-controls>`, then fading its `--primary` and `--secondary` groups. Override both, plus the hidden cursor, in your player CSS:
 
 ```css
-.media-default-skin--video .media-controls:not([data-visible]) {
-  opacity: 1;
-  scale: 1;
-  filter: none;
-  pointer-events: auto;
+.media-default-skin--video .media-controls--root:not([data-visible]) {
+  .media-controls--primary,
+  .media-controls--secondary {
+    opacity: 1;
+    scale: 1;
+    filter: none;
+    pointer-events: auto;
+  }
 }
 
-.media-default-skin--video:has(.media-controls:not([data-visible])) {
+.media-default-skin--video:has(.media-controls--root:not([data-visible])) {
   cursor: auto;
 }
 ```
+
+The class names matter here: `data-visible` lands on `.media-controls--root`, but the transition runs on the groups inside it, so targeting only the root leaves the controls faded out.
 
 To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature and swap it into a custom feature list:
 
