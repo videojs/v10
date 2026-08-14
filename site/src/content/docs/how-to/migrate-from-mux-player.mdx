@@ -17,7 +17,7 @@ This guide walks you from a working Mux Player embed to a working Video.js playe
 
 Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
 
-**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> it's built from, and you don't have to pick those yourself: the packaged players come with a sensible set.
+**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> it's built from.
 
 **The media** is the thing that plays the video. The Mux media is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for another <DocsLink slug="concepts/media-sources">media component</DocsLink> and the rest of your player keeps working.
 
@@ -64,7 +64,7 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 ></mux-player>
 ```
 
-Each piece is its own import. From the CDN, that's one script for the general-purpose <DocsLink slug="concepts/presets">preset</DocsLink> — `<video-player>` and `<video-skin>`, which already fit together — one for the Mux media, and one for analytics:
+A <DocsLink slug="concepts/presets">preset</DocsLink> is a player, a skin, and a media element that already fit together. Everything else is its own import. From the CDN, that's one script for the video preset, one for the Mux media, and one for analytics:
 
 ```html
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
@@ -143,7 +143,7 @@ export function MyPlayer() {
 }
 ```
 
-`VideoPlayer` is the piece that owns the state. The preset ships a matching <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, typed to the same state, for reading it.
+`VideoPlayer` is the piece that owns the state. To read that state, the preset ships a matching <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook.
 
 The `'use client'` directive is there because the player owns browser state.
 
@@ -354,7 +354,7 @@ class MyElapsed extends ReactiveElement {
 
 <FrameworkCase frameworks={["react"]}>
 
-There are **no `on*` props**. Read state through the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, which is typed to the features that preset includes:
+There are **no `on*` props**. Read state through the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, typed to that preset's features:
 
 ```tsx
 import { usePlayer } from '@videojs/react/video';
@@ -441,11 +441,11 @@ You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a l
 The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state, none of which apply cleanly to a stream with no fixed duration. So a live skin's settings menu holds captions and nothing else. If you need one of the others on a live player, build your own player from a feature list rather than taking the preset's.
 
 <FrameworkCase frameworks={["html"]}>
-That's what <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> is for: hand it the features you want and it gives you back the mixins to define your own player element.
+That's what <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back the mixins to define your own player element.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
-That's what <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> is for: hand it the features you want and it gives you back a `Player` component and a `usePlayer` hook typed to them, the same pair every preset is built from.
+That's what <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> is for. Hand it a feature list and you get back a `Player` component and a `usePlayer` hook, the same pair every preset is built from.
 </FrameworkCase>
 
 ### The settings menu
