@@ -229,6 +229,22 @@ describe('buildCloudflareIframeSrc', () => {
     expect(src).toContain('loop=1');
   });
 
+  it('omits autoplay, muted, and loop rather than turning them off', () => {
+    // Cloudflare reads these three by presence, not by value, so `autoplay=0`
+    // autoplays and `muted=0` starts the video silenced — which also makes the
+    // volume control look broken, since the embed is muted underneath it.
+    const src = buildCloudflareIframeSrc(VIDEO_ID, { autoplay: false, defaultMuted: false, loop: false });
+    expect(src).not.toContain('autoplay');
+    expect(src).not.toContain('muted');
+    expect(src).not.toContain('loop');
+
+    // The props the HTML and React wrappers pass by default must be just as quiet.
+    const fromDefaults = buildCloudflareIframeSrc(VIDEO_ID, cloudflareMediaDefaultProps);
+    expect(fromDefaults).not.toContain('autoplay');
+    expect(fromDefaults).not.toContain('muted');
+    expect(fromDefaults).not.toContain('loop');
+  });
+
   it('shows Cloudflare controls when controls=true', () => {
     const src = buildCloudflareIframeSrc(VIDEO_ID, { controls: true });
     expect(src).not.toContain('controls=');

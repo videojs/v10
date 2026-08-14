@@ -84,11 +84,17 @@ export function buildCloudflareIframeSrc(src: string, props: Partial<CloudflareM
   // something the player reads, so it never reaches the URL.
   const { referrerPolicy: _referrerPolicy, ...cloudflare } = props.source?.engine?.cloudflare ?? {};
   const params: Record<string, unknown> = {
-    // Hide Cloudflare chrome by default; pass nothing only when controls is explicitly true.
+    // `controls` defaults to on and is read by value, so hiding Cloudflare's own
+    // chrome takes an explicit `0`; passing nothing leaves it shown.
     controls: props.controls === true ? null : 0,
-    autoplay: props.autoplay,
-    loop: props.loop,
-    muted: props.defaultMuted,
+    // These three are read by presence rather than by value, unlike `controls`
+    // and unlike every other embed this package talks to. Cloudflare documents it
+    // for `autoplay` — "if you don't want the video to autoplay, don't include the
+    // autoplay flag at all (instead of setting it to autoplay=false)" — and
+    // `loop` and `muted` read the same way. Sending `0` turns all three *on*.
+    autoplay: props.autoplay || null,
+    loop: props.loop || null,
+    muted: props.defaultMuted || null,
     // `||` rather than `??`: `preload` is empty for a bare `preload` attribute,
     // and empty serializes to `1`, which is not one of the values Cloudflare
     // accepts.

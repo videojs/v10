@@ -33,8 +33,7 @@ type NavbarProps = {
   isSpfHls: boolean;
   isMuxVideo: boolean;
   isMuxAudio: boolean;
-  isVimeoVideo: boolean;
-  isYouTubeVideo: boolean;
+  isEmbedMedia: boolean;
   platforms: readonly Platform[];
   stylings: readonly Styling[];
   presets: readonly Preset[];
@@ -100,6 +99,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'mux-background-video': 'Mux Background Video (SPF)',
   'vimeo-video': 'Vimeo Video',
   'youtube-video': 'YouTube Video',
+  'cloudflare-video': 'Cloudflare Stream Video',
 };
 
 export function Navbar({
@@ -130,8 +130,7 @@ export function Navbar({
   isSpfHls,
   isMuxVideo,
   isMuxAudio,
-  isVimeoVideo,
-  isYouTubeVideo,
+  isEmbedMedia,
   platforms,
   stylings,
   presets,
@@ -160,7 +159,7 @@ export function Navbar({
           options={stylings.map((s) => ({
             value: s,
             label: s === 'css' ? 'CSS' : 'Tailwind',
-            disabled: s === 'tailwind' && (isBackgroundVideo || isVimeoVideo || isYouTubeVideo || platform === 'cdn'),
+            disabled: s === 'tailwind' && (isBackgroundVideo || isEmbedMedia || platform === 'cdn'),
           }))}
         />
 
@@ -198,7 +197,7 @@ export function Navbar({
               const note = expectedOutcomeNote(sources[id], preset);
               return { value: id, label: note ? `${sources[id].label} — ${note}` : sources[id].label };
             })}
-          disabled={isBackgroundVideo || isVimeoVideo || isYouTubeVideo}
+          disabled={isBackgroundVideo || isEmbedMedia}
         />
       </div>
 
