@@ -59,13 +59,15 @@ export type PlayerFeatureConfig<State = never> = Record<
     action: ConfigActionKey<State>;
     /** Provider-owned source-state key whose value survives media detach. */
     state: ConfigStateKey<State>;
-    /**
-     * Attribute name the HTML provider element reads this input from, kebab-case,
-     * for a key whose own name is taken on an element. The matching property
-     * follows from it, so `content-title` is also `element.contentTitle`.
-     * Defaults to the kebab-cased key.
-     */
-    htmlAttribute?: string;
+    /** How an HTML provider element names this input, when the key's own name won't do. */
+    html?: {
+      /**
+       * Attribute name in markup, kebab-case, for a key whose own name is taken
+       * on an element. The matching property follows from it, so `content-title`
+       * is also `element.contentTitle`. Defaults to the kebab-cased key.
+       */
+      attribute: string;
+    };
   }
 >;
 
@@ -100,7 +102,7 @@ export type InferPlayerFeatureHtmlConfig<Feature extends AnyPlayerFeature> = Fea
     }
   : object;
 
-type HtmlPropertyKey<Key, Entry> = Entry extends { htmlAttribute: infer Attribute extends string }
+type HtmlPropertyKey<Key, Entry> = Entry extends { html: { attribute: infer Attribute extends string } }
   ? CamelCase<Attribute>
   : Key;
 

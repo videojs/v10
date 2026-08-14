@@ -134,7 +134,7 @@ describe('metadataFeature', () => {
   });
 
   it('takes the title under another name in markup, where `title` is the tooltip', () => {
-    expect(titleConfig.htmlAttribute).toBe('content-title');
+    expect(titleConfig.html?.attribute).toBe('content-title');
   });
 
   it('selects the resolved title and nothing that writes it', () => {
