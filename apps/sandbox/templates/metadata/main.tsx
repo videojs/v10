@@ -6,7 +6,7 @@ import { Video } from '@videojs/react/video';
 import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 
-const Player = createPlayer({ features: [metadataFeature] });
+const { Player, usePlayer } = createPlayer({ features: [metadataFeature] });
 
 type ContentDataVideo = HTMLVideoElement & {
   contentData: Record<string, string | null | undefined>;
@@ -52,7 +52,7 @@ function MetadataVideo({ contentTitle }: { contentTitle: string | null | undefin
 }
 
 function PlayerPreview({ mediaTitle }: { mediaTitle: string | null | undefined }) {
-  const contentTitle = Player.usePlayer((state) => state.contentTitle);
+  const contentTitle = usePlayer((state) => state.contentTitle);
 
   return (
     <div className="relative mt-6 overflow-hidden rounded-lg bg-black shadow-lg">
@@ -127,9 +127,9 @@ function App() {
         ))}
       </fieldset>
 
-      <Player.Provider contentTitle={userTitle} defaultContentTitle={defaultTitle}>
+      <Player contentTitle={userTitle} defaultContentTitle={defaultTitle}>
         <PlayerPreview mediaTitle={mediaTitle} />
-      </Player.Provider>
+      </Player>
 
       <p className="mt-4 font-mono text-sm text-zinc-600">user ?? media ?? userDefault ?? featureDefault</p>
     </main>

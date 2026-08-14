@@ -31,14 +31,14 @@ export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
   displayName?: string;
 }
 
-export type ProviderProps<Config = object> = {
+export type PlayerProps<Config = object> = {
   [Key in keyof Config]?: Config[Key] | undefined;
 } & {
   children: ReactNode;
 };
 
 export interface CreatePlayerResult<Store extends PlayerStore> {
-  Provider: FC<ProviderProps<InferPlayerConfig<Store>>>;
+  Player: FC<PlayerProps<InferPlayerConfig<Store>>>;
   Container: typeof Container;
   usePlayer: UsePlayerHook<Store>;
   useMedia: () => Media | null;
@@ -50,7 +50,7 @@ export type UsePlayerHook<Store extends PlayerStore> = {
 };
 
 /**
- * Create a player instance with typed store, Provider component, Container, and hooks.
+ * Create a player instance with a typed Player component, Container, and hooks.
  *
  * @label Video
  * @param config - Player configuration with features and optional display name.
@@ -86,7 +86,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
     return store;
   }
 
-  function Provider(props: ProviderProps<any>): ReactNode {
+  function Player(props: PlayerProps<any>): ReactNode {
     const { children } = props;
     // Only inputs declared by selected features are forwarded to store actions.
     const configValues = pick(props, configKeys);
@@ -135,7 +135,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   }
 
   if (__DEV__ && config.displayName) {
-    Provider.displayName = `${config.displayName}.Provider`;
+    Player.displayName = config.displayName;
   }
 
   function usePlayer<R>(selector?: (state: object) => R): AnyPlayerStore | R {
@@ -144,7 +144,7 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
   }
 
   return {
-    Provider,
+    Player,
     Container,
     usePlayer,
     useMedia,

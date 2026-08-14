@@ -51,14 +51,14 @@ describe('createPlayer', () => {
     const withMetadata = createPlayer({ features: [metadataFeature] });
     const withoutMetadata = createPlayer({ features: [features.playback] });
 
-    <withMetadata.Provider contentTitle="Title" defaultContentTitle={null}>
+    <withMetadata.Player contentTitle="Title" defaultContentTitle={null}>
       <div />
-    </withMetadata.Provider>;
+    </withMetadata.Player>;
 
     // @ts-expect-error metadata props are absent when the feature is absent.
-    <withoutMetadata.Provider contentTitle="Title">
+    <withoutMetadata.Player contentTitle="Title">
       <div />
-    </withoutMetadata.Provider>;
+    </withoutMetadata.Player>;
   });
 
   it('accepts the orientation lock feature alias with and without config', () => {

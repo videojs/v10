@@ -13,7 +13,7 @@ import { LiveVideoPlayer, usePlayer as useLiveVideoPlayer } from '../live-video/
 import { usePlayer as useVideoPlayer, VideoPlayer } from '../video/player';
 
 describe('preset players', () => {
-  it('exposes each preset provider with its inferred configuration props', () => {
+  it('exposes each preset player with its inferred configuration props', () => {
     <VideoPlayer contentTitle="Video title">Video</VideoPlayer>;
     <AudioPlayer contentTitle="Audio title">Audio</AudioPlayer>;
     <LiveVideoPlayer contentTitle="Live video title">Live video</LiveVideoPlayer>;
@@ -23,7 +23,7 @@ describe('preset players', () => {
     // @ts-expect-error Background video does not include the metadata feature.
     <BackgroundVideoPlayer contentTitle="Background title">Background video</BackgroundVideoPlayer>;
 
-    // @ts-expect-error Preset players are provider components, not createPlayer result objects.
+    // @ts-expect-error Preset players are components, not createPlayer result objects.
     VideoPlayer.Provider;
   });
 

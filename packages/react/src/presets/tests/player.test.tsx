@@ -17,7 +17,7 @@ describe('preset players', () => {
     expect(Player.displayName).toBe(displayName);
   });
 
-  it('exports the provider and hook as separate values', () => {
+  it('exports the player and hook as separate values', () => {
     expect(VideoPlayer).not.toHaveProperty('Provider');
     expect(VideoPlayer).not.toHaveProperty('usePlayer');
     expect(useVideoPlayer).toBeTypeOf('function');

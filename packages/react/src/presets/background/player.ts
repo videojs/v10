@@ -8,10 +8,8 @@ const player = createPlayer({
   displayName: 'BackgroundVideoPlayer',
 });
 
-/** Preconfigured player provider with the background video features. */
-export const BackgroundVideoPlayer = player.Provider;
-
-if (__DEV__) BackgroundVideoPlayer.displayName = 'BackgroundVideoPlayer';
+/** Preconfigured player with the background video features. */
+export const BackgroundVideoPlayer = player.Player;
 
 /** Access the background video player store or select a value from it. */
 export const usePlayer = player.usePlayer;

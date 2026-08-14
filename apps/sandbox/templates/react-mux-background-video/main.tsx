@@ -1,6 +1,6 @@
 import '@app/styles.css';
 import '@videojs/react/background/skin.css';
-import { BackgroundVideoProvider } from '@app/shared/react/providers';
+import { BackgroundVideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { HLS_BACKGROUND_VIDEO_SRC } from '@app/shared/sources';
 import { BackgroundVideoSkin } from '@videojs/react/background';
@@ -16,11 +16,11 @@ import { createRoot } from 'react-dom/client';
 function App() {
   return (
     <SandboxI18nProvider>
-      <BackgroundVideoProvider>
+      <BackgroundVideoPlayer>
         <BackgroundVideoSkin>
           <MuxBackgroundVideo src={`${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p`} />
         </BackgroundVideoSkin>
-      </BackgroundVideoProvider>
+      </BackgroundVideoPlayer>
     </SandboxI18nProvider>
   );
 }
