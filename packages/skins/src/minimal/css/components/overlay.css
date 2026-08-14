@@ -1,7 +1,3 @@
-/* ==========================================================================
-   Overlay / Scrim
-   ========================================================================== */
-
 .media-minimal-skin .media-overlay {
   position: absolute;
   inset: 0;
@@ -16,13 +12,13 @@
   opacity: 0;
   backdrop-filter: blur(0) saturate(1);
   transition-timing-function: ease-out;
-  transition-duration: var(--media-controls-transition-duration);
+  transition-duration: var(--controls-transition-duration);
   transition-property: opacity, backdrop-filter;
 }
 
 .media-minimal-skin .media-error ~ .media-overlay {
-  transition-delay: var(--media-error-dialog-transition-delay);
-  transition-duration: var(--media-error-dialog-transition-duration);
+  transition-delay: var(--error-dialog-transition-delay);
+  transition-duration: var(--error-dialog-transition-duration);
 }
 
 .media-minimal-skin .media-controls[data-visible] ~ .media-overlay,

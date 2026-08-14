@@ -22,7 +22,7 @@ export const poster = (isShadowDOM: boolean) =>
           '[&_::slotted(img)]:h-full',
           '[&_::slotted(img)]:[object-fit:var(--media-object-fit,contain)]',
           '[&_::slotted(img)]:[object-position:var(--media-object-position,center)]',
-          '[&_::slotted(img)]:rounded-(--media-video-border-radius)',
+          '[&_::slotted(img)]:rounded-(--container-border-radius)',
         ]
       : [
           'rounded-[inherit] [object-fit:var(--media-object-fit,contain)] [object-position:var(--media-object-position,center)]',

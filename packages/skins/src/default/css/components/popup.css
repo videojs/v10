@@ -1,13 +1,9 @@
-/* ==========================================================================
-   Popups & Tooltips
-   ========================================================================== */
-
 .media-default-skin {
-  --media-popup-transition:
-    opacity var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
-    filter var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
-    transform var(--media-popup-transition-timing-function) var(--media-popup-transition-duration),
-    scale var(--media-popup-transition-timing-function) var(--media-popup-transition-duration);
+  --popup-transition:
+    opacity var(--popup-transition-timing-function) var(--popup-transition-duration),
+    filter var(--popup-transition-timing-function) var(--popup-transition-duration),
+    transform var(--popup-transition-timing-function) var(--popup-transition-duration),
+    scale var(--popup-transition-timing-function) var(--popup-transition-duration);
 }
 
 .media-default-skin .media-popover,
@@ -17,7 +13,7 @@
   overflow: visible;
   color: inherit;
   border: 0;
-  transition: var(--media-popup-transition);
+  transition: var(--popup-transition);
 
   &[data-starting-style],
   &[data-ending-style] {
@@ -31,7 +27,7 @@
   &[data-ending-style] {
     transform: none;
     /* Speed up the exit transition. */
-    transition-duration: max(0ms, calc(var(--media-popup-transition-duration) - 50ms));
+    transition-duration: max(0ms, calc(var(--popup-transition-duration) - 50ms));
   }
 
   &[data-side="top"] {
@@ -124,7 +120,7 @@
     width: var(--media-tooltip-side-offset);
   }
 
-  & .media-tooltip__kbd {
+  .media-tooltip__kbd {
     min-width: 1.5em;
     padding: 0.1em;
     font-family: inherit;

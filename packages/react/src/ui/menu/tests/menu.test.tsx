@@ -1,24 +1,20 @@
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import type { Text } from '@videojs/core/i18n';
 import type { KeyboardEventHandler, KeyboardEvent as ReactKeyboardEvent } from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { createPlayerWrapper } from '../../../testing/mocks';
 import { ControlsContextProvider } from '../../controls/context';
-import { MenuBack } from '../menu-back';
 import { MenuCheckboxItem } from '../menu-checkbox-item';
 import { MenuContent } from '../menu-content';
 import { MenuGroup } from '../menu-group';
 import { MenuGroupLabel } from '../menu-group-label';
 import { MenuItem } from '../menu-item';
 import { MenuItemIndicator } from '../menu-item-indicator';
-import { MenuItemValue } from '../menu-item-value';
 import { MenuRadioGroup } from '../menu-radio-group';
 import { MenuRadioItem } from '../menu-radio-item';
 import { MenuRoot } from '../menu-root';
 import { MenuSeparator } from '../menu-separator';
 import { MenuTrigger } from '../menu-trigger';
-import { MenuView } from '../menu-view';
 
 afterEach(() => {
   cleanup();
@@ -34,15 +30,15 @@ function SubmenuFixture() {
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
-              <MenuBack data-testid="submenu-back">Back</MenuBack>
+              <MenuItem data-testid="submenu-back">Back</MenuItem>
               <MenuItem data-testid="submenu-item">Auto</MenuItem>
             </MenuContent>
           </MenuRoot>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -53,14 +49,14 @@ function SubmenuPropagationFixture({ onRootKeyDown }: { onRootKeyDown: KeyboardE
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content" onKeyDown={onRootKeyDown}>
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
               <MenuItem data-testid="submenu-item">Auto</MenuItem>
             </MenuContent>
           </MenuRoot>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -71,7 +67,7 @@ function SubmenuKeyboardFixture() {
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
@@ -79,7 +75,7 @@ function SubmenuKeyboardFixture() {
             </MenuContent>
           </MenuRoot>
           <MenuItem data-testid="root-item">Copy link</MenuItem>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -94,14 +90,14 @@ function SubmenuPreventDefaultFixture({
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content" onKeyDown={onSubmenuKeyDown}>
               <MenuItem data-testid="submenu-item">Auto</MenuItem>
             </MenuContent>
           </MenuRoot>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -112,7 +108,7 @@ function SubmenuSelectFixture({ onSelect }: { onSelect: () => void }) {
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
@@ -121,7 +117,7 @@ function SubmenuSelectFixture({ onSelect }: { onSelect: () => void }) {
               </MenuItem>
             </MenuContent>
           </MenuRoot>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -132,38 +128,14 @@ function SubmenuEscapeFixture({ onRootOpenChange }: { onRootOpenChange: (open: b
     <MenuRoot defaultOpen onOpenChange={onRootOpenChange}>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="submenu-content">
               <MenuItem data-testid="submenu-item">Auto</MenuItem>
             </MenuContent>
           </MenuRoot>
-        </MenuView>
-      </MenuContent>
-    </MenuRoot>
-  );
-}
-
-function SiblingSubmenuFixture({ onRootOpenChange }: { onRootOpenChange?: MenuRoot.Props['onOpenChange'] } = {}) {
-  return (
-    <MenuRoot defaultOpen {...(onRootOpenChange ? { onOpenChange: onRootOpenChange } : {})}>
-      <MenuTrigger>Settings</MenuTrigger>
-      <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
-          <MenuRoot>
-            <MenuTrigger data-testid="quality-trigger">Quality</MenuTrigger>
-            <MenuContent data-testid="quality-content">
-              <MenuItem data-testid="quality-item">Auto</MenuItem>
-            </MenuContent>
-          </MenuRoot>
-          <MenuRoot>
-            <MenuTrigger data-testid="speed-trigger">Speed</MenuTrigger>
-            <MenuContent data-testid="speed-content">
-              <MenuItem data-testid="speed-item">Normal</MenuItem>
-            </MenuContent>
-          </MenuRoot>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -174,21 +146,21 @@ function NestedSubmenuFixture() {
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="root-content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuRoot>
             <MenuTrigger data-testid="first-submenu-trigger">Quality</MenuTrigger>
             <MenuContent data-testid="first-submenu-content">
-              <MenuView data-testid="first-submenu-view">
+              <div data-testid="first-submenu-items">
                 <MenuRoot>
                   <MenuTrigger data-testid="second-submenu-trigger">Advanced</MenuTrigger>
                   <MenuContent data-testid="second-submenu-content">
                     <MenuItem data-testid="second-submenu-item">HDR</MenuItem>
                   </MenuContent>
                 </MenuRoot>
-              </MenuView>
+              </div>
             </MenuContent>
           </MenuRoot>
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
@@ -353,7 +325,7 @@ function createRect(width: number, height: number): DOMRect {
   } as DOMRect;
 }
 
-function mockMenuViewSize(element: HTMLElement, getHeight: () => number): void {
+function mockElementSize(element: HTMLElement, getHeight: () => number): void {
   element.getBoundingClientRect = vi.fn(() => createRect(160, getHeight()));
 
   Object.defineProperty(element, 'scrollWidth', {
@@ -372,31 +344,38 @@ function DynamicMenuFixture({ showCaptions }: { showCaptions: boolean }) {
     <MenuRoot defaultOpen>
       <MenuTrigger>Settings</MenuTrigger>
       <MenuContent data-testid="content">
-        <MenuView data-testid="root-view">
+        <div data-testid="root-items">
           <MenuItem>Speed</MenuItem>
           {showCaptions ? <MenuItem>Captions</MenuItem> : null}
-        </MenuView>
+        </div>
       </MenuContent>
     </MenuRoot>
   );
 }
 
-describe('MenuBack', () => {
-  it('resolves menu back text and preserves literal labels', () => {
-    const customText = { key: 'custom.back', text: 'Go back' } as const satisfies Text;
-    const { rerender } = render(<MenuBack />);
-
-    expect(screen.getByRole('button', { name: 'Back' })).toBeTruthy();
-
-    rerender(<MenuBack label={customText} />);
-    expect(screen.getByRole('button', { name: 'Go back' })).toBeTruthy();
-
-    rerender(<MenuBack label="menu.back" />);
-    expect(screen.getByRole('button', { name: 'menu.back' })).toBeTruthy();
-  });
-});
-
 describe('MenuContent', () => {
+  it('waits for a controlled owner to commit requested open changes', async () => {
+    const onOpenChange = vi.fn();
+    const renderMenu = (open: boolean) => (
+      <MenuRoot open={open} onOpenChange={onOpenChange}>
+        <MenuTrigger data-testid="trigger">Settings</MenuTrigger>
+        <MenuContent data-testid="content">Settings</MenuContent>
+      </MenuRoot>
+    );
+    const { rerender } = render(renderMenu(false));
+
+    fireEvent.click(screen.getByTestId('trigger'));
+
+    expect(onOpenChange).toHaveBeenCalledWith(true, expect.objectContaining({ reason: 'click' }));
+    expect(screen.queryByTestId('content')).toBeNull();
+
+    rerender(renderMenu(true));
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('content')).not.toBeNull();
+    });
+  });
+
   it('exposes the positioned side on root content', async () => {
     vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
       if (this.dataset.testid === 'trigger') return makeDOMRect(100, 10, 40, 20);
@@ -418,9 +397,7 @@ describe('MenuContent', () => {
           Settings
         </MenuTrigger>
         <MenuContent data-testid="content">
-          <MenuView>
-            <MenuItem>Auto</MenuItem>
-          </MenuView>
+          <MenuItem>Auto</MenuItem>
         </MenuContent>
       </MenuRoot>
     );
@@ -452,15 +429,15 @@ describe('MenuContent', () => {
             </MenuRadioGroup>
           </MenuGroup>
           <MenuSeparator data-testid="separator" />
-          <MenuView data-testid="root-view">
+          <div data-testid="root-items">
             <MenuRoot>
               <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
               <MenuContent data-testid="submenu-content">
-                <MenuBack data-testid="back">Back</MenuBack>
+                <MenuItem data-testid="back">Back</MenuItem>
                 <MenuItem data-testid="submenu-item">Auto</MenuItem>
               </MenuContent>
             </MenuRoot>
-          </MenuView>
+          </div>
         </MenuContent>
       </MenuRoot>
     );
@@ -493,31 +470,48 @@ describe('MenuContent', () => {
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
-    await waitFor(() => {
-      expect(screen.getByTestId('submenu-content').getAttribute('data-menu-view-state')).toBe('active');
-    });
+    await waitFor(() => expect(screen.queryByTestId('submenu-content')).not.toBeNull());
 
     const submenuContent = screen.getByTestId('submenu-content');
 
     expect(submenuContent.hasAttribute('data-submenu')).toBe(true);
-    expect(submenuContent.hasAttribute('data-menu-view')).toBe(true);
     expect(submenuContent.hasAttribute('data-open')).toBe(true);
     expect(submenuContent.hasAttribute('data-side')).toBe(false);
     expect(submenuContent.hasAttribute('data-align')).toBe(false);
     expectNoMenuStateAttrs(screen.getByTestId('back'));
   });
 
-  it('marks the root view inactive while a submenu view is active', async () => {
+  it('covers ordinary root content while a submenu is active', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      const rootItems = screen.getByTestId('root-items');
+
+      expect(rootItems.getAttribute('aria-hidden')).toBe('true');
+      expect(rootItems.hasAttribute('inert')).toBe(true);
+      expect(screen.getByTestId('root-content').getAttribute('data-submenu-expanded')).toBe('true');
     });
   });
 
-  it('portals submenu content into the parent content viewport', async () => {
+  it('exposes starting and ending style hooks on submenu content', async () => {
+    render(<SubmenuFixture />);
+
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+
+    expect(screen.getByTestId('submenu-content').hasAttribute('data-starting-style')).toBe(true);
+
+    fireEvent.click(screen.getByTestId('submenu-back'));
+
+    const submenu = screen.getByTestId('submenu-content');
+    expect(submenu.hasAttribute('data-ending-style')).toBe(true);
+    expect(submenu.hasAttribute('data-open')).toBe(true);
+    expect(screen.getByTestId('submenu-trigger').getAttribute('aria-expanded')).toBe('false');
+    expect(screen.getByTestId('root-content').getAttribute('data-submenu-expanded')).toBe('false');
+  });
+
+  it('portals submenu content into the parent content', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
@@ -527,7 +521,7 @@ describe('MenuContent', () => {
     });
   });
 
-  it('portals deeper submenu content into the active parent submenu viewport', async () => {
+  it('portals deeper submenu content into the active parent submenu', async () => {
     render(<NestedSubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('first-submenu-trigger'));
@@ -543,24 +537,49 @@ describe('MenuContent', () => {
         screen.getByTestId('first-submenu-content')
       );
       expect(screen.getByTestId('second-submenu-content').parentElement).not.toBe(
-        screen.getByTestId('first-submenu-view')
+        screen.getByTestId('first-submenu-items')
       );
     });
   });
 
-  it('marks root content and view with viewport data attributes', () => {
-    render(<SubmenuFixture />);
+  it('propagates the deepest submenu size to the root content', async () => {
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (this: HTMLElement) {
+      const widths: Record<string, number> = {
+        'root-items': 180,
+        'first-submenu-items': 200,
+        'second-submenu-item': 220,
+      };
+      const heights: Record<string, number> = {
+        'root-items': 100,
+        'first-submenu-items': 150,
+        'second-submenu-item': 240,
+      };
+      return createRect(widths[this.dataset.testid ?? ''] ?? 0, heights[this.dataset.testid ?? ''] ?? 0);
+    });
 
-    expect(screen.getByTestId('root-content').hasAttribute('data-menu-viewport')).toBe(true);
-    expect(screen.getByTestId('root-view').hasAttribute('data-menu-root-view')).toBe(true);
-    expect(screen.getByTestId('root-view').hasAttribute('data-menu-view')).toBe(true);
+    render(<NestedSubmenuFixture />);
+    fireEvent.click(screen.getByTestId('first-submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-width')).toBe('200px');
+      expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-height')).toBe('150px');
+    });
+
+    fireEvent.click(screen.getByTestId('second-submenu-trigger'));
+
+    await waitFor(() => {
+      expect(screen.getByTestId('first-submenu-content').style.getPropertyValue('--media-menu-width')).toBe('220px');
+      expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-width')).toBe('220px');
+      expect(screen.getByTestId('first-submenu-content').style.getPropertyValue('--media-menu-height')).toBe('240px');
+      expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-height')).toBe('240px');
+    });
   });
 
-  it('syncs root viewport size without position options', async () => {
+  it('syncs root content size without position options', async () => {
     const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
 
     HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRectMock() {
-      if (this.getAttribute('data-testid') === 'root-view') {
+      if (this.getAttribute('data-testid') === 'root-items') {
         return new DOMRect(0, 0, 180, 96);
       }
 
@@ -572,15 +591,14 @@ describe('MenuContent', () => {
         <MenuRoot defaultOpen side={null as never}>
           <MenuTrigger>Settings</MenuTrigger>
           <MenuContent data-testid="root-content">
-            <MenuView data-testid="root-view">
+            <div data-testid="root-items">
               <MenuItem>Auto</MenuItem>
-            </MenuView>
+            </div>
           </MenuContent>
         </MenuRoot>
       );
 
       await waitFor(() => {
-        expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-width')).toBe('180px');
         expect(screen.getByTestId('root-content').style.getPropertyValue('--media-menu-height')).toBe('96px');
       });
     } finally {
@@ -588,12 +606,12 @@ describe('MenuContent', () => {
     }
   });
 
-  it('remeasures an open root view when menu items are added', async () => {
+  it('remeasures open root content when menu items are added', async () => {
     const { rerender } = render(<DynamicMenuFixture showCaptions={false} />);
     const content = screen.getByTestId('content');
-    const rootView = screen.getByTestId('root-view');
+    const rootItems = screen.getByTestId('root-items');
 
-    mockMenuViewSize(rootView, () => rootView.children.length * 20);
+    mockElementSize(rootItems, () => rootItems.children.length * 20);
 
     rerender(<DynamicMenuFixture showCaptions />);
 
@@ -602,33 +620,7 @@ describe('MenuContent', () => {
     });
   });
 
-  it('forces layout while the submenu starting style is applied', async () => {
-    const startingStyleMeasurements: boolean[] = [];
-    const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
-
-    HTMLElement.prototype.getBoundingClientRect = function getBoundingClientRectMock() {
-      if (this.hasAttribute('data-submenu')) {
-        startingStyleMeasurements.push(this.hasAttribute('data-starting-style'));
-      }
-
-      return getBoundingClientRect.call(this);
-    };
-
-    try {
-      render(<SubmenuFixture />);
-
-      fireEvent.click(screen.getByTestId('submenu-trigger'));
-
-      await waitFor(() => {
-        expect(screen.getByTestId('submenu-content').hasAttribute('data-menu-view')).toBe(true);
-        expect(startingStyleMeasurements).toContain(true);
-      });
-    } finally {
-      HTMLElement.prototype.getBoundingClientRect = getBoundingClientRect;
-    }
-  });
-
-  it('can reopen a submenu while its previous exit transition is pending', async () => {
+  it('can reopen a submenu immediately after closing it', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
@@ -640,12 +632,42 @@ describe('MenuContent', () => {
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
       expect(screen.getByTestId('submenu-content').hasAttribute('hidden')).toBe(false);
     });
   });
 
-  it('handles keyboard navigation in the active submenu view', async () => {
+  it('resets an open submenu when its parent menu closes', async () => {
+    const onSubmenuOpenChange = vi.fn();
+    const renderMenu = (open: boolean) => (
+      <MenuRoot open={open}>
+        <MenuTrigger>Settings</MenuTrigger>
+        <MenuContent data-testid="root-content">
+          <div>
+            <MenuRoot onOpenChange={onSubmenuOpenChange}>
+              <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+              <MenuContent data-testid="submenu-content">
+                <MenuItem>Auto</MenuItem>
+              </MenuContent>
+            </MenuRoot>
+          </div>
+        </MenuContent>
+      </MenuRoot>
+    );
+    const { rerender } = render(renderMenu(true));
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await waitFor(() => expect(screen.getByTestId('submenu-content')).not.toBeNull());
+    onSubmenuOpenChange.mockClear();
+
+    rerender(renderMenu(false));
+
+    await waitFor(() => {
+      expect(onSubmenuOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'imperative-action' }));
+      expect(screen.getByTestId('submenu-trigger').getAttribute('aria-expanded')).toBe('false');
+    });
+  });
+
+  it('handles keyboard navigation in the active submenu', async () => {
     render(<SubmenuKeyboardFixture />);
 
     fireEvent.pointerEnter(screen.getByTestId('submenu-trigger'));
@@ -661,17 +683,17 @@ describe('MenuContent', () => {
     expect(screen.getByTestId('root-item').hasAttribute('data-highlighted')).toBe(false);
   });
 
-  it('highlights the first item when a submenu view becomes active', async () => {
+  it('highlights the first item when a submenu becomes active', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('submenu-item').hasAttribute('data-highlighted')).toBe(true);
+      expect(screen.getByTestId('submenu-back').hasAttribute('data-highlighted')).toBe(true);
     });
   });
 
-  it('returns to the parent view when selecting an item in a submenu', async () => {
+  it('returns to the parent content when selecting an item in a submenu', async () => {
     const onSelect = vi.fn();
 
     render(<SubmenuSelectFixture onSelect={onSelect} />);
@@ -679,7 +701,7 @@ describe('MenuContent', () => {
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
     });
 
     fireEvent.click(screen.getByTestId('submenu-item'));
@@ -687,11 +709,11 @@ describe('MenuContent', () => {
     expect(onSelect).toHaveBeenCalledTimes(1);
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(false);
     });
   });
 
-  it('returns to the parent view without closing the root menu when Escape is pressed in a submenu', async () => {
+  it('returns to the parent content without closing the root menu when Escape is pressed in a submenu', async () => {
     const onRootOpenChange = vi.fn();
 
     render(<SubmenuEscapeFixture onRootOpenChange={onRootOpenChange} />);
@@ -700,32 +722,32 @@ describe('MenuContent', () => {
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
     });
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'Escape' });
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(false);
     });
 
     expect(onRootOpenChange).not.toHaveBeenCalledWith(false, expect.anything());
     expect(screen.getByTestId('root-content').hasAttribute('data-open')).toBe(true);
   });
 
-  it('returns to the parent view when ArrowLeft is pressed in a submenu', async () => {
+  it('returns to the parent content when ArrowLeft is pressed in a submenu', async () => {
     render(<SubmenuFixture />);
 
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
     });
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('active');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(false);
     });
   });
 
@@ -737,34 +759,12 @@ describe('MenuContent', () => {
     fireEvent.click(screen.getByTestId('submenu-trigger'));
 
     await waitFor(() => {
-      expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
+      expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
     });
 
     fireEvent.keyDown(screen.getByTestId('submenu-content'), { key: 'ArrowLeft' });
 
-    expect(screen.getByTestId('root-view').getAttribute('data-menu-view-state')).toBe('inactive');
-  });
-
-  it('allows Escape from an inactive sibling submenu view to close the root menu', async () => {
-    const onRootOpenChange = vi.fn();
-
-    render(<SiblingSubmenuFixture onRootOpenChange={onRootOpenChange} />);
-    onRootOpenChange.mockClear();
-
-    fireEvent.click(screen.getByTestId('quality-trigger'));
-
-    await waitFor(() => {
-      expect(screen.getByTestId('quality-content').getAttribute('data-menu-view-state')).toBe('active');
-    });
-
-    const exitingContent = screen.getByTestId('quality-content');
-
-    fireEvent.click(screen.getByTestId('speed-trigger'));
-    fireEvent.keyDown(exitingContent, { key: 'Escape' });
-
-    await waitFor(() => {
-      expect(onRootOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'escape' }));
-    });
+    expect(screen.getByTestId('root-items').hasAttribute('inert')).toBe(true);
   });
 
   it('only stops propagation for submenu-owned keyboard events', async () => {
@@ -949,6 +949,39 @@ describe('MenuContent', () => {
     });
   });
 
+  it('routes focus leaving a submenu through the submenu popover', async () => {
+    const onSubmenuOpenChange = vi.fn();
+    render(
+      <>
+        <MenuRoot defaultOpen>
+          <MenuTrigger>Settings</MenuTrigger>
+          <MenuContent>
+            <div>
+              <MenuRoot onOpenChange={onSubmenuOpenChange}>
+                <MenuTrigger data-testid="submenu-trigger">Quality</MenuTrigger>
+                <MenuContent data-testid="submenu-content">
+                  <MenuItem>Auto</MenuItem>
+                </MenuContent>
+              </MenuRoot>
+            </div>
+          </MenuContent>
+        </MenuRoot>
+        <button type="button" data-testid="outside">
+          Outside
+        </button>
+      </>
+    );
+    fireEvent.click(screen.getByTestId('submenu-trigger'));
+    await waitFor(() => expect(screen.getByTestId('submenu-content')).not.toBeNull());
+    onSubmenuOpenChange.mockClear();
+
+    fireEvent.blur(screen.getByTestId('submenu-content'), { relatedTarget: screen.getByTestId('outside') });
+
+    await waitFor(() => {
+      expect(onSubmenuOpenChange).toHaveBeenCalledWith(false, expect.objectContaining({ reason: 'blur' }));
+    });
+  });
+
   it('forwards disabled to a root trigger render prop and prevents opening', () => {
     render(
       <MenuRoot>
@@ -969,21 +1002,5 @@ describe('MenuContent', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(screen.queryByTestId('content')).toBeNull();
-  });
-
-  it('provides setting context for root trigger item values', () => {
-    const { Wrapper } = createPlayerWrapper({ playbackRates: [1, 1.5], playbackRate: 1.5 });
-
-    render(
-      <MenuRoot>
-        <MenuTrigger type="playback-rate" data-testid="trigger">
-          Speed <MenuItemValue data-testid="value" />
-        </MenuTrigger>
-        <MenuContent data-testid="content">Speed</MenuContent>
-      </MenuRoot>,
-      { wrapper: Wrapper }
-    );
-
-    expect(screen.getByTestId('value').textContent).toBe('1.5×');
   });
 });

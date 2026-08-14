@@ -1,11 +1,5 @@
 @import "tailwindcss";
 
-/* NOTE: This is using a private export. You should import from either:
-- "@videojs/html/tailwind.css" for HTML skins
-- "@videojs/react/tailwind.css" for React skins
-*/
-@import "@videojs/skins/shared/tailwind.css";
-
 @source "../app";
 @source "../src";
 @source "../templates";
@@ -13,6 +7,10 @@
 @source "../node_modules/@videojs/skins";
 @source "../node_modules/@videojs/html";
 @source "../node_modules/@videojs/react";
+
+:root {
+  color-scheme: light dark;
+}
 
 @theme {
   --font-sans: InterVariable, Inter, ui-sans-serif, system-ui, sans-serif;

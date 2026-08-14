@@ -1,5 +1,8 @@
 /* ==========================================================================
    Icon State
+
+   Data-attribute-driven visibility rules for multi-state icon buttons shared
+   by the HTML and React skins.
    ========================================================================== */
 
 export const iconState = {

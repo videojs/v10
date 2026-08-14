@@ -1,15 +1,19 @@
 import { vi } from 'vitest';
 import { createTransition } from '../../transition';
-import { createMenu, type MenuChangeDetails } from '../create-menu';
+import { createMenu, type MenuApi, type MenuChangeDetails } from '../create-menu';
 
 export function createTestMenu(overrides?: Partial<Parameters<typeof createMenu>[0]>) {
   const onOpenChange = vi.fn<(open: boolean, details: MenuChangeDetails) => void>();
   const onHighlightChange = vi.fn<(element: HTMLElement | null) => void>();
   const transition = overrides?.transition ?? createTransition();
+  let menu: MenuApi;
 
-  const menu = createMenu({
+  menu = createMenu({
     transition,
-    onOpenChange,
+    onOpenChange(open, details) {
+      onOpenChange(open, details);
+      menu.syncOpen(open);
+    },
     closeOnEscape: () => true,
     closeOnOutsideClick: () => true,
     onHighlightChange,

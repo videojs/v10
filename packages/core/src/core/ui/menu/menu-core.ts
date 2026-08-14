@@ -94,7 +94,7 @@ export class MenuCore {
       role: 'menu' as const,
       tabIndex: -1,
       // Root menus use the Popover API for dismiss and focus handling.
-      // Submenus render inline inside the parent viewport — no popover.
+      // Submenus render inline inside their parent menu — no popover.
       ...(!state.isSubmenu && { popover: 'manual' as const }),
     };
   }

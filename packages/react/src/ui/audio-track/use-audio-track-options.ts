@@ -13,6 +13,7 @@ export interface AudioTrackOptionsResult {
   state: AudioTrackRadioGroupCore.State;
   label: string;
   value: string;
+  selectedLabel: string;
   options: AudioTrackOption[];
   disabled: boolean;
   hidden: boolean;

@@ -6,6 +6,7 @@ import {
   button,
   buttonGroupEnd,
   buttonGroupStart,
+  container,
   controls,
   error,
   icon,
@@ -17,7 +18,6 @@ import {
   popup,
   poster,
   primaryControls,
-  root,
   secondaryControls,
   seekIndicator,
   slider,
@@ -37,7 +37,7 @@ import './ui';
 
 function getTemplateHTML() {
   return /*html*/ `
-    <media-container class="${root(true)}">
+    <media-container class="${container(true)}">
       <!-- @deprecated slot="media" is no longer required, use the default slot instead -->
       <slot name="media"></slot>
       <slot></slot>
@@ -197,7 +197,7 @@ function getTemplateHTML() {
 
                 <media-menu id="settings-audio-menu" class="${menu.submenuPanel}">
                   <media-menu-back class="${menu.back}">
-                    ${renderIcon('chevron', { class: cn(icon, menu.chevron, iconFlipped) })}
+                    ${renderIcon('chevron', { class: cn(icon, menu.icon, menu.chevron, iconFlipped) })}
                     ${renderText(audioText)}
                   </media-menu-back>
                   <div class="${menu.separator}"></div>

@@ -1,68 +1,70 @@
 import { cn } from '@videojs/utils/style';
 import { buttonGroup as baseButtonGroup } from './components/button-group';
+import { container as baseContainer } from './components/container';
 import { controls as baseControls } from './components/controls';
 import { error as baseError } from './components/error';
 import { menu as baseMenu } from './components/menu';
 import { popup as basePopup } from './components/popup';
-import { root as baseRoot } from './components/root';
 import { slider as baseSlider } from './components/slider';
 import { thumbnail as baseThumbnail } from './components/thumbnail';
 import { time as baseTime } from './components/time';
 
-/* ==========================================================================
-   Root
-   ========================================================================== */
+/* Container */
 
-export const root = (isShadowDOM: boolean) =>
+export const container = (isShadowDOM: boolean) =>
   cn(
-    baseRoot,
+    baseContainer,
     'group/skin',
     'bg-black overflow-clip',
     // Border ring (::after)
     'after:absolute after:pointer-events-none after:rounded-[inherit] after:z-10',
     '[&:fullscreen]:after:hidden',
-    'after:inset-0 after:ring-1 after:ring-inset after:ring-black/15 dark:after:ring-white/15',
+    'after:inset-0 after:ring-1 after:ring-inset after:ring-(color:--border-color)',
     // Video element
     {
-      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--media-video-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,cover)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
+      '[&_::slotted(video)]:block [&_::slotted(video)]:w-full [&_::slotted(video)]:h-full [&_::slotted(video)]:rounded-(--container-border-radius) [&_::slotted(video)]:[object-fit:var(--media-object-fit,cover)] [&_::slotted(video)]:[object-position:var(--media-object-position,center)]':
         isShadowDOM,
       '[&_video]:block [&_video]:w-full [&_video]:h-full [&_video]:rounded-[inherit] [&_video]:[object-fit:var(--media-object-fit,contain)] [&_video]:[object-position:var(--media-object-position,center)]':
         !isShadowDOM,
     },
-    '[--media-video-border-radius:var(--media-border-radius,0.75rem)]',
-    '[--media-controls-background-color:transparent]',
-    '[--media-controls-transition-duration:100ms]',
-    '[--media-controls-transition-timing-function:ease-out]',
-    '[--media-error-dialog-transition-duration:150ms]',
-    '[--media-error-dialog-transition-delay:100ms]',
-    '[--media-error-dialog-transition-timing-function:ease-out]',
-    '[--media-popup-transition-duration:100ms]',
-    '[--media-popup-transition-timing-function:ease-out]',
-    '[--media-popover-backdrop-filter:blur(16px)_saturate(1.5)]',
-    '[--media-popover-background-color:oklch(0_0_0/0.5)]',
-    '[--media-popover-border-color:oklch(1_0_0/0.1)]',
-    '[--media-tooltip-backdrop-filter:var(--media-popover-backdrop-filter)]',
-    '[--media-tooltip-background-color:var(--media-popover-background-color)]',
-    '[--media-tooltip-border-color:var(--media-popover-border-color)]',
-    '[--media-tooltip-text-color:currentColor]',
+    '[--default-accent-color:oklch(1_0_0)]',
+    '[--border-color:light-dark(oklch(0_0_0/0.15),oklch(1_0_0/0.15))]',
+    '[--focus-ring-color:light-dark(oklch(0_0_0),oklch(1_0_0))]',
+    '[--container-border-radius:var(--media-border-radius,0.75rem)]',
+    '[--media-video-border-radius:var(--container-border-radius)]',
+    '[--controls-background-color:transparent]',
+    '[--controls-transition-duration:100ms]',
+    '[--controls-transition-timing-function:ease-out]',
+    '[--error-dialog-transition-duration:150ms]',
+    '[--error-dialog-transition-delay:100ms]',
+    '[--error-dialog-transition-timing-function:ease-out]',
+    '[--popup-transition-duration:100ms]',
+    '[--popup-transition-timing-function:ease-out]',
+    '[--popover-backdrop-filter:blur(16px)_saturate(1.5)]',
+    '[--popover-background-color:oklch(0_0_0/0.5)]',
+    '[--popover-border-color:oklch(1_0_0/0.1)]',
+    '[--tooltip-backdrop-filter:var(--popover-backdrop-filter)]',
+    '[--tooltip-background-color:var(--popover-background-color)]',
+    '[--tooltip-border-color:var(--popover-border-color)]',
+    '[--tooltip-text-color:currentColor]',
     // Fullscreen scale
     'min-[1280px]:[&:fullscreen]:[--scale:1.25]',
     'min-[1536px]:[&:fullscreen]:[--scale:1.5]',
     'min-[1920px]:[&:fullscreen]:[--scale:1.75]',
-    'motion-reduce:[--media-error-dialog-transition-duration:50ms]',
-    'motion-reduce:[--media-error-dialog-transition-delay:0ms]',
-    'motion-reduce:[--media-popup-transition-duration:0ms]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--media-controls-background-color:oklch(0_0_0)]',
-    'contrast-more:[--media-controls-background-color:oklch(0_0_0)]',
-    '[@media(prefers-reduced-transparency:reduce)]:[--media-tooltip-background-color:oklch(0_0_0)]',
-    'contrast-more:[--media-tooltip-background-color:oklch(0_0_0)]',
-    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:300ms]',
-    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:150ms]',
-    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--media-controls-transition-duration:50ms]',
+    'motion-reduce:[--error-dialog-transition-duration:50ms]',
+    'motion-reduce:[--error-dialog-transition-delay:0ms]',
+    'motion-reduce:[--popup-transition-duration:0ms]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--controls-background-color:oklch(0_0_0)]',
+    'contrast-more:[--controls-background-color:oklch(0_0_0)]',
+    '[@media(prefers-reduced-transparency:reduce)]:[--tooltip-background-color:oklch(0_0_0)]',
+    'contrast-more:[--tooltip-background-color:oklch(0_0_0)]',
+    'pointer-fine:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:300ms]',
+    'pointer-coarse:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:150ms]',
+    'motion-reduce:has-[[data-controls]:not([data-visible])]:[--controls-transition-duration:50ms]',
     // Caption track CSS variables (consumed by the native caption bridge in light DOM)
     '[--media-caption-track-y:--spacing(-2)]',
     '[--media-caption-track-delay:25ms]',
-    '[--media-caption-track-duration:var(--media-controls-transition-duration)]',
+    '[--media-caption-track-duration:var(--controls-transition-duration)]',
     'has-[[data-controls][data-visible]]:[--media-caption-track-y:--spacing(-18)]',
     '@2xl/media-root:has-[[data-controls][data-visible]]:*:[--media-caption-track-y:--spacing(-12)]',
     // Native caption track container
@@ -92,16 +94,14 @@ export const root = (isShadowDOM: boolean) =>
         ]
       : [],
     // Fullscreen
-    '[&:fullscreen]:[--media-border-radius:0]',
+    '[&:fullscreen]:[--container-border-radius:0]',
     {
       '[&:fullscreen_video]:object-contain': !isShadowDOM,
       '[&:fullscreen_::slotted(video)]:object-contain': isShadowDOM,
     }
   );
 
-/* ==========================================================================
-   Controls (hide/show behavior)
-   ========================================================================== */
+/* Controls (hide/show behavior) */
 
 export const controls = cn(
   baseControls,
@@ -111,9 +111,9 @@ export const controls = cn(
   'gap-x-2 flex-wrap rounded-[--spacing(3)] group/controls',
   'text-white z-20',
   'peer-data-open/error:hidden',
-  'ease-(--media-controls-transition-timing-function)',
-  'duration-[calc(var(--media-controls-transition-duration)/2)]',
-  'not-data-visible:duration-(--media-controls-transition-duration)',
+  'ease-(--controls-transition-timing-function)',
+  'duration-[calc(var(--controls-transition-duration)/2)]',
+  'not-data-visible:duration-(--controls-transition-duration)',
   'pointer-fine:will-change-[translate,filter,opacity]',
   'pointer-fine:transition-[translate,filter,opacity]',
   'pointer-coarse:will-change-[translate,opacity]',
@@ -126,18 +126,14 @@ export const controls = cn(
   '@2xl/media-root:flex-nowrap @2xl/media-root:[--controls-padding:2] @2xl/media-root:[--base-side-offset:2]'
 );
 
-/* ==========================================================================
-   Button groups
-   ========================================================================== */
+/* Button groups */
 
 export const buttonGroupStart = cn(baseButtonGroup, 'flex-1 @2xl/media-root:flex-none');
 export const buttonGroupEnd = cn(baseButtonGroup, 'flex-1 justify-end @2xl/media-root:flex-none');
 
 export const spacer = 'grow';
 
-/* ==========================================================================
-   Time
-   ========================================================================== */
+/* Time */
 
 export const time = {
   ...baseTime,
@@ -152,9 +148,7 @@ export const time = {
   ),
 };
 
-/* ==========================================================================
-   Error
-   ========================================================================== */
+/* Error */
 
 export const error = {
   ...baseError,
@@ -164,15 +158,11 @@ export const error = {
   title: 'text-(length:--font-size-medium)',
 };
 
-/* ==========================================================================
-   Thumbnail
-   ========================================================================== */
+/* Thumbnail */
 
 export const thumbnail = baseThumbnail;
 
-/* ==========================================================================
-   Sliders
-   ========================================================================== */
+/* Sliders */
 
 export const slider = {
   ...baseSlider,
@@ -185,18 +175,14 @@ export const slider = {
   ),
 };
 
-/* ==========================================================================
-   Popup
-   ========================================================================== */
+/* Popup */
 
 export const popup = {
   ...basePopup,
   volume: cn(basePopup.popover, 'p-0 bg-transparent'),
 };
 
-/* ==========================================================================
-   Menu
-   ========================================================================== */
+/* Menu */
 
 export const menu = {
   ...baseMenu,
@@ -204,9 +190,7 @@ export const menu = {
   settings: baseMenu.settings,
 };
 
-/* ==========================================================================
-   Shared components (no overrides)
-   ========================================================================== */
+/* Shared components (no overrides) */
 
 export { iconState } from '../../shared/tailwind/icon-state';
 export { badge } from './components/badge';

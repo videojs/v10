@@ -86,16 +86,19 @@ const singleCssCustomPropertiesSection = !apiReferenceModel.hasParts
               </P>
             )}
 
-            {partPropsSection && (
-              <>
-                <H4 id={partPropsSection.id}>{partPropsSection.title}</H4>
-                <ApiPropsTable
-                  props={part.data.props}
-                  componentName={part.componentName}
-                  showAttributeName={showAttributeName}
-                />
-              </>
-            )}
+            {partPropsSection &&
+              (!partPropsSection.frameworks ||
+                partPropsSection.frameworks.includes(framework)) && (
+                <>
+                  <H4 id={partPropsSection.id}>{partPropsSection.title}</H4>
+                  <ApiPropsTable
+                    props={part.data.props}
+                    componentName={part.componentName}
+                    framework={framework}
+                    showAttributeName={showAttributeName}
+                  />
+                </>
+              )}
 
             {partStateSection && (
               <>
@@ -146,16 +149,19 @@ const singleCssCustomPropertiesSection = !apiReferenceModel.hasParts
       })
     ) : (
       <>
-        {singlePropsSection && (
-          <>
-            <H3 id={singlePropsSection.id}>{singlePropsSection.title}</H3>
-            <ApiPropsTable
-              props={apiReferenceModel.data.props}
-              componentName={component}
-              showAttributeName={showAttributeName}
-            />
-          </>
-        )}
+        {singlePropsSection &&
+          (!singlePropsSection.frameworks ||
+            singlePropsSection.frameworks.includes(framework)) && (
+            <>
+              <H3 id={singlePropsSection.id}>{singlePropsSection.title}</H3>
+              <ApiPropsTable
+                props={apiReferenceModel.data.props}
+                componentName={component}
+                framework={framework}
+                showAttributeName={showAttributeName}
+              />
+            </>
+          )}
 
         {singleStateSection && (
           <>
