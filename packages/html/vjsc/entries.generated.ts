@@ -375,6 +375,14 @@ export const SeekIndicatorValue = {
   },
 } as const;
 
+export const ShakaVideo = {
+  tagName: 'shaka-video',
+  import: {
+    from: '@videojs/html/media/shaka-video',
+    sideEffect: true,
+  },
+} as const;
+
 export const Slider = {
   tagName: 'media-slider',
   import: {
@@ -679,6 +687,7 @@ export const entries = {
   SeekButton,
   SeekIndicator,
   SeekIndicatorValue,
+  ShakaVideo,
   Slider,
   SliderBuffer,
   SliderFill,
