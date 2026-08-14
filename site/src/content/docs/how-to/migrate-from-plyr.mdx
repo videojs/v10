@@ -210,17 +210,15 @@ Vimeo is supported through a prebuilt component.
 
 <FrameworkCase frameworks={["html"]}>
 
-Replace `<video>` with `<vimeo-video>`. If you're using the CDN, add an additional script:
-
-```html
-<script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/vimeo-video.js"></script>
-```
-
-Or add an additional import:
+Replace `<video>` with `<vimeo-video>` and add the module import:
 
 ```js
 import '@videojs/html/media/vimeo-video';
 ```
+
+<Aside type="note">
+Vimeo and YouTube don't have prebuilt CDN scripts yet, so these two need a bundler.
+</Aside>
 
 </FrameworkCase>
 
@@ -443,7 +441,7 @@ video-player {
 }
 ```
 
-`--media-accent-color` reaches the sliders, active buttons, and accent surfaces. To recolor icons and text instead, use `--media-color-primary`. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the full list.
+`--media-accent-color` reaches the sliders, active buttons, and accent surfaces, so it's the closest match for Plyr's `--plyr-color-main`. Video.js picks a readable text color to sit on top of it; set `--media-accent-text-color` to choose that yourself. `--media-border-radius` and `--media-scale-unit` cover rounding and control sizing. See <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> for the full list.
 
 ## Ejecting
 
@@ -451,11 +449,29 @@ If you need extra customization of layout, styles, or icons, you can "eject" the
 
 ## Coming soon
 
-Two changes are in flight that touch this guide. Neither is released yet, so everything above is what works today.
+Changes in flight that touch this guide. None has shipped, so everything above is what works today.
 
 **The player will own the poster.** `poster` and its blurred placeholder are moving from the skin onto the player, so a media component can report a poster and the player can resolve it. Plyr's `data-poster` maps more directly once that lands ([#1798](https://github.com/videojs/v10/issues/1798)).
 
 **The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet ([#1123](https://github.com/videojs/v10/issues/1123)).
+
+**A Plyr skin is on the list.** Minimal is the closest starting point today, but a skin that matches Plyr's look is tracked at [#181](https://github.com/videojs/v10/issues/181).
+
+<FrameworkCase frameworks={["react"]}>
+**`createPlayer` stops being step one.** Each preset will export a pre-composed player, so the standard case skips feature composition and `createPlayer` becomes the escape hatch for custom feature sets:
+
+```tsx
+import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
+
+<VideoPlayer.Provider>
+  <MinimalVideoSkin>
+    <Video src="/video.mp4" playsInline />
+  </MinimalVideoSkin>
+</VideoPlayer.Provider>
+```
+
+The preset entry point will carry the React client boundary too, so the `'use client'` directive above becomes unnecessary ([#2116](https://github.com/videojs/v10/pull/2116)).
+</FrameworkCase>
 
 ## Known gaps
 
