@@ -210,11 +210,11 @@ Port these across untouched. They're native attributes and always were.
 
 | Video.js 8 | Video.js v10 |
 |---|---|
-| `poster` | a slotted `img` in HTML, or the skin's `poster` prop in React |
+| `poster` | the skin's poster |
 | `posterImage: false` | leave the poster unset |
 | the title in `TitleBar` | `content-title` on the player, with no built-in UI yet |
 
-The poster is a slotted image rather than an attribute, which gives the skin control over how it appears:
+The poster belongs to the skin rather than the media, which is what lets the skin control how it appears:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
@@ -233,7 +233,7 @@ The poster is a slotted image rather than an attribute, which gives the skin con
 ```
 </FrameworkCase>
 
-`content-title` is the closest thing to v8's `TitleBar`, and it does reach player state, so your own UI can read it. No packaged skin draws it yet; [Coming soon](#coming-soon) covers where that's going. See the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the poster component itself.
+`content-title` is the closest thing to v8's `TitleBar`, and it does reach player state, so your own UI can read it. No packaged skin draws it, so v8's `TitleBar` has no visual equivalent ([#1123](https://github.com/videojs/v10/issues/1123)). See the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the poster component itself.
 
 ### Your CSS
 
@@ -328,6 +328,8 @@ In v8, customizing meant three different techniques depending on what you wanted
 ### Level 1: pick a skin
 
 The default skin is a modern, frosted look. The minimal skin is closer to v8's control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it. See <DocsLink slug="concepts/skins">Skins</DocsLink>.
+
+Both also include AirPlay and <DocsLink slug="concepts/cast">Cast</DocsLink> buttons, which v8 had no answer for. Remote playback is a feature you compose in rather than a plugin you install.
 
 ### Level 2: restyle it
 
@@ -482,7 +484,7 @@ One category doesn't survive that translation, because those were never media ev
 Use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync as that state changes:
 
 ```js
-import { PlayerController, playerContext, selectTime } from '@videojs/html';
+import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
 
 class MyElapsed extends ReactiveElement {
   #time = new PlayerController(this, playerContext, selectTime);
@@ -595,30 +597,6 @@ You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a l
 
 The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need one of them on a live player, compose your own feature list instead of using the preset.
 
-## Coming soon
-
-Changes in flight that touch this guide. None has shipped, so everything above is what works today.
-
-**The player will own the poster.** `poster` and a blurred placeholder are moving from the skin onto the player, and the player will resolve them through a chain: what you set, then what the media reports about itself, then a default you supply. That last part is new to v8 users — it means a media component can hand you a poster you never wrote down, the way the Mux one derives a thumbnail from a playback ID ([#1798](https://github.com/videojs/v10/issues/1798)).
-
-**The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet, so v8's `TitleBar` has no visual equivalent today. A title component and skin support are in flight ([#1123](https://github.com/videojs/v10/issues/1123)).
-
-<FrameworkCase frameworks={["react"]}>
-**`createPlayer` stops being step one.** Each preset will export a pre-composed player, so the standard case skips feature composition entirely and `createPlayer` becomes the escape hatch for custom feature sets:
-
-```tsx
-import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
-
-<VideoPlayer.Provider contentTitle="Movie title">
-  <VideoSkin>
-    <Video src="/video.mp4" playsInline />
-  </VideoSkin>
-</VideoPlayer.Provider>
-```
-
-The preset entry point will carry the React client boundary too, so the `'use client'` directive in the examples above becomes unnecessary ([#2116](https://github.com/videojs/v10/pull/2116)).
-</FrameworkCase>
-
 ## Known gaps
 
 Ordered roughly by how likely each is to block a v8 migration.
@@ -626,7 +604,7 @@ Ordered roughly by how likely each is to block a v8 migration.
 - **No ads support.** v8's IMA and ad-plugin ecosystem has no v10 equivalent. This is the most common hard blocker.
 - **No playlist support.** No `videojs-playlist` equivalent.
 - **No plugin system**, by design. Budget for rebuilding UI plugins as components. See [Plugins](#plugins).
-- React has no `on*` event props. Use `usePlayer` and selectors, or listeners on a media ref.
+- No skin draws `content-title`, so v8's `TitleBar` has no visual equivalent ([#1123](https://github.com/videojs/v10/issues/1123)).
 - Playback rates are a fixed set — `0.2`, `0.5`, `0.7`, `1`, `1.2`, `1.5`, `1.7`, `2` — so v8's `playbackRates` has no equivalent yet ([#1404](https://github.com/videojs/v10/issues/1404)).
 - No text-track settings dialog. v8's `textTrackSettings` let viewers restyle captions; v10 exposes only the positioning custom properties its skins define.
 - No spatial navigation. v8's `spatialNavigation` for TV and D-pad remotes has no equivalent.
