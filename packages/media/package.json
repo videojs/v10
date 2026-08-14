@@ -57,7 +57,8 @@
     "@vimeo/player": "^2.30.3",
     "dashjs": "^5.2.0",
     "hls.js": "^1.6.7",
-    "mux-embed": "^5.17.10"
+    "mux-embed": "^5.17.10",
+    "shaka-player": "^5.2.4"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.40",

@@ -18,6 +18,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/hls-js/index': './src/dom/hls-js/index.ts',
     'dom/native-hls/index': './src/dom/native-hls/index.ts',
     'dom/cloudflare/index': './src/dom/cloudflare/index.ts',
+    'dom/shaka/index': './src/dom/shaka/index.ts',
     'dom/spotify/index': './src/dom/spotify/index.ts',
     'dom/tiktok/index': './src/dom/tiktok/index.ts',
     'dom/twitch/index': './src/dom/twitch/index.ts',

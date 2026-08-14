@@ -411,6 +411,9 @@ importers:
       mux-embed:
         specifier: ^5.17.10
         version: 5.17.10
+      shaka-player:
+        specifier: ^5.2.4
+        version: 5.2.6
     devDependencies:
       '@types/chrome':
         specifier: ^0.1.40
@@ -8395,6 +8398,10 @@ packages:
     resolution: {integrity: sha512-M1AvZKFWcCzWRDoyApIqJMSLIpY8Ev4uBGuiPLSFmiTbixXhPmzotSTvLzFmBrfoIxG9aIg2dZOETblEaXGUnQ==}
     engines: {node: '>=20.18.1'}
     hasBin: true
+
+  shaka-player@5.2.6:
+    resolution: {integrity: sha512-/AIgm9CzhTJu5Ba5l6kKczQn7k6MeMqpQmbtvRrUfgYnWxnQfZ20bhQd7TtD5sCypE9x+nr9vxA6bVBlz+nP8A==}
+    engines: {node: '>=18'}
 
   sharp@0.34.5:
     resolution: {integrity: sha512-Ou9I5Ft9WNcCbXrU9cMgPBcCK8LiwLqcbywW3t4oDV37n1pzpuNLsYiAV8eODnjbtQlSDwZ2cUEeQz4E54Hltg==}
@@ -17932,6 +17939,8 @@ snapshots:
       - babel-plugin-macros
       - supports-color
       - typescript
+
+  shaka-player@5.2.6: {}
 
   sharp@0.34.5:
     dependencies:
