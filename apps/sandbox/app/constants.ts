@@ -21,6 +21,7 @@ export const PRESETS = [
   'cloudflare-video',
   'spotify-audio',
   'tiktok-video',
+  'twitch-video',
 ] as const;
 
 /**
@@ -34,4 +35,5 @@ export const EMBED_PRESETS = [
   'cloudflare-video',
   'spotify-audio',
   'tiktok-video',
+  'twitch-video',
 ] as const;
