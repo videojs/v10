@@ -20,6 +20,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/cloudflare/index': './src/dom/cloudflare/index.ts',
     'dom/spotify/index': './src/dom/spotify/index.ts',
     'dom/tiktok/index': './src/dom/tiktok/index.ts',
+    'dom/twitch/index': './src/dom/twitch/index.ts',
     'dom/vimeo/index': './src/dom/vimeo/index.ts',
     'dom/youtube/index': './src/dom/youtube/index.ts',
     'dom/mux/index': './src/dom/mux/index.ts',
