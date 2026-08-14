@@ -1,7 +1,7 @@
-import { createPlayer } from '@videojs/react';
+import { Container, createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const { Player, Container, usePlayer } = createPlayer({
+const { Player, usePlayer } = createPlayer({
   features: videoFeatures,
 });
 

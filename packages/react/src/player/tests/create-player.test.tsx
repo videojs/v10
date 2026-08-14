@@ -5,6 +5,7 @@ import { Component, type ErrorInfo, type ReactNode, StrictMode, useState } from 
 import { renderToString } from 'react-dom/server';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { I18nProvider, useLocale } from '../../i18n';
+import { Container } from '../../index';
 import { useContainer, usePlayerContext } from '../context';
 import { createPlayer } from '../create-player';
 
@@ -351,7 +352,7 @@ describe('createPlayer', () => {
 
     it('does not derive a locale without an I18nProvider', async () => {
       document.documentElement.lang = 'de';
-      const { Player, Container } = createPlayer({ features: [mockSlice] });
+      const { Player } = createPlayer({ features: [mockSlice] });
 
       function Locale() {
         const container = useContainer();
@@ -373,7 +374,7 @@ describe('createPlayer', () => {
     });
 
     it('inherits an explicit I18nProvider', async () => {
-      const { Player, Container } = createPlayer({ features: [mockSlice] });
+      const { Player } = createPlayer({ features: [mockSlice] });
 
       function Locale() {
         const container = useContainer();
@@ -469,15 +470,14 @@ describe('createPlayer', () => {
   });
 
   describe('Container', () => {
-    it('is exported from createPlayer result', () => {
-      const { Container } = createPlayer({ features: [mockSlice] });
+    it('is imported independently of createPlayer', () => {
       expect(Container).toBeDefined();
     });
   });
 
   describe('full integration', () => {
     it('Player → Container → media attach flow', () => {
-      const { Player, Container, usePlayer } = createPlayer({ features: [mockSlice] });
+      const { Player, usePlayer } = createPlayer({ features: [mockSlice] });
 
       let store!: PlayerStore;
 

@@ -120,10 +120,10 @@ With v10 the file size story doesn't actually start with the baseline builds. Th
 For example here's a simple React "hello world" with just a video and play button, weighing in at **\<5 kB** **gzipped**.
 
 ```tsx
-import { createPlayer, features } from '@videojs/react';
+import { Container, createPlayer, features } from '@videojs/react';
 import { Video } from '@videojs/react/video';
 
-const { Player, Container, usePlayer } = createPlayer({
+const { Player, usePlayer } = createPlayer({
   features: [features.playback],
 });
 

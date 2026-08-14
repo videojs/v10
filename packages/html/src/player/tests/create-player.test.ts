@@ -2,6 +2,7 @@ import { audioFeatures, backgroundFeatures, metadataFeature, type PopupGroup, vi
 import { ContextConsumer } from '@videojs/element/context';
 import { afterEach, describe, expect, it } from 'vitest';
 
+import { ContainerMixin } from '../../index';
 import { MediaElement } from '../../ui/media-element';
 import { createPlayer } from '../create-player';
 import { popupGroupContext } from '../popup-group-context';
@@ -26,7 +27,7 @@ describe('createPlayer', () => {
     expect(result.create).toBeInstanceOf(Function);
     expect(result.PlayerController).toBeDefined();
     expect(result.ProviderMixin).toBeInstanceOf(Function);
-    expect(result.ContainerMixin).toBeInstanceOf(Function);
+    expect(result).not.toHaveProperty('ContainerMixin');
   });
 
   it('create() returns a store instance', () => {
@@ -47,7 +48,6 @@ describe('createPlayer', () => {
   });
 
   it('ContainerMixin produces a valid custom element class', () => {
-    const { ContainerMixin } = createPlayer({ features: videoFeatures });
     const ContainerElement = ContainerMixin(MediaElement);
 
     expect(typeof ContainerElement).toBe('function');
@@ -55,7 +55,7 @@ describe('createPlayer', () => {
   });
 
   it('scopes popup coordination to container descendants', async () => {
-    const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+    const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
     class PopupGroupProbe extends MediaElement {
       popupGroup: PopupGroup | undefined;
@@ -101,7 +101,7 @@ describe('createPlayer', () => {
     expect(result.create).toBeInstanceOf(Function);
     expect(result.PlayerController).toBeDefined();
     expect(result.ProviderMixin).toBeInstanceOf(Function);
-    expect(result.ContainerMixin).toBeInstanceOf(Function);
+    expect(result).not.toHaveProperty('ContainerMixin');
   });
 
   it('creates background player with expected exports', () => {
@@ -111,7 +111,7 @@ describe('createPlayer', () => {
     expect(result.create).toBeInstanceOf(Function);
     expect(result.PlayerController).toBeDefined();
     expect(result.ProviderMixin).toBeInstanceOf(Function);
-    expect(result.ContainerMixin).toBeInstanceOf(Function);
+    expect(result).not.toHaveProperty('ContainerMixin');
   });
 
   it('maps selected feature inputs to kebab-cased reactive properties and attributes', async () => {

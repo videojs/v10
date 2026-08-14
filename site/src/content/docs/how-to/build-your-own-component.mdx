@@ -101,6 +101,8 @@ this.#store.value.setVolume(0.5);
 Your component needs to be inside <DocsLink slug="reference/player-provider">`<Player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
 
 ```tsx
+import { Container } from '@videojs/react';
+
 <Player> // [!code focus]
   <Container> // [!code focus]
     <VideoSkin>

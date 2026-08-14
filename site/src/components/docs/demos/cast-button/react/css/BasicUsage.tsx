@@ -1,8 +1,8 @@
-import { CastButton, createPlayer } from '@videojs/react';
+import { CastButton, Container, createPlayer } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (

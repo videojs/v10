@@ -1,8 +1,8 @@
-import { CaptionsRadioGroup, createPlayer, Menu } from '@videojs/react';
+import { CaptionsRadioGroup, Container, createPlayer, Menu } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 function CaptionsMenu(): ReactNode {
   return (

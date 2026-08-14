@@ -1,7 +1,7 @@
-import { createPlayer, isMediaSourceCapable, isMediaVideoDimensionsCapable } from '@videojs/react';
+import { Container, createPlayer, isMediaSourceCapable, isMediaVideoDimensionsCapable } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const { Player, Container, useMedia } = createPlayer({
+const { Player, useMedia } = createPlayer({
   features: videoFeatures,
 });
 

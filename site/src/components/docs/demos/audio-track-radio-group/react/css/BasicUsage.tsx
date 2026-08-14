@@ -1,9 +1,9 @@
-import { AudioTrackRadioGroup, createPlayer, Menu } from '@videojs/react';
+import { AudioTrackRadioGroup, Container, createPlayer, Menu } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 const src = '{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}';
 
 function AudioMenu(): ReactNode {

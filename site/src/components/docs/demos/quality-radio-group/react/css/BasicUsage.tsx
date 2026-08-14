@@ -1,9 +1,9 @@
-import { createPlayer, Menu, QualityRadioGroup } from '@videojs/react';
+import { Container, createPlayer, Menu, QualityRadioGroup } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 const src = '{{VJS8_DEMO_VIDEO_HLS}}';
 
 function QualityMenu(): ReactNode {

@@ -73,10 +73,10 @@ Add features to a preset's feature bundle to enable new functionality. For examp
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx title="App.tsx"
-import { createPlayer, playbackFeature } from '@videojs/react';
+import { Container, createPlayer, playbackFeature } from '@videojs/react';
 import { backgroundFeatures, BackgroundVideo } from '@videojs/react/background';
 
-const { Player, Container } = createPlayer({ // [!code focus]
+const { Player } = createPlayer({ // [!code focus]
   features: [...backgroundFeatures, playbackFeature], // [!code focus]
 }); // [!code focus]
 

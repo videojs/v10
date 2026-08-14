@@ -1,7 +1,7 @@
-import { Controls, createPlayer, PlayButton, Time } from '@videojs/react';
+import { Container, Controls, createPlayer, PlayButton, Time } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (

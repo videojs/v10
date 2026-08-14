@@ -127,26 +127,26 @@ Media Chrome `<template>`-based themes (`media-theme`) become Video.js **skins**
 
 ## React
 
-Media Chrome's React package wraps the custom elements. `@videojs/react` ships native components composed under a `createPlayer` provider, customized with the `render` prop and hooks (`usePlayer`, `useMedia`, `useStore`).
+Media Chrome's React package wraps the custom elements. `@videojs/react` ships native components composed with `createPlayer`, customized with the `render` prop and hooks (`usePlayer`, `useMedia`, `useStore`).
 
 ```tsx
-import { createPlayer, PlayButton } from '@videojs/react';
+import { Container, createPlayer, PlayButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export function MyPlayer() {
   return (
-    <Player.Provider>
-      <Player.Container>
+    <Player>
+      <Container>
         <Video src="video.mp4" />
         <PlayButton
           render={(props, state) => (
             <button {...props}>{state.paused ? 'Play' : 'Pause'}</button>
           )}
         />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```
@@ -185,7 +185,7 @@ The skin hides controls by removing `data-visible` from `<media-controls>`. Keep
 To change the *delay* rather than disable it, note the idle timer is a constant inside `controlsFeature`. Fork that feature and swap it into a custom feature list:
 
 ```ts
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: videoFeatures.map((f) => (f.name === 'controls' ? myControlsFeature : f)),
 });
 ```

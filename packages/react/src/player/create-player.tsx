@@ -23,7 +23,6 @@ import type { FC, ReactNode } from 'react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useDestroy } from '../utils/use-destroy';
-import { Container } from './container';
 import { PlayerContextProvider, useMedia, usePlayerContext } from './context';
 
 export interface CreatePlayerConfig<Features extends AnyPlayerFeature[]> {
@@ -39,7 +38,6 @@ export type PlayerProps<Config = object> = {
 
 export interface CreatePlayerResult<Store extends PlayerStore> {
   Player: FC<PlayerProps<InferPlayerConfig<Store>>>;
-  Container: typeof Container;
   usePlayer: UsePlayerHook<Store>;
   useMedia: () => Media | null;
 }
@@ -50,7 +48,7 @@ export type UsePlayerHook<Store extends PlayerStore> = {
 };
 
 /**
- * Create a player instance with a typed Player component, Container, and hooks.
+ * Create a player instance with a typed Player component and hooks.
  *
  * @label Video
  * @param config - Player configuration with features and optional display name.
@@ -145,7 +143,6 @@ export function createPlayer(config: CreatePlayerConfig<AnyPlayerFeature[]>): Cr
 
   return {
     Player,
-    Container,
     usePlayer,
     useMedia,
   };

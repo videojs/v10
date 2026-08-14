@@ -346,7 +346,7 @@ Use the media element for standard playback operations:
 | `player.fullscreen.enter()` | Fullscreen feature or fullscreen control |
 | `player.toggleCaptions()` | Text-track feature or captions control |
 
-For custom UI, read and write through the Video.js player store. In React, import the preset's `usePlayer` hook or use selectors. In HTML custom elements, use `PlayerController`.
+For custom UI, read and write through the Video.js player store. In React, import `usePlayer` from the preset and call it directly or with a selector. In HTML custom elements, use `PlayerController`.
 
 ## Rewrite styles
 

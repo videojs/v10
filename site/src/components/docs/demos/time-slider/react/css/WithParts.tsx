@@ -1,7 +1,7 @@
-import { createPlayer, TimeSlider } from '@videojs/react';
+import { Container, createPlayer, TimeSlider } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function WithParts() {
   return (

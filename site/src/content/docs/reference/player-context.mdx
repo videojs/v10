@@ -37,10 +37,10 @@ const { context } = createPlayer({ features: videoFeatures });
 context === playerContext; // true
 ```
 
-Use the direct import when building reusable elements that don't depend on a specific `createPlayer` call. Destructure from `createPlayer` when you want all player utilities from a single result.
+Use the direct import when building reusable elements that don't depend on a specific `createPlayer` call.
 
 ### When you need this
 
-Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level API like <DocsLink slug="reference/container-mixin">`ContainerMixin`</DocsLink> or <DocsLink slug="reference/provider-mixin">`ProviderMixin`</DocsLink>.
+Most elements should use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> (which accepts a context argument) rather than importing `playerContext` directly. Import it directly when you need to pass the context token to a lower-level factory such as `createContainerMixin` or `createProviderMixin`.
 
 <UtilReference util="playerContext" />

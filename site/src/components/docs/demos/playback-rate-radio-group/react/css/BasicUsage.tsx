@@ -1,8 +1,8 @@
-import { createPlayer, Menu, PlaybackRateRadioGroup } from '@videojs/react';
+import { Container, createPlayer, Menu, PlaybackRateRadioGroup } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const { Player, Container } = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 function SpeedMenu(): ReactNode {
   return (
