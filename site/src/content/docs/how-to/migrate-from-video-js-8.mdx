@@ -43,11 +43,11 @@ So a v8 embed becomes a player wrapped around a skin wrapped around a media:
 
 <FrameworkCase frameworks={["react"]}>
 ```jsx
-<Player.Provider>
+<VideoPlayer>
   <VideoSkin>
     <Video src="/video.mp4" />
   </VideoSkin>
-</Player.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 
@@ -150,36 +150,33 @@ export function MyPlayer() {
 npm install @videojs/react
 ```
 
-One new idea here. You build your player type up front with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>, telling it which <DocsLink slug="concepts/features">features</DocsLink> you want. A feature is a slice of player state and the behavior behind it: volume, fullscreen, captions, and so on. `videoFeatures` is the standard set, and it's what you want unless you know you need something unusual.
+One new idea here. Instead of one `videojs()` that does everything, you pick a <DocsLink slug="concepts/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you know you need something unusual.
 
 ```tsx
 'use client';
 
 import '@videojs/react/video/skin.css';
-import { createPlayer } from '@videojs/react';
-import { Video, VideoSkin, videoFeatures } from '@videojs/react/video';
-
-const Player = createPlayer({ features: videoFeatures });
+import { Video, VideoPlayer, VideoSkin } from '@videojs/react/video';
 
 export function MyPlayer() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <VideoSkin className="aspect-video" poster="/poster.jpg">
         <Video src="/video.mp4" preload="auto" playsInline>
           <track kind="captions" src="/captions/en.vtt" srclang="en" label="English" default />
           <track kind="metadata" src="/storyboard.vtt" label="thumbnails" default />
         </Video>
       </VideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 ```
 
-`createPlayer` gives you back a `Provider` to wrap your player in and a <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook to read state from, both typed to the features you picked. Call it once, outside your component, and reuse it. There's no ref to manage and no disposal to remember.
+`VideoPlayer` is the piece that owns the state. The preset ships a matching <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, typed to the same state, for reading it. There's no ref to manage and no disposal to remember.
 
 Three differences worth understanding, because each one is a pattern you'll see again:
 
-- **No `videojs()` call and no effect.** The provider owns the lifecycle.
+- **No `videojs()` call and no effect.** `VideoPlayer` owns the lifecycle.
 - **No `controls` prop.** The skin *is* the controls. Rendering a skin is how you ask for them, which is also how you opt out.
 - **The poster is a skin prop, not a media attribute.** That's what lets the skin control how it appears, rather than the browser.
 
@@ -309,11 +306,11 @@ For HLS, import the component and swap it for `<Video>`:
 ```tsx
 import { HlsVideo } from '@videojs/react/media/hls-video';
 
-<Player.Provider>
+<VideoPlayer>
   <VideoSkin>
     <HlsVideo src="/stream.m3u8" playsInline />
   </VideoSkin>
-</Player.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 
@@ -403,18 +400,16 @@ Then write the layout yourself:
 
 <FrameworkCase frameworks={["react"]}>
 
-Drop `VideoSkin` and compose the <DocsLink slug="concepts/ui-components">UI components</DocsLink> inside your provider yourself. Compound parts are namespaced, so a time slider is assembled from `TimeSlider.Root`, `TimeSlider.Track`, and friends:
+Drop `VideoSkin` and compose the <DocsLink slug="concepts/ui-components">UI components</DocsLink> yourself. `Container` is the element the skin used to render for you: it's the box the media and controls live in. Compound parts are namespaced, so a time slider is assembled from `TimeSlider.Root`, `TimeSlider.Track`, and friends:
 
 ```tsx
-import { Controls, createPlayer, Hotkey, MuteButton, PlayButton, TimeSlider } from '@videojs/react';
-import { Video, videoFeatures } from '@videojs/react/video';
-
-const Player = createPlayer({ features: videoFeatures });
+import { Container, Controls, Hotkey, MuteButton, PlayButton, TimeSlider } from '@videojs/react';
+import { Video, VideoPlayer } from '@videojs/react/video';
 
 export function MyPlayer() {
   return (
-    <Player.Provider>
-      <Player.Container>
+    <VideoPlayer>
+      <Container>
         <Video src="/video.mp4" playsInline />
 
         <Controls.Root>
@@ -432,8 +427,8 @@ export function MyPlayer() {
 
         <Hotkey keys="Space" action="togglePaused" />
         <Hotkey keys="ArrowRight" action="seekStep" value={5} />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </VideoPlayer>
   );
 }
 ```
@@ -497,13 +492,13 @@ class MyElapsed extends ReactiveElement {
 
 ### Player state
 
-There are **no `on*` props**. Read state through the <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook that `createPlayer` handed you:
+There are **no `on*` props**. Read state through the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, which is typed to the features that preset includes:
 
 ```tsx
-const Player = createPlayer({ features: videoFeatures });
+import { usePlayer } from '@videojs/react/video';
 
 function Elapsed() {
-  const currentTime = Player.usePlayer((state) => state.currentTime);
+  const currentTime = usePlayer((state) => state.currentTime);
   return <span>{currentTime}</span>;
 }
 ```
@@ -585,17 +580,30 @@ For audio, use the audio player with the audio skin, or the live audio pair. The
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { LiveVideoSkin, liveVideoFeatures } from '@videojs/react/live-video';
+import { HlsVideo } from '@videojs/react/media/hls-video';
+import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video';
 
-const Player = createPlayer({ features: liveVideoFeatures });
+<LiveVideoPlayer>
+  <LiveVideoSkin>
+    <HlsVideo src="/live.m3u8" playsInline />
+  </LiveVideoSkin>
+</LiveVideoPlayer>
 ```
 
-For audio, use `audioFeatures` with the audio skin, or the live audio pair. There's also a background video preset for muted, chrome-free background video, which v8 had no answer for.
+For audio, use the audio preset, or the live audio one. There's also a background video preset for muted, chrome-free background video, which v8 had no answer for.
 </FrameworkCase>
 
 You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a live button that jumps to the live edge. v8's `liveTracker` tuning has no equivalent ([#1730](https://github.com/videojs/v10/issues/1730)).
 
-The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need one of them on a live player, compose your own feature list instead of using the preset.
+The live composition is deliberately narrower than the video one. It leaves out playback rate, quality, and audio-track state, so those controls don't appear in a live skin's settings menu. If you need one of them on a live player, build your own player from a feature list rather than taking the preset's.
+
+<FrameworkCase frameworks={["html"]}>
+That's what <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> is for: hand it the features you want and it gives you back the mixins to define your own player element.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+That's what <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> is for: hand it the features you want and it gives you back a `Player` component and a `usePlayer` hook typed to them, the same pair every preset is built from.
+</FrameworkCase>
 
 ## Known gaps
 
