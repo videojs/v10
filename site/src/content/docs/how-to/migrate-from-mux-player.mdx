@@ -370,7 +370,7 @@ function Elapsed() {
 
 Every feature has a selector (`selectPlayback`, `selectTime`, `selectVolume`, `selectQuality`, `selectLive`, `selectTextTrack`, and so on) for when you want a whole slice rather than one value.
 
-Be honest with yourself about this one when you plan the work. If your app leans on `onPlay`, `onTimeUpdate`, `onEnded`, and `onError`, there's no line-by-line port; those become hooks, or listeners you attach to a `ref` on the media component ([#1426](https://github.com/videojs/v10/issues/1426), [#1041](https://github.com/videojs/v10/issues/1041)).
+Be honest with yourself about this one when you plan the work. If your app leans on `onPlay`, `onTimeUpdate`, `onEnded`, and `onError`, there's no line-by-line port; those become hooks, or listeners you attach to a `ref` on the media component.
 
 For raw media events, attach listeners to a `ref`. The Mux media is a real media element underneath, so `play`, `timeupdate`, `ended`, and `error` all fire on it.
 
