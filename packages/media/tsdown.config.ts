@@ -17,6 +17,7 @@ const createConfig = (mode: PackageBuildMode): UserConfig => ({
     'dom/dash/index': './src/dom/dash/index.ts',
     'dom/hls-js/index': './src/dom/hls-js/index.ts',
     'dom/native-hls/index': './src/dom/native-hls/index.ts',
+    'dom/cloudflare/index': './src/dom/cloudflare/index.ts',
     'dom/vimeo/index': './src/dom/vimeo/index.ts',
     'dom/youtube/index': './src/dom/youtube/index.ts',
     'dom/mux/index': './src/dom/mux/index.ts',
