@@ -1,7 +1,7 @@
 import { defineComponent } from '@videojs/jsx';
 import type { SliderValueProps } from '../slider/slider-component';
-import type { TimeSliderProps } from './time-slider-core';
-import { TimeSliderDataAttrs } from './time-slider-data-attrs';
+import type { TimeSliderProps } from './core';
+import { TimeSliderDataAttrs } from './data';
 
 export default defineComponent({
   name: 'TimeSlider',

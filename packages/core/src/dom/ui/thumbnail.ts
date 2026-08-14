@@ -1,5 +1,5 @@
 import { listen } from '@videojs/utils/dom';
-import { ThumbnailCore } from '../../core/ui/thumbnail/thumbnail-core';
+import { ThumbnailCore } from '../../core/ui/thumbnail/core';
 import type { ThumbnailConstraints } from '../../core/ui/thumbnail/types';
 
 export interface CreateThumbnailOptions {

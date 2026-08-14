@@ -1,4 +1,4 @@
-import type { TooltipGroupCore } from '../../../core/ui/tooltip/tooltip-group-core';
+import type { TooltipGroupCore } from '../../../core/ui/tooltip/group-core';
 import type { UIPointerEvent } from '../event';
 import {
   createPopover,

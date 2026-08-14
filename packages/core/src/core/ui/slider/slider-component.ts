@@ -1,6 +1,6 @@
 import { defineComponent } from '@videojs/jsx';
-import type { SliderProps } from './slider-core';
-import { SliderDataAttrs } from './slider-data-attrs';
+import type { SliderProps } from './core';
+import { SliderDataAttrs } from './data';
 
 export interface SliderValueProps {
   /** Which slider value to display. */

@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { PopoverCSSVars } from '../../../../core/ui/popover/popover-css-vars';
+import { PopoverCSSVars } from '../../../../core/ui/popover/vars';
 import {
   getAnchorPositionStyle,
   getManualPositionStyle,

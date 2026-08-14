@@ -1,6 +1,6 @@
 import { flush } from '@videojs/store';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { TooltipGroupCore } from '../../../../core/ui/tooltip/tooltip-group-core';
+import { TooltipGroupCore } from '../../../../core/ui/tooltip/group-core';
 import { createPopupGroup } from '../../popover/popup-group';
 import { createTestPopover } from '../../popover/tests/popover-helpers';
 import { createTestTooltip } from './tooltip-helpers';

@@ -1,5 +1,5 @@
 import { resolveCSSLength } from '@videojs/utils/dom';
-import { MenuCSSVars } from '../../../core/ui/menu/menu-css-vars';
+import { MenuCSSVars } from '../../../core/ui/menu/vars';
 
 const MENU_SUBMENU_ATTR = 'data-submenu';
 const MENU_SUBMENU_EXPANDED_ATTR = 'data-submenu-expanded';

@@ -1,7 +1,7 @@
 import type { State } from '@videojs/store';
 import { listen } from '@videojs/utils/dom';
 
-import type { AlertDialogInput } from '../../core/ui/alert-dialog/alert-dialog-core';
+import type { AlertDialogInput } from '../../core/ui/alert-dialog/core';
 import { createDismissLayer } from './dismiss-layer';
 import type { TransitionApi } from './transition';
 

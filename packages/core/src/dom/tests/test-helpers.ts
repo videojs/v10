@@ -1,5 +1,5 @@
-import type { SliderState } from '../../core/ui/slider/slider-core';
-import type { TimeSliderState } from '../../core/ui/time-slider/time-slider-core';
+import type { SliderState } from '../../core/ui/slider/core';
+import type { TimeSliderState } from '../../core/ui/time-slider/core';
 
 // ---------------------------------------------------------------------------
 // Mock Video

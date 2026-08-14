@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { MenuItemDataAttrs } from '../../../../core/ui/menu/menu-item-data-attrs';
+import { MenuItemDataAttrs } from '../../../../core/ui/menu/item-data';
 import type { UIFocusEvent, UIKeyboardEvent } from '../../event';
 import { createPopupGroup } from '../../popover/popup-group';
 import { getRootPositionOptions, isMenuNavigationKey } from '../create-menu';

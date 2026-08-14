@@ -25,7 +25,7 @@
  *                     inheritance (stateAttrMap heuristic), non-boolean type
  *                     inference (number, string literal union via type alias),
  *                     extra @parts-tagged data-attrs files attaching to the
- *                     listed parts (gauge-label-data-attrs.ts).
+ *                     listed parts (label-data.ts).
  *   slider/         — Base multi-part component. Exercises: base component whose
  *                     parts are re-exported by domain variants.
  *   volume-slider/  — Domain variant. Exercises: re-exported parts from slider,
@@ -119,9 +119,9 @@ describe('Component pipeline (end-to-end)', () => {
   //
   // A single-part component is the simplest case. The builder merges
   // data from three source files into one flat reference object:
-  //   - Core file → Props interface, State interface, defaultProps
-  //   - Data-attrs file → data attribute names + JSDoc descriptions
-  //   - CSS-vars file → CSS custom property names + descriptions
+  //   - core.ts → Props interface, State interface, defaultProps
+  //   - data.ts → data attribute names + JSDoc descriptions
+  //   - vars.ts → CSS custom property names + descriptions
   //   - HTML element file → tagName for platforms.html
   //
   // Key behaviors tested:
@@ -341,7 +341,7 @@ describe('Component pipeline (end-to-end)', () => {
       expect(fill.state).toEqual({});
 
       // Fill's React source references `stateAttrMap`, so it gets the
-      // component's shared data-attrs from gauge-data-attrs.ts
+      // component's shared data-attrs from data.ts
       expect(Object.keys(fill.dataAttributes).length).toBeGreaterThan(0);
       expect(fill.dataAttributes['data-percentage']).toBeDefined();
       expect(fill.dataAttributes['data-fill-level']).toBeDefined();
@@ -370,11 +370,11 @@ describe('Component pipeline (end-to-end)', () => {
       expect(marker.platforms.react).toEqual({});
     });
 
-    // Extra data-attrs files ({component}-{x}-data-attrs.ts, next to the
-    // main {component}-data-attrs.ts) declare their target parts with a
+    // Extra data-attrs files ({qualifier}-data.ts, next to the main data.ts)
+    // declare their target parts with a
     // @parts JSDoc tag. This covers attrs that a DOM layer applies to
     // parts directly, invisible to the per-part stateAttrMap heuristic
-    // (e.g. menu-item-data-attrs.ts applied by create-menu.ts).
+    // (e.g. item-data.ts applied by create-menu.ts).
     it('extra @parts-tagged data-attrs file attaches to listed parts', () => {
       const parts = findComponent('Gauge')!.reference.parts!;
 

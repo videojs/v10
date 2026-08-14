@@ -50,9 +50,9 @@ export interface PartSource {
   htmlPath?: string;
   /** Path to React component file (for JSDoc description extraction). */
   reactPath?: string;
-  /** Path to data-attrs file for shared data attributes (sub-parts only). */
+  /** Path to data.ts for shared data attributes (sub-parts only). */
   dataAttrsPath?: string;
-  /** PascalCase component name for data-attrs variable lookup (e.g., "Slider"). */
+  /** PascalCase component name for the data attribute export lookup (e.g., "Slider"). */
   dataAttrsComponentName?: string;
 }
 
@@ -64,17 +64,17 @@ export interface ComponentSource {
   name: string;
   /** Original kebab-case directory name (e.g., play-button). */
   kebab: string;
-  /** Path to core file (e.g., packages/core/src/core/ui/play-button/play-button-core.ts) */
+  /** Path to core file (e.g., packages/core/src/core/ui/play-button/core.ts) */
   corePath?: string;
-  /** Path to data attrs file */
+  /** Path to data.ts */
   dataAttrsPath?: string;
-  /** Path to CSS vars file */
+  /** Path to vars.ts */
   cssVarsPath?: string;
   /** Path to HTML element file */
   htmlPath?: string;
   /** Path to index.parts.ts (if multi-part) */
   partsIndexPath?: string;
-  /** Extra part-scoped data-attrs files ({kebab}-{x}-data-attrs.ts with a `@parts` tag) */
+  /** Extra part-scoped data-attrs files ({qualifier}-data.ts with a `@parts` tag) */
   extraDataAttrs?: ExtraDataAttrsSource[];
 }
 
