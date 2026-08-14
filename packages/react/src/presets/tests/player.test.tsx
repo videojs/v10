@@ -8,17 +8,19 @@ import { usePlayer as useVideoPlayer, VideoPlayer } from '../video/player';
 
 describe('preset players', () => {
   it.each([
-    ['VideoPlayer.Provider', VideoPlayer.Provider],
-    ['AudioPlayer.Provider', AudioPlayer.Provider],
-    ['BackgroundVideoPlayer.Provider', BackgroundVideoPlayer.Provider],
-    ['LiveVideoPlayer.Provider', LiveVideoPlayer.Provider],
-    ['LiveAudioPlayer.Provider', LiveAudioPlayer.Provider],
-  ])('exports the preconfigured %s component', (displayName, Provider) => {
-    expect(Provider.displayName).toBe(displayName);
+    ['VideoPlayer', VideoPlayer],
+    ['AudioPlayer', AudioPlayer],
+    ['BackgroundVideoPlayer', BackgroundVideoPlayer],
+    ['LiveVideoPlayer', LiveVideoPlayer],
+    ['LiveAudioPlayer', LiveAudioPlayer],
+  ])('exports the preconfigured %s component', (displayName, Player) => {
+    expect(Player.displayName).toBe(displayName);
   });
 
-  it('exports the preset hook as the player hook', () => {
-    expect(useVideoPlayer).toBe(VideoPlayer.usePlayer);
+  it('exports the provider and hook as separate values', () => {
+    expect(VideoPlayer).not.toHaveProperty('Provider');
+    expect(VideoPlayer).not.toHaveProperty('usePlayer');
+    expect(useVideoPlayer).toBeTypeOf('function');
   });
 
   it('forwards preset configuration props to the player store', () => {
@@ -28,9 +30,9 @@ describe('preset players', () => {
     }
 
     render(
-      <VideoPlayer.Provider contentTitle="Preset title">
+      <VideoPlayer contentTitle="Preset title">
         <Title />
-      </VideoPlayer.Provider>
+      </VideoPlayer>
     );
 
     expect(screen.getByText('Preset title')).toBeTruthy();

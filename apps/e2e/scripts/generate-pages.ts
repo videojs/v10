@@ -216,12 +216,12 @@ import { MEDIA } from '../resources';
 
 function App() {
   return (
-    <VideoPlayer.Provider>
+    <VideoPlayer>
       <VideoSkin${posterProp} style={{ maxWidth: 800, aspectRatio: '16/9' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} playsInline crossOrigin="anonymous">${storyboardTrack}
         </${reactMedia.component}>
       </VideoSkin>
-    </VideoPlayer.Provider>
+    </VideoPlayer>
   );
 }
 
@@ -245,11 +245,11 @@ import { MEDIA } from '../resources';
 
 function App() {
   return (
-    <AudioPlayer.Provider>
+    <AudioPlayer>
       <AudioSkin style={{ maxWidth: 600, margin: '0 auto' }}>
         <${reactMedia.component} src={MEDIA.${resource}.url} />
       </AudioSkin>
-    </AudioPlayer.Provider>
+    </AudioPlayer>
   );
 }
 

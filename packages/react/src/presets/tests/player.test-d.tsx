@@ -14,14 +14,17 @@ import { usePlayer as useVideoPlayer, VideoPlayer } from '../video/player';
 
 describe('preset players', () => {
   it('exposes each preset provider with its inferred configuration props', () => {
-    <VideoPlayer.Provider contentTitle="Video title">Video</VideoPlayer.Provider>;
-    <AudioPlayer.Provider contentTitle="Audio title">Audio</AudioPlayer.Provider>;
-    <LiveVideoPlayer.Provider contentTitle="Live video title">Live video</LiveVideoPlayer.Provider>;
-    <LiveAudioPlayer.Provider contentTitle="Live audio title">Live audio</LiveAudioPlayer.Provider>;
-    <BackgroundVideoPlayer.Provider>Background video</BackgroundVideoPlayer.Provider>;
+    <VideoPlayer contentTitle="Video title">Video</VideoPlayer>;
+    <AudioPlayer contentTitle="Audio title">Audio</AudioPlayer>;
+    <LiveVideoPlayer contentTitle="Live video title">Live video</LiveVideoPlayer>;
+    <LiveAudioPlayer contentTitle="Live audio title">Live audio</LiveAudioPlayer>;
+    <BackgroundVideoPlayer>Background video</BackgroundVideoPlayer>;
 
     // @ts-expect-error Background video does not include the metadata feature.
-    <BackgroundVideoPlayer.Provider contentTitle="Background title">Background video</BackgroundVideoPlayer.Provider>;
+    <BackgroundVideoPlayer contentTitle="Background title">Background video</BackgroundVideoPlayer>;
+
+    // @ts-expect-error Preset players are provider components, not createPlayer result objects.
+    VideoPlayer.Provider;
   });
 
   it('exposes a typed usePlayer hook for each preset', () => {
