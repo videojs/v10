@@ -9,7 +9,7 @@ export type PreloadValue = (typeof PRELOAD_VALUES)[number];
 export const DEFAULT_PRELOAD: PreloadValue = 'metadata';
 
 // Any `{height}p`, not just the rungs `MediaResolution` names.
-const MAX_AUTO_RESOLUTION_PATTERN = /^\d+p$/;
+const RESOLUTION_PATTERN = /^\d+p$/;
 
 export const PREFER_PLAYBACK_VALUES = ['mse', 'native'] as const;
 export type PreferPlaybackValue = (typeof PREFER_PLAYBACK_VALUES)[number];
@@ -37,11 +37,19 @@ function readPreload(): PreloadValue {
   return PRELOAD_VALUES.includes(value as PreloadValue) ? (value as PreloadValue) : DEFAULT_PRELOAD;
 }
 
-function readMaxAutoResolution(): MediaResolution | undefined {
-  const value = params.get('maxAutoResolution');
-  if (!value || !MAX_AUTO_RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
+function readResolution(name: string): MediaResolution | undefined {
+  const value = params.get(name);
+  if (!value || !RESOLUTION_PATTERN.test(value) || Number.parseInt(value, 10) <= 0) return undefined;
 
   return value as MediaResolution;
+}
+
+/** Absent unless named, so the source default is what runs otherwise. */
+function readOptionalBoolean(name: string): boolean | undefined {
+  const value = params.get(name);
+  if (value === null) return undefined;
+
+  return value !== '0' && value !== 'false';
 }
 
 function readPreferPlayback(): PreferPlaybackValue | undefined {
@@ -56,7 +64,9 @@ let currentMuted = readBoolean('muted');
 let currentLoop = readBoolean('loop');
 let currentPreload = readPreload();
 let currentLocale = readLocale();
-const initialMaxAutoResolution = readMaxAutoResolution();
+const initialMaxAutoResolution = readResolution('maxAutoResolution');
+const initialMinAutoResolution = readResolution('minAutoResolution');
+const initialCapRenditionToPlayerSize = readOptionalBoolean('capRenditionToPlayerSize');
 const initialPreferPlayback = readPreferPlayback();
 
 function readLocale(): SandboxLocaleTag {
@@ -67,18 +77,27 @@ function readLocale(): SandboxLocaleTag {
 /**
  * Playback options read once from the query string and folded into the *initial*
  * `source`, so the engine is built with them instead of having them switched in
- * afterwards. Both keys are absent unless named, leaving the default sandbox
+ * afterwards. Every key is absent unless named, leaving the default sandbox
  * behavior untouched.
  *
  * - `?maxAutoResolution=720p` caps automatic rendition selection.
+ * - `?capRenditionToPlayerSize=0` stops the element's size from capping it.
+ * - `?minAutoResolution=270p` lowers the floor on that size cap, whose default
+ *   is `720p` — low enough here to leave a small player uncapped.
  * - `?preferPlayback=native` forces the browser's own HLS.
  */
 export function getInitialPlaybackOverrides(): {
   maxAutoResolution?: MediaResolution;
+  capRenditionToPlayerSize?: boolean;
+  minAutoResolution?: MediaResolution;
   preferPlayback?: PreferPlaybackValue;
 } {
   return {
     ...(initialMaxAutoResolution && { maxAutoResolution: initialMaxAutoResolution }),
+    ...(initialCapRenditionToPlayerSize !== undefined && {
+      capRenditionToPlayerSize: initialCapRenditionToPlayerSize,
+    }),
+    ...(initialMinAutoResolution && { minAutoResolution: initialMinAutoResolution }),
     ...(initialPreferPlayback && { preferPlayback: initialPreferPlayback }),
   };
 }
