@@ -276,11 +276,13 @@ Document common errors:
 **Solution:**
 
 // ❌ Wrong
-const player = createPlayer();
+const { create } = createPlayer({ features: videoFeatures });
+const player = create();
 player.play(); // Error!
 
 // ✅ Correct
-const player = createPlayer();
+const { create } = createPlayer({ features: videoFeatures });
+const player = create();
 await player.attach(videoElement);
 player.play();
 ```
