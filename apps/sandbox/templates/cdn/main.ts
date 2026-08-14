@@ -23,13 +23,13 @@ import {
   getChapters,
   getPosterSrc,
   getStoryboardSrc,
-  HLS_BACKGROUND_VIDEO_SRC,
   isLiveSource,
   SOURCES,
   SPOTIFY_AUDIO_SRC,
   TIKTOK_VIDEO_SRC,
   TWITCH_VIDEO_SRC,
   VIMEO_VIDEO_SRC,
+  withMuxMaxResolution,
   YOUTUBE_VIDEO_SRC,
 } from '@app/shared/sources';
 import type { Preset, Skin } from '@app/types';
@@ -371,15 +371,16 @@ async function render() {
   const storyboard = isVideoPreset(preset) ? getStoryboardSrc(state.source) : undefined;
   const poster = isVideoPreset(preset) ? getPosterSrc(state.source) : undefined;
 
-  // Each background preset renders its own fixed source: the native element takes
-  // a progressive MP4, the SPF-backed tags need CMAF/fMP4 over HLS. The Mux tag
-  // gets the capped URL, which is the whole reason that name is worth keeping —
-  // `hls-background-video` is the same element pinning the top rendition on offer.
+  // `<background-video>` renders a fixed progressive MP4, since a native element
+  // has no manifest to pick renditions from. The SPF-backed tags take the picked
+  // HLS source instead, and the Mux one adds the cap param that is the whole reason
+  // that name is worth keeping — `hls-background-video` is the same element against
+  // an uncapped manifest.
   const backgroundSrc =
     preset === 'mux-background-video'
-      ? `${HLS_BACKGROUND_VIDEO_SRC}?max_resolution=720p`
+      ? withMuxMaxResolution(source.url ?? '', '720p')
       : preset === 'hls-background-video'
-        ? HLS_BACKGROUND_VIDEO_SRC
+        ? (source.url ?? '')
         : BACKGROUND_VIDEO_SRC;
   const sourceAttr = isBackgroundPreset(preset)
     ? `src="${backgroundSrc}"`
