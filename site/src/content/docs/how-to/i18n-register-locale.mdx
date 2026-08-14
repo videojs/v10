@@ -58,17 +58,17 @@ Without the side-effect import, `<media-i18n>` lazy-loads `es` when it resolves 
 ```tsx title="app.tsx"
 import { I18nProvider } from '@videojs/react/i18n';
 import '@videojs/react/i18n/locales/es/register';
-import { Provider, VideoSkin, Video } from '@videojs/react/video';
+import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video';
 
 export function App() {
   return (
-    <Provider>
+    <VideoPlayer>
       <I18nProvider locale="es">
         <VideoSkin>
           <Video src="..." playsInline />
         </VideoSkin>
       </I18nProvider>
-    </Provider>
+    </VideoPlayer>
   );
 }
 ```

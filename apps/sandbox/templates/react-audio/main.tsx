@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { AudioProvider } from '@app/shared/react/providers';
+import { AudioPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { AudioSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -28,11 +28,11 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <AudioProvider>
+      <AudioPlayer>
         <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
           <Audio src={SOURCES[source].url} autoPlay={autoplay} muted={muted} loop={loop} preload={preload} />
         </AudioSkinComponent>
-      </AudioProvider>
+      </AudioPlayer>
     </SandboxI18nProvider>
   );
 }

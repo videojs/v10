@@ -1,5 +1,6 @@
 import type { PropertyValues } from '@videojs/element';
 import { ContextConsumer } from '@videojs/element/context';
+import { findElementChild } from '@videojs/utils/dom';
 
 import { RadioGroupElement } from '../radio-group/radio-group-element';
 import { type MenuContextValue, type MenuTriggerMetadata, menuContext } from './context';
@@ -58,7 +59,8 @@ export class MenuRadioGroupElement extends RadioGroupElement {
 
     if (!this.#setTriggerMetadata) return;
 
-    const selectedItem = [...this.children].find(
+    const selectedItem = findElementChild(
+      this,
       (item): item is MenuRadioItemElement => item instanceof MenuRadioItemElement && item.value === this.value
     );
     const label = selectedItem?.querySelector<HTMLElement>('[data-part~="label"]')?.textContent;

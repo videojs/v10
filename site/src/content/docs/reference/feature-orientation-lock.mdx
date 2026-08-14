@@ -19,7 +19,7 @@ By default, the feature locks to `landscape`. Pass a Screen Orientation API type
 import { createPlayer, features } from '@videojs/react';
 import { videoFeatures } from '@videojs/react/video';
 
-export const Player = createPlayer({
+export const { Player } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 ```
@@ -30,7 +30,7 @@ export const Player = createPlayer({
 import { createPlayer, features } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({
+export const { ProviderMixin } = createPlayer({
   features: [...videoFeatures, features.orientationLock],
 });
 ```
@@ -41,7 +41,7 @@ const player = createPlayer({
 import { createPlayer, features } from '@videojs/react';
 import { videoFeatures } from '@videojs/react/video';
 
-export const Player = createPlayer({
+export const { Player } = createPlayer({
   features: [...videoFeatures, features.orientationLock({ type: 'portrait' })],
 });
 ```
@@ -52,7 +52,7 @@ export const Player = createPlayer({
 import { createPlayer, features } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const player = createPlayer({
+export const { ProviderMixin } = createPlayer({
   features: [...videoFeatures, features.orientationLock({ type: 'portrait' })],
 });
 ```

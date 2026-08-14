@@ -20,21 +20,16 @@ export function generateReactCode(skin: Skin): string {
   const skinComponent = skin === 'default' ? 'VideoSkin' : 'MinimalVideoSkin';
   const skinCss = skin === 'default' ? 'skin' : 'minimal-skin';
 
-  return `'use client';
-
-import { createPlayer } from '@videojs/react';
-import { ${skinComponent}, Video, videoFeatures } from '@videojs/react/video';
+  return `import { VideoPlayer, ${skinComponent}, Video } from '@videojs/react/video';
 import '@videojs/react/video/${skinCss}.css';
 
-const Player = createPlayer({ features: videoFeatures });
-
-export function VideoPlayer() {
+export function App() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <${skinComponent} poster="${VJS10_DEMO_VIDEO.poster}">
         <Video src="${VJS10_DEMO_VIDEO.mp4}" playsInline />
       </${skinComponent}>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }`;
 }

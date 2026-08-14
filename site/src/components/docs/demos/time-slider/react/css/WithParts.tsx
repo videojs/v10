@@ -1,12 +1,12 @@
-import { createPlayer, TimeSlider } from '@videojs/react';
+import { Container, createPlayer, TimeSlider } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function WithParts() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
         <TimeSlider.Root className="media-time-slider">
           <TimeSlider.Track className="media-slider-track">
@@ -16,7 +16,7 @@ export default function WithParts() {
           <TimeSlider.Thumb className="media-slider-thumb" />
           <TimeSlider.Value type="pointer" className="media-slider-value" />
         </TimeSlider.Root>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

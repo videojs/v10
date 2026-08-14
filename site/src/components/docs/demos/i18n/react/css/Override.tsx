@@ -5,11 +5,11 @@ import { Video, VideoSkin, videoFeatures } from '@videojs/react/video';
 import '@videojs/react/video/skin.css';
 import './Sources.css';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function Override() {
   return (
-    <Player.Provider>
+    <Player>
       <I18nProvider locale="en" translations={{ buttons: { play: 'Player override' } }}>
         <div className="react-i18n-source">
           <VideoSkin className="react-i18n-source__player">
@@ -17,6 +17,6 @@ export default function Override() {
           </VideoSkin>
         </div>
       </I18nProvider>
-    </Player.Provider>
+    </Player>
   );
 }

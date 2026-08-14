@@ -76,7 +76,7 @@ const provider = factory.createProvider();
 const player = provider.getInstance();
 
 // Good: Direct API
-const player = createPlayer();
+const { Player } = createPlayer({ features });
 ```
 
 ---

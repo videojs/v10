@@ -1,6 +1,6 @@
 ---
 title: createPlayer
-description: Factory function that creates a player instance with typed store, Provider component, Container, and hooks
+description: Factory function that creates a typed Player component and hooks
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
@@ -16,11 +16,14 @@ import basicUsageReactCss from "@/components/docs/demos/create-player/react/css/
 The hook is typed according to the provided features, giving you full type safety for state selectors and actions.
 
 ```tsx
-import { createPlayer } from '@videojs/react';
+import { Container, createPlayer } from '@videojs/react';
 import { videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
-// Player.Provider, Player.Container, Player.usePlayer, Player.useMedia
+const { Player, usePlayer, useMedia } = createPlayer({
+  features: videoFeatures,
+});
+
+// Container is imported independently from createPlayer.
 ```
 
 ## Examples

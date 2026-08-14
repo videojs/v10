@@ -1,6 +1,6 @@
 ---
 title: createPlayer
-description: Factory function that creates a player instance with typed store, mixins, and controller for HTML custom elements
+description: Factory function that creates a player instance with a typed store, provider mixin, and controller for HTML custom elements
 ---
 
 import UtilReference from "@/components/docs/api-reference/UtilReference.astro";
@@ -12,13 +12,13 @@ import basicUsageHtml from "@/components/docs/demos/html-create-player/html/css/
 import basicUsageHtmlCss from "@/components/docs/demos/html-create-player/html/css/BasicUsage.css?raw";
 import basicUsageHtmlTs from "@/components/docs/demos/html-create-player/html/css/BasicUsage.ts?raw";
 
-`createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, `ContainerMixin`, and a `create` store factory.
+`createPlayer` is the entry point for setting up a Video.js player with HTML custom elements. It accepts a configuration object with a `features` array and returns a typed <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink>, `context`, `ProviderMixin`, and a `create` store factory. Import `ContainerMixin` separately from the main package when composing a container.
 
 ```ts title="player.ts"
-import { createPlayer, MediaElement, selectPlayback } from '@videojs/html';
+import { ContainerMixin, createPlayer, MediaElement, selectPlayback } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { ProviderMixin, ContainerMixin, PlayerController, context } = createPlayer({
+const { ProviderMixin, PlayerController, context } = createPlayer({
   features: videoFeatures,
 });
 
@@ -32,15 +32,15 @@ class PlayButton extends MediaElement {
 }
 ```
 
-`PlayerController`, `ProviderMixin`, and `ContainerMixin` are intended for controller hosts and custom-element composition. Keep wiring minimal in utility examples, and build concrete elements where needed.
+`PlayerController` and `ProviderMixin` are scoped to the created player's feature set. The root `ContainerMixin` consumes the shared player context, so the same import works with any created player.
 
 Use split elements (recommended for reusable skins/layouts):
 
 ```ts title="player.ts"
-import { createPlayer, MediaElement } from '@videojs/html';
+import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 class PlayerRoot extends ProviderMixin(MediaElement) {}
 class PlayerRegion extends ContainerMixin(MediaElement) {}
@@ -49,10 +49,10 @@ class PlayerRegion extends ContainerMixin(MediaElement) {}
 Use a single composed element when the same element should both own the store and attach media:
 
 ```ts title="player.ts"
-import { createPlayer, MediaElement } from '@videojs/html';
+import { ContainerMixin, createPlayer, MediaElement } from '@videojs/html';
 import { videoFeatures } from '@videojs/html/video';
 
-const { ProviderMixin, ContainerMixin } = createPlayer({ features: videoFeatures });
+const { ProviderMixin } = createPlayer({ features: videoFeatures });
 
 class ComposedPlayer extends ProviderMixin(ContainerMixin(MediaElement)) {}
 ```

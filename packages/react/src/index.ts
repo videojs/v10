@@ -73,7 +73,7 @@ export {
   type CreatePlayerConfig,
   type CreatePlayerResult,
   createPlayer,
-  type ProviderProps,
+  type PlayerProps,
 } from './player/create-player';
 // UI
 export { AirPlayButton, type AirPlayButtonProps } from './ui/airplay-button/airplay-button';
