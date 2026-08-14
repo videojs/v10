@@ -11,7 +11,8 @@ import type {
   TextSelectionSet,
   VideoSelectionSet,
 } from '../../../media/types';
-import { selectAudioTrack, selectVideoTrack } from '../select-tracks';
+import { applyRules } from '../../primitives/selection-rules';
+import { preferHighestResolution, screenResolutionCap, selectAudioTrack, selectVideoTrack } from '../select-tracks';
 
 function makeState(initial: TrackSelectionState = {}): StateSignals<TrackSelectionState> {
   return {
@@ -351,5 +352,100 @@ describe('selectAudioTrack', () => {
     expect(state.selectedAudioTrackId.get()).toBe('audio-en');
 
     reactor.destroy();
+  });
+});
+
+// ============================================================================
+// screenResolutionCap — tested as the pure rule it is, no behavior in the way.
+// The composed-chain case at the bottom is the one that matters in practice.
+// ============================================================================
+
+describe('preferHighestResolution', () => {
+  const noDeps = { state: {}, config: undefined };
+
+  // A ranker, not a picker: it returns the whole reordered set and lets the chain
+  // take the head. Returning one track would early-bail `applyRules` and block any
+  // rule behind it.
+  it('returns every candidate, reordered, rather than a single pick', () => {
+    const tracks = [
+      { id: '720p', width: 1280, height: 720, bandwidth: 2_000_000 },
+      { id: '1440p', width: 2560, height: 1440, bandwidth: 8_000_000 },
+      { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
+    ];
+    expect(preferHighestResolution(tracks, noDeps).map((track) => track.id)).toEqual(['1440p', '720p', '360p']);
+  });
+
+  it('does not mutate the candidate list it was given', () => {
+    const tracks = [
+      { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
+      { id: '1080p', width: 1920, height: 1080, bandwidth: 4_000_000 },
+    ];
+    preferHighestResolution(tracks, noDeps);
+    expect(tracks.map((track) => track.id)).toEqual(['360p', '1080p']);
+  });
+});
+
+describe('screenResolutionCap', () => {
+  const ladder = [
+    { id: '360p', width: 640, height: 360, bandwidth: 500_000 },
+    { id: '1080p', width: 1920, height: 1080, bandwidth: 4_000_000 },
+    { id: '1440p', width: 2560, height: 1440, bandwidth: 8_000_000 },
+    { id: '2160p', width: 3840, height: 2160, bandwidth: 15_000_000 },
+  ];
+
+  // A 16" MBP in its default scaled mode: 3456x2234 device px = 7,720,704.
+  const laptopScreen = { width: 3456, height: 2234 };
+
+  function depsWith(screenResolution: { width: number; height: number } | undefined) {
+    return { state: { screenResolution: signal(screenResolution) }, config: undefined };
+  }
+
+  // Narrows only — the surviving order is the manifest's. Choosing among the
+  // survivors is the following ranker's job, exercised at the bottom of this block.
+  it('narrows to the renditions that fit the screen', () => {
+    const survivors = screenResolutionCap(ladder, depsWith(laptopScreen));
+    expect(survivors.map((track) => track.id)).toEqual(['360p', '1080p', '1440p']);
+  });
+
+  it('falls through when there is no screen to read', () => {
+    expect(screenResolutionCap(ladder, depsWith(undefined))).toEqual([]);
+  });
+
+  // Composing the cap without `trackScreenResolution` leaves the slot absent
+  // entirely — inert rather than broken, and notably not a cap of zero.
+  it('falls through when the composition declares no screenResolution signal', () => {
+    expect(screenResolutionCap(ladder, { state: {}, config: undefined })).toEqual([]);
+  });
+
+  // No fallback here either — `applyRules` skips an empty result, which is what
+  // keeps a cap from ever narrowing the candidates to nothing.
+  it('falls through when the screen fits no rendition at all', () => {
+    expect(screenResolutionCap(ladder, depsWith({ width: 320, height: 240 }))).toEqual([]);
+  });
+
+  it('leaves the chain unnarrowed when nothing fits, so the ranker still decides', () => {
+    const deps = depsWith({ width: 320, height: 240 });
+    const survivors = applyRules([screenResolutionCap, preferHighestResolution], ladder, deps);
+    expect(survivors[0]?.id).toBe('2160p');
+  });
+
+  it('picks the largest rendition that fits when composed ahead of the ranker', () => {
+    const deps = depsWith(laptopScreen);
+    const survivors = applyRules([screenResolutionCap, preferHighestResolution], ladder, deps);
+    expect(survivors[0]?.id).toBe('1440p');
+  });
+
+  // Order-independent, per the model: a sort reorders whatever survived, and a
+  // filter preserves order, so the head is the same either way round.
+  it('reaches the same pick with the cap after the ranker', () => {
+    const deps = depsWith(laptopScreen);
+    expect(applyRules([preferHighestResolution, screenResolutionCap], ladder, deps)[0]?.id).toBe('1440p');
+  });
+
+  // Without the cap the same ladder pins the top rung — the difference the rule makes.
+  it('is what pulls the pick below the top rung', () => {
+    const deps = depsWith(laptopScreen);
+    expect(applyRules([preferHighestResolution], ladder, deps)[0]?.id).toBe('2160p');
+    expect(applyRules([screenResolutionCap, preferHighestResolution], ladder, deps)[0]?.id).toBe('1440p');
   });
 });

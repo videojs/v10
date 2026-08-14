@@ -15,6 +15,12 @@ export {
   derivePerTypeStartMediaTime,
   deriveSharedMinStartMediaTime,
 } from '../../behaviors/establish-start-media-time';
+// The video selection rules the engines compose by default, plus the rule shape
+// itself. `config.rules` is public, so without these a consumer can override the
+// chain but cannot reconstruct or partially opt out of the default it replaces —
+// `[preferHighestResolution]` alone drops the screen-size cap, for one.
+export type { SelectTrackRule } from '../../behaviors/select-tracks';
+export { preferHighestResolution, screenResolutionCap } from '../../behaviors/select-tracks';
 // The Medias over these engines are not here: they live behind
 // `@videojs/spf/hls-video`, `@videojs/spf/hls-audio`, and
 // `@videojs/spf/hls-background-video` so that driving an engine directly doesn't pull

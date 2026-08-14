@@ -564,7 +564,7 @@ type TextTerminalConfig = TrackSwitchingConfig<'selectedTextTrackId', TextTrackC
  *     stale pick whose match is gone (e.g. the language dropped on a source
  *     change) falls through to the default policy.
  *   - auto (`undefined`) → the opt-in default policy (`preferredSubtitleLanguage`
- *     → `DEFAULT=YES + AUTOSELECT=YES` → none), shared with `pickTextTrack`.
+ *     → `DEFAULT=YES + AUTOSELECT=YES` → none), via `pickTextTrackFromTracks`.
  *
  * Returning `undefined` is a real outcome (captions are opt-in), which is why the
  * text variant relies on `setupTrackSwitching`'s no-selection seam.

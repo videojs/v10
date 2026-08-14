@@ -3,9 +3,8 @@
  *
  * Reported as a width and a height rather than a `"720p"`-style tier, because
  * the cap that consumes it compares against real track dimensions. A tier only
- * describes a track once you assume its aspect ratio — the assumption
- * `maxResolutionToPixelArea` has to make, and the one that mis-measures an
- * anamorphic or otherwise non-16:9 rendition.
+ * describes a track once you assume its aspect ratio, and that assumption
+ * mis-measures an anamorphic or otherwise non-16:9 rendition.
  *
  * The signal source for the screen-size cap in
  * `internal/design/spf/features/rendition-selection-caps.md`.
@@ -49,10 +48,10 @@ export interface ScreenResolutionOptions {
  * Read the screen's resolution, or `undefined` where there isn't one to read.
  *
  * `undefined` means "unknown", which is the answer a cap needs in order to not
- * cap. That lines up with `maxResolutionToPixelArea(undefined)` returning
- * `+Infinity`, so an unknown screen is a cap of "no cap" rather than a cap of
- * zero — the reading a naive `?? 0` would produce, which would pin every source
- * to its smallest rendition on exactly the environments we know least about.
+ * cap. `screenResolutionCap` reads it that way and declines to narrow, so an
+ * unknown screen is "no cap" rather than a cap of zero — the reading a naive
+ * `?? 0` would produce, which would pin every source to its smallest rendition on
+ * exactly the environments we know least about.
  *
  * Dimensions are reported as-is, including the axis swap a rotated device
  * applies to them. Normalizing orientation away is a policy question — whether a

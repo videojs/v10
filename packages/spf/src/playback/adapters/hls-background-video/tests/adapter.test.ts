@@ -197,9 +197,22 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('picks the largest rendition on offer', async () => {
       const media = new HlsBackgroundVideoMediaElement();
+      // The default chain caps to the screen, so this is written explicitly —
+      // left ambient, the expected pick would vary with the runner's display.
+      media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
       media.engine.state.presentation.set(presentationWithFourTracks());
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('1440p');
+      media.destroy();
+    });
+
+    it('caps the pick to the screen when the manifest offers more than it can show', async () => {
+      const media = new HlsBackgroundVideoMediaElement();
+      // 1080p (2,073,600) is over a 1,555,200 px screen; 720p (921,600) fits.
+      media.engine.state.screenResolution.set({ width: 1440, height: 1080 });
+      media.engine.state.presentation.set(presentationWithFourTracks());
+      await new Promise<void>((resolve) => queueMicrotask(resolve));
+      expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
       media.destroy();
     });
 
@@ -213,6 +226,7 @@ describe('HlsBackgroundVideoMediaElement', () => {
       ] as never;
 
       const media = new HlsBackgroundVideoMediaElement();
+      media.engine.state.screenResolution.set({ width: 3840, height: 2160 });
       media.engine.state.presentation.set(capped);
       await new Promise<void>((resolve) => queueMicrotask(resolve));
       expect(media.engine.state.selectedVideoTrackId.get()).toBe('720p');
@@ -221,7 +235,8 @@ describe('HlsBackgroundVideoMediaElement', () => {
 
     it('honors a config-supplied rule chain, overriding the engine default', async () => {
       // The adapter supplies no selection config of its own, so a consumer's chain
-      // replaces the engine's `preferHighestResolution` default outright.
+      // replaces the engine's `[screenResolutionCap, preferHighestResolution]`
+      // default outright — screen cap included, hence no screen written here.
       const media = new HlsBackgroundVideoMediaElement({
         config: { rules: [(tracks: readonly { id: string }[]) => tracks.filter((track) => track.id === '360p')] },
       });

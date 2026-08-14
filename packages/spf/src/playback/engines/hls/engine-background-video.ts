@@ -21,7 +21,12 @@ import { trackScreenResolution } from '../../behaviors/dom/track-screen-resoluti
 import { updateMediaSourceDuration } from '../../behaviors/dom/update-mediasource-duration';
 import { type ParsePresentation, resolvePresentation } from '../../behaviors/resolve-presentation';
 import { resolveVideoTrack } from '../../behaviors/resolve-track';
-import { preferHighestResolution, type SelectVideoTrackConfig, selectVideoTrack } from '../../behaviors/select-tracks';
+import {
+  preferHighestResolution,
+  type SelectVideoTrackConfig,
+  screenResolutionCap,
+  selectVideoTrack,
+} from '../../behaviors/select-tracks';
 
 // ============================================================================
 // Background-video engine state & context
@@ -52,8 +57,8 @@ export interface BackgroundVideoEngineState {
   loadActivated?: boolean;
   /**
    * The screen's pixel dimensions, or `undefined` where there is none to read.
-   * Written by `trackScreenResolution`; nothing reads it yet — the screen-size
-   * rendition cap that will is the next step.
+   * Written by `trackScreenResolution`, read by the `screenResolutionCap`
+   * selection rule — which treats `undefined` as "don't cap".
    */
   screenResolution?: ScreenResolution;
 }
@@ -91,12 +96,12 @@ export interface BackgroundVideoEngineConfig
   extends ShareSignalsConfig<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   /**
    * Selection-rule chain handed to `selectVideoTrack`. Defaults to
-   * `[preferHighestResolution]` — narrows to the largest rendition on offer and
-   * pins it for the session.
+   * `[screenResolutionCap, preferHighestResolution]` — narrows to the renditions
+   * that fit the screen, takes the largest of those, and pins it for the session.
    *
-   * A cap composes as another rule ahead of it, which is how the screen-size cap
-   * will arrive; nothing about this variant's selection is a bespoke picker any
-   * more.
+   * The cap sits ahead of the ranker because a scope that narrows first wins over
+   * one applied later; pass `[preferHighestResolution]` alone to opt out and always
+   * pin the largest rendition on offer.
    */
   rules?: readonly NonNullable<SelectVideoTrackConfig['rules']>[number][];
   /**
@@ -152,7 +157,7 @@ export function createBackgroundVideoEngine(
 ): Composition<BackgroundVideoEngineState, BackgroundVideoEngineContext> {
   const finalConfig = {
     ...config,
-    rules: config.rules ?? [preferHighestResolution],
+    rules: config.rules ?? [screenResolutionCap, preferHighestResolution],
     parsePresentation: config.parsePresentation ?? parseMultivariantPlaylist,
     resolveDuration: getResolvedSelectedTrackDuration,
   };

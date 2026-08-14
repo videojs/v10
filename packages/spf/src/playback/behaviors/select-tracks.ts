@@ -48,10 +48,10 @@ import { createMachineReactor } from '../../core/reactors/create-machine-reactor
 import { computed, type ReadonlySignal, type Signal } from '../../core/signals/primitives';
 import {
   type AudioSelectionConfig,
+  byDescendingResolution,
   pickAudioTrackFromTracks,
-  pickTrackUnderPixelArea,
   type TrackSelectionState,
-  type VideoSelectionConfig,
+  tracksUnderPixelArea,
 } from '../../media/primitives/select-tracks';
 import { isResolvedPresentation, type TrackType } from '../../media/types';
 import { getTracksByType } from '../../media/utils/tracks';
@@ -129,8 +129,8 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
             const candidates = getTracksByType(state.presentation.get()!, trackType);
             // Constraints prune the unplayable, then the chain narrows and ranks;
             // the pick is the head. An empty `rules` chain therefore selects the
-            // first candidate — the same answer `pickFirstTrackId` gave, now a
-            // consequence of the model rather than a separate code path.
+            // first candidate, which falls out of the model rather than needing a
+            // first-track code path of its own.
             const survivors = applyRules(rules, applyConstraints(constraints, candidates, deps), deps);
             const id = survivors[0]?.id;
             if (id) state[selectedKey].set(id);
@@ -150,8 +150,8 @@ function setupTrackSelection<K extends SelectedTrackKey, RuleConfig>({
 // its own options (`preferredAudioLanguage`) directly off it.
 //
 // Video's default is the *empty* chain: with no rule narrowing or reordering the
-// candidates, the head is the first track — exactly what `pickFirstTrackId` used
-// to return, now falling out of the model instead of being its own code path.
+// candidates, the head is the first track — a consequence of the model rather than
+// a first-track code path of its own.
 // ============================================================================
 
 /** Default video chain: none. The first candidate is the pick. */
@@ -172,16 +172,71 @@ const preferAudioPolicy: SelectTrackRule<SelectAudioTrackConfig> = (tracks, { co
 const DEFAULT_AUDIO_RULES: readonly SelectTrackRule<SelectAudioTrackConfig>[] = [preferAudioPolicy];
 
 /**
- * Narrow to the largest rendition on offer, by pixel area. The background-video
- * default — that variant pins one rendition for the session, and absent a cap the
- * largest is the pick.
+ * Order the candidates by resolution, largest first, with bandwidth breaking ties
+ * between renditions of identical dimensions. The background-video default — that
+ * variant pins one rendition for the session, and absent a cap the largest is the
+ * head.
+ *
+ * A ranker, so it reorders rather than narrowing: the chain's pick is the head of
+ * what it returns, which means ranking never has to collapse to one track. Belongs
+ * last in a chain — a sort only reorders what survived the filters ahead of it, and
+ * leaving it last is what lets `applyRules` early-bail before it runs.
  *
  * Exported because it is a *rule*, not a variant's private policy: the same one
  * composes into `switchVideoTrack`'s chain when a ranker is wanted there.
  */
-export const preferHighestResolution: SelectTrackRule<unknown> = (tracks) => {
-  const pick = pickTrackUnderPixelArea(tracks as readonly { id: string }[]);
-  return pick ? [pick] : [];
+export const preferHighestResolution: SelectTrackRule<unknown> = (tracks) => [...tracks].sort(byDescendingResolution);
+
+/**
+ * What {@link screenResolutionCap} reads off the composition state.
+ *
+ * Structurally compatible with `media/dom/screen`'s `ScreenResolution` rather than
+ * importing it: this module sits outside the DOM layer (project references enforce
+ * that), and a rule comparing pixel areas needs two numbers, not a screen.
+ */
+type ScreenResolutionRuleState = {
+  screenResolution?: ReadonlySignal<{ readonly width: number; readonly height: number } | undefined>;
+};
+
+/**
+ * Narrow to the renditions that fit the screen, by pixel area — the screen-size
+ * cap from `internal/design/spf/features/rendition-selection-caps.md`, as a scope
+ * (soft filter) rather than a constraint: an over-cap rendition is wasteful, not
+ * unplayable, so nothing here may make a source unplayable.
+ *
+ * Narrows only — it neither orders the survivors nor resolves the case where none
+ * survive, because `applyRules` owns both. So it needs a ranker behind it to pick
+ * within the cap: `[screenResolutionCap, preferHighestResolution]` yields the
+ * largest rendition that fits. Composed *last*, the pick would instead be whichever
+ * fitting rendition the manifest happened to list first.
+ *
+ * Reading `state.screenResolution` through its signal is what subscribes a
+ * re-evaluating chain (`switchVideoTrack`) to screen changes; `selectVideoTrack`
+ * pins the first answer instead, by design.
+ *
+ * Compares areas rather than matching a `"1080p"`-style tier because a tier only
+ * describes a rendition once you assume its aspect ratio — the assumption that
+ * mis-measures an anamorphic ladder. See `media/dom/screen.ts`.
+ *
+ * Three ways the cap ends up not applying, all of them fall-through:
+ *
+ * - **No `screenResolution` signal at all**, because the composition omits
+ *   `trackScreenResolution`. So composing the cap without its signal source is
+ *   inert rather than broken.
+ * - **A `screenResolution` of `undefined`**, meaning no screen to read. "Unknown"
+ *   has to mean "don't cap": treating it as an area of zero would pin every source
+ *   to its smallest rendition on exactly the environments we know least about.
+ * - **No rendition fits**, on a screen smaller than the whole ladder. `applyRules`
+ *   skips the empty result and the chain proceeds unnarrowed, so the ranker behind
+ *   the cap decides — for `preferHighestResolution`, the largest rendition. A floor
+ *   is the fix if that ever matters (`rendition-selection-caps.md` carries one), not
+ *   a special case here.
+ */
+export const screenResolutionCap: SelectTrackRule<unknown> = (tracks, { state }) => {
+  const screenResolution = (state as ScreenResolutionRuleState | undefined)?.screenResolution?.get();
+  if (!screenResolution) return [];
+
+  return tracksUnderPixelArea(tracks, screenResolution.width * screenResolution.height);
 };
 
 // ============================================================================
@@ -193,7 +248,7 @@ export const preferHighestResolution: SelectTrackRule<unknown> = (tracks) => {
  * `constraints` to prune candidates before it runs; otherwise the chain is empty
  * and the first candidate is the pick.
  */
-export interface SelectVideoTrackConfig extends VideoSelectionConfig {
+export interface SelectVideoTrackConfig {
   constraints?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
   rules?: readonly SelectTrackRule<SelectVideoTrackConfig>[];
 }

@@ -4,8 +4,8 @@
  * The variant subtracts audio, text, ABR, and preload-monitoring behaviors
  * from the HLS video engine, then seeds `loadActivated: true` so the
  * composition behaves as if preload has already been activated. These tests
- * confirm the seed, the absence of subtracted state slots, and the picker
- * configurability.
+ * confirm the seed, the absence of subtracted state slots, and the selection
+ * rule chain — its screen-size cap and its configurability.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { snapshot } from '../../../../core/signals/primitives';
@@ -78,8 +78,13 @@ describe('createBackgroundVideoEngine', () => {
     engine.destroy();
   });
 
-  it('defaults the picker to pickHighestResolutionVideoTrack', async () => {
+  // The screen is written explicitly in both tests below rather than left to
+  // whatever the test runner's screen happens to be: the default chain caps to it,
+  // so an ambient reading would make the expected pick machine-dependent.
+  it('defaults the rule chain to the largest rendition that fits the screen', async () => {
     const engine = createBackgroundVideoEngine();
+    // Roomy enough that the cap admits both, leaving the ranker to decide.
+    engine.state.screenResolution.set({ width: 3840, height: 2160 });
 
     const presentation: MaybeResolvedPresentation = {
       id: 'p',
@@ -135,9 +140,55 @@ describe('createBackgroundVideoEngine', () => {
     engine.destroy();
   });
 
+  it('caps the default pick to the screen', async () => {
+    const engine = createBackgroundVideoEngine();
+    // 921,600 px: the 1080p rung's 2,073,600 is over it, the 480p rung's 409,920 fits.
+    engine.state.screenResolution.set({ width: 1280, height: 720 });
+
+    const videoTrack = (id: string, width: number, height: number, bandwidth: number) =>
+      ({
+        type: 'video',
+        id,
+        url: `https://example.com/${id}.m3u8`,
+        bandwidth,
+        mimeType: 'video/mp4',
+        codecs: ['avc1.42E01E'],
+        initialization: { url: 'init', byteRange: { offset: 0, length: 0 } },
+        segments: [],
+        startTime: 0,
+        duration: 0,
+        width,
+        height,
+      }) as never;
+
+    engine.state.presentation.set({
+      id: 'p',
+      url: 'https://example.com/manifest.m3u8',
+      startTime: 0,
+      selectionSets: [
+        {
+          id: 'video-set',
+          type: 'video',
+          switchingSets: [
+            {
+              id: 'video-switching',
+              type: 'video',
+              tracks: [videoTrack('480p', 854, 480, 1_000_000), videoTrack('1080p', 1920, 1080, 4_000_000)],
+            },
+          ],
+        },
+      ],
+    } as MaybeResolvedPresentation);
+
+    await new Promise<void>((resolve) => queueMicrotask(resolve));
+    expect(engine.state.selectedVideoTrackId.get()).toBe('480p');
+    engine.destroy();
+  });
+
   it('honors a custom rule chain from config', async () => {
     // Two tracks, so overriding is observable: the default chain
-    // (`preferHighestResolution`) would take 720p, and this rule takes 480p.
+    // (`[screenResolutionCap, preferHighestResolution]`) would take 720p on any
+    // screen that fits it, and this rule takes 480p regardless.
     const engine = createBackgroundVideoEngine({
       rules: [(tracks) => tracks.filter((track) => track.id === '480p')],
     });
