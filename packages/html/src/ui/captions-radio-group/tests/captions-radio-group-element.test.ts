@@ -97,16 +97,16 @@ afterEach(() => {
 });
 
 describe('CaptionsRadioGroupElement', () => {
-  it('uses the stateful core label for aria-label', async () => {
+  it('uses the stable core group label for aria-label', async () => {
     const { options } = setup('en');
 
     await options.updateComplete;
-    expect(options.getAttribute('aria-label')).toBe('Enable captions');
+    expect(options.getAttribute('aria-label')).toBe('Captions');
 
     const enabled = setup('en', { subtitlesShowing: true }).options;
 
     await enabled.updateComplete;
-    expect(enabled.getAttribute('aria-label')).toBe('Disable captions');
+    expect(enabled.getAttribute('aria-label')).toBe('Captions');
   });
 
   it('preserves authored accessible names', async () => {

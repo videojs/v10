@@ -95,15 +95,15 @@ describe('CaptionsRadioGroupCore', () => {
   });
 
   describe('getLabel', () => {
-    it('returns default labels based on showing state', () => {
+    it('returns a stable default group label', () => {
       const core = new CaptionsRadioGroupCore();
       expect(core.getLabel(createState({ subtitlesShowing: false }))).toMatchObject({
-        key: 'captions.enable',
-        text: 'Enable captions',
+        key: 'menu.captions',
+        text: 'Captions',
       });
       expect(core.getLabel(createState({ subtitlesShowing: true }))).toMatchObject({
-        key: 'captions.disable',
-        text: 'Disable captions',
+        key: 'menu.captions',
+        text: 'Captions',
       });
     });
 

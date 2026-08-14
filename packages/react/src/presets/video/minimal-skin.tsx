@@ -39,9 +39,10 @@ import { Container } from '@/player/container';
 import { usePlayer } from '@/player/context';
 import { AirPlayButton } from '@/ui/airplay-button';
 import { useAudioTrackOptions } from '@/ui/audio-track';
+import { AudioTrackRadioGroup } from '@/ui/audio-track-radio-group';
 import { BufferingIndicator } from '@/ui/buffering-indicator';
 import { CaptionsButton } from '@/ui/captions-button';
-import { useCaptionsOptions } from '@/ui/captions-radio-group';
+import { CaptionsRadioGroup, useCaptionsOptions } from '@/ui/captions-radio-group';
 import { CastButton } from '@/ui/cast-button';
 import { Controls } from '@/ui/controls';
 import { ErrorDialog } from '@/ui/error-dialog';
@@ -53,9 +54,11 @@ import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
+import { PlaybackRateRadioGroup } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { useQualityOptions } from '@/ui/quality';
+import { QualityRadioGroup } from '@/ui/quality-radio-group';
 import { SeekIndicator } from '@/ui/seek-indicator';
 import { Slider } from '@/ui/slider';
 import { StatusAnnouncer } from '@/ui/status-announcer';
@@ -167,34 +170,22 @@ function SettingsMenu(): ReactNode {
                   {t(qualityText)}
                 </Menu.Item>
                 <Menu.Separator className="media-menu__separator" />
-                <Menu.RadioGroup
+                <QualityRadioGroup
                   className="media-menu__group"
-                  value={quality.value}
-                  onValueChange={quality.setValue}
                   aria-label={t(qualityText)}
-                >
-                  {quality.options.map((option) => (
-                    <Menu.RadioItem
-                      key={option.value}
-                      className="media-menu__item"
-                      value={option.value}
-                      disabled={option.disabled}
-                    >
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className="media-menu__item">
                       <span>
-                        {option.label}
-                        {option.tier ? <sup className="media-menu__tier">{option.tier}</sup> : null}
+                        {item.label}
+                        {item.tier ? <sup className="media-menu__tier">{item.tier}</sup> : null}
                       </span>
-                      {option.badge ? <span className="media-badge">{option.badge}</span> : null}
-                      <Menu.ItemIndicator
-                        checked={option.value === quality.value}
-                        forceMount
-                        className="media-menu__indicator"
-                      >
+                      {item.badge ? <span className="media-badge">{item.badge}</span> : null}
+                      <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
                     </Menu.RadioItem>
-                  ))}
-                </Menu.RadioGroup>
+                  )}
+                />
               </Menu.Content>
             </Menu.Root>
           ) : null}
@@ -220,30 +211,18 @@ function SettingsMenu(): ReactNode {
                   {t(audioText)}
                 </Menu.Item>
                 <Menu.Separator className="media-menu__separator" />
-                <Menu.RadioGroup
+                <AudioTrackRadioGroup
                   className="media-menu__group"
-                  value={audioTrack.value}
-                  onValueChange={audioTrack.setValue}
                   aria-label={t(audioText)}
-                >
-                  {audioTrack.options.map((option) => (
-                    <Menu.RadioItem
-                      key={option.value}
-                      className="media-menu__item"
-                      value={option.value}
-                      disabled={option.disabled}
-                    >
-                      <span>{option.label}</span>
-                      <Menu.ItemIndicator
-                        checked={option.value === audioTrack.value}
-                        forceMount
-                        className="media-menu__indicator"
-                      >
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className="media-menu__item">
+                      <span>{item.label}</span>
+                      <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
                     </Menu.RadioItem>
-                  ))}
-                </Menu.RadioGroup>
+                  )}
+                />
               </Menu.Content>
             </Menu.Root>
           ) : null}
@@ -269,30 +248,18 @@ function SettingsMenu(): ReactNode {
                   {t(speedText)}
                 </Menu.Item>
                 <Menu.Separator className="media-menu__separator" />
-                <Menu.RadioGroup
+                <PlaybackRateRadioGroup
                   className="media-menu__group"
-                  value={playbackRate.value}
-                  onValueChange={playbackRate.setValue}
                   aria-label={t(playbackRateText)}
-                >
-                  {playbackRate.options.map((option) => (
-                    <Menu.RadioItem
-                      key={option.value}
-                      className="media-menu__item"
-                      value={option.value}
-                      disabled={option.disabled}
-                    >
-                      <span>{option.label}</span>
-                      <Menu.ItemIndicator
-                        checked={option.value === playbackRate.value}
-                        forceMount
-                        className="media-menu__indicator"
-                      >
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className="media-menu__item">
+                      <span>{item.label}</span>
+                      <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
                     </Menu.RadioItem>
-                  ))}
-                </Menu.RadioGroup>
+                  )}
+                />
               </Menu.Content>
             </Menu.Root>
           ) : null}
@@ -318,30 +285,18 @@ function SettingsMenu(): ReactNode {
                   {t(captionsText)}
                 </Menu.Item>
                 <Menu.Separator className="media-menu__separator" />
-                <Menu.RadioGroup
+                <CaptionsRadioGroup
                   className="media-menu__group"
-                  value={captions.value}
-                  onValueChange={captions.setValue}
                   aria-label={t(captionsText)}
-                >
-                  {captions.options.map((option) => (
-                    <Menu.RadioItem
-                      key={option.value}
-                      className="media-menu__item"
-                      value={option.value}
-                      disabled={option.disabled}
-                    >
-                      <span>{option.label}</span>
-                      <Menu.ItemIndicator
-                        checked={option.value === captions.value}
-                        forceMount
-                        className="media-menu__indicator"
-                      >
+                  renderItem={(props, item) => (
+                    <Menu.RadioItem {...props} className="media-menu__item">
+                      <span>{item.label}</span>
+                      <Menu.ItemIndicator checked={item.checked} forceMount className="media-menu__indicator">
                         <CheckIcon className="media-icon" />
                       </Menu.ItemIndicator>
                     </Menu.RadioItem>
-                  ))}
-                </Menu.RadioGroup>
+                  )}
+                />
               </Menu.Content>
             </Menu.Root>
           ) : null}
