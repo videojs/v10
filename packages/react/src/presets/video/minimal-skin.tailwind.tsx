@@ -77,6 +77,7 @@ import { MuteButton } from '@/ui/mute-button';
 import { PiPButton } from '@/ui/pip-button';
 import { PlayButton } from '@/ui/play-button';
 import { usePlaybackRateOptions } from '@/ui/playback-rate';
+import { PlaybackRateRadioGroup } from '@/ui/playback-rate-radio-group';
 import { Popover } from '@/ui/popover';
 import { Poster } from '@/ui/poster';
 import { useQualityOptions } from '@/ui/quality';
@@ -321,30 +322,18 @@ function SettingsMenu(): ReactNode {
                     {t(speedText)}
                   </Menu.Back>
                   <Menu.Separator className={menu.separator} />
-                  <Menu.RadioGroup
+                  <PlaybackRateRadioGroup
                     className={menu.group}
-                    value={playbackRate.value}
-                    onValueChange={playbackRate.setValue}
                     aria-label={t(playbackRateText)}
-                  >
-                    {playbackRate.options.map((option) => (
-                      <Menu.RadioItem
-                        key={option.value}
-                        className={menu.item}
-                        value={option.value}
-                        disabled={option.disabled}
-                      >
-                        <span>{option.label}</span>
-                        <Menu.ItemIndicator
-                          checked={option.value === playbackRate.value}
-                          forceMount
-                          className={menu.indicator}
-                        >
+                    renderItem={(props, item) => (
+                      <Menu.RadioItem {...props} className={menu.item}>
+                        <span>{item.label}</span>
+                        <Menu.ItemIndicator checked={item.checked} forceMount className={menu.indicator}>
                           <CheckIcon className={cn(icon, menu.icon)} />
                         </Menu.ItemIndicator>
                       </Menu.RadioItem>
-                    ))}
-                  </Menu.RadioGroup>
+                    )}
+                  />
                 </Menu.Content>
               </Menu.Root>
             ) : null}
