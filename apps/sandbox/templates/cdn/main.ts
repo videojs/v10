@@ -140,6 +140,7 @@ async function loadCdnPreset(preset: Preset, skin: Skin, live: boolean) {
     case 'native-hls-video':
     case 'hls-video':
     case 'dash-video':
+    case 'shaka-video':
     case 'vimeo-video':
     case 'youtube-video':
     case 'cloudflare-video':
@@ -212,6 +213,9 @@ async function loadCdnMedia(preset: Preset) {
       break;
     case 'dash-video':
       await import('@videojs/html/cdn/media/dash-video');
+      break;
+    case 'shaka-video':
+      await import('@videojs/html/cdn/media/shaka-video');
       break;
     // Each embed is one bundle beside the rest, so a page reaches a third-party
     // player the same way it reaches an HLS one — no npm-only step.
@@ -302,6 +306,7 @@ function getMediaTag(preset: Preset): string {
     'hls-video': 'hls-video',
     'hls-audio': 'hls-audio',
     'dash-video': 'dash-video',
+    'shaka-video': 'shaka-video',
     'vimeo-video': 'vimeo-video',
     'youtube-video': 'youtube-video',
     'cloudflare-video': 'cloudflare-video',
@@ -331,7 +336,8 @@ function isVideoPreset(preset: Preset): boolean {
     preset === 'mux-video-spf' ||
     preset === 'native-hls-video' ||
     preset === 'hls-video' ||
-    preset === 'dash-video'
+    preset === 'dash-video' ||
+    preset === 'shaka-video'
   );
 }
 

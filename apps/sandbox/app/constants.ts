@@ -12,6 +12,7 @@ export const PRESETS = [
   'hls-video',
   'hls-audio',
   'dash-video',
+  'shaka-video',
   'audio',
   'background-video',
   'hls-background-video',

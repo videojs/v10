@@ -108,6 +108,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'hls-video': 'HLS Video',
   'hls-audio': 'HLS Audio',
   'dash-video': 'DASH Video',
+  'shaka-video': 'Shaka Video',
   audio: 'Audio',
   'background-video': 'Background Video',
   'hls-background-video': 'HLS Background Video (SPF)',

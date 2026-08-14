@@ -15,6 +15,7 @@ import {
   MUX_SOURCE_IDS,
   MUX_SPF_SOURCE_IDS,
   NON_DASH_SOURCE_IDS,
+  SHAKA_SOURCE_IDS,
   SOURCES,
   SPF_HLS_SOURCE_IDS,
 } from '@app/shared/sources';
@@ -101,15 +102,17 @@ export function App() {
       ? MP4_SOURCE_IDS
       : preset === 'dash-video'
         ? DASH_SOURCE_IDS
-        : structuredSource && muxPreset
-          ? MUX_SOURCE_IDS
-          : structuredSource && hlsPreset
-            ? HLS_SOURCE_IDS
-            : structuredSource && muxSpfPreset
-              ? MUX_SPF_SOURCE_IDS
-              : spfHlsPreset || muxSpfPreset || spfBackgroundPreset
-                ? SPF_HLS_SOURCE_IDS
-                : NON_DASH_SOURCE_IDS;
+        : preset === 'shaka-video'
+          ? SHAKA_SOURCE_IDS
+          : structuredSource && muxPreset
+            ? MUX_SOURCE_IDS
+            : structuredSource && hlsPreset
+              ? HLS_SOURCE_IDS
+              : structuredSource && muxSpfPreset
+                ? MUX_SPF_SOURCE_IDS
+                : spfHlsPreset || muxSpfPreset || spfBackgroundPreset
+                  ? SPF_HLS_SOURCE_IDS
+                  : NON_DASH_SOURCE_IDS;
 
   // Keep the URL in sync with all state.
   useEffect(() => {
@@ -175,9 +178,10 @@ export function App() {
     }
   }, [preset, source]);
 
-  // Constrain source away from DASH for non-DASH presets
+  // Constrain source away from DASH for presets that cannot play it. Shaka is
+  // not one of them — it plays DASH and HLS from the same element.
   useEffect(() => {
-    if (preset !== 'dash-video' && SOURCES[source].type === 'dash') {
+    if (preset !== 'dash-video' && preset !== 'shaka-video' && SOURCES[source].type === 'dash') {
       setSource(DEFAULT_SOURCE);
     }
   }, [preset, source]);
