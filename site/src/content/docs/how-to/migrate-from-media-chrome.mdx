@@ -189,6 +189,14 @@ Continuous values use CSS custom properties: sliders expose `--media-slider-fill
 
 Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
 
+## Coming soon
+
+Two changes are in flight that touch this guide. Neither is released yet, so everything above is what works today.
+
+**The player will own the poster.** Media Chrome's `media-poster-image` takes its own `src`. In Video.js the poster is a skin concern today, and it's moving onto the player, so a media component can report a poster and the player can resolve it ([#1798](https://github.com/videojs/v10/issues/1798)).
+
+**The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet ([#1123](https://github.com/videojs/v10/issues/1123)).
+
 ## Known gaps
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated; see [Workarounds](#workarounds).
