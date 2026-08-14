@@ -126,7 +126,7 @@ export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
 
 ### Notes
 
-- `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element already composed from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video. `VideoPlayer` is the piece that owns the state.
+- `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together. `VideoPlayer` is the piece that owns the state, built from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video.
 - The poster is a prop on the skin rather than a `poster` attribute on the media, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
