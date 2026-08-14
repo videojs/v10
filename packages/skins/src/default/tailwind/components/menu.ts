@@ -75,8 +75,9 @@ export const menu = {
     '[&>:not([data-submenu])]:will-change-[translate,filter]',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:-translate-x-full',
     '[&[data-submenu-expanded=true]>:not([data-submenu])]:blur',
-    '[&[data-submenu-expanded=true]>:not([data-submenu])]:animate-media-menu-content-exit',
-    '[&[data-submenu-expanded=false]>:not([data-submenu])]:animate-media-menu-content-enter',
+    // Avoid restarting the covered-content transition in WebKit while the
+    // anchor-positioned highlight is active.
+    '[&[data-submenu-expanded]>:not([data-submenu])]:before:hidden',
     'overflow-hidden!'
   ),
   group,

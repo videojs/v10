@@ -1,5 +1,3 @@
-@import "../../../shared/global/menu/keyframes.css";
-
 .media-default-skin .media-menu {
   --menu-transition-duration: 250ms;
   --menu-max-height: calc(var(--spacing) * 56);
@@ -211,11 +209,12 @@
     &[data-submenu-expanded="true"] > :not([data-submenu]) {
       filter: blur(8px);
       translate: -100% 0;
-      animation: media-menu-content-exit var(--menu-transition-duration) ease-in-out both;
     }
 
-    &[data-submenu-expanded="false"] > :not([data-submenu]) {
-      animation: media-menu-content-enter var(--menu-transition-duration) ease-in-out both;
+    /* WebKit can restart the covered-content transition while the
+       anchor-positioned highlight remains active. */
+    &[data-submenu-expanded] > :not([data-submenu])::before {
+      display: none;
     }
 
     /* Don't transition size on open/close. */
