@@ -12,6 +12,8 @@ import type { MediaResolution } from '../../core/types';
 export interface RenditionCapPolicy {
   /** Highest resolution ABR may auto-select, or `undefined` for no cap. */
   maxAutoResolution: MediaResolution | undefined;
+  /** Whether the element's rendered size caps automatic selection. */
+  capToPlayerSize: boolean;
   /** Registered by the controller's own constructor. */
   controller?: RenditionCapController | undefined;
 }
@@ -89,6 +91,12 @@ type CapLevelControllerClass = typeof Hls.DefaultConfig.capLevelController;
  * loop writes passes through. Overriding it makes the requested ceiling part of
  * the same single-writer computation.
  *
+ * Every cap here rides that loop, which is why `capLevelToPlayerSize` stays on
+ * in the engine config even when the player-size cap is switched off: the switch
+ * belongs in the policy, since it has to move without a rebuild, and stopping
+ * the loop would take one — and would strand the resolution cap, which depends
+ * on the same re-evaluation.
+ *
  * @param policy - Live cap inputs, re-read on every evaluation.
  * @param BaseController - Controller to layer on top of, so a controller passed
  *   through `source.engine.capLevelController` keeps its behavior.
@@ -132,6 +140,25 @@ export function createCapLevelController(
     }
 
     /**
+     * hls.js derives its player-size ceiling from these two, so reporting an
+     * unbounded measurement is how `capToPlayerSize: false` switches that
+     * ceiling off while leaving the rest of the base controller intact.
+     *
+     * Returning early from `getMaxLevel()` instead would be the obvious way to
+     * skip the size cap, and it would also skip the levels `capLevelOnFPSDrop`
+     * has restricted: those are filtered inside the same `super.getMaxLevel()`
+     * call, and `restrictedLevels` is private, so there is no way to reapply
+     * them afterwards. Neutralizing the input keeps one path for both.
+     */
+    get mediaWidth(): number {
+      return policy.capToPlayerSize ? super.mediaWidth : Number.POSITIVE_INFINITY;
+    }
+
+    get mediaHeight(): number {
+      return policy.capToPlayerSize ? super.mediaHeight : Number.POSITIVE_INFINITY;
+    }
+
+    /**
      * Intersect hls.js's player-size ceiling with the requested one. Deferring
      * to `super` first keeps the behavior it owns — notably the level
      * restrictions `capLevelOnFPSDrop` accumulates.
@@ -156,7 +183,10 @@ export function createCapLevelController(
      */
     detectPlayerSize() {
       super.detectPlayerSize();
-      if (this.mediaWidth > 0 && this.mediaHeight > 0) return;
+      // Read through the base getters: the overrides above report an unbounded
+      // size while the player-size cap is off, which would otherwise pass for a
+      // measurable element and leave the resolution cap unapplied.
+      if (super.mediaWidth > 0 && super.mediaHeight > 0) return;
       this.#applyResolutionCap();
     }
 
@@ -170,7 +200,13 @@ export function createCapLevelController(
       this.#applyResolutionCap();
     }
 
-    /** The ceiling on its own, for when the size measurement is unavailable. */
+    /**
+     * The ceiling on its own, for when the size measurement is unavailable.
+     *
+     * `capToPlayerSize` does not reach this path, and has nothing to do here: it
+     * switches off a cap derived from the element's size, and this is precisely
+     * the case where no such cap exists.
+     */
     #applyResolutionCap() {
       const { levels } = this.#hls;
       if (!levels?.length) return;

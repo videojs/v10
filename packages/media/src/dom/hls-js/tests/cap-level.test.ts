@@ -30,6 +30,9 @@ function createEngine(levels: FakeLevel[], config: Record<string, unknown> = {})
     levels,
     autoLevelCapping: -1,
     autoLevelEnabled: true,
+    // Where a manual selection lands. `-1` is hls.js for "nothing forced".
+    nextLevel: -1,
+    currentLevel: -1,
     logger: { log: () => {} },
     config: {
       capLevelToPlayerSize: true,
@@ -63,18 +66,21 @@ afterEach(() => {
   while (controllers.length) controllers.pop()!.destroy();
   document.body.innerHTML = '';
   vi.restoreAllMocks();
+  vi.unstubAllGlobals();
 });
 
 interface SetupOptions {
   maxAutoResolution?: MediaResolution | undefined;
+  /** Defaults to on, as a source without the key does. */
+  capToPlayerSize?: boolean;
   levels?: FakeLevel[];
   config?: Record<string, unknown>;
   /** Rendered size of the video element; omit to leave it unmeasurable. */
   playerSize?: { width: number; height: number };
 }
 
-function setup({ maxAutoResolution, levels = LADDER, config, playerSize }: SetupOptions = {}) {
-  const policy: RenditionCapPolicy = { maxAutoResolution };
+function setup({ maxAutoResolution, capToPlayerSize = true, levels = LADDER, config, playerSize }: SetupOptions = {}) {
+  const policy: RenditionCapPolicy = { maxAutoResolution, capToPlayerSize };
   const engine = createEngine(levels, config);
   const Controller = createCapLevelController(policy);
   const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
@@ -264,6 +270,19 @@ describe('createCapLevelController', () => {
     expect(engine.autoLevelCapping).toBe(0);
   });
 
+  it('caps automatic selection only, leaving the ladder whole for manual choice', () => {
+    const { engine } = setup({ maxAutoResolution: '360p', playerSize: { width: 320, height: 180 } });
+
+    // Every cap here is a ceiling on ABR, never a filter on availability: hls.js
+    // reads `autoLevelCapping` only while choosing on its own. The levels a
+    // rendition list is built from stay whole, and nothing is forced, so a
+    // viewer picking 1440p by hand still gets it.
+    expect(engine.autoLevelCapping).toBe(0);
+    expect(engine.levels).toHaveLength(LADDER.length);
+    expect(engine.nextLevel).toBe(-1);
+    expect(engine.currentLevel).toBe(-1);
+  });
+
   it('registers itself on the policy and steps down on destroy', () => {
     const { controller, policy } = setup({ playerSize: { width: 1920, height: 1080 } });
 
@@ -361,7 +380,7 @@ describe('createCapLevelController', () => {
   });
 
   it('layers over a controller supplied through the engine config', () => {
-    const policy: RenditionCapPolicy = { maxAutoResolution: '720p' };
+    const policy: RenditionCapPolicy = { maxAutoResolution: '720p', capToPlayerSize: true };
     const engine = createEngine(LADDER);
     const seen: number[] = [];
 
@@ -381,8 +400,91 @@ describe('createCapLevelController', () => {
     expect(seen).toEqual([4]);
   });
 
+  describe('capToPlayerSize', () => {
+    it('caps to the smallest rendition covering the element by default', () => {
+      const { controller, topIndex } = setup({ playerSize: { width: 320, height: 180 } });
+
+      // hls.js covers the element rather than staying under it: the 640×360
+      // rendition is the first whose largest dimension reaches 320.
+      expect(controller.getMaxLevel(topIndex)).toBe(0);
+    });
+
+    it('stops the element size from capping when switched off', () => {
+      const { controller, topIndex } = setup({
+        capToPlayerSize: false,
+        playerSize: { width: 320, height: 180 },
+      });
+
+      expect(controller.getMaxLevel(topIndex)).toBe(4);
+    });
+
+    it('leaves the resolution cap in force when switched off', () => {
+      const { controller, topIndex } = setup({
+        capToPlayerSize: false,
+        maxAutoResolution: '720p',
+        playerSize: { width: 320, height: 180 },
+      });
+
+      // The size no longer binds; the requested ceiling still does.
+      expect(controller.getMaxLevel(topIndex)).toBe(2);
+    });
+
+    it('keeps FPS-drop restrictions when switched off', () => {
+      const { engine, controller, topIndex } = setup({
+        capToPlayerSize: false,
+        playerSize: { width: 320, height: 180 },
+      });
+
+      expect(controller.getMaxLevel(topIndex)).toBe(4);
+
+      emit(engine, Hls.Events.FPS_DROP_LEVEL_CAPPING, { droppedLevel: 4, level: 4 });
+
+      // The restriction is applied inside `super.getMaxLevel()`, alongside the
+      // size ceiling. Switching the size cap off must not be a way around it,
+      // which is why the size component is neutralized through the measurement
+      // rather than by skipping the call.
+      expect(controller.getMaxLevel(topIndex)).toBe(3);
+    });
+
+    it('applies a toggle change without waiting for the next tick', () => {
+      const { engine, policy } = setup({ playerSize: { width: 320, height: 180 } });
+
+      expect(engine.autoLevelCapping).toBe(0);
+
+      policy.capToPlayerSize = false;
+      policy.controller!.apply();
+
+      expect(engine.autoLevelCapping).toBe(4);
+    });
+  });
+
+  describe('device pixel ratio', () => {
+    // hls.js measures in device pixels by default, which is the issue's
+    // criterion and needs no code of ours — only pinning, since a change to
+    // `ignoreDevicePixelRatio` would silently halve what a retina player asks
+    // for. `contentScaleFactor` reads `self.devicePixelRatio`.
+    const retina = { config: { ignoreDevicePixelRatio: false }, playerSize: { width: 640, height: 360 } };
+
+    it('measures the element in CSS pixels at a ratio of 1', () => {
+      vi.stubGlobal('devicePixelRatio', 1);
+
+      const { controller, topIndex } = setup(retina);
+
+      expect(controller.getMaxLevel(topIndex)).toBe(0);
+    });
+
+    it('asks for twice the rendition at a ratio of 2', () => {
+      vi.stubGlobal('devicePixelRatio', 2);
+
+      const { controller, topIndex } = setup(retina);
+
+      // 640 CSS px is 1280 device px, which the 1280×720 rendition covers.
+      expect(controller.getMaxLevel(topIndex)).toBe(2);
+    });
+  });
+
   it('never caps an audio-only stream, whose capping loop never starts', () => {
-    const policy: RenditionCapPolicy = { maxAutoResolution: '720p' };
+    const policy: RenditionCapPolicy = { maxAutoResolution: '720p', capToPlayerSize: true };
     const engine = createEngine([]);
     const Controller = createCapLevelController(policy);
     const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };

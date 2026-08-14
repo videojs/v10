@@ -42,7 +42,7 @@ The shape answers one question: does this option describe the source, or how to 
 |---|---|---|
 | Which source to play | `source.src`, or an element's own identity fields | `src`, `MuxVideo`'s `playbackId` |
 | How to interpret it | `source.type` | `'video/mp4'` |
-| How Video.js plays it | `source`, at the top level | `preferPlayback`, `maxAutoResolution` |
+| How Video.js plays it | `source`, at the top level | `preferPlayback`, `maxAutoResolution`, `capRenditionToPlayerSize` |
 | How a specific engine behaves | `source.engine`, under that engine's name | hls.js's `maxBufferLength`, in `source.engine.hlsJs` |
 | A side-car component's own settings | that component's props | <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>, <DocsLink slug="concepts/cast">Google Cast</DocsLink> |
 
@@ -232,6 +232,36 @@ The cap limits automatic selection without hiding anything. Renditions above it 
 Renditions are matched on pixel area rather than height, which keeps unusual aspect ratios honest: an ultrawide 2560×1080 rendition carries more pixels than 16:9 1080p, so a `'1080p'` cap leaves it out. When every rendition sits above the cap, the smallest one plays.
 
 Changing the cap applies to the running engine, so playback continues uninterrupted. It needs the hls.js engine — native HLS playback ignores it, and audio-only streams have no video renditions to cap.
+
+### Capping to the player's size
+
+A 400px-wide player has no use for a 4K rendition, so `capRenditionToPlayerSize` holds automatic selection to the smallest rendition that still covers the element. It defaults to `true`, and the cap follows the element as it's resized:
+
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<HlsJsVideo source={{ src: 'https://example.com/stream.m3u8', capRenditionToPlayerSize: false }} />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = { src: 'https://example.com/stream.m3u8', capRenditionToPlayerSize: false };
+```
+</FrameworkCase>
+
+The element is measured in device pixels, so a `2` device pixel ratio asks for twice the rendition a CSS measurement would — a 640px-wide player on a retina screen still gets 720p. Switch the cap off for a player whose layout size understates what it needs, such as one that goes fullscreen without a resize.
+
+### Three things that sound alike
+
+Three separate mechanisms bound which rendition plays, and they're easy to mistake for each other:
+
+| Option | Side | What it does |
+|---|---|---|
+| `source.playback.maxResolution` | Server | A Mux query param. Trims the manifest, so higher renditions never arrive — not even by hand. |
+| `source.maxAutoResolution` | Client | A ceiling on automatic selection. Everything still arrives and stays selectable by hand. |
+| `source.capRenditionToPlayerSize` | Client | The same kind of ceiling, derived from the element's rendered size and moving with it. |
+
+`playback.maxResolution` is the server-side one: it decides what the manifest carries. The other two only bound what adaptive selection picks from whatever does arrive.
 
 ## DRM protected sources
 

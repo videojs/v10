@@ -25,6 +25,9 @@ export const defaultHlsConfig: Partial<HlsConfig> = {
   backBufferLength: 30,
   renderTextTracksNatively: false,
   liveDurationInfinity: true,
+  // Runs hls.js's capping loop, which every rendition cap is evaluated on — not
+  // only the one named after it. Whether the player size actually caps anything
+  // is `capRenditionToPlayerSize`, which moves without rebuilding the engine.
   capLevelToPlayerSize: true,
   capLevelOnFPSDrop: true,
   autoStartLoad: false,
@@ -37,7 +40,10 @@ export interface HlsJsOnlyMediaParams {
 
 class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost<Hls, HTMLVideoElement> {
   #engine: Hls | null = null;
-  #capPolicy: RenditionCapPolicy = { maxAutoResolution: undefined };
+  #capPolicy: RenditionCapPolicy = {
+    maxAutoResolution: undefined,
+    capToPlayerSize: true,
+  };
 
   constructor(params: HlsJsOnlyMediaParams) {
     super();
@@ -64,6 +70,20 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   set maxAutoResolution(value: MediaResolution | undefined) {
     if (this.#capPolicy.maxAutoResolution === value) return;
     this.#capPolicy.maxAutoResolution = value;
+    this.#capPolicy.controller?.apply();
+  }
+
+  /** Whether the rendered size caps selection. See `HlsSource.capRenditionToPlayerSize`. */
+  get capRenditionToPlayerSize(): boolean {
+    return this.#capPolicy.capToPlayerSize;
+  }
+
+  set capRenditionToPlayerSize(value: boolean | undefined) {
+    // Defaults resolve here rather than in the caller, so the getters report the
+    // cap that is actually in force instead of what a source happened to name.
+    const next = value ?? true;
+    if (this.#capPolicy.capToPlayerSize === next) return;
+    this.#capPolicy.capToPlayerSize = next;
     this.#capPolicy.controller?.apply();
   }
 

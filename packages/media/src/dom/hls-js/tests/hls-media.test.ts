@@ -484,7 +484,7 @@ describe('HlsJsMedia', () => {
     });
   });
 
-  describe('maxAutoResolution', () => {
+  describe('rendition caps', () => {
     const M3U8 = 'https://example.com/video.m3u8';
     const built: HlsJsMedia[] = [];
 
@@ -538,23 +538,30 @@ describe('HlsJsMedia', () => {
       { width: 1920, height: 1080, bitrate: 5_000_000 },
     ];
 
-    /** What the engine's installed cap controller resolves the policy to now. */
-    function cappedIndex(media: HlsJsMedia) {
+    /**
+     * What the engine's installed cap controller resolves the policy to now.
+     *
+     * The probe defaults to a viewport larger than the whole ladder, so the
+     * player-size ceiling never binds and a requested resolution is what is
+     * being measured. Pass a smaller one to measure the size cap itself.
+     */
+    function cappedIndex(media: HlsJsMedia, playerSize = { width: 4096, height: 2160 }) {
       const engine = probeEngine(LADDER);
       const Controller = media.engine!.config.capLevelController;
       const controller = new Controller(engine);
 
-      // Attach a viewport larger than the whole ladder so the player-size
-      // ceiling never binds and the resolution cap is what is being measured.
       const probeVideo = document.createElement('video');
-      probeVideo.width = 4096;
-      probeVideo.height = 2160;
+      probeVideo.width = playerSize.width;
+      probeVideo.height = playerSize.height;
       (engine as any).emit(Hls.Events.MEDIA_ATTACHING, { media: probeVideo });
 
       const index = controller.getMaxLevel(LADDER.length - 1);
       controller.destroy();
       return index;
     }
+
+    /** Small enough that every rung but the lowest is above what it needs. */
+    const SMALL_PLAYER = { width: 320, height: 180 };
 
     it('installs its own cap-level controller over the hls.js default', () => {
       const { media } = setupMse();
@@ -633,6 +640,69 @@ describe('HlsJsMedia', () => {
       expect(media.engine).toBeNull();
       expect(warn).toHaveBeenCalledWith(
         expect.stringContaining('`maxAutoResolution` requires the hls.js (MSE) engine')
+      );
+    });
+
+    describe('capRenditionToPlayerSize', () => {
+      it('caps to the element size by default', () => {
+        const { media } = setupMse();
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+      });
+
+      it('stops capping to the element size when switched off', () => {
+        const { media } = setupMse({ capRenditionToPlayerSize: false });
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('does not recreate the engine when only the toggle changes', () => {
+        const { media } = setupMse();
+        const engine = media.engine;
+
+        media.source = { src: M3U8, capRenditionToPlayerSize: false };
+        media.load();
+
+        expect(media.engine).toBe(engine);
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('keeps a false toggle when only src changes', () => {
+        // A falsy value still has to survive the carry-over, which a truthiness
+        // check on the way through would drop.
+        const { media } = setupMse({ capRenditionToPlayerSize: false });
+
+        media.src = 'https://example.com/other.m3u8';
+
+        expect(media.source?.capRenditionToPlayerSize).toBe(false);
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('returns to capping when the key is removed', () => {
+        const { media } = setupMse({ capRenditionToPlayerSize: false });
+
+        media.source = { src: M3U8 };
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+      });
+    });
+
+    it('warns about every cap native playback ignores', () => {
+      const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const media = new HlsJsMedia();
+      built.push(media);
+      media.attach(document.createElement('video'));
+      media.source = {
+        src: M3U8,
+        type: ContentTypes.M3U8,
+        preferPlayback: 'native',
+        capRenditionToPlayerSize: false,
+      };
+      media.load();
+
+      expect(warn).toHaveBeenCalledWith(
+        expect.stringContaining('`capRenditionToPlayerSize` requires the hls.js (MSE) engine')
       );
     });
   });

@@ -83,6 +83,33 @@ export interface HlsSource {
    */
   maxAutoResolution?: MediaResolution | undefined;
   /**
+   * Whether the element's rendered size caps automatic selection. Defaults to
+   * `true`.
+   *
+   * A 400px-wide player has no use for a 4K rendition, so by default adaptive
+   * selection is held to the smallest rendition that still covers the element,
+   * measured in device pixels — a `2` device pixel ratio asks for twice the
+   * renditions a CSS measurement would. The cap follows the element as it is
+   * resized.
+   *
+   * Set it to `false` for a player whose layout size understates what it needs,
+   * such as one that goes fullscreen without a resize, or one being measured
+   * before layout settles.
+   *
+   * Which rendition covers the element is hls.js's own judgement, and it weighs
+   * a rendition's largest dimension rather than its pixel area — deliberately,
+   * so that a change in aspect ratio cannot make capping oscillate. That is a
+   * different heuristic from the one `maxAutoResolution` uses, so the two can
+   * land on different renditions for the same element and ladder.
+   *
+   * Applied live — changing it never rebuilds the playback engine. Requires the
+   * hls.js (MSE) engine; native HLS playback ignores it. Reaching past this to
+   * hls.js's own `capLevelToPlayerSize` through `source.engine.hlsJs` switches
+   * off the loop that evaluates *every* cap here, `maxAutoResolution` included,
+   * and takes an engine rebuild to change.
+   */
+  capRenditionToPlayerSize?: boolean | undefined;
+  /**
    * Playback options, keyed by the engine that reads them. Only one of the two
    * engines below ends up playing, and each reads only its own key.
    */
@@ -201,13 +228,16 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   set src(src: string) {
     // `src` says which source to play; every other field says how to play it, so
     // they carry over.
-    const { type, preferPlayback, drm, engine, maxAutoResolution } = this.#source ?? {};
+    const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize } = this.#source ?? {};
     const next: HlsSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
       ...(drm && { drm }),
       ...(engine && { engine }),
       ...(maxAutoResolution && { maxAutoResolution }),
+      // Carried on definedness, not truthiness: `false` is the whole point of
+      // naming this one, and it is the falsy value.
+      ...(capRenditionToPlayerSize !== undefined && { capRenditionToPlayerSize }),
       ...(src && { src }),
     };
 
@@ -318,15 +348,22 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       // Read the stored source, not the `source` getter: subclasses override the
       // getter to return what was assigned to them, while the fields below come
       // from what they resolved and handed down (Mux fills in the DRM options).
-      const { type, preferPlayback, drm, engine, maxAutoResolution } = this.#source ?? {};
+      const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize } = this.#source ?? {};
       const { hlsJs, nativeHls } = engine ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
 
-      if (__DEV__ && !useMse && maxAutoResolution) {
-        console.warn(
-          '[vjs-media] `maxAutoResolution` requires the hls.js (MSE) engine; native HLS playback ignores it.'
-        );
+      if (__DEV__ && !useMse) {
+        const ignored = Object.entries({ maxAutoResolution, capRenditionToPlayerSize })
+          .filter(([, value]) => value !== undefined)
+          .map(([key]) => `\`${key}\``);
+
+        if (ignored.length > 0) {
+          const [verb, pronoun] = ignored.length > 1 ? ['require', 'them'] : ['requires', 'it'];
+          console.warn(
+            `[vjs-media] ${ignored.join(', ')} ${verb} the hls.js (MSE) engine; native HLS playback ignores ${pronoun}.`
+          );
+        }
       }
 
       this.#delegate = useMse
@@ -396,6 +433,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   #applyRenditionCaps() {
     if (this.#delegate instanceof HlsJsOnlyMedia) {
       this.#delegate.maxAutoResolution = this.#source?.maxAutoResolution;
+      this.#delegate.capRenditionToPlayerSize = this.#source?.capRenditionToPlayerSize;
     }
   }
 
