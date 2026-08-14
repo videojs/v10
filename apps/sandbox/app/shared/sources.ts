@@ -333,18 +333,25 @@ export const DEFAULT_DASH_SOURCE: SourceId = 'dash-1';
 export const BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/Sc89iWAyNkhJ3P1rQ02nrEdCFTnfT01CZ2KmaEcxXfB008/low.mp4';
 
 /**
- * The same clip as {@link BACKGROUND_VIDEO_SRC} over HLS, for the SPF-backed
- * `<hls-background-video>` and its `<mux-background-video>` alias. Re-ingested
- * from that asset's `high.mp4` rendition.
+ * A 4K clip over HLS, for the SPF-backed `<hls-background-video>` and its
+ * `<mux-background-video>` alias.
+ *
+ * Deliberately *not* the clip {@link BACKGROUND_VIDEO_SRC} plays: the rendition
+ * ladder has to straddle a real screen for the screen-resolution cap to have
+ * anything to choose between. Its rungs run 640x360 → 3838x2160, so a display
+ * under the top rung caps to 2558x1440 instead. (Those off-by-two widths are the
+ * source's near-square pixel aspect ratio, not a typo, and they are the reason
+ * the cap compares pixel areas rather than matching `1920x1080`-style tiers.)
+ * Video-only — the source carries no audio track.
  *
  * Must be a **CMAF/fMP4** asset: SPF appends fMP4 segments directly and does no
  * MPEG-TS transmuxing, so a TS-packaged playback ID surfaces the
  * unsupported-container error instead of playing. Packaging follows the video
  * quality tier — `premium` yields CMAF, while `plus`/`basic` (legacy
- * `encoding_tier: smart`) yield MPEG-TS — which is why this is a separate asset
- * rather than the `.m3u8` of the one above.
+ * `encoding_tier: smart`) yield MPEG-TS — which is also why a 4K ladder needs
+ * `max_resolution_tier: '2160p'` alongside `video_quality: 'premium'`.
  */
-export const HLS_BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/JsDMLkGisX8lHq01wcVv32kQ2vIYvsrEXx007W15xDKJg.m3u8';
+export const HLS_BACKGROUND_VIDEO_SRC = 'https://stream.mux.com/SfAaZ9InpM8FMfky7DkNBuTpxEDqU8Jchpa49urOWcs.m3u8';
 
 export const VIMEO_VIDEO_SRC = 'https://vimeo.com/648359100';
 
