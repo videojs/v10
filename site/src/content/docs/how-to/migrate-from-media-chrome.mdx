@@ -156,7 +156,7 @@ Most names match. These are the renames that bite:
 | `media-volume-range` | `media-volume-slider` | "range" becomes "slider" |
 | `media-time-display`, `media-duration-display` | `media-time` | one element, set via attribute |
 | `media-loading-indicator` | `media-buffering-indicator` | rename |
-| `media-poster-image` | `media-poster` | rename |
+| `media-poster-image` | `media-poster` | rename, and the image source moves — see below |
 | `media-seek-backward-button`, `media-seek-forward-button` | `media-seek-button` | one element, direction via signed `seconds` |
 | `media-rendition-menu` | `media-quality-radio-group` | inside `media-menu` |
 | `media-captions-menu` | `media-captions-radio-group` | inside `media-menu` |
@@ -167,8 +167,24 @@ Unchanged names: `media-play-button`, `media-mute-button`, `media-fullscreen-but
 
 Sliders are compound in both, using `media-slider-track`, `media-slider-fill`, and `media-slider-thumb`.
 
+<FrameworkCase frameworks={["html"]}>
+`media-poster` is the one rename that changes shape. Where `media-poster-image` took its own `src`, `media-poster` wraps the image you bring:
+
+```html
+<media-poster>
+  <img src="/poster.jpg" alt="" decoding="async" />
+</media-poster>
+```
+</FrameworkCase>
+
 <FrameworkCase frameworks={["react"]}>
-In React these are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="concepts/ui-components">UI components</DocsLink> concept for the full set.
+These are PascalCase components rather than tags — `TimeSlider`, `VolumeSlider`, `BufferingIndicator`, `Poster`, `QualityRadioGroup` — and the compound parts are namespaced, so `media-slider-track` becomes `TimeSlider.Track`. See the <DocsLink slug="concepts/ui-components">UI components</DocsLink> concept for the full set.
+
+`Poster` is the one rename that changes shape. It *is* the image rather than a wrapper around one, so `media-poster-image`'s attributes go straight on it:
+
+```tsx
+<Poster src="/poster.jpg" alt="" />
+```
 </FrameworkCase>
 
 ## Rewrite your styles
@@ -189,30 +205,6 @@ Continuous values use CSS custom properties: sliders expose `--media-slider-fill
 
 Media Chrome's `<template>`-based themes (`media-theme`) become Video.js <DocsLink slug="concepts/skins">skins</DocsLink> and <DocsLink slug="concepts/presets">presets</DocsLink>. Start from a preset, then eject and customize with <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink>, rather than authoring a template.
 
-## Coming soon
-
-Changes in flight that touch this guide. None has shipped, so everything above is what works today.
-
-**The player will own the poster.** Media Chrome's `media-poster-image` takes its own `src`. In Video.js the poster is a skin concern today, and it's moving onto the player, so a media component can report a poster and the player can resolve it ([#1798](https://github.com/videojs/v10/issues/1798)).
-
-**The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet ([#1123](https://github.com/videojs/v10/issues/1123)).
-
-<FrameworkCase frameworks={["react"]}>
-**`createPlayer` stops being step one.** Each preset will export a pre-composed player, so `createPlayer` becomes the escape hatch for custom feature sets rather than the entry point:
-
-```tsx
-import { Video, VideoPlayer } from '@videojs/react/video';
-
-<VideoPlayer.Provider>
-  <VideoPlayer.Container>
-    <Video src="video.mp4" />
-  </VideoPlayer.Container>
-</VideoPlayer.Provider>
-```
-
-The preset entry point will carry the React client boundary too, so the `'use client'` directive above becomes unnecessary ([#2116](https://github.com/videojs/v10/pull/2116)).
-</FrameworkCase>
-
 ## Known gaps
 
 These Media Chrome features have no direct equivalent yet. Several can be approximated; see [Workarounds](#workarounds).
@@ -231,10 +223,15 @@ Chapters themselves do work. Add a default `<track kind="chapters">` and the pac
 
 ### Disable autohide (`autohide="-1"`)
 
-The skin hides controls by removing `data-visible` from the root `<media-controls>`, then fading its `--primary` and `--secondary` groups. Override both, plus the hidden cursor, in your player CSS:
+The skin hides controls by removing `data-visible` from the root `<media-controls>`. Which element then fades depends on the player's width: below `32rem` it's the `--primary` and `--secondary` groups inside the root, and at or above `32rem` it's the root itself. Override both, plus the hidden cursor, in your player CSS:
 
 ```css
 .media-default-skin--video .media-controls--root:not([data-visible]) {
+  opacity: 1;
+  scale: 1;
+  filter: none;
+  pointer-events: auto;
+
   .media-controls--primary,
   .media-controls--secondary {
     opacity: 1;
@@ -249,7 +246,7 @@ The skin hides controls by removing `data-visible` from the root `<media-control
 }
 ```
 
-The class names matter here: `data-visible` lands on `.media-controls--root`, but the transition runs on the groups inside it, so targeting only the root leaves the controls faded out.
+Two things make this fragile. It matches the skin's own selectors exactly, so it only wins on source order — load your stylesheet after the skin's. And the class names are the default skin's; the minimal skin fades `.media-minimal-skin--video .media-controls` instead, with no groups to reach.
 
 To change the *delay* rather than disable it, note that the idle timer is a constant inside `controlsFeature`. Fork that feature and swap it into a custom feature list:
 
