@@ -31,7 +31,7 @@ npm install @videojs/react
 
 ## Map the controller
 
-Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controller>`. Video.js splits this into a player, which owns state and draws nothing, and a `<media-container>`, which is the box everything lives in. The media is a plain child.
+Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controller>`. Video.js splits that into two elements. The player owns state and draws nothing. The `<media-container>` is the box everything lives in, with the media as a plain child.
 
 ```html
 <!-- Media Chrome -->
@@ -59,7 +59,7 @@ Media Chrome wraps a slotted `<video slot="media">` in a single `<media-controll
 
 <FrameworkCase frameworks={["react"]}>
 
-Media Chrome's React package wraps its custom elements. `@videojs/react` ships native components instead. `VideoPlayer` comes from the general-purpose <DocsLink slug="concepts/presets">preset</DocsLink> and `Container` is the box the media and controls live in:
+Media Chrome's React package wraps its custom elements. `@videojs/react` ships native components instead. `VideoPlayer` comes from the video <DocsLink slug="concepts/presets">preset</DocsLink>, and `Container` is the box the media and controls live in:
 
 ```tsx
 'use client';
@@ -79,7 +79,7 @@ export function MyPlayer() {
 }
 ```
 
-A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> builds one: hand it a feature list and it returns a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
+A preset player carries a fixed set of <DocsLink slug="concepts/features">features</DocsLink>. When you need a different set, build your own with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>. Hand it a feature list and you get back a typed `Player` component and `usePlayer` hook, the same pair the preset is made of. Call it once, outside your component, and reuse it.
 
 ```tsx
 import { createPlayer } from '@videojs/react';
