@@ -2,7 +2,7 @@ import { CaptionsRadioGroup, createPlayer, Menu } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player, Container } = createPlayer({ features: videoFeatures });
 
 function CaptionsMenu(): ReactNode {
   return (
@@ -29,8 +29,8 @@ function CaptionsMenu(): ReactNode {
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop>
           <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srcLang="en" label="English" />
           <track kind="subtitles" src="/docs/demos/captions-button/captions.vtt" srcLang="es" label="Spanish" />
@@ -38,7 +38,7 @@ export default function BasicUsage() {
         <div className="menu-bar">
           <CaptionsMenu />
         </div>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

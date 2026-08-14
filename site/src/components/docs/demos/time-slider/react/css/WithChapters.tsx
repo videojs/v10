@@ -1,12 +1,12 @@
 import { createPlayer, TimeSlider } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player, Container } = createPlayer({ features: videoFeatures });
 
 export default function WithChapters() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop crossOrigin="anonymous">
           <track kind="chapters" src="/docs/demos/time-slider/chapters.vtt" srcLang="en" default />
         </Video>
@@ -33,7 +33,7 @@ export default function WithChapters() {
             <TimeSlider.Value type="pointer" />
           </TimeSlider.Preview>
         </TimeSlider.Root>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

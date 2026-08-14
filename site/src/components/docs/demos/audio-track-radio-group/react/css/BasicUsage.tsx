@@ -3,7 +3,7 @@ import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player, Container } = createPlayer({ features: videoFeatures });
 const src = '{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}';
 
 function AudioMenu(): ReactNode {
@@ -31,13 +31,13 @@ function AudioMenu(): ReactNode {
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <HlsJsVideo src={src} autoPlay crossOrigin="anonymous" muted playsInline loop />
         <div className="menu-bar">
           <AudioMenu />
         </div>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

@@ -86,7 +86,7 @@ Most player libraries ship every feature in one bundle, so you carry code you do
 ```tsx
 import { createPlayer, playbackFeature, timeFeature } from '@videojs/react';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: [playbackFeature, timeFeature], // [!code focus]
 });
 ```

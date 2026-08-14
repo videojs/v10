@@ -15,7 +15,7 @@ For the reasoning behind this design, see <DocsLink slug="concepts/why-videojs">
 
 ## 1. State management
 <FrameworkCase frameworks={["react"]}>
-State is handled by a preset player provider, which creates a central state store that all components can access. When you wrap your player in `VideoPlayer`, the components automatically connect to the state.
+State is handled by a preset player component, which creates a central state store that all components can access. When you wrap your player in `VideoPlayer`, the components automatically connect to the state.
 
 ```tsx
 {/* All components inside automatically connect to state */} {/* [!code focus] */}
@@ -26,7 +26,7 @@ State is handled by a preset player provider, which creates a central state stor
 </VideoPlayer> {/* [!code focus] */}
 ```
 
-You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
+You can access state and actions from anywhere within `VideoPlayer` with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
 
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>

@@ -2,7 +2,7 @@ import { createPlayer, Menu, PlaybackRateRadioGroup } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player, Container } = createPlayer({ features: videoFeatures });
 
 function SpeedMenu(): ReactNode {
   return (
@@ -29,13 +29,13 @@ function SpeedMenu(): ReactNode {
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
         <div className="menu-bar">
           <SpeedMenu />
         </div>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

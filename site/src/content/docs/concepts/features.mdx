@@ -55,7 +55,7 @@ If you're not using presets, you can create a player that has individual feature
 ```tsx
 import { createPlayer, playbackFeature, volumeFeature, timeFeature, controlsFeature } from '@videojs/react';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: [playbackFeature, volumeFeature, timeFeature, controlsFeature],
 });
 ```
@@ -86,7 +86,7 @@ Since feature bundles are just an array of features under the hood, it doesn't t
 import { createPlayer, playbackFeature } from '@videojs/react';
 import { backgroundFeatures } from '@videojs/react/background';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: [...backgroundFeatures, playbackFeature],
 });
 ```

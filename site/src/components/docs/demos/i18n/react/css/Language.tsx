@@ -6,7 +6,7 @@ import { useState } from 'react';
 import '@videojs/react/video/skin.css';
 import './Language.css';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 const locales = ['en', ...LOCALES] as const;
 type Locale = (typeof locales)[number];
 const languageNames = new Intl.DisplayNames(['en'], { type: 'language' });
@@ -26,13 +26,13 @@ export default function Language() {
           ))}
         </select>
       </label>
-      <Player.Provider>
+      <Player>
         <I18nProvider locale={locale}>
           <VideoSkin className="react-i18n-language__player">
             <Video src="{{VJS10_DEMO_VIDEO_MP4}}" muted playsInline />
           </VideoSkin>
         </I18nProvider>
-      </Player.Provider>
+      </Player>
     </div>
   );
 }
