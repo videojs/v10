@@ -46,13 +46,13 @@ export async function Player({ locale }: { locale: string }) {
   const { default: translations } = await load();
 
   return (
-    <VideoPlayer.Provider>
+    <VideoPlayer>
       <I18nProvider locale={locale} translations={translations}>
         <VideoSkin>
           <Video src="..." playsInline />
         </VideoSkin>
       </I18nProvider>
-    </VideoPlayer.Provider>
+    </VideoPlayer>
   );
 }
 ```

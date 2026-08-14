@@ -13,10 +13,10 @@ import '@videojs/react/video/minimal-skin.css';
  */
 export function MinimalSkinDemo() {
   return (
-    <VideoPlayer.Provider>
+    <VideoPlayer>
       <MinimalVideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </MinimalVideoSkin>
-    </VideoPlayer.Provider>
+    </VideoPlayer>
   );
 }

@@ -15,10 +15,10 @@ import '@videojs/react/video/skin.css';
  */
 export function FrostedSkinDemo() {
   return (
-    <VideoPlayer.Provider>
+    <VideoPlayer>
       <VideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </VideoSkin>
-    </VideoPlayer.Provider>
+    </VideoPlayer>
   );
 }

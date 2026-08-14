@@ -62,13 +62,13 @@ import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video';
 
 export function App() {
   return (
-    <VideoPlayer.Provider>
+    <VideoPlayer>
       <I18nProvider locale="es">
         <VideoSkin>
           <Video src="..." playsInline />
         </VideoSkin>
       </I18nProvider>
-    </VideoPlayer.Provider>
+    </VideoPlayer>
   );
 }
 ```

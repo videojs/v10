@@ -64,13 +64,13 @@ function App() {
       <button type="button" onClick={() => setLocale('es')}>
         Español
       </button>
-      <VideoPlayer.Provider>
+      <VideoPlayer>
         <I18nProvider locale={locale}>
           <VideoSkin>
             <Video src="..." playsInline />
           </VideoSkin>
         </I18nProvider>
-      </VideoPlayer.Provider>
+      </VideoPlayer>
     </>
   );
 }

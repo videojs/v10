@@ -203,7 +203,7 @@ describe('generateReactCreateCode', () => {
     expect(code).not.toContain('createPlayer');
     expect(code).not.toContain('videoFeatures');
     expect(code).toContain("import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video'");
-    expect(code).toContain('<VideoPlayer.Provider>');
+    expect(code).toContain('<VideoPlayer>');
     expect(code).toContain('<VideoSkin>');
     expect(code).toContain('<Video src={src} playsInline />');
     expect(code).toContain("from '@videojs/react/video'");
@@ -251,7 +251,7 @@ describe('generateReactCreateCode', () => {
     const code = result['MyPlayer.tsx'];
     expect(code).not.toContain('audioFeatures');
     expect(code).toContain("import { AudioPlayer, AudioSkin, Audio } from '@videojs/react/audio'");
-    expect(code).toContain('<AudioPlayer.Provider>');
+    expect(code).toContain('<AudioPlayer>');
     expect(code).toContain('<AudioSkin>');
     expect(code).toContain('<Audio src={src} />');
     expect(code).not.toContain('playsInline');
@@ -285,7 +285,7 @@ describe('generateReactCreateCode', () => {
     expect(code).toContain(
       "import { BackgroundVideoPlayer, BackgroundVideoSkin, BackgroundVideo } from '@videojs/react/background'"
     );
-    expect(code).toContain('<BackgroundVideoPlayer.Provider>');
+    expect(code).toContain('<BackgroundVideoPlayer>');
     expect(code).toContain('<BackgroundVideoSkin>');
     expect(code).toContain('<BackgroundVideo');
     expect(code).toContain("import '@videojs/react/background/skin.css'");

@@ -15,15 +15,15 @@ For the reasoning behind this design, see <DocsLink slug="concepts/why-videojs">
 
 ## 1. State management
 <FrameworkCase frameworks={["react"]}>
-State is handled by a preset player provider, which creates a central state store that all components can access. When you wrap your player in `VideoPlayer.Provider`, the components automatically connect to the state.
+State is handled by a preset player provider, which creates a central state store that all components can access. When you wrap your player in `VideoPlayer`, the components automatically connect to the state.
 
 ```tsx
 {/* All components inside automatically connect to state */} {/* [!code focus] */}
-<VideoPlayer.Provider> {/* [!code focus] */}
+<VideoPlayer> {/* [!code focus] */}
   <VideoSkin>
     <Video src="video.mp4" />
   </VideoSkin>
-</VideoPlayer.Provider> {/* [!code focus] */}
+</VideoPlayer> {/* [!code focus] */}
 ```
 
 You can access state and actions from anywhere within the provider with the <DocsLink slug="reference/use-player">`usePlayer` hook</DocsLink>.
@@ -55,11 +55,11 @@ Skins are complete, pre-designed player UIs that package components and styles t
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<VideoPlayer.Provider>
+<VideoPlayer>
   <VideoSkin> {/* [!code focus] */}
     <Video src="video.mp4" />
   </VideoSkin> {/* [!code focus] */}
-</VideoPlayer.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -80,15 +80,15 @@ If you want more control than skins offer you, you can build your own UI from ou
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<VideoPlayer.Provider>
-  <VideoPlayer.Container> {/* [!code focus] */}
+<VideoPlayer>
+  <Container> {/* [!code focus] */}
     <Video src="video.mp4" />
     <Controls.Root> {/* [!code focus] */}
       <PlayButton /> {/* [!code focus] */}
       {/* ... */} {/* [!code focus] */}
     </Controls.Root> {/* [!code focus] */}
-  </VideoPlayer.Container> {/* [!code focus] */}
-</VideoPlayer.Provider>
+  </Container> {/* [!code focus] */}
+</VideoPlayer>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -126,11 +126,11 @@ DASH, YouTube, Vimeo, Mux, and more media elements are currently under developme
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-<VideoPlayer.Provider>
+<VideoPlayer>
   <VideoSkin>
     <HlsJsVideo src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM.m3u8" /> {/* [!code focus] */}
   </VideoSkin>
-</VideoPlayer.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 <FrameworkCase frameworks={["html"]}>
@@ -163,11 +163,11 @@ import { BackgroundVideo, BackgroundVideoPlayer, BackgroundVideoSkin } from '@vi
 
 function Hero() {
   return (
-    <BackgroundVideoPlayer.Provider>
+    <BackgroundVideoPlayer>
       <BackgroundVideoSkin>
         <BackgroundVideo src="hero.mp4" />
       </BackgroundVideoSkin>
-    </BackgroundVideoPlayer.Provider>
+    </BackgroundVideoPlayer>
   );
 }
 ```

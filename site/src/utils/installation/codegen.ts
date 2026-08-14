@@ -306,14 +306,14 @@ export function generateReactCreateCode(
   }
 
   const playerJsx = skinComponent
-    ? `    <${playerComponent}.Provider>
+    ? `    <${playerComponent}>
       <${skinComponent}>
         ${rendererJsx}
       </${skinComponent}>
-    </${playerComponent}.Provider>`
-    : `    <${playerComponent}.Provider>
+    </${playerComponent}>`
+    : `    <${playerComponent}>
       ${rendererJsx}
-    </${playerComponent}.Provider>`;
+    </${playerComponent}>`;
 
   const imports = [
     ...(skinCssImport ? [`import '${skinCssImport}';`] : []),

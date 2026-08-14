@@ -19,7 +19,7 @@ export default function HeroVideo({
   const SkinComponent = $skin === 'default' ? VideoSkin : MinimalVideoSkin;
 
   return (
-    <VideoPlayer.Provider>
+    <VideoPlayer>
       <SkinComponent
         className={className}
         style={
@@ -40,6 +40,6 @@ export default function HeroVideo({
           />
         </HlsJsVideo>
       </SkinComponent>
-    </VideoPlayer.Provider>
+    </VideoPlayer>
   );
 }

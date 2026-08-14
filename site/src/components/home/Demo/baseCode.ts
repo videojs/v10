@@ -25,11 +25,11 @@ import '@videojs/react/video/${skinCss}.css';
 
 export function VideoPlayer() {
   return (
-    <VideoPlayerPreset.Provider>
+    <VideoPlayerPreset>
       <${skinComponent} poster="${VJS10_DEMO_VIDEO.poster}">
         <Video src="${VJS10_DEMO_VIDEO.mp4}" playsInline />
       </${skinComponent}>
-    </VideoPlayerPreset.Provider>
+    </VideoPlayerPreset>
   );
 }`;
 }
