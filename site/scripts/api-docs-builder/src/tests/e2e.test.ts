@@ -326,10 +326,18 @@ describe('Component pipeline (end-to-end)', () => {
       const fill = findComponent('Gauge')!.reference.parts!.fill!;
 
       expect(fill.name).toBe('Fill');
-      // Sub-part custom React props: extracted from `FillProps` interface.
-      // `children` is auto-excluded by the builder.
-      expect(fill.props.color).toMatchObject({ type: 'string' });
-      expect(fill.props.children).toBeUndefined();
+      // Sub-part custom React props are React-only. Documented `children`
+      // is included because it is an explicit part contract.
+      expect(fill.props.color).toEqual({
+        type: 'string',
+        description: 'The color of the fill bar.',
+        frameworks: ['react'],
+      });
+      expect(fill.props.children).toEqual({
+        type: 'unknown',
+        description: 'Fallback content displayed before the gauge is ready.',
+        frameworks: ['react'],
+      });
       expect(fill.state).toEqual({});
 
       // Fill's React source references `stateAttrMap`, so it gets the
