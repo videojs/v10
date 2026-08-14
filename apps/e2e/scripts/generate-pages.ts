@@ -395,11 +395,11 @@ import { DefaultVideoSkin } from '${generatedRoot}/skin';
 import '${generatedRoot}/styles/styles.css';
 import { MEDIA } from '../resources';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 function App() {
   return (
-    <Player.Provider>
+    <Player>
       <DefaultVideoSkin
         data-source-skin
         poster={MEDIA.${resource}.poster}
@@ -411,7 +411,7 @@ function App() {
       >
         <Video src={MEDIA.${resource}.url} playsInline muted crossOrigin="anonymous" />
       </DefaultVideoSkin>
-    </Player.Provider>
+    </Player>
   );
 }
 
