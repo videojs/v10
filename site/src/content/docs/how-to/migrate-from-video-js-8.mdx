@@ -23,7 +23,7 @@ In v8 the player was everything: playback, UI, and the skin on top of it. Option
 
 v10 splits those jobs up. Learning the three names first makes the rest of this guide much shorter.
 
-**The player** is the outer element. It holds state and hands that state to everything inside it, and it draws nothing. This is the closest thing to a v8 `player` instance, but it owns state rather than DOM. What state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> you compose into it.
+**The player** is the outer element. It holds state and hands that state to everything inside it, and it draws nothing. This is the closest thing to a v8 `player` instance, but it owns state rather than DOM. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> it's built from, and you don't have to pick those yourself: the packaged players come with a sensible set.
 
 **The media** is the thing that plays the video. This is where v8's *tech* went. A plain `<video>` plays progressive files, and there's a <DocsLink slug="concepts/media-sources">media component</DocsLink> for HLS, DASH, YouTube, Vimeo, and Mux. Swapping one for another is a tag change, and the rest of your player keeps working.
 
@@ -77,7 +77,7 @@ Here's a standard v8 setup: one file, captions, a poster, and the default skin.
 <script src="https://vjs.zencdn.net/8.x/video.min.js"></script>
 ```
 
-v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you the player and the default skin:
+v10 ships web components, so the migration keeps its declarative feel. One script from the CDN gives you `<video-player>` and `<video-skin>`, the general-purpose <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element that already fit together.
 
 ```html
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
