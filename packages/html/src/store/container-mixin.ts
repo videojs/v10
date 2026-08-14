@@ -1,7 +1,7 @@
-import { createPopupGroup, type MediaContainer, type PlayerStore } from '@videojs/core/dom';
+import { type AnyPlayerStore, createPopupGroup, type MediaContainer, type PlayerStore } from '@videojs/core/dom';
 import { ContextConsumer, ContextProvider } from '@videojs/element/context';
 import type { MediaElementConstructor } from '@/ui/media-element';
-import type { ContainerContext, PlayerContext } from '../player/context';
+import { type ContainerContext, containerContext, type PlayerContext, playerContext } from '../player/context';
 import { popupGroupContext } from '../player/popup-group-context';
 import type { PlayerConsumer, PlayerConsumerConstructor } from './types';
 
@@ -73,3 +73,13 @@ export function createContainerMixin<Store extends PlayerStore>(
     return PlayerContainerElement;
   };
 }
+
+/**
+ * Player container mixin configured for the default player contexts.
+ *
+ * Import this convenience mixin directly when composing a custom container.
+ */
+export const ContainerMixin = createContainerMixin<AnyPlayerStore>({
+  playerContext,
+  containerContext,
+});

@@ -1,13 +1,13 @@
-import { CastButton, createPlayer } from '@videojs/react';
+import { CastButton, Container, createPlayer } from '@videojs/react';
 import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <HlsJsVideo src="{{VJS10_DEMO_VIDEO_HLS}}" autoPlay muted playsInline loop />
         <CastButton
           className="media-cast-button"
@@ -15,7 +15,7 @@ export default function BasicUsage() {
             <button {...props}>{state.connection === 'connected' ? 'Stop casting' : 'Start casting'}</button>
           )}
         />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

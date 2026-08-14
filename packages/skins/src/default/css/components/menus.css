@@ -28,7 +28,7 @@
     overscroll-behavior: none;
     outline: none;
     translate: 0 0;
-    transition-timing-function: ease-in-out;
+    transition-timing-function: ease-out;
     transition-duration: var(--menu-transition-duration);
     transition-property: translate, filter;
     will-change: translate, filter;
@@ -85,8 +85,8 @@
     outline-offset: -2px;
     border-radius: var(--menu-item-border-radius);
     transition: background-color, color;
-    transition-timing-function: ease-out;
-    transition-duration: 200ms;
+    transition-timing-function: ease-in-out;
+    transition-duration: 100ms;
 
     .media-icon {
       flex-shrink: 0;
@@ -106,6 +106,15 @@
 
       .media-icon {
         color: inherit;
+      }
+    }
+
+    @supports (top: anchor(top)) {
+      transition-duration: 50ms;
+
+      &:hover,
+      &[data-highlighted] {
+        transition-duration: 200ms;
       }
     }
   }
@@ -201,8 +210,8 @@
     & > :not([data-submenu]) {
       translate: 0 0;
       transition:
-        translate var(--menu-transition-duration) ease-in-out,
-        filter var(--menu-transition-duration) ease-in-out;
+        translate var(--menu-transition-duration) ease-out,
+        filter var(--menu-transition-duration) ease-out;
       will-change: translate, filter;
     }
 

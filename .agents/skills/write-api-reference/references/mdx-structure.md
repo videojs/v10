@@ -231,7 +231,7 @@ Link generously between related reference pages.
 Same-framework or cross-framework link:
 
 ```mdx
-Within a player provider, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
+Within a `Player`, <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> is usually simpler.
 ```
 
 Selector page linking to framework-specific utils:
@@ -257,7 +257,7 @@ Util pages document React hooks/utilities and HTML controllers/mixins. They are 
 ```yaml
 ---
 title: usePlayer
-description: Hook to access the player store from within a Player Provider
+description: Hook to access the player store from within a Player
 ---
 ```
 

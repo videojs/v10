@@ -33,7 +33,7 @@ Import the locale pack on the server (or in a server component) and pass it to <
 
 ```tsx
 import { I18nProvider } from '@videojs/react/i18n';
-import { Provider, VideoSkin, Video } from '@videojs/react/video';
+import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video';
 
 const loaders = {
   es: () => import('@videojs/react/i18n/locales/es'),
@@ -46,13 +46,13 @@ export async function Player({ locale }: { locale: string }) {
   const { default: translations } = await load();
 
   return (
-    <Provider>
+    <VideoPlayer>
       <I18nProvider locale={locale} translations={translations}>
         <VideoSkin>
           <Video src="..." playsInline />
         </VideoSkin>
       </I18nProvider>
-    </Provider>
+    </VideoPlayer>
   );
 }
 ```

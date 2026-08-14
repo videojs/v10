@@ -21,6 +21,8 @@ describe('createPlayer', () => {
     const result = createPlayer({ features: videoFeatures });
 
     assertType<CreatePlayerResult<VideoPlayerStore>>(result);
+    // @ts-expect-error ContainerMixin is imported from the package root, not created per player.
+    result.ContainerMixin;
   });
 
   it('resolves audio features to AudioPlayerStore', () => {
