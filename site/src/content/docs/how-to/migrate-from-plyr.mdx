@@ -417,7 +417,7 @@ const currentTime = Player.usePlayer((state) => state.currentTime);
 Use <DocsLink slug="reference/player-controller">`PlayerController`</DocsLink> inside a custom element:
 
 ```js
-import { PlayerController, playerContext, selectTime } from '@videojs/html';
+import { PlayerController, playerContext, ReactiveElement, selectTime } from '@videojs/html';
 
 class MyElapsed extends ReactiveElement {
   #time = new PlayerController(this, playerContext, selectTime);
@@ -446,32 +446,6 @@ video-player {
 ## Ejecting
 
 If you need extra customization of layout, styles, or icons, you can "eject" the skin into your application, much like a shadcn installation. Copy the skin and its CSS into your project, then modify the components and styles directly. <DocsLink slug="how-to/customize-skins">Customize skins</DocsLink> has copy-paste-ready implementations for every packaged skin.
-
-## Coming soon
-
-Changes in flight that touch this guide. None has shipped, so everything above is what works today.
-
-**The player will own the poster.** `poster` and its blurred placeholder are moving from the skin onto the player, so a media component can report a poster and the player can resolve it. Plyr's `data-poster` maps more directly once that lands ([#1798](https://github.com/videojs/v10/issues/1798)).
-
-**The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet ([#1123](https://github.com/videojs/v10/issues/1123)).
-
-**A Plyr skin is on the list.** Minimal is the closest starting point today, but a skin that matches Plyr's look is tracked at [#181](https://github.com/videojs/v10/issues/181).
-
-<FrameworkCase frameworks={["react"]}>
-**`createPlayer` stops being step one.** Each preset will export a pre-composed player, so the standard case skips feature composition and `createPlayer` becomes the escape hatch for custom feature sets:
-
-```tsx
-import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
-
-<VideoPlayer.Provider>
-  <MinimalVideoSkin>
-    <Video src="/video.mp4" playsInline />
-  </MinimalVideoSkin>
-</VideoPlayer.Provider>
-```
-
-The preset entry point will carry the React client boundary too, so the `'use client'` directive above becomes unnecessary ([#2116](https://github.com/videojs/v10/pull/2116)).
-</FrameworkCase>
 
 ## Known gaps
 
