@@ -17,7 +17,7 @@ This guide walks you from a working Mux Player embed to a working Video.js playe
 
 Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
 
-**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> you compose into it.
+**The player** is the outer element. It holds state, hands that state to everything inside it, and draws nothing itself. Which state it holds depends on the <DocsLink slug="concepts/features">features</DocsLink> it's built from, and you don't have to pick those yourself: the packaged players come with a sensible set.
 
 **The media** is the thing that plays the video. The Mux media is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for another <DocsLink slug="concepts/media-sources">media component</DocsLink> and the rest of your player keeps working.
 
@@ -64,7 +64,7 @@ Here's a typical Mux Player embed. A playback ID, a title and viewer ID for anal
 ></mux-player>
 ```
 
-Each piece is its own import. From the CDN, that's one script for the player and its skin, one for the Mux media, and one for analytics:
+Each piece is its own import. From the CDN, that's one script for the general-purpose <DocsLink slug="concepts/presets">preset</DocsLink> — `<video-player>` and `<video-skin>`, which already fit together — one for the Mux media, and one for analytics:
 
 ```html
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
@@ -121,7 +121,7 @@ export function MyPlayer() {
 npm install @videojs/react
 ```
 
-One extra step here: instead of one component that does everything, you pick a <DocsLink slug="concepts/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you're doing something unusual.
+One new idea here. Instead of one component that does everything, you pick a <DocsLink slug="concepts/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you're doing something unusual.
 
 ```tsx
 'use client';
