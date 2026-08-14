@@ -37,11 +37,11 @@ So a Mux Player embed becomes a player wrapped around a skin wrapped around a me
 
 <FrameworkCase frameworks={["react"]}>
 ```jsx
-<Player.Provider>
+<VideoPlayer>
   <VideoSkin>
     <MuxVideo />
   </VideoSkin>
-</Player.Provider>
+</VideoPlayer>
 ```
 </FrameworkCase>
 
@@ -104,7 +104,7 @@ import '@videojs/html/media/mux-data';
 ```tsx
 import MuxPlayer from '@mux/mux-player-react';
 
-export function VideoPlayer() {
+export function MyPlayer() {
   return (
     <MuxPlayer
       playbackId="EcHgOK9coz5K…"
@@ -121,32 +121,29 @@ export function VideoPlayer() {
 npm install @videojs/react
 ```
 
-One extra step here: you build your player type up front with <DocsLink slug="reference/create-player">`createPlayer`</DocsLink>, telling it which <DocsLink slug="concepts/features">features</DocsLink> you want. A feature is a slice of player state and the behavior behind it: volume, fullscreen, captions, and so on. `videoFeatures` is the standard set for video, and it's what you want unless you're doing something unusual.
+One extra step here: instead of one component that does everything, you pick a <DocsLink slug="concepts/presets">preset</DocsLink> that matches what you're building. A preset is a player, a skin, and a media element that already fit together. `@videojs/react/video` is the general-purpose one, and it's what you want unless you're doing something unusual.
 
 ```tsx
 'use client';
 
 import '@videojs/react/video/skin.css';
-import { createPlayer } from '@videojs/react';
-import { VideoSkin, videoFeatures } from '@videojs/react/video';
+import { VideoPlayer, VideoSkin } from '@videojs/react/video';
 import { MuxData } from '@videojs/react/media/mux-data';
 import { MuxVideo } from '@videojs/react/media/mux-video';
 
-const Player = createPlayer({ features: videoFeatures });
-
-export function VideoPlayer() {
+export function MyPlayer() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <VideoSkin className="aspect-video" poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2">
         <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} playsInline crossOrigin="anonymous" />
         <MuxData playerSoftwareName="my-app" metadata={{ video_title: 'Test VOD', viewer_user_id: 'user-id-007' }} />
       </VideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 ```
 
-`createPlayer` gives you back a `Provider` to wrap your player in and a <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook to read state from, both typed to the features you picked. Call it once, outside your component, and reuse it.
+`VideoPlayer` is the piece that owns the state. The preset ships a matching <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, typed to the same state, for reading it.
 
 The `'use client'` directive is there because the player owns browser state.
 
@@ -357,13 +354,13 @@ class MyElapsed extends ReactiveElement {
 
 <FrameworkCase frameworks={["react"]}>
 
-There are **no `on*` props**. Read state through the <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook that `createPlayer` handed you:
+There are **no `on*` props**. Read state through the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook, which is typed to the features that preset includes:
 
 ```tsx
-const Player = createPlayer({ features: videoFeatures });
+import { usePlayer } from '@videojs/react/video';
 
 function Elapsed() {
-  const currentTime = Player.usePlayer((state) => state.currentTime);
+  const currentTime = usePlayer((state) => state.currentTime);
   return <span>{currentTime}</span>;
 }
 ```
@@ -428,15 +425,28 @@ Live streams use a different player and skin, because live has different state a
 
 <FrameworkCase frameworks={["react"]}>
 ```tsx
-import { LiveVideoSkin, liveVideoFeatures } from '@videojs/react/live-video';
+import { LiveVideoPlayer, LiveVideoSkin } from '@videojs/react/live-video';
+import { MuxVideo } from '@videojs/react/media/mux-video';
 
-const Player = createPlayer({ features: liveVideoFeatures });
+<LiveVideoPlayer>
+  <LiveVideoSkin>
+    <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} playsInline />
+  </LiveVideoSkin>
+</LiveVideoPlayer>
 ```
 </FrameworkCase>
 
 You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a live button that jumps to the live edge. See <DocsLink slug="reference/feature-live">the live feature</DocsLink>.
 
-The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state, none of which apply cleanly to a stream with no fixed duration. So a live skin's settings menu holds captions and nothing else. If you need one of the others on a live player, compose your own feature list rather than using `liveVideoFeatures`.
+The live composition is narrower than the video one on purpose: it leaves out quality, audio-track, and playback-rate state, none of which apply cleanly to a stream with no fixed duration. So a live skin's settings menu holds captions and nothing else. If you need one of the others on a live player, build your own player from a feature list rather than taking the preset's.
+
+<FrameworkCase frameworks={["html"]}>
+That's what <DocsLink slug="reference/html-create-player">`createPlayer`</DocsLink> is for: hand it the features you want and it gives you back the mixins to define your own player element.
+</FrameworkCase>
+
+<FrameworkCase frameworks={["react"]}>
+That's what <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> is for: hand it the features you want and it gives you back a `Player` component and a `usePlayer` hook typed to them, the same pair every preset is built from.
+</FrameworkCase>
 
 ### The settings menu
 
