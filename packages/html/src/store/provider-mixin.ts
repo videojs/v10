@@ -9,7 +9,7 @@ import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { ContextProvider } from '@videojs/element/context';
 import type { Media } from '@videojs/media/dom';
 import { isNull } from '@videojs/utils/predicate';
-import { kebabCase } from '@videojs/utils/string';
+import { camelCase, kebabCase } from '@videojs/utils/string';
 import type { MediaElementConstructor } from '@/ui/media-element';
 import type { ContainerContext, MediaContext, PlayerContext } from '../player/context';
 import type { PlayerProviderConstructor } from './types';
@@ -25,6 +25,31 @@ export interface ProviderMixinConfig<Store extends PlayerStore> {
 export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaElementConstructor>(
   BaseClass: Class
 ) => Class & PlayerProviderConstructor<Store>;
+
+/** One configuration input, under the names it goes by on the element. */
+interface ConfigInput {
+  /** Reactive property mirroring the attribute. */
+  property: string;
+  attribute: string;
+  entry: PlayerFeatureConfig[string];
+}
+
+/**
+ * Name each input on the element. A key whose own name is taken there declares
+ * an `htmlAttribute` instead, and the property follows from that.
+ */
+function resolveInputs(config: PlayerFeatureConfig): ConfigInput[] {
+  return Object.entries(config).map(([key, entry]) => {
+    const attribute = entry.htmlAttribute ?? kebabCase(key);
+
+    if (__DEV__ && entry.htmlAttribute && entry.htmlAttribute !== kebabCase(entry.htmlAttribute)) {
+      // Markup lowercases attribute names, so an uppercase letter here never matches.
+      console.warn(`[vjs-html] config htmlAttribute "${entry.htmlAttribute}" is not kebab-case and will never match`);
+    }
+
+    return { property: camelCase(attribute), attribute, entry };
+  });
+}
 
 /**
  * Create a mixin that provides player context to descendant elements and
@@ -42,13 +67,13 @@ export type ProviderMixin<Store extends PlayerStore> = <Class extends MediaEleme
 export function createProviderMixin<Store extends PlayerStore>(
   options: ProviderMixinConfig<Store>
 ): ProviderMixin<Store> {
-  const configKeys = Object.keys(options.config);
+  const inputs = resolveInputs(options.config);
 
   return <Class extends MediaElementConstructor>(BaseClass: Class) => {
     class PlayerProviderElement extends BaseClass {
       static properties = {
         ...(BaseClass as unknown as { properties: PropertyDeclarationMap }).properties,
-        ...Object.fromEntries(configKeys.map((key) => [key, { type: String, attribute: kebabCase(key) }])),
+        ...Object.fromEntries(inputs.map(({ property, attribute }) => [property, { type: String, attribute }])),
       };
 
       #store: Store | null = options.factory();
@@ -131,9 +156,9 @@ export function createProviderMixin<Store extends PlayerStore>(
 
         // Configuration flows one way: only actual reactive property changes
         // write to the store. Store-side writers do not reflect back here.
-        for (const key of configKeys) {
-          if (!changed.has(key)) continue;
-          setPlayerConfigValue(this.store, options.config[key]!, (this as unknown as Record<string, unknown>)[key]);
+        for (const { property, entry } of inputs) {
+          if (!changed.has(property)) continue;
+          setPlayerConfigValue(this.store, entry, (this as unknown as Record<string, unknown>)[property]);
         }
       }
 
@@ -169,8 +194,8 @@ export function createProviderMixin<Store extends PlayerStore>(
         const store = this.store;
         if (this.#configuredStore === store) return;
 
-        for (const key of configKeys) {
-          setPlayerConfigValue(store, options.config[key]!, (this as unknown as Record<string, unknown>)[key]);
+        for (const { property, entry } of inputs) {
+          setPlayerConfigValue(store, entry, (this as unknown as Record<string, unknown>)[property]);
         }
         this.#configuredStore = store;
       }
