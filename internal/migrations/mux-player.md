@@ -1,26 +1,36 @@
 # Migrate from Mux Player
 
-Mux Player is a single, batteries-included element. Drop in `mux-player` with a `playback-id` and you get HLS playback, an adaptive themed UI, Mux Data analytics, captions, Chromecast, AirPlay, and keyboard support, all wired together.
+Mux Player is one element that does everything. You drop in `<mux-player>` with a playback ID and you get HLS playback, a themed UI, analytics, captions, Chromecast, AirPlay, and keyboard shortcuts, all wired together.
 
-Video.js v10 is built a bit differently. **The player is composed, not configured.** That means the player you ship is smaller and faster, and when you're ready to customize it, it's easy to go under the hood and build what you need. It also means there's a bit more set-up to get started.
+Video.js v10 asks you to name the pieces you want. That sounds like more work, and for the first five minutes it is. In exchange, the player you ship only contains what you asked for, and when you need to change how something behaves you can open it up instead of hoping there's an attribute for it.
 
-The migration is mostly **splitting one element into a few** and **moving Mux stream parameters into a source object** instead of onto attributes.
+This guide walks you from a working Mux Player embed to a working Video.js player, then covers the things you'll reach for next.
 
-## Why switch?
+## Three pieces instead of one
 
-- **📦 You ship less.** Mux Player is one bundle whether or not you use Chromecast, chapters, or a settings menu. In v10 the player, the skin, the media, and analytics are separate imports, so an embed that doesn't cast doesn't pay for casting.
-- **🧩 Customization doesn't mean forking.** Mux Player's UI is fixed apart from the attributes it exposes and the CSS variables it documents. v10 skins are plain component trees you can [eject](#ejecting) and edit.
-- **⚛️ React is first-class, not a wrapper.** `@videojs/react` gives you providers, components, hooks, and TypeScript types rather than a web component with a React shim over it.
-- **🎛️ The same player handles more than Mux.** If some of your content isn't Mux-hosted, the HLS, DASH, Vimeo, and YouTube media components drop into the same player and skin.
-- **🔭 Mux stays a first-class citizen.** `<mux-video>` still knows what a playback ID is: it derives the stream URL, the poster, the storyboard, and the DRM license servers for you, and reports the title and poster into player state.
+Mux Player packs three jobs into a single element. Video.js splits them up, so it helps to learn the names before you write any code.
 
-Video.js v10 is still moving toward GA. Configurable playback rates, cue-point APIs, and lazy loading are active areas, so check [Known gaps](#known-gaps) when those features matter to your migration.
+**The player** is the outer element. It holds state — is it paused, how loud is it, what's the title — and hands that state to everything inside it. It draws nothing.
 
----
+**The media** is the thing that plays the video. `<mux-video>` is the one you want: it knows what a playback ID is and how to talk to Mux. Swap it for `<hls-video>`, `<dash-video>`, or `<youtube-video>` and the rest of your player keeps working.
 
-## Basic migration
+**The skin** is the UI: the controls, the poster, the captions, the settings menu, the keyboard shortcuts. It's a pre-built arrangement of smaller components, and you can use it as-is, restyle it, or take it apart.
 
-Here's a typical Mux Player embed: a playback ID, some Mux Data metadata, and a poster pulled from two seconds in.
+So a Mux Player embed becomes a player wrapped around a skin wrapped around a media:
+
+```html
+<video-player>
+  <video-skin>
+    <mux-video></mux-video>
+  </video-skin>
+</video-player>
+```
+
+Everything else in this guide is about which of those three a given Mux Player attribute now belongs to.
+
+## Your first player
+
+Here's a typical Mux Player embed. A playback ID, a title and viewer ID for analytics, and a poster pulled from two seconds in.
 
 ```html
 <script src="https://cdn.jsdelivr.net/npm/@mux/mux-player" defer></script>
@@ -33,9 +43,9 @@ Here's a typical Mux Player embed: a playback ID, some Mux Data metadata, and a 
 ></mux-player>
 ```
 
-### HTML (Web Components)
+### HTML
 
-The easiest path is the CDN. You need two scripts: the player with its default skin, and the Mux media.
+Each piece is its own import. From the CDN, that's one script for the player and its skin, one for the Mux media, and one for analytics:
 
 ```html
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/video.js"></script>
@@ -44,7 +54,12 @@ The easiest path is the CDN. You need two scripts: the player with its default s
 
 <video-player content-title="Test VOD">
   <video-skin class="aspect-video">
-    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8" poster-time="2" playsinline crossorigin="anonymous"></mux-video>
+    <mux-video
+      src="https://stream.mux.com/EcHgOK9coz5K….m3u8"
+      poster-time="2"
+      playsinline
+      crossorigin="anonymous"
+    ></mux-video>
     <mux-data player-software-name="my-app"></mux-data>
   </video-skin>
 </video-player>
@@ -57,7 +72,7 @@ The easiest path is the CDN. You need two scripts: the player with its default s
 </script>
 ```
 
-If you prefer not to use the CDN, use the individual modules:
+If you use a bundler instead of the CDN, the imports are the same three pieces:
 
 ```js
 import '@videojs/html/video/player';
@@ -67,23 +82,24 @@ import '@videojs/html/media/mux-video';
 import '@videojs/html/media/mux-data';
 ```
 
-#### Notes
+A few things worth calling out, because they're all cases where Video.js does more for you than the markup suggests:
 
-- **You don't set a poster.** `<mux-video>` derives one from the playback ID and reports it as content data, and the player resolves it into state for the skin's poster image. `poster-time="2"` is the `thumbnail-time` equivalent, and it feeds the derived URL.
-- **You don't add a storyboard track.** `<mux-video>` adds and maintains the thumbnail `<track>` from the same playback ID, and drops it for live streams.
-- **Mux Data is opt-in, and needs no env key** for Mux-hosted content, because the environment resolves from the playback ID. Leave `<mux-data>` out and there's no analytics and no analytics bytes — that's the answer to Mux Player's `disable-tracking`.
-- **Chromecast is opt-in too**, via `<google-cast>`. AirPlay needs nothing extra.
-- Set the aspect ratio in your own CSS on the skin. There's no `ratio` attribute.
+- **You didn't set a poster, and you get one.** `<mux-video>` builds a poster URL from the playback ID, tells the player about it, and the skin paints it. `poster-time="2"` is Mux Player's `thumbnail-time`, and it feeds that URL.
+- **You didn't add a storyboard track, and you get hover previews.** `<mux-video>` adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
+- **Analytics needs no environment key.** Mux resolves the environment from the playback ID.
+- **Set the aspect ratio yourself,** in your own CSS on the skin. There's no `ratio` attribute, because sizing belongs to your layout.
+
+Two things are opt-in that used to be automatic. Analytics is the `<mux-data>` element, and Chromecast is a `<google-cast>` element. Leave either out and you don't ship its code. That, incidentally, is the answer to Mux Player's `disable-tracking`: don't include `<mux-data>`.
 
 ### React
 
-Install the dependency:
+`@videojs/react` gives you real React components rather than a wrapper around a custom element.
 
 ```bash
 npm install @videojs/react
 ```
 
-Then create a reusable player component:
+One extra step here: you build your player type up front with `createPlayer`, telling it which **features** you want. A feature is a slice of player state and the behavior behind it: volume, fullscreen, captions, and so on. `videoFeatures` is the standard set for video, and it's what you want unless you're doing something unusual.
 
 ```tsx
 'use client';
@@ -108,50 +124,13 @@ export function VideoPlayer() {
 }
 ```
 
-#### Notes
+`createPlayer` gives you back a `Provider` to wrap your player in and a `usePlayer` hook to read state from, both typed to the features you picked. Call it once, outside your component, and reuse it.
 
-- `createPlayer` builds a typed player from a feature set. `videoFeatures` is the standard video composition; there are `audioFeatures`, `liveVideoFeatures`, and `liveAudioFeatures` alongside it.
-- There are no `on*` props. See [Events and player state](#events-and-player-state).
-- The `'use client'` directive is needed in React Server Components apps because the player owns browser state.
+The `'use client'` directive is there because the player owns browser state. There are also no `on*` props, which is the one part of a React migration that takes real work. See [Read player state](#read-player-state).
 
----
+## Mux settings live in a source object
 
-## Choosing a Mux media
-
-Mux Player has one playback engine. v10 gives you two, and the import path is what chooses.
-
-| Import | Engine | Use it when |
-|---|---|---|
-| `@videojs/html/media/mux-video`<br>`@videojs/react/media/mux-video` | hls.js | **Start here.** Supports everything, including TS-packaged assets and DRM. |
-| `.../media/mux-video/spf` | SPF (Video.js's own engine) | You want the dramatically smaller bundle and your content and feature needs fit. |
-| `.../media/mux-video/hls-js` | hls.js | You need direct access to the hls.js instance or its settings. |
-
-Both flavors register the same `<mux-video>` tag and take the same source, so switching is an import change. Importing two flavors into one build is not supported — one registration wins.
-
-The default is hls.js-backed today because it's the reliable superset. SPF doesn't play TS-packaged media, which currently includes Mux's Plus quality assets, and it doesn't license DRM. Mux accounts with a mixed back catalog should stay on the default until source detection lands; see the [MuxVideo and Legacy Formats PRD](https://app.notion.com/p/mux/PRD-Video-js-v10-MuxVideo-and-Legacy-Formats-38f97a7f89d080979189db5d688f7e74) for where this is going.
-
-`<mux-audio>` follows the same three paths, and pairs with the audio player and audio skins.
-
----
-
-## Where did my attribute go?
-
-In Mux Player almost everything is a declarative attribute on one element. In Video.js v10 each setting takes one of five paths.
-
-### Fate 1 · Stays a native attribute or prop
-
-Port these straight across.
-
-| Mux Player | Video.js v10 |
-|---|---|
-| `autoplay` `muted` `loop` `preload` `crossorigin` `playsinline` | the same attributes on `mux-video` |
-| `stream-type` | `stream-type` on `mux-video` |
-| `thumbnail-time` | `poster-time` on `mux-video` |
-| `.media.nativeEl` | `.target` on the element, or a `ref` to the `video` in React |
-
-### Fate 2 · Moves into the Mux source
-
-Mux Player built stream and image URLs for you from its attributes. `<mux-video>` does the same thing from a **source object** — playback identity plus the params that modify it. Assign it as a property in HTML, or pass it as the `source` prop in React.
+Mux Player has an attribute for every Mux stream parameter: `max-resolution`, `asset-start-time`, `custom-domain`, and a dozen more. Video.js collects them into a single **source** object that describes what to play and how.
 
 ```js
 document.querySelector('mux-video').source = {
@@ -161,84 +140,89 @@ document.querySelector('mux-video').source = {
 };
 ```
 
+The groups map to the three URLs Mux serves. `playback` modifies the video stream, `poster` modifies the still image, and `storyboard` modifies the hover-preview track. Video.js builds all three URLs and converts your camel-case keys to the `snake_case` query parameters Mux expects, so `assetStartTime` goes out as `asset_start_time`.
+
+You can also skip the object entirely and set `src` to a full Mux URL. `<mux-video>` parses it back into a source, query parameters included, which is what you want in markup you can't run JavaScript against:
+
+```html
+<mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8?max_resolution=1080p"></mux-video>
+```
+
+There's no `playback-id` attribute, so declarative markup uses the URL form.
+
+Here's where each Mux Player attribute lands:
+
 | Mux Player | Video.js v10 |
 |---|---|
-| `playback-id="ID"` | `source.playbackId` |
-| `max-resolution` / `min-resolution` | `source.playback.maxResolution` / `.minResolution` |
+| `playback-id` | `source.playbackId` |
+| `custom-domain` | `source.customDomain` |
+| `max-resolution`, `min-resolution` | `source.playback.maxResolution`, `.minResolution` |
 | `rendition-order` | `source.playback.renditionOrder` |
-| `asset-start-time` / `asset-end-time` | `source.playback.assetStartTime` / `.assetEndTime` |
-| `program-start-time` / `program-end-time` | `source.playback.programStartTime` / `.programEndTime` |
-| `custom-domain="media.example.com"` | `source.customDomain` |
-| `playback-token="JWT"` | `source.playback.token` |
-| `thumbnail-token` / `storyboard-token` | `source.poster.token` / `source.storyboard.token` |
-| `drm-token` | `source.drm.token` |
+| `asset-start-time`, `asset-end-time` | `source.playback.assetStartTime`, `.assetEndTime` |
+| `program-start-time`, `program-end-time` | `source.playback.programStartTime`, `.programEndTime` |
 | `default-subtitles-lang` | `source.playback.defaultSubtitlesLang` |
-| poster tuning (size, crop, rotation, format) | `source.poster.*` |
+| `playback-token` | `source.playback.token` |
+| `thumbnail-token`, `storyboard-token` | `source.poster.token`, `source.storyboard.token` |
+| `drm-token` | `source.drm.token` |
+| `thumbnail-time` | `poster-time` attribute, or `source.poster.time` |
+| poster size, crop, rotation, format | `source.poster.*` |
 
-Camel-case keys under `playback`, `poster`, and `storyboard` are serialized to the `snake_case` query params Mux expects, so `assetStartTime` becomes `asset_start_time`. A signed `token` replaces every other param in its group, exactly as it does with Mux Player, so caps and clipping have to be baked into the JWT.
+Signed playback behaves the way it does in Mux Player: a token replaces every other parameter in its group, so caps and clipping have to be baked into the token itself.
 
-**The `src` attribute still works.** Set `src` to a `https://stream.mux.com/ID.m3u8?…` URL and `<mux-video>` parses it back into a source, params included. That's the declarative path, and it's what to reach for in markup-only integrations — a source carrying signed tokens has no reasonable room in an attribute, so those get assigned as an object. There's no `playback-id` attribute.
+## Analytics moves to its own element
 
-### Fate 3 · Moves to `<mux-data>`
-
-Mux Player's analytics attributes become attributes and properties on a separate `<mux-data>` / `<MuxData>` component that you place inside the player.
+Mux Player's analytics attributes become attributes and properties on `<mux-data>`, placed inside the player.
 
 | Mux Player | Video.js v10 |
 |---|---|
-| `metadata-*` / `metadata={…}` | the `metadata` property (same `snake_case` keys, so the values port directly) |
-| `env-key` | `env-key` — usually unneeded, since Mux-hosted content resolves its own environment |
+| `metadata-*`, `metadata={…}` | the `metadata` property |
+| `env-key` | `env-key`, rarely needed for Mux-hosted content |
 | `disable-cookies` | `disable-cookies` |
 | `beacon-collection-domain` | `beacon-collection-domain` |
-| `player-software-name` / `player-software-version` | `player-software-name` / `player-software-version` |
+| `player-software-name`, `player-software-version` | `player-software-name`, `player-software-version` |
 | `debug` | the `debug` property |
 | `disable-tracking` | omit `<mux-data>` |
 
-`metadata` and `MuxDataSdk` are properties rather than attributes, because neither has a sensible string form.
+Your metadata keys don't change. They're the same `snake_case` names Mux Data has always taken, so the values port across untouched. `metadata` is a property rather than an attribute because an object has no sensible string form.
 
-### Fate 4 · Moves to the player, as metadata
+## Titles and posters belong to the player
 
-Content-level information now lives on the player element rather than the media, so any skin or component can read it. Each value resolves through the same chain: what you set, then what the media reports, then your fallback.
+`metadata-video-title` quietly did two jobs in Mux Player. It labelled the video for analytics, and it was the title the viewer read. Those are separate now, which is worth knowing before you go looking for the one attribute that used to do both:
 
-| Mux Player | Video.js v10 |
-|---|---|
-| `metadata-video-title` (as display text) | `content-title` / `contentTitle` on the player |
-| `poster` | `poster` / `poster` on the player — or let `<mux-video>` derive it |
-| `placeholder` | `poster-placeholder` / `posterPlaceholder` on the player |
+- For analytics, it's `metadata.video_title` on `<mux-data>`.
+- For display, it's `content-title` on the player.
 
-Note that `metadata-video-title` did two jobs in Mux Player: it labelled the video for analytics *and* it was the display title. Those are separate now — `<mux-data>`'s `metadata.video_title` for analytics, `content-title` for what the viewer reads. The video skins render the title in the top-left, and hide the region entirely when there's no title.
-
-The placeholder is a **CSS image**, not a URL, and it's painted as the poster image's own background. Bake the blur into the image the way an image pipeline already hands one back:
+Display information sits on the player rather than the media so that any component can read it:
 
 ```html
-<video-player poster-placeholder="url('data:image/webp;base64,…')">
+<video-player content-title="Test VOD" poster="https://image.mux.com/…" poster-placeholder="url('data:image/webp;base64,…')">
 ```
 
-Because `<mux-video>` reports a poster it derived from the playback ID, setting `poster` on the player is an override, not a requirement. Set `default-poster` instead when you want a fallback that only applies if the media has nothing.
+In React those are props on `Player.Provider`: `contentTitle`, `poster`, and `posterPlaceholder`. The video skins render the title in the top-left corner, and hide that whole region when there's no title, so you don't get an empty gradient.
 
-### Fate 5 · Becomes a composition choice
+Each of these resolves through a chain, which is what makes the Mux integration feel automatic. The player prefers what you set, falls back to what the media reports, then falls back to a default you supply:
 
-You set it on a component, or change the component tree. See [Customizing your player](#customizing-your-player).
+```
+what you set  →  what <mux-video> derived  →  your default  →  nothing
+```
 
-| Mux Player | Where it lives now |
-|---|---|
-| hide or reorder a control (`--play-button: none`) | omit or move that component in the tree |
-| `nohotkeys` / `hotkeys` | `media-hotkey` elements |
-| `forward-seek-offset` / `backward-seek-offset` | `value` on the seek hotkeys and gestures |
-| `accent-color` / `primary-color` / `secondary-color` | `--media-accent-color` |
-| `theme` | pick the default or minimal skin |
-| `audio` | the audio player and audio skin, with `<mux-audio>` |
-| `playbackrates` | not configurable yet ([#1404](https://github.com/videojs/v10/issues/1404)) |
-| chapters, cue points | see [Chapters and cue points](#chapters-and-cue-points) |
+That's why the first example got a poster without asking. `<mux-video>` derived one and nothing overrode it. Setting `poster` on the player replaces that; setting `default-poster` only fills in when the media has nothing to offer.
 
----
+The placeholder is the blurred stand-in shown while the real poster loads, Mux Player's `placeholder`. Two differences: it's a CSS image rather than a bare URL, and the blur has to be baked into the image. Image pipelines like Next.js already hand you a pre-blurred data URL, so this is usually what you already have.
 
-## Customizing your player
+## Customize your player
 
-Three levels, lightest to heaviest.
+Mux Player gives you attributes and documented CSS variables. Past that, you're stuck. Video.js gives you three levels, and you should try them in order.
 
-**1. Use the skin as-is.** `video-skin` / `VideoSkin` for the modern frosted look, `video-minimal-skin` / `MinimalVideoSkin` for something closer to a classic control bar. Both include the controls, a settings menu that appears when quality, speed, audio tracks, or captions are available, tooltips, hotkeys, gestures, and captions.
+### Level 1: pick a skin
 
-**2. Restyle it.** Override `--media-*` custom properties. The brand-color case Mux Player covers with `accent-color`:
+Two are packaged. `video-skin` is a modern, frosted look. `video-minimal-skin` is closer to a classic control bar. Both bring controls, tooltips, captions, keyboard shortcuts, touch gestures, and a settings menu that appears when there's something to put in it.
+
+In React they're `VideoSkin` and `MinimalVideoSkin`, and each comes in a CSS and a Tailwind variant.
+
+### Level 2: restyle it
+
+Set custom properties. The common case, a brand color:
 
 ```css
 /* Mux Player */
@@ -252,11 +236,13 @@ video-skin {
 }
 ```
 
-`--media-accent-color` reaches the sliders, active buttons, and accent surfaces. `--media-accent-text-color` overrides the contrasting text color the skin otherwise derives for you.
+`--media-accent-color` reaches the sliders, the active buttons, and the accent surfaces. Video.js derives a readable text color to sit on top of it; override that with `--media-accent-text-color` if you'd rather choose.
 
-**3. Eject.** Copy the skin's component tree into your project and edit it, the way you would a shadcn component. The packaged skin's source *is* that tree, so ejecting starts as copy-and-paste.
+### Level 3: eject
 
-Ejecting is what the per-control knobs require. The packaged skins bake their seek step into the hotkeys and gestures, so Mux Player's one-character `forward-seek-offset="30"` becomes editing those template lines:
+**Ejecting** means copying the skin's source into your project and editing it, the way you would a shadcn component. The packaged skin isn't compiled magic — it's a tree of `media-*` components — so ejecting starts as copy and paste.
+
+This is the level that per-control tweaks need, and it's a genuine step up in effort from a Mux Player attribute. `forward-seek-offset="30"` was one character. In Video.js, the skins bake their seek step into their keyboard shortcuts and gestures, so changing it means editing those lines:
 
 ```html
 <media-hotkey keys="ArrowRight" action="seekStep" value="30"></media-hotkey>
@@ -264,13 +250,13 @@ Ejecting is what the per-control knobs require. The packaged skins bake their se
 <media-gesture type="doubletap" action="seekStep" value="30" region="right"></media-gesture>
 ```
 
-Neither packaged video skin includes seek *buttons*. `media-seek-button` exists and takes `seconds` (default 30), so add it to your tree if your users expect the skip controls Mux Player's themes show.
+While you're in there: neither packaged video skin includes skip *buttons*. Mux Player's themes show them, so if your users expect them, add `media-seek-button`, which takes `seconds` and defaults to 30.
 
-An ejected HTML player with 30-second skip buttons, no volume control, and two hotkeys:
+Here's an ejected player with skip buttons, no volume control, and two shortcuts. Note that the import gives you the components without a skin, and that you now assemble the poster and title yourself:
 
 ```html
 <script type="module">
-  // Registers video-player, media-container, and every media-* control — no skin.
+  // Registers video-player, media-container, and every media-* control. No skin.
   import '@videojs/html/video/ui';
   import '@videojs/html/media/mux-video';
 </script>
@@ -296,7 +282,7 @@ An ejected HTML player with 30-second skip buttons, no volume control, and two h
       </media-time-slider>
       <media-time type="duration"></media-time>
       <media-fullscreen-button></media-fullscreen-button>
-      <!-- no media-mute-button → volume simply doesn't render -->
+      <!-- No media-mute-button, so no volume control renders. -->
     </media-controls>
 
     <media-hotkey keys="Space" action="togglePaused"></media-hotkey>
@@ -305,17 +291,17 @@ An ejected HTML player with 30-second skip buttons, no volume control, and two h
 </video-player>
 ```
 
-In React it's the same idea: drop `VideoSkin` and compose the `@videojs/react` control components inside `Player.Provider` yourself.
+Removing a control is removing a line. That's the trade you get for the extra setup.
 
----
+React works the same way: drop `VideoSkin` and compose the control components inside `Player.Provider` yourself.
 
-## Advanced migration
+## Read player state
 
-### Events and player state
+### HTML
 
-**HTML.** `<mux-video>` is a real media element, so every standard media event (`play`, `timeupdate`, `ended`, `error`, …) fires on it, plus `streamtypechange`, `targetlivewindowchange`, `sourcechange`, and `contentdatachange`. Mux Player event listeners port directly.
+`<mux-video>` is a real media element, so every media event you already listen for still fires on it: `play`, `timeupdate`, `ended`, `error`, and the rest. Mux Player listeners port directly. There are a few extras: `streamtypechange`, `targetlivewindowchange`, `sourcechange`, and `contentdatachange`.
 
-For UI state rather than media state, use `PlayerController` in a custom element, with the feature selectors:
+For UI state rather than media state, use `PlayerController` inside a custom element. Give it a selector for the feature you care about and it keeps your element in sync:
 
 ```js
 import { PlayerController, playerContext, selectTime } from '@videojs/html';
@@ -325,7 +311,9 @@ class MyElapsed extends ReactiveElement {
 }
 ```
 
-**React.** There are **no `on*` props**. Subscribe to reactive state through the hook `createPlayer` returns:
+### React
+
+There are **no `on*` props**. Read state through the hook `createPlayer` handed you:
 
 ```tsx
 const Player = createPlayer({ features: videoFeatures });
@@ -336,43 +324,74 @@ function Elapsed() {
 }
 ```
 
-Selectors are available for each feature — `selectPlayback`, `selectTime`, `selectVolume`, `selectQuality`, `selectLive`, `selectTextTrack`, `selectMetadata`, and the rest. For raw media events, attach listeners to a `ref` on `MuxVideo`.
+Every feature has a selector (`selectPlayback`, `selectTime`, `selectVolume`, `selectQuality`, `selectLive`, `selectTextTrack`, `selectMetadata`, and so on) for when you want a whole slice rather than one value.
 
-This is the biggest single React migration cost. `onPlay`, `onTimeUpdate`, `onEnded`, and `onError` don't have prop equivalents, so those become hooks or ref listeners ([#1426](https://github.com/videojs/v10/issues/1426), [#1041](https://github.com/videojs/v10/issues/1041)).
+Be honest with yourself about this one when you plan the work. If your app leans on `onPlay`, `onTimeUpdate`, `onEnded`, and `onError`, there's no line-by-line port; those become hooks, or listeners you attach to a `ref` on `MuxVideo` ([#1426](https://github.com/videojs/v10/issues/1426), [#1041](https://github.com/videojs/v10/issues/1041)).
 
-### Imperative control
+### Drive playback
 
 | Mux Player | Video.js v10 |
 |---|---|
-| `player.play()` / `pause()` | `media.play()` / `pause()`, or the store's `play` / `pause` / `togglePaused` |
+| `player.play()`, `player.pause()` | `media.play()`, `media.pause()`, or the store's `togglePaused` |
 | `player.currentTime = 10` | `media.currentTime = 10` |
-| `player.volume` / `muted` | `media.volume` / `media.muted` |
+| `player.volume`, `player.muted` | `media.volume`, `media.muted` |
 | `player.playbackRate` | `media.playbackRate`, or the store's `setPlaybackRate` |
-| `player.requestFullscreen()` | the store's `enterFullscreen` / `exitFullscreen` / `toggleFullscreen` |
-| `player.addChapters([…])` | add a `<track kind="chapters">` |
+| `player.requestFullscreen()` | the store's `enterFullscreen`, `exitFullscreen`, `toggleFullscreen` |
+| `player.addChapters([…])` | a `<track kind="chapters">`, covered below |
 
-### Styling and themes
+Anything that's a standard media property you set on the media. Anything the browser doesn't own — fullscreen, captions, quality — goes through the player, because the player is what tracks it.
 
-v10 ships **two** looks — default and minimal — each in a CSS and a Tailwind variant, against Mux Player's five themes. There's no runtime `theme=` switch; you pick the skin at import time.
+## Which Mux media should you use?
 
-That's a deliberate product difference rather than a missing feature: fewer, more composable looks, with ejection instead of a theme catalog. `gerwig` and `minimal` have reasonable analogs. `classic`, `microvideo`, and `news` don't ([#181](https://github.com/videojs/v10/issues/181) tracks one additional theme).
+You can skip this section until you hit one of the two problems in it.
 
-### Quality, live, audio, captions
+`<mux-video>` comes in two flavors, backed by two different playback engines, and the import path chooses:
 
-| Capability | Status | Notes |
+| Import | Engine | When |
 |---|---|---|
-| Live and DVR | 🟢 | Use the live player and live skins: `live-video-player`, `live-video-skin`, `liveVideoFeatures`. `streamType`, `targetLiveWindow`, `liveEdgeStart`, and `media-live-button`. |
-| Quality selection | 🟢 | `media-quality-radio-group` / `QualityRadioGroup`, in the settings menu. Manifest-level caps are `source.playback.maxResolution`. |
-| Multi-track audio | 🟢 | `media-audio-track-radio-group` / `AudioTrackRadioGroup`, in the settings menu. |
-| Captions and subtitles | 🟢 | `toggleSubtitles()`, `selectSubtitlesTrack()`, `media-captions-button`, `media-captions-radio-group`. Rendered natively. |
-| Timeline hover previews | 🟢 | Derived from the playback ID; no markup needed. |
-| Playback rates | 🟡 | The menu ships, but the rate set is fixed at `0.2`–`2` ([#1404](https://github.com/videojs/v10/issues/1404)). |
+| `.../media/mux-video` | hls.js | **The default. Start here.** |
+| `.../media/mux-video/spf` | SPF | You want a much smaller bundle and neither problem below applies. |
+| `.../media/mux-video/hls-js` | hls.js | You need to reach the hls.js instance or its settings directly. |
+
+SPF is Video.js's own playback engine, and it's the reason v10 can be as small as it is. It doesn't yet do two things hls.js does:
+
+- **TS-packaged media.** Mux's Plus quality assets are currently packaged as TS. If any of your catalog is Plus quality, stay on the default.
+- **DRM.** SPF doesn't license protected content.
+
+Both flavors register the same `<mux-video>` tag and take the same source, so moving between them is an import change and nothing else. Don't import both into one build; only one registration wins.
+
+The plan is for the default import to detect the content and pick the engine for you, so you won't have to think about this. Until then, the default is the safe choice. See the [MuxVideo and Legacy Formats PRD](https://app.notion.com/p/mux/PRD-Video-js-v10-MuxVideo-and-Legacy-Formats-38f97a7f89d080979189db5d688f7e74) for the full plan.
+
+`<mux-audio>` follows the same three paths, and pairs with the audio player and audio skins.
+
+## Live, quality, audio tracks, and captions
+
+Live streams use a different player and skin, because live has different state and a different UI:
+
+```html
+<live-video-player>
+  <live-video-skin>
+    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
+  </live-video-skin>
+</live-video-player>
+```
+
+In React that's `liveVideoFeatures` passed to `createPlayer`, with `LiveVideoSkin`. You get `streamType`, `targetLiveWindow`, and `liveEdgeStart` in state, plus a `media-live-button` that jumps to the live edge.
+
+For everything else, the settings menu in both skins appears on its own when there's something to show:
+
+| What | Component | Notes |
+|---|---|---|
+| Quality | `media-quality-radio-group` | Lets a viewer pick a rendition. To cap the manifest instead, use `source.playback.maxResolution`. |
+| Audio tracks | `media-audio-track-radio-group` | For multi-language audio. |
+| Captions | `media-captions-button`, `media-captions-radio-group` | Rendered by the browser. |
+| Speed | `media-playback-rate-radio-group` | The rate set is fixed at `0.2`–`2` for now ([#1404](https://github.com/videojs/v10/issues/1404)). |
 
 Caption *styling* is limited to the positioning custom properties the skins expose. There's no equivalent of a text-track settings dialog.
 
-### Chapters and cue points
+## Chapters and cue points
 
-**Chapters** work as content, not as an API. Add a `<track kind="chapters">` and the packaged skins segment the time slider and show the chapter title on hover:
+Chapters are content, not an API call. Add a chapters track and the skins segment the time slider and show the chapter title on hover:
 
 ```html
 <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8">
@@ -380,13 +399,13 @@ Caption *styling* is limited to the positioning custom properties the skins expo
 </mux-video>
 ```
 
-Mux Player's `addChapters()` has no direct equivalent; you supply a chapters track instead. The store exposes `chaptersCues` as a read-only array, but there's **no `activeChapter` getter and no `chapterchange` event** ([#1441](https://github.com/videojs/v10/issues/1441)), so app code that drives its own UI from the active chapter needs to derive it from `currentTime` and `chaptersCues`.
+There's no `addChapters()`. If you were building that VTT on the fly, you'll still need to, but you point the player at it instead of passing an array.
 
-**Cue points** (`addCuePoint`, `cuePoints`, `activeCuePoint`, `cuepointchange`) are not in yet ([#1442](https://github.com/videojs/v10/issues/1442), [#1267](https://github.com/videojs/v10/issues/1267)).
+Two gaps to plan around. The player exposes `chaptersCues` as a read-only array, but there's no `activeChapter` and no `chapterchange` event ([#1441](https://github.com/videojs/v10/issues/1441)). If your app highlights the current chapter in its own UI, derive it from `currentTime` and `chaptersCues`. Cue points aren't implemented at all ([#1442](https://github.com/videojs/v10/issues/1442), [#1267](https://github.com/videojs/v10/issues/1267)).
 
-### Secure playback, DRM, and tokens
+## Signed playback and DRM
 
-**Signed playback** works. Each token is a param in its own group of the source, and each is audience-checked before a URL is built, so a token in the wrong slot produces no URL rather than a rejected request:
+**Signed playback works today.** Each token is a parameter in its own group, and Video.js checks each one's audience before building a URL, so a token in the wrong slot produces no URL rather than a request Mux would reject:
 
 ```js
 muxVideo.source = {
@@ -397,9 +416,9 @@ muxVideo.source = {
 };
 ```
 
-Neither player refreshes tokens. Mux Player at least *detects* an expired JWT and shows a friendly message; v10 doesn't surface that yet, and has no auto-refresh ([#1432](https://github.com/videojs/v10/issues/1432)).
+Neither player refreshes tokens. Mux Player at least notices an expired one and shows a friendly message; Video.js doesn't surface that yet ([#1432](https://github.com/videojs/v10/issues/1432)).
 
-**DRM** works on the default hls.js-backed `<mux-video>` and on native HLS. Give it a license token and the FairPlay, Widevine, and PlayReady license servers are all derived from it, plus the FairPlay application certificate:
+**DRM works on the default `<mux-video>`** and on native HLS. Hand it a license token and Video.js derives the FairPlay, Widevine, and PlayReady license servers from it, along with the FairPlay application certificate:
 
 ```js
 muxVideo.source = {
@@ -409,35 +428,35 @@ muxVideo.source = {
 };
 ```
 
-DRM playback is always signed, so `playback.token` is required alongside `drm.token`. You can also name license servers yourself, keyed by EME key system, for content Mux doesn't license — those win key by key over the derived URLs.
+DRM playback is always signed, so `drm.token` needs a `playback.token` beside it. For content Mux doesn't license, name license servers yourself, keyed by key system; yours win over the derived ones key by key.
 
-The SPF-backed flavor does **not** license DRM ([#1411](https://github.com/videojs/v10/issues/1411)), which is one of the two reasons to stay on the default import.
+The SPF flavor doesn't license DRM ([#1411](https://github.com/videojs/v10/issues/1411)), which is one of the two reasons to stay on the default import.
 
-### Escape hatches
+## Escape hatches
 
 | Mux Player | Video.js v10 |
 |---|---|
 | `media.nativeEl` | `.target` on the element, or a `ref` to the `video` in React |
-| hls.js instance | `.host.engine`, on the hls.js-backed flavor. In React, reachable through a media ref |
-| `prefer-playback` | choose the media component: `<mux-video>`, `<mux-video>` from `/spf`, or `<native-hls-video>` |
+| the hls.js instance | `.host.engine` on the hls.js-backed flavor; in React, through a media ref |
+| `prefer-playback` | pick the media: `<mux-video>`, `<mux-video>` from `/spf`, or `<native-hls-video>` |
 
-Program Date Time has no convenience surface: there's no `getStartDate()` or `currentPdt`. Only `liveEdgeStart` and `targetLiveWindow` are exposed. Reach into the engine directly if you need PDT.
-
----
+Program Date Time has no convenience surface: no `getStartDate()`, no `currentPdt`. The player exposes `liveEdgeStart` and `targetLiveWindow`; for PDT itself, reach into the engine.
 
 ## Known gaps
 
-- Playback rates are a fixed set (`0.2`–`2`); choosing them isn't supported yet ([#1404](https://github.com/videojs/v10/issues/1404)).
-- Chapters expose `chaptersCues` but no `activeChapter` and no `chapterchange` event ([#1441](https://github.com/videojs/v10/issues/1441)). There's no `addChapters()`; use a chapters track.
-- Cue points are not implemented ([#1442](https://github.com/videojs/v10/issues/1442), [#1267](https://github.com/videojs/v10/issues/1267)).
-- React has no `on*` event props. Subscribe with `usePlayer` and selectors, or attach listeners to a media ref ([#1426](https://github.com/videojs/v10/issues/1426), [#1041](https://github.com/videojs/v10/issues/1041)).
-- The SPF-backed `<mux-video>` doesn't license DRM and doesn't play TS-packaged media ([#1411](https://github.com/videojs/v10/issues/1411)). The default hls.js-backed flavor does both.
-- Signed playback works, but there's no expired-token message and no token auto-refresh ([#1432](https://github.com/videojs/v10/issues/1432)).
-- There's no `playback-id` attribute; use `src` with a stream URL, or assign `source` in JS.
+Ordered roughly by how many migrations they'll touch.
+
+- React has no `on*` event props. Use `usePlayer` and selectors, or listeners on a media ref ([#1426](https://github.com/videojs/v10/issues/1426), [#1041](https://github.com/videojs/v10/issues/1041)).
+- Playback rates are fixed at `0.2`–`2`; you can't choose the set yet ([#1404](https://github.com/videojs/v10/issues/1404)).
+- Two skins, against Mux Player's five themes, and no runtime theme switch ([#181](https://github.com/videojs/v10/issues/181)). That's a deliberate trade — fewer looks, each one ejectable — but it's a real difference if you shipped `theme="classic"`.
+- Chapters have no `activeChapter` and no `chapterchange` event ([#1441](https://github.com/videojs/v10/issues/1441)), and no `addChapters()`.
+- Cue points aren't implemented ([#1442](https://github.com/videojs/v10/issues/1442), [#1267](https://github.com/videojs/v10/issues/1267)).
+- No `playback-id` attribute; use a `src` URL or assign `source` in JavaScript.
 - Lazy loading (`loading="viewport|page"`) has no equivalent.
-- Two skins against Mux Player's five themes, and no runtime theme switch ([#181](https://github.com/videojs/v10/issues/181)).
-- Neither packaged video skin includes seek buttons; add `media-seek-button` yourself.
-- The controls auto-hide delay is not configurable, and there's no `disabled` state for the controls.
-- Player setting persistence — volume, captions language, rate, quality — has no equivalent ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` instead.
-- Caption styling is limited to the skins' positioning custom properties; there's no text-track settings dialog.
-- Smaller conveniences with homes: resolution controls [#1415](https://github.com/videojs/v10/issues/1415), restore-last-volume and smart unmute [#1425](https://github.com/videojs/v10/issues/1425), debug mode [#1406](https://github.com/videojs/v10/issues/1406), autoplay-with-muted-fallback [#1039](https://github.com/videojs/v10/issues/1039). Several sit under the parity epic [#1535](https://github.com/videojs/v10/issues/1535).
+- The SPF `<mux-video>` doesn't license DRM and doesn't play TS-packaged media ([#1411](https://github.com/videojs/v10/issues/1411)). The default flavor does both.
+- Signed playback works, but there's no expired-token message and no auto-refresh ([#1432](https://github.com/videojs/v10/issues/1432)).
+- Neither packaged video skin includes skip buttons; add `media-seek-button`.
+- The controls auto-hide delay isn't configurable, and there's no disabled state for the controls.
+- Nothing persists between sessions: volume, captions language, speed, quality ([#944](https://github.com/videojs/v10/issues/944)). Default subtitle language is tracked at [#1423](https://github.com/videojs/v10/issues/1423), though Mux users can set `source.playback.defaultSubtitlesLang` and let the manifest decide.
+- Caption styling is limited to the skins' positioning custom properties.
+- Smaller conveniences with homes: resolution controls [#1415](https://github.com/videojs/v10/issues/1415), restore-last-volume and smart unmute [#1425](https://github.com/videojs/v10/issues/1425), debug mode [#1406](https://github.com/videojs/v10/issues/1406), autoplay with muted fallback [#1039](https://github.com/videojs/v10/issues/1039). Several sit under the parity epic [#1535](https://github.com/videojs/v10/issues/1535).
