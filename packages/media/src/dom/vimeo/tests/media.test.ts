@@ -388,6 +388,9 @@ describe('VimeoMedia', () => {
 
   it('dispatches `contentdatachange` when the title arrives and when it is cleared', async () => {
     const media = new VimeoMedia();
+    // There is no embed to build without a source, so the player only exists once
+    // one is set; `attachAndLoad` is skipped here to watch the attach itself.
+    media.src = '76979871';
     const handler = vi.fn();
     media.addEventListener('contentdatachange', handler);
 
@@ -427,6 +430,7 @@ describe('VimeoMedia', () => {
 
   it('reports a blank title as an absent key rather than an empty string', async () => {
     const media = new VimeoMedia();
+    media.src = '76979871';
     const iframe = createIframe();
     media.attach(iframe);
 
