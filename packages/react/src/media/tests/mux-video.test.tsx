@@ -80,6 +80,15 @@ describe('MuxVideo', () => {
     expect(media.source?.maxAutoResolution).toBe('720p');
   });
 
+  it('forwards the player-size caps from the source prop to the media', () => {
+    const { media } = renderWithMedia(
+      <MuxVideo source={{ playbackId: 'abc123', capRenditionToPlayerSize: false, minAutoResolution: '1080p' }} />
+    );
+
+    expect(media.source?.capRenditionToPlayerSize).toBe(false);
+    expect(media.source?.minAutoResolution).toBe('1080p');
+  });
+
   it('adds a storyboard track inferred from the source prop', () => {
     const { container } = render(<MuxVideo source={{ playbackId: 'abc123' }} />);
 

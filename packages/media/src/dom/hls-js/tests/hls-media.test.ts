@@ -647,7 +647,9 @@ describe('HlsJsMedia', () => {
       it('caps to the element size by default', () => {
         const { media } = setupMse();
 
-        expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+        // 320 device px is covered by the 640×360 rung, but the default floor
+        // holds the ceiling at 720p rather than dropping that far.
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(1);
       });
 
       it('stops capping to the element size when switched off', () => {
@@ -683,7 +685,51 @@ describe('HlsJsMedia', () => {
 
         media.source = { src: M3U8 };
 
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(1);
+      });
+    });
+
+    describe('minAutoResolution', () => {
+      it('floors the size cap at the resolution named', () => {
+        const { media } = setupMse({ minAutoResolution: '1080p' });
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('does not raise an explicit maxAutoResolution', () => {
+        const { media } = setupMse({ maxAutoResolution: '360p', minAutoResolution: '1080p' });
+
+        // The ceiling the caller asked for is the stricter instruction. A floor
+        // bounds how far the element's size may cap, and nothing else.
         expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+      });
+
+      it('weakens to nothing at the bottom of the ladder', () => {
+        // There is no rung under 270p, so naming it lifts the floor for any
+        // real ladder — the way to ask for strict player-size capping.
+        const { media } = setupMse({ minAutoResolution: '270p' });
+
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(0);
+      });
+
+      it('does not recreate the engine when only the floor changes', () => {
+        const { media } = setupMse({ minAutoResolution: '720p' });
+        const engine = media.engine;
+
+        media.source = { src: M3U8, minAutoResolution: '1080p' };
+        media.load();
+
+        expect(media.engine).toBe(engine);
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
+      });
+
+      it('keeps the floor when only src changes', () => {
+        const { media } = setupMse({ minAutoResolution: '1080p' });
+
+        media.src = 'https://example.com/other.m3u8';
+
+        expect(media.source?.minAutoResolution).toBe('1080p');
+        expect(cappedIndex(media, SMALL_PLAYER)).toBe(2);
       });
     });
 
@@ -698,11 +744,12 @@ describe('HlsJsMedia', () => {
         type: ContentTypes.M3U8,
         preferPlayback: 'native',
         capRenditionToPlayerSize: false,
+        minAutoResolution: '720p',
       };
       media.load();
 
       expect(warn).toHaveBeenCalledWith(
-        expect.stringContaining('`capRenditionToPlayerSize` requires the hls.js (MSE) engine')
+        expect.stringContaining('`capRenditionToPlayerSize`, `minAutoResolution` require the hls.js (MSE) engine')
       );
     });
   });

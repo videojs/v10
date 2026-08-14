@@ -235,6 +235,49 @@ describe('MuxMedia', () => {
     media.destroy();
   });
 
+  it('inherits the player-size caps without restarting playback', async () => {
+    vi.spyOn(Hls, 'isSupported').mockReturnValue(true);
+
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    media.source = { playbackId: 'abc123', capRenditionToPlayerSize: false };
+    await flushLoad();
+
+    const engine = media.engine;
+    const loadstart = vi.fn();
+    media.addEventListener('loadstart', loadstart);
+
+    media.source = { playbackId: 'abc123', capRenditionToPlayerSize: true, minAutoResolution: '1080p' };
+    await flushLoad();
+
+    expect(media.source?.capRenditionToPlayerSize).toBe(true);
+    expect(media.source?.minAutoResolution).toBe('1080p');
+    expect(media.engine).toBe(engine);
+    expect(loadstart).not.toHaveBeenCalled();
+
+    media.destroy();
+  });
+
+  it('keeps the client-side floor separate from the server-side one it resembles', async () => {
+    const media = new MuxMedia();
+    media.attach(document.createElement('video'));
+    // `playback.minResolution` asks Mux which renditions to put in the manifest.
+    // `minAutoResolution` is unrelated: it bounds how far the element's own size
+    // may cap what arrives. Only the former belongs in the URL.
+    media.source = {
+      playbackId: 'abc123',
+      preferPlayback: 'native',
+      playback: { minResolution: '480p' },
+      minAutoResolution: '720p',
+    };
+    await flushLoad();
+
+    expect(media.src).toBe('https://stream.mux.com/abc123.m3u8?min_resolution=480p');
+    expect(media.source?.minAutoResolution).toBe('720p');
+
+    media.destroy();
+  });
+
   it('reloads when the playback id changes', async () => {
     const media = new MuxMedia();
     media.attach(document.createElement('video'));

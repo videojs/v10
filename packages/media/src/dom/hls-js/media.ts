@@ -90,7 +90,7 @@ export interface HlsSource {
    * selection is held to the smallest rendition that still covers the element,
    * measured in device pixels — a `2` device pixel ratio asks for twice the
    * renditions a CSS measurement would. The cap follows the element as it is
-   * resized.
+   * resized, and `minAutoResolution` bounds how far down it can go.
    *
    * Set it to `false` for a player whose layout size understates what it needs,
    * such as one that goes fullscreen without a resize, or one being measured
@@ -109,6 +109,25 @@ export interface HlsSource {
    * and takes an engine rebuild to change.
    */
   capRenditionToPlayerSize?: boolean | undefined;
+  /**
+   * Lowest resolution `capRenditionToPlayerSize` may cap down to. Defaults to
+   * `'720p'`.
+   *
+   * Not a quality floor. It bounds the size-derived cap and nothing else: when
+   * bandwidth is poor, adaptive selection still drops below it, because the cap
+   * is a ceiling and selection stays free underneath. Nor does it raise an
+   * explicit `maxAutoResolution` — asking for at most `'360p'` alongside a
+   * `'720p'` floor yields `'360p'`.
+   *
+   * The default exists because the low rungs of a ladder are there for poor
+   * network conditions, and capping a small player to them looks worse than its
+   * size suggests. Name a lower rung to weaken the floor, or `'270p'` to lift it
+   * for any real ladder.
+   *
+   * Applied live — changing it never rebuilds the playback engine. Requires the
+   * hls.js (MSE) engine; native HLS playback ignores it.
+   */
+  minAutoResolution?: MediaResolution | undefined;
   /**
    * Playback options, keyed by the engine that reads them. Only one of the two
    * engines below ends up playing, and each reads only its own key.
@@ -228,7 +247,8 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
   set src(src: string) {
     // `src` says which source to play; every other field says how to play it, so
     // they carry over.
-    const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize } = this.#source ?? {};
+    const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize, minAutoResolution } =
+      this.#source ?? {};
     const next: HlsSource = {
       ...(type && { type }),
       ...(preferPlayback && { preferPlayback }),
@@ -238,6 +258,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       // Carried on definedness, not truthiness: `false` is the whole point of
       // naming this one, and it is the falsy value.
       ...(capRenditionToPlayerSize !== undefined && { capRenditionToPlayerSize }),
+      ...(minAutoResolution && { minAutoResolution }),
       ...(src && { src }),
     };
 
@@ -348,13 +369,14 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
       // Read the stored source, not the `source` getter: subclasses override the
       // getter to return what was assigned to them, while the fields below come
       // from what they resolved and handed down (Mux fills in the DRM options).
-      const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize } = this.#source ?? {};
+      const { type, preferPlayback, drm, engine, maxAutoResolution, capRenditionToPlayerSize, minAutoResolution } =
+        this.#source ?? {};
       const { hlsJs, nativeHls } = engine ?? {};
       const contentType = type ?? inferContentType(this.src);
       const useMse = Hls.isSupported() && contentType === ContentTypes.M3U8 && preferPlayback !== PlaybackTypes.NATIVE;
 
       if (__DEV__ && !useMse) {
-        const ignored = Object.entries({ maxAutoResolution, capRenditionToPlayerSize })
+        const ignored = Object.entries({ maxAutoResolution, capRenditionToPlayerSize, minAutoResolution })
           .filter(([, value]) => value !== undefined)
           .map(([key]) => `\`${key}\``);
 
@@ -434,6 +456,7 @@ export class HlsJsMedia extends HTMLVideoElementHost implements HlsMediaProps {
     if (this.#delegate instanceof HlsJsOnlyMedia) {
       this.#delegate.maxAutoResolution = this.#source?.maxAutoResolution;
       this.#delegate.capRenditionToPlayerSize = this.#source?.capRenditionToPlayerSize;
+      this.#delegate.minAutoResolution = this.#source?.minAutoResolution;
     }
   }
 

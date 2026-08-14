@@ -251,17 +251,36 @@ video.source = { src: 'https://example.com/stream.m3u8', capRenditionToPlayerSiz
 
 The element is measured in device pixels, so a `2` device pixel ratio asks for twice the rendition a CSS measurement would — a 640px-wide player on a retina screen still gets 720p. Switch the cap off for a player whose layout size understates what it needs, such as one that goes fullscreen without a resize.
 
-### Three things that sound alike
+`minAutoResolution` bounds how far down that cap can reach, and defaults to `'720p'`:
 
-Three separate mechanisms bound which rendition plays, and they're easy to mistake for each other:
+<FrameworkCase frameworks={["react"]}>
+```tsx
+<HlsJsVideo source={{ src: 'https://example.com/stream.m3u8', minAutoResolution: '480p' }} />
+```
+</FrameworkCase>
+
+<FrameworkCase frameworks={["html"]}>
+```ts
+video.source = { src: 'https://example.com/stream.m3u8', minAutoResolution: '480p' };
+```
+</FrameworkCase>
+
+**It is not a quality floor.** It bounds the size-derived cap and nothing else. When bandwidth is poor, adaptive selection still drops below it — the cap is a ceiling, and selection stays free underneath. It also never raises an explicit `maxAutoResolution`: ask for at most `'360p'` alongside a `'720p'` floor and you get `'360p'`.
+
+The default is there because the low rungs of a ladder exist for poor network conditions, and capping a small player down to them looks worse than its size suggests. Name a lower rung to weaken the floor, or `'270p'` to lift it for any real ladder.
+
+### Four things that sound alike
+
+Four separate mechanisms bound which rendition plays, and they're easy to mistake for each other:
 
 | Option | Side | What it does |
 |---|---|---|
 | `source.playback.maxResolution` | Server | A Mux query param. Trims the manifest, so higher renditions never arrive — not even by hand. |
 | `source.maxAutoResolution` | Client | A ceiling on automatic selection. Everything still arrives and stays selectable by hand. |
 | `source.capRenditionToPlayerSize` | Client | The same kind of ceiling, derived from the element's rendered size and moving with it. |
+| `source.minAutoResolution` | Client | A bound on the one above. Not a quality minimum, and not related to `playback.minResolution`. |
 
-`playback.maxResolution` is the server-side one: it decides what the manifest carries. The other two only bound what adaptive selection picks from whatever does arrive.
+`playback.maxResolution` and `playback.minResolution` are the server-side pair: they decide what the manifest carries. The other three only bound what adaptive selection picks from whatever does arrive.
 
 ## DRM protected sources
 
@@ -365,6 +384,8 @@ video.source = {
 </FrameworkCase>
 
 `playback` params ride along in the URL, so `playback.maxResolution` decides which renditions the manifest carries in the first place. `maxAutoResolution` is the other half of that pair: it caps what adaptive selection picks from the renditions that do arrive. Use `playback.maxResolution` when a viewer should never get 4K, and `maxAutoResolution` when they should be able to ask for it.
+
+The same split applies at the bottom of the ladder, and the names are close enough to be worth restating: `playback.minResolution` asks Mux to leave the lowest renditions out of the manifest, while `minAutoResolution` is a client-side bound on the player-size cap. They are unrelated.
 
 Setting a Mux stream URL as `src` works too — the element parses the playback ID and query params back out into `source`. To play something Mux doesn't host, name it with `src` inside `source`; engine options still apply.
 

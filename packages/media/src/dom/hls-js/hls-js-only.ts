@@ -11,7 +11,7 @@ import type {
 } from '../../core/types';
 import { HTMLVideoElementHost } from '../video-host';
 import { HlsJsMediaAirPlayMixin } from './airplay-bridge';
-import { createCapLevelController, type RenditionCapPolicy } from './cap-level';
+import { createCapLevelController, DEFAULT_MIN_AUTO_RESOLUTION, type RenditionCapPolicy } from './cap-level';
 import { setupDrm } from './drm';
 import { HlsJsMediaErrorsMixin } from './errors';
 import { HlsJsMediaLiveMixin } from './live';
@@ -43,6 +43,7 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
   #capPolicy: RenditionCapPolicy = {
     maxAutoResolution: undefined,
     capToPlayerSize: true,
+    minAutoResolution: DEFAULT_MIN_AUTO_RESOLUTION,
   };
 
   constructor(params: HlsJsOnlyMediaParams) {
@@ -84,6 +85,18 @@ class HlsJsOnlyMediaBase extends HTMLVideoElementHost implements MediaEngineHost
     const next = value ?? true;
     if (this.#capPolicy.capToPlayerSize === next) return;
     this.#capPolicy.capToPlayerSize = next;
+    this.#capPolicy.controller?.apply();
+  }
+
+  /** Floor on the player-size cap. See `HlsSource.minAutoResolution`. */
+  get minAutoResolution(): MediaResolution {
+    return this.#capPolicy.minAutoResolution ?? DEFAULT_MIN_AUTO_RESOLUTION;
+  }
+
+  set minAutoResolution(value: MediaResolution | undefined) {
+    const next = value ?? DEFAULT_MIN_AUTO_RESOLUTION;
+    if (this.#capPolicy.minAutoResolution === next) return;
+    this.#capPolicy.minAutoResolution = next;
     this.#capPolicy.controller?.apply();
   }
 

@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { MediaResolution } from '../../../core/types';
 import {
   createCapLevelController,
+  levelIndexAtOrAbove,
   levelIndexAtOrBelow,
   type RenditionCapPolicy,
   resolutionToPixelArea,
@@ -73,14 +74,27 @@ interface SetupOptions {
   maxAutoResolution?: MediaResolution | undefined;
   /** Defaults to on, as a source without the key does. */
   capToPlayerSize?: boolean;
+  /**
+   * Left unset by default, unlike a source, whose absent key means `'720p'`.
+   * The floor and the size cap it bounds are then measurable one at a time; the
+   * default itself is a property of the source layer, covered there.
+   */
+  minAutoResolution?: MediaResolution | undefined;
   levels?: FakeLevel[];
   config?: Record<string, unknown>;
   /** Rendered size of the video element; omit to leave it unmeasurable. */
   playerSize?: { width: number; height: number };
 }
 
-function setup({ maxAutoResolution, capToPlayerSize = true, levels = LADDER, config, playerSize }: SetupOptions = {}) {
-  const policy: RenditionCapPolicy = { maxAutoResolution, capToPlayerSize };
+function setup({
+  maxAutoResolution,
+  capToPlayerSize = true,
+  minAutoResolution,
+  levels = LADDER,
+  config,
+  playerSize,
+}: SetupOptions = {}) {
+  const policy: RenditionCapPolicy = { maxAutoResolution, capToPlayerSize, minAutoResolution };
   const engine = createEngine(levels, config);
   const Controller = createCapLevelController(policy);
   const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
@@ -193,6 +207,42 @@ describe('levelIndexAtOrBelow', () => {
   });
 });
 
+describe('levelIndexAtOrAbove', () => {
+  it('picks the smallest level at or above the floor', () => {
+    expect(levelIndexAtOrAbove(asLevels(LADDER), '720p')).toBe(2);
+    expect(levelIndexAtOrAbove(asLevels(LADDER), '540p')).toBe(2);
+  });
+
+  it('admits the rendition a floor is named after', () => {
+    // Each rung satisfies its own floor rather than reaching for the next one —
+    // 854×480 is the case a strict 16:9 area would get wrong.
+    expect(levelIndexAtOrAbove(asLevels(LADDER), '360p')).toBe(0);
+    expect(levelIndexAtOrAbove(asLevels(LADDER), '480p')).toBe(1);
+    expect(levelIndexAtOrAbove(asLevels(LADDER), '1440p')).toBe(4);
+  });
+
+  it('has no floor to apply without a resolution', () => {
+    expect(levelIndexAtOrAbove(asLevels(LADDER), undefined)).toBeUndefined();
+  });
+
+  it('has no floor to apply without levels', () => {
+    expect(levelIndexAtOrAbove(asLevels([]), '720p')).toBeUndefined();
+  });
+
+  it('falls back to the largest level when every rendition is below the floor', () => {
+    // A floor nothing satisfies cannot cap anything, so it points at the top.
+    expect(levelIndexAtOrAbove(asLevels(LADDER), '2160p')).toBe(4);
+  });
+
+  it('measures area rather than height, so a narrow rendition does not clear a floor its height would', () => {
+    // 960×720 is 720 tall but carries a quarter fewer pixels than 16:9 720p, so
+    // a '720p' floor reaches past it — matching how a cap judges the same level.
+    const anamorphic = [level(960, 720, 1_500_000), level(1920, 1080, 5_000_000)];
+
+    expect(levelIndexAtOrAbove(asLevels(anamorphic), '720p')).toBe(1);
+  });
+});
+
 describe('createCapLevelController', () => {
   it('leaves the player-size result alone when no cap is set', () => {
     const { controller, topIndex } = setup({ playerSize: { width: 1920, height: 1080 } });
@@ -271,7 +321,11 @@ describe('createCapLevelController', () => {
   });
 
   it('caps automatic selection only, leaving the ladder whole for manual choice', () => {
-    const { engine } = setup({ maxAutoResolution: '360p', playerSize: { width: 320, height: 180 } });
+    const { engine } = setup({
+      maxAutoResolution: '360p',
+      minAutoResolution: '720p',
+      playerSize: { width: 320, height: 180 },
+    });
 
     // Every cap here is a ceiling on ABR, never a filter on availability: hls.js
     // reads `autoLevelCapping` only while choosing on its own. The levels a
@@ -380,7 +434,11 @@ describe('createCapLevelController', () => {
   });
 
   it('layers over a controller supplied through the engine config', () => {
-    const policy: RenditionCapPolicy = { maxAutoResolution: '720p', capToPlayerSize: true };
+    const policy: RenditionCapPolicy = {
+      maxAutoResolution: '720p',
+      capToPlayerSize: true,
+      minAutoResolution: undefined,
+    };
     const engine = createEngine(LADDER);
     const seen: number[] = [];
 
@@ -458,6 +516,87 @@ describe('createCapLevelController', () => {
     });
   });
 
+  describe('minAutoResolution', () => {
+    const smallPlayer = { playerSize: { width: 320, height: 180 } };
+
+    it('raises the size cap to the floor', () => {
+      const { controller, topIndex } = setup({ minAutoResolution: '720p', ...smallPlayer });
+
+      // Without a floor this player caps to 360p; the floor holds it at 720p.
+      expect(controller.getMaxLevel(topIndex)).toBe(2);
+    });
+
+    it('does not raise an explicit maxAutoResolution', () => {
+      const { controller, topIndex } = setup({
+        maxAutoResolution: '360p',
+        minAutoResolution: '720p',
+        ...smallPlayer,
+      });
+
+      // The floor bounds the size cap only. A requested ceiling is the stricter
+      // instruction and wins — it is not a quality minimum being negotiated.
+      expect(controller.getMaxLevel(topIndex)).toBe(0);
+    });
+
+    it('does nothing while the size cap is off', () => {
+      const { controller, topIndex } = setup({
+        capToPlayerSize: false,
+        minAutoResolution: '480p',
+        ...smallPlayer,
+      });
+
+      // No size cap to lift, and a floor must never cap anything on its own.
+      expect(controller.getMaxLevel(topIndex)).toBe(4);
+    });
+
+    it('cannot raise the cap onto a level FPS drops have restricted', () => {
+      const { engine, controller, topIndex } = setup({ minAutoResolution: '1440p', ...smallPlayer });
+
+      // The floor reaches the top rung while the device still keeps up.
+      expect(controller.getMaxLevel(topIndex)).toBe(4);
+
+      emit(engine, Hls.Events.FPS_DROP_LEVEL_CAPPING, { droppedLevel: 4, level: 4 });
+
+      // Once it does not, the floor must not hand that rung back: the floor says
+      // "do not cap a small player this far down", not "decode what you can't".
+      expect(controller.getMaxLevel(topIndex)).toBe(3);
+    });
+
+    it('cannot raise the cap above the top of the ladder', () => {
+      const { controller, topIndex } = setup({ minAutoResolution: '2160p', ...smallPlayer });
+
+      expect(controller.getMaxLevel(topIndex)).toBe(topIndex);
+    });
+
+    it('leaves a ladder that starts above the floor alone', () => {
+      // Only 1080p and 1440p on offer, so every rung already clears a 720p floor.
+      const { controller, topIndex } = setup({
+        minAutoResolution: '720p',
+        levels: LADDER.slice(3),
+        ...smallPlayer,
+      });
+
+      expect(controller.getMaxLevel(topIndex)).toBe(0);
+    });
+
+    it('applies no floor when none is named', () => {
+      const { controller, topIndex } = setup(smallPlayer);
+
+      expect(controller.getMaxLevel(topIndex)).toBe(0);
+    });
+
+    it('applies a floor change without waiting for the next tick', () => {
+      const { engine, policy } = setup(smallPlayer);
+
+      expect(engine.autoLevelCapping).toBe(0);
+
+      policy.minAutoResolution = '1080p';
+      policy.controller!.apply();
+
+      expect(engine.autoLevelCapping).toBe(3);
+    });
+  });
+
   describe('device pixel ratio', () => {
     // hls.js measures in device pixels by default, which is the issue's
     // criterion and needs no code of ours — only pinning, since a change to
@@ -484,7 +623,11 @@ describe('createCapLevelController', () => {
   });
 
   it('never caps an audio-only stream, whose capping loop never starts', () => {
-    const policy: RenditionCapPolicy = { maxAutoResolution: '720p', capToPlayerSize: true };
+    const policy: RenditionCapPolicy = {
+      maxAutoResolution: '720p',
+      capToPlayerSize: true,
+      minAutoResolution: '720p',
+    };
     const engine = createEngine([]);
     const Controller = createCapLevelController(policy);
     const controller = new Controller(engine) as InstanceType<typeof Controller> & { destroy(): void };
