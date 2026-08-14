@@ -1,9 +1,6 @@
 import { VJS10_DEMO_VIDEO } from '@/consts';
-import { createPlayer } from '@videojs/react';
-import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
+import { MinimalVideoSkin, VideoPlayer, Video } from '@videojs/react/video';
 import '@videojs/react/video/minimal-skin.css';
-
-const Player = createPlayer({ features: videoFeatures });
 
 /**
  * Live demo of the minimal video skin design.
@@ -16,10 +13,10 @@ const Player = createPlayer({ features: videoFeatures });
  */
 export function MinimalSkinDemo() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <MinimalVideoSkin className="aspect-video" poster={VJS10_DEMO_VIDEO.poster}>
         <Video src={VJS10_DEMO_VIDEO.mp4} playsInline />
       </MinimalVideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }

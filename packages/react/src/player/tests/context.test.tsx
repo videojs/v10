@@ -42,17 +42,17 @@ function createContextValue(overrides?: Partial<PlayerContextValue>): PlayerCont
 }
 
 describe('usePlayerContext', () => {
-  it('throws outside Provider', () => {
+  it('throws outside a Player', () => {
     const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     expect(() => {
       renderHook(() => usePlayerContext());
-    }).toThrow('usePlayerContext must be used within a Player Provider');
+    }).toThrow('usePlayerContext must be used within a Player');
 
     consoleSpy.mockRestore();
   });
 
-  it('returns context value inside Provider', () => {
+  it('returns context value inside a Player', () => {
     const store = createMockStore();
     const value = createContextValue({ store: store as any });
 
@@ -67,12 +67,12 @@ describe('usePlayerContext', () => {
 });
 
 describe('useMediaAttach', () => {
-  it('returns undefined outside Provider', () => {
+  it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useMediaAttach());
     expect(result.current).toBeUndefined();
   });
 
-  it('returns setMedia inside Provider', () => {
+  it('returns setMedia inside a Player', () => {
     const setMedia = vi.fn();
     const value = createContextValue({ setMedia });
 
@@ -108,12 +108,12 @@ describe('useContainer', () => {
 });
 
 describe('useContainerAttach', () => {
-  it('returns undefined outside Provider', () => {
+  it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useContainerAttach());
     expect(result.current).toBeUndefined();
   });
 
-  it('returns setContainer inside Provider', () => {
+  it('returns setContainer inside a Player', () => {
     const setContainer = vi.fn();
     const value = createContextValue({ setContainer });
 
@@ -126,12 +126,12 @@ describe('useContainerAttach', () => {
 });
 
 describe('useOptionalContainer', () => {
-  it('returns null outside Provider', () => {
+  it('returns null outside a Player', () => {
     const { result } = renderHook(() => useOptionalContainer());
     expect(result.current).toBeNull();
   });
 
-  it('returns container inside Provider', () => {
+  it('returns container inside a Player', () => {
     const container = document.createElement('div');
     const value = createContextValue({ container });
 
@@ -157,24 +157,24 @@ describe('usePlayer', () => {
 });
 
 describe('useOptionalPlayer', () => {
-  it('returns undefined outside Provider', () => {
+  it('returns undefined outside a Player', () => {
     const { result } = renderHook(() => useOptionalPlayer());
     expect(result.current).toBeUndefined();
   });
 
-  it('returns undefined outside Provider with selector', () => {
+  it('returns undefined outside a Player with selector', () => {
     const { result } = renderHook(() => useOptionalPlayer((state: any) => state.paused));
     expect(result.current).toBeUndefined();
   });
 
-  it('does not run selector outside Provider', () => {
+  it('does not run selector outside a Player', () => {
     const selector = vi.fn(() => true);
     const { result } = renderHook(() => useOptionalPlayer(selector));
     expect(result.current).toBeUndefined();
     expect(selector).not.toHaveBeenCalled();
   });
 
-  it('returns store inside Provider', () => {
+  it('returns store inside a Player', () => {
     const store = createMockStore();
     const value = createContextValue({ store: store as any });
 
@@ -185,7 +185,7 @@ describe('useOptionalPlayer', () => {
     expect(result.current).toBe(store);
   });
 
-  it('returns selected state inside Provider', () => {
+  it('returns selected state inside a Player', () => {
     const store = createMockStore({ paused: true });
     const value = createContextValue({ store: store as any });
 

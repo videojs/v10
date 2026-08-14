@@ -1,4 +1,4 @@
-import { resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
+import { getElementSize, resolveCSSLength, supportsAnchorPositioning } from '@videojs/utils/dom';
 import { clamp } from '@videojs/utils/number';
 import type { PopoverAlign, PopoverSide } from '../../../core/ui/popover/popover-core';
 import { PopoverCSSVars } from '../../../core/ui/popover/popover-css-vars';
@@ -374,13 +374,10 @@ export function resolveOffsets(el: Element, cssVars: PositioningCSSVars = Popove
  */
 export function getPopupPositionRect(el: HTMLElement, side: PopoverSide): DOMRect {
   const rect = el.getBoundingClientRect();
-  const width = el.offsetWidth || rect.width;
-  const height = el.offsetHeight || rect.height;
+  const size = getElementSize(el, {
+    box: 'layout',
+    overflow: side === 'left' || side === 'right' ? 'width' : 'height',
+  });
 
-  return createDOMRect(
-    rect.left,
-    rect.top,
-    side === 'left' || side === 'right' ? Math.max(width, el.scrollWidth) : width,
-    side === 'top' || side === 'bottom' ? Math.max(height, el.scrollHeight) : height
-  );
+  return createDOMRect(rect.left, rect.top, size.width, size.height);
 }

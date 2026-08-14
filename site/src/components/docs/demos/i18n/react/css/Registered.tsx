@@ -11,11 +11,11 @@ registerI18n('en-x-demo', {
   },
 });
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function Registered() {
   return (
-    <Player.Provider>
+    <Player>
       <I18nProvider locale="en-x-demo">
         <div className="react-i18n-source">
           <VideoSkin className="react-i18n-source__player">
@@ -23,6 +23,6 @@ export default function Registered() {
           </VideoSkin>
         </div>
       </I18nProvider>
-    </Player.Provider>
+    </Player>
   );
 }

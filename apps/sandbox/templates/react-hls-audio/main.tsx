@@ -1,5 +1,5 @@
 import '@app/styles.css';
-import { AudioProvider } from '@app/shared/react/providers';
+import { AudioPlayer } from '@app/shared/react/players';
 import { AudioSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
 import { useLoop } from '@app/shared/react/use-loop';
@@ -27,7 +27,7 @@ function App() {
   const preload = usePreload();
 
   return (
-    <AudioProvider>
+    <AudioPlayer>
       <AudioSkinComponent skin={skin} styling={styling} className="w-full max-w-xl mx-auto">
         <HlsAudio
           src={SOURCES[source].url ?? ''}
@@ -38,7 +38,7 @@ function App() {
           crossOrigin="anonymous"
         />
       </AudioSkinComponent>
-    </AudioProvider>
+    </AudioPlayer>
   );
 }
 

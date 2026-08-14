@@ -17,13 +17,16 @@ You probably don't want to hand-pick every feature your player needs. A **featur
 
 <FrameworkCase frameworks={["react"]}>
 
-For example, `videoFeatures` bundles playback, volume, time, fullscreen, and more — everything a general video player needs:
+For example, the `/video` preset configures `VideoPlayer` with `videoFeatures`, which bundles playback, volume, time, fullscreen, and more — everything a general video player needs:
 
 ```tsx
-import { createPlayer } from '@videojs/react';
-import { videoFeatures } from '@videojs/react/video';
+import { VideoPlayer, Video, VideoSkin } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
+<VideoPlayer>
+  <VideoSkin>
+    <Video src="movie.mp4" />
+  </VideoSkin>
+</VideoPlayer>
 ```
 
 </FrameworkCase>
@@ -52,7 +55,7 @@ If you're not using presets, you can create a player that has individual feature
 ```tsx
 import { createPlayer, playbackFeature, volumeFeature, timeFeature, controlsFeature } from '@videojs/react';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: [playbackFeature, volumeFeature, timeFeature, controlsFeature],
 });
 ```
@@ -83,7 +86,7 @@ Since feature bundles are just an array of features under the hood, it doesn't t
 import { createPlayer, playbackFeature } from '@videojs/react';
 import { backgroundFeatures } from '@videojs/react/background';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: [...backgroundFeatures, playbackFeature],
 });
 ```

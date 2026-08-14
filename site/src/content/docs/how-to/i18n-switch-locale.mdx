@@ -54,7 +54,7 @@ An <DocsLink slug="reference/i18n-provider">`I18nProvider`</DocsLink> without `l
 ```tsx
 import { useState } from 'react';
 import { I18nProvider } from '@videojs/react/i18n';
-import { Provider, VideoSkin, Video } from '@videojs/react/video';
+import { VideoPlayer, VideoSkin, Video } from '@videojs/react/video';
 
 function App() {
   const [locale, setLocale] = useState<'en' | 'es' | 'fr'>('en');
@@ -64,13 +64,13 @@ function App() {
       <button type="button" onClick={() => setLocale('es')}>
         Español
       </button>
-      <Provider>
+      <VideoPlayer>
         <I18nProvider locale={locale}>
           <VideoSkin>
             <Video src="..." playsInline />
           </VideoSkin>
         </I18nProvider>
-      </Provider>
+      </VideoPlayer>
     </>
   );
 }

@@ -1,4 +1,4 @@
-import { listen } from '@videojs/utils/dom';
+import { listen, observeResize } from '@videojs/utils/dom';
 import { ThumbnailCore } from '../../core/ui/thumbnail/thumbnail-core';
 import type { ThumbnailConstraints } from '../../core/ui/thumbnail/types';
 
@@ -31,7 +31,7 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
   let naturalHeight = 0;
   let lastSrc = '';
   let imgBound = false;
-  let resizeObserver: ResizeObserver | null = null;
+  let stopObservingResize: (() => void) | null = null;
 
   // --- img event listeners ---
 
@@ -71,12 +71,11 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
       }
     }
 
-    if (!resizeObserver) {
+    if (!stopObservingResize) {
       const container = getContainer();
 
       if (container) {
-        resizeObserver = new ResizeObserver(onStateChange);
-        resizeObserver.observe(container);
+        stopObservingResize = observeResize(container, onStateChange);
       }
     }
   }
@@ -129,8 +128,8 @@ export function createThumbnail(options: CreateThumbnailOptions): ThumbnailApi {
 
   function destroy(): void {
     abort.abort();
-    resizeObserver?.disconnect();
-    resizeObserver = null;
+    stopObservingResize?.();
+    stopObservingResize = null;
   }
 
   return {

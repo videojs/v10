@@ -98,17 +98,19 @@ this.#store.value.setVolume(0.5);
 
 <FrameworkCase frameworks={["react"]}>
 
-Your component needs to be inside <DocsLink slug="reference/player-provider">`<Player.Provider>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Player.Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
+Your component needs to be inside <DocsLink slug="reference/player-provider">`<Player>`</DocsLink> to access state. Place it inside <DocsLink slug="reference/player-container">`<Container>`</DocsLink> if it should also participate in fullscreen and respond to user activity:
 
 ```tsx
-<Player.Provider> // [!code focus]
-  <Player.Container> // [!code focus]
+import { Container } from '@videojs/react';
+
+<Player> // [!code focus]
+  <Container> // [!code focus]
     <VideoSkin>
       <Video src="video.mp4" />
     </VideoSkin>
     <SkipIntroButton /> // [!code focus]
-  </Player.Container> // [!code focus]
-</Player.Provider> // [!code focus]
+  </Container> // [!code focus]
+</Player> // [!code focus]
 ```
 
 </FrameworkCase>

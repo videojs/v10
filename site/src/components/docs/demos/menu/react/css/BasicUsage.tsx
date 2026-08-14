@@ -1,4 +1,5 @@
 import {
+  Container,
   createPlayer,
   Menu,
   useAudioTrackOptions,
@@ -10,7 +11,7 @@ import { HlsJsVideo } from '@videojs/react/media/hlsjs-video';
 import { videoFeatures } from '@videojs/react/video';
 import type { ReactNode } from 'react';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 const src = '{{VJS10_MULTI_AUDIO_DEMO_VIDEO_HLS}}';
 
 function SettingsMenu(): ReactNode {
@@ -235,8 +236,8 @@ function SettingsMenu(): ReactNode {
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <HlsJsVideo src={src} autoPlay crossOrigin="anonymous" muted playsInline loop>
           <track kind="captions" src="/docs/demos/captions-button/captions.vtt" srcLang="en" label="English" />
           <track kind="subtitles" src="/docs/demos/captions-button/captions.vtt" srcLang="es" label="Spanish" />
@@ -244,7 +245,7 @@ export default function BasicUsage() {
         <div className="menu-bar">
           <SettingsMenu />
         </div>
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

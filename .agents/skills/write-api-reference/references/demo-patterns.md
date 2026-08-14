@@ -118,17 +118,17 @@ Import registration for:
 ### .tsx (component)
 
 ```tsx
-import { createPlayer, MuteButton } from '@videojs/react';
+import { Container, createPlayer, MuteButton } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
 import './BasicUsage.css';
 
-const Player = createPlayer({ features: videoFeatures });
+const { Player } = createPlayer({ features: videoFeatures });
 
 export default function BasicUsage() {
   return (
-    <Player.Provider>
-      <Player.Container className="react-mute-button-basic">
+    <Player>
+      <Container className="react-mute-button-basic">
         <Video
           src="https://stream.mux.com/BV3YZtogl89mg9VcNBhhnHm02Y34zI1nlMuMQfAbl3dM/highest.mp4"
           autoPlay
@@ -142,8 +142,8 @@ export default function BasicUsage() {
             <button {...props}>{state.muted ? 'Unmute' : 'Mute'}</button>
           )}
         />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }
 ```

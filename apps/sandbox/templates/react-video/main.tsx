@@ -1,6 +1,6 @@
 import '@app/styles.css';
 import { Chapters } from '@app/shared/react/chapters';
-import { VideoProvider } from '@app/shared/react/providers';
+import { VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { Storyboard } from '@app/shared/react/storyboard';
@@ -34,7 +34,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <VideoProvider>
+      <VideoPlayer>
         <VideoSkinComponent poster={poster} skin={skin} styling={styling} className="aspect-video max-w-4xl mx-auto">
           <Video
             src={SOURCES[source].url}
@@ -49,7 +49,7 @@ function App() {
             <Storyboard src={storyboard} />
           </Video>
         </VideoSkinComponent>
-      </VideoProvider>
+      </VideoPlayer>
     </SandboxI18nProvider>
   );
 }

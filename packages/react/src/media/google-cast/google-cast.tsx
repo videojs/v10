@@ -12,16 +12,16 @@ export type GoogleCastProps = Partial<GoogleCastComponentProps>;
 /**
  * Adds Google Cast support to the surrounding player's media.
  *
- * Renders nothing — place it inside the player provider as a sibling of the
+ * Renders nothing — place it inside the Player as a sibling of the
  * media component (e.g. `<HlsJsVideo />`) and it registers a `GoogleCast`
  * media component with the active media.
  *
  * @example
  * ```tsx
- * <Player.Provider>
+ * <Player>
  *   <HlsJsVideo src="https://example.com/stream.m3u8" />
  *   <GoogleCast receiver="YOUR_APP_ID" />
- * </Player.Provider>
+ * </Player>
  * ```
  */
 export function GoogleCast(props: GoogleCastProps): ReactNode {

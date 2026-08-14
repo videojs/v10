@@ -1,6 +1,6 @@
 import '@app/styles.css';
 import { Chapters } from '@app/shared/react/chapters';
-import { LiveVideoProvider, VideoProvider } from '@app/shared/react/providers';
+import { LiveVideoPlayer, VideoPlayer } from '@app/shared/react/players';
 import { SandboxI18nProvider } from '@app/shared/react/sandbox-i18n';
 import { VideoSkinComponent } from '@app/shared/react/skins';
 import { useAutoplay } from '@app/shared/react/use-autoplay';
@@ -34,7 +34,7 @@ function App() {
   const muted = useMuted();
   const loop = useLoop();
   const preload = usePreload();
-  const Provider = live ? LiveVideoProvider : VideoProvider;
+  const Player = live ? LiveVideoPlayer : VideoPlayer;
 
   // A source carrying signed tokens has no room in a plain `src`. A Mux
   // `drm.token` becomes the FairPlay / Widevine / PlayReady license servers.
@@ -42,7 +42,7 @@ function App() {
 
   return (
     <SandboxI18nProvider>
-      <Provider>
+      <Player>
         <VideoSkinComponent
           poster={poster}
           placeholder={placeholder}
@@ -67,7 +67,7 @@ function App() {
           <MuxData playerSoftwareName="mux-video" />
           <GoogleCast />
         </VideoSkinComponent>
-      </Provider>
+      </Player>
     </SandboxI18nProvider>
   );
 }

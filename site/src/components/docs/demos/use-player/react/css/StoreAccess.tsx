@@ -1,12 +1,12 @@
-import { createPlayer } from '@videojs/react';
+import { Container, createPlayer } from '@videojs/react';
 import { Video, videoFeatures } from '@videojs/react/video';
 
-const Player = createPlayer({
+const { Player, usePlayer } = createPlayer({
   features: videoFeatures,
 });
 
 function Controls() {
-  const store = Player.usePlayer();
+  const store = usePlayer();
 
   return (
     <div className="controls">
@@ -22,11 +22,11 @@ function Controls() {
 
 export default function StoreAccess() {
   return (
-    <Player.Provider>
-      <Player.Container className="media-container">
+    <Player>
+      <Container className="media-container">
         <Video src="{{VJS10_DEMO_VIDEO_MP4}}" autoPlay muted playsInline loop />
         <Controls />
-      </Player.Container>
-    </Player.Provider>
+      </Container>
+    </Player>
   );
 }

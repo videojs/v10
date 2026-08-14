@@ -1,6 +1,14 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { addAnchorName, getAnchorNames, resolveCSSLength } from '../style';
+import {
+  addAnchorName,
+  getAnchorNames,
+  readCSSLength,
+  resolveCSSLength,
+  restoreInlineStyles,
+  snapshotInlineStyles,
+  withInlineStyles,
+} from '../style';
 
 describe('getAnchorNames', () => {
   it('returns normalized anchor names', () => {
@@ -45,6 +53,45 @@ describe('addAnchorName', () => {
     cleanup();
 
     expect(getAnchorNames(el)).toEqual(['--settings-menu']);
+  });
+});
+
+describe('inline style snapshots', () => {
+  it('normalizes property names and restores values and priorities', () => {
+    const element = document.createElement('div');
+    element.style.setProperty('min-width', '20px', 'important');
+    const snapshot = snapshotInlineStyles(element, ['minWidth', '--custom-size']);
+
+    element.style.setProperty('min-width', '40px');
+    element.style.setProperty('--custom-size', '10px');
+    restoreInlineStyles(element, snapshot);
+
+    expect(element.style.getPropertyValue('min-width')).toBe('20px');
+    expect(element.style.getPropertyValue('--custom-size')).toBe('');
+  });
+
+  it('restores styles when a synchronous callback throws', () => {
+    const element = document.createElement('div');
+    element.style.width = '20px';
+
+    expect(() =>
+      withInlineStyles(element, { width: '40px' }, () => {
+        expect(element.style.width).toBe('40px');
+        throw new Error('stop');
+      })
+    ).toThrow('stop');
+    expect(element.style.width).toBe('20px');
+  });
+});
+
+describe('readCSSLength', () => {
+  it('distinguishes absent values and preserves zero', () => {
+    const element = document.createElement('div');
+
+    expect(readCSSLength(element, '--size', { source: 'inline' })).toBeNull();
+
+    element.style.setProperty('--size', '0px');
+    expect(readCSSLength(element, '--size', { source: 'inline' })).toBe(0);
   });
 });
 

@@ -91,7 +91,7 @@ Supported source formats:
 - JSON array: `{ url, startTime, endTime? }[]`
 - JSON sprite array: `{ url, startTime, endTime?, width, height, coords }[]`
 
-In React, text-track mode needs `Player.Provider` because it reads track state from the player store. JSON modes (`thumbnails` prop) work without `Provider`.
+In React, text-track mode needs `Player` because it reads track state from the player store. JSON modes (`thumbnails` prop) work without a player.
 
 The component picks the latest thumbnail whose `startTime` is less than or equal to the current `time`, then scales/clips sprite tiles to fit CSS min/max constraints while preserving aspect ratio.
 

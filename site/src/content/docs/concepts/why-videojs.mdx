@@ -86,7 +86,7 @@ Most player libraries ship every feature in one bundle, so you carry code you do
 ```tsx
 import { createPlayer, playbackFeature, timeFeature } from '@videojs/react';
 
-const Player = createPlayer({
+const { Player } = createPlayer({
   features: [playbackFeature, timeFeature], // [!code focus]
 });
 ```
@@ -120,15 +120,15 @@ The player feels like the rest of your app.
   </TabsList>
   <TabsPanel client:idle value="react" initial>
     ```tsx
-    import { Player, Video, VideoSkin } from '@videojs/react/video';
+    import { VideoPlayer, Video, VideoSkin } from '@videojs/react/video';
 
     function MyPlayer() {
       return (
-        <Player.Provider>
+        <VideoPlayer>
           <VideoSkin>
             <Video src="movie.mp4" />
           </VideoSkin>
-        </Player.Provider>
+        </VideoPlayer>
       );
     }
     ```
