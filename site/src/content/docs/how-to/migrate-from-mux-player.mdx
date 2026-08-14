@@ -71,15 +71,11 @@ Each piece is its own import. From the CDN, that's one script for the player and
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-video.js"></script>
 <script type="module" src="https://cdn.jsdelivr.net/npm/@videojs/html/cdn/media/mux-data.js"></script>
 
-<video-player content-title="Test VOD">
+<video-player>
   <video-skin class="aspect-video">
-    <mux-video
-      src="https://stream.mux.com/EcHgOK9coz5K….m3u8"
-      poster-time="2"
-      playsinline
-      crossorigin="anonymous"
-    ></mux-video>
+    <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8" playsinline crossorigin="anonymous"></mux-video>
     <mux-data player-software-name="my-app"></mux-data>
+    <img slot="poster" src="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2" alt="" />
   </video-skin>
 </video-player>
 
@@ -126,9 +122,9 @@ const Player = createPlayer({ features: videoFeatures });
 
 export function VideoPlayer() {
   return (
-    <Player.Provider contentTitle="Test VOD">
-      <VideoSkin className="aspect-video">
-        <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…', poster: { time: 2 } }} playsInline crossOrigin="anonymous" />
+    <Player.Provider>
+      <VideoSkin className="aspect-video" poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2">
+        <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} playsInline crossOrigin="anonymous" />
         <MuxData playerSoftwareName="my-app" metadata={{ video_title: 'Test VOD', viewer_user_id: 'user-id-007' }} />
       </VideoSkin>
     </Player.Provider>
@@ -142,9 +138,9 @@ The `'use client'` directive is there because the player owns browser state.
 
 </FrameworkCase>
 
-A few things worth calling out, because they're all cases where Video.js does more for you than the markup suggests:
+A few things worth calling out:
 
-- **You didn't set a poster, and you get one.** <DocsLink slug="reference/mux-video">`MuxVideo`</DocsLink> builds a poster URL from the playback ID, tells the player about it, and the skin paints it. `poster-time` is Mux Player's `thumbnail-time`, and it feeds that URL.
+- **The poster is yours to build.** Mux Player derived one from the playback ID; here you point the skin at an `image.mux.com` URL, and `thumbnail-time="2"` becomes `?time=2`. <DocsLink slug="reference/mux-video">`MuxVideo`</DocsLink> does derive the same URL and report it, but nothing consumes that yet — see [Coming soon](#coming-soon).
 - **You didn't add a storyboard track, and you get hover previews.** The Mux media adds and maintains the thumbnail track itself, and removes it for live streams, where storyboards don't exist.
 - **Analytics needs no environment key.** Mux resolves the environment from the playback ID. See <DocsLink slug="concepts/mux-data">Mux Data</DocsLink>.
 - **Set the aspect ratio yourself,** in your own CSS on the skin. There's no `ratio` attribute, because sizing belongs to your layout.
@@ -217,8 +213,8 @@ Here's where each Mux Player attribute lands:
 | `playback-token` | `source.playback.token` |
 | `thumbnail-token`, `storyboard-token` | `source.poster.token`, `source.storyboard.token` |
 | `drm-token` | `source.drm.token` |
-| `thumbnail-time` | `poster-time`, or `source.poster.time` |
-| poster size, crop, rotation, format | `source.poster.*` |
+| `thumbnail-time` | `?time=` on the poster URL you build |
+| poster size, crop, rotation, format | query parameters on that URL |
 
 Signed playback behaves the way it does in Mux Player: a token replaces every other parameter in its group, so caps and clipping have to be baked into the token itself.
 
@@ -238,46 +234,42 @@ Mux Player's analytics attributes become attributes and properties on the <DocsL
 
 Your metadata keys don't change. They're the same `snake_case` names Mux Data has always taken, so the values port across untouched. `metadata` is a property rather than an attribute because an object has no sensible string form.
 
-## Titles and posters belong to the player
+## Titles and posters
 
 `metadata-video-title` quietly did two jobs in Mux Player. It labelled the video for analytics, and it was the title the viewer read. Those are separate now, which is worth knowing before you go looking for the one attribute that used to do both:
 
 - For analytics, it's `metadata.video_title` on the Mux Data component.
 - For display, it's `content-title` on the player.
 
-Display information sits on the player rather than the media so that any component can read it.
+`content-title` reaches player state today, so your own UI can read it. No packaged skin draws it yet, so setting it alone won't put a title on screen — [Coming soon](#coming-soon) covers where that's going.
+
+The poster is a skin concern. Build an `image.mux.com` URL and hand it over:
 
 <FrameworkCase frameworks={["html"]}>
 ```html
-<video-player
-  content-title="Test VOD"
-  poster="https://image.mux.com/…"
-  poster-placeholder="url('data:image/webp;base64,…')"
->
+<video-skin placeholdersrc="data:image/webp;base64,…">
+  <mux-video src="https://stream.mux.com/EcHgOK9coz5K….m3u8"></mux-video>
+  <img slot="poster" src="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2" alt="" />
+</video-skin>
 ```
+
+The poster is a slotted `img` rather than an attribute, which gives the skin control over how it appears. `placeholdersrc` is the blurred stand-in shown while the real poster loads, Mux Player's `placeholder`.
 </FrameworkCase>
 
 <FrameworkCase frameworks={["react"]}>
 ```jsx
-<Player.Provider
-  contentTitle="Test VOD"
-  poster="https://image.mux.com/…"
-  posterPlaceholder="url('data:image/webp;base64,…')"
+<VideoSkin
+  poster="https://image.mux.com/EcHgOK9coz5K…/thumbnail.webp?time=2"
+  placeholder="data:image/webp;base64,…"
 >
+  <MuxVideo source={{ playbackId: 'EcHgOK9coz5K…' }} />
+</VideoSkin>
 ```
+
+`placeholder` is the blurred stand-in shown while the real poster loads, Mux Player's `placeholder`.
 </FrameworkCase>
 
-The video skins render the title in the top-left corner, and hide that whole region when there's no title, so you don't get an empty gradient.
-
-Each of these resolves through a chain, which is what makes the Mux integration feel automatic. The player prefers what you set, falls back to what the media reports, then falls back to a default you supply:
-
-```
-what you set  →  what the Mux media derived  →  your default  →  nothing
-```
-
-That's why the first example got a poster without asking. The Mux media derived one and nothing overrode it. Setting `poster` on the player replaces that; setting the default equivalent only fills in when the media has nothing to offer.
-
-The placeholder is the blurred stand-in shown while the real poster loads, Mux Player's `placeholder`. Two differences: it's a CSS image rather than a bare URL, and the blur has to be baked into the image. Image pipelines like Next.js already hand you a pre-blurred data URL, so this is usually what you already have. See the <DocsLink slug="reference/poster">Poster</DocsLink> reference.
+Mux serves the poster from its `thumbnail` endpoint, so every Mux Player poster attribute becomes a query parameter you append: `thumbnail-time` is `?time=`, and the size, crop, rotation, and format options work the same way. See the <DocsLink slug="reference/poster">Poster</DocsLink> reference for the component itself.
 
 ## Customize your player
 
@@ -481,6 +473,16 @@ The SPF flavor doesn't license DRM ([#1411](https://github.com/videojs/v10/issue
 | `prefer-playback` | pick the media: the default Mux media, its SPF flavor, or <DocsLink slug="reference/native-hls-video">native HLS</DocsLink> |
 
 Program Date Time has no convenience surface: no `getStartDate()`, no `currentPdt`. The player exposes `liveEdgeStart` and `targetLiveWindow`; for PDT itself, reach into the engine.
+
+## Coming soon
+
+Two changes are in flight that touch this guide. Neither is released yet, so everything above is what works today.
+
+**The player will own the poster.** `poster` and its blurred placeholder are moving from the skin onto the player, and the player will resolve them through a chain: what you set, then what the media reports, then a default you supply.
+
+That last part matters most for Mux. `<mux-video>` already derives a poster URL from the playback ID and reports it, so once the player consumes it, a playback ID gets you a poster with no URL to build — and `poster-time` becomes the declarative form of `thumbnail-time`. The storyboard track already works this way, which is why hover previews need no markup today ([#1798](https://github.com/videojs/v10/issues/1798)).
+
+**The skins will show a title.** `content-title` already reaches player state, but nothing draws it yet. A title component and skin support are in flight ([#1123](https://github.com/videojs/v10/issues/1123)).
 
 ## Known gaps
 
