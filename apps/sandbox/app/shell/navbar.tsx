@@ -100,6 +100,7 @@ const PRESET_LABELS: Record<Preset, string> = {
   'vimeo-video': 'Vimeo Video',
   'youtube-video': 'YouTube Video',
   'cloudflare-video': 'Cloudflare Stream Video',
+  'spotify-audio': 'Spotify Audio',
 };
 
 export function Navbar({
