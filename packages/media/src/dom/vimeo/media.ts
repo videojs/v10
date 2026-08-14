@@ -385,17 +385,20 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
   }
 
   /**
-   * Store the title the embed reported, announcing the content-data change it
-   * causes. Vimeo cannot tell "no title yet" from "the title is blank" — a
-   * failed read falls back to the current value — and a blank would read as a
-   * deliberate one, stopping a consumer's fallback chain. So an empty title is
-   * reported as an absent key rather than an empty string.
+   * Store the title the embed reported, reporting whether the content data
+   * changed. Announcing is left to the caller, which knows when the rest of what
+   * it is writing is in step.
+   *
+   * Vimeo cannot tell "no title yet" from "the title is blank" — a failed read
+   * falls back to the current value — and a blank would read as a deliberate one,
+   * stopping a consumer's fallback chain. So an empty title is reported as an
+   * absent key rather than an empty string.
    */
-  #setTitle(value: string) {
-    if (this.#title === value) return;
+  #setTitle(value: string): boolean {
+    if (this.#title === value) return false;
     this.#title = value;
     this.#contentData = value ? { title: value } : {};
-    this.dispatchEvent(new Event('contentdatachange'));
+    return true;
   }
 
   get buffered() {
@@ -496,19 +499,23 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
     this.#progress = 0;
     this.#readyState = READY_STATE_HAVE_NOTHING;
     this.#seeking = false;
-    this.#setTitle('');
     this.#volume = 1;
     this.#error = null;
     this.#videoWidth = Number.NaN;
     this.#videoHeight = Number.NaN;
     this.#isFullscreen = false;
     this.#isPictureInPicture = false;
+
+    // Last, and apart from the plain assignments above: this one announces, and
+    // a listener reading a half-reset media would still see the old video.
+    if (this.#setTitle('')) this.dispatchEvent(new Event('contentdatachange'));
   }
 
   async #onLoaded() {
     const load = this.#loadComplete;
     this.#readyState = READY_STATE_HAVE_METADATA;
     const player = this.#player;
+    let contentDataChanged = false;
     if (player) {
       // Each value falls back to the current one so a single failure isn't fatal.
       const [muted, volume, duration, title] = await Promise.all([
@@ -522,8 +529,9 @@ export class VimeoMedia extends VimeoMediaBase implements Partial<Video> {
       this.#muted = muted;
       this.#volume = volume;
       this.#duration = duration;
-      this.#setTitle(title);
+      contentDataChanged = this.#setTitle(title);
     }
+    if (contentDataChanged) this.dispatchEvent(new Event('contentdatachange'));
     for (const type of ['loadedmetadata', 'durationchange', 'volumechange', 'loadcomplete']) {
       this.dispatchEvent(new Event(type));
     }

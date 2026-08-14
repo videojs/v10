@@ -445,6 +445,24 @@ describe('VimeoMedia', () => {
     expect('title' in media.contentData).toBe(false);
   });
 
+  it('has the rest of the reset in step when it announces a cleared title', async () => {
+    const media = new VimeoMedia();
+    media.src = '76979871';
+    const { player } = await attachAndLoad(media);
+    player.emit('resize', { videoWidth: 1280, videoHeight: 720 });
+
+    const seen: number[] = [];
+    media.addEventListener('contentdatachange', () => seen.push(media.videoWidth));
+
+    media.src = '12345';
+
+    // The dimensions are cleared after the title is, so announcing from the
+    // middle of the reset would hand a listener the old video's frame size
+    // alongside the cleared title.
+    expect(seen).toHaveLength(1);
+    expect(seen[0]).toBeNaN();
+  });
+
   it('clears state reported about the old video when the source is cleared', async () => {
     const media = new VimeoMedia();
     media.src = '76979871';
