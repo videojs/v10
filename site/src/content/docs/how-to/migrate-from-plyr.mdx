@@ -17,7 +17,7 @@ Plyr is simple and familiar, so the reason to migrate should be practical. These
 
 - **♿ Accessibility starts in the component model.** Plyr has long-running reports around WCAG compliance, slider semantics, keyboard behavior, focus visibility, and menu roles ([#905](https://github.com/sampotts/plyr/issues/905), [#103](https://github.com/sampotts/plyr/issues/103)). Video.js v10 exposes buttons, sliders, menus, radio groups, and tooltips as focused components with state attributes and <DocsLink slug="concepts/accessibility">accessibility behavior</DocsLink> built into each part.
 - **📺 Streaming controls are first-class media state.** Streaming was an afterthought in Plyr. HLS quality switching is one of Plyr's most-requested gaps ([#1741](https://github.com/sampotts/plyr/issues/1741), [#218](https://github.com/sampotts/plyr/issues/218)). Video.js v10 models HLS, DASH, and Mux-backed media directly, so quality UI can read rendition state instead of parsing manifests and wiring hls.js in application code.
-- **🧩 Composition keeps player code cleaner.** Providers, media elements, skins, controls, gestures, and hotkeys are separate pieces. You can replace one part without wrapping or forking the whole player.
+- **🧩 Composition keeps player code cleaner.** Players, media elements, skins, controls, gestures, and hotkeys are separate pieces. You can replace one part without wrapping or forking the whole player.
 - **✨ Two polished skins are ready to use.** Minimal is the closest starting point for Plyr migrations, while Default gives you a modern, frosted design. Both can be [ejected](#ejecting) when you want to customize the layout, styling, or icons.
 - **📡 Remote playback is part of the built-in video UI.** Plyr has an open Google Cast request dating back years ([#112](https://github.com/sampotts/plyr/issues/112)). Video.js v10 includes <DocsLink slug="concepts/cast">Cast</DocsLink> and AirPlay controls through a shared remote playback feature.
 - **⚛️ React gets a native API.** Plyr integrations in React tend to wrap an imperative constructor around framework-owned DOM ([#254](https://github.com/sampotts/plyr/issues/254)), and lifecycle cleanup can get awkward when routes or components unmount ([#1001](https://github.com/sampotts/plyr/issues/1001)). `@videojs/react` gives you providers, components, hooks, and TypeScript types instead.
@@ -98,38 +98,35 @@ First, install the dependency:
 npm install @videojs/react
 ```
 
-Then create a reusable `VideoPlayer` component in your app:
+Then create a reusable player component in your app:
 
 ```tsx
 'use client';
 
 import '@videojs/react/video/minimal-skin.css';
-import { createPlayer } from '@videojs/react';
-import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
+import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
 
-const Player = createPlayer({ features: videoFeatures });
-
-interface VideoPlayerProps {
+interface AppVideoPlayerProps {
   origin: string;
 }
 
-export function VideoPlayer({ origin }: VideoPlayerProps) {
+export function AppVideoPlayer({ origin }: AppVideoPlayerProps) {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <MinimalVideoSkin poster={`${origin}/poster.jpg`}>
         <Video src={`${origin}/video.mp4`} playsInline>
           <track kind="captions" label="English" src={`${origin}/captions/en.vtt`} srclang="en" default />
           <track kind="metadata" label="thumbnails" src={`${origin}/storyboard.vtt`} default />
         </Video>
       </MinimalVideoSkin>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 ```
 
 ### Notes
 
-- `createPlayer` builds a typed player from a set of <DocsLink slug="concepts/features">features</DocsLink>. `videoFeatures` is the standard composition for video. Call it once, outside your component, and reuse it.
+- `@videojs/react/video` is a <DocsLink slug="concepts/presets">preset</DocsLink>: a player, a skin, and a media element already composed from the standard set of <DocsLink slug="concepts/features">features</DocsLink> for video. `VideoPlayer` is the piece that owns the state.
 - The poster is a prop on the skin rather than a `poster` attribute on the media, which gives the skin control over how it appears. That's much like Plyr's `data-poster`.
 - This example assumes all your files for a given asset live in the same path, using consistent filenames. This will almost certainly need adjusting for your implementation.
 - There's also a default skin with a modern, frosted appearance that some may prefer. Try it by switching the CSS import filename to `skin.css` and the `MinimalVideoSkin` import and usage to `VideoSkin`.
@@ -265,11 +262,11 @@ import { YouTubeVideo } from '@videojs/react/media/youtube-video';
 ```
 
 ```jsx
-<Player.Provider>
+<VideoPlayer>
   <MinimalVideoSkin>
     <YouTubeVideo src="https://youtu.be/aqz-KE-bpKQ" playsInline />
   </MinimalVideoSkin>
-</Player.Provider>
+</VideoPlayer>
 ```
 
 </FrameworkCase>
@@ -325,14 +322,11 @@ Use the React provider when you want scoped overrides:
 
 import '@videojs/react/video/minimal-skin.css';
 import { I18nProvider } from '@videojs/react/i18n';
-import { createPlayer } from '@videojs/react';
-import { MinimalVideoSkin, Video, videoFeatures } from '@videojs/react/video';
-
-const Player = createPlayer({ features: videoFeatures });
+import { MinimalVideoSkin, Video, VideoPlayer } from '@videojs/react/video';
 
 export function MyPlayer() {
   return (
-    <Player.Provider>
+    <VideoPlayer>
       <I18nProvider
         locale="en"
         translations={{
@@ -349,7 +343,7 @@ export function MyPlayer() {
           <Video src="/video.mp4" playsInline />
         </MinimalVideoSkin>
       </I18nProvider>
-    </Player.Provider>
+    </VideoPlayer>
   );
 }
 ```
@@ -406,10 +400,12 @@ Use the media element for standard playback operations:
 For custom UI, read and write through the Video.js player store.
 
 <FrameworkCase frameworks={["react"]}>
-Use the <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook that <DocsLink slug="reference/create-player">`createPlayer`</DocsLink> returns, or the feature selectors:
+Import the preset's <DocsLink slug="reference/use-player">`usePlayer`</DocsLink> hook and call it directly or with a selector:
 
 ```tsx
-const currentTime = Player.usePlayer((state) => state.currentTime);
+import { usePlayer } from '@videojs/react/video';
+
+const currentTime = usePlayer((state) => state.currentTime);
 ```
 </FrameworkCase>
 
