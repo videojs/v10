@@ -19,12 +19,14 @@ export {
   type JsxChildReplacement,
   type JsxElementLike,
   type JsxPropReference,
+  jsxAttributes,
   jsxExpression,
   type Matcher,
   propertyAccess,
   type ReplaceJsxChildOptions,
   type ReplaceOptions,
   readAccessPath,
+  readJsxAttributeExpression,
   readJsxProp,
   readStringAttribute,
   replace,
@@ -34,6 +36,7 @@ export {
   tagName,
   type UnwrapOptions,
   unwrap,
+  updateJsxAttributes,
   type WrapOptions,
   wrap,
 } from './jsx';
@@ -50,6 +53,14 @@ export {
   resolveRelative,
   transformImports,
 } from './transforms';
+export {
+  createIndexedAccessType,
+  createInterfaceDeclaration,
+  createLiteralType,
+  createNamedType,
+  type InterfaceDeclarationOptions,
+  type InterfacePropertySpec,
+} from './utils/declarations';
 export { collectModuleReferences, type ModuleReference } from './utils/module-references';
 export {
   collectModuleSpecifiers,

@@ -22,6 +22,28 @@ describe('transform', () => {
     expect(compact(result.code)).toContain(compact('<Root {...props} />'));
   });
 
+  it('replaces a function props binding with a typed target shape', async () => {
+    const result = await transform(`export function Skin(){ return <Root/>; }`, {
+      config: {
+        plugins: [
+          rewrite((code) => {
+            const ContainerProps = code.import('@fixture/react', 'ContainerProps', { type: true });
+            return [
+              code.function('Skin').setProps(['children', { name: 'props', spread: true }], {
+                type: ContainerProps,
+                initializer: code.value.object(),
+              }),
+            ];
+          }),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('import type { ContainerProps } from "@fixture/react"');
+    expect(compact(result.code)).toContain(compact('function Skin({ children, ...props }: ContainerProps = {})'));
+  });
+
   it('composes generic import, JSX attribute, JSX element, and interface edits', async () => {
     const source = `import { Action, Backdrop, Frame, Hint, Range, Toolbar } from '@fixture/core';
 import { styles } from './tokens';
@@ -178,6 +200,109 @@ export function Template({ children, className }: TemplateProps) {
     expect(result.code).not.toContain('Popover.Root');
     expect(result.code).not.toContain('Popover.Trigger');
     expect(result.code).not.toContain('className');
+  });
+
+  it('scopes JSX prop edits to matching element tags', async () => {
+    const source = `export function Template(){ return <Panel className="component"><div className="native" /></Panel>; }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [
+          rewrite((code) => [
+            code.jsx
+              .props('className')
+              .on(/^[a-z]/)
+              .rename('class'),
+          ]),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).toContain('<Panel className="component">');
+    expect(compact(result.code)).toContain(compact('<div class="native" />'));
+  });
+
+  it('scopes JSX lowering to one function', async () => {
+    const source = `export function Target(){ return <Root><Primitive className="base"><Slot /></Primitive></Root>; }
+export function Other(){ return <Root><Primitive className="base"><Slot /></Primitive></Root>; }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [
+          rewrite((code) => {
+            const target = code.function('Target');
+            return [
+              target.jsx.element('Root').addProp('className', () => 'target'),
+              target.jsx.element('Slot').remove(),
+              target.jsx.element('Primitive').spreadProps('props', { position: 'start' }),
+              target.jsx
+                .props('className')
+                .on('Primitive')
+                .replace(({ value }) =>
+                  code.value.arrow(
+                    ['state'],
+                    code.value.conditional(
+                      code.value.equal(code.value.typeOf('className'), code.value.string('function')),
+                      code.value.call('className', ['state']),
+                      value
+                    )
+                  )
+                ),
+              target.jsx.element('Primitive').selfClosing(),
+            ];
+          }),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(compact(result.code)).toContain(
+      compact(
+        '<Root className="target"><Primitive {...props} className={state => typeof className === "function" ? className(state) : "base"} /></Root>'
+      )
+    );
+    expect(compact(result.code)).toContain(compact('<Root><Primitive className="base"><Slot /></Primitive></Root>'));
+  });
+
+  it('inserts declarations beside functions and removes selected variables', async () => {
+    const source = `declare const Placeholder: unknown;
+export function Target(){ return <Root />; }`;
+    const result = await transform(source, {
+      config: {
+        plugins: [
+          rewrite((code) => {
+            const BaseProps = code.import('@fixture/react', 'BaseProps', { type: true });
+            return [
+              code.variable('Placeholder').remove(),
+              code.function('Target').insertBefore(() =>
+                code.statement.interface({
+                  name: 'TargetProps',
+                  export: true,
+                  extends: [code.type.named('Omit', [code.type.named(BaseProps), code.type.literal('hidden')])],
+                  properties: [
+                    { name: 'value', optional: true, type: code.type.string() },
+                    {
+                      name: 'render',
+                      optional: true,
+                      type: code.type.indexed(code.type.named(BaseProps), code.type.literal('render')),
+                    },
+                  ],
+                })
+              ),
+            ];
+          }),
+        ],
+      },
+    });
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.code).not.toContain('Placeholder');
+    expect(result.code).toContain('import type { BaseProps } from "@fixture/react"');
+    expect(compact(result.code)).toContain(
+      compact(
+        'export interface TargetProps extends Omit<BaseProps, "hidden"> { value?: string; render?: BaseProps["render"]; }'
+      )
+    );
+    expect(result.code.indexOf('interface TargetProps')).toBeLessThan(result.code.indexOf('function Target'));
   });
 
   it('rejects ambiguous JSX prop forwarding targets', async () => {

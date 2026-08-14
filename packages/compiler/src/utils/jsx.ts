@@ -39,7 +39,7 @@ export function hasJsxSpreadAttribute(attributes: ts.JsxAttributes, name: string
 
 /** Read one named JSX prop whose value can be represented as an expression. */
 export function readJsxProp(element: JsxElementLike, name: string): JsxPropReference | undefined {
-  const attribute = findJsxAttribute(attributesOf(element), name);
+  const attribute = findJsxAttribute(jsxAttributes(element), name);
   if (!attribute) return undefined;
   const expression = readJsxAttributeExpression(attribute);
   return expression ? { element, attribute, expression } : undefined;
@@ -56,7 +56,7 @@ export function replaceJsxPropValue(
     reference.attribute.name,
     ts.isStringLiteral(expression) ? expression : factory.createJsxExpression(undefined, expression)
   );
-  const attributes = attributesOf(reference.element);
+  const attributes = jsxAttributes(reference.element);
   const nextAttributes = factory.updateJsxAttributes(
     attributes,
     attributes.properties.map((property) => (property === reference.attribute ? attribute : property))
@@ -150,7 +150,7 @@ export function readStringAttribute(attributes: ts.JsxAttributes, name: string):
   return null;
 }
 
-function attributesOf(element: JsxElementLike): ts.JsxAttributes {
+export function jsxAttributes(element: JsxElementLike): ts.JsxAttributes {
   return ts.isJsxElement(element) ? element.openingElement.attributes : element.attributes;
 }
 
@@ -161,7 +161,7 @@ export function readJsxAttributeExpression(attribute: ts.JsxAttribute): ts.Expre
   return ts.isJsxExpression(initializer) ? initializer.expression : undefined;
 }
 
-function updateJsxAttributes(
+export function updateJsxAttributes(
   element: JsxElementLike,
   attributes: ts.JsxAttributes,
   factory: ts.NodeFactory
