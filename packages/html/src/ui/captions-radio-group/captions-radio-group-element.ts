@@ -1,13 +1,12 @@
 import { CaptionsRadioGroupCore, CaptionsRadioGroupDataAttrs, type CaptionsRadioGroupOption } from '@videojs/core';
 import { applyStateDataAttrs, logMissingFeature, selectTextTrack } from '@videojs/core/dom';
-import type { Text } from '@videojs/core/i18n';
+import { type Text, translateText } from '@videojs/core/i18n';
 import type { PropertyDeclarationMap, PropertyValues } from '@videojs/element';
 import { i18nContext } from '../../i18n/context';
 import { I18nController } from '../../i18n/controller';
 import { playerContext } from '../../player/context';
 import { PlayerController } from '../../player/player-controller';
 import { MenuRadioGroupElement } from '../menu/menu-radio-group-element';
-import { applyRadioGroupAriaLabel } from '../radio-group/apply-radio-group-aria-label';
 import { RadioOptionsController } from '../radio-options/radio-options-controller';
 
 export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
@@ -52,7 +51,7 @@ export class CaptionsRadioGroupElement extends MenuRadioGroupElement {
       this.#core.setMedia(media);
       state = this.#core.getState();
 
-      applyRadioGroupAriaLabel(this, this.#i18n.value, this.#core.getLabel(state));
+      this.applyDefaultAriaLabel(translateText(this.#core.getLabel(state), this.#i18n.value));
       this.#options.sync(state, this.#i18n.value, this.#i18n.locale);
       this.publishMenuMetadata(state.disabled, state.availability);
     }

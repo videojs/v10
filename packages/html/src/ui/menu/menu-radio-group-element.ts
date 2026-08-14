@@ -11,6 +11,7 @@ export class MenuRadioGroupElement extends RadioGroupElement {
 
   readonly #group = new MenuGroupController(this);
   readonly #menu = new ContextConsumer(this, { context: menuContext, subscribe: true });
+  #ariaLabel: string | null = null;
   #metadataMenu: MenuContextValue['menu'] | null = null;
   #setTriggerMetadata: ((metadata: MenuTriggerMetadata) => void) | null = null;
 
@@ -33,6 +34,17 @@ export class MenuRadioGroupElement extends RadioGroupElement {
     } else {
       item.textContent = label;
     }
+  }
+
+  /** Applies a generated fallback without replacing an author-provided accessible name. */
+  protected applyDefaultAriaLabel(label: string): void {
+    if (this.hasAttribute('aria-labelledby')) return;
+
+    const current = this.getAttribute('aria-label');
+    if (current !== null && current !== this.#ariaLabel) return;
+
+    this.#ariaLabel = label;
+    this.setAttribute('aria-label', label);
   }
 
   protected publishMenuMetadata(disabled: boolean, availability?: 'available' | 'unavailable' | 'unsupported'): void {
